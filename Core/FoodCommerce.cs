@@ -55,20 +55,25 @@ namespace PersistentCity.Core
     }
     public sealed class ResidentMeal
     {
+        // F6c: transient panel counters (never saved); see ResidentBudget.counters.
+        internal FoodMoneyCounters? counters;
+        private MealStatus status;
+        private MealExcursion? excursion;
+        private ResidentBudget? budget;
         public string ResidentId { get; set; } = "";
         public string AnchorId { get; set; } = "";
         public int Slot { get; set; }
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; }
         public bool NeedsHomeResync { get; set; }
-        public MealExcursion? Excursion { get; set; }
+        public MealExcursion? Excursion { get => excursion; set { var c = counters; if (c == null) excursion = value; else { var old = excursion; excursion = value; c.Replaced(old, value); } } }
         public int Day { get; set; }
         public MealKind Kind { get; set; }
         public Money DayAllowanceUsed { get; set; }
         public double DesiredAt { get; set; }
         public double ExpiresAt { get; set; }
         public double DueAt { get; set; }
-        public MealStatus Status { get; set; }
+        public MealStatus Status { get => status; set { var c = counters; if (c == null) status = value; else { var old = status; status = value; c.Restatus(old, value); } } }
         public string PlaceId { get; set; } = "";
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
@@ -79,7 +84,7 @@ namespace PersistentCity.Core
         public double ServiceAt { get; set; }
         public double Deadline { get; set; }
         public double ReturnMinutes { get; set; }
-        public ResidentBudget? Budget { get; set; }
+        public ResidentBudget? Budget { get => budget; set { var c = counters; if (c == null) budget = value; else { var old = budget; budget = value; c.Replaced(old, value); } } }
         public bool ExistingStop { get; set; }
         public long ExistingStopPurchases { get; set; }
         public long Purchases { get; set; }
@@ -163,8 +168,9 @@ namespace PersistentCity.Core
         bool IsConfirmedPaid(ResidentMeal meal);
     }
 
-    /// <summary>Sequential meal opportunities sharing one resident wallet. No nutrition or
-    /// closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
+    /// <summary>Sequential meal opportunities, each paid from its own consumer's budget (with household
+    /// finances on, one ResidentBudget per roster record, seeded by consumer ID; no shared or household
+    /// wallet). No nutrition or closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
     public sealed partial class FoodCommerce
     {
         private sealed class Order : IComparer<ResidentMeal>
@@ -206,8 +212,10 @@ namespace PersistentCity.Core
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
             InitializeRepresentation();
+            long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
             foreach (var entry in state.Residents)
             {
+                rivalLoad.Observe(entry, rivalPeriod);
                 if (entry.DueAt < city.State.Minute) throw new InvalidOperationException("Overdue meal record.");
                 due.Add(entry);
                 if (entry.Budget != null) budgetDue.Add(entry);
@@ -217,6 +225,7 @@ namespace PersistentCity.Core
                     || entry.Decision?.Shops.Any(s => s.AlternativeKind == FoodAlternativeKind.Rival) == true)) rivalResumeNeedsRefresh = true;
             }
             budgetDue.Build();
+            Feedback = FoodMoneyCounters.Attach(state);
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
         private static string ReservationKey(string shop, string product) => shop + "\n" + product;
@@ -253,7 +262,7 @@ namespace PersistentCity.Core
             meal.Allowance = consumer.DailyAllowance;
             if (state.HouseholdFinanceVersion != 0) CreateBudget(meal, person);
             StartMeal(meal, person, (int)(city.State.Minute / 1440), state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast);
-            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); return meal;
+            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal); return meal;
         }
         private void StartMeal(ResidentMeal meal, CitizenState person, int day, MealKind kind)
         {
@@ -444,7 +453,7 @@ namespace PersistentCity.Core
                         else {
                             if (result.Failure == ShopExperience.Closed || result.Failure == ShopExperience.Stockout || result.Failure == ShopExperience.Queue)
                                 Experience(meal, result.Failure.Value, now);
-                            MealOutcomes.Record(meal, now, checkout: true);
+                            RecordOutcome(meal, now, true);
                         }
                         if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
@@ -458,15 +467,23 @@ namespace PersistentCity.Core
             RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
-            MealOutcomes.Record(meal, city.State.Minute, checkout: true);
+            RecordOutcome(meal, city.State.Minute, true);
+        }
+        // The only outcome writer. A lazy day rollover drops earlier records, so the derived rival load drops them too.
+        private void RecordOutcome(ResidentMeal meal, double minute, bool checkout, FoodOutsideOption outside = FoodOutsideOption.None)
+        {
+            if (meal.Today != null && meal.Day > meal.Today.Day && MealOutcomes.StatusFor(meal.Status).HasValue)
+                foreach (var record in meal.Today.Meals) rivalLoad.Forget(record);
+            MealOutcomes.Record(meal, minute, checkout, outside);
         }
         private void Finish(ResidentMeal meal, MealStatus status, string reason, FoodOutsideOption outside = FoodOutsideOption.None)
         {
             if (status == MealStatus.Missed && Active(meal)) FailedVisit(meal, reason);
             string choiceReason=meal.Reason;
             if (Active(meal)) Reserve(meal, -1);
+            if (meal.Status == MealStatus.Serving && meal.TargetKind == FoodAlternativeKind.Rival) rivalLoad.Leave(meal);
             meal.Status = status; meal.Reason = reason;
-            MealOutcomes.Record(meal, city.State.Minute, checkout: status == MealStatus.Uncertain, outside);
+            RecordOutcome(meal, city.State.Minute, status == MealStatus.Uncertain, outside);
             if((status==MealStatus.Uncertain || status==MealStatus.Paid && meal.TargetKind==FoodAlternativeKind.Rival)
                 && meal.Today?.Find(meal.Kind) is MealOutcomeRecord outcome)
             {
