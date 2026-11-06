@@ -12,7 +12,7 @@ The port double does the same work as `NativeResearchChargePort`:
 - 2,000 registrations, 20 rented by the player. Each order bills one of the last rented businesses, so every `TryResolve` walks the whole list and builds the `NativeFoodMarket.PlaceId` string of all 20 player businesses;
 - the native money change: binary32 subtraction, one appended record and its data dictionary.
 
-Not in the offline number: the one `Harmony.GetPatchInfo(RunDaily)` foreign-patch check per boundary with work (the test project does not reference Harmony; it is a dictionary lookup plus a copy of the patch lists, once a day) and native `ChangeMoney` side work (top-bar animation, tax tracking, sound, `ba:gameevent_moneychange` listeners), which is native cost, not mod-work. The batched rig measures both (check 10 in the checks file).
+Not in the offline number: the one `Harmony.GetPatchInfo(RunDaily)` foreign-patch check per boundary with work (the test project does not reference Harmony; it is a dictionary lookup plus a copy of the patch lists, once a day) and native `ChangeMoney` side work (top-bar animation, tax tracking, sound, `ba:gameevent_moneychange` listeners), which is native cost, not mod-work. The batched rig measures both (check 8 in the checks file, part of plan check 10).
 
 ## Results
 
