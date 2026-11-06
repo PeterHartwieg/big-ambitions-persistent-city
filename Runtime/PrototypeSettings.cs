@@ -19,6 +19,15 @@ namespace PersistentCity.Runtime
         public int RivalRefreshGameMinutes { get => Rivals.RivalRefreshGameMinutes; set => Rivals.RivalRefreshGameMinutes=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 64)]
         public int RivalReadsPerUnit { get => Rivals.RivalReadsPerUnit; set => Rivals.RivalReadsPerUnit=value; }
+        // F6b estimated service limits. RivalCapacityPercent holds Peter's Q2 answer (100 = moderate default).
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 25, 400)]
+        public int RivalCapacityPercent { get => Rivals.RivalCapacityPercent; set => Rivals.RivalCapacityPercent=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 8)]
+        public int RivalServiceLanes { get => Rivals.RivalServiceLanes; set => Rivals.RivalServiceLanes=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 10000)]
+        public int RivalMealPeriodUnits { get => Rivals.RivalMealPeriodUnits; set => Rivals.RivalMealPeriodUnits=value; }
+        [JsonConverter(typeof(RivalServiceProfilesConverter))]
+        public System.Collections.Generic.Dictionary<string, RivalServiceProfile> RivalServiceProfiles { get => Rivals.RivalServiceProfiles; set => Rivals.RivalServiceProfiles=value; }
 
         [JsonConverter(typeof(StreetLifeMinutesConverter), 1, 8)]
         public int FoodMenuMaximumOffersPerShop { get => FoodChoice.FoodMenuMaximumOffersPerShop; set => FoodChoice.FoodMenuMaximumOffersPerShop=value; }
@@ -305,6 +314,41 @@ namespace PersistentCity.Runtime
             return value == Math.Truncate(value) ? (int)value : int.MinValue;
         }
         public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    // Per-business-type rival estimates. Unusable numbers become the Clamp sentinel instead of discarding the file.
+    internal sealed class RivalServiceProfilesConverter : JsonConverter<System.Collections.Generic.Dictionary<string, RivalServiceProfile>>
+    {
+        public override System.Collections.Generic.Dictionary<string, RivalServiceProfile> ReadJson(JsonReader reader, Type type,
+            System.Collections.Generic.Dictionary<string, RivalServiceProfile>? existing, bool hasExisting, JsonSerializer serializer)
+        {
+            var result = new System.Collections.Generic.Dictionary<string, RivalServiceProfile>(StringComparer.Ordinal);
+            if (!(JToken.Load(reader) is JObject root)) return result;
+            int Integer(JToken? token)
+            {
+                if (token == null) return int.MinValue;
+                string raw = token.Type == JTokenType.String ? (string)token! : token.ToString(Formatting.None);
+                return double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) && value == Math.Truncate(value)
+                    && value >= int.MinValue + 1 && value <= int.MaxValue ? (int)value : int.MinValue;
+            }
+            foreach (var property in root.Properties())
+                result[property.Name] = property.Value is JObject profile
+                    ? new RivalServiceProfile { Lanes = Integer(profile["Lanes"]), MealPeriodUnits = Integer(profile["MealPeriodUnits"]) }
+                    : new RivalServiceProfile { Lanes = int.MinValue, MealPeriodUnits = int.MinValue };
+            return result;
+        }
+        public override void WriteJson(JsonWriter writer, System.Collections.Generic.Dictionary<string, RivalServiceProfile>? value, JsonSerializer serializer)
+        {
+            writer.WriteStartObject();
+            if (value != null) foreach (var entry in value)
+            {
+                writer.WritePropertyName(entry.Key); writer.WriteStartObject();
+                writer.WritePropertyName("Lanes"); writer.WriteValue(entry.Value.Lanes);
+                writer.WritePropertyName("MealPeriodUnits"); writer.WriteValue(entry.Value.MealPeriodUnits);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndObject();
+        }
     }
 
     // Preserve A's numeric-string/endpoint conventions without letting an unusable awareness

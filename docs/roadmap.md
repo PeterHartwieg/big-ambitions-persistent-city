@@ -34,6 +34,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+City-audit F6b implements [estimated rival service lanes and meal-period sell-out](plans/f6-economy.md) derived from saved state, with writer 25 unchanged; [offline evidence and automated batched-rig handoff](checks/f6b.md); not verified by rig.
+
 City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
 
 City-audit F7a (4 Nov, offline) implements the [save-cost baseline](checks/f7a.md): on-request save-phase/activation diagnostics and representative/stress fixtures; writer 25 unchanged; not verified by rig.
@@ -43,6 +45,8 @@ City-audit F6c (#93) implements [feedback v1](plans/f6-economy.md#4-slice-breakd
 City-audit F5a (#92) implements the [read-only world census](plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](checks/f5a.md).
 
 City-audit F5b (4 November, offline) implements the inactive [identity and ownership core](plans/f5-population.md): person/visitor/employment types, derived household and visitor identity (IdentityPolicy v1) and the ownership validator, not wired; writer 25 unchanged. [Checks and batched-rig handoff](checks/f5b-identity-core.md).
+
+City-audit F7f (#94) implements the [frozen reader corpus](plans/f7-save-snapshots.md#4-slice-breakdown) for schemas 13–25 offline, with pinned hashes and no reader/writer change; rig verification pending. [Checks and batched-rig list](checks/f7f.md).
 
 City-audit F5f (5 November, offline) implements the [active-journey candidate index](plans/f5-population.md#4-slice-breakdown) for physical selection (selection-scan part of parked hotspot #1; spatial indexing and movement authority stay with F2); writer 25 unchanged; rig verification pending. [Checks and batched-rig list](checks/f5f.md).
 
@@ -100,6 +104,8 @@ Record every taken win with before/after numbers.
 
 - City-audit F5b — [Ordered-input owner lookup hint, boxing-free enum checks, allocation-free intent ownership and concatenation-free identity hashing](perf/f5b-identity-core.md): validator p50 1,914/10,000/100,000 persons 1.3185/8.3299/108.7320 -> 0.6485/3.6938/49.2912 ms; warm validator 68,741/358,737/3,587,106 -> 0 B/call; intent check 127.8 -> 0 B/intent (3.06 -> 1.05 ms per 30,000); identity draw 284 -> 0 B/lookup. New code, offline components only; no frame work.
 
+- City-audit F7f — [One over-cap payload per frozen reader instead of per schema](perf/f7f.md): corpus over-cap test 3,294.7 -> 871.4 ms, corpus suite 6,188.0 -> 3,162.9 ms (sum of per-method medians, 3 runs); test time only, zero runtime change and no mod-work effect; also records lines/test time per frozen reader.
+
 - City-audit F5f — [Active-journey candidate index for physical selection](perf/f5f.md): selection p95 against the unchanged pre-F5f loop at 1,914/10,000/50,000 persons with 100 active journeys 0.0360/0.2623/1.0858 -> 0.0133/0.0126/0.0123 ms, with 1,000 active 0.2801/0.4230/1.9762 -> 0.1823/0.2289/0.1927 ms; 0 B per call from the selection itself; offline harness on native doubles (tiered compilation off), not in-game mod-work.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
@@ -121,6 +127,7 @@ Record every taken win with before/after numbers.
 
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
 
+- City-audit F6b — [Rival lane/sell-out cost, reconstruction and retained bytes; no win taken](perf/f6b.md).
 - C2b - [Campaign index reuse, canonical sorting, shared references, active-hour buffers and neutral marker cache](perf/c2b-campaign-awareness.md).
 - D2 — [Bounded rival choice, refresh and settlement measurements](perf/d2-rival-outflow.md).
 
