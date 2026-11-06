@@ -212,8 +212,10 @@ namespace PersistentCity.Core
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
             InitializeRepresentation();
+            long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
             foreach (var entry in state.Residents)
             {
+                rivalLoad.Observe(entry, rivalPeriod);
                 if (entry.DueAt < city.State.Minute) throw new InvalidOperationException("Overdue meal record.");
                 due.Add(entry);
                 if (entry.Budget != null) budgetDue.Add(entry);
@@ -451,7 +453,7 @@ namespace PersistentCity.Core
                         else {
                             if (result.Failure == ShopExperience.Closed || result.Failure == ShopExperience.Stockout || result.Failure == ShopExperience.Queue)
                                 Experience(meal, result.Failure.Value, now);
-                            MealOutcomes.Record(meal, now, checkout: true);
+                            RecordOutcome(meal, now, true);
                         }
                         if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
@@ -465,15 +467,23 @@ namespace PersistentCity.Core
             RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
-            MealOutcomes.Record(meal, city.State.Minute, checkout: true);
+            RecordOutcome(meal, city.State.Minute, true);
+        }
+        // The only outcome writer. A lazy day rollover drops earlier records, so the derived rival load drops them too.
+        private void RecordOutcome(ResidentMeal meal, double minute, bool checkout, FoodOutsideOption outside = FoodOutsideOption.None)
+        {
+            if (meal.Today != null && meal.Day > meal.Today.Day && MealOutcomes.StatusFor(meal.Status).HasValue)
+                foreach (var record in meal.Today.Meals) rivalLoad.Forget(record);
+            MealOutcomes.Record(meal, minute, checkout, outside);
         }
         private void Finish(ResidentMeal meal, MealStatus status, string reason, FoodOutsideOption outside = FoodOutsideOption.None)
         {
             if (status == MealStatus.Missed && Active(meal)) FailedVisit(meal, reason);
             string choiceReason=meal.Reason;
             if (Active(meal)) Reserve(meal, -1);
+            if (meal.Status == MealStatus.Serving && meal.TargetKind == FoodAlternativeKind.Rival) rivalLoad.Leave(meal);
             meal.Status = status; meal.Reason = reason;
-            MealOutcomes.Record(meal, city.State.Minute, checkout: status == MealStatus.Uncertain, outside);
+            RecordOutcome(meal, city.State.Minute, status == MealStatus.Uncertain, outside);
             if((status==MealStatus.Uncertain || status==MealStatus.Paid && meal.TargetKind==FoodAlternativeKind.Rival)
                 && meal.Today?.Find(meal.Kind) is MealOutcomeRecord outcome)
             {

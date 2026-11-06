@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 City-audit F1 implements simulation/accounting backpressure, bounded lag and visible pacing/refusal status, boundary observation publication and safe PC stop/native-clock release on a lost epoch, with accounting-specific recovery when a different valid save loads, with writer 25 unchanged. [Offline cadence/reload evidence and six automated batched-rig checks](docs/checks/f1-accounting-backlog.md); native accounting and complete-cost proof remain a merge blocker.
 
+City-audit F6b implements estimated rival service limits: rivals queue on estimated lanes and sell out per meal period, labeled estimated, derived from saved state with writer 25 unchanged; not verified by rig. [Offline evidence, F6d dependency and automated batched-rig checks](docs/checks/f6b.md).
+
 City-audit F3 implements bounded household posting units and finite route retries/query admission, with coherent 1,024-candidate campaign capture, resumable publication and no schema change. [Offline equivalence, stress limitations and automated batched-rig checks](docs/checks/pc-f3-bounded-bulk-work.md).
 
 City-audit F6c implements read-only feedback v1 in the Ctrl+F8 food panel: week-over-week purchases, sales and evaluated-offer causes per managed shop from the existing 14-day history (days without a record labeled, no hour/meal/resident attribution), a neutral rival estimate label, current budget-state counts from incremental counters that replace the panel's consumer scans, and inspector words for budget states. No behaviour, economy or save change. [Offline evidence and automated batched-rig checks](docs/checks/f6c.md).

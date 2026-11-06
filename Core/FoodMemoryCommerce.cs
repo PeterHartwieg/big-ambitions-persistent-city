@@ -61,7 +61,13 @@ namespace PersistentCity.Core
         {
             if (!city.State.Capabilities.Active || decision.Shops.Count != 1 || person.PlaceId != decision.Shops[0].PlaceId) return;
             var shop = decision.Shops[0];
-            if (shop.AlternativeKind == FoodAlternativeKind.Rival) return;
+            if (shop.AlternativeKind == FoodAlternativeKind.Rival)
+            {
+                // F6b: the only refusal recorded for a present rival customer is the modeled sell-out of an
+                // otherwise eligible offer (evaluation removed it); other rival stop failures stay neutral.
+                if (rivalSoldOutShops.Contains(shop)) RivalStopStockout(meal, person, shop, decision);
+                return;
+            }
             if (!shop.Offers.Any(o => o.Price > Money.Zero && o.Price <= AvailableForMeal(meal))) return;
             var business = CapturedBusiness(shop);
             var hours = business.OpeningPlace;
