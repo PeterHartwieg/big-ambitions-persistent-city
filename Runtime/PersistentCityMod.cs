@@ -72,6 +72,8 @@ namespace PersistentCity.Runtime
             public CityState State = null!;
             public SaveSession Saves = null!;
             public double ReadMilliseconds, CreateMilliseconds, ValidateMilliseconds;
+            public string? EpochMarker;
+            public long EpochSequence;
         }
         private Task<PreparedCity>? initialization;
         private SaveSession? saveSession;
@@ -220,7 +222,7 @@ namespace PersistentCity.Runtime
             catch (Exception error) { Fail(error.Message); }
         }
 
-        private void Update()
+        private void UpdateCity()
         {
             try
             {
@@ -524,6 +526,9 @@ namespace PersistentCity.Runtime
             if (NativeFoodOwnership.Error.Length > 0) { Fail(NativeFoodOwnership.Error); return; }
             // Snapshot all Unity/RLO input on the main thread. Large population creation and
             // strict save decoding are pure work; never hold up a frame while creating 25,000 people.
+            string? epochRefusal = SaveEpochStore.CheckForStart(save.modData, out var epochMarker);
+            if (epochRefusal != null) { Fail("Save-epoch check refused: " + epochRefusal + " Every saved key is retained."); return; }
+            save.modData.TryGetValue(SaveEpochStore.Key, out var epochText);
             initializingHadPayload = save.modData.TryGetValue(SaveStore.StateKey, out initializingPayload);
             var saved = new Dictionary<string, string>(StringComparer.Ordinal);
             if (initializingHadPayload) saved.Add(SaveStore.StateKey, initializingPayload!);
@@ -542,6 +547,8 @@ namespace PersistentCity.Runtime
             // F7a: load timing only when save-cost diagnostics are requested; otherwise no timestamps or fields.
             bool timed = timeActivation = saveCost != null;
             if (timed) { activationHadPayload = initializingHadPayload; activationPayloadCharacters = initializingPayload?.Length ?? 0; }
+            // Rule 5: saves during initialization are refused with both markers, never silently skipped.
+            BeginInitializingSaveEpoch(save, save.modData, epochMarker?.Sequence ?? 0);
             initialization = Task.Run(() =>
             {
                 long readStarted = timed ? Stopwatch.GetTimestamp() : 0;
@@ -557,12 +564,15 @@ namespace PersistentCity.Runtime
                     if (!source.MatchesPopulation(state)) throw new InvalidDataException("Snapshot donor identities differ from current RLO profiles.");
                 }
                 else throw new InvalidDataException("Population save refused: " + stored.Error);
+                string? epochMismatch = SaveEpochStore.DescribesState(epochMarker, stored.SourceSchema, stored.State);
+                if (epochMismatch != null) throw new InvalidDataException("Save-epoch check refused: " + epochMismatch);
                 NativeTravelPace.PrepareInitialTiming(state, stored.Status == SaveReadStatus.Missing, clockRate);
                 long validating = timed ? Stopwatch.GetTimestamp() : 0;
                 SaveCodec.ValidateForActivation(state); // Validate completely before making it active or touching modData.
-                if (!timed) return new PreparedCity { State = state, Saves = session };
+                if (!timed) return new PreparedCity { State = state, Saves = session, EpochMarker = epochText, EpochSequence = epochMarker?.Sequence ?? 0 };
                 long validated = Stopwatch.GetTimestamp();
-                return new PreparedCity { State = state, Saves = session, ReadMilliseconds = (created - readStarted) * MillisecondsPerTimestamp,
+                return new PreparedCity { State = state, Saves = session, EpochMarker = epochText, EpochSequence = epochMarker?.Sequence ?? 0,
+                    ReadMilliseconds = (created - readStarted) * MillisecondsPerTimestamp,
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
@@ -597,15 +607,17 @@ namespace PersistentCity.Runtime
             {
                 string error = pending.Exception?.GetBaseException().Message ?? "Unknown initialization failure.";
                 if (ReferenceEquals(expectedSave, save)) Fail(error + " Original payload retained.");
-                else NativeCityClock.Stop();
+                else { NativeCityClock.Stop(); DropSaveEpoch(); }
                 return;
             }
-            if (pending.IsCanceled || save == null || !ReferenceEquals(expectedSave, save)) { NativeCityClock.Stop(); return; }
+            if (pending.IsCanceled || save == null || !ReferenceEquals(expectedSave, save)) { NativeCityClock.Stop(); DropSaveEpoch(); return; }
             bool hasPayload = save.modData.TryGetValue(SaveStore.StateKey, out var currentPayload);
             if (hasPayload != initializingHadPayload || currentPayload != expectedPayload)
             { Fail("Population payload changed during initialization. Original payload retained."); return; }
             var prepared = pending.Result;
             var state = prepared.State;
+            save.modData.TryGetValue(SaveEpochStore.Key, out var currentEpoch);
+            if (!ReferenceEquals(currentEpoch, prepared.EpochMarker)) { Fail("Save-epoch marker changed during initialization. Every saved key is retained."); return; }
             var source = ReadRlo("activation");
             if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization. Original payload retained."); return; }
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
@@ -639,9 +651,9 @@ namespace PersistentCity.Runtime
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
             ResetAdvanceDiagnostics();
-            GlobalEvents.onSaveGame += Save;
-            GlobalEvents.onGameUnloaded += Shutdown;
-            subscribed = true;
+            if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
+            { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }
+            saveEpoch.CompleteInitialization(); // Attached: publication allowed, detach now marks a still-current city.
             nextDependencyCheck = Time.unscaledTime + 30;
             nextStationScan = float.PositiveInfinity;
             seenRoadSnapshots = 0; clockRetimingRoutes = false;
@@ -667,37 +679,43 @@ namespace PersistentCity.Runtime
             return result;
         }
 
-        private void Save()
+        /// <summary>Today's save steps, in order, inside the F7b epoch callback (<see cref="Save"/>).</summary>
+        private SaveEpochCapture CaptureForSave(SaveEpochTicket ticket)
         {
-            if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
+            if (failed || simulation == null) return SaveEpochCapture.Refused("Population is not active.");
             var cost = saveCost; // F7a: null unless requested; then only timestamps are taken.
             cost?.Begin();
-            if (!BeginAccountingObservations()) { cost?.End(false, "Accounting observations refused."); return; }
-            bool saved = false; string error = "";
-            try
-            {
-                var source = ReadRlo("save");
-                if (!source.MatchesPopulation(simulation.State))
-                { error = "RLO changed before saving."; Fail("RLO changed before saving; original population payload retained."); return; }
-                RunPhysical(() => physical?.BeforeSave());
-                foodMarket?.CompleteCampaignsForSave();
-                foodMarket?.RefreshKnownOwnership();
-                if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute)) { error = "Accounting input epoch changed."; StopAccounting(); return; }
-                // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
-                var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
-                    .WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
-                saved = result.Success; error = result.Error;
-                if (!result.Success) Fail("Population save refused: " + result.Error);
-            }
-            catch (Exception exception) { error = exception.Message; Fail("Population save failed: " + exception.Message); }
+            var capture = SaveEpochCapture.Refused("Population save failed.");
+            try { capture = CaptureSteps(ticket, cost); return capture; }
+            catch (Exception exception) { capture = SaveEpochCapture.Refused("Population save failed: " + exception.Message); throw; }
             finally
             {
                 if (cost != null)
                 {
-                    cost.End(saved, error);
-                    if (saved) CountSavedRecords(cost);
+                    cost.End(capture.Error == null, capture.Error ?? "");
+                    if (capture.Error == null) CountSavedRecords(cost);
                 }
             }
+        }
+
+        private SaveEpochCapture CaptureSteps(SaveEpochTicket ticket, SaveCostRecorder? cost)
+        {
+            if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
+            var source = ReadRlo("save");
+            if (!source.MatchesPopulation(simulation!.State))
+                return SaveEpochCapture.Refused("RLO changed before saving; original population payload retained.");
+            RunPhysical(() => physical?.BeforeSave());
+            foodMarket?.CompleteCampaignsForSave();
+            foodMarket?.RefreshKnownOwnership();
+            if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute))
+                return SaveEpochCapture.Refused("Accounting input epoch changed before saving.");
+            if (saveEpoch?.CanPublish(ticket, SaveGameManager.Current, SaveGameManager.Current.modData) != true)
+                return SaveEpochCapture.Refused("Save epoch changed during capture; previous payload retained.");
+            // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
+            var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
+                .WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
+            return result.Success ? SaveEpochCapture.Written(simulation.State.Minute, simulation.State.PopulationKey)
+                : SaveEpochCapture.Refused("Population save refused: " + result.Error);
         }
 
         private void RestoreInterior()
@@ -720,6 +738,7 @@ namespace PersistentCity.Runtime
 
         private void Detach()
         {
+            DetachSaveEpoch();
             NativeInteriorCityView.Stop();
             foodMarket?.Dispose(); foodMarket = null;
             inspector.Detach();
