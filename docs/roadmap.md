@@ -13,7 +13,7 @@ Principles that still apply: bounded state, no extra route searches per decision
 | Audit F5c-lite | planned (running) | Schema 26 person shape, refusing older development cities. Replaces F5c's migration design. |
 | Audit F5d, F5e, F5g, F5i, F5h | planned | Independent schedules, workplaces and employment, population fill and visitor transport, visitor bodies after F2, integrated acceptance. [F5 plan](plans/f5-population.md#4-slice-breakdown). |
 | Audit F6d to F6h | planned | Ledger contract, attended wages, household resources, change journal and feedback v2, multi-week calibration. [F6 plan](plans/f6-economy.md#4-slice-breakdown). F6d also owns the committed-meal profile change across reload left by [F6b](checks/f6b.md). |
-| Audit F7p | planned (running) | Compact-format prototype, tools only. |
+| Audit F7p | implemented | Compact-format prototype, tools only; [decision: candidate C for F7d](decisions/2026-11-06-f7d-compact-format.md). |
 | Audit F7c, F7d, F7e | planned | Snapshot/wire split, compact writer, overlap in the native save window (F7e conditional). [F7 plan](plans/f7-save-snapshots.md#4-slice-breakdown). |
 | Re-scope plan rows for no migration | planned | F5d, F5e, F6d, F6e, F7c and F7d still describe migration or switch-over-day tests. The coordinator proposes the changes; Peter approves them in `docs/decisions/`. |
 | Audit F2, F4, F8, F9 | planned, no plan yet | [City audit](reviews/2026-11-03-city-vision-audit.md): F2 presentation must not change journey authority; F4 the perf gate does not prove the requested experience; F8 capability boundaries for dependencies and native patches; F9 an integrated city acceptance path. |

@@ -52,6 +52,7 @@ Sorted by slice ID. Status: planned, implemented, partial, stopped, verified by 
 | F7a save-cost baseline | implemented | pending | [f7a.md](docs/checks/f7a.md) |
 | F7b save-epoch contract | implemented | pending | [f7b.md](docs/checks/f7b.md) |
 | F7f reader corpus | implemented | pending | [f7f.md](docs/checks/f7f.md) |
+| F7p compact-format prototype | implemented | pending | [f7p.md](docs/checks/f7p.md) |
 
 ## Other records
 

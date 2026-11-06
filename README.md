@@ -61,8 +61,8 @@ Status words: planned, implemented, partial, stopped, verified by rig. Rig is "p
 | Audit F5c-lite to F5i population | planned | pending |
 | Audit F6a harness, F6b rival limits, F6c feedback v1 | implemented | pending |
 | Audit F6d to F6h economy | planned | pending |
-| Audit F7a save cost, F7b save epoch, F7f reader corpus | implemented | pending |
-| Audit F7p, F7c to F7e save snapshots | planned | pending |
+| Audit F7a save cost, F7b save epoch, F7f reader corpus, F7p compact-format prototype | implemented | pending |
+| Audit F7c to F7e save snapshots | planned | pending |
 
 ## Links
 
