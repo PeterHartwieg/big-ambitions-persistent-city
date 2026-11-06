@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 City-audit F1 implements simulation/accounting backpressure, bounded lag and visible pacing/refusal status, boundary observation publication and safe PC stop/native-clock release on a lost epoch, with accounting-specific recovery when a different valid save loads, with writer 25 unchanged. [Offline cadence/reload evidence and six automated batched-rig checks](docs/checks/f1-accounting-backlog.md); native accounting and complete-cost proof remain a merge blocker.
 
+City-audit F6a implements an offline intervention harness and records today's economic baseline, including the unlimited rival curve; no Runtime, Core or save change. [Baseline, offline checks and automated batched-rig checks](docs/checks/f6a-intervention-harness.md).
+
 City-audit F7b implements the exact save-epoch contract: a strict `persistentcity:save-epoch_v1` side key, failure and detach markers that every writer-25 build refuses, and a re-entrancy guard, with writer 25 unchanged. [Offline evidence and automated batched-rig checks](docs/checks/f7b.md); not verified by rig.
 
 City-audit F6b implements estimated rival service limits: rivals queue on estimated lanes and sell out per meal period, labeled estimated, derived from saved state with writer 25 unchanged; not verified by rig. [Offline evidence, F6d dependency and automated batched-rig checks](docs/checks/f6b.md).

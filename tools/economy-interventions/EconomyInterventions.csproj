@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="EconomyFixture.cs" /><Compile Include="InterventionInputs.cs" />
+    <Compile Include="EconomyRun.cs" /><Compile Include="EconomyMetrics.cs" />
+    <Compile Include="InterventionArms.cs" /><Compile Include="SelfChecks.cs" />
+    <Compile Include="Baseline.cs" /><Compile Include="Program.cs" />
+    <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
+    <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
+  </ItemGroup>
+</Project>

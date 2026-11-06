@@ -38,6 +38,8 @@ City-audit F6b implements [estimated rival service lanes and meal-period sell-ou
 
 City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
 
+City-audit F6a implements the [section 3.5 intervention harness](plans/f6-economy.md#35-controlled-interventions-and-measurement) offline (`tools/economy-interventions`) and records today's six-week baseline and unlimited rival curve; no Runtime/Core/save change. [Baseline and automated batched-rig checks](checks/f6a-intervention-harness.md).
+
 City-audit F7a (4 Nov, offline) implements the [save-cost baseline](checks/f7a.md): on-request save-phase/activation diagnostics and representative/stress fixtures; writer 25 unchanged; not verified by rig.
 
 City-audit F7b implements the [exact save-epoch contract](plans/f7-save-snapshots.md) (side key, failed/detach markers, re-entrancy guard, legacy path), writer 25 unchanged; not verified by rig. [Offline evidence and automated batched-rig checks](checks/f7b.md).
@@ -96,6 +98,7 @@ Record every taken win with before/after numbers.
 
 - City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; R2 quiet baseline text 16,640 -> 0 B / 40 -> 0 builds per 1,200 requests (GUI excluded); offline components, no native whole-frame gate claim.
 
+- City-audit F6a — [Harness tool cost; no win taken](perf/f6a-intervention-harness.md): tools/tests only, no product code or mod work touched; 1.32/3.27 s and 1.80/3.74 GB per simulated week (10,260 epochs) at 1,914/4,000 consumers (tool cost, no gate).
 - City-audit F7b — [Save-epoch callback overhead](perf/f7b.md): no win taken (save/detach path only); publish 0.0001 -> 0.0008 ms p95, 0 -> 808 B per save, load check 0.0012 ms p95; writer-25 SHA-256 unchanged; no frame work beyond a unit counter; offline components only.
 
 - City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](perf/pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](checks/pc-f3-bounded-bulk-work.md).

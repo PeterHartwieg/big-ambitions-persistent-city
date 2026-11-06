@@ -1,0 +1,591 @@
+{
+ "head": "327c35d",
+ "date": "2026-11-04 to 2026-11-05",
+ "host": "Windows 11, .NET SDK 10.0.402",
+ "note": "Every required command, run sequentially through wait-other-dotnet.ps1. Command 55 was rerun alone after the first matrix process hit its 2-hour background limit while waiting on other worktrees.",
+ "commands": [
+  {
+   "index": 0,
+   "command": "python tools/build.py --game-managed C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed",
+   "exit": 0,
+   "seconds": 1.4,
+   "at": "2026-11-04T21:23:33",
+   "tail": [
+    "DLL SHA256: d6f2ffa2aaf3372b0319d2b54edef7b10a303a2414855f2f7a1a63ba7ac52165"
+   ]
+  },
+  {
+   "index": 1,
+   "command": "dotnet test tests/PersistentCity.Tests.csproj",
+   "exit": 0,
+   "seconds": 133.8,
+   "at": "2026-11-04T21:26:47",
+   "tail": [
+    "Passed!  - Failed:     0, Passed:  2873, Skipped:     0, Total:  2873, Duration: 2 m 11 s - PersistentCity.Tests.dll (net10.0)"
+   ]
+  },
+  {
+   "index": 2,
+   "command": "dotnet test tests/PersistentCity.Tests.csproj --no-build --list-tests",
+   "exit": 0,
+   "seconds": 1.2,
+   "at": "2026-11-04T21:26:49",
+   "tail": []
+  },
+  {
+   "index": 3,
+   "command": "dotnet run --project tools/core-identity-regression/CoreIdentityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 3.4,
+   "at": "2026-11-04T21:26:53",
+   "tail": []
+  },
+  {
+   "index": 4,
+   "command": "dotnet run --project tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.2,
+   "at": "2026-11-04T21:26:54",
+   "tail": []
+  },
+  {
+   "index": 5,
+   "command": "dotnet run --project tools/event-observation-regression/EventObservationRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.9,
+   "at": "2026-11-04T21:26:57",
+   "tail": []
+  },
+  {
+   "index": 6,
+   "command": "dotnet run --project tools/food-catalogue-regression/FoodCatalogueRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 2.1,
+   "at": "2026-11-04T21:26:59",
+   "tail": []
+  },
+  {
+   "index": 7,
+   "command": "dotnet run --project tools/food-checkout-regression/FoodCheckoutRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.8,
+   "at": "2026-11-04T21:27:01",
+   "tail": []
+  },
+  {
+   "index": 8,
+   "command": "dotnet run --project tools/food-hours-regression/FoodHoursRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.6,
+   "at": "2026-11-04T21:27:03",
+   "tail": [
+    "PASS live enrolled-shop hours: extension, closure, reopening, stable identity, unchanged schedule allocation and save ownership.",
+    "PASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role."
+   ]
+  },
+  {
+   "index": 9,
+   "command": "dotnet run --project tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.2,
+   "at": "2026-11-04T21:27:05",
+   "tail": []
+  },
+  {
+   "index": 10,
+   "command": "dotnet run --project tools/food-ownership-regression/FoodOwnershipRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.5,
+   "at": "2026-11-04T21:27:06",
+   "tail": [
+    "PASS 249 actual ownership-hook checks against native field/callback doubles. No Unity/game execution."
+   ]
+  },
+  {
+   "index": 11,
+   "command": "dotnet run --project tools/food-supply-regression/FoodSupplyRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.6,
+   "at": "2026-11-04T21:27:09",
+   "tail": []
+  },
+  {
+   "index": 12,
+   "command": "dotnet run --project tools/frame-observation-regression/FrameObservationRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.9,
+   "at": "2026-11-04T21:27:12",
+   "tail": []
+  },
+  {
+   "index": 13,
+   "command": "dotnet run --project tools/gate-access-regression/GateAccessRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 2.1,
+   "at": "2026-11-04T21:27:14",
+   "tail": [
+    "PASS 213884 gate-access checks against actual Runtime PublicRoadAccess; offline only."
+   ]
+  },
+  {
+   "index": 14,
+   "command": "dotnet run --project tools/road-ceiling-regression/RoadCeilingRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 4.3,
+   "at": "2026-11-04T21:27:19",
+   "tail": []
+  },
+  {
+   "index": 15,
+   "command": "dotnet run --project tools/road-handoff-regression/RoadHandoffRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.8,
+   "at": "2026-11-04T21:27:21",
+   "tail": [
+    "PASS public gates: leaf poses neither open a road nor repeat a change; replaced doors are recorded; a moved frame is a change.",
+    "PASS sample scope: each node/junction validated once per sample; public resolve live; same-frame closures, contract changes, reentrancy, exceptions and generation wrap detected.",
+    "PASS actual RoadRoutes: current fragments rejected; later full run sampled; malformed/unknown history rejected; future fragment bounded; junction identities/history/admission preserved."
+   ]
+  },
+  {
+   "index": 16,
+   "command": "dotnet run --project tools/road-invalidation-regression/RoadInvalidationRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 3.3,
+   "at": "2026-11-04T21:27:24",
+   "tail": [
+    "PASS 265 road invalidation checks; 40 signal cycles preserve network; 20 genuine rebuilds perform zero additional global road-scene searches."
+   ]
+  },
+  {
+   "index": 17,
+   "command": "dotnet run --project tools/road-speed-regression/RoadSpeedRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.8,
+   "at": "2026-11-04T21:27:27",
+   "tail": [
+    "PASS canonical topology, initial-active overlay, old queue immutability, SaveCodec/rebind/restoration: native=824bd5ba73d50953231f3c2a14ba83b2feb08004df74b2abc0cb6f47c41f4409, traffic=88b88ec4817e749052ed4d49e16ea1f8cfd8089ce99eeabb4e48fc412427af41, links=1, capacity=13, baseline=9.6, slowed=10.200000000000001, partial40m=5.1",
+    "PASS actual Runtime mapping preserves 6m FIFO storage spacing with heterogeneous native speed overlay",
+    "PASS 602 offline assertions using actual Runtime/Core/Persistence and synthetic Unity/native surfaces; no rig or RLO mutation."
+   ]
+  },
+  {
+   "index": 18,
+   "command": "dotnet run --project tools/route-discovery-regression/RouteDiscoveryRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 9.4,
+   "at": "2026-11-04T21:27:36",
+   "tail": [
+    "PASS 674 discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal."
+   ]
+  },
+  {
+   "index": 19,
+   "command": "dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 3.4,
+   "at": "2026-11-04T21:27:40",
+   "tail": [
+    "PASS F0 off/on runtime state + hidden/save/reload payloads byte-identical (12 transitions); no persistence source changes."
+   ]
+  },
+  {
+   "index": 20,
+   "command": "dotnet run --project tools/startup-clock-regression/StartupClockRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.6,
+   "at": "2026-11-04T21:27:42",
+   "tail": [
+    "PASS 3064 F0 actual adapter/anchor/lifecycle checks (Unity doubles).",
+    "PASS 17 actual startup-clock source checks; native clock/UI doubles, no Unity execution."
+   ]
+  },
+  {
+   "index": 21,
+   "command": "dotnet run --project tools/traffic-closure-regression/TrafficClosureRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.9,
+   "at": "2026-11-04T21:27:44",
+   "tail": []
+  },
+  {
+   "index": 22,
+   "command": "dotnet run --project tools/traffic-queue-regression/TrafficQueueRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 2.2,
+   "at": "2026-11-04T21:27:47",
+   "tail": [
+    "32414 observations; SHA256=D328799A130E4BF1834A448B46765F4D5BC1750A21DF86B879B42B97307ABAFE"
+   ]
+  },
+  {
+   "index": 23,
+   "command": "dotnet run --project tools/walking-quote-regression/WalkingQuoteRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.3,
+   "at": "2026-11-04T21:27:49",
+   "tail": []
+  },
+  {
+   "index": 24,
+   "command": "dotnet run --project tools/campaign-reader-regression/CampaignReaderRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 3.0,
+   "at": "2026-11-04T21:27:52",
+   "tail": []
+  },
+  {
+   "index": 25,
+   "command": "python tools/native-command-regression/run.py",
+   "exit": 0,
+   "seconds": 2.7,
+   "at": "2026-11-04T21:27:55",
+   "tail": [
+    "PASS 72 native command/step checks; actual production method source, deferred physics test doubles (not game evidence)."
+   ]
+  },
+  {
+   "index": 26,
+   "command": "python tools/physical-selection-regression/run.py",
+   "exit": 0,
+   "seconds": 3.4,
+   "at": "2026-11-04T21:27:59",
+   "tail": [
+    "PASS 1938 F0 source-extracted hidden/pedestrian/vehicle/construction/release/cap/save/6x/time-machine checks.",
+    "PASS 27568 checks; positions 93665->53918; hierarchy 88308->33300"
+   ]
+  },
+  {
+   "index": 27,
+   "command": "python tools/vehicle-ownership-regression/run.py",
+   "exit": 0,
+   "seconds": 1.9,
+   "at": "2026-11-04T21:28:01",
+   "tail": [
+    "PASS 361 actual Runtime vehicle ownership assertions",
+    "PASS epoch call sites: Update, BeginNativeFixedStep and Release advance first; 5 native mutation wrappers advance in finally; no raw native mutation elsewhere"
+   ]
+  },
+  {
+   "index": 28,
+   "command": "python tools/optional-stop-regression/run.py",
+   "exit": 0,
+   "seconds": 3.3,
+   "at": "2026-11-04T21:28:05",
+   "tail": []
+  },
+  {
+   "index": 29,
+   "command": "dotnet run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo",
+   "exit": 0,
+   "seconds": 3.9,
+   "at": "2026-11-04T21:28:09",
+   "tail": []
+  },
+  {
+   "index": 30,
+   "command": "dotnet run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957",
+   "exit": 0,
+   "seconds": 3.5,
+   "at": "2026-11-04T21:28:13",
+   "tail": []
+  },
+  {
+   "index": 31,
+   "command": "dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo",
+   "exit": 0,
+   "seconds": 1.5,
+   "at": "2026-11-04T21:28:15",
+   "tail": []
+  },
+  {
+   "index": 32,
+   "command": "dotnet run --project tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.8,
+   "at": "2026-11-04T21:28:17",
+   "tail": []
+  },
+  {
+   "index": 33,
+   "command": "dotnet run --project tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.4,
+   "at": "2026-11-04T21:39:51",
+   "tail": []
+  },
+  {
+   "index": 34,
+   "command": "dotnet run --project tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.4,
+   "at": "2026-11-04T21:39:53",
+   "tail": []
+  },
+  {
+   "index": 35,
+   "command": "python tools/donut-feasibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T21:39:53",
+   "tail": [
+    "PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins",
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions"
+   ]
+  },
+  {
+   "index": 36,
+   "command": "python tools/salad-feasibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T21:39:54",
+   "tail": [
+    "PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins",
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions",
+    "PASS approved salad additions and landed cupcake/donut shared implementation, facades and cases"
+   ]
+  },
+  {
+   "index": 37,
+   "command": "dotnet run --project tools/rival-outflow-regression/RivalOutflowRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 6.9,
+   "at": "2026-11-04T21:40:01",
+   "tail": []
+  },
+  {
+   "index": 38,
+   "command": "dotnet run --project tools/awareness-regression/AwarenessRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 18.8,
+   "at": "2026-11-04T21:40:21",
+   "tail": []
+  },
+  {
+   "index": 39,
+   "command": "dotnet run --project tools/food-candidate-regression/FoodCandidateRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.4,
+   "at": "2026-11-04T21:40:22",
+   "tail": []
+  },
+  {
+   "index": 40,
+   "command": "dotnet run --project tools/rival-memory-regression/RivalMemoryRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.7,
+   "at": "2026-11-04T21:40:24",
+   "tail": []
+  },
+  {
+   "index": 41,
+   "command": "python tools/rival-memory-regression/validate.py",
+   "exit": 0,
+   "seconds": 2878.3,
+   "at": "2026-11-04T22:28:23",
+   "tail": [
+    "PASS 65/65 foreground commands"
+   ]
+  },
+  {
+   "index": 42,
+   "command": "python tools/run-d3a-checks.py",
+   "exit": 0,
+   "seconds": 924.1,
+   "at": "2026-11-04T22:43:47",
+   "tail": []
+  },
+  {
+   "index": 43,
+   "command": "dotnet run --project tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.7,
+   "at": "2026-11-04T22:43:50",
+   "tail": []
+  },
+  {
+   "index": 44,
+   "command": "dotnet run --project tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.5,
+   "at": "2026-11-04T22:43:51",
+   "tail": []
+  },
+  {
+   "index": 45,
+   "command": "dotnet run --project tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 4.4,
+   "at": "2026-11-04T22:43:56",
+   "tail": []
+  },
+  {
+   "index": 46,
+   "command": "dotnet run --project tools/e4-menu-regression/E4MenuRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 17.9,
+   "at": "2026-11-04T22:44:14",
+   "tail": []
+  },
+  {
+   "index": 47,
+   "command": "python tools/icecream-feasibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T22:44:15",
+   "tail": [
+    "PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins",
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions",
+    "PASS icecream SHA-256 pins, conditional facade, no hooks/polls/gameplay caller; old read branches and cases unchanged"
+   ]
+  },
+  {
+   "index": 48,
+   "command": "python tools/frenchfries-feasibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T22:44:15",
+   "tail": [
+    "PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins",
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions",
+    "PASS pinned fries facade/cases; no gameplay caller, hooks, polls, writes or arbitrary product selector"
+   ]
+  },
+  {
+   "index": 49,
+   "command": "python tools/pizza-feasibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T22:44:16",
+   "tail": [
+    "PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins",
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions",
+    "PASS pizza source pins and no gameplay caller/poll/writer"
+   ]
+  },
+  {
+   "index": 50,
+   "command": "dotnet run --project tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.7,
+   "at": "2026-11-04T22:44:18",
+   "tail": []
+  },
+  {
+   "index": 51,
+   "command": "python tools/e3-remaining-feasibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.6,
+   "at": "2026-11-04T22:44:19",
+   "tail": [
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions",
+    "PASS pizza source pins and no gameplay caller/poll/writer",
+    "PASS batch complete pins, 11 isolation mutations, exact historical additions only; no hooks/polls/writes/gameplay caller"
+   ]
+  },
+  {
+   "index": 52,
+   "command": "dotnet run --project tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 5.2,
+   "at": "2026-11-04T22:44:24",
+   "tail": []
+  },
+  {
+   "index": 53,
+   "command": "python tools/e5a-eligibility-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T22:44:25",
+   "tail": [
+    "PASS 11 isolation mutations rejected; immutable DTO sibling consumer allowed"
+   ]
+  },
+  {
+   "index": 54,
+   "command": "dotnet run --project tools/food-metadata-regression/FoodMetadataRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 8.6,
+   "at": "2026-11-04T22:44:34",
+   "tail": []
+  },
+  {
+   "index": 55,
+   "command": "python tools/food-metadata-regression/validate.py",
+   "exit": 0,
+   "seconds": 3368.3,
+   "at": "2026-11-05T00:42:27",
+   "tail": [
+    "Passed!  - Failed:     0, Passed:  2873, Skipped:     0, Total:  2873, Duration: 2 m 27 s - PersistentCity.Tests.dll (net10.0)",
+    "PASS: two fresh processes match the independent name-taste v1 reference; 937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e",
+    "PASS; command manifest and log hashes: docs\\checks\\e5c-neutral-metadata-results.json"
+   ]
+  },
+  {
+   "index": 56,
+   "command": "dotnet run --project tools/name-identity-regression/NameIdentityRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 15.7,
+   "at": "2026-11-04T23:23:40",
+   "tail": []
+  },
+  {
+   "index": 57,
+   "command": "dotnet run --project tools/e5b-complete-menu-regression/E5bCompleteMenuRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.6,
+   "at": "2026-11-04T23:23:41",
+   "tail": []
+  },
+  {
+   "index": 58,
+   "command": "python -m unittest discover -s tools/e5b-native-rig-proof -p test_*.py",
+   "exit": 0,
+   "seconds": 0.3,
+   "at": "2026-11-04T23:23:42",
+   "tail": [
+    "  \"status\": \"PASS\",",
+    "Ran 16 tests in 0.158s",
+    "OK"
+   ]
+  },
+  {
+   "index": 59,
+   "command": "dotnet run --project tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 4.1,
+   "at": "2026-11-04T23:23:47",
+   "tail": []
+  },
+  {
+   "index": 60,
+   "command": "python tools/food-metadata-api-regression/source_checks.py",
+   "exit": 0,
+   "seconds": 0.1,
+   "at": "2026-11-04T23:23:47",
+   "tail": [
+    "PASS E5e metadata-only surface, no polling/reflection/callbacks/native writes; schema, held capture and native authority unchanged in 4ee0c8d..545f589. Future E5b integration is not frozen."
+   ]
+  },
+  {
+   "index": 61,
+   "command": "dotnet run --project tools/accounting-backlog-regression/AccountingBacklogRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 5.8,
+   "at": "2026-11-04T23:23:53",
+   "tail": [
+    "PASS actual accounting lifecycle: unmarked checkpoint resumes startup, marked reload refuses, old state discarded, generic failures retained (native cleanup doubles; actual Fail)",
+    "PASS actual NativeCityClock source: ordinary/skip/fence/refusal/pacing/recovery/teardown (native/Harmony doubles)",
+    "PASS 957-resident held/travelling and midnight reload; two writer-25 exact round trips (outside timing arms)"
+   ]
+  },
+  {
+   "index": 62,
+   "command": "dotnet run --project tools/bounded-bulk-regression/BoundedBulkRegression.csproj --configuration Release",
+   "exit": 0,
+   "seconds": 1.9,
+   "at": "2026-11-04T23:23:56",
+   "tail": []
+  }
+ ]
+}
