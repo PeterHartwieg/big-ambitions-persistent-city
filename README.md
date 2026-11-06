@@ -22,6 +22,8 @@ City-audit F5b implements the inactive identity and ownership core: person kinds
 
 City-audit F7f implements a frozen reader corpus for every supported schema 13–25, with pinned hashes, per-reader acceptance/refusal tests and a one-folder-per-writer layout; no reader, writer or schema change (writer 25). Offline only; not verified by rig. [Checks and automated batched-rig list](docs/checks/f7f.md).
 
+City-audit F7p implements an offline compact-format prototype (`tools/compact-format`) and a [decision record](docs/decisions/2026-11-06-f7d-compact-format.md) choosing columnar compact JSON with a shared route table for F7d; tools only, writer 25 unchanged. [Offline checks and automated batched-rig list](docs/checks/f7p.md); not verified by rig.
+
 City-audit F5f implements the active-journey candidate index: physical selection iterates only persons travelling, queueing or outdoors, with visitors indexed but given no body until F5i; caps, leases and selection order are unchanged (writer 25). [Offline checks and automated batched-rig checks](docs/checks/f5f.md).
 
 E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](docs/checks/e5b-complete-menu.md).
