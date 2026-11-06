@@ -1,5 +1,13 @@
 # D4: optional modeled rival-experience memory
 
+## Roadmap entry (moved 6 Nov 2026)
+
+**D4 implemented offline:** modeled rival experience shares B1's four-entry memory/watermark, writer 24; D4 adds no shape; [checks](d4-rival-memory.md). Native acceptance is deferred to the next batched combined rig / Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`, and does not gate merge.
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- D4 - 1 November 2026, offline sync: writer 24; 2,556 unit cases; mixed lookup/update p95 0.0003/0.0002 ms, 0 B; matched controls 2,446 B and 8/8 records; [Dated checks and In-game checks for 6 Nov rig](d4-rival-memory.md#in-game-checks-for-6-nov-rig).
+
 Native acceptance checks are deferred to the next batched combined rig / Peter's
 playtest per merge rule v2, are recorded in `rig-2026-11-06-checklist.md`, and do
 not gate merge. Pending evidence still includes native memory replay, rival

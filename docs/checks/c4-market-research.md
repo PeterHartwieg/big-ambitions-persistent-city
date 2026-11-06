@@ -1,5 +1,13 @@
 # C4: Bounded market research, access contract and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](c4-market-research.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+**C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](../market-research.md).
+
 ## Base sync — 1 November 2026 (offline only)
 
 Integrates development `692b8b5` (C2a schema 19 plus all prior slices) with approved inactive C4 `b7b3b04`, preserving both parents. Core research/access behavior is unchanged, paid research remains unavailable and loyalty/rival cells remain unknown. All existing Core/Persistence source matches development; C4 adds no saved field. [Per-file resolutions and validation](../reviews/2026-11-01-c4-sync-base-pr-description.md).

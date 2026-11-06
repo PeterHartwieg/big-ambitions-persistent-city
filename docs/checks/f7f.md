@@ -1,5 +1,21 @@
 # City audit F7f — frozen reader corpus and packaging, 5 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F7f implements a frozen reader corpus for every supported schema 13–25, with pinned hashes, per-reader acceptance/refusal tests and a one-folder-per-writer layout; no reader, writer or schema change (writer 25). Offline only; not verified by rig. [Checks and automated batched-rig list](f7f.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F7f (#94) implements the [frozen reader corpus](../plans/f7-save-snapshots.md#4-slice-breakdown) for schemas 13–25 offline, with pinned hashes and no reader/writer change; rig verification pending. [Checks and batched-rig list](f7f.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F7f — 5 November 2026, offline: frozen reader corpus for schemas 13–25: 26 synthetic fixtures from existing test builders, SHA-256 pinned with writer-25 migration pins; 85 corpus cases (own/newer readers accept, older report Future, exact migration and source projection, cross-schema relabels refused or meaning-identical, future/older/corrupt/visit+1 (also from populated histories)/input+1 refused with every key preserved). No reader, writer or schema change; writer 25. Zero runtime change, so no mod-work added; maintenance cost 9,187 reader lines, corpus suite median 3,164 ms. At `cdee629`: 2,972 tests passed and all required regression tools, source checks and batch scripts (`run-d3a-checks.py`, both `validate.py`) passed offline. [Checks, cross-schema matrix and In-game checks for the next batched rig](f7f.md#in-game-checks-for-the-next-batched-rig), [maintenance cost](../perf/f7f.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F7f row in [f7-save-snapshots.md](../plans/f7-save-snapshots.md): *Status (5 Nov 2026): implemented offline on `codex/pc-f7f-reader-corpus`; rig verification pending ([checks](f7f.md)).*
+
 Refs [#94](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/94). Branch `codex/pc-f7f-reader-corpus` from `origin/codex/persistent-city` at `c64e3e2` (writer **25**; F1 #99, F3 #98, F5a #107 and the F5/F6/F7 plans merged). The scope is the F7f row of [the F7 plan](../plans/f7-save-snapshots.md#4-slice-breakdown). Section 3.9, the section 3.7 invariants and the F7f rows of sections 5 and 6 are the spec.
 
 Persistent City is not live or released. This slice is **implemented** offline. It is **not verified by rig**: no game, rig, lease, profile, ModsLocal or bridge directory was touched. Every result below is offline/headless evidence, not native proof.

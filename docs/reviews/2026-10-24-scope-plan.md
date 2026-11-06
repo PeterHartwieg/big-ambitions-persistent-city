@@ -1,6 +1,6 @@
 # Scope agreement — 24 October 2026
 
-Peter requested a concrete plan reconciled with an Opus session and GPT-6.1 Sol, continuing until scope agreement. The lead, GPT-6.1 Sol and Claude Opus 5.5 all explicitly agree to the same [implementation plan](../implementation-plan.md) after three rounds. No scope blockers remain.
+Peter requested a concrete plan reconciled with an Opus session and GPT-6.1 Sol, continuing until scope agreement. The lead, GPT-6.1 Sol and Claude Opus 5.5 all explicitly agree to the same [implementation plan](../archive/implementation-plan.md) after three rounds. No scope blockers remain.
 
 This is the current required release scope. It replaces the broader economic expansion requirements in the earlier strategy/design documents. It does not claim the planned changes are implemented, new tests were executed, performance is acceptable, or ordinary-save activation/publication is approved.
 

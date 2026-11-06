@@ -1,5 +1,21 @@
 # City audit F7b: exact save-epoch contract
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F7b implements the exact save-epoch contract: a strict `persistentcity:save-epoch_v1` side key, failure and detach markers that every writer-25 build refuses, and a re-entrancy guard, with writer 25 unchanged. [Offline evidence and automated batched-rig checks](f7b.md); not verified by rig.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F7b implements the [exact save-epoch contract](../plans/f7-save-snapshots.md) (side key, failed/detach markers, re-entrancy guard, legacy path), writer 25 unchanged; not verified by rig. [Offline evidence and automated batched-rig checks](f7b.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F7b — 4–5 November 2026, offline: 2,906 tests (50 F7b cases), every regression tool and source check passed at 693b27e (three suite-wrapper validators not completed; see run log); exact save-epoch contract, `persistentcity:save-epoch_v1` side key with strict reader, failed/detach markers through `accounting-stop_v1`, re-entrancy and pending-initialization guard and legacy no-marker path; writer 25 bytes unchanged (SHA-256 equal). Callback overhead p50/p95/max 0.0005/0.0008/0.3734 ms, 808 B/save; load check 0.0007/0.0012/0.0900 ms; zero samples >=30 ms. Not verified by rig. [Dated checks and seven In-game checks for the next batched rig](f7b.md); [measurements](../perf/f7b.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F7b row in [f7-save-snapshots.md](../plans/f7-save-snapshots.md): **Status (4 Nov 2026): implemented offline ([checks](f7b.md)); not verified by rig.**
+
 Refs #94. Plan: [F7 section 3.3 and the F7b row of section 4](../plans/f7-save-snapshots.md). Base `dc59049` (`origin/codex/persistent-city`), writer **25** unchanged. Persistent City is not live or released. F7b is **implemented** (offline evidence below); it is **not verified by rig**. Offline and headless results are not native proof.
 
 ## 4 November 2026 — offline only

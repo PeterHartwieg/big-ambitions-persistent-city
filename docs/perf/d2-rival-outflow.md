@@ -1,5 +1,9 @@
 # D2 performance measurements (offline only)
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- D2 — [Bounded rival choice, refresh and settlement measurements](d2-rival-outflow.md).
+
 Measurement provenance: the original D2 timings/byte tables and round-one repair
 results below were measured on the D2 line based on `51ce709`, before E1 schema
 20. They remain historical evidence, not current merged-head measurements. The

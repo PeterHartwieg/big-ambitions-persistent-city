@@ -1,5 +1,21 @@
 # F1: Shop-view drawing stop and rig handoff
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](f1-shop-view.md).
+
+## README entry (moved 6 Nov 2026)
+
+F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](../archive/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](../archive/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
+
+## Plan row status (moved 6 Nov 2026)
+
+Slice-table row in [track-f-interior-view.md](../plans/track-f-interior-view.md): | **F1** | **NO-GO at drawing step 1, 1 November (offline).** No safe complete approach proven; no renderer/hand-off implemented. Native layout relocation rejected; investigate a render-only street proxy with a smaller read-only geometry/ownership probe. [Decision/evidence](../archive/f1-shop-view-decision.md). Ground-floor view, single body/purchase and restore acceptance remain unfulfilled. |
+
 ## F1 review r1 roadmap status - 1 November 2026 (offline only)
 
 **Opus-r1-1:** moved the unchanged F1 status paragraph directly after Track F and before the Performance gate heading. An exact-text comparison verifies this is the only roadmap change; gate wording, thresholds and the perf log remain intact. No production, configuration, test, tool or prepared-description changes.
@@ -10,7 +26,7 @@ Fresh unchanged-workload timing flags: C1 cold 1,024-business snapshot **p95 7.4
 
 ## F1 drawing decision - 1 November 2026 (offline only)
 
-**NO-GO at task step 1.** [Independent decision and vanilla cache audit](../plans/f1-shop-view-decision.md). Main-camera culling or translation cannot align detached interior/street geometry. Relocation has unrebuilt native caches; a render-only street proxy is a plausible smaller investigation but has unproven door mapping, renderer/material completeness, depth, lighting and restore behavior. No working drawing approach was established. Stop before implementation steps 2-4 as instructed.
+**NO-GO at task step 1.** [Independent decision and vanilla cache audit](../archive/f1-shop-view-decision.md). Main-camera culling or translation cannot align detached interior/street geometry. Relocation has unrebuilt native caches; a render-only street proxy is a plausible smaller investigation but has unproven door mapping, renderer/material completeness, depth, lighting and restore behavior. No working drawing approach was established. Stop before implementation steps 2-4 as instructed.
 
 No Runtime/Core/Compatibility/Persistence, settings, tests, tools or save-format source changes. The flag-off executable path is byte-identical to base `51ce709e2696648a189a17f09890561446b2d75d`; flag-on remains the existing F0 retention experiment with drawing a no-op. E2c retains its existing forced-off verdict. No F1 renderer, customer adoption, bridge line or hand-off counters were added. Existing `PopulationRuntime.InteriorGuardDiagnostics` reports cached guard/effective/active state only; it must not be interpreted as a drawing or purchase verdict. Body summaries and cached adapter fields can be read separately on demand. F1 approach/hand-off counters are **unavailable**, not zero successful entries.
 

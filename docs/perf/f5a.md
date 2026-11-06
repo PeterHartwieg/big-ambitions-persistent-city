@@ -1,5 +1,9 @@
 # City audit F5a — world census performance, 4 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F5a — [Pre-sized census dictionaries](f5a.md): census allocation 126,408 -> 104,000 B/call (reference shape) and 2,288,064 -> 1,817,576 B/call (20,000 places / 50,000 residents), timing within noise; on-request diagnostic, offline only.
+
 Refs #92. Measurement named by the F5 plan's F5a row and section 6: census build time and allocation at the reference place count and at 20,000 places; it must stay off ordinary frames.
 
 ## Where the cost lands

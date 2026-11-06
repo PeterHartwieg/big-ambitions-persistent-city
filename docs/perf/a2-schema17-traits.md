@@ -1,5 +1,9 @@
 # A2 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- A2 — [Schema 17, lifestyle traits and base sync evidence](a2-schema17-traits.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |

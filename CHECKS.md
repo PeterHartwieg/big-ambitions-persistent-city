@@ -1,86 +1,65 @@
 # Validation status
 
-Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
+Sorted by slice ID. Status: planned, implemented, partial, stopped, verified by rig. Rig: verified by rig, or the batched rig run is pending.
 
-- City-audit F7p — 6 November 2026, offline, tools only: `tools/compact-format` compares writer-25 JSON (A), columnar compact JSON (B), B + shared route table + road ranges (C) and C + deflate/base64 (D) on all 13 F7a fixtures; 52/52 rows with zero round-trip differences, exact writer-25 rewrite and decode -> re-encode identity; C 29.74 % of writer 25 at representative 957x2 and 20.93 % at 50000x2 (byte targets met), pause, allocation and stress-load targets not met by any candidate (composed C pause p50 45.9 / 1,796.9 ms); decision C for F7d, conditional on F7d meeting the ceilings. No Core/Persistence/Runtime change; writer 25. 3,179 tests passed. [Checks and In-game checks for the next batched rig](docs/checks/f7p.md#in-game-checks-for-the-next-batched-rig), [matrix](docs/perf/f7p.md), [decision](docs/decisions/2026-11-06-f7d-compact-format.md).
+| Slice | Status | Rig | Checks |
+| --- | --- | --- | --- |
+| A1 resident inspector | implemented | pending | [a1-resident-inspector.md](docs/checks/a1-resident-inspector.md) |
+| A2 lifestyle traits, schema 17 | implemented | pending | [a2-schema17-traits.md](docs/checks/a2-schema17-traits.md) |
+| A3 weighted food choice | implemented | pending | [a3-weighted-choice.md](docs/checks/a3-weighted-choice.md) |
+| A5 integrated acceptance | implemented | pending | [a5-integrated-acceptance.md](docs/checks/a5-integrated-acceptance.md) |
+| B0 schema 18 and capacity | implemented | pending | [b0-schema18.md](docs/checks/b0-schema18.md) |
+| B0b held tuning | implemented | pending | [b0b-held-tuning.md](docs/checks/b0b-held-tuning.md) |
+| B1 shop memory and loyalty | implemented | pending | [b1-memory-loyalty.md](docs/checks/b1-memory-loyalty.md) |
+| B2 regulars and memory words | implemented | pending | [b2-regulars-inspector.md](docs/checks/b2-regulars-inspector.md) |
+| C1 native campaign reader | implemented | pending | [c1-campaign-reader.md](docs/checks/c1-campaign-reader.md) |
+| C2a core awareness, schema 19 | implemented | pending | [c2a-core-awareness.md](docs/checks/c2a-core-awareness.md) |
+| C2b campaign awareness, schema 22 | implemented | pending | [c2b-campaign-awareness.md](docs/checks/c2b-campaign-awareness.md) |
+| C3 agency payment discovery | implemented | pending | [c3-agency-payment.md](docs/checks/c3-agency-payment.md) |
+| C4 market research (inactive) | implemented | pending | [c4-market-research.md](docs/checks/c4-market-research.md) |
+| D1 rival food catalogue | implemented | pending | [d1-rival-catalogue.md](docs/checks/d1-rival-catalogue.md) |
+| D2 rival choice and outflow, schema 21 | implemented | pending | [d2-rival-outflow.md](docs/checks/d2-rival-outflow.md) |
+| D3a outflow line, schema 24 | implemented | pending | [d3a-outflow-line.md](docs/checks/d3a-outflow-line.md) |
+| D4 rival memory | implemented | pending | [d4-rival-memory.md](docs/checks/d4-rival-memory.md) |
+| E1 weather, schema 20 | implemented | pending | [e1-rain.md](docs/checks/e1-rain.md) |
+| E2a street-life proof | implemented | pending | [e2a-street-life.md](docs/checks/e2a-street-life.md) |
+| E2b bounded street life | implemented | pending | [e2b-street-life.md](docs/checks/e2b-street-life.md) |
+| E2c third-party interior guard | implemented | pending | [e2c-interior-guard.md](docs/checks/e2c-interior-guard.md) |
+| E3 cupcake | stopped | pending | [e3-cupcake.md](docs/checks/e3-cupcake.md) |
+| E3 donut | stopped | pending | [e3-donut.md](docs/checks/e3-donut.md) |
+| E3 frenchfries | stopped | pending | [e3-frenchfries.md](docs/checks/e3-frenchfries.md) |
+| E3 ice cream | stopped | pending | [e3-icecream.md](docs/checks/e3-icecream.md) |
+| E3 pizza | stopped | pending | [e3-pizza.md](docs/checks/e3-pizza.md) |
+| E3 remaining batch | stopped | pending | [e3-remaining-batch.md](docs/checks/e3-remaining-batch.md) |
+| E3 salad | stopped | pending | [e3-salad.md](docs/checks/e3-salad.md) |
+| E4 wider menu, schema 23 | implemented | pending | [e4-wider-menu.md](docs/checks/e4-wider-menu.md) |
+| E5a catalogue eligibility | implemented | pending | [e5a-catalogue-eligibility.md](docs/checks/e5a-catalogue-eligibility.md) |
+| E5b complete menu | partial | pending | [e5b-complete-menu.md](docs/checks/e5b-complete-menu.md) |
+| E5c product metadata | implemented | pending | [e5c-neutral-metadata.md](docs/checks/e5c-neutral-metadata.md) |
+| E5d name identity, schema 25 | implemented | pending | [e5d-name-identity-save.md](docs/checks/e5d-name-identity-save.md) |
+| E5e metadata API | implemented | pending | [e5e-metadata-api.md](docs/checks/e5e-metadata-api.md) |
+| F0 interior view (Track F) | implemented | pending | [f0-interior-view.md](docs/checks/f0-interior-view.md) |
+| F1 accounting backlog (audit) | implemented | pending | [f1-accounting-backlog.md](docs/checks/f1-accounting-backlog.md) |
+| F1 shop view (Track F) | stopped | pending | [f1-shop-view.md](docs/checks/f1-shop-view.md) |
+| F1b street proxy (Track F) | stopped | pending | [f1b-street-proxy.md](docs/checks/f1b-street-proxy.md) |
+| F3 bounded bulk work (audit) | implemented | pending | [pc-f3-bounded-bulk-work.md](docs/checks/pc-f3-bounded-bulk-work.md) |
+| F5a world census | implemented | pending | [f5a.md](docs/checks/f5a.md) |
+| F5b identity core | implemented | pending | [f5b-identity-core.md](docs/checks/f5b-identity-core.md) |
+| F5f active-journey index | implemented | pending | [f5f.md](docs/checks/f5f.md) |
+| F6a intervention harness | implemented | pending | [f6a-intervention-harness.md](docs/checks/f6a-intervention-harness.md) |
+| F6b rival service limits | implemented | pending | [f6b.md](docs/checks/f6b.md) |
+| F6c feedback v1 | implemented | pending | [f6c.md](docs/checks/f6c.md) |
+| F7a save-cost baseline | implemented | pending | [f7a.md](docs/checks/f7a.md) |
+| F7b save-epoch contract | implemented | pending | [f7b.md](docs/checks/f7b.md) |
+| F7f reader corpus | implemented | pending | [f7f.md](docs/checks/f7f.md) |
+| F7p compact-format prototype | implemented | pending | [f7p.md](docs/checks/f7p.md) |
 
-- City-audit F6a — 4 November 2026, offline: deterministic Core intervention harness (`tools/economy-interventions`), 16 section 3.5 arms + control x 5 seeds x 6 weeks at 1,914 consumers; no Runtime/Core change, writer 25. 2,873 tests passed (17 F6a) and 63/63 required commands green at `327c35d`. Byte-identical metrics incl. 957-resident mid-epoch reload; inputs only at drained epoch boundaries; 6,832,980 daily per-owner conservation checks held, faults red. Unlimited rival curve recorded (rival 6,094.5 vs own 522.0 served/day at 3,828 consumers). Tool cost 1.32/3.27 s and 1.80/3.74 GB per simulated week (10,260 epochs) at 1,914/4,000 consumers; no mod work added. [Baseline, checks and nine In-game checks for the next batched rig](docs/checks/f6a-intervention-harness.md), [tool cost](docs/perf/f6a-intervention-harness.md).
+## Other records
 
-- City-audit F7f — 5 November 2026, offline: frozen reader corpus for schemas 13–25: 26 synthetic fixtures from existing test builders, SHA-256 pinned with writer-25 migration pins; 85 corpus cases (own/newer readers accept, older report Future, exact migration and source projection, cross-schema relabels refused or meaning-identical, future/older/corrupt/visit+1 (also from populated histories)/input+1 refused with every key preserved). No reader, writer or schema change; writer 25. Zero runtime change, so no mod-work added; maintenance cost 9,187 reader lines, corpus suite median 3,164 ms. At `cdee629`: 2,972 tests passed and all required regression tools, source checks and batch scripts (`run-d3a-checks.py`, both `validate.py`) passed offline. [Checks, cross-schema matrix and In-game checks for the next batched rig](docs/checks/f7f.md#in-game-checks-for-the-next-batched-rig), [maintenance cost](docs/perf/f7f.md).
-
-- City-audit F6b — 4 November 2026, offline: estimated rival lanes and meal-period sell-out derived from saved state (writer 25, no schema); moderate Q2 default 2 lanes / 60 units = 24/hour vs 30/hour reference (−20 %), saturation 75 vs 91 meals/day (−18 %); arrival/completion p95 0.0007/0.0001 ms, 0 B; reconstruction p95 0.0805/0.3226/17.7817 ms at 1,914/10,000/100,000 consumers; 20,000 rivals 3,570,344 B; 0 samples >=30 ms; 2,879 tests pass. Native checks (before red / after green) are rig-automated, deferred to the next batched combined rig per merge rule v2 and do not gate merge. Committed-meal profile change across reload is a documented F6d dependency. [Checks and eight In-game checks for the next batched rig](docs/checks/f6b.md), [measurements](docs/perf/f6b.md).
-
-- City-audit F6c — 4 November 2026, offline: read-only feedback v1 (week-over-week purchases/sales and evaluated-offer causes per shop from the existing 14-day rows, days without a record labeled, neutral rival label constant, current budget-state counts, inspector budget words) with incremental counters replacing the panel's consumer scans; writer 25, no behaviour/economy/save change; 2,899 tests (13 new) and the required commands passed. Panel components: scans p95 1.1088/3.4898/32.1975 ms -> counters 0.0026/0.0050/0.0030 ms at 1,914/10,000/100,000 consumers; per-shop lookups p95 116.1171 -> 14.5748 ms at 1,024 shops; hidden panel 0 B, 0 requests; >=30 ms samples flagged: removed code 45/200 (100,000 consumers) and 200/200 (1,024 shops), new path 1/200 at 1,024 shops (34.2305 ms, open-panel build); posting +0.0006–0.0163 ms p95. [Checks and eight In-game checks for the next batched rig](docs/checks/f6c.md#in-game-checks-for-the-next-batched-rig), [measurements](docs/perf/f6c.md).
-
-- City-audit F5a — 4 November 2026, offline: read-only world census and `pc population census` console diagnostic; writer 25, no behaviour/save/`BusinessAllocation` change; 2,886 tests (30 new) and the required commands passed. On request only: main-thread capture p95 0.023 ms (957 residents) / 0.990–1.382 ms (50,000), detached reduction p95 0.268–0.278 / 7.173–7.644 ms; zero ordinary-frame work, no sample >=30 ms; rival `aiEmployees` verified, workstation count absent. [Checks, ILSpy record and In-game checks for the next batched rig](docs/checks/f5a.md#in-game-checks-for-the-next-batched-rig).
-
-- City-audit F1 — R3 offline: accounting-specific save-change recovery; marked saves remain refused; writer 25; 2,832 tests and all required commands passed. Final detached 30/60/120 p95 0.0370/0.2919/0.3453 ms, max 4.8222/4.6583/3.8542 ms; lag <1 min, supported/stress recovery 2/10 s. R3 repeats 0 samples >=30 ms, max 19.3869 ms; R2 66.3905 ms remains flagged. Native proof blocks merge. [Dated checks and six In-game checks for the next batched rig](docs/checks/f1-accounting-backlog.md), [measurements](docs/perf/f1-accounting-backlog.md).
-
-- City-audit F7b — 4–5 November 2026, offline: 2,906 tests (50 F7b cases), every regression tool and source check passed at 693b27e (three suite-wrapper validators not completed; see run log); exact save-epoch contract, `persistentcity:save-epoch_v1` side key with strict reader, failed/detach markers through `accounting-stop_v1`, re-entrancy and pending-initialization guard and legacy no-marker path; writer 25 bytes unchanged (SHA-256 equal). Callback overhead p50/p95/max 0.0005/0.0008/0.3734 ms, 808 B/save; load check 0.0007/0.0012/0.0900 ms; zero samples >=30 ms. Not verified by rig. [Dated checks and seven In-game checks for the next batched rig](docs/checks/f7b.md); [measurements](docs/perf/f7b.md).
-
-- City-audit F3 — 3 November 2026, offline: R1 2,821 tests; 32-posting units, finite route retries/query admission, coherent 1,024-candidate capture and resumable publication (native-double capture p95/max 6.1153/19.7485 ms, publication 0.0250/0.1615 ms); writer 25 unchanged. Posting-call p95 0.0208/0.0229/0.0111 ms at 1,914/10,000/100,000 consumers, median 0 B; matched Core replay save hashes equal, backlog drains to zero; 49 stress advancement intervals >=30 ms (max 54.2938 ms) flagged. [Checks, qualifications and five In-game checks for the next batched rig](docs/checks/pc-f3-bounded-bulk-work.md); [full timings/work/allocations](docs/perf/pc-f3-bounded-bulk-work.md).
-
-- City-audit F7a — 4–5 November 2026, offline: 2,862/2,862 unit tests and all 63 required commands exit 0 at code `5d0bb2a` (D3a 71/71, rival-memory matrix 65/65); save-cost recorder (observe/synchronize/validate/encode/publish, sizes, records, activation) on request, null and byte-identical otherwise; `tools/save-cost` representative F3-replay fixtures (hashes = F3) and E5d stress fixtures (hashes = E5d), deterministic; writer 25 unchanged. Representative 957x2 2,333,388 chars, save p50/p95 46.10/87.19 ms; stress 50000x2 2,036.83/2,293.39 ms; all 84 save samples >=30 ms flagged (save latency, not mod-work); main-thread construction max 32.221 ms at representative 50,000x2 flagged. encoding-max (E5d non-ASCII) 149,224 chars / 411,368 UTF-8 bytes, save p95 6.29 ms; escaped read 1/7 >=30 ms flagged. [Checks and seven In-game checks for the next batched rig](docs/checks/f7a.md), [baseline](docs/perf/f7a.md).
-
-- City-audit F5b — 4 November 2026, offline, inactive: pure Core person kind, visitor stay, employment, derived household ID, IdentityPolicy v1 and the ownership validator (rules 1-5, duplication guards, player-owned workplaces refused); not wired; writer 25 unchanged. 78 new unit cases; validator 0 B/call warm, p95 0.7140/5.1875/56.3153 ms at 1,914/10,000/100,000 persons (100,000 whole-graph pass >=30 ms flagged, no frame work); derived identity draw 53-64 ns / 0 B. [Checks and four In-game checks for the next batched rig](docs/checks/f5b-identity-core.md), [measurements](docs/perf/f5b-identity-core.md).
-
-- City-audit F5f — 5 November 2026, offline: active-journey candidate index; physical selection and queue planning iterate travelling/queueing/outdoor persons instead of every citizen, visitors indexed but withheld until F5i, caps/leases/`ByPriority` order unchanged, 30 s shadow check with full-scan fallback; writer 25, no identity/economy change. 2,973 tests (9 new) and the required commands passed; index = full scan after every event/slice/skip/reload/rebuild/lease release. Selection p95 against the unchanged pre-F5f loop at 50,000 persons / 100 active 1.0858 -> 0.0123 ms (1,000 active 1.9762 -> 0.1927 ms), no sample >=30 ms. [Checks and four In-game checks for the next batched rig](docs/checks/f5f.md#in-game-checks-for-the-next-batched-rig), [measurements](docs/perf/f5f.md).
-
-- E5b — 2 November 2026, offline **partial / native integration incomplete**: complete-menu price refusal, cached authored bag policy; focused 1,071 menu / 10,596 checkout assertions (r1); discovery 280 -> 0 B/call; cache 10,100/0 hits/misses, 10,100 marks -> one pending shop, setups 33 vs 990; 1,024-shop detached backlog p95/max 0.0140/0.0497 ms, zero new >=30 ms samples; inherited 62.8223 ms first-use interval flagged; [dated evidence, remaining contracts and six In-game checks for the next batched rig](docs/checks/e5b-complete-menu.md), [performance](docs/perf/e5b-complete-menu.md).
-
-- E5e - 2 November 2026, offline: versioned metadata only, 2,782 unit cases / 39 new E5e cases, full required matrix green; empty/256/budget resolve p95 0.000518/0.000047/0.000726 ms, 0 B; register/unregister/conflict p95 0.1084/0.0414/0.1539 ms; budget publish 0.0117 ms / retained 422,128 B; zero >=30 ms E5e windows. [Full measurements, checks and In-game checks for the next batched rig](docs/checks/e5e-metadata-api.md).
-
-- E5a — 2 November 2026, offline: detached loaded-catalogue/stock-contract reader, writer 24; 2,556 unit tests / 2,744 E5a assertions; 8-offer/2,000-holder rebuild p95 0.4434 ms, backlog unit p95 0.1777 ms; rebuild 300,280 -> 129,144 B, clean reads 0 B/scans; initial backlog spike 32.5793 ms flagged. [Checks, full measurements and In-game checks for the next batched rig](docs/checks/e5a-catalogue-eligibility.md).
-
-- E5c - 2 November 2026, offline: Food default/seeded resident tastes, 2,687 tests; 4/8 weights p95 0.003344/0.004805 ms, 0 B; max-name fresh config p95 1.5955 ms; first-use 59.0058 ms (earlier 57.6619 ms) startup intervals flagged. [Full resolver/config numbers, validation and next batched rig](docs/checks/e5c-neutral-metadata.md).
-
-- E5d - 2 November 2026, offline: writer 25, exact 24 migration, 2,612 unit cases; stress save +6,138 B / 280 records; CF32/64 budgets 223,716,156 / 262,116,156 B; [full bytes/counts/latency/memory](docs/perf/e5d-name-identity-save.md) and [In-game checks for the next batched rig](docs/checks/e5d-name-identity-save.md#in-game-checks-for-the-next-batched-rig).
-
-- E3 remaining batch - 2 November 2026, offline: all six named candidates STOP; twelve-reader worst warm 2,000-entry p95 0.1441 ms, 200 / 49,104 B/read; existing cold 1,112 -> 1,256 B, zero reader spikes >=30 ms; [full timings, proof and 6 Nov rig/PR handoff](docs/checks/e3-remaining-batch.md).
-
-- D4 - 1 November 2026, offline sync: writer 24; 2,556 unit cases; mixed lookup/update p95 0.0003/0.0002 ms, 0 B; matched controls 2,446 B and 8/8 records; [Dated checks and In-game checks for 6 Nov rig](docs/checks/d4-rival-memory.md#in-game-checks-for-6-nov-rig).
-
-- D3a — 1 November 2026 (offline): free fourteen-day totals-only outflow, schema 24; 2,528 tests; warm line 0 B/request, 128-settlement/open p95 0.0687 ms, no component spike ≥30 ms. [Dated evidence and In-game checks for 6 Nov rig](docs/checks/d3a-outflow-line.md).
-- D2 - Rival choice/outflow, schema 21 below C2b/E4; offline sync evidence and numbered native checklist: [checks](docs/checks/d2-rival-outflow.md).
-
-- E3 pizza — 1 November 2026 (offline only), holder STOP; 2,000-entry warm p95 donut/cupcake/salad/pizza **0.1589/0.1338/0.1476/0.1122 ms**, **49,104 B/read** (2 entries **200 B**); cold **1,064 B/read**. [Full cold/warm timings, proof and numbered 6 Nov handoff](docs/checks/e3-pizza.md).
-
-- F1b — 1 November 2026, offline: renderer NO-GO; one-shot doors/inventory p95 0.0043/0.2010 ms (native doubles); disabled 0 B, no frame calls. [Dated checks and In-game checks for 6 Nov rig](docs/checks/f1b-street-proxy.md).
-- F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).
-- F0 — Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).
-- D1 — Read-only rival food catalogue and native checklist: [checks](docs/checks/d1-rival-catalogue.md).
-- C1 — Native campaign reader and native checklist: [checks](docs/checks/c1-campaign-reader.md).
-- E2a — Street-life proof, coverage and native checklist: [checks](docs/checks/e2a-street-life.md).
-- A1 — Resident inspector and base sync evidence: [checks](docs/checks/a1-resident-inspector.md).
-- A2 — Schema 17, lifestyle traits and base sync evidence: [checks](docs/checks/a2-schema17-traits.md).
-- A3 — Weighted food choices, review fixes and native checklist: [checks](docs/checks/a3-weighted-choice.md).
-- B0 — Schema 18, capacity, review fixes and native checklist: [checks](docs/checks/b0-schema18.md).
-- B0b — Held tuning, base syncs and native checklist: [checks](docs/checks/b0b-held-tuning.md).
-- B1 — Shop memory, loyalty v2, review fixes and native checklist: [checks](docs/checks/b1-memory-loyalty.md).
-- B2 — Observed own-shop regulars, resident memory words and native checklist: [checks](docs/checks/b2-regulars-inspector.md).
-- E3 — Donut feasibility, base syncs and native checklist: [checks](docs/checks/e3-donut.md).
-- C3 — Agency/payment discovery, base syncs and native checklist: [checks](docs/checks/c3-agency-payment.md).
-- PR #1–#3 history — October accounting, optional stops, reviews and rig evidence: [checks](docs/checks/history-2026-10-pr1-pr3.md).
-- Earlier development history — October foundation, food, traffic and performance evidence: [checks](docs/checks/history-2026-10-development.md).
-- pc-docs-checks-split — Documentation structure and preservation audit: [checks](docs/checks/pc-docs-checks-split.md).
-- E2c — Third-party interior guard, base syncs and native checklist: [checks](docs/checks/e2c-interior-guard.md).
-- C2a — Core bounded awareness, reviews, schema 19 and native checklist: [checks](docs/checks/c2a-core-awareness.md).
-
-- E2b — [Bounded street-life, reviews, base syncs and native checklist](docs/checks/e2b-street-life.md).
-
-- E3 cupcake — Shared direct-stock reader, feasibility and native checklist: [checks](docs/checks/e3-cupcake.md).
-
-- E3 salad — Conditional direct-stock probe, feasibility stop, base sync and native checklist: [checks](docs/checks/e3-salad.md).
-
-- C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
-
-- C2b - 1 November 2026 (offline): schema 22; hourly/query p95 at 1,024 images 2.6336/0.0065 ms, query/absent/disabled 0 B; owner decision 1 active for all residents; pre-E1 measurements; in-game checks batched under merge rule v2, no rig proof claimed. [Checks and rig list](docs/checks/c2b-campaign-awareness.md).
-
-- E4 — Schema 23 envelope (1 Nov, offline; original pre-E1 measurements): 4/8 choice p95 0.0134/0.0257 ms; supply 1,960 -> 1,552 B; eight-product save 10,135,833 B; 6 Nov checklist: [checks](docs/checks/e4-wider-menu.md).
-- A5 — Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](docs/checks/a5-integrated-acceptance.md).
-
-- E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
-
-- E3 ice cream - 1 November 2026, offline STOP; D/C/S/I warm 2,000-entry p95 0.1610 / 0.1474 / 0.1605 / 0.1779 ms, 49,104 B/call; cold/small timings and 6 Nov handoff: [checks](docs/checks/e3-icecream.md).
-
-- E3 frenchfries — 1 November 2026, offline feasibility STOP and numbered 6 Nov handoff: [checks](docs/checks/e3-frenchfries.md).
+| Record | Checks |
+| --- | --- |
+| Batched rig checklist, 6 Nov 2026 | [rig-2026-11-06-checklist.md](docs/checks/rig-2026-11-06-checklist.md) |
+| October PR #1–#3 history | [history-2026-10-pr1-pr3.md](docs/checks/history-2026-10-pr1-pr3.md) |
+| Earlier development history and the pre-6 Nov README body | [history-2026-10-development.md](docs/checks/history-2026-10-development.md) |
+| pc-docs-checks-split (1 Nov) | [pc-docs-checks-split.md](docs/checks/pc-docs-checks-split.md) |
+| pc-docs-restructure (6 Nov) | [pc-docs-restructure.md](docs/checks/pc-docs-restructure.md) |

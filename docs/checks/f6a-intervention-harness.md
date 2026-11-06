@@ -1,5 +1,21 @@
 # City audit F6a — intervention harness and baseline, 4 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F6a implements an offline intervention harness and records today's economic baseline, including the unlimited rival curve; no Runtime, Core or save change. [Baseline, offline checks and automated batched-rig checks](f6a-intervention-harness.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F6a implements the [section 3.5 intervention harness](../plans/f6-economy.md#35-controlled-interventions-and-measurement) offline (`tools/economy-interventions`) and records today's six-week baseline and unlimited rival curve; no Runtime/Core/save change. [Baseline and automated batched-rig checks](f6a-intervention-harness.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F6a — 4 November 2026, offline: deterministic Core intervention harness (`tools/economy-interventions`), 16 section 3.5 arms + control x 5 seeds x 6 weeks at 1,914 consumers; no Runtime/Core change, writer 25. 2,873 tests passed (17 F6a) and 63/63 required commands green at `327c35d`. Byte-identical metrics incl. 957-resident mid-epoch reload; inputs only at drained epoch boundaries; 6,832,980 daily per-owner conservation checks held, faults red. Unlimited rival curve recorded (rival 6,094.5 vs own 522.0 served/day at 3,828 consumers). Tool cost 1.32/3.27 s and 1.80/3.74 GB per simulated week (10,260 epochs) at 1,914/4,000 consumers; no mod work added. [Baseline, checks and nine In-game checks for the next batched rig](f6a-intervention-harness.md), [tool cost](../perf/f6a-intervention-harness.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F6a row in [f6-economy.md](../plans/f6-economy.md): **Status (4 Nov 2026): implemented offline; not verified by rig ([checks](f6a-intervention-harness.md)).**
+
 Refs #93. Base `dc59049` (writer 25; F1 #99, F3 #98 and the F5/F6/F7 plans merged). Scope: the F6a row of [the F6 plan](../plans/f6-economy.md#4-slice-breakdown) and its section 3.5. F6a is implemented offline as a tool. It changes no Runtime or Core behaviour, adds no schema and does not change save bytes. Nothing here is verified by rig. Offline Core results are not native evidence.
 
 Rechecked at this base before use: `AccountingClock` (`Core/AccountingClock.cs:9-62`, minute epochs and `PreviousEpochTarget`), `CitySimulator.IsCaughtUpTo`/`IsAccountingEpochDrained`/`BeginAccountingObservations` (`Core/CitySimulator.cs:172-200`), `HouseholdFinance.CashConserved` (`Core/HouseholdFinance.cs:103-104`), `RivalFoodTerms.Capture` with `Units = null` and the fixed service minutes (`Core/RivalFood.cs:77-87`), `RivalOutflowHistory.Reconciles` (`Core/RivalOutflowHistory.cs:63-68`), `FoodShopDay`/`RecordChoices` (`Core/FoodMarketHistory.cs:24-72`), lazy `ResidentFoodToday` (`Core/FoodToday.cs:127-138`) and the F1 fixture (`tools/accounting-backlog-regression/AccountingScenario.cs`).

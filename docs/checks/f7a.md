@@ -1,5 +1,21 @@
 # City audit F7a: save-cost baseline and representative fixtures (4 November 2026, offline)
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F7a implements an on-request save-cost record (save phases, payload sizes, records, load activation) and the `tools/save-cost` baseline on representative and stress fixtures, with writer 25 and payload bytes unchanged. [Offline baseline and automated batched-rig checks](f7a.md); not verified by rig.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F7a (4 Nov, offline) implements the [save-cost baseline](f7a.md): on-request save-phase/activation diagnostics and representative/stress fixtures; writer 25 unchanged; not verified by rig.
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F7a — 4–5 November 2026, offline: 2,862/2,862 unit tests and all 63 required commands exit 0 at code `5d0bb2a` (D3a 71/71, rival-memory matrix 65/65); save-cost recorder (observe/synchronize/validate/encode/publish, sizes, records, activation) on request, null and byte-identical otherwise; `tools/save-cost` representative F3-replay fixtures (hashes = F3) and E5d stress fixtures (hashes = E5d), deterministic; writer 25 unchanged. Representative 957x2 2,333,388 chars, save p50/p95 46.10/87.19 ms; stress 50000x2 2,036.83/2,293.39 ms; all 84 save samples >=30 ms flagged (save latency, not mod-work); main-thread construction max 32.221 ms at representative 50,000x2 flagged. encoding-max (E5d non-ASCII) 149,224 chars / 411,368 UTF-8 bytes, save p95 6.29 ms; escaped read 1/7 >=30 ms flagged. [Checks and seven In-game checks for the next batched rig](f7a.md), [baseline](../perf/f7a.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F7a row in [f7-save-snapshots.md](../plans/f7-save-snapshots.md): *Status 4 Nov 2026: implemented offline ([checks](f7a.md)); not verified by rig.*
+
 Refs #94. Base `dc59049` (writer **25**, F1 #99 and F3 #98 merged). Scope: the F7a row of [the F7 plan](../plans/f7-save-snapshots.md#4-slice-breakdown) (sections 3, 5, 6, 7 and 10 binding). Numbers: [performance record](../perf/f7a.md). Persistent City is not live or released. F7a is **implemented**; it is **not verified by rig**. Offline/headless results below are not native proof.
 
 Rechecked base locations before editing: `Runtime/PersistentCityMod.cs` `Save()` (observations, then `SaveSession.WriteTo`), `TryStart` (background `SaveSession.Open` + `ValidateForActivation`) and `CompleteInitialization` (main-thread `new CitySimulator`); `Persistence/SaveSession.cs` `WriteTo`; `Persistence/SaveCodec.cs` `WriteForSchema` (prepare, `Validate`, `SerializeObject`, character and UTF-8 caps).

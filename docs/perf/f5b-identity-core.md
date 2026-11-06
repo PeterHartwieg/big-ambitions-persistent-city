@@ -1,5 +1,9 @@
 # City-audit F5b — identity and ownership core: performance
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F5b — [Ordered-input owner lookup hint, boxing-free enum checks, allocation-free intent ownership and concatenation-free identity hashing](f5b-identity-core.md): validator p50 1,914/10,000/100,000 persons 1.3185/8.3299/108.7320 -> 0.6485/3.6938/49.2912 ms; warm validator 68,741/358,737/3,587,106 -> 0 B/call; intent check 127.8 -> 0 B/intent (3.06 -> 1.05 ms per 30,000); identity draw 284 -> 0 B/lookup. New code, offline components only; no frame work.
+
 4 November 2026, offline. Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). Measurement named in the [F5 plan](../plans/f5-population.md) section 4 F5b row: validator cost at 1,914 / 10,000 / 100,000 persons (one pass, no per-person allocation) and derived identity cost per lookup.
 
 ## Scope and limits

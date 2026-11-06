@@ -1,5 +1,9 @@
 # C3: Agency/payment discovery, base syncs and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- C3 — Agency/payment discovery, base syncs and native checklist: [checks](c3-agency-payment.md).
+
 ## C3 second base sync after A3/B0 - 1 November 2026 (offline only)
 
 Merge approved C3 `71285ff` with fetched development `3b8f7ec` (including A3 `831637c` and B0), keeping both parents and merge base `8b05227`. Resolve only CHECKS and README conflicts with both complete parent additions; roadmap auto-merges with every status/performance row retained. All seven In-game checks sections and locked/input qualifications survive; correct E2a's shifted checklist link. **No C3 Runtime code changed and no integration fix was needed.** Payment still refuses; market research stays off. All production files match an owning parent exactly. Incoming B0 owns unchanged schema **18**; every Persistence source, model and migration contract matches development exactly. No C3 persistence change or schema conflict. [Prepared PR description and per-file resolutions](../reviews/2026-11-01-c3-sync2-base-pr-description.md).
@@ -22,7 +26,7 @@ This sync lands into C3 by merge commit to keep ancestry; separate locked-PC C3 
 
 ## C3 agency payment (31 October 2026, offline only)
 
-**PARTIAL:** DLL inspection proves the native recurring marketing fee candidate (`MarketingHelper.RunDaily → GameManager.ChangeMoneySafe`) and its amount/category/day/address records. Campaign confirmation schedules campaigns; payment occurs at the daily boundary. No intrinsic transaction ID or generic third-product extension is proven. [Exact members, call-site evidence, confidence and limitations](../plans/c3-agency-payment.md). Research remains unavailable: Runtime payment always refuses. No campaign mutation, gameplay consumer, report, UI, schema, saved field, food debit or native money movement is added. C4/C5 retain tier contents/fees and wire-contract ownership.
+**PARTIAL:** DLL inspection proves the native recurring marketing fee candidate (`MarketingHelper.RunDaily → GameManager.ChangeMoneySafe`) and its amount/category/day/address records. Campaign confirmation schedules campaigns; payment occurs at the daily boundary. No intrinsic transaction ID or generic third-product extension is proven. [Exact members, call-site evidence, confidence and limitations](../archive/c3-agency-payment.md). Research remains unavailable: Runtime payment always refuses. No campaign mutation, gameplay consumer, report, UI, schema, saved field, food debit or native money movement is added. C4/C5 retain tier contents/fees and wire-contract ownership.
 
 The pure in-memory single-city coordinator keeps exact `Money`, one immutable quote/request ID, pending/reentrant-click exclusion and blocking `PaymentUnknown` after native-entry exceptions or missing/mismatched evidence. It grants no report/entitlement and has no reset/reconciliation API. Actual-source doubles check native-read fingerprints and emitted IL/source isolation; doubles are never accepted as native proof. The diagnostic avoids native caching getters (`Building.Address`, `CityManager.Instance`), reads raw fields/existing singleton lookup and formats only the last sixteen marketing records.
 
@@ -44,12 +48,12 @@ Run in the normal combined 6 Nov `rig_test` session on a named disposable FT fix
 
 ## Development notices
 
-> **C3 — 31 October (offline):** native agency/payment discovery, inactive exact-money order contract and on-demand read-only binding dump. **PARTIAL:** recurring marketing debit is verified in the DLL; durable request identity and a research option remain unproven. Runtime payment refuses; no gameplay, UI or save change. [Findings](../plans/c3-agency-payment.md) · [Checks](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only).
+> **C3 — 31 October (offline):** native agency/payment discovery, inactive exact-money order contract and on-demand read-only binding dump. **PARTIAL:** recurring marketing debit is verified in the DLL; durable request identity and a research option remain unproven. Runtime payment refuses; no gameplay, UI or save change. [Findings](../archive/c3-agency-payment.md) · [Checks](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only).
 
 
 ## Roadmap notices
 
-C3 status, 31 October (offline): [agency/payment discovery](../plans/c3-agency-payment.md) is **PARTIAL**. DLL-verified recurring fee candidate; durable request identity/third-option integration await proof. Inactive typed contract and read-only dump only; Runtime payment refuses. No schema or A/B-stack dependency. [Offline evidence and 6 Nov checklist](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only). New code does no per-frame work; no existing hot path was changed or optimization claimed. Four parked hotspots remain parked.
+C3 status, 31 October (offline): [agency/payment discovery](../archive/c3-agency-payment.md) is **PARTIAL**. DLL-verified recurring fee candidate; durable request identity/third-option integration await proof. Inactive typed contract and read-only dump only; Runtime payment refuses. No schema or A/B-stack dependency. [Offline evidence and 6 Nov checklist](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only). New code does no per-frame work; no existing hot path was changed or optimization claimed. Four parked hotspots remain parked.
 
 
 [Checks index](../../CHECKS.md).

@@ -1,5 +1,9 @@
 # B2 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- B2 — [Observed own-shop regulars and resident memory words](b2-regulars-inspector.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | B2 | Pre-size the transient unique-consumer set at the known population size | Growing-set comparison: 73,152 /322,638 bytes at 1,914 /5,000 consumers | 38,736 /116,932 bytes; same distinct IDs/counts. Offline .NET 10; raw batch measurements in [B2 evidence](../reviews/2026-10-31-b2-measurements.json). |

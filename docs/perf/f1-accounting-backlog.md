@@ -1,5 +1,9 @@
 # City-audit F1 measurements — 3 November 2026
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F1 — [Elapsed-time frame caps and cached pacing text](f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; R2 quiet baseline text 16,640 -> 0 B / 40 -> 0 builds per 1,200 requests (GUI excluded); offline components, no native whole-frame gate claim.
+
 Initial offline evidence below: base `bd99eb3`, implementation `98e2afd`. R1 corrections and current limits follow under [R1 review corrections](#r1-review-corrections). Run:
 `dotnet run --project tools/accounting-backlog-regression/AccountingBacklogRegression.csproj --configuration Release`.
 The foreground run uses .NET 10 on this Windows host, after the shared dotnet gate. Raw output

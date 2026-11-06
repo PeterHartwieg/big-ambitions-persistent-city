@@ -1,5 +1,21 @@
 # City audit F6c — feedback v1, 4 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F6c implements read-only feedback v1 in the Ctrl+F8 food panel: week-over-week purchases, sales and evaluated-offer causes per managed shop from the existing 14-day history (days without a record labeled, no hour/meal/resident attribution), a neutral rival estimate label, current budget-state counts from incremental counters that replace the panel's consumer scans, and inspector words for budget states. No behaviour, economy or save change. [Offline evidence and automated batched-rig checks](f6c.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F6c (#93) implements [feedback v1](../plans/f6-economy.md#4-slice-breakdown) (week-over-week evaluated-offer causes, budget-state counts and inspector words, incremental panel counters) offline; rig verification pending. [Checks and batched-rig list](f6c.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F6c — 4 November 2026, offline: read-only feedback v1 (week-over-week purchases/sales and evaluated-offer causes per shop from the existing 14-day rows, days without a record labeled, neutral rival label constant, current budget-state counts, inspector budget words) with incremental counters replacing the panel's consumer scans; writer 25, no behaviour/economy/save change; 2,899 tests (13 new) and the required commands passed. Panel components: scans p95 1.1088/3.4898/32.1975 ms -> counters 0.0026/0.0050/0.0030 ms at 1,914/10,000/100,000 consumers; per-shop lookups p95 116.1171 -> 14.5748 ms at 1,024 shops; hidden panel 0 B, 0 requests; >=30 ms samples flagged: removed code 45/200 (100,000 consumers) and 200/200 (1,024 shops), new path 1/200 at 1,024 shops (34.2305 ms, open-panel build); posting +0.0006–0.0163 ms p95. [Checks and eight In-game checks for the next batched rig](f6c.md#in-game-checks-for-the-next-batched-rig), [measurements](../perf/f6c.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F6c row in [f6-economy.md](../plans/f6-economy.md): *Status (4 Nov 2026): implemented offline on `codex/pc-f6c-feedback-v1`; rig verification pending ([checks](f6c.md)).*
+
 Refs [#93](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/93). Branch `codex/pc-f6c-feedback-v1` from `origin/codex/persistent-city` at `c64e3e2` (writer **25**; F1 #99, F3 #98, F5a #107 and the F5/F6/F7 plans merged). Scope is the F6c row of [the F6 plan](../plans/f6-economy.md#4-slice-breakdown), with section 3.6 and the F6c rows of sections 5 and 6 as the spec.
 
 Persistent City is not live or released. This slice is implemented offline; nothing here is verified by rig yet.

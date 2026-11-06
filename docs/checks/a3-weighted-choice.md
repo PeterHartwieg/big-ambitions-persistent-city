@@ -1,5 +1,9 @@
 # A3: Weighted food choices, review fixes and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- A3 — Weighted food choices, review fixes and native checklist: [checks](a3-weighted-choice.md).
+
 ## A3 base sync after merged A1/A2/F0/D1/C1/E2a - 31 October 2026 (offline only)
 
 Merge `codex/persistent-city` at `8b05227` into approved A3 `754c2b6`, retaining both parents and merge base `7a6153c`. Resolve all 18 conflicts with both sides' intent: A3 weighted choice/continuation/explanations plus the base's native address formatter, F0 wiring/settings and all D1/C1/E2a readers, fixtures, plans and performance evidence. Both complete parent CHECKS and roadmap documents remain in order; all five native checklists, 15 **LOCKED-OK** and eight **NEEDS-INPUT** markers and input-only qualification remain. Both parent codecs are identical; population schema stays **17**, with unchanged migrations and A3 schema tests. [Prepared PR description and all per-file resolutions](../reviews/2026-10-31-a3-sync-base-pr-description.md).

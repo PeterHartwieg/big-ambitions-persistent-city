@@ -1,5 +1,9 @@
 # B0b: Held tuning, base syncs and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- B0b — Held tuning, base syncs and native checklist: [checks](b0b-held-tuning.md).
+
 ## B0b second base sync with C3 and docs split - 1 November 2026 (offline only)
 
 Merge development `8c24f24` (C3 #20, docs split #41) into B0b `eee1cfb`, with
@@ -67,7 +71,7 @@ The frozen 13-17 contracts remain strict and exclude the new fields. Malformed,
 oversized, non-finite and out-of-range images refuse without source replacement.
 One neutral, bounded binary64 log-contribution slot per shortlisted shop reserves
 B1's effective four-entry-memory result. No memory/loyalty/activation, watermark,
-UI, extra settings or other feature work is included. [Amended wire contract](../population-schema18.md#b0b-amendment--31-october-2026).
+UI, extra settings or other feature work is included. [Amended wire contract](../archive/population-schema18.md#b0b-amendment--31-october-2026).
 
 **Offline measurements.** Baseline `192037b`, production source `9c06dd9`,
 benchmark source `05517ca`; Windows .NET 10 Release, sequential foreground runs.
@@ -182,7 +186,7 @@ No rig action occurred in this offline slice.
 
 > **B0b base sync - 1 November:** approved held tuning is reconciled with synced B0 and merged A1/A2/A3/F0/D1/C1/E2a. **1,984 tests and all 49 foreground checks pass**; B0b production code is unchanged, with no additional integration fix. Exact migrations/replay/refusals and the 405-byte image pass; CF32/CF64 reserved budgets stay **82.204% / 96.509%** (CF64 hard-cap pass). Offline only; combined native checks follow under merge rule v2. [Resolutions and evidence](../reviews/2026-11-01-b0b-sync-base-pr-description.md).
 
-> **Step B0b held tuning — 31 October:** held A3 decisions now persist their captured coefficients across config edits/reload; fresh contexts use current values the same day. Schema 18 is amended in place with a neutral bounded B1 contribution slot. **1,862 tests and all 34 foreground checks pass**. Eight-candidate overhead: 405 saved bytes / 208 managed bytes. Offline only; combined 6 Nov rig checks remain pending. [Evidence](b0b-held-tuning.md#step-b0b-held-tuning-prerequisite--31-october-2026-offline-only) · [Contract](../population-schema18.md#b0b-amendment--31-october-2026).
+> **Step B0b held tuning — 31 October:** held A3 decisions now persist their captured coefficients across config edits/reload; fresh contexts use current values the same day. Schema 18 is amended in place with a neutral bounded B1 contribution slot. **1,862 tests and all 34 foreground checks pass**. Eight-candidate overhead: 405 saved bytes / 208 managed bytes. Offline only; combined 6 Nov rig checks remain pending. [Evidence](b0b-held-tuning.md#step-b0b-held-tuning-prerequisite--31-october-2026-offline-only) · [Contract](../archive/population-schema18.md#b0b-amendment--31-october-2026).
 
 ## Roadmap notices
 

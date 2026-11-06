@@ -1,5 +1,9 @@
 # City audit F6c — feedback v1 performance, 4 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F6c — [Incremental panel counters and one-pass shop lookups](f6c.md): open-panel consumer work p95 1.1088/3.4898/32.1975 -> 0.0026/0.0050/0.0030 ms and 743,240/3,863,008/39,248,344 -> 6,280/6,456/7,768 B/request at 1,914/10,000/100,000 consumers; per-shop lookups p95 2.7575/116.1171 -> 0.5459/14.5748 ms at 64/1,024 shops including the new week text; 128-bit counters and tuple keys cut the 1,024-shop build 8,109,056 -> 4,525,584 B; hidden panel 0 B. Cost: +0.0006–0.0163 ms p95 per posting call, 0 B. Offline components, no whole-frame claim.
+
 Refs #93. Measurements named by the F6c row of [the F6 plan](../plans/f6-economy.md#4-slice-breakdown) and its section 6 table: panel build cost at 1 / 64 / 1,024 shops, before/after scan cost at 1,914 / 10,000 / 100,000 consumers, and hidden-panel cost (0 B, no calls). Standing gate: mod-work p95 < 5 ms, every mod-work sample ≥ 30 ms flagged. Whole-frame cost is tracked separately and is not measured here.
 
 ## Where the cost lands

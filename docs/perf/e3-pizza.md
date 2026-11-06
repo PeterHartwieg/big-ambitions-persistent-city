@@ -1,5 +1,9 @@
 # E3 pizza performance evidence - 1 November 2026
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E3 pizza — [Four-candidate cold/warm costs and allocations; no new win claimed](e3-pizza.md).
+
 No new performance win is claimed. The shared read branches are unchanged: one pinned descriptor was added. Review found once-bound metadata, bounded explicit scans, no success-path diagnostic strings and no redundant identity set; no additional cheap safe measurable optimization was identified or taken. All four parked hotspots remain untouched.
 
 Release .NET 10 conditional native doubles. Separate fresh processes for base `5877453` donut/cupcake/salad before and code `acf8081` all four after. Cold is one first call including JIT, descriptor and metadata binding, not a percentile. Warm is 30 warmups plus 1,001 individually timed valid reads per size; fixture construction excluded, one bag counter included. First three harnesses are unchanged; pizza reuses their native doubles and timing method with its own entry point/cases. Foreground sequential runs use the prescribed other-dotnet guard. Host scheduling remains uncontrolled; timing differences are not causal wins.
@@ -16,6 +20,6 @@ Release .NET 10 conditional native doubles. Separate fresh processes for base `5
 
 Warm allocations remain **200 / 49,104 B/read** at 2 / 2,000 entries for every candidate. Cold allocation changes **1,040 -> 1,064 B**, consistent with one additional **24 B first-use descriptor**, with no retained native-data cache. All measured E3 single-reader cold/warm samples are below 30 ms; zero >=30 ms samples. No ordinary-play caller, hooks, polling, per-frame reflection/scans/allocations or automatic initialization exists. **Zero calls means zero reader work/allocations**, by source isolation.
 
-These are offline reader costs, not native combined mod-work or whole-frame results. The normal combined 6 Nov session must report mod-work p50/p95/max, require **p95 <5 ms** and flag every **spike >=30 ms** with count/condition/component. Whole-frame timings/stalls stay separate. No special performance-only run. [Checks and numbered handoff](../checks/e3-pizza.md); [raw measurements, commands and log hashes](../plans/e3-pizza-offline-results.json).
+These are offline reader costs, not native combined mod-work or whole-frame results. The normal combined 6 Nov session must report mod-work p50/p95/max, require **p95 <5 ms** and flag every **spike >=30 ms** with count/condition/component. Whole-frame timings/stalls stay separate. No special performance-only run. [Checks and numbered handoff](../checks/e3-pizza.md); [raw measurements, commands and log hashes](../archive/e3-pizza-offline-results.json).
 
 **Separate existing offline flags:** D1's 20,000-place empty-cache aggregate build is **43.1023 ms (>=30 ms)**; its bounded 16-read unit is **0.0023 ms**, and warm refresh **1.5850 ms**. C1's synchronous 1,024-business cold snapshot has **p95 6.4978 ms (>=5 ms)**, max **10.6797 ms**; continuation-unit p95/max is **0.0019 / 2.1303 ms**, zero >=30 ms samples. These unchanged aggregate/stress conditions are not E3 reader samples, native frames or combined mod-work clearance. No optional-stop performance comparison arm was run; its required functional runner passed. Raw diagnostic lines are preserved in the machine receipt.

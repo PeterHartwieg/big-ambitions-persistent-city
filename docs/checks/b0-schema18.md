@@ -1,5 +1,9 @@
 # B0: Schema 18, capacity, review fixes and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- B0 — Schema 18, capacity, review fixes and native checklist: [checks](b0-schema18.md).
+
 ## B0 base sync after merged A3 and sibling slices - 1 November 2026 (offline only)
 
 Merge development head `831637c` into approved B0 `192037b`, keeping both parents and merge base `7a6153c`. Resolve all 24 conflicts with both sides' intent: B0's schema 18/compaction/capacity/migrations plus merged A1/A2/A3 sync fixes, F0/D1/C1/E2a, every test, plan, performance row and all six native checklists with their locked/input qualifications. The base still has A3's exact schema-17 persistence/DTO contract; no other slice claimed 18 or added persisted fields. All B0 Persistence sources and compact model/format/ownership code remain unchanged. The only production file combining parents is `CitySimulator.cs`: B0's existing capability guard plus the base's existing inspector formatter API. [All per-file resolutions and exact code impact](../reviews/2026-11-01-b0-sync-base-pr-description.md).
@@ -39,7 +43,7 @@ Full population startup decode remains mandatory and still checks the complete s
 
 A3's visit-free ceiling used 92.4% of the cap; accumulated ordinary histories already exceeded it. B0 publishes population schema **18**, preserves every existing fact in compact budget/meal/day/visit formats, and defines bounded B memory, watermark, business references and capability revision. **B remains empty/inactive on migration.** No UI, inspector, loyalty/capture/choice contribution, economy, config loader, RLO, native receipt/authority format, mod version or release changes.
 
-The branch remains stacked on A3 `754c2b6`; no plan commit was cherry-picked. Production source measured at `5a3a55c`. [Wire contract](../population-schema18.md) and [raw manifests, timings and commands](../reviews/2026-10-31-b0-measurements.json).
+The branch remains stacked on A3 `754c2b6`; no plan commit was cherry-picked. Production source measured at `5a3a55c`. [Wire contract](../archive/population-schema18.md) and [raw manifests, timings and commands](../reviews/2026-10-31-b0-measurements.json).
 
 Frozen 13/14/15/16/17 readers retain their own allow-lists, resolver caches, money conversion, limits and counting. Only after their validation does conversion to 18 receive complete semantic and serialized preflight. Schema 18 keeps four captured offers. Corrupt, oversized, future and unsupported-capability payloads refuse without replacement. Actual early native authority hooks reject inactive unknown revisions/codes and active B before population attachment; the new active-capability assertion is **red against A3's original hook**, green in **138 production-hook checks**. Population decode and simulator startup also refuse unsupported execution.
 
@@ -103,7 +107,7 @@ These are **pending**, for a separately authorized **rig_test session (Codex Sol
 
 > **B0 base sync - 1 November:** schema 18, exact migrations, compaction and save budgets are preserved alongside merged A1/A2/A3/F0/D1/C1/E2a. **1,954 tests and all 46 foreground checks pass**; actual-base economy/reload digests match. CF32 reserved budget remains **82.204%**, CF64 **96.509%** (hard-cap pass, no 85% claim). No new B0 behavior or integration fix. Offline only; separate B0+B0b rig validation follows as needed. [Resolutions and evidence](../reviews/2026-11-01-b0-sync-base-pr-description.md).
 
-> **Step B0 schema 18 - 31 October:** data/save layer only. Exact 13-17 migration, lossless history compaction and inactive bounded B contracts; A3 choices/economy remain unchanged. Base recovery **115,049,920 characters**; full-memory/table ceiling **52.6%**, CF32 reserved budget **82.2%**, CF64 hard-cap budget **96.5%** (no 85% claim). **1,813 tests and all 34 foreground checks pass**. No game/rig/release work; native proof remains pending. [Evidence and measurements](b0-schema18.md#step-b0-population-schema-18-and-history-inclusive-capacity---31-october-2026-offline-only) - [Wire contract](../population-schema18.md) - [6 Nov rig checks](b0-schema18.md#in-game-checks-for-6-nov-rig).
+> **Step B0 schema 18 - 31 October:** data/save layer only. Exact 13-17 migration, lossless history compaction and inactive bounded B contracts; A3 choices/economy remain unchanged. Base recovery **115,049,920 characters**; full-memory/table ceiling **52.6%**, CF32 reserved budget **82.2%**, CF64 hard-cap budget **96.5%** (no 85% claim). **1,813 tests and all 34 foreground checks pass**. No game/rig/release work; native proof remains pending. [Evidence and measurements](b0-schema18.md#step-b0-population-schema-18-and-history-inclusive-capacity---31-october-2026-offline-only) - [Wire contract](../archive/population-schema18.md) - [6 Nov rig checks](b0-schema18.md#in-game-checks-for-6-nov-rig).
 
 
 ## Roadmap notices

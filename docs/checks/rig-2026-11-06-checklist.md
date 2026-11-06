@@ -1,5 +1,7 @@
 # Combined locked-PC rig checklist — 6 November 2026
 
+Results of the first batched run (head `e9995e5`): [rig-2026-11-06-results.md](rig-2026-11-06-results.md).
+
 ## E5b complete menu and refusal/recovery
 
 Recorded on 3 November under the slice owner's merge-rule-v2 decision for PR #85. These checks run in the next batched combined locked-PC session against the development branch head and **do not gate this PR's merge**. Native findings become follow-up fix slices, not reverts. All items are rig-automated; no check waits for a personal playtest, unlocked console or manual visual inspection. The numbered text below matches the [owning E5b checks](e5b-complete-menu.md#in-game-checks-for-the-next-batched-rig) and PR description. A pending capability is implemented by the rig before its assertion is reported as tested.

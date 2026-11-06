@@ -1,5 +1,9 @@
 # E2b: bounded street-life
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E2b — [Bounded street-life, reviews, base syncs and native checklist](e2b-street-life.md).
+
 ## E2b second base sync after A3/B0-B2/C3/E2c/E3 and the docs split - 1 November 2026 (offline only)
 
 Merge development `3f7b885` into approved E2b parent `e6f970b`, retaining merge base `8b05227` and both parents. Resolve four conflicts by preserving both slices' intent: combine dwell timing and food choice/memory settings in `RebuildRoutes`; keep incoming short CHECKS/README/roadmap; move all E2b checks, dated notices and performance rows into this owning file and [E2b perf](../perf/e2b-street-life.md). Add one checks/performance index line each. The full seven-item native checklist and all LOCKED-OK / NEEDS-INPUT / input-only markers below remain. [Prepared PR description and per-file resolutions](../reviews/2026-11-01-e2b-sync2-base-pr-description.md).
@@ -106,7 +110,7 @@ These are whole offline batches, **not combined in-game mod-work or whole-frame 
 
 ### In-game checks for 6 Nov rig
 
-The same numbered list is in the [prepared PR description](../plans/e2b-pr-description.md). LOCKED-OK follows the [feasibility report at 84be71a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md), read through Git only. NEEDS-INPUT requires the unlocked session. No game launch, rig/lease/test-profile or Steam-install mutation occurred in this task.
+The same numbered list is in the [prepared PR description](../archive/e2b-pr-description.md). LOCKED-OK follows the [feasibility report at 84be71a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md), read through Git only. NEEDS-INPUT requires the unlocked session. No game launch, rig/lease/test-profile or Steam-install mutation occurred in this task.
 
 1. **LOCKED-OK — frontage ownership and refusals.** On the named disposable FT fixture, bridge-read native controller identities, registration street/number/type, sampled entrances and the optional environment's `buildings` cache, before and after reload/rebinding. Record eligible Work/Shop/Leisure versus skipped Home/Study counts. Reconcile every selected frontage with exactly one address/controller and entrance; record shared-entrance, duplicate-address, moved-address, missing and unreadable refusals separately. Check both native enumeration orders if a genuine ambiguous fixture exists; otherwise label R2 native ambiguity unobserved and retain the source/double proof. Read only: never call registration-creating or spawning helpers. Bound each dump and report truncation.
 2. **LOCKED-OK — bound-line planning, move-up in rain and reload.** Capture a queue with a live bound queuer and a vacant spot ahead (ID, planned-line membership, line/slot, native path target, saved wait/destination/activity deadline, binding dwell start/end and rain). Through a natural rain change that would omit the unbound current-weather plans, verify the bound line stays in `PlanQueues` and move-up still selects a free spot ahead only when the body accepts the target; unbound admissions retain current rain/thinning. Visible retention and occupied-slot reservation are baseline controls, not E2b fixes. Save outside measured windows and reload during the wait; same-weather eligibility/opening reconstruct, changed weather may reconstruct a different lead or no queue and cannot recover the old slot. Record the limitation, original activity continuation, no extra visit/chance and admission at opening. Mark unavailable natural rain/move-up opportunities honestly.
@@ -118,8 +122,8 @@ The same numbered list is in the [prepared PR description](../plans/e2b-pr-descr
 
 ## Development notices
 
-> **E2b — 31 October (offline):** indexed, fail-closed optional frontage ownership, bound-line planning and move-up through rain (visible retention pre-existed) and default-preserving per-kind dwell maxima. R1/R3 and wider venues remain deferred; queue reload limits and numbered 6 Nov checks are explicit. [Evidence and rig handoff](e2b-street-life.md#e2b-review-round-1--31-october-2026-offline-only) · [Implementation](../plans/e2-street-life.md#e2b-implementation--31-october-2026-offline).
+> **E2b — 31 October (offline):** indexed, fail-closed optional frontage ownership, bound-line planning and move-up through rain (visible retention pre-existed) and default-preserving per-kind dwell maxima. R1/R3 and wider venues remain deferred; queue reload limits and numbered 6 Nov checks are explicit. [Evidence and rig handoff](e2b-street-life.md#e2b-review-round-1--31-october-2026-offline-only) · [Implementation](../archive/e2-street-life.md#e2b-implementation--31-october-2026-offline).
 
-E2b (31 Oct, offline): R2 fails closed on ambiguous/conflicting frontage ownership; R4 keeps bound lines planned for move-up through rain (visible retention pre-existed) with an explicit reload reconstruction limit; five flat per-kind timing maxima preserve existing defaults. R1/R3 await native/visual evidence; no additional venue is enabled. [Implementation and 6 Nov handoff](../plans/e2-street-life.md#e2b-implementation--31-october-2026-offline).
+E2b (31 Oct, offline): R2 fails closed on ambiguous/conflicting frontage ownership; R4 keeps bound lines planned for move-up through rain (visible retention pre-existed) with an explicit reload reconstruction limit; five flat per-kind timing maxima preserve existing defaults. R1/R3 await native/visual evidence; no additional venue is enabled. [Implementation and 6 Nov handoff](../archive/e2-street-life.md#e2b-implementation--31-october-2026-offline).
 
 [Checks index](../../CHECKS.md).

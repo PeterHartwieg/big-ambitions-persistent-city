@@ -1,5 +1,13 @@
 # City audit F3 — 3 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F3 implements bounded household posting units and finite route retries/query admission, with coherent 1,024-candidate campaign capture, resumable publication and no schema change. [Offline equivalence, stress limitations and automated batched-rig checks](pc-f3-bounded-bulk-work.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F3 — 3 November 2026, offline: R1 2,821 tests; 32-posting units, finite route retries/query admission, coherent 1,024-candidate capture and resumable publication (native-double capture p95/max 6.1153/19.7485 ms, publication 0.0250/0.1615 ms); writer 25 unchanged. Posting-call p95 0.0208/0.0229/0.0111 ms at 1,914/10,000/100,000 consumers, median 0 B; matched Core replay save hashes equal, backlog drains to zero; 49 stress advancement intervals >=30 ms (max 54.2938 ms) flagged. [Checks, qualifications and five In-game checks for the next batched rig](pc-f3-bounded-bulk-work.md); [full timings/work/allocations](../perf/pc-f3-bounded-bulk-work.md).
+
 Refs #90. Base `bd99eb3` (writer 25); audit report read from PR #97's branch, including the retained fixture, without importing or editing the report. Its cited operations were rechecked against this base. This slice implements bounded posting units, removes restart-triggered inline planning, and limits atomic native campaign observation. No schema, accounting-boundary, overload-policy, movement-authority or release change. Native evidence remains pending the next batched headless rig.
 
 Rechecked base locations: `FoodFinances.cs:43–56` (whole-minute loop), `NativeCampaignAwareness.cs:62` (refresh drain), `CitySimulator.cs:242/280` (restart escape), and `CitySimulator.cs:21/192/323` (pending-route clock barrier). These are base locations, not stale audited line numbers or final-head line references.
