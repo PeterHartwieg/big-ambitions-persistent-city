@@ -155,7 +155,7 @@ public sealed class PresentationDriver
     /// <summary>Runtime PhysicalPopulation.Update after AdvancePopulation.</summary>
     public void Update(Position focus, bool hiddenTravel)
     {
-        if (hiddenTravel) { HiddenFrames++; HiddenReleases += bindings.Count; Suspend(); return; }
+        if (hiddenTravel) { HiddenFrames++; Suspend(); return; }
         if (!focus.IsFinite) { Suspend(); return; }
         double radius = settings.RadiusMetres, releaseRadius = settings.RadiusMetres * 1.4;
         foreach (var binding in bindings.Values.ToArray())
@@ -331,6 +331,15 @@ public sealed class PresentationDriver
     public void BeforeSave()
     {
         foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding) && !TryAwaitArrival(binding)) Release(binding);
+    }
+
+    /// <summary>Runtime BeforeAdvance during hidden travel (SuspendBeforeNativeFastForward): observe every
+    /// body for save, then release them all, before the simulation advances the hidden slice.</summary>
+    public void SuspendBeforeHiddenAdvance()
+    {
+        HiddenReleases += bindings.Count;
+        BeforeSave();
+        Suspend();
     }
 
     public void Suspend()

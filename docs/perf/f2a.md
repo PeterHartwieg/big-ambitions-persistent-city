@@ -23,7 +23,7 @@ F2a changes no Core, Runtime or Persistence code, so in-game mod-work p95, ≥ 3
 | cadence/120fps | 1,113,678 | 17.1 | 8.0 | 1,526 |
 | transitions/reload-mid-journey | 561,717 | 9.7 | 4.6 | 1,445 |
 
-Whole run (nine self-checks at 96 residents, then 21 arms): **199 s**. The unit tests run the 96-resident, one-day fixture (about 1 minute in Debug for the nine F2a tests).
+Whole run (nine self-checks at 96 residents, then 21 arms): **229 s** after the review fixes (199 s before; the per-arm times above are from that first run and moved by up to 30 % between runs on the shared machine). The unit tests run 96 residents for one day, plus one 96-resident two-day and one 200-resident one-day run (about 1.5 minutes in Debug for the eleven F2a tests).
 
 Cost grows with bound bodies (one lease sample, projection and observation per body per frame, plus 0.25 s selection) and with frame count. Plain arms show the simulation's own cost at these frame rates: 0.9–2.4 s per simulated day.
 

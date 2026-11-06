@@ -40,6 +40,8 @@ public sealed class Boundary
     public double Minute;
     public string SaveSha256 = "", SalesSha256 = "", JourneysSha256 = "", ParkedSha256 = "", WalletsSha256 = "", FifoSha256 = "";
     public int Sales, Arrivals, MissedActivities;
+    /// <summary>Skipped meal outcomes of the day that ended before this 03:00 boundary.</summary>
+    public int SkippedMeals;
 }
 
 public sealed class MovementResult
@@ -194,7 +196,7 @@ public static class MovementRun
         market.Clock = native;
         Require(city.BeginAccountingObservations(native), "initial epoch not published");
         double nextFifo = start + FifoSampleMinutes;
-        bool reloaded = false, faultInjected = false;
+        bool reloaded = false, faultInjected = false, hiddenChecked = false;
         double frameSeconds = 1.0 / options.FramesPerSecond;
         while (boundaries.Count > 0)
         {
@@ -233,6 +235,19 @@ public static class MovementRun
                     "journey ledger: completed journeys differ from observed arrivals (" + (city.State.Citizens.Sum(c => c.CompletedJourneys) - initialCompleted) + " vs " + ledger.Arrivals + ", replaced " + ledger.Replaced + ")");
                 if (boundaries.Count == 0) break;
             }
+            if (hidden && driver != null)
+            {
+                // Runtime BeforeAdvance: hidden travel observes and releases bodies before AdvancePopulation,
+                // so no hidden slice runs with a frozen walker or a physically controlled car.
+                driver.SuspendBeforeHiddenAdvance();
+                Require(driver.Count == 0, "hidden travel advanced with bodies bound");
+                if (!hiddenChecked && city.Traffic != null)
+                {
+                    hiddenChecked = true;
+                    Require(city.Traffic.Capture().Vehicles.All(v => !v.PhysicalControl), "hidden travel advanced with physical traffic control");
+                }
+            }
+            else hiddenChecked = false;
             driver?.MoveBodies(frameSeconds, frameSeconds * GameMinutesPerRealSecond);
             target = Math.Max(city.State.Minute, AccountingClock.Target(native));
             for (int unit = 0; unit < EventUnitsPerFrame; unit++)
@@ -294,12 +309,19 @@ public static class MovementRun
         foreach (var c in state.Citizens)
             if (c.Car != null) parked.Append(c.Identity.Id).Append(':').Append(c.Car.ParkedPosition.X.ToString("R", CultureInfo.InvariantCulture))
                 .Append(',').Append(c.Car.ParkedPosition.Z.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
+        // The daily outcome ledger keeps one day; read the finished day here, before the next day's meals replace it.
+        int day = (int)Math.Floor(at / 1440) - 1, skipped = 0;
         foreach (var m in state.Food!.Residents)
+        {
             wallets.Append(m.ResidentId).Append(':').Append(m.Budget?.Balance.Units ?? 0).Append('\n');
+            if (m.Today == null) continue;
+            Require(m.Today.Day <= day, "a next-day meal outcome exists at the 03:00 boundary");
+            if (m.Today.Day == day) skipped += m.Today.Meals.Count(o => o.Status == MealOutcomeStatus.Skipped);
+        }
         return new Boundary { Minute = at, SaveSha256 = Sha(SaveCodec.Write(state)), SalesSha256 = Sha(string.Join("\n", market.Sales)),
             JourneysSha256 = Sha(ledger.Records.ToString()), ParkedSha256 = Sha(parked.ToString()), WalletsSha256 = Sha(wallets.ToString()),
             FifoSha256 = fifo.Sha, Sales = market.Sales.Count, Arrivals = ledger.Arrivals,
-            MissedActivities = state.Citizens.Sum(c => c.MissedActivities) };
+            MissedActivities = state.Citizens.Sum(c => c.MissedActivities), SkippedMeals = skipped };
     }
 
     private static double Percentile(List<double> sorted, double p) => sorted.Count == 0 ? 0 : sorted[(int)Math.Round((sorted.Count - 1) * p)];
@@ -326,7 +348,7 @@ public static class MovementRun
         m["meals.bought"] = food.Sum(r => r.Purchases);
         m["meals.ownSales"] = market.Sales.Count;
         m["meals.refusedAtCheckout"] = market.Refusals;
-        m["meals.skippedToday"] = food.Sum(r => r.Today?.Meals.Count(o => o.Status == MealOutcomeStatus.Skipped) ?? 0);
+        m["meals.skipped"] = result.Boundaries.Sum(b => b.SkippedMeals);
         m["revenue.ownUnits"] = market.RevenueUnits;
         m["wallets.balanceUnits"] = food.Sum(r => r.Budget?.Balance.Units ?? 0);
         m["traffic.fifoSamples"] = result.FifoSamples;

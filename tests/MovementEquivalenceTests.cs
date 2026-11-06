@@ -91,6 +91,26 @@ public sealed class MovementEquivalenceTests
         Assert.True(hidden.Metrics["bodies.hiddenTravelFrames"] > 0);
     }
 
+    [Fact]
+    public void HiddenTravelReleasesBodiesBeforeTheHiddenSliceAdvances()
+    {
+        // MovementRun requires no binding and no physically controlled vehicle when a hidden slice advances.
+        // 200 residents: the smallest fixture here with bodies bound when the 12:00 window opens.
+        var hidden = MovementRun.Run(Small(o => { o.Residents = 200; o.HiddenTravel = true; }));
+        Assert.True(hidden.Metrics["bodies.hiddenTravelFrames"] > 0);
+        Assert.True(hidden.Metrics["bodies.hiddenTravelReleases"] > 0);
+    }
+
+    [Fact]
+    public void SkippedMealsAreCountedForEveryDay()
+    {
+        var run = MovementRun.Run(Plain(o => { o.Days = 2; o.ReloadMidJourney = true; }));
+        Assert.Equal(3, run.Boundaries.Count);
+        Assert.Equal(0, run.Boundaries[0].SkippedMeals);
+        Assert.True(run.Boundaries[1].SkippedMeals > 0 && run.Boundaries[2].SkippedMeals > 0);
+        Assert.Equal(run.Boundaries.Sum(b => b.SkippedMeals), run.Metrics["meals.skipped"]);
+    }
+
     /// <summary>Today's recorded divergence (expected red). F2c turns walker arms and F2d all arms equal;
     /// those slices flip this assertion to equality.</summary>
     [Fact]

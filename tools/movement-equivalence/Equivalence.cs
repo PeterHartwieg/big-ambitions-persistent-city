@@ -22,7 +22,7 @@ public static class Equivalence
     public static readonly string[] Outcomes = {
         "journeys.walk.meanMinutes", "journeys.walk.p95Minutes", "journeys.car.meanMinutes", "journeys.car.p95Minutes",
         "journeys.arrivals", "visits.shopArrivals", "visits.admittedAtShop", "visits.workArrivals", "routines.missedActivities",
-        "meals.bought", "meals.ownSales", "meals.skippedToday", "revenue.ownUnits", "wallets.balanceUnits", "cars.parkedAway" };
+        "meals.bought", "meals.ownSales", "meals.skipped", "revenue.ownUnits", "wallets.balanceUnits", "cars.parkedAway" };
 
     private static string Pick(Boundary b, string projection) => projection switch
     {

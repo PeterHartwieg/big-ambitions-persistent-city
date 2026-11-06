@@ -69,7 +69,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -81,7 +82,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -93,7 +95,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "a9e5507f6bfe902cd2ee86071515c36b37035716eba3e4bad989c32275ab2d30",
@@ -130,7 +133,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -147,9 +150,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 1.933066,
+        "Seconds": 2.3385693,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1182614224
+        "AllocatedBytes": 1182623032
       },
       "comparison": {
         "Identical": false,
@@ -177,7 +180,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": 0,
           "meals.ownSales": 0,
-          "meals.skippedToday": 0,
+          "meals.skipped": 0,
           "revenue.ownUnits": 0,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": 0,
@@ -204,7 +207,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -216,7 +220,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -228,7 +233,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "0518c5297f26a84e9e2cf779fe39cb928cfc0e8eba53f12009ed73d34330ef14",
@@ -265,7 +271,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -282,9 +288,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 2.9678609,
+        "Seconds": 3.5936365,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1182608664
+        "AllocatedBytes": 1182598360
       },
       "comparison": null
     },
@@ -305,7 +311,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -317,7 +324,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -329,7 +337,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "d73300244506e46e812588e385ac8aaf1aaf95af1b45a84ac852218452b1c08f",
@@ -366,7 +375,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -383,9 +392,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 5.2309965,
+        "Seconds": 5.5625135,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1182611552
+        "AllocatedBytes": 1182603032
       },
       "comparison": {
         "Identical": false,
@@ -413,7 +422,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": 0,
           "meals.ownSales": 0,
-          "meals.skippedToday": 0,
+          "meals.skipped": 0,
           "revenue.ownUnits": 0,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": 0,
@@ -440,7 +449,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -452,7 +462,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -464,7 +475,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "0518c5297f26a84e9e2cf779fe39cb928cfc0e8eba53f12009ed73d34330ef14",
@@ -501,7 +513,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -518,9 +530,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 2.8633869,
+        "Seconds": 3.2232042,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1182610904
+        "AllocatedBytes": 1182617024
       },
       "comparison": {
         "Identical": true,
@@ -544,7 +556,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": 0,
           "meals.ownSales": 0,
-          "meals.skippedToday": 0,
+          "meals.skipped": 0,
           "revenue.ownUnits": 0,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": 0,
@@ -571,7 +583,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -583,7 +596,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -595,7 +609,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "0518c5297f26a84e9e2cf779fe39cb928cfc0e8eba53f12009ed73d34330ef14",
@@ -632,7 +647,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -649,9 +664,9 @@
         "Reloads": 1,
         "InFlightAtReload": 33,
         "BodiesAtReload": 0,
-        "Seconds": 4.6292649,
+        "Seconds": 3.8284234,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1265069184
+        "AllocatedBytes": 1265080392
       },
       "comparison": {
         "Identical": true,
@@ -675,7 +690,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": 0,
           "meals.ownSales": 0,
-          "meals.skippedToday": 0,
+          "meals.skipped": 0,
           "revenue.ownUnits": 0,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": 0,
@@ -702,7 +717,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -714,7 +730,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -726,7 +743,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "0518c5297f26a84e9e2cf779fe39cb928cfc0e8eba53f12009ed73d34330ef14",
@@ -763,7 +781,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -780,9 +798,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 2.8789368,
+        "Seconds": 3.1408776,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1182605336
+        "AllocatedBytes": 1182604752
       },
       "comparison": {
         "Identical": true,
@@ -806,7 +824,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": 0,
           "meals.ownSales": 0,
-          "meals.skippedToday": 0,
+          "meals.skipped": 0,
           "revenue.ownUnits": 0,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": 0,
@@ -833,7 +851,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -845,7 +864,8 @@
             "FifoSha256": "18e843ea2ced373b6df9d750790aa80d892c7fb638d136ff4c6ea7913043c34f",
             "Sales": 303,
             "Arrivals": 4956,
-            "MissedActivities": 363
+            "MissedActivities": 363,
+            "SkippedMeals": 137
           },
           {
             "Minute": 4500,
@@ -857,7 +877,8 @@
             "FifoSha256": "6bdac3a5fdcd6b12916fb8d248349765ba59c7938da10ed2fbc519de3023fb78",
             "Sales": 625,
             "Arrivals": 9983,
-            "MissedActivities": 708
+            "MissedActivities": 708,
+            "SkippedMeals": 169
           }
         ],
         "FinalSaveSha256": "bdfc07842381000a4d2ca0e4c00f1a21d559db0520807f050db41bbff72eb078",
@@ -894,7 +915,7 @@
           "meals.bought": 625,
           "meals.ownSales": 625,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 169,
+          "meals.skipped": 306,
           "revenue.ownUnits": 96797825433600,
           "routines.missedActivities": 708,
           "traffic.fifoSamples": 612,
@@ -911,9 +932,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 12.4429975,
+        "Seconds": 13.4305395,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1364054632
+        "AllocatedBytes": 1364055856
       },
       "comparison": {
         "Identical": false,
@@ -943,7 +964,7 @@
           "journeys.walk.p95Minutes": 3.9999999999997726,
           "meals.bought": -20,
           "meals.ownSales": -20,
-          "meals.skippedToday": 29,
+          "meals.skipped": 49,
           "revenue.ownUnits": -1583769190400,
           "routines.missedActivities": 17,
           "visits.admittedAtShop": -10,
@@ -970,7 +991,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -982,7 +1004,8 @@
             "FifoSha256": "bc6393c63bc39d819c4a69c3c607ae60d23e54cee87df5ba35f0935d506fdefb",
             "Sales": 312,
             "Arrivals": 4983,
-            "MissedActivities": 362
+            "MissedActivities": 362,
+            "SkippedMeals": 132
           },
           {
             "Minute": 4500,
@@ -994,7 +1017,8 @@
             "FifoSha256": "e271a3b0afadc395197627dfa981340227175bc9139f1b2ec460528d3b9b6f69",
             "Sales": 660,
             "Arrivals": 10038,
-            "MissedActivities": 701
+            "MissedActivities": 701,
+            "SkippedMeals": 149
           }
         ],
         "FinalSaveSha256": "0cb421f34cbf353470eb96795f41fab87d9077258ee554cb5f0287e6d3a5687c",
@@ -1031,7 +1055,7 @@
           "meals.bought": 660,
           "meals.ownSales": 660,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 149,
+          "meals.skipped": 281,
           "revenue.ownUnits": 100690139545600,
           "routines.missedActivities": 701,
           "traffic.fifoSamples": 612,
@@ -1048,9 +1072,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 10.3389367,
+        "Seconds": 11.3246332,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1325876880
+        "AllocatedBytes": 1325887736
       },
       "comparison": {
         "Identical": false,
@@ -1080,7 +1104,7 @@
           "journeys.walk.p95Minutes": 3.242664362590176,
           "meals.bought": 15,
           "meals.ownSales": 15,
-          "meals.skippedToday": 9,
+          "meals.skipped": 24,
           "revenue.ownUnits": 2308544921600,
           "routines.missedActivities": 10,
           "visits.admittedAtShop": 15,
@@ -1107,7 +1131,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1119,7 +1144,8 @@
             "FifoSha256": "a1a946125c2f46720b90ded5e3b3ac78c8f3c843fdad99e11780eb9094bebf5b",
             "Sales": 301,
             "Arrivals": 4938,
-            "MissedActivities": 362
+            "MissedActivities": 362,
+            "SkippedMeals": 126
           },
           {
             "Minute": 4500,
@@ -1131,7 +1157,8 @@
             "FifoSha256": "def25266b9104e63f79f56533072cd7326f78f36f80b5e394b20052c8ea468c2",
             "Sales": 642,
             "Arrivals": 9961,
-            "MissedActivities": 711
+            "MissedActivities": 711,
+            "SkippedMeals": 153
           }
         ],
         "FinalSaveSha256": "404f591277a52984e26e4489b95c7b4ed9be128ae222012cabd347927b486e6f",
@@ -1168,7 +1195,7 @@
           "meals.bought": 642,
           "meals.ownSales": 642,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 153,
+          "meals.skipped": 279,
           "revenue.ownUnits": 98569499443200,
           "routines.missedActivities": 711,
           "traffic.fifoSamples": 612,
@@ -1185,9 +1212,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 11.9693033,
+        "Seconds": 12.2129644,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1346341488
+        "AllocatedBytes": 1346345528
       },
       "comparison": {
         "Identical": false,
@@ -1217,7 +1244,7 @@
           "journeys.walk.p95Minutes": 3.9999999999997726,
           "meals.bought": -3,
           "meals.ownSales": -3,
-          "meals.skippedToday": 13,
+          "meals.skipped": 22,
           "revenue.ownUnits": 187904819200,
           "routines.missedActivities": 20,
           "visits.admittedAtShop": -21,
@@ -1244,7 +1271,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1256,7 +1284,8 @@
             "FifoSha256": "5702274c3cdf1e546e293c939e48da41167721876294a4d4d106a86b74d52c2d",
             "Sales": 309,
             "Arrivals": 4955,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 117
           },
           {
             "Minute": 4500,
@@ -1268,7 +1297,8 @@
             "FifoSha256": "dae905e9b983253a7909b196eae1f4d233388bb696503daaaaaafa5ec8db5ba8",
             "Sales": 645,
             "Arrivals": 9996,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 140
           }
         ],
         "FinalSaveSha256": "0518c5297f26a84e9e2cf779fe39cb928cfc0e8eba53f12009ed73d34330ef14",
@@ -1305,7 +1335,7 @@
           "meals.bought": 645,
           "meals.ownSales": 645,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 140,
+          "meals.skipped": 257,
           "revenue.ownUnits": 98381594624000,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -1322,9 +1352,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 3.0914436,
+        "Seconds": 3.0420702,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1182620448
+        "AllocatedBytes": 1182606584
       },
       "comparison": {
         "Identical": true,
@@ -1348,7 +1378,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": 0,
           "meals.ownSales": 0,
-          "meals.skippedToday": 0,
+          "meals.skipped": 0,
           "revenue.ownUnits": 0,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": 0,
@@ -1375,7 +1405,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1387,7 +1418,8 @@
             "FifoSha256": "7fffdc56a220b1222f74132fa598621d17b51deb21941b3ca246a3e782fbb79a",
             "Sales": 306,
             "Arrivals": 4949,
-            "MissedActivities": 358
+            "MissedActivities": 358,
+            "SkippedMeals": 119
           },
           {
             "Minute": 4500,
@@ -1399,7 +1431,8 @@
             "FifoSha256": "a3267cff0726cdda81f1a43a9b24c166b3bf841dfff1406782516af7703d6343",
             "Sales": 641,
             "Arrivals": 9992,
-            "MissedActivities": 691
+            "MissedActivities": 691,
+            "SkippedMeals": 144
           }
         ],
         "FinalSaveSha256": "5e75df61c1331134b88894ddecd11caf3cd0653ea7c9f1dde07a937673fc6cf6",
@@ -1436,7 +1469,7 @@
           "meals.bought": 641,
           "meals.ownSales": 641,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 144,
+          "meals.skipped": 263,
           "revenue.ownUnits": 97952097894400,
           "routines.missedActivities": 691,
           "traffic.fifoSamples": 612,
@@ -1453,9 +1486,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 3.9346373,
+        "Seconds": 3.4996821,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1196288960
+        "AllocatedBytes": 1196286760
       },
       "comparison": {
         "Identical": false,
@@ -1485,7 +1518,7 @@
           "journeys.walk.p95Minutes": 0,
           "meals.bought": -4,
           "meals.ownSales": -4,
-          "meals.skippedToday": 4,
+          "meals.skipped": 6,
           "revenue.ownUnits": -429496729600,
           "routines.missedActivities": 0,
           "visits.admittedAtShop": -2,
@@ -1512,7 +1545,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1524,7 +1558,8 @@
             "FifoSha256": "ed1e5858ceb7022b3999ee9050fedd216c8f51e713630ff81a602fe08e770622",
             "Sales": 299,
             "Arrivals": 4940,
-            "MissedActivities": 362
+            "MissedActivities": 362,
+            "SkippedMeals": 120
           },
           {
             "Minute": 4500,
@@ -1536,7 +1571,8 @@
             "FifoSha256": "07ac8a26d77a044095c22e9bcd65f5f6a624731b693d28b5a4f5576a9ce53d8a",
             "Sales": 623,
             "Arrivals": 9989,
-            "MissedActivities": 698
+            "MissedActivities": 698,
+            "SkippedMeals": 167
           }
         ],
         "FinalSaveSha256": "fc5b31c22991b5c31778456f59ee37bf6321fa6ee6e9c62398b476aaa2147492",
@@ -1573,7 +1609,7 @@
           "meals.bought": 623,
           "meals.ownSales": 623,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 167,
+          "meals.skipped": 287,
           "revenue.ownUnits": 95536178790400,
           "routines.missedActivities": 698,
           "traffic.fifoSamples": 612,
@@ -1590,9 +1626,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 8.6198824,
+        "Seconds": 7.7479131,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1279679560
+        "AllocatedBytes": 1279677096
       },
       "comparison": {
         "Identical": false,
@@ -1622,7 +1658,7 @@
           "journeys.walk.p95Minutes": 2,
           "meals.bought": -22,
           "meals.ownSales": -22,
-          "meals.skippedToday": 27,
+          "meals.skipped": 30,
           "revenue.ownUnits": -2845415833600,
           "routines.missedActivities": 7,
           "visits.admittedAtShop": -4,
@@ -1649,7 +1685,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1661,7 +1698,8 @@
             "FifoSha256": "996c8151dec69a0b4d3863adfcc5e061900921eaceb7940e8622c16185f099d4",
             "Sales": 295,
             "Arrivals": 4940,
-            "MissedActivities": 381
+            "MissedActivities": 381,
+            "SkippedMeals": 158
           },
           {
             "Minute": 4500,
@@ -1673,7 +1711,8 @@
             "FifoSha256": "5f380cf4c80a7632b9b739f0c087502beeebf0b745501221fcfcafe9c6a5df09",
             "Sales": 617,
             "Arrivals": 9964,
-            "MissedActivities": 728
+            "MissedActivities": 728,
+            "SkippedMeals": 176
           }
         ],
         "FinalSaveSha256": "da3aea95dbbee11912df22d429f0650d44a1964f108d2f96ab8d29f3b9a82f9c",
@@ -1710,7 +1749,7 @@
           "meals.bought": 617,
           "meals.ownSales": 617,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 176,
+          "meals.skipped": 334,
           "revenue.ownUnits": 94516124057600,
           "routines.missedActivities": 728,
           "traffic.fifoSamples": 612,
@@ -1727,9 +1766,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 34.5249933,
+        "Seconds": 38.1405362,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1709595576
+        "AllocatedBytes": 1709582416
       },
       "comparison": {
         "Identical": false,
@@ -1759,7 +1798,7 @@
           "journeys.walk.p95Minutes": 7.358081435795839,
           "meals.bought": -28,
           "meals.ownSales": -28,
-          "meals.skippedToday": 36,
+          "meals.skipped": 77,
           "revenue.ownUnits": -3865470566400,
           "routines.missedActivities": 37,
           "visits.admittedAtShop": -26,
@@ -1786,7 +1825,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1798,7 +1838,8 @@
             "FifoSha256": "8cc4a0d70cda3bbc9131d1fbf5015ae026efb1f6d27776ce9ae9ce8131e8208e",
             "Sales": 306,
             "Arrivals": 4938,
-            "MissedActivities": 360
+            "MissedActivities": 360,
+            "SkippedMeals": 113
           },
           {
             "Minute": 4500,
@@ -1810,7 +1851,8 @@
             "FifoSha256": "0024c7fef8f44efb21b9ccea119b73addf616b5ef8970b60ba248477b7e46eaa",
             "Sales": 653,
             "Arrivals": 9981,
-            "MissedActivities": 692
+            "MissedActivities": 692,
+            "SkippedMeals": 137
           }
         ],
         "FinalSaveSha256": "015aa23752e7dc022691ade9acd9f06031104567081400f6c68b22a0c6684142",
@@ -1847,7 +1889,7 @@
           "meals.bought": 653,
           "meals.ownSales": 653,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 137,
+          "meals.skipped": 250,
           "revenue.ownUnits": 99509023539200,
           "routines.missedActivities": 692,
           "traffic.fifoSamples": 612,
@@ -1864,9 +1906,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 11.3008656,
+        "Seconds": 11.9233374,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1358410752
+        "AllocatedBytes": 1358402104
       },
       "comparison": {
         "Identical": false,
@@ -1896,7 +1938,7 @@
           "journeys.walk.p95Minutes": -2.2737367544323206E-13,
           "meals.bought": 8,
           "meals.ownSales": 8,
-          "meals.skippedToday": -3,
+          "meals.skipped": -7,
           "revenue.ownUnits": 1127428915200,
           "routines.missedActivities": 1,
           "visits.admittedAtShop": -8,
@@ -1923,7 +1965,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -1935,7 +1978,8 @@
             "FifoSha256": "712e9207f84567fda02eb5df16a5384a4f9959678c8ec330c4e42792d381b04a",
             "Sales": 300,
             "Arrivals": 4961,
-            "MissedActivities": 365
+            "MissedActivities": 365,
+            "SkippedMeals": 125
           },
           {
             "Minute": 4500,
@@ -1947,7 +1991,8 @@
             "FifoSha256": "89532a91e11db9a0df95581ac3ea21b81905e056827497e40699bc42ec63472c",
             "Sales": 632,
             "Arrivals": 10008,
-            "MissedActivities": 720
+            "MissedActivities": 720,
+            "SkippedMeals": 160
           }
         ],
         "FinalSaveSha256": "e9b246a63d8b3e0a12594110cc4229ddac574c80efec5f461326407694002855",
@@ -1984,7 +2029,7 @@
           "meals.bought": 632,
           "meals.ownSales": 632,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 160,
+          "meals.skipped": 285,
           "revenue.ownUnits": 97898410803200,
           "routines.missedActivities": 720,
           "traffic.fifoSamples": 612,
@@ -2001,9 +2046,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 9.5785031,
+        "Seconds": 12.6987334,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1365456544
+        "AllocatedBytes": 1365447840
       },
       "comparison": {
         "Identical": false,
@@ -2034,7 +2079,7 @@
           "journeys.walk.p95Minutes": 3.9999999999997726,
           "meals.bought": -13,
           "meals.ownSales": -13,
-          "meals.skippedToday": 20,
+          "meals.skipped": 28,
           "revenue.ownUnits": -483183820800,
           "routines.missedActivities": 29,
           "visits.admittedAtShop": -5,
@@ -2061,7 +2106,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -2073,7 +2119,8 @@
             "FifoSha256": "9bc8bd497eafbc48997348b437a06b92fb73531f7a8fa65430b880a2ec28579d",
             "Sales": 297,
             "Arrivals": 4944,
-            "MissedActivities": 366
+            "MissedActivities": 366,
+            "SkippedMeals": 145
           },
           {
             "Minute": 4500,
@@ -2085,7 +2132,8 @@
             "FifoSha256": "2e086f9da96fc22f37a1248df54b73730f97437314d7c790aebb7f6cd7b33bdd",
             "Sales": 630,
             "Arrivals": 9981,
-            "MissedActivities": 710
+            "MissedActivities": 710,
+            "SkippedMeals": 152
           }
         ],
         "FinalSaveSha256": "5022678aa1bdd0741c045fc59b78bacc952af7b1e72f54168e107f53578ed66a",
@@ -2122,7 +2170,7 @@
           "meals.bought": 630,
           "meals.ownSales": 630,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 152,
+          "meals.skipped": 297,
           "revenue.ownUnits": 97710505984000,
           "routines.missedActivities": 710,
           "traffic.fifoSamples": 612,
@@ -2139,9 +2187,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 9.5590784,
+        "Seconds": 12.6741076,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1364795416
+        "AllocatedBytes": 1364808832
       },
       "comparison": {
         "Identical": false,
@@ -2171,7 +2219,7 @@
           "journeys.walk.p95Minutes": 3.9999999999997726,
           "meals.bought": -15,
           "meals.ownSales": -15,
-          "meals.skippedToday": 12,
+          "meals.skipped": 40,
           "revenue.ownUnits": -671088640000,
           "routines.missedActivities": 19,
           "visits.admittedAtShop": -11,
@@ -2198,7 +2246,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -2210,7 +2259,8 @@
             "FifoSha256": "159bf509633b23711b140fc3b86622cae05efdc62d7106e768584519f9dcfc7b",
             "Sales": 306,
             "Arrivals": 4964,
-            "MissedActivities": 369
+            "MissedActivities": 369,
+            "SkippedMeals": 137
           },
           {
             "Minute": 4500,
@@ -2222,7 +2272,8 @@
             "FifoSha256": "7e7593b4fa1970b157ba4dcf0cd3fd2b56898567bb00ffd3f231000ef3c25d8f",
             "Sales": 648,
             "Arrivals": 10023,
-            "MissedActivities": 711
+            "MissedActivities": 711,
+            "SkippedMeals": 152
           }
         ],
         "FinalSaveSha256": "ef984867ff16150bcc84fbf20d8f55c3c5ea1b11466908984d3c3e3db29f0ee0",
@@ -2259,7 +2310,7 @@
           "meals.bought": 648,
           "meals.ownSales": 648,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 152,
+          "meals.skipped": 289,
           "revenue.ownUnits": 100314329907200,
           "routines.missedActivities": 711,
           "traffic.fifoSamples": 612,
@@ -2276,9 +2327,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 10.4318589,
+        "Seconds": 12.735093,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1367894808
+        "AllocatedBytes": 1367892408
       },
       "comparison": {
         "Identical": false,
@@ -2308,7 +2359,7 @@
           "journeys.walk.p95Minutes": 3.9999999999997726,
           "meals.bought": 3,
           "meals.ownSales": 3,
-          "meals.skippedToday": 12,
+          "meals.skipped": 32,
           "revenue.ownUnits": 1932735283200,
           "routines.missedActivities": 20,
           "visits.admittedAtShop": 7,
@@ -2335,7 +2386,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -2347,7 +2399,8 @@
             "FifoSha256": "28a8a764e81eb8ccacd2da39ea56b3172777d94d5dee93e1969996ad13875723",
             "Sales": 305,
             "Arrivals": 4960,
-            "MissedActivities": 361
+            "MissedActivities": 361,
+            "SkippedMeals": 120
           },
           {
             "Minute": 4500,
@@ -2359,7 +2412,8 @@
             "FifoSha256": "5b43863544aa3c02d03a7a555ca6c74cf9bf8634dfa4e332745ea4e98d0e229d",
             "Sales": 626,
             "Arrivals": 9997,
-            "MissedActivities": 699
+            "MissedActivities": 699,
+            "SkippedMeals": 171
           }
         ],
         "FinalSaveSha256": "7d2a2d62f172711205d9a70e91dbbfd66a5e3dccb6373240760f3d78110f55c4",
@@ -2396,7 +2450,7 @@
           "meals.bought": 626,
           "meals.ownSales": 626,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 171,
+          "meals.skipped": 291,
           "revenue.ownUnits": 96556233523200,
           "routines.missedActivities": 699,
           "traffic.fifoSamples": 612,
@@ -2413,9 +2467,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 5.8425893,
+        "Seconds": 7.3694241,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1280035088
+        "AllocatedBytes": 1280047648
       },
       "comparison": {
         "Identical": false,
@@ -2445,7 +2499,7 @@
           "journeys.walk.p95Minutes": 3.5968929287157607,
           "meals.bought": -19,
           "meals.ownSales": -19,
-          "meals.skippedToday": 31,
+          "meals.skipped": 34,
           "revenue.ownUnits": -1825361100800,
           "routines.missedActivities": 8,
           "visits.admittedAtShop": -2,
@@ -2472,7 +2526,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -2484,7 +2539,8 @@
             "FifoSha256": "b1694fc844e89d4bb291d6f8445003c03cf7aabfc603a644434ff3b0afc24c61",
             "Sales": 305,
             "Arrivals": 4944,
-            "MissedActivities": 363
+            "MissedActivities": 363,
+            "SkippedMeals": 135
           },
           {
             "Minute": 4500,
@@ -2496,7 +2552,8 @@
             "FifoSha256": "4792297ca1d9d87c733fc51f27ad4f5af10f5a8ddda654e8064b2121a154afc5",
             "Sales": 643,
             "Arrivals": 9993,
-            "MissedActivities": 707
+            "MissedActivities": 707,
+            "SkippedMeals": 170
           }
         ],
         "FinalSaveSha256": "ff204b0f3fb97a600a7cc996132a15d5a2e408014796f1bff95f586b563debea",
@@ -2533,7 +2590,7 @@
           "meals.bought": 643,
           "meals.ownSales": 643,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 170,
+          "meals.skipped": 305,
           "revenue.ownUnits": 98972152627200,
           "routines.missedActivities": 707,
           "traffic.fifoSamples": 612,
@@ -2550,9 +2607,9 @@
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 17.0727085,
+        "Seconds": 22.4666762,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1526335392
+        "AllocatedBytes": 1526320576
       },
       "comparison": {
         "Identical": false,
@@ -2582,7 +2639,7 @@
           "journeys.walk.p95Minutes": 4.000000000000227,
           "meals.bought": -2,
           "meals.ownSales": -2,
-          "meals.skippedToday": 30,
+          "meals.skipped": 48,
           "revenue.ownUnits": 590558003200,
           "routines.missedActivities": 16,
           "visits.admittedAtShop": -7,
@@ -2609,7 +2666,8 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
@@ -2621,7 +2679,8 @@
             "FifoSha256": "c73d216890528c2297b80cf14a3a55fd9e6d17204236324553cd0acf2b1cd671",
             "Sales": 306,
             "Arrivals": 4956,
-            "MissedActivities": 365
+            "MissedActivities": 365,
+            "SkippedMeals": 139
           },
           {
             "Minute": 4500,
@@ -2633,7 +2692,8 @@
             "FifoSha256": "f3e880dd54dd90d941b7dc9ab9492887f7cd9976ab8f44607cf38769aaa26678",
             "Sales": 638,
             "Arrivals": 10019,
-            "MissedActivities": 707
+            "MissedActivities": 707,
+            "SkippedMeals": 178
           }
         ],
         "FinalSaveSha256": "e042416991119e7b30c6ea4da668dac8bdd92d59ec1fd875cc1b7ffca9e342d2",
@@ -2670,7 +2730,7 @@
           "meals.bought": 638,
           "meals.ownSales": 638,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 178,
+          "meals.skipped": 317,
           "revenue.ownUnits": 98730560716800,
           "routines.missedActivities": 707,
           "traffic.fifoSamples": 612,
@@ -2687,9 +2747,9 @@
         "Reloads": 1,
         "InFlightAtReload": 31,
         "BodiesAtReload": 16,
-        "Seconds": 9.7038742,
+        "Seconds": 13.9147675,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1445296384
+        "AllocatedBytes": 1445287832
       },
       "comparison": {
         "Identical": false,
@@ -2719,7 +2779,7 @@
           "journeys.walk.p95Minutes": 3.9999999999997726,
           "meals.bought": -7,
           "meals.ownSales": -7,
-          "meals.skippedToday": 38,
+          "meals.skipped": 60,
           "revenue.ownUnits": 348966092800,
           "routines.missedActivities": 16,
           "visits.admittedAtShop": 9,
@@ -2746,87 +2806,90 @@
             "FifoSha256": "a348b6f9fd18cf415b9a17a3baa9bbebf16bbb61d29d844a48435e9ab8f88933",
             "Sales": 0,
             "Arrivals": 0,
-            "MissedActivities": 0
+            "MissedActivities": 0,
+            "SkippedMeals": 0
           },
           {
             "Minute": 3060,
-            "SaveSha256": "47484d5c4fc815c23dfb19fae6c0fd682e7fa428083bd4632353985fceacd6fb",
-            "SalesSha256": "136e64bc4a81fd46bc106612a4a098fc730f6e5a1efe2fbc8acd28b6bb1fd6e5",
-            "JourneysSha256": "99c0b57f612dcf86a910163ef2c74a0de1604060f7ff2b5e9e4ae35e382528ed",
+            "SaveSha256": "ade66287e0d4a0f59c6c9c13fad25838890cb5482a1bfdb6b8dd0a3035f0c596",
+            "SalesSha256": "6f631723f270a02f4ce536c7e22a8edebba0f1b93055815a1aa1e79a83e5f771",
+            "JourneysSha256": "66f78d503dfe7122b81fc7c2947d7f944bca771050d96703fddfff2726e01f85",
             "ParkedSha256": "2902f26d15a6e5603afda19c1bf89ec82370e3f84d18e7e4eeb3992c389984ff",
             "WalletsSha256": "bd0371f890248857afb393763c833871cc1c7553f3e2b38f2efd65eea919035c",
             "FifoSha256": "a1fe8d75c8bf28e03a50b013f60298319c554da192176afa43e5fb235cd98010",
             "Sales": 311,
             "Arrivals": 4956,
-            "MissedActivities": 364
+            "MissedActivities": 364,
+            "SkippedMeals": 132
           },
           {
             "Minute": 4500,
-            "SaveSha256": "348b372ee8a48919566d8cc0c94aca6ef380a6a306247a194e487fb3525c34ba",
-            "SalesSha256": "2ff4dab29e0af0ed99a62783864169a295c3fcdc753dde58065d28e97f54566a",
-            "JourneysSha256": "2484072e731fae563c421ff1069353a757688818b26d51672561dcdc97c29357",
+            "SaveSha256": "6e92228ad571e14307468af99f053eb80674b68a7aca255a6ddf0a1e1476f4ac",
+            "SalesSha256": "14f99385b27846f26aaa3a8851d8879bcd104b99c7f6efd55f0aec1e33b9ac58",
+            "JourneysSha256": "6c698628fbc5bf471f6d6321a59ebe6465d145c80905bfd73cc213b5b23d6d64",
             "ParkedSha256": "8d1407a1d427f78685fb7d5b5b3817349d82db5ae6dbdff25526362595499058",
-            "WalletsSha256": "7c327716d5e29f760c066ac590efe5f650649bf9c6f632f94b32b62c30fa9cf6",
-            "FifoSha256": "302e11ecf1be1f76c209908c9a54a06f0895ad0f83a74f39a27b20c46a67a4dd",
-            "Sales": 649,
-            "Arrivals": 10007,
-            "MissedActivities": 710
+            "WalletsSha256": "f78e6799792b50ed5eeac7f4dbc0c78a1c31aa0e7cb56efea3686d4ad84cf4e6",
+            "FifoSha256": "adaf915cac5d590a7607e141d9059c73875ceecd166db2c744ef42b0b0eedd08",
+            "Sales": 644,
+            "Arrivals": 10013,
+            "MissedActivities": 710,
+            "SkippedMeals": 164
           }
         ],
-        "FinalSaveSha256": "348b372ee8a48919566d8cc0c94aca6ef380a6a306247a194e487fb3525c34ba",
-        "SalesSha256": "2ff4dab29e0af0ed99a62783864169a295c3fcdc753dde58065d28e97f54566a",
-        "JourneysSha256": "2484072e731fae563c421ff1069353a757688818b26d51672561dcdc97c29357",
-        "FifoSha256": "302e11ecf1be1f76c209908c9a54a06f0895ad0f83a74f39a27b20c46a67a4dd",
+        "FinalSaveSha256": "6e92228ad571e14307468af99f053eb80674b68a7aca255a6ddf0a1e1476f4ac",
+        "SalesSha256": "14f99385b27846f26aaa3a8851d8879bcd104b99c7f6efd55f0aec1e33b9ac58",
+        "JourneysSha256": "6c698628fbc5bf471f6d6321a59ebe6465d145c80905bfd73cc213b5b23d6d64",
+        "FifoSha256": "adaf915cac5d590a7607e141d9059c73875ceecd166db2c744ef42b0b0eedd08",
         "Metrics": {
-          "bodies.acquired": 3919,
-          "bodies.arrivalHolds": 789,
-          "bodies.blockedSamples": 2736490,
-          "bodies.carFrames": 2789666,
+          "bodies.acquired": 3918,
+          "bodies.arrivalHolds": 792,
+          "bodies.blockedSamples": 2736275,
+          "bodies.carFrames": 2789171,
           "bodies.failedAcquisitions": 0,
           "bodies.hiddenTravelFrames": 1134,
           "bodies.hiddenTravelReleases": 27,
-          "bodies.leaseObservations": 11028488,
+          "bodies.leaseObservations": 11029893,
           "bodies.maxCars": 24,
           "bodies.maxWalkers": 48,
-          "bodies.released": 3919,
+          "bodies.released": 3918,
           "bodies.trafficOvershoots": 0,
-          "bodies.walkerFrames": 8205086,
+          "bodies.walkerFrames": 8206999,
           "cars.parkedAway": 25,
-          "journeys.arrivals": 10007,
+          "journeys.arrivals": 10013,
           "journeys.car.count": 3789,
           "journeys.car.maxMinutes": 210.30710678118658,
-          "journeys.car.meanMinutes": 30.683101539690302,
+          "journeys.car.meanMinutes": 30.68189027035123,
           "journeys.car.p50Minutes": 12.90710678118694,
           "journeys.car.p95Minutes": 134.30710678118658,
           "journeys.replaced": 0,
-          "journeys.walk.count": 6218,
+          "journeys.walk.count": 6224,
           "journeys.walk.maxMinutes": 101.05000114440918,
-          "journeys.walk.meanMinutes": 27.52113898634834,
-          "journeys.walk.p50Minutes": 24.383235931396484,
+          "journeys.walk.meanMinutes": 27.507744801711713,
+          "journeys.walk.p50Minutes": 24.261043548583984,
           "journeys.walk.p95Minutes": 59.41421356237288,
-          "meals.bought": 649,
-          "meals.ownSales": 649,
+          "meals.bought": 644,
+          "meals.ownSales": 644,
           "meals.refusedAtCheckout": 0,
-          "meals.skippedToday": 161,
-          "revenue.ownUnits": 100421704089600,
+          "meals.skipped": 296,
+          "revenue.ownUnits": 99535867084800,
           "routines.missedActivities": 710,
           "traffic.fifoSamples": 612,
-          "traffic.queuedLinkSamples": 6334,
-          "visits.admittedAtShop": 1666,
-          "visits.shopArrivals": 2218,
+          "traffic.queuedLinkSamples": 6336,
+          "visits.admittedAtShop": 1669,
+          "visits.shopArrivals": 2221,
           "visits.workArrivals": 2156,
-          "wallets.balanceUnits": 94938798768521220
+          "wallets.balanceUnits": 94939684605526020
         },
-        "Frames": 551943,
-        "Events": 170870,
+        "Frames": 551913,
+        "Events": 170935,
         "FifoSamples": 612,
-        "QueuedFifoSamples": 6334,
+        "QueuedFifoSamples": 6336,
         "Reloads": 0,
         "InFlightAtReload": 0,
         "BodiesAtReload": 0,
-        "Seconds": 9.5393612,
+        "Seconds": 12.3941791,
         "SimulatedDays": 2,
-        "AllocatedBytes": 1362078272
+        "AllocatedBytes": 1364266104
       },
       "comparison": {
         "Identical": false,
@@ -2849,20 +2912,20 @@
         },
         "Delta": {
           "cars.parkedAway": 0,
-          "journeys.arrivals": 11,
-          "journeys.car.meanMinutes": 0.01635688614772235,
+          "journeys.arrivals": 17,
+          "journeys.car.meanMinutes": 0.01514561680864901,
           "journeys.car.p95Minutes": 1,
-          "journeys.walk.meanMinutes": 1.2870156301614877,
+          "journeys.walk.meanMinutes": 1.27362144552486,
           "journeys.walk.p95Minutes": 3.9999999999997726,
-          "meals.bought": 4,
-          "meals.ownSales": 4,
-          "meals.skippedToday": 21,
-          "revenue.ownUnits": 2040109465600,
+          "meals.bought": -1,
+          "meals.ownSales": -1,
+          "meals.skipped": 39,
+          "revenue.ownUnits": 1154272460800,
           "routines.missedActivities": 19,
-          "visits.admittedAtShop": 1,
-          "visits.shopArrivals": 5,
+          "visits.admittedAtShop": 4,
+          "visits.shopArrivals": 8,
           "visits.workArrivals": 10,
-          "wallets.balanceUnits": -2040109465600
+          "wallets.balanceUnits": -1154272460800
         }
       }
     }
