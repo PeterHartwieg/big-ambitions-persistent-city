@@ -182,6 +182,7 @@ namespace PersistentCity.Core
         // Called wherever a live citizen's choice, stop, phase, activity or outing may have changed.
         internal void FileOptionalStop(CitizenState person)
         {
+            activeJourneys.File(person);
             if (stopEnvironment == null) return;
             bool pending = PendingChance(person), waiting = pending && WaitingForPartner(person);
             if (pending && !waiting) bankedChances.Add(person); else bankedChances.Remove(person);
