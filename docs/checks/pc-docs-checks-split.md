@@ -1,5 +1,9 @@
 # pc-docs-checks-split: documentation layout
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- pc-docs-checks-split — Documentation structure and preservation audit: [checks](pc-docs-checks-split.md).
+
 ## Structural change — 1 November 2026 (offline only)
 
 CHECKS.md indexes the owning slice/topic files. The README's dated opening notices and the roadmap's standalone B0/C3/E2a notices now live with their slice checks. The roadmap indexes six per-slice performance files; its shared performance gate and normal planning prose remain in place. AGENTS.md requires future validation, notices, sync/review-fix notes and performance entries to stay with their slice.

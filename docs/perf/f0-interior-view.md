@@ -1,5 +1,9 @@
 # F0 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- F0 — [Interior view experiment, reviews and native checklist](f0-interior-view.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | F0 review r1, 31 Oct | Cache configured bool/full context per frame and use a validated native speed delegate. Frozen pre-r1 adapter versus fixed adapter, actual `FieldInfo.GetValue` before / actual typed accessor after, 36 queries per emulated frame, 300 × 100 batches; native doubles. | p50/p95/max batch means **0.000975/0.001576/0.002240 ms/frame**, **0 B/frame** | **0.000690/0.000941/0.001080 ms/frame**, **0 B/frame**. Same-frame blockers still invalidate immediately; full-context reads 1 per frame rather than per body. `build/f0-review-r1/accessor-verified.txt`; .NET-only partial timings, not Unity/full-mod clearance. |

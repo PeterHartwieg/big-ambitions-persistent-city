@@ -1,5 +1,7 @@
 # Track F: city view from interiors
 
+6 November 2026: Owner decisions after approval are in [docs/decisions/](../decisions/); this plan is frozen. Slice status is in the checks files indexed by [CHECKS.md](../../CHECKS.md).
+
 F0 discovery/prototype, 31 October 2026. Peter approved this independent track on that date: F0 spike, F1 shop view and visible customer entry, F2 penthouse/upper-floor view, F3 polish. F0 branches directly from `codex/persistent-city`; it uses no A1/A2/A3 code or save contracts. A later **separate E2c** will disable our view if the third-party “True City Interiors” mod is detected. No detection, integration or third-party implementation research belongs to F0.
 
 ## Evidence boundary and decision

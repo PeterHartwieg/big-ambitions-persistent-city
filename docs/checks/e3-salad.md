@@ -1,5 +1,9 @@
 # E3 salad checks
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 salad — Conditional direct-stock probe, feasibility stop, base sync and native checklist: [checks](e3-salad.md).
+
 ## Roadmap entry (moved 6 Nov 2026)
 
 E3 salad status, 1 November (offline): [salad stop record](../archive/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).

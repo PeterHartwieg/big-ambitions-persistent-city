@@ -1,5 +1,9 @@
 # F1: Shop-view drawing stop and rig handoff
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](f1-shop-view.md).
+
 ## README entry (moved 6 Nov 2026)
 
 F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](../archive/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.

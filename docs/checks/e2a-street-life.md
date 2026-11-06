@@ -1,5 +1,9 @@
 # E2a: Street-life proof, coverage and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E2a — Street-life proof, coverage and native checklist: [checks](e2a-street-life.md).
+
 ## E2a review round 1 — 31 October 2026 (offline only)
 
 The missing-fact venue fixtures now set the loop's business type before applying damage, so the 210 assertions exercise each listed type rather than repeating nightclub refusals. The queue test now directly compares 0/25/100 from the same saved waiting state: identical queue commitments and full post-admission saves in rain; dry post-admission saves differ only in the legitimate rate-dependent `OptionalStopChoice` field, which is excluded explicitly from that comparison. Morning/night and reload assertions remain intact.

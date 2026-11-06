@@ -1,5 +1,9 @@
 # E3: Donut feasibility and base sync evidence
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 — Donut feasibility, base syncs and native checklist: [checks](e3-donut.md).
+
 ## Roadmap entry (moved 6 Nov 2026)
 
 E3 status, 31 October (offline): [donut](../archive/e3-donut.md) and [cupcake feasibility discovery](../archive/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.

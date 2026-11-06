@@ -1,5 +1,9 @@
 # B1: Shop memory capture and loyalty policy v2
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- B1 — Shop memory, loyalty v2, review fixes and native checklist: [checks](b1-memory-loyalty.md).
+
 ## Roadmap entry (moved 6 Nov 2026)
 
 B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](../archive/population-schema18.md#b1-execution--31-october-2026).

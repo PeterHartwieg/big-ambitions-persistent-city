@@ -1,5 +1,9 @@
 # E3 pizza performance evidence - 1 November 2026
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E3 pizza — [Four-candidate cold/warm costs and allocations; no new win claimed](e3-pizza.md).
+
 No new performance win is claimed. The shared read branches are unchanged: one pinned descriptor was added. Review found once-bound metadata, bounded explicit scans, no success-path diagnostic strings and no redundant identity set; no additional cheap safe measurable optimization was identified or taken. All four parked hotspots remain untouched.
 
 Release .NET 10 conditional native doubles. Separate fresh processes for base `5877453` donut/cupcake/salad before and code `acf8081` all four after. Cold is one first call including JIT, descriptor and metadata binding, not a percentile. Warm is 30 warmups plus 1,001 individually timed valid reads per size; fixture construction excluded, one bag counter included. First three harnesses are unchanged; pizza reuses their native doubles and timing method with its own entry point/cases. Foreground sequential runs use the prescribed other-dotnet guard. Host scheduling remains uncontrolled; timing differences are not causal wins.

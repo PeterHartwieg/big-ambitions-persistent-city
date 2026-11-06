@@ -1,5 +1,9 @@
 # E1: Weather capture, integration and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](e1-rain.md).
+
 ## Roadmap entry (moved 6 Nov 2026)
 
 E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](../archive/population-schema20.md).

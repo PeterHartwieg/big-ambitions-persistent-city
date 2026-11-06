@@ -1,5 +1,9 @@
 # D1: Read-only rival food catalogue and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- D1 — Read-only rival food catalogue and native checklist: [checks](d1-rival-catalogue.md).
+
 ## D1 rival food catalogue (31 October 2026, offline only)
 
 Implementation `ea69866` adds pure detached advertised-food DTOs and an isolated read-only Runtime cache/dump; nothing calls it in gameplay. No player catalogue, authority, supply, choice, money/ledger or save/schema changes; no A3/B0 dependency. Rival stock stays **Unknown**, with availability evidence **EstimatedFromPriceAndHours** only. Exact binary32 prices are copied or refused without rounding. The unchanged player catalogue regression still prints **29 actual catalogue-adapter checks passed**. D1 passes **274 assertions in Debug / 272 in Release** (the IL guard count varies with compiled output), including emitted-IL native-write/API guards and native-double fingerprint equality after 100 reads/refreshes. Coverage includes ownership split, price refusals, unsupported products, closure/hours/access/rating, detached copies, deterministic order, duplicates/replacements/ownership/vacancy/reload, continuation publication and the 20,000-place bound.

@@ -1,5 +1,7 @@
 # F5: independent logical population
 
+6 November 2026: Owner decisions after approval are in [docs/decisions/](../decisions/); this plan is frozen. Slice status is in the checks files indexed by [CHECKS.md](../../CHECKS.md).
+
 Planning record, 4 November 2026. Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). **Docs only; no implementation change.** Base: `origin/codex/persistent-city` at `d6b534ac720ac7c573879a2c9ee981dbcdbbeed5` (writer **25**; E1–E5, the [city vision audit](../reviews/2026-11-03-city-vision-audit.md), F1 #99 and F3 #98 merged). The audit cites `00506ed`; every code claim below was re-read at `d6b534a` and cites that head. Persistent City is not live or released: a slice is **implemented** when it merges after review and **verified by rig** when its automated rig proof passes. Proposed types, fields, limits, formats and effort are designs, not existing APIs or measured results.
 
 Peter approved F5 #92, F6 #93 and F7 #94 on 4 November 2026, 21:23 JST ("I like all changes, let's make it happen.") after a player-facing summary: F5 is a fuller city of real logical residents and visitors linked by households and workplaces, while visible bodies stay capped. This plan owns the **identity model** that the parallel [F6 economy plan](f6-economy.md) and [F7 save-snapshot plan](f7-save-snapshots.md) build on (their files are written on sibling branches; the links resolve once they merge). Section 3's *Contracts for F6 and F7* is the binding hand-off.

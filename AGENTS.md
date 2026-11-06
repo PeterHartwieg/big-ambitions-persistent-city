@@ -1,20 +1,44 @@
 # Persistent City
 
-A separate Big Ambitions mod with a required Real Life Overhaul dependency. Read README.md for scope and evidence.
+A Big Ambitions mod that keeps a persistent city of residents, journeys and traffic, and connects them to the player's food businesses. It requires Real Life Overhaul (RLO) and is not released.
 
-- The current required release scope is `docs/implementation-plan.md`, reconciled on 24 October with GPT-6.1 Sol and Claude Opus 5.5; `docs/reviews/2026-10-24-scope-plan.md` records agreement. It supersedes older expansion requirements. Preserve persistent people, work/leisure and traffic; keep the release bounded. Implementation and validation status are recorded in README.md and CHECKS.md; scope approval does not authorize release or deployment to ordinary saves.
+## Map
 
-- Slice validation and dated development notices belong in `docs/checks/<slice>.md`. Add exactly one index line to CHECKS.md when introducing a slice; never append slice sections or notices to CHECKS.md, README.md or the roadmap. Keep sync/review-fix notes in the owning slice file, preserving evidence and checklist qualifications.
-- Record per-slice performance wins in `docs/perf/<slice>.md`, with before/after numbers and measurement limits, and one index line under the roadmap perf log. Keep shared performance gates and normal prose in place; this layout does not change performance or rig/release requirements.
-- Core is pure C# targeting netstandard2.1. Keep Unity and game calls in Runtime.
-- The detached food shadow remains hypothetical and must never book native sales. The population phase has no economic effects unless the saved city explicitly owns a food scope.
-- Historical authorization on 22 October covered automatic recurring food decisions, saved journey/settlement ownership and narrow native sales after the isolated pilot, with selected shops explicitly enrolled by `PopulationRuntime.StartFoodRoutines`. The 23 October continuation extended that opt-in scope to a verified menu of croissants, burgers and hot dogs under native equipment rules.
-- On 24 October Peter approved the bounded implementation plan and explicitly instructed execution. This authorizes the current automatic ownership implementation for eligible player food businesses, represented consumers and plug-and-play startup without manual enrollment, superseding the earlier opt-in implementation restriction. Whole-business ownership must still transfer safely at native accounting boundaries, and unsupported businesses remain native-owned. This does not authorize writing rival finances, changing RLO, or deploying to Peter's ordinary save.
-- Diagnostic helpers may create fixtures only in their named disposable FT cities on the owned rig. Preserve/restore preexisting rig files/preferences before releasing ownership; native evidence from those fixtures is separate from release approval.
-- Performance test runs must disable autosave in the isolated test profile before timing begins. Record the original setting, verify autosave is off before each measured window (including after reload), and restore the original setting during cleanup. Keep manual saves outside measured windows; any save activity inside a window invalidates it as a clean performance sample. Save-specific profiling requires a separate explicitly requested run.
-- Keep RLO access behind Compatibility. Validate its contract and refuse to start on incompatible data; never silently make replacement identities.
-- Own state uses a versioned persistentcity namespace. Reject unreadable or future schemas without overwriting them.
-- Reuse stable IDs and persist assignments. No identity changes on pool reuse, reload, camera movement or a different update cadence.
-- No game DLLs, decompiled code, raw save files or credentials in Git. Reference locally available assemblies in place.
-- Tests must check invariants and interrupted journeys, not just repeat formulas. Report offline checks separately from game evidence.
-- This project is independent of RLO: do not modify its source or publish anything upstream as part of this work.
+- `Core/`: pure simulation, netstandard2.1, no Unity. `CitySimulator`, `DailyRoutine`, `TrafficKernel`, `FoodCommerce`, `HouseholdFinance`, `PersonIdentity`.
+- `Persistence/`: save codecs and stores. `SaveCodec` (writer `CityState.CurrentSchema`, now 25), `SaveEpoch`, `FoodSaleReceipts`.
+- `Runtime/`: Unity and game calls. `PersistentCityMod`, the `PopulationRuntime` partials, `PhysicalPopulation`, `NativeFoodMarket`.
+- `Compatibility/`: the only RLO access. `RloBridge`, `RloIdentityAdapter`.
+- `tests/`: xUnit, `PersistentCity.Tests.csproj`. `tools/`: build, harnesses, `docs-links`.
+- Docs: [README](README.md), [roadmap](docs/roadmap.md), [behaviour](docs/behaviour.md), [glossary](docs/glossary.md), [CHECKS](CHECKS.md), `docs/plans/`, `docs/decisions/`, `docs/archive/`.
+
+## Start a slice
+
+Read this file, your plan row and the sections your task lists. Then read the code. Other docs only if the task names them.
+
+## Rules
+
+- Write plainly: "implemented" or "verified by rig". One qualification per claim; link evidence instead of restating caveats. Status words: planned, implemented, partial, stopped, verified by rig.
+- Perf gate: mod-work p95 < 5 ms; flag every mod-work spike >= 30 ms; whole-frame timing is reported separately. Take cheap, safe wins and log them with before/after numbers in `docs/perf/<slice>.md`. Every slice has a perf file.
+- Local tests: build, `dotnet test tests/PersistentCity.Tests.csproj`, and the slice's own new checks. The `tools/*-regression` suites are not run before release. Run one dotnet process at a time.
+- In-game checks are batched for the next rig run and do not gate merge. List them in your checks file under "In-game checks for the next batched rig", each numbered with setup, steps and expected result.
+- No save migration before release. A new schema refuses older development cities with a distinct "start a new city" status. A change that would need a switch-over day bumps the schema instead. Keep save-epoch safety, strict refusal and the pinned current-writer golden hash.
+- Slices edit no shared docs. Write only `docs/checks/<slice>.md` and `docs/perf/<slice>.md`. The coordinator updates README and CHECKS after merge. Plans are frozen; later owner decisions go in `docs/decisions/`.
+- Use "Refs #N", not "Fixes #N".
+- Do not change RLO or publish anything upstream. Do not ask about release or Workshop.
+- Implementers do not use the game, the rig, ModsLocal or the bridge.
+
+Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.md).
+
+## Safety rules
+
+- Core is pure C# on netstandard2.1. Unity and game calls stay in Runtime. RLO access stays behind Compatibility: validate its contract, refuse to start on incompatible data, never silently make replacement identities.
+- Own state uses a versioned `persistentcity` namespace. Reject unreadable or future schemas without overwriting them.
+- Reuse stable IDs and persist assignments. No identity change on pool reuse, reload, camera movement or a different update cadence.
+- No game DLLs, decompiled code, raw save files or credentials in Git. Reference local assemblies in place.
+- Tests check invariants and interrupted journeys, not repeated formulas. Report offline checks separately from game evidence.
+- The detached food shadow stays hypothetical and never books native sales. The population has no economic effect unless the saved city owns a food scope.
+- Eligible player food businesses are owned automatically; ownership transfers only at native accounting boundaries. Unsupported businesses stay native-owned. Never write rival finances. Never deploy to Peter's ordinary save.
+- Diagnostic helpers create fixtures only in their named disposable FT cities on the owned rig, and restore preexisting rig files and preferences before releasing it. Fixture evidence is not release approval.
+- Perf runs disable autosave in the isolated test profile before timing. Record the original setting, check it is off before each measured window (also after reload), and restore it at cleanup. A save inside a window invalidates the sample. Save profiling needs a separate, explicitly requested run.
+
+The October authorizations and the old scope statement are in [docs/decisions/2026-10-22-24-authorizations.md](docs/decisions/2026-10-22-24-authorizations.md).

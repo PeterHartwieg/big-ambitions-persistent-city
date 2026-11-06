@@ -1,5 +1,9 @@
 # A3 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- A3 — [Weighted food choices, review fixes and native checklist](a3-weighted-choice.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | A3 | Reuse the existing exact-hours place cache per business observation across menu feasibility checks; mutable/replaced hours still invalidate | 8-shop decision: 254,728 bytes; p95 0.735 ms | 117,704 bytes; p95 0.300 ms (offline .NET 10; synthetic routes) |

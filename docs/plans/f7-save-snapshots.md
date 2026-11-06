@@ -1,5 +1,7 @@
 # F7: compact coherent save snapshots with a bounded save pause
 
+6 November 2026: Owner decisions after approval are in [docs/decisions/](../decisions/); this plan is frozen. Slice status is in the checks files indexed by [CHECKS.md](../../CHECKS.md).
+
 Planning record, 4 November 2026. Refs #94. **Docs only; no implementation change.** Persistent City is not live or released. A slice is **implemented** when it merges after review and **verified by rig** when its automated rig proof passes; these are separate evidence statuses. Base: `origin/codex/persistent-city` at `d6b534a` (E1–E5, audit #97, F3 #98 and F1 #99 merged), writer **25**. Types, hooks, formats, budgets and effort below are proposed designs unless they cite an inspected member or a retained record.
 
 Peter approved F5 #92, F6 #93 and F7 #94 on **4 November 2026, 21:23 JST** ("I like all changes, let's make it happen.") after a player-facing summary. For F7 that summary was: smaller, shorter saves so the save freeze stays bounded as the city grows, with money, ownership and journeys surviving save/reload exactly. This plan describes how. Implementation slices are later runs after this plan merges.

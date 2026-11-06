@@ -1,5 +1,7 @@
 # City-audit F1 accounting boundary
 
+6 November 2026: Owner decisions after approval are in [docs/decisions/](../decisions/); this plan is frozen. Slice status is in the checks files indexed by [CHECKS.md](../../CHECKS.md).
+
 3 November 2026. Refs #88. Implementation base `bd99eb3a45d6b008911e1a5225ce1ced590cec51`.
 This is the city-audit finding, separate from the older Track F shop-view experiment.
 

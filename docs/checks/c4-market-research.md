@@ -1,5 +1,9 @@
 # C4: Bounded market research, access contract and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](c4-market-research.md).
+
 ## Roadmap entry (moved 6 Nov 2026)
 
 **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](../market-research.md).

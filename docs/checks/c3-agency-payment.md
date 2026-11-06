@@ -1,5 +1,9 @@
 # C3: Agency/payment discovery, base syncs and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- C3 — Agency/payment discovery, base syncs and native checklist: [checks](c3-agency-payment.md).
+
 ## C3 second base sync after A3/B0 - 1 November 2026 (offline only)
 
 Merge approved C3 `71285ff` with fetched development `3b8f7ec` (including A3 `831637c` and B0), keeping both parents and merge base `8b05227`. Resolve only CHECKS and README conflicts with both complete parent additions; roadmap auto-merges with every status/performance row retained. All seven In-game checks sections and locked/input qualifications survive; correct E2a's shifted checklist link. **No C3 Runtime code changed and no integration fix was needed.** Payment still refuses; market research stays off. All production files match an owning parent exactly. Incoming B0 owns unchanged schema **18**; every Persistence source, model and migration contract matches development exactly. No C3 persistence change or schema conflict. [Prepared PR description and per-file resolutions](../reviews/2026-11-01-c3-sync2-base-pr-description.md).

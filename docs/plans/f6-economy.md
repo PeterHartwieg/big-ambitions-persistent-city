@@ -1,5 +1,7 @@
 # City-audit F6: connected economic feedback
 
+6 November 2026: Owner decisions after approval are in [docs/decisions/](../decisions/); this plan is frozen. Slice status is in the checks files indexed by [CHECKS.md](../../CHECKS.md).
+
 4 November 2026. Refs #93. Design plan only. Base `origin/codex/persistent-city` at
 `d6b534a` (writer 25; E1–E5, audit #97, F3 #98 and F1 #99 merged). The audit cites
 `00506ed`. Every source location below was rechecked at `d6b534a` and is cited at that

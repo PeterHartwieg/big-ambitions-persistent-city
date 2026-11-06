@@ -1,5 +1,9 @@
 # B0b: Held tuning, base syncs and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- B0b — Held tuning, base syncs and native checklist: [checks](b0b-held-tuning.md).
+
 ## B0b second base sync with C3 and docs split - 1 November 2026 (offline only)
 
 Merge development `8c24f24` (C3 #20, docs split #41) into B0b `eee1cfb`, with

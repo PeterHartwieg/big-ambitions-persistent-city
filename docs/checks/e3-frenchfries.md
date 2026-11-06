@@ -1,5 +1,9 @@
 # E3 frenchfries feasibility - 1 November 2026 (offline only)
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 frenchfries — 1 November 2026, offline feasibility STOP and numbered 6 Nov handoff: [checks](e3-frenchfries.md).
+
 ## README entry (moved 6 Nov 2026)
 
 E3 frenchfries: [offline feasibility STOP](../archive/e3-frenchfries.md); shipped holder unestablished, conditional probe only, no product enabled or gameplay/save change.

@@ -1,5 +1,9 @@
 # B1 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- B1 — [Shop memory and loyalty v2](b1-memory-loyalty.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | B1 round 4 | Reuse `OpeningPlace` in the physical returning-door closure check | 1,072 allocated bytes per warmed four-site batch after round 3 (one temporary place remains) | 0 bytes/batch; 10,000 batches /10,720,000 -> 0 bytes. Extended `FoodMemoryOpeningCacheTests` also compares all-temporary 4,288 bytes/batch, identical results and hours mutations; offline .NET 10, no native timing claim. |

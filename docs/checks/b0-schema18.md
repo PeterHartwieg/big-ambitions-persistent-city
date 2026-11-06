@@ -1,5 +1,9 @@
 # B0: Schema 18, capacity, review fixes and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- B0 — Schema 18, capacity, review fixes and native checklist: [checks](b0-schema18.md).
+
 ## B0 base sync after merged A3 and sibling slices - 1 November 2026 (offline only)
 
 Merge development head `831637c` into approved B0 `192037b`, keeping both parents and merge base `7a6153c`. Resolve all 24 conflicts with both sides' intent: B0's schema 18/compaction/capacity/migrations plus merged A1/A2/A3 sync fixes, F0/D1/C1/E2a, every test, plan, performance row and all six native checklists with their locked/input qualifications. The base still has A3's exact schema-17 persistence/DTO contract; no other slice claimed 18 or added persisted fields. All B0 Persistence sources and compact model/format/ownership code remain unchanged. The only production file combining parents is `CitySimulator.cs`: B0's existing capability guard plus the base's existing inspector formatter API. [All per-file resolutions and exact code impact](../reviews/2026-11-01-b0-sync-base-pr-description.md).

@@ -1,5 +1,9 @@
 # A1: Resident inspector and base sync evidence
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- A1 — Resident inspector and base sync evidence: [checks](a1-resident-inspector.md).
+
 ## A1 second base sync after D1/C1/E2a - 31 October 2026 (offline only)
 
 Merge `codex/persistent-city` at `9b1b89c` (D1 `707145d`, C1 `00d1321`, E2a `9b1b89c`) into A1 `040bb02`, preserving both parents and merge base F0 `7a344a7`. Resolve only `CHECKS.md`, `README.md` and the optional-stop regression launcher: retain both complete documents and all checklists/LOCKED-OK/NEEDS-INPUT markers; combine SDK fallback with E2a fixtures, argument forwarding and performance/findings execution. All other merged files match their appropriate parent exactly, including all production sources and both parents' project inputs. No behavior or integration fix. [Prepared PR description and per-file resolutions](../reviews/2026-10-31-a1-sync2-base-pr-description.md).

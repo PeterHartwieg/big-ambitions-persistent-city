@@ -1,5 +1,7 @@
 # E5: dynamic product support from the loaded catalogue
 
+6 November 2026: Owner decisions after approval are in [docs/decisions/](../decisions/); this plan is frozen. Slice status is in the checks files indexed by [CHECKS.md](../../CHECKS.md).
+
 Planning record, 2 November 2026. **Docs only; no implementation change.** Persistent City is not a live/released mod. A product path is **implemented** when its slice merges after review and **verified by rig** when its automated rig proof passes; these are distinct evidence statuses. Base: `origin/codex/persistent-city` at `2befe6f2f14c07720fa6cbd81a43b7f5445ffd70`, through D4, writer **24**, E4 and all E3 records. Proposed types, hooks, limits, formats and effort below are implementation designs, not existing APIs or measured results.
 
 Peter, 2 November 2026, 16:49 JST: **“Only implement products that are in the game, can we make it somehow dynamic so also modded products are supported like our own street food mod?”** This replaces E5's named-product implementation PRs, append-only product-code allocation and per-product approval prerequisite in [steps B–E](../archive/steps-b-e.md). Implement one conservative runtime eligibility contract against loaded definitions and actual shop holders. E3 records become regression evidence, not an allow-list. Their original qualifications remain intact: **no E3 product is proven**.

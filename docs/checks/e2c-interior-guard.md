@@ -1,5 +1,9 @@
 # E2c: Third-party interior guard and base sync evidence
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E2c — Third-party interior guard, base syncs and native checklist: [checks](e2c-interior-guard.md).
+
 ## Roadmap entry (moved 6 Nov 2026)
 
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](../plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.

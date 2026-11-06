@@ -1,5 +1,9 @@
 # C1: Native campaign reader and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- C1 — Native campaign reader and native checklist: [checks](c1-campaign-reader.md).
+
 ## C1 native campaign reader - 31 October 2026 (offline only)
 
 Isolated fields-only campaign reader, immutable detached Core snapshots, bounded 1-1,024-business refresh (1-64 businesses/unit) and explicit bridge dump are implemented. Six native channel/size identifiers are verified from the read-only Steam assemblies; lifecycle timing and resident targeting remain Unknown, including all demographic map rows. No awareness/choice, persistence, UI, native campaign mutation or agency charge is added. Peter's Q1-Q7 decisions are recorded in their own docs-only commit. [Contract, evidence and C3 notes](../archive/c1-campaign-reader.md). [Prepared PR description](../archive/c1-pr-description.md).

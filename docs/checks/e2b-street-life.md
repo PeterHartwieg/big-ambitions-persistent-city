@@ -1,5 +1,9 @@
 # E2b: bounded street-life
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E2b — [Bounded street-life, reviews, base syncs and native checklist](e2b-street-life.md).
+
 ## E2b second base sync after A3/B0-B2/C3/E2c/E3 and the docs split - 1 November 2026 (offline only)
 
 Merge development `3f7b885` into approved E2b parent `e6f970b`, retaining merge base `8b05227` and both parents. Resolve four conflicts by preserving both slices' intent: combine dwell timing and food choice/memory settings in `RebuildRoutes`; keep incoming short CHECKS/README/roadmap; move all E2b checks, dated notices and performance rows into this owning file and [E2b perf](../perf/e2b-street-life.md). Add one checks/performance index line each. The full seven-item native checklist and all LOCKED-OK / NEEDS-INPUT / input-only markers below remain. [Prepared PR description and per-file resolutions](../reviews/2026-11-01-e2b-sync2-base-pr-description.md).

@@ -1,5 +1,9 @@
 # A5: integrated Step A acceptance
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- A5 — Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](a5-integrated-acceptance.md).
+
 ## README entry (moved 6 Nov 2026)
 
 A5 integrates Step A's offline acceptance on the schema-20 development line (historical measurements precede E1); [closure, measurements and the 6 Nov in-game checklist](a5-integrated-acceptance.md) keep offline results separate from pending native interaction and final-head proof.
