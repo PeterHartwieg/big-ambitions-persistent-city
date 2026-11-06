@@ -19,12 +19,16 @@ Status: implemented, 6 November 2026. Docs only, plus the new link checker `tool
 
 - `python tools/docs-links/check.py`: 0 broken relative links. It also passed on the base (`e9995e5`) before any move.
 - Preservation script (scratch, not committed): every sentence of 25 or more characters in the base README, roadmap, CHECKS, AGENTS, design.md and the edited plans was searched for in the new Markdown tree, ignoring link targets. The only sentences not found are process instructions replaced by the 6 November rules (the old CHECKS, README, roadmap and AGENTS layout rules), the reworded perf-gate heading, and the plan-row status fragments, which are in the checks files with a row label in front.
-- Build: `python tools/build.py --game-managed ...` and `dotnet test tests/PersistentCity.Tests.csproj`; results in the PR description.
+- Build: `python tools/build.py --game-managed <Steam Managed>` succeeded (no code change; DLL SHA-256 `678cdb58f58c3c3b79f57d4954b0612a7318a685d36c959d7d742ef22173e80d`).
+- `dotnet test tests/PersistentCity.Tests.csproj`: 3,168 passed, 0 failed. No test reads a moved file; the tests that locate the repository root use AGENTS.md, which stays in place.
+- `git diff --stat e9995e5..HEAD -- Core Persistence Runtime Compatibility tests tools config ':!tools/docs-links'` is empty.
 
 ## Known effects
 
 - `tools/e5a-eligibility-regression/source_checks.py` compares `docs/plans/e5-dynamic-products.md` to an old base; the frozen line changes that file. The regression suites are not run before release.
 - A code comment in `Runtime/AgencyPaymentPort.cs` names `docs/plans/c3-agency-payment.md`, now `docs/archive/c3-agency-payment.md`. Code is out of scope for this slice.
+
+- Sizes: README, roadmap, CHECKS and design.md are shorter than before. AGENTS.md grew from 3,930 to 4,527 bytes because it now carries the map and standing rules (limit 5k). Each plan gained the one frozen line. Checks, perf and history files grew by the moved text.
 
 ## In-game checks for the next batched rig
 
