@@ -23,6 +23,12 @@
     <Compile Include="../tools/economy-interventions/EconomyMetrics.cs" Link="EconomyInterventions/EconomyMetrics.cs" />
     <Compile Include="../tools/economy-interventions/InterventionArms.cs" Link="EconomyInterventions/InterventionArms.cs" />
     <Compile Include="../tools/economy-interventions/SelfChecks.cs" Link="EconomyInterventions/SelfChecks.cs" />
+    <Compile Include="../tools/movement-equivalence/MovementFixture.cs" Link="MovementEquivalence/MovementFixture.cs" />
+    <Compile Include="../tools/movement-equivalence/PresentationDriver.cs" Link="MovementEquivalence/PresentationDriver.cs" />
+    <Compile Include="../tools/movement-equivalence/MovementRun.cs" Link="MovementEquivalence/MovementRun.cs" />
+    <Compile Include="../tools/movement-equivalence/MovementArms.cs" Link="MovementEquivalence/MovementArms.cs" />
+    <Compile Include="../tools/movement-equivalence/Equivalence.cs" Link="MovementEquivalence/Equivalence.cs" />
+    <Compile Include="../tools/movement-equivalence/SelfChecks.cs" Link="MovementEquivalence/SelfChecks.cs" />
     <Compile Include="../tools/save-cost/RepresentativeFixture.cs" Link="RepresentativeFixture.cs" />
     <Compile Include="../tools/compact-format/WireTree.cs" Link="CompactFormat/WireTree.cs" />
     <Compile Include="../tools/compact-format/ColumnarCodec.cs" Link="CompactFormat/ColumnarCodec.cs" />
