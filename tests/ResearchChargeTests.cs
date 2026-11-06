@@ -9,14 +9,14 @@ using PersistentCity.Persistence;
 using Xunit;
 using Xunit.Abstractions;
 
-/// <summary>C5d research billing through pure port doubles (plan C5 section 3.5). The double follows the native
-/// ChangeMoneySafe and ChangeMoney contract read at BigAmbitions.dll 9427561b...: false before any change when
-/// money is short, otherwise binary32 Money += amount, one queued record with balance floor(Money), then the
-/// money-change event. Offline only; no native evidence.</summary>
 /// <summary>Runs alone: the postfix timing must not share the CPU and GC with the parallel suite.</summary>
 [CollectionDefinition(nameof(ResearchChargeTests), DisableParallelization = true)]
 public sealed class ResearchChargeSerialCollection { }
 
+/// <summary>C5d research billing through pure port doubles (plan C5 section 3.5). The double follows the native
+/// ChangeMoneySafe and ChangeMoney contract read at BigAmbitions.dll 9427561b...: false before any change when
+/// money is short, otherwise binary32 Money += amount, one queued record with balance floor(Money), then the
+/// money-change event. Offline only; no native evidence.</summary>
 [Collection(nameof(ResearchChargeTests))]
 public sealed class ResearchChargeTests
 {
@@ -101,11 +101,28 @@ public sealed class ResearchChargeTests
         public void CollectTaggedAfter(object? tail, List<ResearchChargeRecord> into)
         {
             Calls++;
+            if (Registrations != null)
+            {
+                // NativeResearchChargePort's shape: probe every record's data, keep tagged ones with their position,
+                // then keep those after the tail (not found: the tail was dropped, so all count).
+                scratch.Clear(); positions.Clear();
+                int index = 0, tailIndex = -1;
+                foreach (var record in Queue)
+                {
+                    if (tail != null && ReferenceEquals(record, tail)) tailIndex = index;
+                    else if (Tagged(record, out var row)) { scratch.Add(row); positions.Add(index); }
+                    index++;
+                }
+                for (int i = 0; i < scratch.Count; i++) if (positions[i] > tailIndex) into.Add(scratch[i]);
+                return;
+            }
             int start = 0;
             if (tail != null)
                 for (int i = 0; i < Queue.Count; i++) if (ReferenceEquals(Queue[i], tail)) { start = i + 1; break; } // not found: tail dropped
             for (int i = start; i < Queue.Count; i++) if (Tagged(Queue[i], out var row)) into.Add(row);
         }
+        private readonly List<ResearchChargeRecord> scratch = new List<ResearchChargeRecord>(4);
+        private readonly List<int> positions = new List<int>(4);
 
         public bool Charge(in ResearchChargeRequest request, Action enteringNative)
         {
@@ -725,6 +742,8 @@ public sealed class ResearchChargeTests
     public void PostfixCostWithZeroOneAndEightOrdersOnAFullQueue()
     {
         var (ledgerIdle, portIdle, _, idle) = Setup();
+        // One untimed pass first: tier-up JIT work is not postfix work.
+        for (int i = 0; i < 1000; i++) if (idle.HasWork) idle.Boundary();
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) if (idle.HasWork) idle.Boundary();
         long idleBytes = GC.GetAllocatedBytesForCurrentThread() - before;
@@ -732,6 +751,7 @@ public sealed class ResearchChargeTests
         Assert.Equal(0, portIdle.Calls);
         var stopped = new ResearchChargeSession(ledgerIdle, portIdle, () => false, _ => throw new InvalidOperationException());
         Surveyed(ledgerIdle, portIdle, "idle");
+        for (int i = 0; i < 1000; i++) if (stopped.HasWork) stopped.Boundary();
         before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) if (stopped.HasWork) stopped.Boundary();
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
@@ -773,6 +793,76 @@ public sealed class ResearchChargeTests
             output.WriteLine($"orders={orders} queue=1000 p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/boundary={bytes / runs}");
             Assert.True(samples[runs * 95 / 100] < 5, "p95 under the 5 ms gate");
         }
+    }
+
+    /// <summary>The postfix's foreign-patch check (ResearchBillingContract.ForeignPatch) against the Harmony build
+    /// tools/build.py pins, on a method that carries our postfix and a foreign postfix, as RunDaily will. Harmony is
+    /// loaded by reflection because the test project does not reference it; the reflection calls make this an upper bound.</summary>
+    [Fact]
+    public void ForeignPatchCheckCost()
+    {
+        string package = Path.Combine(Root(), "build", "lib.harmony.2.4.2.nupkg");
+        if (!File.Exists(package)) { output.WriteLine("foreign-patch check: not measured, run tools/build.py first"); return; }
+        string directory = Path.Combine(Path.GetTempPath(), "pc-c5d-harmony-2.4.2");
+        Directory.CreateDirectory(directory);
+        string dll = Path.Combine(directory, "0Harmony.dll");
+        if (!File.Exists(dll))
+            using (var zip = System.IO.Compression.ZipFile.OpenRead(package)) System.IO.Compression.ZipFileExtensions.ExtractToFile(zip.GetEntry("lib/net10.0/0Harmony.dll")!, dll, true);
+        var harmony = System.Reflection.Assembly.LoadFrom(dll);
+        var harmonyType = harmony.GetType("HarmonyLib.Harmony", true)!;
+        var methodType = harmony.GetType("HarmonyLib.HarmonyMethod", true)!;
+        var target = typeof(PatchTarget).GetMethod(nameof(PatchTarget.RunDaily))!;
+        var patch = harmonyType.GetMethods().Single(m => m.Name == "Patch" && m.GetParameters().Length == 5);
+        var getInfo = harmonyType.GetMethod("GetPatchInfo", new[] { typeof(System.Reflection.MethodBase) })!;
+        object Postfix() => Activator.CreateInstance(methodType, typeof(PatchTarget).GetMethod(nameof(PatchTarget.Postfix)))!;
+        var ours = Activator.CreateInstance(harmonyType, "persistentcity.research-billing")!;
+        var foreign = Activator.CreateInstance(harmonyType, "other.mod")!;
+        patch.Invoke(ours, new object?[] { target, null, Postfix(), null, null });
+        patch.Invoke(foreign, new object?[] { target, null, Postfix(), null, null });
+        try
+        {
+            string? Check()
+            {
+                var info = getInfo.Invoke(null, new object[] { target });
+                if (info == null) return null;
+                foreach (string group in new[] { "Prefixes", "Transpilers", "Finalizers" })
+                    foreach (var row in (System.Collections.IEnumerable)info.GetType().GetField(group)!.GetValue(info)!)
+                    {
+                        string owner = (string)row.GetType().GetField("owner")!.GetValue(row)!;
+                        if (owner != "persistentcity.research-billing") return owner;
+                    }
+                return null;
+            }
+            Assert.Null(Check());
+            var current = getInfo.Invoke(null, new object[] { target })!;
+            Assert.Equal(2, ((System.Collections.ICollection)current.GetType().GetField("Postfixes")!.GetValue(current)!).Count);
+            const int runs = 1000;
+            var samples = new double[runs];
+            long allocated = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < runs; i++)
+            {
+                long start = Stopwatch.GetTimestamp();
+                Check();
+                samples[i] = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
+            }
+            long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / runs;
+            Array.Sort(samples);
+            output.WriteLine($"foreign-patch check: p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/call={bytes}");
+            Assert.True(samples[runs * 95 / 100] < 1);
+        }
+        finally
+        {
+            harmonyType.GetMethod("UnpatchAll", new[] { typeof(string) })!.Invoke(foreign, new object?[] { "other.mod" });
+            harmonyType.GetMethod("UnpatchAll", new[] { typeof(string) })!.Invoke(ours, new object?[] { "persistentcity.research-billing" });
+        }
+    }
+
+    public static class PatchTarget
+    {
+        public static int Calls;
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        public static void RunDaily() { Calls++; }
+        public static void Postfix() { }
     }
 
     private static string Root()
