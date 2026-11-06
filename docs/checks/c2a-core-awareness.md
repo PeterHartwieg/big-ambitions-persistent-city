@@ -164,7 +164,7 @@ flag the synchronous offline full-index samples above 30 ms separately.
 
 > **C2a review r1:** shared geometry rebuilds now yield in bounded units; eligibility-only flips reuse the index. Existing-stop admission/diagnostics and post-activation null refusal are fixed. **1,911 tests and 33 foreground checks pass**; native rig proof remains pending. [Review evidence](#c2a-review-round-1--31-october-2026-offline-only).
 
-> **Step C2a core awareness ? 31 October:** bounded memory seam (empty), neighbourhood/routine and daily distant discovery feed the existing eight-shop choice and sixteen-route ceiling. Schema **19** adds only one held source image and an activation header; campaign source remains unknown. **1,902 tests pass**, with offline regressions/capacity measurements recorded in [CHECKS](#step-c2a-core-bounded-awareness--31-october-2026-offline-only). Combined 6 Nov rig proof remains pending. [Contract](../population-schema19.md).
+> **Step C2a core awareness ? 31 October:** bounded memory seam (empty), neighbourhood/routine and daily distant discovery feed the existing eight-shop choice and sixteen-route ceiling. Schema **19** adds only one held source image and an activation header; campaign source remains unknown. **1,902 tests pass**, with offline regressions/capacity measurements recorded in [CHECKS](#step-c2a-core-bounded-awareness--31-october-2026-offline-only). Combined 6 Nov rig proof remains pending. [Contract](../archive/population-schema19.md).
 
 ## C2a review round 2 - 31 October 2026 (offline only)
 
@@ -194,7 +194,7 @@ pending.
 Fix commit **19289e3** on submitted **9fa59fa**. Addresses Sol-r1-2/3 and
 Opus-r1-1/2/3/4. The actual PR #24 body is updated separately for Sol-r1-4,
 preserving its harness footer. No other slice, schema allocation or native writer
-is added. [Updated contract](../population-schema19.md).
+is added. [Updated contract](../archive/population-schema19.md).
 
 Five targeted red cases reproduce both dense at-stop failures (draws 0/4), the
 mismatched diagnostic, post-activation null acceptance and inline rebuild/capture.
@@ -317,7 +317,7 @@ No rig action was performed by this implementation run.
 Base **c0af745 (B0b)**; Core/index implementation **b50c756**, final config/refusal
 coverage **0d79664**. Only C2a is implemented. B1/B2, C1, D1 and F0 were not merged
 or copied. The remote B?E plan was read through Git; it is absent in this ancestry.
-[Schema 19 and interface contract](../population-schema19.md).
+[Schema 19 and interface contract](../archive/population-schema19.md).
 
 Memory is an empty four-reference provider seam. Neighbourhood/routine uses up to
 four mass-weighted indexed draws each for home, work/study and current origin,

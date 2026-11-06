@@ -25,7 +25,7 @@ Read-only ILSpyCmd inspection used the Steam Managed inputs, without loading the
 | HGPlugins.dll | `7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96` |
 | BigAmbitions.Seasons.dll | `81c69c91af18245ae984571f001bd91db6e19bde7c537b722f0d143621b8c020` |
 
-The generic producer, exact price, bag/counter and field-only tag contracts remain those of [E3 batch M2–M12](../plans/e3-remaining-batch.md#shared-inspected-members-and-call-sites); no product-specific asset pairing is inferred. Fresh inspection supplements them:
+The generic producer, exact price, bag/counter and field-only tag contracts remain those of [E3 batch M2–M12](../archive/e3-remaining-batch.md#shared-inspected-members-and-call-sites); no product-specific asset pairing is inferred. Fresh inspection supplements them:
 
 | Type / members inspected | Finding / use |
 | --- | --- |

@@ -203,7 +203,7 @@ no slot reclamation, scans or identity reuse. Saturation counts a skipped memory
 capture and saves its terminal watermark without changing settlement or retrying it.
 Lower capacity never trims on load/read; normal later insertion applies replacement.
 
-**Save safety.** [B1 execution contract](../population-schema18.md#b1-execution--31-october-2026).
+**Save safety.** [B1 execution contract](../archive/population-schema18.md#b1-execution--31-october-2026).
 B1 deliberately lifts B0b's nonzero-contribution refusal with bounded read/write/replay
 proof; 13-17 resolvers, tuple shapes, reference allocation and record charges stay
 unchanged. The save-contract regression now accepts a full nonzero eight-shop image

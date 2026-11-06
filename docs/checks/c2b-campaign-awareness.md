@@ -8,7 +8,7 @@ Addresses **Sol-r1-1 / Opus-r1-1 / Opus-r1-2**. E4 landed at `2bd9006`
 after the ice cream-only sync's final fetch. Real two-parent merge `beb3eae`
 integrates that head into `d2ba6d2`, based on `75c956c`; no rebase, squash or
 cherry-pick. Both parents' diffs were inspected. All **20 textual conflicts**
-and their resolutions are listed in the [current PR description](../plans/c2b-sync2-base-pr-description.md).
+and their resolutions are listed in the [current PR description](../archive/c2b-sync2-base-pr-description.md).
 
 The next final fetch found **`8c6b3f3` (E3 pizza)**. Two-parent merge `84348e1`
 then integrates it into `4dc81d1` from base `2bd9006`; only README conflicted,
@@ -111,7 +111,7 @@ commit `033ba81`. Both sides' diffs against that base were inspected. The sole
 textual conflict was the adjacent README status paragraphs: retain both C2b
 and E3 ice cream, followed by A5/F1. Automatic CHECKS/roadmap/plan compositions
 retain every existing index/status entry, C2b/A5 perf entries and incoming ice
-cream plans, tools, checks and evidence. [Prepared sync PR description](../plans/c2b-sync2-base-pr-description.md).
+cream plans, tools, checks and evidence. [Prepared sync PR description](../archive/c2b-sync2-base-pr-description.md).
 
 The merge-tree audit covers all **1,351 tracked paths**: **1,347 exact parent
 blobs** outside four composed documents; both parents' checks-index lines and
@@ -173,7 +173,7 @@ deployment approval is claimed.
 
 Merged integration base `0ffb819` (F1, E1 and A5) into C2b `992291e` using a
 real two-parent merge from `51ce709`. All 16 conflict resolutions are listed in
-the [prepared PR description](../plans/c2b-pr-description.md#sync-base-integration-1-november-2026).
+the [prepared PR description](../archive/c2b-pr-description.md#sync-base-integration-1-november-2026).
 All preexisting checks/perf index lines and both parents' slice files are retained.
 The 53 incoming-only files outside integration seams were compared with their
 parent and match exactly after newline normalization. A5's test-only current-schema
@@ -383,7 +383,7 @@ combined cost still needs the rig gate. With no campaigns only allocation-free
 hourly count probes remain; source/index/decision work is zero. Literal zero
 native detection work cannot be claimed because UI starts must be discovered.
 
-The original pre-E1 [schema 22 contract](../population-schema22.md) used exact
+The original pre-E1 [schema 22 contract](../archive/population-schema22.md) used exact
 19-to-22 migration (now 20-to-22 after E1), strict
 old/new shape separation and source preservation. Only campaign images are added;
 held awareness reuses its existing fields. Schemas 17–19 contracts are untouched.
@@ -431,7 +431,7 @@ Candidate DLL SHA-256: `42f851401a11e2f71971223e6c82aef539de943cc21f6bd64d61cf57
 The final package's config hash matches the source template. Coordinated MSBuild
 and VB/C# compiler-server shutdown succeeded; the final inventory found no owned
 dotnet/testhost or gate-runner processes. Other worktrees were allowed to finish;
-none was terminated. [Prepared PR text](../plans/c2b-pr-description.md) contains
+none was terminated. [Prepared PR text](../archive/c2b-pr-description.md) contains
 the identical numbered rig list below.
 
 ### Offline performance and save budget

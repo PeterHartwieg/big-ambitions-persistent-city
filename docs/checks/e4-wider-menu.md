@@ -2,7 +2,7 @@
 
 ## 1 November 2026 — offline implementation
 
-Code commits `60b0715` and `6d3068a`; base `51ce709`, branch `codex/pc-e4-wider-menu`. Implements only the [schema 23 envelope](../population-schema23.md); three native products and effective live maximum four remain. Donut/cupcake/salad are reserved identifiers with pending E3 natural checkout/settlement proof. No game, rig, lease, ModsLocal, bridge profile, WSL or Steam writes in this run. Steam assemblies are read-only build inputs.
+Code commits `60b0715` and `6d3068a`; base `51ce709`, branch `codex/pc-e4-wider-menu`. Implements only the [schema 23 envelope](../archive/population-schema23.md); three native products and effective live maximum four remain. Donut/cupcake/salad are reserved identifiers with pending E3 natural checkout/settlement proof. No game, rig, lease, ModsLocal, bridge profile, WSL or Steam writes in this run. Steam assemblies are read-only build inputs.
 
 ## Review round 1 - 1 November 2026 (offline only)
 
@@ -78,7 +78,7 @@ The eight-cell history itself charges **129,024** records; the measured semantic
 
 Development-only failures were resolved before the final green run: six old current-format fixture assumptions were updated for schema 23 while retaining separate frozen-source refusals; the baseline reader copy needed a distinct snapshot type name; the benchmark update initially omitted its district counter and was correctly refused by sum validation. No production invariant was relaxed to make those fixtures pass. General serialization and the other three parked hotspots were not rewritten.
 
-[Machine-readable results and log hashes](e4-wider-menu-results.json). [Prepared PR description, including the identical numbered rig list](../plans/e4-wider-menu-pr-description.md).
+[Machine-readable results and log hashes](e4-wider-menu-results.json). [Prepared PR description, including the identical numbered rig list](../archive/e4-wider-menu-pr-description.md).
 
 ### In-game checks for 6 Nov rig
 
@@ -115,7 +115,7 @@ Initial E1/F1 merged-tree history sizing from the rerun (not a rewrite of the hi
 
 The initial/timed saves each grow **32 bytes** from the original E4 fixture because E1 now contributes its weather fields; row/cell totals and charges stay exact. **All 42/42 bulk serialization samples >=30 ms are flagged**, max **198.8847 ms**. These are full offline saves, never clean ordinary-play samples. No update, selection or supply sample reaches 30 ms. Four/eight-offer selection p95 is **0.0131 / 0.0251 ms**, with zero allocations and sixteen route slots. The rerun retains the existing supply allocation result **1,960 -> 1,552 B** at four offers, **2,368 B** at eight. This is confirmation of E4's existing win, not a new integration win. Sequential .NET 10 Release field doubles on a shared development PC, JIT/tiering and scheduling limit timing comparisons; fixture construction is excluded. No causal CPU/native improvement, whole-frame result or combined mod-work gate is claimed. The four parked hotspots remain parked.
 
-All twelve conflict resolutions and integration-specific changes are listed in the [sync PR description](../plans/e4-sync-base-pr-description.md). Core/Runtime files outside the model conflict match the automatic composition of the two approved branches; all incoming-only documentation and all incoming checks index lines are preserved.
+All twelve conflict resolutions and integration-specific changes are listed in the [sync PR description](../archive/e4-sync-base-pr-description.md). Core/Runtime files outside the model conflict match the automatic composition of the two approved branches; all incoming-only documentation and all incoming checks index lines are preserved.
 
 The additional sweep found a stale food-candidate partial native double (`Supported` instead of E4's `SupportedMenu`). Only the fixture method name changed; its eligibility expression and all assertions stayed intact. Its rerun passes. The default legacy/weighted economy matches `51ce709` exactly (849/797/2 and 531/499/1 orders/purchases/unconfirmed, with identical order/economy/reload digests). C4-excluded versus included schema-23 fixtures are byte-identical: population 41,860 B, food 66,333 B. These completed results precede the later A5 integration described below.
 

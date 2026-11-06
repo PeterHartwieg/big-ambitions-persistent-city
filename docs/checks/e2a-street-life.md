@@ -8,7 +8,7 @@ Validation: **31/31** requested foreground checks pass, including **1,606/1,606*
 
 ## E2a street-life proof — 31 October 2026 (offline only)
 
-Base `6d43276`; task `pc-e2a-street-life`. Added offline gap coverage in the existing dwell/optional-stop tests and regression tool, read-only DLL venue discovery, and [E2a findings / E2b red cases](../plans/e2-street-life.md). No production, settings, chance/timing policy, population, schema or save-contract change. No A3/sibling implementation dependency. No game, rig, lease, test profile or installation was touched. The DLL SHA-256 remains `f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c`, identical to the base.
+Base `6d43276`; task `pc-e2a-street-life`. Added offline gap coverage in the existing dwell/optional-stop tests and regression tool, read-only DLL venue discovery, and [E2a findings / E2b red cases](../archive/e2-street-life.md). No production, settings, chance/timing policy, population, schema or save-contract change. No A3/sibling implementation dependency. No game, rig, lease, test profile or installation was touched. The DLL SHA-256 remains `f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c`, identical to the base.
 
 ### Coverage matrix: kind × condition
 
@@ -49,7 +49,7 @@ Final recorded run: zero samples >=30 ms. **Flagged exploratory run:** two rate-
 
 ### In-game checks for 6 Nov rig
 
-The same numbered list is in [the prepared PR description](../plans/e2a-pr-description.md). Classification follows the [locked-session feasibility report at `84be71a`](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md); read through Git, with no rig access in E2a.
+The same numbered list is in [the prepared PR description](../archive/e2a-pr-description.md). Classification follows the [locked-session feasibility report at `84be71a`](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md); read through Git, with no rig access in E2a.
 
 1. **LOCKED-OK — state and accounting matrix.** Through bridge reads in the named disposable fixture, record resident ID, assigned/current venue, activity/phase, kind/spot/target, start/end/cancelled/members, active/future/expired status, physical approaching/standing/returning state, queue counts/slots and chance tallies. Cover opening queues, work breaks, paired chats, window shopping, park/resting and walking-arrival audiences at day/night/rain and 0/25/100 (changed config loaded between arms). Reconcile draws = realised + delta pending + drops; distinguish logical from visible counts; verify existing 48/256 caps and no added population or performer trips.
 2. **NEEDS-INPUT — visible matrix.** Observe and capture those six kinds at day, night and in rain at 0/25/100. At 0 show zero new optional stops while opening queues remain independent. At 25/100 correlate bodies with dump IDs; record facing, approach, standing and return, paired partners, no duplicate native standers, blocked entrances or phantom employees. Camera/pool changes retain identity and never create a stop. Record unavailable natural opportunities rather than spawn crowds.
@@ -63,12 +63,12 @@ The same numbered list is in [the prepared PR description](../plans/e2a-pr-descr
 
 ## Development notices
 
-> **E2a — 31 October (offline):** expanded existing street-life proofs and read-only venue discovery; production DLL and save contracts unchanged. [Coverage, costs and 6 Nov rig checks](e2a-street-life.md#e2a-street-life-proof--31-october-2026-offline-only) · [Findings and E2b cases](../plans/e2-street-life.md).
+> **E2a — 31 October (offline):** expanded existing street-life proofs and read-only venue discovery; production DLL and save contracts unchanged. [Coverage, costs and 6 Nov rig checks](e2a-street-life.md#e2a-street-life-proof--31-october-2026-offline-only) · [Findings and E2b cases](../archive/e2-street-life.md).
 
 
 ## Roadmap notices
 
-E2a offline street-life proof and read-only venue findings: [coverage and E2b cases](../plans/e2-street-life.md), including Peter's 31 October Q6 decision (existing identified residents/caps and 25% semantics; no new anonymous crowds or night multiplier). Native evidence remains on the combined 6 Nov checklist.
+E2a offline street-life proof and read-only venue findings: [coverage and E2b cases](../archive/e2-street-life.md), including Peter's 31 October Q6 decision (existing identified residents/caps and 25% semantics; no new anonymous crowds or night multiplier). Native evidence remains on the combined 6 Nov checklist.
 
 
 [Checks index](../../CHECKS.md).

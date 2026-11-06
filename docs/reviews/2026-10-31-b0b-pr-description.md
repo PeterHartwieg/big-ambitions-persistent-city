@@ -19,7 +19,7 @@ held contexts, including empty shortlists, to the scheduler's one-decision limit
 The complete eight-candidate addition is **405 saved bytes**, charged once against
 the existing 65,536-byte aggregate policy/header allowance, with no new collection
 records. B1's full-precision future scalar allowance is at most 589 bytes including
-A3 tuning. Details: [schema amendment](../population-schema18.md#b0b-amendment--31-october-2026).
+A3 tuning. Details: [schema amendment](../archive/population-schema18.md#b0b-amendment--31-october-2026).
 
 **Offline measurements.** Baseline `192037b`, production source `9c06dd9`,
 benchmark source `05517ca`; Windows .NET 10 Release, sequential foreground runs.

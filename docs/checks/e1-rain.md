@@ -138,7 +138,7 @@ when the customer reaches the destination, before any physical observation.
 Normal queue refresh only reads saved terms. Migrated/pre-existing waits lacking
 a matching Q retain the fallback. Native rain still applies when E1 is disabled
 or pre-activation; only its configured lead is gated. No schema/wire-format,
-byte-budget, draw-key, route or movement change. [Updated contract](../population-schema20.md).
+byte-budget, draw-key, route or movement change. [Updated contract](../archive/population-schema20.md).
 
 Seven new real-event regressions fail on the reviewed source: dry commitment,
 rain before the first physical refresh, enabled/disabled E1 and save/reload all
@@ -173,7 +173,7 @@ throwing source is unknown/neutral. Weather cannot create an event/context/route
 held decisions, work/trips/paid terms and existing native optional-stop/paired
 continuations retain their rules. The native seam is read lazily once/frame at
 new boundaries. `PopulationRuntime.Weather(id)` reads saved inputs only.
-[Schema-20 contract](../population-schema20.md). No sibling changes were imported.
+[Schema-20 contract](../archive/population-schema20.md). No sibling changes were imported.
 
 Additive 19->20 migration validates the frozen old shape, initializes unknown,
 activates next logical day and performs semantic plus serialized-size/UTF-8
@@ -312,4 +312,4 @@ No rig work was performed in this implementation run.
 
 ## Development notice
 
-> **E1 development status - 1 November 2026 (offline only):** captured dry/rain/unknown inputs for new discretionary outings and food contexts, soft rain travel preference and frozen new-queue leads; additive schema 20 on C2a. [Contract and byte ledger](../population-schema20.md). Offline measurements and the numbered 6 Nov rig handoff are in [CHECKS](#e1-rain---1-november-2026-offline-only). Native combined performance/behavior proof remains pending.
+> **E1 development status - 1 November 2026 (offline only):** captured dry/rain/unknown inputs for new discretionary outings and food contexts, soft rain travel preference and frozen new-queue leads; additive schema 20 on C2a. [Contract and byte ledger](../archive/population-schema20.md). Offline measurements and the numbered 6 Nov rig handoff are in [CHECKS](#e1-rain---1-november-2026-offline-only). Native combined performance/behavior proof remains pending.

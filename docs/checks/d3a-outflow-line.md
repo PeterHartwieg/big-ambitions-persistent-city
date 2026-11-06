@@ -16,7 +16,7 @@ It does not claim that every rival purchase would otherwise have been a player
 sale. Exact amounts are displayed without manufacturing historical numbers.
 
 D2 cannot supply dated history from its lifetime ledger/current-day outcomes,
-so [additive schema 24](../population-schema24.md) is necessary. Each validated
+so [additive schema 24](../archive/population-schema24.md) is necessary. Each validated
 predecessor migrates through exact schema 23; its existing external account is
 the unknown historical baseline. Fresh confirmed D2 settlements update history
 inside the same atomic debit and reuse its saved paid watermark. Repeated or

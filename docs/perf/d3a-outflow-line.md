@@ -49,7 +49,7 @@ retention and exact D2 ledger reconciliation; late bursts cannot grow row count.
 Saved history: **280 ASCII characters / 293 property bytes / 15 charged records**
 in this fixture. Contract maximum **1,024 history characters / 1,037 property
 bytes / 15 records per food city**, **zero per consumer**. Population-only state
-has zero added fields/records. [Schema contract](../population-schema24.md).
+has zero added fields/records. [Schema contract](../archive/population-schema24.md).
 Capacity accounting subtracts actual history bytes/records from its existing
 D3a reserve once; it does not raise either global cap or double-reserve history.
 

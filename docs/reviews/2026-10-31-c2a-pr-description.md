@@ -26,7 +26,7 @@ partial publication, 1,024/20k work bounds, restart/reload/cadence and unchanged
 eligibility-only revisions. Exact historical economy/reload digests are retained.
 [Command evidence](2026-10-31-c2a-r1-offline-checks.json),
 [rebuild measurements](2026-10-31-c2a-r1-rebuild.json),
-[wire/interface contract](../population-schema19.md).
+[wire/interface contract](../archive/population-schema19.md).
 
 Six complete builds/layout/process in three fresh sequential .NET 10 Release
 processes, including cold/JIT work. Unit timers include builder creation, managed-scope projection and place lookup. Total

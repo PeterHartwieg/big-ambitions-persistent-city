@@ -2,7 +2,7 @@
 
 ## C1 native campaign reader - 31 October 2026 (offline only)
 
-Isolated fields-only campaign reader, immutable detached Core snapshots, bounded 1-1,024-business refresh (1-64 businesses/unit) and explicit bridge dump are implemented. Six native channel/size identifiers are verified from the read-only Steam assemblies; lifecycle timing and resident targeting remain Unknown, including all demographic map rows. No awareness/choice, persistence, UI, native campaign mutation or agency charge is added. Peter's Q1-Q7 decisions are recorded in their own docs-only commit. [Contract, evidence and C3 notes](../plans/c1-campaign-reader.md). [Prepared PR description](../plans/c1-pr-description.md).
+Isolated fields-only campaign reader, immutable detached Core snapshots, bounded 1-1,024-business refresh (1-64 businesses/unit) and explicit bridge dump are implemented. Six native channel/size identifiers are verified from the read-only Steam assemblies; lifecycle timing and resident targeting remain Unknown, including all demographic map rows. No awareness/choice, persistence, UI, native campaign mutation or agency charge is added. Peter's Q1-Q7 decisions are recorded in their own docs-only commit. [Contract, evidence and C3 notes](../archive/c1-campaign-reader.md). [Prepared PR description](../archive/c1-pr-description.md).
 
 **Offline validation:** production Steam-reference build and all **1,566/1,566 unit tests** pass (15 C1 cases added, zero failures/skips); all **32/32 offline gate commands** pass (the 31 requested commands plus the C1 bridge/performance harness). The final build, all 1,566 unit tests, test listing and C1 harness also pass after the malformed-address guard (`ac60a00`). Save-contract source and persisted fields are unchanged; the standalone contract digest is `6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C` (113,747 characters). Production DLL SHA-256: `7dc7074408e93c88394ef8c9f56e5f9af4df935d2d0ee8b5b086ee15db722e8f`. Foreground only, with the required other-dotnet wait before each test/run. Coordinated build-server shutdown completed; the final process inventory found no dotnet, testhost or compiler-server processes. Ignored local logs: `build/c1/`. No game launch, rig/lease access, test-profile/install writes or native measurements.
 
@@ -18,7 +18,7 @@ Isolated fields-only campaign reader, immutable detached Core snapshots, bounded
 
 The initial targeted source assertion falsely matched a comment containing the keyword it banned; the comment was corrected and all 15 C1 cases then passed, including strict changed-enum/enabled/list contracts and a bounded metadata-cache refusal. The bridge-double harness proves 20 repeated reads leave serialized customer/account/campaign fixture data unchanged and throwing money/helper spies untouched. These doubles and source assertions do not substitute for native noninterference proof.
 
-Final machine-readable measurements and all command exits: [offline results](../plans/c1-offline-results.json). Earlier optimized pre-address-check samples measured 1,024-business cold/warm p95 **6.3153/2.1318 ms**; the preceding full-gate repeat measured **7.4726/2.5838 ms** (cursor maximum **6.2034 ms**). These samples remain recorded, with no spikes >=30 ms and no native gate claim.
+Final machine-readable measurements and all command exits: [offline results](../archive/c1-offline-results.json). Earlier optimized pre-address-check samples measured 1,024-business cold/warm p95 **6.3153/2.1318 ms**; the preceding full-gate repeat measured **7.4726/2.5838 ms** (cursor maximum **6.2034 ms**). These samples remain recorded, with no spikes >=30 ms and no native gate claim.
 
 ### In-game checks for 6 Nov rig
 
@@ -34,7 +34,7 @@ Run only in a named disposable FT fixture during the normal combined rig session
 
 ## Development notices
 
-> **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](c1-campaign-reader.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](../plans/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.
+> **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](c1-campaign-reader.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](../archive/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.
 
 
 [Checks index](../../CHECKS.md).

@@ -17,7 +17,7 @@ history revenue or B1 experience. Campaigns remain unknown and unused.
 At the initial pre-E1 implementation, schema **21** used an isolated, frozen
 19-source reader/migration and refused the then-unmerged schema 20. The merged
 tree instead preserves E1 through the isolated 20 -> 21 step described below.
-The [current contract](../population-schema21.md)
+The [current contract](../archive/population-schema21.md)
 records the compact target/account/outcome variants, exact conservation identity,
 unchanged caps and zero extra consumer-record charge. Schema 17–19 contract
 documents, native receipt formats, menus and RLO source are unchanged.

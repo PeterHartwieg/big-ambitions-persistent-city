@@ -22,7 +22,7 @@ This sync lands into C3 by merge commit to keep ancestry; separate locked-PC C3 
 
 ## C3 agency payment (31 October 2026, offline only)
 
-**PARTIAL:** DLL inspection proves the native recurring marketing fee candidate (`MarketingHelper.RunDaily → GameManager.ChangeMoneySafe`) and its amount/category/day/address records. Campaign confirmation schedules campaigns; payment occurs at the daily boundary. No intrinsic transaction ID or generic third-product extension is proven. [Exact members, call-site evidence, confidence and limitations](../plans/c3-agency-payment.md). Research remains unavailable: Runtime payment always refuses. No campaign mutation, gameplay consumer, report, UI, schema, saved field, food debit or native money movement is added. C4/C5 retain tier contents/fees and wire-contract ownership.
+**PARTIAL:** DLL inspection proves the native recurring marketing fee candidate (`MarketingHelper.RunDaily → GameManager.ChangeMoneySafe`) and its amount/category/day/address records. Campaign confirmation schedules campaigns; payment occurs at the daily boundary. No intrinsic transaction ID or generic third-product extension is proven. [Exact members, call-site evidence, confidence and limitations](../archive/c3-agency-payment.md). Research remains unavailable: Runtime payment always refuses. No campaign mutation, gameplay consumer, report, UI, schema, saved field, food debit or native money movement is added. C4/C5 retain tier contents/fees and wire-contract ownership.
 
 The pure in-memory single-city coordinator keeps exact `Money`, one immutable quote/request ID, pending/reentrant-click exclusion and blocking `PaymentUnknown` after native-entry exceptions or missing/mismatched evidence. It grants no report/entitlement and has no reset/reconciliation API. Actual-source doubles check native-read fingerprints and emitted IL/source isolation; doubles are never accepted as native proof. The diagnostic avoids native caching getters (`Building.Address`, `CityManager.Instance`), reads raw fields/existing singleton lookup and formats only the last sixteen marketing records.
 
@@ -44,12 +44,12 @@ Run in the normal combined 6 Nov `rig_test` session on a named disposable FT fix
 
 ## Development notices
 
-> **C3 — 31 October (offline):** native agency/payment discovery, inactive exact-money order contract and on-demand read-only binding dump. **PARTIAL:** recurring marketing debit is verified in the DLL; durable request identity and a research option remain unproven. Runtime payment refuses; no gameplay, UI or save change. [Findings](../plans/c3-agency-payment.md) · [Checks](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only).
+> **C3 — 31 October (offline):** native agency/payment discovery, inactive exact-money order contract and on-demand read-only binding dump. **PARTIAL:** recurring marketing debit is verified in the DLL; durable request identity and a research option remain unproven. Runtime payment refuses; no gameplay, UI or save change. [Findings](../archive/c3-agency-payment.md) · [Checks](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only).
 
 
 ## Roadmap notices
 
-C3 status, 31 October (offline): [agency/payment discovery](../plans/c3-agency-payment.md) is **PARTIAL**. DLL-verified recurring fee candidate; durable request identity/third-option integration await proof. Inactive typed contract and read-only dump only; Runtime payment refuses. No schema or A/B-stack dependency. [Offline evidence and 6 Nov checklist](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only). New code does no per-frame work; no existing hot path was changed or optimization claimed. Four parked hotspots remain parked.
+C3 status, 31 October (offline): [agency/payment discovery](../archive/c3-agency-payment.md) is **PARTIAL**. DLL-verified recurring fee candidate; durable request identity/third-option integration await proof. Inactive typed contract and read-only dump only; Runtime payment refuses. No schema or A/B-stack dependency. [Offline evidence and 6 Nov checklist](c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only). New code does no per-frame work; no existing hot path was changed or optimization claimed. Four parked hotspots remain parked.
 
 
 [Checks index](../../CHECKS.md).

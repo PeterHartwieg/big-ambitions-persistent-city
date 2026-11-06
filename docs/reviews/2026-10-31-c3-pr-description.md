@@ -1,6 +1,6 @@
 # C3: discover native agency fee seam; add inactive order contract and read-only dump
 
-Native agency confirmation schedules recurring campaigns rather than charging immediately. DLL inspection verifies the later daily `MarketingHelper.RunDaily → GameManager.ChangeMoneySafe` fee and transaction/expense fields, but finds no intrinsic durable transaction ID or generic third-product list. **PARTIAL:** Runtime payment refuses; no research purchase is activated. [Full evidence/confidence](../plans/c3-agency-payment.md).
+Native agency confirmation schedules recurring campaigns rather than charging immediately. DLL inspection verifies the later daily `MarketingHelper.RunDaily → GameManager.ChangeMoneySafe` fee and transaction/expense fields, but finds no intrinsic durable transaction ID or generic third-product list. **PARTIAL:** Runtime payment refuses; no research purchase is activated. [Full evidence/confidence](../archive/c3-agency-payment.md).
 
 Adds exact-money typed in-memory quote/request/agency/evidence contracts, one shared city slot, duplicate/pending guards, refusal handling and blocking PaymentUnknown after native entry. Adds an explicit read-only bridge dump with no gameplay consumer, hooks, UI, report, money movement, campaign mutation, persisted fields or schema changes. Native caching getters are deliberately avoided. No A/B-stack or C1 code dependency. Tier contents and prices remain C4/C5 work.
 

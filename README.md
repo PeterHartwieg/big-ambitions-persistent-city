@@ -32,9 +32,9 @@ E5c implements the pure product metadata resolver (Food by default, seeded per-r
 
 E5e implements the bounded, versioned [mod metadata API](docs/food-product-metadata-api.md) with config > API > defaults and immutable loaded-name-filtered resolver images. Schema 25, held inputs and native eligibility/checkout are unchanged. [Offline evidence and automated next-batch rig checks](docs/checks/e5e-metadata-api.md).
 
-E5d implements the inactive [schema-25 name identity/save contract](docs/population-schema25.md), preserving exact predecessor facts and opaque histories; native product/ownership integration remains separate. [Offline evidence and numbered next-batch rig checks](docs/checks/e5d-name-identity-save.md).
+E5d implements the inactive [schema-25 name identity/save contract](docs/archive/population-schema25.md), preserving exact predecessor facts and opaque histories; native product/ownership integration remains separate. [Offline evidence and numbered next-batch rig checks](docs/checks/e5d-name-identity-save.md).
 
-E3 remaining batch: [six named candidates STOP](docs/plans/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-remaining-batch.md).
+E3 remaining batch: [six named candidates STOP](docs/archive/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-remaining-batch.md).
 
 D3a adds a free totals-only fourteen-day rival outflow line to Ctrl+F8 and D2 diagnostics, with schema 24 exact ledger reconciliation. [Offline evidence and pending 6 Nov checks](docs/checks/d3a-outflow-line.md).
 
@@ -42,17 +42,17 @@ D2 adds bounded read-only rival food choices, timed outings and exact own-ledger
 
 C2b has offline campaign evidence/source plumbing and schema 22; active campaigns now raise choice preference and soften distance for every resident under Peter's 1 Nov decision; in-game checks are batched into the combined locked rig under merge rule v2; no rig proof is claimed. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
 
-E3 pizza: [feasibility STOP record](docs/plans/e3-pizza.md), conditional shared probe only; shipped holder unestablished, no product enabled or gameplay/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-pizza.md).
+E3 pizza: [feasibility STOP record](docs/archive/e3-pizza.md), conditional shared probe only; shipped holder unestablished, no product enabled or gameplay/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-pizza.md).
 
-E4 implements the [schema 23 wider-menu envelope](docs/population-schema23.md) with offline coverage; the effective live menu limit stays four and no additional native product is enabled. [Evidence and pending 6 Nov checks](docs/checks/e4-wider-menu.md).
+E4 implements the [schema 23 wider-menu envelope](docs/archive/population-schema23.md) with offline coverage; the effective live menu limit stays four and no additional native product is enabled. [Evidence and pending 6 Nov checks](docs/checks/e4-wider-menu.md).
 
-E3 ice cream: [feasibility STOP](docs/plans/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](docs/checks/e3-icecream.md)).
+E3 ice cream: [feasibility STOP](docs/archive/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](docs/checks/e3-icecream.md)).
 
 A5 integrates Step A's offline acceptance on the schema-20 development line (historical measurements precede E1); [closure, measurements and the 6 Nov in-game checklist](docs/checks/a5-integrated-acceptance.md) keep offline results separate from pending native interaction and final-head proof.
 
-E3 frenchfries: [offline feasibility STOP](docs/plans/e3-frenchfries.md); shipped holder unestablished, conditional probe only, no product enabled or gameplay/save change.
+E3 frenchfries: [offline feasibility STOP](docs/archive/e3-frenchfries.md); shipped holder unestablished, conditional probe only, no product enabled or gameplay/save change.
 
-F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](docs/plans/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
+F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](docs/archive/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
 
 F1b adds explicit read-only door/transform and capped street-renderer metadata commands. [Evidence and offline checks](docs/checks/f1b-street-proxy.md): renderer NO-GO pending semantic door mapping, independent aperture alignment and bounded native coverage; no renderer or schema change.
 
@@ -148,7 +148,7 @@ The original walking milestone was validated on the isolated Mac rig; see its [h
 
 ## Food-demand experiment (21 October; offline first increment)
 
-The following detached experiments and opt-in milestones are historical. The [bounded implementation plan](docs/implementation-plan.md) supersedes their earlier economy roadmap and activation model. A detached prototype now models daily meal intentions, temporary spending allowances, competing shops, travel/opening costs and finite hypothetical stock. Its HTML insight view compares price changes, closures and shortages. Run `dotnet run --project tools/food-demand/FoodDemand.csproj -- build/food-demand-demo` and open the generated `index.html`.
+The following detached experiments and opt-in milestones are historical. The [bounded implementation plan](docs/archive/implementation-plan.md) supersedes their earlier economy roadmap and activation model. A detached prototype now models daily meal intentions, temporary spending allowances, competing shops, travel/opening costs and finite hypothetical stock. Its HTML insight view compares price changes, closures and shortages. Run `dotnet run --project tools/food-demand/FoodDemand.csproj -- build/food-demand-demo` and open the generated `index.html`.
 
 The default demonstration is synthetic. A bounded native catalogue reader is compiled but not activated; live food availability, route/activity integration and game validation remain pending. Neither the experiment nor its JSON documents change the native economy or population save. [Implementation, native sales findings and remaining work](docs/food-demand.md).
 

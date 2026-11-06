@@ -12,7 +12,7 @@ This ancestry sync lands by merge commit into A2. The separate locked-PC `rig_te
 
 ## Step A2 population schema 17 and lifestyle traits - 30 October 2026 (offline only)
 
-Implements slice A2 of the [step A plan](../plans/step-a-inspector-traits-choice.md), stacked on A1. 17 was confirmed as the next free population schema (current was 16). No game, rig or native run.
+Implements slice A2 of the [step A plan](../archive/step-a-inspector-traits-choice.md), stacked on A1. 17 was confirmed as the next free population schema (current was 16). No game, rig or native run.
 
 **What schema 17 adds.**
 - `CitizenState.Traits`: one required record per resident, also when there is no food scope. Ten traits in generation version 1 (three product tastes, price sensitivity, queue patience, loyalty/curiosity, travel willingness, health, quality/brand and time pressure). Each is a fixed band 0-4 stored as one digit in `Bands`. Traits come from the saved `CityState.Seed` and the stable ID through `pc:traits:v1|<length>:<id>|<trait>`, with no names, homes, jobs, bodies or settings in the key. Shares are 10/20/40/20/10%. Traits are immutable after generation, and event copies share them.
