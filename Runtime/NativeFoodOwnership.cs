@@ -43,6 +43,8 @@ namespace PersistentCity.Runtime
         private static bool installed, boundary, awaitingPopulation, releaseWithoutMarket;
         private static long lastBoundaryHour = -1;
         internal static string Error { get; private set; } = "";
+        /// <summary>F5c-lite: set while the current save holds a refused older development city; then nothing is persisted.</summary>
+        internal static FoodAuthorityStandDown? StandDown { get; private set; }
         internal static long Hour => SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
         internal static long SuppressedBatches { get; private set; }
         internal static long SuppressedDraws { get; private set; }
@@ -67,14 +69,14 @@ namespace PersistentCity.Runtime
             prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First });
         internal static void Uninstall()
         {
-            patches.UnpatchAll(PatchId); installed = false; market = null; save = null;
+            patches.UnpatchAll(PatchId); installed = false; market = null; save = null; StandDown = null;
             records.Clear(); observed.Clear(); addresses.Clear(); payload = null; Error = ""; awaitingPopulation = false;
         }
         internal static void EnsureSave()
         {
             var current = SaveGameManager.Current;
             if (current == null || current.modData == null || ReferenceEquals(save, current)) return;
-            save = current; market = null; records.Clear(); observed.Clear(); addresses.Clear(); Error = "";
+            save = current; market = null; records.Clear(); observed.Clear(); addresses.Clear(); Error = ""; StandDown = null;
             lastBoundaryHour = Hour; releaseWithoutMarket = false;
             if (current.BuildingRegistrations != null)
                 foreach (var reg in current.BuildingRegistrations) addresses[reg.Address] = reg;
@@ -82,13 +84,22 @@ namespace PersistentCity.Runtime
             awaitingPopulation = payload == null && current.modData.ContainsKey(SaveStore.StateKey);
             try
             {
-                if (current.modData.TryGetValue(SaveStore.StateKey, out var populationPayload))
-                    SaveCodec.RequireExecutableCapabilities(populationPayload);
+                current.modData.TryGetValue(SaveStore.StateKey, out var populationPayload);
+                bool development = SaveCodec.DevelopmentSchemaOf(populationPayload) != null;
+                if (populationPayload != null && !development) SaveCodec.RequireExecutableCapabilities(populationPayload);
                 foreach (var row in FoodAuthorityStore.Read(payload))
                 {
                     if (row.RequestedHour > Hour || row.FromHour > Hour || row.UntilHour > Hour)
                         throw new InvalidOperationException("Food authority is ahead of the loaded native clock; original payload retained.");
                     records.Add(row.PlaceId, row);
+                }
+                if (development)
+                {
+                    // An older development city is refused, not migrated: take no authority, write no key, and let
+                    // native customers return after the loaded hour (FoodAuthorityStandDown).
+                    StandDown = new FoodAuthorityStandDown(records.Values, Hour);
+                    awaitingPopulation = false; releaseWithoutMarket = false;
+                    return;
                 }
                 releaseWithoutMarket = records.Values.Any(row => row.Managed && !row.Desired);
                 if (releaseWithoutMarket) ObserveReleaseRegistrations();
@@ -107,6 +118,7 @@ namespace PersistentCity.Runtime
         {
             Install(); EnsureSave();
             if (Error.Length > 0) throw new InvalidOperationException(Error);
+            if (StandDown != null) throw new InvalidOperationException(SaveCodec.DevelopmentSchemaMessage);
             if (market != null && !ReferenceEquals(market, value)) throw new InvalidOperationException("Food authority already attached.");
             if (awaitingPopulation) throw new InvalidOperationException("Saved food authority is awaiting population validation.");
             if (payload == null) Persist(); // Supported empty-scope cities also carry the early-load contract.
@@ -119,6 +131,7 @@ namespace PersistentCity.Runtime
         {
             EnsureSave();
             if (Error.Length > 0) throw new InvalidOperationException(Error);
+            if (StandDown != null) throw new InvalidOperationException(SaveCodec.DevelopmentSchemaMessage);
             if (!awaitingPopulation)
             {
                 foreach (var scope in state.Shops)
@@ -167,6 +180,7 @@ namespace PersistentCity.Runtime
         {
             EnsureSave();
             if (Error.Length > 0) throw new InvalidOperationException(Error);
+            if (StandDown != null) return; // nothing is owned or persisted for a refused development city
             bool changed = false;
             foreach (var row in records.Values)
                 if (row.Managed || row.Desired) changed |= row.Observe(row.Signature, false, Hour);
@@ -186,6 +200,7 @@ namespace PersistentCity.Runtime
         {
             EnsureSave();
             if (Error.Length > 0) throw new InvalidOperationException(Error);
+            if (StandDown != null) throw new InvalidOperationException(SaveCodec.DevelopmentSchemaMessage);
             string place = NativeFoodMarket.PlaceId(reg);
             if (!records.TryGetValue(place, out var row)) records.Add(place, row = new FoodAuthority { PlaceId = place });
             bool replacement = observed.TryGetValue(place, out var previous) && !ReferenceEquals(previous, reg);
@@ -196,6 +211,7 @@ namespace PersistentCity.Runtime
         }
         internal static void Retire(string place)
         {
+            if (StandDown != null) return;
             if (records.TryGetValue(place, out var row) && row.Observe(row.Signature, false, Hour)) Persist();
             if (observed.TryGetValue(place, out var reg)) addresses.Remove(reg.Address);
             observed.Remove(place);
@@ -225,6 +241,7 @@ namespace PersistentCity.Runtime
         private static bool Suppress(BuildingRegistration reg, long hour)
         {
             EnsureSave();
+            if (StandDown != null) return StandDown.Suppresses(NativeFoodMarket.PlaceId(reg), hour);
             // A live menu/owner/type mutation can precede our next bounded observation. Old
             // queued work still belongs to its original authority until drained, even if the
             // registration fields have already changed. Sales separately require exact identity.
@@ -267,6 +284,7 @@ namespace PersistentCity.Runtime
         private static void AfterNativeTick()
         {
             EnsureSave();
+            if (StandDown != null) { if (!boundary && StandDown.HandBack(Hour)) HandBackToNative(StandDown); return; }
             if (boundary || Error.Length > 0 || Hour <= lastBoundaryHour
                 || market == null && !releaseWithoutMarket) return;
             // Observation must remain outside the lock: a replacement drains work under its
@@ -307,6 +325,20 @@ namespace PersistentCity.Runtime
             // isolates its own failures and still runs on boundaries with no authority transfers.
             market?.ObserveCampaignBoundary(Hour);
         }
+        // The loaded hour has ended: drain its queued work under the old protection, then regenerate the current and
+        // future native hours for the formerly owned businesses (the native helper keeps completed entries).
+        private static void HandBackToNative(FoodAuthorityStandDown standDown)
+        {
+            boundary = true;
+            try
+            {
+                BusinessSimulatorHelper.Work.ForceCompleteAllWork();
+                foreach (var reg in SaveGameManager.Current.BuildingRegistrations)
+                    if (reg.RentedByPlayer && standDown.IsProtected(NativeFoodMarket.PlaceId(reg)))
+                        CustomerEntriesHelper.UpdateCustomerEntriesForPlayerBusiness(reg, TimeHelper.GetDayOfWeek());
+            }
+            finally { boundary = false; }
+        }
         private static bool HasNativeCustomers(FoodAuthority row) => observed.TryGetValue(row.PlaceId, out var reg)
             && BuildingManager.Instance != null && ReferenceEquals(BuildingManager.Instance.buildingRegistration, reg)
             && IndoorCustomerSpawner.Customers.Count > 0;
@@ -314,7 +346,7 @@ namespace PersistentCity.Runtime
         {
             EnsureSave();
             // Native constructors call Reset(false) before an address is assigned.
-            if (string.IsNullOrWhiteSpace(__instance.StreetName) || Error.Length > 0 || !records.TryGetValue(NativeFoodMarket.PlaceId(__instance), out var row)
+            if (string.IsNullOrWhiteSpace(__instance.StreetName) || Error.Length > 0 || StandDown != null || !records.TryGetValue(NativeFoodMarket.PlaceId(__instance), out var row)
                 || !observed.TryGetValue(row.PlaceId, out var reg) || !ReferenceEquals(reg, __instance)) return;
             DrainOldWork();
             row.Observe(row.Signature, false, Hour, reset: true); Persist();

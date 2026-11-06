@@ -116,6 +116,7 @@ namespace PersistentCity.Core
                 CaptureRoutineStop(person);
                 for (int slot = 0; slot < state.RepresentationFactor; slot++) Enrol(person, slot);
             }
+            PersonTable.OrderVisitors(city.State);
         }
 
         private void CaptureRoutineStop(CitizenState person)

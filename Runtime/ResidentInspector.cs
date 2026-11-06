@@ -380,6 +380,7 @@ namespace PersistentCity.Runtime
             {
                 AddressRow("Home", insight.Home, homeLabel);
                 AddressRow(insight.WorkRole, insight.Work, workLabel);
+                if (insight.PersonWords.Length > 0) GUILayout.Label(insight.PersonWords, text);
                 if (personality.Length > 0) GUILayout.Label(personality, text);
                 if (mapProblem.Length > 0) GUILayout.Label(mapProblem, text);
             }

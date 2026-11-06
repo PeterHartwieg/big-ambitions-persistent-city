@@ -73,9 +73,10 @@ namespace PersistentCity.Persistence
         /// <summary>Returns the start day, or -1 for "no Employment"; the reader reconciles it with DayPlaceId.</summary>
         private static int ParseResidentTuple26(string text)
         {
-            Require(text.Length <= MaxResidentTuple && text.StartsWith("1", StringComparison.Ordinal) && text.Length >= 2, "Invalid person tuple.");
+            Require(text.Length >= 2 && text[0] == '1', "Invalid person tuple version.");
             Require(text[1] != 'V', "A visitor row cannot carry resident identity, home, car or recent visits.");
-            Require(text.StartsWith(ResidentPrefix26, StringComparison.Ordinal), "Unknown person kind.");
+            Require(text[1] == 'R', "Unknown person kind.");
+            Require(text.Length <= MaxResidentTuple, "Oversized person tuple.");
             if (text.Length == 3 && text[2] == '-') return -1;
             Require(text.Length > 3 && text[2] == 'E' && text.EndsWith(EmploymentTail26, StringComparison.Ordinal), "Invalid resident employment.");
             return Day26(text, 3, text.Length - EmploymentTail26.Length, "Invalid resident employment start.");
@@ -160,8 +161,8 @@ namespace PersistentCity.Persistence
         {
             Require(text.Length <= MaxVisitorTuple, "Oversized visitor tuple.");
             var parts = text.Split('|');
-            Require(parts.Length >= 1 && parts[0].Length == 2 && parts[0][0] == '1', "Invalid visitor tuple version.");
-            Require(parts[0] != ResidentPrefix26, "A resident row requires identity, home and recent visits; it cannot be a visitor tuple.");
+            Require(parts[0].Length >= 2 && parts[0][0] == '1', "Invalid visitor tuple version.");
+            Require(parts[0][1] != 'R', "A resident row requires identity, home and recent visits; it cannot be a visitor tuple.");
             Require(parts[0] == VisitorPrefix26, "Unknown person kind.");
             Require(parts.Length == 6, "Visitor tuple has the wrong arity.");
             var visitor = new VisitorPerson { Id = parts[1] };
@@ -255,8 +256,8 @@ namespace PersistentCity.Persistence
         {
             Require(reader.TokenType == JsonToken.String, "Invalid person tuple.");
             string value = (string)reader.Value!;
-            Require(value.Length <= MaxResidentTuple && text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid person tuple encoding.");
             ParseResidentTuple26(value);
+            Require(text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid person tuple encoding.");
         }
 
         /// <summary>After a schema-26 decode and before validation: reconcile resident Employment with DayPlaceId and

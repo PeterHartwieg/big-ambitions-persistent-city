@@ -32,31 +32,25 @@ namespace PersistentCity.Core
         public const int PersonaScheduleCode = 0;
 
         /// <summary>A represented consumer of slot one or two becomes a visitor person when its roster record is
-        /// enrolled (section 9 Q3 default: <see cref="PersonPolicy.MigratedConsumerPattern"/>). The list stays
-        /// ordinal by ID. Its meals keep today's excursion schedule through its host resident.</summary>
+        /// enrolled (section 9 Q3 default: <see cref="PersonPolicy.MigratedConsumerPattern"/>). Its meals keep today's
+        /// excursion schedule through its host resident. Appends; call <see cref="OrderVisitors"/> once enrolment ends.</summary>
         public static VisitorPerson AddRepresentedVisitor(CityState city, string consumerId)
         {
             var visitor = new VisitorPerson { Id = consumerId, Stay = new VisitorStay {
                 Pattern = PersonPolicy.MigratedConsumerPattern, Presence = VisitorPresence.Active,
                 FirstDay = (int)Math.Floor(city.Minute / 1440) } };
-            int at = FindVisitor(city.Visitors, consumerId);
-            if (at >= 0) throw new InvalidOperationException("Visitor person already exists: " + consumerId);
-            city.Visitors.Insert(~at, visitor);
+            city.Visitors.Add(visitor);
             return visitor;
         }
 
-        /// <summary>Binary search over the ordinal visitor list; the complement of the insertion point when absent.</summary>
-        public static int FindVisitor(IReadOnlyList<VisitorPerson> visitors, string id)
+        /// <summary>Restores ordinal order after a batch of appends: one O(n log n) sort instead of an O(n) insert per
+        /// visitor (100,000 visitors at the 50,000×3 bound). Refuses a duplicate person.</summary>
+        public static void OrderVisitors(CityState city)
         {
-            int low = 0, high = visitors.Count - 1;
-            while (low <= high)
-            {
-                int middle = low + ((high - low) >> 1);
-                int order = string.CompareOrdinal(visitors[middle].Id, id);
-                if (order == 0) return middle;
-                if (order < 0) low = middle + 1; else high = middle - 1;
-            }
-            return ~low;
+            city.Visitors.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+            for (int i = 1; i < city.Visitors.Count; i++)
+                if (string.CompareOrdinal(city.Visitors[i - 1].Id, city.Visitors[i].Id) == 0)
+                    throw new InvalidOperationException("Visitor person already exists: " + city.Visitors[i].Id);
         }
 
         /// <summary>The resident's Employment, formalizing DayPlaceId: Study for students, Work otherwise, none when

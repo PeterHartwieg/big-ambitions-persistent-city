@@ -89,6 +89,10 @@ namespace PersistentCity.Core
         public ResidentAddress? Home { get; private set; }
         public ResidentAddress? Work { get; private set; }
         public string WorkRole { get; private set; } = "";
+        /// <summary>Schema-26 person facts in words (F5c-lite): kind, household and Employment. Never an ID.</summary>
+        public PersonKind Kind { get; private set; } = PersonKind.Resident;
+        public int HouseholdSize { get; private set; }
+        public string PersonWords { get; private set; } = "";
         public IReadOnlyList<string> Personality { get; private set; } = Array.Empty<string>();
         public IReadOnlyList<string> MemoryWords { get; private set; } = Array.Empty<string>();
         /// <summary>Words for this consumer's current budget state (F6c); empty without household finances.</summary>
@@ -137,6 +141,8 @@ namespace PersistentCity.Core
             insight.WorkRole = day == null ? person.DayPlaceId.Length > 0 ? "Work or study location unknown"
                 : person.Identity.Persona == Persona.Retiree ? "Retired" : "No regular workplace"
                 : day.Kind == PlaceKind.Study ? "Studies at" : "Works at";
+            insight.HouseholdSize = CountHousehold(city, person);
+            insight.PersonWords = DescribePerson(person, insight.HouseholdSize, day);
             insight.Personality = DescribePersonality(person, meal, productName);
             var mealToday = meal != null && meal.Slot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
             if (mealToday != null && city.Food != null && city.Capabilities.Active)
@@ -221,6 +227,27 @@ namespace PersistentCity.Core
                 case Persona.Grumpy: return "a bit grumpy";
                 default: return "a night owl";
             }
+        }
+
+        // Members share the saved home (HouseholdId h:<HomeId>), so the household is counted, never stored.
+        private static int CountHousehold(CityState city, CitizenState person)
+        {
+            if (person.HomeId.Length == 0) return 0;
+            int members = 0;
+            foreach (var other in city.Citizens) if (other.HomeId == person.HomeId) members++;
+            return members;
+        }
+
+        private static string DescribePerson(CitizenState person, int household, Place? day)
+        {
+            var text = new StringBuilder(64).Append("Resident");
+            if (household == 1) text.Append("; lives alone");
+            else if (household > 1) text.Append("; household of ").Append(household.ToString(CultureInfo.InvariantCulture));
+            var employment = PersonTable.ResidentEmployment(person);
+            if (employment != null && day != null)
+                text.Append(employment.Kind == EmploymentKind.Study ? "; studying since day " : "; employed since day ")
+                    .Append(employment.StartDay.ToString(CultureInfo.InvariantCulture));
+            return text.Append('.').ToString();
         }
 
         private static string TellStory(CitizenState person, ResidentInsight insight, string doing)
