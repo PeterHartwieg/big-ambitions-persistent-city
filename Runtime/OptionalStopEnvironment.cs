@@ -32,7 +32,8 @@ namespace PersistentCity.Runtime
             PublishFrontages(this.places.Values);
         }
         public bool Raining => RainHelper.isRaining;
-        // Issue #128 attribution: these native reads run inside population advancement units.
+        // Issue #128 attribution: every Spots/Available read, both inside advancement units and from
+        // RefreshOptionalStops before them. The per-advance delta isolates advancement reads.
         // Read and reset by the 60-second summary; timing adds no allocation.
         public long SeamCalls { get; private set; }
         public double SeamMilliseconds { get; private set; }
@@ -230,27 +231,36 @@ namespace PersistentCity.Runtime
         {
             if (!place.Id.StartsWith("scene-park:", StringComparison.Ordinal)
                 || !place.EvidenceSource.StartsWith("native-park-volume;", StringComparison.Ordinal)) return Array.Empty<OptionalStopSpot>();
-            foreach (var trigger in ParkTriggers())
+            // A destroyed cached trigger may have been replaced inside an already-loaded scene; the
+            // former per-call scan would see the replacement, so rescan once before reporting no match.
+            for (int attempt = 0; attempt < 2; attempt++)
             {
-                if (trigger == null || !trigger.gameObject.activeInHierarchy
-                    || !OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id) continue;
-                var result = new List<OptionalStopSpot>();
-                foreach (var collider in trigger.GetComponentsInChildren<Collider>(false))
+                bool destroyed = false;
+                foreach (var trigger in ParkTriggers())
                 {
-                    if (collider == null || !collider.enabled || !collider.isTrigger
-                        || collider is MeshCollider mesh && !mesh.convex) continue;
-                    var b = collider.bounds; var center = b.center; center.y = (float)place.Position.Y;
-                    foreach (var outside in new[] { new Vector3(b.min.x - 2, center.y, center.z), new Vector3(b.max.x + 2, center.y, center.z),
-                        new Vector3(center.x, center.y, b.min.z - 2), new Vector3(center.x, center.y, b.max.z + 2) })
+                    if (trigger == null) { destroyed = true; continue; }
+                    if (!trigger.gameObject.activeInHierarchy
+                        || !OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id) continue;
+                    var result = new List<OptionalStopSpot>();
+                    foreach (var collider in trigger.GetComponentsInChildren<Collider>(false))
                     {
-                        var edge = collider.ClosestPoint(outside);
-                        if (!Sample(place.Position, edge, out var point) || (collider.ClosestPoint(PhysicalPedestrianBody.Vector(point))
-                            - PhysicalPedestrianBody.Vector(point)).sqrMagnitude > 0.25f) continue;
-                        result.Add(new OptionalStopSpot { Id = key + ":" + result.Count, TargetId = place.Id, Position = point, Facing = place.Position });
+                        if (collider == null || !collider.enabled || !collider.isTrigger
+                            || collider is MeshCollider mesh && !mesh.convex) continue;
+                        var b = collider.bounds; var center = b.center; center.y = (float)place.Position.Y;
+                        foreach (var outside in new[] { new Vector3(b.min.x - 2, center.y, center.z), new Vector3(b.max.x + 2, center.y, center.z),
+                            new Vector3(center.x, center.y, b.min.z - 2), new Vector3(center.x, center.y, b.max.z + 2) })
+                        {
+                            var edge = collider.ClosestPoint(outside);
+                            if (!Sample(place.Position, edge, out var point) || (collider.ClosestPoint(PhysicalPedestrianBody.Vector(point))
+                                - PhysicalPedestrianBody.Vector(point)).sqrMagnitude > 0.25f) continue;
+                            result.Add(new OptionalStopSpot { Id = key + ":" + result.Count, TargetId = place.Id, Position = point, Facing = place.Position });
+                        }
                     }
+                    if (result.Count == 0) return result;
+                    targets[place.Id] = trigger.transform; cached[key] = result.ToArray(); return cached[key];
                 }
-                if (result.Count == 0) return result;
-                targets[place.Id] = trigger.transform; cached[key] = result.ToArray(); return cached[key];
+                if (!destroyed) break;
+                parkTriggers = null;
             }
             return Array.Empty<OptionalStopSpot>();
         }

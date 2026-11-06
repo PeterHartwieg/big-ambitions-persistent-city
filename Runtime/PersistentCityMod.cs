@@ -354,7 +354,7 @@ namespace PersistentCity.Runtime
                         + slowestAdvanceUnitMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
                         + (slowestAdvanceUnit.Length == 0 ? "none" : slowestAdvanceUnit) + "), optional-stop reads "
                         + slowestAdvanceStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
-                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads this observation: "
+                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads this observation (refresh and advancement): "
                         + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
                         + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
                         + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "

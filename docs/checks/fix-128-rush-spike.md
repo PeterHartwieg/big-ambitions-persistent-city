@@ -14,11 +14,13 @@ The offline replay (matched city; see the perf file) drives Core at the same sca
 2. optional-stop native reads in `OptionalStopEnvironment` (frontage rebind, park edges, audience sampling);
 3. a Mono garbage collection that completes inside the call. The replay's one 60 ms frame, under parallel tests, sat outside every unit, which shows how a process-wide pause lands in this interval.
 
+The cause of the 134.96 ms advance is not yet identified, and #128 stays open. Candidates 1 and 2 are Persistent City Runtime work that needs Unity, so no offline harness can time them, and implementers do not use the game. This slice therefore does not claim the spike fixed. Rig check 1's attribution decides the follow-up fix.
+
 ## Implemented
 
 - **Replay.** `tests/RushSpikeReplay.cs` (fixture) and `tests/RushSpikeReplayTests.cs` (xUnit, non-parallel collection). The test runs day 3 18:30–19:30 after a two-day warm-up. It asserts the rush is present (>250 travelling, >50 cars), single unit <30 ms, advancement interval <30 ms (the failure message carries the GC count during the slowest frame) and p95 <5 ms. It also asserts that the sliced save hash equals an uninterrupted advance of the same city. `tools/rush-spike-replay` prints the evening and morning windows as JSON, and with `-p:SourceRoot=` it compiles the same fixture against another Core/Persistence tree.
-- **Attribution (Runtime, diagnostics only).** The 60-second population summary now adds, after "maximum events in one frame": `Slowest advance: unit <ms> (<kind>), optional-stop reads <ms>, <n> garbage collections completed during it`. It also adds the observation's optional-stop read calls, total, maximum and park trigger scans. Unit kinds: `route-planning`, `citizen`, `citizen-route-begin`, `traffic`, `food-continuation`, `other`, `snapshot` (the closing `SynchronizeSnapshot`).
-- **Park trigger scan (Runtime, perf).** `ParkEdge` used to run `FindObjectsOfType<LocationHappinessTrigger>(true)` on every uncached call. A failed lookup was never cached, so the scan repeated on each resting-stop attempt at that park, inside an advancement unit. It now reuses one trigger array until the loaded-scene set (handle plus `isLoaded`) changes. The per-call checks and their order are unchanged. Only scene-authored, non-clone triggers can match, so the result changes only with a scene change.
+- **Attribution (Runtime, diagnostics only).** The 60-second population summary now adds, after "maximum events in one frame": `Slowest advance: unit <ms> (<kind>), optional-stop reads <ms>, <n> garbage collections completed during it`. The per-advance optional-stop figure counts only reads inside that call. The line also adds the observation's optional-stop read calls, total, maximum and park trigger scans, labelled "(refresh and advancement)" because they include `RefreshOptionalStops` reads made before advancement. Unit kinds: `route-planning`, `citizen`, `citizen-route-begin`, `traffic`, `food-continuation`, `other`, `snapshot` (the closing `SynchronizeSnapshot`).
+- **Park trigger scan (Runtime, perf).** `ParkEdge` used to run `FindObjectsOfType<LocationHappinessTrigger>(true)` on every uncached call. A failed lookup was never cached, so the scan repeated on each resting-stop attempt at that park, inside an advancement unit. It now reuses one trigger array until the loaded-scene set (handle plus `isLoaded`) changes. The per-call checks and their order are unchanged. Only scene-authored, non-clone triggers can match, so the result changes only with a scene change. If a lookup finds no match and the cached array held a destroyed trigger, it rescans once and retries, so a replacement created inside an already-loaded scene is still found. This candidate removal is unmeasured: its before/after cost needs Unity, and rig check 3 reads it.
 
 No Core or Persistence change. Saved state is byte-identical: the replay hashes equal the `f46b3dd` baseline in both windows.
 
@@ -32,7 +34,8 @@ No Core or Persistence change. Saved state is byte-identical: the replay hashes 
 ## Offline evidence
 
 - `python tools/build.py --game-managed "<Steam>/Big Ambitions_Data/Managed"`: passed.
-- `dotnet test tests/PersistentCity.Tests.csproj`: 3,180 passed, 0 failed (includes the new replay test).
+- `dotnet test tests/PersistentCity.Tests.csproj`: all passed (includes the new replay test). The replay test asserts wall-clock time, so if it fails, check the reported GC count and host load before treating it as a regression.
+- Harnesses that compile changed Runtime files: `tools/accounting-backlog-regression` builds (its `PopulationRuntime` double carries `stopEnvironment` and checks its cleanup). `python tools/optional-stop-regression/run.py` passes, with its extraction now including the seam timing helpers that `Spots` calls.
 - `dotnet run -c Release --project tools/rush-spike-replay`, before (`f46b3dd` Core) and after: numbers and hashes in the [perf file](../perf/fix-128-rush-spike.md).
 
 This is offline evidence only. It does not show that the in-game spike is gone.
