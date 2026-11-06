@@ -72,7 +72,10 @@ namespace PersistentCity.Persistence
                 : new SaveWriteResult(false, result.Error);
         }
 
-        public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state)
+        public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state) => WriteTo(modData, state, null);
+
+        /// <summary>Same publication as <see cref="WriteTo(IDictionary{string,string},CityState)"/>; a non-null recorder also times its phases (F7a).</summary>
+        public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state, SaveCostRecorder? cost)
         {
             if (modData == null) throw new ArgumentNullException(nameof(modData));
             if (state == null) return new SaveWriteResult(false, "State is null.");
@@ -81,8 +84,10 @@ namespace PersistentCity.Persistence
             try
             {
                 // Validate the complete new state before considering any replacement.
+                cost?.Enter(SaveCostPhase.Validate);
                 SaveCodec.RequireExecutablePolicy(state);
-                string payload = SaveCodec.Write(state);
+                string payload = SaveCodec.Write(state, cost);
+                cost?.Enter(SaveCostPhase.Publish);
                 bool hasPayload = modData.TryGetValue(SaveStore.StateKey, out var existingPayload);
                 bool trusted = ReferenceEquals(modData, validatedDictionary)
                     && hasPayload == validatedHasPayload && ReferenceEquals(existingPayload, validatedPayload);

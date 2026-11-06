@@ -23,6 +23,7 @@
     <Compile Include="../tools/economy-interventions/EconomyMetrics.cs" Link="EconomyInterventions/EconomyMetrics.cs" />
     <Compile Include="../tools/economy-interventions/InterventionArms.cs" Link="EconomyInterventions/InterventionArms.cs" />
     <Compile Include="../tools/economy-interventions/SelfChecks.cs" Link="EconomyInterventions/SelfChecks.cs" />
+    <Compile Include="../tools/save-cost/RepresentativeFixture.cs" Link="RepresentativeFixture.cs" />
     <None Update="ReaderCorpus/**/*.json" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />

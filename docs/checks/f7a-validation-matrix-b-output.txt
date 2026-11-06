@@ -1,0 +1,28 @@
+===== e3-source-checks (['python.exe', 'tools/e3-remaining-feasibility-regression/source_checks.py'])
+PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins
+PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions
+PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins
+PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions
+PASS approved salad additions and landed cupcake/donut shared implementation, facades and cases
+PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins
+PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions
+PASS icecream SHA-256 pins, conditional facade, no hooks/polls/gameplay caller; old read branches and cases unchanged
+PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins
+PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions
+PASS pinned fries facade/cases; no gameplay caller, hooks, polls, writes or arbitrary product selector
+PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins
+PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions
+PASS pizza source pins and no gameplay caller/poll/writer
+PASS batch complete pins, 11 isolation mutations, exact historical additions only; no hooks/polls/writes/gameplay caller
+===== verify-taste (['python.exe', 'tools/food-metadata-regression/verify_taste.py'])
+no other dotnet test load; continuing
+Package: C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\f7a-save-cost-baseline\build\PersistentCity
+DLL SHA256: cab4b491ff3e8b0f9aafd5056a1ada68d0125202a7ed1dcb3c64f34b70bb8a1f
+Game assemblies and RLO are referenced externally; neither is copied into this package.
+2026-11-05T10:11:46 waiting for other dotnet load: pids 15656
+no other dotnet test load; continuing
+Passed!  - Failed:     0, Passed:  2862, Skipped:     0, Total:  2862, Duration: 2 m 19 s - PersistentCity.Tests.dll (net10.0)
+no other dotnet test load; continuing
+no other dotnet test load; continuing
+no other dotnet test load; continuing
+PASS: two fresh processes match the independent name-taste v1 reference; 937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e

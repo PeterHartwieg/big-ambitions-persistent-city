@@ -6,9 +6,13 @@ City-audit F1 implements simulation/accounting backpressure, bounded lag and vis
 
 City-audit F6a implements an offline intervention harness and records today's economic baseline, including the unlimited rival curve; no Runtime, Core or save change. [Baseline, offline checks and automated batched-rig checks](docs/checks/f6a-intervention-harness.md).
 
+City-audit F7b implements the exact save-epoch contract: a strict `persistentcity:save-epoch_v1` side key, failure and detach markers that every writer-25 build refuses, and a re-entrancy guard, with writer 25 unchanged. [Offline evidence and automated batched-rig checks](docs/checks/f7b.md); not verified by rig.
+
 City-audit F6b implements estimated rival service limits: rivals queue on estimated lanes and sell out per meal period, labeled estimated, derived from saved state with writer 25 unchanged; not verified by rig. [Offline evidence, F6d dependency and automated batched-rig checks](docs/checks/f6b.md).
 
 City-audit F3 implements bounded household posting units and finite route retries/query admission, with coherent 1,024-candidate campaign capture, resumable publication and no schema change. [Offline equivalence, stress limitations and automated batched-rig checks](docs/checks/pc-f3-bounded-bulk-work.md).
+
+City-audit F7a implements an on-request save-cost record (save phases, payload sizes, records, load activation) and the `tools/save-cost` baseline on representative and stress fixtures, with writer 25 and payload bytes unchanged. [Offline baseline and automated batched-rig checks](docs/checks/f7a.md); not verified by rig.
 
 City-audit F6c implements read-only feedback v1 in the Ctrl+F8 food panel: week-over-week purchases, sales and evaluated-offer causes per managed shop from the existing 14-day history (days without a record labeled, no hour/meal/resident attribution), a neutral rival estimate label, current budget-state counts from incremental counters that replace the panel's consumer scans, and inspector words for budget states. No behaviour, economy or save change. [Offline evidence and automated batched-rig checks](docs/checks/f6c.md).
 
