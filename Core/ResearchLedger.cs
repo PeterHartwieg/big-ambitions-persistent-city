@@ -228,7 +228,9 @@ namespace PersistentCity.Core
         private static bool ValidMinute(double minute) => Position.Finite(minute) && minute >= 0 && minute <= 1e9;
 
         /// <summary>Rebuilds a saved ledger for the codec (C5c). Strict: any out-of-bound, inconsistent or
-        /// reused value refuses the whole ledger. Internal so Runtime cannot forge a Paid order.</summary>
+        /// reused value refuses the whole ledger. Internal keeps it off the public surface; the multi-project
+        /// build enforces that. The shipped DLL compiles Core and Runtime into one assembly, so there it is a
+        /// convention: only the codec calls TryRestore.</summary>
         internal static bool TryRestore(long nextSequence, IReadOnlyList<ResearchOrderImage> openRows,
             IReadOnlyList<ResearchOrderImage> keptRows, IReadOnlyList<ResearchOrderImage> closedRows,
             out ResearchLedger? ledger, out string error)
