@@ -79,7 +79,7 @@ public sealed partial class FoodCommerceTests
     { while (!city.AdvanceTo(at, budget).CaughtUp) { } }
     private static CitySimulator Reload(CitySimulator city, Market market, Walking routes)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
         var restored = new CitySimulator(read.State!, routes); restored.AttachFoodMarket(market); return restored;
     }
     [Theory]
@@ -142,7 +142,7 @@ public sealed partial class FoodCommerceTests
         var (a, ma, _) = Ready(30); var (b, mb, routes) = Ready(30);
         Advance(a, 6 * 1440); for(double at = 1440; at <= 6 * 1440; at += 3) Advance(b, at, 1);
         b = Reload(b, mb, routes);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State)); Assert.Equal(ma.Orders, mb.Orders);
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State)); Assert.Equal(ma.Orders, mb.Orders);
         Assert.True(ma.Orders.Count > 30); Assert.Equal(ma.Orders.Count, ma.Orders.Distinct().Count());
         Assert.Equal(ma.Orders.Count, a.State.Food!.Residents.Sum(m => m.Purchases));
         Assert.All(ma.Times.Zip(ma.Times.Skip(1), (x,y) => y-x), gap => Assert.True(gap >= 4 - 1e-7));
@@ -216,18 +216,18 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(); var wire = JObject.Parse(LegacyWire.Write(city.State));
         wire["Schema"] = 7; StripNewFields(wire);
-        var read = SaveCodec.Read(wire.ToString()); Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        var read = DevelopmentChain.Read(wire.ToString()); Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
         wire = JObject.Parse(LegacyWire.Write(city.State)); wire["Food"]!["Residents"]![0]!["ResidentId"] = "unknown";
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
     }
     [Fact]
     public void NativeReceiptPreventsReplayEvenWithAnOlderPopulationSnapshot()
     {
         var (city, market, _) = Ready(); var meal = city.State.Food!.Residents.Single();
-        Advance(city, meal.DesiredAt + 2); var oldPopulation = SaveCodec.Write(city.State);
+        Advance(city, meal.DesiredAt + 2); var oldPopulation = DevelopmentChain.Write(city.State);
         var nativeData = new Dictionary<string,string>();
         FoodSaleReceipts.Begin(nativeData, meal); FoodSaleReceipts.Confirm(nativeData, meal);
-        var restoredMeal = SaveCodec.Read(oldPopulation).State!.Food!.Residents.Single();
+        var restoredMeal = DevelopmentChain.Read(oldPopulation).State!.Food!.Residents.Single();
         Assert.True(FoodSaleReceipts.AlreadyPaid(nativeData, restoredMeal));
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Begin(nativeData, restoredMeal));
         restoredMeal.Price += Money.FromCents(1); Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData, restoredMeal));
@@ -334,7 +334,7 @@ public sealed partial class FoodCommerceTests
         ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents"); ((JObject)payload["Food"]!).Remove("History");
         string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]); Assert.Single(market.Orders);
     }
 
@@ -399,7 +399,7 @@ public sealed partial class FoodCommerceTests
         a.EnableHouseholdFinances(); b.EnableHouseholdFinances();
         Advance(a, 3 * 1440 + 700, 1);
         Advance(b, 2 * 1440 + 1, 128); b = Reload(b, mb, ra); Advance(b, 3 * 1440 + 700, 128);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.Equal(ma.Orders, mb.Orders);
     }
 
@@ -409,9 +409,9 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(); city.EnableHouseholdFinances(); Advance(city, city.State.Minute + 1);
         var payload = JObject.Parse(LegacyWire.Write(city.State));
         payload["Food"]!["Residents"]![0]!["Budget"]!["Balance"] = 999999999L;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
         payload = JObject.Parse(LegacyWire.Write(city.State)); payload["Food"]!["HouseholdFinanceVersion"] = 99;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
 
     [Fact]
@@ -424,7 +424,7 @@ public sealed partial class FoodCommerceTests
         foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>()) m.Remove("Budget");
         string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
     }
 
@@ -460,9 +460,9 @@ public sealed partial class FoodCommerceTests
             Assert.Equal(h.OffersConsidered, h.ChosenOffers + h.PriceRejections + h.AccessRejections + h.ClosedRejections
                 + h.StockRejections + h.ServiceRejections + h.UnknownEvidence + h.PreferredAlternatives);
         });
-        int orders = market.Orders.Count; string before = SaveCodec.Write(city.State);
+        int orders = market.Orders.Count; string before = DevelopmentChain.Write(city.State);
         city = Reload(city, market, routes);
-        Assert.Equal(before, SaveCodec.Write(city.State)); Assert.Equal(orders, market.Orders.Count);
+        Assert.Equal(before, DevelopmentChain.Write(city.State)); Assert.Equal(orders, market.Orders.Count);
         Assert.True(history.Sum(h => h.Purchases) > 0);
     }
 
@@ -472,7 +472,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
         var payload = JObject.Parse(LegacyWire.Write(city.State));
         payload["Food"]!["History"]![0]!["PurchaseHours"]![0] = 999;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
 
     [Theory]
@@ -497,7 +497,7 @@ public sealed partial class FoodCommerceTests
         }
         Assert.True(held > 0); Assert.NotEmpty(actual.Orders);
         Assert.Equal(expected.Orders, actual.Orders);
-        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(city.State));
+        Assert.Equal(DevelopmentChain.Write(reference.State), DevelopmentChain.Write(city.State));
     }
 
 }

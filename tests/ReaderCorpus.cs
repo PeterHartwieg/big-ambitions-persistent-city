@@ -22,6 +22,10 @@ internal static class ReaderCorpus
 {
     public const int OldestSupportedSchema = 13;
     public const string Folder = "ReaderCorpus";
+    /// <summary>F5c-lite: the corpus covers the development schemas 13-25. The product reader refuses all of them
+    /// (DevelopmentSchema), so the chain and its writer-25 pin are reached through the preserved internal chain.</summary>
+    public const int CorpusWriter = SaveCodec.LatestDevelopmentSchema;
+    public static SaveReadResult Chain(string source) => SaveCodec.ReadDevelopmentChain(source);
 
     // Ordered oldest to newest. Sources list the Persistence files that implement each reader (maintenance cost).
     public static readonly FrozenReader[] Readers =
@@ -30,7 +34,7 @@ internal static class ReaderCorpus
         new("PopulationSchema19", 18, 19, PopulationSchema19.Read, new[] { "PopulationSchema19*.cs" }),
         new("PopulationSchema20", 20, 20, PopulationSchema20.Read, new[] { "PopulationSchema20*.cs" }),
         new("PopulationSchema24", 21, 24, PopulationSchema24.Read, new[] { "PopulationSchema24*.cs" }),
-        new("SaveCodec", 25, 25, SaveCodec.Read, new[] { "SaveCodec.cs", "PopulationWire18.cs", "AwarenessWire19.cs", "HeldTuningWire.cs",
+        new("SaveCodec", 25, 25, source => SaveCodec.ReadDevelopmentChain(source!), new[] { "SaveCodec.cs", "PopulationWire18.cs", "AwarenessWire19.cs", "HeldTuningWire.cs",
             "WeatherWire20.cs", "RivalWire21.cs", "CampaignWire22.cs", "MenuWire23.cs", "OutflowWire24.cs", "NameWire25.cs" }),
     };
 
@@ -97,7 +101,7 @@ internal static class ReaderCorpusRecipes
 {
     public static string Project(CityState state, int schema)
     {
-        if (schema >= 25) return SaveCodec.Write(state);
+        if (schema >= 25) return DevelopmentChain.Write25(state);
         if (schema <= 17)
         {
             string legacy17 = LegacyWire.Write(state);
@@ -112,7 +116,7 @@ internal static class ReaderCorpusRecipes
         {
             state.Schema = schema < 20 ? 19 : schema;
             if (schema >= 23) state.MenuPolicy = FoodMenuPolicy.Wire;
-            wire = schema >= 21 ? PopulationSchema24.WriteForSchema(state, schema) : schema == 20 ? PopulationSchema20.Write(state) : PopulationSchema19.Write(state);
+            wire = schema >= 21 ? DevelopmentChain.Legacy(state, () => PopulationSchema24.WriteForSchema(state, schema)) : schema == 20 ? DevelopmentChain.Legacy(state, () => PopulationSchema20.Write(state)) : DevelopmentChain.Legacy(state, () => PopulationSchema19.Write(state));
         }
         finally { state.Schema = current; state.MenuPolicy = policy; }
         if (schema != 18) return wire;

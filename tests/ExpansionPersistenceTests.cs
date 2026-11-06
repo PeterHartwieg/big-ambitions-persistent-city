@@ -20,7 +20,7 @@ public sealed class ExpansionPersistenceTests
 
     private static JObject Legacy(CityState city)
     {
-        var root=JObject.Parse(SaveCodec.Write(city)); root["Schema"]=1;
+        var root=JObject.Parse(DevelopmentChain.Write(city)); root["Schema"]=1;
         Keep(root,"Schema RloVersion PopulationKey Seed Minute Places Citizens");
         foreach(var token in root["Citizens"]!.Cast<JObject>())
             Keep(token,"Identity HomeId DayPlaceId ShopId LeisureId Preferences Phase Activity PlaceId DestinationId DestinationActivity Journey DepartureMinute NextEventMinute ActivityUntilMinute CompletedJourneys MissedActivities RecentVisits");
@@ -44,8 +44,8 @@ public sealed class ExpansionPersistenceTests
         string payload = Legacy(city).ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:data"] = "untouched" };
         var read = SaveStore.ReadFrom(data, "source");
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
-        Assert.Contains("Unsupported experimental state schema", read.Error);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
+        Assert.Contains("older development build; start a new city", read.Error);
         Assert.False(SaveStore.WriteTo(data, city).Success);
         Assert.Equal(payload, data[SaveStore.StateKey]); Assert.Equal("untouched", data["rlo:data"]);
     }
@@ -63,7 +63,7 @@ public sealed class ExpansionPersistenceTests
         if(corruption=="bad-reference") json["Citizens"]![0]!["HomeId"]="absent";
         if(corruption=="bad-type") json["Citizens"]![0]!["Identity"]!["Age"]="30";
         string payload=json.ToString(); var data=new Dictionary<string,string> { [SaveStore.StateKey]=payload };
-        Assert.Equal(SaveReadStatus.Invalid,SaveStore.ReadFrom(data,"source").Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema,SaveStore.ReadFrom(data,"source").Status);
         Assert.False(SaveStore.WriteTo(data,City()).Success); Assert.Equal(payload,data[SaveStore.StateKey]);
     }
 
@@ -80,7 +80,7 @@ public sealed class ExpansionPersistenceTests
 
     private static JObject SecondSchema(CityState city)
     {
-        var root = JObject.Parse(SaveCodec.Write(city)); root["Schema"] = 2;
+        var root = JObject.Parse(DevelopmentChain.Write(city)); root["Schema"] = 2;
         root.Remove("PopulationTarget"); root.Remove("InitialImportedResidents");
         StripTiming(root);
         foreach (var place in root["Places"]!.Cast<JObject>()) place.Remove("ResidentialAreaSquareMetres");
@@ -99,7 +99,7 @@ public sealed class ExpansionPersistenceTests
         var payload = legacy.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var result = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, result.Status); Assert.Null(result.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, result.Status); Assert.Null(result.State);
         Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
@@ -112,10 +112,10 @@ public sealed class ExpansionPersistenceTests
         person.Phase = CitizenPhase.Travelling; person.DestinationId = "work"; person.DestinationActivity = Activity.Work;
         person.DepartureMinute = 1435; person.NextEventMinute = 1455; person.ActivityUntilMinute = 2000;
         person.Journey = new Route { Legs = new List<RouteLeg> { new() { From = person.Car.ParkedPosition, To = new Position(50,0,0), Minutes = 20, Mode = TravelMode.Car } } };
-        string payload = SaveCodec.Write(city); var read = SaveCodec.Read(payload);
+        string payload = DevelopmentChain.Write(city); var read = DevelopmentChain.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.Equal(payload, DevelopmentChain.Write(read.State!));
         Assert.Equal(person.Car.Id, read.State!.Citizens[0].Car!.Id);
         Assert.Equal(person.Journey.PositionAt(5).X, read.State.Citizens[0].Journey!.PositionAt(5).X);
     }
@@ -127,13 +127,13 @@ public sealed class ExpansionPersistenceTests
     [InlineData("type")]
     public void MalformedSchemaThreeIsNotRepaired(string defect)
     {
-        var json = JObject.Parse(SaveCodec.Write(City())); json["Schema"] = 3; StripTiming(json);
+        var json = JObject.Parse(DevelopmentChain.Write(City())); json["Schema"] = 3; StripTiming(json);
         if (defect == "missing") json.Remove("InitialImportedResidents");
         if (defect == "unknown") json["HouseholdPolicyVersion"] = 1;
         if (defect == "accounting") json["PopulationTarget"] = 1;
         if (defect == "type") json["Citizens"]![0]!["NextJobChangeMinute"] = "1500";
         string payload = json.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
-        Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "source").Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveStore.ReadFrom(data, "source").Status);
         Assert.False(SaveStore.WriteTo(data, City()).Success);
         Assert.Same(payload, data[SaveStore.StateKey]);
     }
@@ -152,7 +152,7 @@ public sealed class ExpansionPersistenceTests
         if (defect == "bad-type") root["Citizens"]![0]!["NextJobChangeMinute"] = "1500";
         string payload = root.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
-        Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "source").Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveStore.ReadFrom(data, "source").Status);
         Assert.False(SaveStore.WriteTo(data, City()).Success);
         Assert.Equal(payload, data[SaveStore.StateKey]);
     }
@@ -163,8 +163,8 @@ public sealed class ExpansionPersistenceTests
         var city=City(); var source=city.SourceIdentities.Select(Population.CloneIdentity).ToArray();
         var sim=new CitySimulator(city,new Direct()); sim.AdvanceTo(city.Minute);
         Assert.Equal(source.Select(c=>c.Id), city.Citizens.Select(c=>c.Identity.Id));
-        string json=SaveCodec.Write(city); var copy=SaveCodec.Read(json).State!;
-        Assert.Equal(json,SaveCodec.Write(copy)); Assert.Equal(2,copy.Citizens.Count);
+        string json=DevelopmentChain.Write(city); var copy=DevelopmentChain.Read(json).State!;
+        Assert.Equal(json,DevelopmentChain.Write(copy)); Assert.Equal(2,copy.Citizens.Count);
         Assert.All(source,id=>Assert.True(Population.EqualIdentity(id,copy.SourceIdentities.Single(c=>c.Id==id.Id))));
         Assert.Equal(source.Select(c=>c.Id), copy.Citizens.Select(c=>c.Identity.Id));
     }
@@ -191,20 +191,20 @@ public sealed class ExpansionPersistenceTests
             person.Journey=new Route{Legs=new List<RouteLeg>{new(){From=new Position(0,0,0),To=new Position(50,0,0),Minutes=1,Mode=TravelMode.Car}}};
             if(defect=="foreign-car")person.Car=new CarState{Id="c9:car",ParkedPosition=new Position(0,0,0)};
         }
-        Assert.Throws<SaveValidationException>(()=>SaveCodec.Write(state));
+        Assert.Throws<SaveValidationException>(()=>DevelopmentChain.Write(state));
     }
     [Fact]
     public void CurrentResidentWithoutLeisureCanVisitNewParkWithoutChangingPhysicalState()
     {
         var city=City();city.Places.RemoveAll(p=>p.Kind==PlaceKind.Leisure);
         foreach(var c in city.Citizens)c.LeisureId="";
-        var migrated=SaveCodec.Read(SaveCodec.Write(city)).State!;
+        var migrated=DevelopmentChain.Read(DevelopmentChain.Write(city)).State!;
         var person=migrated.Citizens[0];double next=person.NextEventMinute;
         CatalogueMigration.Enrich(migrated,new[]{new Place{Id="new-park",Name="Park",Kind=PlaceKind.Leisure,Capacity=64}});
         Assert.Equal("new-park",person.LeisureId);
         Assert.Equal(Activity.Leisure,DailyRoutine.At(person,migrated.Seed,5*1440+900,migrated.Places).Activity);
         Assert.Equal("home",person.PlaceId);Assert.Equal(next,person.NextEventMinute);Assert.Null(person.Journey);
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(migrated)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(DevelopmentChain.Write(migrated)).Status);
     }
     [Fact]
     public void LegacyPayloadsAreRefusedEvenWithinTheCurrentSizeLimit()
@@ -212,7 +212,7 @@ public sealed class ExpansionPersistenceTests
         foreach (var payload in new[] { Legacy(City()), SecondSchema(City()) })
         {
             string oversized = new string(' ', 4 * 1024 * 1024) + payload;
-            var result = SaveCodec.Read(oversized);
+            var result = DevelopmentChain.Read(oversized);
             Assert.Equal(SaveReadStatus.Invalid, result.Status);
             Assert.Contains("Unsupported experimental state schema", result.Error);
         }

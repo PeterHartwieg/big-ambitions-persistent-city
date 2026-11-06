@@ -59,9 +59,9 @@ public sealed class RhythmPersistenceTests
     public void FailedOrSuccessfulPreparationRoundTripsAlongsideCommittedJourneyAndWaits(double travel)
     {
         var city = City(); foreach (var person in city.Citizens) person.CommutePreparation.TravelMinutes = travel;
-        string source = SaveCodec.Write(city); var result = SaveCodec.Read(source);
+        string source = DevelopmentChain.Write(city); var result = DevelopmentChain.Read(source);
         Assert.Equal(SaveReadStatus.Loaded, result.Status); Assert.Equal(CityState.CurrentSchema, result.SourceSchema);
-        Assert.Equal(source, SaveCodec.Write(result.State!));
+        Assert.Equal(source, DevelopmentChain.Write(result.State!));
         foreach (var person in result.State!.Citizens)
         {
             Assert.Equal("work", person.CommutePreparation.PlaceId); Assert.Equal(120, person.CommutePreparation.WorkStartsAt);
@@ -79,7 +79,7 @@ public sealed class RhythmPersistenceTests
     {
         var city = City(); var preparation = city.Citizens[0].CommutePreparation;
         preparation.WorkStartsAt = starts; preparation.WorkEndsAt = ends; preparation.PlaceId = "old-work";
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city)).Status);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public sealed class RhythmPersistenceTests
         var city = City(); var person = city.Citizens[3]; person.Identity.Persona = Persona.Student;
         person.DayPlaceId = "study"; person.CommutePreparation.PlaceId = "study";
         city.SourceIdentities.Single(i => i.Id == person.Identity.Id).Persona = Persona.Student;
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city)).Status);
     }
 
     [Theory]
@@ -102,7 +102,7 @@ public sealed class RhythmPersistenceTests
     [InlineData("late-preparation")] [InlineData("retired")]
     public void SchemaSixRequiresExactPreparationShapeAndCoherentMeasuredAttempt(string defect)
     {
-        var root = JObject.Parse(SaveCodec.Write(City())); var person = (JObject)root["Citizens"]![0]!;
+        var root = JObject.Parse(DevelopmentChain.Write(City())); var person = (JObject)root["Citizens"]![0]!;
         var preparation = (JObject)person["CommutePreparation"]!;
         switch (defect)
         {
@@ -127,7 +127,7 @@ public sealed class RhythmPersistenceTests
         }
         string source = root.ToString();
         if (defect == "duplicate-field") source = source.Replace("\"TravelMinutes\": 30", "\"TravelMinutes\": 30, \"TravelMinutes\": 30");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(source).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(source).Status);
     }
 
     [Theory]
@@ -139,11 +139,11 @@ public sealed class RhythmPersistenceTests
     [InlineData("PreparedAt", double.NegativeInfinity)] [InlineData("TravelMinutes", double.NaN)]
     public void PreparationNumericBoundsRejectBothReadAndWrite(string field, double value)
     {
-        var city = City(); var root = JObject.Parse(SaveCodec.Write(city));
+        var city = City(); var root = JObject.Parse(DevelopmentChain.Write(city));
         root["Citizens"]![0]!["CommutePreparation"]![field] = value;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(root.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(root.ToString()).Status);
         typeof(CommutePreparation).GetProperty(field)!.SetValue(city.Citizens[0].CommutePreparation, value);
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city));
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city));
     }
 
     [Theory]
@@ -153,7 +153,7 @@ public sealed class RhythmPersistenceTests
         var city = City(); string payload = Legacy(city, schema).ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
@@ -163,12 +163,12 @@ public sealed class RhythmPersistenceTests
     {
         var wire = Legacy(City(), schema);
         wire["Citizens"]![0]!["CommutePreparation"] = JObject.FromObject(Attempt());
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
         ((JObject)wire["Citizens"]![0]!).Remove("CommutePreparation");
         ((JObject)wire["Citizens"]![0]!).Remove("NextEventMinute");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
         wire = Legacy(City(), schema); wire["Citizens"]![0]!["Journey"]!["Legs"]![1]!["Minutes"] = 0;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
     }
 
     [Theory]
@@ -187,17 +187,17 @@ public sealed class RhythmPersistenceTests
         Assert.Equal(90, traveller.DepartureMinute);
         Assert.Equal(12, traveller.Journey.Legs.Where(l => l.ServiceId == "preparation-wait").Sum(l => l.Minutes));
         Assert.Equal(120, traveller.Journey.Legs.Last().To.X);
-        string saved = SaveCodec.Write(city); var read = SaveCodec.Read(saved);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(saved, SaveCodec.Write(read.State!));
+        string saved = DevelopmentChain.Write(city); var read = DevelopmentChain.Read(saved);
+        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(saved, DevelopmentChain.Write(read.State!));
     }
 
     [Fact]
     public void UnchangedTimingKeepsPreparationAndFailedConversionCannotPartlyClearIt()
     {
         var city = City(); var preparation = city.Citizens[0].CommutePreparation;
-        string before = SaveCodec.Write(city);
+        string before = DevelopmentChain.Write(city);
         Assert.False(TravelTiming.Apply(city, 2, 1)); Assert.Same(preparation, city.Citizens[0].CommutePreparation);
-        Assert.Equal(before, SaveCodec.Write(city));
+        Assert.Equal(before, DevelopmentChain.Write(city));
         city.Citizens[2].NextEventMinute = 99;
         var route = city.Citizens[0].Journey; double arrival = city.Citizens[0].NextEventMinute;
         Assert.Throws<ArgumentException>(() => TravelTiming.Apply(city, 2, 2));
@@ -208,7 +208,7 @@ public sealed class RhythmPersistenceTests
 
     private static JObject Legacy(CityState city, int schema)
     {
-        var wire = JObject.Parse(SaveCodec.Write(city)); wire["Schema"] = schema;
+        var wire = JObject.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
         wire.Remove("Traffic"); wire.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(wire);
         foreach (var person in wire["Citizens"]!.Cast<JObject>()) person.Remove("CommutePreparation");
         if (schema < 5)

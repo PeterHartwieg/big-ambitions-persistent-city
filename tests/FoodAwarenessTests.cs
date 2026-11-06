@@ -202,12 +202,12 @@ public sealed class FoodAwarenessTests
         double at=changed.State.Food.Residents.Single().DesiredAt;
         for(int i=0;i<units;i++) changed.AdvanceTo(at,1);
         var held=changed.State.Food.Residents.Single().Decision;Assert.NotNull(held!.Awareness);
-        string checkpoint=SaveCodec.Write(changed.State);var read=SaveCodec.Read(checkpoint);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        string checkpoint=DevelopmentChain.Write(changed.State);var read=DevelopmentChain.Read(checkpoint);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         changed=new CitySimulator(read.State!,pm);changed.AttachFoodMarket(mm,awarenessSettings:new FoodAwarenessSettings {RadiusMetres=25,DrawsPerAnchor=0,DiscoveryProbability=.001});
-        Assert.Equal(checkpoint,SaveCodec.Write(changed.State));
+        Assert.Equal(checkpoint,DevelopmentChain.Write(changed.State));
         while(!control.AdvanceTo(at+20,128).CaughtUp) {}
         while(!changed.AdvanceTo(at+20,1).CaughtUp) {}
-        Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);Assert.InRange(pm.Out+pm.Back,0,17);
+        Assert.Equal(DevelopmentChain.Write(control.State),DevelopmentChain.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);Assert.InRange(pm.Out+pm.Back,0,17);
     }
     [Theory]
     [InlineData("null",250,.02,4)] [InlineData("true",250,.02,4)]
@@ -227,9 +227,9 @@ public sealed class FoodAwarenessTests
     public void DiagnosticIsReadOnlyAndUnchangedPublicationReusesIndex()
     {
         var (city,_,planner)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
-        string checkpoint=SaveCodec.Write(city.State);
+        string checkpoint=DevelopmentChain.Write(city.State);
         var a=city.InspectFoodAwareness("r");var b=city.InspectFoodAwareness("r");
-        Assert.Equal(JsonConvert.SerializeObject(a),JsonConvert.SerializeObject(b));Assert.Equal(checkpoint,SaveCodec.Write(city.State));Assert.Equal(0,planner.Out+planner.Back);
+        Assert.Equal(JsonConvert.SerializeObject(a),JsonConvert.SerializeObject(b));Assert.Equal(checkpoint,DevelopmentChain.Write(city.State));Assert.Equal(0,planner.Out+planner.Back);
         city.State.Food.Shops[0].BusinessId="replacement";city.InvalidateFoodAwareness();
         Assert.NotEqual(a!.Image.CatalogueRevision,city.InspectFoodAwareness("r")!.Image.CatalogueRevision);
     }
@@ -242,18 +242,18 @@ public sealed class FoodAwarenessTests
         var selected=changed.State.Food.Residents.Single().Decision!;
         while(selected.Result==FoodDecisionResult.Evaluating) changed.AdvanceTo(at,1);
         Assert.Equal(FoodDecisionResult.Selected,selected.Result);Assert.NotNull(selected.Awareness);
-        var read=SaveCodec.Read(SaveCodec.Write(changed.State));Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        var read=DevelopmentChain.Read(DevelopmentChain.Write(changed.State));Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         changed=new CitySimulator(read.State!,pm);changed.AttachFoodMarket(mm,awarenessSettings:new FoodAwarenessSettings {DrawsPerAnchor=0},memory:new Unknown(),campaign:new Unknown());
         while(!control.AdvanceTo(at+20,128).CaughtUp) {}
         while(!changed.AdvanceTo(at+20,1).CaughtUp) {}
-        Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);
+        Assert.Equal(DevelopmentChain.Write(control.State),DevelopmentChain.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);
     }
     private static JObject Held(bool predecessor=false)
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food.Residents.Single().DesiredAt,1);
-        if(!predecessor) return JObject.Parse(SaveCodec.Write(city.State));
-        city.State.Schema=19;return JObject.Parse(PopulationSchema19.Write(city.State));
+        if(!predecessor) return JObject.Parse(DevelopmentChain.Write(city.State));
+        city.State.Schema=19;return JObject.Parse(DevelopmentChain.Legacy(city.State, () => PopulationSchema19.Write(city.State)));
     }
     [Fact]
     public void Schema18MigratesOnceAndNeverRecapturesHeldShortlist()
@@ -261,15 +261,15 @@ public sealed class FoodAwarenessTests
         var json=Held(true);json["Schema"]=18;json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
         var decision=json["Food"]!["Residents"]![0]![9]!;decision["Awareness"]!.Parent!.Remove();
         string source=json.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
-        decision["Awareness"]=new JObject();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(json.ToString(Formatting.None)).Status);((JObject)decision).Remove("Awareness");
-        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
+        decision["Awareness"]=new JObject();Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(json.ToString(Formatting.None)).Status);((JObject)decision).Remove("Awareness");
+        var read=DevelopmentChain.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);
         Assert.Equal((int)(read.State.Minute/1440)+1,read.State.Food!.AwarenessStartsDay);Assert.Null(read.State.Food.Residents[0].Decision!.Awareness);
-        Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));Assert.Equal(source,data[SaveStore.StateKey]);
+        Assert.Equal(DevelopmentChain.Write(read.State),DevelopmentChain.Write(DevelopmentChain.Read(DevelopmentChain.Write(read.State)).State!));Assert.Equal(source,data[SaveStore.StateKey]);
     }
     [Theory] [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
     public void MalformedAwarenessRefusesWithoutReplacingSource(int corruption)
     {
-        var json=Held();var image=json["Food"]!["Residents"]![0]![9]!["Awareness"]!;
+        var json=Held();var image=json["Food"]!["Residents"]![0]![8]!["Awareness"]!;
         if(corruption==0) image["CatalogueRevision"]="bad";
         if(corruption==1) image["Union"]![0]!["Sources"]=128;
         if(corruption==2) ((JArray)image["Union"]!).Add(image["Union"]![0]!.DeepClone());

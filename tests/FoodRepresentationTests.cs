@@ -84,7 +84,7 @@ public sealed partial class FoodCommerceTests
         a.EnableHouseholdFinances(); b.EnableHouseholdFinances();
         Advance(a, 3 * 1440); Advance(b, 3 * 1440);
         Assert.Equal(ma.Orders, mb.Orders); Assert.NotEmpty(mb.Orders);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.Equal(plain.Calls, scoped.Calls); Assert.Equal(plain.Validations, scoped.Validations);
         Assert.Equal(plain.Sequence, scoped.Sequence);
         Assert.DoesNotContain("unscoped-validation", scoped.Log);
@@ -126,7 +126,7 @@ public sealed partial class FoodCommerceTests
         var food = city.State.Food!;
         Assert.Equal(2, food.Residents.Count);
         Assert.Equal(new[] { "r0", "consumer:r0:1" }, food.Residents.Select(m => m.ResidentId));
-        Assert.All(food.Residents, m => Assert.Equal("r0", m.AnchorId));
+        Assert.All(food.Residents, m => Assert.Equal("r0", m.HostId));
         city.EnableHouseholdFinances();
         var budgets = food.Residents.Select(m => m.Budget!).ToArray();
         Assert.NotSame(budgets[0], budgets[1]);
@@ -174,7 +174,7 @@ public sealed partial class FoodCommerceTests
         city = Reload(city, market, routes);
         Advance(city, desired + 80, 1); Advance(control, desired + 80);
         Assert.Equal(controlMarket.Orders, market.Orders);
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(city.State));
+        Assert.Equal(DevelopmentChain.Write(control.State), DevelopmentChain.Write(city.State));
         Assert.All(city.State.Food!.Residents, m => Assert.Null(m.Excursion));
     }
 
@@ -182,7 +182,7 @@ public sealed partial class FoodCommerceTests
     public void AnchorPersonalDetourDoesNotRelocateLaterRepresentedDecision()
     {
         var (city, market, routes) = Ready(atWork: true, representation: 2);
-        var extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         double desired = extra.DesiredAt;
         // Delay the independent intention so slot zero is already at the shop.
         extra.DesiredAt += 6; extra.DueAt += 6;
@@ -191,7 +191,7 @@ public sealed partial class FoodCommerceTests
         city.FoodDecisionObserved += trace => { if (trace.Consumer.Id == extra.ResidentId) extraOrigin = trace.Intent.OriginPlaceId; };
         Advance(city, desired + 7);
         Assert.Equal("work", extraOrigin);
-        Assert.Equal("work", city.State.Food!.Residents.Single(m => m.Slot == 1).Excursion!.OriginId);
+        Assert.Equal("work", city.State.Food!.Residents.Single(m => m.HostSlot == 1).Excursion!.OriginId);
         Assert.Equal("shop", city.State.Citizens.Single().PlaceId);
         Advance(city, desired + 60); Assert.Equal(2, market.Orders.Count);
     }
@@ -201,18 +201,18 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, routes) = Ready(atWork: true, threeMeals: true, representation: 2);
         city.EnableHouseholdFinances();
-        var extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         market.ThrowForResident = extra.ResidentId;
         double first = extra.DesiredAt;
-        Advance(city, first + 60); extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        Advance(city, first + 60); extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         Assert.Equal(MealStatus.Uncertain, extra.Status); Assert.Equal(Money.FromCents(100), extra.Budget!.HeldPurchase);
         string receipt = extra.IntentId;
         city = Reload(city, market, routes); Advance(city, 3 * 1440);
-        extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Assert.Equal(receipt, extra.IntentId); Assert.Equal(MealStatus.Uncertain, extra.Status);
         Assert.Equal(Money.FromCents(100), extra.Budget!.HeldPurchase);
         Assert.Single(market.Orders, o => o == receipt);
-        Assert.True(city.State.Food.Residents.Single(m => m.Slot == 0).Purchases > 1);
+        Assert.True(city.State.Food.Residents.Single(m => m.HostSlot == 0).Purchases > 1);
     }
 
     [Fact]
@@ -224,13 +224,13 @@ public sealed partial class FoodCommerceTests
         Advance(city, desired + 15); Assert.Equal(2, market.Orders.Count);
         routes.Accessible = false;
         Advance(city, desired + 40);
-        var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         Assert.True(extra.Excursion!.Unresolved);
         string receipt = extra.IntentId;
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
         city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
         routes.Accessible = true; Advance(city, 3 * 1440);
-        extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Assert.True(extra.Excursion!.Unresolved); Assert.Equal(receipt, extra.IntentId);
         Assert.Equal(1, extra.Purchases);
     }
@@ -242,9 +242,9 @@ public sealed partial class FoodCommerceTests
         var routes = new ValidatedWalking(); city = city.RebuildRoutes(routes);
         double desired = city.State.Food!.Residents[0].DesiredAt;
         Advance(city, desired + 2);
-        market.EarliestMinute = city.State.Food.Residents.Single(m => m.Slot == 1).Deadline + 100;
+        market.EarliestMinute = city.State.Food.Residents.Single(m => m.HostSlot == 1).Deadline + 100;
         Advance(city, market.EarliestMinute + 1);
-        var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         Assert.True(extra.Excursion!.Unresolved); Assert.False(extra.Excursion.Returning);
         Assert.Contains("exceeds", extra.Excursion.UnresolvedReason);
     }
@@ -263,7 +263,7 @@ public sealed partial class FoodCommerceTests
         // The represented return must not use a quote whose endpoint moved.
         two.State.Places.Single(p => p.Id == "work").Position = new Position(9, 0, 0);
         Advance(two, desired + 40);
-        Assert.True(two.State.Food!.Residents.Single(m => m.Slot == 1).Excursion!.Unresolved);
+        Assert.True(two.State.Food!.Residents.Single(m => m.HostSlot == 1).Excursion!.Unresolved);
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, routes) = Ready(atWork: true);
         city.State.Food!.RepresentationFactor = 2;
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
         Assert.Throws<InvalidOperationException>(() => new CitySimulator(city.State, routes).AttachFoodMarket(market));
     }
 
@@ -282,7 +282,7 @@ public sealed partial class FoodCommerceTests
         market.Products = new[] { FoodProducts.Croissant, FoodProducts.Burger, FoodProducts.HotDog };
         var scope = city.State.Food!.Shops.Single();
         scope.ProductId = market.Products[0]; scope.AdditionalProductIds = market.Products.Skip(1).ToList();
-        var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         extra.PreferredProductId = FoodProducts.HotDog; extra.PreferenceBonusCents = 150;
         var choices = new System.Collections.Generic.Dictionary<string, string>();
         city.FoodDecisionObserved += trace => choices[trace.Consumer.Id] = trace.Intent.ProductId;
@@ -299,12 +299,12 @@ public sealed partial class FoodCommerceTests
         city.State.TravelTimingVersion = 1; city.State.TravelClockRate = 1;
         double desired = city.State.Food!.Residents[0].DesiredAt;
         Advance(city, desired + 2);
-        var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         double arrival = extra.Excursion!.ArrivesAt, back = extra.ReturnMinutes;
         Assert.True(TravelTiming.Apply(city.State, 2, 10)); routes.Minutes *= 10;
         Assert.Equal(arrival, extra.Excursion.ArrivesAt); Assert.Equal(back, extra.ReturnMinutes);
         city = Reload(city, market, routes); Advance(city, desired + 40);
-        extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Assert.Null(extra.Excursion); Assert.Equal(1, extra.Purchases);
     }
 
@@ -321,7 +321,7 @@ public sealed partial class FoodCommerceTests
             if (time % 120 == 0) b = Reload(b, mb, routes);
         }
         Assert.Equal(ma.Orders, mb.Orders);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.All(a.State.Food!.Residents, m => Assert.False(m.Excursion?.Unresolved == true));
     }
 
@@ -331,7 +331,7 @@ public sealed partial class FoodCommerceTests
         var (city, market, _) = Ready(atWork: true, threeMeals: true, representation: 2);
         city.EnableHouseholdFinances();
         var routes = new ValidatedWalking(); city = city.RebuildRoutes(routes);
-        var extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         market.ThrowForResident = extra.ResidentId;
         Advance(city, extra.DesiredAt + 15); routes.Accessible = false;
         Advance(city, extra.DesiredAt + 40);
@@ -344,16 +344,16 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(Money.FromCents(100), extra.Budget.PreparedFoodSpent); Assert.Equal(1, extra.Purchases);
         Assert.True(extra.Excursion!.Unresolved); Assert.Equal(originalReceipt, extra.IntentId);
         Assert.Single(market.Orders, key => key == originalReceipt);
-        Assert.True(city.State.Food.Residents.Single(m => m.Slot == 0).Purchases > 1);
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+        Assert.True(city.State.Food.Residents.Single(m => m.HostSlot == 0).Purchases > 1);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
     }
 
     [Fact]
     public void ConsumerCannotResynchronizeAtHomeUntilItsReturnActuallyCompletes()
     {
         var (city, market, routes) = Ready(atWork: true, representation: 2);
-        city.State.Food!.Residents.Single(m => m.Slot == 0).Allowance = Money.FromCents(0);
-        var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        city.State.Food!.Residents.Single(m => m.HostSlot == 0).Allowance = Money.FromCents(0);
+        var extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         double desired = extra.DesiredAt;
         Advance(city, desired + 10);
         Assert.Equal(1, extra.Purchases);
@@ -382,7 +382,7 @@ public sealed partial class FoodCommerceTests
         var row = Assert.Single(city.State.Food.History);
         Assert.Equal(1, row.StaffRejections); Assert.Equal(0, row.StockRejections);
         Assert.Equal("b", row.BusinessId);
-        Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
+        Assert.Equal("", DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Error);
     }
 
     [Fact]
@@ -397,7 +397,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, 4 * 1440);
         Assert.Equal(1, city.State.Food.History.Where(h => h.BusinessId == "b").Sum(h => h.Purchases));
         Assert.True(city.State.Food.History.Where(h => h.BusinessId == "replacement").Sum(h => h.Purchases) > 0);
-        Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
+        Assert.Equal("", DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Error);
     }
 
     [Fact]
@@ -432,13 +432,13 @@ public sealed partial class FoodCommerceTests
         city.State.Places.Single(p => p.Id == "shop").WeeklyHours = market.Read(city.State.Minute)[0].Hours;
         Advance(city, desired + 6);
         Assert.Empty(market.Orders);
-        var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food.Residents.Single(m => m.HostSlot == 1);
         Assert.True(extra.Excursion!.AdmissionAt > extra.Excursion.ArrivesAt);
         city = Reload(city, market, routes);
         Advance(city, desired + 60);
-        Assert.Equal(1, city.State.Food!.Residents.Single(m => m.Slot == 1).Purchases);
+        Assert.Equal(1, city.State.Food!.Residents.Single(m => m.HostSlot == 1).Purchases);
         Assert.All(market.Times, at => Assert.True(at % 1440 >= market.OpenFromMinute + 4));
-        Assert.Null(city.State.Food!.Residents.Single(m => m.Slot == 1).Excursion);
+        Assert.Null(city.State.Food!.Residents.Single(m => m.HostSlot == 1).Excursion);
     }
 
     [Fact]

@@ -307,7 +307,7 @@ public sealed partial class FoodCommerceTests
         string legacy = token.ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779297", legacy);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = legacy };
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(legacy).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(legacy).Status);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(legacy, data[SaveStore.StateKey]);
     }
 
@@ -326,7 +326,7 @@ public sealed partial class FoodCommerceTests
         string legacy = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false), 14).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779296875", legacy);
         Assert.Contains("\"BalanceCents\":", legacy); Assert.DoesNotContain("\"Balance\":", legacy);
-        var read = SaveCodec.Read(legacy);
+        var read = DevelopmentChain.Read(legacy);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(14, read.SourceSchema);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
         // A native v2 receipt written before the unit change still identifies this intention.
@@ -336,7 +336,7 @@ public sealed partial class FoodCommerceTests
         // Mixing both field generations is refused rather than guessed.
         string mixed = legacy.Replace("\"ArrearsCents\":0.0", "\"Arrears\":0");
         Assert.NotEqual(legacy, mixed);
-        var refused = SaveCodec.Read(mixed);
+        var refused = DevelopmentChain.Read(mixed);
         Assert.Equal(SaveReadStatus.Invalid, refused.Status); Assert.Contains("mixes money field generations", refused.Error);
     }
 
@@ -350,7 +350,7 @@ public sealed partial class FoodCommerceTests
         b["OpeningBalanceCents"] = long.MaxValue; b["BalanceCents"] = long.MaxValue;
         b["IncomeReceivedCents"] = 1; b["EssentialsPaidCents"] = 1;
         string old = token.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = old };
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(old).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(old).Status);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(old, data[SaveStore.StateKey]);
     }
 
@@ -368,17 +368,17 @@ public sealed partial class FoodCommerceTests
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + elapsed);
         string old = Schema13(city.State); int orders = market.Orders.Count;
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = old };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
+        var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(13, read.SourceSchema);
-        Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
+        Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
         var loaded = new CitySimulator(read.State, routes); loaded.AttachFoodMarket(market);
         Assert.Equal(orders, market.Orders.Count);
-        Assert.True(SaveStore.WriteTo(data, loaded.State).Success);
-        Assert.Equal(CityState.CurrentSchema, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
+        // No migration publication: the stored schema-13 payload is never replaced.
+        Assert.False(SaveStore.WriteTo(data, loaded.State).Success); Assert.Equal(old, data[SaveStore.StateKey]);
         var damaged = JObject.Parse(old); damaged["Food"]!["Residents"]![0]!["PriceCents"] = 1.1;
         data[SaveStore.StateKey] = damaged.ToString(); string bad = data[SaveStore.StateKey];
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(bad).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(bad).Status);
         Assert.False(SaveStore.WriteTo(data, loaded.State).Success); Assert.Equal(bad, data[SaveStore.StateKey]);
     }
 }

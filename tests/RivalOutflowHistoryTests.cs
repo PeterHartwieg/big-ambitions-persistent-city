@@ -97,15 +97,15 @@ public sealed class RivalOutflowHistoryTests
         Assert.All(food.Residents, m => Assert.Empty(m.Memory.Entries));
         Assert.True(food.Outflow!.Reconciles(food)); Assert.Equal(3, city.FreeRivalOutflow()!.Count);
         Assert.Equal(0, market.NativeBuys);
-        string before = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        string before = DevelopmentChain.Write(city.State);
+        var read = DevelopmentChain.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var resumed = new CitySimulator(read.State!, paths);
         resumed.AttachFoodMarket(market, memorySettings: new FoodMemorySettings { FoodMemoryWeight = 0 });
         while (!resumed.AdvanceTo(end + 5, 1).CaughtUp) { }
         Assert.Equal(city.FreeRivalOutflow()!.Units, resumed.FreeRivalOutflow()!.Units);
         Assert.Equal(3, resumed.FreeRivalOutflow()!.Count); Assert.Equal(0, market.NativeBuys);
         Assert.True(resumed.State.Food!.Outflow!.Reconciles(resumed.State.Food));
-        var counts = SaveCodec.CountRecords(resumed.State, SaveCodec.Write(resumed.State));
+        var counts = SaveCodec.CountRecords(resumed.State, DevelopmentChain.Write(resumed.State));
         Assert.Equal(counts.Semantic, counts.Streaming);
     }
     [Theory]
@@ -117,15 +117,15 @@ public sealed class RivalOutflowHistoryTests
         while (!city.AdvanceTo(end, 1).CaughtUp) { }
         Assert.True(RivalOutflowHistory.Ledger(city.State.Food) > 0);
         city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
-        string source = SaveCodec.WriteForSchema(city.State, schema);
+        string source = DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
         Assert.DoesNotContain("Outflow", source);
-        var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
+        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(schema, read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema);
         Assert.True(read.State.Food!.Outflow!.Reconciles(read.State.Food));
         Assert.Equal(BigInteger.Zero, read.State.Food.Outflow.Capture(1).Units);
         Assert.All(read.State.Food.Outflow.Capture(1).Days.Where(d => d.Day < 1), d => Assert.False(d.Known));
         read.State.Schema = schema; read.State.MenuPolicy = FoodMenuPolicy.Wire;
-        Assert.Equal(source, SaveCodec.WriteForSchema(read.State, schema));
+        Assert.Equal(source, DevelopmentChain.Legacy(read.State, () => SaveCodec.WriteForSchema(read.State, schema)));
     }
     [Theory]
     [InlineData("0|0|0|0|0|0|0,1,0")]
@@ -139,22 +139,22 @@ public sealed class RivalOutflowHistoryTests
     public void MissingForgedForeignAndFutureHistoryRefuseWithoutChangingInput()
     {
         var (city, _, _) = RivalOutflowTests.Ready();
-        string source = SaveCodec.Write(city.State);
+        string source = DevelopmentChain.Write(city.State);
         foreach (var value in new JToken?[] { null, JValue.CreateNull(), new JValue("1|0|1|1|0|0"), new JValue(new string('1', 1025)) })
         {
             var json = JObject.Parse(source);
             if (value == null) ((JObject)json["Food"]!).Remove("Outflow"); else json["Food"]!["Outflow"] = value;
             string bad = json.ToString(Formatting.None), original = bad;
-            Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(bad).Status); Assert.Equal(original, bad);
+            Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(bad).Status); Assert.Equal(original, bad);
             var store = new Dictionary<string, string> { [SaveStore.StateKey] = bad };
             Assert.False(SaveStore.WriteTo(store, city.State).Success);
             Assert.False(SaveSession.Open(store, city.State.PopulationKey).WriteTo(store, city.State).Success);
             Assert.Same(original, store[SaveStore.StateKey]);
         }
         var future = JObject.Parse(source); future["Schema"] = CityState.CurrentSchema + 1;
-        Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(future.ToString()).Status);
         var foreign = JObject.Parse(source); foreign["Schema"] = 23;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString()).Status);
     }
     [Fact]
     public void CachedFreeViewInvalidatesOnSettlementAndRolloverWithoutChangingPriorSnapshot()

@@ -75,10 +75,10 @@ public sealed class RivalOutflowTests
 
     static CitySimulator Reload(CitySimulator city, Market market, WeightedFoodChoiceTests.Planner paths, double weight = 1)
     {
-        string checkpoint = SaveCodec.Write(city.State); var read = SaveCodec.Read(checkpoint);
+        string checkpoint = DevelopmentChain.Write(city.State); var read = DevelopmentChain.Read(checkpoint);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var next = new CitySimulator(read.State!, paths); next.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings { RivalChoiceWeight = weight });
-        Assert.Equal(checkpoint, SaveCodec.Write(next.State));
+        Assert.Equal(checkpoint, DevelopmentChain.Write(next.State));
         // Transient index construction intentionally restarts on reload. Finish it once before
         // testing a saved semantic/route boundary rather than restarting each private build unit.
         if (next.State.Food!.Residents.All(m => m.Decision == null)) next.InspectFoodAwareness("r");
@@ -189,7 +189,7 @@ public sealed class RivalOutflowTests
         Assert.NotNull(city.State.Food.Residents[0].Decision);
         Assert.Equal(WeatherSample.Rain,city.State.Food.Residents[0].Decision!.Weather);
         Assert.Equal(1.3,city.State.Food.Residents[0].Decision!.WeatherTravelMultiplier);
-        var read=SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal(SaveReadStatus.Loaded,read.Status);
+        var read=DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal(SaveReadStatus.Loaded,read.Status);
         city=new CitySimulator(read.State!,paths);
         city.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Held decision must not reread weather")),new WeatherSettings {Enabled=false,RainTravelWeightMultiplier=2});
         city.AttachFoodMarket(market,rivalSettings:new RivalFoodSettings {RivalChoiceWeight=0,RivalAssumedServiceMinutes=30});
@@ -246,7 +246,7 @@ public sealed class RivalOutflowTests
         if (memoryActive) { Assert.Equal(1, Assert.Single(meal.Memory.Entries).Served); Assert.Equal(ExperienceStage.Served, meal.Memory.Watermark!.Stage); }
         else { Assert.Empty(meal.Memory.Entries); Assert.Null(meal.Memory.Watermark); }
         Assert.Equal(0, market.NativeBuys);
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(meal.Budget.ExternalFoodSpent, read.State!.Food!.Residents[0].Budget!.ExternalFoodSpent);
     }
     [Fact]
@@ -316,21 +316,21 @@ public sealed class RivalOutflowTests
             city.State.Food!.Residents[0].Memory.Weather=WeatherSample.Rain;
         }
         string weather=JsonConvert.SerializeObject(city.State.Citizens[0].W);
-        string source = schema==20 ? PopulationSchema20.Write(city.State) : PopulationSchema19.Write(city.State);
+        string source = schema==20 ? DevelopmentChain.Legacy(city.State, () => PopulationSchema20.Write(city.State)) : DevelopmentChain.Legacy(city.State, () => PopulationSchema19.Write(city.State));
         var store = new Dictionary<string, string> { [SaveCodec.StateKey] = source };
-        var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
+        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
         Assert.Equal(schema==20 ? 1 : 2,read.State.WeatherStartsDay);
         Assert.Equal(weather,JsonConvert.SerializeObject(read.State.Citizens[0].W));
         Assert.Equal(schema==20 ? WeatherSample.Rain : WeatherSample.Unknown,read.State.Food!.Residents[0].Memory.Weather);
         Assert.Equal(2, read.State.Food!.RivalStartsDay); Assert.Equal(source, store[SaveCodec.StateKey]);
-        string current = SaveCodec.Write(read.State); Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(current).State!));
+        string current = DevelopmentChain.Write(read.State); Assert.Equal(current, DevelopmentChain.Write(DevelopmentChain.Read(current).State!));
         foreach (int futureSchema in new[] { 24, 99 })
-        { var json = JObject.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, SaveCodec.Read(json.ToString(Formatting.None)).Status); }
+        { var json = JObject.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, DevelopmentChain.Read(json.ToString(Formatting.None)).Status); }
         var foreign = JObject.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString(Formatting.None)).Status);
         foreign = JObject.Parse(source); ((JArray)foreign["Food"]!["Residents"]![0]!).Add("");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString(Formatting.None)).Status);
         Assert.Equal(source, store[SaveCodec.StateKey]);
     }
     [Theory] [InlineData(false,21)] [InlineData(true,21)] [InlineData(false,22)] [InlineData(true,22)]
@@ -343,11 +343,11 @@ public sealed class RivalOutflowTests
         var meal=city.State.Food.Residents.Single();
         if(paid) Assert.Equal(MealStatus.Paid,meal.Status);else Assert.NotNull(meal.Decision);
         city.State.Schema=schema;
-        string source=SaveCodec.WriteForSchema(city.State,schema);
-        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
+        string source=DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
+        var read=DevelopmentChain.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.Equal(schema,read.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);
         Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
-        read.State.Schema=schema;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,schema));
+        read.State.Schema=schema;Assert.Equal(source,DevelopmentChain.Legacy(read.State, () => SaveCodec.WriteForSchema(read.State, schema)));
         read.State.Schema=CityState.CurrentSchema;
         var resumed=new CitySimulator(read.State,paths);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),
@@ -375,9 +375,9 @@ public sealed class RivalOutflowTests
     {
         var (city, _, _) = Ready(); city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food!.Residents.Single().DesiredAt, 1);
-        var root=JObject.Parse(SaveCodec.Write(city.State));
+        var root=JObject.Parse(DevelopmentChain.Write(city.State));
         var meal=(JArray)root["Food"]!["Residents"]![0]!;
-        var decision=meal[9]!;var shop=decision["Shops"]![0]!;
+        var decision=meal[8]!;var shop=decision["Shops"]![0]!; // roster tuple v3
         switch(damage)
         {
             case "kind": shop["AlternativeKind"]=2; break;
@@ -389,12 +389,12 @@ public sealed class RivalOutflowTests
             case "memory": shop["MemoryContribution"]=9; break;
             case "queue": shop["NextServiceAt"]=(double)shop["NextServiceAt"]!+1; break;
             case "source-kind": foreach(var c in decision["Awareness"]!["Union"]!) c["AlternativeKind"]=0; break;
-            case "legacy-account": meal[3]=-1; break;
+            case "legacy-account": meal[2]=-1; break;
             case "surplus": meal.Add(0); break;
         }
         string source=root.ToString(Formatting.None);
         var data=new Dictionary<string,string>{[SaveCodec.StateKey]=source};
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(source).Status);
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(source).Status);
         Assert.False(SaveStore.WriteTo(data,city.State).Success);Assert.Equal(source,data[SaveCodec.StateKey]);
     }
     [Fact]
@@ -403,7 +403,7 @@ public sealed class RivalOutflowTests
         var (city, _, _) = Ready(); var meal=city.State.Food!.Residents.Single();
         Advance(city,meal.DesiredAt+7); Assert.Equal(Money.FromCents(100),meal.LegacyExternalFoodSpent);
         Assert.Throws<InvalidOperationException>(()=>city.EnableHouseholdFinances());
-        var loaded=SaveCodec.Read(SaveCodec.Write(city.State));Assert.Equal(SaveReadStatus.Loaded,loaded.Status);
+        var loaded=DevelopmentChain.Read(DevelopmentChain.Write(city.State));Assert.Equal(SaveReadStatus.Loaded,loaded.Status);
         Assert.Equal(meal.LegacyExternalFoodSpent,loaded.State!.Food!.Residents[0].LegacyExternalFoodSpent);
     }
 }

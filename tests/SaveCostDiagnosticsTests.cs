@@ -128,11 +128,11 @@ public sealed class SaveCostDiagnosticsTests
         Assert.True(state.Citizens.Average(c => c.RecentVisits.Count) < 32);
         // No stored visitor identity (F5 B6): every consumer belongs to a saved resident.
         var residents = state.Citizens.Select(c => c.Identity.Id).ToHashSet(StringComparer.Ordinal);
-        Assert.All(state.Food.Residents, meal => Assert.Contains(meal.AnchorId, residents));
+        Assert.All(state.Food.Residents, meal => Assert.Contains(meal.HostId, residents));
         string payload = SaveCodec.Write(state);
         var read = SaveCodec.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(25, CityState.CurrentSchema);
+        Assert.Equal(26, CityState.CurrentSchema);
     }
 }

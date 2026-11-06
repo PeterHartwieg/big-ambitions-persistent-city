@@ -4,16 +4,18 @@ namespace PersistentCity.Runtime
 {
     public sealed partial class PopulationRuntime
     {
-        private object? accountingFailureSave;
-        // Runs before Update's failure gate. Other failures retain their existing refusal;
-        // only an accounting stop may be left by loading a different save object.
+        private object? accountingFailureSave, developmentRefusedSave;
+        // Runs before Update's failure gate. Other failures retain their existing refusal; only an accounting stop or
+        // a refused older development city (F5c-lite) may be left by loading a different save object.
         private bool PrepareAccountingSaveChange()
         {
             if (!failed) return true;
             var current = SaveGameManager.Current;
-            if (!accountingStopped || current == null || UI.Load.LoadScene.isLoading
-                || ReferenceEquals(accountingFailureSave, current)) return false;
-            accountingStopped = false; accountingFailureSave = null;
+            // A stopped accounting line or a refused development city stays stopped for its own save only.
+            var refusedSave = accountingStopped ? accountingFailureSave : developmentRefusedSave;
+            if (!accountingStopped && developmentRefusedSave == null || current == null || UI.Load.LoadScene.isLoading
+                || ReferenceEquals(refusedSave, current)) return false;
+            accountingStopped = false; accountingFailureSave = null; developmentRefusedSave = null;
             failed = false; status = "";
             ResetPopulationForSaveChange();
             nextStart = 0;
@@ -21,6 +23,12 @@ namespace PersistentCity.Runtime
         }
         private bool CanStartAccountingSave()
         {
+            // F5c-lite: refuse an older development city before any accounting, epoch or authority write.
+            if (SaveGameManager.Current?.modData != null)
+            {
+                NativeFoodOwnership.EnsureSave();
+                if (NativeFoodOwnership.StandDown != null) { RefuseDevelopmentCity(); return false; }
+            }
             if (SaveGameManager.Current?.modData != null && AccountingStopStore.IsStopped(SaveGameManager.Current.modData))
             { StopAccounting(); return false; }
             return true;
@@ -31,6 +39,11 @@ namespace PersistentCity.Runtime
             if (simulation != null && NativeCityClock.CheckInputEpoch(native, simulation.State.Minute)
                 && simulation.BeginAccountingObservations(native)) return true;
             StopAccounting(); return false;
+        }
+        private void RefuseDevelopmentCity()
+        {
+            developmentRefusedSave = SaveGameManager.Current;
+            Fail(SaveCodec.DevelopmentSchemaMessage + " Persistent City takes no food ownership; owned shops return to native customers after the current hour.");
         }
         private void StopAccounting(string cause = "Accounting input epoch was lost.")
         {

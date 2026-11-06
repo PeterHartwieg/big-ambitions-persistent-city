@@ -245,11 +245,11 @@ namespace PersistentCity.Core
             double start = rivalLoad.NextFree(meal.PlaceId, now, RivalSettings.Lanes(type)), finish = start + meal.ServiceMinutes;
             if (SoldOut(meal.PlaceId, type, finish))
             { RivalSellOutRefusals++; RivalExperience(meal, ShopExperience.Stockout, now); Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return; }
-            if (meal.Slot > 0 && start - now > meal.Excursion!.MaximumQueueMinutes)
+            if (meal.HostSlot > 0 && start - now > meal.Excursion!.MaximumQueueMinutes)
             { RivalLaneRefusals++; RivalExperience(meal, ShopExperience.Queue, now); Finish(meal, MealStatus.Missed, "Queue exceeds patience on arrival"); return; }
             if (finish + eating + meal.ReturnMinutes > meal.Deadline || finish >= close)
             { RivalLaneRefusals++; RivalExperience(meal, ShopExperience.Queue, now); Finish(meal, MealStatus.Missed, "Arrival or queue no longer fits the break"); return; }
-            if (meal.Slot == 0)
+            if (meal.HostSlot == 0)
             {
                 person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = meal.PlaceId, Activity = Activity.Shop });
                 if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);

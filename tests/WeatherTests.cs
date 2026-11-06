@@ -43,26 +43,26 @@ public sealed class WeatherTests
         state.Citizens[0].ShopId="shop";return state;
     }
     private static CityState Read(string wire)
-    { var r=SaveCodec.Read(wire);Assert.True(r.Status==SaveReadStatus.Loaded,r.Error);return r.State!; }
+    { var r=DevelopmentChain.Read(wire);Assert.True(r.Status==SaveReadStatus.Loaded,r.Error);return r.State!; }
     internal static string As19(string wire)
     {
-        var read=SaveCodec.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        read.State!.Schema=19;return PopulationSchema19.Write(read.State);
+        var read=DevelopmentChain.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        read.State!.Schema=19;return DevelopmentChain.Legacy(read.State, () => PopulationSchema19.Write(read.State));
     }
     [Fact]
     public void Migration19IsNeutralActivatesNextDayAndPreservesSource()
     {
-        var state=State();string old=As19(SaveCodec.Write(state));var read=Read(old);
-        Assert.Equal(CityState.CurrentSchema,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
+        var state=State();string old=As19(DevelopmentChain.Write(state));var read=Read(old);
+        Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
         var rain=new Source {Value=WeatherSample.Rain};var city=new CitySimulator(read,new Paths());
         city.AttachWeather(rain,new WeatherSettings {RainOptionalOutingMultiplier=0});city.AdvanceTo(state.Minute);
         Assert.Equal(WeatherSample.Unknown,read.Citizens[0].W!.Weather);Assert.Equal(0,rain.Calls);
-        Assert.Equal(SaveCodec.Write(read),SaveCodec.Write(Read(SaveCodec.Write(read))));
+        Assert.Equal(DevelopmentChain.Write(read),DevelopmentChain.Write(Read(DevelopmentChain.Write(read))));
         city.AdvanceTo(state.Minute+1440);Assert.Equal(WeatherSample.Rain,read.Citizens[0].W!.Weather);Assert.True(rain.Calls>0);
         var forbidden=JObject.Parse(old);forbidden["WeatherStartsDay"]=0;
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(forbidden.ToString()).Status);
-        forbidden=JObject.Parse(old);forbidden["Schema"]=CityState.CurrentSchema+1;Assert.Equal(SaveReadStatus.Future,SaveCodec.Read(forbidden.ToString()).Status);
-        forbidden["Schema"]=12;Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(forbidden.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(forbidden.ToString()).Status);
+        forbidden=JObject.Parse(old);forbidden["Schema"]=CityState.CurrentSchema+1;Assert.Equal(SaveReadStatus.Future,DevelopmentChain.Read(forbidden.ToString()).Status);
+        forbidden["Schema"]=12;Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(forbidden.ToString()).Status);
     }
     [Theory] [InlineData(WeatherSample.Dry)] [InlineData(WeatherSample.Rain)] [InlineData(WeatherSample.Unknown)]
     public void OutingCaptureSurvivesInterruptedPlanningChangedRainAndChangedTuning(WeatherSample weather)
@@ -71,10 +71,10 @@ public sealed class WeatherTests
         var settings=new WeatherSettings {RainOptionalOutingMultiplier=1};var city=new CitySimulator(state,paths);city.AttachWeather(source,settings);
         Assert.Throws<InvalidOperationException>(()=>city.AdvanceTo(state.Minute));
         Assert.Equal(weather,state.Citizens[0].W!.Weather);Assert.Equal(1,source.Calls);
-        string captured=SaveCodec.Write(state);var loaded=Read(captured);var changed=new Source {Throw=true};
+        string captured=DevelopmentChain.Write(state);var loaded=Read(captured);var changed=new Source {Throw=true};
         var next=new CitySimulator(loaded,new Paths());next.AttachWeather(changed,new WeatherSettings {RainOptionalOutingMultiplier=0,Enabled=false});
         next.AdvanceTo(loaded.Minute);Assert.Equal(CitizenPhase.Travelling,loaded.Citizens[0].Phase);Assert.Equal(0,changed.Calls);
-        var committed=SaveCodec.Write(loaded);var after=Read(committed);var resume=new CitySimulator(after,new Paths());resume.AttachWeather(changed,settings);
+        var committed=DevelopmentChain.Write(loaded);var after=Read(committed);var resume=new CitySimulator(after,new Paths());resume.AttachWeather(changed,settings);
         resume.AdvanceTo(after.Minute+1);Assert.Equal("shop",after.Citizens[0].PlaceId);Assert.Equal(0,changed.Calls);
     }
     [Theory] [InlineData(false)] [InlineData(true)]
@@ -151,7 +151,7 @@ public sealed class WeatherTests
         city=new CitySimulator(state,paths);city.AttachWeather(source);city.AttachFoodMarket(market);
         for(int i=0;i<units;i++) city.AdvanceFrameSlice(state.Minute,1);
         Assert.NotNull(meal.Decision);Assert.Equal(WeatherSample.Rain,meal.Decision!.Weather);Assert.Equal(1.3,meal.Decision.WeatherTravelMultiplier);
-        string wire=SaveCodec.Write(state);int routes=paths.Calls;
+        string wire=DevelopmentChain.Write(state);int routes=paths.Calls;
         string Finish(WeatherSample weather,int budget)
         {
             var loaded=Read(wire);var q=new Paths();var s=new Source {Value=weather};var m=new Market();var sim=new CitySimulator(loaded,q);
@@ -160,7 +160,7 @@ public sealed class WeatherTests
             Assert.Equal(0,s.Calls);Assert.Equal(2-routes,q.Calls);Assert.Equal(1,loaded.Food!.Residents[0].ContextAttempts);
             Assert.Equal(MealStatus.Travelling,loaded.Food.Residents[0].Status);
             sim.AdvanceTo(loaded.Minute+3);Assert.Equal(1,m.Orders);Assert.Equal(0,s.Calls);
-            return SaveCodec.Write(loaded);
+            return DevelopmentChain.Write(loaded);
         }
         Assert.Equal(Finish(WeatherSample.Dry,1),Finish(WeatherSample.Rain,128));
     }
@@ -193,7 +193,7 @@ public sealed class WeatherTests
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);city.AttachWeather(new Source {Value=WeatherSample.Rain});
         city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt,1);
-        var root=JObject.Parse(SaveCodec.Write(city.State));root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
+        var root=JObject.Parse(DevelopmentChain.Write25(city.State));root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
         var meal=(JArray)root["Food"]!["Residents"]![0]!;var d=(JObject)meal[9]!;
         if(damage=="code") d["Weather"]=3;
         if(damage=="low") d["WeatherTravelMultiplier"]=0;
@@ -202,7 +202,7 @@ public sealed class WeatherTests
         if(damage=="missing") d.Remove("Weather");
         if(damage=="consumer") meal[35]=((string)meal[35]!)[..^1]+"3";
         string payload=root.ToString(Formatting.None);var store=new Dictionary<string,string> {[SaveStore.StateKey]=payload};
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(payload).Status);Assert.False(SaveStore.WriteTo(store,city.State).Success);Assert.Same(payload,store[SaveStore.StateKey]);
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(payload).Status);Assert.False(SaveStore.WriteTo(store,city.State).Success);Assert.Same(payload,store[SaveStore.StateKey]);
     }
     [Theory]
     [InlineData(true,false)] [InlineData(true,true)]
@@ -217,7 +217,7 @@ public sealed class WeatherTests
         var person=state.Citizens[0];Assert.Equal(CitizenPhase.WaitingForOpening,person.Phase);
         var dry=DwellPlanner.QueueAtOpening(person,shop,state.Seed,state.Minute,false);Assert.NotNull(dry);
         var committed=person.W;
-        string wire=SaveCodec.Write(state);
+        string wire=DevelopmentChain.Write(state);
         source.Value=WeatherSample.Rain;
         if(reload)
         {
@@ -229,7 +229,7 @@ public sealed class WeatherTests
         Assert.Equal(dry,city.QueueAtOpening(person,shop,state.Minute));
         Assert.NotNull(person.W);Assert.True(person.W!.Queue);Assert.Equal(WeatherSample.Dry,person.W.Weather);
         Assert.Same(committed,person.W);Assert.Equal(capturedReads,source.Calls);
-        Assert.Equal(1,paths.Calls);Assert.Equal(wire,SaveCodec.Write(state));
+        Assert.Equal(1,paths.Calls);Assert.Equal(wire,DevelopmentChain.Write(state));
     }
     [Theory]
     [InlineData(true,0,2)] [InlineData(false,0,5)] [InlineData(true,2,5)]
@@ -255,7 +255,7 @@ public sealed class WeatherTests
         var source=new Source {Value=WeatherSample.Dry};var city=new CitySimulator(state,new Paths());city.AttachWeather(source);
         var dry=city.QueueAtOpening(p,shop,now);Assert.NotNull(dry);source.Value=WeatherSample.Rain;
         Assert.Equal(dry,city.QueueAtOpening(p,shop,now+1));Assert.Equal(1,source.Calls);
-        var loaded=Read(SaveCodec.Write(state));var resumed=new CitySimulator(loaded,new Paths());resumed.AttachWeather(source,new WeatherSettings {QueueRainLeadMinutes=2});
+        var loaded=Read(DevelopmentChain.Write(state));var resumed=new CitySimulator(loaded,new Paths());resumed.AttachWeather(source,new WeatherSettings {QueueRainLeadMinutes=2});
         Assert.Equal(dry,resumed.QueueAtOpening(loaded.Citizens[0],loaded.Places[1],now+1));Assert.Equal(1,source.Calls);
     }
     [Fact]
@@ -291,13 +291,13 @@ public sealed class WeatherTests
     [Fact]
     public void WireBudgetCountsPhysicalCaptureAndConsumerSuffixWithoutExtraConsumerRecord()
     {
-        var state=State();string before=SaveCodec.Write(state);var count=SaveCodec.CountRecords(state,before);
-        state.Citizens[0].W=new WeatherCommitment(state.Minute,WeatherSample.Rain,true);string after=SaveCodec.Write(state);
+        var state=State();string before=DevelopmentChain.Write(state);var count=SaveCodec.CountRecords(state,before);
+        state.Citizens[0].W=new WeatherCommitment(state.Minute,WeatherSample.Rain,true);string after=DevelopmentChain.Write(state);
         Assert.Equal(13,after.Length-before.Length); // 15-char value replaces null (2 quotes + 15 - 4)
         Assert.Equal(22,"\"W\":\"".Length+state.Citizens[0].W!.ToWire().Length+2);
         var charged=SaveCodec.CountRecords(state,after);Assert.Equal(count.Streaming+1,charged.Streaming);Assert.Equal(count.Semantic+1,charged.Semantic);
         foreach(string damage in new[] {"1O00AAAAAAAAAAA","2O21AAAAAAAAAAA","1O91AAAAAAAAAAA","1O22AAAAAAAAAAA","1Q21AAAAAAAAAAA","1O21AAAAAAAAAA/"})
-        {var token=JObject.Parse(after);token["Citizens"]![0]!["W"]=damage;Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(token.ToString()).Status);}
-        Assert.Equal(after,SaveCodec.Write(Read(after)));
+        {var token=JObject.Parse(after);token["Citizens"]![0]!["W"]=damage;Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(token.ToString()).Status);}
+        Assert.Equal(after,DevelopmentChain.Write(Read(after)));
     }
 }

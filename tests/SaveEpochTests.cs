@@ -448,7 +448,7 @@ public sealed class SaveEpochTests
             case "chars": file[SaveEpochStore.Key] = marker.Replace("payload=" + chars + " ", "payload=" + (chars + 1) + " "); break;
             case "minute": file[SaveEpochStore.Key] = marker.Replace("minute=600", "minute=601"); break;
             case "population": file[SaveEpochStore.Key] = marker.Replace("population=source", "population=other"); break;
-            case "schema": file[SaveEpochStore.Key] = marker.Replace("schema=25", "schema=24"); break;
+            case "schema": file[SaveEpochStore.Key] = marker.Replace("schema=" + CityState.CurrentSchema, "schema=" + (CityState.CurrentSchema - 1)); break;
             case "missing-payload": file.Remove(SaveStore.StateKey); break;
             case "unlisted-extra-key":
                 file[SaveEpochStore.Key] = marker + "\npayload=3 persistentcity:zz-future_v1"; break;

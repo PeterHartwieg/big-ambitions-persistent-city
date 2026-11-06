@@ -626,7 +626,7 @@ public sealed class ResumablePlanningTests
         CommutePreparation = new CommutePreparation { PlaceId = "work-" + n, WorkStartsAt = 10 * n, WorkEndsAt = 20 * n, PreparedAt = n, TravelMinutes = 2 * n },
         MealOuting = new MealOuting { OriginId = "origin-" + n, OriginActivity = (Activity)(n % 5), ResumeUntil = 30 * n, ResumeEvent = 40 * n, Returning = n % 2 == 1 },
         Car = new CarState { Id = "car-" + n, ModelId = "model-" + n, PaintSeed = n, ParkedPosition = new(n, n, n) },
-        JoinedMinute = 50 * n, LastEmploymentCheckDay = n, JobChanges = 3 * n, Phase = (CitizenPhase)(n % 4), Activity = (Activity)((n + 1) % 5),
+        JoinedMinute = 50 * n, LastEmploymentCheckDay = n, JobChanges = 3 * n, EmploymentStartDay = 6 * n, Phase = (CitizenPhase)(n % 4), Activity = (Activity)((n + 1) % 5),
         PlaceId = "place-" + n, DestinationId = "destination-" + n, DestinationActivity = (Activity)((n + 2) % 5),
         Journey = new Route { Legs = { new RouteLeg { From = new(n, 0, 0), To = new(n + 1, 0, 0), Minutes = n, Mode = TravelMode.Walk, ServiceId = "s" + n } } },
         DepartureMinute = 60 * n, NextEventMinute = 70 * n, ActivityUntilMinute = 80 * n, CompletedJourneys = 4 * n, MissedActivities = 5 * n,

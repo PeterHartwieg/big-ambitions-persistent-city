@@ -100,7 +100,7 @@ namespace PersistentCity.Core
             if (product == null) { product = new FoodProductSales { ProductId = meal.ProductId }; row.ProductSales.Add(product); }
             product.Purchases++; product.Revenue += meal.Price;
             product.PurchaseMeals[(int)meal.Kind]++;
-            string district = city.FindPlace(city.FindCitizen(meal.AnchorId)!.HomeId).District;
+            string district = city.FindPlace(city.FindCitizen(meal.HostId)!.HomeId).District;
             var group = row.BuyerDistricts.FirstOrDefault(d => d.DistrictId == district);
             if (group == null) { group = new FoodBuyerDistrict { DistrictId = district }; row.BuyerDistricts.Add(group); }
             group.Purchases++;
@@ -114,7 +114,7 @@ namespace PersistentCity.Core
             var food = city.Food ?? throw new InvalidOperationException("No enrolled food economy.");
             var budgets = food.Residents.Where(m => m.Budget != null).Select(m => m.Budget!).ToArray();
             return new {
-                minute = city.Minute, residents = food.Residents.Count, physicalResidents = city.Citizens.Count, representedConsumers = food.Residents.Count, representationFactor = food.RepresentationFactor,
+                minute = city.Minute, residents = food.Residents.Count, physicalResidents = city.Citizens.Count, representedConsumers = food.Residents.Count, representationFactor = city.Citizens.Count > 0 && food.Residents.Count % city.Citizens.Count == 0 ? food.Residents.Count / city.Citizens.Count : food.RepresentationFactor, storedRosterFactor = food.RepresentationFactor,
                 unresolvedConsumers = food.Residents.Count(m => m.Status == MealStatus.Uncertain || m.Excursion?.Unresolved == true), financePolicy = food.HouseholdFinanceVersion, mealPolicy = food.MealRhythmVersion,
                 boundary = food.HouseholdFinanceVersion == 0 ? "Temporary allowance experiment" : HouseholdFinance.Evidence,
                 // Exact cents text: totals across residents may exceed one amount's range.

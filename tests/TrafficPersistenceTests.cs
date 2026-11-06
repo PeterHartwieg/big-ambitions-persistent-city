@@ -15,12 +15,12 @@ public sealed class TrafficPersistenceTests
     public void InterruptedFiniteQueueRoundTripPreservesOwnershipEventsAndNominalGeometry()
     {
         var state = QueuedCity();
-        string wire = SaveCodec.Write(state);
-        var read = SaveCodec.Read(wire);
+        string wire = DevelopmentChain.Write(state);
+        var read = DevelopmentChain.Read(wire);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
 
         Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
-        Assert.Equal(wire, SaveCodec.Write(read.State!));
+        Assert.Equal(wire, DevelopmentChain.Write(read.State!));
         var restored = TrafficKernel.Restore(read.State!.Traffic!, false);
         Assert.Equal(2, restored.VehicleCount);
         Assert.Equal(7, restored.GetPermission("c0").NominalMinutes);
@@ -33,7 +33,7 @@ public sealed class TrafficPersistenceTests
     [Fact]
     public void OldTrafficSchemaIsRefusedWithoutChangingTheOwnedQueue()
     {
-        var state = QueuedCity(); var wire = JObject.Parse(SaveCodec.Write(state)); wire["Traffic"]!["Schema"] = 1;
+        var state = QueuedCity(); var wire = JObject.Parse(DevelopmentChain.Write(state)); wire["Traffic"]!["Schema"] = 1;
         string payload = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "unchanged" };
         var read = SaveStore.ReadFrom(data, state.PopulationKey);
@@ -50,7 +50,7 @@ public sealed class TrafficPersistenceTests
         bool called = false;
         typeof(CityState).GetField("SnapshotSynchronizer", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(state, (Action)(() => { called = true; state.Traffic.Clock = state.Minute; }));
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
         Assert.True(called);
     }
 
@@ -58,11 +58,11 @@ public sealed class TrafficPersistenceTests
     public void SchemaSixIsRefusedWithoutInventingTrafficOrReplacingTheJourney()
     {
         var state = QueuedCity(); state.Traffic = null; state.TrafficTopologyId = "";
-        var wire = JObject.Parse(SaveCodec.Write(state)); wire["Schema"] = 6;
+        var wire = JObject.Parse(DevelopmentChain.Write(state)); wire["Schema"] = 6;
         wire.Remove("Traffic"); wire.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(wire);
         string payload = wire.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var read = SaveStore.ReadFrom(data, state.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, state).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
@@ -81,7 +81,7 @@ public sealed class TrafficPersistenceTests
     [InlineData("topology")]
     public void InvalidTrafficIsRejectedWithoutOverwritingOriginalPayload(string defect)
     {
-        var state = QueuedCity(); var wire = JObject.Parse(SaveCodec.Write(state));
+        var state = QueuedCity(); var wire = JObject.Parse(DevelopmentChain.Write(state));
         var traffic = (JObject)wire["Traffic"]!;
         if (defect == "clock") traffic["Clock"] = state.Minute + 1;
         if (defect == "identity") traffic["Vehicles"]![0]!["VehicleId"] = "unowned";
@@ -119,7 +119,7 @@ public sealed class TrafficPersistenceTests
         Assert.Equal(20, state.Traffic.Definitions[0].FreeFlowMinutes);
         Assert.Equal(4, state.Traffic.Definitions[0].HeadwayMinutes);
         Assert.Equal(state.Minute, state.Traffic.Clock);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
         Assert.Equal(10, oldTraffic.Definitions[0].FreeFlowMinutes); // Detached source snapshot was untouched.
         Assert.Equal(18, oldRoute.Minutes);
     }
@@ -152,7 +152,7 @@ public sealed class TrafficPersistenceTests
         state.PrepareForSave(); Assert.True(synchronized); synchronized = false;
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Null(field.GetValue(state));
-        SaveCodec.Write(state); Assert.False(synchronized);
+        DevelopmentChain.Write(state); Assert.False(synchronized);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public sealed class TrafficPersistenceTests
         var kernel = TrafficKernel.Restore(state.Traffic!, false);
         kernel.SetPhysicalControl("c0", true);
         state.Traffic = kernel.Capture();
-        var read = SaveCodec.Read(SaveCodec.Write(state));
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(state));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.True(read.State!.Traffic!.Vehicles[0].PhysicalControl);
         var released = TrafficKernel.Restore(read.State.Traffic);
@@ -170,7 +170,7 @@ public sealed class TrafficPersistenceTests
         Assert.Equal(7, released.GetPermission("c0").NominalMinutes);
         Assert.True(TravelTiming.Apply(state, 2, 0.5));
         Assert.Equal(40, state.Citizens[0].Journey!.PositionAt(7).X);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
         var retimed = TrafficKernel.Restore(state.Traffic!);
         Assert.False(retimed.GetPermission("c0").PhysicalControl);
         Assert.Equal(7, retimed.GetPermission("c0").NominalMinutes);

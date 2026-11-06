@@ -186,7 +186,7 @@ public sealed partial class FoodMemoryTests
     { while (!city.AdvanceFrameSlice(at, budget).CaughtUp) { } }
     private static CitySimulator Reload(CitySimulator city, Market market, WeightedFoodChoiceTests.Planner paths, FoodMemorySettings? settings = null)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var restored = new CitySimulator(read.State!, paths); restored.AttachFoodMarket(market, memorySettings: settings); return restored;
     }
 
@@ -199,11 +199,11 @@ public sealed partial class FoodMemoryTests
         for (int i = 0; i < boundary; i++) b.AdvanceFrameSlice(at + 10, 1);
         b = Reload(b, mb, pb);
         Advance(a, at + 30); Advance(b, at + 30, 1);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         var meal = b.State.Food!.Residents.Single();
         Assert.Equal(1, meal.Memory.Entries.Single().Served); Assert.Equal(ExperienceStage.Served, meal.Memory.Watermark!.Stage);
         Assert.Equal(1, mb.Calls); Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back);
-        string before = SaveCodec.Write(b.State); b.DumpFoodMemory("r"); b.DumpFoodMemory("r"); Assert.Equal(before, SaveCodec.Write(b.State));
+        string before = DevelopmentChain.Write(b.State); b.DumpFoodMemory("r"); b.DumpFoodMemory("r"); Assert.Equal(before, DevelopmentChain.Write(b.State));
     }
 
     [Theory]
@@ -320,7 +320,7 @@ public sealed partial class FoodMemoryTests
         Advance(a, at); Advance(b, at, 1);
         Assert.Equal(3, ma.Calls); Assert.Equal(ma.Calls, mb.Calls); Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back);
         Assert.All(a.State.Food.Residents, m => Assert.Equal(1, m.Memory.Entries.Single().Served));
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
     }
 
     [Fact]
@@ -334,13 +334,13 @@ public sealed partial class FoodMemoryTests
         city = Reload(city, market, paths, settings);
         city.AdvanceFrameSlice(meal.DesiredAt, 1); var decision = city.State.Food!.Residents[0].Decision!;
         Assert.Contains(decision.Shops, s => s.MemoryContribution != 0);
-        string checkpoint = SaveCodec.Write(city.State);
-        var root = JObject.Parse(checkpoint); var d = root["Food"]!["Residents"]![0]![9]!;
+        string checkpoint = DevelopmentChain.Write(city.State);
+        var root = JObject.Parse(checkpoint); var d = root["Food"]!["Residents"]![0]![8]!;
         ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
         Assert.InRange(checkpoint.Length - root.ToString(Formatting.None).Length, 1, 589);
         var control = Reload(city, market, new(), new()); var edited = Reload(city, market, new(), new() { FoodMemoryWeight = 0, FoodMemoryCapacity = 1 });
         Advance(control, meal.DesiredAt, 1); Advance(edited, meal.DesiredAt, 128);
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(edited.State));
+        Assert.Equal(DevelopmentChain.Write(control.State), DevelopmentChain.Write(edited.State));
     }
 
     [Fact]

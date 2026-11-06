@@ -57,9 +57,9 @@ public sealed class PhysicalPersistenceTests
             Assert.True(engine.ObservePhysicalJourney(lease!, citizen.Journey.Minutes));
             if (citizen.DepartureMinute + citizen.Journey.Minutes < clock) roundedBelowClock++;
             if (retime) Assert.True(TravelTiming.Apply(state, 2, 2));
-            string encoded = SaveCodec.Write(state); var read = SaveCodec.Read(encoded);
+            string encoded = DevelopmentChain.Write(state); var read = DevelopmentChain.Read(encoded);
             Assert.Equal(SaveReadStatus.Loaded, read.Status);
-            Assert.Equal(encoded, SaveCodec.Write(read.State!));
+            Assert.Equal(encoded, DevelopmentChain.Write(read.State!));
             var resumed = new CitySimulator(read.State!, new Direct()); var restored = read.State!.Citizens[0];
             Assert.Equal(clock, restored.NextEventMinute);
             Assert.True(resumed.SampleJourney(restored).AtEnd);
@@ -79,15 +79,15 @@ public sealed class PhysicalPersistenceTests
         city.Minute = 144000.37;
         person.DepartureMinute = city.Minute - person.Journey!.Minutes;
         person.NextEventMinute = city.Minute;
-        string encoded = SaveCodec.Write(city);
+        string encoded = DevelopmentChain.Write(city);
         if (defect == "overdue-event") person.NextEventMinute = city.Minute - .00000001;
         if (defect == "future-departure") person.DepartureMinute = Math.BitIncrement(city.Minute);
         if (defect == "expired-route") person.DepartureMinute -= .00001;
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city));
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city));
         var json = JObject.Parse(encoded);
         json["Citizens"]![0]!["NextEventMinute"] = person.NextEventMinute;
         json["Citizens"]![0]!["DepartureMinute"] = person.DepartureMinute;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(json.ToString()).Status);
     }
 
     private sealed class Direct : IRoutePlanner
@@ -98,7 +98,7 @@ public sealed class PhysicalPersistenceTests
 
     private static JObject SchemaFour(CityState city)
     {
-        var root = JObject.Parse(SaveCodec.Write(city)); root["Schema"] = 4;
+        var root = JObject.Parse(DevelopmentChain.Write(city)); root["Schema"] = 4;
         root.Remove("TravelTimingVersion"); root.Remove("TravelClockRate");
         root.Remove("Traffic"); root.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(root);
         foreach (JObject person in root["Citizens"]!) person.Remove("CommutePreparation");
@@ -112,20 +112,20 @@ public sealed class PhysicalPersistenceTests
         var city = Journey(); string payload = SchemaFour(city).ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
     [Fact]
     public void ReadMetadataDistinguishesSourceSchemaWithoutChangingExistingStatuses()
     {
-        Assert.Equal(0, SaveCodec.Read(null).SourceSchema);
-        Assert.Equal(0, SaveCodec.Read("corrupt").SourceSchema);
+        Assert.Equal(0, DevelopmentChain.Read(null).SourceSchema);
+        Assert.Equal(0, DevelopmentChain.Read("corrupt").SourceSchema);
         int futureSchema = CityState.CurrentSchema + 1;
-        var future = SaveCodec.Read("{\"Schema\":" + futureSchema + "}");
+        var future = DevelopmentChain.Read("{\"Schema\":" + futureSchema + "}");
         Assert.Equal(SaveReadStatus.Future, future.Status); Assert.Equal(futureSchema, future.SourceSchema);
         Assert.Null(future.State);
-        var loaded = SaveCodec.Read(SaveCodec.Write(Journey()));
+        var loaded = DevelopmentChain.Read(DevelopmentChain.Write(Journey()));
         Assert.Equal(CityState.CurrentSchema, loaded.SourceSchema);
 
     }
@@ -137,9 +137,9 @@ public sealed class PhysicalPersistenceTests
     {
         var city = Journey(); city.TravelTimingVersion = timing; city.TravelClockRate = rate;
         city.Citizens[0].Car!.PaintSeed = paint;
-        string encoded = SaveCodec.Write(city); var read = SaveCodec.Read(encoded);
+        string encoded = DevelopmentChain.Write(city); var read = DevelopmentChain.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
-        Assert.Equal(encoded, SaveCodec.Write(read.State!));
+        Assert.Equal(encoded, DevelopmentChain.Write(read.State!));
         Assert.Equal(city.Citizens[0].Car!.ModelId, read.State!.Citizens[0].Car!.ModelId);
         Assert.Equal(paint, read.State.Citizens[0].Car!.PaintSeed);
     }
@@ -160,11 +160,11 @@ public sealed class PhysicalPersistenceTests
         if (defect == "clock-nan") city.TravelClockRate = double.NaN;
         if (defect == "model-long") city.Citizens[0].Car!.ModelId = new string('a', 129);
         if (defect == "model-null") city.Citizens[0].Car!.ModelId = null!;
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city));
-        var json = JObject.Parse(SaveCodec.Write(Journey()));
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city));
+        var json = JObject.Parse(DevelopmentChain.Write(Journey()));
         json["TravelTimingVersion"] = city.TravelTimingVersion; json["TravelClockRate"] = city.TravelClockRate;
         json["Citizens"]![0]!["Car"]!["ModelId"] = city.Citizens[0].Car!.ModelId;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(json.ToString()).Status);
     }
 
     [Theory]
@@ -176,14 +176,14 @@ public sealed class PhysicalPersistenceTests
     [InlineData("string-paint")]
     public void CurrentPhysicalFieldsHaveStrictRequiredShape(string defect)
     {
-        var json = JObject.Parse(SaveCodec.Write(Journey())); var car = (JObject)json["Citizens"]![0]!["Car"]!;
+        var json = JObject.Parse(DevelopmentChain.Write(Journey())); var car = (JObject)json["Citizens"]![0]!["Car"]!;
         if (defect == "missing-clock") json.Remove("TravelClockRate");
         if (defect == "string-clock") json["TravelClockRate"] = "1.75";
         if (defect == "float-version") json["TravelTimingVersion"] = 1.0;
         if (defect == "missing-model") car.Remove("ModelId");
         if (defect == "float-paint") car["PaintSeed"] = 1.0;
         if (defect == "string-paint") car["PaintSeed"] = "10";
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(json.ToString()).Status);
     }
 
     [Theory]
@@ -197,7 +197,7 @@ public sealed class PhysicalPersistenceTests
         if (defect == "model") json["Citizens"]![0]!["Car"]!["ModelId"] = "sedan";
         if (defect == "missing") ((JObject)json["Citizens"]![0]!["Car"]!).Remove("ParkedPosition");
         string payload = json.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
-        Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "physical").Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveStore.ReadFrom(data, "physical").Status);
         Assert.False(SaveStore.WriteTo(data, Journey()).Success); Assert.Same(payload, data[SaveStore.StateKey]);
     }
 }

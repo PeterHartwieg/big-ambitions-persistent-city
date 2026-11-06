@@ -224,6 +224,9 @@ namespace PersistentCity.Core
         public double JoinedMinute { get; set; }
         public int LastEmploymentCheckDay { get; set; }
         public int JobChanges { get; set; }
+        /// <summary>Schema 26: day the current DayPlaceId assignment began (the person's Employment start); zero while
+        /// unassigned. Bookkeeping only: no routine, choice or money reads it.</summary>
+        public int EmploymentStartDay { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
         public string PlaceId { get; set; } = "";
@@ -253,7 +256,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 25;
+        public const int CurrentSchema = 26;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
@@ -284,6 +287,15 @@ namespace PersistentCity.Core
         public int NextResidentSequence { get; set; } = 1;
         public int PopulationTarget { get; set; }
         public int InitialImportedResidents { get; set; }
+        /// <summary>Schema 26 visitor persons, ordinal by ID. In writer 26 each is the represented consumer of one
+        /// resident's slot (factor 2/3), eating on today's excursion schedule; see <see cref="PersonTable"/>.</summary>
+        public List<VisitorPerson> Visitors { get; set; } = new List<VisitorPerson>();
+        /// <summary>Next <c>pv:&lt;n&gt;</c> sequence. Writer 26 allocates none, so it equals one plus the pv: visitors.</summary>
+        public int NextVisitorSequence { get; set; } = 1;
+        /// <summary>Version of the derived (never stored) visitor identity policy (contract B6).</summary>
+        public int IdentityPolicyVersion { get; set; } = IdentityPolicy.CurrentVersion;
+        /// <summary>Saved ordinal station table that visitor stays reference by index; empty until visitors arrive by portal.</summary>
+        public List<string> Portals { get; set; } = new List<string>();
     }
 
 }

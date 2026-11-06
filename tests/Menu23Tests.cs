@@ -17,7 +17,7 @@ public sealed partial class FoodCommerceTests
     {
         int current=city.Schema;city.Schema=schema<20 ? 19 : schema;
         string wire;
-        try { wire=schema>=21 ? SaveCodec.WriteForSchema(city,schema) : schema<20 ? PopulationSchema19.Write(city) : PopulationSchema20.Write(city); }
+        try { wire=schema>=21 ? DevelopmentChain.Legacy(city, () => SaveCodec.WriteForSchema(city, schema)) : schema<20 ? DevelopmentChain.Legacy(city, () => PopulationSchema19.Write(city)) : DevelopmentChain.Legacy(city, () => PopulationSchema20.Write(city)); }
         finally { city.Schema=current; }
         if(schema!=18) return wire;
         var root=JObject.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");
@@ -30,17 +30,17 @@ public sealed partial class FoodCommerceTests
     {
         var (city,_)=S17_Full();
         string source=E4_Old(city.State,schema);
-        var read=SaveCodec.Read(source); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema); Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
+        var read=DevelopmentChain.Read(source); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.Equal(schema,read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);
         Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
-        Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
+        Assert.Equal(DevelopmentChain.Write(read.State),DevelopmentChain.Write(DevelopmentChain.Read(DevelopmentChain.Write(read.State)).State!));
         foreach(int unknown in new[]{24,25,99})
         {
             var root=JObject.Parse(source);root["Schema"]=unknown;
             string bad=root.ToString(Formatting.None);
             var data=new Dictionary<string,string>{{SaveStore.StateKey,bad}};
-            Assert.NotEqual(SaveReadStatus.Loaded,SaveCodec.Read(bad).Status);
+            Assert.NotEqual(SaveReadStatus.Loaded,DevelopmentChain.Read(bad).Status);
             Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(bad));
             Assert.False(SaveStore.WriteTo(data,city.State).Success);Assert.Same(bad,data[SaveStore.StateKey]);
         }
@@ -56,7 +56,7 @@ public sealed partial class FoodCommerceTests
             ProductSales={new FoodProductSales{ProductId="past-product",Purchases=1,PurchaseMeals=new long[]{1,0,0,0}}},
             BuyerDistricts={new FoodBuyerDistrict{DistrictId="a",Purchases=1}}};
         history.PurchaseHours[0]=1;city.State.Food!.History.Add(history);
-        string oldSource=E4_Old(city.State,schema);Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(oldSource).Status);
+        string oldSource=E4_Old(city.State,schema);Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(oldSource).Status);
         var original=JObject.Parse(oldSource);
         foreach(string damage in new[]{"scope","history","decision"})
         {
@@ -73,7 +73,7 @@ public sealed partial class FoodCommerceTests
                 var decision=root["Food"]!["Residents"]!.Select(m=>m[9]).First(d=>d?.Type==JTokenType.Object)!;
                 decision["Shops"]![0]!["Offers"]=new JArray(Enumerable.Range(0,5).Select(_=>decision["Shops"]![0]!["Offers"]![0]!.DeepClone()));
             }
-            if(damage!="scope") Assert.Contains("Oversized collection",SaveCodec.Read(root.ToString(Formatting.None)).Error);
+            if(damage!="scope") Assert.Contains("Oversized collection",DevelopmentChain.Read(root.ToString(Formatting.None)).Error);
             B0_Preserve(root.ToString(Formatting.None),city.State);
         }
     }
@@ -88,9 +88,9 @@ public sealed partial class FoodCommerceTests
         person.W = new WeatherCommitment(city.State.Minute, WeatherSample.Rain, true);
         city.State.WeatherStartsDay = 1;
         string source = E4_Old(city.State, 20);
-        var read = SaveCodec.Read(source);
+        var read = DevelopmentChain.Read(source);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(20, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
+        Assert.Equal(20, read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema);
         Assert.Equal(source, E4_Old(read.State, 20)); // every predecessor field, including held weather, is exact
         Assert.Equal(1, read.State.WeatherStartsDay);
         Assert.Equal(person.W.ToWire(), read.State.Citizens[0].W!.ToWire());
@@ -98,23 +98,23 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(WeatherSample.Rain, meal.Memory.Weather);
         Assert.Equal(WeatherSample.Rain, meal.Decision!.Weather);
         Assert.Equal(1.3, meal.Decision.WeatherTravelMultiplier);
-        string migrated = SaveCodec.Write(read.State);
+        string migrated = DevelopmentChain.Write(read.State);
         int reads = 0;
         var resumed = new CitySimulator(read.State, planner);
         resumed.AttachWeather(new FrameWeatherSource(() => 2, () => { reads++; return false; }),
             new WeatherSettings { Enabled = false, RainTravelWeightMultiplier = 2 });
-        Assert.Equal(migrated, SaveCodec.Write(resumed.State)); Assert.Equal(0, reads);
-        Assert.Equal(migrated, SaveCodec.Write(SaveCodec.Read(migrated).State!));
+        Assert.Equal(migrated, DevelopmentChain.Write(resumed.State)); Assert.Equal(0, reads);
+        Assert.Equal(migrated, DevelopmentChain.Write(DevelopmentChain.Read(migrated).State!));
     }
 
     [Fact]
     public void E4_PolicyHeaderAndCompactHistoryRejectAtomicallyWithoutLosingLegacyIds()
     {
-        var (city,_)=S17_Full(); string source=SaveCodec.Write(city.State);
+        var (city,_)=S17_Full(); string source=DevelopmentChain.Write(city.State);
         Assert.Contains("\"MenuPolicy\":",source);
         SaveCodec.RequireExecutableCapabilities(source);
-        var loaded=SaveCodec.Read(source); Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
-        Assert.Equal(source,SaveCodec.Write(loaded.State!));
+        var loaded=DevelopmentChain.Read(source); Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
+        Assert.Equal(source,DevelopmentChain.Write(loaded.State!));
         foreach(var value in new[]{JValue.CreateNull(),new JValue("2|unknown"),new JValue(1)})
         {
             var root=JObject.Parse(source);root["MenuPolicy"]=value;
@@ -127,8 +127,8 @@ public sealed partial class FoodCommerceTests
             BuyerDistricts={ new FoodBuyerDistrict{DistrictId="a",Purchases=1} } };
         history.PurchaseHours[0]=1;city.State.Food!.History.Add(history);
         history.ProductSales[0].ProductId="historical-foreign-product|"+new string('x',230);
-        string legacy=SaveCodec.Write(city.State);
-        Assert.Equal(legacy,SaveCodec.Write(SaveCodec.Read(legacy).State!));
+        string legacy=DevelopmentChain.Write(city.State);
+        Assert.Equal(legacy,DevelopmentChain.Write(DevelopmentChain.Read(legacy).State!));
         history.ProductSales.Add(new FoodProductSales{ProductId="bad",Purchases=1});
         var data=new Dictionary<string,string>{{SaveStore.StateKey,legacy}};
         Assert.False(SaveStore.WriteTo(data,city.State).Success);Assert.Equal(legacy,data[SaveStore.StateKey]);
@@ -192,7 +192,7 @@ public sealed partial class FoodCommerceTests
         string missing=root.ToString(Formatting.None);B0_Preserve(missing,city.State);
         Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(missing));
         root=JObject.Parse(original);root["Food"]!["Shops"]![0]!["AdditionalProductIds"]=new JArray(Enumerable.Range(0,8).Select(i=>"p"+i));
-        Assert.Contains("additional menu",SaveCodec.Read(root.ToString(Formatting.None)).Error);
+        Assert.Contains("additional menu",DevelopmentChain.Read(root.ToString(Formatting.None)).Error);
         root=JObject.Parse(original);root["Food"]!["History"]![0]!["ProductSales"]![0]=new JObject{
             ["ProductId"]=FoodProducts.Croissant,["PurchaseMeals"]=new JArray(1,0,0,0),["Purchases"]=1,["Revenue"]=0};
         B0_Preserve(root.ToString(Formatting.None),city.State);

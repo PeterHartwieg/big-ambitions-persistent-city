@@ -35,7 +35,7 @@ public sealed partial class FoodCommerceTests
         var b = meal.Budget;
         Assert.Equal(b.OpeningBalance + b.IncomeReceived, b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase);
         Assert.Equal(market.Price, Money.Sum(city.State.Food.History.Select(h => h.Revenue)));
-        var read = SaveCodec.Read(SaveCodec.Write(city.State));
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(market.Price, read.State!.Food!.Residents.Single().Spent);
     }
@@ -79,11 +79,11 @@ public sealed partial class FoodCommerceTests
         var resident = city.State.Food!.Residents.Single();
         b.NextPostingMinute = resident.Budget!.NextPostingMinute; b.LastPostedDay = resident.Budget.LastPostedDay; b.HomeFoodFundedDay = -1;
         resident.Budget = b;
-        string encoded = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(encoded);
+        string encoded = DevelopmentChain.Write(city.State);
+        var read = DevelopmentChain.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(b.Balance, read.State!.Food!.Residents.Single().Budget!.Balance);
-        Assert.Equal(encoded, SaveCodec.Write(read.State));
+        Assert.Equal(encoded, DevelopmentChain.Write(read.State));
     }
 
     // Reviewer B: a $1M wallet could not hold a $1.37 price.
@@ -111,18 +111,18 @@ public sealed partial class FoodCommerceTests
             ProductSales = new() { new FoodProductSales { ProductId = FoodProducts.Croissant, Purchases = 8, Revenue = Money.FromCents(8000000), PurchaseMeals = new long[] { 8, 0, 0, 0 } } },
             BuyerDistricts = new() { new FoodBuyerDistrict { DistrictId = "", Purchases = 8 } } };
         row.PurchaseHours[0] = 8; city.State.Food!.History.Add(row);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
         Advance(city, city.State.Food.Residents.Single().DesiredAt + 30);
         Assert.Single(market.Orders);
         Assert.Equal(MealStatus.Paid, city.State.Food.Residents.Single().Status);
         Assert.Equal(market.Price, row.Revenue - Money.FromCents(8000000));
         Assert.Equal(market.Price, row.ProductSales.Single().Revenue - Money.FromCents(8000000));
         Assert.Equal("8000030.0000011920928955078125", row.Revenue.ToCentsText());
-        string encoded = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(encoded);
+        string encoded = DevelopmentChain.Write(city.State);
+        var read = DevelopmentChain.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(row.Revenue, read.State!.Food!.History.Single(h => h.Day == 1).Revenue);
-        Assert.Equal(encoded, SaveCodec.Write(read.State));
+        Assert.Equal(encoded, DevelopmentChain.Write(read.State));
     }
 
     // Reviewer A: Json.NET rounded an over-precise money token while reading. Earlier decimal-cents
@@ -147,11 +147,11 @@ public sealed partial class FoodCommerceTests
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
         string encoded = LegacyWire.Write(city.State);
         if (field == "AllowanceCents") encoded = LegacyMoneyWire.ToLegacy(JObject.Parse(encoded), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(encoded).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(encoded).Status);
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(encoded, damaged);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = damaged };
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(damaged).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(damaged).Status);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(damaged, data[SaveStore.StateKey]);
     }
 
@@ -169,13 +169,13 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(MealStatus.Paid, city.State.Food.Residents.Single().Status);
         string encoded = LegacyWire.Write(city.State);
         Assert.Contains("\"Price\":" + market.Price.Units + ",", encoded);
-        var read = SaveCodec.Read(encoded);
+        var read = DevelopmentChain.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(encoded, LegacyWire.Write(read.State!));
         // The earlier decimal-cents form of the same state loads to identical units.
         string legacy = LegacyMoneyWire.ToLegacy(JObject.Parse(encoded), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":" + market.Price.ToCentsText(), legacy);
-        Assert.Equal(encoded, LegacyWire.Write(SaveCodec.Read(legacy).State!));
+        Assert.Equal(encoded, LegacyWire.Write(DevelopmentChain.Read(legacy).State!));
     }
 
     // Settlement additions after a native sale cannot fail: each is checked before funds move.

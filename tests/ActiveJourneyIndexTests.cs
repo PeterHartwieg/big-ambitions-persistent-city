@@ -272,11 +272,11 @@ public sealed class ActiveJourneyIndexTests
         Assert.False(waiting.ActiveJourneys.Contains(w));
     }
 
-    // Derived only: reading the index never changes saved state, identity or money, and writer 25 is unchanged.
+    // Derived only: reading the index never changes saved state, identity or money, and the writer schema is pinned.
     [Fact]
     public void IndexHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(25, CityState.CurrentSchema);
+        Assert.Equal(26, CityState.CurrentSchema);
         var plain = Mixed(new Walking(), 160); var probed = Mixed(new Walking(), 160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         probed.ActivityObserved += (_, _, _) => { _ = probed.ActiveJourneyIndexMatchesState(); _ = probed.ActiveJourneys.BodyCandidates.Count; };

@@ -110,7 +110,7 @@ public sealed partial class FoodCommerceTests
         string source = payload.ToString(); var orders = market.Orders.ToArray();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
         Assert.Equal(orders, market.Orders);
     }
@@ -135,7 +135,7 @@ public sealed partial class FoodCommerceTests
         var (a, ma, _) = Ready(1200, threeMeals: true); var (b, mb, routes) = Ready(1200, threeMeals: true);
         ma.Units = mb.Units = 10000; a.EnableHouseholdFinances(); b.EnableHouseholdFinances();
         Advance(a, 2860); Advance(b, 2400, 1); b = Reload(b, mb, routes); Advance(b, 2860, 1);
-        Assert.Equal(ma.Orders, mb.Orders); Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(ma.Orders, mb.Orders); Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.Equal(1200, a.State.Food!.Residents.Count);
         Assert.All(a.State.Food.Residents, m => Assert.InRange(m.Purchases, 0, 3));
     }
@@ -191,6 +191,6 @@ public sealed partial class FoodCommerceTests
         if (field == "Kind") payload["Food"]!["Residents"]![0]![field] = 99;
         else if (field == "MealRhythmVersion") payload["Food"]![field] = 99;
         else payload["Food"]!["History"]![0]![field]![1] = 99;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
 }

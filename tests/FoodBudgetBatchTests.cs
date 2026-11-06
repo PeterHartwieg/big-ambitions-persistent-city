@@ -244,7 +244,7 @@ public sealed class FoodBudgetBatchTests
     [InlineData(1914)] [InlineData(10000)] [InlineData(100000)]
     public void SupportedAndStressSizesBoundEveryPostingCallAndKeepTheClockHeld(int consumers)
     {
-        var state = new CityState { Seed = 7, Minute = 1440, Food = new FoodCommerceState { RepresentationFactor = 2, HouseholdFinanceVersion = 1 } };
+        var state = new CityState { Seed = 7, Minute = 1440, Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
         state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = consumers / 2 });
         for (int i = 0; i < consumers / 2; i++)
         {
@@ -254,10 +254,14 @@ public sealed class FoodBudgetBatchTests
             for (int slot = 0; slot < 2; slot++)
             {
                 string id = FoodRepresentation.ConsumerId(citizen.Identity.Id, slot);
-                state.Food.Residents.Add(new ResidentMeal { ResidentId = id, AnchorId = citizen.Identity.Id, Slot = slot,
-                    DueAt = 1e8, Budget = HouseholdFinance.Create(citizen, 7, 1440, null, id) });
+                // Schema 26: each record is its own person's; slot 1 is a represented visitor on its host's day.
+                var meal = new ResidentMeal { ResidentId = id, AnchorId = id, Slot = 0,
+                    DueAt = 1e8, Budget = HouseholdFinance.Create(citizen, 7, 1440, null, id) };
+                meal.AssignHost(citizen.Identity.Id, slot); state.Food.Residents.Add(meal);
+                if (slot > 0) PersonTable.AddRepresentedVisitor(state, id);
             }
         }
+        PersonTable.OrderVisitors(state);
         var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new TracingMarket());
         var food = Food(city); int calls = 0;
         do

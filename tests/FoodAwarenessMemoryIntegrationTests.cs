@@ -31,7 +31,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
     public void SavedB1GenerationsFeedFourSlotsForEachConsumerWithoutWritingOrRevivingExpiredOrReplacedMemory()
     {
         var (city, _, paths) = Ready();
-        string before = SaveCodec.Write(city.State);
+        string before = DevelopmentChain.Write(city.State);
         foreach (var meal in city.State.Food!.Residents)
         {
             var dump = city.InspectFoodAwareness(meal.ResidentId)!;
@@ -39,7 +39,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
             Assert.All(dump.Image.Union.Where(s => (s.Sources & FoodAwarenessSource.Memory) != 0), s => Assert.True(s.Eligible));
             Assert.Equal(8, dump.Samples.Count(s => s.Source == FoodAwarenessSource.Campaign && s.Result == "unknown"));
         }
-        Assert.Equal(before, SaveCodec.Write(city.State)); Assert.Equal(0, paths.Out + paths.Back);
+        Assert.Equal(before, DevelopmentChain.Write(city.State)); Assert.Equal(0, paths.Out + paths.Back);
         city.State.Capabilities.Active = false;
         Assert.All(city.InspectFoodAwareness("r")!.Samples.Where(s => s.Source == FoodAwarenessSource.Memory), s => Assert.Empty(s.BusinessId));
         city.State.Capabilities.Active = true;
@@ -76,7 +76,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
         int currentSchema=changed.State.Schema; string currentMenu=changed.State.MenuPolicy; changed.State.MenuPolicy=FoodMenuPolicy.Wire;
         changed.State.Schema=sourceSchema < 20 ? 19 : sourceSchema;
-        var root = JObject.Parse(sourceSchema < 20 ? PopulationSchema19.Write(changed.State) : sourceSchema>=21 ? SaveCodec.WriteForSchema(changed.State,sourceSchema) : PopulationSchema20.Write(changed.State));
+        var root = JObject.Parse(sourceSchema < 20 ? DevelopmentChain.Legacy(changed.State, () => PopulationSchema19.Write(changed.State)) : sourceSchema>=21 ? DevelopmentChain.Legacy(changed.State, () => SaveCodec.WriteForSchema(changed.State, sourceSchema)) : DevelopmentChain.Legacy(changed.State, () => PopulationSchema20.Write(changed.State)));
         changed.State.Schema=currentSchema; changed.State.MenuPolicy=currentMenu;
         bool legacy18 = sourceSchema == 18;
         if (legacy18)
@@ -88,8 +88,8 @@ public sealed class FoodAwarenessMemoryIntegrationTests
                 if (row[9] is JObject d) d.Remove("Awareness");
         }
         string source = root.ToString(Formatting.None);
-        var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
+        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema);
         Assert.True(read.State.Capabilities.Active);
         Assert.Equal(sourceSchema < 20 ? 2 : 0, read.State.WeatherStartsDay);
         Assert.Equal(memory, JsonConvert.SerializeObject(read.State.Food!.Residents.Select(m => m.Memory)));
@@ -98,13 +98,13 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         if (legacy18) held.Awareness = null;
         Assert.Equal(JsonConvert.SerializeObject(held), JsonConvert.SerializeObject(migrated));
         Assert.Equal(legacy18 ? 2 : 1, read.State.Food.AwarenessStartsDay);
-        string upgraded = SaveCodec.Write(read.State);
-        Assert.Equal(upgraded, SaveCodec.Write(SaveCodec.Read(upgraded).State!));
+        string upgraded = DevelopmentChain.Write(read.State);
+        Assert.Equal(upgraded, DevelopmentChain.Write(DevelopmentChain.Read(upgraded).State!));
         changed = new CitySimulator(read.State, pm);
         changed.AttachWeather(new FrameWeatherSource(() => 2, () => false), new WeatherSettings { Enabled = false });
         changed.AttachFoodMarket(mm, memorySettings: new FoodMemorySettings { FoodMemoryWeight = 0 },
             awarenessSettings: new FoodAwarenessSettings { DrawsPerAnchor = 0 });
-        Assert.Equal(upgraded, SaveCodec.Write(changed.State));
+        Assert.Equal(upgraded, DevelopmentChain.Write(changed.State));
         if (legacy18) control.State.Food!.AwarenessStartsDay = 2;
         // Compare the held consumer only: later fresh contexts legitimately use the edited settings.
         var heldMeal = changed.State.Food!.Residents.Single(m => m.Decision != null);

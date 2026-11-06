@@ -14,18 +14,19 @@ public sealed class Schema18ChoiceReplayTests
     {
         string source = LegacyWire.Write(city.State);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = source, [FoodAuthorityStore.Key] = "untouched authority", ["persistentcity:food-receipt:test"] = "untouched receipt" };
-        var session = SaveSession.Open(data, city.State.PopulationKey); var read = session.InitialReadResult;
+        // F5c-lite: the product session refuses schema 17 and publishes nothing; the frozen chain still replays it.
+        var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
         Assert.Equal(source, LegacyWire.Write(read.State!)); Assert.Same(source, data[SaveStore.StateKey]);
-        Assert.True(session.WriteTo(data, read.State!).Success); Assert.Equal(CityState.CurrentSchema, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
+        Assert.False(SaveSession.Open(data, city.State.PopulationKey).WriteTo(data, read.State!).Success); Assert.Same(source, data[SaveStore.StateKey]);
         Assert.Equal("untouched authority", data[FoodAuthorityStore.Key]); Assert.Equal("untouched receipt", data["persistentcity:food-receipt:test"]);
-        var restored = new CitySimulator(SaveCodec.Read(data[SaveStore.StateKey]).State!, planner); restored.AttachFoodMarket(market); return restored;
+        var restored = new CitySimulator(DevelopmentChain.Read(DevelopmentChain.Write(read.State!)).State!, planner); restored.AttachFoodMarket(market); return restored;
     }
 
     // D3a starts recording on migration; compare every older field separately from that new coverage marker.
     private static string PreOutflow(CityState state)
     {
-        var root = JObject.Parse(SaveCodec.Write(state));
+        var root = JObject.Parse(DevelopmentChain.Write25(state)); // both arms at the frozen writer, without person fields
         ((JObject)root["Food"]!).Remove("Outflow");
         root.Remove("NamePolicyStartsDay"); // independently checked next-day schema-25 boundary
         return root.ToString(Formatting.None);

@@ -61,8 +61,22 @@ namespace PersistentCity.Core
         private MealExcursion? excursion;
         private ResidentBudget? budget;
         public string ResidentId { get; set; } = "";
+        /// <summary>Roster owner. From schema 26 every record is its own person's (AnchorId == ResidentId, Slot 0);
+        /// schemas up to 25 stored the represented consumer's host here.</summary>
         public string AnchorId { get; set; } = "";
         public int Slot { get; set; }
+        private string? hostId;
+        private int? hostSlot;
+        /// <summary>Scheduling adapter, never persisted: the resident whose day a represented consumer eats on, and its
+        /// slot (0 for the resident's own meals). Today's excursion schedule reads only these; ownership stays the
+        /// person's own. Without an assignment it falls back to the stored AnchorId/Slot (pre-26 form).</summary>
+        public string HostId => hostId ?? AnchorId;
+        public int HostSlot => hostSlot ?? Slot;
+        public void AssignHost(string anchorId, int slot)
+        {
+            if (string.IsNullOrEmpty(anchorId) || slot < 0) throw new ArgumentException("Invalid roster host.");
+            hostId = anchorId; hostSlot = slot;
+        }
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; }
         public bool NeedsHomeResync { get; set; }
@@ -248,7 +262,10 @@ namespace PersistentCity.Core
             string id = FoodRepresentation.ConsumerId(person.Identity.Id, slot);
             if (records.TryGetValue(id, out var existing)) return existing;
             var resident = Resident(person);
-            var meal = new ResidentMeal { ResidentId = id, AnchorId = person.Identity.Id, Slot = slot };
+            // Schema 26: the record is the person's own; the host only schedules today's represented excursion.
+            bool own = city.State.Schema >= PersonTable.OwnRosterSchema;
+            var meal = new ResidentMeal { ResidentId = id, AnchorId = own ? id : person.Identity.Id, Slot = own ? 0 : slot };
+            meal.AssignHost(person.Identity.Id, slot);
             if (slot > 0)
             {
                 meal.RepresentedTraits = ResidentTraits.Generate(city.State.Seed, id);
@@ -262,7 +279,10 @@ namespace PersistentCity.Core
             meal.Allowance = consumer.DailyAllowance;
             if (state.HouseholdFinanceVersion != 0) CreateBudget(meal, person);
             StartMeal(meal, person, (int)(city.State.Minute / 1440), state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast);
-            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal); return meal;
+            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal);
+            // Schema 26: every roster record is one person; a represented slot is a visitor person (no behaviour reads it).
+            if (slot > 0) PersonTable.AddRepresentedVisitor(city.State, id);
+            return meal;
         }
         private void StartMeal(ResidentMeal meal, CitizenState person, int day, MealKind kind)
         {
@@ -282,7 +302,7 @@ namespace PersistentCity.Core
             {
                 var pendingMeal=pendingDecision;
                 due.Remove(pendingMeal);
-                try { ContinueFoodDecision(pendingMeal,city.FindCitizen(pendingMeal.AnchorId)!); }
+                try { ContinueFoodDecision(pendingMeal,city.FindCitizen(pendingMeal.HostId)!); }
                 finally { due.Add(pendingMeal); }
                 return;
             }
@@ -293,7 +313,7 @@ namespace PersistentCity.Core
         }
         private void StepMeal(ResidentMeal meal)
         {
-            var person = city.FindCitizen(meal.AnchorId);
+            var person = city.FindCitizen(meal.HostId);
             if (person == null) throw new InvalidOperationException("Meal has no resident.");
             double now = city.State.Minute;
             if (meal.Status == MealStatus.Uncertain && meal.Excursion != null)
@@ -330,7 +350,7 @@ namespace PersistentCity.Core
                     else meal.DueAt = (Math.Floor(now / 1440) + 1) * 1440;
                     return;
                 }
-                if (meal.Slot == 0 && person.MealOuting != null)
+                if (meal.HostSlot == 0 && person.MealOuting != null)
                 { meal.DueAt = Math.Max(now + 1, person.NextEventMinute); return; }
                 NextMeal(meal, out int day, out MealKind kind);
                 if (day < (int)(now / 1440)) { day = (int)(now / 1440); kind = state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast; }
@@ -346,7 +366,7 @@ namespace PersistentCity.Core
             else if (meal.Status == MealStatus.Pending)
             {
                 if (now >= meal.ExpiresAt) Finish(meal, MealStatus.Missed, "No suitable stop in the meal window");
-                else if (meal.Slot > 0) DecideRepresented(meal, person);
+                else if (meal.HostSlot > 0) DecideRepresented(meal, person);
                 else if (AtFoodStop(person)) DecideAtStop(meal, person);
                 else if (person.Phase != CitizenPhase.AtPlace || person.MealOuting != null || person.Activity == Activity.Shop
                     || Math.Min(person.NextEventMinute, person.ActivityUntilMinute) - now < 25)
@@ -355,7 +375,7 @@ namespace PersistentCity.Core
             }
             else if (meal.Status == MealStatus.Travelling)
             {
-                bool admitted = meal.Slot > 0 ? meal.Excursion != null && now >= meal.Excursion.ArrivesAt && !meal.Excursion.Returning
+                bool admitted = meal.HostSlot > 0 ? meal.Excursion != null && now >= meal.Excursion.ArrivesAt && !meal.Excursion.Returning
                     && now < meal.Deadline && Position.Distance(city.FindPlace(meal.PlaceId).Position, meal.Excursion.DestinationPosition) <= .01
                     : person.MealOuting != null && !person.MealOuting.Returning
                     && person.Phase == CitizenPhase.AtPlace && person.PlaceId == meal.PlaceId
@@ -382,7 +402,7 @@ namespace PersistentCity.Core
                         Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return;
                     }
                     double? close = null;
-                    if (meal.Slot > 0)
+                    if (meal.HostSlot > 0)
                     {
                         var hours = available.OpeningPlace;
                         var open = DailyRoutine.NextOpen(hours, now, meal.Deadline);
@@ -395,9 +415,9 @@ namespace PersistentCity.Core
                     meal.ServiceMinutes = 60.0 / available.MealsPerHour.Value;
                     var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
                     meal.ServiceAt = Math.Max(now, scope.NextServiceAt) + meal.ServiceMinutes;
-                    if (meal.Slot > 0 && Math.Max(0, scope.NextServiceAt - now) > meal.Excursion!.MaximumQueueMinutes)
+                    if (meal.HostSlot > 0 && Math.Max(0, scope.NextServiceAt - now) > meal.Excursion!.MaximumQueueMinutes)
                         Finish(meal, MealStatus.Missed, "Queue exceeds patience on arrival");
-                    else if (meal.Slot > 0 && (!close.HasValue || meal.ServiceAt >= close.Value))
+                    else if (meal.HostSlot > 0 && (!close.HasValue || meal.ServiceAt >= close.Value))
                         Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours");
                     else if (meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes > meal.Deadline)
                     {
@@ -409,18 +429,18 @@ namespace PersistentCity.Core
                     }
                     else
                     {
-                        if (meal.Slot == 0) city.ExtendMealStay(person, meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind));
+                        if (meal.HostSlot == 0) city.ExtendMealStay(person, meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind));
                         scope.NextServiceAt = meal.ServiceAt;
                         meal.Status = MealStatus.Serving; meal.DueAt = meal.ServiceAt;
                     }
                 }
-                else if (meal.Slot > 0 || person.MealOuting == null || person.MealOuting.Returning || now >= meal.Deadline)
+                else if (meal.HostSlot > 0 || person.MealOuting == null || person.MealOuting.Returning || now >= meal.Deadline)
                     Finish(meal, MealStatus.Missed, "Visit was interrupted before admission");
                 else meal.DueAt = Math.Max(now + .001, person.NextEventMinute);
             }
             else if (meal.Status == MealStatus.Serving)
             {
-                if (meal.Slot > 0 ? meal.Excursion == null || meal.Excursion.Returning || now > meal.Deadline
+                if (meal.HostSlot > 0 ? meal.Excursion == null || meal.Excursion.Returning || now > meal.Deadline
                     : person.Phase != CitizenPhase.AtPlace || person.PlaceId != meal.PlaceId
                     || (meal.ExistingStop ? person.MealOuting != null || person.Activity != Activity.Shop
                         || now >= Math.Min(person.ActivityUntilMinute, person.NextEventMinute)
@@ -455,7 +475,7 @@ namespace PersistentCity.Core
                                 Experience(meal, result.Failure.Value, now);
                             RecordOutcome(meal, now, true);
                         }
-                        if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
+                        if (meal.HostSlot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
                     catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
                 }
@@ -491,10 +511,10 @@ namespace PersistentCity.Core
                 if(choiceReason.Contains("values quality"))
                 {if(outcome.Factor1==MealFactor.None) outcome.Factor1=MealFactor.Quality;else outcome.Factor2=MealFactor.Quality;}
             }
-            var person = city.FindCitizen(meal.AnchorId)!;
+            var person = city.FindCitizen(meal.HostId)!;
             NextMeal(meal, out int day, out MealKind kind);
             meal.DueAt = Math.Max(city.State.Minute + .001, MealRhythm.DesiredAt(person, city.State.Seed, day, kind));
-            if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
+            if (meal.HostSlot > 0 && meal.Excursion != null) ScheduleReturn(meal);
         }
         private void NextMeal(ResidentMeal meal, out int day, out MealKind kind)
         {
@@ -517,14 +537,14 @@ namespace PersistentCity.Core
             var trace = city.ObservingFood ? new FoodDecisionTrace() : null;
             double now = city.State.Minute;
             CaptureRoutineStop(person);
-            var stop = meal.Slot == 0 ? new FoodRoutineStop { AnchorId = person.Identity.Id, PlaceId = person.PlaceId, Activity = person.Activity,
+            var stop = meal.HostSlot == 0 ? new FoodRoutineStop { AnchorId = person.Identity.Id, PlaceId = person.PlaceId, Activity = person.Activity,
                 DepartureAt = Math.Min(person.NextEventMinute, person.ActivityUntilMinute) } : routineStops[person.Identity.Id];
             var consumer = Consumer(person, AvailableForMeal(meal), meal);
             consumer.OriginPlaceId = stop.PlaceId;
             MealRhythm.Apply(consumer, meal.Kind);
             var intent = new FoodIntent { Id = meal.IntentId, ConsumerId = meal.ResidentId, Day = meal.Day,
                 DesiredAt = meal.DesiredAt, RequestedAt = now, Deadline = Math.Min(meal.ExpiresAt,
-                    Math.Min(now + (meal.Slot == 0 ? MealRhythm.BreakMinutes(person, city.State.Seed, meal.Kind) : RepresentedBreak(person, stop, meal.Kind)),
+                    Math.Min(now + (meal.HostSlot == 0 ? MealRhythm.BreakMinutes(person, city.State.Seed, meal.Kind) : RepresentedBreak(person, stop, meal.Kind)),
                         stop.DepartureAt)),
                 OriginPlaceId = stop.PlaceId, OriginActivity = stop.Activity, EatingMinutes = MealRhythm.EatingMinutes(meal.Kind), MaximumQueueMinutes = MealRhythm.QueueMinutes(meal.Kind, stop.Activity),
                 TimeCostMultiplier = 1 + Math.Min(1, (now - meal.DesiredAt) / 120), ContextEvidence = meal.Kind + ": live scheduled presence and departure deadline; meal-specific time, quality and food suitability" };
@@ -558,7 +578,7 @@ namespace PersistentCity.Core
                 { if (trace != null) trace.RouteChecks[b.Id] = outward == null ? "No outward walking path" : back == null ? "No return walking path" : "Non-walking path"; continue; }
                 if (trace != null) trace.RouteChecks[b.Id] = "Complete walking paths";
                 paths.Add(b.Id, outward);
-                if (meal.Slot > 0) returnGeometry.Add(b.Id, GeometrySignature(back));
+                if (meal.HostSlot > 0) returnGeometry.Add(b.Id, GeometrySignature(back));
                 quotes.Add(new FoodTravelQuote { ConsumerId = meal.ResidentId, BusinessId = b.Id, IntentId = meal.IntentId,
                     OriginPlaceId = stop.PlaceId, Minutes = outward.Minutes, ReturnMinutes = back.Minutes, Evidence = "Current complete walking paths" });
             }
@@ -576,13 +596,13 @@ namespace PersistentCity.Core
             var selected = businesses.Single(b => b.Id == choice.BusinessId);
             var selectedChoice = choice.Choices.Single(c => c.BusinessId == choice.BusinessId && c.ProductId == choice.ProductId);
             double stay = selectedChoice.ServiceEndsAt!.Value - (now + paths[selected.Id].Minutes) + intent.EatingMinutes;
-            if (meal.Slot == 0 && !city.TryBeginMealVisit(person.Identity.Id, selected.PlaceId, paths[selected.Id], choice.ReturnTravelMinutes!.Value, stay, intent.Deadline))
+            if (meal.HostSlot == 0 && !city.TryBeginMealVisit(person.Identity.Id, selected.PlaceId, paths[selected.Id], choice.ReturnTravelMinutes!.Value, stay, intent.Deadline))
             { Finish(meal, MealStatus.Missed, "Schedule or shop changed before departure"); return; }
             meal.PlaceId = selected.PlaceId; meal.BusinessId = selected.Id; meal.ProductId = choice.ProductId;
             meal.Price = selectedChoice.Price; meal.ServiceMinutes = 60.0 / selected.MealsPerHour!.Value;
             meal.ReturnMinutes = choice.ReturnTravelMinutes!.Value; meal.Deadline = intent.Deadline;
             meal.Status = MealStatus.Travelling;
-            if (meal.Slot > 0)
+            if (meal.HostSlot > 0)
             {
                 meal.Excursion = new MealExcursion { OriginId = stop.PlaceId, DestinationId = selected.PlaceId, OriginActivity = stop.Activity,
                     OriginPosition = city.FindPlace(stop.PlaceId).Position, DestinationPosition = city.FindPlace(selected.PlaceId).Position,

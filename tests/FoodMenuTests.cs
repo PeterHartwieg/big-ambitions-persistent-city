@@ -60,11 +60,11 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, _) = Ready(threeMeals: true); city.EnableHouseholdFinances(); market.ThrowAfterSale = uncertain;
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + after);
-        var payload = JObject.Parse(SaveCodec.Write(city.State)); payload["Schema"] = 11; RemoveMenuFields(payload);
+        var payload = JObject.Parse(DevelopmentChain.Write(city.State)); payload["Schema"] = 11; RemoveMenuFields(payload);
         string source = payload.ToString(); var orders = market.Orders.ToArray();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
         Assert.Equal(orders, market.Orders);
         if (uncertain) Assert.Equal(Money.FromCents(100), city.State.Food.Residents.Single().Budget!.HeldPurchase);
@@ -73,22 +73,22 @@ public sealed partial class FoodCommerceTests
     [InlineData("duplicate")] [InlineData("too-many")] [InlineData("null")] [InlineData("missing")]
     public void MalformedMenusAreRejected(string error)
     {
-        var (city, _, _) = Ready(); var payload = JObject.Parse(SaveCodec.Write(city.State));
+        var (city, _, _) = Ready(); var payload = JObject.Parse(DevelopmentChain.Write(city.State));
         var shop = (JObject)payload["Food"]!["Shops"]![0]!;
         if (error == "duplicate") shop["AdditionalProductIds"] = new JArray(FoodProducts.Croissant);
         if (error == "too-many") shop["AdditionalProductIds"] = new JArray("a", "b", "c", "d", "e", "f", "g", "h");
         if (error == "null") shop["AdditionalProductIds"] = null;
         if (error == "missing") shop.Remove("AdditionalProductIds");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
     [Fact]
     public void ProductSalesReconcileWithMealAndRevenueHistory()
     {
         var (city, _, _) = Ready(threeMeals: true); Advance(city, 2860);
         var row = city.State.Food!.History.Single(); Assert.Equal(3, row.ProductSales.Single().Purchases);
-        var payload = JObject.Parse(SaveCodec.Write(city.State));
+        var payload = JObject.Parse(DevelopmentChain.Write(city.State));
         payload["Food"]!["History"]![0]!["ProductSales"]![0]![2] = 1;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
     private sealed class MenuMarket : IFoodMarket
     {
@@ -125,7 +125,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, first.DesiredAt + 60);
         Assert.Equal(2, market.Orders.Count); Assert.All(market.Stock.Values, n => Assert.Equal(0, n));
         Assert.Equal(0, market.Bags); Assert.Equal(Money.FromCents(200), Money.Sum(meals.Select(m => m.Spent)));
-        Assert.Equal(2, city.State.Food!.History.Single().ProductSales.Count); SaveCodec.Write(city.State);
+        Assert.Equal(2, city.State.Food!.History.Single().ProductSales.Count); DevelopmentChain.Write(city.State);
     }
     [Fact]
     public void LastSharedBagDoesNotCauseTwoDebitsForDifferentProducts()
@@ -138,7 +138,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, first.DesiredAt + 60);
         Assert.Single(market.Orders); Assert.Equal(0, market.Bags); Assert.Equal(1, market.Stock.Values.Sum());
         Assert.Equal(Money.FromCents(100), Money.Sum(meals.Select(m => m.Budget!.PreparedFoodSpent)));
-        Assert.All(meals, m => Assert.Equal(Money.FromCents(0), m.Budget!.HeldPurchase)); SaveCodec.Write(city.State);
+        Assert.All(meals, m => Assert.Equal(Money.FromCents(0), m.Budget!.HeldPurchase)); DevelopmentChain.Write(city.State);
     }
     [Fact]
     public void TwelveHundredMenuBuyersHaveTheSameResultsAcrossBatchingAndReload()
@@ -146,10 +146,10 @@ public sealed partial class FoodCommerceTests
         var (a, ma, _) = ReadyMenu(1200, true); var (b, mb, routes) = ReadyMenu(1200, true);
         a.EnableHouseholdFinances(); b.EnableHouseholdFinances();
         Advance(a, 2860); Advance(b, 2400, 1);
-        var read = SaveCodec.Read(SaveCodec.Write(b.State)); Assert.Equal("", read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(b.State)); Assert.Equal("", read.Error);
         b = new CitySimulator(read.State!, routes); b.AttachFoodMarket(mb); Advance(b, 2860, 1);
         Assert.Equal(ma.Orders, mb.Orders); Assert.Equal(ma.Bags, mb.Bags);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
     }
 
     [Theory]

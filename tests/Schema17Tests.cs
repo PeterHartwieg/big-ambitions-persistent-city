@@ -73,7 +73,7 @@ public sealed partial class FoodCommerceTests
         Assert.NotEqual(a.Citizens.Select(x => x.Traits!.Bands), c.Citizens.Select(x => x.Traits!.Bands));
         // No food scope: traits exist, nothing economic does, and the save keeps it that way.
         Assert.Null(a.Food);
-        var read = SaveCodec.Read(LegacyWire.Write(a));
+        var read = DevelopmentChain.Read(LegacyWire.Write(a));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Null(read.State!.Food);
         Assert.Equal(a.Citizens.Select(x => x.Traits!.Bands), read.State.Citizens.Select(x => x.Traits!.Bands));
     }
@@ -84,7 +84,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 3);
         foreach (var meal in city.State.Food!.Residents)
         {
-            if (meal.Slot == 0) Assert.Null(meal.RepresentedTraits);
+            if (meal.HostSlot == 0) Assert.Null(meal.RepresentedTraits);
             else Assert.Equal(ResidentTraits.Generate(city.State.Seed, meal.ResidentId).Bands, meal.RepresentedTraits!.Bands);
         }
         var before = city.State.Citizens.ToDictionary(c => c.Identity.Id, c => c.Traits);
@@ -125,7 +125,7 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("\"Schema\":" + schema + ",", old);
         foreach (string field in EconomyScenario.Schema17Fields) Assert.DoesNotContain("\"" + field + "\":", old);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = old };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
+        var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
         Assert.Same(old, data[SaveStore.StateKey]);
         var migrated = read.State!;
@@ -140,16 +140,15 @@ public sealed partial class FoodCommerceTests
         foreach (var meal in migrated.Food.Residents)
         {
             Assert.Null(meal.Decision); Assert.Equal("", meal.LastContextKey); Assert.Equal(0, meal.ContextAttempts);
-            Assert.Equal(meal.Slot == 0 ? null : ResidentTraits.Generate(migrated.Seed, meal.ResidentId).Bands, meal.RepresentedTraits?.Bands);
+            Assert.Equal(meal.HostSlot == 0 ? null : ResidentTraits.Generate(migrated.Seed, meal.ResidentId).Bands, meal.RepresentedTraits?.Bands);
             var outcomes = meal.Today!;
             Assert.Equal(meal.Day, outcomes.Day);
             Assert.Equal(MealOutcomes.Index(meal.Kind), outcomes.Unrecorded);
             var status = MealOutcomes.StatusFor(meal.Status);
             Assert.Equal(status.HasValue ? 1 : 0, outcomes.Meals.Count);
         }
-        // The upgraded payload is now writable through the normal save path, and reads back as 17.
-        Assert.True(SaveStore.WriteTo(data, migrated).Success);
-        Assert.Equal(CityState.CurrentSchema, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
+        // F5c-lite: no migration publication; the normal save path never replaces the stored development payload.
+        Assert.False(SaveStore.WriteTo(data, migrated).Success); Assert.Same(old, data[SaveStore.StateKey]);
         // Continue both: identical orders and economy, the meal in progress finishing on its legacy terms.
         var twin = new Market { Units = market.Units }; twin.Orders.AddRange(market.Orders); twin.Times.AddRange(market.Times);
         var resumed = new CitySimulator(migrated, routes); resumed.AttachFoodMarket(twin);
@@ -190,12 +189,12 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2);
         var food = city.State.Food!;
         food.ChoiceStartsDay=0; // This fixture deliberately constructs an already active decision.
-        var first = food.Residents.First(m => m.Slot == 0);
+        var first = food.Residents.First(m => m.HostSlot == 0);
         first.Today = new ResidentFoodToday { Day = 0, Meals = {
             new MealOutcomeRecord { Kind = MealKind.Breakfast, Status = MealOutcomeStatus.ChoseAlternative, Reason = MealReasonCode.PrefersAlternative, Outside = FoodOutsideOption.FundedHouseholdFood, At = 500 },
             new MealOutcomeRecord { Kind = MealKind.Lunch, Status = MealOutcomeStatus.Skipped, Reason = MealReasonCode.QueueTooLong, At = 760, Factor1 = MealFactor.Queue },
             new MealOutcomeRecord { Kind = MealKind.Dinner, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.Bought, PlaceId = "address:Gone%20Street:1:shop", ProductId = "pastry", At = 1150, CheckoutAt = 1150 } } };
-        var decided = food.Residents.Last(m => m.Slot == 1);
+        var decided = food.Residents.Last(m => m.HostSlot == 1);
         decided.LastContextKey = "work@1440"; decided.ContextAttempts = 1;
         Route Walk(Position from, Position to) => new Route { Legs = { new RouteLeg { From = from, To = new((from.X + to.X) / 2, 0, 0), Minutes = 1, Mode = TravelMode.Walk },
             new RouteLeg { From = new((from.X + to.X) / 2, 0, 0), To = to, Minutes = 1, Mode = TravelMode.Walk } } };
@@ -218,14 +217,15 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("\"Schema\":17,", json);
         Assert.Contains("\"ChoicePolicyVersion\":1,\"ChoiceStartsDay\":0,", json);
         Assert.Contains("\"Traits\":{\"Bands\":\"" + city.State.Citizens[0].Traits!.Bands + "\",\"Version\":1}", json);
-        var read = SaveCodec.Read(json);
+        var read = DevelopmentChain.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
         Assert.Equal(json, LegacyWire.Write(read.State!));
         var decision = read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!;
         Assert.True(decision.RouteBearing); Assert.Equal(2, decision.Shops[0].Offers.Count); Assert.Equal(-1, decision.Shops[0].Offers[1].Units);
         var data = new Dictionary<string, string>();
         var session = SaveSession.Open(data, city.State.PopulationKey);
-        Assert.True(session.WriteTo(data, read.State).Success); Assert.Equal(SaveCodec.Write(read.State), data[SaveStore.StateKey]);
+        // F5c-lite: the product writer never publishes a development-chain (schema-25) state; nothing is migrated.
+        Assert.False(session.WriteTo(data, read.State).Success); Assert.Empty(data);
     }
 
     public static IEnumerable<object[]> S17_Damage() => new (string name, string error)[]
@@ -386,7 +386,7 @@ public sealed partial class FoodCommerceTests
         }
         string payload = text ?? wire.ToString(Formatting.None);
         Assert.NotEqual(json, payload);
-        var read = SaveCodec.Read(payload);
+        var read = DevelopmentChain.Read(payload);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
         Assert.Contains(error, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "owned by RLO" };
@@ -410,7 +410,7 @@ public sealed partial class FoodCommerceTests
         decision.Shops = new List<FoodDecisionShop> { refusedOutward, refusedReturn, pending };
         decision.Result = FoodDecisionResult.Evaluating; decision.BusinessId = decision.ProductId = ""; decision.QuotesDone = 4;
         string json = LegacyWire.Write(city.State);
-        var read = SaveCodec.Read(json);
+        var read = DevelopmentChain.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(json, LegacyWire.Write(read.State!));
         var restored = read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!;
@@ -435,7 +435,7 @@ public sealed partial class FoodCommerceTests
         string wire = dinner.ToWire();
         Assert.True(wire.Length <= SaveCodec.MaxMealOutcomeWire, wire.Length.ToString());
         string json = LegacyWire.Write(city.State);
-        var read = SaveCodec.Read(json);
+        var read = DevelopmentChain.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(json, LegacyWire.Write(read.State!));
         Assert.Equal(553, 6 * 2 + 2 * 10 + 9 + 256 + 256);
@@ -445,7 +445,7 @@ public sealed partial class FoodCommerceTests
         // A record string beyond the reader's cap is refused before deserialization and preserved.
         string oversized = json.Replace(wire, wire.Substring(0, wire.Length - 256) + new string('p', SaveCodec.MaxMealOutcomeWire - (wire.Length - 256) + 1));
         Assert.NotEqual(json, oversized);
-        var refused = SaveCodec.Read(oversized);
+        var refused = DevelopmentChain.Read(oversized);
         Assert.Equal(SaveReadStatus.Invalid, refused.Status); Assert.Contains("Invalid meal outcome record", refused.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = oversized };
         Assert.False(SaveStore.WriteTo(data, read.State!).Success); Assert.Same(oversized, data[SaveStore.StateKey]);
@@ -510,7 +510,7 @@ public sealed partial class FoodCommerceTests
                 ",\"(Traits|RepresentedTraits)\":(null|\\{\"Bands\":\"[0-4]{10}\",\"Version\":1\\})|,\"Today\":null|,\"Decision\":null|,\"LastContextKey\":\"\"|,\"ContextAttempts\":0", ""),
                 "\"Schema\":17,", "\"Schema\":16,");
         Assert.DoesNotContain("\"Traits\":", old);
-        var migrated = SaveCodec.Read(old);
+        var migrated = DevelopmentChain.Read(old);
         Assert.True(migrated.Status == SaveReadStatus.Loaded, migrated.Error); Assert.Equal(16, migrated.SourceSchema);
         Assert.Equal(130200, migrated.State!.Food!.Residents.Count);
         migrated = null!; old = null!; fresh = null!;
@@ -525,7 +525,7 @@ public sealed partial class FoodCommerceTests
         foreach (var meal in state.Food.Residents) meal.Today = today;
         string json = LegacyWire.Write(state);
         Assert.True(json.Length <= SaveCodec.MaxInputCharacters);
-        var read = SaveCodec.Read(json);
+        var read = DevelopmentChain.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(130200, read.State!.Food!.Residents.Count(m => m.Today!.Meals.Count == 3));
     }
@@ -537,13 +537,13 @@ public sealed partial class FoodCommerceTests
         foreach (int schema in new[] { CityState.CurrentSchema+1, CityState.CurrentSchema+2, 1000 })
         {
             var wire = JObject.Parse(json); wire["Schema"] = schema; string payload = wire.ToString(Formatting.None);
-            Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(payload).Status);
+            Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(payload).Status);
             var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload };
             Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Same(payload, data[SaveStore.StateKey]);
         }
         // An earlier schema cannot carry schema-17 fields, and a schema-17 payload cannot omit them.
         var stripped = LegacyMoneyWire.AsSchema(JObject.Parse(json), 16); stripped["Schema"] = 17;
-        Assert.Contains("Missing object fields", SaveCodec.Read(stripped.ToString(Formatting.None)).Error);
+        Assert.Contains("Missing object fields", DevelopmentChain.Read(stripped.ToString(Formatting.None)).Error);
     }
 
     [Theory]
@@ -558,7 +558,7 @@ public sealed partial class FoodCommerceTests
             while (meal.Status != MealStatus.Paid) Advance(city, until += 1);
             string current = LegacyWire.Write(city.State);
             // The same paid meal, recorded live and synthesized by a schema-16 upgrade.
-            string json = upgraded ? LegacyWire.Write(SaveCodec.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 16).ToString(Formatting.None)).State!) : current;
+            string json = upgraded ? LegacyWire.Write(DevelopmentChain.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 16).ToString(Formatting.None)).State!) : current;
             var record = meal.Today!.Find(meal.Kind)!;
             Assert.Equal((MealOutcomeStatus.Bought, meal.PlaceId, meal.ProductId, (int)Math.Floor(meal.ServiceAt)),
                 (record.Status, record.PlaceId, record.ProductId, record.CheckoutAt));
@@ -573,14 +573,14 @@ public sealed partial class FoodCommerceTests
                 case "moved-checkout": S17_Set(outcomes, index, "CheckoutAt", int.Parse(S17_Get(outcomes[index], "CheckoutAt")) - 1); break;
             }
             string payload = wire.ToString(Formatting.None);
-            var read = SaveCodec.Read(payload);
+            var read = DevelopmentChain.Read(payload);
             Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Contains("Purchase outcome differs from its retained meal", read.Error);
             var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload };
             Assert.False(SaveStore.WriteTo(data, city.State).Success);
             Assert.False(SaveSession.Open(data, city.State.PopulationKey).WriteTo(data, city.State).Success);
             Assert.Same(payload, data[SaveStore.StateKey]);
             // Damaging the live state the same way is refused at write as well.
-            var bad = SaveCodec.Read(json).State!;
+            var bad = DevelopmentChain.Read(json).State!;
             var live = bad.Food!.Residents.Single().Today!.Find(meal.Kind)!;
             if (damage == "other-shop") live.PlaceId = "work"; else if (damage == "other-product") live.ProductId = FoodProducts.HotDog;
             else if (damage == "erased-checkout") live.CheckoutAt = 0; else live.CheckoutAt--;

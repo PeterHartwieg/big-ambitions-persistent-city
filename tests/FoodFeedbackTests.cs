@@ -240,15 +240,15 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(threeMeals: true); city.EnableHouseholdFinances();
         var meal = city.State.Food!.Residents.Single();
         meal.Budget!.Arrears = Money.FromCents(250);
-        string before = SaveCodec.Write(city.State);
-        var insight = city.Inspect(meal.AnchorId)!;
+        string before = DevelopmentChain.Write(city.State);
+        var insight = city.Inspect(meal.HostId)!;
         Assert.Equal(ResidentBudgetWords.BehindOnBills, insight.BudgetWords[0]);
         Assert.DoesNotContain(ResidentBudgetWords.NoSpareMoney, insight.BudgetWords);
         Assert.DoesNotContain(string.Join(" ", insight.BudgetWords), char.IsDigit);
         Assert.Contains(ResidentBudgetWords.BehindOnBills + ".", insight.Text());
-        Assert.Equal(before, SaveCodec.Write(city.State));
+        Assert.Equal(before, DevelopmentChain.Write(city.State));
         meal.Budget.Arrears = Money.Zero; meal.Budget.Balance = Money.FromCents(1);
-        var words = city.Inspect(meal.AnchorId)!.BudgetWords;
+        var words = city.Inspect(meal.HostId)!.BudgetWords;
         Assert.Contains(ResidentBudgetWords.NoSpareMoney, words); Assert.DoesNotContain(ResidentBudgetWords.BehindOnBills, words);
     }
 
@@ -269,7 +269,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(uncertain, snapshot.Uncertain > 0);
         // Exact schema-24 predecessor migrates to writer 25; totals rebuild from the migrated records.
         string source = E5d_Wire24(city.State);
-        var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var migrated = new CitySimulator(read.State!, routes); migrated.AttachFoodMarket(market);
         Check(migrated); Assert.Equal(snapshot, migrated.FoodMoney!.Snapshot());
         // A route rebuild attaches a fresh owner over the same records; the old owner stops counting.
@@ -349,13 +349,13 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, routes) = Ready(count: 2, threeMeals: true); city.EnableHouseholdFinances();
         Advance(city, 2 * 1440 + 700);
-        string before = SaveCodec.Write(city.State);
+        string before = DevelopmentChain.Write(city.State);
         _ = city.FoodMoney!.Snapshot(); _ = city.FoodMoney.Snapshot().Text();
-        Assert.Equal(before, SaveCodec.Write(city.State));
-        Assert.Equal(25, CityState.CurrentSchema); Assert.Equal(25, SaveCodec.Read(before).State!.Schema);
+        Assert.Equal(before, DevelopmentChain.Write(city.State));
+        Assert.Equal(26, CityState.CurrentSchema); Assert.Equal(26, DevelopmentChain.Read(before).State!.Schema);
         Assert.DoesNotContain("counters", before, StringComparison.OrdinalIgnoreCase);
         var restored = Reload(city, market, routes);
-        Assert.Equal(before, SaveCodec.Write(restored.State));
+        Assert.Equal(before, DevelopmentChain.Write(restored.State));
     }
 
     static string F6c_Root()

@@ -63,9 +63,9 @@ public sealed class A5IntegratedAcceptanceTests
         food.Residents[1].Memory.Entries.Add(new() { BusinessRef = 0, Day = 1, Served = 3, Affinity = 8, Outcome = ShopExperience.Served });
         city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
         city.State.Capabilities.Active = false;
-        string before = SaveCodec.Write(city.State);
+        string before = DevelopmentChain.Write(city.State);
         Assert.Empty(city.Inspect(person.Identity.Id)!.MemoryWords);
-        Assert.Equal(before, SaveCodec.Write(city.State));
+        Assert.Equal(before, DevelopmentChain.Write(city.State));
         city.State.Capabilities.Active = true;
         var insight = city.Inspect(person.Identity.Id)!;
         Assert.Equal(new[] { "curious, tries new places" }, insight.MemoryWords);
@@ -121,13 +121,13 @@ public sealed class A5IntegratedAcceptanceTests
                 candidate.AttachWeather(new Weather { Value = captured ? WeatherSample.Unknown : weather },
                     new WeatherSettings { Enabled = !captured, RainTravelWeightMultiplier = captured ? 2 : 1.3 });
                 candidate.FoodDecisionObserved += t => actualDecision = JsonConvert.SerializeObject(t.Decision);
-                Assert.Equal(saved, SaveCodec.Write(candidate.State)); reloaded = true;
+                Assert.Equal(saved, DevelopmentChain.Write(candidate.State)); reloaded = true;
             }
-            string before = SaveCodec.Write(candidate.State); int routes = paths.Out + paths.Back, buys = market.Attempts;
+            string before = DevelopmentChain.Write(candidate.State); int routes = paths.Out + paths.Back, buys = market.Attempts;
             var insight = candidate.Inspect("r")!; _ = insight.Text();
             var awareness = candidate.InspectFoodAwareness("r")!;
             Assert.All(awareness.Samples.Where(s => s.Source == FoodAwarenessSource.Campaign), s => Assert.Equal("unknown", s.Result));
-            Assert.Equal(before, SaveCodec.Write(candidate.State)); Assert.Equal(routes, paths.Out + paths.Back); Assert.Equal(buys, market.Attempts);
+            Assert.Equal(before, DevelopmentChain.Write(candidate.State)); Assert.Equal(routes, paths.Out + paths.Back); Assert.Equal(buys, market.Attempts);
             var r = candidate.AdvanceFrameSlice(at, 1);
             units += r.Events; citizenUnits += r.CitizenEvents; continuations += r.FoodContinuationEvents;
             Assert.InRange(paths.Out + paths.Back - routes, 0, 1);
@@ -148,10 +148,10 @@ public sealed class A5IntegratedAcceptanceTests
         Assert.Equal(1, citizenUnits); Assert.Equal(units - 1, continuations);
         while (!control.AdvanceFrameSlice(at, 128).CaughtUp) { }
         Assert.NotNull(expectedDecision); Assert.Equal(expectedDecision, actualDecision);
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(candidate.State));
+        Assert.Equal(DevelopmentChain.Write(control.State), DevelopmentChain.Write(candidate.State));
         while (!control.AdvanceTo(at + 40, 128).CaughtUp) { }
         while (!candidate.AdvanceTo(at + 40, 1).CaughtUp) { }
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(candidate.State));
+        Assert.Equal(DevelopmentChain.Write(control.State), DevelopmentChain.Write(candidate.State));
         Assert.Equal(cm.Orders, market.Orders); Assert.Single(market.Orders); Assert.Equal(1, market.Attempts);
         Assert.Equal(cp.Out, paths.Out); Assert.Equal(cp.Back, paths.Back);
     }
@@ -166,7 +166,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2);
         city.EnableHouseholdFinances();
         string legacy17 = LegacyWire.Write(city.State);
-        string source = sourceSchema == 16 ? S17_Old(legacy17, 16) : sourceSchema == 17 ? legacy17 : WeatherTests.As19(SaveCodec.Write(city.State));
+        string source = sourceSchema == 16 ? S17_Old(legacy17, 16) : sourceSchema == 17 ? legacy17 : WeatherTests.As19(DevelopmentChain.Write(city.State));
         if (sourceSchema == 18)
         {
             var root = Newtonsoft.Json.Linq.JObject.Parse(source); root["Schema"] = 18;
@@ -174,17 +174,17 @@ public sealed partial class FoodCommerceTests
             source = root.ToString(Formatting.None);
         }
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = source, ["foreign"] = "kept" };
-        var read = SaveSession.Open(data, city.State.PopulationKey).InitialReadResult;
+        var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(sourceSchema, read.SourceSchema);
-        Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
+        Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
         Assert.Equal((int)(city.State.Minute / 1440) + 1, read.State.WeatherStartsDay);
         Assert.All(read.State.Citizens, p => Assert.Null(p.W));
         Assert.All(read.State.Food!.Residents, m => Assert.Equal(WeatherSample.Unknown, m.Memory.Weather));
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(legacy17), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
         var restored = new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner());
-        string before = SaveCodec.Write(restored.State);
+        string before = DevelopmentChain.Write(restored.State);
         foreach (var resident in restored.State.Citizens) _ = restored.Inspect(resident.Identity.Id)!.Text();
-        Assert.Equal(before, SaveCodec.Write(restored.State)); Assert.Equal(before, SaveCodec.Write(SaveCodec.Read(before).State!));
+        Assert.Equal(before, DevelopmentChain.Write(restored.State)); Assert.Equal(before, DevelopmentChain.Write(DevelopmentChain.Read(before).State!));
         Assert.Equal("kept", data["foreign"]); Assert.False(read.State.Capabilities.Active);
     }
 }

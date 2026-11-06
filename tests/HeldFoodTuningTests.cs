@@ -50,7 +50,7 @@ public sealed class HeldFoodTuningTests
     }
     private static (string product, int routes, int orders, string state) Resume(string wire, double taste, int budget, bool editAll = false)
     {
-        var read = SaveCodec.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = DevelopmentChain.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var paths = new Paths(); var market = new Market(); var city = new CitySimulator(read.State!, paths);
         var settings = new FoodChoiceSettings { FoodChoiceTasteWeight = taste };
         if (editAll) {
@@ -61,7 +61,7 @@ public sealed class HeldFoodTuningTests
         var meal = city.State.Food!.Residents.Single();
         while (!city.AdvanceFrameSlice(meal.DesiredAt, budget).CaughtUp) { }
         Assert.Equal(MealStatus.Travelling, meal.Status); Assert.Equal(1, meal.Day);
-        return (meal.ProductId, paths.Calls, market.Orders, SaveCodec.Write(city.State));
+        return (meal.ProductId, paths.Calls, market.Orders, DevelopmentChain.Write(city.State));
     }
     private static string Checkpoint(int units)
     {
@@ -71,7 +71,7 @@ public sealed class HeldFoodTuningTests
         Assert.Equal(units == 3 ? FoodDecisionResult.Selected : FoodDecisionResult.Evaluating, meal.Decision.Result);
         Assert.Equal(Math.Min(units - 1, 2), paths.Calls); Assert.Equal(0, market.Orders);
         Assert.All(meal.Decision.Shops, s => Assert.Equal(0, s.MemoryContribution));
-        return SaveCodec.Write(city.State);
+        return DevelopmentChain.Write(city.State);
     }
 
     [Theory]
@@ -94,7 +94,7 @@ public sealed class HeldFoodTuningTests
     public void LiveEditDoesNotMutateImageAndNextUncapturedContextUsesEditTheSameDay()
     {
         var (city, _, _, settings) = Ready(); var meal = city.State.Food!.Residents.Single();
-        string uncaptured = SaveCodec.Write(city.State);
+        string uncaptured = DevelopmentChain.Write(city.State);
         city.AdvanceFrameSlice(meal.DesiredAt, 1);
         string image = meal.Decision!.Tuning!.ToWire(), key = meal.Decision.ContextKey;
         settings.FoodChoiceTasteWeight = 3;
@@ -103,7 +103,7 @@ public sealed class HeldFoodTuningTests
         Assert.Equal(FoodProducts.Burger, Resume(uncaptured, 0, 1).product);
         Assert.Equal(FoodProducts.Croissant, Resume(uncaptured, 3, 128).product);
         // Same logical stay/seed/attempt has the same key under either tuning image.
-        var read = SaveCodec.Read(uncaptured); var fresh = new CitySimulator(read.State!, new Paths());
+        var read = DevelopmentChain.Read(uncaptured); var fresh = new CitySimulator(read.State!, new Paths());
         fresh.AttachFoodMarket(new Market(), settings); fresh.AdvanceFrameSlice(meal.DesiredAt, 1);
         var next = fresh.State.Food!.Residents.Single().Decision!;
         Assert.Equal(key, next.ContextKey); Assert.NotEqual(image, next.Tuning!.ToWire());
@@ -140,7 +140,7 @@ public sealed class HeldFoodTuningTests
         Assert.Equal(FoodDecisionResult.Selected, meal.Decision!.Result);
         string wire = LegacyWire.Write(city.State);
         if (!legacy17) {
-            var root = JObject.Parse(SaveCodec.Write(city.State)); var d = root["Food"]!["Residents"]![0]![9]!;
+            var root = JObject.Parse(DevelopmentChain.Write(city.State)); var d = root["Food"]!["Residents"]![0]![8]!;
             ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
             wire = root.ToString(Formatting.None);
         }
@@ -156,19 +156,19 @@ public sealed class HeldFoodTuningTests
         string wire;
         if (legacy17) wire = LegacyWire.Write(city.State);
         else {
-            var root = JObject.Parse(SaveCodec.Write(city.State));
-            var d = root["Food"]!["Residents"]![0]![9]!; ((JObject)d).Remove("Tuning");
+            var root = JObject.Parse(DevelopmentChain.Write(city.State));
+            var d = root["Food"]!["Residents"]![0]![8]!; ((JObject)d).Remove("Tuning");
             foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
             wire = root.ToString(Formatting.None);
         }
-        var read = SaveCodec.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = DevelopmentChain.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Null(read.State!.Food!.Residents.Single().Decision!.Tuning);
         Assert.Equal(FoodProducts.Croissant, Resume(wire, 3, 1).product);
         var paths = new Paths(); var restored = new CitySimulator(read.State, paths); var settings = new FoodChoiceSettings { FoodChoiceTasteWeight = 3 };
         restored.AttachFoodMarket(new Market(), settings); restored.AdvanceFrameSlice(meal.DesiredAt, 1);
         Assert.NotNull(read.State.Food.Residents.Single().Decision!.Tuning);
         settings.FoodChoiceTasteWeight = 0;
-        string captured = SaveCodec.Write(read.State);
+        string captured = DevelopmentChain.Write(read.State);
         Assert.Equal(FoodProducts.Croissant, Resume(captured, 0, 128).product);
         Assert.Equal(1, paths.Calls);
     }
@@ -178,7 +178,7 @@ public sealed class HeldFoodTuningTests
     [InlineData(7)] [InlineData(9)]
     public void MalformedImagesAndReservedMemoryRefuseWithoutReplacement(int corruption)
     {
-        var root = JObject.Parse(Checkpoint(1)); var d = root["Food"]!["Residents"]![0]![9]!;
+        var root = JObject.Parse(Checkpoint(1)); var d = root["Food"]!["Residents"]![0]![8]!;
         string valid = (string)d["Tuning"]!;
         switch (corruption) {
             case 0: d["Tuning"] = valid + "0"; break;
@@ -200,10 +200,10 @@ public sealed class HeldFoodTuningTests
     [Fact]
     public void NonNeutralOrNonFiniteReservedContributionRefusesWrite()
     {
-        var read = SaveCodec.Read(Checkpoint(1)); var state = read.State!;
+        var read = DevelopmentChain.Read(Checkpoint(1)); var state = read.State!;
         var shop = state.Food!.Residents.Single().Decision!.Shops.Single();
         foreach (double value in new[] { -8.01, 8.01, double.NaN, double.PositiveInfinity }) {
-            shop.MemoryContribution = value; Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
+            shop.MemoryContribution = value; Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state));
         }
     }
 
@@ -217,7 +217,7 @@ public sealed class HeldFoodTuningTests
             meal.Decision = new FoodDecisionState { IntentId = meal.IntentId, ContextKey = meal.LastContextKey, Attempt = 1,
                 OriginAt = city.State.Minute, Deadline = city.State.Minute + 30, Tuning = FoodDecisionTuning.Capture(new FoodChoiceSettings()) };
         }
-        var error = Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+        var error = Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
         Assert.Contains("More than one held", error.Message);
     }
 
@@ -226,13 +226,13 @@ public sealed class HeldFoodTuningTests
     {
         var (city, _, _) = WeightedFoodChoiceTests.Ready(2, 8); var meal = city.State.Food!.Residents.Single();
         city.AdvanceFrameSlice(meal.DesiredAt, 1);
-        string wire = SaveCodec.Write(city.State); var root = JObject.Parse(wire); var d = root["Food"]!["Residents"]![0]![9]!;
+        string wire = DevelopmentChain.Write(city.State); var root = JObject.Parse(wire); var d = root["Food"]!["Residents"]![0]![8]!;
         ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
         string before = root.ToString(Formatting.None);
         Assert.Equal(405, wire.Length - before.Length);
         Assert.Equal(405, System.Text.Encoding.UTF8.GetByteCount(wire) - System.Text.Encoding.UTF8.GetByteCount(before));
         Assert.InRange(wire.Length - before.Length, 1, 65536); // aggregate policy/held-tuning envelope
-        var old = SaveCodec.Read(before); Assert.Equal(SaveReadStatus.Loaded, old.Status);
+        var old = DevelopmentChain.Read(before); Assert.Equal(SaveReadStatus.Loaded, old.Status);
         Assert.Equal(SaveCodec.CountRecords(city.State, wire), SaveCodec.CountRecords(old.State!, before));
         // Frozen old resolver still writes the same schema-17 facts, and refuses an injected new field.
         string legacy = LegacyWire.Write(city.State);

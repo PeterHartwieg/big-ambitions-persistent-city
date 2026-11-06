@@ -16,8 +16,8 @@ public sealed class D2CompositionTests
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79);
         city.State.Schema=schema; city.State.MenuPolicy=FoodMenuPolicy.Wire;
-        string source=SaveCodec.WriteForSchema(city.State,schema);
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(source).Status);
+        string source=DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
+        Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(source).Status);
         foreach(string damage in new[]{"tuple","account","foreign","campaign","menu"})
         {
             if(damage=="campaign" && schema>=22 || damage=="menu" && schema==23) continue;
@@ -30,7 +30,7 @@ public sealed class D2CompositionTests
             if(damage=="menu") root["MenuPolicy"]=FoodMenuPolicy.Wire;
             string bad=root.ToString(Formatting.None);
             var data=new Dictionary<string,string>{{SaveStore.StateKey,bad}};
-            Assert.Equal(SaveReadStatus.Invalid,SaveSession.Open(data,"weighted").InitialReadResult.Status);
+            Assert.Equal(SaveReadStatus.DevelopmentSchema,SaveSession.Open(data,"weighted").InitialReadResult.Status);
             Assert.Same(bad,data[SaveStore.StateKey]);
         }
     }
@@ -67,7 +67,7 @@ public sealed class D2CompositionTests
         Assert.Contains(held.Shops,s=>s.BusinessId=="b0" && s.AlternativeWeight==1);
         Assert.InRange(held.Shops.Count,1,8);
         state.Schema=22;string source=SaveCodec.WriteForSchema(state,22);state.Schema=23;
-        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        var read=DevelopmentChain.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         var resumed=new CitySimulator(read.State!,paths);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>false),new WeatherSettings {Enabled=false});
         resumed.AttachFoodMarket(market,campaign:new FoodCampaignSource(read.State!.Food!,state.Seed,new FoodCampaignSettings {Enabled=false}),rivalSettings:new RivalFoodSettings {RivalChoiceWeight=0});

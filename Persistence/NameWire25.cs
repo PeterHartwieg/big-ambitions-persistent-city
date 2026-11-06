@@ -74,7 +74,7 @@ namespace PersistentCity.Persistence
         private static FoodOfferMetadata LegacyMetadata25(CityState state, ResidentMeal meal, string product)
         {
             Require(FoodProducts.Known(product), "Uncaptured dynamic offer metadata; E5c/E5b capture is required.");
-            var traits = meal.RepresentedTraits ?? state.Citizens?.FirstOrDefault(c => c?.Identity?.Id == meal.AnchorId)?.Traits;
+            var traits = meal.RepresentedTraits ?? state.Citizens?.FirstOrDefault(c => c?.Identity?.Id == meal.HostId)?.Traits;
             Require(traits != null && traits.IsValid, "Missing held-offer traits.");
             return LegacyFoodOfferMetadata.Capture(traits!, state.Seed, meal.ResidentId, product);
         }

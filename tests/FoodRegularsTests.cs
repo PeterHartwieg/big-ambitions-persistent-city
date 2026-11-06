@@ -145,9 +145,9 @@ public sealed partial class FoodMemoryTests
         Assert.Contains("a regular at Native Bakery.", insight.Text());
         meal.Memory.Entries[0].Outcome = ShopExperience.Stockout;
         Assert.Contains("was let down by a stockout at Native Bakery", Capture(meal).MemoryWords);
-        meal.Slot = 1; meal.ResidentId = FoodRepresentation.ConsumerId(person.Identity.Id, 1);
+        meal.AssignHost(person.Identity.Id, 1); meal.ResidentId = FoodRepresentation.ConsumerId(person.Identity.Id, 1);
         Assert.Empty(Capture(meal).MemoryWords); // never attribute an abstract consumer to the visible person
-        meal.Slot = 0; meal.ResidentId = person.Identity.Id; food.Shops[0].BusinessId = "replaced";
+        meal.AssignHost(person.Identity.Id, 0); meal.ResidentId = person.Identity.Id; food.Shops[0].BusinessId = "replaced";
         Assert.DoesNotContain(Capture(meal).MemoryWords, w => w.Contains("Bakery"));
     }
 

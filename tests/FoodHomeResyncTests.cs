@@ -28,7 +28,7 @@ public sealed partial class FoodCommerceTests
     public void BriefHomeStayResynchronizesIdleConsumerBeforeItsLaterWorkMeal()
     {
         var (city, market, routes) = Ready(atWork: true, representation: 2);
-        var extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         extra.NeedsHomeResync = true; // A completed return missed the shared routine departure.
         var staged = BriefHomeArrival(city, routes); city = staged.City;
         double mealAt = extra.DesiredAt, due = extra.DueAt;
@@ -44,7 +44,7 @@ public sealed partial class FoodCommerceTests
         string? extraOrigin = null;
         city.FoodDecisionObserved += trace => { if (trace.Consumer.Id == extra.ResidentId) extraOrigin = trace.Intent.OriginPlaceId; };
         Advance(city, mealAt + 60);
-        extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Assert.Equal("work", extraOrigin); Assert.Equal(1, extra.Purchases);
         Assert.False(extra.NeedsHomeResync); Assert.Null(extra.Excursion);
         Assert.Single(city.State.Citizens);
@@ -55,7 +55,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, routes) = Ready(atWork: true, representation: 2);
         city.EnableHouseholdFinances();
-        var extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         market.ThrowForResident = extra.ResidentId;
         Advance(city, extra.DesiredAt + 60);
         Assert.Equal(MealStatus.Uncertain, extra.Status); Assert.Null(extra.Excursion);
@@ -77,7 +77,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, _) = Ready(atWork: true, representation: 2);
         var routes = new ValidatedWalking(); city = city.RebuildRoutes(routes);
-        var extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var extra = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Advance(city, extra.DesiredAt + 15); routes.Accessible = false;
         Advance(city, extra.DesiredAt + 40);
         Assert.True(extra.Excursion!.Unresolved);

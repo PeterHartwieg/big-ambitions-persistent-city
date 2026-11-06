@@ -4,7 +4,8 @@ using System.Globalization;
 namespace PersistentCity.Core
 {
     // F5b identity and ownership core (city audit F5 #92, docs/plans/f5-population.md section 3).
-    // Inactive: nothing here is read by the simulator, the codec or Runtime, and no save field exists for it.
+    // F5c-lite persists these types in schema 26 (Core/PersonTable.cs, Persistence/PersonWire26.cs); no routine,
+    // choice or money path reads them yet.
 
     public enum PersonKind { Resident, Visitor }
 

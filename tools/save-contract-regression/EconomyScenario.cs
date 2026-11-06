@@ -145,6 +145,12 @@ public static class EconomyScenario
         {
             var state = SaveCodec.Read(payload).State!;
             state.Schema = 17;
+            // Schema 17 stored a represented consumer under its host and slot (schema 26: own record + scheduling host).
+            if (state.Food != null && state.Citizens.Count > 0)
+            {
+                foreach (var meal in state.Food.Residents) { meal.AnchorId = meal.HostId; meal.Slot = meal.HostSlot; }
+                state.Food.RepresentationFactor = state.Food.Residents.Count / state.Citizens.Count;
+            }
             payload = (string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.LegacyPopulationCodec")!
                 .GetMethod("Write")!.Invoke(null, new object[] {state})!;
         }
