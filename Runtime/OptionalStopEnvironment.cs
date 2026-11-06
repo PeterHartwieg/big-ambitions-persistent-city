@@ -10,6 +10,7 @@ using PersistentCity.Core;
 using PlayerActivity;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 namespace PersistentCity.Runtime
 {
@@ -31,8 +32,26 @@ namespace PersistentCity.Runtime
             PublishFrontages(this.places.Values);
         }
         public bool Raining => RainHelper.isRaining;
+        // Issue #128 attribution: these native reads run inside population advancement units.
+        // Read and reset by the 60-second summary; timing adds no allocation.
+        public long SeamCalls { get; private set; }
+        public double SeamMilliseconds { get; private set; }
+        public double MaximumSeamMilliseconds { get; private set; }
+        public long ParkTriggerScans { get; private set; }
+        public void ResetSeamDiagnostics() { SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0; }
+        // Available can read Spots; count the outer call only.
+        private int seamDepth;
+        private long BeginSeam() { seamDepth++; return System.Diagnostics.Stopwatch.GetTimestamp(); }
+        private void RecordSeam(long started)
+        {
+            if (--seamDepth != 0) return;
+            double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            SeamCalls++; SeamMilliseconds += elapsed;
+            if (elapsed > MaximumSeamMilliseconds) MaximumSeamMilliseconds = elapsed;
+        }
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind)
         {
+            long started = BeginSeam();
             try
             {
                 var result = ReadSpots(place, kind);
@@ -40,6 +59,7 @@ namespace PersistentCity.Runtime
                 return result;
             }
             catch (Exception) { return Array.Empty<OptionalStopSpot>(); }
+            finally { RecordSeam(started); }
         }
         private IReadOnlyList<OptionalStopSpot> ReadSpots(Place place, DwellKind kind)
         {
@@ -210,7 +230,7 @@ namespace PersistentCity.Runtime
         {
             if (!place.Id.StartsWith("scene-park:", StringComparison.Ordinal)
                 || !place.EvidenceSource.StartsWith("native-park-volume;", StringComparison.Ordinal)) return Array.Empty<OptionalStopSpot>();
-            foreach (var trigger in UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true))
+            foreach (var trigger in ParkTriggers())
             {
                 if (trigger == null || !trigger.gameObject.activeInHierarchy
                     || !OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id) continue;
@@ -233,6 +253,31 @@ namespace PersistentCity.Runtime
                 targets[place.Id] = trigger.transform; cached[key] = result.ToArray(); return cached[key];
             }
             return Array.Empty<OptionalStopSpot>();
+        }
+        // Issue #128: ParkEdge ran a whole-scene FindObjectsOfType on every uncached call, inside an
+        // advancement unit. Matching requires a scene-authored, non-clone trigger, so the result set can
+        // only change when a scene loads, finishes loading or unloads. Rescan exactly then; every call still
+        // applies the same null, activity and live scene-key checks in the same order.
+        private LocationHappinessTrigger[]? parkTriggers;
+        private readonly List<int> parkTriggerScenes = new List<int>();
+        private LocationHappinessTrigger[] ParkTriggers()
+        {
+            int count = SceneManager.sceneCount;
+            bool same = parkTriggers != null && parkTriggerScenes.Count == count * 2;
+            for (int i = 0; same && i < count; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                same = parkTriggerScenes[2 * i] == scene.handle && parkTriggerScenes[2 * i + 1] == (scene.isLoaded ? 1 : 0);
+            }
+            if (same) return parkTriggers!;
+            parkTriggerScenes.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                parkTriggerScenes.Add(scene.handle); parkTriggerScenes.Add(scene.isLoaded ? 1 : 0);
+            }
+            ParkTriggerScans++;
+            return parkTriggers = UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true);
         }
         private IReadOnlyList<OptionalStopSpot> Audience(Place place)
         {
@@ -274,8 +319,10 @@ namespace PersistentCity.Runtime
         }
         public OptionalStopAvailability Available(OptionalStopState stop)
         {
+            long started = BeginSeam();
             try { return ReadAvailable(stop); }
             catch (Exception) { return OptionalStopAvailability.Unavailable; }
+            finally { RecordSeam(started); }
         }
         private OptionalStopAvailability ReadAvailable(OptionalStopState stop)
         {
