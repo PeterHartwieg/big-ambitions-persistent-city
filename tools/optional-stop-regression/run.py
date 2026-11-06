@@ -13,7 +13,8 @@ arrival=source[source.index('        private bool TryAwaitArrival('):source.inde
 standing=source[source.index('        private IEnumerable<KeyValuePair<string, int>> Standing('):source.index('        private bool TryLine(')]
 native=(root/'Runtime/OptionalStopEnvironment.cs').read_text()
 geometry=native[native.index('        private OptionalStopAvailability GeometryStatus('):native.index('        private static bool Sample(')]
-discovery=native[native.index('        public IReadOnlyList<OptionalStopSpot> Spots('):native.index('        private bool NativeDoorPresent(')]
+# Start at the issue #128 seam timing helpers that Spots calls.
+discovery=native[native.index('        // Issue #128 attribution'):native.index('        private bool NativeDoorPresent(')]
 native=native[native.index('        private bool NativeDoorPresent('):native.index('        private IReadOnlyList<OptionalStopSpot> ParkEdge(')]
 dwell=(root/'Runtime/DwellSpots.cs').read_text()
 dwell=dwell[dwell.index('namespace PersistentCity.Runtime'):dwell.index('        private static DoorQueue? Sample(')]

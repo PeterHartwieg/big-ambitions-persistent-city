@@ -16,7 +16,7 @@ namespace PersistentCity.Runtime
         private bool failed, physicalFailed, inspectorFailed, clockRetimingRoutes, initializingHadPayload;
         private string status = "", economyText = "";
         private float nextStart, nextEconomyText;
-        private object? saveIdentity, initializingSave, saveSession, routes;
+        private object? saveIdentity, initializingSave, saveSession, routes, stopEnvironment;
         private string? initializingPayload;
         private System.Threading.Tasks.Task<int>? initialization;
         private TestDisposable? physical;
@@ -34,13 +34,13 @@ namespace PersistentCity.Runtime
             initializingSave = SaveGameManager.Current; initializingPayload = "old payload";
             initializingHadPayload = true;
             initialization = System.Threading.Tasks.Task.FromResult(1);
-            saveSession = routes = new object(); physical = new TestDisposable();
+            saveSession = routes = stopEnvironment = new object(); physical = new TestDisposable();
             physicalFailed = inspectorFailed = clockRetimingRoutes = true;
             economyText = "old economy"; nextStart = nextEconomyText = nextAccountingText = 100;
         }
         public bool OldSaveClearedForTest => saveIdentity == null && initializingSave == null
             && initializingPayload == null && !initializingHadPayload && initialization == null && simulation == null
-            && saveSession == null && routes == null && physical == null && !physicalFailed
+            && saveSession == null && routes == null && stopEnvironment == null && physical == null && !physicalFailed
             && !inspectorFailed && !clockRetimingRoutes && economyText.Length == 0 && accountingText.Length == 0
             && nextStart == 0 && nextEconomyText == 0 && nextAccountingText == 0 && inspector.Resets == 1;
     }

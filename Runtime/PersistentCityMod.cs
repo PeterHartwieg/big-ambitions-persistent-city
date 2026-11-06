@@ -103,6 +103,12 @@ namespace PersistentCity.Runtime
         private double planningMilliseconds, maxPlanningSliceMilliseconds;
         private string slowestPlanningUnit = "";
         private long slowestPlanningUnitNavMeshQueries;
+        // Issue #128 attribution of the slowest advancement call in the observation: its slowest single
+        // unit and kind, optional-stop native reads inside it and garbage collections that completed during it.
+        private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds;
+        private string slowestAdvanceUnit = "";
+        private int slowestAdvanceCollections;
+        private OptionalStopEnvironment? stopEnvironment;
 
         /// <summary>Legacy diagnostic fixture helper for a small selected retail slice.
         /// Normal initialization creates food demand and discovers eligible shops automatically.</summary>
@@ -344,7 +350,15 @@ namespace PersistentCity.Runtime
                         + " game minutes. Advancement this observation: " + advanceFrames + " frames, " + advanceEvents + " events, "
                         + advanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
                         + maxAdvanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum advance, "
-                        + maxAdvanceEvents + " maximum events in one frame; these figures cover advancement calls only. Routes: "
+                        + maxAdvanceEvents + " maximum events in one frame; these figures cover advancement calls only. Slowest advance: unit "
+                        + slowestAdvanceUnitMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
+                        + (slowestAdvanceUnit.Length == 0 ? "none" : slowestAdvanceUnit) + "), optional-stop reads "
+                        + slowestAdvanceStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
+                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads this observation (refresh and advancement): "
+                        + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
+                        + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
+                        + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
+                        + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans. Routes: "
                         + roadSnapshots + " road snapshots started (" + gateChanges + " for gate changes), "
                         + waitingFrames + " frames waiting for routes; rebuild reasons ["
                         + string.Join(", ", roadRebuildReasons.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => pair.Key + "=" + pair.Value))
@@ -390,7 +404,15 @@ namespace PersistentCity.Runtime
             long started = Stopwatch.GetTimestamp();
             NativeCityClock.ObserveSimulationLag(target, active.State.Minute);
             int events = 0, citizenEvents = 0;
-            double elapsed = 0;
+            double elapsed = 0, unitStarted = 0, slowestUnit = 0;
+            string slowestKind = "";
+            int collectionsBefore = GC.CollectionCount(0);
+            double stopsBefore = stopEnvironment?.SeamMilliseconds ?? 0;
+            void Unit(string kind)
+            {
+                if (elapsed - unitStarted > slowestUnit) { slowestUnit = elapsed - unitStarted; slowestKind = kind; }
+                unitStarted = elapsed;
+            }
             var budget = new PopulationFrameBudget(Time.unscaledDeltaTime, NativeCityClock.ProcessingEconomySkip);
             int citizenLimit = budget.CitizenEvents;
             double timeBudget = budget.Milliseconds;
@@ -419,6 +441,7 @@ namespace PersistentCity.Runtime
                             slowestPlanningUnitNavMeshQueries = (routes?.Metrics.NavMeshPathQueries ?? 0) - queriesBefore;
                         }
                         elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                        Unit("route-planning");
                         // Not finished: still pending, or the event restarted and is due again unstarted.
                         if (!finished) { if (elapsed >= timeBudget || routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; } continue; }
                         events++; citizenEvents++; planningEvents++;
@@ -431,12 +454,21 @@ namespace PersistentCity.Runtime
                     // under the time and total-unit caps without spending another citizen slot.
                     citizenEvents += result.CitizenEvents;
                     elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                    Unit(result.TrafficEvents > 0 ? "traffic" : result.FoodContinuationEvents > 0 ? "food-continuation"
+                        : result.CitizenEvents > 0 ? (result.PlanningPending ? "citizen-route-begin" : "citizen") : "other");
                     if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
                     if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                 }
             }
             finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
             elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+            Unit("snapshot");
+            if (elapsed > maxAdvanceMilliseconds)
+            {
+                slowestAdvanceUnitMilliseconds = slowestUnit; slowestAdvanceUnit = slowestKind;
+                slowestAdvanceCollections = GC.CollectionCount(0) - collectionsBefore;
+                slowestAdvanceStopMilliseconds = (stopEnvironment?.SeamMilliseconds ?? 0) - stopsBefore;
+            }
             advanceFrames++;
             advanceEvents += events;
             advanceMilliseconds += elapsed;
@@ -503,6 +535,8 @@ namespace PersistentCity.Runtime
             slowestPlanningUnit = ""; slowestPlanningUnitNavMeshQueries = 0;
             closureFrames = 0; closureMilliseconds = maxClosureMilliseconds = 0;
             maxAdvanceEvents = 0;
+            slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;
+            stopEnvironment?.ResetSeamDiagnostics();
             gateChanges = roadSnapshots = waitingFrames = 0;
             roadRebuildReasons.Clear(); slowRoutingFrames = routingFrameLogs = 0;
             maxRloCheckMilliseconds = maxGateCheckMilliseconds = maxStationSearchMilliseconds = maxPrepareMilliseconds = 0;
@@ -632,7 +666,7 @@ namespace PersistentCity.Runtime
             if (!binding.Success) { Fail("Population save binding refused: " + binding.Error); return; }
             saveSession = prepared.Saves;
             dwellSpots = new DwellSpots();
-            var stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
+            var stopEnvironment=this.stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
             simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage, settings.StopTiming());
             simulation.AttachWeather(new FrameWeatherSource(()=>UnityEngine.Time.frameCount,()=>stopEnvironment.Raining),settings.Weather);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
@@ -761,7 +795,7 @@ namespace PersistentCity.Runtime
             initialization = null;
             initializingSave = null;
             initializingPayload = null;
-            simulation = null;
+            simulation = null; stopEnvironment = null;
             saveSession = null;
             routes = null;
             saveIdentity = null;
