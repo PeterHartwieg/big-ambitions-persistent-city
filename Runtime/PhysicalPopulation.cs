@@ -73,6 +73,13 @@ namespace PersistentCity.Runtime
         private int personBindings, carBindings, queueBindings;
         // Reused per-frame snapshot of bindings; taken out while in use so a nested call cannot share it.
         private List<Binding>? bindingSnapshot = new List<Binding>();
+        // F5f shadow comparison of the active-journey index with a full scan, at a low cadence and at the
+        // first selection after construction (load, reload, route rebuild). A mismatch logs once and falls
+        // back to the full scan for this session.
+        private const float JourneyIndexCheckSeconds = 30f;
+        private float nextJourneyIndexCheck;
+        private bool journeyIndexFallback;
+        private long journeyIndexChecks, journeyIndexMismatches;
 
         public PhysicalPopulation(Transform parent, CitySimulator simulation, MultimodalRoutes routes, Assembly dependency,
             IModLogger log, int pedestrianLimit, int vehicleLimit, double radius, DwellSpots spots)
@@ -113,6 +120,8 @@ namespace PersistentCity.Runtime
             + ", cars=" + carBindings + ", acquired=" + acquired + ", released=" + released
             + ", blockedSamples=" + blockedSamples + ", unavailable=" + failedAcquisitions + ", trafficOvershoots=" + trafficOvershoots
             + ", queueing=" + queueBindings + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed
+            + ", journeyIndex=" + simulation.ActiveJourneys.Count + ", journeyIndexWithheldVisitors=" + simulation.ActiveJourneys.WithheldVisitors
+            + ", journeyIndexChecks=" + journeyIndexChecks + ", journeyIndexMismatches=" + journeyIndexMismatches + ", journeyIndexFallback=" + journeyIndexFallback
             + ", carAdmission=" + vehicles.LastAdmissionResident + ":" + vehicles.LastAdmissionStage + ":" + vehicles.LastAdmissionError;
 
         // Release before an unrendered time jump so catch-up can use the same committed geometry.
@@ -188,15 +197,25 @@ namespace PersistentCity.Runtime
             // The bounded view is selected deterministically. No filler identities or unrelated trips are created.
             int people = personBindings, cars = bindings.Count - people;
             int attempts = 0;
+            if (!journeyIndexFallback && Time.unscaledTime >= nextJourneyIndexCheck)
+            {
+                nextJourneyIndexCheck = Time.unscaledTime + JourneyIndexCheckSeconds;
+                CheckJourneyIndex();
+            }
             PlanQueues(focus, radius);
             // Candidate selection. tools/physical-selection-regression extracts the text from this line
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
-            foreach (var c in simulation.State.Citizens)
+            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every
+            // citizen after a shadow mismatch. Filters and order below are the same for both sources.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
+            for (int index = 0; index < roster.Count; index++)
             {
+                var c = roster[index];
                 // Both pools are full: observations and queue movement above still ran; no
                 // candidate can acquire a body until a later update frees a slot.
                 if (people >= pedestrianLimit && cars >= vehicleLimit) break;
+                if (journeyIndexFallback && !ActiveJourneyIndex.ReceivesBody(c)) continue;
                 if (!(c.NextEventMinute > simulation.State.Minute) || bindings.ContainsKey(c.Identity.Id) || ambient.IsReserved(c.Identity.Id)) continue;
                 bool tried = attempted.TryGetValue(c.Identity.Id, out float lastAttempt);
                 if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
@@ -270,6 +289,24 @@ namespace PersistentCity.Runtime
             }
         }
 
+        private void CheckJourneyIndex()
+        {
+            journeyIndexChecks++;
+            if (simulation.ActiveJourneyIndexMatchesState() && StatefulCandidatesIndexed()) return;
+            journeyIndexMismatches++; journeyIndexFallback = true;
+            log.Warn("Active-journey index differs from a full population scan; physical selection uses the full scan for this session.");
+        }
+
+        // The index must hold every citizen this selection's stateful filters (journey, queue, outdoors) could admit.
+        private bool StatefulCandidatesIndexed()
+        {
+            var index = simulation.ActiveJourneys;
+            foreach (var c in simulation.State.Citizens)
+                if (!index.Contains(c) && (c.Phase == CitizenPhase.Travelling && c.Journey != null
+                    || c.Phase == CitizenPhase.WaitingForOpening || Outdoor(c))) return false;
+            return true;
+        }
+
         /// <summary>One physical selection candidate, with its sort keys captured before any attempt is recorded.</summary>
         private readonly struct SelectionCandidate
         {
@@ -311,8 +348,12 @@ namespace PersistentCity.Runtime
             queuers.Clear();
             double now = simulation.State.Minute;
             var planned = new Dictionary<string, (Place Place, List<Dwell> Dwells)>(StringComparer.Ordinal);
-            foreach (var citizen in simulation.State.Citizens)
+            // Waiting citizens are indexed (F5f). Line and slot order are sorted below, not taken from this order.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
+            for (int index = 0; index < roster.Count; index++)
             {
+                var citizen = roster[index];
+                if (journeyIndexFallback && !ActiveJourneyIndex.ReceivesBody(citizen)) continue;
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
                 var dwell = QueueDwell(citizen, place, now);

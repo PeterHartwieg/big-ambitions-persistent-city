@@ -44,8 +44,26 @@ full_pool_check = '''                // Both pools are full: observations and qu
 '''
 assert before_f0['selection'].count(full_pool_check) == 1
 before_f0['selection'] = before_f0['selection'].replace(full_pool_check, '')
+# F5f perf baseline: the unchanged pre-F5f loop over every citizen, with no index and no ID
+# classification, reconstructed from the current text so every other line stays production code.
+before_f5f = dict(current)
+f5f_loop = '''            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every
+            // citizen after a shadow mismatch. Filters and order below are the same for both sources.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
+            for (int index = 0; index < roster.Count; index++)
+            {
+                var c = roster[index];
+'''
+f5f_filter = '''                if (journeyIndexFallback && !ActiveJourneyIndex.ReceivesBody(c)) continue;
+'''
+for text, base in [(f5f_loop, '''            foreach (var c in simulation.State.Citizens)
+            {
+'''), (f5f_filter, '')]:
+    assert before_f5f['selection'].count(text) == 1, text
+    before_f5f['selection'] = before_f5f['selection'].replace(text, base)
+assert 'ActiveJourney' not in before_f5f['selection'] and 'ReceivesBody' not in before_f5f['selection']
 classes = []
-for name, parts in [('Before', baseline), ('BeforeF0', before_f0), ('After', current)]:
+for name, parts in [('Before', baseline), ('BeforeF0', before_f0), ('BeforeF5f', before_f5f), ('After', current)]:
     classes.append('class ' + name + ' : Fixture {\n' + parts['ordinary'] + parts['hash'] + parts['outdoor'] + parts.get('optional_visible', '') + parts.get('candidates', '') + parts['sample'] + '''
  public bool Slot(CitizenState citizen, out VehicleComponent? chosen) {
  chosen = null;
@@ -86,7 +104,9 @@ import xml.etree.ElementTree as ET
 project = ET.Element('Project', Sdk='Microsoft.NET.Sdk')
 properties = ET.SubElement(project, 'PropertyGroup')
 for key, value in {'OutputType': 'Exe', 'TargetFramework': 'net10.0', 'Nullable': 'enable',
-                   'TreatWarningsAsErrors': 'true', 'EnableDefaultCompileItems': 'false'}.items():
+                   'TreatWarningsAsErrors': 'true', 'EnableDefaultCompileItems': 'false',
+                   # Short timing loops otherwise measure unoptimized tier-0 code for whichever arm runs first.
+                   'TieredCompilation': 'false'}.items():
     ET.SubElement(properties, key).text = value
 items = ET.SubElement(project, 'ItemGroup')
 ET.SubElement(items, 'Compile', Include='Program.cs')

@@ -190,7 +190,7 @@ namespace PersistentCity.Runtime
                 log.Info("Food menu policy v1: configured="+settings.FoodMenuMaximumOffersPerShop+", effective native maximum="+Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop)+"; reserved product codes grant no sale permission.");
                 settings.MarketResearch.Clamp(message => log.Info(message));
                 settings.Rivals.Clamp(message => log.Info(message));
-                log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit);
+                log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit+", service limits "+RivalServiceCalibration.Label+": "+settings.Rivals.ServiceLimitsText());
                 settings.Awareness.Clamp(message => log.Info(message));
                 settings.Campaigns.Clamp(message => log.Info(message));
 
