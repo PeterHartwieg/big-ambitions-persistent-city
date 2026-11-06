@@ -2,8 +2,9 @@
 
 Runs every (fixture, candidate) in its own foreground process, after waiting for other worktrees'
 dotnet test/run, so peak working set belongs to that pair. No deadlines, background jobs, game or
-rig inputs. Appends JSONL to docs/perf/assets/f7p/matrix.jsonl (metrics only, never payloads) and
-checks candidate A against F7a's retained writer-25 hashes.
+rig inputs. Writes JSONL to docs/perf/assets/f7p/matrix.jsonl (metrics only, never payloads) and
+checks candidate A against F7a's retained writer-25 hashes. With no fixture list the matrix file is
+rewritten from scratch; with a fixture list the rows are appended (to split a long run into steps).
 
     python tools/compact-format/measure.py [samples] [fixture ...]
 """
@@ -45,6 +46,7 @@ def run(fixture, candidate, samples):
 
 def main():
     samples = sys.argv[1] if len(sys.argv) > 1 else "7"
+    full = len(sys.argv) <= 2
     fixtures = sys.argv[2:] or fixtures_all
     retained = {}
     for line in open(f7a, encoding="utf-8"):
@@ -58,7 +60,7 @@ def main():
     (out / "metadata.json").write_text(json.dumps({"sourceHead": head, "host": platform.platform(), "python": platform.python_version(),
         "dotnet": subprocess.run([dotnet, "--version"], capture_output=True, text=True).stdout.strip(), "samples": int(samples),
         "note": "Windows .NET 10 synthetic; one process per fixture and candidate; not native or Mono evidence"}, indent=2) + "\n")
-    with open(out / "matrix.jsonl", "a", encoding="utf-8") as handle:
+    with open(out / "matrix.jsonl", "w" if full else "a", encoding="utf-8") as handle:
         for fixture in fixtures:
             for candidate in candidates:
                 row = run(fixture, candidate, samples)

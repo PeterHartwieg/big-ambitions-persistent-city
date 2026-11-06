@@ -64,6 +64,27 @@ for f in fixtures:
           + f" | {n(r[0]['decodedStrings']['distinctInstances'])} / {n(r[2]['decodedStrings']['distinctInstances'])}"
           + " | " + " / ".join(f"{x['processPeakWorkingSetBytes'] // mib:,}" for x in r) + " |")
 
+print("\n### Format-independent phases (measured once per fixture in candidate A's process; ms p50 / p95 / max (>= 30 ms of 7))\n")
+print("| Fixture | Synchronize (F7a recorder) | Validate (F7a recorder) | Capture proxy: detached copy | Copy allocated B | Materialize upper bound (strict writer-25 read) | Activation validate | Simulator construction |")
+print("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+for f in fixtures:
+    c = by[(f, "A")]["formatIndependentPhases"]
+    print(f"| {f} | {ms(c['synchronizeMs'])} | {ms(c['validateMs'])} | {ms(c['captureDetachedCopyMs'])} | {n(c['captureDetachedCopyAllocatedBytes']['median'])} | "
+          f"{ms(c['materializeUpperBoundMs'])} | {ms(c['activationValidateMs'])} | {ms(c['simulatorConstructionMs'])} |")
+
+print("\n### Composed synchronous save pause and load per candidate (ms; sum of phase p50s, and sum of phase p95s as an upper bound)\n")
+print("Pause = synchronize + capture proxy + validate + encode (publish is about 0.005 ms, F7a). Load = decode + materialize upper bound + activation validate + construction; the materialize term re-parses writer-25 text, so load is an upper bound.\n")
+print("| Fixture | Pause A | Pause B | Pause C | Pause D | Load A | Load B | Load C | Load D |")
+print("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+def composed(f, x, q):
+    c = by[(f, "A")]["formatIndependentPhases"]; r = by[(f, x)]
+    pause = c["synchronizeMs"][q] + c["captureDetachedCopyMs"][q] + c["validateMs"][q] + r["encodeMs"][q]
+    load = r["decodeMs"][q] + c["materializeUpperBoundMs"][q] + c["activationValidateMs"][q] + c["simulatorConstructionMs"][q]
+    return pause, load
+for f in fixtures:
+    cells = [composed(f, x, "p50") + composed(f, x, "p95") for x in "ABCD"]
+    print(f"| {f} | " + " | ".join(f"{v[0]:,.1f} / {v[2]:,.1f}" for v in cells) + " | " + " | ".join(f"{v[1]:,.1f} / {v[3]:,.1f}" for v in cells) + " |")
+
 for f in ["representative-957x2", "50000x2"]:
     a, c = by[(f, "A")], by[(f, "C")]
     print(f"\n### Characters per field family, {f} (A vs C; families >= 0.5 % of A)\n")

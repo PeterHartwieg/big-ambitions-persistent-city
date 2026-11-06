@@ -41,6 +41,23 @@ namespace PersistentCity.Tools.CompactFormat
             return value;
         }
 
+        /// <summary>Detached deep copy: every object and array is new; immutable leaves and key arrays are shared.</summary>
+        public static object? Clone(object? value)
+        {
+            switch (value)
+            {
+                case WireObject o:
+                    var values = new object?[o.Values.Length];
+                    for (int i = 0; i < values.Length; i++) values[i] = Clone(o.Values[i]);
+                    return new WireObject(o.Keys, values);
+                case object?[] a:
+                    var copy = new object?[a.Length];
+                    for (int i = 0; i < a.Length; i++) copy[i] = Clone(a[i]);
+                    return copy;
+                default: return value;
+            }
+        }
+
         /// <summary>Writer-25 spelling: no whitespace, Newtonsoft default string escaping, number text unchanged.</summary>
         public static string Write(object? root, int capacity = 1024)
         {

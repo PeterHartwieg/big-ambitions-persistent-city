@@ -58,11 +58,15 @@ static class CompactFormatProgram
         var strict = SaveCodec.Read(writer25);
         Check(strict.Status == SaveReadStatus.Loaded, "Strict reader refused the writer-25 source: " + strict.Error);
         Check(SaveCodec.Write(strict.State!) == writer25, "Strict read/write of the source is not byte-identical.");
-        strict = null!; state = null!;
+        strict = null!;
 
         object? tree = WireTree.Parse(writer25);
         Check(WireTree.Write(tree) == writer25, "Wire tree does not reproduce writer-25 bytes.");
         var leaves = WireTree.Count(tree);
+        // Capture, validation and activation do not depend on the wire candidate, so they are measured once per
+        // fixture, in candidate A's process, on the same state and tree (section 3.6 matrix, shared columns).
+        object? common = candidate.Id == "A" ? CommonPhases(state, writer25, tree, samples) : null;
+        state = null!;
 
         var stats = new ColumnarStats();
         string payload = candidate.Encode(tree, stats);
@@ -130,6 +134,7 @@ static class CompactFormatProgram
             encodeSplitMs = candidate.Id == "A" ? null : new { tablePass = Stats(collectMs), columnWriter = Stats(writeMs) },
             decodeMs = Stats(decode), decodeAllocatedBytes = LongStats(decodeAlloc),
             retainedBytesAfterDecode = retained,
+            formatIndependentPhases = common,
             decodedStrings = new { leaves = stringCount, distinctInstances = stringLeaves.Count },
             roundTrip = new { fieldsCompared = leaves.Fields, objects = leaves.Objects, arrays = leaves.Arrays, strings = leaves.Strings,
                 numbers = leaves.Numbers, bools = leaves.Bools, nulls = leaves.Nulls, differences = 0, writer25Identical, reencodeIdentical },
@@ -137,6 +142,56 @@ static class CompactFormatProgram
             retention = new { shopHistoryDays = ShopHistoryDays, recentVisitsLimit = RecentVisitsLimit, pruned = false },
             processPeakWorkingSetBytes = Process.GetCurrentProcess().PeakWorkingSet64,
             evidence = "Windows .NET 10 synthetic, foreground, one process per fixture and candidate; encode/decode run from/to the detached wire tree (F7c snapshot stand-in); capture, validation and CityState materialization are not in these timings"
+        };
+    }
+
+    /// <summary>
+    /// Format-independent save and load phases. Synchronize and validate come from F7a's SaveCostRecorder around
+    /// SaveCodec.Write on this fixture (today's PrepareForSave and Validate; F7c moves validation onto the snapshot).
+    /// Capture is proxied by a detached deep copy of the exact wire tree: every container copied, immutable leaves
+    /// shared, which is the copy a snapshot capture performs, minus reading the live graph. Materialization is an
+    /// upper bound: the strict writer-25 reader on the source text (a real F7d decoder materializes from its own
+    /// columns without a second text parse). Activation validate and simulator construction are F7a's
+    /// CompleteInitialization steps on the materialized state.
+    /// </summary>
+    static object CommonPhases(CityState state, string writer25, object? tree, int samples)
+    {
+        var synchronize = new List<double>(); var validate = new List<double>(); var capture = new List<double>(); var captureAlloc = new List<long>();
+        for (int i = 0; i <= samples; i++)
+        {
+            var cost = new SaveCostRecorder(); cost.Begin();
+            string written = SaveCodec.Write(state, cost); cost.End(true, "");
+            Check(written == writer25, "Recorded write changed the payload.");
+            long bytes = GC.GetAllocatedBytesForCurrentThread(), started = Stopwatch.GetTimestamp();
+            var copy = WireTree.Clone(tree);
+            double copyMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds; long copyBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+            Check(i > 0 || WireTree.DeepEqual(tree, copy, out _), "Detached copy differs.");
+            GC.KeepAlive(copy);
+            if (i == 0) continue;
+            synchronize.Add(cost.Milliseconds(SaveCostPhase.Synchronize)); validate.Add(cost.Milliseconds(SaveCostPhase.Validate));
+            capture.Add(copyMs); captureAlloc.Add(copyBytes);
+        }
+        var materialize = new List<double>(); var activation = new List<double>(); var construct = new List<double>();
+        var planner = new RepresentativeFixture.Routes();
+        for (int i = 0; i <= samples; i++)
+        {
+            long started = Stopwatch.GetTimestamp();
+            var read = SaveCodec.Read(writer25);
+            double readMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            Check(read.Status == SaveReadStatus.Loaded, read.Error);
+            started = Stopwatch.GetTimestamp(); SaveCodec.ValidateForActivation(read.State!);
+            double validateMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            started = Stopwatch.GetTimestamp(); _ = new CitySimulator(read.State!, planner);
+            double constructMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            if (i == 0) continue;
+            materialize.Add(readMs); activation.Add(validateMs); construct.Add(constructMs);
+        }
+        return new
+        {
+            synchronizeMs = Stats(synchronize), validateMs = Stats(validate),
+            captureDetachedCopyMs = Stats(capture), captureDetachedCopyAllocatedBytes = LongStats(captureAlloc),
+            materializeUpperBoundMs = Stats(materialize), activationValidateMs = Stats(activation), simulatorConstructionMs = Stats(construct),
+            provenance = "synchronize/validate: F7a SaveCostRecorder phases of SaveCodec.Write on this fixture; capture: detached deep copy of the wire tree (proxy); materialize: strict writer-25 SaveCodec.Read of the source text (upper bound); activation validate and construction: F7a CompleteInitialization steps",
         };
     }
 
