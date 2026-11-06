@@ -48,6 +48,8 @@ namespace PersistentCity.Tools.CompactFormat
     public sealed class ColumnarStats
     {
         public int Strings, Keys, Shapes, Routes, RouteReferences, RoadTags, Containers;
+        /// <summary>Encode split: the table pass (string counts, shapes, route content) and the column writer.</summary>
+        public long CollectTicks, WriteTicks;
         public Dictionary<string, long> PathCharacters = new Dictionary<string, long>(StringComparer.Ordinal);
         public int TableEntries => Strings + Keys + Shapes + Routes;
     }
@@ -105,6 +107,7 @@ namespace PersistentCity.Tools.CompactFormat
 
             public string Run(object? root, int capacity)
             {
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
                 Collect(root);
                 var stringTable = counts.Where(p => p.Value >= 2).Select(p => p.Key).OrderBy(s => s, StringComparer.Ordinal).ToArray();
                 for (int i = 0; i < stringTable.Length; i++) strings.Add(stringTable[i], i);
@@ -116,6 +119,7 @@ namespace PersistentCity.Tools.CompactFormat
                 var routeTable = uniqueRoutes.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray();
                 for (int i = 0; i < routeTable.Length; i++) routeIndex.Add(routeTable[i].Key, i);
 
+                long collected = System.Diagnostics.Stopwatch.GetTimestamp();
                 output = new StringBuilder(capacity);
                 output.Append("{\"f\":"); WireTree.WriteString(output, options.Format);
                 output.Append(",\"v\":").Append(Version).Append(",\"k\":[");
@@ -141,6 +145,7 @@ namespace PersistentCity.Tools.CompactFormat
                 output.Append('}');
                 if (stats != null)
                 {
+                    stats.CollectTicks += collected - started; stats.WriteTicks += System.Diagnostics.Stopwatch.GetTimestamp() - collected;
                     stats.Strings = stringTable.Length; stats.Keys = keyTable.Length; stats.Shapes = shapeTable.Length; stats.Routes = routeTable.Length;
                 }
                 return output.ToString();
@@ -283,13 +288,14 @@ namespace PersistentCity.Tools.CompactFormat
                     string text = ((WireNumber)values[i]!).Text;
                     raw += text.Length;
                     if (integral != text.EndsWith(".0", StringComparison.Ordinal)) return false;
-                    if (!Varint.TryCanonical(integral ? text.Substring(0, text.Length - 2) : text, out numbers[i])) return false;
+                    if (!Varint.TryCanonical(integral ? text.AsSpan(0, text.Length - 2) : text.AsSpan(), out numbers[i])) return false;
                 }
-                string plain = Varint.Pack(numbers, false), delta = Varint.Pack(numbers, true);
-                bool useDelta = delta.Length < plain.Length;
-                string packed = useDelta ? delta : plain;
-                if (packed.Length + 8 >= raw) return false;
-                output.Append(integral ? "[12," : "[11,").Append(useDelta ? '1' : '0').Append(",\"").Append(packed).Append("\"]");
+                long plain = Varint.Length(numbers, false), delta = Varint.Length(numbers, true);
+                bool useDelta = delta < plain;
+                if (Math.Min(plain, delta) + 8 >= raw) return false;
+                output.Append(integral ? "[12," : "[11,").Append(useDelta ? '1' : '0').Append(",\"");
+                Varint.Append(output, numbers, useDelta);
+                output.Append("\"]");
                 return true;
             }
 
@@ -404,7 +410,7 @@ namespace PersistentCity.Tools.CompactFormat
                     if (!(v is WireNumber number)) continue;
                     string text = number.Text;
                     if (Varint.TryCanonical(text, out _)) integer = true;
-                    else if (text.EndsWith(".0", StringComparison.Ordinal) && Varint.TryCanonical(text.Substring(0, text.Length - 2), out _)) integral = true;
+                    else if (text.EndsWith(".0", StringComparison.Ordinal) && Varint.TryCanonical(text.AsSpan(0, text.Length - 2), out _)) integral = true;
                     else other = true;
                     if ((integer ? 1 : 0) + (integral ? 1 : 0) + (other ? 1 : 0) > 1) return 2;
                 }
@@ -661,33 +667,61 @@ namespace PersistentCity.Tools.CompactFormat
         }
 
         /// <summary>True only when <paramref name="text"/> is exactly long.ToString(InvariantCulture) of its value.</summary>
-        public static bool TryCanonical(string text, out long value)
+        public static bool TryCanonical(string text, out long value) => TryCanonical(text.AsSpan(), out value);
+
+        public static bool TryCanonical(ReadOnlySpan<char> text, out long value)
         {
             value = 0;
-            if (text.Length == 0 || text.Length > 20) return false;
-            int start = text[0] == '-' ? 1 : 0;
-            if (start == text.Length || (text[start] == '0' && text.Length > start + 1) || (start == 1 && text == "-0")) return false;
-            for (int i = start; i < text.Length; i++) if (text[i] < '0' || text[i] > '9') return false;
-            return long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value)
-                && value.ToString(CultureInfo.InvariantCulture) == text;
+            bool negative = text.Length > 0 && text[0] == '-';
+            var digits = negative ? text.Slice(1) : text;
+            if (digits.Length == 0 || digits.Length > 19 || (digits[0] == '0' && (digits.Length > 1 || negative))) return false;
+            ulong magnitude = 0;
+            foreach (char c in digits)
+            {
+                if (c < '0' || c > '9') return false;
+                magnitude = magnitude * 10 + (ulong)(c - '0');
+            }
+            // Nineteen digits cannot overflow ulong; the sign decides the long range.
+            if (negative ? magnitude > 1UL << 63 : magnitude > long.MaxValue) return false;
+            value = negative ? unchecked((long)(0UL - magnitude)) : (long)magnitude;
+            return true;
+        }
+
+        private static ulong Zigzag(long value) => unchecked((ulong)((value << 1) ^ (value >> 63)));
+
+        /// <summary>Packed characters for these values without building the text.</summary>
+        public static long Length(long[] numbers, bool delta)
+        {
+            long length = 0, previous = 0;
+            foreach (long number in numbers)
+            {
+                ulong zigzag = Zigzag(delta ? unchecked(number - previous) : number);
+                previous = number;
+                do { length++; zigzag >>= 5; } while (zigzag != 0);
+            }
+            return length;
         }
 
         public static string Pack(long[] numbers, bool delta)
         {
             var builder = new StringBuilder(numbers.Length * 2);
+            Append(builder, numbers, delta);
+            return builder.ToString();
+        }
+
+        public static void Append(StringBuilder builder, long[] numbers, bool delta)
+        {
             long previous = 0;
             foreach (long number in numbers)
             {
-                long value = delta ? unchecked(number - previous) : number;
+                ulong zigzag = Zigzag(delta ? unchecked(number - previous) : number);
                 previous = number;
-                ulong zigzag = unchecked((ulong)((value << 1) ^ (value >> 63)));
                 do
                 {
                     int bits = (int)(zigzag & 31); zigzag >>= 5;
                     builder.Append(Alphabet[zigzag != 0 ? bits | 32 : bits]);
                 } while (zigzag != 0);
             }
-            return builder.ToString();
         }
 
         public static long[] Unpack(string packed, int count, bool delta)

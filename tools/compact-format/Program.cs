@@ -15,6 +15,7 @@ using PersistentCity.Tools.CompactFormat;
 // Usage: CompactFormat <fixture> <candidate A|B|C|D> [samples]
 //   fixtures: representative-957x2 | representative-5000x2 | representative-50000x2 (F7a replay)
 //             957x2 | 957x3 | 5000x2 | 5000x3 | 50000x2 | 50000x3 | churn | CF32 | CF64 | encoding-max (E5d stress)
+//             file:<path>  a writer-25 payload extracted from a saved checkpoint (rig check 1; never committed)
 static class CompactFormatProgram
 {
     /// <summary>
@@ -45,9 +46,10 @@ static class CompactFormatProgram
     static object Measure(string fixture, Candidate candidate, int samples)
     {
         long start = Stopwatch.GetTimestamp();
-        var state = Fixture(fixture);
+        string? extracted = fixture.StartsWith("file:", StringComparison.Ordinal) ? File.ReadAllText(fixture.Substring(5)) : null;
+        var state = extracted == null ? Fixture(fixture) : ReadCurrent(extracted);
         double buildMs = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
-        string writer25 = SaveCodec.Write(state);
+        string writer25 = extracted ?? SaveCodec.Write(state);
         string writer25Sha = RepresentativeFixture.Sha256(writer25);
         var records = SaveCodec.CountRecords(state, writer25);
 
@@ -64,15 +66,17 @@ static class CompactFormatProgram
 
         var stats = new ColumnarStats();
         string payload = candidate.Encode(tree, stats);
-        var encode = new List<double>(); var encodeAlloc = new List<long>();
+        var encode = new List<double>(); var encodeAlloc = new List<long>(); var collectMs = new List<double>(); var writeMs = new List<double>();
         for (int i = 0; i <= samples; i++)
         {
+            var split = new ColumnarStats();
             long bytes = GC.GetAllocatedBytesForCurrentThread(); start = Stopwatch.GetTimestamp();
-            string again = candidate.Encode(tree);
+            string again = candidate.Encode(tree, split);
             double ms = Stopwatch.GetElapsedTime(start).TotalMilliseconds; long used = GC.GetAllocatedBytesForCurrentThread() - bytes;
             Check(again == payload, "Encoding is not deterministic.");
             if (i == 0) continue;
             encode.Add(ms); encodeAlloc.Add(used);
+            collectMs.Add(split.CollectTicks * 1000.0 / Stopwatch.Frequency); writeMs.Add(split.WriteTicks * 1000.0 / Stopwatch.Frequency);
         }
         var decode = new List<double>(); var decodeAlloc = new List<long>();
         for (int i = 0; i <= samples; i++)
@@ -103,7 +107,7 @@ static class CompactFormatProgram
         int utf8 = Encoding.UTF8.GetByteCount(payload);
         return new
         {
-            fixture, candidate = candidate.Id, description = candidate.Description, samples, buildMs,
+            fixture = extracted == null ? fixture : "file", candidate = candidate.Id, description = candidate.Description, samples, buildMs,
             source = new { writer = CityState.CurrentSchema, characters = writer25.Length, utf8Bytes = Encoding.UTF8.GetByteCount(writer25),
                 sha256 = writer25Sha, streamingRecords = records.Streaming, semanticRecords = records.Semantic,
                 strictReaderAcceptsAndRewritesIdentically = true },
@@ -122,6 +126,8 @@ static class CompactFormatProgram
                 recordCap = SaveCodec.MaxEmbeddedRecords,
             },
             encodeMs = Stats(encode), encodeAllocatedBytes = LongStats(encodeAlloc),
+            // Columnar candidates only: table pass vs column writer (D's deflate and base64 are the remainder).
+            encodeSplitMs = candidate.Id == "A" ? null : new { tablePass = Stats(collectMs), columnWriter = Stats(writeMs) },
             decodeMs = Stats(decode), decodeAllocatedBytes = LongStats(decodeAlloc),
             retainedBytesAfterDecode = retained,
             decodedStrings = new { leaves = stringCount, distinctInstances = stringLeaves.Count },
@@ -132,6 +138,15 @@ static class CompactFormatProgram
             processPeakWorkingSetBytes = Process.GetCurrentProcess().PeakWorkingSet64,
             evidence = "Windows .NET 10 synthetic, foreground, one process per fixture and candidate; encode/decode run from/to the detached wire tree (F7c snapshot stand-in); capture, validation and CityState materialization are not in these timings"
         };
+    }
+
+    /// <summary>An extracted payload must already be current-writer bytes: older schemas would migrate and differ.</summary>
+    static CityState ReadCurrent(string payload)
+    {
+        var read = SaveCodec.Read(payload);
+        Check(read.Status == SaveReadStatus.Loaded, "Strict reader refused the extracted payload: " + read.Error);
+        Check(read.SourceSchema == CityState.CurrentSchema, "Extracted payload is schema " + read.SourceSchema + ", not writer " + CityState.CurrentSchema);
+        return read.State!;
     }
 
     static void CollectStrings(object? value, HashSet<object> instances, ref long count)
