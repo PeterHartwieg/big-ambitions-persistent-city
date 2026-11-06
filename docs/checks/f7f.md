@@ -146,7 +146,7 @@ Offline results on the merged tree, development PC, each dotnet step guarded by 
 - F5b `identity-core-measure`: PASS; validator p50 0.6437 / 3.6705 / 47.6115 ms at 1,914 / 10,000 / 100,000 persons, 0 B warm allocation. This matches the recorded 0.6485 / 3.6938 / 49.2912 ms.
 - F6c `feedback-panel-regression`: passed, no failures. Counters p95 is 0.0033 / 0.0031 / 0.0019 ms, with 0 spikes ≥ 30 ms, and the hidden panel does 0 work.
 - `python tools/rival-memory-regression/validate.py`: PASS 67/67. A first attempt hit the agent shell's 30-minute background cap while it was waiting for other worktrees' dotnet load, and was stopped. The rerun completed with exit 0.
-- `python tools/food-metadata-regression/validate.py` (wraps `run-d3a-checks.py` and rival-memory validate): see the result line below.
+- `python tools/food-metadata-regression/validate.py` (wraps `run-d3a-checks.py` and rival-memory validate), run on 6 November against merge `25865bd`: exit 0. All 73 `run-d3a-checks.py` gates exit 0. Rival-memory validate reports `PASS 67/67 foreground commands`, every pinned `source_checks.py` prints PASS, and the bundled build gives the same DLL SHA-256 `6ee8b14f…ab068d`. Its test run gives 3,063 passed, 0 failed, 0 skipped. `verify_taste.py` reports PASS for the name-taste v1 reference (`937617912baf…3949e`) and for the command manifest. Earlier attempts hit the agent shell's 30-minute background cap while they waited for other worktrees' dotnet load, and were stopped. This run used a 2-hour limit and completed. As in the F7f record above, the two E5c evidence JSON files it rewrites were restored with `git checkout` and are not committed.
 
 ## In-game checks for the next batched rig
 
