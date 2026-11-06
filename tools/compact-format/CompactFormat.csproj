@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors><StartupObject>CompactFormatProgram</StartupObject>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- F7a's fixture builders and E5d's helpers are reused in place; nothing is copied or edited. -->
+    <Compile Include="../save-cost/RepresentativeFixture.cs" /><Compile Include="../save-cost/StressFixture.cs" />
+    <Compile Include="../save-contract-regression/*.cs" />
+    <Compile Include="../name-identity-regression/Program.cs" />
+    <Compile Include="../../Core/*.cs" /><Compile Include="../../Persistence/*.cs" />
+    <Compile Include="../../Runtime/PrototypeSettings.cs" /><Compile Include="../../Runtime/InteriorViewState.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+</Project>
