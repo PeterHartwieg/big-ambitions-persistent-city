@@ -125,6 +125,33 @@ also asserts writer 25, and that the steady state allocates 0 B and makes no riv
 Full suite: **2,879/2,879** tests pass (`dotnet test tests/PersistentCity.Tests.csproj`, 5 November 2026); the build passes; the remaining command matrix is listed in the PR. Offline only; no game, rig, lease, profile,
 ModsLocal or bridge access.
 
+## Sync onto codex/persistent-city, 6 November 2026 (offline)
+
+PR #116 brings this branch up to date with `codex/persistent-city` at `0a926ef` in two real two-parent merges.
+`2e3e032` merges F5a #107 (`c64e3e2`) and F5b #105 (`448247c`). `f90b1df` then merges F6c #110 (`0a926ef`).
+The evidence and qualifications above are unchanged and still describe base `dc59049`.
+
+- Conflicts. In `CHECKS.md` (both merges), the F6b, F6c and F5a index lines are all kept, one line each. In
+  `docs/plans/f6-economy.md` (second merge), the F6b row keeps its 4 November status and the F6c row keeps its
+  status and checks link. `Core/FoodCommerce.cs` (F5b doc comment; F6c transient panel counters),
+  `Runtime/PersistentCityMod.cs` (F5a census command), README and roadmap merged automatically. No conflict was
+  resolved in code, and no F5a, F5b, F6b or F6c source changed: each slice's own files are byte-identical to its
+  side of the merge. Writer 25; no schema or save-contract change.
+- Combined offline results on `f90b1df`: build passes; **3,000/3,000** tests pass (2,990 listed). The 68-command
+  `tools/rival-memory-regression/validate.py` matrix exits 0 for every command, including
+  `rival-limits-regression` (1,091 checks), `feedback-panel-regression`, `population-census-regression` (PASS)
+  and `core-identity-regression`. `tools/identity-core-measure` passes, with validator p50 0.6571/3.6856/49.2684 ms
+  at 1,914/10,000/100,000 persons and 0 B warm, matching F5b's record.
+- Rival-limit perf. Arrival/completion and advancement are unchanged (p95 ≤ 0.0006 ms; interval p95
+  0.30–0.69 ms, max ≤ 11.53 ms, no sample ≥ 30 ms). Reconstruction allocation is byte-identical (12,976 /
+  233,448 / 4,555,304 B). The detached 100,000-consumer reconstruction (6 timed samples, so p95 = max) gave
+  38.5022 ms in the matrix run, while other worktrees' dotnet loads shared the machine. Two quieter reruns gave
+  17.5352 and 22.5708 ms, against 17.7817 ms in the committed record. The timed path is
+  `RivalServiceLoad.Reconstruct`, which the merge does not touch, so this is machine noise on a stress size. It is
+  still flagged: it is attach-time work, not per-frame mod-work, and the supported 1,914-consumer row stays at
+  0.069–0.11 ms. These are detached component timings, not native or whole-frame evidence. The in-game checks
+  below stay deferred to the batched combined rig.
+
 ## In-game checks for the next batched rig
 
 Every check runs in the headless agent rig ([PeterHartwieg/big-ambitions-agent-rig](https://github.com/PeterHartwieg/big-ambitions-agent-rig))
