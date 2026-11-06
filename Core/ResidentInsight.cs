@@ -91,6 +91,8 @@ namespace PersistentCity.Core
         public string WorkRole { get; private set; } = "";
         public IReadOnlyList<string> Personality { get; private set; } = Array.Empty<string>();
         public IReadOnlyList<string> MemoryWords { get; private set; } = Array.Empty<string>();
+        /// <summary>Words for this consumer's current budget state (F6c); empty without household finances.</summary>
+        public IReadOnlyList<string> BudgetWords { get; private set; } = Array.Empty<string>();
         public string Story { get; private set; } = "";
         public string Heading { get; private set; } = "";
         public string HeadingReason { get; private set; } = "";
@@ -142,6 +144,7 @@ namespace PersistentCity.Core
                     memorySettings ?? new FoodMemorySettings(),
                     memoryReference ?? (slot => city.Food.BusinessReferences.Find(r => r.Slot == slot)),
                     id => shopName?.Invoke(id) ?? label(id), currentOwnShop);
+            if (mealToday?.Budget != null) insight.BudgetWords = ResidentBudgetWords.Capture(mealToday.Budget);
             insight.Story = TellStory(person, insight, Doing(person, mealToday, label, productName, now));
             DescribeHeading(person, mealToday, label, productName, now, out string heading, out string reason);
             insight.Heading = heading; insight.HeadingReason = reason;
@@ -157,7 +160,8 @@ namespace PersistentCity.Core
             var text = new StringBuilder(512);
             text.Append(Story).Append('\n').Append('\n');
             foreach (string words in MemoryWords) text.Append(words).Append('.').Append('\n');
-            if (MemoryWords.Count > 0) text.Append('\n');
+            foreach (string words in BudgetWords) text.Append(words).Append('.').Append('\n');
+            if (MemoryWords.Count + BudgetWords.Count > 0) text.Append('\n');
             text.Append(Heading);
             if (HeadingReason.Length > 0) text.Append(" (").Append(HeadingReason).Append(')');
             text.Append('\n').Append('\n').Append("Today's meals").Append('\n');

@@ -54,6 +54,13 @@ namespace PersistentCity.Core
         public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
+        // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
+        // change of a live citizen's phase, activity, place or optional stop (FileOptionalStop and the visit starts).
+        private readonly ActiveJourneyIndex activeJourneys = new ActiveJourneyIndex();
+        /// <summary>Read-only view of the active-journey candidate index for physical selection.</summary>
+        public ActiveJourneyIndex ActiveJourneys => activeJourneys;
+        /// <summary>Shadow comparison of the index against a full scan of the population.</summary>
+        public bool ActiveJourneyIndexMatchesState() => activeJourneys.MatchesScan(State.Citizens);
         internal Position? FindPosition(string id) => places.TryGetValue(id,out var place) ? place.Position : (Position?)null;
         /// <summary>Read-only inspector view of one resident from already stored facts, or null if the
         /// ID has left the population. Never changes the city, draws, plans routes or reads a market.</summary>
@@ -154,6 +161,7 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
             }
+            activeJourneys.Rebuild(state.Citizens);
             RestoreTraffic();
             EnsureTrafficNetwork();
         }

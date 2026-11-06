@@ -38,9 +38,13 @@ City-audit F1 implements [minute-epoch accounting coordination](plans/f1-account
 
 City-audit F7a (4 Nov, offline) implements the [save-cost baseline](checks/f7a.md): on-request save-phase/activation diagnostics and representative/stress fixtures; writer 25 unchanged; not verified by rig.
 
+City-audit F6c (#93) implements [feedback v1](plans/f6-economy.md#4-slice-breakdown) (week-over-week evaluated-offer causes, budget-state counts and inspector words, incremental panel counters) offline; rig verification pending. [Checks and batched-rig list](checks/f6c.md).
+
 City-audit F5a (#92) implements the [read-only world census](plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](checks/f5a.md).
 
 City-audit F5b (4 November, offline) implements the inactive [identity and ownership core](plans/f5-population.md): person/visitor/employment types, derived household and visitor identity (IdentityPolicy v1) and the ownership validator, not wired; writer 25 unchanged. [Checks and batched-rig handoff](checks/f5b-identity-core.md).
+
+City-audit F5f (5 November, offline) implements the [active-journey candidate index](plans/f5-population.md#4-slice-breakdown) for physical selection (selection-scan part of parked hotspot #1; spatial indexing and movement authority stay with F2); writer 25 unchanged; rig verification pending. [Checks and batched-rig list](checks/f5f.md).
 
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
 E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
@@ -90,9 +94,13 @@ Record every taken win with before/after numbers.
 
 - City-audit F7a — [Writer-25 save-cost baseline](perf/f7a.md): representative 957x2 2,333,388 chars, save p50/p95 46.10/87.19 ms, 3.72x UTF-16 allocation; baseline only, no win taken (save serialization stays parked for F7c/F7d).
 
+- City-audit F6c — [Incremental panel counters and one-pass shop lookups](perf/f6c.md): open-panel consumer work p95 1.1088/3.4898/32.1975 -> 0.0026/0.0050/0.0030 ms and 743,240/3,863,008/39,248,344 -> 6,280/6,456/7,768 B/request at 1,914/10,000/100,000 consumers; per-shop lookups p95 2.7575/116.1171 -> 0.5459/14.5748 ms at 64/1,024 shops including the new week text; 128-bit counters and tuple keys cut the 1,024-shop build 8,109,056 -> 4,525,584 B; hidden panel 0 B. Cost: +0.0006–0.0163 ms p95 per posting call, 0 B. Offline components, no whole-frame claim.
+
 - City-audit F5a — [Pre-sized census dictionaries](perf/f5a.md): census allocation 126,408 -> 104,000 B/call (reference shape) and 2,288,064 -> 1,817,576 B/call (20,000 places / 50,000 residents), timing within noise; on-request diagnostic, offline only.
 
 - City-audit F5b — [Ordered-input owner lookup hint, boxing-free enum checks, allocation-free intent ownership and concatenation-free identity hashing](perf/f5b-identity-core.md): validator p50 1,914/10,000/100,000 persons 1.3185/8.3299/108.7320 -> 0.6485/3.6938/49.2912 ms; warm validator 68,741/358,737/3,587,106 -> 0 B/call; intent check 127.8 -> 0 B/intent (3.06 -> 1.05 ms per 30,000); identity draw 284 -> 0 B/lookup. New code, offline components only; no frame work.
+
+- City-audit F5f — [Active-journey candidate index for physical selection](perf/f5f.md): selection p95 against the unchanged pre-F5f loop at 1,914/10,000/50,000 persons with 100 active journeys 0.0360/0.2623/1.0858 -> 0.0133/0.0126/0.0123 ms, with 1,000 active 0.2801/0.4230/1.9762 -> 0.1823/0.2289/0.1927 ms; 0 B per call from the selection itself; offline harness on native doubles (tiered compilation off), not in-game mod-work.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 
