@@ -36,10 +36,10 @@ public sealed partial class FoodCommerceTests
         ReadyForRepresentedReturn()
     {
         var (initial, market, _) = Ready(atWork: true, representation: 2);
-        initial.State.Food!.Residents.Single(m => m.Slot == 0).Allowance = Money.FromCents(0);
+        initial.State.Food!.Residents.Single(m => m.HostSlot == 0).Allowance = Money.FromCents(0);
         var routes = new ReturnReplanningWalking();
         var city = initial.RebuildRoutes(routes);
-        var meal = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        var meal = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Advance(city, meal.DesiredAt + 10);
         Assert.Equal(MealStatus.Paid, meal.Status);
         Assert.Equal(1, meal.Purchases);
@@ -115,7 +115,7 @@ public sealed partial class FoodCommerceTests
         var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
         routes.ReturnMinutes = 100;
         city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
-        meal = city.State.Food!.Residents.Single(m => m.Slot == 1);
+        meal = city.State.Food!.Residents.Single(m => m.HostSlot == 1);
         Advance(city, arrival - .01);
         Assert.True(meal.Excursion!.Returning);
         Assert.Equal(arrival, meal.Excursion.ReturnsAt);

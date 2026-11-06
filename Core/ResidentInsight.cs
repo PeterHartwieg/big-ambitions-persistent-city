@@ -144,7 +144,7 @@ namespace PersistentCity.Core
             insight.HouseholdSize = CountHousehold(city, person);
             insight.PersonWords = DescribePerson(person, insight.HouseholdSize, day);
             insight.Personality = DescribePersonality(person, meal, productName);
-            var mealToday = meal != null && meal.Slot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
+            var mealToday = meal != null && meal.HostSlot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
             if (mealToday != null && city.Food != null && city.Capabilities.Active)
                 insight.MemoryWords = ResidentMemoryWords.Capture(city.Food, mealToday, person.Traits, (int)(now / 1440),
                     memorySettings ?? new FoodMemorySettings(),

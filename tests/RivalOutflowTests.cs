@@ -316,7 +316,7 @@ public sealed class RivalOutflowTests
             city.State.Food!.Residents[0].Memory.Weather=WeatherSample.Rain;
         }
         string weather=JsonConvert.SerializeObject(city.State.Citizens[0].W);
-        string source = schema==20 ? PopulationSchema20.Write(city.State) : PopulationSchema19.Write(city.State);
+        string source = schema==20 ? DevelopmentChain.Legacy(city.State, () => PopulationSchema20.Write(city.State)) : DevelopmentChain.Legacy(city.State, () => PopulationSchema19.Write(city.State));
         var store = new Dictionary<string, string> { [SaveCodec.StateKey] = source };
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
@@ -343,11 +343,11 @@ public sealed class RivalOutflowTests
         var meal=city.State.Food.Residents.Single();
         if(paid) Assert.Equal(MealStatus.Paid,meal.Status);else Assert.NotNull(meal.Decision);
         city.State.Schema=schema;
-        string source=SaveCodec.WriteForSchema(city.State,schema);
+        string source=DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
         var read=DevelopmentChain.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         Assert.Equal(schema,read.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);
         Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
-        read.State.Schema=schema;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,schema));
+        read.State.Schema=schema;Assert.Equal(source,DevelopmentChain.Legacy(read.State, () => SaveCodec.WriteForSchema(read.State, schema)));
         read.State.Schema=CityState.CurrentSchema;
         var resumed=new CitySimulator(read.State,paths);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),

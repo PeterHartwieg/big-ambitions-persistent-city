@@ -226,7 +226,9 @@ public sealed class PersonIdentityTests
             ["Core/Model.cs"] = new[] { "IdentityPolicy" },
             ["Core/PhysicalJourneys.cs"] = new[] { "PersonKind", "PersonIds" },
             ["Core/ResidentInsight.cs"] = new[] { "PersonKind", "HouseholdIds", "EmploymentKind" },
-            ["Persistence/PersonWire26.cs"] = new[] { "IdentityPolicy", "VisitorStay", "PersonKind", "PersonIds", "NativeEmployment", "new Employment", "EmploymentKind" },
+            // The codec checks the saved person table against the F5b ownership validator (rules 1-5).
+            ["Persistence/PersonWire26.cs"] = new[] { "IdentityPolicy", "VisitorStay", "PersonKind", "PersonIds", "NativeEmployment", "new Employment", "EmploymentKind",
+                "OwnershipValidator", "OwnershipInput", "PersonFacts" },
         };
         var files = new[] { "Runtime", "Persistence", "Compatibility" }
             .SelectMany(d => Directory.GetFiles(Path.Combine(root!.FullName, d), "*.cs", SearchOption.AllDirectories))

@@ -72,7 +72,7 @@ namespace PersistentCity.Core
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
-            var person=city.FindCitizen(meal.AnchorId);if(person==null) return null;
+            var person=city.FindCitizen(meal.HostId);if(person==null) return null;
             // Explicit on-demand inspection may finish the transient index; normal events never drain it inline.
             while(NeedsRivalPreparation(city.State.Minute) || !AwarenessReady) ContinueAwarenessPreparation();
             var stop=ChoiceStop(meal,person);bool atStop=meal.Decision!=null
@@ -102,7 +102,7 @@ namespace PersistentCity.Core
 
         private FoodRoutineStop ChoiceStop(ResidentMeal meal,CitizenState p)
         {
-            if(meal.Slot>0) return routineStops[p.Identity.Id];
+            if(meal.HostSlot>0) return routineStops[p.Identity.Id];
             double admission=0;
             for(int i=p.RecentVisits.Count-1;i>=0;i--)
                 if(p.RecentVisits[i].PlaceId==p.PlaceId && p.RecentVisits[i].Activity==p.Activity)
@@ -158,7 +158,7 @@ namespace PersistentCity.Core
             { Finish(meal,MealStatus.Missed,meal.LastContextKey==context ? "This meal situation was already considered" : "Meal decision limit reached");return; }
             double now=city.State.Minute;
             double deadline=atStop ? Math.Min(meal.ExpiresAt,stop.DepartureAt) : Math.Min(meal.ExpiresAt,
-                Math.Min(stop.DepartureAt,now+(meal.Slot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
+                Math.Min(stop.DepartureAt,now+(meal.HostSlot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
             var d=new FoodDecisionState {Tuning=FoodDecisionTuning.Capture(ChoiceSettings),IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
             // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
             using(var captureBatch=(market as IFoodCandidateMarket)?.BeginCapture(now))
@@ -421,7 +421,7 @@ namespace PersistentCity.Core
                     || !ValidateCapturedRoute(city.FindPlace(shop.PlaceId),city.FindPlace(stop.PlaceId),shop.Return!,preferences,atStop))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
                 double stay=choice.ServiceEndsAt!.Value-(d.OriginAt+shop.Outward!.Minutes)+intent.EatingMinutes;
-                if(!atStop && meal.Slot==0 && !city.TryBeginMealVisit(person.Identity.Id,shop.PlaceId,shop.Outward,shop.Return!.Minutes,stay,d.Deadline,
+                if(!atStop && meal.HostSlot==0 && !city.TryBeginMealVisit(person.Identity.Id,shop.PlaceId,shop.Outward,shop.Return!.Minutes,stay,d.Deadline,
                     deferObservation:true,capturedHours:shop.AlternativeKind==FoodAlternativeKind.Rival ? CapturedBusiness(shop).OpeningPlace : null))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
                 // Optional presentation changes only after a winner and its feasibility are committed.
@@ -447,7 +447,7 @@ namespace PersistentCity.Core
                 else
                 {
                     meal.Status=MealStatus.Travelling;
-                    if(meal.Slot>0)
+                    if(meal.HostSlot>0)
                     {
                         meal.Excursion=new MealExcursion {OriginId=stop.PlaceId,DestinationId=shop.PlaceId,OriginActivity=stop.Activity,
                             OriginPosition=city.FindPlace(stop.PlaceId).Position,DestinationPosition=city.FindPlace(shop.PlaceId).Position,
@@ -477,7 +477,7 @@ namespace PersistentCity.Core
                 RouteCalls=atStop ? 0 : d.Shops.Sum(s=>(s.OutwardQuote==FoodQuoteState.Answered || s.OutwardQuote==FoodQuoteState.Refused ? 1 : 0)
                     +(s.ReturnQuote==FoodQuoteState.Answered || s.ReturnQuote==FoodQuoteState.Refused ? 1 : 0))});
             // A compact choice explanation lives in the existing Reason field until checkout; outcomes preserve factors.
-            if(d.Result==FoodDecisionResult.Selected && !atStop && meal.Slot==0) city.ObserveFoodDeparture(person);
+            if(d.Result==FoodDecisionResult.Selected && !atStop && meal.HostSlot==0) city.ObserveFoodDeparture(person);
         }
         private static string ChoiceWords(FoodDecisionState d) => "Chose food"+(d.Factor1==MealFactor.Taste ? "; likes it" : "")
             +(d.Factor1==MealFactor.Quality || d.Factor2==MealFactor.Quality ? "; values quality" : "");

@@ -100,7 +100,7 @@ namespace PersistentCity.Core
             if (product == null) { product = new FoodProductSales { ProductId = meal.ProductId }; row.ProductSales.Add(product); }
             product.Purchases++; product.Revenue += meal.Price;
             product.PurchaseMeals[(int)meal.Kind]++;
-            string district = city.FindPlace(city.FindCitizen(meal.AnchorId)!.HomeId).District;
+            string district = city.FindPlace(city.FindCitizen(meal.HostId)!.HomeId).District;
             var group = row.BuyerDistricts.FirstOrDefault(d => d.DistrictId == district);
             if (group == null) { group = new FoodBuyerDistrict { DistrictId = district }; row.BuyerDistricts.Add(group); }
             group.Purchases++;

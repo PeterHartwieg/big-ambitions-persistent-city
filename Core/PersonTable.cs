@@ -28,6 +28,8 @@ namespace PersistentCity.Core
         public const int MaximumResidents = HousingPolicy.MaximumResidents;
         public const int MaximumVisitors = PopulationCensusPolicy.MaximumVisitors;
         public const int MaximumPortals = PopulationCensusPolicy.MaximumStations;
+        /// <summary>First schema with the factor-1 roster rule: one own slot-0 roster record per person.</summary>
+        public const int OwnRosterSchema = 26;
         /// <summary>Writer 26 has one schedule template: today's persona routine in DailyRoutine.</summary>
         public const int PersonaScheduleCode = 0;
 

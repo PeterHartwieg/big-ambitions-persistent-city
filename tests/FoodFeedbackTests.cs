@@ -241,14 +241,14 @@ public sealed partial class FoodCommerceTests
         var meal = city.State.Food!.Residents.Single();
         meal.Budget!.Arrears = Money.FromCents(250);
         string before = DevelopmentChain.Write(city.State);
-        var insight = city.Inspect(meal.AnchorId)!;
+        var insight = city.Inspect(meal.HostId)!;
         Assert.Equal(ResidentBudgetWords.BehindOnBills, insight.BudgetWords[0]);
         Assert.DoesNotContain(ResidentBudgetWords.NoSpareMoney, insight.BudgetWords);
         Assert.DoesNotContain(string.Join(" ", insight.BudgetWords), char.IsDigit);
         Assert.Contains(ResidentBudgetWords.BehindOnBills + ".", insight.Text());
         Assert.Equal(before, DevelopmentChain.Write(city.State));
         meal.Budget.Arrears = Money.Zero; meal.Budget.Balance = Money.FromCents(1);
-        var words = city.Inspect(meal.AnchorId)!.BudgetWords;
+        var words = city.Inspect(meal.HostId)!.BudgetWords;
         Assert.Contains(ResidentBudgetWords.NoSpareMoney, words); Assert.DoesNotContain(ResidentBudgetWords.BehindOnBills, words);
     }
 

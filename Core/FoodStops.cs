@@ -34,8 +34,8 @@ namespace PersistentCity.Core
             // A brief home stay can fall entirely between meal windows. Rejoin idle
             // represented consumers when that stay is observed, not at their next meal.
             // An unfinished excursion or uncertain checkout keeps its own ownership.
-            if (state.RepresentationFactor > 1 && ResidentLifecycle.IsSafelyHome(person))
-                for (int slot = 1; slot < state.RepresentationFactor; slot++)
+            if (representation > 1 && ResidentLifecycle.IsSafelyHome(person))
+                for (int slot = 1; slot < representation; slot++)
                     if (records.TryGetValue(FoodRepresentation.ConsumerId(person.Identity.Id, slot), out var represented)
                         && represented.Excursion == null) represented.NeedsHomeResync = false;
             if (!records.TryGetValue(person.Identity.Id, out var meal) || meal.TargetKind == FoodAlternativeKind.Rival || !AtFoodStop(person)

@@ -89,39 +89,58 @@ namespace PersistentCity.Core
                 .ThenBy(b => b.Id, StringComparer.Ordinal).Take(LocalFoodCandidates).ToList();
         }
 
+        // Represented consumers per resident for today's excursion schedule (scheduling adapter, not ownership).
+        // Up to schema 25 it is the stored RepresentationFactor. From 26 the stored factor is 1 (one own record per
+        // person); a fresh roster reads the requested factor once, a saved one counts its visitor persons.
+        private int representation = 1;
+
         private void InitializeRepresentation()
         {
-            if (state.RepresentationFactor < 1 || state.RepresentationFactor > 3)
+            bool own = city.State.Schema >= PersonTable.OwnRosterSchema;
+            int residents = city.State.Citizens.Count;
+            if (own && records.Count != 0)
+            {
+                if (state.RepresentationFactor != 1 || residents == 0 || city.State.Visitors.Count % residents != 0)
+                    throw new InvalidOperationException("A schema-26 roster has one own record per person.");
+                representation = 1 + city.State.Visitors.Count / residents;
+            }
+            else representation = state.RepresentationFactor;
+            if (representation < 1 || representation > 3)
                 throw new InvalidOperationException("Representation factor must be fixed between one and three at city initialization.");
             var identities = new HashSet<string>(StringComparer.Ordinal);
             foreach (var person in city.State.Citizens)
-                for (int slot = 0; slot < state.RepresentationFactor; slot++)
+                for (int slot = 0; slot < representation; slot++)
                     if (!identities.Add(FoodRepresentation.ConsumerId(person.Identity.Id, slot)))
                         throw new InvalidOperationException("Consumer identity collides with another stable anchor or slot.");
             foreach (var stop in state.RoutineStops) routineStops.Add(stop.AnchorId, stop);
             // A populated roster is persistent ownership, never permission to multiply wallets.
             if (records.Count != 0)
             {
-                if (records.Count != city.State.Citizens.Count * state.RepresentationFactor)
+                if (records.Count != residents * representation)
                     throw new InvalidOperationException("Saved consumer roster does not match its fixed representation factor.");
                 foreach (var person in city.State.Citizens)
-                    for (int slot = 0; slot < state.RepresentationFactor; slot++)
-                        if (!records.TryGetValue(FoodRepresentation.ConsumerId(person.Identity.Id, slot), out var meal)
-                            || meal.AnchorId != person.Identity.Id || meal.Slot != slot)
+                    for (int slot = 0; slot < representation; slot++)
+                    {
+                        string id = FoodRepresentation.ConsumerId(person.Identity.Id, slot);
+                        if (!records.TryGetValue(id, out var meal)
+                            || (own ? meal.AnchorId != id || meal.Slot != 0 : meal.AnchorId != person.Identity.Id || meal.Slot != slot))
                             throw new InvalidOperationException("Saved consumer identity does not match its anchor and slot.");
+                        meal.AssignHost(person.Identity.Id, slot);
+                    }
                 return;
             }
             foreach (var person in city.State.Citizens)
             {
                 CaptureRoutineStop(person);
-                for (int slot = 0; slot < state.RepresentationFactor; slot++) Enrol(person, slot);
+                for (int slot = 0; slot < representation; slot++) Enrol(person, slot);
             }
             PersonTable.OrderVisitors(city.State);
+            if (own) state.RepresentationFactor = 1; // factor-1 roster rule; scheduling keeps `representation`
         }
 
         private void CaptureRoutineStop(CitizenState person)
         {
-            if (state.RepresentationFactor == 1 || person.MealOuting != null || person.Phase != CitizenPhase.AtPlace
+            if (representation == 1 || person.MealOuting != null || person.Phase != CitizenPhase.AtPlace
                 || person.Activity == Activity.Shop) return;
             double end = Math.Min(person.NextEventMinute, person.ActivityUntilMinute);
             if (end <= city.State.Minute) return;
@@ -177,7 +196,7 @@ namespace PersistentCity.Core
         private bool StepExcursion(ResidentMeal meal, CitizenState person)
         {
             var excursion = meal.Excursion;
-            if (meal.Slot == 0 || excursion == null || Active(meal)) return false;
+            if (meal.HostSlot == 0 || excursion == null || Active(meal)) return false;
             double now = city.State.Minute;
             if (excursion.Unresolved)
             {
@@ -246,12 +265,12 @@ namespace PersistentCity.Core
         private Route? WalkingQuote(Place from, Place to, double at, TravelPreferences preferences, FoodDecisionTrace? trace = null)
         {
             // K=1 preserves the previous planner calls and decisions exactly.
-            if (state.RepresentationFactor == 1)
+            if (representation == 1)
             {
                 if (trace != null) trace.RouteCalls++;
                 return routes.Plan(from, to, at, preferences);
             }
-            var validator = state.RepresentationFactor > 1 ? routes as IWalkingQuoteValidity : null;
+            var validator = representation > 1 ? routes as IWalkingQuoteValidity : null;
             var operation = validator != null ? routes as IWalkingQuoteOperation : null;
             operation?.BeginWalkingQuote();
             try { return SharedWalkingQuote(from, to, at, preferences, validator, trace); }

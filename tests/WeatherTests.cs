@@ -47,7 +47,7 @@ public sealed class WeatherTests
     internal static string As19(string wire)
     {
         var read=DevelopmentChain.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        read.State!.Schema=19;return PopulationSchema19.Write(read.State);
+        read.State!.Schema=19;return DevelopmentChain.Legacy(read.State, () => PopulationSchema19.Write(read.State));
     }
     [Fact]
     public void Migration19IsNeutralActivatesNextDayAndPreservesSource()

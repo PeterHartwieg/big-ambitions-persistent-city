@@ -125,15 +125,54 @@ public sealed class Schema26Tests
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         if (food)
         {
-            Assert.Equal(factor, read.State!.Food!.RepresentationFactor);
-            var before = state.Food!.Residents.ToDictionary(m => m.ResidentId, m => (m.AnchorId, m.Slot), StringComparer.Ordinal);
-            Assert.All(read.State.Food.Residents, m => Assert.Equal(before[m.ResidentId], (m.AnchorId, m.Slot)));
+            // Factor-1 roster rule, live and decoded: one own slot-0 record per person and a stored factor of 1. The host
+            // and slot of today's represented excursion are the scheduling adapter, identical across the reload.
+            foreach (var city2 in new[] { state, read.State! })
+            {
+                Assert.Equal(1, city2.Food!.RepresentationFactor);
+                Assert.All(city2.Food.Residents, m => { Assert.Equal(m.ResidentId, m.AnchorId); Assert.Equal(0, m.Slot);
+                    Assert.Equal(m.ResidentId, FoodRepresentation.ConsumerId(m.HostId, m.HostSlot)); });
+                Assert.Equal(new int[0], OwnershipRules(city2));
+            }
+            var before = state.Food!.Residents.ToDictionary(m => m.ResidentId, m => (m.HostId, m.HostSlot), StringComparer.Ordinal);
+            Assert.All(read.State!.Food!.Residents, m => Assert.Equal(before[m.ResidentId], (m.HostId, m.HostSlot)));
+            Assert.Equal(factor - 1, read.State.Food.Residents.Max(m => m.HostSlot));
         }
         Assert.Equal(state.Citizens.Select(c => c.EmploymentStartDay), read.State!.Citizens.Select(c => c.EmploymentStartDay));
         // The reloaded city keeps running on today's schedules.
         var resumed = new CitySimulator(read.State, new FreshCityTraceTests.Walk());
         if (food) resumed.AttachFoodMarket(new WeightedFoodChoiceTests.Market());
         while (!resumed.AdvanceTo(read.State.Minute + 60, 64).CaughtUp) { }
+    }
+
+    /// <summary>F5b's OwnershipValidator over the saved person table; returns the violated rules other than the two the
+    /// codec documents (opaque resident IDs, represented visitors without a portal).</summary>
+    private static int[] OwnershipRules(CityState state)
+    {
+        var persons = state.Citizens.Select(c => new PersonFacts(c.Identity.Id, PersonKind.Resident, c.HomeId))
+            .Concat(state.Visitors.Select(v => new PersonFacts(v.Id, PersonKind.Visitor, "", v.Stay))).OrderBy(p => p.Id, StringComparer.Ordinal).ToList();
+        var food = state.Food!;
+        var input = new OwnershipInput { Persons = persons, FoodEnabled = true, FinancesEnabled = food.HouseholdFinanceVersion != 0,
+            HomePlaceIds = state.Places.Where(p => p.Kind == PlaceKind.Home).Select(p => p.Id).OrderBy(id => id, StringComparer.Ordinal).ToList(),
+            Roster = food.Residents.Select(m => new RosterFacts(m.ResidentId, m.AnchorId, m.Slot)).ToList(),
+            Wallets = food.Residents.Where(m => m.Budget != null).Select(m => new WalletFacts(MoneyOwnerKind.Person, m.ResidentId)).ToList(),
+            Intents = food.Residents.Select(m => new DemandUnitFacts(m.IntentId, m.ResidentId)).ToList() };
+        var validator = new OwnershipValidator(); validator.Validate(input);
+        return validator.Violations.Where(v => v.Rule != OwnershipRule.PersonIdFormat && v.Rule != OwnershipRule.UnknownPortal).Select(v => (int)v.Rule).ToArray();
+    }
+
+    [Fact]
+    public void WritesRefuseARosterRecordThatIsNotItsOwnPersons()
+    {
+        var state = Running(2, true, 2).State;
+        var visitorMeal = state.Food!.Residents.First(m => m.HostSlot == 1);
+        visitorMeal.AnchorId = visitorMeal.HostId; visitorMeal.Slot = 1; // the pre-26 hosted form
+        Assert.Contains("factor-1 roster rule", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        visitorMeal.AnchorId = visitorMeal.ResidentId; visitorMeal.Slot = 0;
+        state.Food.RepresentationFactor = 2;
+        Assert.Contains("one own record per person", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        state.Food.RepresentationFactor = 1;
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
     }
 
     /// <summary>Every persona housed, plus one unassigned worker: Work, Study and no Employment all occur.</summary>
@@ -419,6 +458,65 @@ public sealed class Schema26Tests
         Assert.DoesNotContain("Oversized", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
     }
 
+    // ---- Record budget: every new schema-26 record is charged by both counters ----
+
+    [Theory]
+    [InlineData(2, true)] [InlineData(1, false)]
+    public void ResidentVisitorAndStationTuplesChargeOneRecordInBothCounters(int factor, bool food)
+    {
+        var state = Running(factor, food, 2).State; state.Portals.AddRange(new[] { "station:a", "station:b" });
+        string p26 = SaveCodec.Write(state), p25 = DevelopmentChain.Write25(state);
+        var c26 = SaveCodec.CountRecords(state, p26);
+        var c25 = SaveCodec.CountRecordsForSchema(SaveCodec.ReadDevelopmentChain(p25).State!, p25, 25);
+        int added = state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
+        Assert.Equal(c25.Streaming + added, c26.Streaming); Assert.Equal(c25.Semantic + added, c26.Semantic);
+    }
+
+    /// <summary>Section 5 record budget at the limit: a schema-26 city charging exactly MaxEmbeddedRecords (with one station
+    /// entry) writes and round-trips; one more new record (a second station) is refused by the writer before
+    /// publication and by the reader before allocation.</summary>
+    [Fact]
+    public void AtTheRecordLimitAPayloadRoundTripsAndOneMoreNewRecordIsRefusedBeforePublication()
+    {
+        var state = EconomyScenario.Create(SaveCodec.MaxResidents, 23);
+        var template = state.Places.Single(p => p.Id == "leisure-1");
+        for (int i = state.Places.Count; i < SaveCodec.MaxPlaces; i++)
+            state.Places.Add(new Place { Id = "pad:" + i.ToString("D5", CultureInfo.InvariantCulture), Name = "Pad", District = "a",
+                Kind = PlaceKind.Leisure, Position = template.Position, Capacity = 0, EvidenceSource = template.EvidenceSource });
+        var empty = SaveCodec.CountRecords(state, SaveCodec.Write(state));
+        Assert.Equal(empty.Streaming, empty.Semantic);
+        long remaining = SaveCodec.MaxEmbeddedRecords - 1 - empty.Semantic; // the last record is the station entry
+        foreach (var place in state.Places.Where(p => p.Kind == PlaceKind.Leisure))
+            for (int w = place.WeeklyHours.Count; w < SaveCodec.MaxOpeningWindows && remaining > state.Citizens.Count * (long)SaveCodec.MaxRecentVisits; w++, remaining--)
+                place.WeeklyHours.Add(new OpeningWindow { Day = w % 7, FromMinute = 0, ToMinute = 60 });
+        foreach (var person in state.Citizens)
+        {
+            person.RecentVisits.Clear();
+            for (int v = 0; v < SaveCodec.MaxRecentVisits && remaining > 0; v++, remaining--)
+                person.RecentVisits.Add(new VisitRecord { AtMinute = state.Minute - SaveCodec.MaxRecentVisits + v, PlaceId = person.HomeId, Activity = Activity.Home });
+        }
+        Assert.Equal(0, remaining);
+        state.Portals.Add("station:a");
+        var data = new Dictionary<string, string>();
+        Assert.True(SaveStore.WriteTo(data, state).Success);
+        string payload = data[SaveStore.StateKey];
+        var count = SaveCodec.CountRecords(state, payload);
+        Assert.Equal((SaveCodec.MaxEmbeddedRecords, SaveCodec.MaxEmbeddedRecords), (count.Streaming, count.Semantic));
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        read = null;
+        // One more new record: the writer refuses before publication and the stored payload stays.
+        state.Portals.Add("station:b");
+        var refused = SaveStore.WriteTo(data, state);
+        Assert.False(refused.Success); Assert.Contains("Too many", refused.Error); Assert.Same(payload, data[SaveStore.StateKey]);
+        Assert.Contains("Too many", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        // The reader charges the same record while streaming, before deserialization allocates.
+        string over = payload.Replace("\"Portals\":[\"station:a\"]", "\"Portals\":[\"station:a\",\"station:b\"]");
+        Assert.NotEqual(payload, over);
+        var overRead = SaveCodec.Read(over);
+        Assert.Equal(SaveReadStatus.Invalid, overRead.Status); Assert.Contains("Too many", overRead.Error);
+    }
+
     // ---- Older development schemas: refused, preserved, food authority native ----
 
     [Fact]
@@ -468,6 +566,34 @@ public sealed class Schema26Tests
         foreach (var (key, value) in before) Assert.Same(value, data[key]);
     }
 
+    /// <summary>An unreadable manifest, or one ahead of the loaded clock, beside a schema-25 payload still stands the city
+    /// down: nothing is protected, so every player business is native at once, and no key changes.</summary>
+    [Theory]
+    [InlineData("not json")] [InlineData("[]x")] [InlineData("ahead")]
+    public void Schema25CityWithAnUnreadableOrAheadManifestStandsDownWithEveryBusinessNative(string damage)
+    {
+        string payload = ReaderCorpus.Load(25).Single(f => f.File == "full.json").Text;
+        const long loadedHour = 12;
+        string manifest = damage;
+        if (damage == "ahead")
+        {
+            var row = new FoodAuthority { PlaceId = "address:test:1:shop" };
+            row.Observe("business:test:1:3:bakery:player", true, loadedHour + 5); row.Boundary(loadedHour + 6, true, false, true);
+            manifest = FoodAuthorityStore.Write(new[] { row });
+        }
+        var data = new Dictionary<string, string>(StringComparer.Ordinal)
+            { [SaveStore.StateKey] = payload, [FoodAuthorityStore.Key] = manifest, [AccountingStopStore.Key] = "save-epoch-failed" };
+        var before = new Dictionary<string, string>(data, StringComparer.Ordinal);
+        Assert.Equal(25, SaveCodec.DevelopmentSchemaOf(data[SaveStore.StateKey]));
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveStore.ReadFrom(data, "food-live").Status);
+        var standDown = FoodAuthorityStandDown.FromManifest(() => FoodAuthorityStore.Read(data[FoodAuthorityStore.Key]), loadedHour, out var problem);
+        Assert.NotNull(problem);
+        Assert.Empty(standDown.ProtectedPlaces);
+        for (long hour = 0; hour <= loadedHour + 8; hour++) Assert.False(standDown.Suppresses("address:test:1:shop", hour));
+        Assert.Equal(before.Count, data.Count);
+        foreach (var (key, value) in before) Assert.Same(value, data[key]);
+    }
+
     /// <summary>Source guard for the Runtime wiring offline tests cannot run: the development check precedes every
     /// accounting-stop, epoch and authority write, and a stood-down save persists nothing.</summary>
     [Fact]
@@ -485,8 +611,12 @@ public sealed class Schema26Tests
             < start.IndexOf("SaveEpochStore.CheckForStart", tryStart, StringComparison.Ordinal));
         string food = File.ReadAllText(Path.Combine(root.FullName, "Runtime", "NativeFoodOwnership.cs"));
         int ensure = food.IndexOf("internal static void EnsureSave()", StringComparison.Ordinal);
-        int development = food.IndexOf("StandDown = new FoodAuthorityStandDown", ensure, StringComparison.Ordinal);
-        Assert.True(development > ensure && food.IndexOf("return;", development, StringComparison.Ordinal) < food.IndexOf("Persist", development, StringComparison.Ordinal));
+        int development = food.IndexOf("StandDown = FoodAuthorityStandDown.FromManifest(", ensure, StringComparison.Ordinal);
+        Assert.True(development > ensure && food.IndexOf("return;", development, StringComparison.Ordinal) < food.IndexOf("Persist()", development, StringComparison.Ordinal));
+        // The development check precedes the manifest read, the capability probe and every suspension (Error) path.
+        int probe = food.IndexOf("SaveCodec.DevelopmentSchemaOf(", ensure, StringComparison.Ordinal);
+        Assert.True(probe > ensure && probe < development && development < food.IndexOf("RequireExecutableCapabilities", ensure, StringComparison.Ordinal)
+            && development < food.IndexOf("Error = \"Food ownership suspended", ensure, StringComparison.Ordinal));
         Assert.Contains("if (StandDown != null) return StandDown.Suppresses(", food);
         Assert.Contains("|| StandDown != null ||", food);
     }

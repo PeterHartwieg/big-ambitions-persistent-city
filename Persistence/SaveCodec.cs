@@ -441,7 +441,7 @@ namespace PersistentCity.Persistence
                 if(schema==23 && type==typeof(FoodProductSales) && name=="ProductId")
                     Require(reader.TokenType==JsonToken.String && FoodMenuPolicy.Code((string)reader.Value!)==0,"Reviewed product history requires a compact cell.");
                 if (schema >= 25 && type == typeof(CityState) && name == "ProductNames") CheckNameTable25(reader, text, ref records, fieldStart25);
-                else if (schema >= PersonSchema && type == typeof(CitizenState) && name == "P") CheckResidentTuple26(reader, text);
+                else if (schema >= PersonSchema && type == typeof(CitizenState) && name == "P") CheckResidentTuple26(reader, text, ref records);
                 else if (schema >= PersonSchema && type == typeof(CityState) && name == "Portals") CheckPortals26(reader, text, ref records);
                 else if (schema >= 25 && type == typeof(FoodDecisionOffer) && name == "Metadata") CheckMetadata25(reader, text, ref records, fieldNames, fieldStart25);
                 else if(schema>=23 && type==typeof(FoodScope) && name=="AdditionalProductIds") CheckMenuIds23(reader,ref records, schema >= 25 ? text : null);
@@ -953,8 +953,12 @@ namespace PersistentCity.Persistence
             Require(food.AwarenessStartsDay>=0 && food.AwarenessStartsDay<=currentDay+1,"Invalid awareness activation day.");
             Require(food.RivalStartsDay>=0 && food.RivalStartsDay<=currentDay+1,"Invalid rival activation day.");
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
-            Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
-            Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
+            // Schema 26: one own roster record per person (stored factor 1); the scheduling factor counts visitor persons.
+            bool ownRoster = state.Schema >= PersonSchema;
+            if (ownRoster) Require(food.RepresentationFactor == 1, "A schema-26 roster has one own record per person (factor 1).");
+            int factor = ownRoster ? SchedulingFactor26(state) : food.RepresentationFactor;
+            Require(factor >= 1 && factor <= 3, "Invalid consumer representation factor.");
+            Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * factor, "Meal roster differs from represented population.");
             Require(food.Districts != null, "Missing food budget districts.");
             FoodHouseholdPolicy.ValidateMixes(food.Districts);
             Require(food.HouseholdFinanceVersion == 0 || food.HouseholdFinanceVersion == HouseholdFinance.PolicyVersion, "Unknown household finance policy.");
@@ -1031,14 +1035,15 @@ namespace PersistentCity.Persistence
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var meal in food.Residents)
             {
-                Require(meal != null && seen.Add(meal.ResidentId) && citizens.ContainsKey(meal.AnchorId)
-                    && meal.Slot >= 0 && meal.Slot < food.RepresentationFactor
-                    && meal.ResidentId == FoodRepresentation.ConsumerId(meal.AnchorId, meal.Slot), "Unknown or duplicate consumer/anchor slot.");
+                Require(meal != null && seen.Add(meal.ResidentId) && citizens.ContainsKey(meal.HostId)
+                    && meal.HostSlot >= 0 && meal.HostSlot < factor
+                    && meal.ResidentId == FoodRepresentation.ConsumerId(meal.HostId, meal.HostSlot), "Unknown or duplicate consumer/anchor slot.");
+                if (ownRoster) Require(meal.AnchorId == meal.ResidentId && meal.Slot == 0, "A roster record is not its own person's (factor-1 roster rule).");
                 Require(meal.PreferenceBonusCents >= 0 && meal.PreferenceBonusCents <= 150
                     && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : KnownMenuProduct(state.Schema,meal.PreferredProductId)), "Invalid consumer taste.");
-                Require(meal.Slot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
-                Require(meal.Slot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
-                if (meal.Slot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
+                Require(meal.HostSlot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
+                Require(meal.HostSlot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
+                if (meal.HostSlot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
                 else Traits(meal.RepresentedTraits, "represented consumer");
                 Known(meal.Status, "Meal status");
                 Known(meal.Kind, "Meal kind");
@@ -1071,7 +1076,7 @@ namespace PersistentCity.Persistence
                 records += ValidateMemory(meal.Memory, currentDay, memoryReferences);
                 records += ValidateDecision(meal, food, foodPlaces, ref routeBearing, state.Schema);
                 Require(records <= MaxEmbeddedRecords, "Too many embedded food records.");
-                var outing = meal.Slot == 0 ? citizens[meal.AnchorId].MealOuting : null;
+                var outing = meal.HostSlot == 0 ? citizens[meal.HostId].MealOuting : null;
                 Require(!meal.ExistingStop || outing == null, "Existing-stop purchase also owns an outing.");
                 if (outing != null)
                 {
@@ -1272,10 +1277,10 @@ namespace PersistentCity.Persistence
         private static void ValidateExcursion(ResidentMeal meal, CityState state, FoodPlaceLookup foodPlaces)
         {
             var excursion = meal.Excursion;
-            if (meal.Slot > 0 && (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving))
+            if (meal.HostSlot > 0 && (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving))
                 Require(excursion != null, "Active represented meal lost its excursion.");
             if (excursion == null) return;
-            Require(meal.Slot > 0 && !meal.NeedsHomeResync && meal.Status != MealStatus.Pending
+            Require(meal.HostSlot > 0 && !meal.NeedsHomeResync && meal.Status != MealStatus.Pending
                 && excursion.DestinationId == meal.PlaceId, "Invalid represented excursion owner.");
             Known(excursion.OriginActivity, "Excursion origin activity");
             Require(excursion.ReturnGeometry.Length == 44, "Missing committed return geometry signature.");

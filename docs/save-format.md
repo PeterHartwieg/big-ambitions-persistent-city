@@ -45,7 +45,9 @@ A visitor has no identity, home, car or recent visits; the tuple has no slot for
 
 ### Meal roster (factor-1 roster rule)
 
-`Food.Residents[]` holds exactly one roster record per person (residents and visitors). Each record is tuple version 3, which is the writer-25 tuple without `AnchorId` and `Slot`. `Food` has no `RepresentationFactor`. On read, each record's host and slot and the city's factor (1 + visitors / residents, at most 3) are derived from the person table. Every visitor must be one resident's represented consumer, and every resident has the same number of them.
+`Food.Residents[]` holds exactly one roster record per person (residents and visitors). Each record is tuple version 3, which is the writer-25 tuple without `AnchorId` and `Slot`. `Food` has no `RepresentationFactor`. Every record decodes, and is written, as its own person's: `AnchorId == ResidentId`, `Slot == 0`, stored factor 1. The host and slot of a represented consumer's excursion (`ResidentMeal.HostId`/`HostSlot`) are a scheduling adapter that is never stored; they and the scheduling factor (1 + visitors / residents, at most 3) are derived from the person table. Every visitor must be one resident's represented consumer, and every resident has the same number of them. The saved person table must also pass F5b's `OwnershipValidator`; resident IDs stay opaque, and a represented visitor has no portal.
+
+Each resident tuple, visitor tuple and station entry charges one embedded record, in the streaming check and the write-side count alike.
 
 ## Bounds
 

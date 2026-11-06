@@ -53,6 +53,9 @@ public sealed class FreshCityTraceTests
 
     private static string R(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
+    // The represented consumer's host and slot are behaviour (whose day it eats on). At the base they were stored as
+    // AnchorId/Slot; schema 26 stores each record as its own person's and keeps the host as the scheduling adapter
+    // HostId/HostSlot, so the trace text and its pinned hash are unchanged.
     private static void Snapshot(StringBuilder trace, CityState state, WeightedFoodChoiceTests.Market market)
     {
         trace.Append('@').Append(R(state.Minute)).Append('\n');
@@ -64,7 +67,7 @@ public sealed class FreshCityTraceTests
                 .Append(c.MealOuting == null ? "-" : c.MealOuting.OriginId + (c.MealOuting.Returning ? "<" : ">")).Append('|').Append(c.JobChanges).Append('\n');
         if (state.Food != null)
             foreach (var m in state.Food.Residents.OrderBy(m => m.ResidentId, StringComparer.Ordinal))
-                trace.Append(m.ResidentId).Append('|').Append(m.AnchorId).Append('|').Append(m.Slot).Append('|').Append((int)m.Status).Append('|')
+                trace.Append(m.ResidentId).Append('|').Append(m.HostId).Append('|').Append(m.HostSlot).Append('|').Append((int)m.Status).Append('|')
                     .Append(m.Day).Append('|').Append((int)m.Kind).Append('|').Append(m.PlaceId).Append('|').Append(m.ProductId).Append('|')
                     .Append(R(m.DueAt)).Append('|').Append(m.Purchases).Append('|').Append(m.Spent.Units).Append('|')
                     .Append(m.Budget == null ? "-" : m.Budget.Balance.Units + "/" + m.Budget.IncomeReceived.Units + "/" + (int)m.Budget.IncomeSource)

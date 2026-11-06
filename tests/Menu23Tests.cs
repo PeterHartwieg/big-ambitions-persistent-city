@@ -17,7 +17,7 @@ public sealed partial class FoodCommerceTests
     {
         int current=city.Schema;city.Schema=schema<20 ? 19 : schema;
         string wire;
-        try { wire=schema>=21 ? SaveCodec.WriteForSchema(city,schema) : schema<20 ? PopulationSchema19.Write(city) : PopulationSchema20.Write(city); }
+        try { wire=schema>=21 ? DevelopmentChain.Legacy(city, () => SaveCodec.WriteForSchema(city, schema)) : schema<20 ? DevelopmentChain.Legacy(city, () => PopulationSchema19.Write(city)) : DevelopmentChain.Legacy(city, () => PopulationSchema20.Write(city)); }
         finally { city.Schema=current; }
         if(schema!=18) return wire;
         var root=JObject.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");

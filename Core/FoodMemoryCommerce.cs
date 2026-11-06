@@ -39,7 +39,7 @@ namespace PersistentCity.Core
         private void Experience(ResidentMeal meal, ShopExperience cause, double at)
         {
             if (meal.TargetKind == FoodAlternativeKind.Player && city.State.Capabilities.Active)
-                memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, city.FindCitizen(meal.AnchorId)!), MemorySettings);
+                memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, city.FindCitizen(meal.HostId)!), MemorySettings);
         }
 
         private FoodBusiness? FailureEvidence(string businessId, string placeId, double minute, FoodBusiness? observed = null)
@@ -116,7 +116,7 @@ namespace PersistentCity.Core
         internal RegularsProjection Regulars(Func<FoodScope, bool>? currentOwnShop = null)
             => new RegularsProjection(state, (int)(city.State.Minute / 1440), (m, e, day) =>
             {
-                var traits = m.RepresentedTraits ?? city.FindCitizen(m.AnchorId)?.Traits;
+                var traits = m.RepresentedTraits ?? city.FindCitizen(m.HostId)?.Traits;
                 return traits == null ? 0 : FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings);
             }, MemorySettings, currentOwnShop);
 
@@ -131,7 +131,7 @@ namespace PersistentCity.Core
         {
             if (!records.TryGetValue(consumerId, out var meal)) return null;
             int day = (int)(city.State.Minute / 1440);
-            var traits = Traits(meal, city.FindCitizen(meal.AnchorId)!);
+            var traits = Traits(meal, city.FindCitizen(meal.HostId)!);
             var projection = Regulars(currentOwnShop);
             var own = state.Shops.Where(s => currentOwnShop == null || currentOwnShop(s)).ToDictionary(s => s.BusinessId, StringComparer.Ordinal);
             var entries = meal.Memory.Entries.Select(e =>
@@ -145,8 +145,8 @@ namespace PersistentCity.Core
                     Expired = FoodMemoryPolicy.Expired(e, day, MemorySettings) };
             }).ToArray();
             return new { ConsumerId = consumerId, Day = day, Active = city.State.Capabilities.Active,
-                Represented = meal.Slot > 0,
-                StoryKind = meal.Slot > 0 ? "Represented consumer; no physical body" : "Resident's own consumer",
+                Represented = meal.HostSlot > 0,
+                StoryKind = meal.HostSlot > 0 ? "Represented consumer; no physical body" : "Resident's own consumer",
                 Words = ResidentMemoryWords.Capture(state, meal, traits, day, MemorySettings, memoryStore.Reference,
                     id => ResidentAddress.From(city.FindPlace(id)).Label, currentOwnShop),
                 OwnShopRegulars = own.Values.Select(s => new { s.BusinessId, s.PlaceId, Regulars = projection.CountOwnShop(s.BusinessId) }).ToArray(),

@@ -261,7 +261,7 @@ public sealed class FoodCampaignAwarenessTests
         city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
         root=JObject.Parse(DevelopmentChain.Write(city.State));
         int current=city.State.Schema;city.State.Schema=20;
-        root=JObject.Parse(PopulationSchema20.Write(city.State));city.State.Schema=current;
+        root=JObject.Parse(DevelopmentChain.Legacy(city.State, () => PopulationSchema20.Write(city.State)));city.State.Schema=current;
         string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         DevelopmentChain.RequireRefusedCapabilities(source);
         var read=DevelopmentChain.RefusedThenRead(data,"weighted");Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
@@ -280,7 +280,7 @@ public sealed class FoodCampaignAwarenessTests
         var (heldCity,_,_)=WeightedFoodChoiceTests.Ready(79,24);heldCity.State.Food!.AwarenessStartsDay=1;
         heldCity.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
         heldCity.InspectFoodAwareness("r");heldCity.AdvanceTo(heldCity.State.Food.Residents[0].DesiredAt,1);
-        heldCity.State.Schema=20;var heldRoot=JObject.Parse(PopulationSchema20.Write(heldCity.State));heldCity.State.Schema=current;
+        heldCity.State.Schema=20;var heldRoot=JObject.Parse(DevelopmentChain.Legacy(heldCity.State, () => PopulationSchema20.Write(heldCity.State)));heldCity.State.Schema=current;
         var heldRead=DevelopmentChain.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
         Assert.Equal(JsonConvert.SerializeObject(heldCity.State.Food.Residents[0].Decision),JsonConvert.SerializeObject(heldRead.State!.Food!.Residents[0].Decision));
         var legacy19=JObject.Parse(WeatherTests.As19(heldRoot.ToString(Formatting.None)));

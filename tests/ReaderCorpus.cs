@@ -116,7 +116,7 @@ internal static class ReaderCorpusRecipes
         {
             state.Schema = schema < 20 ? 19 : schema;
             if (schema >= 23) state.MenuPolicy = FoodMenuPolicy.Wire;
-            wire = schema >= 21 ? PopulationSchema24.WriteForSchema(state, schema) : schema == 20 ? PopulationSchema20.Write(state) : PopulationSchema19.Write(state);
+            wire = schema >= 21 ? DevelopmentChain.Legacy(state, () => PopulationSchema24.WriteForSchema(state, schema)) : schema == 20 ? DevelopmentChain.Legacy(state, () => PopulationSchema20.Write(state)) : DevelopmentChain.Legacy(state, () => PopulationSchema19.Write(state));
         }
         finally { state.Schema = current; state.MenuPolicy = policy; }
         if (schema != 18) return wire;

@@ -84,7 +84,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 3);
         foreach (var meal in city.State.Food!.Residents)
         {
-            if (meal.Slot == 0) Assert.Null(meal.RepresentedTraits);
+            if (meal.HostSlot == 0) Assert.Null(meal.RepresentedTraits);
             else Assert.Equal(ResidentTraits.Generate(city.State.Seed, meal.ResidentId).Bands, meal.RepresentedTraits!.Bands);
         }
         var before = city.State.Citizens.ToDictionary(c => c.Identity.Id, c => c.Traits);
@@ -140,7 +140,7 @@ public sealed partial class FoodCommerceTests
         foreach (var meal in migrated.Food.Residents)
         {
             Assert.Null(meal.Decision); Assert.Equal("", meal.LastContextKey); Assert.Equal(0, meal.ContextAttempts);
-            Assert.Equal(meal.Slot == 0 ? null : ResidentTraits.Generate(migrated.Seed, meal.ResidentId).Bands, meal.RepresentedTraits?.Bands);
+            Assert.Equal(meal.HostSlot == 0 ? null : ResidentTraits.Generate(migrated.Seed, meal.ResidentId).Bands, meal.RepresentedTraits?.Bands);
             var outcomes = meal.Today!;
             Assert.Equal(meal.Day, outcomes.Day);
             Assert.Equal(MealOutcomes.Index(meal.Kind), outcomes.Unrecorded);
@@ -189,12 +189,12 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2);
         var food = city.State.Food!;
         food.ChoiceStartsDay=0; // This fixture deliberately constructs an already active decision.
-        var first = food.Residents.First(m => m.Slot == 0);
+        var first = food.Residents.First(m => m.HostSlot == 0);
         first.Today = new ResidentFoodToday { Day = 0, Meals = {
             new MealOutcomeRecord { Kind = MealKind.Breakfast, Status = MealOutcomeStatus.ChoseAlternative, Reason = MealReasonCode.PrefersAlternative, Outside = FoodOutsideOption.FundedHouseholdFood, At = 500 },
             new MealOutcomeRecord { Kind = MealKind.Lunch, Status = MealOutcomeStatus.Skipped, Reason = MealReasonCode.QueueTooLong, At = 760, Factor1 = MealFactor.Queue },
             new MealOutcomeRecord { Kind = MealKind.Dinner, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.Bought, PlaceId = "address:Gone%20Street:1:shop", ProductId = "pastry", At = 1150, CheckoutAt = 1150 } } };
-        var decided = food.Residents.Last(m => m.Slot == 1);
+        var decided = food.Residents.Last(m => m.HostSlot == 1);
         decided.LastContextKey = "work@1440"; decided.ContextAttempts = 1;
         Route Walk(Position from, Position to) => new Route { Legs = { new RouteLeg { From = from, To = new((from.X + to.X) / 2, 0, 0), Minutes = 1, Mode = TravelMode.Walk },
             new RouteLeg { From = new((from.X + to.X) / 2, 0, 0), To = to, Minutes = 1, Mode = TravelMode.Walk } } };

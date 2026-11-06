@@ -82,24 +82,26 @@ namespace PersistentCity.Runtime
                 foreach (var reg in current.BuildingRegistrations) addresses[reg.Address] = reg;
             current.modData.TryGetValue(FoodAuthorityStore.Key, out payload);
             awaitingPopulation = payload == null && current.modData.ContainsKey(SaveStore.StateKey);
+            current.modData.TryGetValue(SaveStore.StateKey, out var populationPayload);
+            if (SaveCodec.DevelopmentSchemaOf(populationPayload) != null)
+            {
+                // An older development city is refused, not migrated: take no authority, write no key, and let native
+                // customers return after the loaded hour (FoodAuthorityStandDown). An unreadable or ahead manifest
+                // protects nothing, so every player business is native at once; it is never rewritten.
+                string? manifest = payload;
+                StandDown = FoodAuthorityStandDown.FromManifest(() => FoodAuthorityStore.Read(manifest), Hour, out var problem);
+                awaitingPopulation = false; releaseWithoutMarket = false;
+                if (problem != null) Debug.LogWarning("[Persistent City] " + problem + "; refused development city, every player business is native.");
+                return;
+            }
             try
             {
-                current.modData.TryGetValue(SaveStore.StateKey, out var populationPayload);
-                bool development = SaveCodec.DevelopmentSchemaOf(populationPayload) != null;
-                if (populationPayload != null && !development) SaveCodec.RequireExecutableCapabilities(populationPayload);
+                if (populationPayload != null) SaveCodec.RequireExecutableCapabilities(populationPayload);
                 foreach (var row in FoodAuthorityStore.Read(payload))
                 {
                     if (row.RequestedHour > Hour || row.FromHour > Hour || row.UntilHour > Hour)
                         throw new InvalidOperationException("Food authority is ahead of the loaded native clock; original payload retained.");
                     records.Add(row.PlaceId, row);
-                }
-                if (development)
-                {
-                    // An older development city is refused, not migrated: take no authority, write no key, and let
-                    // native customers return after the loaded hour (FoodAuthorityStandDown).
-                    StandDown = new FoodAuthorityStandDown(records.Values, Hour);
-                    awaitingPopulation = false; releaseWithoutMarket = false;
-                    return;
                 }
                 releaseWithoutMarket = records.Values.Any(row => row.Managed && !row.Desired);
                 if (releaseWithoutMarket) ObserveReleaseRegistrations();

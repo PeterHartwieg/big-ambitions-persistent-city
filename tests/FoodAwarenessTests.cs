@@ -253,7 +253,7 @@ public sealed class FoodAwarenessTests
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food.Residents.Single().DesiredAt,1);
         if(!predecessor) return JObject.Parse(DevelopmentChain.Write(city.State));
-        city.State.Schema=19;return JObject.Parse(PopulationSchema19.Write(city.State));
+        city.State.Schema=19;return JObject.Parse(DevelopmentChain.Legacy(city.State, () => PopulationSchema19.Write(city.State)));
     }
     [Fact]
     public void Schema18MigratesOnceAndNeverRecapturesHeldShortlist()

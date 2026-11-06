@@ -252,12 +252,13 @@ namespace PersistentCity.Persistence
             Require(reader.TokenType == JsonToken.EndArray, "Incomplete station table.");
         }
 
-        private static void CheckResidentTuple26(JsonReader reader, TokenText text)
+        private static void CheckResidentTuple26(JsonReader reader, TokenText text, ref int records)
         {
             Require(reader.TokenType == JsonToken.String, "Invalid person tuple.");
             string value = (string)reader.Value!;
             ParseResidentTuple26(value);
             Require(text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid person tuple encoding.");
+            Charge(ref records); // one fixed tuple per resident person
         }
 
         /// <summary>After a schema-26 decode and before validation: reconcile resident Employment with DayPlaceId and
@@ -285,20 +286,31 @@ namespace PersistentCity.Persistence
             }
             var food = state.Food;
             if (food == null) { Require(state.Visitors.Count == 0, "Visitor persons require a food roster in writer 26."); return; }
-            int residents = state.Citizens.Count;
-            Require(residents > 0 && state.Visitors.Count % residents == 0 && state.Visitors.Count / residents <= 2,
-                "Visitor persons are not the represented consumers of the residents.");
-            food.RepresentationFactor = 1 + state.Visitors.Count / residents;
-            var hosts = RepresentedHosts26(state, food.RepresentationFactor);
+            // Factor-1 roster rule: every record is its own person's (slot 0, own anchor, stored factor 1). The host
+            // and slot of today's represented excursion are a scheduling adapter, assigned from the person table.
+            var hosts = RepresentedHosts26(state, SchedulingFactor26(state));
+            food.RepresentationFactor = 1;
             Require(food.Residents != null, "Missing meal roster.");
             var residentIds = new HashSet<string>(state.Citizens.Select(c => c.Identity?.Id ?? ""), StringComparer.Ordinal);
             foreach (var meal in food.Residents)
             {
                 Require(meal != null, "Null meal roster record.");
-                if (residentIds.Contains(meal.ResidentId)) { meal.AnchorId = meal.ResidentId; meal.Slot = 0; }
-                else if (hosts.TryGetValue(meal.ResidentId, out var host)) { meal.AnchorId = host.Anchor; meal.Slot = host.Slot; }
+                meal.AnchorId = meal.ResidentId; meal.Slot = 0;
+                if (residentIds.Contains(meal.ResidentId)) meal.AssignHost(meal.ResidentId, 0);
+                else if (hosts.TryGetValue(meal.ResidentId, out var host)) meal.AssignHost(host.Anchor, host.Slot);
                 else Fail("Meal roster record has no person: " + meal.ResidentId);
             }
+        }
+
+        /// <summary>Represented consumers per resident for today's excursion schedule (1 + visitors / residents).</summary>
+        private static int SchedulingFactor26(CityState state)
+        {
+            Require(state.Citizens != null && state.Visitors != null, "Missing person table.");
+            int residents = state.Citizens.Count;
+            if (state.Visitors.Count == 0) return 1;
+            Require(residents > 0 && state.Visitors.Count % residents == 0 && state.Visitors.Count / residents <= 2,
+                "Visitor persons are not the represented consumers of the residents.");
+            return 1 + state.Visitors.Count / residents;
         }
 
         /// <summary>The represented consumer IDs FoodRepresentation would enrol for this factor, by host.</summary>
@@ -335,10 +347,8 @@ namespace PersistentCity.Persistence
             }
             var residents = new HashSet<string>(state.Citizens.Select(c => c.Identity.Id), StringComparer.Ordinal);
             var food = state.Food;
-            int factor = food?.RepresentationFactor ?? 1;
             Require(food != null || state.Visitors.Count == 0, "Visitor persons require a food roster in writer 26.");
-            Require((long)state.Visitors.Count == (long)(factor - 1) * state.Citizens.Count, "Visitor persons differ from the represented roster.");
-            var hosts = RepresentedHosts26(state, factor);
+            var hosts = RepresentedHosts26(state, SchedulingFactor26(state));
             int visitorSequences = 0;
             string? previous = null;
             foreach (var visitor in state.Visitors)
@@ -390,7 +400,54 @@ namespace PersistentCity.Persistence
                 }
             }
             Require(state.NextVisitorSequence >= 1 && state.NextVisitorSequence - 1 == visitorSequences, "Visitor creation and active counts disagree.");
-            return state.Visitors.Count;
+            ValidateOwnership26(state);
+            // One record per person tuple (resident P and visitor) and per station entry, as the streaming check charges.
+            return state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
+        }
+
+        /// <summary>The F5b ownership contract (rules 1-5, duplication guards) over the saved person table. Two facts are
+        /// accepted, each producing exactly one violation that is subtracted: resident IDs stay opaque (contract B1, so
+        /// a resident ID outside the c&lt;n&gt;/pc:&lt;n&gt; formats is allowed), and a represented visitor arrives through
+        /// no portal (an empty OriginPortalId).</summary>
+        private static void ValidateOwnership26(CityState state)
+        {
+            var food = state.Food;
+            var persons = new List<PersonFacts>(state.Citizens.Count + state.Visitors.Count);
+            int tolerated = 0;
+            var employments = new List<Employment>();
+            foreach (var resident in state.Citizens)
+            {
+                persons.Add(new PersonFacts(resident.Identity.Id, PersonKind.Resident, resident.HomeId, null, resident.Car != null));
+                if (!PersonIds.FitsKind(PersonIds.Classify(resident.Identity.Id), PersonKind.Resident)) tolerated++;
+                var job = PersonTable.ResidentEmployment(resident);
+                if (job != null) employments.Add(job);
+            }
+            foreach (var visitor in state.Visitors)
+            {
+                persons.Add(new PersonFacts(visitor.Id, PersonKind.Visitor, "", visitor.Stay));
+                if (visitor.Stay.OriginPortalId.Length == 0) tolerated++;
+                if (visitor.Employment != null) employments.Add(visitor.Employment);
+            }
+            persons.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+            var input = new OwnershipInput
+            {
+                Persons = persons, Employments = employments, PortalIds = state.Portals,
+                HomePlaceIds = state.Places.Where(p => p.Kind == PlaceKind.Home).Select(p => p.Id).OrderBy(id => id, StringComparer.Ordinal).ToList(),
+                Workplaces = state.Places.Where(p => p.Kind == PlaceKind.Work || p.Kind == PlaceKind.Study)
+                    .OrderBy(p => p.Id, StringComparer.Ordinal).Select(p => new WorkplaceFacts(p.Id, p.Kind)).ToList(),
+                FoodEnabled = food != null, FinancesEnabled = food != null && food.HouseholdFinanceVersion != 0,
+            };
+            if (food != null)
+            {
+                input.Roster = food.Residents.Select(m => new RosterFacts(m.ResidentId, m.AnchorId, m.Slot)).ToList();
+                input.Wallets = food.Residents.Where(m => m.Budget != null).Select(m => new WalletFacts(MoneyOwnerKind.Person, m.ResidentId)).ToList();
+                input.Intents = food.Residents.Select(m => new DemandUnitFacts(m.IntentId, m.ResidentId)).ToList();
+            }
+            var validator = new OwnershipValidator();
+            if (validator.Validate(input) || validator.ViolationCount == tolerated
+                && validator.Violations.All(v => v.Rule == OwnershipRule.PersonIdFormat || v.Rule == OwnershipRule.UnknownPortal)) return;
+            var shown = validator.Violations.FirstOrDefault(v => v.Rule != OwnershipRule.PersonIdFormat && v.Rule != OwnershipRule.UnknownPortal);
+            Fail("Ownership contract violated: " + (shown.Subject == null ? validator.ViolationCount + " violations" : shown.ToString()) + ".");
         }
     }
 }

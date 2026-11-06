@@ -14,7 +14,7 @@ public sealed partial class FoodCommerceTests
     internal static string E5d_Wire24(CityState state)
     {
         int schema = state.Schema; string policy = state.MenuPolicy;
-        try { state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire; return PopulationSchema24.Write(state); }
+        try { state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire; return DevelopmentChain.Legacy(state, () => PopulationSchema24.Write(state)); }
         finally { state.Schema = schema; state.MenuPolicy = policy; }
     }
     static JObject E5d_Offer(JObject root) => (JObject)root["Food"]!["Residents"]!
@@ -151,8 +151,8 @@ public sealed partial class FoodCommerceTests
         var old = PopulationSchema24.CountRecordsForSchema(oldState, before, 24);
         string wire = DevelopmentChain.Write(city.State);
         var current = SaveCodec.CountRecords(city.State, wire);
-        // Schema 26 also charges one fixed tuple per visitor person (the represented consumers).
-        int added = city.State.ProductNames.Count + city.State.Visitors.Count + city.State.Food.Residents.Where(m => m.Decision != null)
+        // Schema 26 also charges one fixed tuple per person: each resident's P and each visitor (the represented consumers).
+        int added = city.State.ProductNames.Count + city.State.Citizens.Count + city.State.Visitors.Count + city.State.Food.Residents.Where(m => m.Decision != null)
             .Sum(m => m.Decision!.Shops.Sum(s => s.Offers.Count));
         Assert.Equal(old.Streaming + added, current.Streaming);
         Assert.Equal(old.Semantic + added, current.Semantic);
