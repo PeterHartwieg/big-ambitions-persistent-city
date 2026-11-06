@@ -1,0 +1,24 @@
+{
+  "schema": 25,
+  "readerWhenFrozen": "SaveCodec",
+  "writerCommit": "4ee0c8d",
+  "rigFixture": "pc-schema-25-ref@1 / pc-representative-957@1: pending production in big-ambitions-agent-rig (491ffbf); not sealed",
+  "fixtures": [
+    {
+      "file": "full.json",
+      "sha256": "2085efd217a9397ac1b491a26ecb37411ff65061ae920aa7b206686ec6782dc1",
+      "characters": 6083,
+      "builder": "FoodCommerceTests.S17_Full (2 residents, factor 2, three meals, active decision with routes, outcomes)",
+      "recipe": "ReaderCorpusRecipes.Project(city, 25)",
+      "kind": "synthetic offline payload from test builders; not a native save"
+    },
+    {
+      "file": "minimal.json",
+      "sha256": "ca3965dd083a42e19c44ecb80eff7bec34d3cfcddf61e7a2d2cbc2d1cd1702dd",
+      "characters": 1646,
+      "builder": "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)",
+      "recipe": "ReaderCorpusRecipes.Project(city, 25)",
+      "kind": "synthetic offline payload from test builders; not a native save"
+    }
+  ]
+}

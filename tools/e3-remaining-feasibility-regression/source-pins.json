@@ -1,7 +1,7 @@
 {
   "Runtime/DirectStockShowcaseReader.cs": "678fffacdc4bd6c89ac357774020521a7cdf73cdbeb57626140f125688d5a2d7",
   "Runtime/RemainingBatchFeasibilityReaders.cs": "a7f515ab12d58d8ad031fd2d75c0dde3b335d7d898a841f80a28a4a7f9e5bfe1",
-  "tools/build.py": "1703b7dceff6c07dcef10141918cd70b0065f01e2ed581b71fdb06da86abe981",
+  "tools/build.py": "5003522b4939eb1f1336c13039697c397a619e4deb67ca003ea76da8cf7d0475",
   "tools/donut-feasibility-regression/source_checks.py": "fa880f2783597eb9378371d55039ad615586ae019fddd1b389799ff630d9f972",
   "tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj": "1190471abdfcc774de979e05da1b497d25b53b80b8c9e5755c0098f90e808e88",
   "tools/e3-remaining-feasibility-regression/Program.cs": "ca37c4d80d1a5b8dc66d17557662cfd8972f238f513949014882a010b42ef266",
