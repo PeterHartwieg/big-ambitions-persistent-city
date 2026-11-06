@@ -173,6 +173,10 @@ namespace PersistentCity.Runtime
                 + ", resting=" + StreetLifeRestingMaximumMinutes + "; new stops only.");
         }
         public bool Enabled { get; set; } = true;
+        /// <summary>F7a save-cost recording default: off, so ordinary saves do no timing or counting work.</summary>
+        public const bool SaveCostDiagnosticsDefault = false;
+        /// <summary>Arms the explicit F7a save-cost record from startup (diagnostic profiles only).</summary>
+        public bool SaveCostDiagnostics { get; set; } = SaveCostDiagnosticsDefault;
         public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
         public bool PhysicalEnabled { get; set; } = true;
         public int MaximumPedestrians { get; set; } = 48;

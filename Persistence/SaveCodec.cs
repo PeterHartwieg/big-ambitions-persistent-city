@@ -55,17 +55,27 @@ namespace PersistentCity.Persistence
 
         public static string Write(CityState state) => WriteForSchema(state,CityState.CurrentSchema);
 
-        internal static string WriteForSchema(CityState state,int schema)
+        /// <summary>Same bytes as <see cref="Write(CityState)"/>; a non-null recorder also times its phases (F7a).</summary>
+        public static string Write(CityState state, SaveCostRecorder? cost) => WriteForSchema(state,CityState.CurrentSchema,cost);
+
+        internal static string WriteForSchema(CityState state,int schema) => WriteForSchema(state,schema,null);
+
+        internal static string WriteForSchema(CityState state,int schema,SaveCostRecorder? cost)
         {
             if (schema < 25) return PopulationSchema24.WriteForSchema(state, schema);
             if (state == null) throw new SaveValidationException("State is null.");
+            cost?.Enter(SaveCostPhase.Synchronize);
             state.PrepareForSave();
             InitializeOutflow24(state, schema);
             if (schema >= 25) PrepareNames25(state);
+            cost?.Enter(SaveCostPhase.Validate);
             Validate(state,schema);
+            cost?.Enter(SaveCostPhase.Encode);
             var json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
-            Require(System.Text.Encoding.UTF8.GetByteCount(json) <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
+            int bytes = System.Text.Encoding.UTF8.GetByteCount(json);
+            Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
+            cost?.Payload(json.Length, bytes);
             return json;
         }
 
