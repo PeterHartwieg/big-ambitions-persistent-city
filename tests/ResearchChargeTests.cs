@@ -13,6 +13,11 @@ using Xunit.Abstractions;
 /// ChangeMoneySafe and ChangeMoney contract read at BigAmbitions.dll 9427561b...: false before any change when
 /// money is short, otherwise binary32 Money += amount, one queued record with balance floor(Money), then the
 /// money-change event. Offline only; no native evidence.</summary>
+/// <summary>Runs alone: the postfix timing must not share the CPU and GC with the parallel suite.</summary>
+[CollectionDefinition(nameof(ResearchChargeTests), DisableParallelization = true)]
+public sealed class ResearchChargeSerialCollection { }
+
+[Collection(nameof(ResearchChargeTests))]
 public sealed class ResearchChargeTests
 {
     private const double Minute = 9 * 60 + 30;
@@ -52,10 +57,27 @@ public sealed class ResearchChargeTests
         public float Balance { get { Calls++; BalanceReads++; return Money; } }
         public int BilledDay { get { Calls++; return Day - 1; } }
 
+        /// <summary>When set, the double does the native port's work: TryResolve walks every registration and builds
+        /// NativeFoodMarket.PlaceId for each player-rented one, and Tail and CollectTaggedAfter walk the whole queue.</summary>
+        public List<(string Street, int Number, bool Rented)>? Registrations;
+
         public bool TryResolve(ResearchOrder order, out ResearchChargeTarget? target)
         {
             Calls++;
             target = null;
+            if (Registrations != null)
+            {
+                foreach (var registration in Registrations)
+                {
+                    if (!registration.Rented) continue;
+                    string place = "address:" + Uri.EscapeDataString(registration.Street) + ":"
+                        + registration.Number.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":shop";
+                    if (place != order.BusinessAddress) continue;
+                    target = new ResearchChargeTarget("Name of " + place, Businesses[place]);
+                    return true;
+                }
+                return false;
+            }
             if (!Businesses.TryGetValue(order.BusinessAddress, out var address) || Ineligible.Contains(order.BusinessAddress)) return false;
             target = new ResearchChargeTarget("Name of " + order.BusinessAddress, address);
             return true;
@@ -67,12 +89,21 @@ public sealed class ResearchChargeTests
             foreach (var record in Queue) if (Tagged(record, out var row)) into.Add(row);
         }
 
-        public object? Tail() { Calls++; return Queue.Count == 0 ? null : Queue[Queue.Count - 1]; }
+        public object? Tail()
+        {
+            Calls++;
+            if (Registrations == null) return Queue.Count == 0 ? null : Queue[Queue.Count - 1];
+            Record? last = null;
+            foreach (var record in Queue) last = record; // native Queue<Transaction> has no end accessor
+            return last;
+        }
 
         public void CollectTaggedAfter(object? tail, List<ResearchChargeRecord> into)
         {
             Calls++;
-            int start = tail == null ? 0 : Queue.FindIndex(r => ReferenceEquals(r, tail)) + 1; // -1 + 1: tail dropped
+            int start = 0;
+            if (tail != null)
+                for (int i = 0; i < Queue.Count; i++) if (ReferenceEquals(Queue[i], tail)) { start = i + 1; break; } // not found: tail dropped
             for (int i = start; i < Queue.Count; i++) if (Tagged(Queue[i], out var row)) into.Add(row);
         }
 
@@ -718,7 +749,16 @@ public sealed class ResearchChargeTests
                 for (int i = 0; i < 1000; i++)
                     port.Queue.Add(new Record { Type = i % 7 == 0 ? ResearchCharge.MarketingType : "ba:transaction_rent", Amount = -10, Day = 40,
                         Data = new Dictionary<string, string> { { "businessName", "b" + (i % 13) } } });
-                for (int i = 0; i < orders; i++) Surveyed(ledger, port, "shop-" + i, ResearchProducts.All[i % 3].Code);
+                // A city with 2,000 registrations, 20 of them rented by the player; orders go to the last rented ones,
+                // so every resolution walks the whole list and builds 20 place IDs.
+                port.Registrations = new List<(string, int, bool)>(2000);
+                for (int i = 0; i < 2000; i++) port.Registrations.Add(("Street " + (i % 97), i, i % 100 == 99));
+                for (int i = 0; i < orders; i++)
+                {
+                    var (street, number, _) = port.Registrations[(19 - i) * 100 + 99];
+                    string place = "address:" + Uri.EscapeDataString(street) + ":" + number + ":shop";
+                    Surveyed(ledger, port, place, ResearchProducts.All[i % 3].Code);
+                }
                 long start = Stopwatch.GetTimestamp();
                 long allocated = GC.GetAllocatedBytesForCurrentThread();
                 if (session.HasWork) session.Boundary();
