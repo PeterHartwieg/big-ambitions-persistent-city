@@ -55,20 +55,25 @@ namespace PersistentCity.Core
     }
     public sealed class ResidentMeal
     {
+        // F6c: transient panel counters (never saved); see ResidentBudget.counters.
+        internal FoodMoneyCounters? counters;
+        private MealStatus status;
+        private MealExcursion? excursion;
+        private ResidentBudget? budget;
         public string ResidentId { get; set; } = "";
         public string AnchorId { get; set; } = "";
         public int Slot { get; set; }
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; }
         public bool NeedsHomeResync { get; set; }
-        public MealExcursion? Excursion { get; set; }
+        public MealExcursion? Excursion { get => excursion; set { var c = counters; if (c == null) excursion = value; else { var old = excursion; excursion = value; c.Replaced(old, value); } } }
         public int Day { get; set; }
         public MealKind Kind { get; set; }
         public Money DayAllowanceUsed { get; set; }
         public double DesiredAt { get; set; }
         public double ExpiresAt { get; set; }
         public double DueAt { get; set; }
-        public MealStatus Status { get; set; }
+        public MealStatus Status { get => status; set { var c = counters; if (c == null) status = value; else { var old = status; status = value; c.Restatus(old, value); } } }
         public string PlaceId { get; set; } = "";
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
@@ -79,7 +84,7 @@ namespace PersistentCity.Core
         public double ServiceAt { get; set; }
         public double Deadline { get; set; }
         public double ReturnMinutes { get; set; }
-        public ResidentBudget? Budget { get; set; }
+        public ResidentBudget? Budget { get => budget; set { var c = counters; if (c == null) budget = value; else { var old = budget; budget = value; c.Replaced(old, value); } } }
         public bool ExistingStop { get; set; }
         public long ExistingStopPurchases { get; set; }
         public long Purchases { get; set; }
@@ -163,8 +168,9 @@ namespace PersistentCity.Core
         bool IsConfirmedPaid(ResidentMeal meal);
     }
 
-    /// <summary>Sequential meal opportunities sharing one resident wallet. No nutrition or
-    /// closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
+    /// <summary>Sequential meal opportunities, each paid from its own consumer's budget (with household
+    /// finances on, one ResidentBudget per roster record, seeded by consumer ID; no shared or household
+    /// wallet). No nutrition or closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
     public sealed partial class FoodCommerce
     {
         private sealed class Order : IComparer<ResidentMeal>
@@ -219,6 +225,7 @@ namespace PersistentCity.Core
                     || entry.Decision?.Shops.Any(s => s.AlternativeKind == FoodAlternativeKind.Rival) == true)) rivalResumeNeedsRefresh = true;
             }
             budgetDue.Build();
+            Feedback = FoodMoneyCounters.Attach(state);
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
         private static string ReservationKey(string shop, string product) => shop + "\n" + product;
@@ -255,7 +262,7 @@ namespace PersistentCity.Core
             meal.Allowance = consumer.DailyAllowance;
             if (state.HouseholdFinanceVersion != 0) CreateBudget(meal, person);
             StartMeal(meal, person, (int)(city.State.Minute / 1440), state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast);
-            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); return meal;
+            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal); return meal;
         }
         private void StartMeal(ResidentMeal meal, CitizenState person, int day, MealKind kind)
         {

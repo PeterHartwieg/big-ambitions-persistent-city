@@ -19,7 +19,12 @@ namespace PersistentCity.Runtime
             "ba:businesstype_gym", "ba:businesstype_nightclub", "ba:businesstype_cinema", "ba:businesstype_theater"
         };
 
-        public static List<Place> Read()
+        public static List<Place> Read() => Read(null);
+
+        /// <summary>Optionally also records census facts for each established business from the
+        /// same read: the catalogue area already read for homes, player ownership and the rival
+        /// AI staff list length. Field reads only; the census sink changes no returned place.</summary>
+        public static List<Place> Read(List<CensusWorkplace>? census)
         {
             var places = new List<Place>();
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -89,16 +94,29 @@ namespace PersistentCity.Runtime
                 }
                 // Unknown/closed schedules remain closed (0,0); no invented business opening hours.
                 weekly.Sort((a, b) => a.Day != b.Day ? a.Day.CompareTo(b.Day) : a.FromMinute != b.FromMinute ? a.FromMinute.CompareTo(b.FromMinute) : a.ToMinute.CompareTo(b.ToMinute));
+                bool school = registration.businessTypeName == "ba:businesstype_school";
+                if (census != null && !ids.Contains(PlaceId(PlaceKind.Work)))
+                {
+                    interiorAreas.TryGetValue(building.BuildingSize ?? "", out int businessArea);
+                    var staff = registration.aiEmployees;
+                    census.Add(new CensusWorkplace
+                    {
+                        WorkPlaceId = PlaceId(PlaceKind.Work), StudyPlaceId = school ? PlaceId(PlaceKind.Study) : "",
+                        AreaSquareMetres = Math.Max(0, businessArea), PlayerOwned = registration.RentedByPlayer,
+                        NativeStaff = !registration.RentedByPlayer && !string.IsNullOrEmpty(registration.businessOwnerRivalId) && staff != null ? staff.Count : -1
+                    });
+                }
                 Add(PlaceKind.Work, registration.BusinessName, BusinessAllocation, 0, 0);
-                if (registration.businessTypeName == "ba:businesstype_school") Add(PlaceKind.Study, registration.BusinessName, BusinessAllocation, 0, 0);
+                if (school) Add(PlaceKind.Study, registration.BusinessName, BusinessAllocation, 0, 0);
                 else if (LeisureTypes.Contains(registration.businessTypeName)) Add(PlaceKind.Leisure, registration.BusinessName, BusinessAllocation, 0, 0);
                 if (building.BuildingType == "ba:buildingtype_retail")
                     Add(PlaceKind.Shop, registration.BusinessName, BusinessAllocation, 0, 0,
                         copyWeeklyHours: IsRetailShopActivity(registration.businessTypeName));
 
+                string PlaceId(PlaceKind kind) => "address:" + address + ":" + kind.ToString().ToLowerInvariant();
                 void Add(PlaceKind kind, string name, int capacity, int opening, int closing, double residentialArea = 0, string? evidence = null, bool copyWeeklyHours = true)
                 {
-                    string id = "address:" + address + ":" + kind.ToString().ToLowerInvariant();
+                    string id = PlaceId(kind);
                     if (!ids.Add(id)) return;
                     var place = new Place { Id = id, Name = string.IsNullOrWhiteSpace(name) ? addressName : name, District = district, Kind = kind, Position = entrance,
                         Capacity = capacity, OpenMinute = opening, CloseMinute = closing,
