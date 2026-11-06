@@ -8,15 +8,17 @@ namespace PersistentCity.Core
 {
     public readonly struct AdvanceResult
     {
-        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0)
-        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; }
+        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0, int researchUnits = 0)
+        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; ResearchUnits = researchUnits; }
         /// <summary>Total bounded work units, including citizen, traffic and food continuation units.</summary>
         public int Events { get; }
         public int TrafficEvents { get; }
         /// <summary>Bounded shared awareness-index preparation and already-started food decision units,
         /// including commit. Begin counts once as a citizen event; these units use the same work/time caps.</summary>
         public int FoodContinuationEvents { get; }
-        public int CitizenEvents => Events - TrafficEvents - FoodContinuationEvents;
+        /// <summary>Bounded research survey units (index or C4 engine) run inside the hold.</summary>
+        public int ResearchUnits { get; }
+        public int CitizenEvents => Events - TrafficEvents - FoodContinuationEvents - ResearchUnits;
         public bool CaughtUp { get; }
         /// <summary>A citizen event is waiting for a route answer. The clock stays at that event's minute
         /// until ContinuePlanning reports completion; nothing else advances meanwhile.</summary>
@@ -79,6 +81,17 @@ namespace PersistentCity.Core
             food = new FoodCommerce(this, market, routes, choiceSettings, memorySettings, awarenessSettings, memory, campaign, rivalSettings);
         }
 
+        private ResearchSurveyRunner? research;
+        /// <summary>The attached research survey runner, or null.</summary>
+        public ResearchSurveyRunner? Research => research;
+        /// <summary>C5b seam: surveys the ledger's Ordered orders inside the F1 hold. The ledger is not part of
+        /// CityState here; the caller owns it (C5e attaches CityState.Research the same way).</summary>
+        public ResearchSurveyRunner AttachResearch(ResearchLedger ledger, int consumersPerUnit = 256, Func<string, string?>? businessPlace = null)
+        {
+            if (research != null) throw new InvalidOperationException("Research already attached.");
+            return research = new ResearchSurveyRunner(this, ledger, consumersPerUnit, businessPlace);
+        }
+
         /// <summary>Explicit place/catalogue publication notification for non-versioned Core providers.</summary>
         public void InvalidateFoodAwareness() => food?.InvalidateAwareness();
         /// <summary>On-demand read-only bridge diagnostic. Does not create a context, request routes,
@@ -135,6 +148,8 @@ namespace PersistentCity.Core
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
+            // A running survey is transient; the replacement starts it again from zero.
+            if (research != null) replacement.AttachResearch(research.Ledger, research.ConsumersPerUnit, research.BusinessPlace);
             return replacement;
         }
 
@@ -217,6 +232,8 @@ namespace PersistentCity.Core
             // A queued campaign publication belongs to the epoch that observed its hour boundary.
             // It holds native time (IsCaughtUpTo) but is never unfinished previous-epoch work.
             => (food?.HasPendingCampaignPublication != true || inspectSavedFood)
+            // An open research survey holds native time the same way and is not previous-epoch work either.
+            && (research == null || inspectSavedFood || !research.HoldsThrough(targetMinute))
             && (pending == null || inspectSavedFood && pending.Item.Minute > targetMinute)
             && (food?.HasPendingDecision != true || inspectSavedFood && food!.NextMinute > targetMinute)
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
@@ -232,7 +249,7 @@ namespace PersistentCity.Core
             if (State.Food != null && food == null) throw new InvalidOperationException("Saved food economy requires its market before advancing.");
             EnsureTrafficNetwork();
             ValidatePhysicalClock(targetMinute);
-            int count = 0, trafficCount = 0, foodContinuationCount = 0;
+            int count = 0, trafficCount = 0, foodContinuationCount = 0, researchCount = 0;
             if (pending != null)
             {
                 // The non-frame path finishes an interrupted event inline; a frame slice leaves it to ContinuePlanning.
@@ -251,6 +268,9 @@ namespace PersistentCity.Core
                 double foodMinute = food?.NextMinute ?? double.PositiveInfinity;
                 double activation = State.Capabilities.Active ? double.PositiveInfinity : (Math.Floor(State.Minute / 1440) + 1) * 1440;
                 double next = Math.Min(activation, Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute)));
+                // A survey runs once everything through its SurveyAtMinute has drained, before the next event.
+                if (research != null && research.ReadyBefore(next, targetMinute))
+                { research.Continue(); count++; researchCount++; continue; }
                 if (next > targetMinute) break;
                 State.Minute = next;
                 if (next == activation) { State.Capabilities.Active = true; count++; continue; }
@@ -288,13 +308,13 @@ namespace PersistentCity.Core
                     continue;
                 }
                 if (!RunEvent(item, inline: publishSnapshot))
-                    return new AdvanceResult(count, false, trafficCount, planningPending: true, foodContinuationEvents: foodContinuationCount);
+                    return new AdvanceResult(count, false, trafficCount, planningPending: true, foodContinuationEvents: foodContinuationCount, researchUnits: researchCount);
                 count++;
             }
             bool caughtUp = NoEventsThrough(targetMinute);
             if (caughtUp) { traffic?.AdvanceTo(targetMinute, 0); State.Minute = targetMinute; }
             if (publishSnapshot) SynchronizeSnapshot();
-            return new AdvanceResult(count, caughtUp, trafficCount, foodContinuationEvents: foodContinuationCount);
+            return new AdvanceResult(count, caughtUp, trafficCount, foodContinuationEvents: foodContinuationCount, researchUnits: researchCount);
         }
 
         // One citizen event in flight. The event runs on a working copy of the resident, so the published
