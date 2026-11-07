@@ -31,6 +31,7 @@ public sealed class Schema18ReviewTests
     }
 
     [Theory]
+    [InlineData(typeof(ResidentBudget), 20, CityState.EconomicLedgerSchema)]
     [InlineData(typeof(ResidentBudget), 19, 25)] [InlineData(typeof(ResidentBudget), 19, 26)]
     [InlineData(typeof(ResidentMeal), 36, 25)] [InlineData(typeof(ResidentMeal), 34, 26)]
     public void PublishedTupleLayoutsCoverEveryWritablePropertyExactlyOnce(Type dto, int expected, int schema)
@@ -42,6 +43,7 @@ public sealed class Schema18ReviewTests
         // roster record's anchor and slot from the person table (one record per person).
         var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null
             && !(dto == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")
+            && !(dto == typeof(ResidentBudget) && schema < SaveCodec.EconomicLedgerSchema && p.Name == "Ledger")
             && !(dto == typeof(ResidentMeal) && schema >= SaveCodec.PersonSchema && (p.Name == "AnchorId" || p.Name == "Slot")));
         Assert.Equal(expected, fields.Length);
         Assert.Equal(fields.Length, fields.Select(p => p.Name).Distinct(StringComparer.Ordinal).Count());

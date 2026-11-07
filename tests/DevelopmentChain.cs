@@ -27,6 +27,7 @@ internal static class DevelopmentChain
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.PersonSchema ? SaveCodec.ReadWriter26(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.IndependentSchema ? SaveCodec.ReadWriter27(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.WorkplaceCapacitySchema ? SaveCodec.ReadWriter28(source)
+        : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.VendorSchema ? SaveCodec.ReadWriter30(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.ResearchSchema ? SaveCodec.ReadWriter29(source)
         : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveCodec.Read(source);
 
@@ -64,13 +65,20 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
-    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29
+    public static string Write30(CityState state)
+    {
+        int schema = state.Schema;
+        try { state.Schema = SaveCodec.VendorSchema; return SaveCodec.WriteForSchema(state, SaveCodec.VendorSchema); }
+        finally { state.Schema = schema; }
+    }
+
+    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema
         ? SaveCodec.WriteForSchema(state, state.Schema) : SaveCodec.Write(state);
 
     /// <summary>The activation save contract for the state's own schema (the current writer or a frozen one).</summary>
     public static void ValidateForActivation(CityState state)
     {
-        if (state.Schema == Represented || state.Schema == ChainOutput || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29) SaveCodec.ValidateForActivation(state, state.Schema);
+        if (state.Schema == Represented || state.Schema == ChainOutput || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema) SaveCodec.ValidateForActivation(state, state.Schema);
         else SaveCodec.ValidateForActivation(state);
     }
 

@@ -174,8 +174,8 @@ public sealed class VendorSaveTests
     public void VendorsTakeTheNextFreeWriterAndOlderWritersOmitTheTable()
     {
         Assert.Equal(SaveCodec.ResearchSchema + 1, SaveCodec.VendorSchema);
-        Assert.Equal(SaveCodec.VendorSchema, CityState.CurrentSchema);
-        Assert.Equal(SaveCodec.ResearchSchema, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(SaveCodec.VendorSchema + 1, CityState.CurrentSchema);
+        Assert.Equal(SaveCodec.VendorSchema, SaveCodec.LatestDevelopmentSchema);
         var city = Table(2, 1, 1).State;
         string payload = SaveCodec.Write(city);
         Assert.Contains("\"Vendors\":[1,[", payload);
@@ -190,7 +190,7 @@ public sealed class VendorSaveTests
     {
         foreach (var state in new[] { CurrentSchemaOnlyTests.City(), WeightedFoodChoiceTests.Ready(5, shops: 3).city.State, Researched() })
         {
-            string current = SaveCodec.Write(state), frozen = DevelopmentChain.Write29(state);
+            string current = DevelopmentChain.Write30(state), frozen = DevelopmentChain.Write29(state);
             Assert.Contains("\"Vendors\":[1,[]]", current);
             int scopes = state.Food?.Shops.Count ?? 0;
             Assert.Equal(scopes, current.Split("\"Channel\":0,").Length - 1);
@@ -977,7 +977,7 @@ public sealed class VendorSaveTests
     public void AFutureCityIsRefusedAndKept()
     {
         string payload = SaveCodec.Write(Table(1, 1, 1).State)
-            .Replace("\"Schema\":" + SaveCodec.VendorSchema + ",", "\"Schema\":" + (SaveCodec.VendorSchema + 1) + ",");
+            .Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + (CityState.CurrentSchema + 1) + ",");
         RefusedAndPreserved(payload, SaveReadStatus.Future);
     }
 
@@ -1000,13 +1000,13 @@ public sealed class VendorSaveTests
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
         {
-            string payload = SaveCodec.Write(build());
+            string payload = DevelopmentChain.Write30(build());
             Assert.Contains("\"Schema\":" + SaveCodec.VendorSchema + ",", payload);
             actual.Add(name + " " + Sha(payload) + " " + payload.Length);
             var pin = pins["fixtures"]![name];
             expected.Add(name + " " + (string?)pin?["sha256"] + " " + (int?)pin?["characters"]);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            var read = SaveCodec.ReadWriter30(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(payload, DevelopmentChain.Write30(read.State!));
         }
         Assert.True(expected.SequenceEqual(actual), string.Join("; ", actual));
     }

@@ -15,6 +15,7 @@ namespace PersistentCity.Core
         internal FoodMoneyCounters? counters;
         private int dailyHousingCents, dailyEssentialsCents, dailyHomeFoodCents, lastPostedDay = -1, homeFoodFundedDay = -1;
         private Money openingBalance, balance, incomeReceived, essentialsPaid, homeFoodPaid, preparedFoodSpent, externalFoodSpent, heldPurchase, arrears;
+        public OwnerAccounts Ledger { get; set; }
         public ResidentIncomeSource IncomeSource { get; set; }
         public int BaseIncomeCents { get; set; }
         public int DailyIncomeCents { get; set; }
@@ -92,13 +93,15 @@ namespace PersistentCity.Core
             // The save contract also sums the conservation totals (CashConserved), which can overflow
             // when every amount fits. Posting adds the income to both sides of a conserved ledger, so
             // the funded total bounds the accounted one.
-            _ = budget.OpeningBalance + received;
+            _ = budget.OpeningBalance + budget.Ledger.EmploymentIncome + received;
+            CheckCash(budget);
             budget.IncomeSource = source; budget.DailyIncomeCents = dailyIncome;
             budget.Balance = balance; budget.IncomeReceived = received; budget.HomeFoodPaid = homeFoodPaid;
             budget.EssentialsPaid = essentials; budget.Arrears = required - paid; budget.DaysWithoutHomeFood = unfed;
             if (fed) budget.HomeFoodFundedDay = day;
             budget.LastPostedDay = day;
             budget.NextPostingMinute = (day + 1) * 1440.0;
+            CheckCash(budget);
         }
 
         /// <summary>The save contract's cash conservation: opening savings plus income received equals
@@ -106,7 +109,10 @@ namespace PersistentCity.Core
         /// range throws <see cref="OverflowException"/> even when every component fits. Holds,
         /// confirmations and refunds move money between accounted amounts and leave both totals unchanged.</summary>
         public static bool CashConserved(ResidentBudget b)
-            => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.ExternalFoodSpent + b.HeldPurchase;
+            => b.OpeningBalance + b.Ledger.EmploymentIncome + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.ExternalFoodSpent + b.Ledger.Discretionary + b.HeldPurchase;
+
+        internal static void CheckCash(ResidentBudget budget)
+        { if (!CashConserved(budget)) throw new InvalidOperationException("Household cash is not conserved."); }
 
         // A schema-27 visitor's source is its own (F5b PersonIncome.Select over its Employment and carried outside
         // employer), never an anchor's. F5e: a resident's comes from its own Employment (built from DayPlaceId) through
@@ -144,11 +150,12 @@ namespace PersistentCity.Core
         {
             if (price <= Money.Zero || price > SpendingLimit(budget)
                 || !Money.TryAdd(budget.PreparedFoodSpent, price, out _)) return false;
-            budget.Balance -= price; budget.HeldPurchase = price; return true;
+            CheckCash(budget);
+            budget.Balance -= price; budget.HeldPurchase = price; CheckCash(budget); return true;
         }
         public static void ConfirmPurchase(ResidentBudget budget)
-        { budget.PreparedFoodSpent += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; }
+        { CheckCash(budget); budget.PreparedFoodSpent += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; CheckCash(budget); }
         public static void RefusePurchase(ResidentBudget budget)
-        { budget.Balance += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; }
+        { CheckCash(budget); budget.Balance += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; CheckCash(budget); }
     }
 }

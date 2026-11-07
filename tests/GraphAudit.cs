@@ -113,6 +113,8 @@ internal sealed class GraphFill
         if (type == typeof(double)) return n + 0.5;
         if (type == typeof(bool)) return true;
         if (type.IsEnum) { var values = Enum.GetValues(type); return values.GetValue(Math.Min(1, values.Length - 1)); }
+        if (type == typeof(BigInteger)) return new BigInteger(n);
+        if (type == typeof(int[])) return new int[] { n, n + 1 };
         if (type == typeof(Money)) return Money.FromUnits(n);
         if (type == typeof(Position)) return new Position(n, n + 0.25, n + 0.5);
         if (type == typeof(long[])) return new long[] { n, n + 1 };
@@ -132,7 +134,7 @@ internal sealed class GraphFill
             if (item != null) list.Add(item);
             return list;
         }
-        if (type.Namespace == "PersistentCity.Core" && type.IsClass && !type.IsAbstract && type.GetConstructor(Type.EmptyTypes) != null)
+        if (type.Namespace == "PersistentCity.Core" && (type.IsValueType || type.IsClass && !type.IsAbstract && type.GetConstructor(Type.EmptyTypes) != null))
         {
             if (depth > 6) return null;
             var value = Activator.CreateInstance(type)!;

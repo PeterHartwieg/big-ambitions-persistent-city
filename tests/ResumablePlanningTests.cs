@@ -619,6 +619,7 @@ public sealed class ResumablePlanningTests
     private static CitizenState Filled(int n, CitizenIdentity identity) => new()
     {
         W = new WeatherCommitment(n,WeatherSample.Rain,n%2==1),
+        Accrual = new EmploymentAccrual { AttendedMinutes = n, Day = n, Shift = n, MissMask = n, UnpostedWage = Money.FromUnits(n) },
         OptionalStopChoice = n % 2 == 1,
         OptionalStop = new OptionalStopState { SpotId = "spot-" + n, Members = { "member-" + n } },
         Identity = identity, HomeId = "home-" + n, DayPlaceId = "work-" + n, ShopId = "shop-" + n, LeisureId = "leisure-" + n,

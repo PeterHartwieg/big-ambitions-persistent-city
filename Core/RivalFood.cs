@@ -109,12 +109,13 @@ namespace PersistentCity.Core
             if (meal.TargetKind != FoodAlternativeKind.Rival || meal.External.Length != 21 || meal.External[1] != '0'
                 || !RivalFoodTerms.Canonical(meal.External.Substring(2))
                 || meal.Status != MealStatus.Serving || !CanPay(meal, meal.Price)) return false;
+            if (meal.Budget != null) HouseholdFinance.CheckCash(meal.Budget);
             var spent = meal.Spent + meal.Price;
             var external = (meal.Budget == null ? meal.LegacyExternalFoodSpent : meal.Budget.ExternalFoodSpent) + meal.Price;
             var used = meal.Budget == null ? meal.DayAllowanceUsed + meal.Price : meal.DayAllowanceUsed;
             var balance = meal.Budget == null ? Money.Zero : meal.Budget.Balance - meal.Price;
             string watermark = "11" + meal.External.Substring(2);
-            if (meal.Budget != null) { meal.Budget.Balance = balance; meal.Budget.ExternalFoodSpent = external; }
+            if (meal.Budget != null) { meal.Budget.Balance = balance; meal.Budget.ExternalFoodSpent = external; HouseholdFinance.CheckCash(meal.Budget); }
             else meal.LegacyExternalFoodSpent = external;
             meal.DayAllowanceUsed = used; meal.Spent = spent; meal.Purchases++;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;

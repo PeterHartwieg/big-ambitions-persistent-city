@@ -131,8 +131,8 @@ public sealed class ResearchSaveTests
     {
         Assert.Equal(SaveCodec.WorkplaceCapacitySchema + 1, SaveCodec.ResearchSchema);
         // E6c: writer 29 is now the frozen C5c writer; the vendor writer keeps the research section.
-        Assert.Equal(SaveCodec.ResearchSchema + 1, CityState.CurrentSchema);
-        Assert.Equal(SaveCodec.ResearchSchema, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(SaveCodec.EconomicLedgerSchema, CityState.CurrentSchema);
+        Assert.Equal(SaveCodec.VendorSchema, SaveCodec.LatestDevelopmentSchema);
         var city = City(AllStates());
         Assert.Contains("\"Research\":[", SaveCodec.Write(city));
         Assert.Contains("\"Research\":[", DevelopmentChain.Write29(city));
