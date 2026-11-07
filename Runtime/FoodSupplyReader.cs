@@ -13,6 +13,7 @@ namespace PersistentCity.Runtime
 {
     public sealed class FoodSupplySnapshot
     {
+        public bool HasSupplyImage { get; set; }
         public double AtMinute { get; set; }
         public string ProductId { get; set; } = "";
         public int? Units { get; set; }
@@ -116,6 +117,7 @@ namespace PersistentCity.Runtime
                     if (!supported)
                     { r.Evidence = "Shared/converted resources or unverified product stock; offer excluded"; continue; }
                     r.Units = bags ? Math.Min(r.ProducerUnits, bagUnits) : r.ProducerUnits;
+                    r.HasSupplyImage = true;
                     r.Evidence = "Current native eligible producers, staffed counters and shared bag pool; one stock unit per product; checkout revalidates contention";
                 }
                 return result;

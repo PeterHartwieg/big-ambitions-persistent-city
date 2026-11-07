@@ -642,7 +642,7 @@ namespace PersistentCity.Core
                     OriginPlaceId = stop.PlaceId, Minutes = outward.Minutes, ReturnMinutes = back.Minutes, Evidence = "Current complete walking paths" });
             }
             FoodDemand.ChooseObserved(consumer, businesses, quotes, intent, now, refusals, meal.Kind);
-            RecordChoices(intent, businesses);
+            RecordChoices(intent, businesses, meal.Kind);
             var choice = intent;
             if (trace != null)
             {

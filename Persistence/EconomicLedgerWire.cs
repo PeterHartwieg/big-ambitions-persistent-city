@@ -13,7 +13,7 @@ namespace PersistentCity.Persistence
         public const int EconomicLedgerSchema = CityState.EconomicLedgerSchema;
         internal static bool EconomicProperty(Type type, string? name) => type == typeof(CityState) && name == "Economy"
             || (type == typeof(CitizenState) || type == typeof(VisitorRoutine)) && name == "Accrual"
-            || type == typeof(FoodShopDay) && name == "PeriodCauses" || type == typeof(ResidentBudget) && name == "Ledger";
+            || type == typeof(FoodShopDay) && (name == "PeriodCauses" || name == "StockoutObserved") || type == typeof(ResidentBudget) && name == "Ledger";
 
         // Canonical fixed-width uppercase base36 integers. Money is exact signed-64-range nonnegative units,
         // never a price float or a rounded decimal. Fixed widths include leading zeros and reject alternate spellings.
@@ -114,7 +114,7 @@ namespace PersistentCity.Persistence
             public override object ReadJson(JsonReader reader, Type type, object? value, JsonSerializer serializer) => ParseEconomic(type, (string)reader.Value!, context);
         }
 
-        private static ShopObservation ReadObservation(JsonReader reader, TokenText? text, ref int records)
+        private static ShopObservation ReadObservation(JsonReader reader, TokenText? text, ref int records, int schema)
         {
             Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.String, "Expected observed-shop header.");
             string header = (string)reader.Value!;
@@ -128,13 +128,38 @@ namespace PersistentCity.Persistence
                 Require(reader.TokenType == JsonToken.String && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!)), "Noncanonical shop change.");
                 shop.Changes.Add((ShopChange)ParseEconomic(typeof(ShopChange), (string)reader.Value!)); Charge(ref records);
             }
-            Require(reader.TokenType == JsonToken.EndArray && reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid observed-shop width.");
+            Require(reader.TokenType == JsonToken.EndArray, "Invalid journal.");
+            if (schema >= CityState.ChangeJournalSchema)
+            {
+                Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing observation state.");
+                string state = (string)reader.Value!;
+                Require(state.Length == 20 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, state)), "Invalid observation state.");
+                shop.Evicted = Cell(state, 0, 13); shop.StaffedCounters = checked((int)(Cell(state, 13, 7) - 1));
+                Require(shop.StaffedCounters >= -1, "Invalid staffed counters.");
+                Require(reader.Read() && reader.TokenType == JsonToken.StartArray, "Missing supply image.");
+                var supply = new List<ShopObservedOffer>();
+                while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+                {
+                    Require(reader.TokenType == JsonToken.String && supply.Count < 8, "Invalid supply image.");
+                    string cell = (string)reader.Value!;
+                    Require(cell.Length == 22 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, cell)), "Invalid supply cell.");
+                    supply.Add(new ShopObservedOffer { ProductId = Cell(cell, 0, 2).ToString(CultureInfo.InvariantCulture), PriceUnits = Cell(cell, 2, 13), Stock = checked((int)Cell(cell, 15, 7)) });
+                }
+                shop.Supply = supply.ToArray();
+                Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing hours image.");
+                string hours = (string)reader.Value!;
+                Require((hours.Length == 0 || hours.Length == FoodChangeJournal.HoursEdges * 3) && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, hours)), "Invalid hours image.");
+                shop.Hours = new int[hours.Length / 3];
+                for (int i = 0; i < shop.Hours.Length; i++) { shop.Hours[i] = (int)Cell(hours, i * 3, 3); Require(shop.Hours[i] <= 1441, "Invalid hours edge."); }
+            }
+            Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid observed-shop width.");
             return shop;
         }
         private sealed class ObservationConverter : JsonConverter<ShopObservation>
         {
             private readonly WireContext context;
-            public ObservationConverter(WireContext context) { this.context = context; }
+            private readonly int schema;
+            public ObservationConverter(WireContext context, int schema) { this.context = context; this.schema = schema; }
             public override void WriteJson(JsonWriter writer, ShopObservation? shop, JsonSerializer serializer)
             {
                 writer.WriteStartArray();
@@ -144,13 +169,21 @@ namespace PersistentCity.Persistence
                 try { writer.StringEscapeHandling = StringEscapeHandling.Default; writer.WriteValue(Cell(shop!.BusinessRef, 3) + shop.Fingerprint); }
                 finally { writer.StringEscapeHandling = escaping; }
                 writer.WriteStartArray(); foreach (var change in shop.Changes) writer.WriteValue(EconomicText(change, context));
-                writer.WriteEndArray(); writer.WriteEndArray();
+                writer.WriteEndArray();
+                if (schema >= CityState.ChangeJournalSchema)
+                {
+                    writer.WriteValue(Cell(shop.Evicted, 13) + Cell((long)shop.StaffedCounters + 1, 7));
+                    writer.WriteStartArray();
+                    foreach (var o in shop.Supply) writer.WriteValue(Cell(context.ProductIndex[o.ProductId] - 1, 2) + Cell(o.PriceUnits, 13) + Cell(o.Stock, 7));
+                    writer.WriteEndArray(); writer.WriteValue(string.Concat(shop.Hours.Select(n => Cell(n, 3))));
+                }
+                writer.WriteEndArray();
             }
             public override ShopObservation ReadJson(JsonReader reader, Type type, ShopObservation? value, bool hasValue, JsonSerializer serializer)
             {
                 // Decode with the name table rather than the streaming placeholders.
                 int ignored = 0;
-                var shop = ReadObservation(reader, null, ref ignored);
+                var shop = ReadObservation(reader, null, ref ignored, schema);
                 for (int i = 0; i < shop.Changes.Count; i++)
                 {
                     var change = shop.Changes[i];
@@ -159,6 +192,12 @@ namespace PersistentCity.Persistence
                         Require(change.Subject < context.ProductNames.Length, "Invalid shop-change product.");
                         change.ProductId = context.ProductNames[change.Subject]; change.Subject = 0; shop.Changes[i] = change;
                     }
+                }
+                for (int i = 0; i < shop.Supply.Length; i++)
+                {
+                    var offer = shop.Supply[i]; int index = int.Parse(offer.ProductId, CultureInfo.InvariantCulture);
+                    Require(index < context.ProductNames.Length, "Invalid observed product.");
+                    offer.ProductId = context.ProductNames[index]; shop.Supply[i] = offer;
                 }
                 return shop;
             }
@@ -185,6 +224,32 @@ namespace PersistentCity.Persistence
                 Require(state.Food!.Shops.Any(s => s.BusinessId == reference.BusinessId && s.PlaceId == reference.PlaceId), "Observed shop is not managed.");
                 previous = shop.BusinessRef;
                 Require(ValidFingerprint(shop.Fingerprint), "Invalid shop fingerprint.");
+                Require(shop.Evicted >= 0 && shop.Supply != null && shop.Supply.Length <= 8 && shop.StaffedCounters >= -1
+                    && (shop.Supply.Length == 0) == (shop.StaffedCounters == -1), "Invalid observed supply.");
+                string? priorProduct = null;
+                foreach (var offer in shop.Supply)
+                {
+                    Require(offer.ProductId != null && state.ProductNames.Contains(offer.ProductId)
+                        && (priorProduct == null || StringComparer.Ordinal.Compare(priorProduct, offer.ProductId) < 0)
+                        && offer.PriceUnits > 0 && offer.PriceUnits <= Money.FromCents(Money.MaximumNativePriceCents).Units && offer.Stock >= 0, "Invalid observed offer.");
+                    priorProduct = offer.ProductId;
+                }
+                Require(shop.Hours != null && (shop.Hours.Length == 0 || shop.Hours.Length == FoodChangeJournal.HoursEdges)
+                    && shop.Hours.All(n => n >= 0 && n <= 1441), "Invalid observed hours.");
+                int windowCount = 0;
+                for (int weekday = 0; shop.Hours.Length != 0 && weekday < 7; weekday++)
+                {
+                    bool absent = false; int priorFrom = -1, priorTo = -1;
+                    for (int slot = 0; slot < MaxOpeningWindows; slot++)
+                    {
+                        int edge = weekday * MaxOpeningWindows * 2 + slot * 2, from = shop.Hours[edge], to = shop.Hours[edge + 1];
+                        if (from == 1441) { Require(to == 1441, "Unpaired absent hours edge."); absent = true; continue; }
+                        Require(!absent && from < to && to <= 1440 && (from > priorFrom || from == priorFrom && to >= priorTo), "Noncanonical observed hours window.");
+                        priorFrom = from; priorTo = to; windowCount++;
+                    }
+                }
+                Require(windowCount <= MaxOpeningWindows, "Observed hours exceed their bound.");
+                Require(shop.Supply.Length == 0 && shop.Hours.Length == 0 || shop.Fingerprint.Length != 0, "Observed image has no fingerprint.");
                 Require(shop.Changes != null && shop.Changes.Count <= EconomicLedger.ChangesPerShop && (shop.Changes.Count == 0 || shop.Fingerprint.Length != 0), "Shop journal exceeds its bound or has no fingerprint.");
                 int last = -1;
                 var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -249,7 +314,7 @@ namespace PersistentCity.Persistence
         internal static EconomicLedger? CopyEconomy(EconomicLedger? e) => e == null ? null : new EconomicLedger
         {
             Outside = e.Outside?.Select(d => d == null ? null! : new OutsideSpendingDay { Day = d.Day, RetailUnits = d.RetailUnits, RetailVisits = d.RetailVisits, LeisureUnits = d.LeisureUnits, LeisureVisits = d.LeisureVisits }).ToList()!,
-            Shops = e.Shops?.Select(s => s == null ? null! : new ShopObservation { BusinessRef = s.BusinessRef, Fingerprint = s.Fingerprint, Changes = s.Changes == null ? null! : new List<ShopChange>(s.Changes) }).ToList()!,
+            Shops = e.Shops?.Select(s => s == null ? null! : new ShopObservation { BusinessRef = s.BusinessRef, Fingerprint = s.Fingerprint, Evicted = s.Evicted, StaffedCounters = s.StaffedCounters, Supply = s.Supply == null ? null! : (ShopObservedOffer[])s.Supply.Clone(), Hours = s.Hours == null ? null! : (int[])s.Hours.Clone(), Changes = s.Changes == null ? null! : new List<ShopChange>(s.Changes) }).ToList()!,
         };
 
         // Frozen predecessor used only by offline checks. The public reader always refuses it, preserving its payload.

@@ -128,7 +128,7 @@ namespace PersistentCity.Runtime
                 AdditionalProductIds = b.Offers.Skip(1).Select(o => o.ProductId).ToList() }).ToList(),
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home && !PortalPlaces.Is(p))
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
-            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
+            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop, economy: simulation.State.Economy);
             try { simulation.State.Food = state; simulation.AttachFoodMarket(ComposeFoodMarkets(adapter), settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
             catch { vendorMarket?.Dispose(); vendorMarket = null; simulation.State.Food = null; adapter.Dispose(); throw; }
         }
@@ -702,7 +702,7 @@ namespace PersistentCity.Runtime
                         .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
-            foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
+            foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop, economy: state.Economy);
             simulation.AttachFoodMarket(ComposeFoodMarkets(foodMarket), settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);

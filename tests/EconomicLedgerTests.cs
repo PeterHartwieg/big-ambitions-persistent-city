@@ -86,7 +86,7 @@ public sealed class EconomicLedgerTests
     public void NextFreeWriterAndFreshZeroShape()
     {
         Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.CurrentSchema);
+        Assert.Equal(CityState.AttendanceSchema + 1, CityState.CurrentSchema);
         var state = Fresh();
         Assert.Empty(state.Economy.Outside); Assert.Empty(state.Economy.Shops);
         Assert.All(PersonTable.Schedules(state), p => Assert.Equal(default, p.Accrual));
@@ -110,7 +110,7 @@ public sealed class EconomicLedgerTests
         output.WriteLine($"frozen ledger golden {seed}: {Sha(DevelopmentChain.WriteLedger(state))} {payload.Length}");
         if (Environment.GetEnvironmentVariable("PC_F6D_PINS") is string path)
             File.AppendAllText(path, $"golden {seed} {Sha(DevelopmentChain.WriteLedger(state))} {payload.Length}" + Environment.NewLine);
-        Assert.Equal(pin, Sha(DevelopmentChain.WriteLedger(state))); Assert.Equal(length, payload.Length);
+        Assert.Equal(pin, Sha(DevelopmentChain.WriteLedger(state))); Assert.Equal(length, DevelopmentChain.WriteAttendance(state).Length);
         var snapshot = SaveCodec.Capture(state);
         state.Citizens[0].Accrual = default; state.VisitorRoutines[0].Accrual = default;
         state.Food!.Residents[0].Budget!.Ledger = default;

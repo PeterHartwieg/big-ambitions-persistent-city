@@ -279,6 +279,7 @@ namespace PersistentCity.Persistence
 
             private static FoodShopDay ShopDay(FoodShopDay d) => new FoodShopDay
             {
+                StockoutObserved = d.StockoutObserved,
                 PeriodCauses = d.PeriodCauses == null ? null! : new MealPeriodCauses { Counts = d.PeriodCauses.Counts == null ? null! : (int[])d.PeriodCauses.Counts.Clone() },
                 Day = d.Day, PlaceId = d.PlaceId, BusinessId = d.BusinessId, OffersConsidered = d.OffersConsidered, ChosenOffers = d.ChosenOffers,
                 PriceRejections = d.PriceRejections, AccessRejections = d.AccessRejections, ClosedRejections = d.ClosedRejections,

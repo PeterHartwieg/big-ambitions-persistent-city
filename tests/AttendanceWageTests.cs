@@ -55,7 +55,7 @@ public sealed class AttendanceWageTests
     public void NextFreeWriterRefusesInactiveLedgerCityWithoutOverwritingAnything()
     {
         Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.AttendanceSchema);
-        Assert.Equal(CityState.AttendanceSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
         var state = Fresh().State;
         string old = DevelopmentChain.WriteLedger(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadLedgerWriter(old).Status);
@@ -73,7 +73,7 @@ public sealed class AttendanceWageTests
         string payload = SaveCodec.Write(city.State);
         Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(city.State)));
         output.WriteLine($"golden {seed}: {EconomicLedgerTests.Sha(payload)} {payload.Length}");
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
+        Assert.Equal(pin, EconomicLedgerTests.Sha(DevelopmentChain.WriteAttendance(city.State)));
         Reload(city, new Routes());
     }
 

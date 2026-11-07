@@ -14,6 +14,7 @@ namespace PersistentCity.Runtime
         private bool showEconomy;
         private float nextEconomyText;
         private string economyText = "";
+        private int economyShopPage;
         private Vector2 economyScroll;
         private GUIStyle? economyLabel;
         private Rect economyRect;
@@ -36,12 +37,20 @@ namespace PersistentCity.Runtime
                 long requests = money.Requests, rebuilds = money.Rebuilds;
                 var current = money.Snapshot(); var rescan = FoodMoneyCounters.Rescan(food);
                 int day = (int)(simulation!.State.Minute / 1440); var index = FoodFeedback.IndexHistory(food.History);
-                int recordingSince = FoodFeedback.RecordingSince(food);
+                int recordingSince = FoodFeedback.RecordingSince(food); int v2RecordingSince = FoodFeedbackV2.RecordingSince(food);
                 return new { active = true, day, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
                     counters = current.ToString(), rescan = rescan.ToString(), moneyText = current.Text(), rivalLabel = FoodFeedback.RivalEstimateLabel,
                     shops = food.Shops.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
-                        index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text() }).ToArray() };
+                        index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text(),
+                        feedbackV2 = FeedbackV2Text(index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var v2Rows) ? v2Rows : new List<FoodShopDay>(),
+                            foodMarket?.JournalFor(s.BusinessId), day, v2RecordingSince),
+                        evicted = foodMarket?.JournalFor(s.BusinessId)?.Evicted ?? 0 }).ToArray() };
             }
+        }
+        private static string FeedbackV2Text(IReadOnlyList<FoodShopDay> rows, ShopObservation? journal, int day, int recordingSince)
+        {
+            var text = new StringBuilder(); FoodFeedbackV2.AppendPeriods(text, rows, day, recordingSince);
+            FoodFeedbackV2.AppendJournal(text, journal, rows, day, recordingSince, LocalizedName); return text.ToString();
         }
         // Whole-dollar display only; never changes a settlement amount. Totals may exceed one amount's range.
         private static string Amount(Money amount) => Amount(amount.Units);
@@ -101,6 +110,16 @@ namespace PersistentCity.Runtime
                 GUILayout.Label("Preparing resident food demand. Eligible player businesses are managed automatically once the city is ready.", economyLabel);
                 GUILayout.EndArea(); return;
             }
+            int pages = Math.Max(1, (simulation.State.Food.Shops.Count + FoodFeedbackV2.ShopsPerPage - 1) / FoodFeedbackV2.ShopsPerPage);
+            economyShopPage = Math.Min(economyShopPage, pages - 1);
+            if (pages > 1)
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Previous shops")) { economyShopPage = (economyShopPage + pages - 1) % pages; economyText = "Loading shop page..."; }
+                GUILayout.Label("Shops · page " + (economyShopPage + 1) + " / " + pages);
+                if (GUILayout.Button("Next shops")) { economyShopPage = (economyShopPage + 1) % pages; economyText = "Loading shop page..."; }
+                GUILayout.EndHorizontal();
+            }
             if (Time.unscaledTime >= nextEconomyText)
             { economyText = BuildEconomyText(); nextEconomyText = Time.unscaledTime + 3; }
             economyScroll = GUILayout.BeginScrollView(economyScroll);
@@ -135,7 +154,7 @@ namespace PersistentCity.Runtime
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
             var regulars = simulation.ProjectRegulars(ObservedOwnShop);
-            var history = FoodFeedback.IndexHistory(food.History); int recordingSince = FoodFeedback.RecordingSince(food);
+            var history = FoodFeedback.IndexHistory(food.History); int recordingSince = FoodFeedback.RecordingSince(food); int v2RecordingSince = FoodFeedbackV2.RecordingSince(food);
             var shopPlaces = new Dictionary<string, Place?>(food.Shops.Count, StringComparer.Ordinal);
             foreach (var scope in food.Shops) shopPlaces[scope.PlaceId] = null;
             foreach (var p in city.Places) if (shopPlaces.TryGetValue(p.Id, out var found) && found == null) shopPlaces[p.Id] = p;
@@ -146,8 +165,10 @@ namespace PersistentCity.Runtime
                 list.Add(a);
             }
             var noRows = new List<FoodShopDay>();
-            foreach (var scope in food.Shops)
+            int firstShop = economyShopPage * FoodFeedbackV2.ShopsPerPage;
+            for (int shopIndex = firstShop; shopIndex < Math.Min(food.Shops.Count, firstShop + FoodFeedbackV2.ShopsPerPage); shopIndex++)
             {
+                var scope = food.Shops[shopIndex];
                 string? regularText = regulars?.OwnShopText(scope.BusinessId);
                 var place = shopPlaces[scope.PlaceId] ?? throw new InvalidOperationException("Managed shop place is missing.");
                 var rows = history.TryGetValue(FoodFeedback.Key(scope.PlaceId, scope.BusinessId), out var shopRows) ? shopRows : noRows;
@@ -173,6 +194,9 @@ namespace PersistentCity.Runtime
                     text.AppendLine("Purchase hours: " + string.Join(", ", observed.PurchaseHours.Select((n, h) => new { n, h })
                         .Where(p => p.n > 0).Select(p => p.h.ToString("00") + ":00 " + p.n)));
                 }
+                FoodFeedbackV2.AppendPeriods(text, rows, day, v2RecordingSince);
+                FoodFeedbackV2.AppendJournal(text, foodMarket?.JournalFor(scope.BusinessId),
+                    rows, day, v2RecordingSince, LocalizedName);
                 var accounts = accountsByPlace.TryGetValue(scope.PlaceId, out var placeAccounts)
                     ? placeAccounts.OrderByDescending(a => a.Day).Take(3).ToArray() : Array.Empty<NativeFoodAccount>();
                 foreach (var a in accounts)
@@ -182,6 +206,7 @@ namespace PersistentCity.Runtime
                 text.AppendLine();
             }
             if (money.Budgets > 0) text.Append(money.Text());
+            FoodFeedbackV2.AppendCity(text, money, city.Economy, day);
             text.AppendLine();
             text.AppendLine("Offer counts describe evaluated choices, not unique people or all district demand. Native operating results exclude initial investment, loans and personal taxes. Consumer income is modeled outside income/support; native business accounts remain authoritative.");
             return text.ToString();

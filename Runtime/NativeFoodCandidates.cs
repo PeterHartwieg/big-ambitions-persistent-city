@@ -63,7 +63,7 @@ namespace PersistentCity.Runtime
             if(captureBatch) return;
             long observationMinute=(long)(SaveGameManager.Current.Day*1440.0+SaveGameManager.Current.Hour*60.0+SaveGameManager.Current.Minute);
             if(lastOwnershipRefresh!=observationMinute) {lastOwnershipRefresh=observationMinute;RefreshKnownOwnership();}
-            RefreshRoutineHours(minute,true);
+            RefreshRoutineHours(observationMinute,true);
         }
         public FoodBusiness? CaptureBusiness(string businessId,double minute)
         {
@@ -103,11 +103,12 @@ namespace PersistentCity.Runtime
                 registrations[place] = reg; shopControllers[place] = controller;
                 var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(controller));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
-                else Candidate(authority.BusinessId,false);
+                else { Candidate(authority.BusinessId,false); if (!authority.Managed && scopesByPlace.TryGetValue(authority.PlaceId, out var retired)) changeJournal?.Clear(retired.BusinessId); }
             }
         }
         private void WithdrawAddress(string place)
         {
+            if (scopesByPlace.TryGetValue(place, out var retired)) changeJournal?.Clear(retired.BusinessId);
             if(registrations.TryGetValue(place,out var old))
             {
                 var authority=NativeFoodOwnership.Find(old);
@@ -136,7 +137,7 @@ namespace PersistentCity.Runtime
                 var reg = pair.Value.buildingRegistration;
                 if (reg == null)
                 {
-                    if(scopesByPlace.TryGetValue(pair.Key,out var old)) Candidate(old.BusinessId,false);
+                    if(scopesByPlace.TryGetValue(pair.Key,out var old)) { Candidate(old.BusinessId,false); changeJournal?.Clear(old.BusinessId); }
                     NativeFoodOwnership.Retire(pair.Key);registrations.Remove(pair.Key);continue;
                 }
                 registrations[pair.Key] = reg;
@@ -144,7 +145,7 @@ namespace PersistentCity.Runtime
                 if (recoveryBoundary) RevalidateRefusedContract(reg, pair.Value);
                 var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
-                else Candidate(authority.BusinessId,false);
+                else { Candidate(authority.BusinessId,false); if (!authority.Managed && scopesByPlace.TryGetValue(authority.PlaceId, out var retired)) changeJournal?.Clear(retired.BusinessId); }
             }
         }
         internal void ActivateScope(FoodAuthority authority, BuildingRegistration reg)
@@ -170,6 +171,7 @@ namespace PersistentCity.Runtime
             var products = menu.OrderBy(p => p, StringComparer.Ordinal).ToArray();
             if (scope.BusinessId != authority.BusinessId)
             {
+                changeJournal?.Clear(scope.BusinessId);
                 Candidate(scope.BusinessId,false);scopesByBusiness.Remove(scope.BusinessId);
                 scope.NextServiceAt = EarliestMinute;
             }

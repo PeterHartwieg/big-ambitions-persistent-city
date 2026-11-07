@@ -101,10 +101,15 @@ namespace PersistentCity.Runtime
             public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
         }
         public double EarliestMinute => SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0;
-        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = 4)
+        private readonly FoodChangeJournal? changeJournal;
+        private bool journalReady;
+        public ShopObservation? JournalFor(string businessId) => changeJournal?.Find(businessId);
+        private readonly ShopObservedOffer[] journalOffers = new ShopObservedOffer[8];
+        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = 4, EconomicLedger? economy = null)
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
+            if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
             this.rivalWarning = rivalWarning;
             menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));
@@ -128,6 +133,7 @@ namespace PersistentCity.Runtime
             try
             {
                 NativeFoodOwnership.Attach(this);
+                journalReady = true;
                 patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
                     prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
             }
@@ -290,6 +296,21 @@ namespace PersistentCity.Runtime
                 b.MealsPerHour = supply[scope.ProductId].MealsPerHour; b.ServiceEvidence = supply[scope.ProductId].Evidence;
                 b.ServiceUnavailableReason = supply[scope.ProductId].AvailabilityReason;
                 foreach (var offer in b.Offers) offer.Units = supply[offer.ProductId].Units;
+                if (changeJournal != null && supply[scope.ProductId].HasSupplyImage)
+                {
+                    int index = 0;
+                    foreach (var offer in b.Offers)
+                        journalOffers[index++] = new ShopObservedOffer { ProductId = offer.ProductId, PriceUnits = offer.Price.Units,
+                            Stock = supply[offer.ProductId].ProducerUnits };
+                    for (int i = 1; i < index; i++)
+                    {
+                        var value = journalOffers[i]; int j = i - 1;
+                        while (j >= 0 && StringComparer.Ordinal.Compare(journalOffers[j].ProductId, value.ProductId) > 0)
+                        { journalOffers[j + 1] = journalOffers[j]; j--; }
+                        journalOffers[j + 1] = value;
+                    }
+                    changeJournal.ObserveSupply(b.Id, b.PlaceId, checked((int)observationMinute), journalOffers, index, supply[scope.ProductId].StaffedCounters);
+                }
                 result.Add(b);
             }
             return result;
