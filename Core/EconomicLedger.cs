@@ -36,10 +36,53 @@ namespace PersistentCity.Core
     public sealed class OutsideSpendingDay
     {
         public int Day { get; set; }
-        public BigInteger RetailUnits { get; set; }
-        public BigInteger RetailVisits { get; set; }
-        public BigInteger LeisureUnits { get; set; }
-        public BigInteger LeisureVisits { get; set; }
+        // Accumulate exact deltas without allocating BigInteger limbs per admission. Materialize
+        // wide integers only for a save or requested output; a rare long carry folds into the base.
+        private OutsideCounter retailUnits, retailVisits, leisureUnits, leisureVisits;
+        public BigInteger RetailUnits { get => retailUnits.Value; set => retailUnits = new OutsideCounter(value); }
+        public BigInteger RetailVisits { get => retailVisits.Value; set => retailVisits = new OutsideCounter(value); }
+        public BigInteger LeisureUnits { get => leisureUnits.Value; set => leisureUnits = new OutsideCounter(value); }
+        public BigInteger LeisureVisits { get => leisureVisits.Value; set => leisureVisits = new OutsideCounter(value); }
+        internal bool TryRecord(OrdinaryVisitClass kind, Money price)
+        {
+            var units = kind == OrdinaryVisitClass.Retail ? retailUnits : leisureUnits;
+            var visits = kind == OrdinaryVisitClass.Retail ? retailVisits : leisureVisits;
+            if (!units.TryAdd(price.Units) || !visits.TryAdd(1)) return false;
+            if (kind == OrdinaryVisitClass.Retail) { retailUnits = units; retailVisits = visits; }
+            else { leisureUnits = units; leisureVisits = visits; }
+            return true;
+        }
+        private struct OutsideCounter
+        {
+            private static readonly BigInteger Maximum = BigInteger.Pow(10, 26) - 1; // F6d's unchanged wide-token bound
+            private BigInteger basis;
+            private long delta, allowance;
+            internal OutsideCounter(BigInteger value) { basis = value; delta = 0; allowance = Remaining(value); }
+            private static long Remaining(BigInteger value)
+            {
+                var remaining = Maximum - value;
+                return remaining <= 0 ? 0 : remaining > long.MaxValue ? long.MaxValue : (long)remaining;
+            }
+            internal BigInteger Value
+            {
+                get
+                {
+                    if (delta != 0) { basis += delta; delta = 0; }
+                    allowance = Remaining(basis); return basis;
+                }
+            }
+            internal bool TryAdd(long amount)
+            {
+                if (allowance < amount)
+                {
+                    var current = basis + delta;
+                    allowance = Remaining(current);
+                    if (allowance < amount) return false;
+                }
+                if (delta > long.MaxValue - amount) { basis += delta; delta = 0; }
+                delta += amount; allowance -= amount; return true;
+            }
+        }
     }
 
     public enum ShopChangeKind { Price, Stock, StaffedCounters, Hours }

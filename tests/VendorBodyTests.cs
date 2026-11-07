@@ -323,10 +323,10 @@ public sealed class VendorBodyTests
     }
 
     [Fact]
-    public void CurrentWriter31GoldenRemainsUnchanged()
+    public void FrozenWriter31GoldenRemainsUnchanged()
     {
         var state = EconomicLedgerTests.Fresh(5150); EconomicLedgerTests.Populate(state);
-        Assert.Equal(31, CityState.CurrentSchema);
-        Assert.Equal("06b494d2627e0d6675d8c437e1c0dff72e176ab3ae7aaa54a0f152052aace308", EconomicLedgerTests.Sha(SaveCodec.Write(state)));
+        Assert.Equal(31, CityState.EconomicLedgerSchema);
+        Assert.Equal("06b494d2627e0d6675d8c437e1c0dff72e176ab3ae7aaa54a0f152052aace308", EconomicLedgerTests.Sha(DevelopmentChain.WriteLedger(state)));
     }
 }

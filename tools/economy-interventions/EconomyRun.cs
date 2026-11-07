@@ -21,6 +21,7 @@ public sealed class RunOptions
     public double? ReloadAt;
     public Fault Fault;
     public int FaultDay = EconomyRun.BaselineDays + 2;
+    public bool OrdinaryVisits;
     public bool RivalListed = true, OwnListed = true;
 }
 
@@ -58,9 +59,16 @@ public static class EconomyRun
         long allocated = GC.GetTotalAllocatedBytes(true);
         var timer = System.Diagnostics.Stopwatch.StartNew();
         var (state, market) = EconomyFixture.Build(options.Seed, options.Residents, options.RivalListed, options.OwnListed);
+        if (options.OrdinaryVisits)
+        {
+            state.Places.Add(new Place { Id = "ordinary-retail", Name = "Outside non-food shop", Kind = PlaceKind.Shop, Position = new Position(3, 0, 0) });
+            state.Places.Add(new Place { Id = "ordinary-leisure", Name = "Outside leisure", Kind = PlaceKind.Leisure, Position = new Position(0, 0, 3) });
+            foreach (var p in state.Citizens) { p.ShopId = "ordinary-retail"; p.LeisureId = "ordinary-leisure"; }
+        }
         var routes = new EconomyRoutes(market);
         var observer = new DecisionObserver();
         var city = EconomyFixture.Attach(state, market, routes, fresh: true);
+        if (options.OrdinaryVisits) city.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(state.Minute));
         city.FoodDecisionObserved += observer.Observe;
         double start = EconomyFixture.StartMinute;
         // The last requested day ends at start + Days days; its outcomes are sampled at 03:00 after it.
@@ -71,6 +79,7 @@ public static class EconomyRun
         Require(city.BeginAccountingObservations(start), "initial epoch not published");
         var pending = new SortedDictionary<int, DayMetrics>();
         var previous = Household.Capture(city.State);
+        var ordinaryDays = new Dictionary<int, long>();
         bool reloaded = false;
         for (long epoch = (long)start + 1; epoch <= end; epoch++)
         {
@@ -80,7 +89,7 @@ public static class EconomyRun
             if (options.ReloadAt is double at && !reloaded && at != Math.Floor(at) && epoch - 0.5 >= at)
             {
                 Drain(city, epoch - 0.5);
-                if (InFlight(city) > 0) { city = Reload(city, market, routes, result, observer); reloaded = true; }
+                if (InFlight(city) > 0) { city = Reload(city, market, routes, result, observer, options.OrdinaryVisits); reloaded = true; }
             }
             Drain(city, ending);
             bool drained = city.IsAccountingEpochDrained(epoch);
@@ -89,8 +98,15 @@ public static class EconomyRun
             if (epoch % 1440 == 0 && day >= 2 && day - 1 <= options.Days)
             {
                 if (options.Fault != Fault.None && day - 1 == options.FaultDay) Inject(options.Fault, city.State, market);
-                var metrics = new DayMetrics { Day = day - 1 };
+                var metrics = new DayMetrics { Day = day - 1, OrdinaryVisits = options.OrdinaryVisits };
                 Check(city, market, metrics);
+                if (options.OrdinaryVisits)
+                {
+                    ordinaryDays[metrics.Day] = metrics.OrdinaryDiscretionaryUnits;
+                    ordinaryDays.TryGetValue(metrics.Day - EconomicLedger.Days, out long expired);
+                    if (metrics.OrdinaryDiscretionaryUnits - expired != metrics.OrdinaryWindowUnits)
+                        throw new LedgerViolation("ordinary dated totals do not equal watermarked wallet debits");
+                }
                 result.ConservationChecks += metrics.ConservationChecks;
                 var current = Household.Capture(city.State);
                 Household.Write(previous, current, metrics);
@@ -109,7 +125,7 @@ public static class EconomyRun
             Require(city.BeginAccountingObservations(epoch), "observation epoch not published");
             result.Epochs++;
             if (options.ReloadAt is double whole && !reloaded && whole == epoch)
-            { city = Reload(city, market, routes, result, observer); reloaded = true; }
+            { city = Reload(city, market, routes, result, observer, options.OrdinaryVisits); reloaded = true; }
         }
         Require(pending.Count == 0 && result.Days.Count == options.Days, "missing day samples");
         Require(result.Epochs == end - (long)start, "unexpected epoch count");
@@ -127,7 +143,7 @@ public static class EconomyRun
         while (!city.AdvanceTo(target, 10000).CaughtUp) Require(++guard < 100000, "nonterminating epoch");
     }
 
-    private static CitySimulator Reload(CitySimulator city, EconomyMarket market, EconomyRoutes routes, RunResult result, DecisionObserver observer)
+    private static CitySimulator Reload(CitySimulator city, EconomyMarket market, EconomyRoutes routes, RunResult result, DecisionObserver observer, bool ordinary)
     {
         result.InFlightAtReload = InFlight(city);
         string before = SaveCodec.Write(city.State);
@@ -136,6 +152,7 @@ public static class EconomyRun
         Require(SaveCodec.Write(read.State!) == before, "reload round trip changed the save");
         result.Reloads++;
         var next = EconomyFixture.Attach(read.State!, market, routes, fresh: false);
+        if (ordinary) next.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(read.State!.Minute));
         // The observer is harness state; it continues across the city reload.
         next.FoodDecisionObserved += observer.Observe;
         return next;
@@ -168,8 +185,10 @@ public static class EconomyRun
             if (!conserved) throw new LedgerViolation("conservation identity failed for " + meal.ResidentId + " on day " + metrics.Day);
             metrics.ConservationChecks++;
             prepared += b.PreparedFoodSpent.Units;
+            metrics.OrdinaryDiscretionaryUnits += b.Ledger.Discretionary.Units;
             if (meal.Status == MealStatus.Uncertain && market.IsConfirmedPaid(meal)) uncertain += meal.Price.Units;
         }
+        metrics.OrdinaryWindowUnits = (long)city.FreeOutsideSpending().Units;
         metrics.NativeOrders = market.NativeOrders; metrics.NativeRevenueUnits = market.NativeRevenueUnits;
         metrics.ConfirmedPreparedUnits = prepared; metrics.UncertainConfirmedUnits = uncertain;
         metrics.DuplicateOrders = market.DuplicateOrders; metrics.HistoricalClockMisses = city.HistoricalClockMisses;
@@ -290,8 +309,9 @@ public static class EconomyRun
             .Open("fixture").Field("residents", options.Residents).Field("consumers", options.Residents * EconomyFixture.RepresentationFactor)
             .Field("days", options.Days).Field("rivalListed", options.RivalListed).Field("ownListed", options.OwnListed)
             .Field("mealsPerHour", EconomyFixture.MealsPerHour).Field("walkingRouteMinutes", 1).Field("unitsPerCent", Money.UnitsPerCent).Close()
-            .Open("population").Field("ownerKind", OwnerKind).Field("perPersonWallets", false)
-            .Raw("kindsMeasured", "[\"resident\"]").Raw("kindsReserved", "[\"commuter\",\"dayVisitor\"]").Close();
+            .Open("population").Field("ownerKind", options.OrdinaryVisits ? "person-wallet" : OwnerKind).Field("perPersonWallets", options.OrdinaryVisits)
+            .Raw("kindsMeasured", options.OrdinaryVisits ? "[\"resident\",\"visitor\"]" : "[\"resident\"]")
+            .Raw("kindsReserved", options.OrdinaryVisits ? "[]" : "[\"commuter\",\"dayVisitor\"]").Close();
         json.OpenArray("inputs"); foreach (var input in schedule.Inputs) json.RawItem(input.Json()); json.CloseArray();
         json.OpenArray("days"); foreach (var day in days) day.Write(json); json.CloseArray();
         json.Close();
@@ -299,5 +319,18 @@ public static class EconomyRun
     }
 
     public static string Sha256(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+    private sealed class OrdinaryExperimentOwnership : IOrdinaryVisitOwnership
+    {
+        private long loadedHour, observedHour = -1;
+        internal OrdinaryExperimentOwnership(double minute) { loadedHour = (long)(minute / 60); }
+        public bool Pending => false;
+        public void Continue() { }
+        public void ObserveBoundary(double minute) { if ((long)(minute / 60) > loadedHour) observedHour = (long)(minute / 60); }
+        public bool TryGet(string place, out OrdinaryVisitTerms terms)
+        {
+            var kind = place == "ordinary-retail" ? OrdinaryVisitClass.Retail : place == "ordinary-leisure" ? OrdinaryVisitClass.Leisure : OrdinaryVisitClass.ActivityOnly;
+            terms = new OrdinaryVisitTerms(observedHour, false, kind); return observedHour >= 0;
+        }
+    }
     private static void Require(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
 }

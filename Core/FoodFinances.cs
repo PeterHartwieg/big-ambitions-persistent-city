@@ -67,7 +67,7 @@ namespace PersistentCity.Core
                     Schedule(e);
                 }
                 else if (food.city.State.Schema >= CityState.AttendanceSchema)
-                    HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person);
+                    HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments);
                 else HouseholdFinance.PostDevelopmentDay(budget, food.city.State.Minute, e.Person);
                 e.Minute = Math.Min(budget.NextPostingMinute, e.WageAt);
                 Repair(0);
@@ -159,6 +159,7 @@ namespace PersistentCity.Core
         }
         private Money AvailableForMeal(ResidentMeal meal)
         {
+            if (meal.Budget != null) meal.Budget.VisitorEndowment = city.VisitorEndowments && Owner(meal)?.IsVisitor == true;
             if (meal.Budget != null) meal.Allowance = HouseholdFinance.SpendingLimit(meal.Budget);
             return meal.Budget != null ? meal.Allowance : Money.Max(Money.Zero, meal.Allowance - meal.DayAllowanceUsed);
         }

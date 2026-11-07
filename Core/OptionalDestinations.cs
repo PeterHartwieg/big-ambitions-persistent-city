@@ -52,6 +52,8 @@ namespace PersistentCity.Core
             foreach (var candidate in candidates)
             {
                 var slot = new RoutineSlot(candidate.Id, proposed.Activity, proposed.EndsAt);
+                if (!CanAdmitOrdinary(person, candidate.Id, proposed.Activity, now))
+                { ObserveRoutine(person, slot, now, "candidate-rejected", "paid-visit-unaffordable"); continue; }
                 if (!UsefulOpening(candidate, now, slot.EndsAt, stay).HasValue)
                 { ObserveRoutine(person, slot, now, "candidate-rejected", "no-useful-opening"); continue; }
                 // Only a walking-only traveller can use a walking lower bound safely.
