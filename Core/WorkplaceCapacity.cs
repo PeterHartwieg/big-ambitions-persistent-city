@@ -10,7 +10,11 @@ namespace PersistentCity.Core
     /// A business without a positive catalogue area seats nobody (no capacity is invented), and a player-owned
     /// business seats nobody, because Persistent City persons are not the player's native staff (F6 request C1,
     /// <see cref="PopulationCensusPolicy.ExcludePlayerOwnedWorkplaces"/>). Shop and leisure allocations are attraction
-    /// weights for customers, not people employed, and are unchanged.</summary>
+    /// weights for customers, not people employed, and are unchanged. Capacities are evaluated once, from the catalogue
+    /// read when the city is created, and then stay with the saved places: a saved city never re-reads them. Player
+    /// ownership is therefore the creation-time ownership. A business the player rents later keeps its band and the
+    /// persons seated there; one the player gives up keeps capacity zero. No later ownership change reseats anyone;
+    /// any reconciliation with native staffing is F6's.</summary>
     public static class WorkplaceCapacityPolicy
     {
         public const string PolicyId = "workplace-bands-v1";
