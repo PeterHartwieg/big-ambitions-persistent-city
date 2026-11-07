@@ -70,6 +70,19 @@ namespace PersistentCity.Core
 
         /// <summary>The next order's sequence. Starts at 1 and never decreases.</summary>
         public long NextSequence { get; private set; } = 1;
+
+        /// <summary>Save snapshot capture (F7c): a detached copy with the same lists, order and order states. Reports
+        /// are immutable and shared.</summary>
+        internal ResearchLedger CopyForSave()
+        {
+            var copy = new ResearchLedger { NextSequence = NextSequence };
+            foreach (var (rows, target) in new[] { (open, copy.open), (kept, copy.kept), (closed, copy.closed) })
+                foreach (var order in rows)
+                    target.Add(new ResearchOrder(order.Sequence, order.Product, order.BusinessAddress, order.AgencyAddress, order.TaxDeductible,
+                        order.RadiusMetres, order.OrderMinute, order.SurveyAtMinute)
+                    { State = order.State, DeclineReason = order.DeclineReason, ReportId = order.ReportId, Report = order.Report });
+            return copy;
+        }
         /// <summary>Ordered and Surveyed, in order sequence.</summary>
         public IReadOnlyList<ResearchOrder> Open => open;
         /// <summary>Paid, oldest delivery first.</summary>

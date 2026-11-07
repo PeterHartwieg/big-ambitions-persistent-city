@@ -235,7 +235,7 @@ namespace PersistentCity.Core
             // Nothing above mutates the snapshot: any invalid route/rate leaves all citizens intact.
             foreach (var change in changes)
             {
-                if (change.Route != null) change.Citizen.Journey = change.Route;
+                if (change.Route != null) change.Citizen.Journey = change.Route.Commit();
                 change.Citizen.NextEventMinute = change.EventMinute;
                 if (change.MealStayUntil.HasValue) change.Citizen.ActivityUntilMinute = change.MealStayUntil.Value;
             }

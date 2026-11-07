@@ -2,8 +2,9 @@ using System.Diagnostics;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>Contiguous save phases inside one native onSaveGame callback (F7a).</summary>
-    public enum SaveCostPhase { Observe, Synchronize, Validate, Encode, Publish }
+    /// <summary>Contiguous save phases inside one native onSaveGame callback (F7a). F7c adds Capture, the snapshot
+    /// copy between Synchronize and Validate; it is appended so the earlier phase numbers stay.</summary>
+    public enum SaveCostPhase { Observe, Synchronize, Validate, Encode, Publish, Capture }
 
     /// <summary>
     /// Explicitly requested save-cost record. Callers pass null when diagnostics are off, so the
@@ -14,7 +15,7 @@ namespace PersistentCity.Persistence
     /// </summary>
     public sealed class SaveCostRecorder
     {
-        public const int PhaseCount = 5;
+        public const int PhaseCount = 6;
         private readonly long[] ticks = new long[PhaseCount];
         private long started, last;
         private SaveCostPhase current;

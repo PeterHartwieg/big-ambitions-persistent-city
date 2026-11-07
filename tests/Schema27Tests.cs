@@ -429,7 +429,7 @@ public sealed class Schema27Tests
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.Contains("car leg", read.Error);
         RefusedAndPreserved(bad, Running(2, 1).State, SaveReadStatus.Invalid, "car leg");
         // The writer refuses the same in-memory state before publication.
-        state.VisitorRoutines[index].Journey!.Legs[0].Mode = TravelMode.Car;
+        RouteEdits.EditableJourney(state.VisitorRoutines[index]).Legs[0].Mode = TravelMode.Car;
         Assert.Contains("car leg", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
     }
 

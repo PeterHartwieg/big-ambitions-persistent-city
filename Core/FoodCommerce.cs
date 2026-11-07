@@ -87,6 +87,8 @@ namespace PersistentCity.Core
             if (string.IsNullOrEmpty(anchorId) || slot < 0) throw new ArgumentException("Invalid roster host.");
             hostId = anchorId; hostSlot = slot;
         }
+        /// <summary>Save snapshot capture (F7c): copy the transient host assignment exactly, including "none".</summary>
+        internal void CopyHostTo(ResidentMeal target) { target.hostId = hostId; target.hostSlot = hostSlot; }
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; }
         public bool NeedsHomeResync { get; set; }

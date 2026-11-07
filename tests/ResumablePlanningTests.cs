@@ -48,7 +48,7 @@ public sealed class ResumablePlanningTests
         return walk.Legs.Count == 0 ? null : walk;
     }
 
-    private sealed class SyncPlanner : ICitizenRoutePlanner, ICommuteTimingPlanner
+    internal sealed class SyncPlanner : ICitizenRoutePlanner, ICommuteTimingPlanner
     {
         public int Calls;
         public Func<int, bool>? ThrowAt;
@@ -62,7 +62,7 @@ public sealed class ResumablePlanningTests
         public Route? Plan(Place from, Place to, double minute, CitizenState citizen) => Serve(new RouteRequest(from, to, minute, citizen, citizen.Preferences));
     }
 
-    private class DeferredPlanner : IResumableRoutePlanner, ICommuteTimingPlanner
+    internal class DeferredPlanner : IResumableRoutePlanner, ICommuteTimingPlanner
     {
         public Func<int, int> ContinuesFor = _ => 1;
         public Func<int, int, bool>? ThrowAt;
@@ -113,7 +113,7 @@ public sealed class ResumablePlanningTests
 
     private sealed class LeasedPlanner : DeferredPlanner, IRouteEventInputs { }
 
-    private static CityState City(int count, int seed = 11)
+    internal static CityState City(int count, int seed = 11)
     {
         var identities = Enumerable.Range(0, count).Select(i => new CitizenIdentity
         {
@@ -163,7 +163,7 @@ public sealed class ResumablePlanningTests
         Assert.True(city.IsCaughtUpTo(target));
     }
 
-    private static double Target(int day) => 1440 * (day + 1) + 37;
+    internal static double Target(int day) => 1440 * (day + 1) + 37;
 
     // A fixed meal outing at the same simulated moment in every run, to exercise the preference-only return request.
     private static bool BeginLunch(CitySimulator city)

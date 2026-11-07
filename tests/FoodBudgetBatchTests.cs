@@ -12,9 +12,9 @@ namespace PersistentCity.Tests;
 // runs the same code with BudgetPostingsPerEvent = 1, which is the earlier StepBudget exactly.
 public sealed class FoodBudgetBatchTests
 {
-    private const double Midnight = 2 * 1440.0;
+    internal const double Midnight = 2 * 1440.0;
 
-    private sealed class Walking : IRoutePlanner
+    internal sealed class Walking : IRoutePlanner
     {
         public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => new()
         { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Minutes = 5, Mode = TravelMode.Walk } } };
@@ -22,7 +22,7 @@ public sealed class FoodBudgetBatchTests
 
     // Records every native call the food layer makes, with the clock and how many budgets had
     // posted for that day when the call happened.
-    private sealed class TracingMarket : IFoodMarket, IFoodSaleEvidence
+    internal sealed class TracingMarket : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
         public int Units = 1000;
@@ -46,7 +46,7 @@ public sealed class FoodBudgetBatchTests
         }
     }
 
-    private sealed class Run
+    internal sealed class Run
     {
         public CitySimulator City = null!;
         public readonly TracingMarket Market = new();
@@ -58,7 +58,7 @@ public sealed class FoodBudgetBatchTests
 
     // Half the residents have a citizen event exactly at the second midnight, and one resident's checkout
     // stays uncertain so its meal record is due again at that midnight as well.
-    private static Run Start(bool legacy, int count = 60)
+    internal static Run Start(bool legacy, int count = 60)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {
             Id = "r" + n, Name = "Resident " + n, Persona = n % 3 == 0 ? Persona.Retiree : Persona.Foodie, Age = 30 + n % 40 }).ToArray(), new[] {
@@ -81,13 +81,13 @@ public sealed class FoodBudgetBatchTests
         return run;
     }
 
-    private static int Posted(CitySimulator city)
+    internal static int Posted(CitySimulator city)
     {
         int day = (int)(city.State.Minute / 1440);
         return city.State.Food!.Residents.Count(m => m.Budget != null && m.Budget.LastPostedDay >= day);
     }
 
-    private static void Attach(Run run)
+    internal static void Attach(Run run)
     {
         var city = run.City;
         string Stamp() => "@" + city.State.Minute.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + " posted " + Posted(city);
@@ -100,7 +100,7 @@ public sealed class FoodBudgetBatchTests
         => (FoodCommerce)(typeof(CitySimulator).GetField("food", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(city)
             ?? throw new InvalidOperationException("CitySimulator no longer exposes its food commerce field to this test."));
 
-    private static void Advance(Run run, double target, int budget)
+    internal static void Advance(Run run, double target, int budget)
     {
         while (true)
         {
