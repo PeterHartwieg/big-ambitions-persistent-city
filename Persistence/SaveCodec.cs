@@ -389,7 +389,8 @@ namespace PersistentCity.Persistence
             if (type == typeof(string))
             {
                 Require(token == JsonToken.String, "Expected a string.");
-                Require(((string)reader.Value!).Length <= 512, "Oversized string.");
+                // E6c: from the vendor schema a vendor place or business id may reach its escaped maximum.
+                Require(((string)reader.Value!).Length <= (schema >= VendorSchema ? IdentityBound((string)reader.Value!, 512) : 512), "Oversized string.");
                 if (schema >= 25) Require(ExactString25(text, (IJsonLineInfo)reader, (string)reader.Value!), "Invalid string encoding.");
                 return;
             }
@@ -405,7 +406,7 @@ namespace PersistentCity.Persistence
             if (type == typeof(double)) { Require(token == JsonToken.Float || token == JsonToken.Integer && text.CanonicalInteger((IJsonLineInfo)reader), "Expected a canonical number."); return; }
             if (type == typeof(MealOutcomeRecord))
             {
-                Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire
+                Require(token == JsonToken.String && ((string)reader.Value!).Length <= (schema >= VendorSchema ? MaxMealOutcomeWire - 256 + VendorNames.MaximumPlaceIdLength : MaxMealOutcomeWire)
                     && RivalWire21.CanonicalOutcome((string)reader.Value!)
                     && (schema < 25 || ExactString25(text, (IJsonLineInfo)reader, (string)reader.Value!)), "Invalid meal outcome record.");
                 return;
@@ -1105,7 +1106,7 @@ namespace PersistentCity.Persistence
             {
                 Require(shop != null && shop.AlternativeKind == FoodAlternativeKind.Player, "Native food scopes cannot enroll rivals.");
                 Require(shop != null && shops.Add(shop.PlaceId) && businessIds.Add(shop.BusinessId), "Duplicate food scope.");
-                Text(shop.PlaceId, "Food place", 256); Text(shop.ProductId, "Food product", 256); Text(shop.BusinessId, "Food business", 512);
+                Text(shop.PlaceId, "Food place", IdentityBound(shop.PlaceId, 256)); Text(shop.ProductId, "Food product", 256); Text(shop.BusinessId, "Food business", IdentityBound(shop.BusinessId, 512));
                 Require(shop.AdditionalProductIds != null && shop.AdditionalProductIds.Count < MenuLimit(state.Schema)
                     && shop.Products().Distinct(StringComparer.Ordinal).Count() == shop.AdditionalProductIds.Count + 1, "Invalid food menu.");
                 foreach (var product in shop.AdditionalProductIds) Text(product, "Food menu product", 256);
@@ -1119,7 +1120,7 @@ namespace PersistentCity.Persistence
                 if(state.Schema>=23) records+=1+(row?.ProductSales?.Count ?? 0);
                 Require(row != null && row.Day >= 0 && row.Day <= (int)(state.Minute / 1440) && foodPlaces.Contains(row.PlaceId, (int)PlaceKind.Shop)
                     && historyKeys.Add(row.Day + ":" + row.PlaceId + "\n" + row.BusinessId), "Invalid market history ownership.");
-                Text(row.BusinessId, "Historical business", 512);
+                Text(row.BusinessId, "Historical business", IdentityBound(row.BusinessId, 512));
                 Require(row.OffersConsidered >= 0 && row.ChosenOffers >= 0 && row.PriceRejections >= 0
                     && row.AccessRejections >= 0 && row.ClosedRejections >= 0 && row.StockRejections >= 0 && row.StaffRejections >= 0
                     && row.ServiceRejections >= 0 && row.UnknownEvidence >= 0 && row.PreferredAlternatives >= 0
@@ -1210,7 +1211,7 @@ namespace PersistentCity.Persistence
                 Require(meal.DesiredAt >= meal.Day * 1440.0 && meal.DesiredAt < (meal.Day + 1) * 1440.0
                     && meal.ExpiresAt > meal.DesiredAt && meal.ExpiresAt <= (meal.Day + 1) * 1440.0
                     && meal.ExpiresAt <= meal.DesiredAt + 240 && meal.DueAt >= state.Minute, "Invalid meal schedule.");
-                Text(meal.PlaceId, "Meal shop", 256, true); Text(meal.BusinessId, "Meal business", 512, true);
+                Text(meal.PlaceId, "Meal shop", IdentityBound(meal.PlaceId, 256), true); Text(meal.BusinessId, "Meal business", IdentityBound(meal.BusinessId, 512), true);
                 Text(meal.ProductId, "Meal product", 256, true); Text(meal.Reason, "Meal reason", 512, true);
                 if (meal.PlaceId.Length > 0)
                     Require(foodPlaces.Contains(meal.PlaceId, (int)PlaceKind.Shop) && meal.BusinessId.Length > 0 && meal.ProductId.Length > 0, "Meal lost its historical business/place identity.");
@@ -1285,7 +1286,7 @@ namespace PersistentCity.Persistence
                 previous = record.Kind;
                 Require(MealOutcomes.Index(record.Kind) >= today.Unrecorded, "Outcome recorded for a meal marked unrecorded.");
                 Require(record.Factor2 == MealFactor.None || record.Factor1 != MealFactor.None && record.Factor1 != record.Factor2, "Invalid meal outcome factors.");
-                Text(record.PlaceId, "Meal outcome shop", 256, true); Text(record.ProductId, "Meal outcome product", 256, true);
+                Text(record.PlaceId, "Meal outcome shop", IdentityBound(record.PlaceId, 256), true); Text(record.ProductId, "Meal outcome product", 256, true);
                 double dayStart = today.Day * 1440.0;
                 Require(record.At >= dayStart && record.At <= minute, "Invalid meal outcome time.");
                 Require(record.CheckoutAt == 0 || record.CheckoutAt >= dayStart && record.CheckoutAt <= record.At, "Invalid meal checkout time.");
@@ -1333,7 +1334,7 @@ namespace PersistentCity.Persistence
             Require(decision.Factor2 == MealFactor.None || decision.Factor1 != MealFactor.None && decision.Factor1 != decision.Factor2, "Invalid decision factors.");
             Minute(decision.OriginAt, "Decision origin"); Minute(decision.Deadline, "Decision deadline");
             Require(decision.Deadline >= decision.OriginAt, "Decision deadline precedes its origin.");
-            Text(decision.BusinessId, "Decision business", 512, true); Text(decision.ProductId, "Decision product", 256, true);
+            Text(decision.BusinessId, "Decision business", IdentityBound(decision.BusinessId, 512), true); Text(decision.ProductId, "Decision product", 256, true);
             Require((decision.Result == FoodDecisionResult.Selected) == (decision.BusinessId.Length > 0 && decision.ProductId.Length > 0)
                 && (decision.Result == FoodDecisionResult.Selected || decision.BusinessId.Length == 0 && decision.ProductId.Length == 0),
                 "Decision selection differs from its result.");
@@ -1363,7 +1364,7 @@ namespace PersistentCity.Persistence
                 Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
                     "Invalid held memory contribution.");
                 // B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
-                Text(shop!.BusinessId, "Decision shop business", 512);
+                Text(shop!.BusinessId, "Decision shop business", IdentityBound(shop.BusinessId, 512));
                 Require(foodPlaces.Contains(shop.PlaceId, (int)PlaceKind.Shop), "Unknown decision shop.");
                 Require(shop.MealsPerHour == -1 || Position.Finite(shop.MealsPerHour) && shop.MealsPerHour >= 0 && shop.MealsPerHour <= 100000,
                     "Invalid decision service evidence.");
@@ -1486,7 +1487,7 @@ namespace PersistentCity.Persistence
 
         private static Place Reference(Dictionary<string, Place> places, string id, params PlaceKind[] kinds)
         {
-            Text(id, "Place reference", 256);
+            Text(id, "Place reference", IdentityBound(id, 256));
             if (!places.TryGetValue(id, out var place)) Fail("Unknown place reference: " + id);
             if (kinds.Length != 0 && Array.IndexOf(kinds, place!.Kind) < 0) Fail("Place reference has the wrong role: " + id);
             return place!;

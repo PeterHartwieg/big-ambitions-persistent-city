@@ -127,8 +127,8 @@ namespace PersistentCity.Persistence
             {
                 Require(entry != null && entry.Slot > previous && entry.Slot < MaxPlaces && ids.Add(entry.BusinessId), "Duplicate or unordered business reference.");
                 previous = entry.Slot;
-                Text(entry.BusinessId, "Business reference identity", 512);
-                Text(entry.PlaceId, "Business reference place", 256);
+                Text(entry.BusinessId, "Business reference identity", IdentityBound(entry.BusinessId, 512));
+                Text(entry.PlaceId, "Business reference place", IdentityBound(entry.PlaceId, 256));
                 // E6c: the place of any vendor row, tombstones included, for that row's signature at a generation
                 // from 1 to its current one; any other business id at a vendor place is refused.
                 if (vendors.ByPlace.TryGetValue(entry.PlaceId, out var vendor))
@@ -431,7 +431,7 @@ namespace PersistentCity.Persistence
             {
                 Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference version.");
                 Require(reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 0, MaxPlaces - 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference slot.");
-                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= 512, "Invalid business reference identity.");
+                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= (schema >= VendorSchema ? IdentityBound((string)reader.Value!, 512) : 512), "Invalid business reference identity.");
                 Require(reader.Read() && reader.TokenType == JsonToken.String && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid business place reference.");
                 string place = (string)reader.Value!;
                 if (place.Length == 1 + VendorIndexWidth && place[0] == VendorPlaceForm)

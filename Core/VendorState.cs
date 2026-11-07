@@ -49,30 +49,20 @@ namespace PersistentCity.Core
             return escaped == null ? id : escaped.ToString();
         }
 
-        /// <summary>Longest <see cref="Key"/>: an escaped id up to this length is kept, a longer one is hashed.</summary>
-        public const int MaximumKeyLength = 128;
-        /// <summary>Longest place id and business id (generation up to int.MaxValue). Both fit every saved
-        /// 256-character place field and 512-character business field.</summary>
-        public const int MaximumPlaceIdLength = 7 + MaximumKeyLength;
-        public const int MaximumBusinessIdLength = 19 + MaximumKeyLength + 12 + 10;
-        private const char HashedKey = '~';
+        /// <summary>Longest escaped id: a BMP unit outside ASCII escapes to three UTF-8 bytes, nine characters (a surrogate
+        /// pair to four bytes, twelve characters for two units), so 128 units escape to at most 1,152 characters.</summary>
+        public const int MaximumEscapedIdLength = 9 * MaximumIdLength;
+        /// <summary>Longest place id, <c>vendor:&lt;escaped id&gt;</c>.</summary>
+        public const int MaximumPlaceIdLength = 7 + MaximumEscapedIdLength;
+        /// <summary>Longest business id, <c>streetfood:vehicle:&lt;escaped id&gt;:generation:&lt;g&gt;</c> with g up to int.MaxValue.</summary>
+        public const int MaximumBusinessIdLength = 19 + MaximumEscapedIdLength + 12 + 10;
 
-        /// <summary>The id part of the place and signature. Escaping can grow a 128-unit id to 1,152 characters, beyond
-        /// the saved place and business bounds, so an escaped form longer than 128 becomes '~' and the lowercase hex
-        /// SHA-256 of the id's UTF-8 bytes. '~' never appears in an escaped id, so the two forms cannot collide.</summary>
-        public static string Key(string id)
-        {
-            string escaped = Escape(id);
-            if (escaped.Length <= MaximumKeyLength) return escaped;
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(id));
-            var key = new StringBuilder(1 + hash.Length * 2).Append(HashedKey);
-            foreach (byte b in hash) key.Append(b.ToString("x2", CultureInfo.InvariantCulture));
-            return key.ToString();
-        }
+        /// <summary>A place id or business id derived from a vehicle id. Saved fields that hold them allow the vendor
+        /// maxima above instead of their ordinary 256 and 512 characters.</summary>
+        public static bool IsVendorIdentity(string? id) => IsVendorPlace(id) || id != null && id.StartsWith(SignaturePrefix, StringComparison.Ordinal);
 
-        public static string PlaceId(string vehicleId) => PlacePrefix + Key(vehicleId);
-        public static string Signature(string vehicleId) => SignaturePrefix + Key(vehicleId);
+        public static string PlaceId(string vehicleId) => PlacePrefix + Escape(vehicleId);
+        public static string Signature(string vehicleId) => SignaturePrefix + Escape(vehicleId);
         public static string BusinessId(string vehicleId, int generation) => generation < 1 ? throw new ArgumentOutOfRangeException(nameof(generation))
             : Signature(vehicleId) + ":generation:" + generation.ToString(CultureInfo.InvariantCulture);
         public static bool IsVendorPlace(string? placeId) => placeId != null && placeId.StartsWith(PlacePrefix, StringComparison.Ordinal);

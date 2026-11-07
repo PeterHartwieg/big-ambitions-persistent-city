@@ -611,48 +611,60 @@ public sealed class VendorSaveTests
         Refused(WithRows(text, new[] { "[2,\"a\\u0001\",1,\"vendor:a%01\",\"streetfood:vehicle:a%01:generation:1\"]" }), "Invalid vendor vehicle id.");
     }
 
-    /// <summary>Review Sol-r1-1: a valid 128-unit id may escape to 1,152 characters. The derived key is bounded, so place
-    /// and business ids fit every saved place (256) and business (512) field, and the city round-trips with the id's
-    /// Vehicle scope, a meal at its place, a remembered business reference and a remembered tombstone.</summary>
+    /// <summary>Reviews Sol-r1-1 and Sol-r2-1: a valid 128-unit id may escape to 1,152 characters. The identities keep
+    /// the plan's escaped form (vendor:&lt;escaped id&gt;, streetfood:vehicle:&lt;escaped id&gt;:generation:&lt;g&gt;), and every
+    /// saved field that holds them allows the escaped maxima: the table, the Vehicle scope, a meal and its outcome
+    /// record, a resident at the stand, a business reference and a remembered tombstone.</summary>
     [Theory]
-    [InlineData("中", 128)]        // 9 escaped characters per unit
-    [InlineData(" ", 128)]         // 3 per unit: 391 characters escaped
-    [InlineData("\ud83d\ude9a", 64)] // 64 surrogate pairs, 128 units
+    [InlineData("中", 128)]        // 9 escaped characters per unit: the maximum
+    [InlineData(" ", 128)]         // 3 per unit
+    [InlineData("\ud83d\ude9a", 64)] // 64 surrogate pairs, 128 units, 6 per unit
     [InlineData("é", 128)]
-    public void MaximumLengthEscapedIdsRoundTripWithScopeMealReferenceAndTombstone(string unit, int repeat)
+    public void MaximumLengthEscapedIdsRoundTripWithScopeMealPersonReferenceAndTombstone(string unit, int repeat)
     {
         string id = string.Concat(Enumerable.Repeat(unit, repeat)), other = "t" + id.Substring(unit.Length);
-        Assert.Equal(128, id.Length); Assert.True(VendorNames.ValidId(id)); Assert.True(VendorNames.Escape(id).Length > VendorNames.MaximumKeyLength);
-        Assert.StartsWith("vendor:~", VendorNames.PlaceId(id));
-        Assert.True(VendorNames.PlaceId(id).Length <= VendorNames.MaximumPlaceIdLength && VendorNames.MaximumPlaceIdLength <= 256);
-        Assert.True(VendorNames.BusinessId(id, int.MaxValue).Length <= VendorNames.MaximumBusinessIdLength && VendorNames.MaximumBusinessIdLength <= 512);
-        Assert.NotEqual(VendorNames.PlaceId(id), VendorNames.PlaceId(other));
+        Assert.Equal(128, id.Length); Assert.True(VendorNames.ValidId(id));
+        Assert.Equal("vendor:" + VendorNames.Escape(id), VendorNames.PlaceId(id));
+        Assert.Equal("streetfood:vehicle:" + VendorNames.Escape(id) + ":generation:7", VendorNames.BusinessId(id, 7));
+        Assert.True(VendorNames.PlaceId(id).Length <= VendorNames.MaximumPlaceIdLength);
+        Assert.True(VendorNames.BusinessId(id, int.MaxValue).Length <= VendorNames.MaximumBusinessIdLength);
+        if (unit == "中")
+        {
+            Assert.Equal(VendorNames.MaximumPlaceIdLength, VendorNames.PlaceId(id).Length);
+            Assert.Equal(VendorNames.MaximumBusinessIdLength, VendorNames.BusinessId(id, int.MaxValue).Length);
+        }
         var city = WeightedFoodChoiceTests.Ready(5).city;
-        var table = city.State.Vendors;
+        var state = city.State;
+        var table = state.Vendors;
         var tomb = table.Admit(other, ""); tomb.Generation = 2; table.Move(tomb, VendorRowState.Tombstone);
         var row = table.Admit(id, "cart");
         row.Stand = new VendorStand { OpeningId = 1, Position = new Position(10, 0, 0), OpenedDay = 2, OpenedMinute = 540, ClosesDay = 2, ClosesMinute = 660, Published = true };
         city.PublishVendorPlace(row, Menu(FoodProducts.HotDog)); row.PlacePublished = true;
-        var food = city.State.Food!;
+        var food = state.Food!;
         food.BusinessReferences.Add(new BusinessReference { Slot = 0, BusinessId = row.BusinessId, PlaceId = row.PlaceId });
         food.BusinessReferences.Add(new BusinessReference { Slot = 1, BusinessId = VendorNames.BusinessId(other, 1), PlaceId = tomb.PlaceId });
-        var meal = food.Residents[0];
-        meal.PlaceId = row.PlaceId; meal.BusinessId = row.BusinessId; meal.ProductId = FoodProducts.HotDog;
-        string payload = SaveCodec.Write(city.State);
+        // The resident bought at the stand and is still eating there.
+        var person = state.Citizens.Single();
+        var meal = food.Residents.Single(m => m.ResidentId == person.Identity.Id);
+        meal.Status = MealStatus.Paid; meal.PlaceId = row.PlaceId; meal.BusinessId = row.BusinessId; meal.ProductId = FoodProducts.HotDog;
+        person.MealOuting = new MealOuting { OriginId = person.HomeId, OriginActivity = Activity.Home, ResumeUntil = person.NextEventMinute + 600, ResumeEvent = person.NextEventMinute + 600 };
+        person.PlaceId = row.PlaceId; person.Activity = Activity.Shop; person.Phase = CitizenPhase.AtPlace;
+        person.ActivityUntilMinute = person.NextEventMinute;
+        int day = (int)(state.Minute / 1440);
+        meal.Today = new ResidentFoodToday { Day = day };
+        meal.Today.Meals.Add(new MealOutcomeRecord { Kind = MealKind.Legacy, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.ReceiptConfirmed,
+            PlaceId = row.PlaceId, ProductId = FoodProducts.HotDog, At = (int)state.Minute });
+        string payload = SaveCodec.Write(state);
         var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         Assert.Equal(new[] { other, id }.OrderBy(x => x, StringComparer.Ordinal), read.State!.Vendors.Rows.Select(r => r.VehicleId));
-        Assert.Equal(row.PlaceId, read.State.Food!.Residents[0].PlaceId);
+        Assert.Contains("\"" + VendorNames.PlaceId(id) + "\"", payload);
+        Assert.Equal(row.PlaceId, read.State.Citizens.Single().PlaceId);
+        Assert.Equal(row.PlaceId, read.State.Food!.Residents[0].Today!.Meals.Single().PlaceId);
         Assert.Equal(new Position(10, 0, 0), new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner()).FindPosition(row.PlaceId));
-    }
-
-    [Fact]
-    public void AnEscapedIdUpToTheKeyBoundKeepsItsReadableForm()
-    {
-        string id = new string(' ', 42); // 126 escaped characters
-        Assert.Equal("vendor:" + VendorNames.Escape(id), VendorNames.PlaceId(id));
-        Assert.Equal("vendor:" + VendorNames.Escape(id + "a"), VendorNames.PlaceId(id + "a")); // 127
-        Assert.StartsWith("vendor:~", VendorNames.PlaceId(id + " ")); // 129
+        // An ordinary place or business id keeps its own bound: only vendor identities may be longer.
+        food.BusinessReferences.Add(new BusinessReference { Slot = 2, BusinessId = new string('b', 513), PlaceId = "s0" });
+        WriteRefused(state, "Invalid Business reference identity.");
     }
 
     // ---- Persons at stands (review Opus-r1-1) ----

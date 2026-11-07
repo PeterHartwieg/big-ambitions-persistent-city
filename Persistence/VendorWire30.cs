@@ -64,6 +64,12 @@ namespace PersistentCity.Persistence
             => context.VendorIndex.TryGetValue(id, out int row) ? VendorPlaceForm + MemoryWire.Number(row, VendorIndexWidth)
             : context.Index.TryGetValue(id, out int at) ? MemoryWire.Number(at, 3) : null;
 
+        /// <summary>The length bound of a saved place or business field: a vendor place id or business id may reach the
+        /// escaped maxima (<see cref="VendorNames.MaximumPlaceIdLength"/>, <see cref="VendorNames.MaximumBusinessIdLength"/>);
+        /// every other value keeps the field's own bound.</summary>
+        private static int IdentityBound(string? value, int max) => VendorNames.IsVendorPlace(value) ? Math.Max(max, VendorNames.MaximumPlaceIdLength)
+            : VendorNames.IsVendorIdentity(value) ? Math.Max(max, VendorNames.MaximumBusinessIdLength) : max;
+
         /// <summary>Properties that exist only from the vendor schema; every older writer and frozen reader omits them.</summary>
         internal static bool VendorProperty30(Type type, string? name) => type == typeof(CityState) && name == "Vendors";
 
