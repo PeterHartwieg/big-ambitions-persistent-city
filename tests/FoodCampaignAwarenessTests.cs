@@ -265,7 +265,7 @@ public sealed class FoodCampaignAwarenessTests
         string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         DevelopmentChain.RequireRefusedCapabilities(source);
         var read=DevelopmentChain.RefusedThenRead(data,"weighted");Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(20,read.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
+        Assert.Equal(20,read.SourceSchema);Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
         var expected=JObject.Parse(DevelopmentChain.Write25(city.State));expected["Food"]!["RivalStartsDay"]=(int)(city.State.Minute/1440)+1; expected["NamePolicyStartsDay"]=(int)(city.State.Minute/1440)+1;
         Assert.True(JToken.DeepEquals(expected,JObject.Parse(DevelopmentChain.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
         foreach(int schema in new[]{24,99})
@@ -287,7 +287,7 @@ public sealed class FoodCampaignAwarenessTests
         string legacySource=legacy19.ToString(Formatting.None);data[SaveStore.StateKey]=legacySource;
         var legacyRead=DevelopmentChain.RefusedThenRead(data,"weighted");
         Assert.True(legacyRead.Status==SaveReadStatus.Loaded,legacyRead.Error);
-        Assert.Equal(19,legacyRead.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,legacyRead.State!.Schema);
+        Assert.Equal(19,legacyRead.SourceSchema);Assert.Equal(DevelopmentChain.ChainOutput,legacyRead.State!.Schema);
         Assert.Equal((int)(heldCity.State.Minute/1440)+1,legacyRead.State.WeatherStartsDay);
         Assert.Equal(WeatherSample.Unknown,legacyRead.State.Food!.Residents[0].Decision!.Weather);
         Assert.Equal(legacySource,data[SaveStore.StateKey]);
@@ -324,7 +324,7 @@ public sealed class FoodCampaignAwarenessTests
         DevelopmentChain.RequireRefusedCapabilities(source);
         var read=DevelopmentChain.RefusedThenRead(data,"weighted");
         Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(22,read.SourceSchema);
-        Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
+        Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         Assert.Equal(source,As22(read.State));Assert.Same(source,data[SaveStore.StateKey]);
         Assert.Equal(state.Citizens[0].W!.ToWire(),read.State.Citizens[0].W!.ToWire());
         Assert.Equal(WeatherSample.Rain,read.State.Food!.Residents[0].Decision!.Weather);

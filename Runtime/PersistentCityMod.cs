@@ -125,7 +125,7 @@ namespace PersistentCity.Runtime
             var state = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, Shops = catalogue.Businesses.Select(b => new FoodScope {
                 PlaceId = b.PlaceId, BusinessId = b.Id, ProductId = b.Offers.First().ProductId,
                 AdditionalProductIds = b.Offers.Skip(1).Select(o => o.ProductId).ToList() }).ToList(),
-                Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
+                Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home && !PortalPlaces.Is(p))
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
             try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
@@ -657,6 +657,13 @@ namespace PersistentCity.Runtime
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
             if (!AccountingClock.Compatible(state.Minute, Now()))
             { StopAccounting(); return; }
+            // F5d: a city whose first roster is about to be created gets its portal places now, before routes and
+            // the scheduler index the catalogue. A saved city keeps its own station table.
+            if (state.Food == null && state.Schema >= PersonTable.IndependentSchema && state.Portals.Count == 0 && state.Visitors.Count == 0)
+            {
+                PortalPlaces.Add(state, NativePortalStations.Read());
+                log?.Info("Visitor portals: " + state.Portals.Count + " subway stations.");
+            }
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
@@ -673,7 +680,7 @@ namespace PersistentCity.Runtime
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,
                     RepresentationFactor = CityBalance.ConsumerRepresentationFactor,
-                    Districts = FoodHouseholdCatalogue.Read(state.Places.Where(p => p.Kind == PlaceKind.Home)
+                    Districts = FoodHouseholdCatalogue.Read(state.Places.Where(p => p.Kind == PlaceKind.Home && !PortalPlaces.Is(p))
                         .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
@@ -691,7 +698,7 @@ namespace PersistentCity.Runtime
             nextDependencyCheck = Time.unscaledTime + 30;
             nextStationScan = float.PositiveInfinity;
             seenRoadSnapshots = 0; clockRetimingRoutes = false;
-            Say("Persistent population active: " + state.Citizens.Count + " residents, " + state.Places.Count
+            Say("Persistent population active: " + state.Citizens.Count + " residents, " + state.Visitors.Count + " visitors, " + state.Places.Count
                 + " places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.");
         }
 

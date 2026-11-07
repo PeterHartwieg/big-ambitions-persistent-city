@@ -31,12 +31,12 @@ public sealed partial class FoodCommerceTests
         string source = schema == 17 ? LegacyWire.Write(city.State) : S17_Old(LegacyWire.Write(city.State), schema);
         var original = LegacyPopulationCodec.Read(source); Assert.True(original.Status == SaveReadStatus.Loaded, original.Error);
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema);
+        Assert.Equal(schema, read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema);
         Assert.Equal(LegacyWire.Write(original.State!), LegacyWire.Write(read.State));
         Assert.All(read.State.Food!.Residents, m => { Assert.Empty(m.Memory.Entries); Assert.Null(m.Memory.Watermark); });
         Assert.Empty(read.State.Food.BusinessReferences); Assert.False(read.State.Capabilities.Active);
         string next = DevelopmentChain.Write(read.State);
-        Assert.Equal(SaveCodec.LatestDevelopmentSchema, DevelopmentChain.Read(next).SourceSchema);
+        Assert.Equal(DevelopmentChain.ChainOutput, DevelopmentChain.Read(next).SourceSchema);
         Assert.Equal(next, DevelopmentChain.Write(DevelopmentChain.Read(next).State!));
         for (int i = 0; i < 2; i++) Assert.Equal(BitConverter.DoubleToInt64Bits(person.RecentVisits[i].AtMinute), BitConverter.DoubleToInt64Bits(read.State.Citizens[0].RecentVisits[i].AtMinute));
         if (schema == 17) Assert.NotNull(read.State.Food.Residents.Single(m => m.Decision != null).Decision);
@@ -100,7 +100,7 @@ public sealed partial class FoodCommerceTests
         {
             case "tuple-octal": broken = source.Replace("\"Residents\":[[3,", "\"Residents\":[[03,"); break; // roster tuple v3
             case "tuple-hex": broken = source.Replace("\"Residents\":[[3,", "\"Residents\":[[0x3,"); break;
-            case "schema-hex": broken = source.Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":0x18,"); break;
+            case "schema-hex": broken = source.Replace("\"Schema\":" + city.State.Schema + ",", "\"Schema\":0x18,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
             case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
@@ -112,22 +112,22 @@ public sealed partial class FoodCommerceTests
     public void B0_FullMemoryRoundTripsCanonicallyWithinItsInclusiveBudgetAndCountsAsOne()
     {
         var (city, _) = S17_Full(); var state = city.State; var food = state.Food!;
-        var meal = food.Residents[0]; string empty = DevelopmentChain.Write(state); var before = SaveCodec.CountRecords(state, empty);
+        var meal = food.Residents[0]; string empty = DevelopmentChain.Write(state); var before = DevelopmentChain.CountRecords(state, empty);
         foreach (int slot in new[] { 0, 1, 2, 19999 }) food.BusinessReferences.Add(new BusinessReference { Slot = slot, BusinessId = "generation:" + slot, PlaceId = "shop" });
         meal.Memory = B0_Memory(); string wire = MemoryWire.Encode(meal.Memory);
         Assert.Equal(48, wire.Length); Assert.True(wire.Length + 3 <= 64); Assert.All(wire, c => Assert.InRange((int)c, 0, 127));
         Assert.Equal(wire, MemoryWire.Encode(MemoryWire.Decode(wire)));
-        string json = DevelopmentChain.Write(state); var after = SaveCodec.CountRecords(state, json);
+        string json = DevelopmentChain.Write(state); var after = DevelopmentChain.CountRecords(state, json);
         Assert.Equal(before.Streaming + 4, after.Streaming); Assert.Equal(before.Semantic + 4, after.Semantic);
         var read = DevelopmentChain.Read(json); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(json, DevelopmentChain.Write(read.State!));
         // Empty extension already charges one; adding all four entries and watermark adds zero records.
-        meal.Memory = new ConsumerMemory(); Assert.Equal(after, SaveCodec.CountRecords(state, DevelopmentChain.Write(state)));
+        meal.Memory = new ConsumerMemory(); Assert.Equal(after, DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state)));
         var threeOutcomes = meal.Today;
-        meal.Today = null; var noToday = SaveCodec.CountRecords(state, DevelopmentChain.Write(state));
-        meal.Today = new ResidentFoodToday { Day = 0 }; var emptyToday = SaveCodec.CountRecords(state, DevelopmentChain.Write(state));
+        meal.Today = null; var noToday = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
+        meal.Today = new ResidentFoodToday { Day = 0 }; var emptyToday = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
         Assert.Equal(noToday, emptyToday); // absence, empty and saturated rollups all charge one consumer unit
         meal.Today = threeOutcomes;
-        var restoredToday = SaveCodec.CountRecords(state, DevelopmentChain.Write(state));
+        var restoredToday = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
         // The schema-25 table regains the historical "pastry" identity; the rollup is still one unit.
         Assert.Equal(emptyToday.Streaming + 1, restoredToday.Streaming);
         Assert.Equal(emptyToday.Semantic + 1, restoredToday.Semantic);
@@ -191,7 +191,7 @@ public sealed partial class FoodCommerceTests
         var (city, _) = S17_Full();
         city.State.Capabilities.Active = true;
         string active = DevelopmentChain.Write(city.State);
-        SaveCodec.RequireExecutableCapabilities(active);
+        DevelopmentChain.ProbeCapabilities(active);
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(active).Status);
         _ = new CitySimulator(city.State, new Walking());
         city.State.Capabilities.Revision = 2;

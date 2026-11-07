@@ -276,7 +276,7 @@ public sealed class ActiveJourneyIndexTests
     [Fact]
     public void IndexHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(26, CityState.CurrentSchema);
+        Assert.Equal(27, CityState.CurrentSchema);
         var plain = Mixed(new Walking(), 160); var probed = Mixed(new Walking(), 160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         probed.ActivityObserved += (_, _, _) => { _ = probed.ActiveJourneyIndexMatchesState(); _ = probed.ActiveJourneys.BodyCandidates.Count; };
@@ -291,7 +291,7 @@ public sealed class ActiveJourneyIndexTests
         Assert.Equal(identities, probed.State.Citizens.Select(c => c.Identity));
         // Only read members are public; filing and rebuilding stay inside Core.
         var mutators = typeof(ActiveJourneyIndex).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-            .Where(m => !m.IsSpecialName).Select(m => m.Name).OrderBy(n => n, StringComparer.Ordinal);
+            .Where(m => !m.IsSpecialName).Select(m => m.Name).Distinct().OrderBy(n => n, StringComparer.Ordinal);
         Assert.Equal(new[] { "Contains", "MatchesScan" }, mutators);
     }
 

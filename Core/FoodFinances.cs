@@ -64,7 +64,7 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("Finish current purchases before enabling household finances.");
             state.HouseholdFinanceVersion = HouseholdFinance.PolicyVersion;
             foreach (var meal in state.Residents)
-            { CreateBudget(meal, city.FindCitizen(meal.HostId)!); budgetDue.Add(meal); }
+            { CreateBudget(meal, Owner(meal)!); budgetDue.Add(meal); }
             budgetDue.Build();
         }
         private void CreateBudget(ResidentMeal meal, CitizenState person)
@@ -97,7 +97,7 @@ namespace PersistentCity.Core
             do
             {
                 var meal = budgetDue.Min!;
-                HouseholdFinance.PostDay(meal.Budget!, city.State.Minute, city.FindCitizen(meal.HostId)!);
+                HouseholdFinance.PostDay(meal.Budget!, city.State.Minute, Owner(meal)!);
                 budgetDue.UpdatedMinimum();
                 posted++;
                 LastBudgetPostings = posted; BudgetPostings++;

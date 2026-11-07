@@ -115,7 +115,7 @@ namespace PersistentCity.Runtime
             var counters = simulation.FoodMoney;
             if (counters == null) return "Preparing resident food demand. The food market is not attached yet.";
             var money = counters.Snapshot();
-            text.AppendLine("Day " + day + " · " + city.Citizens.Count + " physical residents · " + food.Residents.Count + " represented consumers");
+            text.AppendLine("Day " + day + " · " + city.Citizens.Count + " residents · " + city.Visitors.Count + " visitors · " + food.Residents.Count + " people with meals");
             text.AppendLine("Accounting lag " + NativeCityClock.LagMinutes.ToString("F3", CultureInfo.InvariantCulture)
                 + " game minutes; calendar holds " + NativeCityClock.HeldOrdinaryTicks + " ordinary / " + NativeCityClock.HeldEconomySkipTicks
                 + " skip ticks. Configured calendar factor " + NativeCityClock.Factor.ToString("F3", CultureInfo.InvariantCulture) + ".");

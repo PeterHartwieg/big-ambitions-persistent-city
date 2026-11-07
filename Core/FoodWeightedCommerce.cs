@@ -75,7 +75,7 @@ namespace PersistentCity.Core
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
-            var person=city.FindCitizen(meal.HostId);if(person==null) return null;
+            var person=Owner(meal);if(person==null) return null;
             // Explicit on-demand inspection may finish the transient index; normal events never drain it inline.
             while(NeedsRivalPreparation(city.State.Minute) || !AwarenessReady) ContinueAwarenessPreparation();
             var stop=ChoiceStop(meal,person);bool atStop=meal.Decision!=null

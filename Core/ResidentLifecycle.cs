@@ -25,6 +25,8 @@ namespace PersistentCity.Core
         public static double NextHomeEvent(CitizenState person, double routineMinute, double now)
         {
             if (!IsWorker(person) || !IsSafelyHome(person)) return routineMinute;
+            // A dormant visitor waits for its next stay start; its employment check runs at its portal events.
+            if (person.IsVisitor) return routineMinute;
             // One overdue day per event. Requeue through the simulator's ordinary budget;
             // never loop through months of missed days inside a resident update.
             // Spread the small daily check through the first four hours. This adds
@@ -49,7 +51,13 @@ namespace PersistentCity.Core
             person.LastEmploymentCheckDay = day;
             string key = person.Identity.Id + ":employment:" + day.ToString(CultureInfo.InvariantCulture);
             double chance = (StableRandom.Hash(key, city.Seed) + 1.0) / (uint.MaxValue + 2.0);
-            if (person.DayPlaceId != "")
+            if (person.DayPlaceId == "" && person.VisitorCarried == ResidentIncomeSource.ExternalEmployment)
+            {
+                // A visitor's outside employer (carried income) ends by the ordinary job-loss draw; the ordinary
+                // job-finding draw may seat it here instead (section 3 Resources). Either outcome is its own.
+                if (chance < CityBalance.DailyJobLossChance) { person.VisitorCarried = null; return null; }
+            }
+            else if (person.DayPlaceId != "")
             {
                 if (chance >= CityBalance.DailyJobLossChance) return null;
                 person.DayPlaceId = "";
@@ -69,6 +77,7 @@ namespace PersistentCity.Core
         internal static void AssignWorkplace(CitizenState person, Place candidate)
         {
             person.DayPlaceId = candidate.Id;
+            person.VisitorCarried = null;
             // The assignment follows the employment check of LastEmploymentCheckDay.
             person.EmploymentStartDay = person.LastEmploymentCheckDay;
             person.JobChanges = checked(person.JobChanges + 1);

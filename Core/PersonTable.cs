@@ -18,6 +18,8 @@ namespace PersistentCity.Core
         public ResidentIncomeSource? CarriedIncomeSource { get; set; }
         /// <summary>Latest arrival {place, exact minute, activity}; absent while dormant. Read checks structure only.</summary>
         public VisitRecord? LastArrival { get; set; }
+        /// <summary>Schema 27: this visitor's own routine in the event queue (never serialized with the tuple).</summary>
+        public VisitorRoutine? Routine { get; set; }
     }
 
     /// <summary>Person-table rules of writer 26 (plan section 3 Identity and ownership, section 5 Bounds).</summary>
@@ -30,6 +32,8 @@ namespace PersistentCity.Core
         public const int MaximumPortals = PopulationCensusPolicy.MaximumStations;
         /// <summary>First schema with the factor-1 roster rule: one own slot-0 roster record per person.</summary>
         public const int OwnRosterSchema = 26;
+        /// <summary>First schema whose visitors run their own routines (F5d): no host, anchor or represented excursion.</summary>
+        public const int IndependentSchema = 27;
         /// <summary>Writer 26 has one schedule template: today's persona routine in DailyRoutine.</summary>
         public const int PersonaScheduleCode = 0;
 
@@ -66,5 +70,12 @@ namespace PersistentCity.Core
         }
 
         public static int PersonCount(CityState city) => city.Citizens.Count + city.Visitors.Count;
+
+        /// <summary>Every scheduled person: residents, then schema-27 visitor routines in ordinal order.</summary>
+        public static IEnumerable<CitizenState> Schedules(CityState city)
+        {
+            foreach (var resident in city.Citizens) yield return resident;
+            foreach (var routine in city.VisitorRoutines) yield return routine;
+        }
     }
 }

@@ -126,13 +126,14 @@ public sealed class SaveCostDiagnosticsTests
         // Natural, not saturated, histories (E5d stress retains 32 visits/resident).
         Assert.InRange(state.Citizens.Max(c => c.RecentVisits.Count), 1, SaveCodec.MaxRecentVisits);
         Assert.True(state.Citizens.Average(c => c.RecentVisits.Count) < 32);
-        // No stored visitor identity (F5 B6): every consumer belongs to a saved resident.
-        var residents = state.Citizens.Select(c => c.Identity.Id).ToHashSet(StringComparer.Ordinal);
-        Assert.All(state.Food.Residents, meal => Assert.Contains(meal.HostId, residents));
+        // No stored visitor identity (F5 B6): every roster record is a saved resident's or a visitor person's own (F5d).
+        var persons = state.Citizens.Select(c => c.Identity.Id).Concat(state.Visitors.Select(v => v.Id)).ToHashSet(StringComparer.Ordinal);
+        Assert.Equal(957, state.Visitors.Count);
+        Assert.All(state.Food.Residents, meal => { Assert.Contains(meal.HostId, persons); Assert.Equal(meal.ResidentId, meal.HostId); });
         string payload = SaveCodec.Write(state);
         var read = SaveCodec.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(26, CityState.CurrentSchema);
+        Assert.Equal(27, CityState.CurrentSchema);
     }
 }

@@ -166,6 +166,8 @@ public static class RushSpikeReplay
                 new FoodScope { PlaceId = "shop-002", BusinessId = "b3", ProductId = FoodProducts.Burger, AdditionalProductIds = { FoodProducts.HotDog, FoodProducts.Croissant } },
             }
         };
+        // The pinned #128 replay measures the represented-consumer (writer-26) city it was captured in.
+        city.Schema = SaveCodec.PersonSchema;
         return city;
     }
 
@@ -239,7 +241,7 @@ public static class RushSpikeReplay
         result.CompletedJourneys = state.Citizens.Sum(c => c.CompletedJourneys);
         result.Stops = city.OptionalStopChances.Realised;
         result.StopSeamCalls = stops.Calls; result.RouteCalls = planner.Calls;
-        result.SaveSha256 = Sha(SaveCodec.Write(state));
+        result.SaveSha256 = Sha(DevelopmentChain.Write(state));
         return result;
     }
 
@@ -250,7 +252,7 @@ public static class RushSpikeReplay
         var city = Attach(state, new Planner(), new Market(), new Stops());
         while (!city.AdvanceTo(from, 256).CaughtUp) { }
         while (!city.AdvanceTo(to, 256).CaughtUp) { }
-        return Sha(SaveCodec.Write(state));
+        return Sha(DevelopmentChain.Write(state));
     }
 
     public static string Sha(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));

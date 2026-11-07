@@ -105,7 +105,7 @@ public sealed class RivalOutflowHistoryTests
         Assert.Equal(city.FreeRivalOutflow()!.Units, resumed.FreeRivalOutflow()!.Units);
         Assert.Equal(3, resumed.FreeRivalOutflow()!.Count); Assert.Equal(0, market.NativeBuys);
         Assert.True(resumed.State.Food!.Outflow!.Reconciles(resumed.State.Food));
-        var counts = SaveCodec.CountRecords(resumed.State, DevelopmentChain.Write(resumed.State));
+        var counts = DevelopmentChain.CountRecords(resumed.State, DevelopmentChain.Write(resumed.State));
         Assert.Equal(counts.Semantic, counts.Streaming);
     }
     [Theory]
@@ -120,7 +120,7 @@ public sealed class RivalOutflowHistoryTests
         string source = DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
         Assert.DoesNotContain("Outflow", source);
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema);
+        Assert.Equal(schema, read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema);
         Assert.True(read.State.Food!.Outflow!.Reconciles(read.State.Food));
         Assert.Equal(BigInteger.Zero, read.State.Food.Outflow.Capture(1).Units);
         Assert.All(read.State.Food.Outflow.Capture(1).Days.Where(d => d.Day < 1), d => Assert.False(d.Known));

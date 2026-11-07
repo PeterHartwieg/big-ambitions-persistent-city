@@ -206,7 +206,7 @@ namespace PersistentCity.Core
         public double TravelMinutes { get; set; }
     }
 
-    public sealed class CitizenState
+    public class CitizenState
     {
         public WeatherCommitment? W { get; set; }
         public CitizenIdentity Identity { get; set; } = new CitizenIdentity();
@@ -245,6 +245,14 @@ namespace PersistentCity.Core
         // Transient and never serialized: per-resident routine hashes derived from Identity.Id and the
         // city seed. RoutineKeys.For rebuilds it when either differs; event copies share it.
         internal RoutineKeys? RoutineKeys;
+        // Transient and never serialized: the visitor person whose routine this is (schema 27), shared by event
+        // copies. Null for residents. Visitors keep no RecentVisits history beyond their latest arrival.
+        internal VisitorPerson? Visitor;
+        // Transient copy of the visitor's carried income source, edited by an event's working copy and published at
+        // commit (VisitorSchedules.Sync), so an abandoned event never changes it. Always null for residents.
+        internal ResidentIncomeSource? VisitorCarried;
+        /// <summary>True for a schema-27 visitor's routine (also on an event's working copy).</summary>
+        public bool IsVisitor => Visitor != null;
     }
 
     public sealed class VisitRecord
@@ -256,7 +264,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 26;
+        public const int CurrentSchema = 27;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
@@ -274,6 +282,7 @@ namespace PersistentCity.Core
         public void PrepareForSave()
         {
             SnapshotSynchronizer?.Invoke();
+            foreach (var visitor in Visitors) if (visitor.Routine != null) VisitorSchedules.Sync(visitor);
             Food?.Outflow?.Advance((int)(Minute / 1440));
         }
         public string RloVersion { get; set; } = "";
@@ -296,6 +305,9 @@ namespace PersistentCity.Core
         public int IdentityPolicyVersion { get; set; } = IdentityPolicy.CurrentVersion;
         /// <summary>Saved ordinal station table that visitor stays reference by index; empty until visitors arrive by portal.</summary>
         public List<string> Portals { get; set; } = new List<string>();
+        /// <summary>Schema 27: one routine per visitor, in the order of <see cref="Visitors"/>. Each is scheduled by the
+        /// same event queue as the residents; its identity is derived, its home is its portal place (off-map time).</summary>
+        public List<VisitorRoutine> VisitorRoutines { get; set; } = new List<VisitorRoutine>();
     }
 
 }

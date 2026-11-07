@@ -43,6 +43,7 @@ public sealed class HeldFoodTuningTests
         resident.Traits = new ResidentTraits { Bands = "4022222222" };
         state.Food = new FoodCommerceState { RepresentationFactor = representation, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "generation:1",
             ProductId = FoodProducts.Croissant, AdditionalProductIds = new() { FoodProducts.Burger } } } };
+        DevelopmentChain.RepresentedSchema(state, representation);
         var paths = new Paths(); var market = new Market(); var city = new CitySimulator(state, paths);
         var settings = new FoodChoiceSettings { FoodChoiceTasteWeight = 0 }; city.AttachFoodMarket(market, settings);
         state.Food.ChoiceStartsDay = 1;

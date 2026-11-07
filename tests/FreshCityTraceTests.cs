@@ -23,7 +23,9 @@ public sealed class FreshCityTraceTests
                 Minutes = 1 + Position.Distance(from.Position, to.Position) / 80 } } };
     }
 
-    internal static (CityState State, WeightedFoodChoiceTests.Market Market) Fresh(int factor, bool food, int seed = 4242)
+    /// <summary>The fresh trace city. <paramref name="schema"/> defaults to the frozen writer-26 path for factors 2/3
+    /// (represented consumers, which schema 27 no longer has) and to the current writer otherwise.</summary>
+    internal static (CityState State, WeightedFoodChoiceTests.Market Market) Fresh(int factor, bool food, int seed = 4242, int? schema = null)
     {
         var identities = Enumerable.Range(0, 8).Select(n => new CitizenIdentity {
             Id = "c" + n, Name = "Resident " + n, Age = n == 7 ? 70 : n == 6 ? 19 : 25 + n,
@@ -38,6 +40,7 @@ public sealed class FreshCityTraceTests
         places.AddRange(Enumerable.Range(0, 3).Select(i => new Place { Id = "shop:" + i, Name = "Shop " + i, Kind = PlaceKind.Shop,
             Capacity = 16, Position = new(20 + i * 30, 0, 15 - i * 5) }));
         var state = Population.CreateFromHousing(identities, places, "fresh-trace", "0.40.4", seed, 1440 + 6 * 60);
+        state.Schema = schema ?? (factor > 1 ? DevelopmentChain.Represented : CityState.CurrentSchema);
         var market = new WeightedFoodChoiceTests.Market();
         if (food)
         {
@@ -90,7 +93,7 @@ public sealed class FreshCityTraceTests
             Snapshot(trace, city.State, market);
             if (hour % 24 == 0)
             {
-                var read = SaveCodec.Read(SaveCodec.Write(city.State));
+                var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State));
                 Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
                 city = new CitySimulator(read.State!, planner);
                 if (food) city.AttachFoodMarket(market);
@@ -101,7 +104,9 @@ public sealed class FreshCityTraceTests
         return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(trace.ToString()))).ToLowerInvariant();
     }
 
-    // Pinned at base e9995e5 (writer 25), before any F5c-lite change.
+    // Pinned at base e9995e5 (writer 25), before any F5c-lite change. F5d: factor 1 and no food run the current writer
+    // (27) and are unchanged, so resident behaviour, including the resident arrival guard, is unchanged; factors 2/3
+    // are the represented-consumer behaviour, which only the frozen writer-26 path keeps.
     [Theory]
     [InlineData(1, true, "87c5e888bdf8ac0f9ecb679ca06f5a03065a23588119e53f7625d35269b920d9")]
     [InlineData(2, true, "8dfefcc2632ee1af9561a2fa6b4b738feaec8323d9a5244d4671a6d90809ec5c")]

@@ -272,7 +272,8 @@ namespace PersistentCity.Core
         {
             var meal = roster[order[index]];
             // Schema 26: a represented consumer's record is its own (Slot 0); its host resident and host slot give
-            // the scheduling citizen and mark it represented. Before 26 these are AnchorId and Slot.
+            // the scheduling citizen and mark it represented. Before 26 these are AnchorId and Slot. From schema 27
+            // (F5d) the host is the person itself, and a visitor's own traits are its record's.
             var person = city.FindCitizen(meal.HostId);
             bool represented = meal.HostSlot > 0;
             Position? home = null, dayPlace = null;
@@ -285,7 +286,7 @@ namespace PersistentCity.Core
                     : person.Identity.Persona == Persona.Student ? Activity.Study : Activity.Work;
                 // Without a work or study place the usual day place is home.
                 dayPlace = activity == Activity.Home ? home : city.FindPosition(person.DayPlaceId);
-                var bands = represented ? meal.RepresentedTraits : person.Traits;
+                var bands = represented || person.IsVisitor ? meal.RepresentedTraits : person.Traits;
                 if (bands != null && bands.IsValid) traits = bands.Bands;
             }
             return new MarketResearchConsumer(meal.ResidentId, represented, home, dayPlace, activity, traits,

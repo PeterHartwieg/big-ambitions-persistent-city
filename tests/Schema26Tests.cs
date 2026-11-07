@@ -13,7 +13,10 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5c-lite (#92): writer 26, the person shape without migration. Golden bytes, the factor-1 roster rule,
+/// <summary>F5d: writer 26 is now a frozen development writer (the product refuses it as an older development
+/// city, see Schema27Tests). Its codec stays compiling and reachable only through <see cref="DevelopmentChain"/>, so
+/// these tests check the frozen writer-26 shape and its pinned bytes unchanged.
+/// F5c-lite (#92): writer 26, the person shape without migration. Golden bytes, the factor-1 roster rule,
 /// the strict per-kind reader, the named bounds at and one over, fabricated arrival tuples, and the refusal of older
 /// development cities with their food authority left native.</summary>
 public sealed class Schema26Tests
@@ -23,7 +26,7 @@ public sealed class Schema26Tests
     /// <summary>A fresh seeded city of the trace test, run for 30 hours (meals, budgets, journeys, visitors).</summary>
     internal static CitySimulator Running(int factor, bool food = true, double hours = 30)
     {
-        var (state, market) = FreshCityTraceTests.Fresh(factor, food);
+        var (state, market) = FreshCityTraceTests.Fresh(factor, food, schema: DevelopmentChain.Represented);
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         if (food) city.AttachFoodMarket(market);
         double until = state.Minute + hours * 60;
@@ -38,16 +41,18 @@ public sealed class Schema26Tests
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
         ("fresh-trace-factor2-30h", () => Running(2).State),
-        ("current-schema-minimal", CurrentSchemaOnlyTests.City),
+        ("current-schema-minimal", () => CurrentSchemaOnlyTests.City().Also(c => c.Schema = DevelopmentChain.Represented)),
     };
 
     private static void RefusedAndPreserved(string payload, CityState replacement, SaveReadStatus expected, string? error = null)
     {
-        var read = SaveCodec.Read(payload);
+        var read = DevelopmentChain.Read(payload);
         Assert.True(read.Status == expected, read.Status + ": " + read.Error); Assert.Null(read.State);
         if (error != null) Assert.Contains(error, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "kept", [FoodAuthorityStore.Key] = "manifest" };
-        Assert.Equal(expected, SaveSession.Open(data, replacement.PopulationKey).InitialReadResult.Status);
+        // The product refuses every writer-26 payload as an older development city before reading its shape.
+        var product = SaveCodec.DevelopmentSchemaOf(payload) != null ? SaveReadStatus.DevelopmentSchema : expected;
+        Assert.Equal(product, SaveSession.Open(data, replacement.PopulationKey).InitialReadResult.Status);
         Assert.False(SaveStore.WriteTo(data, replacement).Success);
         Assert.False(SaveSession.Open(data, replacement.PopulationKey).WriteTo(data, replacement).Success);
         Assert.Same(payload, data[SaveStore.StateKey]); Assert.Equal("kept", data["rlo:state"]); Assert.Equal("manifest", data[FoodAuthorityStore.Key]);
@@ -74,24 +79,24 @@ public sealed class Schema26Tests
     [Fact]
     public void GoldenWriter26BytesArePinned()
     {
-        Assert.Equal(26, CityState.CurrentSchema);
+        Assert.Equal(26, SaveCodec.PersonSchema); Assert.Equal(26, SaveCodec.LatestDevelopmentSchema);
         var pins = JObject.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(26, (int)pins["writer"]!);
         foreach (var (name, build) in GoldenFixtures())
         {
             var state = build();
-            string payload = SaveCodec.Write(state);
+            string payload = DevelopmentChain.Write(state);
             Assert.Equal((string)pins["fixtures"]![name]!["sha256"]!, Sha(payload));
             Assert.Equal((int)pins["fixtures"]![name]!["characters"]!, payload.Length);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            var read = DevelopmentChain.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(payload, DevelopmentChain.Write(read.State!));
         }
     }
 
     [Fact]
     public void GoldenFixturesAreDeterministicAcrossBuilds()
     {
-        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
+        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(DevelopmentChain.Write(build()), DevelopmentChain.Write(build()));
     }
 
     // ---- Fresh cities in the new shape: factor-1 roster rule ----
@@ -114,15 +119,15 @@ public sealed class Schema26Tests
             Assert.Null(visitor.Employment); Assert.Null(visitor.CarriedIncomeSource); Assert.Null(visitor.LastArrival);
         }
         if (food) Assert.Equal(PersonTable.PersonCount(state), state.Food!.Residents.Count);
-        string payload = SaveCodec.Write(state);
+        string payload = DevelopmentChain.Write(state);
         Assert.Contains("\"Schema\":26,", payload);
         Assert.DoesNotContain("RepresentationFactor", payload);
         // Roster tuple v3: version plus 34 slots, no anchor or slot (routine stops still name their resident anchor).
         if (food) Assert.All(JObject.Parse(payload)["Food"]!["Residents"]!, row => { Assert.Equal(3, (int)row[0]!); Assert.Equal(35, ((JArray)row).Count); });
         Assert.DoesNotContain("EmploymentStartDay", payload);
         Assert.Contains("\"P\":\"1R", payload);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        var read = DevelopmentChain.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, DevelopmentChain.Write(read.State!));
         if (food)
         {
             // Factor-1 roster rule, live and decoded: one own slot-0 record per person and a stored factor of 1. The host
@@ -178,12 +183,12 @@ public sealed class Schema26Tests
         var state = Running(2, true, 2).State;
         var visitorMeal = state.Food!.Residents.First(m => m.HostSlot == 1);
         visitorMeal.AnchorId = visitorMeal.HostId; visitorMeal.Slot = 1; // the pre-26 hosted form
-        Assert.Contains("factor-1 roster rule", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        Assert.Contains("factor-1 roster rule", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state)).Message);
         visitorMeal.AnchorId = visitorMeal.ResidentId; visitorMeal.Slot = 0;
         state.Food.RepresentationFactor = 2;
-        Assert.Contains("one own record per person", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        Assert.Contains("one own record per person", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state)).Message);
         state.Food.RepresentationFactor = 1;
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
     }
 
     /// <summary>Every persona housed, plus one unassigned worker: Work, Study and no Employment all occur.</summary>
@@ -215,7 +220,7 @@ public sealed class Schema26Tests
         var unassigned = state.Citizens[3]; unassigned.LastEmploymentCheckDay = 2;
         ResidentLifecycle.AssignWorkplace(unassigned, state.Places.Single(p => p.Id == "work:a"));
         Assert.Equal(2, unassigned.EmploymentStartDay);
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(state)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(2, read.State!.Citizens[3].EmploymentStartDay);
     }
 
@@ -225,7 +230,7 @@ public sealed class Schema26Tests
     public void PerKindShapeRefusesVisitorRowsWithResidentFieldsAndResidentsWithoutIdentity()
     {
         var city = Running(2, true, 2); var state = city.State;
-        string payload = SaveCodec.Write(state);
+        string payload = DevelopmentChain.Write(state);
         // A visitor in the resident table would carry identity, home, car and recent visits: refused.
         var root = JObject.Parse(payload); root["Citizens"]![0]!["P"] = (string)root["Visitors"]![0]!;
         Invalid(root.ToString(Formatting.None), state, "visitor row cannot carry resident identity");
@@ -250,9 +255,9 @@ public sealed class Schema26Tests
     [Fact]
     public void ResidentTupleMustMatchItsDayPlaceAndFixedCodes()
     {
-        var state = Personas(); string payload = SaveCodec.Write(state);
+        var state = Personas(); string payload = DevelopmentChain.Write(state);
         int worker = state.Citizens.FindIndex(c => c.DayPlaceId.Length > 0), retiree = state.Citizens.FindIndex(c => c.DayPlaceId.Length == 0);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(payload).Status);
         string Set(int row, string tuple) { var r = JObject.Parse(payload); r["Citizens"]![row]!["P"] = tuple; return r.ToString(Formatting.None); }
         int start = state.Citizens[worker].EmploymentStartDay;
         Invalid(Set(worker, "1R-"), state, "Employment differs");
@@ -274,9 +279,9 @@ public sealed class Schema26Tests
     [Fact]
     public void RootPersonFieldsAreStrict()
     {
-        var state = Running(2, true, 2).State; string payload = SaveCodec.Write(state);
+        var state = Running(2, true, 2).State; string payload = DevelopmentChain.Write(state);
         string Root(Action<JObject> change) { var r = JObject.Parse(payload); change(r); return r.ToString(Formatting.None); }
-        RefusedAndPreserved(Root(r => r["Schema"] = 27), state, SaveReadStatus.Future);
+        RefusedAndPreserved(Root(r => r["Schema"] = 28), state, SaveReadStatus.Future);
         Invalid(Root(r => r["Persons"] = new JArray()), state, "Unknown field: Persons");
         Invalid(Root(r => r["Food"]!["RepresentationFactor"] = 2), state, "Unknown field: RepresentationFactor");
         Invalid(Root(r => r.Remove("Visitors")), state, "Missing object fields");
@@ -301,7 +306,7 @@ public sealed class Schema26Tests
     [Fact]
     public void VisitorStayEmploymentAndIncomeAreStructurallyChecked()
     {
-        var state = Running(2, true, 2).State; string payload = SaveCodec.Write(state);
+        var state = Running(2, true, 2).State; string payload = DevelopmentChain.Write(state);
         string Stay(string stay) => WithVisitor(payload, 0, p => { p[2] = stay; return string.Join("|", p); });
         string Field(int index, string value) => WithVisitor(payload, 0, p => { p[index] = value; return string.Join("|", p); });
         double future = state.Minute + 90;
@@ -315,16 +320,16 @@ public sealed class Schema26Tests
         Invalid(Stay("000CA.1.0000000000000000"), state, "outside the station table");
         Invalid(Stay("zz0CA.1.0000000000000000"), state, "portal");
         // A dormant visitor and one arriving through a saved portal are valid shapes.
-        var dormant = SaveCodec.Read(Stay("---CD.1." + Bits(future))); Assert.True(dormant.Status == SaveReadStatus.Loaded, dormant.Error);
+        var dormant = DevelopmentChain.Read(Stay("---CD.1." + Bits(future))); Assert.True(dormant.Status == SaveReadStatus.Loaded, dormant.Error);
         var withPortal = JObject.Parse(Stay("000CA.1.0000000000000000")); withPortal["Portals"] = new JArray("station:central");
-        var portal = SaveCodec.Read(withPortal.ToString(Formatting.None)); Assert.True(portal.Status == SaveReadStatus.Loaded, portal.Error);
+        var portal = DevelopmentChain.Read(withPortal.ToString(Formatting.None)); Assert.True(portal.Status == SaveReadStatus.Loaded, portal.Error);
         Assert.Equal("station:central", portal.State!.Visitors[0].Stay.OriginPortalId);
-        Assert.Equal(withPortal.ToString(Formatting.None), SaveCodec.Write(portal.State));
+        Assert.Equal(withPortal.ToString(Formatting.None), DevelopmentChain.Write(portal.State));
         // Employment: commuters only, a saved Work/Study place of the right kind, native employment fixed at none.
         string work = MemoryWire.Number(PlaceIndex(state, "work:a"), 3), study = MemoryWire.Number(PlaceIndex(state, "study:a"), 3);
-        var employed = SaveCodec.Read(Field(3, "W" + work + ".1.0.0")); Assert.True(employed.Status == SaveReadStatus.Loaded, employed.Error);
+        var employed = DevelopmentChain.Read(Field(3, "W" + work + ".1.0.0")); Assert.True(employed.Status == SaveReadStatus.Loaded, employed.Error);
         Assert.Equal("work:a", employed.State!.Visitors[0].Employment!.WorkplaceId);
-        Assert.Equal(Field(3, "W" + work + ".1.0.0"), SaveCodec.Write(employed.State));
+        Assert.Equal(Field(3, "W" + work + ".1.0.0"), DevelopmentChain.Write(employed.State));
         Invalid(Field(3, "W" + study + ".1.0.0"), state, "wrong role");
         Invalid(Field(3, "S" + work + ".1.0.0"), state, "wrong role");
         Invalid(Field(3, "W" + work + ".1.0.1"), state, "Invalid visitor employment");
@@ -333,7 +338,7 @@ public sealed class Schema26Tests
         Invalid(Field(3, "WZZZ.1.0.0"), state, "workplace index");
         Invalid(WithVisitor(payload, 0, p => { p[2] = "---DA.1.0000000000000000"; p[3] = "W" + work + ".1.0.0"; return string.Join("|", p); }), state, "day visitor holds no employment");
         // Carried income: one defined source digit or none.
-        var carried = SaveCodec.Read(Field(4, "1")); Assert.True(carried.Status == SaveReadStatus.Loaded, carried.Error);
+        var carried = DevelopmentChain.Read(Field(4, "1")); Assert.True(carried.Status == SaveReadStatus.Loaded, carried.Error);
         Assert.Equal(ResidentIncomeSource.ExternalPension, carried.State!.Visitors[0].CarriedIncomeSource);
         Invalid(Field(4, "3"), state, "carried income"); Invalid(Field(4, "11"), state, "carried income");
     }
@@ -344,13 +349,13 @@ public sealed class Schema26Tests
     [Fact]
     public void FabricatedArrivalTuplesAreRefusedAndHistoricalOnesRead()
     {
-        var state = Running(2, true, 2).State; string payload = SaveCodec.Write(state);
+        var state = Running(2, true, 2).State; string payload = DevelopmentChain.Write(state);
         string Arrival(string token) => WithVisitor(payload, 0, p => { p[5] = token; return string.Join("|", p); });
         string work = MemoryWire.Number(PlaceIndex(state, "work:a"), 3), shop = MemoryWire.Number(PlaceIndex(state, "shop:1"), 3);
         foreach (string historical in new[] { "1" + Bits(state.Minute - 300) + work + "1", "1" + Bits(state.Minute) + shop + "2", "1" + Bits(0) + work + "0" })
         {
-            var read = SaveCodec.Read(Arrival(historical)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(Arrival(historical), SaveCodec.Write(read.State!));
+            var read = DevelopmentChain.Read(Arrival(historical)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(Arrival(historical), DevelopmentChain.Write(read.State!));
         }
         Invalid(Arrival("1" + Bits(state.Minute + 1) + shop + "2"), state, "Arrival is in the future");
         Invalid(Arrival("1" + Bits(-1) + shop + "2"), state);
@@ -391,33 +396,33 @@ public sealed class Schema26Tests
     [Fact]
     public void PersonsAndResidentsAreRefusedOneOverTheirBoundsBeforeAllocation()
     {
-        var small = Running(2, true, 1).State; string source = SaveCodec.Write(small);
+        var small = Running(2, true, 1).State; string source = DevelopmentChain.Write(small);
         var root = JObject.Parse(source);
         string citizen = root["Citizens"]![0]!.ToString(Formatting.None);
         string visitor = JsonConvert.ToString((string)root["Visitors"]![0]!);
         string residents = Spliced(source, "Citizens", citizen, SaveCodec.MaxResidents);
         // At the resident bound: no bound refusal (identical rows fail later, as duplicates or a roster mismatch).
-        var at = SaveCodec.Read(Spliced(residents, "Visitors", visitor, 0));
+        var at = DevelopmentChain.Read(Spliced(residents, "Visitors", visitor, 0));
         Assert.Equal(SaveReadStatus.Invalid, at.Status); Assert.DoesNotContain("exceed the bound", at.Error);
         string overResidents = Spliced(source, "Citizens", citizen, SaveCodec.MaxResidents + 1);
-        Assert.Contains("Residents exceed the bound of 50000", SaveCodec.Read(overResidents).Error);
+        Assert.Contains("Residents exceed the bound of 50000", DevelopmentChain.Read(overResidents).Error);
         // 50,000 residents + 100,000 visitors = 150,000 persons: at the bound; one more visitor is one over.
         string atPersons = Spliced(residents, "Visitors", visitor, SaveCodec.MaxVisitors);
-        var atRead = SaveCodec.Read(atPersons);
+        var atRead = DevelopmentChain.Read(atPersons);
         Assert.Equal(SaveReadStatus.Invalid, atRead.Status); Assert.DoesNotContain("exceed the bound", atRead.Error);
         string overPersons = Spliced(residents, "Visitors", visitor, SaveCodec.MaxVisitors + 1);
-        Assert.Contains("Persons exceed the bound of 150000", SaveCodec.Read(overPersons).Error);
+        Assert.Contains("Persons exceed the bound of 150000", DevelopmentChain.Read(overPersons).Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = overPersons };
         Assert.False(SaveStore.WriteTo(data, small).Success); Assert.Same(overPersons, data[SaveStore.StateKey]);
         // The visitor bound itself, with few residents.
-        Assert.Contains("Visitors exceed the bound of 100000", SaveCodec.Read(Spliced(source, "Visitors", visitor, SaveCodec.MaxVisitors + 1)).Error);
-        Assert.DoesNotContain("exceed the bound", SaveCodec.Read(Spliced(source, "Visitors", visitor, SaveCodec.MaxVisitors)).Error);
+        Assert.Contains("Visitors exceed the bound of 100000", DevelopmentChain.Read(Spliced(source, "Visitors", visitor, SaveCodec.MaxVisitors + 1)).Error);
+        Assert.DoesNotContain("exceed the bound", DevelopmentChain.Read(Spliced(source, "Visitors", visitor, SaveCodec.MaxVisitors)).Error);
     }
 
     [Fact]
     public void WritesCheckTheNamedBoundsBeforeAnyPersonWork()
     {
-        var state = FreshCityTraceTests.Fresh(1, false).State; var person = state.Citizens[0];
+        var state = FreshCityTraceTests.Fresh(1, false, schema: DevelopmentChain.Represented).State; var person = state.Citizens[0];
         var original = state.Citizens.ToList();
         void Fill(int residents, int visitors)
         {
@@ -427,27 +432,27 @@ public sealed class Schema26Tests
         string Error(int residents, int visitors)
         {
             Fill(residents, visitors);
-            try { SaveCodec.Write(state); return ""; } catch (SaveValidationException e) { return e.Message; }
+            try { DevelopmentChain.Write(state); return ""; } catch (SaveValidationException e) { return e.Message; }
         }
         Assert.DoesNotContain("exceed the bound", Error(SaveCodec.MaxResidents, SaveCodec.MaxVisitors));
         Assert.Contains("Persons exceed the bound", Error(SaveCodec.MaxResidents, SaveCodec.MaxVisitors + 1));
         Assert.Contains("Residents exceed the bound", Error(SaveCodec.MaxResidents + 1, 0));
         Assert.Contains("Visitors exceed the bound", Error(1, SaveCodec.MaxVisitors + 1));
         state.Citizens = original; state.Visitors.Clear();
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
     }
 
     private static JsonSerializerSettings Settings(CityState state)
     {
         var context = typeof(SaveCodec).GetNestedType("WireContext", BindingFlags.NonPublic)!.GetMethod("FromState")!.Invoke(null, new object[] { state });
         return (JsonSerializerSettings)typeof(SaveCodec).GetMethod("SettingsForSchema", BindingFlags.NonPublic | BindingFlags.Static)!
-            .Invoke(null, new[] { context, (object)CityState.CurrentSchema })!;
+            .Invoke(null, new[] { context, (object)SaveCodec.PersonSchema })!;
     }
 
     [Fact]
     public void TrafficVehiclesAreRefusedOneOverTheResidentBound()
     {
-        var state = FreshCityTraceTests.Fresh(1, false).State; string source = SaveCodec.Write(state);
+        var state = FreshCityTraceTests.Fresh(1, false, schema: DevelopmentChain.Represented).State; string source = DevelopmentChain.Write(state);
         string vehicle = JsonConvert.SerializeObject(new TrafficVehicleState { VehicleId = "v" }, Settings(state));
         string Traffic(int vehicles)
         {
@@ -457,16 +462,16 @@ public sealed class Schema26Tests
             var rows = string.Join(",", Enumerable.Repeat(vehicle, vehicles));
             return root.ToString(Formatting.None).Replace("\"@@V@@\"", rows);
         }
-        var at = SaveCodec.Read(Traffic(SaveCodec.MaxTrafficVehicles));
+        var at = DevelopmentChain.Read(Traffic(SaveCodec.MaxTrafficVehicles));
         Assert.Equal(SaveReadStatus.Invalid, at.Status); Assert.DoesNotContain("Oversized", at.Error);
         Invalid(Traffic(SaveCodec.MaxTrafficVehicles + 1), state, "Oversized collection");
         // The write side refuses the same count before any per-vehicle check.
         state.TrafficTopologyId = new string('a', 64);
         state.Traffic = new TrafficKernelState { Clock = state.Minute, RequestedTime = state.Minute,
             Vehicles = Enumerable.Repeat(new TrafficVehicleState { VehicleId = "v" }, SaveCodec.MaxTrafficVehicles + 1).ToList() };
-        Assert.Contains("Oversized traffic collection", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        Assert.Contains("Oversized traffic collection", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state)).Message);
         state.Traffic.Vehicles.RemoveAt(0);
-        Assert.DoesNotContain("Oversized", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        Assert.DoesNotContain("Oversized", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state)).Message);
     }
 
     // ---- Record budget: every new schema-26 record is charged by both counters ----
@@ -476,8 +481,8 @@ public sealed class Schema26Tests
     public void ResidentVisitorAndStationTuplesChargeOneRecordInBothCounters(int factor, bool food)
     {
         var state = Running(factor, food, 2).State; state.Portals.AddRange(new[] { "station:a", "station:b" });
-        string p26 = SaveCodec.Write(state), p25 = DevelopmentChain.Write25(state);
-        var c26 = SaveCodec.CountRecords(state, p26);
+        string p26 = DevelopmentChain.Write(state), p25 = DevelopmentChain.Write25(state);
+        var c26 = DevelopmentChain.CountRecords(state, p26);
         var c25 = SaveCodec.CountRecordsForSchema(SaveCodec.ReadDevelopmentChain(p25).State!, p25, 25);
         int added = state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
         Assert.Equal(c25.Streaming + added, c26.Streaming); Assert.Equal(c25.Semantic + added, c26.Semantic);
@@ -489,12 +494,12 @@ public sealed class Schema26Tests
     [Fact]
     public void AtTheRecordLimitAPayloadRoundTripsAndOneMoreNewRecordIsRefusedBeforePublication()
     {
-        var state = EconomyScenario.Create(SaveCodec.MaxResidents, 23);
+        var state = EconomyScenario.Create(SaveCodec.MaxResidents, 23); state.Schema = DevelopmentChain.Represented;
         var template = state.Places.Single(p => p.Id == "leisure-1");
         for (int i = state.Places.Count; i < SaveCodec.MaxPlaces; i++)
             state.Places.Add(new Place { Id = "pad:" + i.ToString("D5", CultureInfo.InvariantCulture), Name = "Pad", District = "a",
                 Kind = PlaceKind.Leisure, Position = template.Position, Capacity = 0, EvidenceSource = template.EvidenceSource });
-        var empty = SaveCodec.CountRecords(state, SaveCodec.Write(state));
+        var empty = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
         Assert.Equal(empty.Streaming, empty.Semantic);
         long remaining = SaveCodec.MaxEmbeddedRecords - 1 - empty.Semantic; // the last record is the station entry
         foreach (var place in state.Places.Where(p => p.Kind == PlaceKind.Leisure))
@@ -508,23 +513,21 @@ public sealed class Schema26Tests
         }
         Assert.Equal(0, remaining);
         state.Portals.Add("station:a");
-        var data = new Dictionary<string, string>();
-        Assert.True(SaveStore.WriteTo(data, state).Success);
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = DevelopmentChain.Write(state) };
         string payload = data[SaveStore.StateKey];
-        var count = SaveCodec.CountRecords(state, payload);
+        var count = DevelopmentChain.CountRecords(state, payload);
         Assert.Equal((SaveCodec.MaxEmbeddedRecords, SaveCodec.MaxEmbeddedRecords), (count.Streaming, count.Semantic));
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        var read = DevelopmentChain.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, DevelopmentChain.Write(read.State!));
         read = null;
         // One more new record: the writer refuses before publication and the stored payload stays.
         state.Portals.Add("station:b");
-        var refused = SaveStore.WriteTo(data, state);
-        Assert.False(refused.Success); Assert.Contains("Too many", refused.Error); Assert.Same(payload, data[SaveStore.StateKey]);
-        Assert.Contains("Too many", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        Assert.Contains("Too many", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state)).Message);
+        Assert.Same(payload, data[SaveStore.StateKey]);
         // The reader charges the same record while streaming, before deserialization allocates.
         string over = payload.Replace("\"Portals\":[\"station:a\"]", "\"Portals\":[\"station:a\",\"station:b\"]");
         Assert.NotEqual(payload, over);
-        var overRead = SaveCodec.Read(over);
+        var overRead = DevelopmentChain.Read(over);
         Assert.Equal(SaveReadStatus.Invalid, overRead.Status); Assert.Contains("Too many", overRead.Error);
     }
 

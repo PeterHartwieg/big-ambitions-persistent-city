@@ -183,7 +183,8 @@ namespace PersistentCity.Core
         internal void FileOptionalStop(CitizenState person)
         {
             activeJourneys.File(person);
-            if (stopEnvironment == null) return;
+            // Optional stops are body-presentation dwells; visitors have no body before F5i and take no chance.
+            if (stopEnvironment == null || person.IsVisitor) return;
             bool pending = PendingChance(person), waiting = pending && WaitingForPartner(person);
             if (pending && !waiting) bankedChances.Add(person); else bankedChances.Remove(person);
             if (waiting) waitingChances.Add(person); else waitingChances.Remove(person);
@@ -200,7 +201,7 @@ namespace PersistentCity.Core
         private void ScheduleOptionalStop(CitizenState person, Route? arrivalRoute)
         {
             double now = State.Minute;
-            if (stopEnvironment == null || !stopPercentage.HasValue || stopEnvironment.Raining || person.Phase != CitizenPhase.AtPlace
+            if (stopEnvironment == null || !stopPercentage.HasValue || person.IsVisitor || stopEnvironment.Raining || person.Phase != CitizenPhase.AtPlace
                 || person.MealOuting != null || person.OptionalStop != null || person.RecentVisits.Count == 0
                 || person.RecentVisits[person.RecentVisits.Count - 1].AtMinute != now
                 || person.RecentVisits[person.RecentVisits.Count - 1].PlaceId != person.PlaceId) return;

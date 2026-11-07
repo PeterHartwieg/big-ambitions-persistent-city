@@ -22,7 +22,7 @@ public sealed partial class FoodCommerceTests
         var resolver = FoodProductMetadataResolver.Empty.WithApi(registry.Publish(catalogue));
         offer.Metadata = resolver.Capture(name,FoodMetadataApiTests.Traits,957,"pc:1");
         string held = DevelopmentChain.Write(city.State);
-        Assert.Equal(CityState.CurrentSchema,city.State.Schema);
+        Assert.Equal(DevelopmentChain.Represented,city.State.Schema); // S17_Full is the frozen represented city
         input.MealClass = MealClass.Bundle; input.TasteBand = 0; input.BreakfastFitCents = 5000;
         Assert.True(provider.TryRegisterProductMetadata(name,input,1,out _));
         var next = FoodProductMetadataResolver.Empty.WithApi(registry.Publish(catalogue)).Capture(name,FoodMetadataApiTests.Traits,957,"pc:1");

@@ -54,6 +54,7 @@ public sealed class RivalServiceLimitsTests
         // Existing-stop customers: already inside the rival on an ordinary shop stop for the whole day.
         foreach (var person in state.Citizens.Take(atRival)) { person.PlaceId = "s0"; person.Activity = Activity.Shop; person.Phase = CitizenPhase.AtPlace; }
         state.Food = new FoodCommerceState { RepresentationFactor = representation, ChoiceStartsDay = 1 };
+        DevelopmentChain.RepresentedSchema(state, representation);
         var market = new RivalOutflowTests.Market();
         market.Rivals.Add(Rival, new FoodScope { AlternativeKind = FoodAlternativeKind.Rival, BusinessId = Rival, PlaceId = "s0", ProductId = FoodProducts.Croissant });
         market.Observations.Add(Rival, RivalOutflowTests.Observation(Rival, "s0"));
@@ -76,11 +77,11 @@ public sealed class RivalServiceLimitsTests
         RivalAssumedServiceMinutes = s.RivalAssumedServiceMinutes, RivalCapacityPercent = s.RivalCapacityPercent };
     static CitySimulator Reload(CitySimulator city, RivalOutflowTests.Market market, WeightedFoodChoiceTests.Planner paths, RivalFoodSettings settings)
     {
-        string wire = SaveCodec.Write(city.State); var read = SaveCodec.Read(wire);
+        string wire = DevelopmentChain.Write(city.State); var read = DevelopmentChain.Read(wire);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var next = new CitySimulator(read.State!, paths);
         next.AttachFoodMarket(next.State.Food!.Shops.Count > 0 ? new WithPlayer(market) : market, rivalSettings: settings, campaign: new NoCampaign());
-        Assert.Equal(wire, SaveCodec.Write(next.State));
+        Assert.Equal(wire, DevelopmentChain.Write(next.State));
         Assert.Equal(city.RivalLoadImage(), next.RivalLoadImage());
         if (next.State.Food!.Residents.All(m => m.Decision == null)) next.InspectFoodAwareness("r0");
         return next;
@@ -104,7 +105,7 @@ public sealed class RivalServiceLimitsTests
                 if (caught) break;
             }
         }
-        return SaveCodec.Write(city.State);
+        return DevelopmentChain.Write(city.State);
     }
 
     [Fact]
@@ -282,7 +283,7 @@ public sealed class RivalServiceLimitsTests
         Assert.NotNull(meal.Decision); var held = JsonConvert.SerializeObject(meal.Decision);
         // A reload under a much tighter profile must not recapture or reroll the held image.
         var tight = new RivalFoodSettings { RivalMealPeriodUnits = 1, RivalServiceLanes = 1 };
-        string wire = SaveCodec.Write(city.State); var read = SaveCodec.Read(wire); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        string wire = DevelopmentChain.Write(city.State); var read = DevelopmentChain.Read(wire); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, paths); resumed.AttachFoodMarket(market, rivalSettings: tight);
         Assert.Equal(held, JsonConvert.SerializeObject(resumed.State.Food!.Residents.Single().Decision));
         int reads = market.Reads;
@@ -314,12 +315,12 @@ public sealed class RivalServiceLimitsTests
         Assert.True(found);
         var travellers = city.State.Food!.Residents.Where(m => m.Status == MealStatus.Travelling && m.TargetKind == FoodAlternativeKind.Rival)
             .Select(m => m.ResidentId).ToArray();
-        string checkpoint = SaveCodec.Write(city.State);
+        string checkpoint = DevelopmentChain.Write(city.State);
         // Same profile: exactly the uninterrupted future.
         var same = Reload(city, market, paths, Copy(loose));
         Assert.Equal(Run(city, 2880, 5, 4), Run(same, 2880, 5, 4));
         // Tighter profile: the travellers are refused at arrival, before any debit.
-        var read = SaveCodec.Read(checkpoint); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = DevelopmentChain.Read(checkpoint); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var tight = new CitySimulator(read.State!, paths);
         tight.AttachFoodMarket(market, rivalSettings: Tight(lanes: 8, units: 1, service: 10), campaign: new NoCampaign());
         var spent = travellers.ToDictionary(id => id, id => tight.State.Food!.Residents.Single(m => m.ResidentId == id).LegacyExternalFoodSpent);

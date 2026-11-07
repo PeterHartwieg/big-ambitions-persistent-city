@@ -416,6 +416,7 @@ public sealed partial class FoodCommerceTests
     public void AbstractConsumerIdentityCollisionFailsBeforeInitializingAnyWallet()
     {
         var (initial, market, routes) = Ready(count: 2, representation: 1);
+        initial.State.Schema = DevelopmentChain.Represented; // represented consumer IDs exist only in the frozen writer-26 path
         initial.State.Citizens[1].Identity.Id = FoodRepresentation.ConsumerId("r0", 1);
         initial.State.Food!.Residents.Clear(); initial.State.Food.RepresentationFactor = 2;
         var city = new CitySimulator(initial.State, routes);

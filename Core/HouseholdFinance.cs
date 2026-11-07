@@ -108,8 +108,11 @@ namespace PersistentCity.Core
         public static bool CashConserved(ResidentBudget b)
             => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.ExternalFoodSpent + b.HeldPurchase;
 
+        // A schema-27 visitor's source is its own (F5b PersonIncome.Select over its Employment and carried outside
+        // employer), never an anchor's. Residents keep today's rule, which that function equals for them.
         private static ResidentIncomeSource IncomeSource(CitizenState person)
-            => person.Identity.Persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension
+            => person.Visitor != null ? PersonIncome.Select(person.Identity.Persona, person.Identity.Age, person.Visitor.Employment, person.VisitorCarried)
+            : person.Identity.Persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension
                 : person.Identity.Age >= 18 && ResidentLifecycle.IsWorker(person) && person.DayPlaceId.Length != 0
                     ? ResidentIncomeSource.ExternalEmployment : ResidentIncomeSource.ExternalSupport;
 

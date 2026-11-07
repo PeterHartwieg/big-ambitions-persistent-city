@@ -111,21 +111,21 @@ public sealed partial class FoodMemoryTests
             meal.Day = 1; meal.ContextAttempts = 0; meal.BusinessId = meal.PlaceId = "";
         }
         a = Reload(a, ma, pa, sa); b = Reload(b, mb, pb, sb);
-        string checkpoint = SaveCodec.Write(a.State);
-        Assert.Equal(checkpoint, SaveCodec.Write(b.State));
+        string checkpoint = DevelopmentChain.Write(a.State);
+        Assert.Equal(checkpoint, DevelopmentChain.Write(b.State));
         Assert.Equal(1, a.ProjectRegulars()!.CountOwnShop("b0"));
         Assert.Equal(0, b.ProjectRegulars()!.CountOwnShop("b0"));
         a.Inspect(a.State.Citizens[0].Identity.Id); a.DumpFoodMemory(a.State.Food!.Residents[0].ResidentId);
-        Assert.Equal(checkpoint, SaveCodec.Write(a.State)); // exact payload, zero growth
+        Assert.Equal(checkpoint, DevelopmentChain.Write(a.State)); // exact payload, zero growth
         double at = a.State.Food!.Residents.Max(m => m.DesiredAt) + 20;
         Advance(a, at, 1); Advance(b, at, 128);
         Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back); Assert.Equal(ma.Calls, mb.Calls);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State)); // weights/draws included
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State)); // weights/draws included
         var restored = Reload(a, ma, new(), sa);
         Assert.Equal(a.ProjectRegulars()!.CountOwnShop("b0"), restored.ProjectRegulars()!.CountOwnShop("b0"));
-        var replay = new CitySimulator(SaveCodec.Read(checkpoint).State!, new WeightedFoodChoiceTests.Planner());
+        var replay = new CitySimulator(DevelopmentChain.Read(checkpoint).State!, new WeightedFoodChoiceTests.Planner());
         replay.AttachFoodMarket(new Market { Source = mb.Source }, memorySettings: sa); Advance(replay, at);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(replay.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(replay.State));
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public sealed partial class FoodMemoryTests
         meal.Day = 1; meal.ContextAttempts = 0; meal.BusinessId = meal.PlaceId = "";
         // Reattach to rebuild B1's existing generation index after the fixture's direct setup.
         city = Reload(city, market, paths);
-        string before = SaveCodec.Write(city.State);
+        string before = DevelopmentChain.Write(city.State);
         var dump = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId)!);
         Assert.True((bool)dump["Regular"]!); Assert.True((bool)dump["Represented"]!); Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
         Assert.Equal(1, (int)dump["OwnShopRegulars"]![0]!["Regulars"]!);
@@ -170,7 +170,7 @@ public sealed partial class FoodMemoryTests
         var retained = Assert.Single((JArray)refused["Entries"]!);
         Assert.False((bool)retained["OwnCurrent"]!); Assert.False((bool)retained["Regular"]!);
         Assert.Empty((JArray)refused["OwnShopRegulars"]!);
-        Assert.Equal(before, SaveCodec.Write(city.State)); Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out + paths.Back);
+        Assert.Equal(before, DevelopmentChain.Write(city.State)); Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out + paths.Back);
     }
 
     [Theory]
@@ -191,7 +191,7 @@ public sealed partial class FoodMemoryTests
         if (state == "replaced") city.State.Food!.Shops[0].BusinessId = "replacement";
         if (state == "withdrawn") city.State.Food!.Shops.RemoveAt(0);
         Func<FoodScope, bool> observed = _ => state != "unobserved";
-        string before = SaveCodec.Write(city.State);
+        string before = DevelopmentChain.Write(city.State);
         var dump = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, observed)!);
         var entries = (JArray)dump["Entries"]!;
         Assert.Equal(2, entries.Count);
@@ -206,7 +206,7 @@ public sealed partial class FoodMemoryTests
         Assert.Equal(state != "unobserved", (bool)current["Regular"]!);
         Assert.Equal(state != "unobserved", (bool)dump["Regular"]!);
         Assert.DoesNotContain((JArray)dump["OwnShopRegulars"]!, e => (string)e["BusinessId"]! == "b0");
-        Assert.Equal(before, SaveCodec.Write(city.State));
+        Assert.Equal(before, DevelopmentChain.Write(city.State));
         city = Reload(city, market, paths);
         Assert.Equal(dump.ToString(), JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, observed)!).ToString());
         Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out + paths.Back);

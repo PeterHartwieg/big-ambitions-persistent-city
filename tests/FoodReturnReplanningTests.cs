@@ -112,7 +112,7 @@ public sealed partial class FoodCommerceTests
         double arrival = meal.Excursion.ReturnsAt;
         string geometry = meal.Excursion.ReturnGeometry, receipt = meal.IntentId;
         Money spent = meal.Spent;
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
         routes.ReturnMinutes = 100;
         city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
         meal = city.State.Food!.Residents.Single(m => m.HostSlot == 1);

@@ -345,7 +345,7 @@ public sealed class OptionalStopSchedulingTests
             var wire = LegacyMoneyWire.AsSchema(JObject.Parse(LegacyWire.Write(sim.State)), schema);
             string source = wire.ToString(); var read = DevelopmentChain.Read(source);
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
-            Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
+            Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
             var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env,100); loaded.AdvanceTo(1451);
             Assert.Null(loaded.State.Citizens[0].OptionalStop); Assert.Single(loaded.State.Citizens[0].RecentVisits);
             Assert.Equal(source, wire.ToString());

@@ -14,7 +14,7 @@ namespace PersistentCity.Persistence
     {
         public const int PersonSchema = 26;
         /// <summary>Newest schema written by a development build before the person shape; it and older ones are refused.</summary>
-        public const int LatestDevelopmentSchema = 25;
+        public const int LatestDevelopmentSchema = 26;
         public const string DevelopmentSchemaMessage = "This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged.";
 
         // Named schema-26 bounds (plan section 5 Bounds), checked while streaming and before every write.
@@ -38,7 +38,8 @@ namespace PersistentCity.Persistence
 
         /// <summary>Properties that exist only from schema 26; every older writer and frozen reader omits them.</summary>
         internal static bool PersonProperty26(Type type, string? name)
-            => type == typeof(CityState) && (name == "Visitors" || name == "NextVisitorSequence" || name == "IdentityPolicyVersion" || name == "Portals")
+            => type == typeof(CityState) && (name == "Visitors" || name == "NextVisitorSequence" || name == "IdentityPolicyVersion" || name == "Portals"
+                || PersonProperty27(type, name))
             || type == typeof(CitizenState) && name == "EmploymentStartDay";
 
         /// <summary>Header probe for the native authority bootstrap: the stored schema if a development build wrote it.

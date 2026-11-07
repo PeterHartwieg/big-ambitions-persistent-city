@@ -500,7 +500,7 @@ public sealed partial class FoodCommerceTests
     public void S17_LargeRepresentedCitiesAboveOneHundredThirtyThousandConsumersMigrateAndSave()
     {
         var state = EconomyScenario.Create(43400, 5);
-        state.Food = EconomyScenario.Food(); state.Food.RepresentationFactor = 3;
+        state.Food = EconomyScenario.Food(); state.Food.RepresentationFactor = 3; DevelopmentChain.RepresentedSchema(state, 3);
         var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new S17_NoMarket()); city.EnableHouseholdFinances();
         Assert.Equal(130200, state.Food.Residents.Count);
         // Schema-16 image: the same city as an earlier writer produced it.
@@ -690,7 +690,9 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void S17_EconomyScenarioMatchesThePreSchema17Baseline()
     {
-        var result = JObject.FromObject(EconomyScenario.Run(legacyChoice:true));
+        // Two consumers per resident is the represented-consumer city, which only the frozen writer-26 path keeps (F5d).
+        var result = JObject.FromObject(EconomyScenario.Run(legacyChoice:true,
+            frozen: (s => s.Schema = DevelopmentChain.Represented, DevelopmentChain.Write, DevelopmentChain.Read)));
         Assert.Equal(849, (int)result["orders"]!);
         Assert.Equal(797, (int)result["purchases"]!);
         Assert.Equal(107967424757760L, (long)result["spentUnits"]!);

@@ -643,7 +643,8 @@ public sealed class ResumablePlanningTests
         // until both the fixture and the event copy know about it.
         foreach (var property in typeof(CitizenState).GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            if (property.Name == nameof(CitizenState.Identity)) continue;
+            // IsVisitor is derived from the transient visitor link, which the event copy shares.
+            if (property.Name == nameof(CitizenState.Identity) || property.Name == nameof(CitizenState.IsVisitor)) continue;
             Assert.NotEqual(JsonConvert.SerializeObject(property.GetValue(one)), JsonConvert.SerializeObject(property.GetValue(two)));
         }
         var live = Filled(1, identity);

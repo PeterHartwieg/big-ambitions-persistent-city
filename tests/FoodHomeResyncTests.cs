@@ -69,7 +69,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(receipt, extra.IntentId); Assert.Equal(hold, extra.Budget.HeldPurchase);
         Assert.Equal(balance, extra.Budget.Balance); Assert.Equal(income, extra.Budget.IncomeReceived);
         Assert.Single(market.Orders, id => id == receipt);
-        Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
+        Assert.Equal("", DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Error);
     }
 
     [Fact]

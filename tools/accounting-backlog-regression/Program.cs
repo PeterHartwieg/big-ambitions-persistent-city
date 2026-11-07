@@ -31,6 +31,22 @@ internal static class Program
                 result.FrameP50, result.FrameP95, result.FrameMax, result.Spikes, result.Seconds,
                 unitsPerCpuSecond = result.Units / result.Seconds }));
         }
+        // F5d persons variant: one visitor per resident with its own routine through the same queue. The same logical
+        // day across frame rates, unit budgets, a stall, hidden skip and reload must give identical saves and orders.
+        var persons = AccountingScenario.Run(957, 60, 128, 2, persons: true);
+        var personsReloaded = AccountingScenario.Run(957, 30, 1, .01, reload: true, persons: true);
+        if (persons.Snapshot != personsReloaded.Snapshot || !persons.Orders.SequenceEqual(personsReloaded.Orders) || personsReloaded.Reloads != 2)
+            throw new Exception("957+957-person held/midnight reload diverged");
+        foreach (var arm in new[] { (30, 1, .01, false), (60, 16, .5, false), (120, 128, 2.0, false), (30, 1, .01, true) })
+        {
+            var result = AccountingScenario.Run(957, arm.Item1, arm.Item2, arm.Item3, stallFrames: arm.Item1 * 2, skip: arm.Item4, persons: true);
+            if (persons.Snapshot != result.Snapshot || !persons.Orders.SequenceEqual(result.Orders) || !result.Conserved)
+                throw new Exception("957+957-person economic replay diverged");
+            Console.WriteLine(JsonSerializer.Serialize(new { variant = "persons", residents = 957, visitors = result.Visitors, fps = arm.Item1, units = arm.Item2,
+                milliseconds = arm.Item3, skip = arm.Item4, result.Frames, result.Units, result.Held, result.MaxLag,
+                result.RecoverySeconds, result.Purchases, result.VisitorPurchases, result.MissedMeals, nativeOrders = result.Orders.Length,
+                result.FrameP50, result.FrameP95, result.FrameMax, result.Spikes, result.Seconds, unitsPerCpuSecond = result.Units / result.Seconds }));
+        }
         var stress = AccountingScenario.Run(2000, 30, 1, .01, stallFrames: 300);
         Console.WriteLine(JsonSerializer.Serialize(new { stressResidents = 2000, stress.Frames, stress.Units, stress.Held, stress.MaxLag,
             stress.RecoverySeconds, stress.FrameP50, stress.FrameP95, stress.FrameMax, stress.Spikes, stress.Seconds }));
