@@ -355,7 +355,8 @@ public sealed class ResearchSurveyTests
         var roster = run.City.State.Food.Residents;
         var anchor = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Commuter);
         anchor.Traits = null;
-        roster.First(m => m.Slot > 0 && m.AnchorId != anchor.Identity.Id).RepresentedTraits = null;
+        // Schema 26: a represented consumer's record is its own (Slot 0); its host slot marks it represented.
+        roster.First(m => m.HostSlot > 0 && m.HostId != anchor.Identity.Id).RepresentedTraits = null;
         var lost = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Foodie && c.DayPlaceId.Length > 0);
         lost.DayPlaceId = "demolished-workplace";
         run.City.AttachResearch(new ResearchLedger());
@@ -363,7 +364,7 @@ public sealed class ResearchSurveyTests
         Frames(run.City, run.City.State.Minute);
         int consumers = roster.Count;
         Assert.Equal(consumers, Cell(order, MarketResearchMetric.Consumers));
-        Assert.Equal(roster.Count(m => m.Slot > 0), Cell(order, MarketResearchMetric.RepresentedConsumers));
+        Assert.Equal(roster.Count(m => m.HostSlot > 0), Cell(order, MarketResearchMetric.RepresentedConsumers));
         Assert.Null(Cell(order, MarketResearchMetric.BreakfastOpportunities));
         Assert.Null(Cell(order, MarketResearchMetric.LunchOpportunities));
         Assert.Null(Cell(order, MarketResearchMetric.DinnerOpportunities));
