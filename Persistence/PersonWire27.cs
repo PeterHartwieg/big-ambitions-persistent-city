@@ -54,15 +54,17 @@ namespace PersistentCity.Persistence
             }
         }
 
-        private static IList<JsonProperty> RoutineProperties27(IList<JsonProperty> inherited)
+        private static IList<JsonProperty> RoutineProperties27(IList<JsonProperty> inherited, int schema)
         {
             var journey = inherited.Single(p => p.PropertyName == "Journey");
             journey.PropertyName = "J";
-            return new List<JsonProperty> { journey, new JsonProperty
+            var result = new List<JsonProperty> { journey, new JsonProperty
             {
                 PropertyName = "T", UnderlyingName = "T", PropertyType = typeof(RoutineTuple27), DeclaringType = typeof(VisitorRoutine),
                 ValueProvider = new RoutineTupleProvider(), Readable = true, Writable = true, Required = Required.Always
             } };
+            if (schema >= EconomicLedgerSchema) result.Add(inherited.Single(p => p.PropertyName == "Accrual"));
+            return result;
         }
 
         private static void ApplyRoutine27(VisitorRoutine target, VisitorRoutine parsed)

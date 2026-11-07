@@ -197,6 +197,14 @@ public sealed partial class FoodCommerceTests
         if (ledger == "prepared") meal.Budget!.PreparedFoodSpent = full;
         if (ledger == "history" || ledger == "product") city.State.Food.History.Add(row);
         var prepared = meal.Budget!.PreparedFoodSpent;
+        // F6d checks the extended identity at every ledger mutation. This deliberately invalid fixture now
+        // refuses before its daily posting, still before any hold or native checkout.
+        if (ledger == "prepared")
+        {
+            Assert.Throws<OverflowException>(() => Advance(city, meal.DesiredAt + 30));
+            Assert.Empty(market.Orders); Assert.Equal(prepared, meal.Budget!.PreparedFoodSpent);
+            Assert.Equal(Money.Zero, meal.Budget.HeldPurchase); return;
+        }
         Advance(city, meal.DesiredAt + 30);
         if (ledger == "none") { Assert.Single(market.Orders); Assert.Equal(MealStatus.Paid, meal.Status); return; }
         Assert.Empty(market.Orders);
@@ -216,7 +224,7 @@ public sealed partial class FoodCommerceTests
     {
         var types = new HashSet<Type>(); var pending = new Stack<Type>(new[] { typeof(CityState), typeof(FoodShadowState) });
         var moneyNames = new HashSet<string>(LegacyMoneyWire.Names.Keys);
-        moneyNames.UnionWith(new[] { "ExternalFoodSpent", "LegacyExternalFoodSpent" });
+        moneyNames.UnionWith(new[] { "ExternalFoodSpent", "LegacyExternalFoodSpent", "EmploymentIncome", "Discretionary", "UnpostedWage" });
         while (pending.Count > 0)
         {
             var type = pending.Pop();

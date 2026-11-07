@@ -23,6 +23,7 @@ namespace PersistentCity.Core
     }
     public sealed class FoodShopDay
     {
+        public MealPeriodCauses PeriodCauses { get; set; } = new MealPeriodCauses();
         public int Day { get; set; }
         public string PlaceId { get; set; } = "";
         public string BusinessId { get; set; } = "";

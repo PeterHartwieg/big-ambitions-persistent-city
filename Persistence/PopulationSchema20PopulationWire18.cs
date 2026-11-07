@@ -201,7 +201,7 @@ namespace PersistentCity.Persistence
             private TupleLayout(Type type, string fields)
             {
                 var names = fields.Split(' ');
-                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !RivalWire21.AddedProperty(type,p.Name)).ToArray();
+                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !SaveCodec.EconomicProperty(type, p.Name) && !RivalWire21.AddedProperty(type,p.Name)).ToArray();
                 if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
                     throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");

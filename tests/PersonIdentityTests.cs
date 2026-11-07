@@ -249,11 +249,12 @@ public sealed class PersonIdentityTests
             var permitted = allowed.TryGetValue(relative, out var list) ? list : Array.Empty<string>();
             foreach (var name in names)
                 if (Array.IndexOf(permitted, name) < 0)
-                    Assert.False(text.Contains(name, StringComparison.Ordinal), relative + " references " + name);
+                    Assert.False(name == "new Employment" ? System.Text.RegularExpressions.Regex.IsMatch(text, @"new Employment\s*[({]")
+                        : text.Contains(name, StringComparison.Ordinal), relative + " references " + name);
             foreach (var draw in new[] { "IdentityPolicy.V1", ".Derive(", "IdentityPolicy.Draw" })
                 Assert.False(text.Contains(draw, StringComparison.Ordinal), relative + " draws derived identity: " + draw);
         }
-        Assert.Equal(PersistentCity.Persistence.SaveCodec.VendorSchema, CityState.CurrentSchema);
+        Assert.Equal(PersistentCity.Persistence.SaveCodec.EconomicLedgerSchema, CityState.CurrentSchema);
     }
 
     // ---- Per-person income source ----

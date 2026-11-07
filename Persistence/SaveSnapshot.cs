@@ -9,7 +9,7 @@ namespace PersistentCity.Persistence
     /// order produces the same snapshot and the same bytes. Visitors are one part because a visitor person and its
     /// routine point at each other.
     /// </summary>
-    internal enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research, Vendors }
+    internal enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research, Vendors, Economy }
 
     /// <summary>
     /// One save epoch's detached, immutable projection of the state the wire carries (F7 plan section 3.2, slice F7c).
@@ -24,7 +24,7 @@ namespace PersistentCity.Persistence
         internal static readonly SnapshotSection[] DefaultOrder =
         {
             SnapshotSection.Header, SnapshotSection.Places, SnapshotSection.Residents, SnapshotSection.Visitors,
-            SnapshotSection.Traffic, SnapshotSection.Food, SnapshotSection.Research, SnapshotSection.Vendors,
+            SnapshotSection.Traffic, SnapshotSection.Food, SnapshotSection.Research, SnapshotSection.Vendors, SnapshotSection.Economy,
         };
 
         private SaveSnapshot(CityState wire, int schema, int sharedRoutes, int copiedRoutes)
@@ -100,6 +100,7 @@ namespace PersistentCity.Persistence
                     case SnapshotSection.Traffic: wire.Traffic = live.Traffic == null ? null : Traffic(live.Traffic); return;
                     case SnapshotSection.Food: wire.Food = live.Food == null ? null : Food(live.Food); return;
                     case SnapshotSection.Research: wire.Research = live.Research?.CopyForSave()!; return;
+                    case SnapshotSection.Economy: wire.Economy = SaveCodec.CopyEconomy(live.Economy)!; return;
                     case SnapshotSection.Vendors: wire.Vendors = SaveCodec.CopyVendors30(live.Vendors)!; return;
                     default: throw new ArgumentOutOfRangeException(nameof(section));
                 }
@@ -153,7 +154,7 @@ namespace PersistentCity.Persistence
                 copy.OptionalStopChoice = c.OptionalStopChoice;
                 copy.Car = c.Car == null ? null : new CarState { ModelId = c.Car.ModelId, PaintSeed = c.Car.PaintSeed, Id = c.Car.Id, ParkedPosition = c.Car.ParkedPosition };
                 copy.JoinedMinute = c.JoinedMinute; copy.LastEmploymentCheckDay = c.LastEmploymentCheckDay; copy.JobChanges = c.JobChanges;
-                copy.EmploymentStartDay = c.EmploymentStartDay;
+                copy.EmploymentStartDay = c.EmploymentStartDay; copy.Accrual = c.Accrual;
                 copy.Phase = c.Phase; copy.Activity = c.Activity; copy.PlaceId = c.PlaceId; copy.DestinationId = c.DestinationId;
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
                 copy.DepartureMinute = c.DepartureMinute; copy.NextEventMinute = c.NextEventMinute; copy.ActivityUntilMinute = c.ActivityUntilMinute;
@@ -278,6 +279,7 @@ namespace PersistentCity.Persistence
 
             private static FoodShopDay ShopDay(FoodShopDay d) => new FoodShopDay
             {
+                PeriodCauses = d.PeriodCauses == null ? null! : new MealPeriodCauses { Counts = d.PeriodCauses.Counts == null ? null! : (int[])d.PeriodCauses.Counts.Clone() },
                 Day = d.Day, PlaceId = d.PlaceId, BusinessId = d.BusinessId, OffersConsidered = d.OffersConsidered, ChosenOffers = d.ChosenOffers,
                 PriceRejections = d.PriceRejections, AccessRejections = d.AccessRejections, ClosedRejections = d.ClosedRejections,
                 StockRejections = d.StockRejections, StaffRejections = d.StaffRejections, ServiceRejections = d.ServiceRejections,
@@ -324,7 +326,7 @@ namespace PersistentCity.Persistence
 
             private static ResidentBudget? Budget(ResidentBudget? b) => b == null ? null : new ResidentBudget
             {
-                IncomeSource = b.IncomeSource, BaseIncomeCents = b.BaseIncomeCents, DailyIncomeCents = b.DailyIncomeCents,
+                Ledger = b.Ledger, IncomeSource = b.IncomeSource, BaseIncomeCents = b.BaseIncomeCents, DailyIncomeCents = b.DailyIncomeCents,
                 DailyHousingCents = b.DailyHousingCents, DailyEssentialsCents = b.DailyEssentialsCents, DailyHomeFoodCents = b.DailyHomeFoodCents,
                 OpeningBalance = b.OpeningBalance, Balance = b.Balance, IncomeReceived = b.IncomeReceived, EssentialsPaid = b.EssentialsPaid,
                 HomeFoodPaid = b.HomeFoodPaid, PreparedFoodSpent = b.PreparedFoodSpent, ExternalFoodSpent = b.ExternalFoodSpent,

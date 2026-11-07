@@ -200,7 +200,7 @@ namespace PersistentCity.Persistence
             private TupleLayout(Type type, string fields)
             {
                 var names = fields.Split(' ');
-                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null).ToArray();
+                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !SaveCodec.EconomicProperty(type, p.Name)).ToArray();
                 if (names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).IsSupersetOf(names))
                     throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");

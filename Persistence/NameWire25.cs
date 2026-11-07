@@ -66,6 +66,10 @@ namespace PersistentCity.Persistence
                     if (row?.ProductSales != null) foreach (var cell in row.ProductSales)
                         if (cell != null) Add(cell.ProductId, Opaque25(cell));
             }
+            if (state.Schema >= EconomicLedgerSchema && state.Economy?.Shops != null)
+                foreach (var shop in state.Economy.Shops)
+                    if (shop?.Changes != null) foreach (var change in shop.Changes)
+                        if (change.Kind == ShopChangeKind.Price || change.Kind == ShopChangeKind.Stock) Add(change.ProductId);
             return names.ToList();
         }
         private static bool Opaque25(FoodProductSales cell)

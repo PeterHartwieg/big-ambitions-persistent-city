@@ -11,7 +11,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-29). It is refused and kept
+    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas before the current writer). It is refused and kept
     /// unchanged, like Invalid and Future; it is neither corruption nor a missing city.</summary>
     public enum SaveReadStatus { Missing, Loaded, Invalid, Future, DevelopmentSchema }
 
@@ -384,6 +384,8 @@ namespace PersistentCity.Persistence
             { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text, PlaceCells.Streaming(schema)); return; }
             if (type == typeof(ResearchLedger))
             { Require(schema >= ResearchSchema, "The research section needs the research schema."); CheckResearch29(reader, text, ref records); return; }
+            if (schema >= EconomicLedgerSchema && type == typeof(ShopObservation)) { ReadObservation(reader, text, ref records); return; }
+            if (schema >= EconomicLedgerSchema && EconomicScalar(type)) { CheckEconomicScalar(reader, type, text); return; }
             if (type == typeof(VendorTable))
             { Require(schema >= VendorSchema, "The vendor table needs the vendor schema."); CheckVendors30(reader, text, ref records); return; }
             if (type == typeof(string))
@@ -478,7 +480,7 @@ namespace PersistentCity.Persistence
             {
                 Require(token == JsonToken.StartArray, "Expected an array.");
                 var item = array.CollectionItemType!;
-                int limit = item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? (schema>=22 ? 32 : 24) : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
+                int limit = item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? (schema>=22 ? 32 : 24) : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
                     : item == typeof(FoodDecisionOffer) ? MenuLimit(schema)
                     : item == typeof(FoodProductSales) ? MenuLimit(schema) : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces
                     : item == typeof(ResidentMeal) ? schema >= PersonSchema ? MaxPersons : MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
@@ -504,6 +506,7 @@ namespace PersistentCity.Persistence
                         if (item == typeof(VisitorPerson)) Charge(ref records); // one fixed tuple per visitor person
                     }
                     Require(++count <= limit, "Oversized collection.");
+                    if (schema >= EconomicLedgerSchema && (item == typeof(OutsideSpendingDay) || item == typeof(ShopObservation) || item == typeof(ShopChange))) Charge(ref records);
                     if (schema>=23 && (item==typeof(FoodShopDay) || item==typeof(FoodProductSales))) Charge(ref records);
                     if (item == typeof(FoodAwarenessCandidate) || item == typeof(BusinessReference) || item == typeof(RouteLeg) || item == typeof(VisitRecord) || item == typeof(OpeningWindow)
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
@@ -567,10 +570,11 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema25Contracts = new StateContractResolver(25);
         private static readonly IContractResolver Schema26Contracts = new StateContractResolver(26);
         private static readonly IContractResolver Schema28Contracts = new StateContractResolver(WorkplaceCapacitySchema);
+        private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -590,6 +594,8 @@ namespace PersistentCity.Persistence
             if (schema >= IndependentSchema) settings.Converters.Add(new RoutineTupleConverter27(context));
             if (schema >= ResearchSchema) settings.Converters.Add(new ResearchConverter29());
             if (schema >= VendorSchema) settings.Converters.Add(new VendorConverter30(context));
+            if (schema >= EconomicLedgerSchema) settings.Converters.Add(new EconomicConverter(context));
+            if (schema >= EconomicLedgerSchema) settings.Converters.Add(new ObservationConverter(context));
             if (schema >= 25) settings.Converters.Add(new ProductSales25Converter(context));
             else if(schema>=23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
@@ -647,7 +653,7 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
@@ -755,6 +761,7 @@ namespace PersistentCity.Persistence
             }
             else if (schema >= PersonSchema) embeddedRecords += ValidatePersons26(state, places, assigned);
             if (schema >= ResearchSchema) embeddedRecords += ValidateResearch29(state);
+            if (schema >= EconomicLedgerSchema) embeddedRecords += ValidateEconomy(state);
             Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             int totalRecords = ValidateTraffic(state, embeddedRecords);
             // The frozen semantic counter did not charge scope menu strings or optional-stop members;
@@ -1470,7 +1477,8 @@ namespace PersistentCity.Persistence
                 && b.ExternalFoodSpent >= Money.Zero && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
                 "Negative household accounting.");
             // Checked unit sums: an amount beyond the unit's range is refused (OverflowException), never rounded.
-            Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved.");
+            try { Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved."); }
+            catch (OverflowException) { Fail("Household conservation total exceeds the money range."); }
             Minute(b.NextPostingMinute, "Next household posting");
             Require(b.LastPostedDay >= -1 && b.LastPostedDay <= (int)(minute / 1440)
                 && b.HomeFoodFundedDay >= -1 && b.HomeFoodFundedDay <= b.LastPostedDay
@@ -1520,6 +1528,7 @@ namespace PersistentCity.Persistence
                     && !(schema < IndependentSchema && PersonProperty27(type, property.PropertyName))
                     && !(schema < ResearchSchema && ResearchProperty29(type, property.PropertyName))
                     && !(schema < VendorSchema && VendorProperty30(type, property.PropertyName))
+                    && !(schema < EconomicLedgerSchema && EconomicProperty(type, property.PropertyName))
                     // Schema 26 derives these from the person table: the resident tuple P and one roster record per person.
                     && !(schema >= PersonSchema && (type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"
                         || type == typeof(FoodCommerceState) && property.PropertyName == "RepresentationFactor"))
@@ -1532,9 +1541,10 @@ namespace PersistentCity.Persistence
                     && !(schema<23 && type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay"))).ToList();
+                if (schema >= EconomicLedgerSchema && type == typeof(FoodShopDay)) properties.Single(p => p.PropertyName == "PeriodCauses").PropertyName = "Causes";
                 if (schema >= PersonSchema && type == typeof(CitizenState)) properties.Add(ResidentTupleProperty());
                 if (schema >= VendorSchema && type == typeof(FoodScope)) properties.Add(ChannelProperty30());
-                if (type == typeof(VisitorRoutine)) properties = RoutineProperties27(properties).ToList();
+                if (type == typeof(VisitorRoutine)) properties = RoutineProperties27(properties, schema).ToList();
                 return properties
                     // These two root headers let the native authority bootstrap stop before the graph.
                     // JSON object order is not a schema change; all old property orders still read.

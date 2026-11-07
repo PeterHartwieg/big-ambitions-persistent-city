@@ -1253,7 +1253,7 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = 24) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !SaveCodec.PersonProperty26(type, property.PropertyName) && !FoodNameIdentity.AddedProperty(type, property.PropertyName)
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !SaveCodec.EconomicProperty(type, property.PropertyName) && !SaveCodec.PersonProperty26(type, property.PropertyName) && !FoodNameIdentity.AddedProperty(type, property.PropertyName)
                     && !(schema<24 && type==typeof(FoodCommerceState) && property.PropertyName=="Outflow")
                     && !(schema<22 && type==typeof(FoodCommerceState) && property.PropertyName=="Campaigns")
                     && !(schema<21 && PopulationSchema24RivalWire21.AddedProperty(type,property.PropertyName!))

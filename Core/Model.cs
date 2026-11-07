@@ -289,6 +289,7 @@ namespace PersistentCity.Core
         /// <summary>Schema 26: day the current DayPlaceId assignment began (the person's Employment start); zero while
         /// unassigned. Bookkeeping only: no routine, choice or money reads it.</summary>
         public int EmploymentStartDay { get; set; }
+        public EmploymentAccrual Accrual { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
         public string PlaceId { get; set; } = "";
@@ -330,7 +331,8 @@ namespace PersistentCity.Core
         public const int ResearchSchema = PersonTable.WorkplaceCapacitySchema + 1;
         /// <summary>E6c: the next writer after C5c's research schema; it adds <see cref="Vendors"/> and the scope channel.</summary>
         public const int VendorSchema = ResearchSchema + 1;
-        public const int CurrentSchema = VendorSchema;
+        public const int EconomicLedgerSchema = VendorSchema + 1;
+        public const int CurrentSchema = EconomicLedgerSchema;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
@@ -343,6 +345,7 @@ namespace PersistentCity.Core
         public string TrafficTopologyId { get; set; } = "";
         public TrafficKernelState? Traffic { get; set; }
         public FoodCommerceState? Food { get; set; }
+        public EconomicLedger Economy { get; set; } = new EconomicLedger();
         // The live event engine owns mutable queues; serialization asks it for one coherent snapshot.
         internal Action? SnapshotSynchronizer;
         public void PrepareForSave()
