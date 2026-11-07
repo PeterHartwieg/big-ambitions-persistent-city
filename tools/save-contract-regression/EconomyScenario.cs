@@ -104,10 +104,16 @@ public static class EconomyScenario
     };
 
     /// <summary>Run the fixed scenario and return the order log and economy digests.</summary>
-    public static object Run(int residents = 60, int seed = 23, bool legacyChoice = false)
+    /// <summary><paramref name="frozen"/> lets a caller run the same scenario on a frozen writer: it adjusts the fresh
+    /// state (for example its schema) and supplies that writer's write/read pair for the mid-run reload.</summary>
+    public static object Run(int residents = 60, int seed = 23, bool legacyChoice = false,
+        (Action<CityState> Prepare, Func<CityState, string> Write, Func<string, SaveReadResult> Read)? frozen = null)
     {
         var state = Create(residents, seed);
         state.Food = Food();
+        frozen?.Prepare(state);
+        Func<CityState, string> write = frozen?.Write ?? SaveCodec.Write;
+        Func<string, SaveReadResult> readBack = frozen?.Read ?? SaveCodec.Read;
         var routes = new Walking(); var market = new Market();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
         string? reloaded = null;
@@ -119,13 +125,13 @@ public static class EconomyScenario
             while (!city.AdvanceTo(at, 64).CaughtUp) { }
             if (reloaded == null && at >= 2 * 1440 + 750)
             {
-                reloaded = SaveCodec.Write(city.State);
-                var read = SaveCodec.Read(reloaded);
+                reloaded = write(city.State);
+                var read = readBack(reloaded);
                 if (read.Status != SaveReadStatus.Loaded) throw new InvalidOperationException("Reload failed: " + read.Error);
                 city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
             }
         }
-        string final = SaveCodec.Write(city.State);
+        string final = write(city.State);
         var meals = city.State.Food!.Residents;
         return new
         {
@@ -134,16 +140,16 @@ public static class EconomyScenario
             purchases = meals.Sum(m => m.Purchases),
             spentUnits = meals.Sum(m => m.Spent.Units),
             uncertain = meals.Count(m => m.Status == MealStatus.Uncertain),
-            economyDigest = Digest(WithoutSchema17(final)),
-            reloadDigest = Digest(WithoutSchema17(reloaded!)),
+            economyDigest = Digest(WithoutSchema17(final, readBack)),
+            reloadDigest = Digest(WithoutSchema17(reloaded!, readBack)),
         };
     }
 
-    public static string WithoutSchema17(string payload)
+    public static string WithoutSchema17(string payload, Func<string, SaveReadResult>? read = null)
     {
         if (typeof(CityState).GetProperty("Capabilities") != null && (int)JObject.Parse(payload)["Schema"]! >= 18)
         {
-            var state = SaveCodec.Read(payload).State!;
+            var state = (read ?? SaveCodec.Read)(payload).State!;
             state.Schema = 17;
             // Schema 17 stored a represented consumer under its host and slot (schema 26: own record + scheduling host).
             if (state.Food != null && state.Citizens.Count > 0)

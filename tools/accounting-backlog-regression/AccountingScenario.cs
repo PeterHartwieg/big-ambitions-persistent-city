@@ -48,10 +48,17 @@ public static class AccountingScenario
         public long SpentUnits;
         public long BalanceUnits, HeldUnits;
         public int MissedMeals;
+        /// <summary>Persons variant (F5d): visitors with their own routines, their purchases, and the city-wide
+        /// conservation check at every frame.</summary>
+        public int Visitors;
+        public long VisitorPurchases;
+        public bool Conserved = true;
     }
     private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
+    /// <summary>One logical day. <paramref name="persons"/> adds the F5d persons variant: two subway portals, so the
+    /// factor-2 roster creates one visitor per resident running its own routine through the same queue.</summary>
     public static Result Run(int residents, int fps, int eventBudget, double milliseconds,
-        bool reload = false, int stallFrames = 0, bool skip = false, bool coordinated = true)
+        bool reload = false, int stallFrames = 0, bool skip = false, bool coordinated = true, bool persons = false)
     {
         var state = Population.Create(Enumerable.Range(0, residents).Select(n => new CitizenIdentity {
             Id = "r" + n, Name = "Resident " + n, Persona = Persona.Foodie, Age = 30 }).ToArray(), new[] {
@@ -63,6 +70,12 @@ public static class AccountingScenario
         {
             person.Phase = CitizenPhase.AtPlace; person.PlaceId = "home"; person.Activity = Activity.Home;
             person.NextEventMinute = person.ActivityUntilMinute = 4320;
+        }
+        if (persons)
+        {
+            // Visitors compete for the same workplace, so it gets room for them.
+            state.Places.Single(p => p.Id == "work").Capacity = 2 * residents;
+            PortalPlaces.Add(state, new[] { new PortalStation("subway:east", new Position(3, 0, 1)), new PortalStation("subway:west", new Position(-1, 0, 1)) });
         }
         state.Food = new FoodCommerceState { RepresentationFactor = 2, MealRhythmVersion = MealRhythm.PolicyVersion,
             Shops = new List<FoodScope> { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
@@ -121,6 +134,7 @@ public static class AccountingScenario
             { result.RecoverySeconds = (result.Frames - recoveryStart) / (double)fps; recovered = true; }
             double cost = (Stopwatch.GetTimestamp() - started - saveTicks) * 1000.0 / Stopwatch.Frequency;
             costs.Add(cost); if (cost >= 30) result.Spikes++;
+            if (persons && result.Frames % 97 == 0 && !city.State.Food!.Residents.All(m => HouseholdFinance.CashConserved(m.Budget!))) result.Conserved = false;
             if (reload && !firstReload && city.State.Food!.Residents.Any(m => m.Decision != null || m.Status == MealStatus.Travelling))
             {
                 firstReload = true;
@@ -137,6 +151,9 @@ public static class AccountingScenario
         result.BalanceUnits = city.State.Food.Residents.Sum(m => m.Budget!.Balance.Units);
         result.HeldUnits = city.State.Food.Residents.Sum(m => m.Budget!.HeldPurchase.Units);
         result.MissedMeals = city.State.Food.Residents.Sum(m => m.Today?.Meals.Count(o => o.Status == MealOutcomeStatus.Skipped) ?? 0);
+        result.Visitors = city.State.Visitors.Count;
+        result.VisitorPurchases = city.State.Food.Residents.Where(m => m.ResidentId.StartsWith(PersonIds.VisitorPrefix, StringComparison.Ordinal)).Sum(m => m.Purchases);
+        if (persons && !city.State.Food.Residents.All(m => HouseholdFinance.CashConserved(m.Budget!))) result.Conserved = false;
         costs.Sort(); result.FrameP50 = costs[costs.Count / 2]; result.FrameP95 = costs[(int)((costs.Count - 1) * .95)]; result.FrameMax = costs[costs.Count - 1];
         return result;
     }

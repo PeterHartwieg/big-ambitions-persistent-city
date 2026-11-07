@@ -84,7 +84,7 @@ public sealed class ResearchSurveyTests
     {
         var state = EconomyScenario.Create(residents, seed);
         if (unemployedEvery > 0) for (int i = 0; i < state.Citizens.Count; i += unemployedEvery) state.Citizens[i].DayPlaceId = "";
-        state.Food = EconomyScenario.Food();
+        state.Food = EconomyScenario.Food(); DevelopmentChain.RepresentedSchema(state, state.Food.RepresentationFactor);
         var run = new Run();
         if (routes != null) run.Routes = routes;
         run.City = new CitySimulator(state, run.Routes);
@@ -102,9 +102,9 @@ public sealed class ResearchSurveyTests
 
     private static void Reload(Run run, ResearchLedger? ledger, int unit = 256, IRoutePlanner? routes = null)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(run.City.State));
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(run.City.State));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
-        Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
+        Assert.Equal(run.City.State.Schema, read.State!.Schema);
         if (routes != null) run.Routes = routes;
         run.City = new CitySimulator(read.State!, run.Routes);
         run.City.AttachFoodMarket(run.Market);
@@ -201,7 +201,7 @@ public sealed class ResearchSurveyTests
         Frames(held.City, target); Frames(plain.City, target);
         Assert.NotEmpty(plain.Trace);
         Assert.Equal(plain.Trace, held.Trace);
-        Assert.Equal(SaveCodec.Write(plain.City.State), SaveCodec.Write(held.City.State));
+        Assert.Equal(DevelopmentChain.Write(plain.City.State), DevelopmentChain.Write(held.City.State));
         Assert.Equal(plain.Market.Orders, held.Market.Orders);
     }
 
@@ -250,7 +250,7 @@ public sealed class ResearchSurveyTests
         Assert.Equal(Cells(order), Cells(restored));
         Assert.Equal(order.ReportId, restored.ReportId);
         Assert.Equal(plain.Trace, reloaded.Trace);
-        Assert.Equal(SaveCodec.Write(plain.City.State), SaveCodec.Write(reloaded.City.State));
+        Assert.Equal(DevelopmentChain.Write(plain.City.State), DevelopmentChain.Write(reloaded.City.State));
     }
 
     [Fact]
@@ -330,7 +330,7 @@ public sealed class ResearchSurveyTests
         Frames(reloaded.City, minute);
         Assert.Equal(committed, reloaded.City.State.Citizens.Single(c => c.Identity.Id == resident).DayPlaceId);
         Assert.Equal(cells, Cells(reloaded.Research.Ledger.Open.Single()));
-        Assert.Equal(SaveCodec.Write(plain.City.State), SaveCodec.Write(reloaded.City.State));
+        Assert.Equal(DevelopmentChain.Write(plain.City.State), DevelopmentChain.Write(reloaded.City.State));
     }
 
     [Fact]
@@ -355,7 +355,7 @@ public sealed class ResearchSurveyTests
         var roster = run.City.State.Food.Residents;
         var anchor = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Commuter);
         anchor.Traits = null;
-        roster.First(m => m.Slot > 0 && m.AnchorId != anchor.Identity.Id).RepresentedTraits = null;
+        roster.First(m => m.HostSlot > 0 && m.HostId != anchor.Identity.Id).RepresentedTraits = null;
         var lost = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Foodie && c.DayPlaceId.Length > 0);
         lost.DayPlaceId = "demolished-workplace";
         run.City.AttachResearch(new ResearchLedger());
@@ -363,7 +363,7 @@ public sealed class ResearchSurveyTests
         Frames(run.City, run.City.State.Minute);
         int consumers = roster.Count;
         Assert.Equal(consumers, Cell(order, MarketResearchMetric.Consumers));
-        Assert.Equal(roster.Count(m => m.Slot > 0), Cell(order, MarketResearchMetric.RepresentedConsumers));
+        Assert.Equal(roster.Count(m => m.HostSlot > 0), Cell(order, MarketResearchMetric.RepresentedConsumers));
         Assert.Null(Cell(order, MarketResearchMetric.BreakfastOpportunities));
         Assert.Null(Cell(order, MarketResearchMetric.LunchOpportunities));
         Assert.Null(Cell(order, MarketResearchMetric.DinnerOpportunities));
@@ -461,14 +461,14 @@ public sealed class ResearchSurveyTests
         var run = Start(); Catch(run.City, Noon);
         run.City.AttachResearch(new ResearchLedger(), 16);
         run.Trace.Clear();
-        string before = EconomyScenario.Digest(SaveCodec.Write(run.City.State));
+        string before = EconomyScenario.Digest(DevelopmentChain.Write(run.City.State));
         int reads = run.Market.Reads, sales = run.Market.Orders.Count;
         var local = Order(run, ResearchProducts.DetailedLocalCode, "shop-3");
         var city = Order(run, ResearchProducts.DetailedCityCode, "shop-1");
         int frames = Frames(run.City, Noon);
         Assert.True(frames > 2);
         Assert.Equal(ResearchOrderState.Surveyed, local.State); Assert.Equal(ResearchOrderState.Surveyed, city.State);
-        Assert.Equal(before, EconomyScenario.Digest(SaveCodec.Write(run.City.State)));
+        Assert.Equal(before, EconomyScenario.Digest(DevelopmentChain.Write(run.City.State)));
         Assert.Equal(reads, run.Market.Reads); Assert.Equal(sales, run.Market.Orders.Count);
         Assert.Empty(run.Trace);
     }
@@ -485,7 +485,7 @@ public sealed class ResearchSurveyTests
             Assert.Equal(0, units);
         }
         Assert.Equal(plain.Trace, idle.Trace);
-        Assert.Equal(SaveCodec.Write(plain.City.State), SaveCodec.Write(idle.City.State));
+        Assert.Equal(DevelopmentChain.Write(plain.City.State), DevelopmentChain.Write(idle.City.State));
         Assert.Null(research.SurveyingOrderId);
     }
 

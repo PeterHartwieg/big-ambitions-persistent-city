@@ -100,6 +100,8 @@ namespace PersistentCity.Core
                 if (futureWork.HasValue && futureWork.Value.StartsAt > minute && futureWork.Value.StartsAt < next)
                     next = futureWork.Value.StartsAt;
                 bool weekend = Weekend(currentDay);
+                // A commuter visitor's stays recur on weekdays only; at weekends it stays off-map at its portal.
+                if (weekend && person.IsVisitor) continue;
                 double shopFrom = midnight + (late ? 1230 : weekend ? 660 : 1050) + shift;
                 double shopUntil = Math.Min(MaxMinute, shopFrom + 45);
                 if (person.ShopId.Length > 0 && shopUntil > minute && shopUntil > shopFrom && shopFrom < next

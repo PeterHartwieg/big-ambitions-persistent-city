@@ -244,7 +244,8 @@ public sealed class FoodBudgetBatchTests
     [InlineData(1914)] [InlineData(10000)] [InlineData(100000)]
     public void SupportedAndStressSizesBoundEveryPostingCallAndKeepTheClockHeld(int consumers)
     {
-        var state = new CityState { Seed = 7, Minute = 1440, Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
+        // A represented roster (slot 1 on its host's day) is the frozen writer-26 shape.
+        var state = new CityState { Seed = 7, Minute = 1440, Schema = DevelopmentChain.Represented, Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
         state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = consumers / 2 });
         for (int i = 0; i < consumers / 2; i++)
         {

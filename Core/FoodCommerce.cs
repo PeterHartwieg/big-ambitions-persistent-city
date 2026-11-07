@@ -209,6 +209,15 @@ namespace PersistentCity.Core
         internal IFoodMarket Market => market;
         public long HistoricalClockMisses { get; private set; }
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
+        /// <summary>Diagnostic (never saved): food or finance lookups of a person other than the meal's own owner, the
+        /// pre-27 represented-consumer anchor. Schema 27 keeps it at zero (F5d: no anchor read at all).</summary>
+        public long AnchorReads { get; private set; }
+        // The person whose schedule, wallet inputs and traits a meal reads. From schema 27 that is always its owner.
+        private CitizenState? Owner(ResidentMeal meal)
+        {
+            if (!string.Equals(meal.HostId, meal.ResidentId, StringComparison.Ordinal)) AnchorReads++;
+            return city.FindCitizen(meal.HostId);
+        }
         internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
             this.city = city; this.market = market; this.routes = routes;
@@ -266,9 +275,11 @@ namespace PersistentCity.Core
             bool own = city.State.Schema >= PersonTable.OwnRosterSchema;
             var meal = new ResidentMeal { ResidentId = id, AnchorId = own ? id : person.Identity.Id, Slot = own ? 0 : slot };
             meal.AssignHost(person.Identity.Id, slot);
-            if (slot > 0)
+            // Schema 27: a visitor is its own person with its own routine; its tastes are drawn by its own ID.
+            if (person.IsVisitor) meal.RepresentedTraits = person.Traits;
+            if (slot > 0 || person.IsVisitor)
             {
-                meal.RepresentedTraits = ResidentTraits.Generate(city.State.Seed, id);
+                if (slot > 0) meal.RepresentedTraits = ResidentTraits.Generate(city.State.Seed, id);
                 var products = FoodProducts.Ids.OrderBy(p => p, StringComparer.Ordinal).ToArray();
                 meal.PreferredProductId = products[StableRandom.Hash(id + ":taste", city.State.Seed) % (uint)products.Length];
                 meal.PreferenceBonusCents = 50 + (int)(StableRandom.Hash(id + ":taste-strength", city.State.Seed) % 101);
@@ -302,7 +313,7 @@ namespace PersistentCity.Core
             {
                 var pendingMeal=pendingDecision;
                 due.Remove(pendingMeal);
-                try { ContinueFoodDecision(pendingMeal,city.FindCitizen(pendingMeal.HostId)!); }
+                try { ContinueFoodDecision(pendingMeal,Owner(pendingMeal)!); }
                 finally { due.Add(pendingMeal); }
                 return;
             }
@@ -313,7 +324,7 @@ namespace PersistentCity.Core
         }
         private void StepMeal(ResidentMeal meal)
         {
-            var person = city.FindCitizen(meal.HostId);
+            var person = Owner(meal);
             if (person == null) throw new InvalidOperationException("Meal has no resident.");
             double now = city.State.Minute;
             if (meal.Status == MealStatus.Uncertain && meal.Excursion != null)
@@ -331,6 +342,10 @@ namespace PersistentCity.Core
                 catch (Exception) { /* Missing proof preserves held funds and the original receipt. */ }
             }
             if (StepExcursion(meal, person)) { return; }
+            // A dormant visitor is off-map: no new demand until its next stay (section 3 Visitor lifecycle). Unresolved
+            // obligations (an uncertain receipt above, a held purchase) stay with the same person and wallet.
+            if (person.IsVisitor && VisitorSchedules.Dormant(person) && !Active(meal) && meal.Status != MealStatus.Uncertain)
+            { SkipDormantMeals(meal, person, now); return; }
             if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
             { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             if (!Active(meal) && meal.Status != MealStatus.Pending)
@@ -380,7 +395,9 @@ namespace PersistentCity.Core
                     : person.MealOuting != null && !person.MealOuting.Returning
                     && person.Phase == CitizenPhase.AtPlace && person.PlaceId == meal.PlaceId
                     && (meal.TargetKind == FoodAlternativeKind.Rival
-                        || person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt));
+                        // Visitors keep one LastArrival tuple instead of RecentVisits; residents keep this check unchanged.
+                        || (person.Visitor != null ? VisitorSchedules.ArrivedForMeal(person.Visitor, meal.PlaceId, meal.DesiredAt)
+                            : person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt)));
                 if (admitted)
                 {
                     if (meal.TargetKind == FoodAlternativeKind.Rival) { ArriveRival(meal, person, now); return; }
@@ -511,10 +528,30 @@ namespace PersistentCity.Core
                 if(choiceReason.Contains("values quality"))
                 {if(outcome.Factor1==MealFactor.None) outcome.Factor1=MealFactor.Quality;else outcome.Factor2=MealFactor.Quality;}
             }
-            var person = city.FindCitizen(meal.HostId)!;
+            var person = Owner(meal)!;
             NextMeal(meal, out int day, out MealKind kind);
             meal.DueAt = Math.Max(city.State.Minute + .001, MealRhythm.DesiredAt(person, city.State.Seed, day, kind));
             if (meal.HostSlot > 0 && meal.Excursion != null) ScheduleReturn(meal);
+        }
+        /// <summary>A dormant visitor's meal opportunities before its next stay end without an intent or outcome; the
+        /// first meal still open at the stay start waits for it. Bounded: a stay is at most a few days ahead.</summary>
+        private void SkipDormantMeals(ResidentMeal meal, CitizenState person, double now)
+        {
+            double stay = Math.Max(now, person.NextEventMinute);
+            int day, guard = 0;
+            MealKind kind;
+            if (meal.Status != MealStatus.Pending)
+            {
+                NextMeal(meal, out day, out kind);
+                if (day < (int)(now / 1440)) { day = (int)(now / 1440); kind = state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast; }
+                StartMeal(meal, person, day, kind);
+            }
+            while (meal.ExpiresAt <= stay && guard++ < 64)
+            {
+                NextMeal(meal, out day, out kind);
+                StartMeal(meal, person, day, kind);
+            }
+            meal.DueAt = Math.Max(now + .001, Math.Max(meal.DueAt, Math.Min(stay, meal.ExpiresAt)));
         }
         private void NextMeal(ResidentMeal meal, out int day, out MealKind kind)
         {

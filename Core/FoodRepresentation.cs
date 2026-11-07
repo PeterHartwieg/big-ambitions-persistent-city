@@ -96,6 +96,7 @@ namespace PersistentCity.Core
 
         private void InitializeRepresentation()
         {
+            if (city.State.Schema >= PersonTable.IndependentSchema) { InitializePersons(); return; }
             bool own = city.State.Schema >= PersonTable.OwnRosterSchema;
             int residents = city.State.Citizens.Count;
             if (own && records.Count != 0)
@@ -136,6 +137,38 @@ namespace PersistentCity.Core
             }
             PersonTable.OrderVisitors(city.State);
             if (own) state.RepresentationFactor = 1; // factor-1 roster rule; scheduling keeps `representation`
+        }
+
+        // Schema 27 (F5d): one own record per person and no represented consumer, host, routine stop or excursion. A
+        // fresh roster creates the requested factor's K-1 visitors per resident as persons with their own routines.
+        // A saved roster enrols any person without a record (for example residents appended by ExpandToHousing),
+        // closing the gap where they had no meals or wallet; existing records are never re-seeded.
+        private void InitializePersons()
+        {
+            representation = 1;
+            var city = this.city.State;
+            if (state.RepresentationFactor < 1 || state.RepresentationFactor > 3)
+                throw new InvalidOperationException("Representation factor must be fixed between one and three at city initialization.");
+            if (state.RoutineStops.Count != 0) throw new InvalidOperationException("Schema 27 has no represented routine stops.");
+            // A populated roster is persistent ownership, never permission to multiply wallets.
+            if (records.Count != 0 && state.RepresentationFactor != 1) throw new InvalidOperationException("A saved roster has one own record per person.");
+            if (records.Count == 0 && city.Visitors.Count == 0
+                && VisitorSchedules.Create(city, VisitorSchedules.FreshVisitors(city.Citizens.Count, state.RepresentationFactor)).Count != 0)
+                this.city.ScheduleVisitors();
+            state.RepresentationFactor = 1;
+            var persons = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var person in city.Citizens)
+                if (!persons.Add(person.Identity.Id)) throw new InvalidOperationException("Duplicate person " + person.Identity.Id + ".");
+            foreach (var visitor in city.Visitors)
+                if (!persons.Add(visitor.Id)) throw new InvalidOperationException("Duplicate person " + visitor.Id + ".");
+            foreach (var meal in records.Values)
+            {
+                if (!persons.Contains(meal.ResidentId) || meal.AnchorId != meal.ResidentId || meal.Slot != 0 || meal.Excursion != null)
+                    throw new InvalidOperationException("Saved meal record is not its own person's: " + meal.ResidentId + ".");
+                meal.AssignHost(meal.ResidentId, 0);
+            }
+            foreach (var person in city.Citizens) if (!records.ContainsKey(person.Identity.Id)) Enrol(person);
+            foreach (var routine in city.VisitorRoutines) if (!records.ContainsKey(routine.Identity.Id)) Enrol(routine);
         }
 
         private void CaptureRoutineStop(CitizenState person)

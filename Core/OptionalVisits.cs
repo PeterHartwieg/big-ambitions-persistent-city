@@ -79,8 +79,7 @@ namespace PersistentCity.Core
                 }
                 if (now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now))
                 {
-                    person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = person.PlaceId, Activity = Activity.Shop });
-                    if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
+                    VisitorSchedules.RecordArrival(person, now, person.PlaceId, Activity.Shop);
                     person.NextEventMinute = Math.Min(person.ActivityUntilMinute, DailyRoutine.NextClose(places[person.PlaceId], now)!.Value);
                     return MealOutingStep.Handled;
                 }

@@ -10,17 +10,41 @@ namespace PersistentCity.Tests;
 /// removes them. For schema-26 payloads and states both members are exactly SaveCodec.Read/Write.</summary>
 internal static class DevelopmentChain
 {
-    public static SaveReadResult Read(string? source) => source != null && SaveCodec.DevelopmentSchemaOf(source) != null
-        ? SaveCodec.ReadDevelopmentChain(source) : SaveCodec.Read(source);
+    /// <summary>The frozen pre-26 chain migrates every schema up to 25 to exactly writer 25.</summary>
+    public const int ChainOutput = 25;
+    /// <summary>F5d: the frozen writer-26 shape (represented consumers on their host's excursion schedule). Schema 27
+    /// has no represented consumer, so tests of that path build their city in this schema.</summary>
+    public const int Represented = SaveCodec.PersonSchema;
 
-    public static string Write(CityState state) => state.Schema == SaveCodec.LatestDevelopmentSchema
-        ? SaveCodec.WriteForSchema(state, SaveCodec.LatestDevelopmentSchema) : SaveCodec.Write(state);
+    /// <summary>A city with represented consumers (factor 2/3) runs the frozen writer-26 path.</summary>
+    public static CityState RepresentedSchema(CityState state, int factor)
+    {
+        if (factor > 1) state.Schema = Represented;
+        return state;
+    }
+
+    public static SaveReadResult Read(string? source) => source == null ? SaveCodec.Read(source)
+        : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.PersonSchema ? SaveCodec.ReadWriter26(source)
+        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveCodec.Read(source);
+
+    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented
+        ? SaveCodec.WriteForSchema(state, state.Schema) : SaveCodec.Write(state);
+
+    /// <summary>The activation save contract for the state's own schema (the current writer or a frozen one).</summary>
+    public static void ValidateForActivation(CityState state)
+    {
+        if (state.Schema == Represented || state.Schema == ChainOutput) SaveCodec.ValidateForActivation(state, state.Schema);
+        else SaveCodec.ValidateForActivation(state);
+    }
+
+    /// <summary>Both record counters for the state's own schema (the current writer or a frozen one).</summary>
+    public static (int Streaming, int Semantic) CountRecords(CityState state, string source) => SaveCodec.CountRecordsForSchema(state, source, state.Schema);
 
     /// <summary>The writer-25 bytes of a fresh state, for tests that relabel a payload as an older schema.</summary>
     public static string Write25(CityState state)
     {
         int schema = state.Schema;
-        try { state.Schema = SaveCodec.LatestDevelopmentSchema; return Legacy(state, () => SaveCodec.WriteForSchema(state, SaveCodec.LatestDevelopmentSchema)); }
+        try { state.Schema = ChainOutput; return Legacy(state, () => SaveCodec.WriteForSchema(state, ChainOutput)); }
         finally { state.Schema = schema; }
     }
 
@@ -58,6 +82,19 @@ internal static class DevelopmentChain
         var read = SaveCodec.ReadDevelopmentChain(data[SaveStore.StateKey]);
         if (read.Status == SaveReadStatus.Loaded) Assert.Equal(populationKey, read.State!.PopulationKey);
         return read;
+    }
+
+    /// <summary>F5d: the product reader refuses a frozen writer-26 payload as an older development city before its shape.</summary>
+    public static SaveReadStatus ProductStatus(string payload, SaveReadStatus frozen)
+        => SaveCodec.DevelopmentSchemaOf(payload) != null ? SaveReadStatus.DevelopmentSchema : frozen;
+
+    /// <summary>The capability-header probe of a frozen writer-26 payload: the product refuses its schema, and the same
+    /// headers relabelled as the current writer pass the probe (it reads only the headers).</summary>
+    public static void ProbeCapabilities(string payload)
+    {
+        if (SaveCodec.DevelopmentSchemaOf(payload) != SaveCodec.PersonSchema) { SaveCodec.RequireExecutableCapabilities(payload); return; }
+        RequireRefusedCapabilities(payload);
+        SaveCodec.RequireExecutableCapabilities(payload.Replace("\"Schema\":26,", "\"Schema\":" + CityState.CurrentSchema + ","));
     }
 
     /// <summary>The early authority probe refuses an older development payload with the development message.</summary>

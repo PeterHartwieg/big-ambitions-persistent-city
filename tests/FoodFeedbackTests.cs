@@ -352,7 +352,7 @@ public sealed partial class FoodCommerceTests
         string before = DevelopmentChain.Write(city.State);
         _ = city.FoodMoney!.Snapshot(); _ = city.FoodMoney.Snapshot().Text();
         Assert.Equal(before, DevelopmentChain.Write(city.State));
-        Assert.Equal(26, CityState.CurrentSchema); Assert.Equal(26, DevelopmentChain.Read(before).State!.Schema);
+        Assert.Equal(27, CityState.CurrentSchema); Assert.Equal(27, DevelopmentChain.Read(before).State!.Schema);
         Assert.DoesNotContain("counters", before, StringComparison.OrdinalIgnoreCase);
         var restored = Reload(city, market, routes);
         Assert.Equal(before, DevelopmentChain.Write(restored.State));

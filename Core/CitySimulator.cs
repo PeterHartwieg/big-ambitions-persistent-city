@@ -54,6 +54,8 @@ namespace PersistentCity.Core
         public CityState State { get; }
         private FoodCommerce? food;
         public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
+        /// <summary>F5d diagnostic counter: food/finance reads of a person other than the meal's owner (zero from schema 27).</summary>
+        public long FoodAnchorReads => food?.AnchorReads ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
@@ -62,7 +64,7 @@ namespace PersistentCity.Core
         /// <summary>Read-only view of the active-journey candidate index for physical selection.</summary>
         public ActiveJourneyIndex ActiveJourneys => activeJourneys;
         /// <summary>Shadow comparison of the index against a full scan of the population.</summary>
-        public bool ActiveJourneyIndexMatchesState() => activeJourneys.MatchesScan(State.Citizens);
+        public bool ActiveJourneyIndexMatchesState() => activeJourneys.MatchesScan(State.Citizens, State.VisitorRoutines);
         internal Position? FindPosition(string id) => places.TryGetValue(id,out var place) ? place.Position : (Position?)null;
         /// <summary>Read-only inspector view of one resident from already stored facts, or null if the
         /// ID has left the population. Never changes the city, draws, plans routes or reads a market.</summary>
@@ -71,7 +73,8 @@ namespace PersistentCity.Core
         {
             if (residentId == null) return null;
             var person = FindCitizen(residentId);
-            if (person == null) return null;
+            // Visitors have no body before F5i, so nothing selects them for the resident inspector.
+            if (person == null || person.IsVisitor) return null;
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
             return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop);
         }
@@ -176,9 +179,49 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
             }
-            activeJourneys.Rebuild(state.Citizens);
+            // Schema 27: visitor routines share the queue. Their slot is the complement of their list index.
+            if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0 && state.Schema >= PersonTable.IndependentSchema)
+            {
+                if (state.Schema < PersonTable.IndependentSchema) throw new InvalidOperationException("Visitor routines need schema 27.");
+                VisitorSchedules.LinkAll(state);
+                for (int visitorIndex = 0; visitorIndex < state.VisitorRoutines.Count; visitorIndex++)
+                {
+                    var routine = state.VisitorRoutines[visitorIndex];
+                    if (!Position.Finite(routine.NextEventMinute) || routine.NextEventMinute < state.Minute)
+                        throw new ArgumentException("A visitor has an overdue or nonfinite event.");
+                    if (!places.ContainsKey(routine.HomeId)) throw new ArgumentException("A visitor's portal is not a saved place.");
+                    var item = new Due(~visitorIndex) { Citizen = routine, Minute = routine.NextEventMinute };
+                    if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
+                    citizenEvents.Add(routine.Identity.Id, item);
+                }
+            }
+            activeJourneys.Rebuild(state.Citizens, state.VisitorRoutines);
             RestoreTraffic();
             EnsureTrafficNetwork();
+        }
+
+        /// <summary>Queues visitor routines created after construction (a fresh roster). Every visitor slot is rebuilt
+        /// from the current ordinal list, so no in-flight visitor event may exist.</summary>
+        internal void ScheduleVisitors()
+        {
+            if (pending != null && pending.Item.ListIndex < 0) throw new InvalidOperationException("A visitor event is in flight.");
+            if (State.Schema < PersonTable.IndependentSchema) throw new InvalidOperationException("Visitor routines need schema 27.");
+            foreach (var visitor in State.VisitorRoutines)
+                if (citizenEvents.TryGetValue(visitor.Identity.Id, out var old)) { due.Remove(old); citizenEvents.Remove(visitor.Identity.Id); }
+            VisitorSchedules.LinkAll(State);
+            for (int visitorIndex = 0; visitorIndex < State.VisitorRoutines.Count; visitorIndex++)
+            {
+                var routine = State.VisitorRoutines[visitorIndex];
+                if (!places.ContainsKey(routine.HomeId))
+                {
+                    var portal = State.Places.Find(p => p.Id == routine.HomeId) ?? throw new InvalidOperationException("A visitor's portal is not a saved place.");
+                    places.Add(portal.Id, portal);
+                }
+                var item = new Due(~visitorIndex) { Citizen = routine, Minute = routine.NextEventMinute };
+                if (!due.Add(item)) throw new InvalidOperationException("Duplicate citizen event.");
+                citizenEvents.Add(routine.Identity.Id, item);
+                activeJourneys.File(routine);
+            }
         }
 
         public AdvanceResult AdvanceTo(double targetMinute, int eventBudget = 10000)
@@ -463,6 +506,7 @@ namespace PersistentCity.Core
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             CommitEvent(live, working);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
+            if (live.Visitor != null) VisitorSchedules.Sync(live.Visitor);
             item.Minute = ScheduledMinute(live);
             // The in-flight item is outside the queue; failing to add it means it was queued meanwhile and
             // its sort key just changed inside the set.
@@ -503,7 +547,8 @@ namespace PersistentCity.Core
             // Immutable once generated, so the copy shares it; events never change traits.
             Traits = live.Traits,
             // Derived from the shared identity and the seed, so the copy may share it.
-            RoutineKeys = live.RoutineKeys
+            RoutineKeys = live.RoutineKeys,
+            Visitor = live.Visitor, VisitorCarried = live.VisitorCarried
         };
         private static CommutePreparation CopyPreparation(CommutePreparation source) => new CommutePreparation
         {
@@ -555,6 +600,7 @@ namespace PersistentCity.Core
             live.CompletedJourneys = working.CompletedJourneys; live.MissedActivities = working.MissedActivities;
             live.RecentVisits.Clear(); live.RecentVisits.AddRange(working.RecentVisits);
             live.RoutineKeys = working.RoutineKeys;
+            live.VisitorCarried = working.VisitorCarried;
         }
 
         public Position PositionOf(CitizenState person) => person.Phase == CitizenPhase.Travelling && person.Journey != null
@@ -650,11 +696,7 @@ namespace PersistentCity.Core
                 double admissionFrom = AdmissionFrom(person);
                 bool admitted = person.DestinationActivity == Activity.Home
                     || (now >= admissionFrom && now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now));
-                if (admitted)
-                {
-                    person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = person.PlaceId, Activity = person.Activity });
-                    if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
-                }
+                if (admitted) VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
                 else
                 {
                     // A closure during travel can still leave a later opening in this activity.
@@ -768,10 +810,7 @@ namespace PersistentCity.Core
             {
                 if (person.Phase == CitizenPhase.WaitingForOpening && person.DestinationId == slot.PlaceId
                     && person.DestinationActivity == slot.Activity && slot.Activity != Activity.Home)
-                {
-                    person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = slot.PlaceId, Activity = slot.Activity });
-                    if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
-                }
+                    VisitorSchedules.RecordArrival(person, now, slot.PlaceId, slot.Activity);
                 person.Phase = CitizenPhase.AtPlace;
                 person.Activity = slot.Activity;
                 person.DestinationId = "";

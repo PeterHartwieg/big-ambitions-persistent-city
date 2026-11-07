@@ -49,6 +49,7 @@ public sealed class WeightedFoodChoiceTests
         var person=state.Citizens.Single(); person.NextEventMinute=person.ActivityUntilMinute=2870;
         person.Preferences.WalkingToleranceMetres=5;
         state.Food=new FoodCommerceState {MealRhythmVersion=threeMeals?MealRhythm.PolicyVersion:0,RepresentationFactor=representation,ChoiceStartsDay=active?1:2, Shops=places.Skip(1).Select((p,i)=>new FoodScope {PlaceId=p.Id,BusinessId="b"+i,ProductId=FoodProducts.Croissant}).ToList()};
+        DevelopmentChain.RepresentedSchema(state,representation);
         var market=new Market {Shops=state.Food.Shops.Select(s=>new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,MealsPerHour=60,
             Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
             Offers=new(){new FoodOffer {ProductId=FoodProducts.Croissant,Price=Money.FromCents(100),Units=100}}}).ToArray()};
@@ -74,6 +75,12 @@ public sealed class WeightedFoodChoiceTests
 
     private static CitySimulator Reload(CitySimulator city,Market market,Planner planner)
     {
+        if(city.State.Schema==DevelopmentChain.Represented)
+        {
+            // The frozen writer-26 represented city: the product session refuses it, the frozen chain round-trips it.
+            var frozen=DevelopmentChain.Read(DevelopmentChain.Write(city.State));Assert.True(frozen.Status==SaveReadStatus.Loaded,frozen.Error);
+            var again=new CitySimulator(frozen.State!,planner);again.AttachFoodMarket(market);return again;
+        }
         var data=new Dictionary<string,string>();
         var session=SaveSession.Open(data,city.State.PopulationKey);
         var write=session.WriteTo(data,city.State);Assert.True(write.Success,write.Error);
@@ -92,12 +99,12 @@ public sealed class WeightedFoodChoiceTests
         var (changed,mm,pm)=Ready(79,12);
         double at=control.State.Food!.Residents.Single().DesiredAt;
         for(int i=0;i<boundary;i++) changed.AdvanceTo(at,1);
-        string checkpoint=SaveCodec.Write(changed.State);
+        string checkpoint=DevelopmentChain.Write(changed.State);
         changed=Reload(changed,mm,pm);
-        Assert.Equal(checkpoint,SaveCodec.Write(changed.State));
+        Assert.Equal(checkpoint,DevelopmentChain.Write(changed.State));
         while(!control.AdvanceTo(at+20,128).CaughtUp) {}
         while(!changed.AdvanceTo(at+20,1).CaughtUp) {}
-        Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(changed.State));
+        Assert.Equal(DevelopmentChain.Write(control.State),DevelopmentChain.Write(changed.State));
         Assert.Equal(mc.Orders,mm.Orders);Assert.Single(mm.Orders);
         Assert.Equal(pc.Out,pm.Out);Assert.Equal(pc.Back,pm.Back);
         Assert.Equal(8,pm.Out);Assert.InRange(pm.Back,0,9); // one later return revalidation is separate
@@ -213,7 +220,7 @@ public sealed class WeightedFoodChoiceTests
         while(!city.AdvanceTo(until,1).CaughtUp) {}
         Assert.Equal(3,traces.Count);Assert.All(traces,t=>Assert.NotNull(t.Decision));
         Assert.All(traces,t=>Assert.InRange(t.RouteCalls,0,16));Assert.Equal(3,market.Orders.Count);
-        string saved=SaveCodec.Write(city.State);city=Reload(city,market,planner);Assert.Equal(saved,SaveCodec.Write(city.State));
+        string saved=DevelopmentChain.Write(city.State);city=Reload(city,market,planner);Assert.Equal(saved,DevelopmentChain.Write(city.State));
         while(!city.AdvanceTo(until+10,1).CaughtUp) {}Assert.Equal(3,market.Orders.Count);
     }
 
@@ -251,7 +258,7 @@ public sealed class WeightedFoodChoiceTests
         b=Reload(b,mb,pb);
         while(!b.AdvanceTo(at+30,1).CaughtUp) {}
         while(!a.AdvanceTo(at+30,128).CaughtUp) {}
-        Assert.Equal(SaveCodec.Write(a.State),SaveCodec.Write(b.State));Assert.Equal(ma.Orders,mb.Orders);
+        Assert.Equal(DevelopmentChain.Write(a.State),DevelopmentChain.Write(b.State));Assert.Equal(ma.Orders,mb.Orders);
         Assert.Single(mb.Orders);Assert.Equal(1,mb.Attempts);Assert.Equal(pa.Out,pb.Out);Assert.Equal(pa.Back,pb.Back);
     }
     [Fact]
@@ -389,7 +396,7 @@ public sealed class WeightedFoodChoiceTests
         Assert.Equal(whole.Events,units+remaining.Events);
         Assert.Equal(whole.CitizenEvents,citizens+remaining.CitizenEvents);
         Assert.Equal(whole.FoodContinuationEvents,continuations+remaining.FoodContinuationEvents);
-        Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(city.State));
+        Assert.Equal(DevelopmentChain.Write(control.State),DevelopmentChain.Write(city.State));
         Assert.Equal(8,planner.Out);Assert.Equal(8,planner.Back);Assert.Empty(market.Orders);
     }
     [Fact]

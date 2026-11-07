@@ -72,6 +72,8 @@ namespace PersistentCity.Core
             if (citizenId == null) throw new ArgumentNullException(nameof(citizenId));
             if (physicalJourneys.ContainsKey(citizenId) || !citizenEvents.TryGetValue(citizenId, out var item) || InProgress(item)) return false;
             var c = item.Citizen;
+            // Visitors receive no body or lease before F5i (plan B5): their journeys stay purely logical.
+            if (!ActiveJourneyIndex.ReceivesBody(c)) return false;
             if (c.Phase != CitizenPhase.Travelling || c.Journey == null || c.Identity.Id != citizenId || !CurrentCitizenSlot(item, c)) return false;
             double progress = JourneyProgress(c);
             if (departureHold && (progress != 0 || c.DepartureMinute != State.Minute || trafficCitizens.ContainsKey(citizenId))) return false;
@@ -97,7 +99,8 @@ namespace PersistentCity.Core
             && CurrentCitizenSlot(item, lease.Citizen);
 
         private bool CurrentCitizenSlot(Due item, CitizenState citizen) => item.ListIndex >= 0
-            && item.ListIndex < State.Citizens.Count && ReferenceEquals(State.Citizens[item.ListIndex], citizen);
+            ? item.ListIndex < State.Citizens.Count && ReferenceEquals(State.Citizens[item.ListIndex], citizen)
+            : ~item.ListIndex < State.VisitorRoutines.Count && ReferenceEquals(State.VisitorRoutines[~item.ListIndex], citizen);
 
         /// <summary>
         /// Report measured progress along the persisted legs, expressed in their nominal route minutes.
@@ -289,7 +292,7 @@ namespace PersistentCity.Core
         public static PersonKind KindOf(CitizenState c)
             => PersonIds.FitsKind(PersonIds.Classify(c.Identity.Id), PersonKind.Visitor) ? PersonKind.Visitor : PersonKind.Resident;
 
-        public static bool ReceivesBody(CitizenState c) => VisitorsReceiveBodies || KindOf(c) != PersonKind.Visitor;
+        public static bool ReceivesBody(CitizenState c) => VisitorsReceiveBodies || !c.IsVisitor && KindOf(c) != PersonKind.Visitor;
 
         /// <summary>Indexed persons that may receive a body, in no particular order.</summary>
         public IReadOnlyList<CitizenState> BodyCandidates => eligible;
@@ -299,10 +302,14 @@ namespace PersistentCity.Core
         public int WithheldVisitors => withheld.Count;
         public bool Contains(CitizenState c) => positions.ContainsKey(c);
 
-        internal void Rebuild(IReadOnlyList<CitizenState> citizens)
+        internal void Rebuild(IReadOnlyList<CitizenState> citizens) => Rebuild(citizens, Array.Empty<CitizenState>());
+
+        /// <summary>Residents and schema-27 visitor routines; visitors are filed with their kind and withheld.</summary>
+        internal void Rebuild(IReadOnlyList<CitizenState> citizens, IReadOnlyList<CitizenState> visitors)
         {
             eligible.Clear(); withheld.Clear(); positions.Clear();
             for (int i = 0; i < citizens.Count; i++) File(citizens[i]);
+            for (int i = 0; i < visitors.Count; i++) File(visitors[i]);
         }
 
         /// <summary>Called wherever a live citizen's phase, activity, place or optional stop may have changed.</summary>
@@ -336,12 +343,15 @@ namespace PersistentCity.Core
         /// <summary>Shadow comparison against a full scan: exactly the members of <paramref name="citizens"/>,
         /// each in the list of its kind, with consistent positions. Allocation-free; for tests and the
         /// low-cadence runtime check, never per frame.</summary>
-        public bool MatchesScan(IReadOnlyList<CitizenState> citizens)
+        public bool MatchesScan(IReadOnlyList<CitizenState> citizens) => MatchesScan(citizens, Array.Empty<CitizenState>());
+
+        /// <summary>As above over residents and visitor routines together.</summary>
+        public bool MatchesScan(IReadOnlyList<CitizenState> citizens, IReadOnlyList<CitizenState> visitors)
         {
             int members = 0;
-            for (int i = 0; i < citizens.Count; i++)
+            for (int i = 0; i < citizens.Count + visitors.Count; i++)
             {
-                var c = citizens[i];
+                var c = i < citizens.Count ? citizens[i] : visitors[i - citizens.Count];
                 bool present = positions.TryGetValue(c, out int at);
                 if (Member(c) != present) return false;
                 if (!present) continue;

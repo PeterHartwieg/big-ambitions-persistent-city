@@ -31,7 +31,7 @@ public sealed partial class FoodCommerceTests
         var (city,_)=S17_Full();
         string source=E4_Old(city.State,schema);
         var read=DevelopmentChain.Read(source); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);
+        Assert.Equal(schema,read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);
         Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(DevelopmentChain.Write(read.State),DevelopmentChain.Write(DevelopmentChain.Read(DevelopmentChain.Write(read.State)).State!));
@@ -90,7 +90,7 @@ public sealed partial class FoodCommerceTests
         string source = E4_Old(city.State, 20);
         var read = DevelopmentChain.Read(source);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(20, read.SourceSchema); Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema);
+        Assert.Equal(20, read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema);
         Assert.Equal(source, E4_Old(read.State, 20)); // every predecessor field, including held weather, is exact
         Assert.Equal(1, read.State.WeatherStartsDay);
         Assert.Equal(person.W.ToWire(), read.State.Citizens[0].W!.ToWire());
@@ -112,7 +112,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city,_)=S17_Full(); string source=DevelopmentChain.Write(city.State);
         Assert.Contains("\"MenuPolicy\":",source);
-        SaveCodec.RequireExecutableCapabilities(source);
+        DevelopmentChain.ProbeCapabilities(source);
         var loaded=DevelopmentChain.Read(source); Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
         Assert.Equal(source,DevelopmentChain.Write(loaded.State!));
         foreach(var value in new[]{JValue.CreateNull(),new JValue("2|unknown"),new JValue(1)})

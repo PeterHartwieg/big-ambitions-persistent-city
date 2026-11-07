@@ -24,7 +24,7 @@ internal static class ReaderCorpus
     public const string Folder = "ReaderCorpus";
     /// <summary>F5c-lite: the corpus covers the development schemas 13-25. The product reader refuses all of them
     /// (DevelopmentSchema), so the chain and its writer-25 pin are reached through the preserved internal chain.</summary>
-    public const int CorpusWriter = SaveCodec.LatestDevelopmentSchema;
+    public const int CorpusWriter = DevelopmentChain.ChainOutput;
     public static SaveReadResult Chain(string source) => SaveCodec.ReadDevelopmentChain(source);
 
     // Ordered oldest to newest. Sources list the Persistence files that implement each reader (maintenance cost).

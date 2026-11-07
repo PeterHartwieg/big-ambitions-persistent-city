@@ -220,6 +220,8 @@ public static class EconomyFixture
             ProductId = products[0], AdditionalProductIds = products.Skip(1).ToList() };
         state.Food = new FoodCommerceState { RepresentationFactor = RepresentationFactor, MealRhythmVersion = MealRhythm.PolicyVersion,
             Shops = new List<FoodScope> { Scope("shop", Shop), Scope("shop-far", FarShop) } };
+        // F5d: one subway portal, so the factor-2 roster creates one visitor per resident on its own routine.
+        PortalPlaces.Add(state, new[] { new PortalStation("subway:economy", new Position(0, 0, 1)) });
         var market = new EconomyMarket();
         foreach (var (business, place, open, minutes) in new[] { (Shop, "shop", ownListed, 1.0), (FarShop, "shop-far", false, FarSiteRouteMinutes) })
         {

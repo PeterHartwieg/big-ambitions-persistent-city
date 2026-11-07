@@ -61,6 +61,8 @@ public static class RepresentativeFixture
     public static Replay Build(int residents, int seed = Seed, double target = TargetMinute, int eventsPerSlice = 1)
     {
         var state = EconomyScenario.Create(residents, seed); state.Food = EconomyScenario.Food();
+        // F5d: two subway portals, so the factor-2 roster creates one visitor per resident on its own routine.
+        PortalPlaces.Add(state, Portals);
         var routes = new Routes(); var market = new Market();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
         long events = 0;
@@ -69,6 +71,11 @@ public static class RepresentativeFixture
         if (state.Food!.Residents.Any(m => !HouseholdFinance.CashConserved(m.Budget!))) throw new InvalidOperationException("Unconserved representative cash.");
         return new Replay(city, routes, market, events);
     }
+
+    public static readonly PortalStation[] Portals =
+    {
+        new PortalStation("subway:econ-north", new Position(250, 0, 600)), new PortalStation("subway:econ-south", new Position(450, 0, -500)),
+    };
 
     public static string Sha256(string payload) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
 }

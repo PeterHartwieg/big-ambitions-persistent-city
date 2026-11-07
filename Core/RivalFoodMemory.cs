@@ -47,7 +47,7 @@ namespace PersistentCity.Core
         {
             if (cause.HasValue && meal.TargetKind == FoodAlternativeKind.Rival && city.State.Capabilities.Active)
                 memoryStore.Experience(meal, cause.Value, (int)(at / 1440),
-                    Traits(meal, city.FindCitizen(meal.HostId)!), MemorySettings);
+                    Traits(meal, Owner(meal)!), MemorySettings);
         }
     }
 }

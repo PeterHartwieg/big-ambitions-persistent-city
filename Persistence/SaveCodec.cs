@@ -162,16 +162,32 @@ namespace PersistentCity.Persistence
             try
             {
                 int schema = ReadSchema(source);
-                if (schema > LatestDevelopmentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
+                if (schema > 25) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
                 if (schema <= 24)
                 {
                     var old = PopulationSchema24.Read(source);
                     if (old.Status != SaveReadStatus.Loaded) return old;
                     MigrateNames25(old.State!);
-                    ValidateForActivation(old.State!, LatestDevelopmentSchema);
+                    ValidateForActivation(old.State!, 25);
                     return new SaveReadResult(SaveReadStatus.Loaded, old.State, "", old.SourceSchema);
                 }
-                Require(schema == LatestDevelopmentSchema, "Not a development schema.");
+                Require(schema == 25, "Not a development schema.");
+                return ReadExact(source, schema);
+            }
+            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
+            { return Invalid("Invalid state: " + exception.Message); }
+        }
+
+        /// <summary>The frozen exact writer-26 reader (F5c-lite's person shape with represented consumers). Unreachable
+        /// from <see cref="Read"/>, which refuses schema 26 as an older development city; kept for its own tests.</summary>
+        internal static SaveReadResult ReadWriter26(string source)
+        {
+            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
+            try
+            {
+                int schema = ReadSchema(source);
+                if (schema > PersonSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
+                Require(schema == PersonSchema, "Not the frozen writer-26 schema.");
                 return ReadExact(source, schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -194,7 +210,8 @@ namespace PersistentCity.Persistence
             using var reader = Reader(source);
             var state = serializer.Deserialize<CityState>(reader);
             Require(state != null, "State is null.");
-            if (schema >= PersonSchema) DerivePersons26(state!);
+            if (schema >= IndependentSchema) DerivePersons27(state!);
+            else if (schema >= PersonSchema) DerivePersons26(state!);
             Validate(state!,schema);
             return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
         }
@@ -289,6 +306,8 @@ namespace PersistentCity.Persistence
             { CheckMetadata25(reader, text, ref records, fieldNames); return; }
             if (type == typeof(VisitorPerson))
             { Require(schema >= PersonSchema, "Visitor persons need schema 26."); CheckVisitor26(reader, text); return; }
+            if (type == typeof(RoutineTuple27))
+            { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text); return; }
             if (type == typeof(string))
             {
                 Require(token == JsonToken.String, "Expected a string.");
@@ -385,7 +404,7 @@ namespace PersistentCity.Persistence
                     : item == typeof(FoodProductSales) ? MenuLimit(schema) : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces
                     : item == typeof(ResidentMeal) ? schema >= PersonSchema ? MaxPersons : MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
                     : item == typeof(FoodRoutineStop) ? schema >= PersonSchema ? MaxPersons : MaxCitizens
-                    : item == typeof(VisitorPerson) ? MaxVisitors
+                    : item == typeof(VisitorPerson) || item == typeof(VisitorRoutine) ? MaxVisitors
                     : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? schema >= PersonSchema ? MaxResidents : MaxCitizens
                     : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
                     : item == typeof(RouteLeg) ? MaxRouteLegs : item == typeof(VisitRecord) ? MaxRecentVisits
@@ -467,8 +486,9 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema23Contracts = new StateContractResolver(23);
         private static readonly IContractResolver Schema22Contracts = new StateContractResolver(22);
         private static readonly IContractResolver Schema25Contracts = new StateContractResolver(25);
+        private static readonly IContractResolver Schema26Contracts = new StateContractResolver(26);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
-            : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : StateContracts;
+            : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -485,6 +505,7 @@ namespace PersistentCity.Persistence
             settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter(schema));
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
             if (schema >= PersonSchema) settings.Converters.Add(new VisitorConverter26(context));
+            if (schema >= IndependentSchema) settings.Converters.Add(new RoutineTupleConverter27(context));
             if (schema >= 25) settings.Converters.Add(new ProductSales25Converter(context));
             else if(schema>=23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
@@ -542,7 +563,7 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
@@ -623,59 +644,7 @@ namespace PersistentCity.Persistence
                 OptionalReference(places, citizen.ShopId, PlaceKind.Shop);
                 OptionalReference(places, citizen.LeisureId, PlaceKind.Leisure);
                 ValidateOptionalStop(citizen, state, places, citizens);
-                Known(citizen.Phase, "Citizen phase"); Known(citizen.Activity, "Activity"); Known(citizen.DestinationActivity, "Destination activity");
-                var current = Reference(places, citizen.PlaceId);
-                Require((int)current.Kind == (int)citizen.Activity, "Current activity does not match current place.");
-                Bounded(citizen.Preferences.WalkingToleranceMetres, 0, MaxCoordinate, "Walking tolerance");
-                Bounded(citizen.Preferences.FareWeightMinutes, 0, 1000000, "Fare weight");
-                Minute(citizen.DepartureMinute, "Departure minute"); Minute(citizen.NextEventMinute, "Next event minute"); Minute(citizen.ActivityUntilMinute, "Activity end minute");
-                Require(citizen.NextEventMinute >= state.Minute, "Next event precedes the city clock.");
-                Require(citizen.CompletedJourneys >= 0 && citizen.MissedActivities >= 0, "Negative citizen counters.");
-                if (citizen.Phase == CitizenPhase.AtPlace)
-                {
-                    Require(citizen.DestinationId == "" && citizen.Journey == null && citizen.DepartureMinute == 0, "At-place citizen has an active destination or journey.");
-                }
-                else
-                {
-                    var destination = Reference(places, citizen.DestinationId);
-                    Require((int)destination.Kind == (int)citizen.DestinationActivity, "Destination activity does not match destination place.");
-                    if (citizen.Phase == CitizenPhase.WaitingForRoute || citizen.Phase == CitizenPhase.WaitingForOpening)
-                        Require(citizen.Journey == null && citizen.DepartureMinute == 0, "Waiting citizen has an active journey.");
-                    else
-                    {
-                        var route = citizen.Journey;
-                        Require(route != null && route.Legs != null && route.Legs.Count > 0 && route.Legs.Count <= MaxRouteLegs, "Missing or oversized route.");
-                        embeddedRecords += route!.Legs.Count;
-                        Position previous = current.Position;
-                        foreach (var leg in route.Legs)
-                        {
-                            Require(leg != null, "Null route leg."); Point(leg.From); Point(leg.To); Known(leg.Mode, "Travel mode");
-                            Bounded(leg.Minutes, double.Epsilon, 1000000, "Leg duration"); Text(leg.ServiceId, "Service ID", 256, true);
-                            Require(Same(previous, leg.From), "Route legs are disconnected or start at the wrong place."); previous = leg.To;
-                        }
-                        Require(Same(previous, destination.Position), "Route ends at the wrong destination.");
-                        Require(citizen.DepartureMinute <= state.Minute, "Journey departure is in the future.");
-                        double arrival = citizen.DepartureMinute + route.Minutes;
-                        // A completed physical lease rebases departure = clock - duration.
-                        // Adding duration back can differ from clock by a few ulps. Normalize
-                        // only this computed value when the explicit event is exactly queued
-                        // at the current clock; persisted dates themselves remain strict.
-                        double clockRoundoff = 4 * 2.2204460492503131e-16
-                            * Math.Max(1, Math.Max(Math.Abs(state.Minute), Math.Abs(route.Minutes)));
-                        if (citizen.NextEventMinute == state.Minute && Math.Abs(arrival - state.Minute) <= clockRoundoff)
-                            arrival = state.Minute;
-                        Require(arrival <= MaxMinute && Near(arrival, citizen.NextEventMinute), "Journey arrival does not match the next event.");
-                        Require(arrival >= state.Minute, "Journey ended before the city clock.");
-                        Point(route.PositionAt(state.Minute - citizen.DepartureMinute));
-                    }
-                }
-                if (citizen.Phase == CitizenPhase.WaitingForOpening)
-                {
-                    Require(citizen.DestinationActivity != Activity.Home && citizen.NextEventMinute < citizen.ActivityUntilMinute,
-                        "Opening wait must target an activity before its deadline.");
-                    Require(DailyRoutine.Open(places[citizen.DestinationId], citizen.NextEventMinute),
-                        "Opening wait does not end at an open venue.");
-                }
+                ValidateSchedule(citizen, state, places, ref embeddedRecords);
                 Require(citizen.RecentVisits != null && citizen.RecentVisits.Count <= MaxRecentVisits, "Invalid recent visit count.");
                 embeddedRecords += citizen.RecentVisits!.Count;
                 double lastVisit = 0;
@@ -688,7 +657,8 @@ namespace PersistentCity.Persistence
                 }
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             }
-            if (schema >= PersonSchema) embeddedRecords += ValidatePersons26(state, places, assigned);
+            if (schema >= IndependentSchema) embeddedRecords += ValidatePersons27(state, places, assigned, ref embeddedRecords);
+            else if (schema >= PersonSchema) embeddedRecords += ValidatePersons26(state, places, assigned);
             Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             int totalRecords = ValidateTraffic(state, embeddedRecords);
             // The frozen semantic counter did not charge scope menu strings or optional-stop members;
@@ -702,6 +672,64 @@ namespace PersistentCity.Persistence
                 int count = assigned.TryGetValue(id, out int previous) ? previous + 1 : 1;
                 if (count > places[id].Capacity) Fail("Place assignment exceeds capacity: " + id);
                 assigned[id] = count;
+            }
+        }
+
+        /// <summary>Phase, place, journey and wait rules shared by residents and schema-27 visitor routines.</summary>
+        private static void ValidateSchedule(CitizenState citizen, CityState state, Dictionary<string, Place> places, ref int embeddedRecords)
+        {
+            Known(citizen.Phase, "Citizen phase"); Known(citizen.Activity, "Activity"); Known(citizen.DestinationActivity, "Destination activity");
+            var current = Reference(places, citizen.PlaceId);
+            Require((int)current.Kind == (int)citizen.Activity, "Current activity does not match current place.");
+            Bounded(citizen.Preferences.WalkingToleranceMetres, 0, MaxCoordinate, "Walking tolerance");
+            Bounded(citizen.Preferences.FareWeightMinutes, 0, 1000000, "Fare weight");
+            Minute(citizen.DepartureMinute, "Departure minute"); Minute(citizen.NextEventMinute, "Next event minute"); Minute(citizen.ActivityUntilMinute, "Activity end minute");
+            Require(citizen.NextEventMinute >= state.Minute, "Next event precedes the city clock.");
+            Require(citizen.CompletedJourneys >= 0 && citizen.MissedActivities >= 0, "Negative citizen counters.");
+            if (citizen.Phase == CitizenPhase.AtPlace)
+            {
+                Require(citizen.DestinationId == "" && citizen.Journey == null && citizen.DepartureMinute == 0, "At-place citizen has an active destination or journey.");
+            }
+            else
+            {
+                var destination = Reference(places, citizen.DestinationId);
+                Require((int)destination.Kind == (int)citizen.DestinationActivity, "Destination activity does not match destination place.");
+                if (citizen.Phase == CitizenPhase.WaitingForRoute || citizen.Phase == CitizenPhase.WaitingForOpening)
+                    Require(citizen.Journey == null && citizen.DepartureMinute == 0, "Waiting citizen has an active journey.");
+                else
+                {
+                    var route = citizen.Journey;
+                    Require(route != null && route.Legs != null && route.Legs.Count > 0 && route.Legs.Count <= MaxRouteLegs, "Missing or oversized route.");
+                    embeddedRecords += route!.Legs.Count;
+                    Position previous = current.Position;
+                    foreach (var leg in route.Legs)
+                    {
+                        Require(leg != null, "Null route leg."); Point(leg.From); Point(leg.To); Known(leg.Mode, "Travel mode");
+                        Bounded(leg.Minutes, double.Epsilon, 1000000, "Leg duration"); Text(leg.ServiceId, "Service ID", 256, true);
+                        Require(Same(previous, leg.From), "Route legs are disconnected or start at the wrong place."); previous = leg.To;
+                    }
+                    Require(Same(previous, destination.Position), "Route ends at the wrong destination.");
+                    Require(citizen.DepartureMinute <= state.Minute, "Journey departure is in the future.");
+                    double arrival = citizen.DepartureMinute + route.Minutes;
+                    // A completed physical lease rebases departure = clock - duration.
+                    // Adding duration back can differ from clock by a few ulps. Normalize
+                    // only this computed value when the explicit event is exactly queued
+                    // at the current clock; persisted dates themselves remain strict.
+                    double clockRoundoff = 4 * 2.2204460492503131e-16
+                        * Math.Max(1, Math.Max(Math.Abs(state.Minute), Math.Abs(route.Minutes)));
+                    if (citizen.NextEventMinute == state.Minute && Math.Abs(arrival - state.Minute) <= clockRoundoff)
+                        arrival = state.Minute;
+                    Require(arrival <= MaxMinute && Near(arrival, citizen.NextEventMinute), "Journey arrival does not match the next event.");
+                    Require(arrival >= state.Minute, "Journey ended before the city clock.");
+                    Point(route.PositionAt(state.Minute - citizen.DepartureMinute));
+                }
+            }
+            if (citizen.Phase == CitizenPhase.WaitingForOpening)
+            {
+                Require(citizen.DestinationActivity != Activity.Home && citizen.NextEventMinute < citizen.ActivityUntilMinute,
+                    "Opening wait must target an activity before its deadline.");
+                Require(DailyRoutine.Open(places[citizen.DestinationId], citizen.NextEventMinute),
+                    "Opening wait does not end at an open venue.");
             }
         }
 
@@ -956,9 +984,13 @@ namespace PersistentCity.Persistence
             // Schema 26: one own roster record per person (stored factor 1); the scheduling factor counts visitor persons.
             bool ownRoster = state.Schema >= PersonSchema;
             if (ownRoster) Require(food.RepresentationFactor == 1, "A schema-26 roster has one own record per person (factor 1).");
-            int factor = ownRoster ? SchedulingFactor26(state) : food.RepresentationFactor;
+            // Schema 27: no represented consumers; one roster record per resident and per visitor (bijection rule 2).
+            bool independent = state.Schema >= IndependentSchema;
+            if (independent) Require(state.Visitors != null && state.VisitorRoutines != null && state.Visitors.Count == state.VisitorRoutines.Count, "Every visitor has exactly one routine.");
+            int factor = independent ? 1 : ownRoster ? SchedulingFactor26(state) : food.RepresentationFactor;
             Require(factor >= 1 && factor <= 3, "Invalid consumer representation factor.");
-            Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * factor, "Meal roster differs from represented population.");
+            Require(food.Residents != null && food.Residents.Count == (independent ? state.Citizens.Count + state.Visitors!.Count : state.Citizens.Count * factor),
+                "Meal roster differs from represented population.");
             Require(food.Districts != null, "Missing food budget districts.");
             FoodHouseholdPolicy.ValidateMixes(food.Districts);
             Require(food.HouseholdFinanceVersion == 0 || food.HouseholdFinanceVersion == HouseholdFinance.PolicyVersion, "Unknown household finance policy.");
@@ -1021,6 +1053,16 @@ namespace PersistentCity.Persistence
                 foreach (var district in row.BuyerDistricts) Text(district.DistrictId, "Buyer district", 256, emptyAllowed: true);
             }
             var citizens = state.Citizens.ToDictionary(c => c.Identity.Id, StringComparer.Ordinal);
+            var visitorIds = new HashSet<string>(StringComparer.Ordinal);
+            if (independent)
+            {
+                for (int i = 0; i < state.Visitors!.Count; i++)
+                {
+                    Require(state.Visitors[i] != null && state.VisitorRoutines![i] != null && !citizens.ContainsKey(state.Visitors[i].Id), "Visitor duplicates a resident ID.");
+                    citizens.Add(state.Visitors[i].Id, state.VisitorRoutines[i]); visitorIds.Add(state.Visitors[i].Id);
+                }
+                Require(food.RoutineStops != null && food.RoutineStops.Count == 0, "Schema 27 has no represented routine stops.");
+            }
             Require(food.RoutineStops != null && food.RoutineStops.Count <= citizens.Count, "Invalid shared routine stops.");
             var stopOwners = new HashSet<string>(StringComparer.Ordinal);
             foreach (var stop in food.RoutineStops)
@@ -1043,7 +1085,13 @@ namespace PersistentCity.Persistence
                     && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : KnownMenuProduct(state.Schema,meal.PreferredProductId)), "Invalid consumer taste.");
                 Require(meal.HostSlot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
                 Require(meal.HostSlot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
-                if (meal.HostSlot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
+                if (independent && visitorIds.Contains(meal.ResidentId))
+                {
+                    // A visitor's own traits, drawn by its PersonId exactly as its derived routine's.
+                    Traits(meal.RepresentedTraits, "visitor");
+                    Require(meal.RepresentedTraits!.ToString() == ResidentTraits.Generate(state.Seed, meal.ResidentId).ToString(), "Visitor traits differ from their derivation.");
+                }
+                else if (meal.HostSlot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
                 else Traits(meal.RepresentedTraits, "represented consumer");
                 Known(meal.Status, "Meal status");
                 Known(meal.Kind, "Meal kind");
@@ -1367,6 +1415,7 @@ namespace PersistentCity.Persistence
             {
                 var properties = base.CreateProperties(type, memberSerialization).Where(property => property.Writable
                     && !(schema < PersonSchema && PersonProperty26(type, property.PropertyName))
+                    && !(schema < IndependentSchema && PersonProperty27(type, property.PropertyName))
                     // Schema 26 derives these from the person table: the resident tuple P and one roster record per person.
                     && !(schema >= PersonSchema && (type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"
                         || type == typeof(FoodCommerceState) && property.PropertyName == "RepresentationFactor"))
@@ -1380,6 +1429,7 @@ namespace PersistentCity.Persistence
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay"))).ToList();
                 if (schema >= PersonSchema && type == typeof(CitizenState)) properties.Add(ResidentTupleProperty());
+                if (type == typeof(VisitorRoutine)) properties = RoutineProperties27(properties).ToList();
                 return properties
                     // These two root headers let the native authority bootstrap stop before the graph.
                     // JSON object order is not a schema change; all old property orders still read.

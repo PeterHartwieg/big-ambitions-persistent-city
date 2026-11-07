@@ -183,6 +183,12 @@ namespace PersistentCity.Core
                 Count(used, person.HomeId);
                 if (person.DayPlaceId != "") Count(used, person.DayPlaceId);
             }
+            // Schema 27: seated visitors hold workplace capacity too; their portal home holds none.
+            foreach (var visitor in city.VisitorRoutines)
+            {
+                if (excluded != null && (ReferenceEquals(visitor, excluded) || ReferenceEquals(visitor.Identity, excluded.Identity))) continue;
+                if (visitor.DayPlaceId != "") Count(used, visitor.DayPlaceId);
+            }
             return used;
         }
         internal static int Used(Dictionary<string, int> values, string id) => values.TryGetValue(id, out var count) ? count : 0;

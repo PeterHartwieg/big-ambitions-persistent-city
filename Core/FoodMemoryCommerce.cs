@@ -39,7 +39,7 @@ namespace PersistentCity.Core
         private void Experience(ResidentMeal meal, ShopExperience cause, double at)
         {
             if (meal.TargetKind == FoodAlternativeKind.Player && city.State.Capabilities.Active)
-                memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, city.FindCitizen(meal.HostId)!), MemorySettings);
+                memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, Owner(meal)!), MemorySettings);
         }
 
         private FoodBusiness? FailureEvidence(string businessId, string placeId, double minute, FoodBusiness? observed = null)
@@ -116,7 +116,7 @@ namespace PersistentCity.Core
         internal RegularsProjection Regulars(Func<FoodScope, bool>? currentOwnShop = null)
             => new RegularsProjection(state, (int)(city.State.Minute / 1440), (m, e, day) =>
             {
-                var traits = m.RepresentedTraits ?? city.FindCitizen(m.HostId)?.Traits;
+                var traits = m.RepresentedTraits ?? Owner(m)?.Traits;
                 return traits == null ? 0 : FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings);
             }, MemorySettings, currentOwnShop);
 
@@ -131,7 +131,7 @@ namespace PersistentCity.Core
         {
             if (!records.TryGetValue(consumerId, out var meal)) return null;
             int day = (int)(city.State.Minute / 1440);
-            var traits = Traits(meal, city.FindCitizen(meal.HostId)!);
+            var traits = Traits(meal, Owner(meal)!);
             var projection = Regulars(currentOwnShop);
             var own = state.Shops.Where(s => currentOwnShop == null || currentOwnShop(s)).ToDictionary(s => s.BusinessId, StringComparer.Ordinal);
             var entries = meal.Memory.Entries.Select(e =>

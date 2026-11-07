@@ -251,8 +251,8 @@ namespace PersistentCity.Core
             { RivalLaneRefusals++; RivalExperience(meal, ShopExperience.Queue, now); Finish(meal, MealStatus.Missed, "Arrival or queue no longer fits the break"); return; }
             if (meal.HostSlot == 0)
             {
-                person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = meal.PlaceId, Activity = Activity.Shop });
-                if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
+                VisitorSchedules.RecordArrival(person, now, meal.PlaceId, Activity.Shop);
+                if (person.Visitor != null) VisitorSchedules.Sync(person.Visitor);
                 city.ExtendMealStay(person, finish + MealRhythm.EatingMinutes(meal.Kind));
             }
             meal.ServiceAt = finish; meal.Status = MealStatus.Serving; meal.DueAt = finish;

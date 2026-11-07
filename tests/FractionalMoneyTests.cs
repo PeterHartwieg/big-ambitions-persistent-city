@@ -370,7 +370,7 @@ public sealed partial class FoodCommerceTests
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = old };
         var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(13, read.SourceSchema);
-        Assert.Equal(SaveCodec.LatestDevelopmentSchema, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
+        Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
         var loaded = new CitySimulator(read.State, routes); loaded.AttachFoodMarket(market);
         Assert.Equal(orders, market.Orders.Count);

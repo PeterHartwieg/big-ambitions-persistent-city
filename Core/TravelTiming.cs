@@ -85,7 +85,7 @@ namespace PersistentCity.Core
             var trafficChanges = new Dictionary<string, Change>(StringComparer.Ordinal);
             var places = new Dictionary<string, Place>(StringComparer.Ordinal);
             foreach (var place in state.Places) places.Add(place.Id, place);
-            foreach (var citizen in state.Citizens)
+            foreach (var citizen in PersonTable.Schedules(state))
             {
                 if (citizen == null || !Position.Finite(citizen.NextEventMinute)
                     || citizen.NextEventMinute < state.Minute || citizen.NextEventMinute > MaxMinute)
@@ -239,7 +239,7 @@ namespace PersistentCity.Core
                 change.Citizen.NextEventMinute = change.EventMinute;
                 if (change.MealStayUntil.HasValue) change.Citizen.ActivityUntilMinute = change.MealStayUntil.Value;
             }
-            foreach (var citizen in state.Citizens) citizen.CommutePreparation = new CommutePreparation();
+            foreach (var citizen in PersonTable.Schedules(state)) citizen.CommutePreparation = new CommutePreparation();
             foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
             state.TravelTimingVersion = 1;
             state.TravelClockRate = clockRate;

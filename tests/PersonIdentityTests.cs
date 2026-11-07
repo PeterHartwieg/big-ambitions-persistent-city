@@ -229,11 +229,17 @@ public sealed class PersonIdentityTests
             // The codec checks the saved person table against the F5b ownership validator (rules 1-5).
             ["Persistence/PersonWire26.cs"] = new[] { "IdentityPolicy", "VisitorStay", "PersonKind", "PersonIds", "NativeEmployment", "new Employment", "EmploymentKind",
                 "OwnershipValidator", "OwnershipInput", "PersonFacts" },
+            // F5d: writer 27 checks the visitor routines against the same contract; money reads each person's own
+            // income source (section 3 Resources).
+            ["Persistence/PersonWire27.cs"] = new[] { "IdentityPolicy", "PersonKind", "PersonIds", "NativeEmployment", "EmploymentKind",
+                "OwnershipValidator", "OwnershipInput", "PersonFacts" },
+            ["Core/HouseholdFinance.cs"] = new[] { "PersonIncome", "new Employment", "EmploymentKind" },
         };
         var files = new[] { "Runtime", "Persistence", "Compatibility" }
             .SelectMany(d => Directory.GetFiles(Path.Combine(root!.FullName, d), "*.cs", SearchOption.AllDirectories))
             .Concat(Directory.GetFiles(Path.Combine(root!.FullName, "Core"), "*.cs")
-                .Where(f => !new[] { "PersonIdentity.cs", "IdentityPolicy.cs", "OwnershipValidator.cs" }.Contains(Path.GetFileName(f))));
+                // F5d: Core/VisitorSchedules.cs owns the visitor routines and derives their identity (contract B6).
+                .Where(f => !new[] { "PersonIdentity.cs", "IdentityPolicy.cs", "OwnershipValidator.cs", "VisitorSchedules.cs" }.Contains(Path.GetFileName(f))));
         foreach (var file in files)
         {
             string text = File.ReadAllText(file);
@@ -245,7 +251,7 @@ public sealed class PersonIdentityTests
             foreach (var draw in new[] { "IdentityPolicy.V1", ".Derive(", "IdentityPolicy.Draw" })
                 Assert.False(text.Contains(draw, StringComparison.Ordinal), relative + " draws derived identity: " + draw);
         }
-        Assert.Equal(26, CityState.CurrentSchema);
+        Assert.Equal(27, CityState.CurrentSchema);
     }
 
     // ---- Per-person income source ----

@@ -53,7 +53,7 @@ public sealed class WeatherTests
     public void Migration19IsNeutralActivatesNextDayAndPreservesSource()
     {
         var state=State();string old=As19(DevelopmentChain.Write(state));var read=Read(old);
-        Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
+        Assert.Equal(DevelopmentChain.ChainOutput,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
         var rain=new Source {Value=WeatherSample.Rain};var city=new CitySimulator(read,new Paths());
         city.AttachWeather(rain,new WeatherSettings {RainOptionalOutingMultiplier=0});city.AdvanceTo(state.Minute);
         Assert.Equal(WeatherSample.Unknown,read.Citizens[0].W!.Weather);Assert.Equal(0,rain.Calls);

@@ -150,7 +150,7 @@ public sealed partial class FoodCommerceTests
         var oldState = PopulationSchema24.Read(before).State!;
         var old = PopulationSchema24.CountRecordsForSchema(oldState, before, 24);
         string wire = DevelopmentChain.Write(city.State);
-        var current = SaveCodec.CountRecords(city.State, wire);
+        var current = DevelopmentChain.CountRecords(city.State, wire);
         // Schema 26 also charges one fixed tuple per person: each resident's P and each visitor (the represented consumers).
         int added = city.State.ProductNames.Count + city.State.Citizens.Count + city.State.Visitors.Count + city.State.Food.Residents.Where(m => m.Decision != null)
             .Sum(m => m.Decision!.Shops.Sum(s => s.Offers.Count));
@@ -212,10 +212,10 @@ public sealed partial class FoodCommerceTests
         Assert.All(typeof(FoodOfferMetadata).GetProperties(), p => Assert.Null(p.SetMethod));
         Assert.Equal(900, read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!.Shops[0].Offers[0].Metadata!.BreakfastFitCents);
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(wire));
-        Assert.Throws<SaveValidationException>(() => SaveCodec.ValidateForActivation(read.State));
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.ValidateForActivation(read.State));
         Assert.Throws<InvalidOperationException>(() => new CitySimulator(read.State, new Walking()));
         var data = new Dictionary<string, string> { [SaveCodec.StateKey] = wire };
-        Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, city.State.PopulationKey).Status);
+        Assert.Equal(DevelopmentChain.ProductStatus(wire, SaveReadStatus.Invalid), SaveStore.ReadFrom(data, city.State.PopulationKey).Status);
         Assert.False(SaveStore.WriteTo(data, S17_Full().city.State).Success);
         Assert.False(SaveSession.Open(data, city.State.PopulationKey).WriteTo(data, S17_Full().city.State).Success);
         Assert.Same(wire, data[SaveCodec.StateKey]);
