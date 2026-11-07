@@ -67,7 +67,7 @@ namespace PersistentCity.Core
                 if (change.Kind == ShopChangeKind.Hours) text.Append(" weekday ").Append(change.Subject / 128 + 1).Append(" window ").Append(change.Subject % 128 / 2 + 1)
                     .Append(change.Subject % 2 == 0 ? " opens" : " closes");
                 text.Append(' ').Append(Value(change, change.Before)).Append(" → ").Append(Value(change, change.After)).AppendLine(".");
-                bool mixed = shop.Evicted > 0;
+                bool mixed = false;
                 for (int other = 0; other < shop.Changes.Count; other++)
                 {
                     int otherDay = shop.Changes[other].ObservedMinute / 1440;
@@ -83,12 +83,13 @@ namespace PersistentCity.Core
                 text.Append("Purchases, 7 days before / from observation day (today so far): ").Append(before).Append(" / ").Append(after);
                 if (partial) text.Append(" · partial; change pending complete retained windows");
                 else text.Append(" · change ").Append(Signed(after - before));
-                if (mixed) text.Append(shop.Evicted > 0 ? " · mixed (older changes evicted)" : " · mixed (overlapping changes)");
+                if (mixed) text.Append(" · mixed (overlapping changes)");
                 text.AppendLine();
             }
         }
         private static string Signed(long n) => (n >= 0 ? "+" : "") + n.ToString(CultureInfo.InvariantCulture);
-        private static string Value(ShopChange change, long n) => change.Kind == ShopChangeKind.Price
+        private static string Value(ShopChange change, long n) => change.Kind == ShopChangeKind.Stock && (n == 0 || n == 1)
+            ? n == 0 ? "unavailable" : "in stock" : change.Kind == ShopChangeKind.Price
             ? ((decimal)n / Money.UnitsPerDollar).ToString("$0.00########", CultureInfo.InvariantCulture)
             : change.Kind == ShopChangeKind.Hours ? n == 1441 ? "absent" : (n / 60).ToString("00", CultureInfo.InvariantCulture) + ":" + (n % 60).ToString("00", CultureInfo.InvariantCulture)
             : n.ToString(CultureInfo.InvariantCulture);

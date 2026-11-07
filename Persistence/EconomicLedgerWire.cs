@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 
@@ -143,17 +144,49 @@ namespace PersistentCity.Persistence
                     Require(reader.TokenType == JsonToken.String && supply.Count < 8, "Invalid supply image.");
                     string cell = (string)reader.Value!;
                     Require(cell.Length == 22 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, cell)), "Invalid supply cell.");
-                    supply.Add(new ShopObservedOffer { ProductId = Cell(cell, 0, 2).ToString(CultureInfo.InvariantCulture), PriceUnits = Cell(cell, 2, 13), Stock = checked((int)Cell(cell, 15, 7)) });
+                    supply.Add(new ShopObservedOffer { ProductId = Cell(cell, 0, 2).ToString(CultureInfo.InvariantCulture), PriceUnits = Cell(cell, 2, 13), Stock = checked((int)(Cell(cell, 15, 7) - 1)) });
                 }
                 shop.Supply = supply.ToArray();
                 Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing hours image.");
                 string hours = (string)reader.Value!;
-                Require((hours.Length == 0 || hours.Length == FoodChangeJournal.HoursEdges * 3) && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, hours)), "Invalid hours image.");
-                shop.Hours = new int[hours.Length / 3];
-                for (int i = 0; i < shop.Hours.Length; i++) { shop.Hours[i] = (int)Cell(hours, i * 3, 3); Require(shop.Hours[i] <= 1441, "Invalid hours edge."); }
+                Require((hours.Length == 0 || hours.Length >= 14 && hours.Length <= 14 + 64 * 6)
+                    && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, hours)), "Invalid hours image.");
+                if (hours.Length != 0)
+                {
+                    shop.Hours = new int[FoodChangeJournal.HoursEdges]; Array.Fill(shop.Hours, 1441);
+                    int at = 14, windows = 0;
+                    for (int day = 0; day < 7; day++)
+                    {
+                        int count = (int)Cell(hours, day * 2, 2); windows += count;
+                        Require(count <= 64 && windows <= 64, "Observed hours exceed their bound.");
+                        for (int slot = 0; slot < count; slot++)
+                        {
+                            int edge = day * 128 + slot * 2;
+                            shop.Hours[edge] = (int)Cell(hours, at, 3); shop.Hours[edge + 1] = (int)Cell(hours, at + 3, 3); at += 6;
+                            Require(shop.Hours[edge] < shop.Hours[edge + 1] && shop.Hours[edge + 1] <= 1440, "Invalid present hours window.");
+                        }
+                    }
+                    Require(at == hours.Length, "Noncanonical sparse hours width.");
+                }
             }
             Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid observed-shop width.");
             return shop;
+        }
+        private static string ObservedHoursText(int[] hours)
+        {
+            if (hours.Length == 0) return "";
+            var header = new StringBuilder(14); var edges = new StringBuilder();
+            for (int day = 0; day < 7; day++)
+            {
+                int count = 0;
+                for (int slot = 0; slot < 64 && hours[day * 128 + slot * 2] != 1441; slot++)
+                {
+                    int at = day * 128 + slot * 2; count++;
+                    edges.Append(Cell(hours[at], 3)).Append(Cell(hours[at + 1], 3));
+                }
+                header.Append(Cell(count, 2));
+            }
+            return header.Append(edges).ToString();
         }
         private sealed class ObservationConverter : JsonConverter<ShopObservation>
         {
@@ -174,8 +207,8 @@ namespace PersistentCity.Persistence
                 {
                     writer.WriteValue(Cell(shop.Evicted, 13) + Cell((long)shop.StaffedCounters + 1, 7));
                     writer.WriteStartArray();
-                    foreach (var o in shop.Supply) writer.WriteValue(Cell(context.ProductIndex[o.ProductId] - 1, 2) + Cell(o.PriceUnits, 13) + Cell(o.Stock, 7));
-                    writer.WriteEndArray(); writer.WriteValue(string.Concat(shop.Hours.Select(n => Cell(n, 3))));
+                    foreach (var o in shop.Supply) writer.WriteValue(Cell(context.ProductIndex[o.ProductId] - 1, 2) + Cell(o.PriceUnits, 13) + Cell((long)o.Stock + 1, 7));
+                    writer.WriteEndArray(); writer.WriteValue(ObservedHoursText(shop.Hours));
                 }
                 writer.WriteEndArray();
             }
@@ -216,6 +249,10 @@ namespace PersistentCity.Persistence
                 previous = d.Day; records++;
             }
             previous = -1;
+            // Native input may already be at the boundary while the logical clock is its exact predecessor.
+            // Accept that one compatible minute without changing the first-observed timestamp.
+            double latestObservation = state.Minute, nextMinute = Math.Floor(state.Minute) + 1;
+            if (nextMinute <= 1e9 && state.Minute == AccountingClock.PreviousEpochTarget(nextMinute)) latestObservation = nextMinute;
             var references = state.Food?.BusinessReferences.ToDictionary(r => r.Slot);
             foreach (var shop in economy.Shops)
             {
@@ -225,13 +262,13 @@ namespace PersistentCity.Persistence
                 previous = shop.BusinessRef;
                 Require(ValidFingerprint(shop.Fingerprint), "Invalid shop fingerprint.");
                 Require(shop.Evicted >= 0 && shop.Supply != null && shop.Supply.Length <= 8 && shop.StaffedCounters >= -1
-                    && (shop.Supply.Length == 0) == (shop.StaffedCounters == -1), "Invalid observed supply.");
+                    && (shop.Supply.Length != 0 || shop.StaffedCounters == -1), "Invalid observed supply.");
                 string? priorProduct = null;
                 foreach (var offer in shop.Supply)
                 {
                     Require(offer.ProductId != null && state.ProductNames.Contains(offer.ProductId)
                         && (priorProduct == null || StringComparer.Ordinal.Compare(priorProduct, offer.ProductId) < 0)
-                        && offer.PriceUnits > 0 && offer.PriceUnits <= Money.FromCents(Money.MaximumNativePriceCents).Units && offer.Stock >= 0, "Invalid observed offer.");
+                        && offer.PriceUnits > 0 && offer.PriceUnits <= Money.FromCents(Money.MaximumNativePriceCents).Units && offer.Stock >= -1 && offer.Stock <= 1, "Invalid observed offer.");
                     priorProduct = offer.ProductId;
                 }
                 Require(shop.Hours != null && (shop.Hours.Length == 0 || shop.Hours.Length == FoodChangeJournal.HoursEdges)
@@ -256,7 +293,7 @@ namespace PersistentCity.Persistence
                 foreach (var change in shop.Changes)
                 {
                     Known(change.Kind, "Shop change kind");
-                    Require(change.ObservedMinute >= last && change.ObservedMinute <= state.Minute && change.ObservedMinute >= 0, "Invalid first-observed minute.");
+                    Require(change.ObservedMinute >= last && change.ObservedMinute <= latestObservation && change.ObservedMinute >= 0, "Invalid first-observed minute.");
                     Require(change.Before >= 0 && change.After >= 0 && change.Before != change.After, "Invalid shop-change values.");
                     Require(change.Subject >= 0 && (change.Kind == ShopChangeKind.Price || change.Kind == ShopChangeKind.Stock
                         ? change.Subject == 0 && change.ProductId != null && state.ProductNames.Contains(change.ProductId) : change.Kind == ShopChangeKind.Hours ? change.Subject < 7 * MaxOpeningWindows * 2 && change.ProductId == null : change.Subject == 0 && change.ProductId == null), "Invalid shop-change subject.");

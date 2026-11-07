@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="../tools/accounting-backlog-regression/AccountingScenario.cs" Link="AccountingScenario.cs" />
     <Compile Include="../tools/market-research-regression/ResearchFixture.cs" Link="ResearchFixture.cs" />
+    <Compile Include="../Runtime/DecisionSupplyImage.cs" Link="DecisionSupplyImage.cs" />
     <Compile Include="../Runtime/DwellSpots.cs" Link="DwellSpots.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.cs" Link="PhysicalPopulation.cs" />
     <Compile Include="../Runtime/FoodMarkets.cs" Link="FoodMarkets.cs" />

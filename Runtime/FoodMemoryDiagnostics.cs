@@ -15,7 +15,7 @@ namespace PersistentCity.Runtime
     {
         private bool ObservedOwnShop(PersistentCity.Core.FoodScope scope) => foodMarket?.ObservedOwnShop(scope) == true;
         /// <summary>Last rendered panel image, read-only; does not open or rebuild it.</summary>
-        public string FoodEconomyPanelText => showEconomy ? economyText : "";
+        public string FoodEconomyPanelText => showEconomy ? economyRefresh.Text : "";
         /// <summary>Bridge-callable detached consumer memory facts. No UI, market refresh or routes.</summary>
         public object[] FoodRegularsDump() => simulation?.DumpFoodRegulars(ObservedOwnShop) ?? System.Array.Empty<object>();
         public string ResidentPopupText => inspector.PopupText;

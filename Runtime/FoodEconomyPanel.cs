@@ -12,8 +12,8 @@ namespace PersistentCity.Runtime
     public sealed partial class PopulationRuntime
     {
         private bool showEconomy;
-        private float nextEconomyText;
-        private string economyText = "";
+        private readonly FoodPanelRefresh economyRefresh = new FoodPanelRefresh();
+        private Func<string>? economyBuilder;
         private int economyShopPage;
         private Vector2 economyScroll;
         private GUIStyle? economyLabel;
@@ -38,7 +38,7 @@ namespace PersistentCity.Runtime
                 var current = money.Snapshot(); var rescan = FoodMoneyCounters.Rescan(food);
                 int day = (int)(simulation!.State.Minute / 1440); var index = FoodFeedback.IndexHistory(food.History);
                 int recordingSince = FoodFeedback.RecordingSince(food); int v2RecordingSince = FoodFeedbackV2.RecordingSince(food);
-                return new { active = true, day, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
+                return new { active = true, day, panelBuilds = economyRefresh.Builds, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
                     counters = current.ToString(), rescan = rescan.ToString(), moneyText = current.Text(), rivalLabel = FoodFeedback.RivalEstimateLabel,
                     shops = food.Shops.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
                         index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text(),
@@ -87,7 +87,7 @@ namespace PersistentCity.Runtime
             }
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
-            { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }
+            { showEconomy = !showEconomy; economyRefresh.Invalidate(); input.Use(); }
             if (showEconomy) DrawEconomy(); else economyRect = default;
             if (!inspectorFailed) inspector.Draw();
         }
@@ -115,15 +115,15 @@ namespace PersistentCity.Runtime
             if (pages > 1)
             {
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Previous shops")) { economyShopPage = (economyShopPage + pages - 1) % pages; economyText = "Loading shop page..."; }
+                if (GUILayout.Button("Previous shops")) { economyShopPage = (economyShopPage + pages - 1) % pages; economyRefresh.Invalidate(); }
                 GUILayout.Label("Shops · page " + (economyShopPage + 1) + " / " + pages);
-                if (GUILayout.Button("Next shops")) { economyShopPage = (economyShopPage + 1) % pages; economyText = "Loading shop page..."; }
+                if (GUILayout.Button("Next shops")) { economyShopPage = (economyShopPage + 1) % pages; economyRefresh.Invalidate(); }
                 GUILayout.EndHorizontal();
             }
-            if (Time.unscaledTime >= nextEconomyText)
-            { economyText = BuildEconomyText(); nextEconomyText = Time.unscaledTime + 3; }
+            economyBuilder ??= BuildEconomyText;
+            economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder);
             economyScroll = GUILayout.BeginScrollView(economyScroll);
-            GUILayout.Label(economyText, economyLabel);
+            GUILayout.Label(economyRefresh.Text, economyLabel);
             GUILayout.EndScrollView(); GUILayout.EndArea();
         }
         private string BuildEconomyText()

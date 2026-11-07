@@ -59,6 +59,7 @@ namespace PersistentCity.Core
     {
         public string ProductId { get; set; }
         public long PriceUnits { get; set; }
+        // -1 unknown, 0 unavailable, 1 available; exact unit depletion is not journal evidence.
         public int Stock { get; set; }
     }
 

@@ -53,33 +53,46 @@ namespace PersistentCity.Core
             if (row.Changes.Count == EconomicLedger.ChangesPerShop) { row.Changes.RemoveAt(0); row.Evicted = checked(row.Evicted + 1); }
             row.Changes.Add(new ShopChange { ObservedMinute = minute, Kind = kind, Subject = subject, ProductId = product, Before = before, After = after });
         }
-        // Caller supplies an ordinal menu (at most eight offers) from its already-read supply image.
-        public void ObserveSupply(string business, string place, int minute, ShopObservedOffer[] offers, int count, int staffedCounters)
+        // Prices are always observed. Closed/unverified supply preserves the last stock/staff evidence.
+        // Stock is availability (-1 unknown, 0 empty, 1 available), so ordinary sales cannot fill the journal.
+        public void ObserveSupply(string business, string place, int minute, ShopObservedOffer[] offers, int count, int staffedCounters,
+            bool hasSupplyImage = true)
         {
             if (count < 1 || count > 8 || count > offers.Length || staffedCounters < 0) throw new ArgumentException("Invalid observation.");
             var row = Get(business, place); if (row == null) return;
-            bool same = row.StaffedCounters == staffedCounters && row.Supply.Length == count;
+            bool changed = row.Supply.Length != count;
+            if (hasSupplyImage && row.StaffedCounters != staffedCounters)
+            {
+                if (row.StaffedCounters >= 0) Add(row, minute, ShopChangeKind.StaffedCounters, 0, null, row.StaffedCounters, staffedCounters);
+                row.StaffedCounters = staffedCounters; changed = true;
+            }
+            // At most eight offers; reuse the saved array until any exact price or availability changes.
+            ShopObservedOffer[]? next = null;
+            int old = 0;
             for (int i = 0; i < count; i++)
             {
-                if (i > 0 && StringComparer.Ordinal.Compare(offers[i - 1].ProductId, offers[i].ProductId) >= 0) throw new ArgumentException("Unordered observed menu.");
-                if (i >= row.Supply.Length || row.Supply[i].ProductId != offers[i].ProductId || row.Supply[i].PriceUnits != offers[i].PriceUnits || row.Supply[i].Stock != offers[i].Stock) same = false;
-            }
-            if (same) return;
-            if (row.StaffedCounters >= 0)
-            {
-                Add(row, minute, ShopChangeKind.StaffedCounters, 0, null, row.StaffedCounters, staffedCounters);
-                // Both menus are bounded by eight; join in ordinal order without city-wide work.
-                int old = 0;
-                for (int i = 0; i < count; i++)
+                var after = offers[i];
+                if (i > 0 && StringComparer.Ordinal.Compare(offers[i - 1].ProductId, after.ProductId) >= 0) throw new ArgumentException("Unordered observed menu.");
+                while (old < row.Supply.Length && StringComparer.Ordinal.Compare(row.Supply[old].ProductId, after.ProductId) < 0) old++;
+                bool known = old < row.Supply.Length && row.Supply[old].ProductId == after.ProductId;
+                var before = known ? row.Supply[old] : default;
+                after.Stock = hasSupplyImage ? (after.Stock > 0 ? 1 : 0) : known ? before.Stock : -1;
+                if (known)
                 {
-                    while (old < row.Supply.Length && StringComparer.Ordinal.Compare(row.Supply[old].ProductId, offers[i].ProductId) < 0) old++;
-                    if (old >= row.Supply.Length || row.Supply[old].ProductId != offers[i].ProductId) continue;
-                    var before = row.Supply[old]; var after = offers[i];
                     Add(row, minute, ShopChangeKind.Price, 0, after.ProductId, before.PriceUnits, after.PriceUnits);
-                    Add(row, minute, ShopChangeKind.Stock, 0, after.ProductId, before.Stock, after.Stock);
+                    if (before.Stock >= 0 && after.Stock >= 0) Add(row, minute, ShopChangeKind.Stock, 0, after.ProductId, before.Stock, after.Stock);
                 }
+                if (!known || old != i || before.PriceUnits != after.PriceUnits || before.Stock != after.Stock) changed = true;
+                // Only allocate on changed observations. Fill preceding unchanged offers from the saved image.
+                if (changed && next == null)
+                {
+                    next = new ShopObservedOffer[count];
+                    if (i > 0) Array.Copy(row.Supply, next, i);
+                }
+                if (next != null) next[i] = after;
             }
-            row.Supply = new ShopObservedOffer[count]; Array.Copy(offers, row.Supply, count); row.StaffedCounters = staffedCounters; Fingerprint(row);
+            if (!changed) return;
+            row.Supply = next!; Fingerprint(row);
         }
         public void ObserveHours(string business, string place, int minute, IReadOnlyList<OpeningWindow> hours)
         {

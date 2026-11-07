@@ -8,6 +8,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
+using PersistentCity.Runtime;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -42,8 +43,8 @@ public sealed class ChangeJournalTests
         return state;
     }
     [Theory]
-    [InlineData(5150, "27f4207169d84347465226c61bdf867d2e9ef9b90312922f01ad2aad3bb77869")]
-    [InlineData(9217, "d6a6a0385cd73deca8b3061eb1d102e426f02d78bde6125c74954a0bd7c7060e")]
+    [InlineData(5150, "570461024fd65a093220d73de492518a87b5395d4d6a93fd563db86a32fe4c13")]
+    [InlineData(9217, "df8c95a30d401b72b580794efe27da15eb15d941ea20e05afe5ae36aa68b4404")]
     public void CurrentWriterGoldenSnapshotAndReload(int seed, string pin)
     {
         Assert.Equal(CityState.AttendanceSchema + 1, CityState.ChangeJournalSchema);
@@ -83,12 +84,12 @@ public sealed class ChangeJournalTests
         Assert.All(state.Economy.Shops, row => Assert.Empty(row.Changes));
         // A fixture edit of the quiet shop exists outside the observer until the next read.
         var edited = Offers(300, 0);
-        journal.ObserveSupply(a.BusinessId, a.PlaceId, 1811, Offers(275, 39), 1, 1);
+        journal.ObserveSupply(a.BusinessId, a.PlaceId, 1811, Offers(275, 0), 1, 1);
         Assert.Empty(state.Economy.Shops[1].Changes);
         state.Minute = 2000; string saved = SaveCodec.Write(state);
         state = SaveCodec.Read(saved).State!; food = state.Food!; journal = new FoodChangeJournal(food, state.Economy);
         string before = state.Economy.Shops[0].Fingerprint;
-        journal.ObserveSupply(a.BusinessId, a.PlaceId, 1900, Offers(275, 39), 1, 1);
+        journal.ObserveSupply(a.BusinessId, a.PlaceId, 1900, Offers(275, 0), 1, 1);
         Assert.Equal(3, state.Economy.Shops[0].Changes.Count); Assert.Equal(before, state.Economy.Shops[0].Fingerprint);
         journal.ObserveSupply(b.BusinessId, b.PlaceId, 1900, edited, 1, 2);
         Assert.All(state.Economy.Shops[0].Changes, c => Assert.Equal(1811, c.ObservedMinute));
@@ -110,6 +111,31 @@ public sealed class ChangeJournalTests
         hours.Add(new OpeningWindow { Day = 0, FromMinute = 360, ToMinute = 1320 });
         journal.ObserveHours(shop.BusinessId, shop.PlaceId, 1901, hours);
         EconomicLedgerTests.AssertRoundTrip(state);
+    }
+    [Fact]
+    public void SparseHoursRetainCanonicalWindowsAndBoundTheSavedImage()
+    {
+        var state = Fresh(); var scope = state.Food!.Shops[0]; var journal = new FoodChangeJournal(state.Food, state.Economy);
+        var weekly = Enumerable.Range(0, 7).Select(day => new OpeningWindow { Day = day, FromMinute = 360, ToMinute = 1320 }).ToList();
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1800, Offers(), 1, 2);
+        journal.ObserveHours(scope.BusinessId, scope.PlaceId, 1800, weekly);
+        JArray Image() => (JArray)JObject.Parse(SaveCodec.Write(state))["Economy"]!["Shops"]![0]!;
+        var image = Image(); Assert.Equal(56, ((string)image[4]!).Length);
+        // State, supply, hours plus their three separators; excludes the already-frozen header/journal.
+        int Extension(JArray row) => row.Skip(2).Sum(cell => cell.ToString(Newtonsoft.Json.Formatting.None).Length) + 3;
+        Assert.Equal(109, Extension(image));
+        EconomicLedgerTests.AssertRoundTrip(state);
+        var full = Enumerable.Range(0, 64).Select(i => new OpeningWindow { Day = 0, FromMinute = i * 20, ToMinute = i * 20 + 10 }).ToList();
+        journal.ObserveHours(scope.BusinessId, scope.PlaceId, 1900, full);
+        image = Image(); Assert.Equal(398, ((string)image[4]!).Length);
+        Assert.Equal(626, Extension(image) + 7 * 25); // Seven more fixed-width offer cells.
+        EconomicLedgerTests.AssertRoundTrip(state);
+        string sparse = (string)image[4]!;
+        // Swap the first two windows: the sparse reader must still enforce canonical ordering.
+        image[4] = sparse[..14] + sparse[20..26] + sparse[14..20] + sparse[26..];
+        var root = JObject.Parse(SaveCodec.Write(state)); root["Economy"]!["Shops"]![0] = image;
+        EconomicLedgerTests.Refused(root.ToString(Newtonsoft.Json.Formatting.None));
+        output.WriteLine("exact image: weekly/one offer=109 chars/shop, 111616/1024 shops; max hours/eight offers=626, 641024/1024 shops; plan hash budget=32, 32768/1024 shops");
     }
     [Fact]
     public void SameMinuteReversalsKeepTheExactBaselineAndCanonicalJournal()
@@ -163,6 +189,9 @@ public sealed class ChangeJournalTests
         var distant = row.Changes[1]; distant.ObservedMinute = 28 * 1440; row.Changes[1] = distant;
         text.Clear(); FoodFeedbackV2.AppendJournal(text, row, rows, 34, 1);
         Assert.DoesNotContain("mixed", text.ToString());
+        row.Changes.RemoveAt(1); row.Evicted = 100;
+        text.Clear(); FoodFeedbackV2.AppendJournal(text, row, rows, 20, 1);
+        Assert.DoesNotContain("mixed", text.ToString()); Assert.Contains("evicted: 100", text.ToString());
     }
     [Fact]
     public void CoverageStartsOnCreationDayAndCounterLimitsAreLabeled()
@@ -176,7 +205,7 @@ public sealed class ChangeJournalTests
     }
     [Theory]
     [InlineData("missing-image")] [InlineData("future-minute")] [InlineData("supply-width")]
-    [InlineData("hours-width")] [InlineData("supply-order")] [InlineData("staff-overflow")] [InlineData("hours-gap")]
+    [InlineData("hours-width")] [InlineData("supply-order")] [InlineData("staff-overflow")] [InlineData("hours-gap")] [InlineData("hours-counted-absent")]
     public void ImageFaultsAreRefusedAndKept(string fault)
     {
         var root = JObject.Parse(SaveCodec.Write(Fixture())); var shop = (JArray)root["Economy"]!["Shops"]![0]!;
@@ -186,33 +215,95 @@ public sealed class ChangeJournalTests
             case "future-minute": { string cell = (string)shop[1]![0]!; shop[1]![0] = "ZZZZZZ" + cell[6..]; break; }
             case "supply-width": shop[3]![0] = "0"; break;
             case "hours-width": shop[4] = "000"; break;
-            case "hours-gap": { string hours = (string)shop[4]!; shop[4] = hours.Substring(6, 6) + hours.Substring(0, 6) + hours[12..]; break; }
+            case "hours-gap": { string hours = (string)shop[4]!; shop[4] = "00" + hours[2..]; break; }
+            case "hours-counted-absent": { string hours = (string)shop[4]!; shop[4] = hours[..14] + "141141"; break; }
             case "supply-order": ((JArray)shop[3]!).Add(shop[3]![0]!.DeepClone()); break;
             case "staff-overflow": shop[2] = new string('0', 13) + "ZZZZZZZ"; break;
         }
         EconomicLedgerTests.Refused(root.ToString(Newtonsoft.Json.Formatting.None));
     }
     [Fact]
-    public void ExistingObservationPathHasEqualReadCountsAndNoShopWrite()
+    public void ExistingObservationPathHasNoAddedReaderOrShopWriterCallSites()
     {
+        // This is a source-structure guard, not a native read-counter experiment.
         string runtime = Source("Runtime/NativeFoodMarket.cs");
-        string added = runtime[runtime.IndexOf("if (changeJournal != null &&", StringComparison.Ordinal)..runtime.IndexOf("result.Add(b);", runtime.IndexOf("if (changeJournal != null &&", StringComparison.Ordinal), StringComparison.Ordinal)];
+        string added = runtime[runtime.IndexOf("private void ObserveJournalSupply", StringComparison.Ordinal)..runtime.IndexOf("private IReadOnlyCollection<string>? SelectedCompleteMenu", StringComparison.Ordinal)];
         foreach (string forbidden in new[] { "FoodSupplyReader.Read", "ReadMenu(", "SaveGameManager", "reg.", "SetUp(", ".Buy(" }) Assert.DoesNotContain(forbidden, added);
-        // Counter fixture runs exactly the same existing reads with and without the consumer attached.
-        var state = Fresh(); var scope = state.Food!.Shops[0]; var journal = new FoodChangeJournal(state.Food, state.Economy);
-        int reads = 0;
-        void Demand(bool enabled, int minute) { reads++; var image = Offers(); if (enabled) journal.ObserveSupply(scope.BusinessId, scope.PlaceId, minute, image, 1, 2); }
-        for (int i = 0; i < 50; i++) Demand(false, 1800 + i);
-        int before = reads; reads = 0;
-        for (int i = 0; i < 50; i++) Demand(true, 1800 + i);
-        Assert.Equal(before, reads);
-        Assert.Equal(40, state.Economy.Shops[0].Supply[0].Stock);
-        Assert.Equal(5, runtime.Split("FoodSupplyReader.ReadMenu").Length - 1); // base 7a79f2a has exactly five call sites
-        string core = Source("Core/FoodChangeJournal.cs");
-        Assert.DoesNotContain("PersistentCity.Runtime", core); Assert.DoesNotContain("IFoodMarket", core);
-        string hours = Source("Runtime/NativeFoodHours.cs"); Assert.Contains("ObserveJournalHours(pair.Key, place, minute)", hours);
+        Assert.Equal(5, runtime.Split("FoodSupplyReader.ReadMenu").Length - 1);
+        Assert.Contains("cachedImage.Image.ObserveLive(supply)", runtime);
+        Assert.True(runtime.IndexOf("ObserveJournalSupply(b, scope, supply", StringComparison.Ordinal)
+            < runtime.IndexOf("if (supply.Values.Any(s => !s.Units.HasValue))", StringComparison.Ordinal));
+        string hours = Source("Runtime/NativeFoodHours.cs");
+        Assert.Contains("if (!closed) ObserveJournalHours", hours);
         Assert.Contains("candidateBusinesses.Contains(scope.BusinessId)", hours);
-        string ownership = Source("Runtime/NativeFoodCandidates.cs"); Assert.Contains("changeJournal?.Clear(scope.BusinessId)", ownership);
+        Assert.Contains("changeJournal?.Clear(scope.BusinessId)", Source("Runtime/NativeFoodCandidates.cs"));
+    }
+    [Fact]
+    public void SameMinuteLiveCaptureSupersedesAnOlderCachedHandle()
+    {
+        var state = Fresh(); var scope = state.Food!.Shops[0]; var journal = new FoodChangeJournal(state.Food, state.Economy);
+        var cachedA = new DecisionSupplyImage<ShopObservedOffer[]>(Offers(stock: 40));
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1900, cachedA.Value, 1, 2);
+        var liveB = Offers(stock: 0);
+        cachedA.ObserveLive(liveB); // same production seam used by ReadSelected's live capture
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1900, liveB, 1, 2);
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1900, cachedA.Value, 1, 2);
+        Assert.Same(liveB, cachedA.Value);
+        Assert.Equal(0, journal.Find(scope.BusinessId)!.Supply[0].Stock);
+        Assert.Single(journal.Find(scope.BusinessId)!.Changes);
+    }
+    [Fact]
+    public void ClosedShopPriceEditsAndReversalsPreserveStockStaffAndExactMinutes()
+    {
+        var state = Fresh(); var scope = state.Food!.Shops[0]; var journal = new FoodChangeJournal(state.Food, state.Economy);
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1800, Offers(600), 1, 2);
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1801, Offers(700, 0), 1, 0, false);
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1802, Offers(600, 0), 1, 0, false);
+        var row = journal.Find(scope.BusinessId)!;
+        Assert.Equal(2, row.StaffedCounters); Assert.Equal(1, row.Supply[0].Stock);
+        Assert.Equal(new[] { 1801, 1802 }, row.Changes.Select(c => c.ObservedMinute));
+        Assert.All(row.Changes, c => Assert.Equal(ShopChangeKind.Price, c.Kind));
+        EconomicLedgerTests.AssertRoundTrip(state);
+        var coldState = Fresh(); var cold = new FoodChangeJournal(coldState.Food!, coldState.Economy);
+        cold.ObserveSupply(scope.BusinessId, scope.PlaceId, 1800, Offers(600, 0), 1, 0, false);
+        cold.ObserveSupply(scope.BusinessId, scope.PlaceId, 1801, Offers(700, 0), 1, 0, false);
+        Assert.Equal(-1, cold.Find(scope.BusinessId)!.Supply[0].Stock);
+        Assert.Equal(-1, cold.Find(scope.BusinessId)!.StaffedCounters);
+        Assert.Single(cold.Find(scope.BusinessId)!.Changes);
+        EconomicLedgerTests.AssertRoundTrip(coldState);
+    }
+    [Fact]
+    public void ExactNativeMinuteAtTheCompatibleLogicalPredecessorRoundTrips()
+    {
+        var state = Fresh(); var scope = state.Food!.Shops[0]; var journal = new FoodChangeJournal(state.Food, state.Economy);
+        state.Minute = AccountingClock.PreviousEpochTarget(2001);
+        Assert.True(AccountingClock.Compatible(state.Minute, 2001));
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 2000, Offers(), 1, 2);
+        journal.ObserveHours(scope.BusinessId, scope.PlaceId, 2000, Hours());
+        journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 2001, Offers(300), 1, 2);
+        journal.ObserveHours(scope.BusinessId, scope.PlaceId, 2001, Hours(1200));
+        EconomicLedgerTests.AssertRoundTrip(state);
+        Assert.Equal(2001, state.Economy.Shops[0].Changes[0].ObservedMinute);
+        state.Minute = 2000.5;
+        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
+    }
+    [Fact]
+    public void HiddenFramesDoNotBuildAndPageInvalidationBuildsImmediately()
+    {
+        var city = AttendanceWageTests.Fresh(); var gate = new FoodPanelRefresh(); int buildEconomyTextCalls = 0;
+        string BuildEconomyText() { buildEconomyTextCalls++; return city.FoodMoney!.Snapshot().Text(); }
+        Func<string> build = BuildEconomyText;
+        long requests = city.FoodMoney!.Requests, bytes = GC.GetAllocatedBytesForCurrentThread();
+        for (int frame = 0; frame < 10000; frame++) gate.Update(false, frame / 60.0, build);
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - bytes);
+        Assert.Equal(0, buildEconomyTextCalls); Assert.Equal(0, gate.Builds); Assert.Equal(requests, city.FoodMoney.Requests);
+        gate.Update(true, 200, build); Assert.Equal(1, buildEconomyTextCalls);
+        gate.Update(true, 201, build); Assert.Equal(1, buildEconomyTextCalls);
+        gate.Invalidate(); gate.Update(true, 201, build); Assert.Equal(2, buildEconomyTextCalls);
+        Assert.Equal(requests + 2, city.FoodMoney.Requests);
+        gate.Reset(); Assert.Equal("", gate.Text); Assert.Equal(0, gate.Builds);
+        gate.Update(true, 201, build); Assert.Equal(1, gate.Builds);
+        Assert.Contains("economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder)", Source("Runtime/FoodEconomyPanel.cs"));
     }
     static string Source(string name)
     {
@@ -261,6 +352,10 @@ public sealed class ChangeJournalTests
                 _ = text.ToString();
             }, 100);
         }
+        var cacheOffers = Offers(); var cacheImage = new DecisionSupplyImage<ShopObservedOffer[]>(cacheOffers);
+        Measure("cache live replacement", () => cacheImage.ObserveLive(cacheOffers));
+        var cacheSlots = new DecisionSupplyImage<ShopObservedOffer[]>[1];
+        Measure("cache image creation", () => cacheSlots[0] = new DecisionSupplyImage<ShopObservedOffer[]>(cacheOffers));
         var city = AttendanceWageTests.Fresh(); AttendanceWageTests.Advance(city, 1440); var state = city.State; string payload = SaveCodec.Write(state);
         Measure("save write fresh", () => SaveCodec.Write(state), 50);
         Measure("save read fresh", () => { Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status); }, 50);
@@ -269,8 +364,12 @@ public sealed class ChangeJournalTests
         Measure("save write observed fixture", () => SaveCodec.Write(observed), 20);
         Measure("save read observed fixture", () => Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(populated).Status), 20);
         long requests = city.FoodMoney!.Requests; long bytes = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10000; i++) { /* closed panel: no projection */ }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - bytes); Assert.Equal(requests, city.FoodMoney.Requests);
+        var gate = new FoodPanelRefresh(); Func<string> build = () => city.FoodMoney.Snapshot().Text();
+        bytes = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10000; i++) gate.Update(false, i / 60.0, build);
+        long hiddenBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+        Assert.Equal(0, gate.Builds);
+        Assert.Equal(0, hiddenBytes); Assert.Equal(requests, city.FoodMoney.Requests);
         string panel = Source("Runtime/FoodEconomyPanel.cs"); Assert.Contains("if (showEconomy) DrawEconomy();", panel);
     }
     void Measure(string label, Action action, int samples = 2000)
@@ -319,5 +418,28 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(text.ToString(), restoredText.ToString()); Assert.Equal(saved, SaveCodec.Write(read.State));
         text.Clear(); FoodFeedbackV2.AppendCity(text, city.FoodMoney!.Snapshot(), city.State.Economy, 20);
         Assert.Contains("Household strain (person wallets, current)", text.ToString()); Assert.Contains("$0 this week · $0 last week", text.ToString());
+    }
+}
+
+public sealed partial class FoodCommerceTests
+{
+    [Fact]
+    public void F6g_ActualCheckoutDepletionPreservesPriceEntryAndReadCounts()
+    {
+        var baseline = Run(false); var observed = Run(true);
+        Assert.True(observed.Sales >= 8, "Fixture must complete at least eight real FoodCommerce checkouts.");
+        Assert.Equal(baseline.Reads, observed.Reads); Assert.Equal(baseline.Sales, observed.Sales);
+        var row = observed.Journal!.Find("b")!;
+        Assert.Single(row.Changes); Assert.Equal(ShopChangeKind.Price, row.Changes[0].Kind);
+        Assert.Equal(0, row.Evicted); Assert.Equal(1, row.Supply[0].Stock);
+        static (int Reads, int Sales, FoodChangeJournal? Journal) Run(bool attach)
+        {
+            var (city, market, _) = Ready(count: 24, threeMeals: true); city.EnableHouseholdFinances();
+            market.Units = 1000;
+            if (attach) market.Journal = new FoodChangeJournal(city.State.Food!, city.State.Economy);
+            market.Read(1440); market.Price = Money.FromCents(125); market.Read(1440);
+            Advance(city, 3 * 1440);
+            return (market.Reads, market.Orders.Count, market.Journal);
+        }
     }
 }

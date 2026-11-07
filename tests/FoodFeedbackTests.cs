@@ -301,8 +301,9 @@ public sealed partial class FoodCommerceTests
         // panel text is built only from DrawEconomy behind showEconomy and the three-second refresh.
         string panel = F6c_Source("Runtime/FoodEconomyPanel.cs");
         Assert.Contains("if (showEconomy) DrawEconomy(); else economyRect = default;", panel);
-        Assert.Contains("{ economyText = BuildEconomyText(); nextEconomyText = Time.unscaledTime + 3; }", panel);
-        Assert.Equal(2, Count(panel, ".Snapshot()")); Assert.Equal(2, Count(panel, "BuildEconomyText()"));
+        Assert.Contains("economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder);", panel);
+        Assert.Equal(2, Count(panel, ".Snapshot()")); Assert.Equal(1, Count(panel, "BuildEconomyText()"));
+        Assert.Contains("economyBuilder ??= BuildEconomyText;", panel);
         Assert.DoesNotContain("food.Residents.Count(", panel); Assert.DoesNotContain("food.Residents.Where(", panel);
         Assert.DoesNotContain("food.History.Where(", panel); Assert.DoesNotContain("city.Places.First(", panel);
         foreach (string file in Directory.GetFiles(Path.Combine(F6c_Root(), "Runtime"), "*.cs"))

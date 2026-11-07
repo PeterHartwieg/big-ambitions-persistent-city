@@ -42,13 +42,22 @@ public sealed partial class FoodCommerceTests
         public bool ConfirmEvidence;
         public bool ThrowOnEvidence;
         public bool Closed { get; set; }
+        public FoodChangeJournal? Journal;
+        public int Reads;
         public List<string> Orders = new();
         public List<double> Times = new();
         public bool IsConfirmedPaid(ResidentMeal meal) => ThrowOnEvidence
             ? throw new InvalidOperationException("Evidence unavailable") : ConfirmEvidence && Orders.Contains(meal.IntentId);
-        public IReadOnlyList<FoodBusiness> Read(double minute) => new[] { new FoodBusiness { Id = BusinessId, PlaceId = "shop", Name = "Bakery", ServiceUnavailableReason = UnavailableReason,
+        public IReadOnlyList<FoodBusiness> Read(double minute)
+        {
+            Reads++;
+            var businesses = new[] { new FoodBusiness { Id = BusinessId, PlaceId = "shop", Name = "Bakery", ServiceUnavailableReason = UnavailableReason,
             MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = OpenFromMinute, ToMinute = 1440 }).ToList(),
             Offers = Products.Select(p => new FoodOffer { ProductId = p, Price = Price, Units = Units }).ToList() } };
+            Journal?.ObserveSupply(BusinessId, "shop", (int)minute,
+                new[] { new ShopObservedOffer { ProductId = FoodProducts.Croissant, PriceUnits = Price.Units, Stock = Units } }, 1, Capacity > 0 ? 1 : 0, !Closed);
+            return businesses;
+        }
         public FoodSale Buy(ResidentMeal meal, double at)
         {
             if (Units <= 0 || Capacity <= 0 || Closed || Price != meal.Price) return new(false, "Unavailable at checkout");

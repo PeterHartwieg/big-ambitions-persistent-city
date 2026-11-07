@@ -68,14 +68,15 @@ namespace PersistentCity.Runtime
             public DecisionSupply(BuildingRegistration registration, string businessId, string[] products,
                 IReadOnlyDictionary<string, FoodSupplySnapshot> supply)
             {
-                Registration = registration; BusinessId = businessId; Products = products; Supply = supply;
+                Registration = registration; BusinessId = businessId; Products = products; Image = new DecisionSupplyImage<IReadOnlyDictionary<string, FoodSupplySnapshot>>(supply);
                 RentedByPlayer = registration.RentedByPlayer; TemporarilyClosed = registration.temporarilyClosed;
                 Established = registration.HasEstablishedBusiness; BusinessType = registration.businessTypeName;
             }
             public BuildingRegistration Registration { get; }
             public string BusinessId { get; }
             public string[] Products { get; }
-            public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
+            public DecisionSupplyImage<IReadOnlyDictionary<string, FoodSupplySnapshot>> Image { get; }
+            public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply => Image.Value;
             public bool RentedByPlayer { get; }
             public bool TemporarilyClosed { get; }
             public bool Established { get; }
@@ -285,6 +286,10 @@ namespace PersistentCity.Runtime
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.
                 var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products)
                     : DecisionMenu(observationMinute, b.PlaceId, reg, b.Id, products);
+                // A live capture supersedes any older decision image without another native read.
+                if ((observed != null || capture) && decisionSupply.TryGetValue(b.PlaceId, out var cachedImage))
+                    cachedImage.Image.ObserveLive(supply);
+                ObserveJournalSupply(b, scope, supply, checked((int)observationMinute));
                 if (supply.Values.Any(s => !s.Units.HasValue))
                 {
                     supplyExclusions[b.PlaceId] = "Excluded: menu stock contract is unverified";
@@ -296,24 +301,29 @@ namespace PersistentCity.Runtime
                 b.MealsPerHour = supply[scope.ProductId].MealsPerHour; b.ServiceEvidence = supply[scope.ProductId].Evidence;
                 b.ServiceUnavailableReason = supply[scope.ProductId].AvailabilityReason;
                 foreach (var offer in b.Offers) offer.Units = supply[offer.ProductId].Units;
-                if (changeJournal != null && supply[scope.ProductId].HasSupplyImage)
-                {
-                    int index = 0;
-                    foreach (var offer in b.Offers)
-                        journalOffers[index++] = new ShopObservedOffer { ProductId = offer.ProductId, PriceUnits = offer.Price.Units,
-                            Stock = supply[offer.ProductId].ProducerUnits };
-                    for (int i = 1; i < index; i++)
-                    {
-                        var value = journalOffers[i]; int j = i - 1;
-                        while (j >= 0 && StringComparer.Ordinal.Compare(journalOffers[j].ProductId, value.ProductId) > 0)
-                        { journalOffers[j + 1] = journalOffers[j]; j--; }
-                        journalOffers[j + 1] = value;
-                    }
-                    changeJournal.ObserveSupply(b.Id, b.PlaceId, checked((int)observationMinute), journalOffers, index, supply[scope.ProductId].StaffedCounters);
-                }
                 result.Add(b);
             }
             return result;
+        }
+        private void ObserveJournalSupply(FoodBusiness b, FoodScope scope, IReadOnlyDictionary<string, FoodSupplySnapshot> supply, int observationMinute)
+        {
+            if (changeJournal != null)
+            {
+                int index = 0; bool complete = true;
+                foreach (var offer in b.Offers)
+                {
+                    var image = supply[offer.ProductId]; complete &= image.HasSupplyImage;
+                    journalOffers[index++] = new ShopObservedOffer { ProductId = offer.ProductId, PriceUnits = offer.Price.Units, Stock = image.ProducerUnits };
+                }
+                for (int i = 1; i < index; i++)
+                {
+                    var value = journalOffers[i]; int j = i - 1;
+                    while (j >= 0 && StringComparer.Ordinal.Compare(journalOffers[j].ProductId, value.ProductId) > 0)
+                    { journalOffers[j + 1] = journalOffers[j]; j--; }
+                    journalOffers[j + 1] = value;
+                }
+                changeJournal.ObserveSupply(b.Id, b.PlaceId, observationMinute, journalOffers, index, supply[scope.ProductId].StaffedCounters, complete);
+            }
         }
         private IReadOnlyCollection<string>? SelectedCompleteMenu(BuildingRegistration reg)
         {
