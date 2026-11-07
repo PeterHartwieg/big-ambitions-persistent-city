@@ -12,12 +12,15 @@ namespace PersistentCity.Runtime
     /// <summary>Read-only main-thread snapshot of known buildings and sampled pedestrian entrances.</summary>
     internal static class GamePlaces
     {
-        // Business allocations are simulation policy, not native staffing or customer capacity.
+        // Shop and leisure allocations are customer attraction policy, not native customer capacity. Work and Study
+        // capacity is F5e's WorkplaceCapacityPolicy over the catalogue area; neither is native staffing.
         private const int BusinessAllocation = 16;
         private static readonly HashSet<string> LeisureTypes = new HashSet<string>(StringComparer.Ordinal)
         {
             "ba:businesstype_gym", "ba:businesstype_nightclub", "ba:businesstype_cinema", "ba:businesstype_theater"
         };
+
+        private const string WorkplaceEvidence = "native-building-traffic;policy:destination-weight;" + WorkplaceCapacityPolicy.Evidence;
 
         public static List<Place> Read() => Read(null);
 
@@ -95,19 +98,23 @@ namespace PersistentCity.Runtime
                 // Unknown/closed schedules remain closed (0,0); no invented business opening hours.
                 weekly.Sort((a, b) => a.Day != b.Day ? a.Day.CompareTo(b.Day) : a.FromMinute != b.FromMinute ? a.FromMinute.CompareTo(b.FromMinute) : a.ToMinute.CompareTo(b.ToMinute));
                 bool school = registration.businessTypeName == "ba:businesstype_school";
+                // The same catalogue area as for homes; zero when the catalogue has no positive area.
+                interiorAreas.TryGetValue(building.BuildingSize ?? "", out int businessArea);
+                businessArea = Math.Max(0, businessArea);
                 if (census != null && !ids.Contains(PlaceId(PlaceKind.Work)))
                 {
-                    interiorAreas.TryGetValue(building.BuildingSize ?? "", out int businessArea);
                     var staff = registration.aiEmployees;
                     census.Add(new CensusWorkplace
                     {
                         WorkPlaceId = PlaceId(PlaceKind.Work), StudyPlaceId = school ? PlaceId(PlaceKind.Study) : "",
-                        AreaSquareMetres = Math.Max(0, businessArea), PlayerOwned = registration.RentedByPlayer,
+                        AreaSquareMetres = businessArea, PlayerOwned = registration.RentedByPlayer,
                         NativeStaff = !registration.RentedByPlayer && !string.IsNullOrEmpty(registration.businessOwnerRivalId) && staff != null ? staff.Count : -1
                     });
                 }
-                Add(PlaceKind.Work, registration.BusinessName, BusinessAllocation, 0, 0);
-                if (school) Add(PlaceKind.Study, registration.BusinessName, BusinessAllocation, 0, 0);
+                // F5e: seated persons per workplace follow the area band, never the native staff list.
+                Add(PlaceKind.Work, registration.BusinessName, WorkplaceCapacityPolicy.Work(businessArea, registration.RentedByPlayer), 0, 0,
+                    evidence: WorkplaceEvidence);
+                if (school) Add(PlaceKind.Study, registration.BusinessName, WorkplaceCapacityPolicy.Study(businessArea), 0, 0, evidence: WorkplaceEvidence);
                 else if (LeisureTypes.Contains(registration.businessTypeName)) Add(PlaceKind.Leisure, registration.BusinessName, BusinessAllocation, 0, 0);
                 if (building.BuildingType == "ba:buildingtype_retail")
                     Add(PlaceKind.Shop, registration.BusinessName, BusinessAllocation, 0, 0,

@@ -64,6 +64,9 @@ namespace PersistentCity.Core
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
         // change of a live citizen's phase, activity, place or optional stop (FileOptionalStop and the visit starts).
         private readonly ActiveJourneyIndex activeJourneys = new ActiveJourneyIndex();
+        // F5e: seated persons per workplace for the job-finding vacancy check; moved only at event commit.
+        private readonly WorkplaceOccupancy occupancy = new WorkplaceOccupancy();
+        internal bool OccupancyMatchesFullCount() => occupancy.Matches(State);
         /// <summary>Read-only view of the active-journey candidate index for physical selection.</summary>
         public ActiveJourneyIndex ActiveJourneys => activeJourneys;
         /// <summary>Shadow comparison of the index against a full scan of the population.</summary>
@@ -202,6 +205,7 @@ namespace PersistentCity.Core
                 }
             }
             activeJourneys.Rebuild(state.Citizens, state.VisitorRoutines);
+            occupancy.Rebuild(state);
             RestoreTraffic();
             EnsureTrafficNetwork();
         }
@@ -228,6 +232,8 @@ namespace PersistentCity.Core
                 citizenEvents.Add(routine.Identity.Id, item);
                 activeJourneys.File(routine);
             }
+            // Fresh visitors were seated against the city's capacity when they were created.
+            occupancy.Rebuild(State);
         }
 
         public AdvanceResult AdvanceTo(double targetMinute, int eventBudget = 10000)
@@ -510,6 +516,7 @@ namespace PersistentCity.Core
             // A pending chance outlives its visit. Read it from the live citizen at commit, so a chance
             // handed on while this event was in flight is not restored.
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
+            occupancy.Move(live.DayPlaceId, working.DayPlaceId);
             CommitEvent(live, working);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (live.Visitor != null) VisitorSchedules.Sync(live.Visitor);
@@ -723,7 +730,7 @@ namespace PersistentCity.Core
                 arrived = true;
             }
             // The daily employment check probes candidate workplaces with detached residents; each probe is one request.
-            var candidates = ResidentLifecycle.BeginEmploymentCheck(State, person, now, places);
+            var candidates = ResidentLifecycle.BeginEmploymentCheck(State, person, now, places, occupancy);
             if (candidates != null)
                 foreach (var candidate in candidates)
                 {

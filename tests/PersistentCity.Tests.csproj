@@ -36,6 +36,7 @@
     <None Update="ReaderCorpus/**/*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Writer26/*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Writer27/*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Writer28/*.json" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />

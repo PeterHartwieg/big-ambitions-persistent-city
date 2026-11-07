@@ -55,7 +55,7 @@ public sealed class Schema18ReviewTests
         const string capability = "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}";
         // Schema 23 and later also carry the menu-policy header before the population graph.
         string menu = "\"MenuPolicy\":\"" + FoodNameIdentity.Wire + "\",";
-        string prefix = capabilitiesFirst ? "{" + capability + ",\"Schema\":27," + menu : "{\"Schema\":27," + capability + "," + menu;
+        string prefix = capabilitiesFirst ? "{" + capability + ",\"Schema\":28," + menu : "{\"Schema\":28," + capability + "," + menu;
         string damaged = prefix + "\"UnreadBody\":[";
         SaveCodec.RequireExecutableCapabilities(damaged);
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(damaged).Status);
@@ -81,7 +81,7 @@ public sealed class Schema18ReviewTests
     [InlineData("\"Schema\":18,\"Schema\":18,")]
     [InlineData("\"Schema\":0x12,")]
     [InlineData("\"Schema\":17,")]
-    [InlineData("\"Schema\":24,")] [InlineData("\"Schema\":25,")] [InlineData("\"Schema\":26,")] [InlineData("\"Schema\":28,")]
+    [InlineData("\"Schema\":24,")] [InlineData("\"Schema\":25,")] [InlineData("\"Schema\":26,")] [InlineData("\"Schema\":27,")] [InlineData("\"Schema\":29,")]
     public void ProbeRefusesDuplicateNoncanonicalLegacyOrFutureHeader(string schema)
     {
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities("{" + schema + "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}}"));
@@ -95,15 +95,15 @@ public sealed class Schema18ReviewTests
     [InlineData("{\"Active\":false,\"Code\":\"C\",\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":2}")]
     public void ProbeKeepsStrictCapabilityHeaderValidation(string capability)
-        => Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities("{\"Schema\":27,\"Capabilities\":" + capability + "}"));
+        => Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities("{\"Schema\":28,\"Capabilities\":" + capability + "}"));
 
     [Fact]
     public void ProbeSupportsPrettyHeadersAndAllPublishedLegacySchemas()
     {
-        SaveCodec.RequireExecutableCapabilities("{\r\n \"Capabilities\": {\r \"Code\":\"B\",\n\"Active\":false,\r\n\"Revision\":1},\r\n\"Schema\":27,\r\n\"MenuPolicy\":\"" + FoodNameIdentity.Wire + "\",\"UnreadBody\":[");
+        SaveCodec.RequireExecutableCapabilities("{\r\n \"Capabilities\": {\r \"Code\":\"B\",\n\"Active\":false,\r\n\"Revision\":1},\r\n\"Schema\":28,\r\n\"MenuPolicy\":\"" + FoodNameIdentity.Wire + "\",\"UnreadBody\":[");
         // F5c-lite: every older development schema, in each integer grammar the legacy probe accepted, is refused
         // with the development message, so the native authority bootstrap never takes PC ownership.
-        foreach (string schema in new[] { "0xD", "13", "17", "18", "25", "26" })
+        foreach (string schema in new[] { "0xD", "13", "17", "18", "25", "26", "27" })
             Assert.Contains("older development build", Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(
                 "{\"Unrelated\":[],\"Schema\":" + schema + ",\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}}")).Message);
     }

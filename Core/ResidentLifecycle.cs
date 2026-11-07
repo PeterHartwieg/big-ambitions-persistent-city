@@ -42,9 +42,11 @@ namespace PersistentCity.Core
         internal static IReadOnlyList<Place>? BeginEmploymentCheck(CityState city, CitizenState person, double now)
             => BeginEmploymentCheck(city, person, now, null);
 
-        /// <summary>As above, resolving the home through the simulator's place index instead of a catalogue scan.</summary>
+        /// <summary>As above, resolving the home through the simulator's place index instead of a catalogue scan and, with
+        /// <paramref name="occupancy"/>, checking vacancies against the simulator's seated counts instead of recounting
+        /// every person (F5e). A person on the finding branch holds no workplace itself, so both give the same vacancies.</summary>
         internal static IReadOnlyList<Place>? BeginEmploymentCheck(CityState city, CitizenState person, double now,
-            IReadOnlyDictionary<string, Place>? places)
+            IReadOnlyDictionary<string, Place>? places, WorkplaceOccupancy? occupancy = null)
         {
             if (!IsWorker(person) || !IsSafelyHome(person) || person.LastEmploymentCheckDay >= (int)(now / 1440)) return null;
             int day = checked(person.LastEmploymentCheckDay + 1);
@@ -67,9 +69,11 @@ namespace PersistentCity.Core
                 return null;
             }
             if (chance >= CityBalance.DailyJobFindingChance) return null;
-            var used = Population.Assignments(city, person);
             var home = places != null && places.TryGetValue(person.HomeId, out var indexed) ? indexed
                 : city.Places.First(p => p.Id == person.HomeId);
+            if (occupancy != null)
+                return DestinationChoice.Shortlist(city.Places.Where(occupancy.Vacant), home, PlaceKind.Work, key, city.Seed, CityBalance.WorkplaceRouteProbes);
+            var used = Population.Assignments(city, person);
             return DestinationChoice.Shortlist(city.Places.Where(p => Population.Used(used, p.Id) < p.Capacity),
                 home, PlaceKind.Work, key, city.Seed, CityBalance.WorkplaceRouteProbes);
         }

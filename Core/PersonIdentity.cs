@@ -171,5 +171,15 @@ namespace PersistentCity.Core
             if (carried.HasValue) return carried.Value;
             return persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension : ResidentIncomeSource.ExternalSupport;
         }
+
+        /// <summary>F5e: <see cref="Select"/> for a resident's Employment as <see cref="PersonTable.ResidentEmployment"/>
+        /// builds it from DayPlaceId (Study for students, Work otherwise), without allocating the record per posting.
+        /// A Study enrolment never yields <c>ExternalEmployment</c>: study carries no wage.</summary>
+        public static ResidentIncomeSource ForDayPlace(Persona persona, int age, string dayPlaceId)
+        {
+            bool work = dayPlaceId.Length != 0 && persona != Persona.Student;
+            if (work && age >= 18 && persona != Persona.Retiree) return ResidentIncomeSource.ExternalEmployment;
+            return persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension : ResidentIncomeSource.ExternalSupport;
+        }
     }
 }

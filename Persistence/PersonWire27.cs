@@ -15,6 +15,8 @@ namespace PersistentCity.Persistence
     public static partial class SaveCodec
     {
         public const int IndependentSchema = PersonTable.IndependentSchema;
+        /// <summary>F5e: writer 28 keeps this shape; the bump marks cities seated under the workplace area bands.</summary>
+        public const int WorkplaceCapacitySchema = PersonTable.WorkplaceCapacitySchema;
         public const int MaxRoutineTuple = 512;
 
         private const int RoutineFields27 = 16;
