@@ -77,7 +77,7 @@ namespace PersistentCity.Core
                 BusinessId = b.Id, IntentId = meal.IntentId, OriginPlaceId = person.PlaceId,
                 Minutes = 0, ReturnMinutes = 0, Evidence = "Resident is already present at this shop" }).ToArray();
             FoodDemand.ChooseObserved(consumer, businesses, quotes, intent, now, mealKind: meal.Kind);
-            RecordChoices(intent, businesses);
+            RecordChoices(intent, businesses, meal.Kind);
             if (city.ObservingFood) city.ObserveFood(new FoodDecisionTrace {
                 MealKind = meal.Kind, Consumer = consumer, Intent = intent, Businesses = businesses, Quotes = quotes });
             if (intent.Status != FoodIntentStatus.Travelling)

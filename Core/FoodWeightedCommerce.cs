@@ -479,7 +479,7 @@ namespace PersistentCity.Core
             }
             if(d.Result==FoodDecisionResult.Selected) meal.Reason=ChoiceWords(d);
             EndDecision(meal);
-            RecordChoices(intent,businesses);
+            RecordChoices(intent,businesses,meal.Kind);
             if(city.ObservingFood) city.ObserveFood(new FoodDecisionTrace {Consumer=Consumer(person,AvailableForMeal(meal),meal),
                 Intent=intent,Businesses=businesses,Quotes=quotes,MealKind=meal.Kind,Decision=d,ChoiceMilliseconds=choiceMilliseconds,
                 RouteCalls=atStop ? 0 : d.Shops.Sum(s=>(s.OutwardQuote==FoodQuoteState.Answered || s.OutwardQuote==FoodQuoteState.Refused ? 1 : 0)

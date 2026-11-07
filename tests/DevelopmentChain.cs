@@ -80,6 +80,13 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
+    public static string WriteAttendance(CityState state)
+    {
+        int schema = state.Schema;
+        try { state.Schema = CityState.AttendanceSchema; return SaveCodec.WriteForSchema(state, CityState.AttendanceSchema); }
+        finally { state.Schema = schema; }
+    }
+
     public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema || state.Schema == SaveCodec.EconomicLedgerSchema
         ? SaveCodec.WriteForSchema(state, state.Schema) : SaveCodec.Write(state);
 

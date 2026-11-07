@@ -98,9 +98,24 @@ namespace PersistentCity.Core
         public long After { get; set; }
     }
 
+    public struct ShopObservedOffer
+    {
+        public string ProductId { get; set; }
+        public long PriceUnits { get; set; }
+        // -1 unknown, 0 unavailable, 1 available; exact unit depletion is not journal evidence.
+        public int Stock { get; set; }
+    }
+
     public sealed class ShopObservation
     {
+        internal int[] HourCounts = new int[7];
+        internal string HoursHash = "";
         public int BusinessRef { get; set; }
+        public long Evicted { get; set; }
+        public int StaffedCounters { get; set; } = -1;
+        public ShopObservedOffer[] Supply { get; set; } = System.Array.Empty<ShopObservedOffer>();
+        // Canonical weekday/slot edges; empty until the first hours refresh.
+        public int[] Hours { get; set; } = System.Array.Empty<int>();
         // Empty until first observation; otherwise the twenty-character Z85 encoding of a 128-bit fingerprint.
         public string Fingerprint { get; set; } = "";
         public List<ShopChange> Changes { get; set; } = new List<ShopChange>();

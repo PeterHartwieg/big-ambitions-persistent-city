@@ -39,7 +39,8 @@ namespace PersistentCity.Runtime
                         count++;
                     }
                 }
-                if (same && count == place.WeeklyHours.Count) continue;
+                if (same && count == place.WeeklyHours.Count)
+                { if (!closed) ObserveJournalHours(pair.Key, place, minute); continue; }
                 var hours = new List<OpeningWindow>();
                 if (!closed)
                 foreach (var day in reg.scheduleDays)
@@ -47,7 +48,13 @@ namespace PersistentCity.Runtime
                         foreach (var slot in day.openingHourSlots)
                             hours.Add(new OpeningWindow { Day = (int)day.day - 1, FromMinute = slot.startingHour * 60, ToMinute = slot.endingHour * 60 });
                 place.OpenMinute = place.CloseMinute = 0; place.WeeklyHours = hours;
+                if (!closed) ObserveJournalHours(pair.Key, place, minute);
             }
+        }
+        private void ObserveJournalHours(string placeId, Place place, double minute)
+        {
+            if (journalReady && scopesByPlace.TryGetValue(placeId, out var scope) && candidateBusinesses.Contains(scope.BusinessId))
+                changeJournal?.ObserveHours(scope.BusinessId, placeId, checked((int)Math.Floor(minute)), place.WeeklyHours);
         }
     }
 }

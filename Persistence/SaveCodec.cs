@@ -384,7 +384,7 @@ namespace PersistentCity.Persistence
             { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text, PlaceCells.Streaming(schema)); return; }
             if (type == typeof(ResearchLedger))
             { Require(schema >= ResearchSchema, "The research section needs the research schema."); CheckResearch29(reader, text, ref records); return; }
-            if (schema >= EconomicLedgerSchema && type == typeof(ShopObservation)) { ReadObservation(reader, text, ref records); return; }
+            if (schema >= EconomicLedgerSchema && type == typeof(ShopObservation)) { ReadObservation(reader, text, ref records, schema); return; }
             if (schema >= EconomicLedgerSchema && EconomicScalar(type)) { CheckEconomicScalar(reader, type, text); return; }
             if (type == typeof(VendorTable))
             { Require(schema >= VendorSchema, "The vendor table needs the vendor schema."); CheckVendors30(reader, text, ref records); return; }
@@ -570,11 +570,13 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema25Contracts = new StateContractResolver(25);
         private static readonly IContractResolver Schema26Contracts = new StateContractResolver(26);
         private static readonly IContractResolver Schema28Contracts = new StateContractResolver(WorkplaceCapacitySchema);
+        private static readonly IContractResolver Schema31Contracts = new StateContractResolver(EconomicLedgerSchema);
+        private static readonly IContractResolver Schema32Contracts = new StateContractResolver(CityState.AttendanceSchema);
         private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -595,7 +597,7 @@ namespace PersistentCity.Persistence
             if (schema >= ResearchSchema) settings.Converters.Add(new ResearchConverter29());
             if (schema >= VendorSchema) settings.Converters.Add(new VendorConverter30(context));
             if (schema >= EconomicLedgerSchema) settings.Converters.Add(new EconomicConverter(context));
-            if (schema >= EconomicLedgerSchema) settings.Converters.Add(new ObservationConverter(context));
+            if (schema >= EconomicLedgerSchema) settings.Converters.Add(new ObservationConverter(context, schema));
             if (schema >= 25) settings.Converters.Add(new ProductSales25Converter(context));
             else if(schema>=23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
@@ -653,7 +655,7 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
@@ -1528,6 +1530,7 @@ namespace PersistentCity.Persistence
                     && !(schema < IndependentSchema && PersonProperty27(type, property.PropertyName))
                     && !(schema < ResearchSchema && ResearchProperty29(type, property.PropertyName))
                     && !(schema < VendorSchema && VendorProperty30(type, property.PropertyName))
+                    && !(schema < CityState.ChangeJournalSchema && type == typeof(FoodShopDay) && property.PropertyName == "StockoutObserved")
                     && !(schema < EconomicLedgerSchema && EconomicProperty(type, property.PropertyName))
                     // Schema 26 derives these from the person table: the resident tuple P and one roster record per person.
                     && !(schema >= PersonSchema && (type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"

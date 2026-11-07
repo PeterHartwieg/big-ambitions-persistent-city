@@ -68,14 +68,15 @@ namespace PersistentCity.Runtime
             public DecisionSupply(BuildingRegistration registration, string businessId, string[] products,
                 IReadOnlyDictionary<string, FoodSupplySnapshot> supply)
             {
-                Registration = registration; BusinessId = businessId; Products = products; Supply = supply;
+                Registration = registration; BusinessId = businessId; Products = products; Image = new DecisionSupplyImage<IReadOnlyDictionary<string, FoodSupplySnapshot>>(supply);
                 RentedByPlayer = registration.RentedByPlayer; TemporarilyClosed = registration.temporarilyClosed;
                 Established = registration.HasEstablishedBusiness; BusinessType = registration.businessTypeName;
             }
             public BuildingRegistration Registration { get; }
             public string BusinessId { get; }
             public string[] Products { get; }
-            public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
+            public DecisionSupplyImage<IReadOnlyDictionary<string, FoodSupplySnapshot>> Image { get; }
+            public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply => Image.Value;
             public bool RentedByPlayer { get; }
             public bool TemporarilyClosed { get; }
             public bool Established { get; }
@@ -101,10 +102,15 @@ namespace PersistentCity.Runtime
             public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
         }
         public double EarliestMinute => SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0;
-        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = 4)
+        private readonly FoodChangeJournal? changeJournal;
+        private bool journalReady;
+        public ShopObservation? JournalFor(string businessId) => changeJournal?.Find(businessId);
+        private readonly ShopObservedOffer[] journalOffers = new ShopObservedOffer[8];
+        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = 4, EconomicLedger? economy = null)
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
+            if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
             this.rivalWarning = rivalWarning;
             menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));
@@ -128,6 +134,7 @@ namespace PersistentCity.Runtime
             try
             {
                 NativeFoodOwnership.Attach(this);
+                journalReady = true;
                 patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
                     prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
             }
@@ -279,6 +286,10 @@ namespace PersistentCity.Runtime
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.
                 var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products)
                     : DecisionMenu(observationMinute, b.PlaceId, reg, b.Id, products);
+                // A live capture supersedes any older decision image without another native read.
+                if ((observed != null || capture) && decisionSupply.TryGetValue(b.PlaceId, out var cachedImage))
+                    cachedImage.Image.ObserveLive(supply);
+                ObserveJournalSupply(b, scope, supply, checked((int)observationMinute));
                 if (supply.Values.Any(s => !s.Units.HasValue))
                 {
                     supplyExclusions[b.PlaceId] = "Excluded: menu stock contract is unverified";
@@ -293,6 +304,26 @@ namespace PersistentCity.Runtime
                 result.Add(b);
             }
             return result;
+        }
+        private void ObserveJournalSupply(FoodBusiness b, FoodScope scope, IReadOnlyDictionary<string, FoodSupplySnapshot> supply, int observationMinute)
+        {
+            if (changeJournal != null)
+            {
+                int index = 0; bool complete = true;
+                foreach (var offer in b.Offers)
+                {
+                    var image = supply[offer.ProductId]; complete &= image.HasSupplyImage;
+                    journalOffers[index++] = new ShopObservedOffer { ProductId = offer.ProductId, PriceUnits = offer.Price.Units, Stock = image.ProducerUnits };
+                }
+                for (int i = 1; i < index; i++)
+                {
+                    var value = journalOffers[i]; int j = i - 1;
+                    while (j >= 0 && StringComparer.Ordinal.Compare(journalOffers[j].ProductId, value.ProductId) > 0)
+                    { journalOffers[j + 1] = journalOffers[j]; j--; }
+                    journalOffers[j + 1] = value;
+                }
+                changeJournal.ObserveSupply(b.Id, b.PlaceId, observationMinute, journalOffers, index, supply[scope.ProductId].StaffedCounters, complete);
+            }
         }
         private IReadOnlyCollection<string>? SelectedCompleteMenu(BuildingRegistration reg)
         {

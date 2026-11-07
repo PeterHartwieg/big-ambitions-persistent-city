@@ -24,7 +24,7 @@ namespace PersistentCity.Runtime
             simulation = null; saveSession = null; stopEnvironment = null;
             routes = null; clockRetimingRoutes = false; saveIdentity = null;
             accountingText = ""; nextAccountingText = 0;
-            economyText = ""; nextEconomyText = 0;
+            economyRefresh.Reset();
         }
     }
 }

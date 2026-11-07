@@ -239,8 +239,10 @@ public sealed partial class FoodMemoryTests
         string Read(string file) => File.ReadAllText(Path.Combine(root!.FullName, file));
         string panel = Read("Runtime/FoodEconomyPanel.cs"), popup = Read("Runtime/ResidentInspector.cs");
         Assert.Contains("if (showEconomy) DrawEconomy();", panel);
-        Assert.Contains("Time.unscaledTime >= nextEconomyText", panel);
-        Assert.Contains("nextEconomyText = Time.unscaledTime + 3", panel);
+        Assert.Contains("economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder)", panel);
+        string refresh = Read("Core/FoodPanelRefresh.cs");
+        Assert.Contains("if (!visible || now < next) return;", refresh);
+        Assert.Contains("next = now + 3", refresh);
         Assert.DoesNotContain("if (regularText == null) continue;", panel);
         Assert.Contains("if (regularText != null) text.AppendLine(regularText);", panel);
         Assert.Contains("?? \"Waiting for business ownership\"", panel);

@@ -18,7 +18,7 @@ internal sealed class GraphAudit
 {
     /// <summary>Transient caches and panel counters that are never saved and that a capture leaves empty.</summary>
     private static readonly HashSet<string> Transient = new(StringComparer.Ordinal)
-    { "counters", "visitorEndowment", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "estimatedMinutes" };
+    { "counters", "visitorEndowment", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "estimatedMinutes", "HourCounts", "HoursHash" };
 
     private readonly HashSet<(object, object)> visited = new(PairComparer.Instance);
     public readonly List<object> Shared = new();
@@ -114,6 +114,7 @@ internal sealed class GraphFill
         if (type == typeof(bool)) return true;
         if (type.IsEnum) { var values = Enum.GetValues(type); return values.GetValue(Math.Min(1, values.Length - 1)); }
         if (type == typeof(BigInteger)) return new BigInteger(n);
+        if (type == typeof(ShopObservedOffer[])) return new[] { new ShopObservedOffer { ProductId = "s" + n, PriceUnits = n + 1, Stock = n + 2 } };
         if (type == typeof(int[])) return new int[] { n, n + 1 };
         if (type == typeof(Money)) return Money.FromUnits(n);
         if (type == typeof(Position)) return new Position(n, n + 0.25, n + 0.5);

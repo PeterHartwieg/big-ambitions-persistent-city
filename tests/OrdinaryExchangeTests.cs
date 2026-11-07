@@ -220,7 +220,9 @@ public sealed class OrdinaryExchangeTests
         foreach (string write in new[] { "RentedByPlayer =", "businessOwnerRivalId =", "retailPrices =", "Bank", "Payroll", "CustomerEntriesHelper" })
             Assert.DoesNotContain(write, adapter);
         string panel = File.ReadAllText(Path.Combine(root, "Runtime/FoodEconomyPanel.cs"));
-        Assert.Contains("simulation.FreeOutsideSpending().Text()", panel);
+        // F6g owns the panel projection; render its week comparison once, without the old 14-day total.
+        Assert.DoesNotContain("simulation.FreeOutsideSpending().Text()", panel);
+        Assert.Equal(1, panel.Split("FoodFeedbackV2.AppendCity(").Length - 1);
     }
 
     [Fact]
@@ -232,13 +234,14 @@ public sealed class OrdinaryExchangeTests
     }
 
     [Fact]
-    public void CurrentWriter32GoldenIsUnchangedWithOrdinaryPolicyAttached()
+    public void FrozenAttendanceWriterGoldenIsUnchangedWithOrdinaryPolicyAttached()
     {
         var city = AttendanceWageTests.Fresh(42);
         city.AttachOrdinaryExchanges(new OrdinaryOwnershipIndex(Array.Empty<Place>(), city.State.Minute, _ => default));
         Drain(city, 1440 + 1100);
-        Assert.Equal(32, CityState.CurrentSchema);
-        Assert.Equal("23d2928c71a4a954255154702a93deca1e63b53249fd9332813a1c7ee762082e", EconomicLedgerTests.Sha(SaveCodec.Write(city.State)));
+        // F6f pins the attendance writer; F6g separately pins the new current writer.
+        Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.AttendanceSchema);
+        Assert.Equal("23d2928c71a4a954255154702a93deca1e63b53249fd9332813a1c7ee762082e", EconomicLedgerTests.Sha(DevelopmentChain.WriteAttendance(city.State)));
     }
     [Fact]
     public void NoOutsideProjectionOrStringIsBuiltBySimulationEvents()

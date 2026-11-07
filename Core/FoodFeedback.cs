@@ -20,7 +20,7 @@ namespace PersistentCity.Core
         /// <summary>Equals the <see cref="FoodShopDay"/> retention (rows before day − 13 are removed), so the
         /// previous week is always inside the kept history.</summary>
         public const int RetainedDays = 2 * WeekDays;
-        public const string OfferMeaning = "Evaluated offers are daily totals summed per week. A resident who decides again counts again, so these are offers, not people, and they are not located by hour or meal.";
+        public const string OfferMeaning = "Evaluated offers are daily totals summed per week. A resident who decides again counts again, so these are offers, not people, and these daily totals are not located by hour or meal. Meal-period causes appear separately.";
         private static readonly CultureInfo Dollars = CultureInfo.GetCultureInfo("en-US");
         private static readonly string[] CauseLabels = { "Chosen", "Unaffordable", "Travel/time", "Closed or too late",
             "Stock unavailable", "No staffed counter", "Service/queue", "Preferred another option", "Unknown evidence" };
