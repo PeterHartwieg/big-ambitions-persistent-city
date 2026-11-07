@@ -13,6 +13,17 @@ namespace PersistentCity.Core
         // F6c: transient city totals for the read-only food panel; never saved. Each setter reports the exact
         // change so the panel needs no consumer scan. Unattached budgets (tests, codecs, copies) pay one null check.
         internal FoodMoneyCounters? counters;
+        private bool visitorEndowment;
+        internal bool VisitorEndowment
+        {
+            get => visitorEndowment;
+            set
+            {
+                if (visitorEndowment == value) return;
+                int before = counters == null ? 0 : FoodMoneyCounters.Flags(this);
+                visitorEndowment = value; counters?.Reflag(before, this);
+            }
+        }
         private int dailyHousingCents, dailyEssentialsCents, dailyHomeFoodCents, lastPostedDay = -1, homeFoodFundedDay = -1;
         private Money openingBalance, balance, incomeReceived, essentialsPaid, homeFoodPaid, preparedFoodSpent, externalFoodSpent, heldPurchase, arrears;
         private OwnerAccounts ledger;
@@ -70,18 +81,25 @@ namespace PersistentCity.Core
             return budget;
         }
 
-        public static void PostDay(ResidentBudget budget, double minute, CitizenState? person = null)
-            => PostDayCore(budget, minute, person, false);
+        public static void PostDay(ResidentBudget budget, double minute, CitizenState? person = null, bool visitorEndowment = false)
+            => PostDayCore(budget, minute, person, false, visitorEndowment);
 
         // Frozen development simulations only; the product reader refuses these cities.
         internal static void PostDevelopmentDay(ResidentBudget budget, double minute, CitizenState person)
             => PostDayCore(budget, minute, person, true);
 
-        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool dailyEmployment)
+        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool dailyEmployment, bool visitorEndowment = false)
         {
             int day = checked((int)(minute / 1440));
             if (minute != budget.NextPostingMinute || day <= budget.LastPostedDay)
                 throw new InvalidOperationException("Household posting is duplicate or out of order.");
+            if (visitorEndowment && person?.IsVisitor == true)
+            {
+                CheckCash(budget);
+                budget.VisitorEndowment = true;
+                budget.LastPostedDay = day; budget.NextPostingMinute = (day + 1) * 1440.0;
+                return; // endowment pays purchases; no city housing, essentials or daily outside allowance
+            }
             // Refresh only the next unposted wage. Earlier postings, savings and holds
             // retain their exact amounts through job transitions and reloads.
             var source = person != null ? IncomeSource(person) : budget.IncomeSource;
@@ -142,12 +160,15 @@ namespace PersistentCity.Core
             => source == ResidentIncomeSource.ExternalPension ? basis * CityBalance.PensionIncomePercent / 100
                 : source == ResidentIncomeSource.ExternalSupport ? basis * CityBalance.SupportIncomePercent / 100 : basis;
 
+        internal static Money SpendingReserve(ResidentBudget budget) => budget.VisitorEndowment ? Money.Zero
+            : Money.FromCents((long)budget.DailyHousingCents + budget.DailyEssentialsCents + budget.DailyHomeFoodCents);
+
         public static Money SpendingLimit(ResidentBudget budget)
         {
             if (budget.HeldPurchase != Money.Zero || budget.Arrears != Money.Zero) return Money.Zero;
             // Keep the next day's basic bill available. Savings can fund a considered purchase,
             // but replenishing a daily allowance never creates spendable money.
-            var reserve = Money.FromCents((long)budget.DailyHousingCents + budget.DailyEssentialsCents + budget.DailyHomeFoodCents);
+            var reserve = SpendingReserve(budget);
             return Money.Min(Money.FromCents(1000000), Money.Max(Money.Zero, budget.Balance - reserve));
         }
 

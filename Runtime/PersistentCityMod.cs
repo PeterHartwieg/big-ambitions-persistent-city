@@ -685,6 +685,8 @@ namespace PersistentCity.Runtime
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             simulation.AttachWorkplaceAvailability(new NativeWorkplaceAvailability(state.Places));
+            ordinaryOwnershipIndex = NativeOrdinaryOwnership.Create(state.Places, state.Minute);
+            simulation.AttachOrdinaryExchanges(ordinaryOwnershipIndex, new OrdinaryVisitPrices(settings.OrdinaryRetailVisitCents, settings.OrdinaryLeisureVisitCents));
             if (!simulation.IsAccountingEpochDrained(Now()))
             { StopAccounting(); return; }
             var binding = prepared.Saves.BindTo(save.modData);
@@ -801,7 +803,7 @@ namespace PersistentCity.Runtime
             DetachSaveEpoch();
             NativeInteriorCityView.Stop();
             vendorMarket?.Dispose(); vendorMarket = null;
-            foodMarket?.Dispose(); foodMarket = null;
+            foodMarket?.Dispose(); foodMarket = null; ordinaryOwnershipIndex = null;
             inspector.Detach();
             try { physical?.Dispose(); }
             finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }

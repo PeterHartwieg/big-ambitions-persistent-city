@@ -30,8 +30,14 @@ namespace PersistentCity.Core
             public void Add(ResidentMeal meal)
             {
                 var e = new Entry { Meal = meal, Person = food.Owner(meal)! };
+                meal.Budget!.VisitorEndowment = food.city.VisitorEndowments && e.Person.IsVisitor;
                 items.Add(e);
                 if (food.city.State.Schema >= CityState.AttendanceSchema) byPerson.Add(meal.ResidentId, e);
+            }
+            internal void RestoreVisitorWalletModes()
+            {
+                foreach (var e in items)
+                    e.Meal.Budget!.VisitorEndowment = food.city.VisitorEndowments && e.Person.IsVisitor;
             }
             public void Build()
             {
@@ -67,7 +73,7 @@ namespace PersistentCity.Core
                     Schedule(e);
                 }
                 else if (food.city.State.Schema >= CityState.AttendanceSchema)
-                    HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person);
+                    HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments);
                 else HouseholdFinance.PostDevelopmentDay(budget, food.city.State.Minute, e.Person);
                 e.Minute = Math.Min(budget.NextPostingMinute, e.WageAt);
                 Repair(0);
@@ -105,6 +111,7 @@ namespace PersistentCity.Core
         }
         private readonly BudgetQueue budgetDue;
         private double NextBudgetMinute => budgetDue.Minute;
+        internal void RestoreVisitorWalletModes() => budgetDue.RestoreVisitorWalletModes();
         internal bool TracksEmployment(CitizenState person) => EmploymentWages.Eligible(person) && budgetDue.Contains(person.Identity.Id);
         internal bool PostingDueAt(double minute) => NextBudgetMinute == minute;
         internal void AccrueWorkDeparture(CitizenState live, CitizenState working) => budgetDue.Leave(live, working);
@@ -159,6 +166,7 @@ namespace PersistentCity.Core
         }
         private Money AvailableForMeal(ResidentMeal meal)
         {
+            if (meal.Budget != null) meal.Budget.VisitorEndowment = city.VisitorEndowments && Owner(meal)?.IsVisitor == true;
             if (meal.Budget != null) meal.Allowance = HouseholdFinance.SpendingLimit(meal.Budget);
             return meal.Budget != null ? meal.Allowance : Money.Max(Money.Zero, meal.Allowance - meal.DayAllowanceUsed);
         }

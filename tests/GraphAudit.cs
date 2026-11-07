@@ -18,7 +18,7 @@ internal sealed class GraphAudit
 {
     /// <summary>Transient caches and panel counters that are never saved and that a capture leaves empty.</summary>
     private static readonly HashSet<string> Transient = new(StringComparer.Ordinal)
-    { "counters", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "estimatedMinutes", "HourCounts", "HoursHash" };
+    { "counters", "visitorEndowment", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "estimatedMinutes", "HourCounts", "HoursHash" };
 
     private readonly HashSet<(object, object)> visited = new(PairComparer.Instance);
     public readonly List<object> Shared = new();
