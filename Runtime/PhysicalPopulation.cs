@@ -34,6 +34,7 @@ namespace PersistentCity.Runtime
             // A queue-at-opening stand, its line and its place in it. Null for every other binding.
             public Dwell? Queue;
             public long VendorOpening; // transient; shares the same pool, slot and movement bounds as door queues
+            public double VendorDepartureUntil; // captured logical departure plus catch-up grace; never saved
             public OptionalStopState? Optional;
             public bool OptionalReturning;
             public DoorQueue? Line;
@@ -726,6 +727,16 @@ namespace PersistentCity.Runtime
             queued++; return ObserveVendorQueue(binding);
         }
 
+        private bool AwaitVendorDeparture(Binding binding)
+        {
+            var citizen = binding.Citizen;
+            if (binding.Lease != null || citizen.Phase != CitizenPhase.AtPlace || citizen.PlaceId != binding.Line!.Key
+                || !Position.Finite(binding.VendorDepartureUntil) || simulation.State.Minute > binding.VendorDepartureUntil
+                || !vendorMeals.TryGetValue(citizen.Identity.Id, out var meal) || meal.PlaceId != citizen.PlaceId) return false;
+            return meal.Status == MealStatus.Paid || meal.Status == MealStatus.Missed
+                || meal.Status == MealStatus.Declined || meal.Status == MealStatus.Uncertain;
+        }
+
         private bool ObserveVendorQueue(Binding binding)
         {
             var body = binding.Person!; var line = binding.Line!;
@@ -736,6 +747,7 @@ namespace PersistentCity.Runtime
             if (binding.Step != QueueStep.Entering && (!waiting || binding.StepWalked >= QueueStepSeconds))
             {
                 if (waiting && binding.StepWalked >= QueueStepSeconds) GiveUp(binding);
+                binding.VendorDepartureUntil = Math.Min(binding.Citizen.NextEventMinute, binding.Citizen.ActivityUntilMinute) + 1;
                 binding.Step = QueueStep.Entering; binding.StepWalked = 0;
                 if (!body.SetPathTarget(line.Entrance, NativeTravelPace.WalkingMetresPerSecond)) return false;
             }
@@ -744,6 +756,13 @@ namespace PersistentCity.Runtime
                 if (binding.StepWalked >= QueueStepSeconds) return false;
                 if (Position.Distance(body.Position, line.Entrance) < 0.3)
                 {
+                    // Pavement has no doorway to hide a returned body. Keep a completed meal's
+                    // body here until its scheduled departure takes the lease, even while paused.
+                    if (AwaitVendorDeparture(binding))
+                    {
+                        if (body.Agent.hasPath) body.Agent.ResetPath();
+                        body.Stop(true); return true;
+                    }
                     binding.VendorOpening = 0; binding.Line = null;
                     if (Bound(binding)) queueBindings--;
                     if (binding.Lease == null || !simulation.TrySamplePhysicalJourney(binding.Lease, out var resumed) || resumed.Mode != TravelMode.Walk) return false;

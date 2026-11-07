@@ -57,6 +57,10 @@ public sealed class E6eBodyMeasure
         });
         f.ReachTargets();
         Measure("eight-body dwell update including selection cadence", () => { Time.Next(); f.Bodies.Update(); });
+        foreach (var meal in f.City.State.Food!.Residents) meal.Status = PersistentCity.Core.MealStatus.Paid;
+        f.Tick(); f.ReachTargets();
+        Assert.Equal(8, f.Pool.Active.Count);
+        Measure("eight completed-meal bodies awaiting departure", () => { Time.Next(); f.Bodies.Update(); });
         Report("Whole-frame and native Instantiate/appearance/NavMeshAgent costs: unmeasured offline; batched rig required.");
         Report("No autosave or save in these headless windows. Four parked hotspots unchanged.");
     }

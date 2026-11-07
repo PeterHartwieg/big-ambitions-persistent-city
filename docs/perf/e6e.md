@@ -43,6 +43,20 @@ Each E6e component is below the 5 ms p95 gate offline. This does not measure com
 
 Flag from the first full unit run: the existing `RushSpikeReplayTests.EveningRushHasNoAdvancementIntervalAtOrAbove30MsAndKeepsTheUninterruptedState` failed on a **57.176417 ms** advancement interval at minute **3993.630831643027**, with **one GC** during it. This is its unmodified Core rush fixture, separate from the E6e component windows and from a native whole frame. Core and the parked hotspots were not edited. Isolated and full-suite rerun results are recorded in [checks](../checks/e6e.md#offline-checks).
 
+## Review fix Opus-r1-1
+
+The completed-meal hold adds a transient captured departure deadline to each physical binding; it adds no saved state or native sampling. `E6eBodyMeasure` now also times eight completed-meal bodies waiting at the stand. Same foreground Debug harness, 50 warmups and 1,000 samples per component, native scene/pool doubles:
+
+| Component | p50 (ms) | p95 (ms) | max (ms) | bytes/op | spikes >=30 ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cold eight-spot sampling | 0.001666 | 0.002583 | 9.752958 | 1,080.0 | 0 |
+| Cached queue lookup | 0.000167 | 0.000208 | 0.000209 | 0 | 0 |
+| Eight-body selection/release, pool double | 0.061625 | 0.062500 | 2.337375 | 33,474.0 | 0 |
+| Eight-body dwell, including selection cadence | 0.050959 | 0.051834 | 0.446125 | 26,992.0 | 0 |
+| Eight completed-meal bodies awaiting departure | 0.003875 | 0.004083 | 0.005917 | 1,392.0 | 0 |
+
+All component p95 values remain below 5 ms. The eight-body selection allocation changes from 33,410 to 33,474 B/op with the additional deadline field; the completed-meal window asserts all eight bodies remain acquired. No autosave or save runs in these headless windows. No hotspot or optimization outside this finding changed. Whole-frame and native spawn costs remain unmeasured offline.
+
 ## Whole-frame and native spawn cost
 
 Unmeasured offline. Native `Instantiate`, appearance assignment, NavMeshAgent work, Street Food tick, Unity rendering and whole-frame timing require the batched rig. No total-game mod-work or whole-frame pass is claimed from these component numbers. The batched gate remains PC mod-work p95 <5 ms with every >=30 ms spike listed by component and condition; whole-frame cost is reported separately.

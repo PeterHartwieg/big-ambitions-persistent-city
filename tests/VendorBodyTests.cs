@@ -143,14 +143,12 @@ public sealed class VendorBodyTests
         Assert.Equal(reads, f.Vendors.Api.RevisionReads); Assert.Equal(copies, f.Vendors.Api.CopyCalls);
     }
 
-    [Theory]
-    [InlineData(false)] [InlineData(true)]
-    public void BodiesWalkOffQueueWhenStandClosesOrServiceFinishes(bool paid)
+    [Fact]
+    public void BodiesWalkOffQueueWhenStandClosesBeforeServiceFinishes()
     {
         using var f = new Fixture(); f.Tick(); f.ReachTargets();
         var body = Assert.Single(f.Pool.Active).Value;
-        if (paid) f.Meal.Status = MealStatus.Paid;
-        else { StreetFoodHooks.Close("v00"); f.Vendors.Run(f.Vendors.Now + 1); f.City.State.Minute = f.Vendors.Now; }
+        StreetFoodHooks.Close("v00"); f.Vendors.Run(f.Vendors.Now + 1); f.City.State.Minute = f.Vendors.Now;
         f.Tick();
         Assert.False(body.Agent.isStopped); Assert.Equal(f.Row.Stand!.Position, body.Target);
         f.ReachTargets(); Assert.Empty(f.Pool.Active); Assert.False(body.Valid);
@@ -193,7 +191,7 @@ public sealed class VendorBodyTests
     {
         using var f = new Fixture(people: 2, cap: 1); f.Tick(); f.ReachTargets();
         var first = Assert.Single(f.Pool.Active).Value; var firstIdentity = f.Person.Identity;
-        f.Meal.Status = MealStatus.Paid; f.Tick(); f.ReachTargets();
+        f.Meal.Status = MealStatus.Paid; f.Bodies.Suspend(); f.Tick();
         var next = Assert.Single(f.Pool.Active).Value;
         Assert.False(first.Valid); Assert.Equal("body00", first.IdentityId); Assert.Equal("body01", next.IdentityId);
         Assert.Same(first.Character, next.Character); Assert.True(next.Generation > first.Generation);
@@ -240,6 +238,52 @@ public sealed class VendorBodyTests
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.Equal(f.City.State.Places.Single(p => p.Id == f.Person.HomeId).Position, body.Target);
         Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
+    }
+
+    [Theory]
+    [InlineData(MealStatus.Paid)] [InlineData(MealStatus.Missed)]
+    [InlineData(MealStatus.Declined)] [InlineData(MealStatus.Uncertain)]
+    public void FinishedMealKeepsSameBodyThroughGapAndDeparture(MealStatus status)
+    {
+        using var f = new Fixture(travelling: true, stayMinutes: 2); f.Tick();
+        var body = Assert.Single(f.Pool.Active).Value;
+        body.Character.transform.position = PhysicalPedestrianBody.Vector(f.Row.Stand!.Position);
+        f.Tick(); while (!f.City.AdvanceTo(f.City.State.Minute, 1).CaughtUp) { } f.Tick(); f.ReachTargets();
+        f.Meal.Status = status; f.Tick();
+        Assert.Equal(f.Row.Stand.Position, body.Target);
+        f.ReachTargets();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        Assert.True(body.Valid); Assert.True(body.Agent.isStopped);
+        Assert.Equal(CitizenPhase.AtPlace, f.Person.Phase);
+        int acquisitions = f.Pool.Acquisitions.Count;
+        // A paused city must not consume the bounded logical departure window.
+        for (int i = 0; i < 100; i++) f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        double leaves = f.Person.NextEventMinute;
+        while (!f.City.AdvanceTo(leaves - 0.5).CaughtUp) { } f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        while (!f.City.AdvanceTo(leaves).CaughtUp) { }
+        Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
+        f.Tick(); f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        Assert.Equal(f.City.State.Places.Single(p => p.Id == f.Person.HomeId).Position, body.Target);
+        Assert.False(body.Agent.isStopped);
+        Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
+        Assert.Equal(acquisitions, f.Pool.Acquisitions.Count);
+    }
+
+    [Fact]
+    public void FinishedMealHoldEndsAfterCapturedDepartureGrace()
+    {
+        using var f = new Fixture(); f.Tick(); f.ReachTargets();
+        var body = Assert.Single(f.Pool.Active).Value;
+        double leaves = f.Person.NextEventMinute;
+        f.Meal.Status = MealStatus.Paid; f.Tick(); f.ReachTargets();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        // A later reschedule cannot keep a stale physical handoff alive without a bound.
+        f.Person.NextEventMinute += 30; f.Person.ActivityUntilMinute += 30;
+        f.City.State.Minute = leaves + 1.01; f.Tick();
+        Assert.Empty(f.Pool.Active); Assert.False(body.Valid);
     }
 
     [Fact]
