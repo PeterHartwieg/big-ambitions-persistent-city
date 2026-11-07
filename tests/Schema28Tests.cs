@@ -161,23 +161,23 @@ public sealed class Schema28Tests
         ("current-schema-minimal", CurrentSchemaOnlyTests.City),
     };
 
-    /// <summary>Two seeded fixtures pinned for writer 28. A later shape change without a schema bump fails here.</summary>
+    /// <summary>Two seeded fixtures pinned for writer 28. C5c: writer 28 is now the frozen F5e writer (before the research
+    /// section); its pins are unchanged and its frozen reader round-trips them.</summary>
     [Fact]
     public void GoldenWriter28BytesArePinned()
     {
-        Assert.Equal(28, CityState.CurrentSchema); Assert.Equal(28, PersonTable.WorkplaceCapacitySchema);
-        Assert.Equal(27, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(28, PersonTable.WorkplaceCapacitySchema); Assert.Equal(28, SaveCodec.WorkplaceCapacitySchema);
         var pins = JObject.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(28, (int)pins["writer"]!);
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
         {
-            string payload = SaveCodec.Write(build());
+            string payload = DevelopmentChain.Write28(build());
             Assert.Contains("\"Schema\":28,", payload);
             actual.Add(name + " " + Sha(payload) + " " + payload.Length);
             expected.Add(name + " " + (string)pins["fixtures"]![name]!["sha256"]! + " " + (int)pins["fixtures"]![name]!["characters"]!);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            var read = SaveCodec.ReadWriter28(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(payload, SaveCodec.WriteForSchema(read.State!, 28));
         }
         Assert.True(expected.SequenceEqual(actual), string.Join("; ", actual));
     }
@@ -185,7 +185,7 @@ public sealed class Schema28Tests
     [Fact]
     public void GoldenFixturesAreDeterministic()
     {
-        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
+        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(DevelopmentChain.Write28(build()), DevelopmentChain.Write28(build()));
     }
 
     /// <summary>Writer 28 is writer 27's shape: the same state gives the same bytes apart from the schema label.</summary>
@@ -193,9 +193,9 @@ public sealed class Schema28Tests
     public void Writer28KeepsTheWriter27ShapeAndOnlyTheLabelDiffers()
     {
         var state = GoldenFixtures().First().Build();
-        string current = SaveCodec.Write(state), frozen = DevelopmentChain.Write27(state);
+        string current = DevelopmentChain.Write28(state), frozen = DevelopmentChain.Write27(state);
         Assert.Equal(current.Replace("\"Schema\":28,", "\"Schema\":27,"), frozen);
-        Assert.Equal(28, state.Schema);
+        Assert.Equal(CityState.CurrentSchema, state.Schema);
     }
 
     // ---- Older cities are refused and kept ----
@@ -225,7 +225,7 @@ public sealed class Schema28Tests
         RefusedAndPreserved(JObject.Parse(payload).Also(r => r["Schema"] = 26).ToString(Formatting.None), replacement,
             SaveReadStatus.DevelopmentSchema, "start a new city");
         // A future label is refused as future and kept.
-        RefusedAndPreserved(JObject.Parse(SaveCodec.Write(replacement)).Also(r => r["Schema"] = 29).ToString(Formatting.None), replacement,
+        RefusedAndPreserved(JObject.Parse(SaveCodec.Write(replacement)).Also(r => r["Schema"] = CityState.CurrentSchema + 1).ToString(Formatting.None), replacement,
             SaveReadStatus.Future);
     }
 

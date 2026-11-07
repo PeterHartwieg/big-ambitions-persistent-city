@@ -245,8 +245,10 @@ public sealed class MarketResearchTests
         var source=new ResearchFixture(40); Assert.Equal(0,source.Reads);
         Assert.DoesNotContain(typeof(IMarketResearchSnapshot).GetMethods(),m=>m.GetParameters().Any(p=>p.ParameterType==typeof(IRoutePlanner)));
         Assert.DoesNotContain(typeof(MarketResearchEngine).Assembly.GetReferencedAssemblies(),a=>a.Name!.Contains("Unity") || a.Name.Contains("Rlo"));
-        Assert.DoesNotContain(typeof(CityState).GetProperties(),p=>p.Name.Contains("Research"));
-        Assert.DoesNotContain(typeof(CityState).GetFields(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic),p=>p.Name.Contains("Research"));
+        // C5c: the only saved research member is the C5 ledger; no engine, cursor or report is a CityState member.
+        Assert.Equal(new[] { "Research" }, typeof(CityState).GetProperties().Where(p=>p.Name.Contains("Research")).Select(p=>p.Name));
+        Assert.Equal(typeof(ResearchLedger), typeof(CityState).GetProperty("Research")!.PropertyType);
+        Assert.DoesNotContain(typeof(CityState).GetFields(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic),p=>p.Name.Contains("Research") && p.Name!="<Research>k__BackingField");
     }
 
     [Fact]

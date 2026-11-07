@@ -1,0 +1,11 @@
+{
+  "writer": 29,
+  "note": "C5c: SHA-256 of SaveCodec.Write for four fixtures (ResearchSaveTests.GoldenFixtures). Writer 29 adds CityState.Research; everything outside the section is writer 28's shape. A shape change without a schema bump must fail this pin; a bump adds a new pin file. refusedOlder is frozen writer-28 bytes (CurrentSchemaOnlyTests.City through DevelopmentChain.Write28, the same bytes as Writer28 current-schema-minimal), written once and never regenerated.",
+  "fixtures": {
+    "current-schema-minimal": { "sha256": "04e4a45e391f1a5d0889b73fb968a022d8ed27c65a57efdb56eaff5a7440ed7a", "characters": 1780 },
+    "research-all-states": { "sha256": "d6068b684fbeed9036ab8d214729b87edb11b96ae9bfa0d4f845f9a31db1186c", "characters": 13438 },
+    "research-at-bounds": { "sha256": "70b11fd9ad18de1fa8feb605abf6e4a8940c6e4827d48d94030b88751c6a788b", "characters": 48089 },
+    "banded-visitors-factor2-30h-research": { "sha256": "cf3928a536ae17fae9e855f28afdd29a396c65c9c0ded3878600f850d1c70e45", "characters": 181598 }
+  },
+  "refusedOlder": { "file": "refused-writer-28-minimal.json", "schema": 28, "sha256": "d6758956db7c631251385a06d9732e8b2683b6dacac9dbd0e9c0dea23f51ef69" }
+}
