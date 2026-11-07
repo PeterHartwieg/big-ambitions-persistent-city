@@ -10,6 +10,12 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
+    public sealed partial class PopulationRuntime
+    {
+        // Keep the E6e hook with physical population; reuse E6d's validated, logical-minute image.
+        internal StreetFoodVendorMarket? PhysicalVendorMarket => vendorMarket;
+    }
+
     /// <summary>Rendering leases follow the population; measured body movement owns visible journey progress.</summary>
     internal sealed partial class PhysicalPopulation : IDisposable
     {
@@ -27,6 +33,7 @@ namespace PersistentCity.Runtime
             public float NextTargetAttempt;
             // A queue-at-opening stand, its line and its place in it. Null for every other binding.
             public Dwell? Queue;
+            public long VendorOpening; // transient; shares the same pool, slot and movement bounds as door queues
             public OptionalStopState? Optional;
             public bool OptionalReturning;
             public DoorQueue? Line;
@@ -45,7 +52,7 @@ namespace PersistentCity.Runtime
         private enum QueueStep { Approaching, Standing, Entering }
         private sealed class QueuePlanEntry
         {
-            public Dwell Dwell; public DoorQueue Line = null!; public int Slot;
+            public Dwell? Dwell; public DoorQueue Line = null!; public int Slot; public long VendorOpening;
         }
         private readonly CitySimulator simulation;
         private readonly MultimodalRoutes routes;
@@ -56,6 +63,12 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, float> attempted = new Dictionary<string, float>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places;
         private readonly DwellSpots spots;
+        private readonly PopulationRuntime? owner;
+        private readonly Dictionary<string, long> vendorGaveUp = new Dictionary<string, long>(StringComparer.Ordinal);
+        private readonly Dictionary<string, CitizenState> vendorWaiters = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
+        private FoodCommerceState? vendorFood;
+        private int vendorMealCount;
+        private readonly Dictionary<string, ResidentMeal> vendorMeals = new Dictionary<string, ResidentMeal>(StringComparer.Ordinal);
         private readonly Dictionary<string, QueuePlanEntry> queuers = new Dictionary<string, QueuePlanEntry>(StringComparer.Ordinal);
         // Queue dwells whose citizen could not reach a spot: they wait inside for the rest of that dwell.
         private readonly Dictionary<string, double> gaveUp = new Dictionary<string, double>(StringComparer.Ordinal);
@@ -85,7 +98,10 @@ namespace PersistentCity.Runtime
             IModLogger log, int pedestrianLimit, int vehicleLimit, double radius, DwellSpots spots)
         {
             this.spots = spots;
+            owner = parent.GetComponent<PopulationRuntime>();
+            foreach (var citizen in simulation.State.Citizens) TrackVendorWaiter(citizen);
             this.simulation = simulation; this.routes = routes; this.log = log;
+            RefreshVendorMeals();
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
             places = simulation.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
             pedestrians = new PhysicalPedestrians(parent, pedestrianLimit);
@@ -159,6 +175,7 @@ namespace PersistentCity.Runtime
         public void Update()
         {
             if (!active || disposed) return;
+            RefreshVendorMeals();
             ambient.Update();
             if (!ambient.Active) throw new InvalidOperationException("Pedestrian ownership guard failed: " + ambient.LastError);
             vehicles.Update();
@@ -203,6 +220,7 @@ namespace PersistentCity.Runtime
                 CheckJourneyIndex();
             }
             PlanQueues(focus, radius);
+            PlanVendorQueues(focus, radius);
             // Candidate selection. tools/physical-selection-regression extracts the text from this line
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
@@ -227,6 +245,20 @@ namespace PersistentCity.Runtime
                 if (!(distance <= radius)) continue;
                 candidates.Add(new SelectionCandidate(c, sampled, tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
             }
+            // Vendor stays are outdoor meal service, so they are not in the journey/opening index.
+            // Maintain them from committed activity events rather than scanning the population per frame.
+            foreach (var citizen in vendorWaiters.Values)
+            {
+                if (journeyIndexFallback || simulation.ActiveJourneys.Contains(citizen)
+                    || people >= pedestrianLimit || !queuers.TryGetValue(citizen.Identity.Id, out var queue)
+                    || bindings.ContainsKey(citizen.Identity.Id) || ambient.IsReserved(citizen.Identity.Id)
+                    || !(citizen.NextEventMinute > simulation.State.Minute)) continue;
+                bool tried = attempted.TryGetValue(citizen.Identity.Id, out float lastAttempt);
+                if (tried && Time.unscaledTime - lastAttempt < 2) continue;
+                double distance = Position.Distance(queue.Line.Entrance, focus);
+                if (distance <= radius) candidates.Add(new SelectionCandidate(citizen, queue.Line.Entrance,
+                    tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
+            }
             candidates.Sort(SelectionCandidate.ByPriority);
             foreach (var candidate in candidates)
             {
@@ -249,7 +281,7 @@ namespace PersistentCity.Runtime
                 var binding = new Binding { Citizen = citizen, ObservedMinute = simulation.State.Minute };
                 Position at = candidate.Position;
                 // A waiter who was indoors comes out through the entrance and walks to their spot.
-                if (queuer) { binding.Queue = queue!.Dwell; binding.Line = queue.Line; binding.Slot = queue.Slot; at = queue.Line.Entrance; }
+                if (queuer) { binding.Queue = queue!.Dwell; binding.VendorOpening = queue.VendorOpening; binding.Line = queue.Line; binding.Slot = queue.Slot; at = queue.Line.Entrance; }
                 if (moving && !simulation.TryAcquirePhysicalJourney(citizen.Identity.Id, out binding.Lease)) continue;
                 bool bound = false;
                 try
@@ -404,6 +436,7 @@ namespace PersistentCity.Runtime
         private void GiveUp(Binding binding)
         {
             if (binding.Queue.HasValue) gaveUp[binding.Citizen.Identity.Id] = binding.Queue.Value.EndMinute;
+            if (binding.VendorOpening > 0) vendorGaveUp[binding.Citizen.Identity.Id] = binding.VendorOpening;
             if (gaveUp.Count > 256)
                 foreach (var stale in gaveUp.Where(p => p.Value <= simulation.State.Minute).Select(p => p.Key).ToList()) gaveUp.Remove(stale);
         }
@@ -412,7 +445,7 @@ namespace PersistentCity.Runtime
         {
             foreach (var b in bindings.Values)
             {
-                if (b.Queue.HasValue && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
+                if ((b.Queue.HasValue || b.VendorOpening > 0) && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
                     yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, b.Slot);
                 else if (b.Optional != null && !b.OptionalReturning)
                     for (int slot = 0; slot < line.Spots.Count; slot++)
@@ -439,7 +472,7 @@ namespace PersistentCity.Runtime
             if (person == null || !person.Valid || lease == null || binding.Queue.HasValue || binding.AwaitingArrival
                 || citizen.Phase != CitizenPhase.Travelling || simulation.IsPhysicalJourneyValid(lease)
                 || (citizen.DestinationActivity != Activity.Shop && citizen.DestinationActivity != Activity.Leisure)
-                || !places.TryGetValue(citizen.DestinationId, out var destination)
+                || !TryBodyPlace(citizen.DestinationId, out var destination)
                 || Position.Distance(person.Position, destination.Position) > 3) return false;
             binding.Lease = null;
             simulation.ReleasePhysicalJourney(lease); // Already returned on completion; a no-op kept for symmetry with Release.
@@ -462,8 +495,10 @@ namespace PersistentCity.Runtime
             if (citizen.Phase == CitizenPhase.WaitingForOpening && spots.SampledThisFrame
                 && places.TryGetValue(citizen.PlaceId, out var place) && spots.Unsampled(place)
                 && simulation.State.Minute <= binding.AwaitMinute + 0.5) return true;
+            if (VendorWaiting(citizen, out var vendor, out _) && spots.SampledThisFrame
+                && spots.Unsampled(simulation.FindPlace(vendor.PlaceId)) && simulation.State.Minute <= binding.AwaitMinute + 0.5) return true;
             binding.AwaitingArrival = false;
-            return TryJoinOptional(binding) || TryJoinQueue(binding);
+            return TryJoinVendorQueue(binding) || TryJoinOptional(binding) || TryJoinQueue(binding);
         }
 
         /// <summary>Join the door's queue with the body that walked here. Its spot respects the people already planned for that line.</summary>
@@ -537,11 +572,12 @@ namespace PersistentCity.Runtime
         // ActivityObserved runs at commitment, before another simulation event can advance this route.
         private void OnOptionalDeparture(string id, CitizenState citizen, double minute)
         {
-            if (!bindings.TryGetValue(id, out var binding) || binding.Optional == null || binding.Person == null
+            TrackVendorWaiter(citizen);
+            if (!bindings.TryGetValue(id, out var binding) || (binding.Optional == null && binding.VendorOpening == 0) || binding.Person == null
                 || !binding.Person.Valid || citizen.Phase != CitizenPhase.Travelling
                 || binding.Lease != null && simulation.IsPhysicalJourneyValid(binding.Lease)) return;
             if (!simulation.TryHoldPhysicalDeparture(id, out var lease))
-                throw new InvalidOperationException("Optional-stop body lost departure ownership.");
+                throw new InvalidOperationException("Dwell body lost departure ownership.");
             binding.Lease = lease; binding.TargetLeg = -1; binding.ObservedMinute = minute;
         }
 
@@ -608,6 +644,125 @@ namespace PersistentCity.Runtime
             body.Tick(); return true;
         }
 
+        private bool TryBodyPlace(string id, out Place place)
+        {
+            if (!VendorNames.IsVendorPlace(id)) return places.TryGetValue(id, out place!);
+            var row = simulation.State.Vendors.FindPlace(id);
+            if (row?.Stand == null || row.State == VendorRowState.Tombstone) { place = null!; return false; }
+            place = simulation.FindPlace(id); return true;
+        }
+
+        private void RefreshVendorMeals()
+        {
+            var food = simulation.State.Food;
+            if (owner?.PhysicalVendorMarket == null || food == null
+                || ReferenceEquals(food, vendorFood) && food.Residents.Count == vendorMealCount) return;
+            vendorMeals.Clear();
+            foreach (var meal in food.Residents) vendorMeals[meal.ResidentId] = meal;
+            vendorFood = food; vendorMealCount = food.Residents.Count;
+        }
+
+        private void TrackVendorWaiter(CitizenState citizen)
+        {
+            if (citizen.Phase == CitizenPhase.AtPlace && citizen.Activity == Activity.Shop
+                && VendorNames.IsVendorPlace(citizen.PlaceId) && ActiveJourneyIndex.ReceivesBody(citizen))
+                vendorWaiters[citizen.Identity.Id] = citizen;
+            else { vendorWaiters.Remove(citizen.Identity.Id); vendorGaveUp.Remove(citizen.Identity.Id); }
+        }
+
+        private bool VendorWaiting(CitizenState citizen, out VendorRow row, out VendorVehicle vehicle)
+        {
+            row = null!; vehicle = null!;
+            var market = owner?.PhysicalVendorMarket;
+            if (market == null || citizen.Phase != CitizenPhase.AtPlace || citizen.Activity != Activity.Shop
+                || !vendorMeals.TryGetValue(citizen.Identity.Id, out var meal) || meal.PlaceId != citizen.PlaceId
+                || (meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving)) return false;
+            row = simulation.State.Vendors.FindPlace(citizen.PlaceId)!;
+            if (row?.Stand == null || !row.Stand.Published || simulation.State.Minute >= row.Stand.ClosesAt
+                || vendorGaveUp.TryGetValue(citizen.Identity.Id, out long failedOpening) && failedOpening == row.Stand.OpeningId
+                || !market.CanServe(row.BusinessId) || meal.BusinessId != row.BusinessId) return false;
+            vehicle = market.Coordinator.Image?.Find(row.VehicleId)!;
+            return vehicle != null && vehicle.OpeningId == row.Stand.OpeningId
+                && Position.Distance(vehicle.Window, row.Stand.Position) <= VendorRules.StandRadiusMetres;
+        }
+
+        private void PlanVendorQueues(Position focus, double radius)
+        {
+            foreach (var bound in bindings.Values.Where(b => b.VendorOpening > 0 && b.Step != QueueStep.Entering).OrderBy(b => b.Slot))
+            {
+                if (!VendorWaiting(bound.Citizen, out _, out var vehicle) || vehicle.OpeningId != bound.VendorOpening) continue;
+                int? ahead = DwellPlanner.MoveUp(new HashSet<int>(Standing(bound.Line!).Select(p => p.Value)), bound.Slot);
+                if (!ahead.HasValue || !bound.Person!.SetPathTarget(bound.Line!.Spots[ahead.Value], NativeTravelPace.WalkingMetresPerSecond)) continue;
+                bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
+            }
+            foreach (var citizen in vendorWaiters.Values.OrderBy(c => vendorMeals.TryGetValue(c.Identity.Id, out var m) ? m.ServiceAt : double.MaxValue)
+                .ThenBy(c => c.Identity.Id, StringComparer.Ordinal))
+            {
+                if (ambient.IsReserved(citizen.Identity.Id) || !VendorWaiting(citizen, out var row, out var vehicle) || Position.Distance(row.Stand!.Position, focus) > radius
+                    || !spots.TryVendorQueue(row, vehicle, out var line) || line == null) continue;
+                var occupied = new HashSet<int>(Standing(line).Select(p => p.Value));
+                foreach (var planned in queuers.Values) if (planned.Line.Key == line.Key) occupied.Add(planned.Slot);
+                int slot = 0;
+                if (bindings.TryGetValue(citizen.Identity.Id, out var binding) && binding.VendorOpening == vehicle.OpeningId
+                    && binding.Line == line && binding.Step != QueueStep.Entering) slot = binding.Slot;
+                else { while (occupied.Contains(slot) && slot < line.Spots.Count) slot++; }
+                if (slot < line.Spots.Count) queuers[citizen.Identity.Id] = new QueuePlanEntry { Line = line, Slot = slot, VendorOpening = vehicle.OpeningId };
+            }
+        }
+
+        private bool TryJoinVendorQueue(Binding binding)
+        {
+            if (!VendorWaiting(binding.Citizen, out var row, out var vehicle)
+                || !spots.TryVendorQueue(row, vehicle, out var line) || line == null) return false;
+            var occupied = new HashSet<int>(Standing(line).Select(p => p.Value));
+            foreach (var pair in queuers) if (pair.Key != binding.Citizen.Identity.Id && pair.Value.Line.Key == line.Key) occupied.Add(pair.Value.Slot);
+            int slot = 0; while (occupied.Contains(slot) && slot < line.Spots.Count) slot++;
+            if (slot == line.Spots.Count) return false;
+            if (!binding.Person!.SetPathTarget(line.Spots[slot], NativeTravelPace.WalkingMetresPerSecond))
+            { vendorGaveUp[binding.Citizen.Identity.Id] = vehicle.OpeningId; return false; }
+            binding.Line = line; binding.Slot = slot; binding.VendorOpening = vehicle.OpeningId;
+            binding.Step = QueueStep.Approaching; binding.StepWalked = 0;
+            if (Bound(binding)) queueBindings++;
+            queued++; return ObserveVendorQueue(binding);
+        }
+
+        private bool ObserveVendorQueue(Binding binding)
+        {
+            var body = binding.Person!; var line = binding.Line!;
+            if (!body.Valid) return false;
+            if (!body.Agent.isStopped) binding.StepWalked += Time.unscaledDeltaTime;
+            bool waiting = VendorWaiting(binding.Citizen, out var row, out var vehicle) && vehicle.OpeningId == binding.VendorOpening
+                && spots.TryVendorQueue(row, vehicle, out var current) && ReferenceEquals(line, current);
+            if (binding.Step != QueueStep.Entering && (!waiting || binding.StepWalked >= QueueStepSeconds))
+            {
+                if (waiting && binding.StepWalked >= QueueStepSeconds) GiveUp(binding);
+                binding.Step = QueueStep.Entering; binding.StepWalked = 0;
+                if (!body.SetPathTarget(line.Entrance, NativeTravelPace.WalkingMetresPerSecond)) return false;
+            }
+            if (binding.Step == QueueStep.Entering)
+            {
+                if (binding.StepWalked >= QueueStepSeconds) return false;
+                if (Position.Distance(body.Position, line.Entrance) < 0.3)
+                {
+                    binding.VendorOpening = 0; binding.Line = null;
+                    if (Bound(binding)) queueBindings--;
+                    if (binding.Lease == null || !simulation.TrySamplePhysicalJourney(binding.Lease, out var resumed) || resumed.Mode != TravelMode.Walk) return false;
+                    // The return starts at the stand, so walk back there before resuming its measured corners.
+                    binding.TargetLeg = -1; binding.ObservedMinute = simulation.State.Minute;
+                    body.Stop(false); return true;
+                }
+                body.Tick(); return true;
+            }
+            if (Position.Distance(body.Position, line.Spots[binding.Slot]) <= 0.3)
+            {
+                binding.Step = QueueStep.Standing;
+                if (body.Agent.hasPath) body.Agent.ResetPath();
+                body.Stop(true); body.Face(binding.Slot == 0 ? line.Door : line.Spots[binding.Slot - 1]);
+                return true;
+            }
+            body.Tick(); return true;
+        }
+
         private bool MotionPermission(PhysicalVehicleBody body, out PhysicalJourneySample sample, out double maximum)
         {
             sample = default; maximum = 0;
@@ -640,6 +795,7 @@ namespace PersistentCity.Runtime
         private bool Observe(Binding binding)
         {
             if (binding.Person != null && !binding.Person.Valid || binding.Car != null && !binding.Car.Valid) return false;
+            if (binding.VendorOpening > 0) return ObserveVendorQueue(binding);
             if (binding.Optional != null) return ObserveOptional(binding);
             if (binding.Lease == null)
             {
@@ -651,6 +807,8 @@ namespace PersistentCity.Runtime
             }
             if (!simulation.TrySamplePhysicalJourney(binding.Lease, out var sample))
             {
+                if (TryJoinVendorQueue(binding))
+                { simulation.ReleasePhysicalJourney(binding.Lease); binding.Lease = null; return true; }
                 if (TryJoinOptional(binding)) { binding.Lease = null; return ObserveOptional(binding); }
                 return false;
             }
@@ -807,7 +965,7 @@ namespace PersistentCity.Runtime
         {
             if (binding.Person != null) personBindings += delta;
             if (binding.Car != null) carBindings += delta;
-            if (binding.Queue.HasValue) queueBindings += delta;
+            if (binding.Queue.HasValue || binding.VendorOpening > 0) queueBindings += delta;
         }
         private void ReleaseBodies(Binding binding)
         {
