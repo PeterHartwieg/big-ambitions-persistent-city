@@ -102,7 +102,10 @@ namespace PersistentCity.Core
     public sealed class VendorImageReader
     {
         public const int CopyUnit = 16;
+        /// <summary>A non-Ready image is read again once per this many native minutes even at the same revision.</summary>
+        public const int RetryMinutes = 15;
         private readonly IVendorApi api;
+        private long retrySlot = long.MinValue;
         private VendorImage published = new VendorImage(), building = new VendorImage();
         private int copied = -1, total;
         private long buildingRevision;
@@ -111,8 +114,9 @@ namespace PersistentCity.Core
         public VendorImage Image => published;
         public bool Pending => copied >= 0;
 
-        /// <summary>One revision read. True when a copy is pending or a new image was published.</summary>
-        public bool Poll()
+        /// <summary>One revision read. True when a copy is pending or a new image was published. With a native minute,
+        /// an image that is not Ready is also read again once per 15 minutes: Street Food may recover without a new revision.</summary>
+        public bool Poll(long minute = -1)
         {
             long revision = api.Revision;
             if (copied >= 0)
@@ -120,7 +124,8 @@ namespace PersistentCity.Core
                 if (revision == buildingRevision) return true;
                 copied = -1; // Street Food changed again mid-copy; start over from its new view.
             }
-            else if (revision == published.Revision) return false;
+            else if (revision == published.Revision && (published.Ready || minute < 0 || minute / RetryMinutes == retrySlot)) return false;
+            if (minute >= 0) retrySlot = minute / RetryMinutes;
             buildingRevision = revision;
             VendorApiStatus status; int count;
             try { status = api.BeginRead(out count); }
@@ -197,7 +202,7 @@ namespace PersistentCity.Core
         private readonly VendorLease lease = new VendorLease();
         private readonly VendorReferences references = new VendorReferences();
         private readonly List<KeyValuePair<string, string>> refusals = new List<KeyValuePair<string, string>>();
-        private bool referencesCollected, applyPending, stopped, leaseLapsed, kindChangePending;
+        private bool referencesCollected, applyPending, stopped, leaseLapsed, kindChangePending, revivalPending;
         private long waitingSlot = -1;
 
         public VendorCoordinator(VendorTable table, IVendorApi? api, string unavailableReason, IVendorPlaces places, IVendorStandSampler sampler,
@@ -227,7 +232,7 @@ namespace PersistentCity.Core
         {
             if (api == null || stopped) return false;
             if (NeedsLease() && lease.Due(minute)) RenewLease(minute);
-            if (reader!.Poll()) applyPending = applyPending || !reader.Pending;
+            if (reader!.Poll(minute)) applyPending = applyPending || !reader.Pending;
             if (Waiting() && minute / WaitingRecheckMinutes != waitingSlot) { waitingSlot = minute / WaitingRecheckMinutes; applyPending = true; }
             return reader.Pending || applyPending;
         }
@@ -313,7 +318,7 @@ namespace PersistentCity.Core
         {
             referencesCollected = false;
             refusals.Clear();
-            kindChangePending = false;
+            kindChangePending = false; revivalPending = false;
             bool lapsed = leaseLapsed; leaseLapsed = false;
             var image = reader!.Image;
             long hour = minute / 60;
@@ -340,6 +345,10 @@ namespace PersistentCity.Core
                 if (row == null || row.State != VendorRowState.Live)
                 {
                     string? admission = refusal ?? table.AdmissionRefusal(row);
+                    // A retired vehicle that returns becomes the next generation only after residents committed to the
+                    // previous generation at its place have resolved (the same drain rule as a kind change).
+                    if (admission == null && row != null && row.State == VendorRowState.Retired && Committed(row))
+                    { admission = "returning vehicle waits for committed residents"; revivalPending = true; }
                     if (admission != null) { refusals.Add(new KeyValuePair<string, string>(v.VehicleId, admission)); continue; }
                     if (row == null) row = table.Admit(v.VehicleId, v.Kind);
                     else
@@ -381,6 +390,9 @@ namespace PersistentCity.Core
                 if (v.Open && v.OpeningId == a.OpeningId) a.RequestedHour = -1; // handed back: request the next opening again
                 a.OpeningId = -1; row.DeferredStand = null; Close(row);
             }
+            // A handback Street Food has not confirmed blocks every new request and acquisition until it succeeds.
+            if (a.HandbackPending && !Release(row, hour, row.Reason)) { row.Reason = "handback to Street Food not confirmed; retrying"; return; }
+            if (refusal == null && !a.Desired) a.Desired = true; // after a confirmed retried handback an eligible vehicle asks again
             if (a.Desired && !a.Requested) Request(row, minute, hour);
 
             if (owned && a.OpeningId != v.OpeningId && a.Desired)
@@ -390,9 +402,9 @@ namespace PersistentCity.Core
                 if (why == null) stand = VendorRules.PlanStand(v, sampler, out why);
                 if (stand == null)
                 {
-                    // No PC work exists for this opening yet: hand it back at once and ask for the next one.
-                    Release(row, hour, why!);
-                    a.Desired = true; Request(row, minute, hour);
+                    // No PC work exists for this opening yet: hand it back at once and ask for the next one,
+                    // but only once Street Food has confirmed the handback.
+                    if (Release(row, hour, why!)) { a.Desired = true; Request(row, minute, hour); }
                     row.Reason = why!;
                 }
                 else
@@ -443,19 +455,25 @@ namespace PersistentCity.Core
             else row.Reason = "ownership request refused: " + (string.IsNullOrEmpty(reason) ? status.ToString() : reason);
         }
 
-        private void Release(VendorRow row, long hour, string reason)
+        /// <summary>Asks Street Food to take the vehicle back. PC stops serving at once either way; a handback Street Food
+        /// did not confirm stays pending and is retried, because another vehicle may keep the shared lease alive.</summary>
+        private bool Release(VendorRow row, long hour, string reason)
         {
             var a = row.Authority;
-            try { api!.RequestOwner(row.VehicleId, false, out _); } catch (InvalidOperationException) { } // the lease then runs out by itself
+            bool released;
+            try { released = api!.RequestOwner(row.VehicleId, false, out _) == VendorApiStatus.Ready; }
+            catch (InvalidOperationException) { released = false; }
+            a.HandbackPending = !released;
             if (a.Managed) a.UntilHour = hour;
             a.RequestedHour = -1; a.OpeningId = -1; a.Suspended = false; a.Desired = false;
             row.DeferredStand = null; Close(row); row.Reason = reason;
+            return released;
         }
 
         private void Retire(VendorRow row, long hour)
         {
             var a = row.Authority;
-            a.Desired = false; a.RequestedHour = -1; a.OpeningId = -1; a.Suspended = false;
+            a.Desired = false; a.RequestedHour = -1; a.OpeningId = -1; a.Suspended = false; a.HandbackPending = false;
             if (a.Managed) a.UntilHour = hour;
             row.DeferredStand = null; Close(row); row.Reason = "vehicle missing from Street Food";
             table.Move(row, VendorRowState.Retired);
@@ -488,20 +506,20 @@ namespace PersistentCity.Core
                 var row = table.Rows[r];
                 if (row.State != VendorRowState.Live) continue;
                 var a = row.Authority;
-                if (a.Desired || a.Requested || a.Managed || a.OpeningId >= 0) return true;
+                if (a.Desired || a.Requested || a.Managed || a.OpeningId >= 0 || a.HandbackPending) return true;
             }
             return false;
         }
 
         private bool Waiting()
         {
-            if (kindChangePending) return true;
+            if (kindChangePending || revivalPending) return true;
             for (int r = 0; r < table.Rows.Count; r++)
             {
                 var row = table.Rows[r];
                 if (row.State != VendorRowState.Live) continue;
                 var a = row.Authority;
-                if (row.DeferredStand != null || !a.Desired && (a.Requested || a.Managed || a.OpeningId >= 0)) return true;
+                if (row.DeferredStand != null || a.HandbackPending || !a.Desired && (a.Requested || a.Managed || a.OpeningId >= 0)) return true;
             }
             return false;
         }
@@ -578,6 +596,13 @@ namespace PersistentCity.Core
                     foreach (var shop in meal.Decision.Shops) if (VendorNames.IsVendorPlace(shop.PlaceId)) into.ShortLived.Add(shop.PlaceId);
             }
             foreach (var stop in state.RoutineStops) if (VendorNames.IsVendorPlace(stop.PlaceId)) into.ShortLived.Add(stop.PlaceId);
+            // A physical resident walking to, eating at or about to leave the stand: its return route starts from the
+            // place's position, so the place must not move until the person has left it.
+            foreach (var person in State.Citizens)
+            {
+                if (VendorNames.IsVendorPlace(person.PlaceId)) into.ShortLived.Add(person.PlaceId);
+                if (VendorNames.IsVendorPlace(person.DestinationId)) into.ShortLived.Add(person.DestinationId);
+            }
             foreach (var day in state.History) if (VendorNames.IsVendorPlace(day.PlaceId)) into.Retained.Add(day.PlaceId);
             foreach (var reference in state.BusinessReferences) if (VendorNames.IsVendorPlace(reference.PlaceId)) into.Memory.Add(reference.PlaceId);
         }

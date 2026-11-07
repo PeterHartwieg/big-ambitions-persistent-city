@@ -36,9 +36,10 @@ public sealed class StreetFoodVendorTests
         public readonly VendorTable Table = new VendorTable();
         public readonly VendorCoordinator Vendors;
         public readonly Sampler Stands = new Sampler();
-        public Rig(IVendorApi? api = null, string reason = "", bool bind = true, int seed = 5)
+        public Rig(IVendorApi? api = null, string reason = "", bool bind = true, int seed = 5, IRoutePlanner? planner = null)
         {
             City = WeightedFoodChoiceTests.Ready(seed).city;
+            if (planner != null) City = City.RebuildRoutes(planner);
             if (bind && api == null) api = StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi));
             Vendors = new VendorCoordinator(Table, api, reason, City, Stands);
         }
@@ -644,5 +645,148 @@ public sealed class StreetFoodVendorTests
         string every = Script(1);
         Assert.Contains("A|Retired|1|", every); Assert.Contains("B|Live|1|", every);
         Assert.Equal(every, Script(step));
+    }
+
+    // ---- Review round 1 regressions ----
+
+    private sealed class RecordingPlanner : IRoutePlanner, IFoodWalkingPace
+    {
+        public readonly List<(string From, Position At)> Requests = new();
+        public double WalkingMetresPerMinute => 120;
+        public Route? Plan(Place a, Place b, double at, TravelPreferences p)
+        {
+            Requests.Add((a.Id, a.Position));
+            return new Route { Legs = new() { new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Walk, Minutes = 1 } } };
+        }
+    }
+
+    [Fact]
+    public void APhysicalResidentEatingAtTheStandPinsItAndReturnsFromTheStandTheyVisited()
+    {
+        StreetFoodHooks.Add("A", "cart", 100);
+        var planner = new RecordingPlanner();
+        var rig = new Rig(planner: planner);
+        rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 60); rig.Run(At(9, 5));
+        var a = rig.Row("A");
+        // Checkout succeeded: the meal is Paid, but the resident is still at the stand eating, on a meal outing.
+        var person = rig.City.State.Citizens.Single();
+        var meal = rig.City.State.Food!.Residents.Single(m => m.ResidentId == person.Identity.Id);
+        meal.Status = MealStatus.Paid; meal.PlaceId = a.PlaceId; meal.BusinessId = a.BusinessId;
+        person.MealOuting = new MealOuting { OriginId = person.HomeId, OriginActivity = Activity.Home, ResumeUntil = person.NextEventMinute + 600, ResumeEvent = person.NextEventMinute + 600 };
+        person.PlaceId = a.PlaceId; person.Activity = Activity.Shop; person.Phase = CitizenPhase.AtPlace;
+        person.ActivityUntilMinute = person.NextEventMinute;
+
+        rig.RunTo(At(10, 5)); StreetFoodHooks.Close("A"); StreetFoodHooks.Open("A", 60, x: 500); rig.Run(At(10, 5));
+        Assert.NotNull(a.DeferredStand);
+        Assert.Equal(100, rig.City.FindPosition(a.PlaceId)!.Value.X);
+
+        // The eating interval ends: the return route starts from the stand the resident visited.
+        while (!rig.City.AdvanceTo(person.NextEventMinute, 1).CaughtUp) { }
+        var back = Assert.Single(planner.Requests, r => r.From == a.PlaceId);
+        Assert.Equal(100, back.At.X);
+        Assert.NotEqual(a.PlaceId, person.PlaceId);
+
+        // Once the resident has left, the move applies.
+        rig.RunTo(At(10, 20), 5);
+        Assert.Null(a.DeferredStand);
+        Assert.Equal(500, rig.City.FindPosition(a.PlaceId)!.Value.X);
+    }
+
+    [Fact]
+    public void AnUnconfirmedHandbackIsRetriedAndBlocksNewRequestsWhileAnotherVehicleKeepsTheLease()
+    {
+        StreetFoodHooks.Add("A"); StreetFoodHooks.Add("B", x: 300);
+        var rig = new Rig();
+        rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 300); StreetFoodHooks.Open("B", 300); rig.Run(At(9, 5));
+        Assert.True(rig.Serves("A")); Assert.True(rig.Serves("B"));
+
+        // A turns ineligible and Street Food fails its release; B stays eligible and keeps the shared lease renewed.
+        StreetFoodHooks.FailRelease.Add("A");
+        var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
+        StreetFoodHooks.Calls.Clear();
+        rig.RunTo(At(10, 5));
+        var a = rig.Row("A");
+        Assert.True(a.Authority.HandbackPending);
+        Assert.False(rig.Serves("A")); Assert.True(rig.Serves("B"));
+        Assert.Equal(VendorNames.Owner, v.Owner); // Street Food still reserves the opening for PC
+        Assert.True(StreetFoodHooks.Calls.Count(c => c == "release A") >= 10); // retried every 5 minutes, no new revision
+        Assert.DoesNotContain("request A", StreetFoodHooks.Calls);
+        Assert.True(rig.Vendors.Lease.Valid(At(10, 5)));
+
+        // Street Food recovers: the retried handback goes through and the opening is Street Food's again.
+        StreetFoodHooks.FailRelease.Clear();
+        rig.RunTo(At(10, 15), 5);
+        Assert.False(a.Authority.HandbackPending);
+        Assert.Equal("", v.Owner);
+        Assert.DoesNotContain("request A", StreetFoodHooks.Calls);
+    }
+
+    [Fact]
+    public void AFailedHandbackOfAFaultyGrantIsNotFollowedByANewRequestUntilConfirmed()
+    {
+        StreetFoodHooks.Add("A");
+        var rig = new Rig();
+        rig.Run(At(8, 5));
+        StreetFoodHooks.FailRelease.Add("A");
+        StreetFoodHooks.Open("A"); StreetFoodHooks.Find("A").Owner = VendorNames.Owner; // faulty same-hour grant
+        StreetFoodHooks.Calls.Clear();
+        rig.Run(At(8, 6));
+        var a = rig.Row("A");
+        Assert.True(a.Authority.HandbackPending); Assert.False(a.Authority.Requested); Assert.False(rig.Serves("A"));
+        Assert.DoesNotContain("request A", StreetFoodHooks.Calls);
+        StreetFoodHooks.FailRelease.Clear();
+        rig.RunTo(At(8, 15), 5);
+        Assert.False(a.Authority.HandbackPending); Assert.True(a.Authority.Requested);
+        Assert.Contains("request A", StreetFoodHooks.Calls);
+    }
+
+    [Fact]
+    public void AFrozenVehicleScopeKeepsItsChannel()
+    {
+        var scope = new FoodScope { PlaceId = "vendor:A", BusinessId = "streetfood:vehicle:A:generation:1", ProductId = FoodProducts.HotDog };
+        scope.UseChannel(FoodScopeChannel.Vehicle);
+        Assert.Equal(FoodScopeChannel.Vehicle, FoodCommerce.FreezeScope(scope).Channel);
+        Assert.Equal(FoodScopeChannel.Shop, FoodCommerce.FreezeScope(new FoodScope { PlaceId = "s", BusinessId = "b", ProductId = FoodProducts.HotDog }).Channel);
+    }
+
+    [Fact]
+    public void AReturningRetiredVehicleWaitsForResidentsCommittedToTheOldGeneration()
+    {
+        StreetFoodHooks.Add("A");
+        var rig = new Rig();
+        rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A"); rig.Run(At(9, 5));
+        var meal = rig.Commit("A", MealStatus.Travelling);
+        StreetFoodHooks.Remove("A"); rig.Run(At(9, 10));
+        var a = rig.Row("A");
+        Assert.Equal(VendorRowState.Retired, a.State);
+
+        StreetFoodHooks.Add("A"); rig.Run(At(9, 15));
+        Assert.Equal(VendorRowState.Retired, a.State); Assert.Equal(1, a.Generation);
+        Assert.Equal("returning vehicle waits for committed residents", rig.Vendors.Refusals.Single(p => p.Key == "A").Value);
+        Assert.Equal(meal.BusinessId, rig.City.State.Food!.Shops.Single(s => s.PlaceId == a.PlaceId).BusinessId);
+
+        meal.Status = MealStatus.Declined;
+        rig.RunTo(At(9, 25), 5);
+        Assert.Equal(VendorRowState.Live, a.State); Assert.Equal(2, a.Generation);
+        Assert.Equal(a.BusinessId, rig.City.State.Food.Shops.Single(s => s.PlaceId == a.PlaceId).BusinessId);
+    }
+
+    [Fact]
+    public void ANotReadyImageIsReadAgainEveryFifteenMinutesWithoutANewRevision()
+    {
+        StreetFoodHooks.Add("A");
+        StreetFoodHooks.ReadStatus = 2;
+        var rig = new Rig();
+        rig.Run(At(8, 0));
+        Assert.Equal(VendorApiStatus.NotYet, rig.Vendors.Image!.Status);
+        int reads = StreetFoodHooks.ReadCalls;
+        StreetFoodHooks.ReadStatus = 0; // Street Food recovers without changing its revision
+        rig.RunTo(At(8, 14));
+        Assert.Equal(reads, StreetFoodHooks.ReadCalls);
+        Assert.Empty(rig.Table.Rows);
+        rig.Run(At(8, 15));
+        Assert.Equal(reads + 1, StreetFoodHooks.ReadCalls);
+        Assert.True(rig.Vendors.Image!.Ready);
+        Assert.NotNull(rig.Table.Find("A"));
     }
 }

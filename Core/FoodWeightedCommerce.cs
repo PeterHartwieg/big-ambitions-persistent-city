@@ -124,8 +124,13 @@ namespace PersistentCity.Core
         }
         private FoodDrawContext Draw(ResidentMeal meal,FoodDecisionState d) => new FoodDrawContext(city.State.Seed,meal.ResidentId,meal.Day,meal.Kind,d.ContextKey,d.Attempt);
         private static FoodRoutineStop CopyStop(FoodRoutineStop s) => new FoodRoutineStop {PlaceId=s.PlaceId,Activity=s.Activity,CapturedAt=s.CapturedAt,DepartureAt=s.DepartureAt};
-        private static FoodScope FreezeScope(FoodScope s) => new FoodScope {AlternativeKind=s.AlternativeKind,BusinessId=s.BusinessId,PlaceId=s.PlaceId,
-            ProductId=s.ProductId,AdditionalProductIds=new List<string>(s.AdditionalProductIds),NextServiceAt=s.NextServiceAt};
+        internal static FoodScope FreezeScope(FoodScope s)
+        {
+            var copy=new FoodScope {AlternativeKind=s.AlternativeKind,BusinessId=s.BusinessId,PlaceId=s.PlaceId,
+                ProductId=s.ProductId,AdditionalProductIds=new List<string>(s.AdditionalProductIds),NextServiceAt=s.NextServiceAt};
+            copy.UseChannel(s.Channel); // a held vehicle choice stays routed to the vehicle market
+            return copy;
+        }
         private bool MatchesStop(FoodRoutineStop stop,FoodDecisionState d,bool atStop)
         {
             if(capturedStop==null)

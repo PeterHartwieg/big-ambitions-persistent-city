@@ -232,6 +232,8 @@ namespace PersistentCity.Core
         public bool Suspended { get; set; }
         /// <summary>The Street Food opening PC accepted and serves; -1 when none.</summary>
         public long OpeningId { get; set; } = -1;
+        /// <summary><c>RequestOwner(false)</c> was sent but not confirmed; retried before any new request.</summary>
+        public bool HandbackPending { get; set; }
         public bool Requested => RequestedHour >= 0;
         public bool Managed => FromHour >= 0 && UntilHour < 0;
     }
