@@ -181,6 +181,41 @@ public sealed class AttendanceWageTests
         Assert.Equal(Money.Zero, Budget(city).Ledger.EmploymentIncome);
     }
 
+    [Theory]
+    [InlineData(Activity.Shop, false)] [InlineData(Activity.Shop, true)]
+    [InlineData(Activity.Leisure, false)] [InlineData(Activity.Leisure, true)]
+    [InlineData(Activity.Study, false)] [InlineData(Activity.Study, true)]
+    public void AClosedWorkShiftDoesNotBlockOtherArrivalsOrTheirOpeningWaits(Activity activity, bool opensLater)
+    {
+        var routes = new Routes(); var city = Fresh(routes: routes);
+        var p = city.State.Citizens[0];
+        var w = DailyRoutine.WorkOnDay(p, city.State.Seed, city.State.Minute)!.Value;
+        city.SetLogicalWorkplaceClosure("work", true); Advance(city, w.StartsAt + 5);
+        Assert.Equal(EmploymentWages.Closed, p.Accrual.Shift);
+        double now = city.State.Minute, arrival = now + 1, opening = opensLater ? now + 10 : arrival;
+        var venue = new Place { Id = "other", Name = "Other venue", Capacity = 1, Position = new Position(20, 0, 0),
+            Kind = activity == Activity.Shop ? PlaceKind.Shop : activity == Activity.Study ? PlaceKind.Study : PlaceKind.Leisure,
+            OpenMinute = (int)(opening % 1440), CloseMinute = 1440 };
+        city.State.Places.Add(venue);
+        p.Phase = CitizenPhase.Travelling; p.PlaceId = p.HomeId; p.Activity = Activity.Home;
+        p.DestinationId = venue.Id; p.DestinationActivity = activity;
+        p.DepartureMinute = now; p.NextEventMinute = arrival; p.ActivityUntilMinute = now + 45;
+        p.Journey = routes.Plan(city.State.Places.Single(v => v.Id == p.HomeId), venue, now, p.Preferences);
+        city = new CitySimulator(city.State, routes); city.AttachFoodMarket(new Market());
+        Advance(city, arrival);
+        if (opensLater)
+        {
+            Assert.Equal(CitizenPhase.WaitingForOpening, p.Phase);
+            Assert.Equal(opening, p.NextEventMinute);
+            Advance(city, opening);
+        }
+        Assert.Equal(CitizenPhase.AtPlace, p.Phase);
+        Assert.Equal((venue.Id, activity), (p.PlaceId, p.Activity));
+        Assert.Contains(p.RecentVisits, v => v.PlaceId == venue.Id && v.Activity == activity && v.AtMinute == opening);
+        Assert.Equal(EmploymentWages.Closed, p.Accrual.Shift);
+        Assert.Equal(0, p.MissedActivities);
+    }
+
     private static (CitizenState Person, ResidentBudget Budget, WorkWindow Window) Shift(double start = 1500, double end = 1980)
     {
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "c0", Age = 30, Persona = Persona.Commuter },

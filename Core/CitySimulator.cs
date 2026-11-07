@@ -732,13 +732,14 @@ namespace PersistentCity.Core
                 person.Phase = CitizenPhase.AtPlace;
                 person.CompletedJourneys++;
                 double admissionFrom = AdmissionFrom(person);
+                bool closedWorkShift = person.DestinationActivity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed;
                 bool admitted = person.DestinationActivity == Activity.Home
-                    || (person.Accrual.Shift != EmploymentWages.Closed && now >= admissionFrom && now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now));
+                    || (!closedWorkShift && now >= admissionFrom && now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now));
                 if (admitted) VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
                 else
                 {
                     // A closure during travel can still leave a later opening in this activity.
-                    double? opening = person.Accrual.Shift != EmploymentWages.Closed && now < person.ActivityUntilMinute
+                    double? opening = !closedWorkShift && now < person.ActivityUntilMinute
                         ? DailyRoutine.NextOpen(places[person.PlaceId], Math.Max(now, admissionFrom), person.ActivityUntilMinute) : null;
                     if (opening.HasValue)
                     {

@@ -88,7 +88,12 @@ namespace PersistentCity.Core
             int dailyIncome = person != null ? IncomeAmount(budget.BaseIncomeCents, source) : budget.DailyIncomeCents;
             // Compute every change, including the wage refresh, before assigning any: an overflow
             // leaves the budget unchanged.
-            var income = source == ResidentIncomeSource.ExternalEmployment && !dailyEmployment ? Money.Zero : Money.FromCents(dailyIncome);
+            // A visitor's carried outside employer has no logical city shift to accrue. Keep that
+            // existing daily income until an employment outcome replaces it; city jobs earn only shifts.
+            bool carriedOutsideEmployment = person?.Visitor != null
+                && person.VisitorCarried == ResidentIncomeSource.ExternalEmployment && !EmploymentWages.Eligible(person);
+            var income = source == ResidentIncomeSource.ExternalEmployment && !dailyEmployment && !carriedOutsideEmployment
+                ? Money.Zero : Money.FromCents(dailyIncome);
             var balance = budget.Balance + income;
             var received = budget.IncomeReceived + income;
             // Fund a real-cost subsistence basket before discretionary spending. A failed

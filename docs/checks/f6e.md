@@ -6,7 +6,7 @@ Refs #93. Base: `fb64fa576d` (F6d `eef1bdc174`, E6d `fb64fa576d`). The writer is
 
 ## Implementation
 
-- Employment income is credited only by logical shift postings into the person's F5 wallet. Daily employment credit is removed from the current policy; pension and support keep their daily posting. Missing work does not substitute support. The frozen development simulation retains its old daily postings for historical golden checks; the product reader refuses those schemas.
+- In-city employment income is credited only by logical shift postings into the person's F5 wallet. An unseated visitor's carried outside employer has no city shift and retains its existing daily income until an employment outcome replaces it. Pension and support keep their daily posting. Missing work does not substitute support. The frozen development simulation retains its old daily postings for historical golden checks; the product reader refuses those schemas.
 - F5's current persona schedule has four 480-minute shifts each week. The hourly rate is the original daily band × 7 × 60 / 1,920. Integer numerator remainders carry between shifts in `UnpostedWage`, initially biased by half the denominator, so cumulative wages round to the nearest exact unit. No displayed-cent rounding is used. A city created during a shift can earn its remaining attended minutes from its first day.
 - The existing tuple records the shift-start day, completed attended segments, carry, 14-day miss mask and stage (unset, working, closed, settled, closure day, after midnight with/without prior attendance). An ongoing segment is reconstructed from F5's saved admission record. Departure commits attendance with the citizen event; abandoned route continuations cannot mutate wages. Work-return admission is recorded after a meal outing.
 - Shift start/end and midnight portions share the minute/ordinal posting heap, at most 32 postings per unit, before meals at that minute. Its index is derived on load. A day/stage watermark prevents duplicate settlement, including after midnight. F5's current templates end on the same day. Active shifts retain the saved F5 commute-preparation window, so an explicit overnight fixture can traverse the posting heap and strict save/reload without new fields.
@@ -18,10 +18,12 @@ Refs #93. Base: `fb64fa576d` (F6d `eef1bdc174`, E6d `fb64fa576d`). The writer is
 
 `AttendanceWageTests` covers next-free writer/refusal, two current-writer hashes, F7c snapshot equality, full-attendance weekly trace against seven base daily credits, first-day partial attendance, every published shift/event/posting transition across reload, 30/60/120 cadence equality, blocked/closed/reopened shifts, late arrival/early departure, exact rounding carry across 28 shifts and reloads, midnight portions, exactly-once posting, job-loss draw stability, support after loss, conservation and atomic overflow. Core assembly reachability and the Runtime fixture gate are checked. Existing historical hashes are preserved under their original writers.
 
+Review regressions reproduced lost carried outside-employment income and blocked non-work arrivals before the fixes. The visitor continuity check now asserts nonzero outside income and cash conservation across reload. Six arrival cases cover shop, leisure and study admission, both immediately and after waiting for opening, during a closed work shift.
+
 Completed foreground checks:
 
 - Required `tools/build.py --game-managed` build: passed with the supplied external Managed directory.
-- Required `dotnet test tests/PersistentCity.Tests.csproj`: 3,770 passed, zero failed.
+- Required `dotnet test tests/PersistentCity.Tests.csproj` after review fixes: 3,776 passed, zero failed.
 - Full-size F6e employment arms plus attendance checks in Release: 23 passed, including five seeds × control / closure / blocked-route arms at 957 residents / 1,914 wallets.
 - Final inspector checks after diagnostic wording cleanup: 28 passed.
 - F6e performance measurement in Release: passed; steady-state settlement and posting allocation assertions are zero. Performance evidence is in [f6e.md](../perf/f6e.md).

@@ -493,9 +493,11 @@ public sealed class Schema27Tests
         {
             // No demand from off-map persons, but their wallets keep posting.
             Assert.Equal(0, meal.Purchases); Assert.Null(meal.Decision); Assert.Equal("", meal.PlaceId);
-            if (meal.Budget!.IncomeSource == ResidentIncomeSource.ExternalEmployment)
+            var person = state.VisitorRoutines.Single(r => r.Identity.Id == meal.ResidentId);
+            if (meal.Budget!.IncomeSource == ResidentIncomeSource.ExternalEmployment && EmploymentWages.Eligible(person))
                 Assert.Equal(start[meal.ResidentId], meal.Budget.IncomeReceived);
             else Assert.True(meal.Budget.IncomeReceived > start[meal.ResidentId]);
+            Assert.True(HouseholdFinance.CashConserved(meal.Budget));
         }
         Assert.DoesNotContain(market.Orders, o => o.Contains("pv%3A") || o.Contains("pv:"));
         var reloaded = Reload(city, market, routes);
@@ -630,10 +632,18 @@ public sealed class Schema27Tests
             Assert.Equal(expected == ResidentIncomeSource.ExternalEmployment ? expected : (ResidentIncomeSource?)null, routine.Person!.CarriedIncomeSource);
         }
         Assert.Contains(state.Visitors, v => v.CarriedIncomeSource == ResidentIncomeSource.ExternalEmployment);
+        var outsideWorkers = state.VisitorRoutines.Where(r => r.VisitorCarried == ResidentIncomeSource.ExternalEmployment)
+            .Select(r => r.Identity.Id).ToHashSet();
         var continuous = Start(Fresh(2).State.Also(s => { foreach (var p in s.Places.Where(p => p.Kind == PlaceKind.Work || p.Kind == PlaceKind.Study)) p.Capacity = s.Citizens.Count(c => c.DayPlaceId == p.Id); }), new Market { Shops = market.Shops });
         for (int day = 0; day < 3; day++)
         {
             Advance(city, state.Minute + 1440); Advance(continuous, continuous.State.Minute + 1440);
+            foreach (var meal in state.Food!.Residents.Where(m => outsideWorkers.Contains(m.ResidentId)))
+            {
+                Assert.True(meal.Budget!.IncomeReceived > Money.Zero, "outside employment keeps its daily income without a local shift");
+                Assert.Equal(Money.Zero, meal.Budget.Ledger.EmploymentIncome);
+                Assert.True(HouseholdFinance.CashConserved(meal.Budget));
+            }
             var before = state.Food!.Residents.ToDictionary(m => m.ResidentId, m => (m.Budget!.IncomeSource, m.Budget.DailyIncomeCents, m.Budget.IncomeReceived));
             city = Reload(city, market); state = city.State;
             Assert.Equal(before, state.Food!.Residents.ToDictionary(m => m.ResidentId, m => (m.Budget!.IncomeSource, m.Budget.DailyIncomeCents, m.Budget.IncomeReceived)));
