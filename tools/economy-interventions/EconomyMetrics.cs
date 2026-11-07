@@ -92,7 +92,7 @@ public sealed class DayMetrics
             json.CloseArray().Close();
         }
         json.CloseArray().Close();
-        json.Open("rival").Field("meals", RivalMeals).Values("byCheckoutHour", RivalHours).Field("estimatedLimits", "none-before-F6b").Close();
+        json.Open("rival").Field("meals", RivalMeals).Values("byCheckoutHour", RivalHours).Field("estimatedLimits", "estimated (modeled service limits)").Close();
         // Diagnostic/experiment metric (F6 Q3 default): never free player UI.
         json.Open("share").Field("diagnosticOnly", EconomyRun.MarketShareDiagnosticOnly)
             .Open("city").Field("resolved", Resolved).Field("own", OwnMeals).Field("rival", RivalMeals).Field("home", HomeMeals)

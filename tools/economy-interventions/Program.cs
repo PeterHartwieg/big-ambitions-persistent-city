@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using PersistentCity.EconomyInterventions;
 
-// F6a intervention harness. Usage:
-//   EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms family/name,...] [--skip-curve] [--skip-perf] [--checks-only]
+// F6a/F6h intervention harness. Usage:
+//   EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms family/name,...] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3]
 // Writes one metrics JSON per arm and seed, a seed-band summary, today's rival saturation curve
 // and tool-cost measurements. Offline Core evidence only; never native or rig proof.
 internal static class Program
@@ -13,13 +13,23 @@ internal static class Program
     private static int Main(string[] args)
     {
         if (args.Length == 0 || args[0].StartsWith("--", StringComparison.Ordinal))
-        { Console.Error.WriteLine("usage: EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms a,b] [--skip-curve] [--skip-perf] [--checks-only]"); return 2; }
+        { Console.Error.WriteLine("usage: EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms a,b] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3]"); return 2; }
         string outDir = args[0];
         int seeds = Option(args, "--seeds", EconomyRun.Seeds), residents = Option(args, "--residents", EconomyFixture.Residents);
         string? filter = args.SkipWhile(a => a != "--arms").Skip(1).FirstOrDefault();
         Directory.CreateDirectory(Path.Combine(outDir, "runs"));
 
-        SelfChecks.Run();
+        bool integrated = args.Contains("--integrated");
+        if (integrated && args.Contains("--checks-only"))
+        {
+            Console.Error.WriteLine("Integrated checks: dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~F6hIntegratedTests");
+            return 2;
+        }
+        double priceWeight = double.Parse(args.SkipWhile(a => a != "--price-weight").Skip(1).FirstOrDefault() ?? "1",
+            System.Globalization.CultureInfo.InvariantCulture);
+        // Integrated runs use the fast representative unit checks instead of silently running
+        // the legacy 48-person six-week self-checks before every opt-in sweep.
+        if (!integrated) SelfChecks.Run();
         if (args.Contains("--checks-only")) return 0;
 
         var arms = new[] { InterventionArms.Control }.Concat(InterventionArms.All())
@@ -30,12 +40,12 @@ internal static class Program
             var list = new List<RunResult>();
             for (int seed = 0; seed < seeds; seed++)
             {
-                var result = EconomyRun.Run(new RunOptions { Family = arm.Family, Arm = arm.Name, Seed = seed, Residents = residents, Inputs = arm.Inputs });
+                var result = EconomyRun.Run(new RunOptions { Family = arm.Family, Arm = arm.Name, Seed = seed, Residents = residents, Inputs = arm.Inputs, Integrated = integrated, PriceWeight = priceWeight });
                 File.WriteAllText(Path.Combine(outDir, "runs", arm.Family + "-" + arm.Name + "-seed" + seed + ".json"), result.Json);
                 Console.WriteLine($"{arm.Family}/{arm.Name} seed {seed}: {result.Seconds:F1} s, {result.ConservationChecks} conservation checks, {result.InputsPublished} inputs, metrics sha256 {EconomyRun.Sha256(result.Json)[..16]}");
                 list.Add(result);
             }
-            if (arm == InterventionArms.Control)
+            if (arm == InterventionArms.Control && !integrated)
             {
                 // Full-size save/reload equivalence on the measured fixture, outside any timing claim.
                 var reloaded = EconomyRun.Run(new RunOptions { Seed = 0, Residents = residents, ReloadAt = SelfChecks.MidEpochReload });
@@ -45,14 +55,15 @@ internal static class Program
             }
             results[arm.Family + "/" + arm.Name] = list;
         }
-        File.WriteAllText(Path.Combine(outDir, "baseline-summary.json"), Baseline.Summary(arms, results, residents, seeds));
-        Console.WriteLine("PASS baseline summary: " + arms.Count + " arms x " + seeds + " seeds");
-        if (!args.Contains("--skip-curve"))
+        File.WriteAllText(Path.Combine(outDir, "baseline-summary.json"), Baseline.Summary(arms, results, residents, seeds, integrated));
+        Console.WriteLine("RECORDED summary: " + arms.Count + " arms x " + seeds + " seeds");
+        if (integrated) Console.WriteLine("F6h acceptance is separate: run acceptance.py; recording a sweep is not acceptance.");
+        if (!integrated && !args.Contains("--skip-curve"))
         {
             File.WriteAllText(Path.Combine(outDir, "rival-curve.json"), Baseline.RivalCurve());
             Console.WriteLine("PASS unlimited rival curve recorded");
         }
-        if (!args.Contains("--skip-perf"))
+        if (!integrated && !args.Contains("--skip-perf"))
         {
             File.WriteAllText(Path.Combine(outDir, "perf.json"), Baseline.Perf(results));
             Console.WriteLine("PASS harness cost recorded");

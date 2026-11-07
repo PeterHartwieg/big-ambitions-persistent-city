@@ -22,6 +22,8 @@ public sealed class RunOptions
     public Fault Fault;
     public int FaultDay = EconomyRun.BaselineDays + 2;
     public bool OrdinaryVisits;
+    public bool Integrated;
+    public double PriceWeight = 1;
     public bool RivalListed = true, OwnListed = true;
 }
 
@@ -31,7 +33,7 @@ public sealed class RunResult
     public List<DayMetrics> Days = new();
     public string FinalSaveSha256 = "";
     public long ConservationChecks, InputsPublished, Epochs;
-    public int Reloads, InFlightAtReload;
+    public int Reloads, InFlightAtReload, JournalEntries;
     public double Seconds;
     public long AllocatedBytes;
 }
@@ -56,10 +58,15 @@ public static class EconomyRun
 
     public static RunResult Run(RunOptions options)
     {
+        if (!double.IsFinite(options.PriceWeight) || options.PriceWeight < 0 || options.PriceWeight > 3)
+            throw new ArgumentOutOfRangeException(nameof(options.PriceWeight));
         long allocated = GC.GetTotalAllocatedBytes(true);
         var timer = System.Diagnostics.Stopwatch.StartNew();
         var (state, market) = EconomyFixture.Build(options.Seed, options.Residents, options.RivalListed, options.OwnListed);
-        if (options.OrdinaryVisits)
+        market.ChoiceSettings.FoodChoicePriceWeight = options.PriceWeight;
+        if (options.Integrated) market.Journal = new FoodChangeJournal(state.Food!, state.Economy);
+        bool ordinary = options.OrdinaryVisits || options.Integrated;
+        if (ordinary)
         {
             state.Places.Add(new Place { Id = "ordinary-retail", Name = "Outside non-food shop", Kind = PlaceKind.Shop, Position = new Position(3, 0, 0) });
             state.Places.Add(new Place { Id = "ordinary-leisure", Name = "Outside leisure", Kind = PlaceKind.Leisure, Position = new Position(0, 0, 3) });
@@ -68,7 +75,7 @@ public static class EconomyRun
         var routes = new EconomyRoutes(market);
         var observer = new DecisionObserver();
         var city = EconomyFixture.Attach(state, market, routes, fresh: true);
-        if (options.OrdinaryVisits) city.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(state.Minute));
+        if (ordinary) city.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(state.Minute));
         city.FoodDecisionObserved += observer.Observe;
         double start = EconomyFixture.StartMinute;
         // The last requested day ends at start + Days days; its outcomes are sampled at 03:00 after it.
@@ -89,7 +96,7 @@ public static class EconomyRun
             if (options.ReloadAt is double at && !reloaded && at != Math.Floor(at) && epoch - 0.5 >= at)
             {
                 Drain(city, epoch - 0.5);
-                if (InFlight(city) > 0) { city = Reload(city, market, routes, result, observer, options.OrdinaryVisits); reloaded = true; }
+                if (InFlight(city) > 0) { city = Reload(city, market, routes, result, observer, ordinary); reloaded = true; }
             }
             Drain(city, ending);
             bool drained = city.IsAccountingEpochDrained(epoch);
@@ -98,9 +105,9 @@ public static class EconomyRun
             if (epoch % 1440 == 0 && day >= 2 && day - 1 <= options.Days)
             {
                 if (options.Fault != Fault.None && day - 1 == options.FaultDay) Inject(options.Fault, city.State, market);
-                var metrics = new DayMetrics { Day = day - 1, OrdinaryVisits = options.OrdinaryVisits };
+                var metrics = new DayMetrics { Day = day - 1, OrdinaryVisits = ordinary };
                 Check(city, market, metrics);
-                if (options.OrdinaryVisits)
+                if (ordinary)
                 {
                     ordinaryDays[metrics.Day] = metrics.OrdinaryDiscretionaryUnits;
                     ordinaryDays.TryGetValue(metrics.Day - EconomicLedger.Days, out long expired);
@@ -125,11 +132,12 @@ public static class EconomyRun
             Require(city.BeginAccountingObservations(epoch), "observation epoch not published");
             result.Epochs++;
             if (options.ReloadAt is double whole && !reloaded && whole == epoch)
-            { city = Reload(city, market, routes, result, observer, options.OrdinaryVisits); reloaded = true; }
+            { city = Reload(city, market, routes, result, observer, ordinary); reloaded = true; }
         }
         Require(pending.Count == 0 && result.Days.Count == options.Days, "missing day samples");
         Require(result.Epochs == end - (long)start, "unexpected epoch count");
         Require(options.ReloadAt == null || reloaded, "requested reload did not happen");
+        result.JournalEntries = city.State.Economy.Shops.Sum(s => s.Changes.Count);
         result.FinalSaveSha256 = Sha256(SaveCodec.Write(city.State));
         result.Json = Write(options, schedule, result.Days);
         result.Seconds = timer.Elapsed.TotalSeconds;
@@ -151,6 +159,7 @@ public static class EconomyRun
         Require(read.Status == SaveReadStatus.Loaded, "reload refused: " + read.Error);
         Require(SaveCodec.Write(read.State!) == before, "reload round trip changed the save");
         result.Reloads++;
+        if (market.Journal != null) market.Journal = new FoodChangeJournal(read.State!.Food!, read.State.Economy);
         var next = EconomyFixture.Attach(read.State!, market, routes, fresh: false);
         if (ordinary) next.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(read.State!.Minute));
         // The observer is harness state; it continues across the city reload.
@@ -304,14 +313,19 @@ public static class EconomyRun
 
     private static string Write(RunOptions options, InputSchedule schedule, List<DayMetrics> days)
     {
+        bool ordinary = options.OrdinaryVisits || options.Integrated;
         var json = new Json();
-        json.Open().Field("schema", Schema).Field("family", options.Family).Field("arm", options.Arm).Field("seed", options.Seed)
+        json.Open().Field("schema", options.Integrated ? "persistentcity-f6h-metrics-1" : Schema).Field("family", options.Family).Field("arm", options.Arm).Field("seed", options.Seed)
             .Open("fixture").Field("residents", options.Residents).Field("consumers", options.Residents * EconomyFixture.RepresentationFactor)
             .Field("days", options.Days).Field("rivalListed", options.RivalListed).Field("ownListed", options.OwnListed)
             .Field("mealsPerHour", EconomyFixture.MealsPerHour).Field("walkingRouteMinutes", 1).Field("unitsPerCent", Money.UnitsPerCent).Close()
-            .Open("population").Field("ownerKind", options.OrdinaryVisits ? "person-wallet" : OwnerKind).Field("perPersonWallets", options.OrdinaryVisits)
-            .Raw("kindsMeasured", options.OrdinaryVisits ? "[\"resident\",\"visitor\"]" : "[\"resident\"]")
-            .Raw("kindsReserved", options.OrdinaryVisits ? "[]" : "[\"commuter\",\"dayVisitor\"]").Close();
+            .Open("population").Field("ownerKind", ordinary ? "person-wallet" : OwnerKind).Field("perPersonWallets", ordinary)
+            .Raw("kindsMeasured", ordinary ? "[\"resident\",\"visitor\"]" : "[\"resident\"]")
+            .Raw("kindsReserved", ordinary ? "[]" : "[\"commuter\",\"dayVisitor\"]").Close();
+        if (options.Integrated) json.Open("integrated").Field("writer", CityState.CurrentSchema)
+            .Ratio("priceWeight", options.PriceWeight).Field("rivalLanes", RivalServiceCalibration.DefaultLanes)
+            .Field("rivalUnits", RivalServiceCalibration.DefaultMealPeriodUnits)
+            .Ratio("jobLossK", CityBalance.JobLossPerMiss).Close();
         json.OpenArray("inputs"); foreach (var input in schedule.Inputs) json.RawItem(input.Json()); json.CloseArray();
         json.OpenArray("days"); foreach (var day in days) day.Write(json); json.CloseArray();
         json.Close();

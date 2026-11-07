@@ -16,8 +16,7 @@ public static class InterventionArms
     public const int FirstRevertedDay = FirstInterventionDay + EconomyRun.InterventionDays;
     public const string Product = FoodProducts.Burger;
     public const int LunchFrom = 11 * 60, LunchTo = 14 * 60;
-    // Rival lanes have no Core consumer before F6b. The input is a percentage of the F6b default
-    // profile and is recorded, so the F6a arm is today's "no limit to halve" baseline.
+    // Percentage of F6b's default lane profile; no change to meal-period units.
     public const int RivalLanesHalvedPercent = 50, RivalLanesDefaultPercent = 100;
 
     private static double At(int day, int minuteOfDay = 0) => day * 1440.0 + minuteOfDay;
@@ -77,7 +76,7 @@ public static class InterventionArms
             new("access", "second-site-2x", "Second own site at twice the distance, open for 2 weeks", Window(
                 a => new[] { new InterventionInput(a, InputKind.SiteOpen, EconomyFixture.FarShop, "", 1) },
                 r => new[] { new InterventionInput(r, InputKind.SiteOpen, EconomyFixture.FarShop, "", 0) }).ToList()),
-            new("rival", "lanes-halved", "Nearby rival's estimated lanes halved (no Core consumer before F6b)", Window(
+            new("rival", "lanes-halved", "Nearby rival's estimated lanes halved", Window(
                 a => new[] { new InterventionInput(a, InputKind.RivalLanes, EconomyFixture.RivalBusiness, "", RivalLanesHalvedPercent) },
                 r => new[] { new InterventionInput(r, InputKind.RivalLanes, EconomyFixture.RivalBusiness, "", RivalLanesDefaultPercent) }).ToList()),
             new("rival", "price-minus-25", "Rival price -25 % (whole menu)", Window(

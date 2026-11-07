@@ -1,0 +1,186 @@
+"""F6h acceptance report. Offline only; exits 1 on a failed or unmeasured gate.
+
+python3 tools/economy-interventions/acceptance.py build/f6h --output build/f6h/acceptance.json
+No guessed wholesale prices: a dominance certificate covers every fixed per-product
+wholesale cost between zero and the baseline retail price. It can disprove acceptance,
+but cannot certify measured native operating profit or replace the rig throughput read.
+"""
+import argparse
+import hashlib
+import json
+import statistics as st
+from pathlib import Path
+
+
+def band(values):
+    mean = st.mean(values)
+    sd = st.stdev(values) if len(values) > 1 else 0
+    return {"mean": mean, "sd": sd, "low": mean - 2 * sd, "high": mean + 2 * sd,
+            "min": min(values), "max": max(values), "perSeed": values}
+
+
+def inside(value, seed_band):
+    return seed_band["low"] <= value <= seed_band["high"]
+
+
+def trailing(run, day):
+    return st.mean(d["own"]["purchases"] for d in run["days"][day - 3:day])
+
+
+def recovery(run, controls):
+    for day in range(31, 43):
+        if inside(trailing(run, day), band([trailing(c, day) for c in controls])):
+            return day - 28
+    return None
+
+
+def products(run, week):
+    counts = {}
+    revenue = 0
+    for d in run["days"][week * 7:(week + 1) * 7]:
+        revenue += d["own"]["revenueUnits"]
+        for shop in d["own"]["shops"]:
+            for p in shop["products"]:
+                counts[p["productId"]] = counts.get(p["productId"], 0) + p["purchases"]
+    return counts, revenue
+
+
+def dominance_floor(high, other, week, base_units):
+    """Minimum profit(high)-profit(other) over the entire stated wholesale box.
+
+    Linear in each price, so the minimum occurs at an endpoint. Positive means
+    the high arm wins for *every* cost in the box, including measured costs if in it.
+    """
+    a, ar = products(high, week)
+    b, br = products(other, week)
+    return ar - br - sum(max(0, a.get(p, 0) - b.get(p, 0)) * cost for p, cost in base_units.items())
+
+
+def report(directory):
+    groups = {}
+    hashes = {}
+    for path in sorted((directory / "runs").glob("*.json")):
+        raw = path.read_bytes()
+        run = json.loads(raw)
+        assert run["schema"] == "persistentcity-f6h-metrics-1", path
+        assert len(run["days"]) == 42, path
+        key = run["family"] + "/" + run["arm"]
+        groups.setdefault(key, []).append(run)
+        hashes[path.name] = hashlib.sha256(raw).hexdigest()
+    controls = sorted(groups["control/control"], key=lambda r: r["seed"])
+    assert len(controls) == 5 and [r["seed"] for r in controls] == list(range(5))
+    units = controls[0]["fixture"]["unitsPerCent"]
+    # Read actual product IDs from the fixture outputs rather than relying on name spelling.
+    base_units = {}
+    for d in controls[0]["days"]:
+        for shop in d["own"]["shops"]:
+            for p in shop["products"]:
+                if p["purchases"]:
+                    cost = p["revenueUnits"] // p["purchases"]
+                    assert cost * p["purchases"] == p["revenueUnits"]
+                    base_units[p["productId"]] = cost
+    assert len(base_units) == 3
+    metrics = {
+        "ownPurchases": lambda d: d["own"]["purchases"],
+        "revenueUnits": lambda d: d["own"]["revenueUnits"],
+        "rivalMeals": lambda d: d["rival"]["meals"],
+        "incomeUnits": lambda d: d["households"]["incomeReceivedUnits"],
+    }
+    rows = {}
+    conservation = 0
+    for key, runs in groups.items():
+        runs.sort(key=lambda r: r["seed"])
+        assert [r["seed"] for r in runs] == list(range(5)), key
+        for seed, run in enumerate(runs):
+            assert run["days"][:14] == controls[seed]["days"][:14], (key, "unmatched baseline")
+            for d in run["days"]:
+                a = d["accounting"]
+                assert a["conserved"] and a["duplicateReceipts"] == a["historicalClockMisses"] == a["epochReadViolations"] == 0
+                assert a["nativeRevenueUnits"] == a["confirmedPreparedUnits"] + a["uncertainConfirmedUnits"]
+                assert a["outsideLedgerUnits"] == a["watermarkedOutflowUnits"]
+                conservation += a["conservationChecks"]
+                day = d["day"]
+                expired = run["days"][day - 15]["accounting"]["ordinaryDiscretionaryUnits"] if day > 14 else 0
+                assert a["ordinaryWindowUnits"] == a["ordinaryDiscretionaryUnits"] - expired
+        row = {"weekly": {}, "effectOutsideControlBand": {}}
+        for name, metric in metrics.items():
+            row["weekly"][name] = [band([sum(metric(d) for d in r["days"][w * 7:(w + 1) * 7]) for r in runs]) for w in range(6)]
+            value = st.mean([st.mean(metric(d) for d in r["days"][14:28]) for r in runs])
+            control_band = band([st.mean(metric(d) for d in r["days"][14:28]) for r in controls])
+            row["effectOutsideControlBand"][name] = not inside(value, control_band)
+        if key != "control/control":
+            row["recoveryDaysPerSeed"] = [recovery(r, controls) for r in runs]
+            row["recoveryWithin14Days"] = all(d is not None and d <= 14 for d in row["recoveryDaysPerSeed"])
+            row["residualPurchasesPerDayAfter14Days"] = [trailing(r, 42) - trailing(c, 42) for r, c in zip(runs, controls)]
+            row["staffingDoesNotRaiseFortnightMeals"] = all(
+                sum(d["own"]["purchases"] for d in r["days"][14:28]) <= sum(d["own"]["purchases"] for d in c["days"][14:28])
+                for r, c in zip(runs, controls)) if key.startswith("staffing/") else None
+        if key.startswith("staffing/"):
+            def active_meals(run):
+                if key.endswith("zero-staff-day"):
+                    return run["days"][16]["own"]["purchases"]
+                return sum(sum(shop["byHour"][11:14]) for d in run["days"][14:28] for shop in d["own"]["shops"])
+            row["staffingActiveWindowDeltaMealsPerSeed"] = [active_meals(r) - active_meals(c) for r, c in zip(runs, controls)]
+            row["staffingWeeklyDeltaMealsPerSeed"] = [[sum(d["own"]["purchases"] for d in r["days"][w * 7:(w + 1) * 7]) -
+                sum(d["own"]["purchases"] for d in c["days"][w * 7:(w + 1) * 7]) for w in (2, 3)] for r, c in zip(runs, controls)]
+            row["staffingDaysWithMoreMealsThanControlPerSeed"] = [[d["day"] for d, c in zip(r["days"][14:28], control["days"][14:28])
+                if d["own"]["purchases"] > c["own"]["purchases"]] for r, control in zip(runs, controls)]
+        rows[key] = row
+    household = {}
+    for name, measure in {
+        "arrearsShare": lambda r, w: r["days"][w * 7 + 6]["households"]["arrearsOwners"] / r["days"][w * 7 + 6]["households"]["owners"],
+        "p10Dollars": lambda r, w: r["days"][w * 7 + 6]["households"]["p10BalanceUnits"] / units / 100,
+        "unfedOwnerDays": lambda r, w: sum(d["households"]["unfedDays"] for d in r["days"][w * 7:w * 7 + 7]),
+    }.items():
+        household[name] = [band([measure(r, w) for r in controls]) for w in range(6)]
+    household["p10FallsEveryWeekPerSeed"] = [all(r["days"][w * 7 + 6]["households"]["p10BalanceUnits"] < r["days"][(w - 1) * 7 + 6]["households"]["p10BalanceUnits"] for w in range(1, 6)) for r in controls]
+    certificates = []
+    if "price/menu-plus-50" in groups:
+        for seed, high in enumerate(groups["price/menu-plus-50"]):
+            for week in (2, 3):
+                comparisons = {key: dominance_floor(high, runs[seed], week, base_units) / units / 100
+                               for key, runs in groups.items() if key == "control/control" or key.startswith("price/product-")}
+                certificates.append({"seed": seed, "week": week + 1, "minimumProfitAdvantageDollars": comparisons})
+    dominant = len(certificates) == 10 and all(min(c["minimumProfitAdvantageDollars"].values()) > 0 for c in certificates)
+    failures = []
+    if dominant:
+        failures.append("among price arms, menu +50% maximizes weekly revenue minus every fixed wholesale vector in [0, baseline retail] in every seed in weeks 3 and 4")
+    for key, row in rows.items():
+        if key == "control/control":
+            continue
+        if not row["recoveryWithin14Days"]:
+            failures.append(key + ": recovery exceeds 14 days in at least one seed")
+        if row["staffingDoesNotRaiseFortnightMeals"] is False or any(delta > 0 for delta in row.get("staffingActiveWindowDeltaMealsPerSeed", [])):
+            failures.append(key + ": staffing cut raises served meals")
+    if any(household["p10FallsEveryWeekPerSeed"]):
+        failures.append("control p10 falls every week in at least one seed")
+    families = {family: (any(any(row["effectOutsideControlBand"].values())
+                           for key, row in rows.items() if key.startswith(family + "/"))
+                           if any(key.startswith(family + "/") for key in rows) else None)
+                for family in ("price", "staffing", "hours", "shortage", "employment", "access", "rival")}
+    for family, passed in families.items():
+        if passed is False:
+            failures.append(family + ": no measured effect outside control band")
+    return {"status": "stopped" if failures else "partial", "unitsPerCent": units, "runs": len(hashes), "completeInterventionMatrix": len(groups) == 17,
+            "dailyConservationChecks": conservation, "arms": rows, "householdControlSeedBands": household,
+            "familyEffectOutsideControlBand": families, "menuDominanceCertificates": certificates,
+            "failedCriteria": failures, "unmeasuredCriteria": ["measured native wholesale costs", "every gain has a measured cost / no Pareto dominant arm",
+                "native staffed-throughput calibration", "F1 cadence byte identity", "F2 body-cap flagged differences", "full section 6 perf and 100000-consumer stress"] + (["remaining intervention arms"] if len(groups) != 17 else []),
+            "defaults": controls[0]["integrated"], "metricsSha256": hashes}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("directory", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    result = report(args.directory)
+    args.output.write_text(json.dumps(result, indent=2) + "\n")
+    print(result["status"], result["runs"], "runs;", result["dailyConservationChecks"], "daily owner checks")
+    for failure in result["failedCriteria"]:
+        print("FAILED:", failure)
+    raise SystemExit(1 if result["failedCriteria"] or result["unmeasuredCriteria"] else 0)
+
+
+if __name__ == "__main__":
+    main()

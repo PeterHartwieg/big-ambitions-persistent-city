@@ -44,7 +44,7 @@ public static class Baseline
         ("p10BalanceUnitsEndOfWeek", d => d.P10BalanceUnits, true), ("employedEndOfWeek", d => d.Employed, true),
     };
 
-    public static string Summary(IReadOnlyList<Arm> arms, Dictionary<string, List<RunResult>> results, int residents, int seeds)
+    public static string Summary(IReadOnlyList<Arm> arms, Dictionary<string, List<RunResult>> results, int residents, int seeds, bool integrated = false)
     {
         var control = results["control/control"];
         int reverted = InterventionArms.FirstRevertedDay;
@@ -57,12 +57,12 @@ public static class Baseline
         double InterventionMean(RunResult r) => r.Days.Where(d => DayMetrics.Phase(d.Day) == "intervention").Average(d => (double)d.OwnPurchases);
         var controlIntervention = control.Select(InterventionMean).ToArray();
         var json = new Json();
-        json.Open().Field("schema", EconomyRun.Schema + "-summary").Field("residents", residents)
+        json.Open().Field("schema", integrated ? "persistentcity-f6h-summary-1" : EconomyRun.Schema + "-summary").Field("residents", residents)
             .Field("consumers", residents * EconomyFixture.RepresentationFactor).Field("seeds", seeds).Field("unitsPerCent", Money.UnitsPerCent)
             .Open("protocol").Field("baselineDays", EconomyRun.BaselineDays).Field("interventionDays", EconomyRun.InterventionDays)
             .Field("revertedDays", EconomyRun.RevertedDays).Field("outcomeSampleMinute", EconomyRun.OutcomeSampleMinute)
             .Field("controlBand", "per-day mean +/- 2 sd over seeds of the 3-day trailing mean own purchases").Close()
-            .Field("evidence", "Offline detached Core scenario; not native or rig evidence. Thresholds are F6h work.");
+            .Field("evidence", integrated ? "Offline F6h measurements; acceptance.py reports failed and unmeasured gates separately." : "Offline detached Core scenario; not native or rig evidence. Thresholds are F6h work.");
         json.OpenArray("arms");
         foreach (var arm in arms)
         {
