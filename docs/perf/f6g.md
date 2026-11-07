@@ -76,3 +76,9 @@ The new `StockoutObserved` property adds at most 25 characters per daily row, or
 - Required foreground `dotnet test tests/PersistentCity.Tests.csproj`: **3,828 passed**, 0 failed, 0 skipped (4 min 1 s).
 - Foreground F6g checks and final timing batch: **40 passed**, including F6g and existing F6c/panel guards. No other testhost was active when launched.
 - `git diff --check`: passed. No game, rig, ModsLocal, bridge or regression matrix run.
+
+## Round-2 staffing review
+
+Opus-r2-1 retains the exact staffed-counter contract. Boolean or daily-maximum aggregation would suppress a real lunch reduction from two counters to one. This review changes documentation only; runtime behavior, writer-33 golden pins, save sizes and measured costs above are unchanged. The existing staff-variation/reload and counted oldest-first eviction checks cover the contract. Native open-hour membership variation is explicitly included in batched rig check 4, rather than asserted from offline fixtures.
+
+Round-2 validation: required build passed with the same DLL SHA256 (`2d552b68a214f9af905c5bd0b7e473ef6e553cc4545a3ca263fc27c8cbe1e20f`); required foreground unit suite passed **3,828 tests**, 0 failed, 0 skipped (3 min 51 s). The other checkout's testhost finished before this build/test sequence started. `git diff --check` passed. No game, rig or regression matrix run.
