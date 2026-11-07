@@ -7,7 +7,7 @@ using UnityEngine.AI;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>A queue line beside one door: standing points along the wall, each facing the door.</summary>
+    /// <summary>A queue at a customer entrance: a building door or a pavement-side vendor stand.</summary>
     internal sealed class DoorQueue
     {
         public DoorQueue(string key, Position door, Position entrance, IReadOnlyList<Position> spots) { Key = key; Door = door; Entrance = entrance; Spots = spots; }
@@ -42,7 +42,7 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, DoorQueue> queues = new Dictionary<string, DoorQueue>(StringComparer.Ordinal);
         private readonly Dictionary<string, float> retryAt = new Dictionary<string, float>(StringComparer.Ordinal);
 
-        public static string KeyOf(Place place) => DwellPlanner.DoorKey(place.Position);
+        public static string KeyOf(Place place) => VendorNames.IsVendorPlace(place.Id) ? place.Id : DwellPlanner.DoorKey(place.Position);
 
         /// <summary>
         /// At most one uncached door is sampled per frame across all callers. A door with no usable line is tried again
@@ -51,6 +51,7 @@ namespace PersistentCity.Runtime
         public bool TryQueue(Place place, ref bool sampledThisCall, out DoorQueue? queue)
         {
             string key = KeyOf(place);
+            if (VendorNames.IsVendorPlace(place.Id)) { queue = null; return false; }
             if (queues.TryGetValue(key, out var cached)) { queue = cached; return true; }
             queue = null;
             if (sampledThisCall || SampledThisFrame || retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry) return false;
@@ -67,6 +68,58 @@ namespace PersistentCity.Runtime
         {
             string key = KeyOf(place);
             return !queues.ContainsKey(key) && !(retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry);
+        }
+
+        private readonly Dictionary<string, (long Opening, Position Entrance, Position Origin, float Heading, string Kind)> vendorLayouts
+            = new Dictionary<string, (long, Position, Position, float, string)>(StringComparer.Ordinal);
+
+        /// <summary>Street Food supplies the pavement-side queue origin and its direction (Unity yaw degrees).
+        /// Never look for a building door or snap a refused spot farther out into the street.</summary>
+        public bool TryVendorQueue(VendorRow row, VendorVehicle vehicle, out DoorQueue? queue)
+        {
+            queue = null;
+            var stand = row.Stand;
+            if (stand == null || !stand.Published || stand.OpeningId != vehicle.OpeningId || !vehicle.OwnedByPersistentCity) return false;
+            string key = row.PlaceId;
+            var origin = new Position(vehicle.QueueX, vehicle.QueueY, vehicle.QueueZ);
+            var layout = (vehicle.OpeningId, stand.Position, origin, vehicle.QueueHeading, vehicle.Kind);
+            if (!vendorLayouts.TryGetValue(key, out var previous) || previous.Opening != vehicle.OpeningId
+                || previous.Heading != vehicle.QueueHeading || previous.Kind != vehicle.Kind
+                || !SamePoint(previous.Entrance, stand.Position) || !SamePoint(previous.Origin, origin))
+            {
+                vendorLayouts[key] = layout;
+                queues.Remove(key); retryAt.Remove(key);
+            }
+            if (queues.TryGetValue(key, out var cached)) { queue = cached; return true; }
+            if (SampledThisFrame || retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry) return false;
+            sampledFrame = Time.frameCount;
+            queue = SampleVendor(key, stand.Position, vehicle);
+            if (queue == null) { retryAt[key] = Time.unscaledTime + RetrySeconds; return false; }
+            retryAt.Remove(key); queues[key] = queue;
+            return true;
+        }
+
+        private static bool SamePoint(Position a, Position b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+
+        private static DoorQueue? SampleVendor(string key, Position entrance, VendorVehicle vehicle)
+        {
+            var origin = new Position(vehicle.QueueX, vehicle.QueueY, vehicle.QueueZ);
+            if (!entrance.IsFinite || !origin.IsFinite || !Position.Finite(vehicle.QueueHeading)) return null;
+            double heading = vehicle.QueueHeading * Math.PI / 180.0;
+            double spacing = vehicle.Kind == "truck" ? 1.0 : 0.8;
+            var points = new List<Position>(QueueLength);
+            Position previous = entrance;
+            for (int i = 0; i < QueueLength; i++)
+            {
+                var wanted = new Position(origin.X + Math.Sin(heading) * spacing * i, origin.Y, origin.Z + Math.Cos(heading) * spacing * i);
+                if (!NavMesh.SamplePosition(PhysicalPedestrianBody.Vector(wanted), out NavMeshHit hit, 0.3f, WalkingRoutes.DryFilter)) break;
+                var point = PhysicalPedestrianBody.Point(hit.position);
+                // Keep the supplied pavement line, including its level. A partial line is usable; never bridge a gap.
+                if (Math.Abs(point.Y - wanted.Y) > 0.5 || Math.Sqrt(Math.Pow(point.X - wanted.X, 2) + Math.Pow(point.Z - wanted.Z, 2)) > 0.15
+                    || NavMesh.Raycast(PhysicalPedestrianBody.Vector(previous), hit.position, out _, WalkingRoutes.DryFilter)) break;
+                points.Add(point); previous = point;
+            }
+            return points.Count == 0 ? null : new DoorQueue(key, entrance, entrance, points);
         }
 
         private static DoorQueue? Sample(string key, Place place)
