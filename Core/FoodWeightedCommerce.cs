@@ -23,6 +23,7 @@ namespace PersistentCity.Core
         private bool AwarenessReady => awarenessCatalogue!=null && awarenessRevision==CurrentAwarenessRevision
             && awarenessInvalidation==publishedInvalidation && ReferenceEquals(awarenessScopes,state.Shops) && awarenessCount==state.Shops.Count;
         private long publishedInvalidation=-1;
+        internal bool AwarenessCurrent => AwarenessReady;
         // The next logical event stays unprocessed while the shared image builds. A held decision
         // already owns its inputs and is never delayed/rerolled by a later catalogue publication.
         internal bool HasPendingCampaignPublication => (CampaignProvider as IFoodCampaignPreparation)?.HasPendingPublication == true;
@@ -59,6 +60,8 @@ namespace PersistentCity.Core
         private FoodScope? ScopeAtPlace(string place)
             => AwarenessReady ? awarenessCatalogue!.ScopeAtPlace(place)
                 : state.Shops.FirstOrDefault(scope=>scope.PlaceId==place);
+        // A Vehicle scope is offered only through a candidate market, which routes it to the vehicle market by channel.
+        private bool VendorCandidate(FoodScope scope) => market is IFoodCandidateMarket m ? m.IsCandidate(scope) : scope.Channel==FoodScopeChannel.Shop;
         private Position? Anchor(string id) => id.Length==0 ? (Position?)null : city.FindPlace(id).Position;
         private FoodAwarenessImage AwarenessSample(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,int day,bool atStop,FoodAwarenessDump? dump=null)
         {
@@ -66,7 +69,7 @@ namespace PersistentCity.Core
                 campaigns.Prepare(meal.ResidentId,day,city.State.Minute);
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
                 AwarenessSettings,e=>(!atStop || e.PlaceId==stop.PlaceId) && e.Scope!.BusinessId==e.BusinessId
-                    && (e.Kind==FoodAwarenessAlternativeKind.External ? RivalSettings.RivalChoiceWeight>0 && RivalCandidate(e.Scope!) : (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!))),
+                    && (e.Kind==FoodAwarenessAlternativeKind.External ? RivalSettings.RivalChoiceWeight>0 && RivalCandidate(e.Scope!) : VendorCandidate(e.Scope!)),
                 city.State.Capabilities.Active ? MemoryProvider ?? storedMemoryProvider : EmptyFoodAwarenessProvider.Instance,CampaignProvider,dump,atStop ? stop.PlaceId : null);
         }
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
@@ -232,7 +235,7 @@ namespace PersistentCity.Core
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
             foreach(var scope in state.Shops)
             {
-                if(market is IFoodCandidateMarket candidates && !candidates.IsCandidate(scope)) continue;
+                if(!VendorCandidate(scope)) continue;
                 double minutes=Position.Distance(origin.Position,city.FindPlace(scope.PlaceId).Position)/pace;
                 double contribution=MemoryContribution(meal,person,scope.BusinessId);
                 double rank=FoodDrawContext.Rank(draw.ShopHash(scope.BusinessId),FoodChoicePolicy.ApplyMemory(distancePreference.Weight(minutes,true),contribution,tuning.FoodChoiceWeightFloor));
