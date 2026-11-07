@@ -90,7 +90,14 @@ namespace PersistentCity.Core
         {
             ordinaryOwnership = ownership ?? throw new ArgumentNullException(nameof(ownership)); ordinaryPrices = prices ?? new OrdinaryVisitPrices();
             ordinaryLoadedHour = (long)(State.Minute / 60); ordinaryObservedHour = -1;
+            // Market-first attachment reflags its live counters; policy-first sets modes as wallets attach.
+            food?.RestoreVisitorWalletModes();
         }
+        private bool RecordsSamePlaceArrival(CitizenState person, RoutineSlot slot)
+            => slot.PlaceId == person.PlaceId && slot.Activity != Activity.Home
+                && (person.Phase == CitizenPhase.WaitingForOpening && person.DestinationId == slot.PlaceId
+                    && person.DestinationActivity == slot.Activity
+                    || State.Schema >= CityState.AttendanceSchema && person.Activity != slot.Activity);
         private Money OrdinaryPrice(string placeId, Activity activity, double minute, out OrdinaryVisitClass kind)
         {
             kind = OrdinaryVisitClass.ActivityOnly;

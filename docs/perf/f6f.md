@@ -72,3 +72,9 @@ Full-size Release check (repeated on the final cap-guard code in Debug with iden
 | 4 | 680.93 → 716.77 | 4 / 14 / 8 | 0 / 222 / 112 |
 
 The full-size controls end with 1–5 wallets in arrears out of 1,914. Several controls decline after their week-2/3 peak; they do not reproduce the small fixture’s every-week decline. Closure and blocked-route arms show greater strain. These observations are retained for F6h’s combined-loop calibration; they do not establish its control band. Saves used by the harness are outside component timing windows. The native batch must record the original autosave setting, verify it off before every window and after reload, invalidate any window containing a save, then restore settings. No native performance window was taken here.
+
+## Review corrections
+
+Restoring the transient visitor mode during market attachment uses the existing budget-queue insertion pass and cached owner. Policy attachment after the market walks those existing entries once and reflags the attached counters in place. It retains no new collection and adds no simulation-event scan. The shared same-place arrival predicate reads existing fields in O(1); a continued admitted visit skips the affordability lookup because it records no new arrival. New arrivals keep the existing gate and debit. There are no added native reads or panel builds.
+
+These are correctness fixes, with four regression cases failing before and passing afterward (both attachment orders, shop and leisure continuation). The component timing tables above are the original slice measurements; no new timing or whole-frame result is claimed for this review correction. The four parked hotspots stay unchanged.

@@ -282,4 +282,66 @@ public sealed class OrdinaryExchangeTests
         Assert.Equal(maximum, row.RetailUnits); Assert.Equal(visits, row.RetailVisits);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VisitorFeedbackIsRestoredBeforeEventsInEitherAttachmentOrder(bool marketFirst)
+    {
+        var (state, market) = Schema28Tests.Fresh();
+        CitySimulator Attach(CityState snapshot)
+        {
+            var next = new CitySimulator(snapshot, new FreshCityTraceTests.Walk());
+            if (marketFirst) next.AttachFoodMarket(market);
+            next.AttachOrdinaryExchanges(new OrdinaryOwnershipIndex(Array.Empty<Place>(), snapshot.Minute, _ => default));
+            if (!marketFirst) next.AttachFoodMarket(market);
+            return next;
+        }
+        var city = Attach(state); Drain(city, 2880);
+        var visitor = state.Food!.Residents.Single(m => m.ResidentId == state.Visitors[0].Id).Budget!;
+        // Leave an endowment below the resident reserve, with no hold or missing visitor basket.
+        Assert.True(HouseholdFinance.HoldPurchase(visitor, visitor.Balance - Money.FromCents(1)));
+        HouseholdFinance.ConfirmPurchase(visitor);
+        var before = city.FoodMoney!.Snapshot();
+        Assert.Equal(0, before.WithoutHomeBasket);
+        string payload = SaveCodec.Write(state);
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var restored = Attach(read.State!);
+        Assert.Equal(state.Minute, restored.State.Minute);
+        Assert.Equal(before, restored.FoodMoney!.Snapshot());
+        Assert.Equal(FoodMoneyCounters.Rescan(restored.State.Food!), restored.FoodMoney.Snapshot());
+        Assert.All(restored.State.Food!.Residents, m => Assert.Equal(restored.FindCitizen(m.ResidentId)!.IsVisitor, m.Budget!.VisitorEndowment));
+        Assert.Equal(payload, SaveCodec.Write(restored.State));
+    }
+
+    [Theory]
+    [InlineData(Activity.Shop)]
+    [InlineData(Activity.Leisure)]
+    public void SameVenueContinuationRetainsTheVisitAfterItsPaymentDrainsTheLimit(Activity activity)
+    {
+        int shift = (int)(StableRandom.Hash("person:hours", 7) % 31) - 15;
+        double start = 1440 + (activity == Activity.Shop ? 1050 : 1140) + shift;
+        var owner = new Ownership { Hour = (long)((start + 1) / 60), Kind = activity == Activity.Shop ? OrdinaryVisitClass.Retail : OrdinaryVisitClass.Leisure };
+        var city = Arrival(owner, start + 1, activity); var person = city.State.Citizens[0];
+        if (activity == Activity.Leisure) person.Identity.Persona = Persona.Sporty;
+        person.ShopId = activity == Activity.Shop ? "venue" : "";
+        person.LeisureId = activity == Activity.Leisure ? "venue" : "";
+        // First admitted slot ends while the next routine slot continues at the same venue.
+        person.ActivityUntilMinute = start + 21;
+        var budget = Budget(city); var price = new OrdinaryVisitPrices().Price(owner.Kind);
+        budget.OpeningBalance = budget.Balance = HouseholdFinance.SpendingReserve(budget) + price;
+        city = city.RebuildRoutes(new AttendanceWageTests.Routes());
+        Drain(city, start + 1);
+        Assert.Equal(price, budget.Ledger.Discretionary); Assert.Equal(Money.Zero, HouseholdFinance.SpendingLimit(budget));
+        var arrival = Assert.Single(person.RecentVisits);
+        var nextSlot = DailyRoutine.At(person, city.State.Seed, start + 21);
+        Assert.Equal(activity, nextSlot.Activity); Assert.True(nextSlot.EndsAt > start + 21);
+        owner.Hour = (long)((start + 21) / 60);
+        Drain(city, start + 21);
+        Assert.Equal("venue", person.PlaceId); Assert.Equal(activity, person.Activity);
+        Assert.Equal(CitizenPhase.AtPlace, person.Phase); Assert.Equal(nextSlot.EndsAt, person.NextEventMinute);
+        Assert.Equal(0, person.MissedActivities); Assert.Same(arrival, Assert.Single(person.RecentVisits));
+        Assert.Equal(price, budget.Ledger.Discretionary); Assert.Equal((long)(start + 1), budget.Ledger.VisitWatermark);
+        Assert.Equal(BigInteger.One, city.FreeOutsideSpending().Visits); Assert.True(HouseholdFinance.CashConserved(budget));
+    }
+
 }

@@ -869,18 +869,17 @@ namespace PersistentCity.Core
                 slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt);
                 destination = places[person.HomeId];
             }
-            if (slot.PlaceId == person.PlaceId && slot.Activity != Activity.Home
-                && !CanAdmitOrdinary(person, slot.PlaceId, slot.Activity, now))
+            bool recordArrival = RecordsSamePlaceArrival(person, slot);
+            if (recordArrival && !CanAdmitOrdinary(person, slot.PlaceId, slot.Activity, now))
             {
                 MissRoutine(person, slot, now, "paid-visit-unaffordable");
                 slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt); destination = places[person.HomeId];
+                recordArrival = false;
             }
             person.ActivityUntilMinute = slot.EndsAt;
             if (slot.PlaceId == person.PlaceId)
             {
-                if (slot.Activity != Activity.Home && (person.Phase == CitizenPhase.WaitingForOpening
-                    && person.DestinationId == slot.PlaceId && person.DestinationActivity == slot.Activity
-                    || State.Schema >= CityState.AttendanceSchema && person.Activity != slot.Activity))
+                if (recordArrival)
                     VisitorSchedules.RecordArrival(person, now, slot.PlaceId, slot.Activity);
                 person.Phase = CitizenPhase.AtPlace;
                 person.Activity = slot.Activity;
