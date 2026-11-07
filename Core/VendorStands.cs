@@ -106,6 +106,7 @@ namespace PersistentCity.Core
         public const int RetryMinutes = 15;
         private readonly IVendorApi api;
         private long retrySlot = long.MinValue;
+        private bool refresh;
         private VendorImage published = new VendorImage(), building = new VendorImage();
         private int copied = -1, total;
         private long buildingRevision;
@@ -113,6 +114,8 @@ namespace PersistentCity.Core
         public VendorImageReader(IVendorApi api) { this.api = api ?? throw new ArgumentNullException(nameof(api)); }
         public VendorImage Image => published;
         public bool Pending => copied >= 0;
+        /// <summary>The next <see cref="Poll"/> reads Street Food again even at the same revision.</summary>
+        public void Refresh() => refresh = true;
 
         /// <summary>One revision read. True when a copy is pending or a new image was published. With a native minute,
         /// an image that is not Ready is also read again once per 15 minutes: Street Food may recover without a new revision.</summary>
@@ -124,8 +127,9 @@ namespace PersistentCity.Core
                 if (revision == buildingRevision) return true;
                 copied = -1; // Street Food changed again mid-copy; start over from its new view.
             }
-            else if (revision == published.Revision && (published.Ready || minute < 0 || minute / RetryMinutes == retrySlot)) return false;
+            else if (revision == published.Revision && !refresh && (published.Ready || minute < 0 || minute / RetryMinutes == retrySlot)) return false;
             if (minute >= 0) retrySlot = minute / RetryMinutes;
+            refresh = false;
             buildingRevision = revision;
             VendorApiStatus status; int count;
             try { status = api.BeginRead(out count); }
@@ -391,14 +395,26 @@ namespace PersistentCity.Core
                 a.OpeningId = -1; row.DeferredStand = null; Close(row);
             }
             // A handback Street Food has not confirmed blocks every new request and acquisition until it succeeds.
-            if (a.HandbackPending && !Release(row, hour, row.Reason)) { row.Reason = "handback to Street Food not confirmed; retrying"; return; }
-            if (refusal == null && !a.Desired) a.Desired = true; // after a confirmed retried handback an eligible vehicle asks again
+            if (a.HandbackPending)
+            {
+                if (!lease.Valid(minute)) a.HandbackPending = false; // the lapsed lease handed every PC opening and request back
+                else
+                {
+                    if (!Release(row, hour, row.Reason)) { row.Reason = "handback to Street Food not confirmed; retrying"; return; }
+                    // Confirmed: this snapshot predates the handback, so the next request and grant wait for a fresh read.
+                    if (refusal == null) a.Desired = true;
+                    reader!.Refresh();
+                    return;
+                }
+            }
             if (a.Desired && !a.Requested) Request(row, minute, hour);
 
             if (owned && a.OpeningId != v.OpeningId && a.Desired)
             {
                 VendorStand? stand = null;
-                string? why = v.OpenedHour <= a.RequestedHour ? "Street Food granted an opening that started in the request hour" : VendorRules.OpeningRefusal(v);
+                // A grant counts only against a request Street Food confirmed (RequestedHour recorded) and only for a later hour.
+                string? why = !a.Requested ? "Street Food granted an opening without a confirmed ownership request"
+                    : v.OpenedHour <= a.RequestedHour ? "Street Food granted an opening that started in the request hour" : VendorRules.OpeningRefusal(v);
                 if (why == null) stand = VendorRules.PlanStand(v, sampler, out why);
                 if (stand == null)
                 {
@@ -506,7 +522,8 @@ namespace PersistentCity.Core
                 var row = table.Rows[r];
                 if (row.State != VendorRowState.Live) continue;
                 var a = row.Authority;
-                if (a.Desired || a.Requested || a.Managed || a.OpeningId >= 0 || a.HandbackPending) return true;
+                // A pending handback alone does not renew: without other PC work the lease runs out and Street Food takes the vehicle back.
+                if (a.Desired || a.Requested || a.Managed || a.OpeningId >= 0) return true;
             }
             return false;
         }

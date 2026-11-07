@@ -165,6 +165,7 @@ namespace PersistentCity.Tests
         public static int ReadCalls;
         public static bool ThrowOnRead;
         public static readonly HashSet<string> FailRelease = new HashSet<string>(StringComparer.Ordinal);
+        public static readonly HashSet<string> FailRequest = new HashSet<string>(StringComparer.Ordinal);
         public static readonly List<Vehicle> Vehicles = new List<Vehicle>();
         public static readonly Dictionary<string, long> Wishes = new Dictionary<string, long>(StringComparer.Ordinal);
         public static readonly List<string> Calls = new List<string>();
@@ -174,7 +175,7 @@ namespace PersistentCity.Tests
 
         public static void Reset()
         {
-            ContractVersion = 1; Revision = 1; ReadStatus = 0; ReadCalls = 0; ThrowOnRead = false; FailRelease.Clear();
+            ContractVersion = 1; Revision = 1; ReadStatus = 0; ReadCalls = 0; ThrowOnRead = false; FailRelease.Clear(); FailRequest.Clear();
             Vehicles.Clear(); Wishes.Clear(); Calls.Clear(); LeaseUntil = -1; Now = 2 * 1440 + 8 * 60; Sequence = 0;
         }
 
@@ -230,6 +231,7 @@ namespace PersistentCity.Tests
             reason = "";
             var v = Vehicles.Find(x => x.Id == id);
             if (v == null) { reason = "unknown vehicle"; return 3; }
+            if (want && FailRequest.Contains(id)) { reason = "stand-in request fault"; return 4; }
             if (want) { if (!Wishes.ContainsKey(id)) Wishes[id] = Now / 60; return 0; }
             if (FailRelease.Contains(id)) { reason = "stand-in release fault"; return 4; }
             Wishes.Remove(id);

@@ -22,11 +22,12 @@ public sealed class StreetFoodVendorTests
     internal sealed class Sampler : IVendorStandSampler
     {
         public int Calls;
+        public bool Blocked;
         public bool TrySample(Position stand, double radius, out Position point)
         {
             Calls++;
             point = new Position(stand.X, 0, stand.Z);
-            return stand.X < 9000; // far stands are off the walkable mesh
+            return !Blocked && stand.X < 9000; // far stands are off the walkable mesh
         }
     }
 
@@ -788,5 +789,68 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(reads + 1, StreetFoodHooks.ReadCalls);
         Assert.True(rig.Vendors.Image!.Ready);
         Assert.NotNull(rig.Table.Find("A"));
+    }
+
+    // ---- Review round 2 regressions ----
+
+    [Fact]
+    public void AConfirmedRetriedHandbackFollowedByAFailedRequestNeverServesTheOldOpening()
+    {
+        StreetFoodHooks.Add("A"); StreetFoodHooks.Add("B", x: 300);
+        var rig = new Rig();
+        rig.Run(At(8, 5));
+        // A's crew opening at 09:05 is granted, but its stand has no walkable point (a refusal the snapshot does not
+        // carry) and Street Food fails the handback. B keeps the shared lease alive.
+        rig.Stands.Blocked = true; StreetFoodHooks.FailRelease.Add("A");
+        rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 120); rig.Run(At(9, 5));
+        rig.Stands.Blocked = false; StreetFoodHooks.Open("B", 120); rig.Run(At(9, 6));
+        var a = rig.Row("A");
+        Assert.True(a.Authority.HandbackPending); Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("A").Owner);
+
+        // The retry succeeds and the next ownership request fails. The retry runs on the snapshot taken before the
+        // handback, which still shows A owned by PC: that opening must not be accepted.
+        StreetFoodHooks.FailRelease.Clear(); StreetFoodHooks.FailRequest.Add("A");
+        rig.Run(At(9, 10));
+        Assert.Equal(VendorNames.Owner, rig.Vendors.Image!.Find("A")!.OpeningOwner); // the stale snapshot
+        Assert.False(a.Authority.HandbackPending);
+        Assert.Equal("", StreetFoodHooks.Find("A").Owner);
+        Assert.False(rig.Serves("A")); Assert.Equal(-1, a.Authority.OpeningId); Assert.False(a.PlacePublished);
+        rig.RunTo(At(9, 40), 5);
+        Assert.False(rig.Serves("A")); Assert.False(a.Authority.Requested); Assert.True(rig.Serves("B"));
+    }
+
+    [Fact]
+    public void APendingHandbackAloneDoesNotRenewTheLeaseSoStreetFoodTakesTheVehicleBack()
+    {
+        StreetFoodHooks.Add("A");
+        var rig = new Rig();
+        rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 300); rig.Run(At(9, 5));
+        Assert.True(rig.Serves("A"));
+        StreetFoodHooks.FailRelease.Add("A"); // Street Food never confirms the release
+        var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
+        rig.Run(At(9, 10));
+        var a = rig.Row("A");
+        Assert.True(a.Authority.HandbackPending);
+        StreetFoodHooks.Calls.Clear();
+        rig.RunTo(At(10, 30));
+        Assert.DoesNotContain("renew", StreetFoodHooks.Calls);
+        Assert.Equal("", v.Owner); // the lease ran out and Street Food took the opening back
+        Assert.False(a.Authority.HandbackPending);
+        Assert.False(rig.Serves("A"));
+    }
+
+    [Fact]
+    public void AConfirmedRetriedHandbackSendsNoFurtherCallsFromTheStaleSnapshot()
+    {
+        StreetFoodHooks.Add("A"); StreetFoodHooks.Add("B", x: 300);
+        var rig = new Rig();
+        rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 300); StreetFoodHooks.Open("B", 300); rig.Run(At(9, 5));
+        StreetFoodHooks.FailRelease.Add("A");
+        var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
+        rig.Run(At(9, 10));
+        StreetFoodHooks.FailRelease.Clear(); StreetFoodHooks.Calls.Clear();
+        rig.Run(At(9, 15)); // the retry, from the snapshot taken before the handback
+        Assert.Equal(1, StreetFoodHooks.Calls.Count(c => c == "release A"));
+        Assert.False(rig.Row("A").Authority.HandbackPending);
     }
 }
