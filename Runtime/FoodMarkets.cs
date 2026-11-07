@@ -7,7 +7,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>One population market, with authority selected by the saved scope channel.</summary>
     public sealed class FoodMarkets : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
-        IFoodSaleEvidence, IFoodFailureMarket, IRivalFoodMarket, IFoodAwarenessRevision, IDisposable
+        IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IRivalFoodMarket, IFoodAwarenessRevision, IDisposable
     {
         private readonly FoodCommerceState state;
         private readonly IFoodMarket shops, vehicles;
@@ -22,6 +22,7 @@ namespace PersistentCity.Runtime
         public FoodSale Buy(ResidentMeal meal, double minute) => Market(meal.BusinessId).Buy(meal, minute);
         public FoodBusiness? ReadBusiness(string id, double minute) => ((ILocalFoodMarket)Market(id)).ReadBusiness(id, minute);
         public FoodBusiness? ReadFailureBusiness(string id, string place, double minute) => ((IFoodFailureMarket)Market(id)).ReadFailureBusiness(id, place, minute);
+        public FoodBusiness? ReadClosedStand(string id, string place, double minute) => (Market(id) as IFoodClosedStandMarket)?.ReadClosedStand(id, place, minute);
         public bool CanServe(string id) => ((IFoodBusinessAuthority)Market(id)).CanServe(id);
         public bool IsConfirmedPaid(ResidentMeal meal) => ((IFoodSaleEvidence)Market(meal.BusinessId)).IsConfirmedPaid(meal);
         public bool IsCandidate(FoodScope scope) => ((IFoodCandidateMarket)(scope.Channel == FoodScopeChannel.Vehicle ? vehicles : shops)).IsCandidate(scope);
@@ -30,6 +31,10 @@ namespace PersistentCity.Runtime
         {
             if (maximumCandidates < 1 || maximumCandidates > 8 || !Position.Finite(tolerance) || tolerance < 0)
                 throw new ArgumentException("Invalid local food observation bound.");
+            // Preserve the native small-market menu/cache and shop-only local-read behavior.
+            if (!state.Shops.Any(s => s.Channel == FoodScopeChannel.Vehicle))
+                return ((ILocalFoodMarket)shops).ReadLocal(origin, minute, tolerance, maximumCandidates);
+            if (state.Shops.Count <= maximumCandidates) return Read(minute);
             // Rank saved geometry before reading either seller's supply; apply the shared bound once.
             using (BeginCapture(minute))
                 return state.Shops.Where(IsCandidate).Select(s => new { Scope = s, Distance = Position.Distance(origin.Position, position(s.PlaceId)) })

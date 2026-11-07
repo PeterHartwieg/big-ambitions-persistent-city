@@ -408,14 +408,14 @@ public sealed class VehicleMarketTests
         public ShopMarket(FoodCommerceState state, IDictionary<string, string> receipts) { this.state = state; this.receipts = receipts; }
         public double Start;
         public double EarliestMinute => Start;
-        public int Captures, Disposals, Sales, RivalCalls, MarketDisposals;
+        public int Captures, Disposals, Sales, RivalCalls, MarketDisposals, LocalReads;
         public bool ThrowDispose;
         public long AwarenessRevision => 7;
         private IEnumerable<FoodScope> Shops => state.Shops.Where(s => s.Channel == FoodScopeChannel.Shop);
         public IReadOnlyList<FoodBusiness> Read(double minute) => Shops.Select(s => ReadBusiness(s.BusinessId, minute)!).ToArray();
         public FoodBusiness? ReadBusiness(string id, double minute) => Shops.Where(s => s.BusinessId == id).Select(s => new FoodBusiness {
             Id = s.BusinessId, PlaceId = s.PlaceId, MealsPerHour = 60, Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(100), Units = 100 } } }).SingleOrDefault();
-        public IReadOnlyList<FoodBusiness> ReadLocal(Place p, double at, double tolerance, int max) => Read(at).Take(max).ToArray();
+        public IReadOnlyList<FoodBusiness> ReadLocal(Place p, double at, double tolerance, int max) { LocalReads++; return Read(at).Take(max).ToArray(); }
         public bool CanServe(string id) => Shops.Any(s => s.BusinessId == id);
         public bool IsConfirmedPaid(ResidentMeal m) => FoodSaleReceipts.ReadStatus(receipts, m) == FoodReceiptStatus.Paid;
         public FoodSale Buy(ResidentMeal m, double at) { FoodSaleReceipts.Begin(receipts, m); Sales++; FoodSaleReceipts.Confirm(receipts, m); return new(true, "shop double confirmed"); }
@@ -452,7 +452,7 @@ public sealed class VehicleMarketTests
         Assert.Equal(8, local.Count);
         Assert.Equal(vehicleIncluded, local.Any(b => VendorNames.IsVendorPlace(b.PlaceId)));
         Assert.Equal(local.OrderBy(b => Position.Distance(f.City.FindPlace("home").Position, f.City.FindPlace(b.PlaceId).Position)).Select(b => b.Id), local.Select(b => b.Id));
-        Assert.Equal(8 - (vehicleIncluded ? 1 : 0), shop.Captures);
+        Assert.Equal(vehicleIncluded ? 0 : 8, shop.Captures); // Small markets use the full batched read.
         Assert.Equal(shops + 1, composite.Read(f.Now).Count);
         Assert.Equal(f.Now, composite.EarliestMinute); shop.Start = f.Now + 8; Assert.Equal(f.Now + 8, composite.EarliestMinute);
         Assert.Equal(33, composite.RivalRevision); Assert.Same(shop.Rival, composite.ReadRival("rival"));

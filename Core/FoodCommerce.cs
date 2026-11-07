@@ -359,8 +359,16 @@ namespace PersistentCity.Core
             // obligations (an uncertain receipt above, a held purchase) stay with the same person and wallet.
             if (person.IsVisitor && VisitorSchedules.Dormant(person) && !Active(meal) && meal.Status != MealStatus.Uncertain)
             { SkipDormantMeals(meal, person, now); return; }
+            FoodBusiness? closedStand = null;
             if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
-            { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
+            {
+                closedStand = ClosedStand(meal, now);
+                if (closedStand == null)
+                { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
+                if (meal.Status == MealStatus.Serving)
+                { Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours"); return; }
+                // Keep the captured trip to the old stand. Only reaching it supplies a Closed visit.
+            }
             if (!Active(meal) && meal.Status != MealStatus.Pending)
             {
                 // Retain the exact unresolved receipt and any held money across later meals.
@@ -415,9 +423,9 @@ namespace PersistentCity.Core
                 {
                     if (meal.TargetKind == FoodAlternativeKind.Rival) { ArriveRival(meal, person, now); return; }
                     memoryStore.CommitStage(meal, ExperienceStage.Reached);
-                    var available = ReadBusiness(meal.BusinessId, now);
+                    var available = ReadBusiness(meal.BusinessId, now) ?? closedStand;
                     if (available?.PlaceId != meal.PlaceId) available = null;
-                    if (city.State.Capabilities.Active && NewChoice(meal) && available != null
+                    if (city.State.Capabilities.Active && (NewChoice(meal) || closedStand != null) && available != null
                         && !DailyRoutine.Open(available.OpeningPlace, now))
                     { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
                     if (available?.MealsPerHour == null || available.MealsPerHour <= 0)

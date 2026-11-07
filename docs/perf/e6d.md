@@ -51,6 +51,22 @@ Allocation fell 75.2%. These are the first and final measurement runs (the final
 
 The saved-slot checkout path verifies the vehicle id before reusing the slot. A normal before/after pair copies two vehicles instead of scanning up to 128 copies for the 64th vehicle. Reordered snapshots are covered by a functional test and fall back to identity search.
 
+## Review-fix verification
+
+Repeated the same Release probe on 7 November 2026 after the closed-visit, local-read, stockout and shutdown fixes. The completed foreground run had no other testhost active. A prior overlapping functional-suite launch was cancelled and is excluded from reported checks. Autosave is absent in this process, and there were no saves in the measurement windows. These are functional repairs; no additional optimization or parked-hotspot work was undertaken.
+
+| Operation | Samples | p50 ms | p95 ms | Max ms | Allocated B/op | ≥30 ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Snapshot Read, 64 vehicles | 300 | 0.344625 | 0.359125 | 3.301167 | 259,336.0 | 0 |
+| One capture handle and 8 vehicle captures | 300 | 0.014250 | 0.014500 | 0.433875 | 11,544.0 | 0 |
+| Baseline: materialize 64, rank 8 | 300 | 0.349208 | 0.359375 | 0.831042 | 261,672.0 | 0 |
+| Current: rank, materialize 8 | 300 | 0.310417 | 0.317875 | 0.724625 | 248,344.0 | 0 |
+| Checkout, vehicle 64 of 64 | 300 | 0.036875 | 0.038250 | 0.489500 | 43,167.6 | 0 |
+| Combined preparation + merged capture + 8 checkouts | 1,280 | 0.225041 | **0.854875** | 6.059375 | 601,214.7 | 0 |
+| Whole 64-sale burst, across 8 groups | 160 | 2.305083 | 6.458458 | 11.521917 | 4,809,718.0 | 0 |
+
+Combined bounded market work remains below 5 ms at p95 (previous 0.916833 ms; repeat 0.854875 ms). Every measured ≥30 ms spike: **0**. The whole burst spans eight groups and is not a frame; whole-frame cost remains unmeasured offline. The probe exercises normal sales; the review regressions separately exercise closed arrivals and the optional stockout evidence read after a definite refusal.
+
 ## Native performance still to measure
 
 The [automated rig checklist](../checks/e6d.md#in-game-checks-for-the-next-batched-rig), check 8, owns combined full PC mod-work p95, all ≥ 30 ms spikes and separate whole-frame timing with actual Street Food. Offline combined market numbers include neither the four parked hotspots nor the rest of the game's work. They are not native frame evidence. Runtime vendor status exposes maximum observed unit time and the ≥ 30 ms count, and each such unit logs its component and duration without a first-N suppression.

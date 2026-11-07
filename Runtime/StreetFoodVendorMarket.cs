@@ -31,7 +31,7 @@ namespace PersistentCity.Runtime
 
     /// <summary>Street Food owns stock, ledgers and player money. PC holds only an exact receipt for one API sale.</summary>
     public sealed class StreetFoodVendorMarket : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
-        IFoodSaleEvidence, IFoodFailureMarket, IFoodAwarenessRevision, IDisposable
+        IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IFoodAwarenessRevision, IDisposable
     {
         private CitySimulator city;
         private readonly FoodCommerceState state;
@@ -218,6 +218,18 @@ namespace PersistentCity.Runtime
             return ReadBusiness(id, minute) ?? new FoodBusiness { Id = id, PlaceId = place, Name = "Street Food " + row.Kind,
                 MealsPerHour = 0, ServiceUnavailableReason = row.Reason.Length == 0 ? Coordinator.Reason : row.Reason };
         }
+        public FoodBusiness? ReadClosedStand(string id, string place, double minute)
+        {
+            var row = Row(id);
+            if (disposed || !sameSave() || Coordinator.Image?.Ready != true || row?.PlaceId != place
+                || row.Stand == null || row.Stand.Published) return null;
+            var v = Coordinator.Image.Find(row.VehicleId);
+            // A ready snapshot must positively show this opening has ended or moved. Merely losing
+            // authority (withdrawal, lease, unsupported menu, API absence) is not a closed visit.
+            if (v != null && v.Open && v.OpeningId == row.Stand.OpeningId && row.DeferredStand == null) return null;
+            return new FoodBusiness { Id = id, PlaceId = place, Name = "Street Food " + row.Kind,
+                MealsPerHour = 0, ServiceUnavailableReason = "Committed stand is closed" };
+        }
         private sealed class Capture : IDisposable
         {
             private StreetFoodVendorMarket? owner;
@@ -300,7 +312,17 @@ namespace PersistentCity.Runtime
                 if (!uncertain && sale == null && status >= VendorApiStatus.Off && status <= VendorApiStatus.Failed)
                 {
                     FoodSaleReceipts.Cancel(receipts, meal);
-                    return new FoodSale(false, "Street Food refused before effects: " + reason);
+                    ShopExperience? failure = null;
+                    try
+                    {
+                        if (ReadLive(row.VehicleId, after) && LiveOpening(row, after, now))
+                        {
+                            int remaining = after.ItemIndex(meal.ProductId);
+                            if (remaining >= 0 && after.Units[remaining] == 0) failure = ShopExperience.Stockout;
+                        }
+                    }
+                    catch (Exception) { /* Optional stockout proof cannot change a definite refusal. */ }
+                    return new FoodSale(false, "Street Food refused before effects: " + reason, failure);
                 }
                 if (uncertain || status != VendorApiStatus.Ready || sale == null || sale.BookedDay != now / 1440
                     || sale.Cents != before.PriceCents[item] || sale.UnitsBefore != before.Units[item]

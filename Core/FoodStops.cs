@@ -22,7 +22,7 @@ namespace PersistentCity.Core
             {
                 // The native place-hours admission may have refused before a RecentVisit was added.
                 // Reaching the committed door plus named closed hours is evidence; a lost route is not.
-                var business = ReadBusiness(arriving.BusinessId, city.State.Minute);
+                var business = ReadBusiness(arriving.BusinessId, city.State.Minute) ?? ClosedStand(arriving, city.State.Minute);
                 if (business != null && business.PlaceId == arriving.PlaceId && business.Id == arriving.BusinessId
                     && !DailyRoutine.Open(business.OpeningPlace, city.State.Minute))
                 {

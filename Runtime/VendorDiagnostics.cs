@@ -30,8 +30,10 @@ namespace PersistentCity.Runtime
         {
             if (!vendorCommands) return;
             vendorCommands = false;
-            CommandHelper.RemoveCommand<string, string>(RoutePcCommand);
-            CommandHelper.RemoveCommand<string, string, string>(RoutePcDetail);
+            try { CommandHelper.RemoveCommand<string, string>(RoutePcCommand); }
+            catch (Exception e) { log?.Warn("Vendor diagnostics command removal failed: " + e.Message); }
+            try { CommandHelper.RemoveCommand<string, string, string>(RoutePcDetail); }
+            catch (Exception e) { log?.Warn("Vendor diagnostics detail command removal failed: " + e.Message); }
             if (vendorObservedCity != null) vendorObservedCity.FoodDecisionObserved -= RecordVendorDecision;
             vendorObservedCity = null; vendorDecisions.Clear();
         }
