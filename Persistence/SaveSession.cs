@@ -74,19 +74,41 @@ namespace PersistentCity.Persistence
 
         public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state) => WriteTo(modData, state, null);
 
-        /// <summary>Same publication as <see cref="WriteTo(IDictionary{string,string},CityState)"/>; a non-null recorder also times its phases (F7a).</summary>
+        /// <summary>Same publication as <see cref="WriteTo(IDictionary{string,string},CityState)"/>; a non-null recorder also times its phases (F7a).
+        /// The state is captured into a <see cref="SaveSnapshot"/> here, on the calling (main) thread, and the payload is
+        /// validated and encoded from that snapshot (F7c).</summary>
         public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state, SaveCostRecorder? cost)
         {
             if (modData == null) throw new ArgumentNullException(nameof(modData));
             if (state == null) return new SaveWriteResult(false, "State is null.");
             if (!string.Equals(state.PopulationKey, populationKey, StringComparison.Ordinal))
                 return new SaveWriteResult(false, "State belongs to another population than this save session.");
+            SaveSnapshot snapshot;
             try
             {
                 // Validate the complete new state before considering any replacement.
                 cost?.Enter(SaveCostPhase.Validate);
                 SaveCodec.RequireExecutablePolicy(state);
-                string payload = SaveCodec.Write(state, cost);
+                snapshot = SaveCodec.Capture(state, cost);
+            }
+            catch (SaveValidationException exception) { return new SaveWriteResult(false, exception.Message); }
+            return WriteTo(modData, snapshot, cost);
+        }
+
+        /// <summary>Validate, encode and publish one snapshot of this session's population. A snapshot is published at
+        /// most once; a second publication is refused, so no snapshot outlives its save epoch.</summary>
+        public SaveWriteResult WriteTo(IDictionary<string, string> modData, SaveSnapshot snapshot, SaveCostRecorder? cost = null)
+        {
+            if (modData == null) throw new ArgumentNullException(nameof(modData));
+            if (snapshot == null) return new SaveWriteResult(false, "Snapshot is null.");
+            if (snapshot.Published) return new SaveWriteResult(false, "A save snapshot is published at most once.");
+            if (!string.Equals(snapshot.PopulationKey, populationKey, StringComparison.Ordinal))
+                return new SaveWriteResult(false, "State belongs to another population than this save session.");
+            try
+            {
+                cost?.Enter(SaveCostPhase.Validate);
+                SaveCodec.RequireExecutablePolicy(snapshot.Wire);
+                string payload = SaveCodec.Encode(snapshot, cost);
                 cost?.Enter(SaveCostPhase.Publish);
                 bool hasPayload = modData.TryGetValue(SaveStore.StateKey, out var existingPayload);
                 bool trusted = ReferenceEquals(modData, validatedDictionary)
@@ -101,6 +123,7 @@ namespace PersistentCity.Persistence
                         return new SaveWriteResult(false, "Stored state changed during validation.");
                 }
                 modData[SaveStore.StateKey] = payload;
+                snapshot.Published = true;
                 validatedDictionary = modData;
                 validatedHasPayload = true;
                 validatedPayload = payload;

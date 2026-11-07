@@ -38,6 +38,7 @@ namespace PersistentCity.Runtime
                     {
                         sequence = cost.Sequence, success = cost.Success, error = cost.Error, lastPhase = cost.LastPhase.ToString(),
                         observeMs = cost.Milliseconds(SaveCostPhase.Observe), synchronizeMs = cost.Milliseconds(SaveCostPhase.Synchronize),
+                        captureMs = cost.Milliseconds(SaveCostPhase.Capture),
                         validateMs = cost.Milliseconds(SaveCostPhase.Validate), encodeMs = cost.Milliseconds(SaveCostPhase.Encode),
                         publishMs = cost.Milliseconds(SaveCostPhase.Publish), totalMs = cost.TotalMilliseconds,
                         atLeast30Ms = cost.TotalMilliseconds >= 30,

@@ -854,7 +854,7 @@ namespace PersistentCity.Core
             ValidateRoute(route, places[person.PlaceId].Position, destination.Position);
             ValidateCarRoute(route, person);
             person.Phase = CitizenPhase.Travelling;
-            person.Journey = route;
+            person.Journey = route.Commit();
             person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
         }

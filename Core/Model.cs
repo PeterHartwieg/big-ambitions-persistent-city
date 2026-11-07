@@ -70,20 +70,27 @@ namespace PersistentCity.Core
 
     public sealed class RouteLeg
     {
+        private Position from, to;
+        private TravelMode mode;
+        private double minutes;
         private string serviceId = "";
-        public Position From { get; set; }
-        public Position To { get; set; }
-        public TravelMode Mode { get; set; }
-        public double Minutes { get; set; }
+        public Position From { get => from; set { Mutable(); from = value; } }
+        public Position To { get => to; set { Mutable(); to = value; } }
+        public TravelMode Mode { get => mode; set { Mutable(); mode = value; } }
+        public double Minutes { get => minutes; set { Mutable(); minutes = value; } }
         /// <summary>Native provenance on the wire, e.g. native:road:v1:&lt;topology&gt;:&lt;from&gt;:&lt;to&gt;. Setting it
         /// (when planned, copied or loaded) also decodes a native road tag into transient fields.</summary>
         public string ServiceId
         {
             get => serviceId;
-            set { serviceId = value; RoadTag = RoadTag.Decode(value); }
+            set { Mutable(); serviceId = value; RoadTag = RoadTag.Decode(value); }
         }
         /// <summary>Transient decoding of ServiceId; never serialized.</summary>
         internal RoadTag RoadTag { get; private set; }
+        /// <summary>True once the route holding this leg was committed as a journey (F7c); every setter then refuses.</summary>
+        internal bool Frozen { get; private set; }
+        internal void Freeze() => Frozen = true;
+        private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
     }
 
     internal enum RoadTagKind : byte { None, V1, Fragment1 }
@@ -136,10 +143,51 @@ namespace PersistentCity.Core
     public sealed class Route
     {
         private double? estimatedMinutes;
-        public List<RouteLeg> Legs { get; set; } = new List<RouteLeg>();
+        private List<RouteLeg> legs = new List<RouteLeg>();
+        // F7c: -1 until the route is committed as a journey; then the leg count frozen at commit.
+        private int committedLegs = -1;
+        private double committedMinutes;
+        public List<RouteLeg> Legs
+        {
+            get => legs;
+            set { if (committedLegs >= 0) throw new InvalidOperationException("A committed route is immutable."); legs = value; }
+        }
+        /// <summary>The sum of the leg durations in leg order; computed once at commit for a committed route.</summary>
         public double Minutes
         {
-            get { double total = 0; foreach (var leg in Legs) total += leg.Minutes; return total; }
+            get
+            {
+                if (committedLegs < 0) return Sum();
+                if (legs.Count != committedLegs) throw new InvalidOperationException("A committed route's legs changed after commit.");
+                return committedMinutes;
+            }
+        }
+        private double Sum() { double total = 0; foreach (var leg in legs) total += leg.Minutes; return total; }
+        /// <summary>True once <see cref="Commit"/> froze this route (F7c).</summary>
+        public bool IsCommitted => committedLegs >= 0;
+        /// <summary>
+        /// Freeze a route as it becomes a journey (F7c, plan section 3.4): every leg's setters and the Legs setter refuse
+        /// from now on, and the total minutes are computed once, with the same summation order as before. Save
+        /// snapshots then share the route instead of copying its legs. Idempotent. The list type stays
+        /// <c>List&lt;RouteLeg&gt;</c>, so <see cref="CommittedIntact"/> lets a capture detect a structural edit.
+        /// </summary>
+        internal Route Commit()
+        {
+            if (committedLegs >= 0) return this;
+            foreach (var leg in legs) leg?.Freeze();
+            committedMinutes = Sum();
+            committedLegs = legs.Count;
+            return this;
+        }
+        /// <summary>A committed route whose leg list still holds exactly the frozen legs it was committed with.</summary>
+        internal bool CommittedIntact
+        {
+            get
+            {
+                if (committedLegs < 0 || legs.Count != committedLegs) return false;
+                foreach (var leg in legs) if (leg == null || !leg.Frozen) return false;
+                return true;
+            }
         }
         /// <summary>Transient planning ETA, never movement progress or persisted journey timing.</summary>
         public double EstimatedMinutes => estimatedMinutes ?? Minutes;

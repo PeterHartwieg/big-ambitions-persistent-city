@@ -65,11 +65,37 @@ namespace PersistentCity.Persistence
         internal static string WriteForSchema(CityState state,int schema,SaveCostRecorder? cost)
         {
             if (schema < 25) return PopulationSchema24.WriteForSchema(state, schema);
+            return EncodeForSchema(CaptureForSchema(state, schema, cost), schema, cost);
+        }
+
+        /// <summary>
+        /// F7c save snapshot: synchronize the live graph (today's PrepareForSave, outflow and name-table steps), then
+        /// copy the wire-carried state into a detached <see cref="SaveSnapshot"/>. Main thread only, inside the save
+        /// callback; a later live mutation never reaches the snapshot.
+        /// </summary>
+        public static SaveSnapshot Capture(CityState state, SaveCostRecorder? cost = null) => CaptureForSchema(state, CityState.CurrentSchema, cost);
+
+        internal static SaveSnapshot CaptureForSchema(CityState state, int schema, SaveCostRecorder? cost, IReadOnlyList<SnapshotSection>? order = null)
+        {
+            if (schema < 25) throw new ArgumentOutOfRangeException(nameof(schema), "Snapshots start at writer 25.");
             if (state == null) throw new SaveValidationException("State is null.");
             cost?.Enter(SaveCostPhase.Synchronize);
             state.PrepareForSave();
             InitializeOutflow24(state, schema);
-            if (schema >= 25) PrepareNames25(state);
+            PrepareNames25(state);
+            cost?.Enter(SaveCostPhase.Capture);
+            return SaveSnapshot.Capture(state, schema, order);
+        }
+
+        /// <summary>Validate the snapshot and encode it with the current writer. The bytes equal the ones the writer
+        /// produced from the live graph before F7c (pinned golden hashes).</summary>
+        public static string Encode(SaveSnapshot snapshot, SaveCostRecorder? cost = null) => EncodeForSchema(snapshot, CityState.CurrentSchema, cost);
+
+        internal static string EncodeForSchema(SaveSnapshot snapshot, int schema, SaveCostRecorder? cost)
+        {
+            if (snapshot == null) throw new SaveValidationException("Snapshot is null.");
+            Require(snapshot.Schema == schema, "The snapshot was captured for another writer schema.");
+            var state = snapshot.Wire;
             cost?.Enter(SaveCostPhase.Validate);
             Validate(state,schema);
             cost?.Enter(SaveCostPhase.Encode);

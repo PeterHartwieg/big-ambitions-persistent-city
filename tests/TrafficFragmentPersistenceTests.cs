@@ -62,6 +62,7 @@ public sealed class TrafficFragmentPersistenceTests
     }
 
     private static RouteLeg Tail(CityState state) => state.Citizens[0].Journey!.Legs[1];
+    private static RouteLeg EditableTail(CityState state) => RouteEdits.EditableJourney(state.Citizens[0]).Legs[1];
 
     [Theory]
     [InlineData(false)] [InlineData(true)]
@@ -96,7 +97,7 @@ public sealed class TrafficFragmentPersistenceTests
     {
         var (state, _) = Retimed();
         string valid = SaveCodec.Write(state);
-        Tail(state).ServiceId = service;
+        EditableTail(state).ServiceId = service;
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
         var wire = JObject.Parse(valid); wire["Citizens"]![0]!["Journey"]!["Legs"]![1]!["ServiceId"] = service;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
@@ -108,7 +109,7 @@ public sealed class TrafficFragmentPersistenceTests
     [InlineData("nonfinite")]
     public void FragmentTagCannotAuthorizeStationaryWalkingOrNonfiniteTraffic(string defect)
     {
-        var (state, _) = Retimed(); var tail = Tail(state);
+        var (state, _) = Retimed(); var tail = EditableTail(state);
         var wire = JObject.Parse(SaveCodec.Write(state));
         if (defect == "zero") tail.From = tail.To;
         if (defect == "walk") tail.Mode = TravelMode.Walk;
@@ -124,7 +125,7 @@ public sealed class TrafficFragmentPersistenceTests
     [InlineData("native:road:fragment1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:0:2")]
     public void SyntaxAcceptanceStillRequiresActualGraphProvenanceAtBinding(string service)
     {
-        var (state, _) = Retimed(); Tail(state).ServiceId = service;
+        var (state, _) = Retimed(); EditableTail(state).ServiceId = service;
         var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         Assert.Throws<ArgumentException>(() => new CitySimulator(decoded.State!, new Planner(2)));
     }

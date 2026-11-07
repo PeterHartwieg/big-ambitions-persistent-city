@@ -234,6 +234,8 @@ public sealed class PersonIdentityTests
             ["Persistence/PersonWire27.cs"] = new[] { "IdentityPolicy", "PersonKind", "PersonIds", "NativeEmployment", "EmploymentKind",
                 "OwnershipValidator", "OwnershipInput", "PersonFacts" },
             ["Core/HouseholdFinance.cs"] = new[] { "PersonIncome", "new Employment", "EmploymentKind" },
+            // F7c: the save snapshot copies the saved policy version and each visitor's stored stay and employment; it derives nothing.
+            ["Persistence/SaveSnapshot.cs"] = new[] { "IdentityPolicy", "VisitorStay", "NativeEmployment", "new Employment" },
         };
         var files = new[] { "Runtime", "Persistence", "Compatibility" }
             .SelectMany(d => Directory.GetFiles(Path.Combine(root!.FullName, d), "*.cs", SearchOption.AllDirectories))

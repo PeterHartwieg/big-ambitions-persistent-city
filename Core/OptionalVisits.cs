@@ -32,7 +32,7 @@ namespace PersistentCity.Core
             person.MealOuting = outing; person.DestinationId = shopId; person.DestinationActivity = Activity.Shop;
             person.ActivityUntilMinute = leave; person.Phase = CitizenPhase.Travelling;
             person.Journey = new Route { Legs = outward.Legs.Select(l => new RouteLeg { From = l.From, To = l.To,
-                Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() };
+                Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() }.Commit();
             person.DepartureMinute = now; person.NextEventMinute = arrival;
             item.Minute = ScheduledMinute(person); due.Add(item); FileOptionalStop(person);
             if(!deferObservation) ObserveFoodDeparture(person);
@@ -102,7 +102,7 @@ namespace PersistentCity.Core
             { person.Phase = CitizenPhase.WaitingForRoute; person.NextEventMinute = now + 5; return; }
             ValidateRoute(route, places[person.PlaceId].Position, places[outing.OriginId].Position);
             if (route.Legs.Any(l => l.Mode != TravelMode.Walk)) throw new InvalidOperationException("Meal return must be walking.");
-            person.Phase = CitizenPhase.Travelling; person.Journey = route; person.DepartureMinute = now;
+            person.Phase = CitizenPhase.Travelling; person.Journey = route.Commit(); person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
         }
 
@@ -134,7 +134,7 @@ namespace PersistentCity.Core
             person.DestinationActivity = Activity.Shop;
             person.ActivityUntilMinute = leave;
             person.Phase = CitizenPhase.Travelling;
-            person.Journey = committed;
+            person.Journey = committed.Commit();
             person.DepartureMinute = now;
             person.NextEventMinute = arrival;
             item.Minute = ScheduledMinute(person);
