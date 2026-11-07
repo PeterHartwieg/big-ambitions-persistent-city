@@ -47,6 +47,8 @@ public sealed class DayMetrics
     // Accounting boundary.
     public long ConservationChecks, NativeOrders, NativeRevenueUnits, ConfirmedPreparedUnits, UncertainConfirmedUnits,
         DuplicateOrders, HistoricalClockMisses, OutsideLedgerUnits, WatermarkedOutflowUnits, WatermarkedOutflowWindowUnits, EpochReadViolations;
+    public bool OrdinaryVisits;
+    public long OrdinaryDiscretionaryUnits, OrdinaryWindowUnits;
     // Outcome sample (03:00 the next day).
     public long Resolved, OwnMeals, RivalMeals, HomeMeals, Skipped, Unconfirmed;
     public readonly long[] OutcomeMeals = new long[4];
@@ -106,12 +108,12 @@ public sealed class DayMetrics
             json.Open().Field("businessId", key.Split('|')[0]).Field("productId", key.Split('|')[1]).Field("evaluated", o.Considered)
                 .Field("feasible", o.Feasible).Field("chosen", o.Chosen).Close();
         json.CloseArray();
-        json.Open("households").Field("ownerKind", EconomyRun.OwnerKind).Field("owners", Owners).Field("arrearsOwners", ArrearsOwners)
+        json.Open("households").Field("ownerKind", OrdinaryVisits ? "person-wallet" : EconomyRun.OwnerKind).Field("owners", Owners).Field("arrearsOwners", ArrearsOwners)
             .Field("unfedDays", UnfedDays).Field("medianBalanceUnits", MedianBalanceUnits).Field("p10BalanceUnits", P10BalanceUnits)
             .Field("incomeReceivedUnits", IncomeReceivedUnits).Field("scheduledEmploymentUnits", ScheduledEmploymentUnits)
             .Field("employed", Employed).Field("jobLosses", JobLosses).Field("jobFinds", JobFinds).Field("missedActivities", MissedActivities).Close();
         // Per-kind lines. Only today's kind exists; F5 commuter/day-visitor lines join this object later.
-        json.Open("kinds").Open("resident").Field("consumers", Owners).Field("own", OwnMeals).Field("rival", RivalMeals)
+        json.Open("kinds").Open(OrdinaryVisits ? "allPersons" : "resident").Field("consumers", Owners).Field("own", OwnMeals).Field("rival", RivalMeals)
             .Field("home", HomeMeals).Field("skipped", Skipped).Close().Close();
         json.Open("accounting").Field("conservationChecks", ConservationChecks).Field("conserved", true)
             .Field("nativeOrders", NativeOrders).Field("nativeRevenueUnits", NativeRevenueUnits)
@@ -119,6 +121,7 @@ public sealed class DayMetrics
             .Field("duplicateReceipts", DuplicateOrders).Field("historicalClockMisses", HistoricalClockMisses)
             .Field("outsideLedgerUnits", OutsideLedgerUnits).Field("watermarkedOutflowUnits", WatermarkedOutflowUnits)
             .Field("watermarkedOutflowWindowUnits", WatermarkedOutflowWindowUnits)
+            .Field("ordinaryDiscretionaryUnits", OrdinaryDiscretionaryUnits).Field("ordinaryWindowUnits", OrdinaryWindowUnits)
             .Field("epochReadViolations", EpochReadViolations).Close();
         json.Close();
     }

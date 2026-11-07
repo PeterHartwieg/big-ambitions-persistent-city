@@ -80,6 +80,7 @@ namespace PersistentCity.Runtime
 
         private void RunCensusCommand(string area, string action, string detail)
         {
+            if (area == "ordinary" && action == "status") { OrdinaryExchangeStatus(); return; }
             // F5d: `pc population person <id>` prints one person's stored routine, presence, meal and wallet facts.
             if (string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) && string.Equals(action, "person", StringComparison.OrdinalIgnoreCase))
             { PersonCommand(detail); return; }

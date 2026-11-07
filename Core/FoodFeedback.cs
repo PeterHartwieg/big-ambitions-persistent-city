@@ -294,9 +294,9 @@ namespace PersistentCity.Core
             if (b.Arrears.Units != 0) flags |= BehindFlag;
             if (b.HeldPurchase.Units != 0) flags |= HoldFlag;
             // Three ints fit a long in cents and in units (|sum| < 2^33, units per cent 2^28).
-            else if (b.Arrears.Units != 0 || b.Balance.Units <= ((long)b.DailyHousingCents + b.DailyEssentialsCents + b.DailyHomeFoodCents) * Money.UnitsPerCent)
+            else if (b.Arrears.Units != 0 || b.Balance <= HouseholdFinance.SpendingReserve(b))
                 flags |= ShortFlag;
-            if (b.LastPostedDay >= 0 && b.HomeFoodFundedDay != b.LastPostedDay) flags |= BasketFlag;
+            if (!b.VisitorEndowment && b.LastPostedDay >= 0 && b.HomeFoodFundedDay != b.LastPostedDay) flags |= BasketFlag;
             return flags;
         }
         private static void Count(int[] counts, int flags, int sign)

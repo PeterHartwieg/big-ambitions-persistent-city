@@ -167,6 +167,8 @@ namespace PersistentCity.Core
             replacement.CopyVendorPlaces(this);
             replacement.activityObservers = activityObservers;
             replacement.workplaceAvailability = workplaceAvailability;
+            replacement.ordinaryOwnership = ordinaryOwnership; replacement.ordinaryPrices = ordinaryPrices;
+            replacement.ordinaryLoadedHour = ordinaryLoadedHour; replacement.ordinaryObservedHour = ordinaryObservedHour;
             replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
@@ -288,6 +290,9 @@ namespace PersistentCity.Core
                     State.Capabilities.Active = true;
                 State.Minute = epoch; SynchronizeSnapshot();
             }
+            ordinaryOwnership?.ObserveBoundary(epoch);
+            if (ordinaryOwnership != null && (long)(epoch / 60) > ordinaryLoadedHour) ordinaryObservedHour = (long)(epoch / 60);
+            if (OrdinaryExchangesActive) OrdinaryExchanges.Prune(State.Economy, (int)(epoch / 1440));
             return true;
         }
         private bool SavedFoodAfter(double target)
@@ -307,7 +312,8 @@ namespace PersistentCity.Core
         private bool NoEventsThrough(double targetMinute, bool inspectSavedFood = false)
             // A queued campaign publication belongs to the epoch that observed its hour boundary.
             // It holds native time (IsCaughtUpTo) but is never unfinished previous-epoch work.
-            => (food?.HasPendingCampaignPublication != true || inspectSavedFood)
+            => (ordinaryOwnership?.Pending != true || inspectSavedFood)
+            && (food?.HasPendingCampaignPublication != true || inspectSavedFood)
             // An open research survey holds native time the same way and is not previous-epoch work either.
             && (research == null || inspectSavedFood || !research.HoldsThrough(targetMinute))
             && (pending == null || inspectSavedFood && pending.Item.Minute > targetMinute)
@@ -337,6 +343,8 @@ namespace PersistentCity.Core
             }
             while (count < eventBudget)
             {
+                if (ordinaryOwnership?.Pending == true)
+                { ordinaryOwnership.Continue(); count++; continue; }
                 if (food?.HasPendingCampaignPublication == true)
                 { food.ContinueCampaignPublication(); count++; foodContinuationCount++; continue; }
                 double citizenMinute = due.Count == 0 ? double.PositiveInfinity : due.Min!.Minute;
@@ -541,6 +549,7 @@ namespace PersistentCity.Core
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             occupancy.Move(live.DayPlaceId, working.DayPlaceId);
             food?.AccrueWorkDeparture(live, working);
+            CommitOrdinaryArrival(live, working);
             CommitEvent(live, working);
             food?.EmploymentChanged(live);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
@@ -717,6 +726,7 @@ namespace PersistentCity.Core
                 yield break;
             }
             RoutineSlot? missedArrival = null;
+            bool paidRefusedArrival = false;
             bool arrived = false;
             if ((person.Phase == CitizenPhase.WaitingForRoute || person.Phase == CitizenPhase.WaitingForOpening)
                 && person.DestinationActivity != Activity.Home && now >= person.ActivityUntilMinute)
@@ -735,11 +745,13 @@ namespace PersistentCity.Core
                 bool closedWorkShift = person.DestinationActivity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed;
                 bool admitted = person.DestinationActivity == Activity.Home
                     || (!closedWorkShift && now >= admissionFrom && now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now));
+                bool affordable = !admitted || CanAdmitOrdinary(person, person.PlaceId, person.Activity, now);
+                admitted &= affordable; paidRefusedArrival = !affordable;
                 if (admitted) VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
                 else
                 {
                     // A closure during travel can still leave a later opening in this activity.
-                    double? opening = !closedWorkShift && now < person.ActivityUntilMinute
+                    double? opening = affordable && !closedWorkShift && now < person.ActivityUntilMinute
                         ? DailyRoutine.NextOpen(places[person.PlaceId], Math.Max(now, admissionFrom), person.ActivityUntilMinute) : null;
                     if (opening.HasValue)
                     {
@@ -777,7 +789,7 @@ namespace PersistentCity.Core
                 person.CommutePreparation = new CommutePreparation();
             // An admitted activity retains its saved deadline, including an old
             // routine loaded after a policy change. A closure still ends attendance.
-            bool attending = person.Phase == CitizenPhase.AtPlace && person.Activity != Activity.Home
+            bool attending = !paidRefusedArrival && person.Phase == CitizenPhase.AtPlace && person.Activity != Activity.Home
                 && !(person.Activity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed)
                 && now < person.ActivityUntilMinute;
             double? currentClose = attending ? DailyRoutine.NextClose(places[person.PlaceId], now) : null;
@@ -857,12 +869,17 @@ namespace PersistentCity.Core
                 slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt);
                 destination = places[person.HomeId];
             }
+            bool recordArrival = RecordsSamePlaceArrival(person, slot);
+            if (recordArrival && !CanAdmitOrdinary(person, slot.PlaceId, slot.Activity, now))
+            {
+                MissRoutine(person, slot, now, "paid-visit-unaffordable");
+                slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt); destination = places[person.HomeId];
+                recordArrival = false;
+            }
             person.ActivityUntilMinute = slot.EndsAt;
             if (slot.PlaceId == person.PlaceId)
             {
-                if (slot.Activity != Activity.Home && (person.Phase == CitizenPhase.WaitingForOpening
-                    && person.DestinationId == slot.PlaceId && person.DestinationActivity == slot.Activity
-                    || State.Schema >= CityState.AttendanceSchema && person.Activity != slot.Activity))
+                if (recordArrival)
                     VisitorSchedules.RecordArrival(person, now, slot.PlaceId, slot.Activity);
                 person.Phase = CitizenPhase.AtPlace;
                 person.Activity = slot.Activity;
