@@ -207,20 +207,28 @@ internal static class Program
         WalkingRoutes.CountPathQueries=true;WalkingRoutes.QueryCostMilliseconds=.1;
         try
         {
-            foreach(int fps in new[]{30,60})
+            // F5d persons variant: the same peak with one visitor per resident. Visitors own no car (section 9 Q1), so
+            // their requests are the same trip for a carless person; they enter the same F3 admission.
+            var visitor=new CitizenState{Identity=new CitizenIdentity{Id="pv:1"},HomeId=f.Person.HomeId,PlaceId=f.Person.PlaceId,
+                Preferences=new TravelPreferences{OwnsCar=false,AllowTransit=true,WalkingToleranceMetres=f.Person.Preferences.WalkingToleranceMetres,FareWeightMinutes=f.Person.Preferences.FareWeightMinutes}};
+            string visitorExpected=Fingerprint(f.Planner.Plan(f.From,f.To,100,visitor));
+            foreach(var (fps,persons) in new[]{(30,false),(60,false),(30,true),(60,true)})
             {
+                int requests=persons?1914:957;
                 int frames=0,completed=0,maxQueries=0,maxPerPlan=0;long startQueries=f.Planner.Metrics.NavMeshPathQueries;
                 IRoutePlanningJob? job=null;long planStart=0;
-                while(completed<957)
+                while(completed<requests)
                 {
                     Time.frameCount++;frames++;long frameQueries=f.Planner.Metrics.NavMeshPathQueries,start=Stopwatch.GetTimestamp();
-                    for(int unit=0;unit<128 && completed<957;unit++)
+                    for(int unit=0;unit<128 && completed<requests;unit++)
                     {
-                        if(job==null) {planStart=f.Planner.Metrics.NavMeshPathQueries;job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));}
+                        bool isVisitor=persons && completed%2==1;
+                        var who=isVisitor?visitor:f.Person;
+                        if(job==null) {planStart=f.Planner.Metrics.NavMeshPathQueries;job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,who,who.Preferences));}
                         double remaining=Math.Max(0,2-Stopwatch.GetElapsedTime(start).TotalMilliseconds);
                         if(job.Continue(remaining))
                         {
-                            Check(Fingerprint(job.Result)==expected,"peak admission changed route");
+                            Check(Fingerprint(job.Result)==(isVisitor?visitorExpected:expected),"peak admission changed route");
                             maxPerPlan=Math.Max(maxPerPlan,(int)(f.Planner.Metrics.NavMeshPathQueries-planStart));
                             job.Dispose();job=null;completed++;
                         }
@@ -230,13 +238,13 @@ internal static class Program
                     Check(frames<10000,"peak route backlog did not drain");
                 }
                 double seconds=frames/(double)fps,capacity=completed/seconds;
-                // 957 commute requests released across a deliberately narrow 30-game-minute peak,
+                // 957 commute requests (1,914 with visitors) released across a deliberately narrow 30-game-minute peak,
                 // at one-third game-minute/second. Burst completion must precede that 90s window.
                 Check(seconds<90,"route admission cannot clear the supported commute peak");
-                Console.WriteLine(JsonSerializer.Serialize(new {peakPlanning=true,residents=957,consumers=1914,fps,frames,
+                Console.WriteLine(JsonSerializer.Serialize(new {peakPlanning=true,variant=persons?"persons":"residents",residents=957,visitors=persons?957:0,requests,fps,frames,
                     completed,seconds,plansPerSecond=capacity,queries=f.Planner.Metrics.NavMeshPathQueries-startQueries,
-                    maxQueriesPerFrame=maxQueries,maxQueriesPerPlan=maxPerPlan,finalBacklog=957-completed,
-                    queryDoubleMilliseconds=.1,frameBudgetMilliseconds=2,peakPlansPerGameMinute=957/30.0,
+                    maxQueriesPerFrame=maxQueries,maxQueriesPerPlan=maxPerPlan,finalBacklog=requests-completed,
+                    queryDoubleMilliseconds=.1,frameBudgetMilliseconds=2,peakPlansPerGameMinute=requests/30.0,
                     evidence="Production native-double jobs; synthetic 0.1ms path cost; fixed burst drain, not native proof"}));
             }
         }

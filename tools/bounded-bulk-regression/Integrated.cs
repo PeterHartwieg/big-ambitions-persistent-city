@@ -33,6 +33,8 @@ static class Integrated
         foreach (int residents in new[] { 957, 5000, 50000 })
         {
             var state = EconomyScenario.Create(residents, 23); state.Food = EconomyScenario.Food();
+            // F5d: two portals, so the factor-2 roster adds one visitor per resident on its own routine.
+            PortalPlaces.Add(state, new[] { new PortalStation("subway:econ-north", new Position(250, 0, 600)), new PortalStation("subway:econ-south", new Position(450, 0, -500)) });
             var routes = new Routes(); var market = new Market();
             var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
             double target = 2910;

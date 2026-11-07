@@ -212,11 +212,9 @@ namespace PersistentCity.Core
             else
             {
                 stay.Presence = VisitorPresence.Active; stay.NextStayStart = 0;
-                var last = routine.RecentVisits.Count == 0 ? null : routine.RecentVisits[routine.RecentVisits.Count - 1];
-                if (last == null) visitor.LastArrival = null;
-                else if (visitor.LastArrival == null || visitor.LastArrival.AtMinute != last.AtMinute || visitor.LastArrival.PlaceId != last.PlaceId
-                    || visitor.LastArrival.Activity != last.Activity)
-                    visitor.LastArrival = new VisitRecord { AtMinute = last.AtMinute, PlaceId = last.PlaceId, Activity = last.Activity };
+                // Arrival records are never edited after the arrival commit, so the tuple shares the routine's record
+                // (F5d perf: no second record per visitor arrival).
+                visitor.LastArrival = routine.RecentVisits.Count == 0 ? null : routine.RecentVisits[routine.RecentVisits.Count - 1];
             }
             if (routine.DayPlaceId.Length == 0) visitor.Employment = null;
             else
@@ -246,6 +244,32 @@ namespace PersistentCity.Core
         {
             var arrival = visitor.LastArrival;
             return arrival != null && arrival.PlaceId == placeId && arrival.Activity == Activity.Shop && arrival.AtMinute >= desiredAt;
+        }
+
+        /// <summary>Read-only diagnostic of one person (resident or visitor) from stored facts only, for the debug line
+        /// <c>pc population person &lt;id&gt;</c>; null if no such person exists. Never draws, plans or changes state.</summary>
+        public static string? DescribePerson(CityState city, string id, long anchorReads)
+        {
+            CitizenState? person = null; VisitorPerson? visitor = null;
+            foreach (var resident in city.Citizens) if (resident.Identity.Id == id) { person = resident; break; }
+            if (person == null)
+                for (int i = 0; i < city.Visitors.Count; i++)
+                    if (city.Visitors[i].Id == id) { visitor = city.Visitors[i]; person = city.VisitorRoutines.Count > i ? city.VisitorRoutines[i] : null; break; }
+            if (person == null) return null;
+            string R(double value) => value.ToString("R", CultureInfo.InvariantCulture);
+            var text = new System.Text.StringBuilder()
+                .Append("id=").Append(id).Append("\nkind=").Append(visitor == null ? "resident" : "visitor")
+                .Append("\nphase=").Append(person.Phase).Append(" activity=").Append(person.Activity).Append(" place=").Append(person.PlaceId)
+                .Append(" destination=").Append(person.DestinationId).Append("\nnext_event=").Append(R(person.NextEventMinute))
+                .Append(" activity_until=").Append(R(person.ActivityUntilMinute)).Append(" journeys=").Append(person.CompletedJourneys)
+                .Append("\nhome=").Append(person.HomeId).Append(" day_place=").Append(person.DayPlaceId);
+            if (visitor != null) text.Append("\nvisitor=").Append(Describe(visitor)).Append(" next_stay=").Append(R(visitor.Stay.NextStayStart));
+            var meal = city.Food?.Residents.Find(m => m.ResidentId == id);
+            if (meal != null)
+                text.Append("\nmeal=").Append(meal.Kind).Append(' ').Append(meal.Status).Append(" day=").Append(meal.Day)
+                    .Append(" place=").Append(meal.PlaceId).Append(" purchases=").Append(meal.Purchases)
+                    .Append(meal.Budget == null ? "" : " income=" + meal.Budget.IncomeSource + " balance_units=" + meal.Budget.Balance.Units.ToString(CultureInfo.InvariantCulture));
+            return text.Append("\nfood_anchor_reads=").Append(anchorReads).ToString();
         }
 
         public static string Describe(VisitorPerson visitor) => visitor.Id + " " + visitor.Stay.Presence.ToString().ToLowerInvariant()

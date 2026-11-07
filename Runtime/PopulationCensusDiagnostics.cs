@@ -41,7 +41,7 @@ namespace PersistentCity.Runtime
             try
             {
                 CommandHelper.AddCommand<string, string>("pc", "Persistent City read-only diagnostics: pc population census", CensusCommand);
-                CommandHelper.AddCommand<string, string, string>("pc", "Persistent City read-only diagnostics: pc population census workplaces", CensusDetailCommand);
+                CommandHelper.AddCommand<string, string, string>("pc", "Persistent City read-only diagnostics: pc population census workplaces | pc population person <id>", CensusDetailCommand);
                 censusCommandRegistered = true;
             }
             catch (Exception error) { log?.Warn("Population census console command not registered: " + error.Message); }
@@ -80,11 +80,14 @@ namespace PersistentCity.Runtime
 
         private void RunCensusCommand(string area, string action, string detail)
         {
+            // F5d: `pc population person <id>` prints one person's stored routine, presence, meal and wallet facts.
+            if (string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) && string.Equals(action, "person", StringComparison.OrdinalIgnoreCase))
+            { PersonCommand(detail); return; }
             bool details = string.Equals(detail, "workplaces", StringComparison.OrdinalIgnoreCase);
             if (!string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) || !string.Equals(action, "census", StringComparison.OrdinalIgnoreCase)
                 || detail.Length > 0 && !details)
             {
-                Debug.LogWarning("[Persistent City] Unknown command. Use: pc population census [workplaces]");
+                Debug.LogWarning("[Persistent City] Unknown command. Use: pc population census [workplaces] | pc population person <id>");
                 return;
             }
             var current = simulation;
@@ -116,6 +119,16 @@ namespace PersistentCity.Runtime
                 + "\ndetached_compute_ms=" + result.ComputeMilliseconds.ToString("F3", CultureInfo.InvariantCulture)
                 + "\nnext=" + (censusTask == null ? "none" : "pending"));
             if (details && !result.Refused) Debug.Log("[Persistent City] population census workplaces\n" + result.Detail);
+        }
+
+        private void PersonCommand(string id)
+        {
+            var current = simulation;
+            if (failed || current == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
+            { Debug.LogWarning("[Persistent City] person unavailable: no active Persistent City population in this save."); return; }
+            string? line = id.Length == 0 ? null : VisitorSchedules.DescribePerson(current.State, id, current.FoodAnchorReads);
+            if (line == null) Debug.LogWarning("[Persistent City] Unknown person: " + id);
+            else Debug.Log("[Persistent City] population person (read-only)\n" + line);
         }
 
         // Main thread: copy only managed facts, then reduce them detached from the frame.

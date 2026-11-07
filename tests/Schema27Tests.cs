@@ -218,6 +218,11 @@ public sealed class Schema27Tests
             a => Assert.Equal(state.Visitors.Single(v => v.Id == pair.Key).Stay.OriginPortalId, a.Place)));
         Assert.Contains(VisitorMeals(state), m => m.Purchases > 0);
         Assert.Equal(0, city.FoodAnchorReads);
+        // The read-only person diagnostic behind `pc population person <id>`.
+        string line = VisitorSchedules.DescribePerson(state, state.Visitors[0].Id, city.FoodAnchorReads)!;
+        Assert.Contains("kind=visitor", line); Assert.Contains("portal=" + state.Visitors[0].Stay.OriginPortalId, line); Assert.Contains("food_anchor_reads=0", line);
+        Assert.Contains("kind=resident", VisitorSchedules.DescribePerson(state, state.Citizens[0].Identity.Id, 0)!);
+        Assert.Null(VisitorSchedules.DescribePerson(state, "pv:999999", 0));
     }
 
     // ---- No anchor read at all ----
@@ -325,6 +330,62 @@ public sealed class Schema27Tests
         }
         var reloaded = AccountingScenario.Run(24, 30, 1, .01, reload: true, persons: true);
         Assert.Equal(reference.Snapshot, reloaded.Snapshot); Assert.Equal(2, reloaded.Reloads);
+    }
+
+    // ---- Rival settlement owned by a visitor, across reload ----
+
+    private static (CitySimulator City, RivalOutflowTests.Market Market) RivalCity()
+    {
+        var (state, _) = Fresh(2);
+        var food = state.Food!; food.Shops.Clear();
+        var market = new RivalOutflowTests.Market();
+        for (int i = 0; i < 3; i++)
+        {
+            string id = "rival" + i;
+            market.Rivals.Add(id, new FoodScope { AlternativeKind = FoodAlternativeKind.Rival, BusinessId = id, PlaceId = "shop:" + i, ProductId = FoodProducts.Croissant });
+            market.Observations.Add(id, RivalOutflowTests.Observation(id, "shop:" + i));
+        }
+        var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
+        city.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings());
+        food.ChoiceStartsDay = food.AwarenessStartsDay = food.RivalStartsDay = 1;
+        return (city, market);
+    }
+
+    [Fact]
+    public void VisitorRivalSettlementSettlesOnceAcrossEveryReload()
+    {
+        var (plain, _) = RivalCity();
+        var (reloaded, market) = RivalCity();
+        double end = plain.State.Minute + 30 * 60;
+        Advance(plain, end);
+        int reloads = 0;
+        while (!reloaded.IsCaughtUpTo(end))
+        {
+            reloaded.AdvanceTo(end, 5);
+            if (VisitorMeals(reloaded.State).Any(m => m.TargetKind == FoodAlternativeKind.Rival && m.Status != MealStatus.Pending) && reloads < 300)
+            {
+                var read = SaveCodec.Read(SaveCodec.Write(reloaded.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+                reloaded = new CitySimulator(read.State!, new FreshCityTraceTests.Walk());
+                reloaded.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings()); reloads++;
+            }
+        }
+        Assert.True(reloads > 0);
+        var settled = VisitorMeals(reloaded.State).Where(m => m.Budget!.ExternalFoodSpent > Money.Zero).ToList();
+        Assert.NotEmpty(settled);
+        Assert.Equal(SaveCodec.Write(plain.State), SaveCodec.Write(reloaded.State));
+        Assert.All(reloaded.State.Food!.Residents, m => Assert.True(HouseholdFinance.CashConserved(m.Budget!)));
+        Assert.Equal(0, reloaded.FoodAnchorReads);
+    }
+
+    [Fact]
+    public void StreamingAndSemanticRecordCountersAgree()
+    {
+        foreach (int factor in new[] { 1, 2, 3 })
+        {
+            var state = Running(factor, 30).State;
+            var count = SaveCodec.CountRecords(state, SaveCodec.Write(state));
+            Assert.Equal(count.Streaming, count.Semantic);
+        }
     }
 
     // ---- Conservation from city creation ----

@@ -212,6 +212,7 @@ namespace PersistentCity.Core
         /// <summary>Diagnostic (never saved): food or finance lookups of a person other than the meal's own owner, the
         /// pre-27 represented-consumer anchor. Schema 27 keeps it at zero (F5d: no anchor read at all).</summary>
         public long AnchorReads { get; private set; }
+        internal int QueuedMeals => due.Count;
         // The person whose schedule, wallet inputs and traits a meal reads. From schema 27 that is always its owner.
         private CitizenState? Owner(ResidentMeal meal)
         {

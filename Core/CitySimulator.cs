@@ -56,6 +56,9 @@ namespace PersistentCity.Core
         public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
         /// <summary>F5d diagnostic counter: food/finance reads of a person other than the meal's owner (zero from schema 27).</summary>
         public long FoodAnchorReads => food?.AnchorReads ?? 0;
+        /// <summary>Measurement only: queued person events and queued meal events.</summary>
+        internal int QueuedPersonEvents => due.Count;
+        internal int QueuedMealEvents => food?.QueuedMeals ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every

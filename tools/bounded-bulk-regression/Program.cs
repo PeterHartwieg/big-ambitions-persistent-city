@@ -12,7 +12,7 @@ if (args.Contains("--integrated")) { Integrated.Run(); return; }
 foreach (int residents in new[] { 957, 5000, 50000 })
 {
     var state = new CityState { Seed = 7, Minute = 1440, PopulationKey = "audit",
-        Food = new FoodCommerceState { RepresentationFactor = 2, HouseholdFinanceVersion = 1 } };
+        Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
     state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = residents });
     for (int i = 0; i < residents; i++)
     {
@@ -20,14 +20,18 @@ foreach (int residents in new[] { 957, 5000, 50000 })
             HomeId = "home", PlaceId = "home", Activity = Activity.Home, Phase = CitizenPhase.AtPlace,
             NextEventMinute = 1e8, ActivityUntilMinute = 1e8 };
         state.Citizens.Add(person);
-        for (int slot = 0; slot < 2; slot++)
-        {
-            string id = FoodRepresentation.ConsumerId(person.Identity.Id, slot);
-            state.Food.Residents.Add(new ResidentMeal { ResidentId = id, AnchorId = person.Identity.Id, Slot = slot,
-                DueAt = 1e8, Budget = HouseholdFinance.Create(person, 7, 1440, null, id) });
-        }
+        state.SourceIdentities.Add(person.Identity);
     }
+    // F5d (writer 27): one visitor person per resident, so the day posts one wallet per person (residents and
+    // visitors), each with its own income source. Meals and routines are never stepped here.
+    PortalPlaces.Add(state, new[] { new PortalStation("subway:audit", new Position(5, 0, 0)) });
+    VisitorSchedules.Create(state, residents);
+    foreach (var person in PersonTable.Schedules(state))
+        state.Food.Residents.Add(new ResidentMeal { ResidentId = person.Identity.Id, AnchorId = person.Identity.Id, DueAt = 1e8,
+            RepresentedTraits = person.IsVisitor ? person.Traits : null, Budget = HouseholdFinance.Create(person, 7, 1440, null, person.Identity.Id) });
+    foreach (var routine in state.VisitorRoutines) routine.NextEventMinute = routine.ActivityUntilMinute = 1e8;
     var city = new CitySimulator(state, new Routes()); city.AttachFoodMarket(new Market());
+    if (state.Food.Residents.Count != residents * 2 || state.Visitors.Count != residents) throw new Exception("Persons fixture incomplete");
     var food = field.GetValue(city)!;
     var step = (Func<bool>)method.CreateDelegate(typeof(Func<bool>), food);
     var counter = typeof(FoodCommerce).GetProperty("LastBudgetPostings");

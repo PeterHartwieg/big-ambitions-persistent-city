@@ -142,6 +142,9 @@ namespace PersistentCity.Runtime
     {
         internal static int WithdrawalRequests;
         internal static void ReleaseAfterAccountingFailure() => WithdrawalRequests++;
+        // F5c-lite's development-city refusal hooks: no refused city exists in this harness.
+        internal static void EnsureSave() { }
+        internal static PersistentCity.Core.FoodAuthorityStandDown? StandDown => null;
     }
 }
 public sealed class GameManager { public void RunMainGameTick(float deltaTimeWithMultiplier) { } }
