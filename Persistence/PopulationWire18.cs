@@ -396,25 +396,29 @@ namespace PersistentCity.Persistence
         {
             private readonly WireContext context;
             public VisitConverter(WireContext context) { this.context = context; }
-            public static void Check(JsonReader reader)
+            // Place cell at 17-19: a city index or, from the vendor schema, "v" and a vendor table row (PlaceCells).
+            public static string Check(JsonReader reader, PlaceCells cells)
             {
                 Require(reader.TokenType == JsonToken.String, "Invalid visit token."); string text = (string)reader.Value!;
                 Require(text.Length == 21 && text[0] == '1', "Invalid visit length/version.");
                 for (int i = 1; i <= 16; i++) Require(text[i] >= '0' && text[i] <= '9' || text[i] >= 'A' && text[i] <= 'F', "Invalid visit binary64 alphabet.");
-                Require(MemoryWire.Number(text, 17, 3) < MaxPlaces && text[20] >= '0' && text[20] <= '4', "Invalid visit place/activity code.");
+                Require(text[20] >= '0' && text[20] <= '4', "Invalid visit place/activity code.");
+                string place = cells.Parse(text, 17, "Invalid visit place/activity code.");
                 double minute = BitConverter.Int64BitsToDouble(unchecked((long)ulong.Parse(text.Substring(1, 16), NumberStyles.HexNumber, CultureInfo.InvariantCulture)));
                 Minute(minute, "Visit minute");
+                return place;
             }
             public override void WriteJson(JsonWriter writer, VisitRecord? value, JsonSerializer serializer)
             {
-                writer.WriteValue("1" + unchecked((ulong)BitConverter.DoubleToInt64Bits(value!.AtMinute)).ToString("X16", CultureInfo.InvariantCulture)
-                    + MemoryWire.Number(context.Index[value.PlaceId], 3) + (char)('0' + (int)value.Activity));
+                string? cell = PlaceCell30(context, value!.PlaceId);
+                Require(cell != null, "Visit names an unknown place.");
+                writer.WriteValue("1" + unchecked((ulong)BitConverter.DoubleToInt64Bits(value.AtMinute)).ToString("X16", CultureInfo.InvariantCulture)
+                    + cell + (char)('0' + (int)value.Activity));
             }
             public override VisitRecord ReadJson(JsonReader reader, Type type, VisitRecord? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
-                Check(reader); string text = (string)reader.Value!; int at = MemoryWire.Number(text, 17, 3);
-                Require(at < context.Places.Length, "Invalid visit place reference.");
-                return new VisitRecord { AtMinute = BitConverter.Int64BitsToDouble(unchecked((long)ulong.Parse(text.Substring(1, 16), NumberStyles.HexNumber, CultureInfo.InvariantCulture))), PlaceId = context.Places[at], Activity = (Activity)(text[20] - '0') };
+                string place = Check(reader, PlaceCells.Of(context)); string text = (string)reader.Value!;
+                return new VisitRecord { AtMinute = BitConverter.Int64BitsToDouble(unchecked((long)ulong.Parse(text.Substring(1, 16), NumberStyles.HexNumber, CultureInfo.InvariantCulture))), PlaceId = place, Activity = (Activity)(text[20] - '0') };
             }
         }
         private sealed class BusinessReferenceConverter : JsonConverter<BusinessReference>

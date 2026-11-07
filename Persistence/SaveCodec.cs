@@ -379,9 +379,9 @@ namespace PersistentCity.Persistence
             if (type == typeof(FoodOfferMetadata))
             { CheckMetadata25(reader, text, ref records, fieldNames); return; }
             if (type == typeof(VisitorPerson))
-            { Require(schema >= PersonSchema, "Visitor persons need schema 26."); CheckVisitor26(reader, text); return; }
+            { Require(schema >= PersonSchema, "Visitor persons need schema 26."); CheckVisitor26(reader, text, PlaceCells.Streaming(schema)); return; }
             if (type == typeof(RoutineTuple27))
-            { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text); return; }
+            { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text, PlaceCells.Streaming(schema)); return; }
             if (type == typeof(ResearchLedger))
             { Require(schema >= ResearchSchema, "The research section needs the research schema."); CheckResearch29(reader, text, ref records); return; }
             if (type == typeof(VendorTable))
@@ -453,7 +453,7 @@ namespace PersistentCity.Persistence
                 Charge(ref records); // four fixed memories + watermark are ONE extension
                 return;
             }
-            if (type == typeof(VisitRecord)) { VisitConverter.Check(reader); Require(text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Noncanonical visit encoding."); return; }
+            if (type == typeof(VisitRecord)) { VisitConverter.Check(reader, PlaceCells.Streaming(schema)); Require(text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Noncanonical visit encoding."); return; }
             if (type == typeof(BusinessReference)) { BusinessReferenceConverter.Check(reader, text, schema); return; }
             if (type == typeof(PopulationCapabilities)) Charge(ref records);
             if (type == typeof(Position))
@@ -690,6 +690,9 @@ namespace PersistentCity.Persistence
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
                 foreach (var window in place.WeeklyHours) OpeningWindowRules(window);
             }
+            // E6c: a resident or visitor may be at, walking to or have recently visited a stand. Those cells resolve the
+            // live and retired vendor places the simulator rebuilds; city places never use the vendor prefix.
+            foreach (var vendorPlace in vendors.FoodPlaces) places.Add(vendorPlace.Id, vendorPlace);
             ValidateExpansion(state);
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);

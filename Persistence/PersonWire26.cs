@@ -136,13 +136,14 @@ namespace PersistentCity.Persistence
                 text.Append('|').Append(v.CarriedIncomeSource.HasValue ? ((char)('0' + (int)v.CarriedIncomeSource.Value)).ToString() : NoField26).Append('|');
                 var arrival = v.LastArrival;
                 if (arrival == null) text.Append(NoField26);
-                else text.Append('1').Append(Bits26(arrival.AtMinute)).Append(MemoryWire.Number(context.Index[arrival.PlaceId], 3)).Append((char)('0' + (int)arrival.Activity));
+                else text.Append('1').Append(Bits26(arrival.AtMinute)).Append(PlaceCell30(context, arrival.PlaceId) ?? throw new SaveValidationException("Visitor arrival names an unknown place."))
+                    .Append((char)('0' + (int)arrival.Activity));
                 writer.WriteValue(text.ToString());
             }
             public override VisitorPerson ReadJson(JsonReader reader, Type objectType, VisitorPerson? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 Require(reader.TokenType == JsonToken.String, "Invalid visitor tuple.");
-                return ParseVisitor26((string)reader.Value!, context.Places);
+                return ParseVisitor26((string)reader.Value!, context.Places, PlaceCells.Of(context));
             }
         }
 
@@ -158,7 +159,7 @@ namespace PersistentCity.Persistence
 
         /// <summary>Structural parse only (plan section 3 Arrival evidence: reading and admission are separate).
         /// Places and portals resolve by index; cross-record rules run in <see cref="ValidatePersons26"/>.</summary>
-        private static VisitorPerson ParseVisitor26(string text, IReadOnlyList<string>? places)
+        private static VisitorPerson ParseVisitor26(string text, IReadOnlyList<string>? places, PlaceCells cells)
         {
             Require(text.Length <= MaxVisitorTuple, "Oversized visitor tuple.");
             var parts = text.Split('|');
@@ -215,9 +216,10 @@ namespace PersistentCity.Persistence
                 Require(arrival.Length == 21 && arrival[0] == '1', "Invalid arrival tuple length/version.");
                 double at = Minute26(arrival, 1, "Invalid arrival minute.");
                 Minute(at, "Arrival minute");
-                int place = PlaceIndex26(arrival, 17, places, "Invalid arrival place index.");
+                // E6c: the arrival place may be a vendor place ("v" and a vendor table row); the workplace never is.
+                string place = cells.Parse(arrival, 17, "Invalid arrival place index.");
                 Require(arrival[20] >= '0' && arrival[20] <= '0' + (int)Activity.Study, "Unknown arrival activity.");
-                visitor.LastArrival = new VisitRecord { AtMinute = at, PlaceId = places != null ? places[place] : "", Activity = (Activity)(arrival[20] - '0') };
+                visitor.LastArrival = new VisitRecord { AtMinute = at, PlaceId = places != null ? place : "", Activity = (Activity)(arrival[20] - '0') };
             }
             return visitor;
         }
@@ -231,12 +233,12 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Streaming check of one visitor tuple before deserialization: canonical ASCII, bounded, well formed.</summary>
-        private static void CheckVisitor26(JsonReader reader, TokenText text)
+        private static void CheckVisitor26(JsonReader reader, TokenText text, PlaceCells cells)
         {
             Require(reader.TokenType == JsonToken.String, "Invalid visitor tuple.");
             string value = (string)reader.Value!;
             Require(value.Length <= MaxVisitorTuple && text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid visitor tuple encoding.");
-            ParseVisitor26(value, null);
+            ParseVisitor26(value, null, cells);
         }
 
         private static void CheckPortals26(JsonReader reader, TokenText text, ref int records)

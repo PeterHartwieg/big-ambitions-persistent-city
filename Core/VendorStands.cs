@@ -81,6 +81,15 @@ namespace PersistentCity.Core
                 ClosesDay = vehicle.ClosesDay, ClosesMinute = vehicle.ClosesMinute };
         }
 
+        /// <summary>The vendor place's weekly hours: the stand's one window while it is published, otherwise none.</summary>
+        public static List<OpeningWindow> StandHours(VendorStand stand)
+        {
+            var hours = new List<OpeningWindow>();
+            if (stand.Published && stand.ClosesAt > stand.OpenedAt && stand.ClosesAt - stand.OpenedAt < 1440)
+                hours.Add(new OpeningWindow { Day = Weekday(stand.OpenedDay), FromMinute = stand.OpenedMinute, ToMinute = stand.ClosesMinute });
+            return hours;
+        }
+
         /// <summary>DailyRoutine's weekday (Monday = 0) of a native day.</summary>
         public static int Weekday(int day) => ((day - 1) % 7 + 7) % 7;
 
@@ -563,10 +572,7 @@ namespace PersistentCity.Core
             }
             place.Position = stand.Position;
             place.OpenMinute = 0; place.CloseMinute = 0; // no hours outside the stand's one window
-            var hours = new List<OpeningWindow>();
-            if (stand.Published && stand.ClosesAt > stand.OpenedAt && stand.ClosesAt - stand.OpenedAt < 1440)
-                hours.Add(new OpeningWindow { Day = VendorRules.Weekday(stand.OpenedDay), FromMinute = stand.OpenedMinute, ToMinute = stand.ClosesMinute });
-            place.WeeklyHours = hours;
+            place.WeeklyHours = VendorRules.StandHours(stand);
             var scope = food.Shops.Find(s => s.PlaceId == row.PlaceId);
             if (scope == null)
             {
@@ -613,12 +619,16 @@ namespace PersistentCity.Core
                     foreach (var shop in meal.Decision.Shops) if (VendorNames.IsVendorPlace(shop.PlaceId)) into.ShortLived.Add(shop.PlaceId);
             }
             foreach (var stop in state.RoutineStops) if (VendorNames.IsVendorPlace(stop.PlaceId)) into.ShortLived.Add(stop.PlaceId);
-            // A physical resident walking to, eating at or about to leave the stand: its return route starts from the
-            // place's position, so the place must not move until the person has left it.
-            foreach (var person in State.Citizens)
+            // A physical resident or visitor walking to, eating at or about to leave the stand: its return route starts
+            // from the place's position, so the place must not move until the person has left it. A recent visit names
+            // the place in the save (E6c), so it keeps the row and its place until the visit ages out.
+            foreach (var person in State.Citizens) Person(person);
+            foreach (var routine in State.VisitorRoutines) Person(routine);
+            void Person(CitizenState person)
             {
                 if (VendorNames.IsVendorPlace(person.PlaceId)) into.ShortLived.Add(person.PlaceId);
                 if (VendorNames.IsVendorPlace(person.DestinationId)) into.ShortLived.Add(person.DestinationId);
+                foreach (var visit in person.RecentVisits) if (VendorNames.IsVendorPlace(visit.PlaceId)) into.Retained.Add(visit.PlaceId);
             }
             foreach (var day in state.History) if (VendorNames.IsVendorPlace(day.PlaceId)) into.Retained.Add(day.PlaceId);
             foreach (var reference in state.BusinessReferences) if (VendorNames.IsVendorPlace(reference.PlaceId)) into.Memory.Add(reference.PlaceId);

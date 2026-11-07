@@ -81,17 +81,18 @@ namespace PersistentCity.Persistence
             private readonly WireContext context;
             public RoutineTupleConverter27(WireContext context) { this.context = context; }
             public override void WriteJson(JsonWriter writer, RoutineTuple27? value, JsonSerializer serializer)
-                => writer.WriteValue(RoutineTuple27Text(value!.Routine, context.Index));
+                => writer.WriteValue(RoutineTuple27Text(value!.Routine, context));
             public override RoutineTuple27 ReadJson(JsonReader reader, Type objectType, RoutineTuple27? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 Require(reader.TokenType == JsonToken.String, "Invalid visitor routine tuple.");
-                return new RoutineTuple27(ParseRoutine27((string)reader.Value!, context.Places));
+                return new RoutineTuple27(ParseRoutine27((string)reader.Value!, PlaceCells.Of(context)));
             }
         }
 
-        private static string RoutineTuple27Text(VisitorRoutine r, Dictionary<string, int> index)
+        private static string RoutineTuple27Text(VisitorRoutine r, WireContext context)
         {
-            string Place(string id) { Require(index.TryGetValue(id, out int i), "Visitor routine names an unknown place."); return MemoryWire.Number(i, 3); }
+            // E6c: a vendor place (a visitor at or walking to a stand) takes the "v" form; see PlaceCells.
+            string Place(string id) => PlaceCell30(context, id) ?? throw new SaveValidationException("Visitor routine names an unknown place.");
             string Optional(string id) => id.Length == 0 ? NoPlace27 : Place(id);
             var text = new StringBuilder(160).Append('1').Append('|')
                 .Append(Digit((int)r.Phase)).Append(Digit((int)r.Activity)).Append(Digit((int)r.DestinationActivity)).Append('|')
@@ -143,15 +144,12 @@ namespace PersistentCity.Persistence
             return int.Parse(text, CultureInfo.InvariantCulture);
         }
 
-        private static string ParsePlace27(string text, int offset, IReadOnlyList<string>? places, bool optional, string label)
+        private static string ParsePlace27(string text, int offset, PlaceCells places, bool optional, string label)
         {
             Require(text.Length >= offset + 3, "Invalid " + label + ".");
             if (optional && string.CompareOrdinal(text, offset, NoPlace27, 0, 3) == 0) return "";
-            int index = -1;
-            try { index = MemoryWire.Number(text, offset, 3); } catch (FormatException) { Fail("Invalid " + label + "."); }
-            Require(index < (places?.Count ?? MaxPlaces), "Invalid " + label + ".");
             // The streaming check has no place table; it keeps a placeholder that is never published.
-            return places != null ? places[index] : "#";
+            return places.Parse(text, offset, "Invalid " + label + ".");
         }
 
         private static T Code27<T>(char c, int maximum, string label)
@@ -161,7 +159,7 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Structural parse (the streaming check passes no place table). Cross-record rules run in ValidatePersons27.</summary>
-        private static VisitorRoutine ParseRoutine27(string text, IReadOnlyList<string>? places)
+        private static VisitorRoutine ParseRoutine27(string text, PlaceCells places)
         {
             Require(text.Length <= MaxRoutineTuple, "Oversized visitor routine tuple.");
             var parts = text.Split('|');
@@ -216,12 +214,12 @@ namespace PersistentCity.Persistence
             return r;
         }
 
-        private static void CheckRoutine27(JsonReader reader, TokenText text)
+        private static void CheckRoutine27(JsonReader reader, TokenText text, PlaceCells cells)
         {
             Require(reader.TokenType == JsonToken.String, "Invalid visitor routine tuple.");
             string value = (string)reader.Value!;
             Require(value.Length <= MaxRoutineTuple && text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid visitor routine tuple encoding.");
-            ParseRoutine27(value, null);
+            ParseRoutine27(value, cells);
         }
 
         /// <summary>After a schema-27 decode and before validation: the writer-26 person derivations for residents and

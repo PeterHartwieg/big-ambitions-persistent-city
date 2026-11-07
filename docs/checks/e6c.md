@@ -11,7 +11,8 @@ Plan: [E6 section 4, row E6c](../plans/e6-carts-food-trucks.md#4-slice-breakdown
 - **Edits outside the E6c file list,** each needed for the shape to work:
   - `Persistence/SaveSnapshot.cs` (F7c) gets a `Vendors` capture section, and its scope copy keeps the channel. Without them the snapshot writer would drop both.
   - `Persistence/PersonWire26.cs` sets `LatestDevelopmentSchema` to writer 29 and adds the table to the omit list the frozen codecs use. C5c and F5e changed the same lines.
-  - In `Core/CitySimulator.cs` and `Core/VendorStands.cs` (E6b), the simulator constructor rebuilds the vendor place of every live or retired row with a stand from the table, and sets `PlacePublished`. A route rebuild now replaces those places with the old simulator's objects instead of adding them twice. This is the plan's "vendor places are rebuilt from the table on load".
+  - In `Core/CitySimulator.cs` and `Core/VendorStands.cs` (E6b), the simulator constructor rebuilds the vendor place of every live or retired row with a stand from the table, and sets `PlacePublished`. A route rebuild now replaces those places with the old simulator's objects instead of adding them twice. This is the plan's "vendor places are rebuilt from the table on load". `CollectVendorReferences` also counts visitor routines, and it counts recent visits as retained references (review Opus-r1-1, below). The stand's hours moved to `VendorRules.StandHours` so the codec builds the same place.
+  - In `Core/VendorState.cs` (E6b), `VendorNames.Key` bounds the derived id (review Sol-r1-1, below).
 - **Unchanged.** `FoodSaleReceipts`, `FoodAuthorityStore`, the save-epoch marker and payload list, rival records, Runtime market, checkout and bodies, Street Food's repository. No migration.
 
 ## Wire
@@ -23,9 +24,11 @@ Plan: [E6 section 4, row E6c](../plans/e6-carts-food-trucks.md#4-slice-breakdown
 - Stand: `[opening id, x, y, z, opened day, opened minute, closes day, closes minute, published]`.
 - Authority: `[desired, requested hour, from hour, until hour, suspended, opening id, handback pending]`. The plan lists the first five. Opening id and handback pending are also part of E6b's `VendorAuthority`, and without them a reload would re-acquire a served opening and lose a pending handback, so they are saved too.
 
-The place id and business id are derived from the vehicle id. The reader requires the saved strings to equal the derivation. `PlacePublished` is not saved: a live or retired row has its place exactly while it has a stand, and the writer refuses a table that breaks this.
+The place id and business id are derived from the vehicle id. The reader requires the saved strings to equal the derivation. The derived key is the escaped id when that is at most 128 characters. Otherwise it is `~` plus the lowercase hex SHA-256 of the id's UTF-8 bytes. Escaping never produces `~`, so the two forms cannot collide. A place id is then at most 135 characters and a business id at most 169, inside every saved 256-character place field and 512-character business field. `PlacePublished` is not saved: a live or retired row has its place exactly while it has a stand, and the writer refuses a table that breaks this.
 
 Business-reference place cell: a city place keeps its three base-36 digits of the ordinal `Places` index. A vendor row's place is written as `v` plus two base-36 digits of the row's position in the saved table, counting live, retired and tombstone rows (at most 1,152; two digits reach 1,295). `WireContext.FromSource` decodes the table before business references are decoded. `Check` accepts the `v` form only in the vendor schema and below 1,152. `ReadJson` resolves `v` only through the table, and refuses a city index that names a vendor place.
+
+The same `v` form is used by every compact cell that can name the place where a person is: a resident's recent visit, a visitor's routine place, destination and venues, and a visitor's last arrival. Resident place and destination are plain strings already. Person validation resolves the live and retired vendor places the simulator rebuilds, with the stand's position and hours. A recent visit keeps its row retired, so the place still exists. Compaction waits until the visit ages out of the 32 kept visits.
 
 ## Reader and writer rules
 
@@ -42,8 +45,8 @@ Business-reference place cell: a city place keeps its three base-36 digits of th
 | Check | Result |
 | --- | --- |
 | `python3 tools/build.py --game-managed ".../dll-import-shim/Big Ambitions_Data/Managed"` | passed |
-| `dotnet test tests/PersistentCity.Tests.csproj` | 3,591 / 3,591 passed on the second run (the first full run had one wall-clock failure, `RushSpikeReplayTests`, which passes alone; see below) |
-| `dotnet test ... --filter VendorSaveTests` | 47 / 47 passed |
+| `dotnet test tests/PersistentCity.Tests.csproj` | 3,601 / 3,601 passed after the review round-1 fixes (before them, 3,591 / 3,591 on the second run; the first full run had one wall-clock failure, `RushSpikeReplayTests`, which passes alone; see below) |
+| `dotnet test ... --filter VendorSaveTests` | 57 / 57 passed |
 | `PC_E6C_MEASURE=1 dotnet test -c Release --filter E6cVendorSaveMeasure` | numbers in [docs/perf/e6c.md](../perf/e6c.md) |
 
 `RushSpikeReplayTests.EveningRushHasNoAdvancementIntervalAtOrAbove30MsAndKeepsTheUninterruptedState` times wall-clock intervals. It failed once under the full parallel suite and passes alone and on the re-run. It builds no vendor rows, and the only E6c code on its path is an empty-table loop in the simulator constructor.
@@ -61,6 +64,8 @@ Cases in `tests/VendorSaveTests.cs`, all through the real `SaveCodec.Write` and 
 - **`v` form.** City place `001`, then `v00`, `v01`, `v02`. `v03` in a three-row table, `vZZ` (beyond 1,152), a lowercase digit, `v0` and `v000` are refused. `v00` with another row's business is refused. A city index naming a forged `vendor:zz` city place is refused by the reader, and the writer refuses that city place. A `v` cell in a frozen writer-29 payload is refused by the writer-29 reader.
 - **Other business ids at a vendor place.** Refused by the writer and the reader: another signature, generation 0, `01`, `+1`, no generation, a plain id.
 - **Ids.** 128-unit ids round-trip, 129 are refused. A non-ASCII id with a space and an emoji escapes and round-trips. A control character is refused.
+- **Maximum-length escaped ids (review Sol-r1-1).** Ids of 128 `中`, 128 spaces, 64 surrogate pairs and 128 `é` all escape beyond 128 characters. Each gets a hashed key, a place id of at most 135 characters and a business id of at most 169. Each round-trips with a Vehicle scope, a meal at its place, a business reference and a remembered tombstone. Escaped ids up to 128 characters keep their readable form.
+- **Persons at stands (review Opus-r1-1).** A resident eating at a stand, one walking to it, and one with a retired stand among their recent visits (written `v01`) each save and reload. A visitor at a stand writes `v00` in its routine and in its arrival, and reloads. A visit `v` index outside the table is refused, and the frozen writer 29 refuses a visit at a vendor place. A recent visit keeps a sold vehicle's row retired across a reload, and the row is removed once the visit is gone.
 - **Duplicates and malformed rows.** Duplicate and unordered ids are refused. So are a place or business that differs from the derivation, generation 0 or `01`, state 3, a surplus slot, kind `van`, an until hour of -2 and a missing authority slot.
 - **Scope checks.** A Vehicle scope without its row, a row with a stand but no scope, a Shop scope at a vendor place, a Vehicle scope at a city place, a Vehicle scope with another generation, and channel code 2. A meal at a missing vendor place or at a tombstone's place, and a history row at a missing vendor place. A deferred stand without a stand ("stand without vendor place"), a stand whose place is not published and the reverse, a stand closing before it opens. A tombstone with a kind or authority. A null, wrong-version, surplus-slot or missing table.
 - **Deferred stand move.** A pending meal holds stop 1 while the vehicle opens at stop 2. The move is deferred, and the city reloads. After reload the row still has the deferred stand, and the rebuilt place is at the old position with no hours. When the meal clears, the place moves to stop 2, opens and is served. The city reloads again with no deferred stand.
@@ -70,10 +75,6 @@ Cases in `tests/VendorSaveTests.cs`, all through the real `SaveCodec.Write` and 
 - **Snapshot.** The F7c capture copies rows, stands and the channel, and mutations after capture do not reach the payload.
 
 Changes to other tests. The literal writer-29 checks in `ActiveJourneyIndexTests`, `PopulationCensusTests`, `PersonIdentityTests`, `FoodFeedbackTests` and `SaveCostDiagnosticsTests` now expect the vendor schema. Schema 29 joins the refused lists in `CurrentSchemaOnlyTests` and `Schema18ReviewTests`. `ResearchSaveTests` pins and `SaveSnapshotTests.CurrentWriterBytesEqualTheBaseWriterOnFreshFixtures` now run the frozen writer 29, with unchanged hashes; the latter keeps its name because `docs/checks/f7c.md` links it, and its session part uses the current writer. E6b's `TheChannelIsNotPartOfTheCurrentSaveShape` became `TheChannelIsPartOfTheVendorSaveShapeOnly`. `ActivationValidationTests` passes the new `FoodPlaceLookup` argument.
-
-## Found while implementing (for E6d and the coordinator)
-
-The writer accepts vendor places in food records and business references only. A person whose `PlaceId` or `DestinationId` is a vendor place, a recent visit, or a visitor's routine or last arrival there is refused by the writer with "Unknown place reference" (or the visitor and arrival equivalents). The save fails cleanly; nothing is written. Those cells use the three-digit city index, and the plan gives no vendor form for them. E6b's `CollectVendorReferences` already expects physical residents at a stand. So once E6d sends residents to vehicles, a save with someone walking to or standing at a vehicle would be refused. The plan row did not assign this to E6c. It needs a decision before E6d merges: either a next-free bump that adds the `v` form to those cells, or E6d keeps residents off vendor places at save time.
 
 ## In-game checks for the next batched rig
 

@@ -25,6 +25,45 @@ namespace PersistentCity.Persistence
         private const long MaxVendorHour = (long)(MaxMinute / 60);
         private const int MaxVendorDay = (int)(MaxMinute / 1440);
 
+        /// <summary>A place cell inside a compact person or visit token: three base-36 digits of the ordinal Places
+        /// index, or (vendor schema) <c>v</c> and two base-36 digits of the vendor table's saved row order. With no
+        /// tables (the streaming check) it bounds the index and returns a placeholder that is never published.</summary>
+        private sealed class PlaceCells
+        {
+            private static readonly PlaceCells CityStreaming = new PlaceCells(null, null, false), VendorStreaming = new PlaceCells(null, null, true);
+            public static PlaceCells Streaming(int schema) => schema >= VendorSchema ? VendorStreaming : CityStreaming;
+            public static PlaceCells Of(WireContext context) => new PlaceCells(context.Places, context.VendorPlaces, true);
+            private readonly IReadOnlyList<string>? places, vendors;
+            private readonly bool vendorForm;
+            private PlaceCells(IReadOnlyList<string>? places, IReadOnlyList<string>? vendors, bool vendorForm)
+            { this.places = places; this.vendors = vendors; this.vendorForm = vendorForm; }
+
+            public string Parse(string text, int offset, string error)
+            {
+                Require(text.Length >= offset + 3, error);
+                int index = -1;
+                if (text[offset] == VendorPlaceForm)
+                {
+                    // v indices resolve only through the vendor table.
+                    Require(vendorForm, error);
+                    try { index = MemoryWire.Number(text, offset + 1, VendorIndexWidth); } catch (FormatException) { Fail(error); }
+                    Require(index < (vendors?.Count ?? MaxVendorRows), error);
+                    return places != null ? vendors![index] : "#";
+                }
+                try { index = MemoryWire.Number(text, offset, 3); } catch (FormatException) { Fail(error); }
+                Require(index < (places?.Count ?? MaxPlaces), error);
+                if (places == null) return "#";
+                Require(!VendorNames.IsVendorPlace(places[index]), error); // a city index never names a vendor place
+                return places[index];
+            }
+        }
+
+        /// <summary>The writer's place cell for <paramref name="id"/>: the vendor form for a vendor row's place, else the
+        /// city index. Null when the id is in neither table.</summary>
+        private static string? PlaceCell30(WireContext context, string id)
+            => context.VendorIndex.TryGetValue(id, out int row) ? VendorPlaceForm + MemoryWire.Number(row, VendorIndexWidth)
+            : context.Index.TryGetValue(id, out int at) ? MemoryWire.Number(at, 3) : null;
+
         /// <summary>Properties that exist only from the vendor schema; every older writer and frozen reader omits them.</summary>
         internal static bool VendorProperty30(Type type, string? name) => type == typeof(CityState) && name == "Vendors";
 
@@ -124,14 +163,14 @@ namespace PersistentCity.Persistence
                 if (state == VendorRowState.Tombstone)
                 {
                     row.Generation = (int)Long30(reader, text, 1, int.MaxValue, "Invalid vendor generation.");
-                    Require(String30(reader, text, 512, "Invalid vendor place.") == VendorNames.PlaceId(row.VehicleId), "Vendor place differs from its vehicle id.");
-                    Require(String30(reader, text, 512, "Invalid vendor business.") == VendorNames.BusinessId(row.VehicleId, row.Generation), "Vendor business differs from its vehicle id and generation.");
+                    Require(String30(reader, text, VendorNames.MaximumPlaceIdLength, "Invalid vendor place.") == VendorNames.PlaceId(row.VehicleId), "Vendor place differs from its vehicle id.");
+                    Require(String30(reader, text, VendorNames.MaximumBusinessIdLength, "Invalid vendor business.") == VendorNames.BusinessId(row.VehicleId, row.Generation), "Vendor business differs from its vehicle id and generation.");
                 }
                 else
                 {
                     row.Kind = String30(reader, text, 16, "Invalid vendor kind.");
                     row.Generation = (int)Long30(reader, text, 1, int.MaxValue, "Invalid vendor generation.");
-                    Require(String30(reader, text, 512, "Invalid vendor place.") == VendorNames.PlaceId(row.VehicleId), "Vendor place differs from its vehicle id.");
+                    Require(String30(reader, text, VendorNames.MaximumPlaceIdLength, "Invalid vendor place.") == VendorNames.PlaceId(row.VehicleId), "Vendor place differs from its vehicle id.");
                     row.Stand = Stand30(reader, text);
                     row.DeferredStand = Stand30(reader, text);
                     Require(reader.Read() && reader.TokenType == JsonToken.StartArray, "Expected a vendor authority.");
@@ -313,7 +352,8 @@ namespace PersistentCity.Persistence
             public static readonly VendorIndex30 Empty = new VendorIndex30();
             /// <summary>Every row's place, tombstones included (business references may name them).</summary>
             public readonly Dictionary<string, VendorRow> ByPlace = new Dictionary<string, VendorRow>(StringComparer.Ordinal);
-            /// <summary>Live and retired rows with a stand: the places the simulator publishes, at the stand's position.</summary>
+            /// <summary>Live and retired rows with a stand: the places the simulator publishes, at the stand's position. Food
+            /// records name them, and so may persons, visits and visitor arrivals (they keep the row retired, not compacted).</summary>
             public readonly List<Place> FoodPlaces = new List<Place>();
             public bool IsFoodPlace(string id) => ByPlace.TryGetValue(id, out var row) && row.State != VendorRowState.Tombstone && row.Stand != null;
         }
@@ -337,7 +377,9 @@ namespace PersistentCity.Persistence
                 Charge(ref records);
                 index.ByPlace.Add(row.PlaceId, row);
                 if (row.State != VendorRowState.Tombstone && row.Stand != null)
-                    index.FoodPlaces.Add(new Place { Id = row.PlaceId, Kind = PlaceKind.Shop, Position = row.Stand.Position });
+                    // The place the simulator rebuilds (CitySimulator.PublishVendorPlace): position and hours from the stand.
+                    index.FoodPlaces.Add(new Place { Id = row.PlaceId, Name = "Street Food " + row.Kind, Kind = PlaceKind.Shop, Capacity = 1,
+                        EvidenceSource = "streetfood", Position = row.Stand.Position, OpenMinute = 0, CloseMinute = 0, WeeklyHours = VendorRules.StandHours(row.Stand) });
             }
             // City places never use the vendor prefix, so a city index can never name a vendor place.
             foreach (var place in state.Places) Require(place == null || !VendorNames.IsVendorPlace(place.Id), "A city place uses the vendor place prefix.");

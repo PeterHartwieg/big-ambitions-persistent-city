@@ -611,6 +611,159 @@ public sealed class VendorSaveTests
         Refused(WithRows(text, new[] { "[2,\"a\\u0001\",1,\"vendor:a%01\",\"streetfood:vehicle:a%01:generation:1\"]" }), "Invalid vendor vehicle id.");
     }
 
+    /// <summary>Review Sol-r1-1: a valid 128-unit id may escape to 1,152 characters. The derived key is bounded, so place
+    /// and business ids fit every saved place (256) and business (512) field, and the city round-trips with the id's
+    /// Vehicle scope, a meal at its place, a remembered business reference and a remembered tombstone.</summary>
+    [Theory]
+    [InlineData("中", 128)]        // 9 escaped characters per unit
+    [InlineData(" ", 128)]         // 3 per unit: 391 characters escaped
+    [InlineData("\ud83d\ude9a", 64)] // 64 surrogate pairs, 128 units
+    [InlineData("é", 128)]
+    public void MaximumLengthEscapedIdsRoundTripWithScopeMealReferenceAndTombstone(string unit, int repeat)
+    {
+        string id = string.Concat(Enumerable.Repeat(unit, repeat)), other = "t" + id.Substring(unit.Length);
+        Assert.Equal(128, id.Length); Assert.True(VendorNames.ValidId(id)); Assert.True(VendorNames.Escape(id).Length > VendorNames.MaximumKeyLength);
+        Assert.StartsWith("vendor:~", VendorNames.PlaceId(id));
+        Assert.True(VendorNames.PlaceId(id).Length <= VendorNames.MaximumPlaceIdLength && VendorNames.MaximumPlaceIdLength <= 256);
+        Assert.True(VendorNames.BusinessId(id, int.MaxValue).Length <= VendorNames.MaximumBusinessIdLength && VendorNames.MaximumBusinessIdLength <= 512);
+        Assert.NotEqual(VendorNames.PlaceId(id), VendorNames.PlaceId(other));
+        var city = WeightedFoodChoiceTests.Ready(5).city;
+        var table = city.State.Vendors;
+        var tomb = table.Admit(other, ""); tomb.Generation = 2; table.Move(tomb, VendorRowState.Tombstone);
+        var row = table.Admit(id, "cart");
+        row.Stand = new VendorStand { OpeningId = 1, Position = new Position(10, 0, 0), OpenedDay = 2, OpenedMinute = 540, ClosesDay = 2, ClosesMinute = 660, Published = true };
+        city.PublishVendorPlace(row, Menu(FoodProducts.HotDog)); row.PlacePublished = true;
+        var food = city.State.Food!;
+        food.BusinessReferences.Add(new BusinessReference { Slot = 0, BusinessId = row.BusinessId, PlaceId = row.PlaceId });
+        food.BusinessReferences.Add(new BusinessReference { Slot = 1, BusinessId = VendorNames.BusinessId(other, 1), PlaceId = tomb.PlaceId });
+        var meal = food.Residents[0];
+        meal.PlaceId = row.PlaceId; meal.BusinessId = row.BusinessId; meal.ProductId = FoodProducts.HotDog;
+        string payload = SaveCodec.Write(city.State);
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.Equal(new[] { other, id }.OrderBy(x => x, StringComparer.Ordinal), read.State!.Vendors.Rows.Select(r => r.VehicleId));
+        Assert.Equal(row.PlaceId, read.State.Food!.Residents[0].PlaceId);
+        Assert.Equal(new Position(10, 0, 0), new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner()).FindPosition(row.PlaceId));
+    }
+
+    [Fact]
+    public void AnEscapedIdUpToTheKeyBoundKeepsItsReadableForm()
+    {
+        string id = new string(' ', 42); // 126 escaped characters
+        Assert.Equal("vendor:" + VendorNames.Escape(id), VendorNames.PlaceId(id));
+        Assert.Equal("vendor:" + VendorNames.Escape(id + "a"), VendorNames.PlaceId(id + "a")); // 127
+        Assert.StartsWith("vendor:~", VendorNames.PlaceId(id + " ")); // 129
+    }
+
+    // ---- Persons at stands (review Opus-r1-1) ----
+
+    /// <summary>A resident eating at a stand, walking to it, or with the stand among their recent visits saves and
+    /// reloads. The visit uses the "v" place cell.</summary>
+    [Fact]
+    public void AResidentAtWalkingToOrRecentlyAtAStandSavesAndReloads()
+    {
+        foreach (string arm in new[] { "at", "travelling", "visited" })
+        {
+            var city = Table(1, 1, 0);
+            var state = city.State;
+            var person = state.Citizens.Single();
+            var meal = state.Food!.Residents.Single(m => m.ResidentId == person.Identity.Id);
+            var live = state.Vendors.Find("l0000")!;
+            var stand = city.FindPlace(live.PlaceId);
+            if (arm == "at")
+            {
+                meal.Status = MealStatus.Paid; meal.PlaceId = live.PlaceId; meal.BusinessId = live.BusinessId; meal.ProductId = FoodProducts.HotDog;
+                person.MealOuting = new MealOuting { OriginId = person.HomeId, OriginActivity = Activity.Home, ResumeUntil = person.NextEventMinute + 600, ResumeEvent = person.NextEventMinute + 600 };
+                person.PlaceId = live.PlaceId; person.Activity = Activity.Shop; person.Phase = CitizenPhase.AtPlace;
+                person.ActivityUntilMinute = person.NextEventMinute;
+            }
+            else if (arm == "travelling")
+            {
+                var home = city.FindPlace(person.HomeId);
+                meal.Status = MealStatus.Travelling; meal.PlaceId = live.PlaceId; meal.BusinessId = live.BusinessId; meal.ProductId = FoodProducts.HotDog;
+                meal.Allowance = Money.FromCents(1000); meal.Price = Money.FromCents(450); meal.ServiceMinutes = 5; meal.Deadline = meal.ExpiresAt;
+                person.MealOuting = new MealOuting { OriginId = person.HomeId, OriginActivity = Activity.Home, ResumeUntil = person.NextEventMinute + 600, ResumeEvent = person.NextEventMinute + 600 };
+                person.DestinationId = live.PlaceId; person.DestinationActivity = Activity.Shop; person.Phase = CitizenPhase.Travelling;
+                person.Journey = new Route { Legs = { new RouteLeg { From = home.Position, To = stand.Position, Mode = TravelMode.Walk, Minutes = 5 } } }.Commit();
+                person.DepartureMinute = state.Minute; person.NextEventMinute = state.Minute + 5; person.ActivityUntilMinute = state.Minute + 30;
+            }
+            else person.RecentVisits.Add(new VisitRecord { AtMinute = state.Minute, PlaceId = "vendor:r0000", Activity = Activity.Shop });
+            string payload = SaveCodec.Write(state);
+            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, arm + ": " + read.Error);
+            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            var loaded = read.State!.Citizens.Single();
+            if (arm == "at") Assert.Equal(live.PlaceId, loaded.PlaceId);
+            else if (arm == "travelling") Assert.Equal(live.PlaceId, loaded.DestinationId);
+            else
+            {
+                Assert.Equal("vendor:r0000", loaded.RecentVisits[^1].PlaceId);
+                var visits = (JArray)((JArray)Wire(payload)["Citizens"]!)[0]["RecentVisits"]!;
+                Assert.Equal("v01", ((string)visits.Last()!).Substring(17, 3));
+            }
+            Assert.NotNull(new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner()).FindPosition(live.PlaceId));
+        }
+    }
+
+    [Theory]
+    [InlineData("v02", "Invalid visit place/activity code.")] // two rows
+    [InlineData("vZZ", "Invalid visit place/activity code.")]
+    public void AVisitVIndexOutsideTheTableIsRefused(string cell, string message)
+    {
+        var state = Table(1, 1, 0).State;
+        state.Citizens.Single().RecentVisits.Add(new VisitRecord { AtMinute = state.Minute, PlaceId = "vendor:r0000", Activity = Activity.Shop });
+        string payload = SaveCodec.Write(state);
+        string visit = (string)((JArray)((JArray)Wire(payload)["Citizens"]!)[0]["RecentVisits"]!).Last()!;
+        Refused(payload.Replace(visit, visit.Substring(0, 17) + cell + visit.Substring(20)), message);
+        // A visit at a vendor place in an older writer is refused as unknown, never written with a city index.
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write29(state));
+    }
+
+    [Fact]
+    public void ARecentVisitKeepsTheRetiredRowAndItsPlaceUntilItAgesOut()
+    {
+        var rig = new Rig();
+        rig.OpenAll(At(8, 5), "A");
+        var person = rig.City.State.Citizens.Single();
+        person.RecentVisits.Add(new VisitRecord { AtMinute = rig.City.State.Minute, PlaceId = "vendor:A", Activity = Activity.Shop });
+        StreetFoodHooks.Remove("A"); rig.Run(rig.Now + 5);
+        Assert.Equal(VendorRowState.Retired, rig.Row("A").State);
+        Assert.Equal(0, rig.Vendors.Compact()); // the visit still names the place
+        rig.Reload();
+        Assert.NotNull(rig.City.FindPosition("vendor:A"));
+        rig.City.State.Citizens.Single().RecentVisits.Clear();
+        Assert.Equal(1, rig.Vendors.Compact());
+        Assert.Null(rig.Table.Find("A"));
+        rig.Reload();
+    }
+
+    /// <summary>A visitor at, or last arrived at, a stand writes its routine and arrival cells in the "v" form.</summary>
+    [Fact]
+    public void AVisitorAtAStandWritesTheVendorFormInItsRoutineAndArrival()
+    {
+        var (state, market) = Schema28Tests.Fresh();
+        var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
+        city.AttachFoodMarket(market);
+        double target = state.Minute + 30 * 60;
+        while (!city.AdvanceTo(target, 64).CaughtUp) { }
+        Fill(city, 1, 0, 0);
+        var live = state.Vendors.Rows.Single();
+        // An active visitor at a city place, moved to the stand: its routine place and its arrival name the vendor place.
+        var routine = state.VisitorRoutines.First(r => r.Phase == CitizenPhase.AtPlace && r.PlaceId != r.HomeId && r.MealOuting == null && r.OptionalStop == null);
+        routine.Activity = Activity.Shop;
+        var visitor = state.Visitors[state.VisitorRoutines.IndexOf(routine)];
+        var arrival = new VisitRecord { AtMinute = state.Minute, PlaceId = live.PlaceId, Activity = Activity.Shop };
+        routine.PlaceId = live.PlaceId; routine.RecentVisits.Clear(); routine.RecentVisits.Add(arrival); visitor.LastArrival = arrival;
+        string payload = SaveCodec.Write(state);
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        int at = state.VisitorRoutines.IndexOf(routine);
+        Assert.Equal(live.PlaceId, read.State!.VisitorRoutines[at].PlaceId);
+        Assert.Equal(live.PlaceId, read.State.Visitors[at].LastArrival!.PlaceId);
+        Assert.Contains("|v00|", (string)((JArray)Wire(payload)["VisitorRoutines"]!)[at]["T"]!);
+        string tuple = (string)((JArray)Wire(payload)["Visitors"]!)[at]!;
+        Assert.Equal("v00", tuple.Substring(tuple.Length - 4, 3)); // the arrival cell, before its activity digit
+    }
+
     [Fact]
     public void DuplicateOrUnorderedVehicleIdsAreRefused()
     {
