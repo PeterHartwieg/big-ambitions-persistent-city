@@ -35,9 +35,10 @@ public sealed class ResearchSaveTests
         return ResearchFixture.Finish(source, 256, order.Product.Tier, scope);
     }
 
-    private static ResearchOrder Place(ResearchLedger ledger, string business, string code, bool tax = false, double minute = OrderMinute)
+    private static ResearchOrder Place(ResearchLedger ledger, string business, string code, bool tax = false, double minute = OrderMinute,
+        string agency = "agency:7")
     {
-        Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder(code, business, "agency:7", tax, 500, minute, out var order));
+        Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder(code, business, agency, tax, 500, minute, out var order));
         return order!;
     }
 
@@ -67,17 +68,23 @@ public sealed class ResearchSaveTests
         return ledger;
     }
 
-    /// <summary>The section at its bounds: 8 Surveyed open orders, 16 kept and 16 closed, every report at the widest
-    /// sold tier (Detailed, 62 cells), maximum-length addresses.</summary>
+    /// <summary>The section at its bounds: 8 Surveyed open orders, 16 kept and 16 closed. Every order is DetailedLocal,
+    /// the widest sold tier (62 cells) whose report also carries the business address, and every business and agency
+    /// address has the maximum length.</summary>
     internal static ResearchLedger AtBounds(int addressLength = ResearchLedger.MaximumAddressLength)
     {
         var ledger = new ResearchLedger();
         string Address(string kind, int i) => (kind + ":" + i.ToString("D3", CultureInfo.InvariantCulture) + ":").PadRight(addressLength, 'x');
         for (int i = 0; i < ResearchLedger.MaximumClosedOrders; i++)
-            Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaymentUnknown(Seal(ledger, Place(ledger, Address("closed", i), ResearchProducts.DetailedCityCode)).Id));
+            Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaymentUnknown(Seal(ledger, Place(ledger, Address("closed", i), ResearchProducts.DetailedLocalCode, agency: Address("agency", i))).Id));
         for (int i = 0; i < ResearchLedger.MaximumKeptReports; i++)
-            Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(Seal(ledger, Place(ledger, Address("kept", i), ResearchProducts.DetailedLocalCode)).Id));
-        for (int i = 0; i < ResearchLedger.MaximumOpenOrders; i++) Seal(ledger, Place(ledger, Address("open", i), ResearchProducts.DetailedCityCode));
+            Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(Seal(ledger, Place(ledger, Address("kept", i), ResearchProducts.DetailedLocalCode, agency: Address("agency", i))).Id));
+        for (int i = 0; i < ResearchLedger.MaximumOpenOrders; i++)
+            Seal(ledger, Place(ledger, Address("open", i), ResearchProducts.DetailedLocalCode, agency: Address("agency", i)));
+        foreach (var order in ledger.Open.Concat(ledger.Kept).Concat(ledger.Closed))
+            Assert.Equal((addressLength, addressLength), (order.BusinessAddress.Length, order.AgencyAddress.Length));
+        foreach (var order in ledger.Open.Concat(ledger.Kept))
+            Assert.Equal((62, addressLength), (order.Report!.FixtureCells.Count, order.Report.Address!.Length));
         Assert.Equal((8, 16, 16), (ledger.Open.Count, ledger.Kept.Count, ledger.Closed.Count));
         return ledger;
     }
@@ -179,7 +186,7 @@ public sealed class ResearchSaveTests
     }
 
     [Fact]
-    public void TheSectionAtItsBoundsRoundTripsAndStaysUnderTwentyKilobytes()
+    public void TheSectionAtItsBoundsRoundTripsAndStaysUnderSixtyFourKilobytes()
     {
         var empty = SaveCodec.Write(City());
         string payload = SaveCodec.Write(City(AtBounds()));
@@ -187,9 +194,10 @@ public sealed class ResearchSaveTests
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         int section = Encoding.UTF8.GetByteCount(payload) - Encoding.UTF8.GetByteCount(empty);
         output.WriteLine("research section at bounds: " + section + " bytes over the empty ledger");
-        // 24 report-holding orders of 62 sold cells plus 16 closed rows. The plan's "well under 20 KB" assumed short
-        // addresses; two 256-character addresses on each of 40 orders add about 20 KB on their own (docs/perf/c5c.md).
-        Assert.True(section < 40 * 1024, section + " bytes");
+        // 24 report-holding orders of 62 sold cells plus 16 closed rows, with three 256-character addresses per report-holding
+        // order and two per closed one. The plan's "well under 20 KB" assumed short addresses (docs/perf/c5c.md). Cell
+        // values up to the 150,000-consumer cap add at most 4 digits to each of the 1,488 cells, about 6 KB more.
+        Assert.True(section + 4 * 62 * 24 < 64 * 1024, section + " bytes");
         // Both record counters charge one record per order.
         var records = SaveCodec.CountRecords(read.State!, payload);
         var baseline = SaveCodec.CountRecords(SaveCodec.Read(empty).State!, empty);
