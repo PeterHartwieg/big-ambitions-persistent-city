@@ -61,6 +61,11 @@ namespace PersistentCity.Core
         /// maxima above instead of their ordinary 256 and 512 characters.</summary>
         public static bool IsVendorIdentity(string? id) => IsVendorPlace(id) || id != null && id.StartsWith(SignaturePrefix, StringComparison.Ordinal);
 
+        /// <summary>The length bound for a place or business field: a vendor place or business id may reach its escaped
+        /// maximum; every other value keeps the field's own bound.</summary>
+        public static int Bound(string? id, int max) => IsVendorPlace(id) ? Math.Max(max, MaximumPlaceIdLength)
+            : IsVendorIdentity(id) ? Math.Max(max, MaximumBusinessIdLength) : max;
+
         public static string PlaceId(string vehicleId) => PlacePrefix + Escape(vehicleId);
         public static string Signature(string vehicleId) => SignaturePrefix + Escape(vehicleId);
         public static string BusinessId(string vehicleId, int generation) => generation < 1 ? throw new ArgumentOutOfRangeException(nameof(generation))

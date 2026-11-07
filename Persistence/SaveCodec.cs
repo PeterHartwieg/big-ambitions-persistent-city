@@ -602,7 +602,7 @@ namespace PersistentCity.Persistence
             if (stop == null) return;
             Known(stop.Kind, "Stop kind");
             Require(DwellRules.For(stop.Kind).Optional, "Nonoptional stop kind.");
-            Text(stop.PlaceId, "Stop place", 256); Text(stop.SpotId, "Stop spot", 512); Text(stop.TargetId, "Stop target", 512);
+            Text(stop.PlaceId, "Stop place", IdentityBound(stop.PlaceId, 256)); Text(stop.SpotId, "Stop spot", 512); Text(stop.TargetId, "Stop target", 512);
             Point(stop.Position); Point(stop.Facing); Point(stop.ReturnPosition);
             Minute(stop.StartMinute, "Stop start"); Minute(stop.EndMinute, "Stop end");
             Minute(stop.VisitMinute, "Stop visit"); Minute(stop.ResumeEventMinute, "Stop continuation");

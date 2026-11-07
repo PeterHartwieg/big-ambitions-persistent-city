@@ -667,6 +667,34 @@ public sealed class VendorSaveTests
         WriteRefused(state, "Invalid Business reference identity.");
     }
 
+    /// <summary>Review Sol-r3-1: the awareness catalogue accepts the escaped maxima too. A city with a maximum-length
+    /// escaped vehicle identity saves, reloads and advances two days through awareness rebuilds.</summary>
+    [Theory]
+    [InlineData(28)]  // a 259-character place id, the first over the ordinary 256 bound
+    [InlineData(128)] // the maxima
+    public void AMaximumLengthVendorIdentitySurvivesReloadAndAwarenessRebuilds(int units)
+    {
+        var (city, market, planner) = WeightedFoodChoiceTests.Ready(5);
+        string id = new string('中', units);
+        var row = city.State.Vendors.Admit(id, "cart");
+        row.Stand = new VendorStand { OpeningId = 1, Position = new Position(15, 0, 0), OpenedDay = 1, OpenedMinute = 0, ClosesDay = 1, ClosesMinute = 1380, Published = true };
+        city.PublishVendorPlace(row, Menu(FoodProducts.Croissant)); row.PlacePublished = true;
+        Assert.True(row.PlaceId.Length > 256);
+        var read = SaveCodec.Read(SaveCodec.Write(city.State));
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var loaded = new CitySimulator(read.State!, planner);
+        loaded.AttachFoodMarket(market);
+        double target = 4320;
+        while (!loaded.AdvanceTo(target, 64).CaughtUp) { }
+        Assert.Equal(target, loaded.State.Minute);
+        loaded.InvalidateFoodAwareness();
+        target += 1440;
+        while (!loaded.AdvanceTo(target, 64).CaughtUp) { }
+        Assert.Equal(target, loaded.State.Minute);
+        var again = SaveCodec.Read(SaveCodec.Write(loaded.State));
+        Assert.True(again.Status == SaveReadStatus.Loaded, again.Error);
+    }
+
     // ---- Persons at stands (review Opus-r1-1) ----
 
     /// <summary>A resident eating at a stand, walking to it, or with the stand among their recent visits saves and
