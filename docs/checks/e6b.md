@@ -41,7 +41,7 @@ Plan: [E6 section 4, row E6b](../plans/e6-carts-food-trucks.md#4-slice-breakdown
 | Check | Result |
 | --- | --- |
 | `python tools/build.py --game-managed "...\Big Ambitions_Data\Managed"` | passed |
-| `dotnet test tests/PersistentCity.Tests.csproj` | 3,359 / 3,360 passed (52 new E6b cases). The one failure, `ResearchSurveyTests.MissingInputsStayUnknown`, fails the same way on the untouched base `30a9de7` (it looks for a represented roster slot, which writer 26 no longer has); E6b does not touch research or the roster. |
+| `dotnet test tests/PersistentCity.Tests.csproj` | **3,360 / 3,360 passed** (52 new E6b cases). `ResearchSurveyTests.MissingInputsStayUnknown` failed on the base `30a9de7` too: the C5b survey read schema-26 represented consumers through `AnchorId`/`Slot`, found no citizen and reported them unknown. Fixed in `Core/ResearchSurvey.cs` (read through `HostId`/`HostSlot`, unchanged before schema 26) and the test's represented-consumer selection. |
 | `dotnet test ... --filter FullyQualifiedName~StreetFoodVendorTests` | 51 / 51 passed |
 | `PC_E6B_MEASURE=1 dotnet test ... --filter FullyQualifiedName~E6bVendorMeasure` | passed; numbers in [docs/perf/e6b.md](../perf/e6b.md) |
 | `python tools/docs-links/check.py` | 0 broken relative links |

@@ -271,7 +271,10 @@ namespace PersistentCity.Core
         public MarketResearchConsumer Read(int index)
         {
             var meal = roster[order[index]];
-            var person = city.FindCitizen(meal.AnchorId);
+            // Schema 26: a represented consumer's record is its own (Slot 0); its host resident and host slot give
+            // the scheduling citizen and mark it represented. Before 26 these are AnchorId and Slot.
+            var person = city.FindCitizen(meal.HostId);
+            bool represented = meal.HostSlot > 0;
             Position? home = null, dayPlace = null;
             var activity = Activity.Home;
             string? traits = null;
@@ -282,10 +285,10 @@ namespace PersistentCity.Core
                     : person.Identity.Persona == Persona.Student ? Activity.Study : Activity.Work;
                 // Without a work or study place the usual day place is home.
                 dayPlace = activity == Activity.Home ? home : city.FindPosition(person.DayPlaceId);
-                var bands = meal.Slot > 0 ? meal.RepresentedTraits : person.Traits;
+                var bands = represented ? meal.RepresentedTraits : person.Traits;
                 if (bands != null && bands.IsValid) traits = bands.Bands;
             }
-            return new MarketResearchConsumer(meal.ResidentId, meal.Slot > 0, home, dayPlace, activity, traits,
+            return new MarketResearchConsumer(meal.ResidentId, represented, home, dayPlace, activity, traits,
                 Meals(meal), Funded(meal), Budget(meal));
         }
 
