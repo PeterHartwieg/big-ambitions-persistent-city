@@ -79,7 +79,7 @@ public sealed class Schema26Tests
     [Fact]
     public void GoldenWriter26BytesArePinned()
     {
-        Assert.Equal(26, SaveCodec.PersonSchema); Assert.Equal(26, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(26, SaveCodec.PersonSchema); Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
         var pins = JObject.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(26, (int)pins["writer"]!);
         foreach (var (name, build) in GoldenFixtures())
@@ -281,7 +281,7 @@ public sealed class Schema26Tests
     {
         var state = Running(2, true, 2).State; string payload = DevelopmentChain.Write(state);
         string Root(Action<JObject> change) { var r = JObject.Parse(payload); change(r); return r.ToString(Formatting.None); }
-        RefusedAndPreserved(Root(r => r["Schema"] = 28), state, SaveReadStatus.Future);
+        RefusedAndPreserved(Root(r => r["Schema"] = CityState.CurrentSchema + 1), state, SaveReadStatus.Future);
         Invalid(Root(r => r["Persons"] = new JArray()), state, "Unknown field: Persons");
         Invalid(Root(r => r["Food"]!["RepresentationFactor"] = 2), state, "Unknown field: RepresentationFactor");
         Invalid(Root(r => r.Remove("Visitors")), state, "Missing object fields");

@@ -11,7 +11,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-25). It is refused and kept
+    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-27). It is refused and kept
     /// unchanged, like Invalid and Future; it is neither corruption nor a missing city.</summary>
     public enum SaveReadStatus { Missing, Loaded, Invalid, Future, DevelopmentSchema }
 
@@ -188,6 +188,22 @@ namespace PersistentCity.Persistence
                 int schema = ReadSchema(source);
                 if (schema > PersonSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
                 Require(schema == PersonSchema, "Not the frozen writer-26 schema.");
+                return ReadExact(source, schema);
+            }
+            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
+            { return Invalid("Invalid state: " + exception.Message); }
+        }
+
+        /// <summary>The frozen exact writer-27 reader (F5d's shape, employment seated under <c>BusinessAllocation = 16</c>).
+        /// Unreachable from <see cref="Read"/>, which refuses schema 27 as an older development city; kept for its own tests.</summary>
+        internal static SaveReadResult ReadWriter27(string source)
+        {
+            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
+            try
+            {
+                int schema = ReadSchema(source);
+                if (schema > IndependentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
+                Require(schema == IndependentSchema, "Not the frozen writer-27 schema.");
                 return ReadExact(source, schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -563,7 +579,7 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");

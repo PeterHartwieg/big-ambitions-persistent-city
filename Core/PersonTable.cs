@@ -34,6 +34,10 @@ namespace PersistentCity.Core
         public const int OwnRosterSchema = 26;
         /// <summary>First schema whose visitors run their own routines (F5d): no host, anchor or represented excursion.</summary>
         public const int IndependentSchema = 27;
+        /// <summary>First schema whose Work and Study places were seated under F5e's area bands
+        /// (<see cref="WorkplaceCapacityPolicy"/>) from city creation. A city of an older schema may hold more workers
+        /// than those bands allow and is refused as an older development city; the shape is writer 27's.</summary>
+        public const int WorkplaceCapacitySchema = 28;
         /// <summary>Writer 26 has one schedule template: today's persona routine in DailyRoutine.</summary>
         public const int PersonaScheduleCode = 0;
 

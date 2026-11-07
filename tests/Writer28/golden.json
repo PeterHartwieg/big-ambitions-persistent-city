@@ -1,0 +1,8 @@
+{
+  "writer": 28,
+  "note": "F5e (#92): SHA-256 of SaveCodec.Write for two seeded fresh fixtures (Schema28Tests.GoldenFixtures). Writer 28 keeps writer 27's shape; its cities are seated under the workplace area bands. A shape change without a schema bump must fail this pin; a bump adds a new pin file.",
+  "fixtures": {
+    "banded-visitors-factor2-30h": { "sha256": "8b264eae56de7067ed1188eb6979eff4fe4f0a96b0303422886cfeb46a2e9c22", "characters": 169914 },
+    "current-schema-minimal": { "sha256": "d6758956db7c631251385a06d9732e8b2683b6dacac9dbd0e9c0dea23f51ef69", "characters": 1754 }
+  }
+}

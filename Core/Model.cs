@@ -264,7 +264,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 27;
+        public const int CurrentSchema = 28;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.

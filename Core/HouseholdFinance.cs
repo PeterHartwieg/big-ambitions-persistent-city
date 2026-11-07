@@ -109,12 +109,11 @@ namespace PersistentCity.Core
             => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.ExternalFoodSpent + b.HeldPurchase;
 
         // A schema-27 visitor's source is its own (F5b PersonIncome.Select over its Employment and carried outside
-        // employer), never an anchor's. Residents keep today's rule, which that function equals for them.
+        // employer), never an anchor's. F5e: a resident's comes from its own Employment (built from DayPlaceId) through
+        // the same rule, which equals today's resident rule; a Study enrolment never gives employment income.
         private static ResidentIncomeSource IncomeSource(CitizenState person)
             => person.Visitor != null ? PersonIncome.Select(person.Identity.Persona, person.Identity.Age, person.Visitor.Employment, person.VisitorCarried)
-            : person.Identity.Persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension
-                : person.Identity.Age >= 18 && ResidentLifecycle.IsWorker(person) && person.DayPlaceId.Length != 0
-                    ? ResidentIncomeSource.ExternalEmployment : ResidentIncomeSource.ExternalSupport;
+            : PersonIncome.ForDayPlace(person.Identity.Persona, person.Identity.Age, person.DayPlaceId);
 
         private static int IncomeAmount(int basis, ResidentIncomeSource source)
             => source == ResidentIncomeSource.ExternalPension ? basis * CityBalance.PensionIncomePercent / 100

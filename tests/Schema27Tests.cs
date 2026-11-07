@@ -119,22 +119,23 @@ public sealed class Schema27Tests
         ("current-schema-minimal", CurrentSchemaOnlyTests.City),
     };
 
-    /// <summary>Two seeded fixtures pinned for writer 27. A later shape change without a schema bump fails here.</summary>
+    /// <summary>Two seeded fixtures pinned for writer 27. F5e: writer 27 is now the frozen F5d writer (same shape as
+    /// writer 28, seated under the fixed allocation); its pins are unchanged and its frozen reader round-trips them.</summary>
     [Fact]
     public void GoldenWriter27BytesArePinned()
     {
-        Assert.Equal(27, CityState.CurrentSchema);
+        Assert.Equal(27, SaveCodec.IndependentSchema);
         var pins = JObject.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(27, (int)pins["writer"]!);
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
         {
             var state = build();
-            string payload = SaveCodec.Write(state);
+            string payload = DevelopmentChain.Write27(state);
             actual.Add(name + " " + Sha(payload) + " " + payload.Length);
             expected.Add(name + " " + (string)pins["fixtures"]![name]!["sha256"]! + " " + (int)pins["fixtures"]![name]!["characters"]!);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            var read = SaveCodec.ReadWriter27(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(payload, SaveCodec.WriteForSchema(read.State!, 27));
         }
         Assert.True(expected.SequenceEqual(actual), string.Join("; ", actual));
     }
@@ -175,7 +176,7 @@ public sealed class Schema27Tests
         Assert.All(state.Food.Residents, m => { Assert.Equal(m.ResidentId, m.HostId); Assert.Equal(0, m.HostSlot); Assert.Null(m.Excursion); });
         Assert.Empty(state.Food.RoutineStops);
         string payload = SaveCodec.Write(state);
-        Assert.Contains("\"Schema\":27,", payload);
+        Assert.Contains("\"Schema\":" + CityState.CurrentSchema + ",", payload);
         Assert.Contains("\"VisitorRoutines\":", payload);
         Assert.DoesNotContain("consumer:", payload);
         Assert.DoesNotContain("RepresentationFactor", payload);
@@ -792,7 +793,8 @@ public sealed class Schema27Tests
         if (employed >= 0)
             Invalid(Root(payload, r => { var parts = ((string)r["Visitors"]![employed]!).Split('|'); parts[4] = "0"; r["Visitors"]![employed] = string.Join("|", parts); }), "carried");
         // Future and older schemas.
-        RefusedAndPreserved(Root(payload, r => r["Schema"] = 28), replacement, SaveReadStatus.Future);
+        RefusedAndPreserved(Root(payload, r => r["Schema"] = CityState.CurrentSchema + 1), replacement, SaveReadStatus.Future);
+        RefusedAndPreserved(Root(payload, r => r["Schema"] = 27), replacement, SaveReadStatus.DevelopmentSchema, "start a new city");
         RefusedAndPreserved(Root(payload, r => r["Schema"] = 26), replacement, SaveReadStatus.DevelopmentSchema, "start a new city");
     }
 }

@@ -134,6 +134,6 @@ public sealed class SaveCostDiagnosticsTests
         var read = SaveCodec.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(27, CityState.CurrentSchema);
+        Assert.Equal(28, CityState.CurrentSchema);
     }
 }

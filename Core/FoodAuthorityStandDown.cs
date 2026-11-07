@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F5c-lite: food authority for a refused city from an older development build (schemas 1-25). Persistent
+    /// <summary>F5c-lite: food authority for a refused city from an older development build (schemas 1-27). Persistent
     /// City takes no authority and writes nothing: the authority manifest, receipts, the accounting-stop marker and the
     /// save-epoch marker stay byte-identical. A business whose saved manifest owned the loaded hour (or an earlier hour
     /// still draining) stays protected until that hour ends, so a partly mod-served hour is never replayed natively;
