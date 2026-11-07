@@ -657,7 +657,12 @@ namespace PersistentCity.Persistence
                 }
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             }
-            if (schema >= IndependentSchema) embeddedRecords += ValidatePersons27(state, places, assigned, ref embeddedRecords);
+            if (schema >= IndependentSchema)
+            {
+                // ValidatePersons27 also adds visitor route legs through the ref; add its tuple charges afterwards.
+                int personRecords = ValidatePersons27(state, places, assigned, ref embeddedRecords);
+                embeddedRecords += personRecords;
+            }
             else if (schema >= PersonSchema) embeddedRecords += ValidatePersons26(state, places, assigned);
             Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             int totalRecords = ValidateTraffic(state, embeddedRecords);

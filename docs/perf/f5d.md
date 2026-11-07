@@ -113,6 +113,23 @@ The 957 × 2 row is the first fixture of the process and includes its first-use 
 - One pass over visitors in `PrepareForSave` (save path only).
 - No per-frame scan, no reflection and no new native call on the frame path. The station read happens once, when a city's first roster is created (initialization, not ordinary play).
 
+## Initialization: fresh-roster visitor creation (review Opus-r1-1)
+
+A fresh city creates its visitors once, when its first roster is enrolled: `VisitorSchedules.Create`, `CitySimulator.ScheduleVisitors` and `Enrol`, inside `AttachFoodMarket`. Runtime calls that from `CompleteInitialization` on the main thread. This is initialization cost, not ordinary play, but it is a main-thread stall, so it is measured here. `F5dMeasure.VisitorCreationCostAtInitialization` uses the representative fixture padded with 2,000 zero-capacity homes (2,013 places, a game-sized catalogue). Each figure is the median of 3 attaches at factor K minus 3 at K = 1 (the same residents without visitors).
+
+| Fresh city | Visitors | Before ms | After ms | Attach total after (K=1) ms |
+| --- | ---: | ---: | ---: | --- |
+| 957 × 2 | 957 | 60.4 | 11.4 | 13.8 (2.4) |
+| 957 × 3 | 1,914 | 104.0 | 29.6 | 32.2 (2.6) |
+| 5,000 × 2 | 5,000 | 273.8 | 48.1 | 64.5 (16.4) |
+| 5,000 × 3 | 10,000 | 176.1 | 110.8 | 134.1 (23.3) |
+| 50,000 × 2 | 50,000 | 858.5 | 299.2 | 452.0 (152.8) |
+| 50,000 × 3 | 100,000 | 1,739.1 | 629.4 | 785.7 (156.3) |
+
+**Win taken:** `Create` builds the Work, Study, Shop and Leisure candidate lists once per call, in catalogue order, instead of scanning every place three times per visitor. `DestinationChoice` applies the same kind-and-capacity filter, so every choice is unchanged; the writer-27 golden pins hold. The 5,000 × 2 "before" figure (above 5,000 × 3) is a single-run outlier on this workstation.
+
+**Flagged:** the one-time attach stall is still ≥ 30 ms from 957 × 3 (32 ms total) and reaches 0.79 s at 50,000 × 3. It happens once per new city, during initialization while the native clock is held, and never in ordinary play or on a later load (a saved city creates no visitors). The reference city (957 × 2) is 13.8 ms. Moving creation off the main thread, next to the resident creation in `Task.Run`, would remove it. That needs the station read before the worker starts, which is a Runtime ordering change outside this fix; it is left for a later slice.
+
 ## Perf wins taken in code this slice touches
 
 1. **Shared arrival record.** A visitor's `LastArrival` reuses the arrival record its routine already holds, instead of copying it per arrival.

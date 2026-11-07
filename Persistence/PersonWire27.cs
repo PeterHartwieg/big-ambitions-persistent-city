@@ -333,6 +333,7 @@ namespace PersistentCity.Persistence
                 else Require(BitConverter.DoubleToInt64Bits(stay.NextStayStart) == 0, "An active visitor has no next stay start.");
                 // A visitor owns no car or traffic record (section 9 Q1 default).
                 Require(routine.Car == null && !routine.Preferences.OwnsCar && routine.Preferences.AllowTransit, "A visitor owns no car.");
+                Require(routine.Journey?.Legs == null || routine.Journey.Legs.All(l => l == null || l.Mode != TravelMode.Car), "A visitor journey has no car leg.");
                 Require(routine.OptionalStop == null && routine.OptionalStopChoice == null, "A visitor takes no optional stop.");
                 Require(routine.RecentVisits.Count <= 1, "A visitor keeps only its latest arrival.");
                 var arrival = visitor.LastArrival;

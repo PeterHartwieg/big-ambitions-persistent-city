@@ -69,6 +69,44 @@ public sealed class F5dMeasure
         return bytes;
     }
 
+    /// <summary>Review Opus-r1-1: one-time visitor creation at the fresh roster (VisitorSchedules.Create, ScheduleVisitors and
+    /// Enrol), which runs inside AttachFoodMarket on the main thread during initialization. The catalogue is padded with
+    /// 2,000 zero-capacity homes to a game-sized place count. Attach at factor K minus attach at K=1 is the visitor cost.</summary>
+    [Fact]
+    public void VisitorCreationCostAtInitialization()
+    {
+        string? output = Environment.GetEnvironmentVariable("PC_F5D_MEASURE");
+        if (string.IsNullOrEmpty(output)) return;
+        string[] only = (Environment.GetEnvironmentVariable("PC_F5D_FIXTURES") ?? "957x2,957x3,5000x2,5000x3,50000x2,50000x3").Split(',');
+        double Attach(int residents, int factor, out int visitors)
+        {
+            var state = EconomyScenario.Create(residents, RepresentativeFixture.Seed); state.Food = EconomyScenario.Food();
+            state.Food.RepresentationFactor = factor;
+            for (int i = 0; i < 2000; i++)
+                state.Places.Add(new Place { Id = "pad:" + i.ToString("D4", System.Globalization.CultureInfo.InvariantCulture), Name = "Pad", District = "a",
+                    Kind = PlaceKind.Home, Capacity = 0, Position = new Position(i % 50 * 10, 0, i / 50 * 10) });
+            state.Places.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+            PortalPlaces.Add(state, RepresentativeFixture.Portals);
+            var city = new CitySimulator(state, new RepresentativeFixture.Routes());
+            long t = Stopwatch.GetTimestamp();
+            city.AttachFoodMarket(new RepresentativeFixture.Market());
+            double ms = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
+            visitors = state.Visitors.Count;
+            return ms;
+        }
+        Attach(957, 2, out _); // warm
+        foreach (string fixture in only)
+        {
+            int residents = int.Parse(fixture.Split('x')[0]), factor = int.Parse(fixture.Split('x')[1]);
+            var withVisitors = new List<double>(); var residentsOnly = new List<double>(); int visitors = 0;
+            for (int i = 0; i < 3; i++) { withVisitors.Add(Attach(residents, factor, out visitors)); residentsOnly.Add(Attach(residents, 1, out _)); }
+            double median(List<double> v) { v.Sort(); return Math.Round(v[v.Count / 2], 1); }
+            File.AppendAllText(output, JsonConvert.SerializeObject(new { creation = true, fixture, visitors, places = 2000 + 11 + 2,
+                attachMs = median(withVisitors), residentsOnlyAttachMs = median(residentsOnly),
+                visitorCreationMs = Math.Round(median(withVisitors) - median(residentsOnly), 1) }) + Environment.NewLine);
+        }
+    }
+
     /// <summary>Visitor wire while visitors are in the city (day 2, 12:00): tuple plus routine, with and without a journey.</summary>
     [Fact]
     public void ActiveVisitorWireAtMidday()

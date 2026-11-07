@@ -96,6 +96,12 @@ namespace PersistentCity.Core
             foreach (var place in city.Places) places[place.Id] = place;
             var identities = IdentityPolicy.V1(city.SourceIdentities);
             var used = Population.Assignments(city);
+            // Review Opus-r1-1 perf: the candidates of each kind once per call, in catalogue order, instead of scanning
+            // every place three times per visitor. DestinationChoice keeps only these, so every choice is unchanged.
+            var candidates = new Dictionary<PlaceKind, List<Place>>();
+            foreach (var kind in new[] { PlaceKind.Work, PlaceKind.Study, PlaceKind.Shop, PlaceKind.Leisure }) candidates[kind] = new List<Place>();
+            foreach (var place in city.Places)
+                if (place.Capacity > 0 && candidates.TryGetValue(place.Kind, out var list)) list.Add(place);
             int day = (int)Math.Floor(city.Minute / 1440);
             for (int i = 0; i < count; i++)
             {
@@ -104,15 +110,15 @@ namespace PersistentCity.Core
                 var portal = places[portalId];
                 var identity = identities.Derive(city.Seed, id);
                 var persona = identity.Persona;
-                string work = persona == Persona.Retiree ? "" : DestinationChoice.Choose(city.Places, portal,
+                string work = persona == Persona.Retiree ? "" : DestinationChoice.Choose(candidates[persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work], portal,
                     persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work, id + ":day", city.Seed,
                     p => Population.Used(used, p.Id) < p.Capacity);
                 if (work.Length != 0) used[work] = Population.Used(used, work) + 1;
                 var routine = new VisitorRoutine
                 {
                     Identity = identity, HomeId = portalId, PlaceId = portalId, DayPlaceId = work,
-                    ShopId = DestinationChoice.Choose(city.Places, portal, PlaceKind.Shop, id + ":shop", city.Seed),
-                    LeisureId = DestinationChoice.Choose(city.Places, portal, PlaceKind.Leisure, id + ":leisure", city.Seed),
+                    ShopId = DestinationChoice.Choose(candidates[PlaceKind.Shop], portal, PlaceKind.Shop, id + ":shop", city.Seed),
+                    LeisureId = DestinationChoice.Choose(candidates[PlaceKind.Leisure], portal, PlaceKind.Leisure, id + ":leisure", city.Seed),
                     Activity = Activity.Home, Phase = CitizenPhase.AtPlace, NextEventMinute = city.Minute, ActivityUntilMinute = city.Minute,
                     Preferences = Preferences(id, persona, city.Seed),
                     Traits = ResidentTraits.Generate(city.Seed, id)

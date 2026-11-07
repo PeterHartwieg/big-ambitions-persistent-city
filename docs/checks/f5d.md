@@ -13,7 +13,7 @@ Performance: [docs/perf/f5d.md](../perf/f5d.md).
   - The routine tuple holds phase, activity, current place, destination, event and activity-end minutes, departure, counters, lifecycle clock, shop and leisure venues, commute preparation, meal outing and weather commitment. Places are three base-36 digits of the ordinal place index; minutes are canonical invariant round-trip text and are refused otherwise.
   - Identity, traits and travel preferences are derived from `(seed, PersonId)` and never stored (contract B6). The home is the stay's portal. `DayPlaceId` and its start day come from the tuple's Employment; the carried source and the single arrival come from the tuple. A visitor has no car, recent-visit list or optional stop on the wire.
   - Each visitor tuple charges one record, as in writer 26; a journey charges its legs exactly like a resident's. Streaming and semantic counters agree (`StreamingAndSemanticRecordCountersAgree`).
-  - The strict reader refuses: a routine count that differs from the visitors, unknown or missing routine fields, wrong tuple arity or version, out-of-range codes and place indices, noncanonical minutes or counters, a visitor without a portal, a portal that is not a portal place, a `consumer:` visitor, presence that differs from the routine, a dormant visitor with an arrival, a carried source next to an own Employment, a visitor car, routine stops and excursions in the roster, and a `NextVisitorSequence` that disagrees with the `pv:` IDs.
+  - The strict reader refuses: a routine count that differs from the visitors, unknown or missing routine fields, wrong tuple arity or version, out-of-range codes and place indices, noncanonical minutes or counters, a visitor without a portal, a portal that is not a portal place, a `consumer:` visitor, presence that differs from the routine, a dormant visitor with an arrival, a carried source next to an own Employment, a visitor car or car leg, routine stops and excursions in the roster, and a `NextVisitorSequence` that disagrees with the `pv:` IDs.
 - **Older cities are refused.** `SaveCodec.LatestDevelopmentSchema = 26`: schemas 1–26 return `SaveReadStatus.DevelopmentSchema` with `DevelopmentSchemaMessage` ("…created by an older development build; start a new city. The saved state is kept unchanged."). The store and session keep the payload and refuse to replace it; the early authority probe refuses with the same message; F5c-lite's food stand-down applies unchanged. The frozen writer-26 reader stays behind the internal `SaveCodec.ReadWriter26`, reached only by its own tests, as the older chain already was.
 - **Portals** (`Core/VisitorSchedules.cs` `PortalPlaces`, `Runtime/NativePortalStations.cs`). When a city's first roster is about to be created, Runtime reads the subway stations once on the main thread (same activity and DLC filter as route preparation, finite navmesh entrance) and Core adds each as a zero-capacity Home-kind place with evidence `portal:subway-station`, listed in the existing `Portals` table. Capacity zero keeps portals out of housing, destination and workplace choice. A portal's district is the district of the nearest saved place (ordinal tie-break), so a visitor's budget uses that neighbourhood's mix. Without stations no visitor is created; no portal is invented.
 - **Visitors are persons with their own routines from the first day** (`VisitorSchedules.Create`, `CitySimulator`). A fresh roster at factor K creates K−1 visitors per resident as `pv:<n>` commuters, with a portal drawn by `Hash(seed, PersonId, "portal")`. Each visitor gets its own:
@@ -50,7 +50,7 @@ Performance: [docs/perf/f5d.md](../perf/f5d.md).
 
 ## Offline evidence
 
-New tests, all in `tests/Schema27Tests.cs` (30 cases), plus the env-gated measurement harness `tests/F5dMeasure.cs`:
+New tests, all in `tests/Schema27Tests.cs` (32 cases), plus the env-gated measurement harness `tests/F5dMeasure.cs`:
 
 - **Golden writer 27.** Two seeded fixtures (a factor-2 fresh city after 30 hours with visitors, and the minimal no-food city) are pinned in `tests/Writer27/golden.json` by SHA-256 and length, with a determinism check. `Writer26/golden.json` still pins the frozen writer-26 bytes (`Schema26Tests`).
 - **Older schema refused and kept.** A writer-26 city with represented visitors, and a writer-25 city, are refused through codec, store, session and the early probe with `DevelopmentSchema` and "start a new city". The payload and every other key are kept byte-identical. The frozen writer-26 reader still decodes the payload, so the refusal is the schema, not damage.
@@ -71,6 +71,9 @@ New tests, all in `tests/Schema27Tests.cs` (30 cases), plus the env-gated measur
 - **Dormancy with an uncertain receipt.** A lost acknowledgement leaves a visitor's meal uncertain with money held. The visitor goes dormant, is saved and reloaded, and stays uncertain with the same hold for twelve hours. When evidence returns, the receipt settles once: no second order, hold released, conservation kept.
 - **Rival settlement across reload.** A visitor's rival meals with reloads after each settlement step give the same city as an unreloaded run, with external spending recorded and conservation kept.
 - **Persons created later.** Residents appended by `ExpandToHousing` get a meal record and a conserved wallet after `RebuildRoutes`, and the city saves.
+- **Review fixes (round 1).**
+  - **Sol-r1-1:** writer-27 validation now adds the visitor tuple charges after `ValidatePersons27` has added travelling visitors' route legs. Before, a travelling-visitor fixture counted 26 streaming records against 25 semantic (`TravellingVisitorRouteLegsAreChargedByBothCounters`: red before the fix, green after).
+  - **Sol-r1-2:** a visitor journey with a car leg is refused on read and write, and the payload is kept (`VisitorJourneyWithACarLegIsRefusedAndPreserved`).
 - **Strict reader.** The refusal cases listed above, each refused as `Invalid` with every key preserved; future (28) and older (26) labels give `Future` and `DevelopmentSchema`.
 
 Adjusted tests (only where they assumed writer 26 is current or relied on represented consumers):
@@ -87,7 +90,7 @@ Adjusted tests (only where they assumed writer 26 is current or relied on repres
 Offline only, on this PC, 7 November 2026. Each `dotnet` command first waited for `wait-other-dotnet.ps1`. Nothing ran in the game or on the rig.
 
 - `python tools/build.py --game-managed "<Steam>/Big Ambitions_Data/Managed"`: exit 0. Runtime compiled against the installed game assemblies.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **3,342 passed, 0 failed, 0 skipped** (3 min 47 s).
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,345 passed, 0 failed, 0 skipped** (2 min 14 s, after the round-1 review fixes; one earlier full run had a single wall-clock failure in the #128 rush replay at 31.7 ms, which passed alone twice and in the next full run).
 - Named measurements: `tools/bounded-bulk-regression` (both modes), `tools/road-ceiling-regression`, `tools/accounting-backlog-regression` and `tests/F5dMeasure.cs`. Numbers are in the perf file.
 
 ## Performance
@@ -100,6 +103,7 @@ Summary; tables in [docs/perf/f5d.md](../perf/f5d.md). Offline, Release, synthet
 - **Routes:** the doubled commute peak (1,914 requests) drains in 26 s at 30 FPS and 13 s at 60 FPS, ≤ 16 queries per frame, inside the 90 s window.
 - **Saved state:** a dormant visitor's tuple plus routine is ≤ 145 characters, an active idle one ≤ 204 (budget 256), and a travelling one ≤ 350 (route legs included). The 150,000-person city uses 51.9 % of the cap, slightly smaller than writer 26 on the same fixture. Retained memory adds about 0.4–0.45 KiB per visitor over writer 26.
 - **Latency:** writer 27 saves and loads faster than F5c-lite's writer 26 from 5,000 residents up. All samples are ≥ 30 ms (save criterion, flagged).
+- **Initialization (review Opus-r1-1):** creating a fresh city's visitors on the main thread takes 11.4 ms at 957 × 2 and 629 ms at 50,000 × 3, down from 60.4 ms and 1,739 ms after the per-call candidate filtering. **Flagged:** this one-time stall is ≥ 30 ms from 957 × 3 upwards. It is not ordinary-play work and does not occur on loads.
 - **Wins taken:** a shared arrival record and no Employment allocation per posting. Allocation drops by 0.25 / 1.05 / 11.1 MB per day at 1,914 / 10,000 / 100,000 persons, with identical save bytes.
 
 ## In-game checks for the next batched rig

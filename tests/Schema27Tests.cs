@@ -388,6 +388,50 @@ public sealed class Schema27Tests
         }
     }
 
+    private static CitySimulator WithTravellingVisitor()
+    {
+        var (state, market) = Fresh(2);
+        var city = Start(state, market);
+        for (int step = 0; step < 200000; step++)
+        {
+            city.AdvanceTo(state.Minute + 600, 1);
+            if (state.VisitorRoutines.Any(r => r.Phase == CitizenPhase.Travelling && r.Journey != null)) return city;
+        }
+        throw new InvalidOperationException("No visitor travelled.");
+    }
+
+    /// <summary>Review fix Sol-r1-1: a travelling visitor's route legs are charged by both counters, so the write-side
+    /// cap check sees every record the streaming reader charges.</summary>
+    [Fact]
+    public void TravellingVisitorRouteLegsAreChargedByBothCounters()
+    {
+        var city = WithTravellingVisitor();
+        var state = city.State;
+        int legs = state.VisitorRoutines.Where(r => r.Journey != null).Sum(r => r.Journey!.Legs.Count);
+        Assert.True(legs > 0);
+        var count = SaveCodec.CountRecords(state, SaveCodec.Write(state));
+        Assert.Equal(count.Streaming, count.Semantic);
+        Assert.True(count.Semantic >= legs + PersonTable.PersonCount(state));
+    }
+
+    /// <summary>Review fix Sol-r1-2: a visitor journey with a car leg is refused and preserved before any simulation.</summary>
+    [Fact]
+    public void VisitorJourneyWithACarLegIsRefusedAndPreserved()
+    {
+        var city = WithTravellingVisitor();
+        var state = city.State;
+        string payload = SaveCodec.Write(state);
+        int index = state.VisitorRoutines.FindIndex(r => r.Phase == CitizenPhase.Travelling && r.Journey != null);
+        string bad = Root(payload, r => r["VisitorRoutines"]![index]!["J"]!["Legs"]![0]!["Mode"] = (int)TravelMode.Car);
+        Assert.NotEqual(payload, bad);
+        var read = SaveCodec.Read(bad);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.Contains("car leg", read.Error);
+        RefusedAndPreserved(bad, Running(2, 1).State, SaveReadStatus.Invalid, "car leg");
+        // The writer refuses the same in-memory state before publication.
+        state.VisitorRoutines[index].Journey!.Legs[0].Mode = TravelMode.Car;
+        Assert.Contains("car leg", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+    }
+
     // ---- Conservation from city creation ----
 
     [Fact]
