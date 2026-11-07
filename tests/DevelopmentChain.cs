@@ -24,6 +24,7 @@ internal static class DevelopmentChain
     }
 
     public static SaveReadResult Read(string? source) => source == null ? SaveCodec.Read(source)
+        : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.EconomicLedgerSchema ? SaveCodec.ReadLedgerWriter(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.PersonSchema ? SaveCodec.ReadWriter26(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.IndependentSchema ? SaveCodec.ReadWriter27(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.WorkplaceCapacitySchema ? SaveCodec.ReadWriter28(source)
@@ -65,6 +66,13 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
+    public static string WriteLedger(CityState state)
+    {
+        int schema = state.Schema;
+        try { state.Schema = SaveCodec.EconomicLedgerSchema; return SaveCodec.WriteForSchema(state, state.Schema); }
+        finally { state.Schema = schema; }
+    }
+
     public static string Write30(CityState state)
     {
         int schema = state.Schema;
@@ -72,7 +80,7 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
-    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema
+    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema || state.Schema == SaveCodec.EconomicLedgerSchema
         ? SaveCodec.WriteForSchema(state, state.Schema) : SaveCodec.Write(state);
 
     /// <summary>The activation save contract for the state's own schema (the current writer or a frozen one).</summary>

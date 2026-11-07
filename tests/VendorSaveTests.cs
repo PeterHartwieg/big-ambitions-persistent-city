@@ -174,8 +174,8 @@ public sealed class VendorSaveTests
     public void VendorsTakeTheNextFreeWriterAndOlderWritersOmitTheTable()
     {
         Assert.Equal(SaveCodec.ResearchSchema + 1, SaveCodec.VendorSchema);
-        Assert.Equal(SaveCodec.VendorSchema + 1, CityState.CurrentSchema);
-        Assert.Equal(SaveCodec.VendorSchema, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(CityState.AttendanceSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
         var city = Table(2, 1, 1).State;
         string payload = SaveCodec.Write(city);
         Assert.Contains("\"Vendors\":[1,[", payload);

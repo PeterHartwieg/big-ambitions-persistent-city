@@ -77,6 +77,7 @@ public sealed partial class FoodCommerceTests
     {
         // Every amount fits, and their conservation totals sit just below the unit range.
         var b = city.State.Food!.Residents.Single().Budget!;
+        b.IncomeSource = ResidentIncomeSource.ExternalSupport;
         b.BaseIncomeCents = b.DailyIncomeCents = 50000;
         b.DailyHousingCents = 3000; b.DailyEssentialsCents = 1500; b.DailyHomeFoodCents = 900;
         b.OpeningBalance = Money.FromCents(1000000);
@@ -96,7 +97,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         var b = R8_BoundaryBudget(city, 34359738367);
         string before = JsonConvert.SerializeObject(b);
-        Assert.Throws<OverflowException>(() => HouseholdFinance.PostDay(b, city.State.Minute, city.State.Citizens.Single()));
+        Assert.Throws<OverflowException>(() => HouseholdFinance.PostDay(b, city.State.Minute));
         Assert.Equal(before, JsonConvert.SerializeObject(b));
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(LegacyWire.Write(city.State)).Status);
     }

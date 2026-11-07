@@ -149,11 +149,12 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
 /// <summary>One-minute walking routes (the F1 supported fixture); two minutes each way to the second
 /// site at twice the distance; both scaled by a shop's access input.
 /// Work trips refuse while the workplace is closed or the worker's route is blocked.</summary>
-public sealed class EconomyRoutes : ICitizenRoutePlanner, IFoodWalkingPace
+public sealed class EconomyRoutes : ICitizenRoutePlanner, IFoodWalkingPace, IWorkplaceAvailability
 {
     private readonly EconomyMarket market;
     public EconomyRoutes(EconomyMarket market) { this.market = market; }
     public double WalkingMetresPerMinute => 120;
+    public bool WorkplaceOpen(string placeId, double minute) => !market.ClosedWorkplaces.Contains(placeId);
     public Route? Plan(Place from, Place to, double at, TravelPreferences preferences)
     {
         double minutes = 1;

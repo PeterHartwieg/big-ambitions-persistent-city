@@ -238,7 +238,7 @@ public sealed class FractionalMoneyTests
     [Fact]
     public void PostingOverflowLeavesTheBudgetUnchanged()
     {
-        var budget = new ResidentBudget { BaseIncomeCents = 50000, DailyIncomeCents = 50000, DailyHousingCents = 7000,
+        var budget = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, BaseIncomeCents = 50000, DailyIncomeCents = 50000, DailyHousingCents = 7000,
             DailyEssentialsCents = 1500, DailyHomeFoodCents = 900, LastPostedDay = 0, NextPostingMinute = 1440,
             Balance = Money.FromCents(1000), IncomeReceived = Money.FromUnits(long.MaxValue - 1) };
         string before = Newtonsoft.Json.JsonConvert.SerializeObject(budget);

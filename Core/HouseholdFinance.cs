@@ -15,7 +15,12 @@ namespace PersistentCity.Core
         internal FoodMoneyCounters? counters;
         private int dailyHousingCents, dailyEssentialsCents, dailyHomeFoodCents, lastPostedDay = -1, homeFoodFundedDay = -1;
         private Money openingBalance, balance, incomeReceived, essentialsPaid, homeFoodPaid, preparedFoodSpent, externalFoodSpent, heldPurchase, arrears;
-        public OwnerAccounts Ledger { get; set; }
+        private OwnerAccounts ledger;
+        public OwnerAccounts Ledger
+        {
+            get => ledger;
+            set { var before = ledger.EmploymentIncome; ledger = value; counters?.EmploymentMoved(before, value.EmploymentIncome); }
+        }
         public ResidentIncomeSource IncomeSource { get; set; }
         public int BaseIncomeCents { get; set; }
         public int DailyIncomeCents { get; set; }
@@ -66,6 +71,13 @@ namespace PersistentCity.Core
         }
 
         public static void PostDay(ResidentBudget budget, double minute, CitizenState? person = null)
+            => PostDayCore(budget, minute, person, false);
+
+        // Frozen development simulations only; the product reader refuses these cities.
+        internal static void PostDevelopmentDay(ResidentBudget budget, double minute, CitizenState person)
+            => PostDayCore(budget, minute, person, true);
+
+        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool dailyEmployment)
         {
             int day = checked((int)(minute / 1440));
             if (minute != budget.NextPostingMinute || day <= budget.LastPostedDay)
@@ -76,7 +88,7 @@ namespace PersistentCity.Core
             int dailyIncome = person != null ? IncomeAmount(budget.BaseIncomeCents, source) : budget.DailyIncomeCents;
             // Compute every change, including the wage refresh, before assigning any: an overflow
             // leaves the budget unchanged.
-            var income = Money.FromCents(dailyIncome);
+            var income = source == ResidentIncomeSource.ExternalEmployment && !dailyEmployment ? Money.Zero : Money.FromCents(dailyIncome);
             var balance = budget.Balance + income;
             var received = budget.IncomeReceived + income;
             // Fund a real-cost subsistence basket before discretionary spending. A failed

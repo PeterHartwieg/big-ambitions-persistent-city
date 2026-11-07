@@ -332,7 +332,8 @@ namespace PersistentCity.Core
         /// <summary>E6c: the next writer after C5c's research schema; it adds <see cref="Vendors"/> and the scope channel.</summary>
         public const int VendorSchema = ResearchSchema + 1;
         public const int EconomicLedgerSchema = VendorSchema + 1;
-        public const int CurrentSchema = EconomicLedgerSchema;
+        public const int AttendanceSchema = EconomicLedgerSchema + 1;
+        public const int CurrentSchema = AttendanceSchema;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.

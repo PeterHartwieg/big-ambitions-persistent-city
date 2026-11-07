@@ -3,7 +3,9 @@ using System.Numerics;
 
 namespace PersistentCity.Core
 {
-    // F6d is an inactive save contract. Only codecs, validation and zero/empty initialization use these values.
+    // F6d save shape, used by F6e without adding fields. Shift: 0 unset, 1 working, 2 closed,
+    // 3 settled, 4 closure day, 5 working after midnight, 6 working after midnight with prior attendance. Day is the shift-start day.
+    // UnpostedWage is the half-denominator-biased exact numerator remainder (denominator 1920).
     // Accrual belongs to the PersonId/current Employment carried by its CitizenState (including VisitorRoutine).
     public struct EmploymentAccrual
     {
@@ -14,7 +16,7 @@ namespace PersistentCity.Core
         public int Shift { get; set; }
     }
 
-    // F5 B4: one wallet per PersonId; IncomeReceived remains OtherIncome while attendance wages are inactive.
+    // F5 B4: one wallet per PersonId; IncomeReceived remains OtherIncome; employment credits use EmploymentIncome.
     public struct OwnerAccounts
     {
         public Money EmploymentIncome { get; set; }

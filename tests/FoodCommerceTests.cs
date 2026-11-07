@@ -351,7 +351,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, city.State.Minute + 1);
         var budget = city.State.Food!.Residents.Single().Budget!;
         Money before = budget.Balance;
-        Assert.True(budget.IncomeReceived > Money.Zero); Assert.True(budget.HomeFoodPaid > Money.Zero);
+        Assert.Equal(Money.Zero, budget.IncomeReceived); Assert.True(budget.HomeFoodPaid > Money.Zero);
         Assert.True(budget.EssentialsPaid > Money.Zero);
         double desired = city.State.Food.Residents.Single().DesiredAt;
         Advance(city, desired + 2); city = Reload(city, market, routes);

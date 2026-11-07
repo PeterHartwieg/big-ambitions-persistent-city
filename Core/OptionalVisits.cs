@@ -29,6 +29,8 @@ namespace PersistentCity.Core
                 ResumeUntil = person.ActivityUntilMinute, ResumeEvent = person.NextEventMinute };
             if (!due.Remove(item)) throw new InvalidOperationException("Resident has no queued event.");
             CancelOptionalStop(citizenId);
+            // Commit the attended portion before leaving the logical workplace.
+            food?.AccrueWorkDeparture(person);
             person.MealOuting = outing; person.DestinationId = shopId; person.DestinationActivity = Activity.Shop;
             person.ActivityUntilMinute = leave; person.Phase = CitizenPhase.Travelling;
             person.Journey = new Route { Legs = outward.Legs.Select(l => new RouteLeg { From = l.From, To = l.To,
@@ -61,6 +63,8 @@ namespace PersistentCity.Core
                 person.PlaceId = outing.OriginId; person.Activity = outing.OriginActivity; person.Phase = CitizenPhase.AtPlace;
                 person.Journey = null; person.DestinationId = ""; person.DepartureMinute = 0; person.CompletedJourneys++;
                 person.ActivityUntilMinute = outing.ResumeUntil; person.MealOuting = null;
+                if (State.Schema >= CityState.AttendanceSchema && person.Activity == Activity.Work && now < person.ActivityUntilMinute)
+                    VisitorSchedules.RecordArrival(person, now, person.PlaceId, Activity.Work);
                 // A late return lets the regular routine decide what to do next.
                 if (now >= outing.ResumeEvent) return MealOutingStep.Ordinary;
                 person.NextEventMinute = outing.ResumeEvent; return MealOutingStep.Handled;

@@ -61,8 +61,8 @@ public sealed partial class FoodCommerceTests
         var meal = city.State.Food!.Residents.Single(); var b = meal.Budget!;
         Assert.Equal(3, market.Orders.Count); Assert.Equal(3, market.Orders.Distinct().Count());
         Assert.Equal(97, market.Units); Assert.Equal(Money.FromCents(300), b.PreparedFoodSpent);
-        Assert.Equal(Money.FromCents(b.DailyIncomeCents), b.IncomeReceived); Assert.Equal(Money.FromCents(b.DailyHomeFoodCents), b.HomeFoodPaid);
-        Assert.Equal(b.OpeningBalance + b.IncomeReceived, b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent);
+        Assert.Equal(Money.Zero, b.IncomeReceived); Assert.Equal(Money.FromCents(b.DailyHomeFoodCents), b.HomeFoodPaid);
+        Assert.Equal(b.OpeningBalance + b.Ledger.EmploymentIncome + b.IncomeReceived, b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent);
         Assert.Equal(new long[] { 0, 1, 1, 1 }, city.State.Food.History.Single().PurchaseMeals);
     }
 

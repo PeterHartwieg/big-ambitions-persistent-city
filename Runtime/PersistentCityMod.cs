@@ -684,6 +684,7 @@ namespace PersistentCity.Runtime
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
+            simulation.AttachWorkplaceAvailability(new NativeWorkplaceAvailability(state.Places));
             if (!simulation.IsAccountingEpochDrained(Now()))
             { StopAccounting(); return; }
             var binding = prepared.Saves.BindTo(save.modData);

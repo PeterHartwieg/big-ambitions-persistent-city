@@ -234,6 +234,7 @@ namespace PersistentCity.Core
         internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
             this.city = city; this.market = market; this.routes = routes;
+            budgetDue = new BudgetQueue(this);
             RivalSettings = rivalSettings ?? new RivalFoodSettings(); RivalSettings.Clamp();
             ChoiceSettings = choiceSettings ?? new FoodChoiceSettings();
             ChoiceSettings.Clamp();

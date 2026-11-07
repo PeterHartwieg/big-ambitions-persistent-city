@@ -34,6 +34,9 @@ public sealed class F6dInactiveTraceTests
     private static string Run(int seed, bool predecessor)
     {
         var (state, market) = Schema28Tests.Fresh(3, seed);
+#if !F6D_BASELINE
+        state.Schema = SaveCodec.EconomicLedgerSchema;
+#endif
         var planner = new FreshCityTraceTests.Walk();
         var city = new CitySimulator(state, planner); city.AttachFoodMarket(market);
         var trace = new StringBuilder();
@@ -53,7 +56,11 @@ public sealed class F6dInactiveTraceTests
             trace.Append(string.Join(",", market.Orders)).Append('\n');
             if (hour % 24 == 0)
             {
+#if F6D_BASELINE
                 var read = predecessor ? ReadVendor(AsVendorWriter(city.State)) : SaveCodec.Read(SaveCodec.Write(city.State));
+#else
+                var read = predecessor ? ReadVendor(AsVendorWriter(city.State)) : SaveCodec.ReadLedgerWriter(DevelopmentChain.WriteLedger(city.State));
+#endif
                 Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
                 city = new CitySimulator(read.State!, planner); city.AttachFoodMarket(market);
             }

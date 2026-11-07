@@ -31,7 +31,7 @@ public sealed class SaveSnapshotTests
     [MemberData(nameof(BasePins))]
     public void CurrentWriterBytesEqualTheBaseWriterOnFreshFixtures(string fixture, string sha256, int characters)
     {
-        var state = F7cFixtures.Build(fixture).State;
+        var state = F7cFixtures.Build(fixture, SaveCodec.ResearchSchema).State;
         const int frozen = SaveCodec.ResearchSchema;
         state.Schema = frozen;
         var snapshot = SaveCodec.CaptureForSchema(state, frozen, null);

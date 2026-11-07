@@ -61,9 +61,10 @@ public sealed class Schema27Tests
         return city;
     }
 
-    internal static CitySimulator Running(int factor = 2, double hours = 30, int seed = 4242)
+    internal static CitySimulator Running(int factor = 2, double hours = 30, int seed = 4242, int? schema = null)
     {
         var (state, market) = Fresh(factor, seed);
+        state.Schema = schema ?? state.Schema;
         var city = Start(state, market);
         Advance(city, state.Minute + hours * 60);
         return city;
@@ -103,7 +104,7 @@ public sealed class Schema27Tests
         foreach (var b in state.Food!.Residents.Select(m => m.Budget!))
         {
             Assert.True(HouseholdFinance.CashConserved(b));
-            totals[0] += Money.TotalUnits(new[] { b.OpeningBalance, b.IncomeReceived });
+            totals[0] += Money.TotalUnits(new[] { b.OpeningBalance, b.IncomeReceived, b.Ledger.EmploymentIncome });
             totals[1] += Money.TotalUnits(new[] { b.Balance, b.EssentialsPaid, b.HomeFoodPaid, b.PreparedFoodSpent, b.ExternalFoodSpent, b.HeldPurchase });
         }
         return totals;
@@ -115,7 +116,7 @@ public sealed class Schema27Tests
 
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
-        ("fresh-visitors-factor2-30h", () => Running(2, 30).State),
+        ("fresh-visitors-factor2-30h", () => Running(2, 30, schema: SaveCodec.IndependentSchema).State),
         ("current-schema-minimal", CurrentSchemaOnlyTests.City),
     };
 
@@ -143,7 +144,7 @@ public sealed class Schema27Tests
     [Fact]
     public void GoldenFixturesAreDeterministic()
     {
-        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
+        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(DevelopmentChain.Write27(build()), DevelopmentChain.Write27(build()));
     }
 
     // ---- Fresh cities: independent persons from the first day ----
@@ -492,7 +493,9 @@ public sealed class Schema27Tests
         {
             // No demand from off-map persons, but their wallets keep posting.
             Assert.Equal(0, meal.Purchases); Assert.Null(meal.Decision); Assert.Equal("", meal.PlaceId);
-            Assert.True(meal.Budget!.IncomeReceived > start[meal.ResidentId]);
+            if (meal.Budget!.IncomeSource == ResidentIncomeSource.ExternalEmployment)
+                Assert.Equal(start[meal.ResidentId], meal.Budget.IncomeReceived);
+            else Assert.True(meal.Budget.IncomeReceived > start[meal.ResidentId]);
         }
         Assert.DoesNotContain(market.Orders, o => o.Contains("pv%3A") || o.Contains("pv:"));
         var reloaded = Reload(city, market, routes);
