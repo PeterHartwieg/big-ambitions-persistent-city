@@ -588,7 +588,7 @@ public sealed class StreetFoodVendorTests
     // ---- Channel and cadence ----
 
     [Fact]
-    public void TheChannelIsNotPartOfTheCurrentSaveShape()
+    public void TheChannelIsPartOfTheVendorSaveShapeOnly()
     {
         var scope = new FoodScope { PlaceId = "s", BusinessId = "b", ProductId = FoodProducts.Croissant };
         Assert.Equal(FoodScopeChannel.Shop, scope.Channel);
@@ -596,8 +596,11 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(FoodScopeChannel.Vehicle, scope.Channel);
         Assert.Throws<ArgumentOutOfRangeException>(() => scope.UseChannel((FoodScopeChannel)2));
         var city = WeightedFoodChoiceTests.Ready(5).city;
+        // E6c: the vendor writer saves the channel; every existing scope writes Shop. The frozen writer 29 has no channel.
         string payload = SaveCodec.Write(city.State);
-        Assert.DoesNotContain("Channel", payload);
+        Assert.Contains("\"Channel\":0,", payload);
+        Assert.DoesNotContain("\"Channel\":1", payload);
+        Assert.DoesNotContain("Channel", DevelopmentChain.Write29(city.State));
     }
 
     [Fact]

@@ -24,7 +24,7 @@ namespace PersistentCity.Persistence
             foreach(var candidate in image.Union!)
             {
                 Require(candidate!=null,"Null awareness candidate.");
-                Text(candidate.BusinessId,"Awareness generation",512);
+                Text(candidate.BusinessId,"Awareness generation",IdentityBound(candidate.BusinessId,512));
                 Require(StringComparer.Ordinal.Compare(previous,candidate.BusinessId)<0,"Duplicate or unordered awareness generation.");
                 previous=candidate.BusinessId;
                 int flags=(int)candidate.Sources;

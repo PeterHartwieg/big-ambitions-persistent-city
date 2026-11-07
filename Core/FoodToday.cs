@@ -87,7 +87,10 @@ namespace PersistentCity.Core
         /// rollup's complete arity has passed. The frozen schema-17 reader keeps its original TryParse.</summary>
         public static bool IsCanonicalWire(string? wire)
         {
-            if (wire == null || wire.Length > 600) return false;
+            // E6c: a vendor place may be longer than 256 characters; the record grows by the same amount.
+            int placeStart = wire == null ? -1 : wire.LastIndexOf('|') + 1;
+            int placeLimit = placeStart > 0 && VendorNames.IsVendorPlace(wire!.Substring(placeStart)) ? VendorNames.MaximumPlaceIdLength : 256;
+            if (wire == null || wire.Length > 600 - 256 + placeLimit) return false;
             int start = 0;
             for (int field = 0; field < 8; field++)
             {
@@ -103,7 +106,7 @@ namespace PersistentCity.Core
                 start = end + 1;
             }
             int productEnd = wire.IndexOf('|', start);
-            return productEnd >= start && productEnd - start <= 256 && wire.Length - productEnd - 1 <= 256;
+            return productEnd >= start && productEnd - start <= 256 && wire.Length - productEnd - 1 <= placeLimit;
         }
 
         private static bool Canonical(string text, out int value)
