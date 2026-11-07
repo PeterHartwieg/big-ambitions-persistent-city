@@ -355,6 +355,7 @@ public sealed class ResearchSurveyTests
         var roster = run.City.State.Food.Residents;
         var anchor = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Commuter);
         anchor.Traits = null;
+        // Schema 26: a represented consumer's record is its own (Slot 0); its host slot marks it represented.
         roster.First(m => m.HostSlot > 0 && m.HostId != anchor.Identity.Id).RepresentedTraits = null;
         var lost = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Foodie && c.DayPlaceId.Length > 0);
         lost.DayPlaceId = "demolished-workplace";

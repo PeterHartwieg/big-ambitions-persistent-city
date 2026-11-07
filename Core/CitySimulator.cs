@@ -150,6 +150,7 @@ namespace PersistentCity.Core
         {
             AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes);
+            replacement.CopyVendorPlaces(this);
             replacement.activityObservers = activityObservers;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
@@ -170,6 +171,8 @@ namespace PersistentCity.Core
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)
             {
+                // Vendor places are published from the vendor table, never stored as city places.
+                if (VendorNames.IsVendorPlace(place.Id)) throw new ArgumentException("A city place uses the vendor place prefix.");
                 places.Add(place.Id, place);
                 if (place.Kind == PlaceKind.Shop || place.Kind == PlaceKind.Leisure) optionalPlaces.Add(place);
             }

@@ -52,7 +52,17 @@ namespace PersistentCity.Core
         public IEnumerable<string> Products() => new[] { ProductId }.Concat(AdditionalProductIds);
         public string BusinessId { get; set; } = "";
         public double NextServiceAt { get; set; }
+        /// <summary>Which market serves this scope. The setter is not public, so the save writer does not see it
+        /// yet: only Shop scopes exist in a saved city until E6c's writer serializes the channel.</summary>
+        public FoodScopeChannel Channel { get; private set; }
+        public void UseChannel(FoodScopeChannel channel)
+        {
+            if (channel != FoodScopeChannel.Shop && channel != FoodScopeChannel.Vehicle) throw new ArgumentOutOfRangeException(nameof(channel));
+            Channel = channel;
+        }
     }
+    /// <summary>Shop scopes are served by the native shop market, Vehicle scopes by the Street Food vehicle market.</summary>
+    public enum FoodScopeChannel { Shop = 0, Vehicle = 1 }
     public sealed class ResidentMeal
     {
         // F6c: transient panel counters (never saved); see ResidentBudget.counters.
