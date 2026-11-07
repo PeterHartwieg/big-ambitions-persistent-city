@@ -9,6 +9,8 @@
   <ItemGroup>
     <Compile Include="../tools/accounting-backlog-regression/AccountingScenario.cs" Link="AccountingScenario.cs" />
     <Compile Include="../tools/market-research-regression/ResearchFixture.cs" Link="ResearchFixture.cs" />
+    <Compile Include="../Runtime/FoodMarkets.cs" Link="FoodMarkets.cs" />
+    <Compile Include="../Runtime/StreetFoodVendorMarket.cs" Link="StreetFoodVendorMarket.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
     <Compile Include="../Runtime/FoodProductOverrideSettings.cs" Link="FoodProductOverrideSettings.cs" />
     <Compile Include="../Runtime/InteriorGuardSettings.cs" Link="InteriorGuardSettings.cs" />

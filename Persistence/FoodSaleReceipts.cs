@@ -58,6 +58,14 @@ namespace PersistentCity.Persistence
                 throw new InvalidOperationException("Native food receipt changed during checkout.");
             data[Key(meal)] = "paid|" + Identity(meal);
         }
+        /// <summary>Only a seller-confirmed refusal before effects can cancel this exact pending identity.</summary>
+        public static void Cancel(IDictionary<string, string> data, ResidentMeal meal)
+        {
+            if (meal.TargetKind != FoodAlternativeKind.Player || ReadStatus(data, meal) != FoodReceiptStatus.Pending
+                || !data.TryGetValue(Key(meal), out var value) || value != "pending|" + Identity(meal))
+                throw new InvalidOperationException("Native food receipt changed during cancellation; outcome is uncertain; do not retry.");
+            data.Remove(Key(meal));
+        }
         /// <summary>Expire only known confirmed receipts outside the native checkout horizon.
         /// The caller protects intention IDs whose population-side outcome is still unresolved,
         /// including a paid native receipt whose matching held funds have not yet reconciled.</summary>

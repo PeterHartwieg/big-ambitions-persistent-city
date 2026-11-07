@@ -78,6 +78,7 @@ namespace PersistentCity.Runtime
         private Task<PreparedCity>? initialization;
         private SaveSession? saveSession;
         private NativeFoodMarket? foodMarket;
+        private StreetFoodVendorMarket? vendorMarket;
         private string? initializingPayload;
         private bool initializingHadPayload;
         private Assembly? dependency;
@@ -128,8 +129,21 @@ namespace PersistentCity.Runtime
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home && !PortalPlaces.Is(p))
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
-            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
-            catch { simulation.State.Food = null; adapter.Dispose(); throw; }
+            try { simulation.State.Food = state; simulation.AttachFoodMarket(ComposeFoodMarkets(adapter), settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
+            catch { vendorMarket?.Dispose(); vendorMarket = null; simulation.State.Food = null; adapter.Dispose(); throw; }
+        }
+        private IFoodMarket ComposeFoodMarkets(NativeFoodMarket shops)
+        {
+            var current = simulation ?? throw new InvalidOperationException("Vendor market needs an active city.");
+            var save = SaveGameManager.Current;
+            var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "FoodTrucks");
+            var api = StreetFoodBridge.Open(assembly, out string reason);
+            vendorMarket = new StreetFoodVendorMarket(current, api, reason, new VendorNavMeshSampler(), save.modData, Now,
+                () => ReferenceEquals(save, SaveGameManager.Current));
+            vendorMarket.WorkSpike = (component, ms) => log?.Warn("Vendor mod-work spike >= 30 ms: " + component + "="
+                + ms.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms");
+            AttachVendorDecisionDiagnostics(current);
+            return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position);
         }
         public void EnableHouseholdFinances()
         {
@@ -183,7 +197,7 @@ namespace PersistentCity.Runtime
         public void Initialize(ModContext context)
         {
             log = context.Logger;
-            RegisterCensusCommand();
+            RegisterVendorDiagnostics();
             try
             {
                 FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
@@ -279,6 +293,8 @@ namespace PersistentCity.Runtime
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
+                // Finish at most one vendor continuation unit before advancing any logical event.
+                if (vendorMarket?.Prepare((long)target) == true) return;
                 foodMarket?.RefreshRoutineHours(target);
                 // Build/refresh native road data in bounded slices before advancing any event.
                 // Mode availability must not depend on which citizen happened to request a route
@@ -296,6 +312,7 @@ namespace PersistentCity.Runtime
                     routes = retimedRoutes;
                     seenRoadSnapshots = 0; clockRetimingRoutes = true;
                     simulation = simulation.RebuildRoutes(routes);
+                    vendorMarket?.Rebind(simulation);
                     seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
                 }
                 long prepareStarted = Stopwatch.GetTimestamp();
@@ -685,7 +702,7 @@ namespace PersistentCity.Runtime
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
-            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
+            simulation.AttachFoodMarket(ComposeFoodMarkets(foodMarket), settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeTravelPace.ResetReading();
@@ -752,6 +769,7 @@ namespace PersistentCity.Runtime
                 return SaveEpochCapture.Refused("Accounting input epoch changed before saving.");
             if (saveEpoch?.CanPublish(ticket, SaveGameManager.Current, SaveGameManager.Current.modData) != true)
                 return SaveEpochCapture.Refused("Save epoch changed during capture; previous payload retained.");
+            vendorMarket?.CompleteForSave();
             // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
             var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
                 .WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
@@ -781,6 +799,7 @@ namespace PersistentCity.Runtime
         {
             DetachSaveEpoch();
             NativeInteriorCityView.Stop();
+            vendorMarket?.Dispose(); vendorMarket = null;
             foodMarket?.Dispose(); foodMarket = null;
             inspector.Detach();
             try { physical?.Dispose(); }
@@ -793,7 +812,7 @@ namespace PersistentCity.Runtime
 
         public void Shutdown()
         {
-            UnregisterCensusCommand();
+            UnregisterVendorDiagnostics();
             ResetCensus();
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.

@@ -10,6 +10,13 @@ namespace PersistentCity.Core
         FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double minute);
     }
 
+    /// <summary>Positive closure evidence for a committed stand, even after its sale authority ends.
+    /// Not a candidate or supply read; absent APIs, lost leases and generic refusals stay neutral.</summary>
+    public interface IFoodClosedStandMarket
+    {
+        FoodBusiness? ReadClosedStand(string businessId, string placeId, double minute);
+    }
+
     public sealed partial class FoodCommerce
     {
         internal FoodMemorySettings MemorySettings { get; }
@@ -47,6 +54,17 @@ namespace PersistentCity.Core
             try { return market is IFoodFailureMarket evidence ? evidence.ReadFailureBusiness(businessId, placeId, minute)
                 : observed ?? ReadBusiness(businessId, minute); }
             catch (Exception) { return null; } // Unavailable extra proof stays neutral; keep the original refusal.
+        }
+
+        private FoodBusiness? ClosedStand(ResidentMeal meal, double minute)
+        {
+            try
+            {
+                var closed = (market as IFoodClosedStandMarket)?.ReadClosedStand(meal.BusinessId, meal.PlaceId, minute);
+                return closed?.Id == meal.BusinessId && closed.PlaceId == meal.PlaceId
+                    && !DailyRoutine.Open(closed.OpeningPlace, minute) ? closed : null;
+            }
+            catch (Exception) { return null; }
         }
 
         // Only exact, causal arrival evidence. Generic "unavailable", interrupted breaks and routes stay neutral.

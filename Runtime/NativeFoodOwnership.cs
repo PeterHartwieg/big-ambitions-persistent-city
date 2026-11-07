@@ -136,17 +136,10 @@ namespace PersistentCity.Runtime
             if (StandDown != null) throw new InvalidOperationException(SaveCodec.DevelopmentSchemaMessage);
             if (!awaitingPopulation)
             {
-                foreach (var scope in state.Shops)
-                {
-                    if (!records.TryGetValue(scope.PlaceId, out var row) || !MatchesScope(row, scope))
-                        RefusePopulation("Saved food scope differs from its authority manifest");
-                }
-                foreach (var row in records.Values.Where(r => r.FromHour >= 0))
-                    if (!state.Shops.Any(s => s.PlaceId == row.PlaceId && MatchesScope(row, s)))
-                        RefusePopulation("Saved food authority has no corresponding population scope");
+                FoodMarkets.ValidateShops(state, records.Values, MatchesScope, RefusePopulation);
                 return;
             }
-            if (state.Shops.Count != 0)
+            if (state.Shops.Any(s => s.Channel == FoodScopeChannel.Shop))
             {
                 Error = "Saved population owns food businesses but its authority manifest is missing; original payload retained and native demand suspended.";
                 throw new InvalidOperationException(Error);
