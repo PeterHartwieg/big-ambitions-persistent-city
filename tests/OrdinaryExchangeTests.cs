@@ -220,7 +220,9 @@ public sealed class OrdinaryExchangeTests
         foreach (string write in new[] { "RentedByPlayer =", "businessOwnerRivalId =", "retailPrices =", "Bank", "Payroll", "CustomerEntriesHelper" })
             Assert.DoesNotContain(write, adapter);
         string panel = File.ReadAllText(Path.Combine(root, "Runtime/FoodEconomyPanel.cs"));
-        Assert.Contains("simulation.FreeOutsideSpending().Text()", panel);
+        // F6g owns the panel projection; render its week comparison once, without the old 14-day total.
+        Assert.DoesNotContain("simulation.FreeOutsideSpending().Text()", panel);
+        Assert.Equal(1, panel.Split("FoodFeedbackV2.AppendCity(").Length - 1);
     }
 
     [Fact]

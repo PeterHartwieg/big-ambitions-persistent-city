@@ -82,3 +82,9 @@ The new `StockoutObserved` property adds at most 25 characters per daily row, or
 Opus-r2-1 retains the exact staffed-counter contract. Boolean or daily-maximum aggregation would suppress a real lunch reduction from two counters to one. This review changes documentation only; runtime behavior, writer-33 golden pins, save sizes and measured costs above are unchanged. The existing staff-variation/reload and counted oldest-first eviction checks cover the contract. Native open-hour membership variation is explicitly included in batched rig check 4, rather than asserted from offline fixtures.
 
 Round-2 validation: required build passed with the same DLL SHA256 (`2d552b68a214f9af905c5bd0b7e473ef6e553cc4545a3ca263fc27c8cbe1e20f`); required foreground unit suite passed **3,828 tests**, 0 failed, 0 skipped (3 min 51 s). The other checkout's testhost finished before this build/test sequence started. `git diff --check` passed. No game, rig or regression matrix run.
+
+## Round-4 duplicate outside-spending line
+
+Removed the panel's additional F6f 14-day outside-total projection. The panel keeps F6g's single this-week/last-week line from the same saved outside rows. The existing panel source guard now requires one city-feedback projection and excludes the duplicate call. This removes one `FreeOutsideSpending` projection/string build per visible refresh (source call sites: 1 → 0); no timing improvement is claimed. F6f's totals producer and explicit diagnostics stay intact. No save/schema or native-read change; hidden-panel behavior is unchanged. Batched rig check 7 now explicitly checks for one outside-spending line.
+
+Round-4 validation: required build passed; required foreground unit suite passed **3,860 tests**, 0 failed, 0 skipped (3 min 50 s). `git diff --check` passed. No concurrent testhost was active when launched. No game, rig or regression matrix run.
