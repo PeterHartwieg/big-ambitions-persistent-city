@@ -170,16 +170,70 @@ public sealed class SaveSnapshotTests
         Assert.NotSame(loaded, reloaded.Wire.Citizens[index].Journey);
         Assert.Equal(payload, SaveCodec.Encode(reloaded));
 
-        // A structural edit of a committed journey refuses the save and keeps the previous payload.
-        var data = new Dictionary<string, string>(StringComparer.Ordinal);
-        var session = SaveSession.Open(data, state.PopulationKey);
-        Assert.True(session.WriteTo(data, state).Success);
-        string previous = data[SaveCodec.StateKey];
-        journey.Legs.Add(new RouteLeg { From = leg.To, To = leg.To, Minutes = 1, Mode = TravelMode.Walk });
-        var refused = session.WriteTo(data, state);
-        Assert.False(refused.Success); Assert.Contains("changed after commit", refused.Error);
-        Assert.Same(previous, data[SaveCodec.StateKey]);
-        Assert.Throws<InvalidOperationException>(() => journey.Minutes);
+        // The leg list refuses every structural edit, through any reference to it (review Sol-r1-1).
+        var legs = journey.Legs;
+        var same = new RouteLeg { From = leg.From, To = leg.To, Mode = leg.Mode, Minutes = leg.Minutes + 1, ServiceId = leg.ServiceId };
+        Assert.Throws<InvalidOperationException>(() => legs[0] = same);
+        Assert.Throws<InvalidOperationException>(() => legs.Add(same));
+        Assert.Throws<InvalidOperationException>(() => legs.Insert(0, same));
+        Assert.Throws<InvalidOperationException>(() => legs.AddRange(new[] { same }));
+        Assert.Throws<InvalidOperationException>(() => legs.RemoveAt(0));
+        Assert.Throws<InvalidOperationException>(() => legs.Remove(leg));
+        Assert.Throws<InvalidOperationException>(() => legs.Clear());
+        Assert.True(legs.IsReadOnly);
+        Assert.Same(leg, journey.Legs[0]);
+        Assert.Equal(sum, journey.Minutes);
+        Assert.Equal(payload, SaveCodec.Encode(snapshot));
+    }
+
+    /// <summary>Review Sol-r1-1: a same-count leg replacement, before or after capture, never reaches an accepted payload,
+    /// and every payload the writer accepts reads back.</summary>
+    [Fact]
+    public void SameCountLegReplacementCannotChangeACommittedRouteBeforeOrAfterCapture()
+    {
+        var state = F7cFixtures.Build("rush-957x2").State;
+        var journeys = PersonTable.Schedules(state).Where(c => c.Journey != null).Select(c => c.Journey!).ToList();
+        Assert.True(journeys.Count > 100);
+        Assert.All(journeys, j => Assert.True(j.IsCommitted && j.Legs.IsReadOnly));
+        string before = SaveCodec.Write(state);
+        // Before capture: a frozen leg taken from another committed route cannot replace one of the same count.
+        var donor = journeys[1].Legs[0];
+        Assert.Throws<InvalidOperationException>(() => journeys[0].Legs[0] = donor);
+        Assert.Throws<InvalidOperationException>(() => journeys[0].Legs = new List<RouteLeg> { donor });
+        var snapshot = SaveCodec.Capture(state);
+        string payload = SaveCodec.Encode(snapshot);
+        Assert.Equal(before, payload);
+        // After capture: the shared route still refuses the same replacement, so the snapshot's bytes stay.
+        foreach (var journey in journeys)
+        {
+            var first = journey.Legs[0];
+            Assert.Throws<InvalidOperationException>(() => journey.Legs[0] = new RouteLeg
+            { From = first.From, To = first.To, Mode = first.Mode, Minutes = first.Minutes + 1, ServiceId = first.ServiceId });
+        }
+        Assert.Equal(payload, SaveCodec.Encode(snapshot));
+        foreach (string accepted in new[] { payload, SaveCodec.Write(state) })
+        {
+            var read = SaveCodec.Read(accepted);
+            Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(accepted, SaveCodec.Write(read.State!));
+        }
+    }
+
+    /// <summary>Review Sol-r1-1: a route owns its legs. Assigning a builder list copies it, so later edits of that list
+    /// change neither the route nor, after commit, any snapshot that shares it.</summary>
+    [Fact]
+    public void ARouteNeverAliasesItsBuilderList()
+    {
+        var a = new RouteLeg { From = new Position(0, 0, 0), To = new Position(1, 0, 0), Minutes = 2, Mode = TravelMode.Walk };
+        var b = new RouteLeg { From = new Position(1, 0, 0), To = new Position(2, 0, 0), Minutes = 3, Mode = TravelMode.Walk };
+        var builder = new List<RouteLeg> { a };
+        var route = new Route { Legs = builder };
+        builder.Add(b); builder[0] = b;
+        Assert.Single(route.Legs); Assert.Same(a, route.Legs[0]);
+        route.Commit();
+        builder.Clear();
+        Assert.Single(route.Legs); Assert.Equal(2, route.Minutes);
+        Assert.Throws<InvalidOperationException>(() => new Route { Legs = new List<RouteLeg> { a, null! } }.Commit());
     }
 
     [Fact]

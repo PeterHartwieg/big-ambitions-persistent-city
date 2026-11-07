@@ -140,54 +140,68 @@ namespace PersistentCity.Core
             && topology.Length == TopologyLength && string.CompareOrdinal(service, TopologyStart, topology, 0, TopologyLength) == 0;
     }
 
+    /// <summary>
+    /// A route's own leg list (F7c). It has the List API the planners and tests use, and it never aliases a caller's
+    /// list: assigning a <see cref="List{T}"/> copies its legs. Once its route is committed it refuses every edit, through
+    /// any reference to it, so a committed route can be shared by save snapshots. JSON reads and writes it as an array.
+    /// </summary>
+    public sealed class RouteLegs : IList<RouteLeg>, IReadOnlyList<RouteLeg>
+    {
+        private readonly List<RouteLeg> items;
+        public RouteLegs() { items = new List<RouteLeg>(); }
+        public RouteLegs(IEnumerable<RouteLeg> legs) { items = new List<RouteLeg>(legs); }
+        public static implicit operator RouteLegs(List<RouteLeg> legs) => new RouteLegs(legs ?? throw new ArgumentNullException(nameof(legs)));
+
+        /// <summary>True once the owning route was committed.</summary>
+        public bool IsReadOnly { get; private set; }
+        internal void Freeze() => IsReadOnly = true;
+        private void Mutable() { if (IsReadOnly) throw new InvalidOperationException("A committed route is immutable."); }
+
+        public int Count => items.Count;
+        public RouteLeg this[int index] { get => items[index]; set { Mutable(); items[index] = value; } }
+        public void Add(RouteLeg leg) { Mutable(); items.Add(leg); }
+        public void AddRange(IEnumerable<RouteLeg> legs) { Mutable(); items.AddRange(legs); }
+        public void Insert(int index, RouteLeg leg) { Mutable(); items.Insert(index, leg); }
+        public void RemoveAt(int index) { Mutable(); items.RemoveAt(index); }
+        public bool Remove(RouteLeg leg) { Mutable(); return items.Remove(leg); }
+        public void Clear() { Mutable(); items.Clear(); }
+        public bool Contains(RouteLeg leg) => items.Contains(leg);
+        public int IndexOf(RouteLeg leg) => items.IndexOf(leg);
+        public void CopyTo(RouteLeg[] array, int index) => items.CopyTo(array, index);
+        /// <summary>The list's own struct enumerator, so a foreach over the legs allocates nothing.</summary>
+        public List<RouteLeg>.Enumerator GetEnumerator() => items.GetEnumerator();
+        IEnumerator<RouteLeg> IEnumerable<RouteLeg>.GetEnumerator() => items.GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => items.GetEnumerator();
+    }
+
     public sealed class Route
     {
         private double? estimatedMinutes;
-        private List<RouteLeg> legs = new List<RouteLeg>();
-        // F7c: -1 until the route is committed as a journey; then the leg count frozen at commit.
-        private int committedLegs = -1;
+        private RouteLegs legs = new RouteLegs();
         private double committedMinutes;
-        public List<RouteLeg> Legs
+        public RouteLegs Legs
         {
             get => legs;
-            set { if (committedLegs >= 0) throw new InvalidOperationException("A committed route is immutable."); legs = value; }
+            set { if (legs.IsReadOnly) throw new InvalidOperationException("A committed route is immutable."); legs = value ?? throw new ArgumentNullException(nameof(value)); }
         }
         /// <summary>The sum of the leg durations in leg order; computed once at commit for a committed route.</summary>
-        public double Minutes
-        {
-            get
-            {
-                if (committedLegs < 0) return Sum();
-                if (legs.Count != committedLegs) throw new InvalidOperationException("A committed route's legs changed after commit.");
-                return committedMinutes;
-            }
-        }
+        public double Minutes => legs.IsReadOnly ? committedMinutes : Sum();
         private double Sum() { double total = 0; foreach (var leg in legs) total += leg.Minutes; return total; }
         /// <summary>True once <see cref="Commit"/> froze this route (F7c).</summary>
-        public bool IsCommitted => committedLegs >= 0;
+        public bool IsCommitted => legs.IsReadOnly;
         /// <summary>
-        /// Freeze a route as it becomes a journey (F7c, plan section 3.4): every leg's setters and the Legs setter refuse
-        /// from now on, and the total minutes are computed once, with the same summation order as before. Save
-        /// snapshots then share the route instead of copying its legs. Idempotent. The list type stays
-        /// <c>List&lt;RouteLeg&gt;</c>, so <see cref="CommittedIntact"/> lets a capture detect a structural edit.
+        /// Freeze a route as it becomes a journey (F7c, plan section 3.4): the leg list and every leg refuse edits from now
+        /// on, and the total minutes are computed once, with the same summation order as before. Save snapshots then share
+        /// the route instead of copying its legs. Idempotent. A null leg refuses the commit.
         /// </summary>
         internal Route Commit()
         {
-            if (committedLegs >= 0) return this;
-            foreach (var leg in legs) leg?.Freeze();
+            if (legs.IsReadOnly) return this;
+            foreach (var leg in legs) if (leg == null) throw new InvalidOperationException("A committed route has a null leg.");
+            foreach (var leg in legs) leg.Freeze();
             committedMinutes = Sum();
-            committedLegs = legs.Count;
+            legs.Freeze();
             return this;
-        }
-        /// <summary>A committed route whose leg list still holds exactly the frozen legs it was committed with.</summary>
-        internal bool CommittedIntact
-        {
-            get
-            {
-                if (committedLegs < 0 || legs.Count != committedLegs) return false;
-                foreach (var leg in legs) if (leg == null || !leg.Frozen) return false;
-                return true;
-            }
         }
         /// <summary>Transient planning ETA, never movement progress or persisted journey timing.</summary>
         public double EstimatedMinutes => estimatedMinutes ?? Minutes;

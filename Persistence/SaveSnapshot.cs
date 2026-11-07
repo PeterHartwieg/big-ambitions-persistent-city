@@ -168,19 +168,14 @@ namespace PersistentCity.Persistence
 
             private static ResidentTraits? Traits(ResidentTraits? t) => t == null ? null : new ResidentTraits { Version = t.Version, Bands = t.Bands };
 
-            /// <summary>A committed journey is immutable and shared; any other route is copied leg by leg.</summary>
+            /// <summary>A committed journey is immutable (its leg list and legs refuse every edit) and shared; any other
+            /// route is copied leg by leg.</summary>
             private Route? Route(Route? route)
             {
                 if (route == null) return null;
-                if (route.IsCommitted)
-                {
-                    if (!route.CommittedIntact) throw new SaveValidationException("A committed journey route changed after commit.");
-                    SharedRoutes++;
-                    return route;
-                }
+                if (route.IsCommitted) { SharedRoutes++; return route; }
                 CopiedRoutes++;
                 var copy = new Route();
-                if (route.Legs == null) { copy.Legs = null!; return copy; }
                 foreach (var leg in route.Legs)
                     copy.Legs.Add(leg == null ? null! : new RouteLeg { From = leg.From, To = leg.To, Mode = leg.Mode, Minutes = leg.Minutes, ServiceId = leg.ServiceId });
                 return copy;

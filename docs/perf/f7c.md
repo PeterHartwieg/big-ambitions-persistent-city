@@ -98,11 +98,11 @@ The snapshot adds 16% to 23% allocation per save, about the size of the live gra
 | representative-50000x2 | 225,140,632 | 225,133,624 | 449,466,728 | 448,636,136 |
 | fresh-50000x3 | 323,917,464 | 324,080,080 | 465,504,368 | 464,896,816 |
 
-The plan expected a small retained win from immutable routes. There is none. A committed route now carries its frozen leg count and total minutes, and each leg a frozen flag. That costs about 24 to 33 bytes per one-leg journey: rush-957x2 +7,304 B for 220 journeys, rush-5000x2 +31,896 B for 1,156. The 00:30 fixtures have no journeys, and their differences are within run noise. The 957x2, 957x3 and saturated live-city rows (not shown) moved by up to 3 MB between runs of the same commit, so I don't report them as a change. What immutable routes do buy is a save that shares each journey instead of copying its legs, and a `Route.Minutes` that no longer sums the legs on every read.
+The plan expected a small retained win from immutable routes. There is none. A committed route now carries its total minutes, and each leg a frozen flag. After review round 1 each route also owns a `RouteLegs` collection, one more object around its list. The table above is the first build. With the review fix the rush rows read 4,556,304 B (rush-957x2, +17,744 B for 220 journeys) and 43,674,760 B (rush-5000x2, +109,536 B for 1,156), so about 80 to 95 bytes per one-leg journey. The 00:30 fixtures have no journeys, and their differences are within run noise. The 957x2, 957x3 and saturated live-city rows (not shown) moved by up to 3 MB between runs of the same commit, so I don't report them as a change. What immutable routes do buy is a save that shares each journey instead of copying its legs, and a `Route.Minutes` that no longer sums the legs on every read.
 
 ## Ordinary play
 
-F7c adds no per-frame work. `Route.Commit` runs once per committed journey, and `Route.Minutes` adds one count comparison.
+F7c adds no per-frame work. `Route.Commit` runs once per committed journey, and `Route.Minutes` reads one flag.
 
 F3 `StepBudget` fixture (`tools/bounded-bulk-regression`, 7 days after one discarded day), call ms median / p95 / max, and median allocation:
 
@@ -122,7 +122,19 @@ F3 integrated replay (`--integrated`, two runs per commit), frame advancement ms
 | 10,000 | 0.0241 / 0.1044 / 8.06 | 0.0249 / 0.1015 / 9.28 | 0.0255 / 0.1047 / 8.56 | 0.0249 / 0.1012 / 9.00 | 470,867,576 → 473,044,760 |
 | 100,000 | 0.0314 / 0.0816 / 22.24 | 0.0315 / 0.0811 / 24.47 | 0.0306 / 0.0810 / **35.43** | 0.0307 / 0.0820 / 24.13 | 4,086,553,944 → 4,105,209,208 |
 
-Frame p95 is unchanged and far below 5 ms. **Flag:** after run 1 had one 35.43 ms frame at 100,000 consumers, the only sample at or above 30 ms in either commit's runs. Run 2 of the same build had none (max 24.13 ms), and the base runs reached 22.24 and 24.47 ms. Its frame allocation maximum matches the base, and I read it as a host or GC pause, but one rerun does not prove that. The rig's ordinary windows measure it natively. Total allocation rises 0.46%, about 18 B per planned route, from the two new route fields and the leg flag.
+Frame p95 is unchanged and far below 5 ms. **Flag:** after run 1 had one 35.43 ms frame at 100,000 consumers, the only sample at or above 30 ms in either commit's runs. Run 2 of the same build had none (max 24.13 ms), and the base runs reached 22.24 and 24.47 ms. Its frame allocation maximum matches the base, and I read it as a host or GC pause, but one rerun does not prove that. The rig's ordinary windows measure it natively. In the first build total allocation rose 0.46%, about 18 B per planned route.
+
+### Review round 1: owned leg collection
+
+Review Sol-r1-1 found that a committed route still handed out its mutable `List<RouteLeg>`, so a same-count leg replacement could change a shared route after capture. `Route.Legs` is now a `RouteLegs` collection that copies any list assigned to it and refuses every edit once its route is committed. Wire bytes are unchanged: every golden pin and the integrated-replay hashes still match. It adds one object per route. I reran the integrated replay three times on the fixed build and once on the base in the same period, when the host was slower than in the first runs. Frame advancement ms median / p95 / max, total allocation:
+
+| Consumers | Base (same period) | Fixed build, run 1 | Run 2 | Run 3 |
+| --- | --- | --- | --- | --- |
+| 1,914 | 0.0545 / 0.1506 / 24.91, 91,235,744 B | 0.0513 / 0.1567 / 17.95 | 0.0504 / 0.1557 / 19.11 | 0.0532 / 0.1368 / 17.68, 93,308,120 B |
+| 10,000 | 0.0307 / 0.1235 / 9.90, 470,961,832 B | 0.0281 / 0.1236 / 9.15 | 0.0282 / 0.1068 / 9.31 | 0.0269 / 0.0977 / 8.96, 479,372,152 B |
+| 100,000 | 0.0356 / 0.0939 / **37.22**, 4,086,555,488 B | 0.0306 / 0.0831 / 24.66 | 0.0330 / 0.0892 / **96.99** | 0.0328 / 0.0882 / **88.10**, 4,142,276,152 B |
+
+Against the base run in the same period, frame p95 is equal or lower at every size. Total allocation rises 1.36% at 100,000 consumers, about 53 B per planned route. **Flags:** frames at or above 30 ms at 100,000 consumers in this period: base 1 (37.22 ms); fixed build run 1 none, run 2 two (max 96.99 ms), run 3 one (88.10 ms). The base had one in the same period and none in the two earlier runs, so these are mod-work spikes I can't separate from host load offline. The batched rig's ordinary windows (check 6) must measure them natively. StepBudget after the fix: p95 0.0383 / 0.0429 / 0.0113 ms at 1,914 / 10,000 / 100,000 consumers, 0 B median, no call at or above 30 ms.
 
 ## Perf change taken
 
@@ -144,4 +156,4 @@ The save-serialization hotspot stays parked. F7c adds the capture cost above and
 
 ## Gate
 
-Mod-work p95 stays under 5 ms: StepBudget p95 is at most 0.011 ms and integrated-replay frame p95 at most 0.1315 ms. One ordinary-play frame of 35.43 ms is flagged above. Save samples are their own criterion, and every one at or above 30 ms is flagged in the tables. Whole-frame timing is not measured offline.
+Mod-work p95 stays under 5 ms: StepBudget p95 is at most 0.011 ms and integrated-replay frame p95 at most 0.1315 ms. Ordinary-play frames at or above 30 ms are flagged above, on both commits; the rig measures them natively. Save samples are their own criterion, and every one at or above 30 ms is flagged in the tables. Whole-frame timing is not measured offline.
