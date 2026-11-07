@@ -49,7 +49,7 @@ namespace PersistentCity.Persistence
             string previous = ""; var counts = new int[6]; var admitted = new HashSet<string>(StringComparer.Ordinal);
             foreach (var candidate in image.Union)
             {
-                Require(candidate != null, "Null awareness candidate."); Text(candidate.BusinessId, "Awareness generation", 512);
+                Require(candidate != null, "Null awareness candidate."); Text(candidate.BusinessId, "Awareness generation", IdentityBound(candidate.BusinessId, 512));
                 Require(StringComparer.Ordinal.Compare(previous, candidate.BusinessId) < 0, "Duplicate/unordered awareness generation.");
                 previous = candidate.BusinessId; int flags = (int)candidate.Sources;
                 Require(flags > 0 && flags < 128 && (flags & 63) > 0, "Unknown awareness source.");

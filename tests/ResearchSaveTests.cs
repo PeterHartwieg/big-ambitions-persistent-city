@@ -130,10 +130,12 @@ public sealed class ResearchSaveTests
     public void ResearchTakesTheNextFreeWriterAndOlderWritersOmitTheSection()
     {
         Assert.Equal(SaveCodec.WorkplaceCapacitySchema + 1, SaveCodec.ResearchSchema);
-        Assert.Equal(SaveCodec.ResearchSchema, CityState.CurrentSchema);
-        Assert.Equal(SaveCodec.WorkplaceCapacitySchema, SaveCodec.LatestDevelopmentSchema);
+        // E6c: writer 29 is now the frozen C5c writer; the vendor writer keeps the research section.
+        Assert.Equal(SaveCodec.ResearchSchema + 1, CityState.CurrentSchema);
+        Assert.Equal(SaveCodec.ResearchSchema, SaveCodec.LatestDevelopmentSchema);
         var city = City(AllStates());
         Assert.Contains("\"Research\":[", SaveCodec.Write(city));
+        Assert.Contains("\"Research\":[", DevelopmentChain.Write29(city));
         Assert.DoesNotContain("Research", DevelopmentChain.Write28(city));
         Assert.DoesNotContain("Research", DevelopmentChain.Write27(city));
     }
@@ -420,7 +422,9 @@ public sealed class ResearchSaveTests
         return city.State;
     }
 
-    /// <summary>The research writer's bytes. A shape change without a schema bump fails here; a bump adds a new pin file.</summary>
+    /// <summary>The research writer's bytes. A shape change without a schema bump fails here; a bump adds a new pin file.
+    /// E6c: writer 29 is now the frozen C5c writer (before the vendor table); its pins are unchanged and its frozen
+    /// reader round-trips them.</summary>
     [Fact]
     public void GoldenResearchWriterBytesArePinned()
     {
@@ -429,13 +433,13 @@ public sealed class ResearchSaveTests
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
         {
-            string payload = SaveCodec.Write(build());
+            string payload = DevelopmentChain.Write29(build());
             Assert.Contains("\"Schema\":" + SaveCodec.ResearchSchema + ",", payload);
             actual.Add(name + " " + Sha(payload) + " " + payload.Length);
             var pin = pins["fixtures"]![name];
             expected.Add(name + " " + (string?)pin?["sha256"] + " " + (int?)pin?["characters"]);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            var read = SaveCodec.ReadWriter29(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            Assert.Equal(payload, SaveCodec.WriteForSchema(read.State!, SaveCodec.ResearchSchema));
         }
         Assert.True(expected.SequenceEqual(actual), string.Join("; ", actual));
     }
@@ -443,7 +447,7 @@ public sealed class ResearchSaveTests
     [Fact]
     public void GoldenFixturesAreDeterministic()
     {
-        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
+        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(DevelopmentChain.Write29(build()), DevelopmentChain.Write29(build()));
     }
 
     /// <summary>The codec's cell table is C4's: every tier's engine report has exactly that layout and length.</summary>

@@ -179,6 +179,7 @@ namespace PersistentCity.Core
                 places.Add(place.Id, place);
                 if (place.Kind == PlaceKind.Shop || place.Kind == PlaceKind.Leisure) optionalPlaces.Add(place);
             }
+            RestoreVendorPlaces();
             for (int citizenIndex = 0; citizenIndex < state.Citizens.Count; citizenIndex++)
             {
                 var person = state.Citizens[citizenIndex];

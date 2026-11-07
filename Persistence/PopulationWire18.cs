@@ -114,7 +114,7 @@ namespace PersistentCity.Persistence
             catch (FormatException e) { throw new SaveValidationException(e.Message); }
             return 1;
         }
-        private static int ValidateBusinessReferences(CityState state)
+        private static int ValidateBusinessReferences(CityState state, VendorIndex30 vendors)
         {
             Require(state.Food != null && state.Food.Shops != null && state.Food.Residents != null && state.Food.History != null
                 && state.Places != null && state.Places.All(p => p != null), "Missing food collections/places.");
@@ -127,9 +127,13 @@ namespace PersistentCity.Persistence
             {
                 Require(entry != null && entry.Slot > previous && entry.Slot < MaxPlaces && ids.Add(entry.BusinessId), "Duplicate or unordered business reference.");
                 previous = entry.Slot;
-                Text(entry.BusinessId, "Business reference identity", 512);
-                Text(entry.PlaceId, "Business reference place", 256);
-                Require(places.Contains(entry.PlaceId), "Unknown business reference place.");
+                Text(entry.BusinessId, "Business reference identity", IdentityBound(entry.BusinessId, 512));
+                Text(entry.PlaceId, "Business reference place", IdentityBound(entry.PlaceId, 256));
+                // E6c: the place of any vendor row, tombstones included, for that row's signature at a generation
+                // from 1 to its current one; any other business id at a vendor place is refused.
+                if (vendors.ByPlace.TryGetValue(entry.PlaceId, out var vendor))
+                    Require(VendorReference30(vendor, entry.BusinessId), "A business reference at a vendor place names another business or generation.");
+                else Require(places.Contains(entry.PlaceId), "Unknown business reference place.");
                 // Existing references must never disagree with the same complete identity elsewhere.
             }
             var byId = refs.ToDictionary(r => r.BusinessId, r => r.PlaceId, StringComparer.Ordinal);
@@ -184,11 +188,30 @@ namespace PersistentCity.Persistence
             }
             /// <summary>Schema-26 station table for visitor stays (ordinal); empty when reading.</summary>
             public List<string> Portals = new List<string>();
+            /// <summary>E6c: the place of every vendor row in the table's saved ordinal order (live, retired and
+            /// tombstone rows); the business-reference <c>v</c> form indexes this list.</summary>
+            public string[] VendorPlaces = Array.Empty<string>();
+            public Dictionary<string, int> VendorIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+            private VendorTable? decodedVendors;
+            /// <summary>The table <see cref="FromSource"/> decoded, handed to the reader at most once.</summary>
+            public VendorTable? TakeVendors() { var table = decodedVendors; decodedVendors = null; return table; }
+            private void SetVendors(VendorTable? table)
+            {
+                if (table == null || table.Rows.Count == 0) return;
+                Require(table.Rows.Count <= MaxVendorRows, "Oversized vendor table.");
+                VendorPlaces = new string[table.Rows.Count];
+                for (int i = 0; i < VendorPlaces.Length; i++)
+                {
+                    VendorPlaces[i] = table.Rows[i].PlaceId;
+                    Require(VendorIndex.TryAdd(VendorPlaces[i], i), "Duplicate vendor place.");
+                }
+            }
             public static WireContext FromState(CityState state)
             {
                 var result = new WireContext(state.Places.Select(p => p.Id));
                 if (state.Portals != null) result.Portals = state.Portals;
                 if (state.Schema >= 25) result.SetProducts(state.ProductNames);
+                if (state.Schema >= VendorSchema) result.SetVendors(state.Vendors);
                 return result;
             }
             public static WireContext FromSource(string source, TokenText? tokenText = null)
@@ -198,6 +221,7 @@ namespace PersistentCity.Persistence
                 Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected root.");
                 var ids = new List<string>(); bool found = false;
                 List<string>? products = null;
+                VendorTable? vendors = null;
                 var text = tokenText ?? new TokenText(source);
                 int fieldStart = text.End((IJsonLineInfo)reader);
                 while (reader.Read() && reader.TokenType != JsonToken.EndObject)
@@ -209,6 +233,15 @@ namespace PersistentCity.Persistence
                         Require(products == null, "Duplicate product name table.");
                         int records = 0;
                         products = CheckNameTable25(reader, text, ref records, fieldStart);
+                        fieldStart = text.End((IJsonLineInfo)reader);
+                        continue;
+                    }
+                    if (name == "Vendors" && reader.TokenType == JsonToken.StartArray)
+                    {
+                        // Read before business references are decoded; the shape check refuses the field in older schemas.
+                        Require(vendors == null, "Duplicate vendor table.");
+                        int records = 0;
+                        vendors = ReadVendors30(reader, text, ref records);
                         fieldStart = text.End((IJsonLineInfo)reader);
                         continue;
                     }
@@ -233,6 +266,8 @@ namespace PersistentCity.Persistence
                 Require(found, "Missing Places.");
                 var result = new WireContext(ids);
                 if (products != null) result.SetProducts(products);
+                result.SetVendors(vendors);
+                result.decodedVendors = vendors;
                 return result;
             }
         }
@@ -361,49 +396,76 @@ namespace PersistentCity.Persistence
         {
             private readonly WireContext context;
             public VisitConverter(WireContext context) { this.context = context; }
-            public static void Check(JsonReader reader)
+            // Place cell at 17-19: a city index or, from the vendor schema, "v" and a vendor table row (PlaceCells).
+            public static string Check(JsonReader reader, PlaceCells cells)
             {
                 Require(reader.TokenType == JsonToken.String, "Invalid visit token."); string text = (string)reader.Value!;
                 Require(text.Length == 21 && text[0] == '1', "Invalid visit length/version.");
                 for (int i = 1; i <= 16; i++) Require(text[i] >= '0' && text[i] <= '9' || text[i] >= 'A' && text[i] <= 'F', "Invalid visit binary64 alphabet.");
-                Require(MemoryWire.Number(text, 17, 3) < MaxPlaces && text[20] >= '0' && text[20] <= '4', "Invalid visit place/activity code.");
+                Require(text[20] >= '0' && text[20] <= '4', "Invalid visit place/activity code.");
+                string place = cells.Parse(text, 17, "Invalid visit place/activity code.");
                 double minute = BitConverter.Int64BitsToDouble(unchecked((long)ulong.Parse(text.Substring(1, 16), NumberStyles.HexNumber, CultureInfo.InvariantCulture)));
                 Minute(minute, "Visit minute");
+                return place;
             }
             public override void WriteJson(JsonWriter writer, VisitRecord? value, JsonSerializer serializer)
             {
-                writer.WriteValue("1" + unchecked((ulong)BitConverter.DoubleToInt64Bits(value!.AtMinute)).ToString("X16", CultureInfo.InvariantCulture)
-                    + MemoryWire.Number(context.Index[value.PlaceId], 3) + (char)('0' + (int)value.Activity));
+                string? cell = PlaceCell30(context, value!.PlaceId);
+                Require(cell != null, "Visit names an unknown place.");
+                writer.WriteValue("1" + unchecked((ulong)BitConverter.DoubleToInt64Bits(value.AtMinute)).ToString("X16", CultureInfo.InvariantCulture)
+                    + cell + (char)('0' + (int)value.Activity));
             }
             public override VisitRecord ReadJson(JsonReader reader, Type type, VisitRecord? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
-                Check(reader); string text = (string)reader.Value!; int at = MemoryWire.Number(text, 17, 3);
-                Require(at < context.Places.Length, "Invalid visit place reference.");
-                return new VisitRecord { AtMinute = BitConverter.Int64BitsToDouble(unchecked((long)ulong.Parse(text.Substring(1, 16), NumberStyles.HexNumber, CultureInfo.InvariantCulture))), PlaceId = context.Places[at], Activity = (Activity)(text[20] - '0') };
+                string place = Check(reader, PlaceCells.Of(context)); string text = (string)reader.Value!;
+                return new VisitRecord { AtMinute = BitConverter.Int64BitsToDouble(unchecked((long)ulong.Parse(text.Substring(1, 16), NumberStyles.HexNumber, CultureInfo.InvariantCulture))), PlaceId = place, Activity = (Activity)(text[20] - '0') };
             }
         }
         private sealed class BusinessReferenceConverter : JsonConverter<BusinessReference>
         {
             private readonly WireContext context;
             public BusinessReferenceConverter(WireContext context) { this.context = context; }
-            public static void Check(JsonReader reader, TokenText text)
+            // Place cell: three base-36 digits of the ordinal Places index, or (vendor schema) "v" and two base-36
+            // digits of the vendor table's saved row order. Each form has its own bound.
+            public static void Check(JsonReader reader, TokenText text, int schema)
             {
                 Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference version.");
                 Require(reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 0, MaxPlaces - 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference slot.");
-                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= 512, "Invalid business reference identity.");
-                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length == 3 && MemoryWire.Number((string)reader.Value!, 0, 3) < MaxPlaces && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid business place reference.");
+                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= (schema >= VendorSchema ? IdentityBound((string)reader.Value!, 512) : 512), "Invalid business reference identity.");
+                Require(reader.Read() && reader.TokenType == JsonToken.String && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid business place reference.");
+                string place = (string)reader.Value!;
+                if (place.Length == 1 + VendorIndexWidth && place[0] == VendorPlaceForm)
+                    Require(schema >= VendorSchema && MemoryWire.Number(place, 1, VendorIndexWidth) < MaxVendorRows, "Invalid vendor business place reference.");
+                else Require(place.Length == 3 && MemoryWire.Number(place, 0, 3) < MaxPlaces, "Invalid business place reference.");
                 Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Surplus business reference slot.");
             }
             public override void WriteJson(JsonWriter writer, BusinessReference? value, JsonSerializer serializer)
             {
-                writer.WriteStartArray(); writer.WriteValue(1); writer.WriteValue(value!.Slot); writer.WriteValue(value.BusinessId); writer.WriteValue(MemoryWire.Number(context.Index[value.PlaceId], 3)); writer.WriteEndArray();
+                writer.WriteStartArray(); writer.WriteValue(1); writer.WriteValue(value!.Slot); writer.WriteValue(value.BusinessId);
+                writer.WriteValue(context.VendorIndex.TryGetValue(value.PlaceId, out int vendor) ? VendorPlaceForm + MemoryWire.Number(vendor, VendorIndexWidth)
+                    : MemoryWire.Number(context.Index[value.PlaceId], 3));
+                writer.WriteEndArray();
             }
             public override BusinessReference ReadJson(JsonReader reader, Type type, BusinessReference? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 reader.Read(); reader.Read(); int slot = checked((int)(long)reader.Value!);
                 reader.Read(); string id = (string)reader.Value!;
-                reader.Read(); int at = MemoryWire.Number((string)reader.Value!, 0, 3); Require(at < context.Places.Length, "Unknown business place reference."); reader.Read();
-                return new BusinessReference { Slot = slot, BusinessId = id, PlaceId = context.Places[at] };
+                reader.Read(); string cell = (string)reader.Value!; string place;
+                if (cell.Length == 1 + VendorIndexWidth && cell[0] == VendorPlaceForm)
+                {
+                    // v indices resolve only through the vendor table.
+                    int row = MemoryWire.Number(cell, 1, VendorIndexWidth);
+                    Require(row < context.VendorPlaces.Length, "Unknown vendor business place reference.");
+                    place = context.VendorPlaces[row];
+                }
+                else
+                {
+                    int at = MemoryWire.Number(cell, 0, 3); Require(at < context.Places.Length, "Unknown business place reference.");
+                    place = context.Places[at];
+                    Require(!VendorNames.IsVendorPlace(place), "A city business place reference names a vendor place.");
+                }
+                reader.Read();
+                return new BusinessReference { Slot = slot, BusinessId = id, PlaceId = place };
             }
         }
     }

@@ -197,8 +197,9 @@ namespace PersistentCity.Core
                             LastWorkItems++;var e=input.Current;
                             if(e==null && skipMissing) continue;
                             if(collected.Count==MaximumAlternatives) throw new ArgumentException("Awareness catalogue exceeds place bound.");
-                            if(e==null || string.IsNullOrWhiteSpace(e.BusinessId) || e.BusinessId.Length>512
-                                || string.IsNullOrWhiteSpace(e.PlaceId) || e.PlaceId.Length>256 || !e.Position.IsFinite || (uint)e.Kind>1)
+                            // E6c: a vehicle's escaped place and business ids may exceed 256/512 (VendorNames.Bound).
+                            if(e==null || string.IsNullOrWhiteSpace(e.BusinessId) || e.BusinessId.Length>VendorNames.Bound(e.BusinessId,512)
+                                || string.IsNullOrWhiteSpace(e.PlaceId) || e.PlaceId.Length>VendorNames.Bound(e.PlaceId,256) || !e.Position.IsFinite || (uint)e.Kind>1)
                                 throw new ArgumentException("Invalid awareness alternative.");
                             ids.Add(e.BusinessId,e);places.Add(e.PlaceId,e);collected.Add(e);
                         }

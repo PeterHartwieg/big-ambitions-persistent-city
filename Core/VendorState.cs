@@ -49,6 +49,23 @@ namespace PersistentCity.Core
             return escaped == null ? id : escaped.ToString();
         }
 
+        /// <summary>Longest escaped id: a BMP unit outside ASCII escapes to three UTF-8 bytes, nine characters (a surrogate
+        /// pair to four bytes, twelve characters for two units), so 128 units escape to at most 1,152 characters.</summary>
+        public const int MaximumEscapedIdLength = 9 * MaximumIdLength;
+        /// <summary>Longest place id, <c>vendor:&lt;escaped id&gt;</c>.</summary>
+        public const int MaximumPlaceIdLength = 7 + MaximumEscapedIdLength;
+        /// <summary>Longest business id, <c>streetfood:vehicle:&lt;escaped id&gt;:generation:&lt;g&gt;</c> with g up to int.MaxValue.</summary>
+        public const int MaximumBusinessIdLength = 19 + MaximumEscapedIdLength + 12 + 10;
+
+        /// <summary>A place id or business id derived from a vehicle id. Saved fields that hold them allow the vendor
+        /// maxima above instead of their ordinary 256 and 512 characters.</summary>
+        public static bool IsVendorIdentity(string? id) => IsVendorPlace(id) || id != null && id.StartsWith(SignaturePrefix, StringComparison.Ordinal);
+
+        /// <summary>The length bound for a place or business field: a vendor place or business id may reach its escaped
+        /// maximum; every other value keeps the field's own bound.</summary>
+        public static int Bound(string? id, int max) => IsVendorPlace(id) ? Math.Max(max, MaximumPlaceIdLength)
+            : IsVendorIdentity(id) ? Math.Max(max, MaximumBusinessIdLength) : max;
+
         public static string PlaceId(string vehicleId) => PlacePrefix + Escape(vehicleId);
         public static string Signature(string vehicleId) => SignaturePrefix + Escape(vehicleId);
         public static string BusinessId(string vehicleId, int generation) => generation < 1 ? throw new ArgumentOutOfRangeException(nameof(generation))

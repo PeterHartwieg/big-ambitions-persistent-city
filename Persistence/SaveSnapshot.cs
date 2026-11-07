@@ -9,7 +9,7 @@ namespace PersistentCity.Persistence
     /// order produces the same snapshot and the same bytes. Visitors are one part because a visitor person and its
     /// routine point at each other.
     /// </summary>
-    internal enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research }
+    internal enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research, Vendors }
 
     /// <summary>
     /// One save epoch's detached, immutable projection of the state the wire carries (F7 plan section 3.2, slice F7c).
@@ -24,7 +24,7 @@ namespace PersistentCity.Persistence
         internal static readonly SnapshotSection[] DefaultOrder =
         {
             SnapshotSection.Header, SnapshotSection.Places, SnapshotSection.Residents, SnapshotSection.Visitors,
-            SnapshotSection.Traffic, SnapshotSection.Food, SnapshotSection.Research,
+            SnapshotSection.Traffic, SnapshotSection.Food, SnapshotSection.Research, SnapshotSection.Vendors,
         };
 
         private SaveSnapshot(CityState wire, int schema, int sharedRoutes, int copiedRoutes)
@@ -71,6 +71,7 @@ namespace PersistentCity.Persistence
             private static readonly Func<OpeningWindow, OpeningWindow> WindowCopy = Window;
             private static readonly Func<VisitRecord, VisitRecord> VisitCopy = Visit;
             private static readonly Func<CitizenIdentity, CitizenIdentity> IdentityCopy = Identity;
+            private static readonly Func<FoodScope, FoodScope> ScopeCopy = Scope;
             private readonly Func<FoodDecisionShop, FoodDecisionShop> decisionShop;
             public Copier() { decisionShop = DecisionShop; }
 
@@ -99,6 +100,7 @@ namespace PersistentCity.Persistence
                     case SnapshotSection.Traffic: wire.Traffic = live.Traffic == null ? null : Traffic(live.Traffic); return;
                     case SnapshotSection.Food: wire.Food = live.Food == null ? null : Food(live.Food); return;
                     case SnapshotSection.Research: wire.Research = live.Research?.CopyForSave()!; return;
+                    case SnapshotSection.Vendors: wire.Vendors = SaveCodec.CopyVendors30(live.Vendors)!; return;
                     default: throw new ArgumentOutOfRangeException(nameof(section));
                 }
             }
@@ -248,8 +250,7 @@ namespace PersistentCity.Persistence
                     CapturedAt = s.CapturedAt, DepartureAt = s.DepartureAt })!,
                 History = List(f.History, ShopDay)!,
                 HouseholdFinanceVersion = f.HouseholdFinanceVersion, MealRhythmVersion = f.MealRhythmVersion,
-                Shops = List(f.Shops, s => new FoodScope { AlternativeKind = s.AlternativeKind, PlaceId = s.PlaceId, ProductId = s.ProductId,
-                    AdditionalProductIds = Values(s.AdditionalProductIds)!, BusinessId = s.BusinessId, NextServiceAt = s.NextServiceAt })!,
+                Shops = List(f.Shops, ScopeCopy)!,
                 Residents = List(f.Residents, Meal)!,
                 Districts = List(f.Districts, d => new FoodDistrictBudgetMix { DistrictId = d.DistrictId, WorkingPercent = d.WorkingPercent,
                     MiddlePercent = d.MiddlePercent, UpperPercent = d.UpperPercent, Evidence = d.Evidence })!,
@@ -257,6 +258,14 @@ namespace PersistentCity.Persistence
                 RivalStartsDay = f.RivalStartsDay,
                 Campaigns = Values(f.Campaigns)!, // FoodCampaignImage is immutable
             };
+
+            private static FoodScope Scope(FoodScope s)
+            {
+                var copy = new FoodScope { AlternativeKind = s.AlternativeKind, PlaceId = s.PlaceId, ProductId = s.ProductId,
+                    AdditionalProductIds = Values(s.AdditionalProductIds)!, BusinessId = s.BusinessId, NextServiceAt = s.NextServiceAt };
+                copy.UseChannel(s.Channel);
+                return copy;
+            }
 
             private static RivalOutflowHistory Outflow(RivalOutflowHistory o)
             {
