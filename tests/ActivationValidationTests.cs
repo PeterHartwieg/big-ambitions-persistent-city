@@ -93,7 +93,7 @@ public sealed class ActivationValidationTests
             var places = new List<Place> { new() { Id = "a", Kind = PlaceKind.Home },
                 new() { Id = "a", Kind = PlaceKind.Shop }, new() { Id = null!, Kind = (PlaceKind)999 } };
             if (hasNull) places.Insert(1, null!);
-            var lookup = Activator.CreateInstance(type, new object[] { places })!;
+            var lookup = Activator.CreateInstance(type, new object[] { places, new List<Place>() })!;
             foreach (string? id in new[] { "a", "A", "missing", null })
             foreach (int kind in new[] { (int)PlaceKind.Home, (int)PlaceKind.Shop, 999, -1 })
             {

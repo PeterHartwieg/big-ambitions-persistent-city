@@ -27,6 +27,7 @@ internal static class DevelopmentChain
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.PersonSchema ? SaveCodec.ReadWriter26(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.IndependentSchema ? SaveCodec.ReadWriter27(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.WorkplaceCapacitySchema ? SaveCodec.ReadWriter28(source)
+        : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.ResearchSchema ? SaveCodec.ReadWriter29(source)
         : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveCodec.Read(source);
 
     /// <summary>F5e: the frozen writer-27 shape (F5d's, seated under the fixed BusinessAllocation of 16). Writer 28 has
@@ -52,13 +53,24 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
-    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28
+    /// <summary>E6c: the frozen writer-29 shape (C5c's, before the vendor table and the scope channel).</summary>
+    public const int Research29 = SaveCodec.ResearchSchema;
+
+    /// <summary>The frozen writer-29 bytes of a current state without vendor rows or vehicle scopes; the state is restored.</summary>
+    public static string Write29(CityState state)
+    {
+        int schema = state.Schema;
+        try { state.Schema = Research29; return SaveCodec.WriteForSchema(state, Research29); }
+        finally { state.Schema = schema; }
+    }
+
+    public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29
         ? SaveCodec.WriteForSchema(state, state.Schema) : SaveCodec.Write(state);
 
     /// <summary>The activation save contract for the state's own schema (the current writer or a frozen one).</summary>
     public static void ValidateForActivation(CityState state)
     {
-        if (state.Schema == Represented || state.Schema == ChainOutput || state.Schema == Independent27 || state.Schema == Workplace28) SaveCodec.ValidateForActivation(state, state.Schema);
+        if (state.Schema == Represented || state.Schema == ChainOutput || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29) SaveCodec.ValidateForActivation(state, state.Schema);
         else SaveCodec.ValidateForActivation(state);
     }
 

@@ -25,25 +25,35 @@ public sealed class SaveSnapshotTests
         new object[] { "rush-957x2", "8F6473A4AD620627E367852AE6AD122146B28185FB2054A71CC188B8B5A11A25", 2213842 },
     };
 
+    /// <summary>E6c: these pins are writer 29's, now the frozen C5c writer (the name is kept for docs/checks/f7c.md). The snapshot path for that schema still
+    /// gives the base bytes; the session and the reader use the current (vendor) writer.</summary>
     [Theory]
     [MemberData(nameof(BasePins))]
     public void CurrentWriterBytesEqualTheBaseWriterOnFreshFixtures(string fixture, string sha256, int characters)
     {
         var state = F7cFixtures.Build(fixture).State;
-        var snapshot = SaveCodec.Capture(state);
-        Assert.Equal(CityState.CurrentSchema, snapshot.Schema);
-        string payload = SaveCodec.Encode(snapshot);
+        const int frozen = SaveCodec.ResearchSchema;
+        state.Schema = frozen;
+        var snapshot = SaveCodec.CaptureForSchema(state, frozen, null);
+        Assert.Equal(frozen, snapshot.Schema);
+        string payload = SaveCodec.EncodeForSchema(snapshot, frozen, null);
         Assert.Equal(sha256, RepresentativeFixture.Sha256(payload));
         Assert.Equal(characters, payload.Length);
-        Assert.Equal(payload, SaveCodec.Write(state));
+        Assert.Equal(payload, SaveCodec.WriteForSchema(state, frozen));
+        var frozenRead = SaveCodec.ReadWriter29(payload);
+        Assert.True(frozenRead.Status == SaveReadStatus.Loaded, frozenRead.Error);
+        Assert.Equal(payload, SaveCodec.WriteForSchema(frozenRead.State!, frozen));
+        state.Schema = CityState.CurrentSchema;
+        string current = SaveCodec.Encode(SaveCodec.Capture(state));
+        Assert.Equal(current, SaveCodec.Write(state));
         var data = new Dictionary<string, string>(StringComparer.Ordinal) { ["other:key"] = "kept" };
         var session = SaveSession.Open(data, state.PopulationKey);
         Assert.True(session.WriteTo(data, state).Success);
-        Assert.Equal(payload, data[SaveCodec.StateKey]); Assert.Equal("kept", data["other:key"]);
-        // The reader is unchanged: it loads the payload and the loaded city writes the same bytes again.
-        var read = SaveCodec.Read(payload);
+        Assert.Equal(current, data[SaveCodec.StateKey]); Assert.Equal("kept", data["other:key"]);
+        // The current reader loads the payload and the loaded city writes the same bytes again.
+        var read = SaveCodec.Read(current);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.Equal(current, SaveCodec.Write(read.State!));
     }
 
     private static CityState ResearchRush()

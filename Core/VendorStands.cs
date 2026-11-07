@@ -627,11 +627,22 @@ namespace PersistentCity.Core
         /// <summary>False while the shared awareness image waits for a rebuild (after a vendor place change, for example).</summary>
         internal bool FoodAwarenessCurrent => food != null && food.AwarenessCurrent;
 
-        /// <summary>A route rebuild replaces the simulator; vendor places live outside CityState.Places and move along.</summary>
+        /// <summary>A route rebuild replaces the simulator; vendor places live outside CityState.Places and move along.
+        /// The replacement already rebuilt the saved table's places, so the old simulator's objects replace them.</summary>
         private void CopyVendorPlaces(CitySimulator from)
         {
             foreach (var pair in from.places)
-                if (VendorNames.IsVendorPlace(pair.Key)) places.Add(pair.Key, pair.Value);
+                if (VendorNames.IsVendorPlace(pair.Key)) places[pair.Key] = pair.Value;
+        }
+
+        /// <summary>E6c: a loaded city's vendor places come from its table, not from CityState.Places. Every live or
+        /// retired row with a stand has a place and its Vehicle scope (the reader checked both).</summary>
+        private void RestoreVendorPlaces()
+        {
+            var table = State.Vendors;
+            if (table == null) return;
+            foreach (var row in table.Rows)
+                if (row.State != VendorRowState.Tombstone && row.Stand != null) { PublishVendorPlace(row, null); row.PlacePublished = true; }
         }
     }
 }

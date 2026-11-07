@@ -327,7 +327,10 @@ namespace PersistentCity.Core
     public sealed class CityState
     {
         /// <summary>C5c: the next writer after F5e's workplace-capacity schema; it adds <see cref="Research"/>.</summary>
-        public const int CurrentSchema = PersonTable.WorkplaceCapacitySchema + 1;
+        public const int ResearchSchema = PersonTable.WorkplaceCapacitySchema + 1;
+        /// <summary>E6c: the next writer after C5c's research schema; it adds <see cref="Vendors"/> and the scope channel.</summary>
+        public const int VendorSchema = ResearchSchema + 1;
+        public const int CurrentSchema = VendorSchema;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
@@ -373,6 +376,9 @@ namespace PersistentCity.Core
         public List<VisitorRoutine> VisitorRoutines { get; set; } = new List<VisitorRoutine>();
         /// <summary>C5c: this city's research orders and kept reports. A fresh city starts with an empty ledger.</summary>
         public ResearchLedger Research { get; set; } = new ResearchLedger();
+        /// <summary>E6c: the Street Food vendor rows, ordinal by vehicle id. Their places are rebuilt from this table
+        /// on load and never stored in <see cref="Places"/>. A fresh city starts with an empty table.</summary>
+        public VendorTable Vendors { get; set; } = new VendorTable();
     }
 
 }

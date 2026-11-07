@@ -11,7 +11,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-28). It is refused and kept
+    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-29). It is refused and kept
     /// unchanged, like Invalid and Future; it is neither corruption nor a missing city.</summary>
     public enum SaveReadStatus { Missing, Loaded, Invalid, Future, DevelopmentSchema }
 
@@ -252,6 +252,22 @@ namespace PersistentCity.Persistence
             { return Invalid("Invalid state: " + exception.Message); }
         }
 
+        /// <summary>The frozen exact writer-29 reader (C5c's shape, before the vendor table and the scope channel).
+        /// Unreachable from <see cref="Read"/>, which refuses schema 29 as an older development city; kept for its own tests.</summary>
+        internal static SaveReadResult ReadWriter29(string source)
+        {
+            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
+            try
+            {
+                int schema = ReadSchema(source);
+                if (schema > ResearchSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
+                Require(schema == ResearchSchema, "Not the frozen writer-29 schema.");
+                return ReadExact(source, schema);
+            }
+            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
+            { return Invalid("Invalid state: " + exception.Message); }
+        }
+
         private static SaveReadResult ReadExact(string source, int schema)
         {
             Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
@@ -368,6 +384,8 @@ namespace PersistentCity.Persistence
             { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text); return; }
             if (type == typeof(ResearchLedger))
             { Require(schema >= ResearchSchema, "The research section needs the research schema."); CheckResearch29(reader, text, ref records); return; }
+            if (type == typeof(VendorTable))
+            { Require(schema >= VendorSchema, "The vendor table needs the vendor schema."); CheckVendors30(reader, text, ref records); return; }
             if (type == typeof(string))
             {
                 Require(token == JsonToken.String, "Expected a string.");
@@ -436,7 +454,7 @@ namespace PersistentCity.Persistence
                 return;
             }
             if (type == typeof(VisitRecord)) { VisitConverter.Check(reader); Require(text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Noncanonical visit encoding."); return; }
-            if (type == typeof(BusinessReference)) { BusinessReferenceConverter.Check(reader, text); return; }
+            if (type == typeof(BusinessReference)) { BusinessReferenceConverter.Check(reader, text, schema); return; }
             if (type == typeof(PopulationCapabilities)) Charge(ref records);
             if (type == typeof(Position))
             {
@@ -548,9 +566,10 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema25Contracts = new StateContractResolver(25);
         private static readonly IContractResolver Schema26Contracts = new StateContractResolver(26);
         private static readonly IContractResolver Schema28Contracts = new StateContractResolver(WorkplaceCapacitySchema);
+        private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -569,6 +588,7 @@ namespace PersistentCity.Persistence
             if (schema >= PersonSchema) settings.Converters.Add(new VisitorConverter26(context));
             if (schema >= IndependentSchema) settings.Converters.Add(new RoutineTupleConverter27(context));
             if (schema >= ResearchSchema) settings.Converters.Add(new ResearchConverter29());
+            if (schema >= VendorSchema) settings.Converters.Add(new VendorConverter30(context));
             if (schema >= 25) settings.Converters.Add(new ProductSales25Converter(context));
             else if(schema>=23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
@@ -626,13 +646,16 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
             ValidateCapabilities(state.Capabilities);
-            int embeddedRecords = 1 + ValidateFood(state);
+            // E6c: the vendor table first; food checks accept its places.
+            int vendorRecords = 0;
+            var vendors = ValidateVendors30(state, schema, ref vendorRecords);
+            int embeddedRecords = 1 + vendorRecords + ValidateFood(state, vendors);
             if (schema >= 25) embeddedRecords += ValidateNames25(state);
             Require(state.TravelTimingVersion == 0 || state.TravelTimingVersion == 1, "Invalid travel timing version.");
             Bounded(state.TravelClockRate, 0.01, 1000, "Travel clock rate");
@@ -1019,31 +1042,35 @@ namespace PersistentCity.Persistence
             }
         }
 
+        /// <summary>City places plus, from the vendor schema, the shop places of live and retired vendor rows with a
+        /// stand (E6c). Tombstone places are not food places; only business references may name them.</summary>
         private sealed class FoodPlaceLookup
         {
             private readonly List<Place> source;
+            private readonly List<Place> vendors;
             private readonly HashSet<(string, int)>? keys;
-            public FoodPlaceLookup(List<Place> source)
+            public FoodPlaceLookup(List<Place> source, List<Place> vendors)
             {
-                this.source = source;
+                this.source = source; this.vendors = vendors;
                 if (source.Count > MaxPlaces || source.Any(p => p == null)) return;
                 keys = new HashSet<(string, int)>();
                 foreach (var place in source) keys.Add((place.Id, (int)place.Kind));
+                foreach (var place in vendors) keys.Add((place.Id, (int)place.Kind));
             }
             public bool Contains(string id, int kind) => keys != null
                 ? keys.Contains((id, kind))
-                : source.Any(p => p.Id == id && (int)p.Kind == kind);
+                : source.Any(p => p.Id == id && (int)p.Kind == kind) || vendors.Any(p => p.Id == id && (int)p.Kind == kind);
             // Used only for the at most one route-bearing decision.
-            public Place? Find(string id) => source.FirstOrDefault(p => p != null && p.Id == id);
+            public Place? Find(string id) => source.FirstOrDefault(p => p != null && p.Id == id) ?? vendors.FirstOrDefault(p => p.Id == id);
         }
 
         /// <summary>Returns the number of nested food records counted toward MaxEmbeddedRecords.</summary>
-        private static int ValidateFood(CityState state)
+        private static int ValidateFood(CityState state, VendorIndex30 vendors)
         {
             Require(state != null && state.Citizens != null && state.Places != null, "Missing food population.");
             var food = state.Food;
             if (food == null) { Require(state.Citizens.All(c => c != null && c.MealOuting == null), "Meal outing without economy."); return 0; }
-            int records = ValidateBusinessReferences(state) + ValidateCampaigns22(food), routeBearing = 0;
+            int records = ValidateBusinessReferences(state, vendors) + ValidateCampaigns22(food), routeBearing = 0;
             int currentDay = (int)Math.Floor(state.Minute / 1440);
             Require(food.ChoicePolicyVersion == FoodChoicePolicy.Version, "Unknown food choice policy.");
             Require(food.ChoiceStartsDay >= 0 && food.ChoiceStartsDay <= currentDay + 1, "Invalid food choice activation day.");
@@ -1066,9 +1093,11 @@ namespace PersistentCity.Persistence
             Require(food.MealRhythmVersion == 0 || food.MealRhythmVersion == MealRhythm.PolicyVersion, "Unknown meal rhythm policy.");
             // Duplicate IDs/kinds must not fail earlier than the existing catalogue validation.
             // A malformed null entry retains Any's original short-circuit/exception behavior.
-            var foodPlaces = new FoodPlaceLookup(state.Places);
+            var foodPlaces = new FoodPlaceLookup(state.Places, vendors.FoodPlaces);
             var shops = new HashSet<string>(StringComparer.Ordinal);
             var businessIds = new HashSet<string>(StringComparer.Ordinal);
+            // E6c: channel and place agree before the place lookup, so a mismatch is reported as one.
+            ValidateScopeChannels30(food, vendors);
             foreach (var shop in food.Shops)
             {
                 Require(shop != null && shop.AlternativeKind == FoodAlternativeKind.Player, "Native food scopes cannot enroll rivals.");
@@ -1486,6 +1515,7 @@ namespace PersistentCity.Persistence
                     && !(schema < PersonSchema && PersonProperty26(type, property.PropertyName))
                     && !(schema < IndependentSchema && PersonProperty27(type, property.PropertyName))
                     && !(schema < ResearchSchema && ResearchProperty29(type, property.PropertyName))
+                    && !(schema < VendorSchema && VendorProperty30(type, property.PropertyName))
                     // Schema 26 derives these from the person table: the resident tuple P and one roster record per person.
                     && !(schema >= PersonSchema && (type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"
                         || type == typeof(FoodCommerceState) && property.PropertyName == "RepresentationFactor"))
@@ -1499,6 +1529,7 @@ namespace PersistentCity.Persistence
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay"))).ToList();
                 if (schema >= PersonSchema && type == typeof(CitizenState)) properties.Add(ResidentTupleProperty());
+                if (schema >= VendorSchema && type == typeof(FoodScope)) properties.Add(ChannelProperty30());
                 if (type == typeof(VisitorRoutine)) properties = RoutineProperties27(properties).ToList();
                 return properties
                     // These two root headers let the native authority bootstrap stop before the graph.
