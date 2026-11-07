@@ -11,7 +11,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-27). It is refused and kept
+    /// <summary>DevelopmentSchema: an older development build wrote the city (schemas 1-28). It is refused and kept
     /// unchanged, like Invalid and Future; it is neither corruption nor a missing city.</summary>
     public enum SaveReadStatus { Missing, Loaded, Invalid, Future, DevelopmentSchema }
 
@@ -210,6 +210,22 @@ namespace PersistentCity.Persistence
             { return Invalid("Invalid state: " + exception.Message); }
         }
 
+        /// <summary>The frozen exact writer-28 reader (F5e's shape, before the research section). Unreachable from
+        /// <see cref="Read"/>, which refuses schema 28 as an older development city; kept for its own tests.</summary>
+        internal static SaveReadResult ReadWriter28(string source)
+        {
+            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
+            try
+            {
+                int schema = ReadSchema(source);
+                if (schema > WorkplaceCapacitySchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
+                Require(schema == WorkplaceCapacitySchema, "Not the frozen writer-28 schema.");
+                return ReadExact(source, schema);
+            }
+            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
+            { return Invalid("Invalid state: " + exception.Message); }
+        }
+
         private static SaveReadResult ReadExact(string source, int schema)
         {
             Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
@@ -324,6 +340,8 @@ namespace PersistentCity.Persistence
             { Require(schema >= PersonSchema, "Visitor persons need schema 26."); CheckVisitor26(reader, text); return; }
             if (type == typeof(RoutineTuple27))
             { Require(schema >= IndependentSchema, "Visitor routines need schema 27."); CheckRoutine27(reader, text); return; }
+            if (type == typeof(ResearchLedger))
+            { Require(schema >= ResearchSchema, "The research section needs the research schema."); CheckResearch29(reader, text, ref records); return; }
             if (type == typeof(string))
             {
                 Require(token == JsonToken.String, "Expected a string.");
@@ -503,8 +521,10 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema22Contracts = new StateContractResolver(22);
         private static readonly IContractResolver Schema25Contracts = new StateContractResolver(25);
         private static readonly IContractResolver Schema26Contracts = new StateContractResolver(26);
+        private static readonly IContractResolver Schema28Contracts = new StateContractResolver(WorkplaceCapacitySchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
-            : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts : StateContracts;
+            : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -522,6 +542,7 @@ namespace PersistentCity.Persistence
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
             if (schema >= PersonSchema) settings.Converters.Add(new VisitorConverter26(context));
             if (schema >= IndependentSchema) settings.Converters.Add(new RoutineTupleConverter27(context));
+            if (schema >= ResearchSchema) settings.Converters.Add(new ResearchConverter29());
             if (schema >= 25) settings.Converters.Add(new ProductSales25Converter(context));
             else if(schema>=23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
@@ -579,7 +600,7 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
@@ -680,6 +701,7 @@ namespace PersistentCity.Persistence
                 embeddedRecords += personRecords;
             }
             else if (schema >= PersonSchema) embeddedRecords += ValidatePersons26(state, places, assigned);
+            if (schema >= ResearchSchema) embeddedRecords += ValidateResearch29(state);
             Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             int totalRecords = ValidateTraffic(state, embeddedRecords);
             // The frozen semantic counter did not charge scope menu strings or optional-stop members;
@@ -1437,6 +1459,7 @@ namespace PersistentCity.Persistence
                 var properties = base.CreateProperties(type, memberSerialization).Where(property => property.Writable
                     && !(schema < PersonSchema && PersonProperty26(type, property.PropertyName))
                     && !(schema < IndependentSchema && PersonProperty27(type, property.PropertyName))
+                    && !(schema < ResearchSchema && ResearchProperty29(type, property.PropertyName))
                     // Schema 26 derives these from the person table: the resident tuple P and one roster record per person.
                     && !(schema >= PersonSchema && (type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"
                         || type == typeof(FoodCommerceState) && property.PropertyName == "RepresentationFactor"))

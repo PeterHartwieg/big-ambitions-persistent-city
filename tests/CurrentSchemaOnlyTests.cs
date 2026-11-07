@@ -17,7 +17,7 @@ public sealed class CurrentSchemaOnlyTests
     [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
     [InlineData(5)] [InlineData(6)] [InlineData(7)] [InlineData(8)]
     [InlineData(9)] [InlineData(10)] [InlineData(11)] [InlineData(12)]
-    [InlineData(13)] [InlineData(24)] [InlineData(25)] [InlineData(26)] [InlineData(27)]
+    [InlineData(13)] [InlineData(24)] [InlineData(25)] [InlineData(26)] [InlineData(27)] [InlineData(28)]
     public void EveryOldDevelopmentSchemaBlocksCodecStoreAndSessionWrites(int schema)
     {
         var city = City(); var wire = JObject.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;

@@ -264,7 +264,8 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 28;
+        /// <summary>C5c: the next writer after F5e's workplace-capacity schema; it adds <see cref="Research"/>.</summary>
+        public const int CurrentSchema = PersonTable.WorkplaceCapacitySchema + 1;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
@@ -308,6 +309,8 @@ namespace PersistentCity.Core
         /// <summary>Schema 27: one routine per visitor, in the order of <see cref="Visitors"/>. Each is scheduled by the
         /// same event queue as the residents; its identity is derived, its home is its portal place (off-map time).</summary>
         public List<VisitorRoutine> VisitorRoutines { get; set; } = new List<VisitorRoutine>();
+        /// <summary>C5c: this city's research orders and kept reports. A fresh city starts with an empty ledger.</summary>
+        public ResearchLedger Research { get; set; } = new ResearchLedger();
     }
 
 }
