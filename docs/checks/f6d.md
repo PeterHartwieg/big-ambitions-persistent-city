@@ -58,7 +58,7 @@ These checks are pending for the combined rig batch before release. No game, rig
 
 ## PR handoff
 
-Title: `F6d: inactive economic ledger contract (next-free writer)`.
+Title: `F6d: economic ledger contract, inactive (next-free writer after E6c)`.
 
 Use this checks file as the PR body; it includes the implemented contract, no-F6b-addition statement and numbered batched-rig list above. Review against F6d only. Refs #93. No F6e/F6f/F6g activation, shared-doc updates, migration or release work is included.
 
@@ -68,7 +68,6 @@ PR performance summary (ASCII bytes = characters; three Release samples; save/co
 
 | Fixture | Inactive bytes added | Populated bytes added | Records added when populated | Current write p95 ms | Current read p95 ms |
 | --- | ---: | ---: | ---: | ---: | ---: |
-
 | 957x2 | 1,001,832 | 1,014,090 | 302 | 599.85 | 819.22 |
 | 957x3 | 1,072,650 | 1,084,908 | 302 | 692.35 | 766.19 |
 | 5000x2 | 1,600,196 | 1,612,454 | 302 | 774.65 | 1,331.57 |
