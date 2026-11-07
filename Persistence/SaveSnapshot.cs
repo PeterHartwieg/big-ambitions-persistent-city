@@ -66,6 +66,13 @@ namespace PersistentCity.Persistence
         private sealed class Copier
         {
             public int SharedRoutes, CopiedRoutes;
+            // Language version 9 allocates a delegate for every method-group conversion and for every lambda that calls
+            // an instance member, so the per-record copies are bound once per capture.
+            private static readonly Func<OpeningWindow, OpeningWindow> WindowCopy = Window;
+            private static readonly Func<VisitRecord, VisitRecord> VisitCopy = Visit;
+            private static readonly Func<CitizenIdentity, CitizenIdentity> IdentityCopy = Identity;
+            private readonly Func<FoodDecisionShop, FoodDecisionShop> decisionShop;
+            public Copier() { decisionShop = DecisionShop; }
 
             public void Section(SnapshotSection section, CityState live, CityState wire)
             {
@@ -86,7 +93,7 @@ namespace PersistentCity.Persistence
                     case SnapshotSection.Places: wire.Places = List(live.Places, Place)!; return;
                     case SnapshotSection.Residents:
                         wire.Citizens = List(live.Citizens, c => Citizen(c, new CitizenState()))!;
-                        wire.SourceIdentities = List(live.SourceIdentities, Identity)!;
+                        wire.SourceIdentities = List(live.SourceIdentities, IdentityCopy)!;
                         return;
                     case SnapshotSection.Visitors: Visitors(live, wire); return;
                     case SnapshotSection.Traffic: wire.Traffic = live.Traffic == null ? null : Traffic(live.Traffic); return;
@@ -112,7 +119,7 @@ namespace PersistentCity.Persistence
             private static Place Place(Place p) => new Place
             {
                 Id = p.Id, Name = p.Name, District = p.District, Kind = p.Kind, Position = p.Position, Capacity = p.Capacity,
-                OpenMinute = p.OpenMinute, CloseMinute = p.CloseMinute, WeeklyHours = List(p.WeeklyHours, Window)!,
+                OpenMinute = p.OpenMinute, CloseMinute = p.CloseMinute, WeeklyHours = List(p.WeeklyHours, WindowCopy)!,
                 AttractionWeight = p.AttractionWeight, NativeTrafficIndex = p.NativeTrafficIndex, EvidenceSource = p.EvidenceSource,
                 ResidentialAreaSquareMetres = p.ResidentialAreaSquareMetres,
             };
@@ -149,7 +156,7 @@ namespace PersistentCity.Persistence
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
                 copy.DepartureMinute = c.DepartureMinute; copy.NextEventMinute = c.NextEventMinute; copy.ActivityUntilMinute = c.ActivityUntilMinute;
                 copy.CompletedJourneys = c.CompletedJourneys; copy.MissedActivities = c.MissedActivities;
-                copy.RecentVisits = List(c.RecentVisits, Visit)!;
+                copy.RecentVisits = List(c.RecentVisits, VisitCopy)!;
                 copy.Traits = Traits(c.Traits);
                 // Derived from the immutable identity and the seed; DailyRoutine rebuilds it when either differs.
                 copy.RoutineKeys = c.RoutineKeys;
@@ -347,16 +354,18 @@ namespace PersistentCity.Persistence
                 IntentId = d.IntentId, PolicyVersion = d.PolicyVersion, ContextKey = d.ContextKey, Attempt = d.Attempt, Result = d.Result,
                 BusinessId = d.BusinessId, ProductId = d.ProductId, Outside = d.Outside, Reason = d.Reason, Factor1 = d.Factor1, Factor2 = d.Factor2,
                 OriginAt = d.OriginAt, Deadline = d.Deadline, QuotesDone = d.QuotesDone,
-                Shops = List(d.Shops, s => new FoodDecisionShop
-                {
-                    AlternativeKind = s.AlternativeKind, RivalTerms = s.RivalTerms, RivalServiceMinutes = s.RivalServiceMinutes,
-                    AlternativeWeight = s.AlternativeWeight, MemoryContribution = s.MemoryContribution, BusinessId = s.BusinessId, PlaceId = s.PlaceId,
-                    MealsPerHour = s.MealsPerHour, ServiceUnavailable = s.ServiceUnavailable, NextServiceAt = s.NextServiceAt,
-                    Hours = List(s.Hours, Window)!, CustomerServicePercent = s.CustomerServicePercent, DistrictId = s.DistrictId,
-                    Offers = List(s.Offers, o => new FoodDecisionOffer { Metadata = o.Metadata, ProductId = o.ProductId, Price = o.Price,
-                        Units = o.Units, DistrictDemandPercent = o.DistrictDemandPercent })!, // metadata is immutable
-                    OutwardQuote = s.OutwardQuote, ReturnQuote = s.ReturnQuote, Outward = Route(s.Outward), Return = Route(s.Return),
-                })!,
+                Shops = List(d.Shops, decisionShop)!,
+            };
+
+            private FoodDecisionShop DecisionShop(FoodDecisionShop s) => new FoodDecisionShop
+            {
+                AlternativeKind = s.AlternativeKind, RivalTerms = s.RivalTerms, RivalServiceMinutes = s.RivalServiceMinutes,
+                AlternativeWeight = s.AlternativeWeight, MemoryContribution = s.MemoryContribution, BusinessId = s.BusinessId, PlaceId = s.PlaceId,
+                MealsPerHour = s.MealsPerHour, ServiceUnavailable = s.ServiceUnavailable, NextServiceAt = s.NextServiceAt,
+                Hours = List(s.Hours, WindowCopy)!, CustomerServicePercent = s.CustomerServicePercent, DistrictId = s.DistrictId,
+                Offers = List(s.Offers, o => new FoodDecisionOffer { Metadata = o.Metadata, ProductId = o.ProductId, Price = o.Price,
+                    Units = o.Units, DistrictDemandPercent = o.DistrictDemandPercent })!, // metadata is immutable
+                OutwardQuote = s.OutwardQuote, ReturnQuote = s.ReturnQuote, Outward = Route(s.Outward), Return = Route(s.Return),
             };
         }
 
