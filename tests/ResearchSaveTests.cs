@@ -131,8 +131,8 @@ public sealed class ResearchSaveTests
     {
         Assert.Equal(SaveCodec.WorkplaceCapacitySchema + 1, SaveCodec.ResearchSchema);
         // E6c: writer 29 is now the frozen C5c writer; the vendor writer keeps the research section.
-        Assert.Equal(SaveCodec.EconomicLedgerSchema, CityState.CurrentSchema);
-        Assert.Equal(SaveCodec.VendorSchema, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(CityState.AttendanceSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
         var city = City(AllStates());
         Assert.Contains("\"Research\":[", SaveCodec.Write(city));
         Assert.Contains("\"Research\":[", DevelopmentChain.Write29(city));
@@ -414,6 +414,7 @@ public sealed class ResearchSaveTests
     private static CityState BandedCity()
     {
         var (state, market) = Schema28Tests.Fresh();
+        state.Schema = SaveCodec.ResearchSchema;
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         city.AttachFoodMarket(market);
         double target = state.Minute + 30 * 60;

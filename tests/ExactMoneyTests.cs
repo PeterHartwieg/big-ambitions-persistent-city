@@ -44,7 +44,7 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void R7_DayPostingAfterExactPurchaseMovesBalanceByExactPostings()
     {
-        var b = new ResidentBudget { OpeningBalance = Money.FromCents(7920000), Balance = Money.FromCents(7920000),
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, OpeningBalance = Money.FromCents(7920000), Balance = Money.FromCents(7920000),
             BaseIncomeCents = 50000, DailyIncomeCents = 50000, DailyHousingCents = 3000,
             DailyEssentialsCents = 1500, DailyHomeFoodCents = 900, LastPostedDay = 1, NextPostingMinute = 2880 };
         var price = Money.FromNative(.3f);
@@ -63,7 +63,7 @@ public sealed partial class FoodCommerceTests
     public void R7_LongLivedTopBandWalletStaysExactThroughDay20000()
     {
         var price = Money.FromNative(1.37f);
-        var b = new ResidentBudget { OpeningBalance = Money.FromCents(350000), Balance = Money.FromCents(350000), BaseIncomeCents = 50000, DailyIncomeCents = 50000,
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, OpeningBalance = Money.FromCents(350000), Balance = Money.FromCents(350000), BaseIncomeCents = 50000, DailyIncomeCents = 50000,
             DailyHousingCents = 7000, DailyEssentialsCents = 1500, DailyHomeFoodCents = 900, NextPostingMinute = 1440, LastPostedDay = 0 };
         Assert.True(HouseholdFinance.HoldPurchase(b, price)); HouseholdFinance.ConfirmPurchase(b);
         for (int day = 1; day <= 20000; day++)
@@ -91,7 +91,7 @@ public sealed partial class FoodCommerceTests
     public void R7_MillionDollarWalletHoldsCheapNativePriceExactly()
     {
         var price = Money.FromNative(1.37f);
-        var b = new ResidentBudget { OpeningBalance = Money.FromCents(100000000), Balance = Money.FromCents(100000000), DailyHousingCents = 7000, DailyEssentialsCents = 1500, DailyHomeFoodCents = 900 };
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, OpeningBalance = Money.FromCents(100000000), Balance = Money.FromCents(100000000), DailyHousingCents = 7000, DailyEssentialsCents = 1500, DailyHomeFoodCents = 900 };
         Assert.True(HouseholdFinance.HoldPurchase(b, price));
         HouseholdFinance.ConfirmPurchase(b);
         Assert.Equal(Money.FromCents(100000000) - price, b.Balance);

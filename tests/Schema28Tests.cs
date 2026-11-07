@@ -157,7 +157,7 @@ public sealed class Schema28Tests
 
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
-        ("banded-visitors-factor2-30h", () => { var (state, market) = Fresh(); var city = Start(state, market); Advance(city, state.Minute + 30 * 60); return city.State; }),
+        ("banded-visitors-factor2-30h", () => { var (state, market) = Fresh(); state.Schema = SaveCodec.WorkplaceCapacitySchema; var city = Start(state, market); Advance(city, state.Minute + 30 * 60); return city.State; }),
         ("current-schema-minimal", CurrentSchemaOnlyTests.City),
     };
 
@@ -195,7 +195,7 @@ public sealed class Schema28Tests
         var state = GoldenFixtures().First().Build();
         string current = DevelopmentChain.Write28(state), frozen = DevelopmentChain.Write27(state);
         Assert.Equal(current.Replace("\"Schema\":28,", "\"Schema\":27,"), frozen);
-        Assert.Equal(CityState.CurrentSchema, state.Schema);
+        Assert.Equal(SaveCodec.WorkplaceCapacitySchema, state.Schema);
     }
 
     // ---- Older cities are refused and kept ----

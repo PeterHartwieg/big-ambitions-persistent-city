@@ -275,6 +275,17 @@ namespace PersistentCity.Core
                 text.Append("\nmeal=").Append(meal.Kind).Append(' ').Append(meal.Status).Append(" day=").Append(meal.Day)
                     .Append(" place=").Append(meal.PlaceId).Append(" purchases=").Append(meal.Purchases)
                     .Append(meal.Budget == null ? "" : " income=" + meal.Budget.IncomeSource + " balance_units=" + meal.Budget.Balance.Units.ToString(CultureInfo.InvariantCulture));
+            var accrual = person.Accrual;
+            var shift = EmploymentWages.ActiveWindow(person, city.Seed);
+            int attended = accrual.AttendedMinutes;
+            if (shift.HasValue && EmploymentWages.Active(accrual) && accrual.Shift != EmploymentWages.Closed)
+                attended += EmploymentWages.CurrentMinutes(person, shift.Value, city.Minute);
+            text.Append("\nwage_attended_minutes=").Append(attended)
+                .Append(" wage_remainder_units=").Append(accrual.UnpostedWage.Units)
+                .Append(" wage_day=").Append(accrual.Day).Append(" wage_stage=").Append(accrual.Shift)
+                .Append(" misses_14_days=").Append(EmploymentWages.RecentMisses(accrual, (int)(city.Minute / 1440)))
+                .Append(" employment_income_units=").Append(meal?.Budget?.Ledger.EmploymentIncome.Units ?? 0)
+                .Append(accrual.Shift == EmploymentWages.ClosureDay || accrual.Shift == EmploymentWages.Closed ? " workplace closed for the recorded shift" : "");
             return text.Append("\nfood_anchor_reads=").Append(anchorReads).ToString();
         }
 

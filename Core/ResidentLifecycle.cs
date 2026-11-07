@@ -61,8 +61,10 @@ namespace PersistentCity.Core
             }
             else if (person.DayPlaceId != "")
             {
-                if (chance >= CityBalance.DailyJobLossChance) return null;
+                if (chance >= (city.Schema >= CityState.AttendanceSchema
+                    ? EmploymentWages.JobLossChance(person.Accrual, day) : CityBalance.DailyJobLossChance)) return null;
                 person.DayPlaceId = "";
+                person.Accrual = default;
                 person.EmploymentStartDay = 0;
                 person.JobChanges = checked(person.JobChanges + 1);
                 person.CommutePreparation = new CommutePreparation();
@@ -81,6 +83,7 @@ namespace PersistentCity.Core
         internal static void AssignWorkplace(CitizenState person, Place candidate)
         {
             person.DayPlaceId = candidate.Id;
+            person.Accrual = default;
             person.VisitorCarried = null;
             // The assignment follows the employment check of LastEmploymentCheckDay.
             person.EmploymentStartDay = person.LastEmploymentCheckDay;

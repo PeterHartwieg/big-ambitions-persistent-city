@@ -253,6 +253,11 @@ namespace PersistentCity.Persistence
         };
 
         // Frozen predecessor used only by offline checks. The public reader always refuses it, preserving its payload.
+        internal static SaveReadResult ReadLedgerWriter(string source)
+        {
+            try { Require(ReadSchema(source) == EconomicLedgerSchema, "Not the inactive ledger schema."); return ReadExact(source, EconomicLedgerSchema); }
+            catch (Exception e) when (e is JsonException || e is SaveValidationException || e is OverflowException || e is FormatException || e is ArgumentException) { return Invalid(e.Message); }
+        }
         internal static SaveReadResult ReadWriter30(string source)
         {
             try { Require(ReadSchema(source) == VendorSchema, "Not the predecessor vendor schema."); return ReadExact(source, VendorSchema); }

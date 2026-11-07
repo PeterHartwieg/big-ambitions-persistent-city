@@ -64,6 +64,7 @@ namespace PersistentCity.Runtime
         private void RoutePcCommand(string area, string action) => RoutePcDetail(area, action, "");
         private void RoutePcDetail(string area, string action, string detail)
         {
+            if (area == "workplace") { WorkplaceCommand(action, detail); return; }
             if (area != "vendor" && !(area == "food" && action == "decisions"))
             { if (detail.Length == 0) CensusCommand(area, action); else CensusDetailCommand(area, action, detail); return; }
             var save = SaveGameManager.Current;

@@ -33,7 +33,7 @@ public sealed class EconomicLedgerTests
         foreach (var m in state.Food!.Residents)
         {
             var b = m.Budget!;
-            // Test-only conserved extension; no production transition posts either new account.
+            // Test-only conserved extension exercises both accounts independently of shift attendance.
             b.Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(17), Discretionary = Money.FromUnits(17), VisitWatermark = (long)state.Minute };
         }
         int day = (int)(state.Minute / 1440);
@@ -86,7 +86,7 @@ public sealed class EconomicLedgerTests
     public void NextFreeWriterAndFreshZeroShape()
     {
         Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal(CityState.EconomicLedgerSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.CurrentSchema);
         var state = Fresh();
         Assert.Empty(state.Economy.Outside); Assert.Empty(state.Economy.Shops);
         Assert.All(PersonTable.Schedules(state), p => Assert.Equal(default, p.Accrual));
@@ -107,10 +107,10 @@ public sealed class EconomicLedgerTests
         var state = Fresh(seed); Populate(state);
         string payload = SaveCodec.Write(state);
         AssertRoundTrip(state);
-        output.WriteLine($"golden {seed}: {Sha(payload)} {payload.Length}");
+        output.WriteLine($"frozen ledger golden {seed}: {Sha(DevelopmentChain.WriteLedger(state))} {payload.Length}");
         if (Environment.GetEnvironmentVariable("PC_F6D_PINS") is string path)
-            File.AppendAllText(path, $"golden {seed} {Sha(payload)} {payload.Length}" + Environment.NewLine);
-        Assert.Equal(pin, Sha(payload)); Assert.Equal(length, payload.Length);
+            File.AppendAllText(path, $"golden {seed} {Sha(DevelopmentChain.WriteLedger(state))} {payload.Length}" + Environment.NewLine);
+        Assert.Equal(pin, Sha(DevelopmentChain.WriteLedger(state))); Assert.Equal(length, payload.Length);
         var snapshot = SaveCodec.Capture(state);
         state.Citizens[0].Accrual = default; state.VisitorRoutines[0].Accrual = default;
         state.Food!.Residents[0].Budget!.Ledger = default;
@@ -301,7 +301,7 @@ public sealed class EconomicLedgerTests
     [Fact]
     public void EmploymentIncomeTotalOverflowRefusesPostingAtomically()
     {
-        var b = new ResidentBudget { Balance = Money.FromUnits(100), EssentialsPaid = Money.FromUnits(long.MaxValue - 100),
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, Balance = Money.FromUnits(100), EssentialsPaid = Money.FromUnits(long.MaxValue - 100),
             Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(long.MaxValue) }, DailyIncomeCents = 1, DailyHomeFoodCents = 1 };
         Assert.True(HouseholdFinance.CashConserved(b));
         string before = JsonConvert.SerializeObject(b);
@@ -312,7 +312,7 @@ public sealed class EconomicLedgerTests
     [Fact]
     public void ExtendedIdentityIncludesBothNewAccountsAndEveryExistingMutation()
     {
-        var b = new ResidentBudget { OpeningBalance = Money.FromCents(1000), Balance = Money.FromCents(1000), DailyIncomeCents = 100, DailyHomeFoodCents = 1 };
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, OpeningBalance = Money.FromCents(1000), Balance = Money.FromCents(1000), DailyIncomeCents = 100, DailyHomeFoodCents = 1 };
         b.Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(9), Discretionary = Money.FromUnits(9) };
         Assert.True(HouseholdFinance.CashConserved(b));
         HouseholdFinance.PostDay(b, 0); Assert.True(HouseholdFinance.CashConserved(b));

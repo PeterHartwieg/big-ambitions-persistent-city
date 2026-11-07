@@ -7,7 +7,7 @@ public sealed class HouseholdFinanceTests
     [Fact]
     public void ScarceIncomeFundsFoodBeforeHousingAndCreatesArrearsRatherThanCash()
     {
-        var b = new ResidentBudget { DailyIncomeCents = 1200, DailyHomeFoodCents = 500,
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, DailyIncomeCents = 1200, DailyHomeFoodCents = 500,
             DailyHousingCents = 1000, DailyEssentialsCents = 200, NextPostingMinute = 0 };
         HouseholdFinance.PostDay(b, 0);
         Assert.Equal(Money.FromCents(0), b.Balance); Assert.Equal(Money.FromCents(500), b.HomeFoodPaid);
@@ -22,7 +22,7 @@ public sealed class HouseholdFinanceTests
     [Fact]
     public void AnUnfundedBasketDoesNotBecomeFreeFood()
     {
-        var b = new ResidentBudget { DailyIncomeCents = 100, DailyHomeFoodCents = 500,
+        var b = new ResidentBudget { IncomeSource = ResidentIncomeSource.ExternalSupport, DailyIncomeCents = 100, DailyHomeFoodCents = 500,
             DailyHousingCents = 100, NextPostingMinute = 0 };
         HouseholdFinance.PostDay(b, 0);
         Assert.Equal(-1, b.HomeFoodFundedDay); Assert.Equal(Money.FromCents(0), b.HomeFoodPaid);

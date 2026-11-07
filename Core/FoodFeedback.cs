@@ -275,7 +275,7 @@ namespace PersistentCity.Core
                 if (meal.Excursion?.Unresolved == true) blocked++;
                 var b = meal.Budget; if (b == null) continue;
                 budgets++;
-                sums[0] += b.OpeningBalance.Units; sums[1] += b.Balance.Units; sums[2] += b.IncomeReceived.Units;
+                sums[0] += b.OpeningBalance.Units; sums[1] += b.Balance.Units; sums[2] += b.IncomeReceived.Units; sums[2] += b.Ledger.EmploymentIncome.Units;
                 sums[3] += b.EssentialsPaid.Units; sums[4] += b.HomeFoodPaid.Units; sums[5] += b.PreparedFoodSpent.Units;
                 sums[6] += b.ExternalFoodSpent.Units; sums[7] += b.HeldPurchase.Units; sums[8] += b.Arrears.Units;
                 Count(flags, Flags(b), 1);
@@ -313,6 +313,8 @@ namespace PersistentCity.Core
             if (meal.Status == MealStatus.Uncertain) uncertain++;
             Join(meal.Excursion); Join(meal.Budget);
         }
+        internal void EmploymentMoved(Money before, Money after)
+        { Add(2, after.Units); Subtract(2, before.Units); }
         internal void Moved(FoodMoneyField field, Money old, Money value, int before, ResidentBudget budget)
         {
             int i = (int)field; Add(i, value.Units); Subtract(i, old.Units);
@@ -369,7 +371,7 @@ namespace PersistentCity.Core
         }
         private void Apply(ResidentBudget b, int sign)
         {
-            Signed(0, b.OpeningBalance, sign); Signed(1, b.Balance, sign); Signed(2, b.IncomeReceived, sign);
+            Signed(0, b.OpeningBalance, sign); Signed(1, b.Balance, sign); Signed(2, b.IncomeReceived, sign); Signed(2, b.Ledger.EmploymentIncome, sign);
             Signed(3, b.EssentialsPaid, sign); Signed(4, b.HomeFoodPaid, sign); Signed(5, b.PreparedFoodSpent, sign);
             Signed(6, b.ExternalFoodSpent, sign); Signed(7, b.HeldPurchase, sign); Signed(8, b.Arrears, sign);
             Count(flagCounts, Flags(b), sign);

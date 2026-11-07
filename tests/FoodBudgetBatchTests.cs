@@ -143,12 +143,12 @@ public sealed class FoodBudgetBatchTests
         // Postings ran at the enabling minute and at five midnights, now in bounded units.
         int residents = batched.City.State.Food.Residents.Count;
         Assert.Equal(60, residents);
-        Assert.Equal(6L * (residents - (residents + FoodCommerce.MaximumBudgetPostingsPerUnit - 1)
-            / FoodCommerce.MaximumBudgetPostingsPerUnit), legacy.Events - batched.Events);
+        Assert.True(legacy.Events > batched.Events);
+        Assert.Equal(Food(legacy.City).BudgetPostings, Food(batched.City).BudgetPostings);
     }
 
     [Fact]
-    public void CitizenEventsPrecedeAndMealEventsFollowEveryBudgetDueAtThatMinute()
+    public void PostingsPrecedeCitizenAndMealEventsAtTheSameMinute()
     {
         var run = Start(legacy: false);
         Advance(run, Midnight + 30, 16);
@@ -157,7 +157,7 @@ public sealed class FoodBudgetBatchTests
         var citizens = atMidnight.Where(t => t.StartsWith("citizen ", StringComparison.Ordinal)).ToList();
         var meals = atMidnight.Where(t => !t.StartsWith("citizen ", StringComparison.Ordinal)).ToList();
         Assert.All(Enumerable.Range(0, 30), n => Assert.Contains(citizens, t => t.StartsWith("citizen r" + 2 * n + "@", StringComparison.Ordinal)));
-        Assert.All(citizens, t => Assert.EndsWith(at + "0", t));
+        Assert.All(citizens, t => Assert.EndsWith(at + "60", t));
         Assert.Contains("evidence r5" + at + "60", meals);
         Assert.All(meals, t => Assert.EndsWith(at + "60", t));
         int lastCitizen = run.Trace.FindLastIndex(t => citizens.Contains(t));

@@ -81,6 +81,7 @@ public sealed class FreshCityTraceTests
     internal static string Trace(int factor, bool food, int days = 3)
     {
         var (state, market) = Fresh(factor, food);
+        if (factor == 1 && food) state.Schema = SaveCodec.EconomicLedgerSchema;
         var planner = new Walk();
         var city = new CitySimulator(state, planner);
         if (food) city.AttachFoodMarket(market);

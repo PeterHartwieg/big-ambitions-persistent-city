@@ -6,56 +6,110 @@ namespace PersistentCity.Core
 {
     public sealed partial class FoodCommerce
     {
-        // Only the minimum changes, and only by moving later. Reuse a heap slot instead of allocating
-        // a new SortedSet node on every posting. This index is derived from saved budget timestamps.
+        // Daily and shift postings share one stable minute/ordinal heap and its 32-posting bound.
+        // Reuse entries; employment changes repair their existing slot. All due times are derived.
         private sealed class BudgetQueue
         {
-            private struct Entry
+            private sealed class Entry
             {
-                public ResidentMeal Meal;
-                public double Minute;
-                public int Ordinal;
+                internal ResidentMeal Meal = null!;
+                internal CitizenState Person = null!;
+                internal double Minute, WageAt = double.PositiveInfinity;
+                internal int Ordinal, Index;
+                internal WorkWindow Window;
+                internal string Workplace = "";
             }
+            private readonly FoodCommerce food;
             private readonly List<Entry> items = new List<Entry>();
+            private readonly Dictionary<string, Entry> byPerson = new Dictionary<string, Entry>(StringComparer.Ordinal);
+            internal BudgetQueue(FoodCommerce food) { this.food = food; }
             public int Count => items.Count;
+            internal bool Contains(string personId) => byPerson.ContainsKey(personId);
             public ResidentMeal Min => items[0].Meal;
-            // Population enrollment/finance activation builds this derived index before advancement.
-            // Cache ordinal ranks once: heap repair never hashes or compares resident-ID strings.
-            public void Add(ResidentMeal meal) => items.Add(new Entry { Meal = meal });
+            public double Minute => items.Count == 0 ? double.PositiveInfinity : items[0].Minute;
+            public void Add(ResidentMeal meal)
+            {
+                var e = new Entry { Meal = meal, Person = food.Owner(meal)! };
+                items.Add(e);
+                if (food.city.State.Schema >= CityState.AttendanceSchema) byPerson.Add(meal.ResidentId, e);
+            }
             public void Build()
             {
                 items.Sort((a, b) => StringComparer.Ordinal.Compare(a.Meal.ResidentId, b.Meal.ResidentId));
                 for (int i = 0; i < items.Count; i++)
                 {
-                    var entry = items[i]; entry.Ordinal = i; entry.Minute = entry.Meal.Budget!.NextPostingMinute; items[i] = entry;
+                    var e = items[i]; e.Ordinal = i; e.Index = i;
+                    Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
                 }
                 for (int i = items.Count / 2 - 1; i >= 0; i--) Repair(i);
+            }
+            private void Schedule(Entry e)
+            {
+                e.Workplace = e.Person.DayPlaceId; e.WageAt = double.PositiveInfinity;
+                if (food.city.State.Schema < CityState.AttendanceSchema || !EmploymentWages.Eligible(e.Person)) return;
+                double now = food.city.State.Minute;
+                e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window);
+                if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
             }
             private static int Compare(Entry a, Entry b)
             {
                 int time = a.Minute.CompareTo(b.Minute);
                 return time == 0 ? a.Ordinal.CompareTo(b.Ordinal) : time;
             }
-            public void UpdatedMinimum()
+            public void PostMinimum()
             {
-                var entry = items[0]; entry.Minute = entry.Meal.Budget!.NextPostingMinute; items[0] = entry;
+                var e = items[0]; var budget = e.Meal.Budget!;
+                if (e.WageAt <= budget.NextPostingMinute)
+                {
+                    if (!EmploymentWages.Active(e.Person.Accrual))
+                        EmploymentWages.Begin(e.Person, e.Window, food.city.WorkplaceOpen(e.Window.PlaceId, e.WageAt));
+                    else EmploymentWages.Settle(e.Person, budget, e.Window, e.WageAt);
+                    Schedule(e);
+                }
+                else if (food.city.State.Schema >= CityState.AttendanceSchema)
+                    HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person);
+                else HouseholdFinance.PostDevelopmentDay(budget, food.city.State.Minute, e.Person);
+                e.Minute = Math.Min(budget.NextPostingMinute, e.WageAt);
                 Repair(0);
+            }
+            internal void Leave(CitizenState live, CitizenState working, bool force = false)
+            {
+                if (byPerson.TryGetValue(live.Identity.Id, out var e))
+                    EmploymentWages.Leave(live, working, e.Window, food.city.State.Minute, force);
+            }
+            internal void Changed(CitizenState person)
+            {
+                if (!byPerson.TryGetValue(person.Identity.Id, out var e) || e.Workplace == person.DayPlaceId) return;
+                Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
+                int at = e.Index;
+                while (at > 0)
+                {
+                    int parent = (at - 1) / 2;
+                    if (Compare(items[parent], e) <= 0) break;
+                    items[at] = items[parent]; items[at].Index = at; at = parent;
+                }
+                items[at] = e; e.Index = at; Repair(at);
             }
             private void Repair(int at)
             {
-                var meal = items[at];
+                var e = items[at];
                 while (at * 2 + 1 < items.Count)
                 {
                     int child = at * 2 + 1;
                     if (child + 1 < items.Count && Compare(items[child + 1], items[child]) < 0) child++;
-                    if (Compare(meal, items[child]) <= 0) break;
-                    items[at] = items[child]; at = child;
+                    if (Compare(e, items[child]) <= 0) break;
+                    items[at] = items[child]; items[at].Index = at; at = child;
                 }
-                items[at] = meal;
+                items[at] = e; e.Index = at;
             }
         }
-        private readonly BudgetQueue budgetDue = new BudgetQueue();
-        private double NextBudgetMinute => budgetDue.Count == 0 ? double.PositiveInfinity : budgetDue.Min!.Budget!.NextPostingMinute;
+        private readonly BudgetQueue budgetDue;
+        private double NextBudgetMinute => budgetDue.Minute;
+        internal bool TracksEmployment(CitizenState person) => EmploymentWages.Eligible(person) && budgetDue.Contains(person.Identity.Id);
+        internal bool PostingDueAt(double minute) => NextBudgetMinute == minute;
+        internal void AccrueWorkDeparture(CitizenState live, CitizenState working) => budgetDue.Leave(live, working);
+        internal void AccrueWorkDeparture(CitizenState person) => budgetDue.Leave(person, person, true);
+        internal void EmploymentChanged(CitizenState person) => budgetDue.Changed(person);
         internal void EnableFinances()
         {
             if (state.Residents.Any(m => m.LegacyExternalFoodSpent != Money.Zero)) throw new InvalidOperationException("Preserve the legacy external-food ledger; use a household-finance scope before new outside purchases.");
@@ -92,17 +146,15 @@ namespace PersistentCity.Core
             LastBudgetPostings = 0;
             if (NextBudgetMinute > (due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt)) return false;
             if (budgetDue.Count == 0) return false;
-            double minute = budgetDue.Min!.Budget!.NextPostingMinute;
+            double minute = budgetDue.Minute;
             int posted = 0;
             do
             {
-                var meal = budgetDue.Min!;
-                HouseholdFinance.PostDay(meal.Budget!, city.State.Minute, Owner(meal)!);
-                budgetDue.UpdatedMinimum();
+                budgetDue.PostMinimum();
                 posted++;
                 LastBudgetPostings = posted; BudgetPostings++;
             }
-            while (posted < BudgetPostingsPerEvent && budgetDue.Min!.Budget!.NextPostingMinute == minute);
+            while (posted < BudgetPostingsPerEvent && budgetDue.Minute == minute);
             return true;
         }
         private Money AvailableForMeal(ResidentMeal meal)

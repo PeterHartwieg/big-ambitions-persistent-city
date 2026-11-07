@@ -181,12 +181,13 @@ public sealed partial class FoodCommerceTests
                 case 5: if (detached.Count > 0) detached[random.Next(detached.Count)].Balance = M(); break; // a detached budget no longer counts
                 default:
                     if (b == null) break;
-                    switch (random.Next(14))
+                    switch (random.Next(15))
                     {
                         case 0: b.OpeningBalance = M(); break; case 1: b.Balance = M(); break; case 2: b.IncomeReceived = M(); break;
                         case 3: b.EssentialsPaid = M(); break; case 4: b.HomeFoodPaid = M(); break; case 5: b.PreparedFoodSpent = M(); break;
                         case 6: b.ExternalFoodSpent = M(); break; case 7: b.HeldPurchase = M(); break; case 8: b.Arrears = M(); break;
                         case 9: b.DailyHousingCents = random.Next(-5, 5000); break; case 10: b.DailyEssentialsCents = random.Next(int.MinValue, int.MaxValue); break;
+                        case 14: var ledger = b.Ledger; ledger.EmploymentIncome = M(); b.Ledger = ledger; break;
                         case 11: b.DailyHomeFoodCents = random.Next(0, 2000); break; case 12: b.LastPostedDay = random.Next(-1, 4); break;
                         default: b.HomeFoodFundedDay = random.Next(-1, 4); break;
                     }
@@ -352,7 +353,7 @@ public sealed partial class FoodCommerceTests
         string before = DevelopmentChain.Write(city.State);
         _ = city.FoodMoney!.Snapshot(); _ = city.FoodMoney.Snapshot().Text();
         Assert.Equal(before, DevelopmentChain.Write(city.State));
-        Assert.Equal(SaveCodec.EconomicLedgerSchema, CityState.CurrentSchema); Assert.Equal(CityState.CurrentSchema, DevelopmentChain.Read(before).State!.Schema);
+        Assert.Equal(CityState.AttendanceSchema, CityState.CurrentSchema); Assert.Equal(CityState.CurrentSchema, DevelopmentChain.Read(before).State!.Schema);
         Assert.DoesNotContain("counters", before, StringComparison.OrdinalIgnoreCase);
         var restored = Reload(city, market, routes);
         Assert.Equal(before, DevelopmentChain.Write(restored.State));

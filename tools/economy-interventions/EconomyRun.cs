@@ -258,7 +258,7 @@ public static class EconomyRun
             foreach (var meal in state.Food!.Residents)
             {
                 var b = meal.Budget!;
-                h.Income += b.IncomeReceived.Units; h.Unfed += b.DaysWithoutHomeFood;
+                h.Income += (b.IncomeReceived + b.Ledger.EmploymentIncome).Units; h.Unfed += b.DaysWithoutHomeFood;
                 if (b.Arrears > Money.Zero) h.Arrears++;
                 if (b.IncomeSource == ResidentIncomeSource.ExternalEmployment) h.Scheduled += Money.FromCents(b.DailyIncomeCents).Units;
                 balances.Add(b.Balance.Units);
