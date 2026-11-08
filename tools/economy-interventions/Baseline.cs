@@ -44,8 +44,9 @@ public static class Baseline
         ("p10BalanceUnitsEndOfWeek", d => d.P10BalanceUnits, true), ("employedEndOfWeek", d => d.Employed, true),
     };
 
-    public static string Summary(IReadOnlyList<Arm> arms, Dictionary<string, List<RunResult>> results, int residents, int seeds, bool integrated = false)
+    public static string Summary(IReadOnlyList<Arm> arms, Dictionary<string, List<RunResult>> results, int residents, int seeds, bool integrated = false, FixtureProfile? profile = null)
     {
+        profile ??= FixtureProfile.CapacityBound;
         var control = results["control/control"];
         int reverted = InterventionArms.FirstRevertedDay;
         // Control seed band per day of the 3-day trailing mean own purchases (mean +/- 2 sd over seeds).
@@ -97,7 +98,7 @@ public static class Baseline
             {
                 bool menu = arm.Name == "menu-plus-50";
                 var priceInput = arm.Inputs.First(i => i.Kind == InputKind.ProductPrice);
-                double basePrice = EconomyFixture.Menu.Single(m => m.Product == priceInput.Product).Cents, changed = priceInput.Value;
+                double basePrice = profile.Base(priceInput.Product), changed = priceInput.Value;
                 double Arc(double qa, double qc) => (qa - qc) / ((qa + qc) / 2) / ((changed - basePrice) / ((changed + basePrice) / 2));
                 double Sum(RunResult r, Func<DayMetrics, double> q) => r.Days.Where(d => DayMetrics.Phase(d.Day) == "intervention").Sum(q);
                 // Served purchases are capped by the staffed ceiling; the demand-side quantities are

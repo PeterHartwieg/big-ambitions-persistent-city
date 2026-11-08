@@ -1,8 +1,13 @@
 """Fast tests of the independent acceptance reader's red-path and cost-box proof."""
 import copy
 import itertools
+import json
 import unittest
-from acceptance import band, dominance_floor, recovery
+from pathlib import Path
+from acceptance import (HOUSEHOLD_THRESHOLDS, band, derive_household_thresholds, dominance_floor,
+                        price_arms, recovery, within_household)
+
+EVIDENCE = Path(__file__).parent / "evidence"
 
 
 def run(counts, prices):
@@ -41,6 +46,31 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual((1, 5), (b["min"], b["max"]))
         self.assertLess(b["low"], 1)
         self.assertGreater(b["high"], 5)
+
+    def test_household_thresholds_are_the_rerun_control_band_rounded_outward(self):
+        # Pinned: a rerun that changes the canonical control band must re-derive the thresholds.
+        report = json.loads((EVIDENCE / "f6h-rerun-acceptance.json").read_text())
+        household = report["householdControlSeedBands"]
+        self.assertEqual(HOUSEHOLD_THRESHOLDS, derive_household_thresholds(household))
+        self.assertTrue(all(household["withinThresholdsPerSeed"]))
+        self.assertFalse(within_household(HOUSEHOLD_THRESHOLDS["week6ArrearsShareMax"] + 1e-4, 0, 1000))
+        self.assertFalse(within_household(0, 0, HOUSEHOLD_THRESHOLDS["week6P10DollarsMin"] - 1))
+
+    def test_price_table_flags_binding_capacity_and_measures_arc_elasticity(self):
+        def day(q, cents, refused, peak):
+            return {"own": {"purchases": q, "revenueUnits": q * cents, "shops": [{"byHour": [peak], "offers": {"price": refused, "considered": 100}}]},
+                    "share": {"city": {"home": 1000 - q}}}
+        def arm(q, cents, peak, refused=1, seeds=5):
+            return [{"days": [day(q, cents, refused, peak)] * 42, "fixture": {"mealsPerHour": 60}} for _ in range(seeds)]
+        controls = arm(100, 10, 50)
+        table = price_arms({"control/control": controls, "price/menu-plus-50": arm(60, 15, 60)}, controls, {}, 1)
+        menu = table["price/menu-plus-50"]
+        self.assertTrue(menu["capacityBinding"])
+        self.assertFalse(table["control/control"]["capacityBinding"])
+        self.assertAlmostEqual(-0.4, menu["quantityChange"]["mean"])
+        self.assertAlmostEqual(-0.1, menu["revenueChange"]["mean"])
+        self.assertAlmostEqual(-0.5 / 0.4, menu["arcElasticity"]["mean"])
+        self.assertAlmostEqual(0.01, menu["unaffordableRefusalShare"]["mean"])
 
 
 if __name__ == "__main__":

@@ -8,8 +8,14 @@ but cannot certify measured native operating profit or replace the rig throughpu
 import argparse
 import hashlib
 import json
+import math
 import statistics as st
 from pathlib import Path
+
+# Household control thresholds from the 8 Nov 2026 rerun after F6i (base 3f734cb6): canonical
+# capacity-bound fixture, five seeds, week-6 control seed band (mean +/- 2 sd), rounded outward.
+# Measured: arrears 0.18808% [high 0.46057%], unfed 2.0 owner-days [high 5.16], p10 $691.43 [low $656.75].
+HOUSEHOLD_THRESHOLDS = {"week6ArrearsShareMax": 0.0047, "week6UnfedOwnerDaysMax": 5.2, "week6P10DollarsMin": 656.0}
 
 
 def band(values):
@@ -54,6 +60,55 @@ def dominance_floor(high, other, week, base_units):
     a, ar = products(high, week)
     b, br = products(other, week)
     return ar - br - sum(max(0, a.get(p, 0) - b.get(p, 0)) * cost for p, cost in base_units.items())
+
+
+def derive_household_thresholds(household):
+    """Week-6 control seed band, rounded outward: arrears up to 4 dp, unfed up to 0.1, p10 down to $1."""
+    return {"week6ArrearsShareMax": math.ceil(household["arrearsShare"][5]["high"] * 1e4) / 1e4,
+            "week6UnfedOwnerDaysMax": math.ceil(household["unfedOwnerDays"][5]["high"] * 10) / 10,
+            "week6P10DollarsMin": float(math.floor(household["p10Dollars"][5]["low"]))}
+
+
+def within_household(arrears, unfed, p10, limits=None):
+    limits = limits or HOUSEHOLD_THRESHOLDS
+    return arrears <= limits["week6ArrearsShareMax"] and unfed <= limits["week6UnfedOwnerDaysMax"] and p10 >= limits["week6P10DollarsMin"]
+
+
+def price_arms(groups, controls, base_units, units):
+    """Price-arm table: per-seed quantity, revenue and arc elasticity against the matched control
+    over both intervention weeks, plus whether own capacity bound at any hour and the share of
+    evaluated own offers refused as unaffordable (wallet-exhaustion check)."""
+    def fortnight(run):
+        days = run["days"][14:28]
+        shops = [s for d in days for s in d["own"]["shops"]]
+        return {"q": sum(d["own"]["purchases"] for d in days), "r": sum(d["own"]["revenueUnits"] for d in days),
+                "home": sum(d["share"]["city"]["home"] for d in days),
+                "peak": max(max(s["byHour"]) for s in shops),
+                "refused": sum(s["offers"]["price"] for s in shops), "considered": sum(s["offers"]["considered"] for s in shops)}
+    capacity = controls[0]["fixture"]["mealsPerHour"]
+    table = {}
+    for key in ["control/control"] + sorted(k for k in groups if k.startswith("price/")):
+        rows = [fortnight(r) for r in groups[key]]
+        base = [fortnight(c) for c in controls]
+        menu = key == "price/menu-plus-50"
+        change = 0.5 if menu else (0.25 if key.endswith("plus-25") else -0.25)
+        arc_price = change / (1 + change / 2)
+        entry = {
+            "ownPurchasesPerDay": band([x["q"] / 14 for x in rows]),
+            "revenueDollarsPerDay": band([x["r"] / units / 100 / 14 for x in rows]),
+            "homeMealsPerDay": band([x["home"] / 14 for x in rows]),
+            "unaffordableRefusalShare": band([x["refused"] / x["considered"] for x in rows]),
+            "peakServedPerHour": [x["peak"] for x in rows], "capacityPerHour": capacity,
+            "capacityBinding": any(x["peak"] >= capacity for x in rows),
+        }
+        if key != "control/control":
+            entry["quantityChange"] = band([x["q"] / b["q"] - 1 for x, b in zip(rows, base)])
+            entry["revenueChange"] = band([x["r"] / b["r"] - 1 for x, b in zip(rows, base)])
+            # Menu arc uses own purchases; product arms use all own purchases too (cross-product
+            # substitution included), so their value is a shop-level response, not own-product.
+            entry["arcElasticity"] = band([(x["q"] - b["q"]) / ((x["q"] + b["q"]) / 2) / arc_price for x, b in zip(rows, base)])
+        table[key] = entry
+    return table
 
 
 def report(directory):
@@ -134,6 +189,11 @@ def report(directory):
     }.items():
         household[name] = [band([measure(r, w) for r in controls]) for w in range(6)]
     household["p10FallsEveryWeekPerSeed"] = [all(r["days"][w * 7 + 6]["households"]["p10BalanceUnits"] < r["days"][(w - 1) * 7 + 6]["households"]["p10BalanceUnits"] for w in range(1, 6)) for r in controls]
+    week6 = {"week6ArrearsShare": household["arrearsShare"][5], "week6UnfedOwnerDays": household["unfedOwnerDays"][5],
+             "week6P10Dollars": household["p10Dollars"][5]}
+    household["thresholds"] = HOUSEHOLD_THRESHOLDS
+    household["derivedFromThisRun"] = derive_household_thresholds(household)
+    household["withinThresholdsPerSeed"] = [within_household(a, u, p) for a, u, p in zip(week6["week6ArrearsShare"]["perSeed"], week6["week6UnfedOwnerDays"]["perSeed"], week6["week6P10Dollars"]["perSeed"])]
     certificates = []
     if "price/menu-plus-50" in groups:
         for seed, high in enumerate(groups["price/menu-plus-50"]):
@@ -154,6 +214,8 @@ def report(directory):
             failures.append(key + ": staffing cut raises served meals")
     if any(household["p10FallsEveryWeekPerSeed"]):
         failures.append("control p10 falls every week in at least one seed")
+    if not all(household["withinThresholdsPerSeed"]):
+        failures.append("control household week-6 metrics outside the rerun thresholds in at least one seed")
     families = {family: (any(any(row["effectOutsideControlBand"].values())
                            for key, row in rows.items() if key.startswith(family + "/"))
                            if any(key.startswith(family + "/") for key in rows) else None)
@@ -161,9 +223,12 @@ def report(directory):
     for family, passed in families.items():
         if passed is False:
             failures.append(family + ": no measured effect outside control band")
-    return {"status": "stopped" if failures else "partial", "unitsPerCent": units, "runs": len(hashes), "completeInterventionMatrix": len(groups) == 17,
+    profile = controls[0].get("profile", {"name": "capacity-bound", "mealsPerHour": controls[0]["fixture"]["mealsPerHour"]})
+    profile = dict(profile, rivalListed=controls[0]["fixture"]["rivalListed"])
+    prices = price_arms(groups, controls, base_units, units) if any(k.startswith("price/") for k in groups) else {}
+    return {"status": "stopped" if failures else "partial", "profile": profile, "unitsPerCent": units, "runs": len(hashes), "completeInterventionMatrix": len(groups) == 17,
             "dailyConservationChecks": conservation, "arms": rows, "householdControlSeedBands": household,
-            "familyEffectOutsideControlBand": families, "menuDominanceCertificates": certificates,
+            "familyEffectOutsideControlBand": families, "menuDominanceCertificates": certificates, "priceArms": prices,
             "failedCriteria": failures, "unmeasuredCriteria": ["measured native wholesale costs", "every gain has a measured cost / no Pareto dominant arm",
                 "native staffed-throughput calibration", "F1 cadence byte identity", "F2 body-cap flagged differences", "full section 6 perf and 100000-consumer stress"] + (["remaining intervention arms"] if len(groups) != 17 else []),
             "defaults": controls[0]["integrated"], "metricsSha256": hashes}

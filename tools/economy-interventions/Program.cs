@@ -5,7 +5,7 @@ using System.Linq;
 using PersistentCity.EconomyInterventions;
 
 // F6a/F6h intervention harness. Usage:
-//   EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms family/name,...] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3]
+//   EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms family/name,...] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3] [--meals-per-hour N] [--menu legacy|native] [--no-rival]
 // Writes one metrics JSON per arm and seed, a seed-band summary, today's rival saturation curve
 // and tool-cost measurements. Offline Core evidence only; never native or rig proof.
 internal static class Program
@@ -13,7 +13,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         if (args.Length == 0 || args[0].StartsWith("--", StringComparison.Ordinal))
-        { Console.Error.WriteLine("usage: EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms a,b] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3]"); return 2; }
+        { Console.Error.WriteLine("usage: EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms a,b] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3] [--meals-per-hour N] [--menu legacy|native] [--no-rival]"); return 2; }
         string outDir = args[0];
         int seeds = Option(args, "--seeds", EconomyRun.Seeds), residents = Option(args, "--residents", EconomyFixture.Residents);
         string? filter = args.SkipWhile(a => a != "--arms").Skip(1).FirstOrDefault();
@@ -32,7 +32,19 @@ internal static class Program
         if (!integrated) SelfChecks.Run();
         if (args.Contains("--checks-only")) return 0;
 
-        var arms = new[] { InterventionArms.Control }.Concat(InterventionArms.All())
+        int mealsPerHour = Option(args, "--meals-per-hour", EconomyFixture.MealsPerHour);
+        string menu = args.SkipWhile(a => a != "--menu").Skip(1).FirstOrDefault() ?? "legacy";
+        if (menu != "legacy" && menu != "native" || mealsPerHour <= 0) { Console.Error.WriteLine("--menu must be legacy or native; --meals-per-hour must be positive"); return 2; }
+        var profile = mealsPerHour == EconomyFixture.MealsPerHour && menu == "legacy" ? FixtureProfile.CapacityBound
+            : new FixtureProfile((mealsPerHour == EconomyFixture.MealsPerHour ? "capacity-bound" : "non-binding-" + mealsPerHour) + "-" + menu + "-menu",
+                mealsPerHour, menu == "native" ? EconomyFixture.NativeMenu : EconomyFixture.Menu);
+        // --no-rival: the sole-shop (monopoly) price fixture; the rival is never listed.
+        bool rivalListed = !args.Contains("--no-rival");
+        if (!rivalListed && profile == FixtureProfile.CapacityBound) { Console.Error.WriteLine("--no-rival is a price-only profile option"); return 2; }
+        if (!rivalListed) profile = profile with { Name = profile.Name + "-no-rival" };
+        // Staffing/other inputs restore the original fixture's terms, so a changed profile is price-only.
+        var candidates = profile == FixtureProfile.CapacityBound ? InterventionArms.All() : InterventionArms.Price(profile);
+        var arms = new[] { InterventionArms.Control }.Concat(candidates)
             .Where(a => filter == null || a.Family == "control" || filter.Split(',').Contains(a.Family + "/" + a.Name)).ToList();
         var results = new Dictionary<string, List<RunResult>>(StringComparer.Ordinal);
         foreach (var arm in arms)
@@ -40,7 +52,7 @@ internal static class Program
             var list = new List<RunResult>();
             for (int seed = 0; seed < seeds; seed++)
             {
-                var result = EconomyRun.Run(new RunOptions { Family = arm.Family, Arm = arm.Name, Seed = seed, Residents = residents, Inputs = arm.Inputs, Integrated = integrated, PriceWeight = priceWeight });
+                var result = EconomyRun.Run(new RunOptions { Family = arm.Family, Arm = arm.Name, Seed = seed, Residents = residents, Inputs = arm.Inputs, Integrated = integrated, PriceWeight = priceWeight, Profile = profile, RivalListed = rivalListed });
                 File.WriteAllText(Path.Combine(outDir, "runs", arm.Family + "-" + arm.Name + "-seed" + seed + ".json"), result.Json);
                 Console.WriteLine($"{arm.Family}/{arm.Name} seed {seed}: {result.Seconds:F1} s, {result.ConservationChecks} conservation checks, {result.InputsPublished} inputs, metrics sha256 {EconomyRun.Sha256(result.Json)[..16]}");
                 list.Add(result);
@@ -48,7 +60,7 @@ internal static class Program
             if (arm == InterventionArms.Control)
             {
                 // Full-size save/reload equivalence on the measured fixture, outside any timing claim.
-                var reloaded = EconomyRun.Run(new RunOptions { Seed = 0, Residents = residents, ReloadAt = SelfChecks.MidEpochReload, Integrated = integrated, PriceWeight = priceWeight });
+                var reloaded = EconomyRun.Run(new RunOptions { Seed = 0, Residents = residents, ReloadAt = SelfChecks.MidEpochReload, Integrated = integrated, PriceWeight = priceWeight, Profile = profile, RivalListed = rivalListed });
                 if (reloaded.Json != list[0].Json || reloaded.FinalSaveSha256 != list[0].FinalSaveSha256)
                     throw new InvalidOperationException("full-size mid-epoch reload changed metrics");
                 Console.WriteLine($"PASS {residents}-resident mid-epoch reload ({reloaded.InFlightAtReload} meals in flight): byte-identical metrics and final save");
@@ -62,7 +74,7 @@ internal static class Program
             }
             results[arm.Family + "/" + arm.Name] = list;
         }
-        File.WriteAllText(Path.Combine(outDir, "baseline-summary.json"), Baseline.Summary(arms, results, residents, seeds, integrated));
+        File.WriteAllText(Path.Combine(outDir, "baseline-summary.json"), Baseline.Summary(arms, results, residents, seeds, integrated, profile));
         Console.WriteLine("RECORDED summary: " + arms.Count + " arms x " + seeds + " seeds");
         if (integrated) Console.WriteLine("F6h acceptance is separate: run acceptance.py; recording a sweep is not acceptance.");
         if (!integrated && !args.Contains("--skip-curve"))

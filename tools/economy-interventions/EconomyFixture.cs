@@ -213,6 +213,9 @@ public static class EconomyFixture
     public const int MealsPerHour = 60;
     public static readonly (string Product, int Cents)[] Menu = {
         (FoodProducts.Burger, 800), (FoodProducts.Croissant, 300), (FoodProducts.HotDog, 500) };
+    // F6i rerun: retained native price levels (decision 2026-11-08); the hot dog is a salad-price proxy.
+    public static readonly (string Product, int Cents)[] NativeMenu = {
+        (FoodProducts.Burger, 1250), (FoodProducts.Croissant, 924), (FoodProducts.HotDog, 1669) };
     public const string Shop = "b-shop", FarShop = "b-far", RivalBusiness = "b-rival";
     // Twice the one-minute own-shop walk, each way, matching the doubled distance.
     public const double FarSiteRouteMinutes = 2;
@@ -220,8 +223,9 @@ public static class EconomyFixture
     public static string WorkplaceId(int index) => "work" + index;
     public static string PlaceOf(string business) => business == Shop ? "shop" : business == FarShop ? "shop-far" : business == RivalBusiness ? "rival" : "";
 
-    public static (CityState State, EconomyMarket Market) Build(int seed, int residents, bool rivalListed = true, bool ownListed = true)
+    public static (CityState State, EconomyMarket Market) Build(int seed, int residents, bool rivalListed = true, bool ownListed = true, FixtureProfile? profile = null)
     {
+        profile ??= FixtureProfile.CapacityBound;
         var places = new List<Place> {
             new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents },
             new Place { Id = "shop", Name = "Own shop", Kind = PlaceKind.Shop, Position = new Position(2, 0, 0) },
@@ -256,15 +260,15 @@ public static class EconomyFixture
         var market = new EconomyMarket();
         foreach (var (business, place, open, minutes) in new[] { (Shop, "shop", ownListed, 1.0), (FarShop, "shop-far", false, FarSiteRouteMinutes) })
         {
-            var shop = new EconomyMarket.Shop { BusinessId = business, PlaceId = place, Name = place, MealsPerHour = MealsPerHour,
+            var shop = new EconomyMarket.Shop { BusinessId = business, PlaceId = place, Name = place, MealsPerHour = profile.MealsPerHour,
                 OpenMinute = OpenMinute, CloseMinute = CloseMinute, SiteOpen = open, BaseRouteMinutes = minutes };
-            foreach (var (product, cents) in Menu) shop.Prices[product] = cents;
+            foreach (var (product, cents) in profile.Menu) shop.Prices[product] = cents;
             market.Shops.Add(shop);
         }
         market.RivalShop.BusinessId = RivalBusiness; market.RivalShop.PlaceId = "rival";
         market.RivalShop.OpenMinute = OpenMinute; market.RivalShop.CloseMinute = CloseMinute;
         market.RivalShop.EstimatedLanes = InterventionArms.RivalLanesDefaultPercent; market.RivalShop.Listed = rivalListed;
-        foreach (var (product, cents) in Menu) market.RivalShop.Prices[product] = cents;
+        foreach (var (product, cents) in profile.Menu) market.RivalShop.Prices[product] = cents;
         return (state, market);
     }
 
@@ -280,4 +284,13 @@ public static class EconomyFixture
         }
         return city;
     }
+}
+
+/// <summary>Matched fixture inputs shared by every arm and seed of one sweep: the own shops'
+/// staffed ceiling and the own/rival menu. Fixture terms, never product defaults.</summary>
+public sealed record FixtureProfile(string Name, int MealsPerHour, IReadOnlyList<(string Product, int Cents)> Menu)
+{
+    // F6a/F6h original: 60 meals/hour binds at peak; $8/$3/$5 menu.
+    public static readonly FixtureProfile CapacityBound = new("capacity-bound", EconomyFixture.MealsPerHour, EconomyFixture.Menu);
+    public int Base(string product) => Menu.Single(m => m.Product == product).Cents;
 }
