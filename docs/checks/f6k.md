@@ -33,7 +33,7 @@ Updated where the 1 → 1.2 default legitimately moves numbers:
 ## Offline validation
 
 - Required foreground build: passed, DLL SHA256 `e76151c7fceaa0b5787a4943ddd9fad4a55f613e7d1c642d3b83a6a8606d8dd6`.
-- `dotnet test tests/PersistentCity.Tests.csproj`: 4,042 passed, 1 failed, 6 min 38 s. The failure is `PresentationGridTests.GridHasNoIdentityOrEconomyEffect`, which asserts `ChangeJournalSchema` (33) equals `CurrentSchema` (34). That already fails on the base after F7d's writer bump; F6k touches neither constant. All golden-hash and writer-34 pins pass unchanged.
+- `dotnet test tests/PersistentCity.Tests.csproj`: 4,043 passed, 0 failed, 6 min 3 s. All golden-hash and writer-34 pins pass unchanged. `PresentationGridTests.GridHasNoIdentityOrEconomyEffect` failed on the base: it still asserted `ChangeJournalSchema` (33) equals `CurrentSchema` (34), the one writer pin F7d missed. It now asserts `CompactSchema`, like the other writer pins.
 - An earlier full run also failed `ResearchChargeTests.PostfixCostWithZeroOneAndEightOrdersOnAFullQueue` while it shared the machine with another worktree's test process (10 min run). It passed alone and in the final run.
 - F6h/F6i/F6j/F6k classes on their own: 76 passed.
 - `git diff --check` and `tools/docs-links/check.py` pass. No game, rig, ModsLocal, bridge, `tools/*-regression` suite or calibration sweep was run.
