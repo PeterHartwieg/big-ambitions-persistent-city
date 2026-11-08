@@ -286,6 +286,6 @@ The section 6 component table above is unchanged by this rerun. F6j's checkout c
 ### Rerun validation
 
 - Representative tests in the default suite: `F6hIntegratedTests.ExistingDefaultsStayPinnedUntilTradeoffGateCanPass` now also pins `FoodChoicePriceWeight` 1, `FoodChoiceHouseholdWeight` 1 and the F6j extras constants. `NonBindingMenuMarkupCostsDemandWithoutWalletExhaustion` now also requires items to exceed meals in both arms (extras in the ticket), meals to fall ≥ 15% and peak meals per hour to stay below capacity.
-- Python reader checks: **8 passed**, including household thresholds pinned to the F6j rerun evidence, meal-based capacity labelling with extras, and the main-mix / within-main split.
+- Python reader checks: **9 passed**, including household thresholds pinned to the F6j rerun evidence, meal-based capacity labelling with extras, the main-mix / within-main split, and (review fix Sol-r1-1) a staffing cut that serves more meals with fewer items failing the staffing gate.
 - Opt-in cadence/body and stress cases: **2 passed** (2 min 28 s); stress alone passed twice more (1 min 18 s each).
 - Required build, full test suite, golden pins and docs checks: recorded in [checks](../checks/f6h.md#acceptance-rerun-after-f6j-8-november-2026).

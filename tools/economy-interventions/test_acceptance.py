@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 from acceptance import (HOUSEHOLD_THRESHOLDS, band, derive_household_thresholds, dominance_floor,
-                        price_arms, recovery, within_household)
+                        price_arms, recovery, staffing_checks, staffing_raises_meals, within_household)
 
 EVIDENCE = Path(__file__).parent / "evidence"
 
@@ -108,6 +108,22 @@ class AcceptanceTests(unittest.TestCase):
         within = table["price/product-plus-25"]
         self.assertAlmostEqual(0, within["extrasPerMealChangeFromMainMix"]["mean"])
         self.assertAlmostEqual(-0.25, within["extrasPerMealChangeWithinMain"]["mean"])
+
+    def test_staffing_gate_counts_meals_not_items(self):
+        # A cut that serves more meals with fewer extras sells fewer items; it must still fail the gate.
+        def run(meals, items, seed):
+            hours = [0] * 24; hours[12] = meals
+            shop = {"meals": meals, "mealsByCheckoutHour": hours, "byHour": [0] * 12 + [items] + [0] * 11}
+            return {"seed": seed, "days": [{"day": n + 1, "own": {"purchases": items, "shops": [shop]}} for n in range(42)]}
+        controls = [run(100, 150, s) for s in range(5)]
+        cut = [run(101, 110, s) for s in range(5)]
+        for key in ("staffing/lunch-counters-halved", "staffing/zero-staff-day"):
+            row = staffing_checks(key, cut, controls)
+            self.assertFalse(row["staffingDoesNotRaiseFortnightMeals"])
+            self.assertTrue(all(d > 0 for d in row["staffingActiveWindowDeltaMealsPerSeed"]))
+            self.assertTrue(staffing_raises_meals(row))
+        fewer = staffing_checks("staffing/lunch-counters-halved", [run(90, 160, s) for s in range(5)], controls)
+        self.assertFalse(staffing_raises_meals(fewer))
 
 
 if __name__ == "__main__":

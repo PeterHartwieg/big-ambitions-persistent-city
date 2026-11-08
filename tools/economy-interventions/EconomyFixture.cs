@@ -250,6 +250,7 @@ public static class EconomyFixture
 
     public static string WorkplaceId(int index) => "work" + index;
     public static string PlaceOf(string business) => business == Shop ? "shop" : business == FarShop ? "shop-far" : business == RivalBusiness ? "rival" : "";
+    public static string? BusinessAt(string place) => new[] { Shop, FarShop }.FirstOrDefault(b => PlaceOf(b) == place);
 
     public static (CityState State, EconomyMarket Market) Build(int seed, int residents, bool rivalListed = true, bool ownListed = true, FixtureProfile? profile = null)
     {

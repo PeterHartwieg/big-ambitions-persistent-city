@@ -143,6 +143,6 @@ public sealed class F6hIntegratedTests
         double Meals(RunResult r) => Sum(r, d => d.OwnMealHours.Values.Sum(h => h.Sum()));
         Assert.True(q0 > Meals(control) && q1 > Meals(high), $"extras must be in the ticket: items {q0}/{q1}, meals {Meals(control)}/{Meals(high)}");
         Assert.True(Meals(high) < Meals(control) * .85, $"markup must cost at least 15% of meals: {Meals(control)} -> {Meals(high)}");
-        Assert.All(control.Days.Concat(high.Days), d => Assert.True(d.OwnMealHours.Values.Max(h => h.Max()) < 6000));
+        Assert.All(control.Days.Concat(high.Days), d => Assert.True(d.OwnMealHours.Values.Select(h => h.Max()).DefaultIfEmpty(0).Max() < 6000));
     }
 }

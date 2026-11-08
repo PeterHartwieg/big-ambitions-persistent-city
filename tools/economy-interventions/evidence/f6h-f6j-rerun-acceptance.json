@@ -6298,32 +6298,32 @@
    ],
    "staffingDoesNotRaiseFortnightMeals": true,
    "staffingActiveWindowDeltaMealsPerSeed": [
-    -1097,
-    -1110,
-    -1148,
-    -1109,
-    -1101
+    -911,
+    -917,
+    -933,
+    -912,
+    -921
    ],
    "staffingWeeklyDeltaMealsPerSeed": [
     [
-     -583,
-     -573
+     -476,
+     -485
     ],
     [
-     -587,
-     -617
+     -490,
+     -501
     ],
     [
-     -612,
-     -599
+     -491,
+     -490
     ],
     [
-     -567,
-     -587
+     -488,
+     -480
     ],
     [
-     -591,
-     -599
+     -497,
+     -488
     ]
    ],
    "staffingDaysWithMoreMealsThanControlPerSeed": [
@@ -6728,66 +6728,56 @@
    ],
    "staffingDoesNotRaiseFortnightMeals": true,
    "staffingActiveWindowDeltaMealsPerSeed": [
-    -569,
-    -565,
-    -577,
-    -560,
-    -539
+    -472,
+    -471,
+    -468,
+    -468,
+    -462
    ],
    "staffingWeeklyDeltaMealsPerSeed": [
     [
-     -565,
-     17
+     -471,
+     1
     ],
     [
-     -573,
-     9
+     -470,
+     -6
     ],
     [
-     -573,
-     -1
+     -468,
+     -5
     ],
     [
-     -565,
-     -7
+     -464,
+     -3
     ],
     [
-     -541,
-     4
+     -461,
+     3
     ]
    ],
    "staffingDaysWithMoreMealsThanControlPerSeed": [
     [
      20,
-     21,
-     23,
-     25,
-     26,
-     28
-    ],
-    [
-     19,
-     22,
      24,
-     25,
      26
     ],
     [
-     18,
-     21,
-     22,
-     25,
-     28
+     20,
+     25
+    ],
+    [
+     27
     ],
     [
      18,
-     23,
+     20,
      24
     ],
     [
-     18,
-     21,
+     20,
      25,
+     26,
      27
     ]
    ]

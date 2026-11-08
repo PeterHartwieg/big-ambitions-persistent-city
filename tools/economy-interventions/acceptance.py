@@ -30,6 +30,38 @@ def inside(value, seed_band):
     return seed_band["low"] <= value <= seed_band["high"]
 
 
+def day_meals(d):
+    """Own meals (visits) on a day. Since F6j shop purchases count items (main + extras); pre-F6j runs have
+    no per-shop meals field and their purchases are meals."""
+    shops = d["own"]["shops"]
+    return sum(s["meals"] for s in shops) if shops and all("meals" in s for s in shops) else d["own"]["purchases"]
+
+
+def meal_hours(shop):
+    return shop["mealsByCheckoutHour"] if "mealsByCheckoutHour" in shop else shop["byHour"]
+
+
+def staffing_checks(key, runs, controls):
+    """Staffing cuts are judged on served meals, never items: fewer extras must not hide more meals."""
+    def active_meals(run):
+        if key.endswith("zero-staff-day"):
+            return day_meals(run["days"][16])
+        return sum(sum(meal_hours(shop)[11:14]) for d in run["days"][14:28] for shop in d["own"]["shops"])
+    return {
+        "staffingDoesNotRaiseFortnightMeals": all(sum(day_meals(d) for d in r["days"][14:28]) <= sum(day_meals(d) for d in c["days"][14:28])
+                                                  for r, c in zip(runs, controls)),
+        "staffingActiveWindowDeltaMealsPerSeed": [active_meals(r) - active_meals(c) for r, c in zip(runs, controls)],
+        "staffingWeeklyDeltaMealsPerSeed": [[sum(day_meals(d) for d in r["days"][w * 7:(w + 1) * 7]) -
+            sum(day_meals(d) for d in c["days"][w * 7:(w + 1) * 7]) for w in (2, 3)] for r, c in zip(runs, controls)],
+        "staffingDaysWithMoreMealsThanControlPerSeed": [[d["day"] for d, c in zip(r["days"][14:28], control["days"][14:28])
+            if day_meals(d) > day_meals(c)] for r, control in zip(runs, controls)],
+    }
+
+
+def staffing_raises_meals(row):
+    return row["staffingDoesNotRaiseFortnightMeals"] is False or any(delta > 0 for delta in row.get("staffingActiveWindowDeltaMealsPerSeed", []))
+
+
 def trailing(run, day):
     return st.mean(d["own"]["purchases"] for d in run["days"][day - 3:day])
 
@@ -197,19 +229,9 @@ def report(directory):
             row["recoveryDaysPerSeed"] = [recovery(r, controls) for r in runs]
             row["recoveryWithin14Days"] = all(d is not None and d <= 14 for d in row["recoveryDaysPerSeed"])
             row["residualPurchasesPerDayAfter14Days"] = [trailing(r, 42) - trailing(c, 42) for r, c in zip(runs, controls)]
-            row["staffingDoesNotRaiseFortnightMeals"] = all(
-                sum(d["own"]["purchases"] for d in r["days"][14:28]) <= sum(d["own"]["purchases"] for d in c["days"][14:28])
-                for r, c in zip(runs, controls)) if key.startswith("staffing/") else None
+            row["staffingDoesNotRaiseFortnightMeals"] = None
         if key.startswith("staffing/"):
-            def active_meals(run):
-                if key.endswith("zero-staff-day"):
-                    return run["days"][16]["own"]["purchases"]
-                return sum(sum(shop["byHour"][11:14]) for d in run["days"][14:28] for shop in d["own"]["shops"])
-            row["staffingActiveWindowDeltaMealsPerSeed"] = [active_meals(r) - active_meals(c) for r, c in zip(runs, controls)]
-            row["staffingWeeklyDeltaMealsPerSeed"] = [[sum(d["own"]["purchases"] for d in r["days"][w * 7:(w + 1) * 7]) -
-                sum(d["own"]["purchases"] for d in c["days"][w * 7:(w + 1) * 7]) for w in (2, 3)] for r, c in zip(runs, controls)]
-            row["staffingDaysWithMoreMealsThanControlPerSeed"] = [[d["day"] for d, c in zip(r["days"][14:28], control["days"][14:28])
-                if d["own"]["purchases"] > c["own"]["purchases"]] for r, control in zip(runs, controls)]
+            row.update(staffing_checks(key, runs, controls))
         rows[key] = row
     household = {}
     for name, measure in {
@@ -240,7 +262,7 @@ def report(directory):
             continue
         if not row["recoveryWithin14Days"]:
             failures.append(key + ": recovery exceeds 14 days in at least one seed")
-        if row["staffingDoesNotRaiseFortnightMeals"] is False or any(delta > 0 for delta in row.get("staffingActiveWindowDeltaMealsPerSeed", [])):
+        if staffing_raises_meals(row):
             failures.append(key + ": staffing cut raises served meals")
     if any(household["p10FallsEveryWeekPerSeed"]):
         failures.append("control p10 falls every week in at least one seed")

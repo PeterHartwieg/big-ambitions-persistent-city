@@ -110,7 +110,7 @@ Rechecked on the base: `FoodChoicePolicy.PriceFactor` is `min(4, (MealReferenceC
 
 ### Result
 
-- **Canonical matrix** (17 arms × 5 seeds × 6 weeks, 60 meals/hour, legacy menu): 6,832,980 daily owner checks conserve; zero duplicate receipts and HistoricalClockMisses. Every family has an effect outside the control seed band. 79 of 80 intervention runs recover in 3 days and one (`employment/workplaces-closed-10pct`, seed 4) in 5. No staffing cut raises served meals in any seed. The full-size seed-0 reload with 15 meals in flight is byte-identical; so are the six profile reloads.
+- **Canonical matrix** (17 arms × 5 seeds × 6 weeks, 60 meals/hour, legacy menu): 6,832,980 daily owner checks conserve; zero duplicate receipts and HistoricalClockMisses. Every family has an effect outside the control seed band. 79 of 80 intervention runs recover in 3 days and one (`employment/workplaces-closed-10pct`, seed 4) in 5. No staffing cut raises served meals in any seed, counted as meals rather than items (review fix Sol-r1-1): lunch halving serves 911–933 fewer meals in the cut windows, the zero-staff day 462–472 fewer. The full-size seed-0 reload with 15 meals in flight is byte-identical; so are the six profile reloads.
 - **Extras are in the tickets.** Control: 1.207 items per meal and $5.73 a meal (canonical); 1.131 items and $12.53 (native, 6,000/hour). Revenue and the per-item wholesale certificate include every extra at its own price. Extras get no $12.50 meal-deal bargain; the F6j tests for that pass on this base.
 - **Non-binding price arms** (native, 6,000/hour, peak ≤436 served meals/hour): +50% loses **27.2%** of meals and 26.5% of items, and revenue rises **10.8%**. Item arc elasticity −0.764 (post-F6i −0.748, first run −0.000540). Without the rival: −27.0% / +11.1%.
 - **Not wallets.** Unaffordable refusals move 2.03% → 2.13%. Extras per meal rise under the markup (0.131 → 0.142; within-main +0.007), so the whole-ticket wallet check does not trim them. C9 is untouched.
@@ -148,7 +148,7 @@ Options for Peter (reserved decision; nothing is chosen here). Multi-item meals 
 
 - Required foreground build: **passed**, DLL SHA256 `554b926070fc6d6a96769bc37f5ba407ff6904e8dde2746f7ed94b39d3359d68`. The diff touches no product source; this rerun does not compare the hash with F6j's.
 - Required foreground `dotnet test tests/PersistentCity.Tests.csproj`: **3,961 passed**, zero failed or skipped, 4 min 53 s. That includes both unchanged writer-33 golden pins (seed 5150 `570461024fd65a093220d73de492518a87b5395d4d6a93fd563db86a32fe4c13`, seed 9217 `df8c95a30d401b72b580794efe27da15eb15d941ea20e05afe5ae36aa68b4404`) and the extended `F6hIntegratedTests`.
-- Python acceptance-reader checks: **8 passed**. The acceptance reader exits 1 on every profile, as recorded above.
+- Python acceptance-reader checks: **9 passed** after review round 1 (8 before). The acceptance reader exits 1 on every profile, as recorded above.
 - Opt-in cadence/body and stress cases: **2 passed**; the stress case passed twice more on its own.
 - Process note: the first attempt at the opt-in cadence/body/stress measurement started while another worktree's `testhost` was running. Its assertions passed. I discarded its timings and reran with no other test process; the numbers above come from the clean runs. A later wait loop matched its own command line (`pgrep -f testhost`); it was stopped and replaced with `pgrep -f "[t]esthost.dll"`. No other dotnet test ran concurrently.
 - No game, rig, ModsLocal, bridge or `tools/*-regression` suite was run.

@@ -309,7 +309,7 @@ public static class EconomyRun
                 if (o.Status == MealOutcomeStatus.Bought) { if (o.TargetKind == FoodAlternativeKind.Rival) { metrics.RivalMeals++; metrics.RivalHours[o.CheckoutAt % 1440 / 60]++; } else
                     {
                         metrics.OwnMeals++;
-                        string business = o.PlaceId == EconomyFixture.PlaceOf(EconomyFixture.FarShop) ? EconomyFixture.FarShop : EconomyFixture.Shop;
+                        string business = EconomyFixture.BusinessAt(o.PlaceId) ?? throw new LedgerViolation("own meal at unknown place " + o.PlaceId);
                         if (!metrics.OwnMealHours.TryGetValue(business, out var hours)) metrics.OwnMealHours[business] = hours = new long[24];
                         hours[o.CheckoutAt % 1440 / 60]++;
                     } }
