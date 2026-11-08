@@ -270,8 +270,13 @@ public sealed class VendorBodyTests
         f.Tick(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.Equal(f.City.State.Places.Single(p => p.Id == f.Person.HomeId).Position, body.Target);
-        Assert.False(body.Agent.isStopped);
         Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
+        // F2c: at the logical pose the body waits for the person to move, then walks with them.
+        Assert.True(body.Agent.isStopped);
+        while (!f.City.AdvanceTo(leaves + 0.02).CaughtUp) { }
+        f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        Assert.False(body.Agent.isStopped);
         Assert.Equal(acquisitions, f.Pool.Acquisitions.Count);
     }
 

@@ -596,6 +596,14 @@ namespace PersistentCity.Runtime
             Follow(binding, citizen.Journey, 0);
         }
 
+        // A journey that committed without a departure notice for this body (for example while it was planned)
+        // is followed from its start, where the returning body stands.
+        private static void TryFollowCommitted(Binding binding)
+        {
+            var citizen = binding.Citizen;
+            if (citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null) Follow(binding, citizen.Journey, 0);
+        }
+
         private static void Follow(Binding binding, Route journey, double bodyMinutes)
         {
             binding.Journey = journey; binding.BodyMinutes = bodyMinutes; binding.TargetLeg = -1;
@@ -644,6 +652,7 @@ namespace PersistentCity.Runtime
                     binding.Optional = null;
                     // The departure tail ends here: follow the journey that committed meanwhile (ObserveWalker
                     // releases at a car or transit boundary). Without one the body goes in at the entrance.
+                    if (binding.Journey == null) TryFollowCommitted(binding);
                     if (binding.Journey == null) return false;
                     body.Stop(false); binding.TargetLeg = -1; return true;
                 }
@@ -787,6 +796,7 @@ namespace PersistentCity.Runtime
                     binding.VendorOpening = 0; binding.Line = null;
                     if (Bound(binding)) queueBindings--;
                     // The return starts at the stand: follow it from here with catch-up (departure tail).
+                    if (binding.Journey == null) TryFollowCommitted(binding);
                     if (binding.Journey == null) return false;
                     binding.TargetLeg = -1;
                     body.Stop(false); return true;
@@ -937,7 +947,8 @@ namespace PersistentCity.Runtime
             var body = binding.Person!;
             double pace = float.IsNaN(binding.HurrySince) ? WalkerFollow.PaceFactor(lag)
                 : lag > WalkerFollow.StopMetres ? WalkerFollow.MaximumPaceFactor : 0;
-            if (own.Stationary || own.AtEnd || pace <= 0) { body.Pace(0); return true; }
+            if (own.Stationary || own.AtEnd) { body.Pace(0); return true; }
+            // Aim at the corner of its own leg even while standing at the logical pose, so it sets off with the person.
             if (binding.TargetLeg != own.LegIndex)
             {
                 if (Time.unscaledTime < binding.NextTargetAttempt) return true;
@@ -945,7 +956,7 @@ namespace PersistentCity.Runtime
                 { body.Stop(true); binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++; return true; }
                 binding.TargetLeg = own.LegIndex;
             }
-            body.Pace(NativeTravelPace.WalkingMetresPerSecond * pace);
+            body.Pace(pace > 0 ? NativeTravelPace.WalkingMetresPerSecond * pace : 0);
             return true;
         }
 

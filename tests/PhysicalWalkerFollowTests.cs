@@ -16,7 +16,7 @@ namespace PersistentCity.Tests;
 public sealed class PhysicalWalkerFollowTests
 {
     private const double Now = 1440 + 600;
-    private static readonly Position Home = new(40, 0, 0), Work = new(100, 0, 0);
+    private static readonly Position Home = new(40, 0, 0), Work = new(100, 0, 0), Venue = new(100, 0, 20);
 
     // Two walk legs through the midpoint, 2 m per game minute.
     private sealed class Walk : IRoutePlanner
@@ -37,16 +37,16 @@ public sealed class PhysicalWalkerFollowTests
         var state = Population.Create(ids, new[] {
             new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2, Position = Home },
             new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 2, Position = Work },
-            new Place { Id = "venue", Name = "Venue", Kind = PlaceKind.Leisure, Capacity = 2, Position = Work } }, "f2c", "0.40.4", 3, Now);
+            new Place { Id = "venue", Name = "Venue", Kind = PlaceKind.Leisure, Capacity = 2, Position = Venue } }, "f2c", "0.40.4", 3, Now);
         var c = state.Citizens[0];
         c.HomeId = "home"; c.DayPlaceId = "work"; c.MealOuting = null;
         if (optional)
         {
             c.PlaceId = "venue"; c.Activity = Activity.Leisure; c.Phase = CitizenPhase.AtPlace; c.Journey = null;
             c.NextEventMinute = c.ActivityUntilMinute = Now + 10;
-            var spot = new Position(104, 0, 0);
+            var spot = new Position(104, 0, 20);
             c.OptionalStop = new OptionalStopState { Kind = DwellKind.WindowShopping, PlaceId = "venue", SpotId = "solo:w", TargetId = "front:w",
-                Position = spot, Facing = new Position(104, 0, 1), ReturnPosition = Work, StartMinute = Now - 1, EndMinute = Now + 5,
+                Position = spot, Facing = new Position(104, 0, 21), ReturnPosition = Venue, StartMinute = Now - 1, EndMinute = Now + 5,
                 VisitMinute = Now - 1, ResumeEventMinute = Now + 10 };
             return state;
         }
@@ -259,22 +259,23 @@ public sealed class PhysicalWalkerFollowTests
         using var f = new Fixture(optional: true);
         f.Tick();
         Assert.True(f.Bound);
-        f.Place(new Position(104, 0, 0)); // at the stop's spot
+        f.Place(new Position(104, 0, 20)); // at the stop's spot
         f.Tick();
         // The stop ends: the body turns back to the entrance.
         f.Advance(Now + 6);
         f.Tick();
-        Assert.Equal(Work, f.Body.Target);
+        Assert.Equal(Venue, f.Body.Target);
         // The next journey commits while the body is still on its way back. Nothing holds it.
         f.Advance(Now + 10);
         Assert.Equal(CitizenPhase.Travelling, f.W.Phase);
         Assert.Equal(f.Plain.State.Citizens[0].DepartureMinute, f.W.DepartureMinute);
         f.Tick();
-        Assert.True(f.Bound); Assert.Equal(Work, f.Body.Target);
+        Assert.True(f.Bound); Assert.Equal(Venue, f.Body.Target);
         f.AssertSameAsBodiesOff();
         // Back at the entrance it follows the journey with catch-up.
         f.Advance(Now + 12);
-        f.Place(Work);
+        Assert.Equal(CitizenPhase.Travelling, f.W.Phase);
+        f.Place(Venue);
         f.Tick(); f.Tick();
         Assert.True(f.Bound);
         Assert.Equal(f.W.Journey!.Legs[0].To, f.Body.Target);
