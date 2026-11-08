@@ -255,3 +255,164 @@ python3 -m unittest discover -s tools/economy-interventions -p test_acceptance.p
 ```
 
 After the first warm run (7.3 s), each canonical six-week run took 4.8–5.5 s. The 6,000/hour profiles took 4.4–6.2 s after their first run (up to 8.4 s). That is tool time, not mod-work.
+
+## Acceptance rerun after F6j, 8 November 2026
+
+Status: **stopped** a third time, on the same dominant-menu criterion, for a design reason. Base `ec186f97` (F6j #156, which includes F6i #150 and the post-F6i rerun #153), writer 33. Defaults, `FoodChoicePolicy`, the F6j extras rule and the schema are unchanged. The two sections above (first run and post-F6i rerun) stay as recorded.
+
+### What ran
+
+The full canonical protocol: 17 arms × 5 seeds × 42 days on the same F6a/F1-derived fixture (957 residents + 957 visitors, legacy $8/$3/$5 menu, 60 meals/hour). Six price-only profiles, 20 runs each: legacy at 6,000 meals/hour; native $12.50/$9.24/$16.69 at 60 and at 6,000; native 6,000 without the rival; and native 6,000 at the existing `FoodChoicePriceWeight` 1.5 and 2 as diagnostics. Each sweep also runs the full-size seed-0 mid-epoch reload; all seven are byte-identical (canonical: 15 meals in flight). Evidence: [f6h-f6j-rerun-acceptance.json](../../tools/economy-interventions/evidence/f6h-f6j-rerun-acceptance.json), [f6h-f6j-rerun-summary.json](../../tools/economy-interventions/evidence/f6h-f6j-rerun-summary.json) and [f6h-f6j-rerun-price-profiles.json](../../tools/economy-interventions/evidence/f6h-f6j-rerun-price-profiles.json).
+
+### Extras are in every ticket
+
+The detached native double has sold extras since F6j. Shop-day `purchases` now count items (main plus extras) and revenue is the whole ticket, each line at its own price. The dominance certificate charges wholesale per item, so extras carry their own cost. This rerun adds three harness metrics, all diagnostic:
+
+- `meals` and `mealsByCheckoutHour` per own shop, from meal outcomes. Capacity is meals per hour, so the capacity label now compares meals with it. Comparing items, which count extras too, would mislabel a 60/hour shop.
+- `tickets` per shop and main dish: meals, sold extras and extras planned within the wallet. The double fills it at checkout; meals plus extras equal items exactly.
+
+Control tickets during the intervention fortnight: canonical 1.207 items per meal, $5.73 a meal. Native at 6,000/hour: 1.131 items, $12.53 a meal. Realised extras are well under the policy rates in the [F6j record](f6j.md) because this fixture has three products: a croissant main has nothing priced at or below 125% of it, and the ticket factor steers some residents away from mains that would carry extras.
+
+The extras policy never sees the $12.50 anchor. Only the main dish's factor uses it, and the ticket factor is at most 1. `F6jMealExtrasTests.ExtrasReceiveNoMealReferenceBargain` and `TicketExpenseLowersAShopWeightButNotTheMainAnchor` still pass on this base.
+
+### Accounting, tradeoffs and recovery (canonical matrix)
+
+**6,832,980 daily owner conservation checks**, all conserved. Zero duplicate receipts, HistoricalClockMisses and out-of-epoch reads. Native-double revenue equals confirmed prepared spend every day, outside ledgers equal watermarks and every 14-day ordinary window reconciles. Each profile sweep adds 1,607,760 checks with the same result.
+
+Every family has an effect outside the control seed band. 79 of the 80 intervention runs recover in 3 days, the earliest the definition allows; `employment/workplaces-closed-10pct` seed 4 takes 5 days. All are within the 14-day criterion. Neither staffing cut raises served meals in any seed: lunch halving serves 1,097/1,110/1,148/1,109/1,101 fewer items in the cut windows (seeds 0–4), and the zero-staff day 569/565/577/560/539 fewer. No Pareto or every-gain-has-a-cost pass is claimed; staffing, venue and wholesale costs are not in the double.
+
+| Arm | Own items/day, weeks 2 / 3 / 4 / 5 / 6 (seed mean) | Effects outside control band | Recovery days (seeds 0–4) |
+| --- | --- | --- | --- |
+| control/control | 577.9 / 576.4 / 579.1 / 584.1 / 581.7 | — | — |
+| price/product-minus-25 | 577.9 / 560.9 / 562.5 / 583.1 / 583.0 | own items, revenue | 3, 3, 3, 3, 3 |
+| price/product-plus-25 | 577.9 / 567.2 / 571.3 / 583.4 / 583.3 | revenue | 3, 3, 3, 3, 3 |
+| price/menu-plus-50 | 577.9 / 547.3 / 547.5 / 584.2 / 581.5 | own items, revenue | 3, 3, 3, 3, 3 |
+| staffing/lunch-counters-halved | 577.9 / 492.4 / 494.1 / 582.4 / 581.9 | own items, revenue | 3, 3, 3, 3, 3 |
+| staffing/zero-staff-day | 577.9 / 495.9 / 579.8 / 584.4 / 582.3 | own items, revenue | 3, 3, 3, 3, 3 |
+| hours/breakfast-removed | 577.9 / 439.3 / 440.5 / 583.2 / 583.4 | own items, revenue, rival meals | 3, 3, 3, 3, 3 |
+| hours/close-2h-earlier | 577.9 / 477.3 / 480.0 / 583.0 / 582.5 | own items, revenue | 3, 3, 3, 3, 3 |
+| shortage/product-3-lunches | 577.9 / 571.6 / 578.3 / 584.0 / 582.7 | none | 3, 3, 3, 3, 3 |
+| shortage/whole-shop-day | 577.9 / 496.3 / 579.3 / 582.3 / 582.5 | own items, revenue | 3, 3, 3, 3, 3 |
+| employment/workplaces-closed-10pct | 577.9 / 575.3 / 575.3 / 580.0 / 580.6 | income | 3, 3, 3, 3, 5 |
+| employment/worker-routes-blocked-5pct | 577.9 / 576.9 / 579.4 / 583.8 / 582.9 | income | 3, 3, 3, 3, 3 |
+| access/route-time-plus-50 | 577.9 / 581.1 / 577.7 / 583.5 / 582.2 | none | 3, 3, 3, 3, 3 |
+| access/door-closed-2-days | 577.9 / 415.1 / 578.7 / 582.8 / 583.8 | own items, revenue | 3, 3, 3, 3, 3 |
+| access/second-site-2x | 577.9 / 1082.7 / 1089.2 / 583.5 / 582.6 | own items, revenue, rival meals | 3, 3, 3, 3, 3 |
+| rival/lanes-halved | 577.9 / 577.0 / 579.2 / 583.7 / 582.1 | rival meals | 3, 3, 3, 3, 3 |
+| rival/price-minus-25 | 577.9 / 577.1 / 582.5 / 582.7 / 581.5 | none | 3, 3, 3, 3, 3 |
+
+Control intervention-fortnight own items/day: **577.8**, seed band **567.9–587.7**; meals/day 478.6 (post-F6i: 481.5 meals, which were also items then). Peak served meals per hour is 60 in every control seed, equal to capacity.
+
+### Price arms
+
+Same definitions as the post-F6i table, with meals and items separated. Meals are visits. Items and revenue include extras. Arc elasticity uses items. The certificate is the minimum weekly profit advantage of menu +50% over the control and both product arms across every fixed per-item wholesale vector between zero and baseline retail. Positive in all ten seed-weeks means dominant.
+
+| Profile | Price weight | Capacity binds (meals/h) | Control meals/day | Control items/meal, ticket | Arm | Meals change [band] | Items change [band] | Revenue change [band] | Item arc elasticity [band] | Unaffordable refusals control → arm | Certificate min, seeds × weeks ($) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Legacy $8/$3/$5, 60/h (canonical) | 1 | yes | 478.6 | 1.207, $5.73 | product-minus-25 | +0.7% [+0.4, +1.0] | -2.8% [-3.4, -2.1] | -9.4% [-10.1, -8.8] | 0.098 [0.075, 0.122] | 0.20% → 0.20% | — |
+| Legacy $8/$3/$5, 60/h (canonical) | 1 | yes | 478.6 | 1.207, $5.73 | product-plus-25 | -0.5% [-0.8, -0.2] | -1.5% [-2.2, -0.8] | +2.5% [+1.5, +3.5] | -0.067 [-0.099, -0.035] | 0.20% → 0.20% | — |
+| Legacy $8/$3/$5, 60/h (canonical) | 1 | yes | 478.6 | 1.207, $5.73 | menu-plus-50 | -1.8% [-2.4, -1.2] | -5.3% [-6.1, -4.4] | +32.3% [+30.8, +33.9] | -0.135 [-0.158, -0.112] | 0.20% → 0.22% | 4,975 to 5,922 |
+| Legacy, 6,000/h | 1 | no (peak ≤638) | 2358.7 | 1.210, $5.65 | product-minus-25 | +2.5% [+2.3, +2.7] | -0.7% [-0.9, -0.6] | -7.2% [-7.5, -6.9] | 0.026 [0.021, 0.031] | 0.97% → 0.94% | — |
+| Legacy, 6,000/h | 1 | no (peak ≤602) | 2358.7 | 1.210, $5.65 | product-plus-25 | -1.6% [-1.8, -1.4] | -2.9% [-3.1, -2.8] | +0.6% [+0.4, +0.8] | -0.133 [-0.140, -0.126] | 0.97% → 0.98% | — |
+| Legacy, 6,000/h | 1 | no (peak ≤582) | 2358.7 | 1.210, $5.65 | menu-plus-50 | -5.7% [-5.9, -5.4] | -9.5% [-9.9, -9.2] | +26.2% [+25.7, +26.8] | -0.250 [-0.259, -0.240] | 0.97% → 1.09% | 22,864 to 23,626 |
+| Native $12.50/$9.24/$16.69, 60/h | 1 | yes | 455.6 | 1.143, $12.84 | product-minus-25 | +2.9% [+2.5, +3.4] | -3.8% [-4.5, -3.0] | -14.7% [-15.6, -13.7] | 0.134 [0.107, 0.161] | 0.41% → 0.39% | — |
+| Native $12.50/$9.24/$16.69, 60/h | 1 | yes | 455.6 | 1.143, $12.84 | product-plus-25 | -1.0% [-1.3, -0.7] | -3.0% [-3.5, -2.5] | +4.3% [+3.6, +5.1] | -0.136 [-0.159, -0.113] | 0.41% → 0.41% | — |
+| Native $12.50/$9.24/$16.69, 60/h | 1 | yes | 455.6 | 1.143, $12.84 | menu-plus-50 | -6.8% [-7.5, -6.1] | -4.7% [-5.9, -3.4] | +44.4% [+42.1, +46.6] | -0.119 [-0.152, -0.087] | 0.41% → 0.48% | 12,384 to 13,862 |
+| Native, 6,000/h | 1 | no (peak ≤589) | 1802.5 | 1.131, $12.53 | product-minus-25 | +10.8% [+10.2, +11.3] | +4.0% [+3.7, +4.4] | -6.8% [-7.2, -6.5] | -0.138 [-0.150, -0.126] | 2.03% → 2.00% | — |
+| Native, 6,000/h | 1 | no (peak ≤494) | 1802.5 | 1.131, $12.53 | product-plus-25 | -3.5% [-3.8, -3.2] | -5.3% [-5.8, -4.8] | +1.6% [+1.1, +2.1] | -0.245 [-0.268, -0.223] | 2.03% → 2.05% | — |
+| Native, 6,000/h | 1 | no (peak ≤436) | 1802.5 | 1.131, $12.53 | menu-plus-50 | -27.2% [-27.5, -27.0] | -26.5% [-26.9, -26.1] | +10.8% [+10.1, +11.4] | -0.764 [-0.778, -0.751] | 2.03% → 2.13% | 10,072 to 13,009 |
+| Native, 6,000/h, no rival | 1 | no (peak ≤607) | 1925.3 | 1.132, $12.53 | product-minus-25 | +10.7% [+9.9, +11.4] | +4.0% [+3.4, +4.5] | -6.8% [-7.3, -6.4] | -0.136 [-0.155, -0.117] | 1.88% → 1.83% | — |
+| Native, 6,000/h, no rival | 1 | no (peak ≤517) | 1925.3 | 1.132, $12.53 | product-plus-25 | -3.4% [-3.6, -3.2] | -5.2% [-5.6, -4.8] | +1.7% [+1.3, +2.1] | -0.242 [-0.261, -0.224] | 1.88% → 1.91% | — |
+| Native, 6,000/h, no rival | 1 | no (peak ≤457) | 1925.3 | 1.132, $12.53 | menu-plus-50 | -27.0% [-27.3, -26.7] | -26.3% [-26.7, -25.9] | +11.1% [+10.6, +11.7] | -0.756 [-0.769, -0.744] | 1.88% → 1.96% | 11,304 to 13,764 |
+| Native, 6,000/h | 1.5 (diag.) | no (peak ≤601) | 1861.7 | 1.077, $11.53 | product-minus-25 | +13.6% [+13.0, +14.2] | +9.1% [+8.6, +9.6] | -1.5% [-1.9, -1.1] | -0.303 [-0.319, -0.288] | 1.91% → 1.94% | — |
+| Native, 6,000/h | 1.5 (diag.) | no (peak ≤482) | 1861.7 | 1.077, $11.53 | product-plus-25 | -4.4% [-4.8, -4.1] | -5.8% [-6.2, -5.4] | -1.1% [-1.6, -0.6] | -0.270 [-0.289, -0.251] | 1.91% → 1.90% | — |
+| Native, 6,000/h | 1.5 (diag.) | no (peak ≤405) | 1861.7 | 1.077, $11.53 | menu-plus-50 | -37.6% [-38.4, -36.8] | -35.7% [-36.5, -35.0] | -2.0% [-3.2, -0.8] | -1.087 [-1.114, -1.059] | 1.91% → 1.80% | -5,176 to -2,228 |
+| Native, 6,000/h | 2 (diag.) | no (peak ≤623) | 1919.1 | 1.048, $10.96 | product-minus-25 | +15.3% [+14.6, +16.0] | +12.3% [+11.7, +12.8] | +2.5% [+2.1, +2.8] | -0.404 [-0.421, -0.387] | 1.88% → 1.94% | — |
+| Native, 6,000/h | 2 (diag.) | no (peak ≤481) | 1919.1 | 1.048, $10.96 | product-plus-25 | -4.9% [-5.1, -4.6] | -5.8% [-6.1, -5.6] | -3.1% [-3.5, -2.8] | -0.271 [-0.282, -0.260] | 1.88% → 1.84% | — |
+| Native, 6,000/h | 2 (diag.) | no (peak ≤374) | 1919.1 | 1.048, $10.96 | menu-plus-50 | -45.0% [-45.9, -44.0] | -42.0% [-42.9, -41.2] | -10.6% [-11.9, -9.3] | -1.329 [-1.364, -1.295] | 1.88% → 1.67% | -24,259 to -20,147 |
+
+Extras per meal, split into two parts. The main-mix part is the arm's mains at control's per-main extras rate. The within-main part is the change in each main's own rate at the arm's mix. A whole-menu markup keeps every price ratio, so the extras bands and draws do not change; if wallets were cutting extras, the within-main part would fall.
+
+| Profile | Price weight | Arm | Extras/meal control → arm | Change from main mix [band] | Change within main [band] | Home meals change [band] |
+|---|---|---|---|---|---|---|
+| Legacy $8/$3/$5, 60/h (canonical) | 1 | product-minus-25 | 0.207 → 0.165 | +0.034 [+0.030, +0.038] | -0.076 [-0.085, -0.067] | -0.2% [-0.3, -0.1] |
+| Legacy $8/$3/$5, 60/h (canonical) | 1 | product-plus-25 | 0.207 → 0.195 | -0.019 [-0.024, -0.015] | +0.007 [+0.001, +0.013] | +0.1% [+0.0, +0.2] |
+| Legacy $8/$3/$5, 60/h (canonical) | 1 | menu-plus-50 | 0.207 → 0.165 | -0.041 [-0.048, -0.034] | -0.001 [-0.008, +0.005] | +0.5% [+0.3, +0.7] |
+| Legacy, 6,000/h | 1 | product-minus-25 | 0.210 → 0.172 | +0.038 [+0.036, +0.039] | -0.076 [-0.078, -0.074] | -10.4% [-11.2, -9.7] |
+| Legacy, 6,000/h | 1 | product-plus-25 | 0.210 → 0.193 | -0.021 [-0.022, -0.020] | +0.005 [+0.004, +0.005] | +6.5% [+5.6, +7.5] |
+| Legacy, 6,000/h | 1 | menu-plus-50 | 0.210 → 0.161 | -0.044 [-0.045, -0.044] | -0.005 [-0.007, -0.003] | +23.7% [+22.2, +25.2] |
+| Native $12.50/$9.24/$16.69, 60/h | 1 | product-minus-25 | 0.143 → 0.068 | +0.012 [+0.011, +0.013] | -0.086 [-0.100, -0.073] | -0.8% [-0.9, -0.6] |
+| Native $12.50/$9.24/$16.69, 60/h | 1 | product-plus-25 | 0.143 → 0.120 | +0.005 [-0.000, +0.010] | -0.028 [-0.032, -0.023] | +0.3% [+0.2, +0.5] |
+| Native $12.50/$9.24/$16.69, 60/h | 1 | menu-plus-50 | 0.143 → 0.169 | +0.009 [+0.004, +0.015] | +0.017 [+0.004, +0.029] | +1.8% [+1.5, +2.1] |
+| Native, 6,000/h | 1 | product-minus-25 | 0.131 → 0.062 | +0.024 [+0.022, +0.026] | -0.093 [-0.098, -0.088] | -17.3% [-18.0, -16.6] |
+| Native, 6,000/h | 1 | product-plus-25 | 0.131 → 0.110 | +0.001 [-0.001, +0.002] | -0.022 [-0.025, -0.019] | +5.6% [+5.2, +6.1] |
+| Native, 6,000/h | 1 | menu-plus-50 | 0.131 → 0.142 | +0.004 [+0.003, +0.006] | +0.007 [+0.004, +0.010] | +43.8% [+42.1, +45.5] |
+| Native, 6,000/h, no rival | 1 | product-minus-25 | 0.132 → 0.063 | +0.025 [+0.023, +0.026] | -0.093 [-0.098, -0.089] | -17.4% [-18.2, -16.7] |
+| Native, 6,000/h, no rival | 1 | product-plus-25 | 0.132 → 0.110 | +0.001 [-0.001, +0.002] | -0.022 [-0.025, -0.019] | +5.6% [+5.2, +5.9] |
+| Native, 6,000/h, no rival | 1 | menu-plus-50 | 0.132 → 0.143 | +0.004 [+0.003, +0.005] | +0.007 [+0.002, +0.011] | +44.2% [+42.6, +45.9] |
+| Native, 6,000/h | 1.5 (diag.) | product-minus-25 | 0.077 → 0.034 | +0.028 [+0.025, +0.030] | -0.071 [-0.079, -0.064] | -24.0% [-24.6, -23.4] |
+| Native, 6,000/h | 1.5 (diag.) | product-plus-25 | 0.077 → 0.061 | -0.003 [-0.005, -0.001] | -0.012 [-0.015, -0.010] | +7.8% [+7.0, +8.7] |
+| Native, 6,000/h | 1.5 (diag.) | menu-plus-50 | 0.077 → 0.109 | +0.010 [+0.008, +0.011] | +0.022 [+0.018, +0.026] | +66.1% [+64.5, +67.7] |
+| Native, 6,000/h | 2 (diag.) | product-minus-25 | 0.048 → 0.021 | +0.024 [+0.022, +0.026] | -0.051 [-0.056, -0.047] | -29.3% [-30.0, -28.6] |
+| Native, 6,000/h | 2 (diag.) | product-plus-25 | 0.048 → 0.037 | -0.003 [-0.004, -0.002] | -0.008 [-0.010, -0.006] | +9.4% [+8.6, +10.1] |
+| Native, 6,000/h | 2 (diag.) | menu-plus-50 | 0.048 → 0.105 | +0.015 [+0.013, +0.017] | +0.042 [+0.036, +0.047] | +86.2% [+83.1, +89.3] |
+
+Five things follow from these tables.
+
+1. **The F6j base does not change the price result.** With native prices and capacity that never binds (peak ≤436 served meals/hour against 6,000), +50% loses **27.2%** of meals and **26.5%** of items, and revenue rises **10.8%** [10.1, 11.4]. Item arc elasticity is **−0.764**, against −0.748 after F6i and −0.000540 in the first run. Without the rival: −27.0% meals, +11.1% revenue. The certificate is positive in all ten seed-weeks of every price-weight-1 profile, so the +50% menu still maximizes operating revenue minus wholesale for every wholesale vector in the box.
+2. **Markup costs demand, and wallets are not why.** Unaffordable refusals move 2.03% → 2.13% of evaluated offers. Home meals rise 43.8%. Extras per meal *rise* under the markup (0.131 → 0.142, within-main +0.007), because the residents who stay are the less price-sensitive ones. The wallet check on the whole ticket does not trim extras. C9 prices are untouched.
+3. **Extras cannot add price response to a whole-menu markup.** A uniform +50% keeps every extra in its band and leaves `main/ticket`, the ticket factor, unchanged, so the ticket rises by the same 50% as the main. Extras make tickets bigger; they do not make demand more elastic. The market elasticity is still the −2 offer-weight elasticity diluted by the shop's share: on day 21 of native seed 0 the shop takes 57% of resolved meals in its catchment (1,512 of 2,871), home 36%, the rival 5%. Below unit elasticity, revenue rises with price.
+4. **Capacity-bound arms are rationed.** At 60/hour, +50% loses 1.8% (legacy) or 6.8% (native) of meals and revenue rises 32.3% or 44.4%. They cannot test price.
+5. **Single-product arms show the 75% band step.** Burger −25% gains meals but sells fewer items: canonical items −2.8% at +0.7% meals, native capacity-bound −3.8% at +2.9%. Next to a $9.38 burger the $9.24 croissant is 98.6% of the main, and next to a $6 legacy burger the $5 hot dog is 83%. Both move from the cheaper band (chance 0.35) to the similar band (0.05), so the within-main part is −0.076 to −0.093. The [F6j decision](../decisions/2026-11-08-multi-item-meals.md) documents this step (Opus-r1-2). It is not a bug, and it is why product arms' item elasticities have mixed signs.
+
+**Price-weight diagnostic.** At the existing setting 1.5 the native non-binding +50% arm loses 37.6% of meals, revenue falls 2.0% [−3.2, −0.8] and the certificate is negative in all ten seed-weeks (−$5,176 to −$2,228). At 2: −45.0% meals, −10.6% revenue. Post-F6i the same diagnostics gave −4.2% and −15.9%; extras make the menu slightly harder to beat at 1.5. These measure an E5 setting. The default stays 1: Peter asked not to raise it, and it is not on F6h's write-back list.
+
+### Household control band and thresholds
+
+Derived again from the canonical control, week 6, mean ±2 sd, rounded outward. [acceptance.py](../../tools/economy-interventions/acceptance.py) checks control against these values, and a Python test pins them to the committed rerun evidence.
+
+| Week-6 control metric | Mean | Seed band | Per seed 0–4 | Threshold after F6j | Post-F6i threshold |
+| --- | ---: | --- | --- | --- | --- |
+| Arrears share | 0.188% | [−0.084%, 0.461%] | 1, 7, 5, 1, 4 owners of 1,914 | ≤ 0.47% | ≤ 0.47% |
+| Unfed owner-days in the week | 1.8 | [−2.05, 5.65] | 1, 5, 2, 1, 0 | ≤ 5.7 | ≤ 5.2 |
+| p10 balance | $689.99 | [$659.00, $720.99] | 686.19, 685.20, 685.22, 676.54, 716.82 | ≥ $658 | ≥ $656 |
+
+p10 does not fall every week in any control seed. It rises to week 3 ($740.66 mean) and declines after ($690.81, 727.75, 740.66, 728.53, 714.24, 689.99), as in both earlier runs. Six weeks do not prove a stationary distribution.
+
+**Flagged, as before:** every non-binding profile breaches these canonical thresholds, because people buy about four times as many shop meals and spend down. Native non-binding control: arrears 1.076% (14–27 owners), 36.2 unfed owner-days in week 6, p10 $614 → $458, and p10 falls every week in seeds 1–3. The capacity-bound native profile also breaches, because its menu costs more: mean arrears 0.282% with seed 1 at 0.470%, unfed owner-days 4, 9, 7, 7, 1 by seed, p10 $661. These are price-response fixtures, not household evidence; refusals stay near 2%, so the drain does not produce the price result.
+
+### Profiles and defaults
+
+| Setting | Before | After this rerun | Reason |
+| --- | --- | --- | --- |
+| Rival lanes/service | 2 × 12/hour | Unchanged | No write-back evidence; native throughput stays rig check 9. |
+| Rival units | 60/meal period | Unchanged | Same. |
+| Missed-work k | 0.5 | Unchanged | Employment arms recover in 3–5 days with income effects outside the band. |
+| C9 prices | $5 / $12 | Unchanged | Not used to produce price elasticity. |
+| `FoodChoicePriceWeight`, `FoodChoiceHouseholdWeight` | 1, 1 | Unchanged | Peter, 8 Nov ~14:20: do not raise. Pinned in `ExistingDefaultsStayPinnedUntilTradeoffGateCanPass`. |
+| F6j extras rule (75% / 125%, 0.35 / 0.05, cap 3) | — | Unchanged | Pinned in the same test. |
+| Household control thresholds | ≤0.47%, ≤5.2, ≥$656 | ≤0.47%, ≤5.7, ≥$658 | Re-derived from this canonical band. |
+
+### Options for the reserved decision
+
+Multi-item meals were the option Peter chose to try first. They are implemented, they raise tickets, and they leave the whole-menu result where it was. What remains is the same set as after F6i, now with numbers on this base:
+
+1. Raise the default `FoodChoicePriceWeight` to 1.5 or 2. Measured above: the +50% menu loses revenue in every seed (−2.0% at 1.5, −10.6% at 2). Peter has said not to for now.
+2. Raise `FoodChoiceHouseholdWeight`. A larger outside share raises market elasticity at the same policy exponent. Not measured; Peter has said not to for now.
+3. Revise the criterion. For example: accept a whole-menu markup that loses a seed-banded share of meals (here 27.2% [27.0, 27.5]) while revenue rises well under the price rise (here 10.8% against 50%), instead of profit non-dominance over the whole zero-to-retail wholesale box. The box needs market elasticity beyond −1.
+
+Not proposed: another price formula, a change to the extras rule, wallet exhaustion through C9 charges, or a persisted field.
+
+### Reproduce
+
+Use the task's Homebrew environment, check that no other `testhost.dll` is running, and run each line in the foreground, one at a time.
+
+```sh
+dotnet run --project tools/economy-interventions -c Release -- build/f6j-full --integrated
+dotnet run --project tools/economy-interventions -c Release -- build/f6j-nb-native --integrated --meals-per-hour 6000 --menu native
+# other profiles: --meals-per-hour 6000; --menu native; add --no-rival; add --price-weight 1.5|2
+python3 tools/economy-interventions/acceptance.py build/f6j-full --output build/f6j-full/acceptance.json   # exits 1
+python3 -m unittest discover -s tools/economy-interventions -p test_acceptance.py
+```
+
+Canonical six-week runs took 5.2–5.3 s after the first (8.2 s); profile runs took 5.0–9.7 s. That is tool time, not mod-work.

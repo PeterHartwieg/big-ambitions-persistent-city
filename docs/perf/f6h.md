@@ -254,3 +254,38 @@ Same method as the first run: each sample is one `AdvanceFrameSlice(..., 1)` wit
 - Python reader checks: **6 passed**, including the household thresholds pinned to the committed rerun evidence and the price-table arithmetic.
 - Opt-in cadence/body and stress cases: **2 passed** (2 min 2 s).
 - Required build, full test suite, golden pins and docs checks: recorded in [checks](../checks/f6h.md#acceptance-rerun-after-f6i-8-november-2026).
+
+## Acceptance rerun after F6j, 8 November 2026
+
+Base `ec186f97` (F6j #156), writer 33, foreground macOS arm64 / .NET 10 Release. Price calibration is still **stopped**; the price-arm tables, household thresholds and options are in [calibration](f6h-calibration.md#acceptance-rerun-after-f6j-8-november-2026). The two sections above stay as recorded. No Core or Runtime code changes and no speedup is claimed. The four parked hotspots (physical population, closure refresh, optional-stop refresh, save serialization) stay parked.
+
+### Sweep tool cost
+
+86 canonical-fixture runs (85-run matrix plus full-size reload) took 472 s in total: 5.2–5.3 s per six-week run after the first (8.2 s). 126 profile runs (6 profiles × 20 plus 6 reloads) took 5.0–9.7 s each, 126–158 s per profile. The harness's new ticket tally and meal-hour counters are tool-side dictionaries filled at checkout and at the 03:00 outcome sample. These are tool wall times, not mod-work.
+
+### Cadence, body cap and 100,000-consumer stress (rerun)
+
+`F6hMeasurements.CadenceAndBodyEvidence` and `IntegratedPostingAdvancementStress` rerun on the F6j base, because extras change checkout and choice. Rows are in [f6h-f6j-rerun-measurements.json](../../tools/economy-interventions/evidence/f6h-f6j-rerun-measurements.json).
+
+All six 30/60/120 FPS × 2-unit/0.1 ms and 256-unit/4 ms arms give byte-identical 42-day economic metrics and final saves. Metrics SHA256 `05A61B5815E75DBE607D55A5169CEEAC03A9718E7104B6CBDE71FA21C42AAA42` matches canonical control seed 0; save SHA256 `1BED9839EAF7779AF4B75DCF4C4E5E9D8B2A676A9CEE71AFE45B79DB37064531` matches the full-size reload proof. Frames per arm range from 98,048 (30 FPS, 256 units) to 1,006,041 (120 FPS, 2 units).
+
+Body cap, **flagged evidence and not a pass**. F2 has no declared divergence bound. Cap 0 is byte-identical to the cadence reference. The default 48/24 cap acquires 7,854 bodies with 124,806 lease observations and at most 12 concurrent walkers. Against cap 0 it differs by −128,179,977,060,341 employment units (about −$4,775), −5,368,709,120,000 C9 units (−$200.00) and +17 items; all 42 daily rows differ. Post-F6i: −$4,150.18, −$71.00, 0 purchases.
+
+The stress case ran three times with identical metrics hashes each time. Run 1 ran together with the cadence/body case; runs 2 and 3 repeat the stress case alone. The machine was shared with other sessions (load average 3–6).
+
+| Consumers | Days | Slice samples | Run 1 p95 / max ms | Run 2 p95 / max ms | Run 3 p95 / max ms | ≥30 ms (runs 1 / 2 / 3) | Daily wallet checks | Post-F6i p95 / max ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1914 | 7 | 237,354 | 0.0078 / 5.9173 | 0.0372 / 21.3960 | 0.0357 / 20.5666 | 0 / 0 / 0 | 13,398 | 0.007000 / 6.209000 |
+| 10000 | 7 | 1,099,427 | 0.0081 / 12.1300 | 0.0079 / 8.4610 | 0.0080 / 7.6322 | 0 / 0 / 0 | 70,000 | 0.007600 / 8.346400 |
+| 100000 | 7 | 10,603,316 | 0.0083 / 76.5911 | 0.0083 / 30.3155 | 0.0082 / 22.9746 | **16 / 1 / 0** | 700,000 | 0.008000 / 22.730500 |
+
+**Flagged:** run 1 had 16 slices ≥ 30 ms at 100,000 consumers (31.0–76.6 ms). Fourteen fall in one burst between slices 3,908,090 and 4,009,177, the other two at 5,095,427 and 5,738,680. Run 2 had one (30.3 ms at slice 9,756,335). Run 3 had none. The same deterministic work moved its tails between runs, and run 1 allocated 42.8 GB over 77 s, so GC pauses or machine load are the likely cause. That is not proven, so all 17 samples stay flagged rather than attributed. p95 is 0.0082–0.0083 ms in every run. These are detached `AdvanceFrameSlice(..., 1)` units with wages, rival limits, C9 admission, journal, meal causes and extras planning active, not the Unity mod-work union or whole-frame time. The 1,914-consumer p95 of 0.036–0.037 ms in runs 2 and 3 is above run 1's 0.0078 ms on identical work, which is also noise from the shared machine.
+
+The section 6 component table above is unchanged by this rerun. F6j's checkout cost is measured in [the F6j record](f6j.md) (`FoodMealExtras.Plan` 1.51 µs per call); its native cost is rig check 4 there and rig check 21 here.
+
+### Rerun validation
+
+- Representative tests in the default suite: `F6hIntegratedTests.ExistingDefaultsStayPinnedUntilTradeoffGateCanPass` now also pins `FoodChoicePriceWeight` 1, `FoodChoiceHouseholdWeight` 1 and the F6j extras constants. `NonBindingMenuMarkupCostsDemandWithoutWalletExhaustion` now also requires items to exceed meals in both arms (extras in the ticket), meals to fall ≥ 15% and peak meals per hour to stay below capacity.
+- Python reader checks: **8 passed**, including household thresholds pinned to the F6j rerun evidence, meal-based capacity labelling with extras, and the main-mix / within-main split.
+- Opt-in cadence/body and stress cases: **2 passed** (2 min 28 s); stress alone passed twice more (1 min 18 s each).
+- Required build, full test suite, golden pins and docs checks: recorded in [checks](../checks/f6h.md#acceptance-rerun-after-f6j-8-november-2026).
