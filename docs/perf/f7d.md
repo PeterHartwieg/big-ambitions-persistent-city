@@ -138,6 +138,10 @@ Both writers write and read every stress city; every round trip is exact (the ha
 Sampled with `GC.GetTotalMemory(false)` about every millisecond on a second thread while one save or one read runs, after a full collection; a millisecond sampler can miss short peaks, so these are lower bounds. The plan's peak budget (retained + snapshot + 2 × payload bytes) is met by writer 33 on the 50,000-resident stress set only and by writer 34 on no fixture: the token tree, the column lists and the compact string coexist with the snapshot, and the budget is computed from the much smaller compact payload. The read peak of writer 34 is 2.6–4.6 × writer 33's, because the decoded tree, the body text and the strict reader's own allocations coexist.
 
 
+## One-time field-limit table (review round 3)
+
+The compact reader's per-field collection bounds come from one reflection pass over the Core and Persistence types (`SaveCodec.BuildFieldLimits`). It runs once per process, on the first compact decode (a `Lazy`, not at `SaveCodec` type initialization), and off the main thread with the rest of the read. `F7dCompactWriterTests.FieldLimitTableBuildsOnceAndCheaply` measured 3.58 ms for 100 field names (Debug build, .NET 10, this PC); below the 30 ms flag. Mono timing is a batched-rig measurement.
+
 ## ≥ 30 ms flags
 
 Every save sample at or above 30 ms is flagged. Writer 34: 7 of 7 samples on every fixture. Writer 33: 7 of 7 on every fixture in this run as well (host load). Every read sample is ≥ 30 ms on both writers. These are save and load latency samples, a separate criterion from ordinary-play mod-work; F7d adds no per-frame work, so mod-work p95 < 5 ms and whole-frame metrics are unaffected and tracked separately.

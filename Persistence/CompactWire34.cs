@@ -50,6 +50,10 @@ namespace PersistentCity.Persistence
         /// keeps every decode allocation proportional to the payload, so a short payload cannot declare a huge column.
         /// The writer refuses above it and the reader refuses before allocating past it.</summary>
         public const int MaxCompactValuesPerCharacter = 4;
+        /// <summary>Key indices across all shapes of one payload. The writer's shapes are one per saved object type and
+        /// field set (a few hundred indices in every measured city); the writer refuses above it and the reader refuses
+        /// before building the shape table.</summary>
+        public const int MaxCompactShapeFields = 65536;
 
         internal static long CompactValueBudget(int payloadCharacters) => Math.Min(MaxCompactValues, (long)MaxCompactValuesPerCharacter * payloadCharacters);
 
@@ -57,11 +61,12 @@ namespace PersistentCity.Persistence
         /// public collection property of a Core or Persistence type, keyed by its name. A name several types use takes their
         /// largest bound, so the compact reader is never stricter than the body reader; other fields get
         /// <see cref="MaxEmbeddedRecords"/>, the largest body bound. Checked before any array of that length is allocated.</summary>
-        internal static int CompactCollectionLimit(string key) => FieldLimits.TryGetValue(key, out int limit) ? limit : MaxEmbeddedRecords;
+        internal static int CompactCollectionLimit(string key) => FieldLimits.Value.TryGetValue(key, out int limit) ? limit : MaxEmbeddedRecords;
 
-        private static readonly Dictionary<string, int> FieldLimits = BuildFieldLimits();
+        // Built on the first compact decode, not at SaveCodec type initialization (one reflection pass; docs/perf/f7d.md).
+        private static readonly Lazy<Dictionary<string, int>> FieldLimits = new Lazy<Dictionary<string, int>>(BuildFieldLimits);
 
-        private static Dictionary<string, int> BuildFieldLimits()
+        internal static Dictionary<string, int> BuildFieldLimits()
         {
             var limits = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var assembly in new[] { typeof(CityState).Assembly, typeof(SaveCodec).Assembly })
@@ -74,7 +79,7 @@ namespace PersistentCity.Persistence
                     {
                         var item = ItemType(property.PropertyType);
                         if (item == null) continue;
-                        int limit = CollectionLimit(item, CityState.CompactSchema);
+                        int limit = SpecializedCollectionLimit(type, property.Name) ?? CollectionLimit(item, CityState.CompactSchema);
                         limits[property.Name] = limits.TryGetValue(property.Name, out int known) ? Math.Max(known, limit) : limit;
                     }
             }
@@ -635,12 +640,15 @@ namespace PersistentCity.Persistence
 
                 internal enum TableKind { Strings, Shapes }
 
+                private readonly HashSet<int> seen = new HashSet<int>();
+
                 /// <summary>Entries of the table at the current position, counted without allocating: every entry must be a
                 /// string, or for shapes an array of at most <paramref name="keys"/> numbers (a shape names each key at most once).
                 /// The position is left unchanged.</summary>
                 public long CountTable(int depth, TableKind kind, int keys)
                 {
                     int start = Position;
+                    long shapeFields = 0;
                     if (Peek() != '[') Fail("Expected a compact array.");
                     Open(depth); Position++;
                     long count = 0;
@@ -657,14 +665,21 @@ namespace PersistentCity.Persistence
                             if (Peek() != '[') Fail("Compact shape is not an array.");
                             Open(depth + 1); Position++;
                             int fields = 0;
+                            seen.Clear();
                             if (Peek() == ']') Position++;
                             else
                                 while (true)
                                 {
-                                    char c = Peek();
-                                    if (c != '-' && (c < '0' || c > '9')) Fail("Compact shape field is not a key index.");
-                                    ScanNumber();
+                                    // A canonical index into the key table, named once per shape; all shapes together are bounded.
+                                    int at = Position;
+                                    long index = 0;
+                                    while (Position < text.Length && text[Position] >= '0' && text[Position] <= '9' && Position - at <= 10)
+                                        index = index * 10 + (text[Position++] - '0');
+                                    if (Position == at || Position - at > 10 || (text[at] == '0' && Position - at > 1)) Fail("Compact shape field is not a canonical key index.");
+                                    if (index >= keys) Fail("Compact shape names a key outside the key table.");
+                                    if (!seen.Add((int)index)) Fail("Duplicate field in a compact shape.");
                                     if (++fields > keys) Fail("Compact shape names more fields than the key table holds.");
+                                    if (++shapeFields > MaxCompactShapeFields) Fail("Compact shapes exceed their field bound.");
                                     if (Peek() == ',') { Position++; continue; }
                                     Expect(']'); break;
                                 }
@@ -860,6 +875,7 @@ namespace PersistentCity.Persistence
                 var routeTable = uniqueRoutes.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray();
                 for (int i = 0; i < routeTable.Length; i++) routeIndex.Add(routeTable[i].Key, i);
                 stats.Strings = stringTable.Length; stats.Keys = keyTable.Length; stats.Shapes = shapeTable.Length; stats.Routes = routeTable.Length;
+                Require(shapeTable.Sum(shape => (long)shape.Length) <= MaxCompactShapeFields, "Compact shapes exceed their field bound.");
                 // The tables are bounded before any column is written.
                 Require(stats.TableEntries <= MaxEmbeddedRecords, "Compact tables exceed the record bound.");
                 long collected = System.Diagnostics.Stopwatch.GetTimestamp();

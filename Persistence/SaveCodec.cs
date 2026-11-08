@@ -576,6 +576,15 @@ namespace PersistentCity.Persistence
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
         }
 
+        /// <summary>Collection fields the token reader bounds with its own check instead of <see cref="CollectionLimit"/>:
+        /// the menu IDs of a scope (CheckMenuIds23), the product name table (CheckNameTable25) and the station table
+        /// (CheckPortals26). F7d's compact reader uses the same bounds for these fields.</summary>
+        internal static int? SpecializedCollectionLimit(Type owner, string field) =>
+            owner == typeof(FoodScope) && field == "AdditionalProductIds" ? FoodMenuPolicy.MaximumOffers - 1
+            : owner == typeof(CityState) && field == "ProductNames" ? FoodNameIdentity.MaximumNames
+            : owner == typeof(CityState) && field == "Portals" ? MaxPortals
+            : (int?)null;
+
         /// <summary>The token reader's bound for a saved collection of <paramref name="item"/> (CheckShape); F7d's compact reader
         /// derives its per-field bounds from the same table.</summary>
         internal static int CollectionLimit(Type item, int schema) => item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? (schema>=22 ? 32 : 24) : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist

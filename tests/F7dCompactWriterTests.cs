@@ -368,7 +368,7 @@ public sealed class F7dCompactWriterTests
         string overShape = shape.Append("]],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
         bytes = Allocated(() => SaveCodec.Read(overShape), out read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
-        Assert.Contains("more fields than the key table", read.Error);
+        Assert.Contains("Duplicate field in a compact shape", read.Error); // refused at the second index
         Assert.True(bytes < 64 * 1024, bytes + " B allocated");
         // A typed table: a key that is not a string is refused before the table is built.
         Assert.Contains("not a string", SaveCodec.Read(head.Replace("\"k\":[\"Citizens\",\"Schema\"]", "\"k\":[\"Citizens\",[0]]") + "\"t\":0}").Error);
@@ -387,6 +387,74 @@ public sealed class F7dCompactWriterTests
         output.WriteLine($"Shops bound {shopBound}; one-over refused after {bytes:N0} B");
         // The early authority probe uses the same counts.
         Assert.Contains("tables exceed the record bound", Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(overKeys)).Message);
+    }
+
+    private static string Envelope(IEnumerable<string> keys, string shapes, string strings, string root)
+        => "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[" + string.Join(",", keys.Select(k => "\"" + k + "\"")) + "],\"h\":" + shapes
+            + ",\"s\":" + strings + ",\"n\":0,\"r\":0,\"t\":" + root + "}";
+
+    [Fact]
+    public void ManyIndividuallyBoundedShapesAreRefusedBeforeTheShapeTableIsBuilt()
+    {
+        // 2,001 shapes of 2,000 zero indices against 2,000 keys: each passes the per-shape length, the duplicate index is
+        // refused during the count pass.
+        var keys = Enumerable.Range(0, 2000).Select(i => "k" + i.ToString("D4")).ToArray();
+        string zeros = "[" + string.Join(",", Enumerable.Repeat("[" + string.Join(",", Enumerable.Repeat("0", 2000)) + "]", 2001)) + "]";
+        string duplicates = Envelope(keys, zeros, "[]", "0");
+        long bytes = Allocated(() => SaveCodec.Read(duplicates), out var read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("Duplicate field in a compact shape", read.Error);
+        Assert.True(bytes < 512 * 1024, bytes + " B allocated");
+        // 300 shapes naming all 300 keys in distinct orders: 90,000 indices, over the aggregate bound of 65,536.
+        var small = Enumerable.Range(0, 300).Select(i => "k" + i.ToString("D3")).ToArray();
+        string rotations = "[" + string.Join(",", Enumerable.Range(0, 300).Select(r => "[" + string.Join(",", Enumerable.Range(0, 300).Select(i => ((i + r) % 300).ToString())) + "]")) + "]";
+        string wide = Envelope(small, rotations, "[]", "0");
+        bytes = Allocated(() => SaveCodec.Read(wide), out read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("shapes exceed their field bound", read.Error);
+        Assert.True(bytes < 512 * 1024, bytes + " B allocated");
+        // Noncanonical and out-of-range indices are refused in the same pass.
+        Assert.Contains("canonical key index", SaveCodec.Read(Envelope(small, "[[01]]", "[]", "0")).Error);
+        Assert.Contains("outside the key table", SaveCodec.Read(Envelope(small, "[[300]]", "[]", "0")).Error);
+        output.WriteLine($"shape probes refused after {bytes:N0} B");
+        RefusedAndKept(duplicates, SaveReadStatus.Invalid);
+    }
+
+    [Fact]
+    public void SpecializedBodyBoundsApplyToMenuIdsProductNamesAndPortals()
+    {
+        Assert.Equal(FoodMenuPolicy.MaximumOffers - 1, SaveCodec.CompactCollectionLimit("AdditionalProductIds"));
+        Assert.Equal(FoodNameIdentity.MaximumNames, SaveCodec.CompactCollectionLimit("ProductNames"));
+        Assert.Equal(SaveCodec.MaxPortals, SaveCodec.CompactCollectionLimit("Portals"));
+        string pad(int n) => "[\"" + new string('x', n) + "\"]"; // an unused table string makes value-budget room
+        var cases = new[]
+        {
+            ("menu IDs", Envelope(new[] { "AdditionalProductIds", "Food", "Schema", "Shops" }, "[[0],[1,2],[3]]", pad(64),
+                "[4,1,[4,2,[5,1,[4,0,[5," + FoodMenuPolicy.MaximumOffers + ",[3," + FoodMenuPolicy.MaximumOffers + "]]]]],[0,34]]")),
+            ("product names", Envelope(new[] { "ProductNames", "Schema" }, "[[0,1]]", pad(FoodNameIdentity.MaximumNames),
+                "[4,0,[5," + (FoodNameIdentity.MaximumNames + 1) + ",[3," + (FoodNameIdentity.MaximumNames + 1) + "]],[0,34]]")),
+            ("portals", Envelope(new[] { "Portals", "Schema" }, "[[0,1]]", pad(SaveCodec.MaxPortals),
+                "[4,0,[5," + (SaveCodec.MaxPortals + 1) + ",[3," + (SaveCodec.MaxPortals + 1) + "]],[0,34]]")),
+        };
+        foreach (var (name, payload) in cases)
+        {
+            long bytes = Allocated(() => SaveCodec.Read(payload), out var read);
+            Assert.True(read.Status == SaveReadStatus.Invalid, name);
+            Assert.True(read.Error.Contains("collection length"), name + ": " + read.Error);
+            Assert.True(bytes < 64 * 1024 + 4L * payload.Length, name + ": " + bytes + " B allocated");
+            RefusedAndKept(payload, SaveReadStatus.Invalid);
+        }
+    }
+
+    [Fact]
+    public void FieldLimitTableBuildsOnceAndCheaply()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var table = SaveCodec.BuildFieldLimits();
+        double ms = watch.Elapsed.TotalMilliseconds;
+        output.WriteLine($"field-limit table: {table.Count} names in {ms:F2} ms");
+        Assert.True(table.Count > 50);
+        Assert.Equal(SaveCodec.MaxResidents, table["Citizens"]);
     }
 
     [Fact]
