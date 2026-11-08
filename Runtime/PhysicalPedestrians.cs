@@ -259,14 +259,20 @@ namespace PersistentCity.Runtime
                     bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
                     float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
                     float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
-                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination)) { probe.Clear(); return false; }
+                    // Only shader configurations whose fragment alpha follows the colour: URP with a transparent surface
+                    // (_Surface 1 and its keyword), or the built-in Standard alpha-blend mode keyword.
+                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
+                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
+                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
+                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) { probe.Clear(); return false; }
                     any = true;
                 }
             }
             probe.Clear();
             return any;
         }
-        private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend"), DstBlendId = Shader.PropertyToID("_DstBlend");
+        private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend"), DstBlendId = Shader.PropertyToID("_DstBlend"),
+            SurfaceId = Shader.PropertyToID("_Surface");
         /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour, starting from the colour the renderer
         /// shows now (its property block's, else its material's). 1 restores the renderers.</summary>
         public void SetFade(float alpha)
@@ -310,13 +316,14 @@ namespace PersistentCity.Runtime
         private readonly List<Renderer> faded = new List<Renderer>(), probe = new List<Renderer>();
         private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
         private MaterialPropertyBlock? block;
-        /// <summary>F2c follow: aim at a logical pose between corners. The pose is projected onto the walkable surface
-        /// first (within 0.5 m), so a leg over a kerb or a crowned road does not fail the endpoint check of SetTarget.</summary>
-        public bool SetPoseTarget(Position pose, double metresPerScaledSecond)
+        /// <summary>F2c follow: the nearest walkable point to a logical pose between corners (within 0.5 m), so a leg
+        /// over a kerb or a crowned road does not fail the endpoint check of SetTarget. No path is calculated here.</summary>
+        public bool TryProjectPose(Position pose, out Position projected)
         {
-            if (!Valid || !Fits(pose)) return false;
-            if (!NavMesh.SamplePosition(Vector(pose), out NavMeshHit hit, 0.5f, WalkingRoutes.DryFilter)) return false;
-            return SetTarget(Point(hit.position), metresPerScaledSecond);
+            projected = pose;
+            if (!Valid || !Fits(pose) || !NavMesh.SamplePosition(Vector(pose), out NavMeshHit hit, 0.5f, WalkingRoutes.DryFilter)) return false;
+            projected = Point(hit.position);
+            return projected.IsFinite;
         }
         /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
         public bool Warp(Position target)

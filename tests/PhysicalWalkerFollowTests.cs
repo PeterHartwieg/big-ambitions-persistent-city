@@ -205,10 +205,13 @@ public sealed class PhysicalWalkerFollowTests
         Assert.Contains("followers=1", PhysicalPopulation.Telemetry.Status(f.Bodies.Followers));
     }
 
-    [Fact]
-    public void TheBodyNeverPassesTheLogicalPoseWhileTheClockStandsStillWhateverTheFrameDurations()
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void TheBodyNeverPassesTheLogicalPoseWhileTheClockStandsStillWhateverTheFrameDurations(bool projectionAhead)
     {
         using var f = new Fixture();
+        // A kerb whose nearest walkable point lies 0.3 m further along the leg: that projection is not used.
+        if (projectionAhead) NavMesh.Sample = p => new Vector3(p.x + 0.3f, p.y + 0.1f, p.z);
         f.Tick();
         f.Advance(Now + 0.1); // logical pose at 40.2 m; the body stands at 40 m
         // Native movement double: the agent walks toward its destination at the commanded speed and stops there.
@@ -267,14 +270,29 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         Assert.True(Position.Distance(new Position(44, 0.12, 0), f.Body.Target) < 1e-4);
         Assert.False(f.Body.Agent.isStopped); Assert.True(f.Body.Speed > 0);
-        // Projection and the raw pose both fail: it keeps walking to its previous destination and tries again.
-        NavMesh.Sample = _ => null;
-        PhysicalPedestrianBody.Unreachable = _ => true;
+        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests);
+        // The projection is found but its path is refused: the raw pose is tried too, and both calculations count.
+        PhysicalPedestrianBody.Unreachable = p => p.Y > 0.05;
         f.Advance(Now + 3);
         f.Tick();
-        Assert.True(Position.Distance(new Position(44, 0.12, 0), f.Body.Target) < 1e-4);
-        Assert.False(f.Body.Agent.isStopped); Assert.True(f.Body.Speed > 0);
-        Assert.True(PhysicalPopulation.Telemetry.PathRequests >= requests + 2);
+        Assert.True(Position.Distance(new Position(46, 0, 0), f.Body.Target) < 1e-4);
+        Assert.Equal(requests + 3, PhysicalPopulation.Telemetry.PathRequests);
+        // Projection and the raw pose both fail: it keeps walking to its previous destination, retrying once a second.
+        NavMesh.Sample = _ => null;
+        PhysicalPedestrianBody.Unreachable = _ => true;
+        f.Advance(Now + 3.5);
+        int calls = f.Body.SetTargets;
+        for (int i = 0; i < 10; i++)
+        {
+            f.Tick(0.05f);
+            Assert.True(Position.Distance(new Position(46, 0, 0), f.Body.Target) < 1e-4);
+            Assert.False(f.Body.Agent.isStopped); Assert.True(f.Body.Speed > 0);
+        }
+        Assert.Equal(calls + 1, f.Body.SetTargets); // one failed attempt in half a second, not one per frame
+        f.Tick(0.6f);
+        Assert.Equal(calls + 2, f.Body.SetTargets);
+        Assert.False(f.Body.Agent.isStopped);
+        Assert.Equal(requests + 3 + 2, PhysicalPopulation.Telemetry.PathRequests);
         Assert.Contains("path_requests=", PhysicalPopulation.Telemetry.Status(1));
     }
 

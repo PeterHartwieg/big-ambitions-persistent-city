@@ -191,13 +191,25 @@ public sealed class PhysicalProgressTests
         => Assert.Equal(factor, WalkerFollow.PaceFactor(lag), 12);
 
     [Theory]
-    [InlineData(2000, true, 5f, 10f, false)] [InlineData(2450, true, 5f, 10f, false)] [InlineData(2500, true, 5f, 10f, false)]
-    [InlineData(2501, true, 5f, 10f, true)] [InlineData(3000, true, 5f, 10f, true)] [InlineData(3000, false, 5f, 10f, false)]
+    [InlineData(2000, true, 5f, 10f, true, false)] [InlineData(2450, true, 5f, 10f, true, false)] [InlineData(2500, true, 5f, 10f, true, false)]
+    [InlineData(2501, true, 5f, 10f, true, true)] [InlineData(3000, true, 5f, 10f, true, true)] [InlineData(3000, false, 5f, 10f, true, false)]
     // A transparent queue with a colour but blending disabled (One/Zero), additive, or no blend properties at all.
-    [InlineData(3000, true, 1f, 0f, false)] [InlineData(3000, true, 5f, 1f, false)] [InlineData(3000, true, null, null, false)]
-    [InlineData(3000, true, 5f, null, false)]
-    public void OnlyAlphaBlendedTransparentMaterialsWithAColourCanFade(int queue, bool colour, float? source, float? destination, bool fades)
-        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(queue, colour, source, destination));
+    [InlineData(3000, true, 1f, 0f, true, false)] [InlineData(3000, true, 5f, 1f, true, false)] [InlineData(3000, true, null, null, true, false)]
+    [InlineData(3000, true, 5f, null, true, false)]
+    // URP Lit with an opaque surface (_Surface 0), queue 3000 and blend 5/10: its fragment alpha is forced to 1.
+    [InlineData(3000, true, 5f, 10f, false, false)]
+    public void OnlyAlphaOutputBlendedTransparentMaterialsWithAColourCanFade(int queue, bool colour, float? source, float? destination, bool alphaSurface, bool fades)
+        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(queue, colour, source, destination, alphaSurface));
+
+    [Fact]
+    public void AProjectedPoseAheadOnTheLegIsNotUsable()
+    {
+        var from = new Position(40, 0, 0); var to = new Position(70, 0, 0); var pose = new Position(44, 0, 0);
+        Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44, 0.12, 0)));   // straight up
+        Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(43.8, 0.1, 0.2))); // behind and aside
+        Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44.3, 0.1, 0)));  // ahead along the leg
+        Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(double.NaN, 0, 0)));
+    }
 
     [Fact]
     public void CorrectionStartsBeyondEightMetresOrOnAnotherMode()

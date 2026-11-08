@@ -282,13 +282,28 @@ namespace PersistentCity.Core
         public const int SourceAlphaBlend = 5, OneMinusSourceAlphaBlend = 10;
 
         /// <summary>Whether a material shows the fade: it has the colour property the fade scales, renders in a
-        /// transparent queue (above 2500), and declares alpha blending (_SrcBlend SrcAlpha, _DstBlend
-        /// OneMinusSrcAlpha). A queue override alone does not make an opaque shader blend, and a shader without those
-        /// blend properties is not recognized; either way the body is kept until it is out of view instead.</summary>
-        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty, float? sourceBlend, float? destinationBlend)
-            => hasColourProperty && renderQueue > 2500
+        /// transparent queue (above 2500), declares alpha blending (_SrcBlend SrcAlpha, _DstBlend OneMinusSrcAlpha), and
+        /// its shader configuration outputs the colour's alpha (<paramref name="alphaSurface"/>: a URP transparent
+        /// surface, or the built-in Standard alpha-blend mode). Queue and blend values alone do not establish that the
+        /// fragment alpha follows the colour (URP's opaque surface forces it to 1), so any other configuration counts as
+        /// opaque and the body is kept until it is out of view instead.</summary>
+        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty, float? sourceBlend, float? destinationBlend, bool alphaSurface)
+            => alphaSurface && hasColourProperty && renderQueue > 2500
             && sourceBlend.HasValue && (int)sourceBlend.Value == SourceAlphaBlend
             && destinationBlend.HasValue && (int)destinationBlend.Value == OneMinusSourceAlphaBlend;
+
+        /// <summary>A NavMesh projection of a pose may shift it along the leg (kerbs, ramps). It is usable only if it is
+        /// not ahead of the pose along the leg <paramref name="from"/>→<paramref name="to"/> (horizontal), so the
+        /// destination stays behind the logical progress.</summary>
+        public static bool NotAheadOnLeg(Position from, Position to, Position pose, Position projected)
+        {
+            double dx = to.X - from.X, dz = to.Z - from.Z, square = dx * dx + dz * dz;
+            if (!projected.IsFinite || !Position.Finite(square)) return false;
+            if (square <= 1e-12) return true;
+            double alongPose = ((pose.X - from.X) * dx + (pose.Z - from.Z) * dz) / square;
+            double alongProjected = ((projected.X - from.X) * dx + (projected.Z - from.Z) * dz) / square;
+            return alongProjected <= alongPose + 1e-9;
+        }
 
         /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
         /// <paramref name="deltaSeconds"/>, so the body is never commanded past the logical pose, even while the
@@ -408,7 +423,8 @@ namespace PersistentCity.Core
         public long LagReleases { get; private set; }
         /// <summary>Mode boundaries where a walker reached the car, bus or subway and a body of the new kind is re-acquired.</summary>
         public long Handoffs { get; set; }
-        /// <summary>Walker path requests (one NavMesh CalculatePath each). Their rate scales with game speed.</summary>
+        /// <summary>Walker path calculations: every SetTarget a follower issues (one NavMesh CalculatePath each, the
+        /// projected and the raw attempt counted separately). Their rate scales with game speed.</summary>
         public long PathRequests { get; set; }
         /// <summary>Acquisitions refused by the test-profile key MovementFaultAcquirePercent.</summary>
         public long FaultedAcquisitions { get; set; }

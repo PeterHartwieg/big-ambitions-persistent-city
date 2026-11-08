@@ -191,12 +191,14 @@ namespace PersistentCity.Runtime
         internal static Func<Position, bool>? Unreachable;
         internal bool SetPathTarget(Position p, double _)
         { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isStopped = false; return true; }
-        internal bool SetTarget(Position p, double speed) => SetPathTarget(p, speed);
-        // F2c: a pose target is projected onto the walkable surface (the NavMesh.Sample hook) before it is aimed at.
-        internal bool SetPoseTarget(Position p, double speed)
+        internal bool SetTarget(Position p, double speed) { SetTargets++; return SetPathTarget(p, speed); }
+        // F2c: a pose is projected onto the walkable surface through the NavMesh.Sample hook; SetTarget counts its calls.
+        internal int SetTargets;
+        internal bool TryProjectPose(Position p, out Position projected)
         {
+            projected = p;
             if (!UnityEngine.AI.NavMesh.SamplePosition(Vector(p), out var hit, 0.5f, default(UnityEngine.AI.NavMeshQueryFilter))) return false;
-            return SetTarget(Point(hit.position), speed);
+            projected = Point(hit.position); return true;
         }
         internal void Stop(bool value) { Agent.isStopped = value; }
         // F2c follower hooks: the commanded pace, an off-screen move, and the test-controlled on-screen flag.

@@ -1025,18 +1025,27 @@ namespace PersistentCity.Runtime
                     || corner && Position.Distance(goal, binding.TargetPoint) > 1e-6);
             if (retarget && !(pose && lag <= WalkerFollow.StopMetres))
             {
-                if (Time.unscaledTime < binding.NextTargetAttempt) { body.Pace(0); return true; }
-                Telemetry.PathRequests++;
-                // A pose between corners is projected onto the walkable surface first (a straight leg can cross a kerb
-                // or a crowned road without a NavMesh corner), then tried as given.
-                bool aimed = pose && !corner
-                    ? body.SetPoseTarget(goal, NativeTravelPace.WalkingMetresPerSecond) || body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond)
-                    : body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond);
-                if (aimed) { binding.TargetLeg = own.LegIndex; binding.TargetIsPose = pose; binding.TargetPoint = goal; }
-                // If a pose cannot be aimed at, keep walking to the previous destination on this route (an earlier
-                // pose or corner, never past the pose) and try again next frame, instead of stopping.
-                else if (pose && binding.TargetLeg >= 0 && binding.TargetLeg <= own.LegIndex) blockedSamples++;
-                else { body.Stop(true); binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++; return true; }
+                // The previous destination on this route (an earlier pose or corner) is never past the pose: while a
+                // re-aim fails, or waits out its one-second retry, the body keeps walking to it.
+                bool previous = binding.TargetLeg >= 0 && binding.TargetLeg <= own.LegIndex;
+                if (Time.unscaledTime < binding.NextTargetAttempt) { if (!previous) { body.Pace(0); return true; } }
+                else
+                {
+                    bool aimed = false;
+                    // A pose between corners is projected onto the walkable surface first (a straight leg can cross a
+                    // kerb or a crowned road without a NavMesh corner); a projection that lands ahead of the pose along
+                    // the leg is not used. Then the pose is tried as given. Each SetTarget is one path calculation.
+                    if (pose && !corner && body.TryProjectPose(goal, out var projected)
+                        && WalkerFollow.NotAheadOnLeg(logical.From, logical.To, goal, projected))
+                    { Telemetry.PathRequests++; aimed = body.SetTarget(projected, NativeTravelPace.WalkingMetresPerSecond); }
+                    if (!aimed) { Telemetry.PathRequests++; aimed = body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond); }
+                    if (aimed) { binding.TargetLeg = own.LegIndex; binding.TargetIsPose = pose; binding.TargetPoint = goal; binding.NextTargetAttempt = 0; }
+                    else
+                    {
+                        binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++;
+                        if (!previous) { body.Stop(true); return true; }
+                    }
+                }
             }
             else if (retarget) { body.Pace(0); return true; }
             body.Pace(WalkerFollow.CommandSpeed(NativeTravelPace.WalkingMetresPerSecond * pace, lag, Time.deltaTime));
