@@ -228,9 +228,9 @@ namespace PersistentCity.Runtime
             // Candidate selection. tools/physical-selection-regression extracts the text from this line
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
-            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every
-            // citizen after a shadow mismatch. Filters and order below are the same for both sources.
-            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
+            // F2f: the active-journey index members filed in the grid cells within the radius (visitors withheld
+            // until F5i), or every citizen after a shadow mismatch. Filters and order below are the same for both sources.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
                 var c = roster[index];
@@ -368,6 +368,8 @@ namespace PersistentCity.Runtime
             }
         }
         private readonly List<SelectionCandidate> candidates = new List<SelectionCandidate>();
+        // F2f grid query result, reused by PlanQueues and then the selection in the same update.
+        private readonly List<CitizenState> nearby = new List<CitizenState>();
 
         // Waiting for a route or for an opening is indoors. Only a queue-at-opening dwell
         // (PlanQueues) puts a waiting citizen in the street, at a spot beside the door.
@@ -384,8 +386,9 @@ namespace PersistentCity.Runtime
             queuers.Clear();
             double now = simulation.State.Minute;
             var planned = new Dictionary<string, (Place Place, List<Dwell> Dwells)>(StringComparer.Ordinal);
-            // Waiting citizens are indexed (F5f). Line and slot order are sorted below, not taken from this order.
-            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
+            // Waiting citizens are indexed (F5f) and filed at their place cell (F2f). Line and slot order are sorted
+            // below, not taken from this order.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
                 var citizen = roster[index];

@@ -5,7 +5,10 @@ class Fixture {
  public Ambient ambient = new();
  public Dictionary<string,float> attempted = new();
  public Dictionary<string, QueuePlanEntry> queuers = new();
- public Dictionary<string,Place> places = new();
+ // Shared with the simulator double, as production's Runtime and Core place tables hold the same Place objects.
+ public Dictionary<string,Place> places => simulation.Places;
+ // E6e vendor stays (outside the journey index); empty in these fixtures.
+ public Dictionary<string, CitizenState> vendorWaiters = new();
  public Position focus;
  public double radius = 100;
  public int InitialPeople, InitialCars, pedestrianLimit = 3, vehicleLimit = 3;
@@ -19,21 +22,27 @@ class Sim {
  public CityState State = new() { Minute = 100 };
  public int Positions;
  public Dictionary<string, PhysicalJourneySample> Samples = new();
- public Position PositionOf(CitizenState c) { Positions++; return c.Journey?.Legs[0].From ?? new Position(int.Parse(c.Identity.Id), 0, 0); }
+ public Dictionary<string,Place> Places = new();
+ // As production: a travelling person is on a committed leg (the first leg's start here), anyone else at their place.
+ // F2f trials set route progress per person, so PositionOf samples the real Route.PositionAt anywhere on the legs.
+ public Dictionary<string, double>? Progress;
+ public Position PositionOf(CitizenState c) { Positions++; return c.Phase == CitizenPhase.Travelling && c.Journey != null
+  ? Progress != null ? c.Journey.PositionAt(Progress[c.Identity.Id]) : c.Journey.Legs[0].From : Places[c.PlaceId].Position; }
  public PhysicalJourneySample SampleJourney(CitizenState c) => Samples[c.Identity.Id];
  // The real Core index over this roster, rebuilt when citizens are added. Reversed models a swap-removal order.
  public bool ReverseIndex;
  ActiveJourneyIndex? index; int indexed = -1;
  public ActiveJourneyIndex ActiveJourneys { get {
   if (index == null || indexed != State.Citizens.Count) {
-   index = new ActiveJourneyIndex(); var roster = State.Citizens.ToList(); if (ReverseIndex) roster.Reverse();
+   index = new ActiveJourneyIndex(id => Places.TryGetValue(id, out var p) ? p.Position : (Position?)null); var roster = State.Citizens.ToList(); if (ReverseIndex) roster.Reverse();
    index.Rebuild(roster); indexed = State.Citizens.Count;
    if (!index.MatchesScan(State.Citizens)) throw new Exception("Index differs from a full scan");
   }
   return index; } }
 }
 class Ambient { public HashSet<string> Reserved = new(); public bool IsReserved(string id) => Reserved.Contains(id); }
-class QueuePlanEntry {}
+class QueuePlanEntry { public QueueLine Line = new(); }
+class QueueLine { public Position Entrance; }
 static class Time { public static float unscaledTime = 10; }
 enum VehicleTypes { Car, Truck }
 class Prefab { public string name = ""; }
@@ -62,6 +71,93 @@ static class Program {
  if(a is double x && b is double y) return BitConverter.DoubleToInt64Bits(x)==BitConverter.DoubleToInt64Bits(y);
  if(a is Position p && b is Position q) return SameValue(p.X,q.X)&&SameValue(p.Y,q.Y)&&SameValue(p.Z,q.Z);
  return Equals(a,b);
+ }
+ // F2f: a spread city (multi-leg diagonal routes, stationary persons at many places, visitors) where the grid
+ // prunes. The grid selection (After), the merged F5f index selection (BeforeF2f) and the full-scan fallback must
+ // pick the same IDs in the same order with the same cooldown writes, at many foci, radii and progress points,
+ // and again after members change journey, place or phase and are re-filed.
+ static int gridSelections, gridPruned;
+ static void F2f(Random rng) {
+  for (int trial=0; trial<300; trial++) {
+   var grid=new After(); var f5f=new BeforeF2f(); var full=new After{journeyIndexFallback=true};
+   var arms=new Fixture[]{grid,f5f,full};
+   double span = trial%3==0 ? 200 : 1500;
+   int n = trial%50==0 ? 3000 : 400;
+   var placeIds=new List<string>();
+   for(int p=0;p<40;p++) { string id=p%5==0?"scene-park:"+p:"place"+p; placeIds.Add(id);
+    var pos=new Position((rng.NextDouble()-.5)*span,rng.NextDouble()*4,(rng.NextDouble()-.5)*span);
+    foreach(var f in arms) f.places[id]=new Place{Id=id,Position=pos}; }
+   var progress=new Dictionary<string,double>();
+   foreach(var f in arms) { f.simulation.Progress=progress; f.pedestrianLimit=1+trial%40; f.vehicleLimit=trial%25; f.radius=trial%7==0?60:120; }
+   Route NewRoute() {
+    var route=new Route(); int legs=1+rng.Next(6);
+    var at=new Position((rng.NextDouble()-.5)*span,0,(rng.NextDouble()-.5)*span);
+    for(int l=0;l<legs;l++) {
+     var to=rng.Next(5)==0?at:new Position(at.X+(rng.NextDouble()-.5)*400,rng.NextDouble(),at.Z+(rng.NextDouble()-.5)*400);
+     route.Legs.Add(new RouteLeg{Mode=(TravelMode)rng.Next(4),Minutes=rng.Next(8)==0?0:.5+rng.NextDouble()*5,From=at,To=to}); at=to; }
+    return route;
+   }
+   var people=new List<CitizenState[]>();
+   for(int i=0;i<n;i++) {
+    string id=i%37==0?"pv:"+i:i.ToString("D5"); int kind=rng.Next(6);
+    var phase=kind<3?CitizenPhase.Travelling:kind==3?CitizenPhase.WaitingForOpening:CitizenPhase.AtPlace;
+    var route=phase==CitizenPhase.Travelling?NewRoute():null;
+    string place=placeIds[rng.Next(placeIds.Count)];
+    if(route!=null) progress[id]=rng.NextDouble()*route.Minutes*(rng.Next(10)==0?0:1);
+    var copies=new CitizenState[arms.Length];
+    for(int a=0;a<arms.Length;a++) {
+     var f=arms[a];
+     var c=new CitizenState{Identity=new CitizenIdentity{Id=id},Phase=phase,Journey=route,PlaceId=place,Activity=kind==5?Activity.Work:Activity.Leisure,
+      OptionalStop=kind==5&&i%2==0?new OptionalStopState{StartMinute=90,EndMinute=110}:null,NextEventMinute=i%29==0?99:101};
+     f.simulation.State.Citizens.Add(c); copies[a]=c;
+     if(route!=null) { var leg=route.Legs[0]; f.simulation.Samples[id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null); }
+     if(phase==CitizenPhase.WaitingForOpening && i%2==0) f.queuers[id]=new QueuePlanEntry();
+     if(i%11==0) f.attempted[id]=9; else if(i%13==0) f.attempted[id]=1;
+     if(i%17==0) f.ambient.Reserved.Add(id);
+     if(i%23==0) f.bindings[id]=new object();
+     if(i%3==0) f.Failed.Add(id);
+    }
+    people.Add(copies);
+   }
+   for(int round=0;round<6;round++) {
+    var focus=new Position((rng.NextDouble()-.5)*span*1.2,rng.NextDouble()*3,(rng.NextDouble()-.5)*span*1.2);
+    // Cell-edge foci: exactly on and an ulp either side of a 64 m boundary.
+    if(round==1) focus=new Position(64*rng.Next(-8,8),0,64*rng.Next(-8,8));
+    if(round==2) focus=new Position(Math.BitDecrement(64.0*rng.Next(-8,8)),0,Math.BitIncrement(64.0*rng.Next(-8,8)));
+    foreach(var f in arms) { f.focus=focus; f.attempted.Clear(); }
+    var index=grid.simulation.ActiveJourneys;
+    Check(index.MatchesScan(grid.simulation.State.Citizens) && index.Grid.Matches(index.BodyCandidates,true),"F2f grid differs from a full scan");
+    var nearby=index.Grid.Query(focus,grid.radius,new List<CitizenState>());
+    Check(nearby.Distinct().Count()==nearby.Count,"F2f grid returned a person twice");
+    var within=index.BodyCandidates.Where(c=>Position.Distance(grid.simulation.PositionOf(c),focus)<=grid.radius).ToList();
+    Check(within.All(nearby.Contains),"F2f grid missed a body candidate inside the radius");
+    Check(nearby.All(c=>index.BodyCandidates.Contains(c)),"F2f grid returned a non-candidate");
+    if(nearby.Count<index.BodyCandidates.Count) gridPruned++;
+    var expected=f5f.Select();
+    Check(grid.Select().SequenceEqual(expected),"F2f grid selection differs from the F5f index");
+    Check(full.Select().SequenceEqual(expected),"F2f fallback differs from the F5f index");
+    Check(grid.attempted.OrderBy(x=>x.Key).SequenceEqual(f5f.attempted.OrderBy(x=>x.Key)),"F2f cooldown writes differ");
+    gridSelections++;
+    // Members change journey (a replacement route), place, or phase; each index re-files its own copy.
+    for(int k=0;k<n/10;k++) {
+     int i=rng.Next(n); var copies=people[i]; string id=copies[0].Identity.Id; int change=rng.Next(4);
+     Route? route=change==0?NewRoute():null; string place=placeIds[rng.Next(placeIds.Count)];
+     if(route!=null) progress[id]=rng.NextDouble()*route.Minutes;
+     for(int a=0;a<arms.Length;a++) {
+      var c=copies[a];
+      if(change==0) { c.Phase=CitizenPhase.Travelling; c.Journey=route; var leg=route!.Legs[0]; arms[a].simulation.Samples[id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null); }
+      else if(change==1) { c.Phase=CitizenPhase.WaitingForOpening; c.Journey=null; c.PlaceId=place; }
+      else if(change==2) { c.Phase=CitizenPhase.AtPlace; c.Journey=null; c.PlaceId=place; c.Activity=Activity.Leisure; }
+      else { c.Phase=CitizenPhase.AtPlace; c.Journey=null; c.Activity=Activity.Home; c.OptionalStop=null; }
+      // Production's PlanQueues rebuilds queue entries every update from waiting citizens only.
+      if(change==1) arms[a].queuers[id]=new QueuePlanEntry(); else arms[a].queuers.Remove(id);
+      arms[a].simulation.ActiveJourneys.File(c);
+     }
+    }
+   }
+  }
+  Check(gridPruned>gridSelections/2,"F2f fixtures did not exercise pruning");
+  Console.WriteLine($"F2f grid-vs-F5f selections {gridSelections} ({gridPruned} pruned)");
  }
  static bool SameSample(PhysicalJourneySample a, PhysicalJourneySample b) => typeof(PhysicalJourneySample)
  .GetFields(System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic)
@@ -183,6 +279,7 @@ static class Program {
   Check(chosen.SequenceEqual(residents.Select()),"Visitor filtering changed resident selection");
   Check(visitors.simulation.ActiveJourneys.WithheldVisitors == 3 && visitors.simulation.ActiveJourneys.Count == 6,"Visitors are not indexed");
  }
+ F2f(rng);
  Check(!ActiveJourneyIndex.VisitorsReceiveBodies,"Visitor bodies are F5i scope");
  Check(afterPositions<beforePositions,"No position reduction"); Check(afterHierarchy<beforeHierarchy,"No hierarchy reduction");
  Console.WriteLine($"PASS {checks} checks; positions {beforePositions}->{afterPositions}; hierarchy {beforeHierarchy}->{afterHierarchy}; F5f index-vs-full-scan selections {indexSelections}");

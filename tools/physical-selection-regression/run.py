@@ -44,9 +44,23 @@ full_pool_check = '''                // Both pools are full: observations and qu
 '''
 assert before_f0['selection'].count(full_pool_check) == 1
 before_f0['selection'] = before_f0['selection'].replace(full_pool_check, '')
+# F2f baseline: the merged F5f selection over every indexed body candidate, reconstructed from the
+# current text by restoring the F5f roster line, so every other line stays production code.
+before_f2f = dict(current)
+f2f_loop = '''            // F2f: the active-journey index members filed in the grid cells within the radius (visitors withheld
+            // until F5i), or every citizen after a shadow mismatch. Filters and order below are the same for both sources.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
+'''
+f5f_roster = '''            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every
+            // citizen after a shadow mismatch. Filters and order below are the same for both sources.
+            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
+'''
+assert before_f2f['selection'].count(f2f_loop) == 1
+before_f2f['selection'] = before_f2f['selection'].replace(f2f_loop, f5f_roster)
+assert 'Grid.Query' not in before_f2f['selection']
 # F5f perf baseline: the unchanged pre-F5f loop over every citizen, with no index and no ID
-# classification, reconstructed from the current text so every other line stays production code.
-before_f5f = dict(current)
+# classification, reconstructed from the F5f text so every other line stays production code.
+before_f5f = dict(before_f2f)
 f5f_loop = '''            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every
             // citizen after a shadow mismatch. Filters and order below are the same for both sources.
             var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.BodyCandidates;
@@ -61,9 +75,10 @@ for text, base in [(f5f_loop, '''            foreach (var c in simulation.State.
 '''), (f5f_filter, '')]:
     assert before_f5f['selection'].count(text) == 1, text
     before_f5f['selection'] = before_f5f['selection'].replace(text, base)
-assert 'ActiveJourney' not in before_f5f['selection'] and 'ReceivesBody' not in before_f5f['selection']
+# The vendor-stay block after the loop (E6e) reads ActiveJourneys.Contains; only the roster loop is reconstructed.
+assert 'ActiveJourneys.BodyCandidates' not in before_f5f['selection'] and 'ReceivesBody' not in before_f5f['selection']
 classes = []
-for name, parts in [('Before', baseline), ('BeforeF0', before_f0), ('BeforeF5f', before_f5f), ('After', current)]:
+for name, parts in [('Before', baseline), ('BeforeF0', before_f0), ('BeforeF5f', before_f5f), ('BeforeF2f', before_f2f), ('After', current)]:
     classes.append('class ' + name + ' : Fixture {\n' + parts['ordinary'] + parts['hash'] + parts['outdoor'] + parts.get('optional_visible', '') + parts.get('candidates', '') + parts['sample'] + '''
  public bool Slot(CitizenState citizen, out VehicleComponent? chosen) {
  chosen = null;
@@ -95,10 +110,11 @@ build.mkdir(parents=True, exist_ok=True)
 (build / 'Program.cs').write_text(program)
 # Count actual production duration-property evaluations without changing its arithmetic.
 model = (root / 'Core' / 'Model.cs').read_text()
-old = 'get { double total = 0; foreach (var leg in Legs) total += leg.Minutes; return total; }'
+# F7c: a committed route caches its total; an uncommitted one sums its legs. Count every read of either.
+old = 'public double Minutes => legs.IsReadOnly ? committedMinutes : Sum();'
 assert model.count(old) == 1
 model = model.replace('public sealed class Route\n    {', 'public sealed class Route\n    {\n        public static int DurationReads;')
-model = model.replace(old, old.replace('double total = 0;', 'DurationReads++; double total = 0;'))
+model = model.replace(old, 'public double Minutes { get { DurationReads++; return legs.IsReadOnly ? committedMinutes : Sum(); } }')
 (build / 'Model.cs').write_text(model)
 import xml.etree.ElementTree as ET
 project = ET.Element('Project', Sdk='Microsoft.NET.Sdk')

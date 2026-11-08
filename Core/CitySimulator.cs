@@ -63,7 +63,8 @@ namespace PersistentCity.Core
         internal Place FindPlace(string id) => places[id];
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
         // change of a live citizen's phase, activity, place or optional stop (FileOptionalStop and the visit starts).
-        private readonly ActiveJourneyIndex activeJourneys = new ActiveJourneyIndex();
+        // F2f: its presentation grid resolves stationary candidates through this simulator's place table.
+        private readonly ActiveJourneyIndex activeJourneys;
         // F5e: seated persons per workplace for the job-finding vacancy check; moved only at event commit.
         private readonly WorkplaceOccupancy occupancy = new WorkplaceOccupancy();
         internal bool OccupancyMatchesFullCount() => occupancy.Matches(State);
@@ -180,6 +181,7 @@ namespace PersistentCity.Core
 
         public CitySimulator(CityState state, IRoutePlanner routes)
         {
+            activeJourneys = new ActiveJourneyIndex(FindPosition);
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
             state.Capabilities.RequireExecutable();

@@ -264,6 +264,8 @@ namespace PersistentCity.Core
     /// of every citizen. It holds no saved state and decides nothing: caps, leases, the candidate filters and their
     /// priority order stay with Runtime's selection, and movement authority stays with F2 #89.
     /// Visitors are indexed with their kind but withheld from <see cref="BodyCandidates"/> until F5i.
+    /// F2f files every body candidate into a <see cref="PresentationGrid"/> from inside File and Rebuild, so selection
+    /// can read only the cells near the focus (<see cref="Grid"/>).
     /// </summary>
     public sealed class ActiveJourneyIndex
     {
@@ -278,6 +280,11 @@ namespace PersistentCity.Core
         private readonly List<CitizenState> withheld = new List<CitizenState>();
         // Position in its list; withheld entries are stored as ~index (negative). CitizenState has reference equality.
         private readonly Dictionary<CitizenState, int> positions = new Dictionary<CitizenState, int>();
+        private readonly PresentationGrid grid;
+
+        /// <param name="placePosition">Place position by ID (the simulator's place table). Without it, stationary
+        /// candidates are unplaced in the grid and returned by every grid query.</param>
+        public ActiveJourneyIndex(Func<string, Position?>? placePosition = null) => grid = new PresentationGrid(placePosition);
 
         /// <summary>Phase-level membership. A superset of every stateful physical-selection candidate
         /// (Runtime PhysicalPopulation: moving journeys, planned queuers, Outdoor); time, distance, cooldown,
@@ -301,31 +308,35 @@ namespace PersistentCity.Core
         /// <summary>Indexed visitors withheld from body selection (zero while VisitorsReceiveBodies).</summary>
         public int WithheldVisitors => withheld.Count;
         public bool Contains(CitizenState c) => positions.ContainsKey(c);
+        /// <summary>F2f spatial view of <see cref="BodyCandidates"/>: <see cref="PresentationGrid.Query"/> returns each body
+        /// candidate filed near a focus once, a superset of those within the radius. Read-only outside Core.</summary>
+        public PresentationGrid Grid => grid;
 
         internal void Rebuild(IReadOnlyList<CitizenState> citizens) => Rebuild(citizens, Array.Empty<CitizenState>());
 
         /// <summary>Residents and schema-27 visitor routines; visitors are filed with their kind and withheld.</summary>
         internal void Rebuild(IReadOnlyList<CitizenState> citizens, IReadOnlyList<CitizenState> visitors)
         {
-            eligible.Clear(); withheld.Clear(); positions.Clear();
+            eligible.Clear(); withheld.Clear(); positions.Clear(); grid.Clear();
             for (int i = 0; i < citizens.Count; i++) File(citizens[i]);
             for (int i = 0; i < visitors.Count; i++) File(visitors[i]);
         }
 
-        /// <summary>Called wherever a live citizen's phase, activity, place or optional stop may have changed.</summary>
+        /// <summary>Called wherever a live citizen's phase, activity, place or optional stop may have changed.
+        /// A body candidate that stays a member is re-filed in the grid when its phase anchor or journey changed.</summary>
         internal void File(CitizenState c)
         {
             bool member = Member(c);
             bool present = positions.TryGetValue(c, out int at);
-            if (member == present) return;
+            if (member == present) { if (member && at >= 0) grid.File(c); return; }
             if (member)
             {
-                if (ReceivesBody(c)) { positions.Add(c, eligible.Count); eligible.Add(c); }
+                if (ReceivesBody(c)) { positions.Add(c, eligible.Count); eligible.Add(c); grid.File(c); }
                 else { positions.Add(c, ~withheld.Count); withheld.Add(c); }
                 return;
             }
             positions.Remove(c);
-            if (at >= 0) RemoveAt(eligible, at, false); else RemoveAt(withheld, ~at, true);
+            if (at >= 0) { RemoveAt(eligible, at, false); grid.Remove(c); } else RemoveAt(withheld, ~at, true);
         }
 
         private void RemoveAt(List<CitizenState> list, int index, bool negative)
@@ -341,7 +352,8 @@ namespace PersistentCity.Core
         }
 
         /// <summary>Shadow comparison against a full scan: exactly the members of <paramref name="citizens"/>,
-        /// each in the list of its kind, with consistent positions. Allocation-free; for tests and the
+        /// each in the list of its kind, with consistent positions, and the grid holds exactly the body candidates
+        /// at their current journey or place cells (F2f). Allocation-free; for tests and the
         /// low-cadence runtime check, never per frame.</summary>
         public bool MatchesScan(IReadOnlyList<CitizenState> citizens) => MatchesScan(citizens, Array.Empty<CitizenState>());
 
@@ -360,7 +372,7 @@ namespace PersistentCity.Core
                 if (body ? at < 0 || at >= eligible.Count || !ReferenceEquals(eligible[at], c)
                     : at >= 0 || ~at >= withheld.Count || !ReferenceEquals(withheld[~at], c)) return false;
             }
-            return members == positions.Count && members == Count;
+            return members == positions.Count && members == Count && grid.Matches(eligible);
         }
     }
 }
