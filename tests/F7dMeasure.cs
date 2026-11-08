@@ -50,6 +50,9 @@ public sealed class F7dMeasure
         // The compact transform alone (body text -> compact text), the part F7d adds to the encode phase.
         string body = SaveCodec.ExpandCompact(after);
         var transform = Time(samples, () => SaveCodec.CompactFromBody(body));
+        var split = new SaveCodec.CompactStats();
+        for (int i = 0; i < samples; i++) SaveCodec.CompactFromBody(body, split);
+        double tableMs = split.CollectTicks * 1000.0 / Stopwatch.Frequency / samples, columnMs = split.WriteTicks * 1000.0 / Stopwatch.Frequency / samples;
         // Decode -> body text alone, the part F7d adds before the strict body reader.
         var expand = Time(samples, () => SaveCodec.ExpandCompact(after));
 
@@ -72,7 +75,7 @@ public sealed class F7dMeasure
             after = new
             {
                 schema = 34, characters = after.Length, utf8Bytes = Encoding.UTF8.GetByteCount(after), utf16Bytes = 2L * after.Length,
-                sha256 = RepresentativeFixture.Sha256(after), write = writeAfter, compactTransformMs = transform, read = readAfter, expandMs = expand,
+                sha256 = RepresentativeFixture.Sha256(after), write = writeAfter, compactTransformMs = transform, compactTablePassMeanMs = Math.Round(tableMs, 3), compactColumnWriterMeanMs = Math.Round(columnMs, 3), read = readAfter, expandMs = expand,
                 activationMs = activateAfter, retainedBytesAfterRead = retainedAfter,
                 tables = new { strings = stats.Strings, keys = stats.Keys, shapes = stats.Shapes, routes = stats.Routes, entries = stats.TableEntries },
                 routeReferences = stats.RouteReferences, roadTags = stats.RoadTags, nesting = SaveCodec.CompactTree.Nesting(after), decodedValues = stats.Values,

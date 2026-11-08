@@ -56,6 +56,8 @@ namespace PersistentCity.Persistence
         {
             public int Strings, Keys, Shapes, Routes, RouteReferences, RoadTags, Nesting;
             public long Values;
+            /// <summary>Encode split for the measurement harness: table pass (counts, shapes, routes) and column writer.</summary>
+            public long CollectTicks, WriteTicks;
             public int TableEntries => Strings + Keys + Shapes + Routes;
         }
 
@@ -698,6 +700,7 @@ namespace PersistentCity.Persistence
 
             public string Run(object? root, int capacity)
             {
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
                 Collect(root, "");
                 var stringTable = counts.Where(p => p.Value >= 2).Select(p => p.Key).OrderBy(s => s, StringComparer.Ordinal).ToArray();
                 for (int i = 0; i < stringTable.Length; i++) strings.Add(stringTable[i], i);
@@ -712,6 +715,8 @@ namespace PersistentCity.Persistence
                 stats.Strings = stringTable.Length; stats.Keys = keyTable.Length; stats.Shapes = shapeTable.Length; stats.Routes = routeTable.Length;
                 // The tables are bounded before any column is written.
                 Require(stats.TableEntries <= MaxEmbeddedRecords, "Compact tables exceed the record bound.");
+                long collected = System.Diagnostics.Stopwatch.GetTimestamp();
+                stats.CollectTicks += collected - started;
 
                 output = new StringBuilder(capacity);
                 output.Append("{\"Schema\":"); AppendInt(output, CityState.CompactSchema);
@@ -737,6 +742,7 @@ namespace PersistentCity.Persistence
                 output.Append(",\"t\":");
                 WriteColumn(new List<object?> { root }, "");
                 output.Append('}');
+                stats.WriteTicks += System.Diagnostics.Stopwatch.GetTimestamp() - collected;
                 return output.ToString();
             }
 
