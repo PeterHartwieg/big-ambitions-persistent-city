@@ -115,14 +115,14 @@ public sealed class F5gMeasure
         foreach (var (name, homes, commuterTarget) in shapes)
         {
             long target = commuterTarget;
+            var (probe, _) = F5gPopulationFillTests.City(homes, 1, seed: 2026);
             if (target < 0)
             {
-                var (probe, _) = F5gPopulationFillTests.City(homes, 1, seed: 2026);
                 var t = VisitorTargets.Compute(0, 0, probe.Citizens.Count, probe.Portals.Count);
                 target = t.VisitorCapacity - t.PoolDemand;
-                // The nearest target at or below that the even band capacities reach.
-                while (F5gPopulationFillTests.TryCatalogueFor(probe, homes, target) == null) target--;
             }
+            // The nearest target at or below that the even band capacities reach.
+            while (F5gPopulationFillTests.TryCatalogueFor(probe, homes, target) == null) target--;
             string? hash = null;
             foreach (var (budget, skip) in new[] { (1, false), (16, false), (128, false), (0, true) })
             {

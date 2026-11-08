@@ -375,7 +375,7 @@ public sealed class F5gPopulationFillTests
         var fill = Fill();
         var city = Start(state, market, fill);
         double end = (2 + days) * 1440 + 30;
-        long units = 0; int reloads = 0;
+        long units = 0; int reloads = 0, reloadedDay = -1;
         while (true)
         {
             bool caught;
@@ -385,11 +385,14 @@ public sealed class F5gPopulationFillTests
             if (reloadMidFill && city.PopulationFillUnits != units && city.PopulationFillUnits % 2 == 1 && city.State.Minute % 1440 == 0)
             { city = Reload(city, market, Fill()); reloads++; units = 0; continue; }
             units = city.PopulationFillUnits;
-            if (reloadDaily && !caught && city.State.Minute % 1440 == 720) { city = Reload(city, market, Fill()); reloads++; }
+            int today = (int)(city.State.Minute / 1440);
+            if (reloadDaily && !caught && today > reloadedDay && city.State.Minute >= today * 1440 + 720)
+            { city = Reload(city, market, Fill()); reloads++; reloadedDay = today; }
             if (caught) break;
         }
         city.SynchronizeSnapshot();
         if (reloadMidFill) Assert.True(reloads > 0, "no reload happened inside a fill");
+        if (reloadDaily) Assert.True(reloads >= days, "a daily reload was skipped");
         Invariants(city.State, "run"); Conserved(city.State, "run");
         return SaveCodec.Write(city.State) + "\n" + string.Join(",", market.Orders);
     }
