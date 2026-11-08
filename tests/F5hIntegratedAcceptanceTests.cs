@@ -300,6 +300,31 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         Assert.Equal(reloaded.Final, SaveCodec.Write(current.State!));
     }
 
+    /// <summary>Review Sol-r2-1: an event waiting for its route has left the due queue but is still due work, so the
+    /// backlog counter counts it. Checked at every slice that leaves planning pending on a small filled city.</summary>
+    [Fact]
+    public void ThePendingRoutedEventCountsAsDueWork()
+    {
+        var (state, market) = F5gPopulationFillTests.City(12, 1, seed: Seed);
+        var planner = new AdmittedPortalPlanner();
+        var city = new CitySimulator(state, planner); city.AttachFoodMarket(market);
+        city.AttachPopulationFill(F5gPopulationFillTests.Catalogue(12, F5gPopulationFillTests.Base));
+        double end = state.Minute + 1440;
+        int pendingSlices = 0;
+        while (!city.IsCaughtUpTo(end))
+        {
+            planner.NewFrame();
+            city.AdvanceFrameSlice(end);
+            if (!city.PlanningPending) continue;
+            pendingSlices++;
+            // The pending event is due at or before the clock and is not in the queue.
+            Assert.True(city.DuePersonEventsAtOrBefore(city.State.Minute) >= 1, "pending routed event not counted at " + city.State.Minute);
+            Assert.Equal(city.QueuedPersonEvents + 1, city.DuePersonEventsAtOrBefore(double.PositiveInfinity));
+            while (city.PlanningPending) { planner.NewFrame(); city.ContinuePlanning(2); }
+        }
+        Assert.True(pendingSlices > 0, "no event waited for its route");
+    }
+
     /// <summary>F5h changes no wire: writer 34 and both of its pinned golden hashes are as F7d left them.</summary>
     [Theory]
     [InlineData(5150, "a3b70408cd5c5f0a23d9e41344d1530283232449f2b9ade5dd37755c92da4a70", 73192)]

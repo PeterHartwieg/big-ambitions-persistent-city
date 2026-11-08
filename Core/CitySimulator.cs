@@ -60,10 +60,11 @@ namespace PersistentCity.Core
         internal int QueuedPersonEvents => due.Count;
         internal int QueuedMealEvents => food?.QueuedMeals ?? 0;
         /// <summary>Measurement only (F5h): queued person events and meal events due at or before <paramref name="minute"/>,
-        /// that is, due work not yet run. Walks the ordered queues from their minimum and stops at the first later entry.</summary>
+        /// that is, due work not yet run. Walks the ordered queues from their minimum and stops at the first later entry.
+        /// An event waiting for its route has left the queue but has not run, so it counts too (review Sol-r2-1).</summary>
         internal int DuePersonEventsAtOrBefore(double minute)
         {
-            int count = 0;
+            int count = pending != null && pending.Item.Minute <= minute && !due.Contains(pending.Item) ? 1 : 0;
             foreach (var entry in due) { if (entry.Minute > minute) break; count++; }
             return count;
         }

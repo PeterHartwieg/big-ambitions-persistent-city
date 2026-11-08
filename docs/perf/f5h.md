@@ -23,7 +23,7 @@ The round-0 numbers are kept only in the comparison table at the end.
   - None at the declared load or at 1,914 persons.
 - **Fill units near the flag line at the stress sizes.** The units on the 50,000- and 100,000-person cities' first boundary take up to 25.2 and 28.2 ms with no GC inside them. That is fill work: those cities now have about 2,000 and 4,000 workplaces to seat commuters in. At the declared load a fill unit takes at most 0.44 ms without saves.
 - **Throughput.** At 60 FPS a game day takes 1.53 times the frames of an unheld clock at the declared load and 3.46 times at 10,017 persons. 50,000 and 100,000 persons cannot keep pace (14.1 and 26.0 times). That is the refusal envelope the plan asks to record. Lag stays at most 0.5 game minutes and no hour is missed, because the F1 clock holds the calendar instead of skipping work.
-- **Due backlog.** After a frame, at most 129 events and meals are due but not yet run at the declared load (575 on a fill boundary in the matrix), and a backlog drains within 9 frames (43 at 60 / 16 / 2 across the boundary). At 100,000 persons the peak is 4,035 and a backlog lasts up to 307 frames.
+- **Due backlog.** After a frame, at most 130 events and meals are due but not yet run at the declared load (575 on a fill boundary in the matrix), and a backlog drains within 9 frames (44 at 60 / 16 / 2 across the boundary). At 100,000 persons the peak is 4,035 and a backlog lasts up to 307 frames.
 - **No perf change in F5h.** The four parked hotspots stay parked.
 
 ## Method
@@ -71,7 +71,7 @@ Every city is a fresh F5g fixture city in writer 34 with the fill attached: seed
   - route planning (`ContinuePlanning`).
 
   Per-frame component time is the sum of that component's units in the frame.
-- **Queue occupancy and due backlog** (review Sol-r1-3). Occupancy is the whole queue, future events included: every person keeps one routine event and one meal record queued, so it equals the persons. The due backlog is the person events and meals due at or before the frame's target that have not run when the frame ends. Two measurement-only internal counters give it: `CitySimulator.DuePersonEventsAtOrBefore` and `DueMealEventsAtOrBefore`. They walk each ordered queue from its minimum, have no Runtime caller and are not saved. The drain is the longest run of consecutive frames that end with a backlog.
+- **Queue occupancy and due backlog** (review Sol-r1-3). Occupancy is the whole queue, future events included: every person keeps one routine event and one meal record queued, so it equals the persons. The due backlog is the person events and meals due at or before the frame's target that have not run when the frame ends. Two measurement-only internal counters give it: `CitySimulator.DuePersonEventsAtOrBefore` and `DueMealEventsAtOrBefore`. They walk each ordered queue from its minimum and also count the event waiting for its route, which has left the queue but has not run (review Sol-r2-1). They have no Runtime caller and are not saved. The drain is the longest run of consecutive frames that end with a backlog.
 - **Spikes.** Every slice of 5 ms or more is recorded with its component, game minute and whether a .NET GC (and which generation) ran inside it. Planning calls are not tagged with GC counts.
 
 ## 1. Mod-work per frame and by component (60 FPS, Runtime caps)
@@ -120,19 +120,19 @@ Flagged slices of 5 ms or more:
 | 50,000 | 40,615 | 14.10 | 37,733 | 0.5 | 565,241 | 79,842 / 23,552 | 185,459 | 50,000 / 50,000 |
 | 100,000 | 74,973 | 26.03 | 72,089 | 0.5 | 1,043,109 | 160,144 / 43,463 | 324,813 | 99,996 / 99,996 |
 
-Due backlog after each frame:
+Due backlog after each frame. These columns are from a rerun after review round 2, which counts an event waiting for its route as due work (Sol-r2-1); the city states are identical to the run above, and frame and hold counts differ between runs by a few frames because frames stop at a time cap:
 
 | Size | Peak due backlog (events + meals) | Frames ending with a backlog | Longest drain (frames) | Wallet postings |
 | --- | ---: | ---: | ---: | ---: |
-| reference | 129 | 1,516 | 9 | 5,999 |
-| 1,914 | 641 | 1,432 | 47 | 5,345 |
-| 10,000 | 475 | 7,062 | 33 | 24,281 |
-| 50,000 | 1,997 | 37,669 | 178 | 122,614 |
-| 100,000 | 4,035 | 72,024 | 307 | 247,028 |
+| reference | 130 | 1,514 | 9 | 5,999 |
+| 1,914 | 641 | 1,428 | 46 | 5,345 |
+| 10,000 | 475 | 7,061 | 33 | 24,281 |
+| 50,000 | 1,997 | 37,666 | 175 | 122,614 |
+| 100,000 | 4,035 | 72,014 | 307 | 247,028 |
 
 - **Frames ÷ unheld** is the day's frames against 2,880, the frames of a native clock that is never held at 60 FPS. The 16-citizen-event cap binds in the busiest hours, and the clock holds there. `HistoricalClockMisses` is 0 at every size.
 - **Backlog and holds.** A frame that ends with due work holds the native clock (`AccountingClock.Limit`), so the held frames and the frames with a backlog track each other. The 1,914 row's peak of 641 is its fill boundary: the 637 persons created there have their first events due on the boundary minute.
-- **Refusal envelope.** At 50,000 and 100,000 the day takes 14 and 26 times as many frames, and the backlog lasts up to 178 and 307 frames. The plan names these sizes as throughput probes. They do not keep pace under Runtime's 60 FPS caps, and the F1 clock slows the calendar instead of dropping work.
+- **Refusal envelope.** At 50,000 and 100,000 the day takes 14 and 26 times as many frames, and the backlog lasts up to 175 and 307 frames. The plan names these sizes as throughput probes. They do not keep pace under Runtime's 60 FPS caps, and the F1 clock slows the calendar instead of dropping work.
 - **Postings.** The posting units posted 5,999 wallets in the day at the declared load, about 2.4 per person. I did not break that down by posting kind.
 
 Planning admissions and portal routes:
@@ -159,30 +159,30 @@ Declared load: day 2 06:00 → day 3 06:00, 1,981 → 2,551 persons, the second 
 | 60 / 128 / 2 (reference) | 0 | 3,201 | 1.11 | 320 (0) | 0.5 | 0.006 / 0.185 / 5.40 | 0 | 0.15 / 0.33 | 575 / 5 |
 | 30 / 32 / 4 | 0 | 3,342 | 2.32 | 1,901 (0) | 1.0 | 0.033 / 0.069 / 4.93 | 0 | 0.17 / 0.42 | 575 / 20 |
 | 30 / 32 / 4 | 2 | 3,345 | 2.32 | 1,904 (1) | 1.0 | 0.034 / 0.070 / 7.99 | 0 | 0.15 / 6.93 | 575 / 22 |
-| 60 / 16 / 2 | 0 | 6,755 | 2.35 | 3,874 (0) | 0.5 | 0.016 / 0.036 / 4.67 | 0 | 0.17 / 0.36 | 575 / 42 |
-| 60 / 16 / 2 | 1 | 6,756 | 2.35 | 3,875 (0) | 0.5 | 0.016 / 0.037 / 4.34 | 0 | 0.15 / 0.31 | 575 / 43 |
+| 60 / 16 / 2 | 0 | 6,755 | 2.35 | 3,874 (0) | 0.5 | 0.016 / 0.036 / 4.67 | 0 | 0.17 / 0.36 | 575 / 41 |
+| 60 / 16 / 2 | 1 | 6,756 | 2.35 | 3,875 (0) | 0.5 | 0.016 / 0.037 / 4.34 | 0 | 0.15 / 0.31 | 575 / 44 |
 | 120 / 128 / 2 | 0 | 6,048 | 1.05 | 287 (0) | 0.25 | 0.002 / 0.121 / 5.67 | 0 | 0.17 / 0.44 | 575 / 6 |
-| 120 / 128 / 2 | 2 | 6,048 | 1.05 | 287 (1) | 0.25 | 0.001 / 0.122 / 10.83 | 0 | 0.17 / 10.44 | 575 / 7 |
-| hidden skip, 32 / 4 | 0 | 3,341 | n/a | 1,900 (0) | 1.0 | 0.033 / 0.070 / 5.76 | 0 | 0.16 / 0.43 | 575 / 20 |
-| hidden skip, 32 / 4 | 2 | 3,345 | n/a | 1,904 (1) | 1.0 | 0.034 / 0.070 / 10.63 | 0 | 0.17 / 3.84 | 575 / 23 |
+| 120 / 128 / 2 | 2 | 6,048 | 1.05 | 287 (1) | 0.25 | 0.001 / 0.122 / 10.83 | 0 | 0.17 / 10.44 | 554 / 7 |
+| hidden skip, 32 / 4 | 0 | 3,341 | n/a | 1,900 (0) | 1.0 | 0.033 / 0.070 / 5.76 | 0 | 0.16 / 0.43 | 575 / 21 |
+| hidden skip, 32 / 4 | 2 | 3,345 | n/a | 1,904 (1) | 1.0 | 0.034 / 0.070 / 10.63 | 0 | 0.17 / 3.84 | 575 / 21 |
 
 10,000 persons (opt-in): day 7 06:00 → day 8 06:00, 9,483 → 10,017 persons, the seventh boundary creating the last 534 (9 units). State hash `41d61cf55ec2f281` in every arm. 90,047 units without saves, 90,070 with.
 
 | Arm (FPS / units / ms) | Saves | Frames | Frames ÷ unheld | Held (on the boundary) | Max lag | Frame p50 / p95 / max ms | ≥ 30 ms | Fill unit p50 / max ms | Peak backlog / longest drain |
 | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | --- | --- |
 | 60 / 128 / 2 (reference) | 0 | 3,508 | 1.22 | 627 (1) | 0.5 | 0.019 / 0.303 / 10.25 | 0 | 0.21 / 5.08 | 537 / 10 |
-| 30 / 32 / 4 | 0 | 4,307 | 2.99 | 2,866 (0) | 1.0 | 0.054 / 0.088 / 10.25 | 0 | 0.17 / 0.78 | 537 / 26 |
-| 30 / 32 / 4 | 2 | 4,309 | 2.99 | 2,868 (1) | 1.0 | 0.054 / 0.086 / 9.70 | 0 | 0.16 / 5.54 | 537 / 28 |
+| 30 / 32 / 4 | 0 | 4,307 | 2.99 | 2,866 (0) | 1.0 | 0.054 / 0.088 / 10.25 | 0 | 0.17 / 0.78 | 537 / 27 |
+| 30 / 32 / 4 | 2 | 4,309 | 2.99 | 2,868 (1) | 1.0 | 0.054 / 0.086 / 9.70 | 0 | 0.16 / 5.54 | 537 / 27 |
 | 60 / 16 / 2 | 0 | 8,757 | 3.04 | 5,876 (1) | 0.5 | 0.026 / 0.042 / 10.07 | 0 | 0.18 / 0.96 | 537 / 54 |
 | 60 / 16 / 2 | 2 | 8,768 | 3.04 | 5,887 (1) | 0.5 | 0.027 / 0.045 / **32.95** | **1** | 0.15 / 5.25 | 537 / 56 |
 | 120 / 128 / 2 | 0 | 6,338 | 1.10 | 577 (1) | 0.25 | 0.003 / 0.215 / 9.17 | 0 | 0.17 / 0.93 | 537 / 10 |
 | 120 / 128 / 2 | 2 | 6,333 | 1.10 | 572 (1) | 0.25 | 0.003 / 0.214 / 9.23 | 0 | 0.19 / 0.93 | 537 / 10 |
-| hidden skip, 32 / 4 | 0 | 4,308 | n/a | 2,867 (1) | 1.0 | 0.053 / 0.084 / 9.02 | 0 | 0.17 / 4.89 | 537 / 27 |
+| hidden skip, 32 / 4 | 0 | 4,308 | n/a | 2,867 (1) | 1.0 | 0.053 / 0.084 / 9.02 | 0 | 0.17 / 4.89 | 537 / 26 |
 | hidden skip, 32 / 4 | 1 | 4,308 | n/a | 2,867 (0) | 1.0 | 0.055 / 0.084 / 10.66 | 0 | 0.18 / 2.35 | 537 / 27 |
 
 - **Flagged ≥ 30 ms.** One frame of 32.9 ms at 10,017 persons, 60 / 16 / 2 with saves: a citizen unit with a gen-2 GC inside it, minute 10,920 (14:00 on day 7). The same arm without saves had none. At the declared load the largest frame was 10.8 ms, a fill unit on the boundary minute right after a reload, with a gen-2 GC inside it.
 - **Fill unit cost.** Every arm of a city runs the same nine units. The p50 is 0.15–0.21 ms. The larger maxima (3.8–10.4 ms) are on the boundary minute, mostly right after a reload, where the reloaded city's first unit latches the plan again. Several of them had a GC inside.
-- **Peak backlog** is the boundary minute in every arm: the 570 (or 534) persons the fill creates have their first events due there.
+- **Peak backlog / longest drain** come from the rerun after review round 2 (Sol-r2-1); the other columns and the state hashes are unchanged from round 1. The peak is the boundary minute in every arm: the 570 (or 534) persons the fill creates have their first events due there.
 - **Hidden skip.** The skip arm requests 120 game minutes per frame, so "frames ÷ unheld" has no meaning there. It runs the same units under the 32-unit cap and ends equal.
 
 ## 4. Saved state at the end of each window

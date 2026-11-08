@@ -121,12 +121,16 @@ No defect in F5a–F5g product behaviour came out of the integrated run.
 - **Opus-r1-1, fixed.** The seven-day test asserts that the reload minutes are exactly the seven boundary minutes, and the text says that the single reload at each of the first two boundaries falls between fill units.
 - **Opus-r1-2, fixed.** The matrix text says that a reload arm gets one or two saves.
 
+## PR review round 2
+
+- **Sol-r2-1, fixed.** An event waiting for its route has left the due queue, so the backlog counter missed it. `DuePersonEventsAtOrBefore` now counts it. Regression: `ThePendingRoutedEventCountsAsDueWork`, red before the fix (expected 75, counted 74) and green after. The backlog tables were regenerated; the city states are unchanged.
+
 ## Validation run
 
 Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400), 8 November 2026. Each `dotnet` command ran only when no other dotnet test process was active.
 
 - `python3 tools/build.py --game-managed "<dll-import-shim>/Big Ambitions_Data/Managed"`: exit 0.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **4,093 passed, 0 failed, 0 skipped** (6 min 28 s), after the PR review round-1 fixes. Before the F5g test port the same suite had 2 failures, both listed under "Defect found".
+- `dotnet test tests/PersistentCity.Tests.csproj`: **4,094 passed, 0 failed, 0 skipped** (5 min 49 s), after the PR review round-2 fix. Before the F5g test port the same suite had 2 failures, both listed under "Defect found".
 - `tests/F5hMeasure.cs` (Release, opt-in): numbers in the perf file.
 
 ## Performance
@@ -143,7 +147,7 @@ Summary; the tables are in [docs/perf/f5h.md](../perf/f5h.md). Offline, Release,
   None at the declared load or at 1,914 persons.
 - **Fill units near the flag line at the stress sizes:** 25.2 ms at 50,000 and 28.2 ms at 99,996 persons on the first boundary, with no GC inside them. That is seating commuters against about 2,000 and 4,000 workplaces. At the declared load a fill unit takes at most 0.44 ms without saves.
 - **Throughput:** a game day takes 1.53 times the frames of an unheld clock at the declared load and 3.46 times at 10,017 persons. 50,000 and 100,000 persons do not keep pace (14.1 and 26.0 times). Lag stays at most 0.5 minutes and no hour is missed.
-- **Due backlog:** at most 129 events and meals left due after a frame at the declared load, drained within 9 frames; 575 on the matrix's fill boundary; 4,035 and up to 307 frames at 99,996 persons.
+- **Due backlog** (an event waiting for its route counted, review Sol-r2-1): at most 130 events and meals left due after a frame at the declared load, drained within 9 frames; 575 on the matrix's fill boundary; 4,035 and up to 307 frames at 99,996 persons.
 - **Saved state:** 1,408,244 characters and 26,523 records at the declared load, 38,401,347 characters (14.3% of the cap) and 544,771 records at 99,996 persons.
 - **No perf change** and no change to the parked hotspots.
 
