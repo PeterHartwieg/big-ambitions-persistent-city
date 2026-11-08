@@ -212,6 +212,16 @@ namespace PersistentCity.Core
             return traffic != null && traffic.TryGetVehicle(citizenId, out permission);
         }
 
+        // Food retries run at a logical event time, independently of snapshot publication.
+        // A travelling resident's published NextEventMinute may describe the previous frame.
+        // AdvanceCore has already advanced traffic to State.Minute before stepping food.
+        internal double RoutineRetryMinute(CitizenState citizen)
+        {
+            if (traffic != null && trafficCitizens.ContainsKey(citizen.Identity.Id))
+                return State.Minute - traffic.GetPermission(citizen.Identity.Id).NominalMinutes + citizen.Journey!.Minutes;
+            return citizen.NextEventMinute;
+        }
+
         private void SynchronizeTrafficJourneys()
         {
             if (traffic == null) return;

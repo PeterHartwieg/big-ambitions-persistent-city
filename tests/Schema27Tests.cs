@@ -121,7 +121,8 @@ public sealed class Schema27Tests
     };
 
     /// <summary>Two seeded fixtures pinned for writer 27. F5e: writer 27 is now the frozen F5d writer (same shape as
-    /// writer 28, seated under the fixed allocation); its pins are unchanged and its frozen reader round-trips them.</summary>
+    /// writer 28, seated under the fixed allocation). F6i repins simulated meals/balances for anchored choice;
+    /// the static pin and frozen-reader round trips remain unchanged.</summary>
     [Fact]
     public void GoldenWriter27BytesArePinned()
     {

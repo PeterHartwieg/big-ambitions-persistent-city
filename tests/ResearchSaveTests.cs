@@ -424,8 +424,8 @@ public sealed class ResearchSaveTests
     }
 
     /// <summary>The research writer's bytes. A shape change without a schema bump fails here; a bump adds a new pin file.
-    /// E6c: writer 29 is now the frozen C5c writer (before the vendor table); its pins are unchanged and its frozen
-    /// reader round-trips them.</summary>
+    /// E6c: writer 29 is now the frozen C5c writer (before the vendor table). F6i repins only the simulated
+    /// banded fixture for anchored food choice; static research pins and frozen-reader round trips stay intact.</summary>
     [Fact]
     public void GoldenResearchWriterBytesArePinned()
     {

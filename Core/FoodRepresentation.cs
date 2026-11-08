@@ -204,7 +204,7 @@ namespace PersistentCity.Core
             if (!meal.NeedsHomeResync && routineStops.TryGetValue(person.Identity.Id, out var stop)
                 && SharedStopAvailable(person, stop) && stop.DepartureAt - city.State.Minute >= 25)
             { Decide(meal, person); return; }
-            meal.DueAt = Math.Min(meal.ExpiresAt, Math.Max(city.State.Minute + 1, person.NextEventMinute));
+            meal.DueAt = Math.Min(meal.ExpiresAt, Math.Max(city.State.Minute + 1, city.RoutineRetryMinute(person)));
         }
 
         private int RepresentedBreak(CitizenState person, FoodRoutineStop stop, MealKind kind)

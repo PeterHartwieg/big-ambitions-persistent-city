@@ -388,7 +388,7 @@ namespace PersistentCity.Core
                     return;
                 }
                 if (meal.HostSlot == 0 && person.MealOuting != null)
-                { meal.DueAt = Math.Max(now + 1, person.NextEventMinute); return; }
+                { meal.DueAt = Math.Max(now + 1, city.RoutineRetryMinute(person)); return; }
                 NextMeal(meal, out int day, out MealKind kind);
                 if (day < (int)(now / 1440)) { day = (int)(now / 1440); kind = state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast; }
                 StartMeal(meal, person, day, kind);
@@ -407,7 +407,7 @@ namespace PersistentCity.Core
                 else if (AtFoodStop(person)) DecideAtStop(meal, person);
                 else if (person.Phase != CitizenPhase.AtPlace || person.MealOuting != null || person.Activity == Activity.Shop
                     || Math.Min(person.NextEventMinute, person.ActivityUntilMinute) - now < 25)
-                    meal.DueAt = Math.Min(meal.ExpiresAt, Math.Max(now + 1, person.NextEventMinute));
+                    meal.DueAt = Math.Min(meal.ExpiresAt, Math.Max(now + 1, city.RoutineRetryMinute(person)));
                 else Decide(meal, person);
             }
             else if (meal.Status == MealStatus.Travelling)

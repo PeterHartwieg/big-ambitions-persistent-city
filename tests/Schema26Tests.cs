@@ -15,7 +15,7 @@ namespace PersistentCity.Tests;
 
 /// <summary>F5d: writer 26 is now a frozen development writer (the product refuses it as an older development
 /// city, see Schema27Tests). Its codec stays compiling and reachable only through <see cref="DevelopmentChain"/>, so
-/// these tests check the frozen writer-26 shape and its pinned bytes unchanged.
+/// these tests check the frozen writer-26 shape. F6i updates only simulated-fixture values for anchored choice.
 /// F5c-lite (#92): writer 26, the person shape without migration. Golden bytes, the factor-1 roster rule,
 /// the strict per-kind reader, the named bounds at and one over, fabricated arrival tuples, and the refusal of older
 /// development cities with their food authority left native.</summary>

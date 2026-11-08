@@ -13,7 +13,8 @@ namespace PersistentCity.Tests;
 /// <summary>F5c-lite: a fresh seeded city's behaviour over its first days, pinned at base e9995e5
 /// (writer 25) before the schema-26 person shape. The trace reads only behaviour (phases, places,
 /// events, meals, purchases, money, orders), never the save shape, and reloads through the live
-/// codec at each day boundary. A schema change that alters behaviour fails these hashes.</summary>
+/// codec at each day boundary. F6i repins food traces for anchored choice; the no-food trace stays pinned
+/// at the original base. No save shape changes.</summary>
 public sealed class FreshCityTraceTests
 {
     internal sealed class Walk : IRoutePlanner
@@ -105,14 +106,14 @@ public sealed class FreshCityTraceTests
         return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(trace.ToString()))).ToLowerInvariant();
     }
 
-    // Pinned at base e9995e5 (writer 25), before any F5c-lite change. F5d: factor 1 and no food run the current writer
-    // (27) and are unchanged, so resident behaviour, including the resident arrival guard, is unchanged; factors 2/3
-    // are the represented-consumer behaviour, which only the frozen writer-26 path keeps.
+    // F6i: food-choice prices now affect home/shop draws, so all three simulated food traces change.
+    // Factors 2/3 retain their frozen represented-consumer codec; factor 1 retains its ledger codec.
+    // The no-food trace still matches base e9995e5. See docs/checks/f6i.md for the scoped rebaseline.
     [Theory]
-    [InlineData(1, true, "87c5e888bdf8ac0f9ecb679ca06f5a03065a23588119e53f7625d35269b920d9")]
-    [InlineData(2, true, "8dfefcc2632ee1af9561a2fa6b4b738feaec8323d9a5244d4671a6d90809ec5c")]
-    [InlineData(3, true, "d5cf1ad026d2ef220d8eb600c6185c8cb11f80b2f7e121a7e81ddb3537794fca")]
+    [InlineData(1, true, "2b9595cf3607f7ec8d0c36916710bcfcc769d6a692f2045e60ed80d16630bd39")]
+    [InlineData(2, true, "454ae66910ca557d96ad7ca7d9035de113241bf7a91783415332f1f18b210dd8")]
+    [InlineData(3, true, "a708826cbc417c10cd50506e992d0418641dc6b39ed8d8039e640667ff8f9fae")]
     [InlineData(1, false, "27c36028fbcc6b9ffe3ad602d8e81c4ce101a0395ac9d2a8d78b4b838cf34910")]
-    public void FreshCityBehaviourTraceIsUnchangedFromBase(int factor, bool food, string expected)
+    public void FreshCityBehaviourTraceIsPinned(int factor, bool food, string expected)
         => Assert.Equal(expected, Trace(factor, food));
 }

@@ -94,8 +94,11 @@ public static class RushSpikeReplay
         private readonly HashSet<string> paid = new HashSet<string>(StringComparer.Ordinal);
         public long Reads;
         public double EarliestMinute => 0;
-        private static Money Price(string product) => product == FoodProducts.Croissant ? Money.FromCents(350)
-            : product == FoodProducts.Burger ? Money.FromCents(725) : Money.FromCents(480);
+        private readonly bool nativePrices;
+        public Market(bool nativePrices = false) { this.nativePrices = nativePrices; }
+        // Keep the original cheap menu as well as native price levels (hotdog is a salad-price proxy).
+        private Money Price(string product) => product == FoodProducts.Croissant ? Money.FromCents(nativePrices ? 924 : 350)
+            : product == FoodProducts.Burger ? Money.FromCents(nativePrices ? 1250 : 725) : Money.FromCents(nativePrices ? 1669 : 480);
         public IReadOnlyList<FoodBusiness> Read(double minute)
         {
             Reads++;
@@ -181,9 +184,9 @@ public static class RushSpikeReplay
 
     /// <summary>Warm up uninterrupted to <paramref name="from"/>, then advance frame by frame to
     /// <paramref name="to"/> at the rig's pace (about 98.6 frames per game minute at 30 FPS).</summary>
-    public static Result Run(double from, double to, double framesPerGameMinute = 98.6, int fps = 30)
+    public static Result Run(double from, double to, double framesPerGameMinute = 98.6, int fps = 30, bool nativePrices = false)
     {
-        var planner = new Planner(); var market = new Market(); var stops = new Stops();
+        var planner = new Planner(); var market = new Market(nativePrices); var stops = new Stops();
         var state = Create();
         var city = Attach(state, planner, market, stops);
         while (!city.AdvanceTo(from, 256).CaughtUp) { }
@@ -246,10 +249,10 @@ public static class RushSpikeReplay
     }
 
     /// <summary>The same city advanced without frame slicing, for the cadence-independence hash.</summary>
-    public static string RunUninterrupted(double from, double to)
+    public static string RunUninterrupted(double from, double to, bool nativePrices = false)
     {
         var state = Create();
-        var city = Attach(state, new Planner(), new Market(), new Stops());
+        var city = Attach(state, new Planner(), new Market(nativePrices), new Stops());
         while (!city.AdvanceTo(from, 256).CaughtUp) { }
         while (!city.AdvanceTo(to, 256).CaughtUp) { }
         return Sha(DevelopmentChain.Write(state));
