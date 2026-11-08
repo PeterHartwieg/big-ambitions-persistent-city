@@ -451,10 +451,14 @@ namespace PersistentCity.Runtime
             {
                 if ((b.Queue.HasValue || b.VendorOpening > 0) && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
                     yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, b.Slot);
-                else if (b.Optional != null && !b.OptionalReturning && !b.OptionalStandsShort)
+                else if (b.Optional != null && !b.OptionalReturning && (!b.OptionalStandsShort || b.Person != null))
+                {
+                    // A body standing short holds the slot it actually stands on, not the stop's spot.
+                    Position at = b.OptionalStandsShort ? b.Person!.Position : b.Optional.Position;
                     for (int slot = 0; slot < line.Spots.Count; slot++)
-                        if (Position.Distance(line.Spots[slot], b.Optional.Position) < 0.65)
+                        if (Position.Distance(line.Spots[slot], at) < 0.65)
                             yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, slot);
+                }
             }
         }
 

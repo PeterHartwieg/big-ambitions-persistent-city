@@ -160,6 +160,22 @@ public sealed class PresentationBoundaryTests
     }
 
     [Fact]
+    public void BodyStandingShortReservesTheQueueSlotItStandsOn()
+    {
+        using var f = new Fixture();
+        f.Tick();
+        for (int i = 0; i < 25; i++) f.Tick(1f);
+        Assert.Equal(Shop, f.Body("a").Position);
+        var standing = typeof(PhysicalPopulation).GetMethod("Standing", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        List<KeyValuePair<string, int>> Reserved(params Position[] spots)
+            => ((IEnumerable<KeyValuePair<string, int>>)standing.Invoke(f.Bodies, new object[] {
+                new DoorQueue("door", new Position(100, 0, -1), Shop, spots) })!).Where(p => p.Key == "a").ToList();
+        // The slot under the body is held; the stop's own spot, which it never reached, is not.
+        Assert.Equal(new[] { new KeyValuePair<string, int>("a", 0) }, Reserved(new Position(100.3, 0, 0), new Position(110, 0, 0)));
+        Assert.Empty(Reserved(SpotA));
+    }
+
+    [Fact]
     public void LogicalEndOfTheStopStillSendsTheBodyBack()
     {
         using var f = new Fixture();
