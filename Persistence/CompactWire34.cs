@@ -62,11 +62,24 @@ namespace PersistentCity.Persistence
         /// <summary>Encode a writer body (the JSON the body codec produced for the snapshot) as the compact wire. The body
         /// already passed validation and both size caps; this adds the compact string's own caps and the table records.</summary>
         internal static string EncodeCompact(string body, int records, CompactStats? stats = null)
+            => EncodeCompact(CompactTree.Parse(body, MaxCompactNesting, canonical: true), body.Length, records, stats);
+
+        /// <summary>The writer path: the snapshot is serialized by the body codec's own serializer straight into the exact
+        /// tree (no body text), the body's character and UTF-8 caps are checked on that tree, then it is encoded.</summary>
+        private static string EncodeCompact(CityState snapshot, JsonSerializerSettings settings, int records, SaveCostRecorder? cost)
         {
-            var tree = CompactTree.Parse(body, MaxCompactNesting, canonical: true);
+            var tree = CompactTree.Serialize(snapshot, settings);
+            CompactTree.Measure(tree, out long characters, out long bytes);
+            Require(characters <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
+            Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
+            return EncodeCompact(tree, (int)characters, records, null);
+        }
+
+        private static string EncodeCompact(object? tree, int bodyCharacters, int records, CompactStats? stats)
+        {
             Require(tree is CompactObject, "Compact root is not an object.");
             stats ??= new CompactStats();
-            string payload = new CompactEncoder(stats).Run(tree, body.Length / 3 + 64);
+            string payload = new CompactEncoder(stats).Run(tree, bodyCharacters / 3 + 64);
             Require(stats.Values <= MaxCompactValues, "Compact state exceeds its decoded value bound.");
             Require((long)records + stats.TableEntries <= MaxEmbeddedRecords, "Too many embedded records with the compact tables charged.");
             Require(payload.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
@@ -300,20 +313,184 @@ namespace PersistentCity.Persistence
 
             private static char Hex(int n) => (char)(n <= 9 ? '0' + n : 'a' + n - 10);
 
+            /// <summary>One instance per field name, and one key array per field sequence, so shapes are found by reference.</summary>
+            internal sealed class KeyShapes
+            {
+                private readonly Dictionary<string, string> keys = new Dictionary<string, string>(StringComparer.Ordinal);
+                private readonly Dictionary<string, List<string[]>> shapes = new Dictionary<string, List<string[]>>(StringComparer.Ordinal);
+
+                public string Key(string name)
+                {
+                    if (keys.TryGetValue(name, out var shared)) return shared;
+                    keys.Add(name, name);
+                    return name;
+                }
+
+                public string[] Shape(List<string> names)
+                {
+                    string first = names.Count == 0 ? "" : names[0];
+                    if (!shapes.TryGetValue(first, out var known)) shapes.Add(first, known = new List<string[]>());
+                    foreach (var candidate in known)
+                    {
+                        if (candidate.Length != names.Count) continue;
+                        bool same = true;
+                        for (int i = 0; i < candidate.Length && same; i++) same = ReferenceEquals(candidate[i], names[i]);
+                        if (same) return candidate;
+                    }
+                    var array = names.ToArray();
+                    known.Add(array);
+                    return array;
+                }
+            }
+
+            /// <summary>The body codec's serialization of <paramref name="value"/> as an exact tree: the same serializer,
+            /// settings and converters as <c>JsonConvert.SerializeObject(value, Formatting.None, settings)</c>, with every
+            /// token recorded as the text writer would spell it.</summary>
+            public static object? Serialize(object value, JsonSerializerSettings settings)
+            {
+                var serializer = JsonSerializer.CreateDefault(settings);
+                serializer.Formatting = Formatting.None;
+                using var writer = new TreeWriter();
+                serializer.Serialize(writer, value);
+                return writer.Root;
+            }
+
+            /// <summary>Characters and UTF-8 bytes of the writer spelling of <paramref name="root"/>, without building it.</summary>
+            public static void Measure(object? root, out long characters, out long bytes)
+            {
+                long c = 0, b = 0;
+                var stack = new Stack<object?>();
+                stack.Push(root);
+                while (stack.Count > 0)
+                {
+                    switch (stack.Pop())
+                    {
+                        case null: c += 4; b += 4; break;
+                        case bool flag: c += flag ? 4 : 5; b += flag ? 4 : 5; break;
+                        case CompactNumber n: c += n.Text.Length; b += n.Text.Length; break;
+                        case string s: MeasureString(s, ref c, ref b); break;
+                        case CompactObject o:
+                            c += 2 + Math.Max(0, o.Keys.Length - 1) + o.Keys.Length; b += 2 + Math.Max(0, o.Keys.Length - 1) + o.Keys.Length;
+                            foreach (var key in o.Keys) MeasureString(key, ref c, ref b);
+                            foreach (var v in o.Values) stack.Push(v);
+                            break;
+                        case object?[] a:
+                            c += 2 + Math.Max(0, a.Length - 1); b += 2 + Math.Max(0, a.Length - 1);
+                            foreach (var v in a) stack.Push(v);
+                            break;
+                    }
+                }
+                characters = c; bytes = b;
+            }
+
+            private static void MeasureString(string value, ref long characters, ref long bytes)
+            {
+                characters += 2; bytes += 2;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    char ch = value[i];
+                    string? escape = Escape(ch);
+                    if (escape != null) { characters += escape.Length; bytes += escape.Length; continue; }
+                    if (ch < ' ') { characters += 6; bytes += 6; continue; }
+                    characters++;
+                    if (ch < 0x80) bytes++;
+                    else if (ch < 0x800) bytes += 2;
+                    else if (char.IsHighSurrogate(ch) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1])) { characters++; bytes += 4; i++; }
+                    else bytes += 3; // other BMP characters, and a lone surrogate as UTF-8's replacement character
+                }
+            }
+
+            /// <summary>Builds the exact tree from serializer calls. Every value token is spelled as Newtonsoft's text writer
+            /// spells it with the body settings; raw JSON and token kinds the body never writes are refused.</summary>
+            private sealed class TreeWriter : JsonWriter
+            {
+                private sealed class Frame
+                {
+                    public List<string>? Names;
+                    public readonly List<object?> Values = new List<object?>();
+                }
+
+                private readonly KeyShapes keys = new KeyShapes();
+                private readonly Stack<Frame> frames = new Stack<Frame>();
+                private bool done;
+                public object? Root { get; private set; }
+
+                private void Add(object? value)
+                {
+                    if (frames.Count == 0)
+                    {
+                        Require(!done, "Serialized state holds more than one value.");
+                        Root = value; done = true;
+                        return;
+                    }
+                    frames.Peek().Values.Add(value);
+                }
+
+                public override void WriteStartObject() { base.WriteStartObject(); frames.Push(new Frame { Names = new List<string>() }); }
+                public override void WriteStartArray() { base.WriteStartArray(); frames.Push(new Frame()); }
+                public override void WriteStartConstructor(string name) => Fail("Constructors are not part of the save body.");
+
+                protected override void WriteEnd(JsonToken token)
+                {
+                    var frame = frames.Pop();
+                    if (frame.Names != null)
+                    {
+                        Require(frame.Names.Count == frame.Values.Count, "Object field without a value.");
+                        Add(new CompactObject(keys.Shape(frame.Names), frame.Values.ToArray()));
+                    }
+                    else Add(frame.Values.Count == 0 ? System.Array.Empty<object?>() : frame.Values.ToArray());
+                }
+
+                public override void WritePropertyName(string name) { base.WritePropertyName(name); frames.Peek().Names!.Add(keys.Key(name)); }
+                public override void WritePropertyName(string name, bool escape) => WritePropertyName(name);
+
+                public override void WriteNull() { base.WriteNull(); Add(null); }
+                public override void WriteUndefined() => Fail("Undefined is not part of the save body.");
+                public override void WriteRaw(string? json) => Fail("Raw JSON is not part of the save body.");
+                public override void WriteRawValue(string? json) => Fail("Raw JSON is not part of the save body.");
+                public override void WriteComment(string? text) => Fail("Comments are not part of the save body.");
+
+                public override void WriteValue(string? value) { base.WriteValue(value); Add(value); }
+                public override void WriteValue(bool value) { base.WriteValue(value); Add(value ? True : False); }
+                public override void WriteValue(char value) { base.WriteValue(value); Add(value.ToString()); }
+                public override void WriteValue(int value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(uint value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(long value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(ulong value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(short value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(ushort value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(byte value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(sbyte value) { base.WriteValue(value); Add(new CompactNumber(value.ToString(CultureInfo.InvariantCulture))); }
+                public override void WriteValue(decimal value) { base.WriteValue(value); Add(new CompactNumber(JsonConvert.ToString(value))); }
+                // The text writer's default FloatFormatHandling.String: finite values keep the round-trip spelling with a
+                // decimal place; NaN and the infinities become strings.
+                public override void WriteValue(double value) { base.WriteValue(value); Add(Floating(value, JsonConvert.ToString(value))); }
+                public override void WriteValue(float value) { base.WriteValue(value); Add(Floating(value, JsonConvert.ToString(value))); }
+
+                private static object Floating(double value, string text) => double.IsNaN(value) || double.IsInfinity(value) ? (object)text : new CompactNumber(text);
+
+                public override void WriteValue(DateTime value) => Fail("Dates are not part of the save body.");
+                public override void WriteValue(DateTimeOffset value) => Fail("Dates are not part of the save body.");
+                public override void WriteValue(Guid value) => Fail("GUIDs are not part of the save body.");
+                public override void WriteValue(TimeSpan value) => Fail("Time spans are not part of the save body.");
+                public override void WriteValue(byte[]? value) => Fail("Bytes are not part of the save body.");
+                public override void WriteValue(Uri? value) => Fail("URIs are not part of the save body.");
+
+                public override void Flush() { }
+            }
+
             internal sealed class Parser
             {
                 private readonly string text;
                 private readonly int maxNesting;
                 private readonly bool canonical;
-                private readonly Dictionary<string, string>? keys;
-                // Objects with the same key sequence share one key array, so shapes are found by reference.
-                private readonly Dictionary<string, List<string[]>>? shapes;
+                private readonly KeyShapes? keys;
                 public int Position;
 
                 public Parser(string text, int maxNesting, bool canonical, bool internKeys)
                 {
                     this.text = text; this.maxNesting = maxNesting; this.canonical = canonical;
-                    if (internKeys) { keys = new Dictionary<string, string>(StringComparer.Ordinal); shapes = new Dictionary<string, List<string[]>>(StringComparer.Ordinal); }
+                    if (internKeys) keys = new KeyShapes();
                 }
 
                 private char Peek()
@@ -470,7 +647,7 @@ namespace PersistentCity.Persistence
                     while (true)
                     {
                         string name = String();
-                        if (keys != null) { if (keys.TryGetValue(name, out var shared)) name = shared; else keys.Add(name, name); }
+                        if (keys != null) name = keys.Key(name);
                         Expect(':');
                         names.Add(name); values.Add(Value(depth + 1));
                         if (!canonical) SkipSpace();
@@ -480,22 +657,7 @@ namespace PersistentCity.Persistence
                     }
                 }
 
-                private string[] SharedKeys(List<string> names)
-                {
-                    if (shapes == null) return names.ToArray();
-                    string first = names.Count == 0 ? "" : names[0];
-                    if (!shapes.TryGetValue(first, out var known)) shapes.Add(first, known = new List<string[]>());
-                    foreach (var candidate in known)
-                    {
-                        if (candidate.Length != names.Count) continue;
-                        bool same = true;
-                        for (int i = 0; i < candidate.Length && same; i++) same = ReferenceEquals(candidate[i], names[i]);
-                        if (same) return candidate;
-                    }
-                    var array = names.ToArray();
-                    known.Add(array);
-                    return array;
-                }
+                private string[] SharedKeys(List<string> names) => keys == null ? names.ToArray() : keys.Shape(names);
 
                 private object?[] Array(int depth)
                 {

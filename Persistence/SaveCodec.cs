@@ -99,15 +99,20 @@ namespace PersistentCity.Persistence
             cost?.Enter(SaveCostPhase.Validate);
             int records = Validate(state,schema);
             cost?.Enter(SaveCostPhase.Encode);
-            var json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
-            Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
-            int bytes = System.Text.Encoding.UTF8.GetByteCount(json);
-            Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
-            // F7d: writer 34 stores the compact columnar form of this body; every frozen JSON writer stores the body itself.
+            string json;
+            int bytes;
+            // F7d: writer 34 stores the compact columnar form of the body; every frozen JSON writer stores the body itself.
             if (schema == CityState.CompactSchema)
             {
-                json = EncodeCompact(json, records + StreamingOnlyRecords(state));
+                json = EncodeCompact(state, SettingsForSchema(WireContext.FromState(state),schema), records + StreamingOnlyRecords(state), cost);
                 bytes = System.Text.Encoding.UTF8.GetByteCount(json);
+            }
+            else
+            {
+                json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
+                Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
+                bytes = System.Text.Encoding.UTF8.GetByteCount(json);
+                Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
             }
             cost?.Payload(json.Length, bytes);
             return json;
