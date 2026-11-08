@@ -112,32 +112,28 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         Assert.True(f.Bound);
         Assert.Equal(NativeTravelPace.WalkingMetresPerSecond * WalkerFollow.MaximumPaceFactor, f.Body.Speed, 9);
-        Assert.Equal(new Position(100, 0, 0), f.Body.Target);
+        Assert.True(Position.Distance(new Position(90, 0, 0), f.Body.Target) < 1e-9); // its destination is the logical pose on the same leg
         f.AssertSameAsBodiesOff();
         // The arrival happens at the logical minute, exactly as without bodies, while the body is still 10 m out.
         f.Advance(Now + 30);
         Assert.Equal(CitizenPhase.AtPlace, f.W.Phase); Assert.Equal("work", f.W.PlaceId); Assert.Equal(1, f.W.CompletedJourneys);
         f.AssertSameAsBodiesOff();
-        // Arrival tail: the body keeps walking to the door for up to 10 s of running time.
+        // Arrival tail: the body keeps walking to the door.
         f.Tick();
         Assert.True(f.Bound); Assert.True(f.Body.Speed > 0); Assert.Empty(f.Corrections());
         // While the game is paused (the city clock stands still) the tail bound does not run.
         for (int i = 0; i < 5; i++) f.Tick(3);
-        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha);
-        for (int i = 0; i < 3; i++) f.Run(3);
-        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha);
-        // Short of the door and on screen after the bound: it stands and fades out over a second, then goes.
-        f.Run(3);
-        Assert.True(f.Bound); Assert.Equal(0, f.Body.Speed);
-        var body = f.Body;
-        f.Run(0.5f);
-        Assert.True(f.Bound); Assert.InRange(body.Alpha, 0.4f, 0.6f);
-        f.Run(0.6f);
-        Assert.False(f.Bound); Assert.Equal(0, body.Alpha);
-        Assert.Equal(body.Fades.OrderByDescending(a => a), body.Fades);
-        var fade = Assert.Single(f.Corrections());
-        Assert.Equal(WalkerCorrectionKind.Fade, fade.Kind); Assert.True(fade.OnScreen);
-        Assert.Equal(new Position(80, 0, 0), fade.Before); Assert.Equal(Work, fade.After);
+        Assert.True(f.Bound);
+        // On screen the tail is not cut short: past the 10 s bound it still walks to the door, unfaded.
+        for (int i = 0; i < 6; i++) f.Run(3);
+        Assert.True(f.Bound); Assert.True(f.Body.Speed > 0); Assert.Equal(1, f.Body.Alpha); Assert.Empty(f.Corrections());
+        // Out of view after the bound it is released, recorded as an off-screen lag release.
+        f.Body.OnScreen = false;
+        f.Run();
+        Assert.False(f.Bound);
+        var release = Assert.Single(f.Corrections());
+        Assert.Equal(WalkerCorrectionKind.LagRelease, release.Kind); Assert.False(release.OnScreen);
+        Assert.Equal(new Position(80, 0, 0), release.Before); Assert.Equal(Work, release.After);
         f.AssertSameAsBodiesOff();
     }
 
@@ -175,7 +171,10 @@ public sealed class PhysicalWalkerFollowTests
         f.Advance(Now + 20);
         for (int i = 0; i < 5; i++) f.Run(3);
         Assert.True(f.Bound); Assert.Equal(1, f.Body.Warps); Assert.Single(f.Corrections()); Assert.Equal(1, f.Body.Alpha);
-        // After 10 s of hurrying it stops at the next corner (the midpoint at 70 m) and fades out there.
+        // Held mid-leg well past the hurry bound, it does not fade there: it waits for a corner.
+        for (int i = 0; i < 5; i++) f.Run(3);
+        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha); Assert.Single(f.Corrections()); Assert.True(f.Body.Speed > 0);
+        // At the next corner (the midpoint at 70 m) it stops and fades out there.
         f.Place(new Position(70, 0, 0));
         var body = f.Body;
         f.Run();
@@ -191,35 +190,66 @@ public sealed class PhysicalWalkerFollowTests
         Assert.Equal(corrections[0].Sequence + 1, corrections[1].Sequence);
         Assert.Equal(onScreenMoves, PhysicalPopulation.Telemetry.OnScreenMoves);
         f.AssertSameAsBodiesOff();
-        // It does not reappear while its logical pose is in view...
+        // It does not reappear while its logical pose is in view, however many other restrictions are held...
+        var restrictions = typeof(PhysicalPopulation).GetField("fadedUntilHidden", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(f.Bodies)!;
+        var add = restrictions.GetType().GetMethod("Add")!;
+        for (int i = 0; i < 600; i++) add.Invoke(restrictions, new object[] { "other" + i, (f.W, f.W.Journey) });
         PhysicalPedestrians.VisiblePoint = _ => true;
         f.Run(2.1f); f.Run(2.1f);
         Assert.False(f.Bound);
-        // ...and reappears at the logical pose once that is out of view.
+        // ...and reappears at the logical pose once that is out of view. A deferral costs no retry time.
         PhysicalPedestrians.VisiblePoint = null;
-        f.Run(2.1f);
+        f.Run(0.3f);
         Assert.True(f.Bound); Assert.True(Position.Distance(new Position(80, 0, 0), f.Body.Position) < 0.01);
         Assert.Equal(1, f.Body.Alpha);
         Assert.Contains("followers=1", PhysicalPopulation.Telemetry.Status(f.Bodies.Followers));
     }
 
     [Fact]
-    public void TheBodyIsNeverCommandedPastTheLogicalPoseWhileTheClockStandsStill()
+    public void TheBodyNeverPassesTheLogicalPoseWhileTheClockStandsStillWhateverTheFrameDurations()
     {
         using var f = new Fixture();
         f.Tick();
         f.Advance(Now + 0.1); // logical pose at 40.2 m; the body stands at 40 m
-        f.Tick(0.5f);
-        Assert.Equal(new Position(70, 0, 0), f.Body.Target);
-        Assert.True(f.Body.Speed > 0);
-        Assert.True(f.Body.Speed * 0.5 <= 0.2 + 1e-9, "speed " + f.Body.Speed);
-        // The clock stands still; the body covered most of the lag. It slows to the remainder, then stops at the pose.
-        f.Place(new Position(40.15, 0, 0));
-        f.Tick(0.5f);
-        Assert.True(f.Body.Speed * 0.5 <= 0.05 + 1e-9, "speed " + f.Body.Speed);
-        f.Place(new Position(40.2, 0, 0));
+        // Native movement double: the agent walks toward its destination at the commanded speed and stops there.
+        void Native(float seconds)
+        {
+            var body = f.Body;
+            if (body.Agent.isStopped) return;
+            double d = Position.Distance(body.Position, body.Target), step = body.Speed * seconds;
+            f.Place(d <= step ? body.Target : Position.Lerp(body.Position, body.Target, step / d));
+        }
+        // A short frame commands a speed, then long and varying native frames run while the clock stands still.
+        foreach (float frame in new[] { 1 / 60f, 0.5f, 1 / 120f, 0.2f, 1 / 60f, 1f, 0.05f, 2f })
+        {
+            f.Tick(frame);
+            Assert.True(Position.Distance(new Position(40.2, 0, 0), f.Body.Target) < 1e-9);
+            Native(frame * 30);
+            Assert.True(f.Body.Position.X <= 40.2 + 1e-4, "body at " + f.Body.Position.X);
+        }
         f.Tick(0.5f);
         Assert.Equal(0, f.Body.Speed); Assert.True(f.Body.Agent.isStopped);
+        Assert.True(Position.Distance(new Position(40.2, 0, 0), f.Body.Position) < 1e-4);
+    }
+
+    [Fact]
+    public void AnOpaqueBodyIsNotFadedButKeptUntilItIsOutOfView()
+    {
+        using var f = new Fixture();
+        f.Tick();
+        f.Body.OnScreen = true; f.Body.CanFade = false;
+        f.Advance(Now + 20);
+        for (int i = 0; i < 5; i++) f.Run(3);
+        // At the corner, past the hurry bound, it cannot fade: it keeps following, visible and unfaded.
+        f.Place(new Position(70, 0, 0));
+        for (int i = 0; i < 4; i++) f.Run(3);
+        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha); Assert.Empty(f.Body.Fades); Assert.Empty(f.Corrections());
+        // Once out of view it is moved to the logical pose.
+        f.Body.OnScreen = false;
+        f.Run();
+        Assert.True(f.Bound);
+        var move = Assert.Single(f.Corrections());
+        Assert.Equal(WalkerCorrectionKind.Move, move.Kind); Assert.False(move.OnScreen);
     }
 
     [Fact]
@@ -233,13 +263,13 @@ public sealed class PhysicalWalkerFollowTests
             Assert.True(f.Bound);
             // A new journey commits from the door while the body is still on its way there.
             var next = Legs(Work, new Position(100, 0, 60));
-            f.W.Phase = CitizenPhase.Travelling; f.W.Journey = next; f.W.DepartureMinute = f.City.State.Minute;
+            f.W.Phase = CitizenPhase.Travelling; f.W.Journey = next; f.W.DepartureMinute = f.City.State.Minute - 1;
             f.Tick();
             Assert.True(f.Bound); Assert.Equal(new Position(70, 0, 0), f.Body.Target);
             f.Place(Work);
             f.Tick(); f.Tick();
             Assert.True(f.Bound);
-            Assert.Equal(new Position(100, 0, 30), f.Body.Target);
+            Assert.True(Position.Distance(new Position(100, 0, 2), f.Body.Target) < 1e-9); // following the new journey's logical pose
             Assert.Empty(f.Corrections());
         }
         using (var f = new Fixture())
@@ -365,7 +395,7 @@ public sealed class PhysicalWalkerFollowTests
         f.Place(Venue);
         f.Tick(); f.Tick();
         Assert.True(f.Bound);
-        Assert.Equal(f.W.Journey!.Legs[0].To, f.Body.Target);
+        Assert.True(Position.Distance(f.City.PositionOf(f.W), f.Body.Target) < 1e-6);
         Assert.True(f.Body.Speed > NativeTravelPace.WalkingMetresPerSecond);
         f.AssertSameAsBodiesOff();
     }

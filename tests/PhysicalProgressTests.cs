@@ -190,6 +190,12 @@ public sealed class PhysicalProgressTests
     public void FollowPaceIsNativeUpToCatchUpAndNeverAboveOneAndAHalf(double lag, double factor)
         => Assert.Equal(factor, WalkerFollow.PaceFactor(lag), 12);
 
+    [Theory]
+    [InlineData(2000, true, false)] [InlineData(2450, true, false)] [InlineData(2500, true, false)]
+    [InlineData(2501, true, true)] [InlineData(3000, true, true)] [InlineData(3000, false, false)]
+    public void OnlyTransparentQueueMaterialsWithAColourCanFade(int queue, bool colour, bool fades)
+        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(queue, colour));
+
     [Fact]
     public void CorrectionStartsBeyondEightMetresOrOnAnotherMode()
     {

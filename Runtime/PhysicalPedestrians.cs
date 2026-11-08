@@ -239,8 +239,32 @@ namespace PersistentCity.Runtime
             Agent.speed = (float)metresPerScaledSecond;
             stopped = false; Tick();
         }
-        /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour (1 restores the materials). Shaders
-        /// without a transparent base colour ignore it; the rig check confirms how native characters render it.</summary>
+        /// <summary>F2c Q3 fade: whether every renderer of this body can show a base-colour alpha (a transparent-queue
+        /// material with a colour property, <see cref="WalkerFollow.MaterialCanFade"/>). Opaque characters cannot fade;
+        /// their correction waits until they are out of view.</summary>
+        public bool CanFade
+        {
+            get
+            {
+                if (Character == null) return false;
+                Character.GetComponentsInChildren(true, probe);
+                bool any = false;
+                foreach (var renderer in probe)
+                {
+                    if (renderer == null) continue;
+                    foreach (var material in renderer.sharedMaterials)
+                    {
+                        bool colour = material != null && (material.HasProperty(BaseColorId) || material.HasProperty(ColorId));
+                        if (!WalkerFollow.MaterialCanFade(material != null ? material.renderQueue : 0, colour)) { probe.Clear(); return false; }
+                        any = true;
+                    }
+                }
+                probe.Clear();
+                return any;
+            }
+        }
+        /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour, starting from the colour the renderer
+        /// shows now (its property block's, else its material's). 1 restores the renderers.</summary>
         public void SetFade(float alpha)
         {
             if (Character == null) return;
@@ -248,16 +272,30 @@ namespace PersistentCity.Runtime
             if (alpha >= 1)
             {
                 foreach (var renderer in faded) if (renderer != null) renderer.SetPropertyBlock(null);
-                faded.Clear(); return;
+                faded.Clear(); originals.Clear(); return;
             }
-            if (faded.Count == 0) Character.GetComponentsInChildren(true, faded);
             block ??= new MaterialPropertyBlock();
-            foreach (var renderer in faded)
+            if (faded.Count == 0)
             {
+                Character.GetComponentsInChildren(true, faded);
+                foreach (var renderer in faded)
+                {
+                    var material = renderer != null ? renderer.sharedMaterial : null;
+                    int id = material != null && material.HasProperty(BaseColorId) ? BaseColorId : ColorId;
+                    Color colour = material != null && material.HasProperty(id) ? material.GetColor(id) : Color.white;
+                    if (renderer != null)
+                    {
+                        renderer.GetPropertyBlock(block);
+                        if (block.HasColor(id)) colour = block.GetColor(id);
+                    }
+                    originals.Add((id, colour));
+                }
+            }
+            for (int i = 0; i < faded.Count; i++)
+            {
+                var renderer = faded[i];
                 if (renderer == null) continue;
-                var material = renderer.sharedMaterial;
-                int id = material != null && material.HasProperty(BaseColorId) ? BaseColorId : ColorId;
-                Color colour = material != null && material.HasProperty(id) ? material.GetColor(id) : Color.white;
+                var (id, colour) = originals[i];
                 colour.a *= alpha;
                 renderer.GetPropertyBlock(block);
                 block.SetColor(id, colour);
@@ -265,7 +303,8 @@ namespace PersistentCity.Runtime
             }
         }
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"), ColorId = Shader.PropertyToID("_Color");
-        private readonly List<Renderer> faded = new List<Renderer>();
+        private readonly List<Renderer> faded = new List<Renderer>(), probe = new List<Renderer>();
+        private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
         private MaterialPropertyBlock? block;
         /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
         public bool Warp(Position target)

@@ -259,8 +259,8 @@ namespace PersistentCity.Core
         public const double StopMetres = 0.05;
         /// <summary>Q3: an on-screen body hurries this long before it fades at the next corner or doorway.</summary>
         public const double HurrySeconds = 10;
-        /// <summary>A fading body that reaches no corner within this further time is released where it is.</summary>
-        public const double FadeSeconds = 10;
+        /// <summary>A walker on the logical pose's leg is re-aimed at that pose once it has moved this far.</summary>
+        public const double RetargetMetres = 0.5;
         /// <summary>After the logical arrival, a visible walker keeps walking to the door this long.</summary>
         public const double ArrivalTailSeconds = 10;
         /// <summary>Q3 fade: a corrected on-screen body stands and fades out over this long before it is released.</summary>
@@ -276,6 +276,11 @@ namespace PersistentCity.Core
             double rise = (lagMetres - CatchUpMetres) / (FullPaceMetres - CatchUpMetres);
             return Math.Min(MaximumPaceFactor, 1 + (MaximumPaceFactor - 1) * rise);
         }
+
+        /// <summary>Whether a material can show the fade: its colour property exists and it renders in the
+        /// transparent queues (above 2500), where a base-colour alpha blends. An opaque material cannot fade, so the
+        /// body is kept until it is out of view instead.</summary>
+        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty) => hasColourProperty && renderQueue > 2500;
 
         /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
         /// <paramref name="deltaSeconds"/>, so the body is never commanded past the logical pose, even while the
@@ -352,7 +357,7 @@ namespace PersistentCity.Core
     {
         /// <summary>An off-screen body moved to the logical pose.</summary>
         Move,
-        /// <summary>Q3: an on-screen body that hurried for the bound faded out at a corner (or where it stood); it reappears at the logical pose once that is out of view.</summary>
+        /// <summary>Q3: an on-screen body that hurried for the bound faded out at a corner; it reappears at the logical pose once that is out of view.</summary>
         Fade,
         /// <summary>An off-screen body released because of lag: the person is no longer walking, or the arrival tail ended short of the door.</summary>
         LagRelease,
@@ -451,11 +456,11 @@ namespace PersistentCity.Core
         public string Status(int followers) => string.Format(CultureInfo.InvariantCulture,
             "followers={0}\nlag_samples={1}\nlag_p50_m={2:F2}\nlag_p95_m={3:F2}\nlag_max_m={4:F2}\ncorrections={5}\nmoves={6}\n"
             + "on_screen_moves={7}\nfades={8}\nlag_releases={9}\nhandoffs={10}\nfaulted_acquisitions={11}\nlast_sequence={12}\n"
-            + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};fade_s:{17};arrival_tail_s:{18};fade_out_s:{19}",
+            + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};arrival_tail_s:{17};fade_out_s:{18};retarget_m:{19}",
             followers, LagSamples, LagQuantile(0.5), LagQuantile(0.95), MaximumLagMetres, Corrections, Moves, OnScreenMoves, Fades,
             LagReleases, Handoffs, FaultedAcquisitions, LastSequence, WalkerFollow.CatchUpMetres, WalkerFollow.CorrectionMetres,
-            WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.FadeSeconds, WalkerFollow.ArrivalTailSeconds,
-            WalkerFollow.FadeOutSeconds);
+            WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.ArrivalTailSeconds,
+            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres);
 
         public static string Format(WalkerCorrection c) => string.Format(CultureInfo.InvariantCulture,
             "seq={0} frame={1} person={2} kind={3} on_screen={4} before={5:R},{6:R},{7:R} after={8:R},{9:R},{10:R}",

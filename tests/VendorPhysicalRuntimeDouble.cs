@@ -199,6 +199,8 @@ namespace PersistentCity.Runtime
         internal bool OnScreen;
         internal void Pace(double v) { Speed = v > 0 ? v : 0; Agent.isStopped = !(v > 0); }
         internal float Alpha = 1;
+        // F2c: whether this body's materials can show a fade; tests decide (the production check is WalkerFollow.MaterialCanFade).
+        internal bool CanFade = true;
         internal readonly List<float> Fades = new();
         internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
         internal bool Warp(Position p) { Character.transform.position = Vector(p); Agent.hasPath = false; Agent.isStopped = true; Warps++; return true; }

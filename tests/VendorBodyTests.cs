@@ -240,7 +240,11 @@ public sealed class VendorBodyTests
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         f.ReachTargets(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        Assert.Equal(f.Person.Journey!.Legs[0].To, body.Target);
+        // It follows: once the person moves on, its destination is the logical pose (never past it).
+        while (!f.City.AdvanceTo(leaves + 0.27).CaughtUp) { }
+        f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-6);
     }
 
     [Theory]
@@ -269,14 +273,14 @@ public sealed class VendorBodyTests
         Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
         f.Tick(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        Assert.Equal(f.City.State.Places.Single(p => p.Id == f.Person.HomeId).Position, body.Target);
         Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
-        // F2c: at the logical pose the body waits for the person to move, then walks with them.
+        // F2c: at the logical pose the body waits for the person to move, then walks with them toward that pose.
         Assert.True(body.Agent.isStopped);
         while (!f.City.AdvanceTo(leaves + 0.02).CaughtUp) { }
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.False(body.Agent.isStopped);
+        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-6);
         Assert.Equal(acquisitions, f.Pool.Acquisitions.Count);
     }
 

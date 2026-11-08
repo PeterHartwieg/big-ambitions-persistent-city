@@ -264,7 +264,7 @@ public sealed class PresentationDriver
         if (binding.Tail)
         {
             if (own.AtEnd || realTime >= binding.TailUntil || own.Mode != TravelMode.Walk) return false;
-            Aim(binding, own, Math.Max(lag, 2 * WalkerFollow.StopMetres));
+            Aim(binding, own, Math.Max(lag, 2 * WalkerFollow.StopMetres), WalkerFollow.Sample(route, route.Minutes));
             return true;
         }
         if (own.Mode != TravelMode.Walk) { binding.Handoff = true; Walking.Handoffs++; return false; }
@@ -282,15 +282,17 @@ public sealed class PresentationDriver
             Walking.Record(frame, citizen.Identity.Id, WalkerCorrectionKind.Move, before, body.Position, false);
             own = WalkerFollow.Sample(route, binding.BodyMinutes); lag = 0;
         }
-        Aim(binding, own, lag);
+        Aim(binding, own, lag, logical);
         return true;
     }
 
-    private static void Aim(Binding binding, PhysicalJourneySample own, double lag)
+    // Runtime WalkLeg: the destination is the logical pose on its own leg, the leg's corner on an earlier one.
+    private static void Aim(Binding binding, PhysicalJourneySample own, double lag, PhysicalJourneySample logical)
     {
         binding.PaceFactor = own.Stationary || own.AtEnd ? 0 : WalkerFollow.PaceFactor(lag);
         binding.LagMetres = lag;
-        binding.Body.Target = own.To; binding.Body.HasTarget = true;
+        bool pose = logical.Mode == TravelMode.Walk && !logical.Stationary && own.LegIndex == logical.LegIndex;
+        binding.Body.Target = pose ? logical.Position : own.To; binding.Body.HasTarget = true;
     }
 
     private bool Observe(Binding binding)
