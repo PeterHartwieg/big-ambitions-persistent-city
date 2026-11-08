@@ -20,7 +20,7 @@ public sealed class HousingCatalogueMigrationTests
         Assert.Equal("old",citizen.HomeId);Assert.Equal("old",citizen.PlaceId);
         Assert.Equal(10,home.Position.X);Assert.Equal(100,citizen.NextEventMinute);
         Assert.All(city.Citizens.Skip(1),c=>Assert.Equal("verified",c.HomeId));
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(city)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveCodec.Write(city)).Status);
     }
     [Fact]
     public void SoleExistingResidentSurvivesEvenIfNoAreaCanBeRediscovered()
@@ -30,6 +30,6 @@ public sealed class HousingCatalogueMigrationTests
         CatalogueMigration.Enrich(city,System.Array.Empty<Place>());
         Population.ExpandToHousing(city);
         Assert.Single(city.Citizens);Assert.Equal(1,city.PopulationTarget);Assert.Equal(1,city.Places[0].Capacity);
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(city)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveCodec.Write(city)).Status);
     }
 }

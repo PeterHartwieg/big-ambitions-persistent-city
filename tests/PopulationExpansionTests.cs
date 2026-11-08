@@ -137,7 +137,7 @@ public sealed class PopulationExpansionTests
         person.PlaceId = current.Id; person.Activity = Activity.Leisure; person.Phase = CitizenPhase.AtPlace;
         person.ActivityUntilMinute = closure; person.NextEventMinute = closure;
         person.RecentVisits.Add(new VisitRecord { AtMinute = city.Minute, PlaceId = current.Id, Activity = Activity.Leisure });
-        var read = SaveCodec.Read(SaveCodec.Write(city));
+        var read = SaveWire.Read(SaveCodec.Write(city));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var simulation = new CitySimulator(read.State!, new Walking());
         simulation.AdvanceTo(closure);
@@ -177,7 +177,7 @@ public sealed class PopulationExpansionTests
         {
             if (++slices % 11 == 0)
             {
-                var read = SaveCodec.Read(SaveCodec.Write(coarse.State));
+                var read = SaveWire.Read(SaveCodec.Write(coarse.State));
                 Assert.Equal(SaveReadStatus.Loaded, read.Status);
                 coarse = new CitySimulator(read.State!, new Walking());
             }

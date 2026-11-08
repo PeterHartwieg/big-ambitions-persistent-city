@@ -67,7 +67,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     private static (CityState State, CitizenState Citizen, double Raw) CapturedShortContinuation(double continuation)
     {
         var (initial, _, _) = Captured();
-        var state = SaveCodec.Read(SaveCodec.Write(initial)).State!; state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = 0;
+        var state = SaveWire.Read(SaveCodec.Write(initial)).State!; state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = 0;
         double[] x = { 1000, 1060, 1060 + continuation };
         var route = new Route { Legs = Enumerable.Range(0, 2).Select(i => new RouteLeg
         { From = P(x[i]), To = P(x[i + 1]), Mode = TravelMode.Car, Minutes = Math.Abs(x[i + 1] - x[i]) / 10,
@@ -114,7 +114,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void CollapsedInteriorTailSurvivesSaveCodecRoundtripWithTheSamePoseAndOwnership()
     {
         var (state, _, raw) = Captured(); Assert.True(TravelTiming.Apply(state, 2, 2));
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var copied = decoded.State!; var simulation = new CitySimulator(copied, new Planner(2));
         Assert.Equal(raw, simulation.Traffic!.GetPermission("car").NominalMinutes);
         Assert.Equal(P(230), copied.Citizens[0].Journey!.PositionAt(raw));
@@ -172,7 +172,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void FixedPolicyWaitTailIsRetainedEvenThoughItsGeometryIsStationary(TravelMode mode)
     {
         var (original, _, raw) = Captured();
-        var state = SaveCodec.Read(SaveCodec.Write(original)).State!; state.Traffic = null; state.TrafficTopologyId = "";
+        var state = SaveWire.Read(SaveCodec.Write(original)).State!; state.Traffic = null; state.TrafficTopologyId = "";
         var citizen = state.Citizens[0]; citizen.Journey = new Route { Legs = new()
         { new RouteLeg { From = P(220), To = P(220), Minutes = 1, Mode = mode },
           new RouteLeg { From = P(220), To = P(240), Minutes = 1, Mode = mode } } };
@@ -188,7 +188,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void NonNativeWalkIsNotMistakenForAnInvalidNativeTail()
     {
         var (original, _, raw) = Captured();
-        var state = SaveCodec.Read(SaveCodec.Write(original)).State!; state.Traffic = null; state.TrafficTopologyId = "";
+        var state = SaveWire.Read(SaveCodec.Write(original)).State!; state.Traffic = null; state.TrafficTopologyId = "";
         var citizen = state.Citizens[0];
         foreach (var leg in citizen.Journey!.Legs) { leg.Mode = TravelMode.Walk; leg.ServiceId = ""; }
         Assert.True(TravelTiming.Apply(state, 2, 2));
@@ -201,7 +201,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void MaterialUnconsumedNativeTimeCannotDisappearInsideAnUnrepresentableFragment()
     {
         var (original, _, _) = Captured();
-        var state = SaveCodec.Read(SaveCodec.Write(original)).State!; state.Traffic = null; state.TrafficTopologyId = "";
+        var state = SaveWire.Read(SaveCodec.Write(original)).State!; state.Traffic = null; state.TrafficTopologyId = "";
         var citizen = state.Citizens[0]; state.Minute = .99; citizen.DepartureMinute = 0; citizen.NextEventMinute = 2;
         citizen.Journey = new Route { Legs = new()
         { new RouteLeg { From = P(Math.BitDecrement(230)), To = P(230), Minutes = 1, Mode = TravelMode.Car,
@@ -307,7 +307,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void DetachedSpanTimingGateExemptsCompletedHistoricalSections()
     {
         var (original, _, _) = Captured(sectionBoundary: true);
-        var state = SaveCodec.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
+        var state = SaveWire.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: true));
         Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
         simulation.AdvanceTo(1); Assert.True(simulation.ObservePhysicalJourney(lease!, 1)); simulation.AdvanceTo(1);
@@ -327,7 +327,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void WaitingSourceFutureSpansCannotBypassDetachedTimingValidation()
     {
         var (captured, _, _) = CapturedShortContinuation(.0001);
-        var state = SaveCodec.Read(SaveCodec.Write(captured)).State!; var citizen = state.Citizens[0];
+        var state = SaveWire.Read(SaveCodec.Write(captured)).State!; var citizen = state.Citizens[0];
         var network = new ShortContinuationPlanner(.0001).TrafficNetwork;
         Assert.True(network.TryMap(citizen.Journey!, out var mapped));
         mapped[0].FreeFlowMinutes += .01; // Structurally valid kernel data with a forged future traversal duration.
@@ -347,7 +347,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     private static (CityState State, double Nominal, double Elapsed) CapturedAtClock(double nominal, double endClock)
     {
         var (original, _, _) = CapturedShortContinuation(10);
-        var state = SaveCodec.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
+        var state = SaveWire.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
         double clock = endClock - 10;
         state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = clock;
         citizen.DepartureMinute = clock; citizen.NextEventMinute = clock + 7;
@@ -356,8 +356,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         simulation.AdvanceTo(clock + 10); Assert.True(simulation.ObservePhysicalJourney(lease!, nominal));
         Assert.Equal(nominal, lease!.ObservedMinutes); Assert.True(simulation.ReleasePhysicalJourney(lease)); state.PrepareForSave();
         double elapsed = state.Minute - citizen.DepartureMinute;
-        string json = SaveCodec.Write(state); var decoded = SaveCodec.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
-        _ = new CitySimulator(SaveCodec.Read(json).State!, new ShortContinuationPlanner(10));
+        string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        _ = new CitySimulator(SaveWire.Read(json).State!, new ShortContinuationPlanner(10));
         return (decoded.State!, nominal, elapsed);
     }
 
@@ -376,7 +376,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     {
         var (state, observed, elapsed) = CapturedAtLargeClock(nominal); Assert.True(observed >= elapsed);
         Assert.True(TravelTiming.Apply(state, 2, rate));
-        string json = SaveCodec.Write(state); var decoded = SaveCodec.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var rebound = new CitySimulator(decoded.State!, new ShortContinuationPlanner(10, rate));
         double actual = rebound.Traffic!.GetPermission("car").NominalMinutes;
         Assert.InRange(Math.Abs(actual - (state.Minute - state.Citizens[0].DepartureMinute)), 0, 1e-7);
@@ -386,7 +386,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     public void LegalClockLagAtACollapsedClockCornerRetainsTheActuallyObservedNativeTail()
     {
         var (original, _, raw) = CapturedShortContinuation(10);
-        var state = SaveCodec.Read(SaveCodec.Write(original)).State!;
+        var state = SaveWire.Read(SaveCodec.Write(original)).State!;
         // Exercise the accepted legacy clock/traffic agreement at this exact collapsed
         // endpoint. The real large-clock captures above establish the naturally arising case.
         var vehicle = state.Traffic!.Vehicles.Single();
@@ -396,8 +396,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         foreach (var item in state.Traffic.Events) item.At = vehicle.ReadyAt;
         state.Citizens[0].DepartureMinute = 0; state.Citizens[0].NextEventMinute = 7;
         TrafficKernel.ValidateState(state.Traffic);
-        string before = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(before).Status);
-        _ = new CitySimulator(SaveCodec.Read(before).State!, new ShortContinuationPlanner(10));
+        string before = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(before).Status);
+        _ = new CitySimulator(SaveWire.Read(before).State!, new ShortContinuationPlanner(10));
         Assert.Equal(P(1060), state.Citizens[0].Journey!.PositionAt(raw));
         Assert.True(state.Citizens[0].Journey!.PositionAt(nominal).X < 1060);
         AssertRetimedCapture(state, nominal, 2, new ShortContinuationPlanner(10, 2));
@@ -409,8 +409,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
     {
         var (state, observed, elapsed) = CapturedAtLargeClock(3.00000001); Assert.True(observed < elapsed);
         state.Citizens[0].Journey!.Legs[0].ServiceId = ""; // Supported historical native geometry without fragment tags.
-        string before = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(before).Status);
-        _ = new CitySimulator(SaveCodec.Read(before).State!, new ShortContinuationPlanner(10));
+        string before = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(before).Status);
+        _ = new CitySimulator(SaveWire.Read(before).State!, new ShortContinuationPlanner(10));
         AssertRetimedCapture(state, observed, 2, new ShortContinuationPlanner(10, 2));
     }
 
@@ -427,7 +427,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         for (int i = 0; i < occupants.Length; i++) Assert.Equal(occupants[i], state.Traffic.Links[i].Vehicles);
         if (rawPositionUnchanged) Assert.Equal(pose, citizen.Journey!.PositionAt(changed.NominalMinutes));
         Assert.Equal(original.Completed, changed.Completed); Assert.Equal(original.CompletedAt, changed.CompletedAt);
-        string json = SaveCodec.Write(state); var decoded = SaveCodec.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var rebound = new CitySimulator(decoded.State!, (IRoutePlanner)planner);
         double actual = rebound.Traffic!.GetPermission("car").NominalMinutes;
         Assert.Equal(changed.NominalMinutes, actual);
@@ -452,7 +452,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     [Fact]
     public void CompletedTrafficRetainsItsTimestampAndOnlyRetimesItsFutureWalkingEgress()
     {
-        var (original, _, _) = Captured(); var state = SaveCodec.Read(SaveCodec.Write(original)).State!;
+        var (original, _, _) = Captured(); var state = SaveWire.Read(SaveCodec.Write(original)).State!;
         var citizen = state.Citizens[0]; citizen.Journey!.Legs[1].Mode = TravelMode.Walk; citizen.Journey.Legs[1].ServiceId = "";
         var planner = new Planner(); Assert.True(planner.TrafficNetwork.TryMap(citizen.Journey, out var mapped));
         var kernel = new TrafficKernel(planner.TrafficNetwork.Links, 0); kernel.Enqueue("car", mapped);
@@ -462,12 +462,12 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.True(kernel.GetPermission("car").IsCompleted);
         state.Minute = 1; state.Traffic = kernel.Capture(); citizen.DepartureMinute = 0; citizen.NextEventMinute = 2;
         var completed = state.Traffic.Vehicles.Single(); Assert.Equal(1, completed.CompletedAt);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Equal(1, citizen.Journey.Legs[0].Minutes); Assert.Equal(2, citizen.Journey.Legs[1].Minutes);
         Assert.Equal(3, citizen.NextEventMinute); Assert.Equal(0, citizen.DepartureMinute);
         Assert.True(state.Traffic!.Vehicles.Single().Completed); Assert.Equal(1, state.Traffic.Vehicles.Single().CompletedAt);
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var rebound = new CitySimulator(decoded.State!, new Planner(2));
         Assert.Equal(0, rebound.Traffic!.VehicleCount); Assert.Equal(3, decoded.State!.Citizens[0].NextEventMinute);
         Assert.Equal(P(230), rebound.SampleJourney(decoded.State.Citizens[0]).Position);
@@ -507,7 +507,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
 
     private static CityState CapturedPolyline(double[] x, double nominal, int boundary = -1, bool closedDownstream = false)
     {
-        var (source, _, _) = Captured(); var state = SaveCodec.Read(SaveCodec.Write(source)).State!;
+        var (source, _, _) = Captured(); var state = SaveWire.Read(SaveCodec.Write(source)).State!;
         state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = 2184.8916206359863;
         var citizen = state.Citizens[0]; citizen.Journey = new Route { Legs = Enumerable.Range(0, x.Length - 1)
             .Select(i => new RouteLeg { From = P(x[i]), To = P(x[i + 1]), Minutes = Math.Abs(x[i + 1] - x[i]) / 10,
@@ -519,8 +519,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease)); simulation.AdvanceTo(state.Minute + 10);
         Assert.True(simulation.ObservePhysicalJourney(lease!, nominal)); Assert.True(simulation.ReleasePhysicalJourney(lease!));
         state.PrepareForSave();
-        string json = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(json).Status);
-        _ = new CitySimulator(SaveCodec.Read(json).State!, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream));
+        string json = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(json).Status);
+        _ = new CitySimulator(SaveWire.Read(json).State!, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream));
         return state;
     }
 
@@ -570,7 +570,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.Equal(5.4, state.Traffic.Vehicles.Single().NominalMinutes);
         Assert.Equal(new[] { 1.6, 3.8, .1 * rate }, citizen.Journey!.Legs.Select(leg => leg.Minutes));
         Assert.All(citizen.Journey.Legs, leg => Assert.StartsWith("native:road:v1:", leg.ServiceId));
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var rebound = new CitySimulator(decoded.State!, new PolylinePlanner(x, rate));
         var after = rebound.SampleJourney(decoded.State!.Citizens[0], rebound.Traffic!.GetPermission("car").NominalMinutes);
         Assert.Equal(before.Position, after.Position); Assert.Equal(before.CarPosition, after.CarPosition);
@@ -585,7 +585,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     [Fact]
     public void SharedPureSamplerRetainsPhysicalBoundaryCarParkingAndPublicValidationContracts()
     {
-        var (original, _, _) = Captured(); var state = SaveCodec.Read(SaveCodec.Write(original)).State!;
+        var (original, _, _) = Captured(); var state = SaveWire.Read(SaveCodec.Write(original)).State!;
         state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = 0;
         var citizen = state.Citizens[0]; citizen.Journey = new Route { Legs = new()
         {
@@ -641,7 +641,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var error = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
         Assert.Contains("unreported occupied traffic section endpoint", error.Message);
         Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(before, SaveCodec.Write(state));
-        var rebound = new CitySimulator(SaveCodec.Read(before).State!, new Planner(sectionBoundary: true, rise: sloped ? .5 : 0));
+        var rebound = new CitySimulator(SaveWire.Read(before).State!, new Planner(sectionBoundary: true, rise: sloped ? .5 : 0));
         Assert.Equal(raw, rebound.Traffic!.GetPermission("car").NominalMinutes); Assert.False(rebound.Traffic.GetPermission("car").IsCompleted);
     }
 
@@ -670,7 +670,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var error = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
         Assert.Contains("ambiguous double-precision projection", error.Message);
         Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(json, SaveCodec.Write(state));
-        _ = new CitySimulator(SaveCodec.Read(json).State!, new PolylinePlanner(x));
+        _ = new CitySimulator(SaveWire.Read(json).State!, new PolylinePlanner(x));
     }
 
     [Theory]
@@ -678,7 +678,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     [InlineData(TravelMode.Subway, true, false)] [InlineData(TravelMode.Subway, true, true)]
     public void UnownedWalkingAndTransitHandoffsReuseTheSamplerWithoutDroppingFixedWaitMinutes(TravelMode nextMode, bool stationary, bool tinyGeometry)
     {
-        var (source, _, raw) = Captured(gap: 5e-13); var state = SaveCodec.Read(SaveCodec.Write(source)).State!;
+        var (source, _, raw) = Captured(gap: 5e-13); var state = SaveWire.Read(SaveCodec.Write(source)).State!;
         state.Traffic = null; state.TrafficTopologyId = ""; var citizen = state.Citizens[0];
         citizen.Journey!.Legs[0].Mode = TravelMode.Walk; citizen.Journey.Legs[0].ServiceId = stationary ? "station-wait" : "";
         citizen.Journey.Legs[1].Mode = nextMode; citizen.Journey.Legs[1].ServiceId = nextMode == TravelMode.Subway ? "subway:line-1" : "";
@@ -688,7 +688,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
             citizen.Journey.Legs[1].From = citizen.Journey.Legs[0].To;
             if (tinyGeometry) Assert.InRange(Position.Distance(citizen.Journey.Legs[0].From, citizen.Journey.Legs[0].To), double.Epsilon, 1e-6);
         }
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         var before = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen, raw);
         double departure = citizen.DepartureMinute; Assert.Equal(1, before.LegIndex); Assert.Equal(0, before.LegFraction);
         Assert.True(TravelTiming.Apply(state, 2, 2));
@@ -696,7 +696,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.Equal(stationary ? 1 : raw, citizen.Journey.Legs[0].Minutes);
         Assert.Equal(2, citizen.Journey.Legs[1].Minutes);
         Assert.Equal(departure + citizen.Journey.Minutes, citizen.NextEventMinute);
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var rebound = new CitySimulator(decoded.State!, new UnmappedPlanner());
         var after = rebound.SampleJourney(decoded.State!.Citizens[0], raw);
         Assert.Equal(before.Position, after.Position); Assert.Equal(before.CarPosition, after.CarPosition);
@@ -714,7 +714,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var error = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
         Assert.Contains("duration", error.Message);
         Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(before, SaveCodec.Write(state));
-        _ = new CitySimulator(SaveCodec.Read(before).State!, new PolylinePlanner(x));
+        _ = new CitySimulator(SaveWire.Read(before).State!, new PolylinePlanner(x));
     }
 
     private static CityState UnownedCanonicalWalkingRoute(double[] x, double elapsed)
@@ -739,7 +739,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         double elapsed = Math.BitIncrement(x[2]); var state = UnownedCanonicalWalkingRoute(x, elapsed); var citizen = state.Citizens[0];
         Assert.Equal(7.800000000000001, citizen.Journey!.Legs.Take(2).Sum(leg => leg.Minutes));
         double residue = elapsed; foreach (var leg in citizen.Journey.Legs.Take(2)) residue -= leg.Minutes;
-        Assert.Equal(0, residue); Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(0, residue); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         var before = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
         Assert.Equal(2, before.LegIndex); Assert.Equal(0, before.LegFraction); Assert.Equal(P(x[2]), before.Position);
         foreach (double rate in new[] { 1d, 2, 1, 2 })
@@ -750,7 +750,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
             Assert.Equal(1.5 * rate / 2, citizen.Journey.Legs[2].Minutes);
             Assert.Equal(0, citizen.DepartureMinute); Assert.Equal(elapsed, state.Minute);
             Assert.Equal(citizen.Journey.Minutes, citizen.NextEventMinute);
-            var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+            var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
             state = decoded.State!; citizen = state.Citizens[0];
             var sample = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
             Assert.Equal(before.Position, sample.Position); Assert.Equal(before.CarPosition, sample.CarPosition); Assert.Equal(before.Mode, sample.Mode);
@@ -759,7 +759,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         resumed.AdvanceTo(arrival);
         Assert.Equal(CitizenPhase.AtPlace, citizen.Phase); Assert.Equal(1, citizen.CompletedJourneys);
         Assert.Equal("b", citizen.PlaceId); Assert.Equal(P(x[^1]), resumed.PositionOf(citizen));
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Fact]
@@ -769,12 +769,12 @@ public sealed class TravelTimingCollapsedNativeTailTests
         double elapsed = Math.BitDecrement(x[5]); var state = UnownedCanonicalWalkingRoute(x, elapsed); var citizen = state.Citizens[0];
         double residue = elapsed; foreach (var leg in citizen.Journey!.Legs.Take(4)) residue -= leg.Minutes;
         Assert.True(residue > citizen.Journey.Legs[4].Minutes);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         var before = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
         Assert.Equal(5, before.LegIndex); Assert.Equal(0, before.LegFraction); Assert.Equal(P(x[5]), before.Position);
         Assert.True(TravelTiming.Apply(state, 2, 1));
         Assert.Equal(6, citizen.Journey.Legs.Count); Assert.All(citizen.Journey.Legs, leg => Assert.True(leg.Minutes > 0));
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var resumed = new CitySimulator(decoded.State!, new UnmappedPlanner()); var restored = decoded.State!.Citizens[0];
         var after = resumed.SampleJourney(restored); Assert.Equal(before.Position, after.Position); Assert.Equal(before.CarPosition, after.CarPosition);
         Assert.Equal(before.Mode, after.Mode); Assert.Equal(0, after.LegFraction);
@@ -794,7 +794,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.True(TravelTiming.Apply(state, 2, 1));
         Assert.Equal(3, citizen.Journey.Legs.Count); Assert.Equal(1.5, citizen.Journey.Legs[2].Minutes);
         Assert.Equal(citizen.Journey.Minutes, citizen.NextEventMinute);
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var restored = decoded.State!.Citizens[0]; var resumed = new CitySimulator(decoded.State, new UnmappedPlanner());
         var after = resumed.SampleJourney(restored); Assert.Equal(before.Position, after.Position); Assert.Equal(before.Mode, after.Mode);
         resumed.AdvanceTo(restored.NextEventMinute); Assert.Equal(1, restored.CompletedJourneys); Assert.Equal("b", restored.PlaceId);
@@ -820,7 +820,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
                 Assert.All(citizen.Journey.Legs, leg => Assert.True(leg.Minutes > 0));
                 Assert.Equal(0, citizen.DepartureMinute); Assert.Equal(elapsed, state.Minute);
                 Assert.Equal(citizen.Journey.Minutes, citizen.NextEventMinute);
-                var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+                var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
                 state = decoded.State!; citizen = state.Citizens[0];
                 var after = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
                 Assert.Equal(measured.Position, after.Position); Assert.Equal(measured.CarPosition, after.CarPosition);
@@ -857,7 +857,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         {
             Assert.True(TravelTiming.Apply(state, 2, rate)); Assert.Equal(0, citizen.DepartureMinute); Assert.Equal(elapsed, state.Minute);
             Assert.All(citizen.Journey!.Legs, leg => Assert.True(leg.Minutes > 0));
-            var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+            var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
             state = decoded.State!; citizen = state.Citizens[0];
             var resumedSample = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
             Assert.Equal(before.Position, resumedSample.Position); Assert.Equal(before.CarPosition, resumedSample.CarPosition); Assert.Equal(before.Mode, resumedSample.Mode);

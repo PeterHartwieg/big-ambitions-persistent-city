@@ -334,7 +334,10 @@ namespace PersistentCity.Core
         public const int EconomicLedgerSchema = VendorSchema + 1;
         public const int AttendanceSchema = EconomicLedgerSchema + 1;
         public const int ChangeJournalSchema = AttendanceSchema + 1;
-        public const int CurrentSchema = ChangeJournalSchema;
+        /// <summary>F7d: the next writer after F6g's change-journal schema. Same entity shape; the save string is the compact
+        /// columnar wire (candidate C), not JSON of this graph.</summary>
+        public const int CompactSchema = ChangeJournalSchema + 1;
+        public const int CurrentSchema = CompactSchema;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.

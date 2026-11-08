@@ -256,18 +256,18 @@ public sealed class FoodCampaignAwarenessTests
     [Fact]
     public void Exact20MigrationAddsD2CampaignAndMenuFieldsAndPreservesSource()
     {
-        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=JObject.Parse(DevelopmentChain.Write(city.State));
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=SaveWire.Parse(DevelopmentChain.Write(city.State));
         city.State.WeatherStartsDay=1;
         city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
-        root=JObject.Parse(DevelopmentChain.Write(city.State));
+        root=SaveWire.Parse(DevelopmentChain.Write(city.State));
         int current=city.State.Schema;city.State.Schema=20;
-        root=JObject.Parse(DevelopmentChain.Legacy(city.State, () => PopulationSchema20.Write(city.State)));city.State.Schema=current;
+        root=SaveWire.Parse(DevelopmentChain.Legacy(city.State, () => PopulationSchema20.Write(city.State)));city.State.Schema=current;
         string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         DevelopmentChain.RequireRefusedCapabilities(source);
         var read=DevelopmentChain.RefusedThenRead(data,"weighted");Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         Assert.Equal(20,read.SourceSchema);Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
-        var expected=JObject.Parse(DevelopmentChain.Write25(city.State));expected["Food"]!["RivalStartsDay"]=(int)(city.State.Minute/1440)+1; expected["NamePolicyStartsDay"]=(int)(city.State.Minute/1440)+1;
-        Assert.True(JToken.DeepEquals(expected,JObject.Parse(DevelopmentChain.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
+        var expected=SaveWire.Parse(DevelopmentChain.Write25(city.State));expected["Food"]!["RivalStartsDay"]=(int)(city.State.Minute/1440)+1; expected["NamePolicyStartsDay"]=(int)(city.State.Minute/1440)+1;
+        Assert.True(JToken.DeepEquals(expected,SaveWire.Parse(DevelopmentChain.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
         foreach(int schema in new[]{24,99})
         {
             root["Schema"]=schema;var wire=root.ToString(Formatting.None);data[SaveStore.StateKey]=wire;
@@ -280,10 +280,10 @@ public sealed class FoodCampaignAwarenessTests
         var (heldCity,_,_)=WeightedFoodChoiceTests.Ready(79,24);heldCity.State.Food!.AwarenessStartsDay=1;
         heldCity.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
         heldCity.InspectFoodAwareness("r");heldCity.AdvanceTo(heldCity.State.Food.Residents[0].DesiredAt,1);
-        heldCity.State.Schema=20;var heldRoot=JObject.Parse(DevelopmentChain.Legacy(heldCity.State, () => PopulationSchema20.Write(heldCity.State)));heldCity.State.Schema=current;
+        heldCity.State.Schema=20;var heldRoot=SaveWire.Parse(DevelopmentChain.Legacy(heldCity.State, () => PopulationSchema20.Write(heldCity.State)));heldCity.State.Schema=current;
         var heldRead=DevelopmentChain.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
         Assert.Equal(JsonConvert.SerializeObject(heldCity.State.Food.Residents[0].Decision),JsonConvert.SerializeObject(heldRead.State!.Food!.Residents[0].Decision));
-        var legacy19=JObject.Parse(WeatherTests.As19(heldRoot.ToString(Formatting.None)));
+        var legacy19=SaveWire.Parse(WeatherTests.As19(heldRoot.ToString(Formatting.None)));
         string legacySource=legacy19.ToString(Formatting.None);data[SaveStore.StateKey]=legacySource;
         var legacyRead=DevelopmentChain.RefusedThenRead(data,"weighted");
         Assert.True(legacyRead.Status==SaveReadStatus.Loaded,legacyRead.Error);
@@ -317,7 +317,7 @@ public sealed class FoodCampaignAwarenessTests
                 .GetMethod("FromState")!.Invoke(null,new object[]{value});
             var settings=(JsonSerializerSettings)typeof(SaveCodec).GetMethod("SettingsForSchema",BindingFlags.NonPublic|BindingFlags.Static)!
                 .Invoke(null,new[]{context,(object)22})!;
-            var root=JObject.Parse(JsonConvert.SerializeObject(value,settings));root["Schema"]=22;
+            var root=SaveWire.Parse(JsonConvert.SerializeObject(value,settings));root["Schema"]=22;
             return root.ToString(Formatting.None);
         }
         string source=As22(state);var data=new Dictionary<string,string>{{SaveStore.StateKey,source}};
@@ -365,7 +365,7 @@ public sealed class FoodCampaignAwarenessTests
         string wire=DevelopmentChain.Write(state);var read=DevelopmentChain.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(wire,DevelopmentChain.Write(read.State!));
         var counts=SaveCodec.CountRecords(state,wire);var previous=DevelopmentChain.Read(before).State!;var oldCounts=SaveCodec.CountRecords(previous,before);
         Assert.Equal(2,counts.Streaming-oldCounts.Streaming);Assert.Equal(2,counts.Semantic-oldCounts.Semantic); // image plus shared generation
-        var root=JObject.Parse(wire);var image=root["Food"]!["Campaigns"]![0]!;
+        var root=SaveWire.Parse(wire);var image=root["Food"]!["Campaigns"]![0]!;
         root["Food"]!["Campaigns"]![0]="bad";Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
         root["Food"]!["Campaigns"]![0]="1ZZZ"+image.ToString().Substring(4);Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
         Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,new uint[64]));

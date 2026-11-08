@@ -53,7 +53,7 @@ public sealed class SaveSnapshotTests
         Assert.True(session.WriteTo(data, state).Success);
         Assert.Equal(current, data[SaveCodec.StateKey]); Assert.Equal("kept", data["other:key"]);
         // The current reader loads the payload and the loaded city writes the same bytes again.
-        var read = SaveCodec.Read(current);
+        var read = SaveWire.Read(current);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(current, SaveCodec.Write(read.State!));
     }
@@ -173,7 +173,7 @@ public sealed class SaveSnapshotTests
         string payload = SaveCodec.Encode(snapshot);
 
         // A loaded journey has not been committed by this simulator yet, so a snapshot copies it.
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = read.State!.Citizens[index].Journey!;
         Assert.False(loaded.IsCommitted);
         var reloaded = SaveCodec.Capture(read.State!);
@@ -225,7 +225,7 @@ public sealed class SaveSnapshotTests
         Assert.Equal(payload, SaveCodec.Encode(snapshot));
         foreach (string accepted in new[] { payload, SaveCodec.Write(state) })
         {
-            var read = SaveCodec.Read(accepted);
+            var read = SaveWire.Read(accepted);
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             Assert.Equal(accepted, SaveCodec.Write(read.State!));
         }

@@ -61,7 +61,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
     private static void Until(CitySimulator sim, double minute) { while (!sim.AdvanceTo(minute).CaughtUp) { } }
     private static CitySimulator Reload(CitySimulator sim, IOptionalStopEnvironment env, int rate)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, rate);
         Assert.True(loaded.OptionalStopIndexesMatchState());
         return loaded;
@@ -123,7 +123,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         Assert.Equal(0, t.Dropped);
         Assert.True(t.PassedOn > 1000, "expected repeated holders to be drawn again: " + t.PassedOn);
         AssertAudit(sim, share, 0);
-        Assert.True(SaveCodec.Read(SaveCodec.Write(sim.State)).Status == SaveReadStatus.Loaded);
+        Assert.True(SaveWire.Read(SaveCodec.Write(sim.State)).Status == SaveReadStatus.Loaded);
     }
 
     // 600 residents of every persona with homes, workplaces, schools, shops and leisure venues; about a third of the

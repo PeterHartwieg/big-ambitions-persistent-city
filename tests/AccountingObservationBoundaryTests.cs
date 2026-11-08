@@ -56,7 +56,7 @@ public sealed partial class PhysicalJourneyTests
         Assert.True(city.BeginAccountingObservations(1500));
         Assert.True(city.ObservePhysicalJourney(lease, 12)); // BeforeSave observation.
         string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(payload); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var restored = new CitySimulator(read.State!, new Planner());
         Assert.True(AccountingClock.Compatible(restored.State.Minute, 1500));
         Assert.True(restored.IsAccountingEpochDrained(1500));

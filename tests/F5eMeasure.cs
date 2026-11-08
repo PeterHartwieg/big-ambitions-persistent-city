@@ -200,13 +200,13 @@ public sealed class F5eMeasure
                 city.SynchronizeSnapshot();
                 string payload = SaveCodec.Write(state);
                 var records = SaveCodec.CountRecords(state, payload);
-                SaveCodec.Read(payload);
+                SaveWire.Read(payload);
                 var writes = new List<double>(); var reads = new List<double>();
                 for (int i = 0; i < samples; i++)
                 {
                     long t = Stopwatch.GetTimestamp(); string again = SaveCodec.Write(state); writes.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
                     if (again != payload) throw new InvalidOperationException("Writer is not deterministic.");
-                    t = Stopwatch.GetTimestamp(); var read = SaveCodec.Read(payload); reads.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
+                    t = Stopwatch.GetTimestamp(); var read = SaveWire.Read(payload); reads.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
                     if (read.Status != SaveReadStatus.Loaded) throw new InvalidOperationException(read.Error);
                 }
                 File.AppendAllText(output!, JsonConvert.SerializeObject(new

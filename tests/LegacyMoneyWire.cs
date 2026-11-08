@@ -62,7 +62,7 @@ internal static class LegacyMoneyWire
     /// activation day and the current-day outcomes. Everything else must survive an upgrade byte for byte.</summary>
     public static string WithoutUpgradeFacts(string payload)
     {
-        var token = JObject.Parse(payload);
+        var token = SaveWire.Parse(payload);
         if (token["Food"] is JObject food)
         {
             food.Remove("ChoiceStartsDay");

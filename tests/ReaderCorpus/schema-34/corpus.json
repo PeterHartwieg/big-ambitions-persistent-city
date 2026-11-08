@@ -1,0 +1,24 @@
+{
+  "schema": 34,
+  "readerWhenFrozen": "SaveCodec (compact)",
+  "writerCommit": null,
+  "rigFixture": "none: a fresh compact city on the rig is F7d batched rig check 1",
+  "fixtures": [
+    {
+      "file": "full.json",
+      "sha256": "a3b70408cd5c5f0a23d9e41344d1530283232449f2b9ade5dd37755c92da4a70",
+      "characters": 73192,
+      "builder": "ChangeJournalTests.Fixture(5150) (3-shop fresh city after 2,000 minutes, journal and meal-period causes)",
+      "recipe": "SaveCodec.Write(city) (fresh city in the compact writer, no migration)",
+      "kind": "synthetic offline payload from test builders; not a native save"
+    },
+    {
+      "file": "minimal.json",
+      "sha256": "f36074dc3f84231277475e1fe76715e2e0f3ec676ec4749431f5b5c8e3967f11",
+      "characters": 2569,
+      "builder": "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)",
+      "recipe": "SaveCodec.Write(city) (fresh city in the compact writer, no migration)",
+      "kind": "synthetic offline payload from test builders; not a native save"
+    }
+  ]
+}

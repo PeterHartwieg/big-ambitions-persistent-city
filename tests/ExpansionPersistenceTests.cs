@@ -20,7 +20,7 @@ public sealed class ExpansionPersistenceTests
 
     private static JObject Legacy(CityState city)
     {
-        var root=JObject.Parse(DevelopmentChain.Write(city)); root["Schema"]=1;
+        var root=SaveWire.Parse(DevelopmentChain.Write(city)); root["Schema"]=1;
         Keep(root,"Schema RloVersion PopulationKey Seed Minute Places Citizens");
         foreach(var token in root["Citizens"]!.Cast<JObject>())
             Keep(token,"Identity HomeId DayPlaceId ShopId LeisureId Preferences Phase Activity PlaceId DestinationId DestinationActivity Journey DepartureMinute NextEventMinute ActivityUntilMinute CompletedJourneys MissedActivities RecentVisits");
@@ -80,7 +80,7 @@ public sealed class ExpansionPersistenceTests
 
     private static JObject SecondSchema(CityState city)
     {
-        var root = JObject.Parse(DevelopmentChain.Write(city)); root["Schema"] = 2;
+        var root = SaveWire.Parse(DevelopmentChain.Write(city)); root["Schema"] = 2;
         root.Remove("PopulationTarget"); root.Remove("InitialImportedResidents");
         StripTiming(root);
         foreach (var place in root["Places"]!.Cast<JObject>()) place.Remove("ResidentialAreaSquareMetres");
@@ -127,7 +127,7 @@ public sealed class ExpansionPersistenceTests
     [InlineData("type")]
     public void MalformedSchemaThreeIsNotRepaired(string defect)
     {
-        var json = JObject.Parse(DevelopmentChain.Write(City())); json["Schema"] = 3; StripTiming(json);
+        var json = SaveWire.Parse(DevelopmentChain.Write(City())); json["Schema"] = 3; StripTiming(json);
         if (defect == "missing") json.Remove("InitialImportedResidents");
         if (defect == "unknown") json["HouseholdPolicyVersion"] = 1;
         if (defect == "accounting") json["PopulationTarget"] = 1;

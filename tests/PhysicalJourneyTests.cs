@@ -70,7 +70,7 @@ public sealed partial class PhysicalJourneyTests
     {
         var engine = Engine(); var lease = Acquire(engine);
         engine.AdvanceTo(1600); engine.ObservePhysicalJourney(lease, 3);
-        var read = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new Planner());
         Assert.Equal(30, resumed.PositionOf(resumed.State.Citizens[0]).X);
         Assert.True(engine.ReleasePhysicalJourney(lease));
@@ -90,7 +90,7 @@ public sealed partial class PhysicalJourneyTests
         Assert.False(result.CaughtUp); Assert.Equal(1, result.Events); Assert.True(engine.State.Minute < 5000);
         Assert.Equal(20, engine.PositionOf(engine.State.Citizens[0]).X);
         Assert.Equal(40, engine.PositionOf(engine.State.Citizens[1]).X);
-        var read = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new Planner());
         engine.ReleasePhysicalJourney(a); engine.ReleasePhysicalJourney(b);
         while (!engine.AdvanceTo(5000, 3).CaughtUp) { }
@@ -105,7 +105,7 @@ public sealed partial class PhysicalJourneyTests
         engine.AdvanceTo(1452, 1);
         engine.ObservePhysicalJourney(completed, 12);
         Assert.Equal(0, engine.State.Citizens[2].CompletedJourneys);
-        var saved = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, saved.Status);
+        var saved = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, saved.Status);
         Assert.Equal(1, engine.AdvanceTo(1452, 1).Events);
         Assert.Equal(1, engine.State.Citizens[2].CompletedJourneys);
         Assert.Equal(CitizenPhase.Travelling, engine.State.Citizens[0].Phase);
@@ -228,7 +228,7 @@ public sealed partial class PhysicalJourneyTests
             Assert.True(PhysicalProgress.TryProject(sample, sample.Position, false, out double projected));
             Assert.True(projected >= observed);
             Assert.True(engine.ObservePhysicalJourney(lease, projected));
-            var loaded = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
+            var loaded = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
             engine = new CitySimulator(loaded.State!, new Planner()); c = engine.State.Citizens[0];
             observed = engine.State.Minute - c.DepartureMinute;
             lease = Acquire(engine);

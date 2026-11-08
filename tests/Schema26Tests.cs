@@ -66,7 +66,7 @@ public sealed class Schema26Tests
 
     private static string WithVisitor(string payload, int index, Func<string[], string> change)
     {
-        var root = JObject.Parse(payload);
+        var root = SaveWire.Parse(payload);
         var parts = ((string)root["Visitors"]![index]!).Split('|');
         root["Visitors"]![index] = change(parts);
         return root.ToString(Formatting.None);
@@ -80,7 +80,7 @@ public sealed class Schema26Tests
     public void GoldenWriter26BytesArePinned()
     {
         Assert.Equal(26, SaveCodec.PersonSchema); Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
-        var pins = JObject.Parse(File.ReadAllText(GoldenPath));
+        var pins = SaveWire.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(26, (int)pins["writer"]!);
         foreach (var (name, build) in GoldenFixtures())
         {
@@ -123,7 +123,7 @@ public sealed class Schema26Tests
         Assert.Contains("\"Schema\":26,", payload);
         Assert.DoesNotContain("RepresentationFactor", payload);
         // Roster tuple v3: version plus 34 slots, no anchor or slot (routine stops still name their resident anchor).
-        if (food) Assert.All(JObject.Parse(payload)["Food"]!["Residents"]!, row => { Assert.Equal(3, (int)row[0]!); Assert.Equal(35, ((JArray)row).Count); });
+        if (food) Assert.All(SaveWire.Parse(payload)["Food"]!["Residents"]!, row => { Assert.Equal(3, (int)row[0]!); Assert.Equal(35, ((JArray)row).Count); });
         Assert.DoesNotContain("EmploymentStartDay", payload);
         Assert.Contains("\"P\":\"1R", payload);
         var read = DevelopmentChain.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -232,15 +232,15 @@ public sealed class Schema26Tests
         var city = Running(2, true, 2); var state = city.State;
         string payload = DevelopmentChain.Write(state);
         // A visitor in the resident table would carry identity, home, car and recent visits: refused.
-        var root = JObject.Parse(payload); root["Citizens"]![0]!["P"] = (string)root["Visitors"]![0]!;
+        var root = SaveWire.Parse(payload); root["Citizens"]![0]!["P"] = (string)root["Visitors"]![0]!;
         Invalid(root.ToString(Formatting.None), state, "visitor row cannot carry resident identity");
-        root = JObject.Parse(payload); root["Citizens"]![0]!["P"] = "1V";
+        root = SaveWire.Parse(payload); root["Citizens"]![0]!["P"] = "1V";
         Invalid(root.ToString(Formatting.None), state, "visitor row cannot carry resident identity");
         // A resident without identity: as a visitor tuple, or a citizen row whose identity is missing or null.
         Invalid(WithVisitor(payload, 0, p => "1R-"), state, "resident row requires identity");
-        root = JObject.Parse(payload); ((JObject)root["Citizens"]![0]!).Remove("Identity");
+        root = SaveWire.Parse(payload); ((JObject)root["Citizens"]![0]!).Remove("Identity");
         Invalid(root.ToString(Formatting.None), state);
-        root = JObject.Parse(payload); root["Citizens"]![0]!["Identity"] = null;
+        root = SaveWire.Parse(payload); root["Citizens"]![0]!["Identity"] = null;
         Invalid(root.ToString(Formatting.None), state);
         // Visitor tuples have no identity, home, car or visit slot: any extra field changes the arity.
         Invalid(WithVisitor(payload, 0, p => string.Join("|", p) + "|Ada"), state, "wrong arity");
@@ -248,7 +248,7 @@ public sealed class Schema26Tests
         // Unknown kind and version.
         Invalid(WithVisitor(payload, 0, p => "1X|" + string.Join("|", p.Skip(1))), state, "Unknown person kind");
         Invalid(WithVisitor(payload, 0, p => "2V|" + string.Join("|", p.Skip(1))), state, "version");
-        root = JObject.Parse(payload); root["Citizens"]![0]!["P"] = "1Q-";
+        root = SaveWire.Parse(payload); root["Citizens"]![0]!["P"] = "1Q-";
         Invalid(root.ToString(Formatting.None), state, "Unknown person kind");
     }
 
@@ -258,7 +258,7 @@ public sealed class Schema26Tests
         var state = Personas(); string payload = DevelopmentChain.Write(state);
         int worker = state.Citizens.FindIndex(c => c.DayPlaceId.Length > 0), retiree = state.Citizens.FindIndex(c => c.DayPlaceId.Length == 0);
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(payload).Status);
-        string Set(int row, string tuple) { var r = JObject.Parse(payload); r["Citizens"]![row]!["P"] = tuple; return r.ToString(Formatting.None); }
+        string Set(int row, string tuple) { var r = SaveWire.Parse(payload); r["Citizens"]![row]!["P"] = tuple; return r.ToString(Formatting.None); }
         int start = state.Citizens[worker].EmploymentStartDay;
         Invalid(Set(worker, "1R-"), state, "Employment differs");
         Invalid(Set(retiree, "1RE" + start + ".0.0"), state, "Employment differs");
@@ -268,19 +268,19 @@ public sealed class Schema26Tests
         Invalid(Set(worker, "1RE" + (state.Citizens[worker].LastEmploymentCheckDay + 1) + ".0.0"), state, "Employment start is outside");
         Invalid(Set(worker, "1RE-1.0.0"), state);
         Invalid(Set(worker, "1R" + new string('-', 40)), state);
-        var r = JObject.Parse(payload); ((JObject)r["Citizens"]![0]!).Remove("P");
+        var r = SaveWire.Parse(payload); ((JObject)r["Citizens"]![0]!).Remove("P");
         Invalid(r.ToString(Formatting.None), state);
         // A duplicate field cannot pass the token check even with equal values.
-        string tuple = "\"P\":\"" + (string)JObject.Parse(payload)["Citizens"]![0]!["P"]! + "\"";
+        string tuple = "\"P\":\"" + (string)SaveWire.Parse(payload)["Citizens"]![0]!["P"]! + "\"";
         int at = payload.IndexOf(tuple, StringComparison.Ordinal);
-        Invalid(payload.Insert(at, tuple + ","), state, "Duplicate field: P");
+        Invalid(payload.Insert(at, tuple + ","), state, "Duplicate field" /* F7d: a duplicated body field becomes a duplicated compact shape field */);
     }
 
     [Fact]
     public void RootPersonFieldsAreStrict()
     {
         var state = Running(2, true, 2).State; string payload = DevelopmentChain.Write(state);
-        string Root(Action<JObject> change) { var r = JObject.Parse(payload); change(r); return r.ToString(Formatting.None); }
+        string Root(Action<JObject> change) { var r = SaveWire.Parse(payload); change(r); return r.ToString(Formatting.None); }
         RefusedAndPreserved(Root(r => r["Schema"] = CityState.CurrentSchema + 1), state, SaveReadStatus.Future);
         Invalid(Root(r => r["Persons"] = new JArray()), state, "Unknown field: Persons");
         Invalid(Root(r => r["Food"]!["RepresentationFactor"] = 2), state, "Unknown field: RepresentationFactor");
@@ -321,7 +321,7 @@ public sealed class Schema26Tests
         Invalid(Stay("zz0CA.1.0000000000000000"), state, "portal");
         // A dormant visitor and one arriving through a saved portal are valid shapes.
         var dormant = DevelopmentChain.Read(Stay("---CD.1." + Bits(future))); Assert.True(dormant.Status == SaveReadStatus.Loaded, dormant.Error);
-        var withPortal = JObject.Parse(Stay("000CA.1.0000000000000000")); withPortal["Portals"] = new JArray("station:central");
+        var withPortal = SaveWire.Parse(Stay("000CA.1.0000000000000000")); withPortal["Portals"] = new JArray("station:central");
         var portal = DevelopmentChain.Read(withPortal.ToString(Formatting.None)); Assert.True(portal.Status == SaveReadStatus.Loaded, portal.Error);
         Assert.Equal("station:central", portal.State!.Visitors[0].Stay.OriginPortalId);
         Assert.Equal(withPortal.ToString(Formatting.None), DevelopmentChain.Write(portal.State));
@@ -386,7 +386,7 @@ public sealed class Schema26Tests
 
     private static string Spliced(string payload, string field, string element, int count)
     {
-        var root = JObject.Parse(payload); root[field] = new JArray("@@" + field + "@@");
+        var root = SaveWire.Parse(payload); root[field] = new JArray("@@" + field + "@@");
         string text = root.ToString(Formatting.None);
         var rows = new StringBuilder(count * (element.Length + 1));
         for (int i = 0; i < count; i++) { if (i > 0) rows.Append(','); rows.Append(element); }
@@ -397,7 +397,7 @@ public sealed class Schema26Tests
     public void PersonsAndResidentsAreRefusedOneOverTheirBoundsBeforeAllocation()
     {
         var small = Running(2, true, 1).State; string source = DevelopmentChain.Write(small);
-        var root = JObject.Parse(source);
+        var root = SaveWire.Parse(source);
         string citizen = root["Citizens"]![0]!.ToString(Formatting.None);
         string visitor = JsonConvert.ToString((string)root["Visitors"]![0]!);
         string residents = Spliced(source, "Citizens", citizen, SaveCodec.MaxResidents);
@@ -456,9 +456,9 @@ public sealed class Schema26Tests
         string vehicle = JsonConvert.SerializeObject(new TrafficVehicleState { VehicleId = "v" }, Settings(state));
         string Traffic(int vehicles)
         {
-            var kernel = JObject.Parse(JsonConvert.SerializeObject(new TrafficKernelState { Clock = state.Minute, RequestedTime = state.Minute }, Settings(state)));
+            var kernel = SaveWire.Parse(JsonConvert.SerializeObject(new TrafficKernelState { Clock = state.Minute, RequestedTime = state.Minute }, Settings(state)));
             kernel["Vehicles"] = new JArray("@@V@@");
-            var root = JObject.Parse(source); root["Traffic"] = kernel; root["TrafficTopologyId"] = new string('a', 64);
+            var root = SaveWire.Parse(source); root["Traffic"] = kernel; root["TrafficTopologyId"] = new string('a', 64);
             var rows = string.Join(",", Enumerable.Repeat(vehicle, vehicles));
             return root.ToString(Formatting.None).Replace("\"@@V@@\"", rows);
         }

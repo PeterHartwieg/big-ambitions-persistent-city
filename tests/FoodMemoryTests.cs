@@ -335,7 +335,7 @@ public sealed partial class FoodMemoryTests
         city.AdvanceFrameSlice(meal.DesiredAt, 1); var decision = city.State.Food!.Residents[0].Decision!;
         Assert.Contains(decision.Shops, s => s.MemoryContribution != 0);
         string checkpoint = DevelopmentChain.Write(city.State);
-        var root = JObject.Parse(checkpoint); var d = root["Food"]!["Residents"]![0]![8]!;
+        var root = SaveWire.Parse(checkpoint); var d = root["Food"]!["Residents"]![0]![8]!;
         ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
         Assert.InRange(checkpoint.Length - root.ToString(Formatting.None).Length, 1, 589);
         var control = Reload(city, market, new(), new()); var edited = Reload(city, market, new(), new() { FoodMemoryWeight = 0, FoodMemoryCapacity = 1 });

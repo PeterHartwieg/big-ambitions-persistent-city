@@ -50,6 +50,6 @@ public sealed partial class FoodCommerceTests
         Advance(city,desired+0.1);
         Assert.True(original.Cancelled); Assert.Equal(desired+9,original.EndMinute);
         Assert.Equal(CitizenPhase.Travelling,person.Phase); Assert.NotNull(person.MealOuting);
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveCodec.Write(city.State)).Status);
     }
 }

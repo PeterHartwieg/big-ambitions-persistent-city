@@ -66,7 +66,7 @@ public sealed class F6eMeasure
             for (int i = -1; i < 5; i++)
             {
                 long start = Stopwatch.GetTimestamp(); string text = SaveCodec.Write(state); double w = Ms(start);
-                start = Stopwatch.GetTimestamp(); var result = SaveCodec.Read(text); double r = Ms(start);
+                start = Stopwatch.GetTimestamp(); var result = SaveWire.Read(text); double r = Ms(start);
                 Assert.True(result.Status == SaveReadStatus.Loaded, result.Error);
                 Assert.Equal(payload, text);
                 if (i >= 0) { write[i] = w; read[i] = r; }

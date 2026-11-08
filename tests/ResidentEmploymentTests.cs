@@ -66,7 +66,7 @@ public sealed class ResidentEmploymentTests
         Assert.Equal("", person.DayPlaceId); Assert.Equal(1, person.JobChanges); Assert.Equal(1, person.LastEmploymentCheckDay);
         Assert.Equal(2, car.ParkedPosition.X); Assert.Equal("model", car.ModelId); Assert.Equal(12, car.PaintSeed);
         Assert.Equal(1, city.NextResidentSequence); Assert.Single(city.Citizens);
-        var saved = SaveCodec.Write(city); var reloaded = SaveCodec.Read(saved);
+        var saved = SaveCodec.Write(city); var reloaded = SaveWire.Read(saved);
         Assert.Equal(SaveReadStatus.Loaded, reloaded.Status); Assert.Equal(saved, SaveCodec.Write(reloaded.State!));
         new CitySimulator(reloaded.State!, new Routes()).AdvanceTo(1440);
         Assert.Equal(1, reloaded.State!.Citizens.Single().JobChanges);
@@ -85,7 +85,7 @@ public sealed class ResidentEmploymentTests
         var route = person.Journey;
         var simulator = new CitySimulator(city, new Routes()); simulator.AdvanceTo(1460);
         Assert.Same(route, person.Journey); Assert.Equal(workplace, person.DayPlaceId); Assert.Equal(0, person.LastEmploymentCheckDay);
-        var saved = SaveCodec.Write(city); var read = SaveCodec.Read(saved); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var saved = SaveCodec.Write(city); var read = SaveWire.Read(saved); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         simulator = new CitySimulator(read.State!, new Routes()); simulator.AdvanceTo(1470, 1);
         person = simulator.State.Citizens.Single();
         Assert.Equal("worker", person.Identity.Id); Assert.Null(person.Journey); Assert.Equal("home", person.PlaceId);
@@ -103,7 +103,7 @@ public sealed class ResidentEmploymentTests
         Assert.Equal(city.Minute + 1, person.NextEventMinute);
         simulator.AdvanceTo(person.NextEventMinute, 1);
         Assert.Equal(2, person.LastEmploymentCheckDay);
-        var saved = SaveCodec.Read(SaveCodec.Write(city)); Assert.Equal(SaveReadStatus.Loaded, saved.Status);
+        var saved = SaveWire.Read(SaveCodec.Write(city)); Assert.Equal(SaveReadStatus.Loaded, saved.Status);
         var resumed = new CitySimulator(saved.State!, new Routes()); resumed.AdvanceTo(person.NextEventMinute, 1);
         Assert.Equal(3, resumed.State.Citizens.Single().LastEmploymentCheckDay);
     }

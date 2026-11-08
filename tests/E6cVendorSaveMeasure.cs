@@ -49,13 +49,13 @@ public sealed class E6cVendorSaveMeasure
                 string payload = SaveCodec.Write(state);
                 int bytes = Encoding.UTF8.GetByteCount(payload);
                 if (live + retired + tombstones == 0) { baseline = payload.Length; baselineBytes = bytes; }
-                int section = ("\"Vendors\":" + Newtonsoft.Json.Linq.JObject.Parse(payload)["Vendors"]!.ToString(Newtonsoft.Json.Formatting.None)).Length;
+                int section = ("\"Vendors\":" + SaveWire.Parse(payload)["Vendors"]!.ToString(Newtonsoft.Json.Formatting.None)).Length;
                 var write = new List<double>(); var read = new List<double>();
-                for (int i = 0; i < 3; i++) { SaveCodec.Write(state); SaveCodec.Read(payload); }
+                for (int i = 0; i < 3; i++) { SaveCodec.Write(state); SaveWire.Read(payload); }
                 for (int i = 0; i < samples; i++)
                 {
                     long start = Stopwatch.GetTimestamp(); SaveCodec.Write(state); write.Add(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
-                    start = Stopwatch.GetTimestamp(); var result = SaveCodec.Read(payload); read.Add(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                    start = Stopwatch.GetTimestamp(); var result = SaveWire.Read(payload); read.Add(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
                     Assert.Equal(SaveReadStatus.Loaded, result.Status);
                 }
                 var (w50, w95, wmax) = Stats(write); var (r50, r95, rmax) = Stats(read);

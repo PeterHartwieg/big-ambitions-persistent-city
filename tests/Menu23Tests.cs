@@ -20,7 +20,7 @@ public sealed partial class FoodCommerceTests
         try { wire=schema>=21 ? DevelopmentChain.Legacy(city, () => SaveCodec.WriteForSchema(city, schema)) : schema<20 ? DevelopmentChain.Legacy(city, () => PopulationSchema19.Write(city)) : DevelopmentChain.Legacy(city, () => PopulationSchema20.Write(city)); }
         finally { city.Schema=current; }
         if(schema!=18) return wire;
-        var root=JObject.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");
+        var root=SaveWire.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");
         foreach(var meal in root["Food"]!["Residents"]!) if(meal[9] is JObject decision) decision.Remove("Awareness");
         return root.ToString(Formatting.None);
     }
@@ -37,14 +37,14 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(DevelopmentChain.Write(read.State),DevelopmentChain.Write(DevelopmentChain.Read(DevelopmentChain.Write(read.State)).State!));
         foreach(int unknown in new[]{24,25,99})
         {
-            var root=JObject.Parse(source);root["Schema"]=unknown;
+            var root=SaveWire.Parse(source);root["Schema"]=unknown;
             string bad=root.ToString(Formatting.None);
             var data=new Dictionary<string,string>{{SaveStore.StateKey,bad}};
             Assert.NotEqual(SaveReadStatus.Loaded,DevelopmentChain.Read(bad).Status);
             Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(bad));
             Assert.False(SaveStore.WriteTo(data,city.State).Success);Assert.Same(bad,data[SaveStore.StateKey]);
         }
-        var foreign=JObject.Parse(source); foreign["MenuPolicy"]=FoodMenuPolicy.Wire;
+        var foreign=SaveWire.Parse(source); foreign["MenuPolicy"]=FoodMenuPolicy.Wire;
         B0_Preserve(foreign.ToString(Formatting.None),city.State);
     }
 
@@ -57,7 +57,7 @@ public sealed partial class FoodCommerceTests
             BuyerDistricts={new FoodBuyerDistrict{DistrictId="a",Purchases=1}}};
         history.PurchaseHours[0]=1;city.State.Food!.History.Add(history);
         string oldSource=E4_Old(city.State,schema);Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(oldSource).Status);
-        var original=JObject.Parse(oldSource);
+        var original=SaveWire.Parse(oldSource);
         foreach(string damage in new[]{"scope","history","decision"})
         {
             var root=(JObject)original.DeepClone();
@@ -117,7 +117,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(source,DevelopmentChain.Write(loaded.State!));
         foreach(var value in new[]{JValue.CreateNull(),new JValue("2|unknown"),new JValue(1)})
         {
-            var root=JObject.Parse(source);root["MenuPolicy"]=value;
+            var root=SaveWire.Parse(source);root["MenuPolicy"]=value;
             B0_Preserve(root.ToString(Formatting.None),city.State);
             Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(root.ToString(Formatting.None)));
         }
@@ -188,12 +188,12 @@ public sealed partial class FoodCommerceTests
             string bad=original.Replace("\"ProductSales\":[[1,1,0,1,0,0,0]]","\"ProductSales\":["+cell+"]");
             Assert.NotEqual(original,bad);B0_Preserve(bad,city.State);
         }
-        var root=JObject.Parse(original);root.Remove("MenuPolicy");
+        var root=SaveWire.Parse(original);root.Remove("MenuPolicy");
         string missing=root.ToString(Formatting.None);B0_Preserve(missing,city.State);
         Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(missing));
-        root=JObject.Parse(original);root["Food"]!["Shops"]![0]!["AdditionalProductIds"]=new JArray(Enumerable.Range(0,8).Select(i=>"p"+i));
+        root=SaveWire.Parse(original);root["Food"]!["Shops"]![0]!["AdditionalProductIds"]=new JArray(Enumerable.Range(0,8).Select(i=>"p"+i));
         Assert.Contains("additional menu",DevelopmentChain.Read(root.ToString(Formatting.None)).Error);
-        root=JObject.Parse(original);root["Food"]!["History"]![0]!["ProductSales"]![0]=new JObject{
+        root=SaveWire.Parse(original);root["Food"]!["History"]![0]!["ProductSales"]![0]=new JObject{
             ["ProductId"]=FoodProducts.Croissant,["PurchaseMeals"]=new JArray(1,0,0,0),["Purchases"]=1,["Revenue"]=0};
         B0_Preserve(root.ToString(Formatting.None),city.State);
     }

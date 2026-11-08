@@ -42,7 +42,7 @@ public sealed class SaveSnapshotInterruptedStateTests
                         // The live city receives the answer after the capture; the snapshot keeps the unstarted event.
                         while (city.PlanningPending) city.ContinuePlanning(0);
                         Assert.Equal(phase, held.Phase);
-                        var read = SaveCodec.Read(SaveCodec.Encode(snapshot));
+                        var read = SaveWire.Read(SaveCodec.Encode(snapshot));
                         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
                         city = new CitySimulator(read.State!, planner); // the route-input lease and the job are transient
                         Assert.False(city.PlanningPending);
@@ -78,8 +78,8 @@ public sealed class SaveSnapshotInterruptedStateTests
         Assert.True(FoodBudgetBatchTests.Posted(resumed.City) > posted);
         Assert.Equal(orders, resumed.Market.Orders.Count);
         string partial = SaveCodec.Encode(snapshot);
-        Assert.Equal(posted, SaveCodec.Read(partial).State!.Food!.Residents.Count(m => m.Budget!.LastPostedDay == 2));
-        var read = SaveCodec.Read(partial); Assert.Equal("", read.Error);
+        Assert.Equal(posted, SaveWire.Read(partial).State!.Food!.Residents.Count(m => m.Budget!.LastPostedDay == 2));
+        var read = SaveWire.Read(partial); Assert.Equal("", read.Error);
         resumed.City = new CitySimulator(read.State!, resumed.Routes);
         resumed.City.AttachFoodMarket(resumed.Market);
         FoodBudgetBatchTests.Attach(resumed);
@@ -96,7 +96,7 @@ public sealed class SaveSnapshotInterruptedStateTests
 
     private static CitySimulator Reload(string payload)
     {
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var city = new CitySimulator(read.State!, new RepresentativeFixture.Routes());
         city.AttachFoodMarket(new RepresentativeFixture.Market());
         return city;

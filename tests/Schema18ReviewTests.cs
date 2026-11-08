@@ -71,7 +71,7 @@ public sealed class Schema18ReviewTests
             new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 } }, "probe-review", "test", 11, 0);
         string current = DevelopmentChain.Write(city);
         Assert.StartsWith("{\"Schema\":"+CityState.CurrentSchema+",\"Capabilities\":", current);
-        var root = JObject.Parse(current);
+        var root = SaveWire.Parse(current);
         var oldOrder = new JObject(root.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).Select(p => new JProperty(p.Name, p.Value.DeepClone())));
         string previous = oldOrder.ToString(Formatting.None);
         SaveCodec.RequireExecutableCapabilities(previous);
