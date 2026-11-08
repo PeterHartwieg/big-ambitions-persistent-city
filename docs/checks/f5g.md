@@ -84,6 +84,7 @@ Review round 1 (an independent review of the head) found:
 - **r1-2, fixed.** A research survey due after a day boundary, with no event in between, could run before that boundary's fill on a long advance but after it on a short one. The survey check now treats the pending boundary as the next work.
 - **r1-3, documented, not changed.** The commuter target counts persons, as the plan states (decision 7 above).
 - **r1-4, fixed.** The bounds are now checked before a unit seats anyone, so a refusal could no longer leave seats counted for persons that were never added. The case was unreachable under today's bounds.
+- **r1-2 follow-up (round 2), fixed.** With the clock already on a boundary that still had fill work, the survey check looked only at the next boundary. Fill work left at the current boundary now counts as work at the current minute.
 - **r1-5, fixed.** Doc wording: the test count, the caught-up wording, and the merge comment ("no copy" instead of "no allocation").
 
 No existing test needed a changed expectation.
@@ -93,7 +94,7 @@ No existing test needed a changed expectation.
 Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400), 8 November 2026. Each `dotnet` command ran only when no other dotnet test or run process was active.
 
 - `python3 tools/build.py --game-managed "<dll-import-shim>/Big Ambitions_Data/Managed"`: exit 0.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **3,917 passed, 0 failed, 0 skipped** (4 min 8 s), after the review round-1 fixes.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,917 passed, 0 failed, 0 skipped** (3 min 53 s), after the review round-2 fix.
 - `tests/F5gMeasure.cs` (Release, opt-in): numbers in the perf file.
 
 ## Performance
