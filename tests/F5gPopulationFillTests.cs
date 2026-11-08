@@ -657,18 +657,19 @@ public sealed class F5gPopulationFillTests
         var meal = copy.Food!.Residents.Single(m => m.ResidentId == commuter.Id);
         copy.Visitors.RemoveAt(at); copy.VisitorRoutines.RemoveAt(at); copy.Food.Residents.Remove(meal);
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(copy));
-        var root = Newtonsoft.Json.Linq.JObject.Parse(payload);
+        // F7d: the save is the compact wire; edits are made on its body and re-encoded (SaveWire).
+        var root = SaveWire.Parse(payload);
         var visitors = (Newtonsoft.Json.Linq.JArray)root["Visitors"]!;
         int index = visitors.Select((v, i) => (v, i)).First(t => ((string)t.v!).Contains("|" + commuter.Id + "|")).i;
         visitors.RemoveAt(index); ((Newtonsoft.Json.Linq.JArray)root["VisitorRoutines"]!).RemoveAt(index);
-        var refused = SaveCodec.Read(root.ToString(Newtonsoft.Json.Formatting.None));
+        var refused = SaveWire.Read(root.ToString(Newtonsoft.Json.Formatting.None));
         Assert.NotEqual(SaveReadStatus.Loaded, refused.Status);
         // A sequence number one past the last, at a working identity, is refused too.
         var identities = IdentityPolicy.V1(state.SourceIdentities);
         int next = state.NextVisitorSequence;
         while (!VisitorSchedules.WorkingPersona(identities.PersonaOf(state.Seed, PersonIds.Visitor(next)))) next++;
-        var forged = Newtonsoft.Json.Linq.JObject.Parse(payload); forged["NextVisitorSequence"] = next + 1;
-        var forgedRead = SaveCodec.Read(forged.ToString(Newtonsoft.Json.Formatting.None));
+        var forged = SaveWire.Parse(payload); forged["NextVisitorSequence"] = next + 1;
+        var forgedRead = SaveWire.Read(forged.ToString(Newtonsoft.Json.Formatting.None));
         Assert.Equal(SaveReadStatus.Invalid, forgedRead.Status); Assert.Contains("not a student or retiree", forgedRead.Error);
     }
 
@@ -999,13 +1000,14 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void DayVisitorsRoundTripInWriter33AndMalformedDayVisitorsAreRefusedAndKept()
     {
-        Assert.Equal(33, CityState.CurrentSchema);
+        // F7d (writer 34) landed before this slice merged: the visitor shape is writer 33's, carried in the compact wire.
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var (state, market) = City(12, 1);
         var city = Start(state, market, Catalogue(12, Base, Since(2)));
         Advance(city, 2 * 1440 + 600);
         Assert.Contains(state.Visitors, v => v.Stay.Pattern == VisitorPattern.DayVisit);
         string payload = SaveCodec.Write(state);
-        Assert.Contains("\"Schema\":33", payload);
+        Assert.StartsWith("{\"Schema\":" + CityState.CompactSchema + ",", payload);
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
@@ -1019,8 +1021,10 @@ public sealed class F5gPopulationFillTests
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(copy));
         var seated = state.Visitors.First(v => v.Stay.Pattern == VisitorPattern.Commuter && v.Employment != null);
         var tuple = new System.Text.RegularExpressions.Regex("\\|" + System.Text.RegularExpressions.Regex.Escape(seated.Id) + "\\|(\\w{3})C");
-        Assert.Matches(tuple, payload);
-        string forged = tuple.Replace(payload, m => "|" + seated.Id + "|" + m.Groups[1].Value + "D", 1);
+        string body = SaveWire.Body(payload);
+        Assert.Matches(tuple, body);
+        string forged = SaveWire.Payload(tuple.Replace(body, m => "|" + seated.Id + "|" + m.Groups[1].Value + "D", 1));
+        Assert.StartsWith(SaveCodec.CompactPrefix, forged);
         var refused = SaveCodec.Read(forged);
         Assert.Equal(SaveReadStatus.Invalid, refused.Status); Assert.Contains("day visitor holds no employment", refused.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = forged, ["rlo:state"] = "kept" };

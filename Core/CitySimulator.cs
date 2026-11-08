@@ -59,6 +59,16 @@ namespace PersistentCity.Core
         /// <summary>Measurement only: queued person events and queued meal events.</summary>
         internal int QueuedPersonEvents => due.Count;
         internal int QueuedMealEvents => food?.QueuedMeals ?? 0;
+        /// <summary>Measurement only (F5h): queued person events and meal events due at or before <paramref name="minute"/>,
+        /// that is, due work not yet run. Walks the ordered queues from their minimum and stops at the first later entry.
+        /// An event waiting for its route has left the queue but has not run, so it counts too (review Sol-r2-1).</summary>
+        internal int DuePersonEventsAtOrBefore(double minute)
+        {
+            int count = pending != null && pending.Item.Minute <= minute && !due.Contains(pending.Item) ? 1 : 0;
+            foreach (var entry in due) { if (entry.Minute > minute) break; count++; }
+            return count;
+        }
+        internal int DueMealEventsAtOrBefore(double minute) => food?.DueMealsAtOrBefore(minute) ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every

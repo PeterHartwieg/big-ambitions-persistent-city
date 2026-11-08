@@ -136,7 +136,7 @@ namespace PersistentCity.Runtime
             var counters = simulation.FoodMoney;
             if (counters == null) return "Preparing resident food demand. The food market is not attached yet.";
             var money = counters.Snapshot();
-            text.AppendLine("Day " + day + " · " + city.Citizens.Count + " residents · " + city.Visitors.Count + " visitors · " + food.Residents.Count + " people with meals");
+            text.AppendLine(PopulationWords.Headline(day, city.Citizens.Count, city.Visitors.Count, food.Residents.Count));
             text.AppendLine("Accounting lag " + NativeCityClock.LagMinutes.ToString("F3", CultureInfo.InvariantCulture)
                 + " game minutes; calendar holds " + NativeCityClock.HeldOrdinaryTicks + " ordinary / " + NativeCityClock.HeldEconomySkipTicks
                 + " skip ticks. Configured calendar factor " + NativeCityClock.Factor.ToString("F3", CultureInfo.InvariantCulture) + ".");
@@ -144,7 +144,8 @@ namespace PersistentCity.Runtime
                 + NativeCityClock.WithheldMinutes.ToString("F3", CultureInfo.InvariantCulture) + ". Holds and boundary caps extend wall time; they are not repaid by speeding up.");
             if (NativeCityClock.PacingAffected) text.AppendLine(AccountingStatusText());
             if (food.MealRhythmVersion != 0) text.AppendLine("Breakfast, lunch and dinner follow each resident's waking hours and preferences. All meals share one wallet; eating at home remains an option.");
-            text.AppendLine("Each consumer has a separate budget for bills, food at home and prepared meals. Workplaces and travel patterns shape nearby demand.");
+            text.AppendLine(PopulationWords.Lines(city.Visitors.Count, city.Portals.Count));
+            text.AppendLine("Workplaces and travel patterns shape nearby demand.");
             int uncertain = money.Uncertain;
             if (uncertain > 0) text.AppendLine(uncertain + " purchases await confirmation. Their funds remain held; other consumers continue normally.");
             int blockedReturns = money.BlockedReturns;
