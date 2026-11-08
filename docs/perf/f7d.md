@@ -85,10 +85,12 @@ The **F5 declared load** is the reference load of 1,914–2,871 persons ([F5d](f
 | Same at the F5 declared load (2,871 persons) | fresh-957x3: 1,152,633 characters, 37.04 % | **not met** by 2.04 points (≤ 6 Mi met) |
 | Stress bytes ≤ 40 % and ≤ 64 Mi characters | representative 50,000×2: 30.05 %, 35,100,344; fresh 50,000×3: 31.96 %, 47,812,181 | **met** |
 | UTF-16 bytes in the native save | 2 × characters (table above) | reported |
-| Records under the 4,000,000 cap with tables charged | max 901,732 (fresh 50,000×3) | **met** |
+| Records under the 4,000,000 cap with tables charged | max 901,732 on the representative set; 3,912,310 at CF64 | **met** |
 | Typical synchronous pause ≤ 40 ms p95 | 171.4 ms (representative 957×2), 191.3 ms (fresh-957x3) p95; writer 33 191.1 and 64.4 | **not met** |
 | Stress pause ≤ 600 ms | 4,058.7 ms p50 at representative 50,000×2 (writer 33 1,828.1) | **not met** |
 | Allocation ≤ 2.5 × payload UTF-16 bytes | 22.6–29.7 × the compact payload's UTF-16 bytes; 7.8–9.3 × the predecessor's | **not met** |
+| Stress bytes on the saturated set | saturated 50,000×2: 27.17 %, 43,094,378; CF64: 28.87 %, 68,107,977 | **met** |
+| Peak transient during save ≤ retained + snapshot + 2 × payload bytes | 25.8 MB vs 7.5 MB budget at 957×2; 2.13 GB vs 0.75 GB at CF64 (table below) | **not met** |
 | Retained ≤ predecessor; intern-on-decode ≤ 80 % | 0.912–0.965 of writer 33 after one read | no regression **met**; ≤ 80 % **not met** |
 | Load (read + activation) ≤ 400 ms typical | 164.3 ms (957×2) and 214.8 ms (957×3) p50 | **met** |
 | Load ≤ 2,500 ms stress | 6,714.5 ms p50 at representative 50,000×2 (writer 33 5,105.7) | **not met** |
@@ -102,7 +104,42 @@ The invariants win over these budgets, as the plan says. The gaps are the ones t
 - **Interning.** One string instance per distinct text is reached for every plain string field (957 home-ID instances → 2 at rush-957x2), but most saved text lives in tuple and image strings the body converters build, so retained memory falls by 4–9 %, not 20 %.
 - **F5 declared load bytes.** At 2,871 persons the payload is 37.0 % of writer 33; its visitor routines are positional tuples whose slots compress less than resident objects.
 
-Not run in this slice: the E5d saturated stress set (50,000×2/×3 saturated, CF32, CF64), whose builders are not in the unit project. F7p measured candidate C on them at 20.9–21.9 % of writer 25 with records ≤ 3,775,940; the writer-34 caps and record charge are tested above, and rig check 5 measures a fresh 50,000-resident city.
+### Saturated stress set and CF compositions (review round 1)
+
+Fresh current-schema versions of E5d's stress set (`tests/F7dStressFixtures.cs`, no migration): F7c's fresh 50,000-resident cities with 32 recent visits per resident (64 for CF64), 14 × 1,024 market-history rows of eight product cells, scopes naming eight products each from the full 256-name table (32 scopes; 1,024 for CF), and for CF32/CF64 the place table filled to the 20,000-place cap. History rows sit on the city's own two days with one business per row; E5d spread them over 14 shifted days. Matched writer 33 and writer 34 on the same city in one process, 3 samples after a warm-up (`PC_F7D_SAMPLES=3`), one process per fixture.
+
+| Fixture | Places / recent visits per resident | Writer 33 chars | Writer 34 chars (÷33) | Records streaming / semantic, tables charged | Tables entries | Decoded values (per record / per char) | Pause 33 ms | Pause 34 ms | Alloc per save 33 → 34 B | Read 33 → 34 ms p50 | Read + activation 33 → 34 ms p50 | Retained 33 → 34 B |
+| --- | --- | ---: | ---: | --- | ---: | --- | --- | --- | --- | --- | --- | --- |
+| saturated-50000x2 | 40 / 32 | 158,620,314 | 43,094,378 (0.2717) | 2,145,015 / 2,144,791 | 69,839 | 12,555,777 (5.853 / 0.291) | 2,152.1 / 2,607.5 / 2,607.5 (3) | 4,947.5 / 5,056.1 / 5,056.1 (3) | 1,925,429,016 → 2,735,754,456 | 4,877.9 → 6,121.4 | 6,475.3 → 7,712.9 | 322,567,784 → 307,776,824 |
+| saturated-50000x3 | 40 / 32 | 191,583,205 | 57,512,875 (0.3002) | 2,304,309 / 2,304,085 | 79,133 | 16,015,775 (6.95 / 0.278) | 3,013.0 / 3,030.6 / 3,030.6 (3) | 6,258.9 / 6,275.9 / 6,275.9 (3) | 2,418,702,608 → 3,559,011,672 | 6,030.4 → 7,963.9 | 7,939.5 → 9,851.1 | 419,583,968 → 404,496,608 |
+| CF32 | 20,000 / 32 | 197,489,099 | 58,506,441 (0.2963) | 2,312,246 / 2,305,078 | 80,126 | 16,368,983 (7.079 / 0.28) | 3,010.0 / 3,082.6 / 3,082.6 (3) | 6,223.6 / 6,328.7 / 6,328.7 (3) | 2,468,784,680 → 3,629,791,928 | 6,208.9 → 8,404.6 | 8,219.0 → 10,398.7 | 427,133,944 → 409,299,984 |
+| CF64 | 20,000 / 64 | 235,889,099 | 68,107,977 (0.2887) | 3,912,310 / 3,905,142 | 80,190 | 17,968,983 (4.593 / 0.264) | 3,691.6 / 3,931.7 / 3,931.7 (3) | 7,590.4 / 8,198.9 / 8,198.9 (3) | 3,070,733,920 → 4,246,953,520 | 7,149.0 → 9,450.8 | 9,560.5 → 11,821.6 | 503,933,944 → 486,099,984 |
+
+Both writers write and read every stress city; every round trip is exact (the harness checks the writer-34 body equals the writer-33 bytes relabelled). Writer 34 is 26.4–30.0 % of writer 33. CF64 carries 3,912,310 streaming records with the 80,190 table entries charged, inside the unchanged 4,000,000-record cap. Its 17,968,983 decoded values are 4.6 per record and 0.264 per payload character, so neither `MaxCompactValues` (67,108,864) nor the per-character bound (4 × 68,107,977) binds before the record cap: a city the record cap allows would need about 14.6 values per record (the highest measured, fresh-50000x3) at more than 4,000,000 records to reach 64 Mi, and every measured fixture is far below 4 values per character. The 256 Mi character cap applies to the body: CF64's body is 235,889,099 characters, so a city whose body passes 256 Mi is refused by writer 34 as by writer 33, even though its compact string would be about 77 M characters.
+
+### Peak transient memory
+
+
+### Peak transient managed heap (above the live city, one save or one read; budget = snapshot allocation + 2 × payload UTF-16 bytes)
+
+| Fixture | Snapshot allocation B | Save peak 33 → 34 B | Budget 33 / 34 B | Save within budget 33 / 34 | Read peak 33 → 34 B |
+| --- | ---: | --- | --- | --- | --- |
+| representative-957x2 | 4,089,096 | 19,668,312 → 25,759,808 | 13,915,284 / 7,487,384 | no / no | 9,502,896 → 29,612,888 |
+| fresh-957x3 | 5,776,544 | 21,845,816 → 34,585,024 | 18,225,236 / 10,387,076 | no / no | 11,571,032 → 36,781,840 |
+| saturated-957x2 | 6,665,264 | 22,480,952 → 26,537,632 | 21,643,868 / 10,599,320 | no / no | 15,913,816 → 40,994,032 |
+| saturated-957x3 | 8,352,752 | 32,735,512 → 34,687,856 | 25,953,860 / 13,502,500 | no / no | 15,677,368 → 54,204,720 |
+| encoding-max | 4,115,896 | 20,528,392 → 26,458,496 | 14,481,344 / 7,779,356 | no / no | 11,427,280 → 29,090,424 |
+| rush-957x2 | 4,053,776 | 19,280,840 → 26,446,888 | 13,600,516 / 7,687,804 | no / no | 8,701,800 → 32,105,840 |
+| representative-5000x2 | 21,170,224 | 82,257,760 → 104,871,488 | 72,520,536 / 37,226,124 | no / no | 38,643,768 → 149,097,944 |
+| fresh-5000x3 | 30,978,376 | 98,184,824 → 151,271,904 | 96,033,036 / 52,900,652 | no / no | 51,904,224 → 175,753,288 |
+| rush-5000x2 | 20,972,256 | 79,655,528 → 107,266,840 | 70,822,428 / 37,927,724 | no / no | 34,475,616 → 132,505,448 |
+| saturated-50000x2 | 303,683,600 | 890,144,936 → 1,386,982,920 | 938,164,856 / 476,061,112 | yes / no | 398,540,248 → 1,857,417,480 |
+| saturated-50000x3 | 399,157,280 | 1,091,856,904 → 1,828,944,336 | 1,165,490,100 / 629,208,780 | yes / no | 524,622,960 → 2,389,737,288 |
+| CF32 | 403,363,552 | 1,113,014,984 → 1,859,843,976 | 1,193,319,948 / 637,389,316 | yes / no | 536,727,768 → 2,460,730,872 |
+| CF64 | 480,163,552 | 1,352,826,128 → 2,129,996,696 | 1,423,719,948 / 752,595,460 | yes / no | 616,073,376 → 2,802,521,912 |
+
+Sampled with `GC.GetTotalMemory(false)` about every millisecond on a second thread while one save or one read runs, after a full collection; a millisecond sampler can miss short peaks, so these are lower bounds. The plan's peak budget (retained + snapshot + 2 × payload bytes) is met by writer 33 on the 50,000-resident stress set only and by writer 34 on no fixture: the token tree, the column lists and the compact string coexist with the snapshot, and the budget is computed from the much smaller compact payload. The read peak of writer 34 is 2.6–4.6 × writer 33's, because the decoded tree, the body text and the strict reader's own allocations coexist.
+
 
 ## ≥ 30 ms flags
 

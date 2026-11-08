@@ -36,10 +36,22 @@ public sealed class F7dMeasure
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static object Measure(string fixture, int samples)
     {
-        var holder = new Holder { Built = F7cFixtures.Build(fixture) };
+        var holder = new Holder { Built = F7dStressFixtures.Is(fixture) ? F7dStressFixtures.Build(fixture) : F7cFixtures.Build(fixture) };
         var state = holder.Built!.State;
-        string before = DevelopmentChain.Write33(state);
-        string after = SaveCodec.Write(state);
+        string? before = null, after = null, refusedBefore = null, refusedAfter = null;
+        try { before = DevelopmentChain.Write33(state); } catch (SaveValidationException e) { refusedBefore = e.Message; }
+        try { after = SaveCodec.Write(state); } catch (SaveValidationException e) { refusedAfter = e.Message; }
+        if (before == null || after == null)
+        {
+            // A city over a cap: both writers must refuse it the same way (the caps are unchanged); nothing is pruned.
+            return new
+            {
+                fixture, residents = state.Citizens.Count, visitors = state.Visitors.Count, places = state.Places.Count,
+                recentVisits = state.Citizens.Sum(c => c.RecentVisits.Count), historyRows = state.Food!.History.Count, scopes = state.Food.Shops.Count,
+                refusedBefore, refusedAfter, beforeCharacters = before?.Length, afterCharacters = after?.Length,
+                evidence = "Windows 11 .NET 10 Release offline; refusal row",
+            };
+        }
         if (SaveCodec.ExpandCompact(after) != ReaderCorpus.Relabel(before, 33, 34)) throw new InvalidOperationException("Bodies differ on " + fixture);
         var stats = new SaveCodec.CompactStats();
         SaveCodec.CompactFromBody(SaveCodec.ExpandCompact(after), stats);
@@ -62,21 +74,31 @@ public sealed class F7dMeasure
         var activateAfter = Time(samples, () => { var s = SaveCodec.Read(after).State!; var t = Stopwatch.GetTimestamp(); SaveCodec.ValidateForActivation(s); _ = new CitySimulator(s, holder.Built.Routes); return Stopwatch.GetElapsedTime(t).TotalMilliseconds; }, inner: true);
         long retainedBefore = Retained(() => SaveCodec.ReadWriter33(before));
         long retainedAfter = Retained(() => SaveCodec.Read(after));
+        // Peak transient managed heap above the live city, sampled while one save or one read runs; the snapshot proxy is
+        // what one capture allocates (plan 3.1: peak <= retained + snapshot + 2 x payload bytes).
+        long snapshotBytes = AllocatedBy(() => SaveCodec.Capture(state));
+        long peakWriteBefore = PeakTransient(() => DevelopmentChain.Write33(state));
+        long peakWriteAfter = PeakTransient(() => SaveCodec.Write(state));
+        long peakReadBefore = PeakTransient(() => SaveCodec.ReadWriter33(before));
+        long peakReadAfter = PeakTransient(() => SaveCodec.Read(after));
 
         int journeys = PersonTable.Schedules(state).Count(c => c.Journey != null);
         return new
         {
-            fixture, residents = state.Citizens.Count, visitors = state.Visitors.Count, journeys,
+            fixture, residents = state.Citizens.Count, visitors = state.Visitors.Count, journeys, places = state.Places.Count, snapshotBytes,
             before = new
             {
                 schema = 33, characters = before.Length, utf8Bytes = Encoding.UTF8.GetByteCount(before), utf16Bytes = 2L * before.Length,
                 sha256 = RepresentativeFixture.Sha256(before), write = writeBefore, read = readBefore, activationMs = activateBefore, retainedBytesAfterRead = retainedBefore,
+                peakTransientWriteBytes = peakWriteBefore, peakTransientReadBytes = peakReadBefore, peakBudgetBytes = snapshotBytes + 4L * before.Length,
             },
             after = new
             {
                 schema = 34, characters = after.Length, utf8Bytes = Encoding.UTF8.GetByteCount(after), utf16Bytes = 2L * after.Length,
                 sha256 = RepresentativeFixture.Sha256(after), write = writeAfter, compactTransformMs = transform, compactTablePassMeanMs = Math.Round(tableMs, 3), compactColumnWriterMeanMs = Math.Round(columnMs, 3), read = readAfter, expandMs = expand,
                 activationMs = activateAfter, retainedBytesAfterRead = retainedAfter,
+                peakTransientWriteBytes = peakWriteAfter, peakTransientReadBytes = peakReadAfter, peakBudgetBytes = snapshotBytes + 4L * after.Length,
+                valuesPerRecord = Math.Round((double)stats.Values / counts.Streaming, 3), valuesPerCharacter = Math.Round((double)stats.Values / after.Length, 3),
                 tables = new { strings = stats.Strings, keys = stats.Keys, shapes = stats.Shapes, routes = stats.Routes, entries = stats.TableEntries },
                 routeReferences = stats.RouteReferences, roadTags = stats.RoadTags, nesting = SaveCodec.CompactTree.Nesting(after), decodedValues = stats.Values,
                 records = new { streaming = counts.Streaming, semantic = counts.Semantic },
@@ -154,6 +176,39 @@ public sealed class F7dMeasure
         var times = new List<double>();
         for (int i = 0; i <= samples; i++) { double ms = work(); if (i > 0) times.Add(ms); }
         return F7cMeasure.Stats(times);
+    }
+
+    private static long AllocatedBy(Func<object?> work)
+    {
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        GC.KeepAlive(work());
+        return GC.GetAllocatedBytesForCurrentThread() - before;
+    }
+
+    /// <summary>Highest managed heap above the post-collection baseline while <paramref name="work"/> runs, sampled about
+    /// every millisecond on a second thread (GC.GetTotalMemory without collecting), including the end state.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static long PeakTransient(Func<object?> work)
+    {
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        long baseline = GC.GetTotalMemory(true), peak = baseline;
+        int done = 0;
+        var sampler = new System.Threading.Thread(() =>
+        {
+            while (System.Threading.Volatile.Read(ref done) == 0)
+            {
+                long now = GC.GetTotalMemory(false);
+                if (now > System.Threading.Interlocked.Read(ref peak)) System.Threading.Interlocked.Exchange(ref peak, now);
+                System.Threading.Thread.Sleep(1);
+            }
+        }) { IsBackground = true };
+        sampler.Start();
+        var result = work();
+        long end = GC.GetTotalMemory(false);
+        System.Threading.Volatile.Write(ref done, 1);
+        sampler.Join();
+        GC.KeepAlive(result);
+        return Math.Max(System.Threading.Interlocked.Read(ref peak), end) - baseline;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
