@@ -190,6 +190,10 @@ public static class RushSpikeReplay
         var state = Create();
         var city = Attach(state, planner, market, stops);
         while (!city.AdvanceTo(from, 256).CaughtUp) { }
+        // Collect the warm-up's and earlier tests' garbage before the timed window, so a collection of memory this replay
+        // did not allocate in the window cannot land in one of its intervals. Collections caused by the window's own
+        // allocations still count.
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         var result = new Result();
         var frames = new List<double>();
         double ms = 1000.0 / Stopwatch.Frequency, clock = from;
