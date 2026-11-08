@@ -33,6 +33,10 @@ namespace PersistentCity.Runtime
             public float HurrySince = float.NaN;
             public bool Fading;
             public int FadeLeg = -1;
+            // The fade itself: started at this follow-clock time, from this pose, seen or not when it began.
+            public float FadeOutSince = float.NaN;
+            public bool FadeOnScreen;
+            public Position FadeFrom;
             // Arrival tail: the logical arrival was processed while the body still walks to the door.
             public bool Tail;
             public float TailSince;
@@ -106,6 +110,12 @@ namespace PersistentCity.Runtime
         // Test-profile key MovementFaultAcquirePercent: refuse this share of body acquisitions (rig check 5).
         private readonly int faultAcquirePercent;
         private readonly System.Random faultDice = new System.Random(0x2F2C);
+        // F2c follow clock: real seconds that pass only while the city clock runs, so a paused game freezes the
+        // hurry, fade and arrival-tail bounds as it freezes the bodies.
+        private float followClock;
+        private double followMinute = double.NaN;
+        // Q3: persons whose body faded reappear only once their logical pose is out of view.
+        private readonly HashSet<string> fadedUntilHidden = new HashSet<string>(StringComparer.Ordinal);
         // Running counts of registered bindings with a walker, a car and a queue stand. Only Bind,
         // Unbind and TryJoinQueue change registration or a registered binding's queue.
         private int personBindings, carBindings, queueBindings;
@@ -206,6 +216,8 @@ namespace PersistentCity.Runtime
         public void Update()
         {
             if (!active || disposed) return;
+            if (simulation.State.Minute > followMinute) followClock += Time.unscaledDeltaTime;
+            followMinute = simulation.State.Minute;
             RefreshVendorMeals();
             ambient.Update();
             if (!ambient.Active) throw new InvalidOperationException("Pedestrian ownership guard failed: " + ambient.LastError);
@@ -298,6 +310,12 @@ namespace PersistentCity.Runtime
                 if (++attempts > 4) break; // Route validation and rejected admissions share the native-work budget.
                 attempted[citizen.Identity.Id] = Time.unscaledTime;
                 PhysicalRoadSample road = default;
+                // Q3: a faded person reappears only where the player cannot see a body appear.
+                if (!car && fadedUntilHidden.Contains(citizen.Identity.Id))
+                {
+                    if (pedestrians.Visible(candidate.Position)) continue;
+                    fadedUntilHidden.Remove(citizen.Identity.Id);
+                }
                 // Waiting sources own no finite road storage. Refuse before borrowing a native body.
                 if (car && (!simulation.TryGetTrafficPermission(citizen.Identity.Id, out var admission)
                     || !admission.LinkId.HasValue || admission.IsCompleted)) continue;
@@ -343,6 +361,7 @@ namespace PersistentCity.Runtime
                 if (queuer) queued++;
             }
             candidates.Clear();
+            if (fadedUntilHidden.Count > 512) fadedUntilHidden.Clear();
             if (attempted.Count > simulation.State.Citizens.Count + 128)
             {
                 var ids = new HashSet<string>(simulation.State.Citizens.Select(c => c.Identity.Id), StringComparer.Ordinal);
@@ -607,7 +626,7 @@ namespace PersistentCity.Runtime
         private static void Follow(Binding binding, Route journey, double bodyMinutes)
         {
             binding.Journey = journey; binding.BodyMinutes = bodyMinutes; binding.TargetLeg = -1;
-            binding.HurrySince = float.NaN; binding.Fading = false; binding.Tail = false;
+            binding.HurrySince = float.NaN; binding.Fading = false; binding.Tail = false; binding.FadeOutSince = float.NaN;
         }
 
         private bool OptionalVisible(CitizenState citizen) => citizen.Phase == CitizenPhase.AtPlace
@@ -882,9 +901,10 @@ namespace PersistentCity.Runtime
                 if ((citizen.Phase != CitizenPhase.AtPlace && citizen.Phase != CitizenPhase.WaitingForOpening)
                     || !TryBodyPlace(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, route.Legs[route.Legs.Count - 1].To) > 3) return false;
-                binding.Tail = true; binding.TailSince = Time.unscaledTime; binding.HurrySince = float.NaN; binding.Fading = false;
+                binding.Tail = true; binding.TailSince = followClock; binding.HurrySince = float.NaN; binding.Fading = false;
             }
             PhysicalJourneySample logical = following ? simulation.SampleJourney(citizen) : WalkerFollow.Sample(route, route.Minutes);
+            if (!float.IsNaN(binding.FadeOutSince)) return FadeOut(binding, logical.Position);
             binding.BodyMinutes = WalkerFollow.Advance(route, binding.BodyMinutes, logical.ElapsedMinutes, body.Position);
             double lag = WalkerFollow.RouteMetres(route, binding.BodyMinutes, logical.ElapsedMinutes);
             if (binding.LagFrame != Time.frameCount) { binding.LagFrame = Time.frameCount; Telemetry.RecordLag(lag); }
@@ -893,7 +913,8 @@ namespace PersistentCity.Runtime
             // The body reached the car, bus or subway it follows: hand over to a body of the new kind (or none).
             if (own.Mode != TravelMode.Walk) { binding.Handoff = true; Telemetry.Handoffs++; return false; }
             if (!WalkerFollow.NeedsCorrection(lag, logical.Mode)) { binding.HurrySince = float.NaN; binding.Fading = false; }
-            else if (!CorrectWalker(binding, logical, own)) return false;
+            else if (!CorrectWalker(binding, logical, own, lag)) return false;
+            else if (!float.IsNaN(binding.FadeOutSince)) return FadeOut(binding, logical.Position);
             else if (float.IsNaN(binding.HurrySince))
             {
                 // Moved to the logical pose off screen: follow on from there.
@@ -905,11 +926,12 @@ namespace PersistentCity.Runtime
 
         /// <summary>
         /// Off screen, the body is moved to the logical pose (or released if the person is no longer walking). On screen
-        /// the Q3 default applies: hurry for up to 10 s, then fade out at the next corner or doorway and reappear at the
-        /// logical pose through selection; nobody jumps on screen. Every correction is recorded with its on-screen flag.
-        /// False releases the body.
+        /// the Q3 default applies: hurry for up to 10 s, then stop at the next corner and fade out there (or where it
+        /// stands if no corner comes within a further 10 s); it reappears at the logical pose once that pose is out of
+        /// view. Nobody jumps on screen. Every correction is recorded with its on-screen flag. False releases the body.
+        /// All bounds run on the follow clock, which stops while the city clock does.
         /// </summary>
-        private bool CorrectWalker(Binding binding, PhysicalJourneySample logical, PhysicalJourneySample own)
+        private bool CorrectWalker(Binding binding, PhysicalJourneySample logical, PhysicalJourneySample own, double lag)
         {
             var body = binding.Person!; string id = binding.Citizen.Identity.Id;
             Position before = body.Position;
@@ -922,26 +944,45 @@ namespace PersistentCity.Runtime
                     binding.HurrySince = float.NaN; binding.Fading = false;
                     return true;
                 }
-                Telemetry.Record(Time.frameCount, id, WalkerCorrectionKind.LagRelease, before, logical.Position, false);
                 binding.Handoff = logical.Mode != TravelMode.Walk;
+                // Close behind a person who has just boarded is an ordinary handoff, not a lag correction.
+                if (binding.Handoff && lag <= WalkerFollow.CorrectionMetres) { Telemetry.Handoffs++; return false; }
+                Telemetry.Record(Time.frameCount, id, WalkerCorrectionKind.LagRelease, before, logical.Position, false);
                 return false;
             }
-            float now = Time.unscaledTime;
-            if (float.IsNaN(binding.HurrySince)) binding.HurrySince = now;
-            float hurried = now - binding.HurrySince;
+            if (float.IsNaN(binding.HurrySince)) binding.HurrySince = followClock;
+            float hurried = followClock - binding.HurrySince;
             if (!binding.Fading && hurried >= WalkerFollow.HurrySeconds) { binding.Fading = true; binding.FadeLeg = own.LegIndex; }
             if (!binding.Fading) return true;
-            if (own.LegIndex != binding.FadeLeg || own.Stationary || Position.Distance(before, own.To) <= 0.3)
-            {
-                Telemetry.Record(Time.frameCount, id, WalkerCorrectionKind.Fade, before, logical.Position, true);
-                return false;
-            }
-            if (hurried < WalkerFollow.HurrySeconds + WalkerFollow.FadeSeconds) return true;
-            Telemetry.Record(Time.frameCount, id, WalkerCorrectionKind.LagRelease, before, logical.Position, true);
+            if (own.LegIndex != binding.FadeLeg || own.Stationary || Position.Distance(before, own.To) <= 0.3
+                || hurried >= WalkerFollow.HurrySeconds + WalkerFollow.FadeSeconds)
+                BeginFade(binding, true);
+            return true;
+        }
+
+        private void BeginFade(Binding binding, bool onScreen)
+        {
+            binding.FadeOutSince = followClock; binding.FadeOnScreen = onScreen; binding.FadeFrom = binding.Person!.Position;
+            binding.Person.Pace(0);
+        }
+
+        /// <summary>The fade itself: the body stands and its renderers fade over <see cref="WalkerFollow.FadeOutSeconds"/>,
+        /// then it is released. Its person reappears through selection only once the logical pose is out of view.</summary>
+        private bool FadeOut(Binding binding, Position after)
+        {
+            var body = binding.Person!;
+            body.Pace(0);
+            float alpha = 1 - (followClock - binding.FadeOutSince) / (float)WalkerFollow.FadeOutSeconds;
+            if (alpha > 0) { body.SetFade(alpha); return true; }
+            body.SetFade(0);
+            Telemetry.Record(Time.frameCount, binding.Citizen.Identity.Id, WalkerCorrectionKind.Fade, binding.FadeFrom, after, binding.FadeOnScreen);
+            fadedUntilHidden.Add(binding.Citizen.Identity.Id);
             return false;
         }
 
-        /// <summary>Walk toward the corner of the body's own leg at the pace its lag asks for; stand at the logical pose.</summary>
+        /// <summary>Walk toward the corner of the body's own leg at the pace its lag asks for; stand at the logical pose.
+        /// The commanded speed never covers more than the lag in one frame, so the body cannot pass the logical pose
+        /// even while the logical clock stands still.</summary>
         private bool WalkLeg(Binding binding, PhysicalJourneySample own, double lag)
         {
             var body = binding.Person!;
@@ -956,28 +997,45 @@ namespace PersistentCity.Runtime
                 { body.Stop(true); binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++; return true; }
                 binding.TargetLeg = own.LegIndex;
             }
-            body.Pace(pace > 0 ? NativeTravelPace.WalkingMetresPerSecond * pace : 0);
+            body.Pace(WalkerFollow.CommandSpeed(NativeTravelPace.WalkingMetresPerSecond * pace, lag, Time.deltaTime));
             return true;
         }
 
         /// <summary>
         /// Arrival tail: the logical arrival is processed, and the visible walker keeps walking to the door for up to 10 s
-        /// of real time. Then it joins a vendor line, an optional stop or the door queue (ObserveArrival), or goes in
-        /// (released). A body that did not reach the door is a lag release.
+        /// on the follow clock. Then it joins a vendor line, an optional stop or the door queue (ObserveArrival), or goes
+        /// in (released). A journey committed meanwhile is followed from the door; one that starts elsewhere ends the
+        /// tail at once. Short of the door, an on-screen body fades and an off-screen one is a lag release.
         /// </summary>
         private bool ObserveArrivalTail(Binding binding, PhysicalJourneySample own, double lag)
         {
-            var body = binding.Person!;
+            var body = binding.Person!; var citizen = binding.Citizen; var route = binding.Journey!;
+            Position door = route.Legs[route.Legs.Count - 1].To;
+            var next = citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null && !ReferenceEquals(citizen.Journey, route)
+                ? citizen.Journey : null;
+            bool fromDoor = next != null && next.Legs.Count > 0 && Position.Distance(next.Legs[0].From, door) <= 3;
             bool atDoor = own.AtEnd;
-            bool expired = Time.unscaledTime - binding.TailSince >= WalkerFollow.ArrivalTailSeconds;
-            if (!atDoor && !expired && own.Mode == TravelMode.Walk) return WalkLeg(binding, own, Math.Max(lag, WalkerFollow.StopMetres * 2));
-            var route = binding.Journey!;
-            binding.Tail = false; binding.Journey = null;
-            binding.AwaitingArrival = true; binding.AwaitMinute = simulation.State.Minute; binding.AwaitJourney = route;
-            if (ObserveArrival(binding)) return true;
-            if (!atDoor)
-                Telemetry.Record(Time.frameCount, binding.Citizen.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position,
-                    route.Legs[route.Legs.Count - 1].To, body.OnScreen);
+            bool expired = followClock - binding.TailSince >= WalkerFollow.ArrivalTailSeconds;
+            if ((next == null || fromDoor) && !atDoor && !expired && own.Mode == TravelMode.Walk)
+                return WalkLeg(binding, own, Math.Max(lag, WalkerFollow.StopMetres * 2));
+            if (fromDoor && atDoor) { Follow(binding, next!, 0); return true; }
+            if (next == null)
+            {
+                binding.Tail = false; binding.Journey = null;
+                binding.AwaitingArrival = true; binding.AwaitMinute = simulation.State.Minute; binding.AwaitJourney = route;
+                if (ObserveArrival(binding)) return true;
+                if (atDoor) return false;
+            }
+            else if (atDoor) return false;
+            // Short of the door: fade where it stands if it can be seen, otherwise release it.
+            if (body.Valid && body.OnScreen)
+            {
+                if (binding.Journey == null) { binding.Journey = route; binding.Tail = true; }
+                binding.AwaitingArrival = false;
+                BeginFade(binding, true);
+                return FadeOut(binding, next != null ? next.Legs[0].From : door);
+            }
+            Telemetry.Record(Time.frameCount, citizen.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, door, false);
             return false;
         }
 

@@ -128,6 +128,7 @@ namespace PersistentCity.Runtime
             if (body == null || !active.TryGetValue(body.IdentityId, out var current) || !ReferenceEquals(current, body)) return;
             active.Remove(body.IdentityId);
             ThirdPersonCharacter character = body.Character;
+            body.SetFade(1); // a pooled actor never keeps an F2c fade
             body.Invalidate();
             if (character == null) return;
             var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
@@ -157,6 +158,10 @@ namespace PersistentCity.Runtime
                 UnityEngine.Object.Destroy(character.gameObject);
             }
         }
+
+        /// <summary>Whether a standing person at this point could be in the main camera's view (frustum only;
+        /// unknown counts as visible). F2c defers a faded person's reappearance while this is true.</summary>
+        public bool Visible(Position at) => ScreenVisibility.ContainsPoint(at);
 
         public void Dispose()
         {
@@ -234,6 +239,34 @@ namespace PersistentCity.Runtime
             Agent.speed = (float)metresPerScaledSecond;
             stopped = false; Tick();
         }
+        /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour (1 restores the materials). Shaders
+        /// without a transparent base colour ignore it; the rig check confirms how native characters render it.</summary>
+        public void SetFade(float alpha)
+        {
+            if (Character == null) return;
+            alpha = Mathf.Clamp01(alpha);
+            if (alpha >= 1)
+            {
+                foreach (var renderer in faded) if (renderer != null) renderer.SetPropertyBlock(null);
+                faded.Clear(); return;
+            }
+            if (faded.Count == 0) Character.GetComponentsInChildren(true, faded);
+            block ??= new MaterialPropertyBlock();
+            foreach (var renderer in faded)
+            {
+                if (renderer == null) continue;
+                var material = renderer.sharedMaterial;
+                int id = material != null && material.HasProperty(BaseColorId) ? BaseColorId : ColorId;
+                Color colour = material != null && material.HasProperty(id) ? material.GetColor(id) : Color.white;
+                colour.a *= alpha;
+                renderer.GetPropertyBlock(block);
+                block.SetColor(id, colour);
+                renderer.SetPropertyBlock(block);
+            }
+        }
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"), ColorId = Shader.PropertyToID("_Color");
+        private readonly List<Renderer> faded = new List<Renderer>();
+        private MaterialPropertyBlock? block;
         /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
         public bool Warp(Position target)
         {
@@ -325,6 +358,14 @@ namespace PersistentCity.Runtime
             }
             if (camera == null || renderer == null) return true;
             return renderer.enabled && renderer.isVisible && GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+        }
+        /// <summary>A standing person's volume at this point is inside the frustum (no camera counts as visible).</summary>
+        internal static bool ContainsPoint(Position at)
+        {
+            Contains(null);
+            if (camera == null || !PhysicalPedestrianBody.Fits(at)) return true;
+            var centre = PhysicalPedestrianBody.Vector(at) + Vector3.up * 0.9f;
+            return GeometryUtility.TestPlanesAABB(planes, new Bounds(centre, new Vector3(0.8f, 1.8f, 0.8f)));
         }
     }
 

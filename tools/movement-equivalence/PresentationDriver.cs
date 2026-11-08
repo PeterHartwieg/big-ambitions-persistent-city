@@ -58,7 +58,7 @@ public sealed class PresentationDriver
         public readonly PhysicalCornerHandoff CornerHandoff = new();
         // F2c walker follow.
         public Route? Journey;
-        public double BodyMinutes, PaceFactor, TailUntil;
+        public double BodyMinutes, PaceFactor, TailUntil, LagMetres;
         public bool Tail, Handoff;
         public long LagFrame = -1;
     }
@@ -124,7 +124,8 @@ public sealed class PresentationDriver
             if (!body.Car)
             {
                 if (binding.Journey == null || !body.HasTarget || Blocked(body)) continue;
-                Step(body, body.Target, GridPlanner.WalkMetresPerMinute * body.Pace * binding.PaceFactor * gameMinutes);
+                // Runtime WalkerFollow.CommandSpeed: never more than the lag in one frame.
+                Step(body, body.Target, Math.Min(binding.LagMetres, GridPlanner.WalkMetresPerMinute * body.Pace * binding.PaceFactor * gameMinutes));
                 continue;
             }
             if (binding.Lease == null || !body.HasTarget) continue;
@@ -272,8 +273,10 @@ public sealed class PresentationDriver
             Position before = body.Position;
             if (logical.Mode != TravelMode.Walk)
             {
+                binding.Handoff = true;
+                if (lag <= WalkerFollow.CorrectionMetres) { Walking.Handoffs++; return false; }
                 Walking.Record(frame, citizen.Identity.Id, WalkerCorrectionKind.LagRelease, before, logical.Position, false);
-                binding.Handoff = true; return false;
+                return false;
             }
             body.Position = logical.Position; binding.BodyMinutes = logical.ElapsedMinutes;
             Walking.Record(frame, citizen.Identity.Id, WalkerCorrectionKind.Move, before, body.Position, false);
@@ -286,6 +289,7 @@ public sealed class PresentationDriver
     private static void Aim(Binding binding, PhysicalJourneySample own, double lag)
     {
         binding.PaceFactor = own.Stationary || own.AtEnd ? 0 : WalkerFollow.PaceFactor(lag);
+        binding.LagMetres = lag;
         binding.Body.Target = own.To; binding.Body.HasTarget = true;
     }
 

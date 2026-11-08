@@ -263,6 +263,8 @@ namespace PersistentCity.Core
         public const double FadeSeconds = 10;
         /// <summary>After the logical arrival, a visible walker keeps walking to the door this long.</summary>
         public const double ArrivalTailSeconds = 10;
+        /// <summary>Q3 fade: a corrected on-screen body stands and fades out over this long before it is released.</summary>
+        public const double FadeOutSeconds = 1;
         private const int MaximumCorners = 16;
 
         /// <summary>Pace multiple for a lag: 0 at the logical pose, 1 up to <see cref="CatchUpMetres"/>, rising
@@ -273,6 +275,16 @@ namespace PersistentCity.Core
             if (lagMetres <= CatchUpMetres) return 1;
             double rise = (lagMetres - CatchUpMetres) / (FullPaceMetres - CatchUpMetres);
             return Math.Min(MaximumPaceFactor, 1 + (MaximumPaceFactor - 1) * rise);
+        }
+
+        /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
+        /// <paramref name="deltaSeconds"/>, so the body is never commanded past the logical pose, even while the
+        /// logical clock stands still. 0 at or below <see cref="StopMetres"/>.</summary>
+        public static double CommandSpeed(double paceMetresPerSecond, double lagMetres, double deltaSeconds)
+        {
+            if (!(paceMetresPerSecond > 0) || !Position.Finite(lagMetres) || lagMetres <= StopMetres) return 0;
+            double frame = Position.Finite(deltaSeconds) && deltaSeconds > 1e-3 ? deltaSeconds : 1e-3;
+            return Math.Min(paceMetresPerSecond, lagMetres / frame);
         }
 
         /// <summary>True when the follow must be corrected: too far behind, or the logical leg is not a walk
@@ -340,9 +352,9 @@ namespace PersistentCity.Core
     {
         /// <summary>An off-screen body moved to the logical pose.</summary>
         Move,
-        /// <summary>Q3: an on-screen body that hurried for the bound faded at a corner or doorway; it reappears at the logical pose.</summary>
+        /// <summary>Q3: an on-screen body that hurried for the bound faded out at a corner (or where it stood); it reappears at the logical pose once that is out of view.</summary>
         Fade,
-        /// <summary>A body released because of lag or a mode the walker cannot show (off screen, or after the fade bound).</summary>
+        /// <summary>An off-screen body released because of lag: the person is no longer walking, or the arrival tail ended short of the door.</summary>
         LagRelease,
     }
 
@@ -439,10 +451,11 @@ namespace PersistentCity.Core
         public string Status(int followers) => string.Format(CultureInfo.InvariantCulture,
             "followers={0}\nlag_samples={1}\nlag_p50_m={2:F2}\nlag_p95_m={3:F2}\nlag_max_m={4:F2}\ncorrections={5}\nmoves={6}\n"
             + "on_screen_moves={7}\nfades={8}\nlag_releases={9}\nhandoffs={10}\nfaulted_acquisitions={11}\nlast_sequence={12}\n"
-            + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};fade_s:{17};arrival_tail_s:{18}",
+            + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};fade_s:{17};arrival_tail_s:{18};fade_out_s:{19}",
             followers, LagSamples, LagQuantile(0.5), LagQuantile(0.95), MaximumLagMetres, Corrections, Moves, OnScreenMoves, Fades,
             LagReleases, Handoffs, FaultedAcquisitions, LastSequence, WalkerFollow.CatchUpMetres, WalkerFollow.CorrectionMetres,
-            WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.FadeSeconds, WalkerFollow.ArrivalTailSeconds);
+            WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.FadeSeconds, WalkerFollow.ArrivalTailSeconds,
+            WalkerFollow.FadeOutSeconds);
 
         public static string Format(WalkerCorrection c) => string.Format(CultureInfo.InvariantCulture,
             "seq={0} frame={1} person={2} kind={3} on_screen={4} before={5:R},{6:R},{7:R} after={8:R},{9:R},{10:R}",

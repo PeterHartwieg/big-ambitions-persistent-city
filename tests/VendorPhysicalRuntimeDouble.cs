@@ -31,8 +31,8 @@ namespace UnityEngine
     public static class Time
     {
         public static int frameCount;
-        public static float unscaledTime, unscaledDeltaTime = 0.1f;
-        public static void Next(float seconds = 0.3f) { frameCount++; unscaledTime += seconds; unscaledDeltaTime = seconds; }
+        public static float unscaledTime, unscaledDeltaTime = 0.1f, deltaTime = 0.1f;
+        public static void Next(float seconds = 0.3f) { frameCount++; unscaledTime += seconds; unscaledDeltaTime = deltaTime = seconds; }
     }
     public sealed class Transform
     {
@@ -198,6 +198,9 @@ namespace PersistentCity.Runtime
         internal int Warps;
         internal bool OnScreen;
         internal void Pace(double v) { Speed = v > 0 ? v : 0; Agent.isStopped = !(v > 0); }
+        internal float Alpha = 1;
+        internal readonly List<float> Fades = new();
+        internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
         internal bool Warp(Position p) { Character.transform.position = Vector(p); Agent.hasPath = false; Agent.isStopped = true; Warps++; return true; }
         internal void Face(Position p) { Facing = p; }
         internal void Tick() { }
@@ -215,6 +218,9 @@ namespace PersistentCity.Runtime
         private int actors;
         private long generation;
         internal PhysicalPedestrians(Transform _, int maximum) { this.maximum = maximum; Last = this; }
+        // F2c: whether a point is in the camera's view; tests decide. Unset means out of view.
+        internal static Func<Position, bool>? VisiblePoint;
+        internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
         {
             body = null;

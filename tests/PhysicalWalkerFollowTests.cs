@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using PersistentCity.Runtime;
@@ -67,6 +68,7 @@ public sealed class PhysicalWalkerFollowTests
         internal Fixture(Func<Route>? journey = null, bool optional = false)
         {
             StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrianBody.Unreachable = null;
+            PhysicalPedestrians.VisiblePoint = null;
             NativeTravelPace.Focus = Work; Time.Next(3);
             City = new CitySimulator(Build(journey?.Invoke(), optional), new Walk());
             Plain = new CitySimulator(Build(journey?.Invoke(), optional), new Walk());
@@ -74,6 +76,8 @@ public sealed class PhysicalWalkerFollowTests
                 new VendorBodyTests.Log(), 8, 3, 100, new DwellSpots());
         }
         internal void Tick(float seconds = 0.3f) { Time.Next(seconds); Bodies.Update(); }
+        // A frame in which the city clock runs (by a negligible 0.0001 game minutes), so the follow clock advances too.
+        internal void Run(float seconds = 0.3f) { Advance(City.State.Minute + 0.0001); Tick(seconds); }
         internal void Advance(double minute) { City.AdvanceTo(minute); Plain.AdvanceTo(minute); }
         internal PhysicalPedestrianBody Body => Pool.Active["w"];
         internal bool Bound => Pool.Active.ContainsKey("w");
@@ -91,7 +95,7 @@ public sealed class PhysicalWalkerFollowTests
             Bodies.BeforeSave(); Plain.RefreshOptionalStops();
             Assert.Equal(SaveCodec.Write(Plain.State), SaveCodec.Write(City.State));
         }
-        public void Dispose() => Bodies.Dispose();
+        public void Dispose() { PhysicalPedestrians.VisiblePoint = null; Bodies.Dispose(); }
     }
 
     [Fact]
@@ -114,16 +118,26 @@ public sealed class PhysicalWalkerFollowTests
         f.Advance(Now + 30);
         Assert.Equal(CitizenPhase.AtPlace, f.W.Phase); Assert.Equal("work", f.W.PlaceId); Assert.Equal(1, f.W.CompletedJourneys);
         f.AssertSameAsBodiesOff();
-        // Arrival tail: the body keeps walking to the door, then goes in. Short of the door after 10 s, it is a lag release.
+        // Arrival tail: the body keeps walking to the door for up to 10 s of running time.
         f.Tick();
         Assert.True(f.Bound); Assert.True(f.Body.Speed > 0); Assert.Empty(f.Corrections());
-        for (int i = 0; i < 3; i++) f.Tick(3);
-        Assert.True(f.Bound);
-        f.Tick(3);
-        Assert.False(f.Bound);
-        var release = Assert.Single(f.Corrections());
-        Assert.Equal(WalkerCorrectionKind.LagRelease, release.Kind); Assert.True(release.OnScreen);
-        Assert.Equal(new Position(80, 0, 0), release.Before); Assert.Equal(Work, release.After);
+        // While the game is paused (the city clock stands still) the tail bound does not run.
+        for (int i = 0; i < 5; i++) f.Tick(3);
+        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha);
+        for (int i = 0; i < 3; i++) f.Run(3);
+        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha);
+        // Short of the door and on screen after the bound: it stands and fades out over a second, then goes.
+        f.Run(3);
+        Assert.True(f.Bound); Assert.Equal(0, f.Body.Speed);
+        var body = f.Body;
+        f.Run(0.5f);
+        Assert.True(f.Bound); Assert.InRange(body.Alpha, 0.4f, 0.6f);
+        f.Run(0.6f);
+        Assert.False(f.Bound); Assert.Equal(0, body.Alpha);
+        Assert.Equal(body.Fades.OrderByDescending(a => a), body.Fades);
+        var fade = Assert.Single(f.Corrections());
+        Assert.Equal(WalkerCorrectionKind.Fade, fade.Kind); Assert.True(fade.OnScreen);
+        Assert.Equal(new Position(80, 0, 0), fade.Before); Assert.Equal(Work, fade.After);
         f.AssertSameAsBodiesOff();
     }
 
@@ -159,23 +173,87 @@ public sealed class PhysicalWalkerFollowTests
         // On screen and 20 m behind again: it hurries; nothing is recorded and it is not moved.
         f.Body.OnScreen = true;
         f.Advance(Now + 20);
-        for (int i = 0; i < 5; i++) f.Tick(3);
-        Assert.True(f.Bound); Assert.Equal(1, f.Body.Warps); Assert.Single(f.Corrections());
-        // After 10 s of hurrying it fades at the next corner (the midpoint at 70 m) and reappears later.
+        for (int i = 0; i < 5; i++) f.Run(3);
+        Assert.True(f.Bound); Assert.Equal(1, f.Body.Warps); Assert.Single(f.Corrections()); Assert.Equal(1, f.Body.Alpha);
+        // After 10 s of hurrying it stops at the next corner (the midpoint at 70 m) and fades out there.
         f.Place(new Position(70, 0, 0));
-        f.Tick();
-        Assert.False(f.Bound);
+        var body = f.Body;
+        f.Run();
+        Assert.True(f.Bound); Assert.Equal(0, body.Speed); Assert.Equal(1, body.Warps);
+        f.Run(0.6f);
+        Assert.True(f.Bound); Assert.InRange(body.Alpha, 0.3f, 0.5f); Assert.Equal(new Position(70, 0, 0), body.Position);
+        f.Run(0.6f);
+        Assert.False(f.Bound); Assert.Equal(0, body.Alpha);
         var corrections = f.Corrections();
         Assert.Equal(2, corrections.Count);
         Assert.Equal(WalkerCorrectionKind.Fade, corrections[1].Kind); Assert.True(corrections[1].OnScreen);
-        Assert.Equal(new Position(70, 0, 0), corrections[1].Before); Assert.Equal(new Position(80, 0, 0), corrections[1].After);
+        Assert.Equal(new Position(70, 0, 0), corrections[1].Before); Assert.True(Position.Distance(new Position(80, 0, 0), corrections[1].After) < 0.01);
         Assert.Equal(corrections[0].Sequence + 1, corrections[1].Sequence);
         Assert.Equal(onScreenMoves, PhysicalPopulation.Telemetry.OnScreenMoves);
         f.AssertSameAsBodiesOff();
-        // It reappears at the logical pose after the retry interval.
-        f.Tick(2.1f);
-        Assert.True(f.Bound); Assert.Equal(new Position(80, 0, 0), f.Body.Position);
+        // It does not reappear while its logical pose is in view...
+        PhysicalPedestrians.VisiblePoint = _ => true;
+        f.Run(2.1f); f.Run(2.1f);
+        Assert.False(f.Bound);
+        // ...and reappears at the logical pose once that is out of view.
+        PhysicalPedestrians.VisiblePoint = null;
+        f.Run(2.1f);
+        Assert.True(f.Bound); Assert.True(Position.Distance(new Position(80, 0, 0), f.Body.Position) < 0.01);
+        Assert.Equal(1, f.Body.Alpha);
         Assert.Contains("followers=1", PhysicalPopulation.Telemetry.Status(f.Bodies.Followers));
+    }
+
+    [Fact]
+    public void TheBodyIsNeverCommandedPastTheLogicalPoseWhileTheClockStandsStill()
+    {
+        using var f = new Fixture();
+        f.Tick();
+        f.Advance(Now + 0.1); // logical pose at 40.2 m; the body stands at 40 m
+        f.Tick(0.5f);
+        Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+        Assert.True(f.Body.Speed > 0);
+        Assert.True(f.Body.Speed * 0.5 <= 0.2 + 1e-9, "speed " + f.Body.Speed);
+        // The clock stands still; the body covered most of the lag. It slows to the remainder, then stops at the pose.
+        f.Place(new Position(40.15, 0, 0));
+        f.Tick(0.5f);
+        Assert.True(f.Body.Speed * 0.5 <= 0.05 + 1e-9, "speed " + f.Body.Speed);
+        f.Place(new Position(40.2, 0, 0));
+        f.Tick(0.5f);
+        Assert.Equal(0, f.Body.Speed); Assert.True(f.Body.Agent.isStopped);
+    }
+
+    [Fact]
+    public void ArrivalTailHandsOverToAJourneyCommittedFromTheDoorAndEndsForOneFromElsewhere()
+    {
+        using (var f = new Fixture())
+        {
+            f.Tick();
+            f.Advance(Now + 30);
+            f.Tick();
+            Assert.True(f.Bound);
+            // A new journey commits from the door while the body is still on its way there.
+            var next = Legs(Work, new Position(100, 0, 60));
+            f.W.Phase = CitizenPhase.Travelling; f.W.Journey = next; f.W.DepartureMinute = f.City.State.Minute;
+            f.Tick();
+            Assert.True(f.Bound); Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+            f.Place(Work);
+            f.Tick(); f.Tick();
+            Assert.True(f.Bound);
+            Assert.Equal(new Position(100, 0, 30), f.Body.Target);
+            Assert.Empty(f.Corrections());
+        }
+        using (var f = new Fixture())
+        {
+            f.Tick();
+            f.Advance(Now + 30);
+            f.Tick();
+            // A journey starting somewhere else ends the tail at once (off screen: released and recorded).
+            f.W.Phase = CitizenPhase.Travelling; f.W.Journey = Legs(new Position(0, 0, 90), Home);
+            f.Tick();
+            Assert.False(f.Bound);
+            var release = Assert.Single(f.Corrections());
+            Assert.Equal(WalkerCorrectionKind.LagRelease, release.Kind); Assert.False(release.OnScreen);
+        }
     }
 
     [Fact]
@@ -227,6 +305,15 @@ public sealed class PhysicalWalkerFollowTests
         var release = Assert.Single(f.Corrections());
         Assert.Equal(WalkerCorrectionKind.LagRelease, release.Kind); Assert.False(release.OnScreen);
         f.AssertSameAsBodiesOff();
+        // Close behind a person who has just boarded, off screen: an ordinary handoff, not a correction.
+        using var near = new Fixture(Transit);
+        near.Tick();
+        near.Advance(Now + 15.5);
+        near.Place(new Position(69.9, 0, 0));
+        near.Tick();
+        Assert.False(near.Bound);
+        Assert.Empty(near.Corrections());
+        Assert.Equal(near.Handoffs + 1, PhysicalPopulation.Telemetry.Handoffs);
     }
 
     [Fact]
