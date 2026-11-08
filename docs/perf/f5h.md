@@ -206,8 +206,8 @@ Against the earlier F5 slices and against this slice's round 0 (before the revie
 | Measure | Earlier slice | F5h round 0 | F5h now |
 | --- | --- | --- | --- |
 | Declared-load city | F5g measure: 957 / 999 / 576 with catalogue-only businesses | 957 / 999 / 576; no commuter seated (68 saved seats, review Astra-r1-1) | 957 / 1,019 / 576; 1,018 commuters seated at city workplaces |
-| Units in a declared-load day | — | 32,325 (planned events not counted) | 64,271 (11,715 of them finished through planning) |
-| Frames ÷ unheld, declared load, Runtime shape | — | 1.29 | 1.53 |
+| Units in a declared-load day | not measured | 32,325 (planned events not counted) | 64,271 (11,715 of them finished through planning) |
+| Frames ÷ unheld, declared load, Runtime shape | not measured | 1.29 | 1.53 |
 | Frame p95, declared load, Runtime shape | F5g: ≤ 2.14 ms per 128-unit slice | 0.437 ms | 0.388 ms |
 | Frame p95, 10,000, Runtime shape | F5g: ≤ 2.41 ms per 128-unit slice | 0.144 ms | 0.174 ms |
 | Fill unit at the declared load, ms | F5g: p95 0.27, max 5.20 (budget 1) | p50 0.15–0.17, max 0.23–3.42 | p50 0.15–0.17, max 0.31–10.44 (the 10.44 after a reload, with a gen-2 GC) |
