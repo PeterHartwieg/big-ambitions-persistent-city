@@ -28,6 +28,9 @@ namespace PersistentCity.Core
         public int RouteCalls { get; set; }
         public double ElapsedMilliseconds { get; set; }
         public FoodDecisionState? Decision { get; set; }
+        /// <summary>F6j: each feasible candidate main with the extras the same policy would add from its captured
+        /// menu: the ticket whose total the choice compared as that shop's expense.</summary>
+        public IReadOnlyList<FoodMealTicket> Tickets { get; set; } = Array.Empty<FoodMealTicket>();
         /// <summary>Shortlist/hash/traits/sampling work only, excluding supply capture, feasibility and routes.
         /// Null if this diagnostic did not observe the initial capture (for example after reload).</summary>
         public double? ChoiceMilliseconds { get; set; }
@@ -156,7 +159,11 @@ namespace PersistentCity.Core
     }
     public readonly struct FoodSale
     {
-        public FoodSale(bool paid, string reason, ShopExperience? failure = null) { Paid = paid; Reason = reason; Failure = failure; }
+        public FoodSale(bool paid, string reason, ShopExperience? failure = null, IReadOnlyList<FoodTicketLine>? soldExtras = null)
+        { Paid = paid; Reason = reason; Failure = failure; this.soldExtras = soldExtras; }
+        private readonly IReadOnlyList<FoodTicketLine>? soldExtras;
+        /// <summary>F6j: the ticket's extras the seller actually sold, in ticket order. Empty for a main-only sale.</summary>
+        public IReadOnlyList<FoodTicketLine> SoldExtras => soldExtras ?? Array.Empty<FoodTicketLine>();
         public ShopExperience? Failure { get; }
         public bool Paid { get; }
         public string Reason { get; }
@@ -183,6 +190,20 @@ namespace PersistentCity.Core
         IDisposable BeginCapture(double minute);
         bool IsCandidate(FoodScope scope);
         FoodBusiness? CaptureBusiness(string businessId, double minute);
+    }
+    /// <summary>F6j: a seller whose own checkout can sell same-visit extras after the main dish, under the meal's one
+    /// receipt. Paid means the main sold; SoldExtras lists the extras that also sold. A seller without this
+    /// interface, or returning false, sells the main dish only, so no extra is ever booked without a sale.</summary>
+    public interface IFoodTicketMarket
+    {
+        bool SellsExtras(string businessId);
+        FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute);
+    }
+    /// <summary>F6j: the seller's confirmed receipt for an uncertain meal, read without a checkout replay. Total is
+    /// what actually sold (at most the held planned total); extras are the sold extra lines.</summary>
+    public interface IFoodTicketEvidence
+    {
+        bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras);
     }
     public interface IFoodBusinessAuthority
     {
@@ -347,11 +368,8 @@ namespace PersistentCity.Core
                 // original transaction. Movement remains unresolved after proof settles cash.
                 try
                 {
-                    if (market is IFoodSaleEvidence evidence && evidence.IsConfirmedPaid(meal))
-                    {
-                        if (meal.Budget != null) HouseholdFinance.ConfirmPurchase(meal.Budget);
-                        ConfirmPurchase(meal, "Original native receipt confirmed; no checkout replay");
-                    }
+                    if (ConfirmedEvidence(meal, out var paid, out var extras))
+                        SettleConfirmed(meal, paid, extras, "Original native receipt confirmed; no checkout replay");
                 }
                 catch (Exception) { /* Missing proof preserves held funds and the original receipt. */ }
             }
@@ -376,12 +394,12 @@ namespace PersistentCity.Core
                 if (meal.Status == MealStatus.Uncertain)
                 {
                     bool confirmed = false;
-                    try { confirmed = market is IFoodSaleEvidence evidence && evidence.IsConfirmedPaid(meal); }
+                    Money paid = Money.Zero; IReadOnlyList<FoodTicketLine> extras = Array.Empty<FoodTicketLine>();
+                    try { confirmed = ConfirmedEvidence(meal, out paid, out extras); }
                     catch (Exception) { /* Unavailable evidence cannot authorize spending or a refund. */ }
                     if (confirmed)
                     {
-                        if (meal.Budget != null) HouseholdFinance.ConfirmPurchase(meal.Budget);
-                        ConfirmPurchase(meal, "Original native receipt confirmed; no checkout replay");
+                        SettleConfirmed(meal, paid, extras, "Original native receipt confirmed; no checkout replay");
                         meal.DueAt = now + .001;
                     }
                     else meal.DueAt = (Math.Floor(now / 1440) + 1) * 1440;
@@ -493,22 +511,36 @@ namespace PersistentCity.Core
                     { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); return; }
                     if (meal.Budget == null && meal.Price > AvailableForMeal(meal))
                     { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+                    // F6j: extras are planned from live terms; the wallet check and hold cover the whole ticket.
+                    var mainPrice = meal.Price;
+                    var limit = CurrentAllowance(meal);
+                    var ticket = CheckoutTicket(meal, now);
+                    if (ticket != null) { meal.Price = ticket.Total; if (!CanSettle(meal)) { meal.Price = mainPrice; ticket = null; } }
                     if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price))
-                    { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+                    { meal.Price = mainPrice; Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+                    // A held ticket may exceed the limit saved at commitment when the wallet grew since; record the
+                    // limit it was planned and held within. Never lowered, so a refusal keeps its saved terms.
+                    if (ticket != null) meal.Allowance = Money.Max(meal.Allowance, limit);
                     if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                     // Persist uncertainty before entering native code. No exception can trigger a replay.
+                    // An uncertain ticket keeps its planned total as Price and as the held amount.
                     meal.ServiceAt = now;
                     Finish(meal, MealStatus.Uncertain, "Native purchase did not confirm completion");
                     try
                     {
-                        var result = market.Buy(meal, now);
+                        var result = ticket != null ? ((IFoodTicketMarket)market).BuyTicket(meal, ticket, now) : market.Buy(meal, now);
+                        var sold = SoldExtras(ticket, result);
+                        Money held = meal.Price, paid = mainPrice;
+                        foreach (var line in sold) paid += line.Price;
+                        if (result.Paid) meal.Price = paid;
                         if (meal.Budget != null) {
-                            if (result.Paid) HouseholdFinance.ConfirmPurchase(meal.Budget);
+                            if (result.Paid) { HouseholdFinance.ReleasePart(meal.Budget, held - paid); HouseholdFinance.ConfirmPurchase(meal.Budget); }
                             else HouseholdFinance.RefusePurchase(meal.Budget);
                         }
-                        else if (!result.Paid) meal.DayAllowanceUsed -= meal.Price;
+                        else meal.DayAllowanceUsed -= result.Paid ? held - paid : held;
+                        if (!result.Paid) meal.Price = mainPrice;
                         meal.Status = result.Paid ? MealStatus.Paid : MealStatus.Missed; meal.Reason = result.Reason;
-                        if (result.Paid) ConfirmPurchase(meal, result.Reason);
+                        if (result.Paid) ConfirmPurchase(meal, result.Reason, sold);
                         else {
                             if (result.Failure == ShopExperience.Closed || result.Failure == ShopExperience.Stockout || result.Failure == ShopExperience.Queue)
                                 Experience(meal, result.Failure.Value, now);
@@ -520,10 +552,10 @@ namespace PersistentCity.Core
                 }
             }
         }
-        private void ConfirmPurchase(ResidentMeal meal, string reason)
+        private void ConfirmPurchase(ResidentMeal meal, string reason, IReadOnlyList<FoodTicketLine>? extras = null)
         {
             Experience(meal, ShopExperience.Served, meal.ServiceAt);
-            RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
+            RecordPurchase(meal, extras); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
             RecordOutcome(meal, city.State.Minute, true);

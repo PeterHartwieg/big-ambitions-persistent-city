@@ -191,6 +191,13 @@ namespace PersistentCity.Core
             CheckCash(budget);
             budget.Balance -= price; budget.HeldPurchase = price; CheckCash(budget); return true;
         }
+        /// <summary>F6j: return the unsold part of a held ticket before confirming the rest.</summary>
+        public static void ReleasePart(ResidentBudget budget, Money amount)
+        {
+            if (amount == Money.Zero) return;
+            if (amount < Money.Zero || amount > budget.HeldPurchase) throw new InvalidOperationException("Release exceeds the held purchase.");
+            CheckCash(budget); budget.Balance += amount; budget.HeldPurchase -= amount; CheckCash(budget);
+        }
         public static void ConfirmPurchase(ResidentBudget budget)
         { CheckCash(budget); budget.PreparedFoodSpent += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; CheckCash(budget); }
         public static void RefusePurchase(ResidentBudget budget)

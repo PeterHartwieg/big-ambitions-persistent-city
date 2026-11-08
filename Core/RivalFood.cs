@@ -211,7 +211,7 @@ namespace PersistentCity.Core
         private bool RivalMatches(string id, string place, string terms, IEnumerable<FoodDecisionOffer>? offers, ResidentMeal? meal, double minute,
             out Place? hours, out ShopExperience? failure, out string businessType, bool requireOpen = true, bool captureHours = false)
         {
-            hours = null; failure = null; businessType = "";
+            hours = null; failure = null; businessType = ""; matchedRival = null;
             var observation = ObserveRival(id);
             // One existing detail read supplies both settlement validation and optional memory.
             // Missing/foreign/changed-price evidence cannot name a bad visit.
@@ -224,6 +224,7 @@ namespace PersistentCity.Core
             if (!RivalFoodTerms.Eligible(observation) || failure.HasValue
                 || RivalFoodTerms.Fingerprint(observation) != terms) return false;
             businessType = observation.BusinessType; rivalTypes[place] = businessType;
+            matchedRival = observation;
             if (!requireOpen) return true;
             // Completion needs membership only; only arrival needs the union's next-close boundary.
             if (captureHours) hours = new Place { WeeklyHours = observation.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };
@@ -263,8 +264,15 @@ namespace PersistentCity.Core
         {
             if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out _, out var failure, out _))
             { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
+            // F6j: the modeled ticket adds extras from the advertised menu; the wallet check covers the total.
+            var mainPrice = meal.Price;
+            var limit = CurrentAllowance(meal);
+            var ticket = RivalTicket(meal);
+            if (ticket != null && ExternalFoodSettlement.CanPay(meal, ticket.Total)) meal.Price = ticket.Total;
             if (!ExternalFoodSettlement.TryPay(meal, state.Outflow, now))
-            { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+            { meal.Price = mainPrice; Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+            // A settled ticket may exceed the limit saved at commitment when the wallet grew since (never lowered).
+            if (meal.Price > mainPrice) meal.Allowance = Money.Max(meal.Allowance, limit);
             RivalSettlements++; meal.ServiceAt = now; rivalLoad.Paid(meal);
             RivalExperience(meal, ShopExperience.Served, now);
             Finish(meal, MealStatus.Paid, "Modeled rival food purchase; availability estimated");

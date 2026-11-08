@@ -19,7 +19,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>Automatic whole-business food authority. Saves use the same native snapshot
     /// as population/meal records. Native code owns inventory, orders and daily accounting.</summary>
-    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IDisposable
+    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IDisposable
     {
         public const string Product = "ba:itemname_croissant";
         private const string PatchId = "persistentcity.food-routines";
@@ -217,6 +217,12 @@ namespace PersistentCity.Runtime
         internal static bool IsBuying(BuildingRegistration reg) => active != null && active.buying && ReferenceEquals(active.buyerShop, reg);
         public bool IsConfirmedPaid(ResidentMeal meal) => meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
             && FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;
+        public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+        {
+            total = Money.Zero; extras = Array.Empty<FoodTicketLine>();
+            return meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
+                && FoodSaleReceipts.TryReadPaidTicket(SaveGameManager.Current.modData, meal, out total, out extras);
+        }
         public bool CanServe(string businessId)
         {
             if (!ReferenceEquals(save, SaveGameManager.Current)) return false;
@@ -381,19 +387,28 @@ namespace PersistentCity.Runtime
             decisionSupply[placeId] = new DecisionSupply(reg, businessId, products, supply);
             return supply;
         }
-        public FoodSale Buy(ResidentMeal meal, double minute)
+        public FoodSale Buy(ResidentMeal meal, double minute) => BuyChecked(meal, minute, null);
+        /// <summary>F6j: every scoped player shop sells extras as further one-product native orders in the same call.</summary>
+        public bool SellsExtras(string businessId) => scopesByBusiness.ContainsKey(businessId);
+        public FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute) => BuyChecked(meal, minute, ticket);
+        private FoodSale BuyChecked(ResidentMeal meal, double minute, FoodMealTicket? ticket)
         {
             if (meal.TargetKind != FoodAlternativeKind.Player) return new FoodSale(false, "Rivals have no native checkout authority");
+            if (ticket != null && (ticket.BusinessId != meal.BusinessId || ticket.Main.ProductId != meal.ProductId || ticket.Total != meal.Price))
+                return new FoodSale(false, "Ticket differs from the committed meal");
             // Any checkout attempt may change this shop's native stock, bags or orders.
-            try { return BuyLive(meal, minute); }
+            try { return BuyLive(meal, minute, ticket); }
             finally { decisionSupply.Remove(meal.PlaceId); }
         }
-        private FoodSale BuyLive(ResidentMeal meal, double minute)
+        // With a ticket, meal.Price is the planned total and the main line is sold at ticket.Main.Price.
+        private FoodSale BuyLive(ResidentMeal meal, double minute, FoodMealTicket? ticket)
         {
             if (minute < EarliestMinute || minute >= EarliestMinute + 60 || !ReferenceEquals(save, SaveGameManager.Current))
                 return new FoodSale(false, "Native clock differs from service time");
             var data = SaveGameManager.Current.modData;
-            if (FoodSaleReceipts.AlreadyPaid(data, meal)) return new FoodSale(true, "Native saved receipt already confirms this intention");
+            Money mainPrice = ticket?.Main.Price ?? meal.Price;
+            if (ticket == null ? FoodSaleReceipts.AlreadyPaid(data, meal) : FoodSaleReceipts.AlreadyPaid(data, meal, ticket.Extras))
+                return new FoodSale(true, "Native saved receipt already confirms this intention", null, ticket?.Extras);
             if (receiptDay != SaveGameManager.Current.Day)
             {
                 receiptDay = SaveGameManager.Current.Day;
@@ -416,7 +431,7 @@ namespace PersistentCity.Runtime
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
-            if (offer != null && offer.Price != meal.Price) return new FoodSale(false, "Approved price changed");
+            if (offer != null && offer.Price != mainPrice) return new FoodSale(false, "Approved price changed");
             var reg = registrations[meal.PlaceId];
             if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service", ShopExperience.Closed);
             // A zero sellable-unit count can also mean no staffed counter. Name stockout only
@@ -426,7 +441,7 @@ namespace PersistentCity.Runtime
                 && (supply.ProducerUnits == 0 || supply.StaffedCounters > 0 && supply.BagUnits == 0))
                 return new FoodSale(false, "Confirmed stockout before service", ShopExperience.Stockout);
             if (offer == null || !offer.Units.HasValue || offer.Units <= 0 || !business!.MealsPerHour.HasValue || business.MealsPerHour <= 0
-                || offer.Price != meal.Price || meal.Price > meal.Allowance
+                || offer.Price != mainPrice || meal.Price > meal.Allowance
                 || meal.ServiceMinutes + 1e-7 < 60.0 / business.MealsPerHour.Value)
                 return new FoodSale(false, "Stock or staffing changed");
             var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
@@ -441,9 +456,38 @@ namespace PersistentCity.Runtime
             { before = seen.Supply; CheckoutSupplyReuses++; }
             else before = FoodSupplyReader.ReadMenu(reg, products);
             if (before.Values.Any(s => !s.Units.HasValue)) return new FoodSale(false, "Menu supply contract changed");
+            var refusal = SellLine(meal, minute, reg, business!, scope, meal.ProductId, mainPrice, before,
+                () => FoodSaleReceipts.Begin(data, meal, ticket?.Extras), out before);
+            if (refusal.HasValue) return refusal.Value;
+            // F6j: each extra is one more one-product order with the same checks, sold only after the main
+            // line is confirmed. The first refusal stops the extras; an uncertain line throws (no retry).
+            var sold = new List<FoodTicketLine>();
+            if (ticket != null)
+                foreach (var extra in ticket.Extras)
+                {
+                    var extraOffer = business!.Offers.SingleOrDefault(o => o.ProductId == extra.ProductId);
+                    if (extraOffer == null || extraOffer.Price != extra.Price || !before.TryGetValue(extra.ProductId, out var extraSupply)
+                        || !(extraSupply.Units > 0) || ScopeStatus(meal.PlaceId).Length > 0 || !BusinessHelper.IsBusinessOpen(reg)) break;
+                    if (SellLine(meal, minute, reg, business!, scope, extra.ProductId, extra.Price, before, null, out before).HasValue) break;
+                    sold.Add(extra);
+                }
+            if (ticket == null) FoodSaleReceipts.Confirm(data, meal);
+            else FoodSaleReceipts.Confirm(data, meal, mainPrice, ticket.Extras, sold);
+            NativePurchases += 1 + sold.Count;
+            return new FoodSale(true, sold.Count == 0 ? "Native product, bag and completed order confirmed; daily settlement remains native"
+                : "Native products, bags and completed orders confirmed; daily settlement remains native", null, sold);
+        }
+        /// <summary>One product as one native customer order and bag. Null after a confirmed sale; a refusal before
+        /// any receipt or native effect; throws when the native outcome is uncertain. <paramref name="beginReceipt"/>
+        /// runs immediately before the native order (the main line); extras share the receipt already begun.</summary>
+        private FoodSale? SellLine(ResidentMeal meal, double minute, BuildingRegistration reg, FoodBusiness business, FoodScope scope,
+            string product, Money price, IReadOnlyDictionary<string, FoodSupplySnapshot> before, Action? beginReceipt,
+            out IReadOnlyDictionary<string, FoodSupplySnapshot> after)
+        {
+            after = before;
             int orders = reg.unprocessedCompletedOrders.Count;
             var customer = new CustomerEntry { spawnTime = TimeHelper.Now(), order = new Order {
-                entries = new List<OrderEntry> { new OrderEntry { itemName = meal.ProductId } } } };
+                entries = new List<OrderEntry> { new OrderEntry { itemName = product } } } };
             var simulator = ScriptableObject.CreateInstance<FullServiceBusinessSimulator>();
             try
             {
@@ -451,13 +495,13 @@ namespace PersistentCity.Runtime
                 if (!ReferenceEquals(save, SaveGameManager.Current) || minute < EarliestMinute || minute >= EarliestMinute + 60
                     || !CanServe(meal.BusinessId))
                     return new FoodSale(false, "Native authority or accounting hour changed during checkout");
-                approvedProduct = meal.ProductId;
+                approvedProduct = product;
                 // Native callbacks can remove or duplicate the selected row after capture.
                 // This is a definite pre-receipt refusal, not an uncertain Single() exception.
                 if (reg.retailPrices == null || reg.retailPrices.Count > 128)
                     return RefuseCheckoutContract(reg);
                 int selectedPrices = 0;
-                foreach (var row in reg.retailPrices) if (row != null && row.itemName == meal.ProductId)
+                foreach (var row in reg.retailPrices) if (row != null && row.itemName == product)
                 { selectedPrices++; approvedPrice = row.price; }
                 if (selectedPrices != 1) return RefuseCheckoutContract(reg);
                 Money livePrice;
@@ -468,30 +512,30 @@ namespace PersistentCity.Runtime
                     RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
                     return new FoodSale(false, "Approved price is outside the supported range");
                 }
-                if (livePrice != meal.Price)
+                if (livePrice != price)
                     return new FoodSale(false, "Approved price changed during native setup");
                 // Setup/open checks may invoke native callbacks. Check the whole approved menu
                 // again, not only the chosen price, before creating a receipt or native order.
-                if (!CompletePricesMatch(reg, business!) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
+                if (!CompletePricesMatch(reg, business) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
                     || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true)
                 {
                     return RefuseCheckoutContract(reg);
                 }
-                FoodSaleReceipts.Begin(data, meal);
+                beginReceipt?.Invoke();
                 buyerShop = reg; buying = true;
                 Process.Invoke(simulator, new object[] { customer });
             }
             finally { buying = false; buyerShop = null; UnityEngine.Object.Destroy(simulator); }
             var entries = customer.order.entries.Where(e => e.paid && ItemsGetter.GetByName(e.itemName)?.HasTag(BigAmbitions.Tags.TagRef.Itemtag.isbag) != true).ToArray();
-            var after = FoodSupplyReader.ReadMenu(reg, scope.Products());
-            if (entries.Length != 1 || entries[0].itemName != meal.ProductId || entries[0].price != approvedPrice
-                || !customer.order.completed || after[meal.ProductId].ProducerUnits != before[meal.ProductId].ProducerUnits - 1
-                || after[meal.ProductId].BagUnits != before[meal.ProductId].BagUnits - 1
-                || scope.Products().Any(p => p != meal.ProductId && after[p].ProducerUnits != before[p].ProducerUnits)
+            var image = FoodSupplyReader.ReadMenu(reg, scope.Products());
+            if (entries.Length != 1 || entries[0].itemName != product || entries[0].price != approvedPrice
+                || !customer.order.completed || image[product].ProducerUnits != before[product].ProducerUnits - 1
+                || image[product].BagUnits != before[product].BagUnits - 1
+                || scope.Products().Any(p => p != product && image[p].ProducerUnits != before[p].ProducerUnits)
                 || reg.unprocessedCompletedOrders.Count != orders + 1)
                 throw new InvalidOperationException("Native sale outcome is uncertain; do not retry this intention.");
-            FoodSaleReceipts.Confirm(data, meal);
-            NativePurchases++; return new FoodSale(true, "Native product, bag and completed order confirmed; daily settlement remains native");
+            after = image;
+            return null;
         }
         private FoodSale RefuseCheckoutContract(BuildingRegistration reg)
         {
