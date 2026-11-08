@@ -8,6 +8,7 @@ Refs #93. Task `pc-f6k-price-weight`, base `codex/persistent-city` at `077d27c7`
 - `config/persistent-city.json`: `FoodChoicePriceWeight` 1.0 → 1.2. The file set the key explicitly, so leaving it would have kept new installs at 1.
 - `Core/FoodChoicePolicy.cs`: comment only (the neutral +50% weight is now 0.38, not 4/9). `PriceFactor`, `TicketFactor` and `MealReferenceCents` are unchanged.
 - `tools/economy-interventions`: `RunOptions.PriceWeight` and the `--price-weight` fallback follow the production default, so a run without the flag measures the shipped setting. Pass `--price-weight 1` to reproduce #160.
+- `tools/economy-interventions/acceptance.py` (review fix Opus-r1-1): the +50% menu dominance certificate is still computed and reported (`menuDominanceCertificates`, `menuPlus50DominantDiagnostic`) but no longer added to `failedCriteria`, so a later F6h run does not report stopped on the closed criterion.
 - Docs: the F6h checks file, the F6 plan and the 6 November defaults file record that F6h no longer stops on profit non-dominance.
 
 ## Saves and existing cities
