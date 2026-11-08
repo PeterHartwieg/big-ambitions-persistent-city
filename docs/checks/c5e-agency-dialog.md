@@ -11,7 +11,7 @@ Plan: [C5 section 4, row C5e](../plans/c5-agency-research.md#c5e--agency-dialog-
   - `Runtime/ResearchAgencyMenu.cs`: the pure gate, click rule, menu tree and localization keys. It is linked into the test project.
   - `Runtime/Localization/en.json`, the English table.
   - Wiring in `Runtime/PersistentCityMod.cs`: `ResearchBilling.Install` and `ResearchAgencyDialog.Install` at initialization. At attach, the saved `CityState.Research` goes through C5b's `AttachResearch`, `ResearchBilling.Attach` and the dialog desk. Detach and uninstall at detach and shutdown.
-  - `tests/ResearchMenuTests.cs` (19 cases).
+  - `tests/ResearchMenuTests.cs` (18 cases).
 - **Small edits outside the owned files, each needed for the wiring:**
   - one `Compile Include` in `tests/PersistentCity.Tests.csproj`;
   - a copy of `Runtime/Localization/*.json` to `<package>/Locales/` in `tools/build.py`;
@@ -83,8 +83,8 @@ Read with read-only ILSpy on 8 November 2026. `BigAmbitions.dll` SHA-256 is `942
 | Check | Result |
 | --- | --- |
 | `python tools/build.py --game-managed "...\Big Ambitions_Data\Managed"` | passed; package has `Locales/en.json` |
-| `dotnet test tests/PersistentCity.Tests.csproj` | **3,914 / 3,914 passed** (19 new C5e cases), including the pinned writer-33 golden hash |
-| `dotnet test ... --filter ResearchMenuTests` | 19 / 19 passed; perf lines in [docs/perf/c5e-agency-dialog.md](../perf/c5e-agency-dialog.md) |
+| `dotnet test tests/PersistentCity.Tests.csproj` | **3,914 / 3,914 passed** (18 new C5e cases), including the pinned writer-33 golden hash |
+| `dotnet test ... --filter ResearchMenuTests` | 18 / 18 passed; perf lines in [docs/perf/c5e-agency-dialog.md](../perf/c5e-agency-dialog.md) |
 
 Cases in `tests/ResearchMenuTests.cs`:
 
