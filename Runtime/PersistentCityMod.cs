@@ -213,6 +213,8 @@ namespace PersistentCity.Runtime
                 settings.FoodChoice.Clamp(message => log.Info(message));
                 log.Info("Food menu policy v1: configured="+settings.FoodMenuMaximumOffersPerShop+", effective native maximum="+Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop)+"; reserved product codes grant no sale permission.");
                 settings.MarketResearch.Clamp(message => log.Info(message));
+                // C5d/C5e native contract checks. A mismatch turns research off with a status line; the city still runs.
+                ResearchBilling.Install(); ResearchAgencyDialog.Install();
                 settings.Rivals.Clamp(message => log.Info(message));
                 log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit+", service limits "+RivalServiceCalibration.Label+": "+settings.Rivals.ServiceLimitsText());
                 settings.Awareness.Clamp(message => log.Info(message));
@@ -707,6 +709,7 @@ namespace PersistentCity.Runtime
             foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop, economy: state.Economy);
             simulation.AttachFoodMarket(ComposeFoodMarkets(foodMarket), settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
             saveIdentity = save;
+            AttachResearch(state);
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeTravelPace.ResetReading();
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
@@ -798,8 +801,48 @@ namespace PersistentCity.Runtime
             log?.Info(message);
         }
 
+        /// <summary>C5e: the saved CityState.Research ledger reaches the survey through the C5b seam, the native bill
+        /// through ResearchBilling and the agency dialog through its desk. Ordering stays hidden while
+        /// MarketResearchSettings.Available is false. A refused dialog or billing contract turns research off for the session:
+        /// the ledger stays in the save unchanged, nothing surveys or charges, and the city keeps running.</summary>
+        private void AttachResearch(CityState state)
+        {
+            if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))
+            {
+                log?.Warn("Research off for this session; saved research orders are kept unchanged. "
+                    + ResearchAgencyDialog.Status + " " + ResearchBilling.Status);
+                return;
+            }
+            simulation!.AttachResearch(state.Research, settings.MarketResearch.MarketResearchConsumersPerUnit);
+            ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit);
+            ResearchAgencyDialog.Attach(new ResearchDesk(ResearchAttached, () => settings.MarketResearch.Available, ResearchEligible,
+                () => simulation?.Research, () => settings.MarketResearch.MarketResearchCatchmentMetres, Now, message => log?.Info(message)));
+        }
+
+        private bool ResearchAttached() => !failed && !accountingStopped && simulation != null && saveEpoch != null
+            && saveIdentity != null && ReferenceEquals(saveIdentity, SaveGameManager.Current);
+
+        /// <summary>Plan section 9, Q4: a player-rented business whose food scope Persistent City owns and can serve now.
+        /// Ordering and billing use this one predicate.</summary>
+        private bool ResearchEligible(BuildingRegistration registration)
+        {
+            if (registration == null || !registration.RentedByPlayer || string.IsNullOrEmpty(registration.BusinessName)) return false;
+            var food = simulation?.State.Food;
+            var market = foodMarket;
+            if (food == null || market == null) return false;
+            string place = NativeFoodMarket.PlaceId(registration);
+            foreach (var scope in food.Shops)
+                if (scope.Channel == FoodScopeChannel.Shop && string.Equals(scope.PlaceId, place, StringComparison.Ordinal))
+                {
+                    bool observed = market.ObservedOwnShop(scope);
+                    return ResearchEligibility.Decide(true, scope.BusinessId, observed, observed ? NativeFoodOwnership.Find(registration) : null);
+                }
+            return false;
+        }
+
         private void Detach()
         {
+            ResearchAgencyDialog.Detach(); ResearchBilling.Detach();
             DetachSaveEpoch();
             NativeInteriorCityView.Stop();
             vendorMarket?.Dispose(); vendorMarket = null;
@@ -815,6 +858,7 @@ namespace PersistentCity.Runtime
 
         public void Shutdown()
         {
+            ResearchAgencyDialog.Uninstall(); ResearchBilling.Uninstall();
             UnregisterVendorDiagnostics();
             ResetCensus();
             Detach();
