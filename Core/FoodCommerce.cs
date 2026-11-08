@@ -246,6 +246,12 @@ namespace PersistentCity.Core
         /// pre-27 represented-consumer anchor. Schema 27 keeps it at zero (F5d: no anchor read at all).</summary>
         public long AnchorReads { get; private set; }
         internal int QueuedMeals => due.Count;
+        internal int DueMealsAtOrBefore(double minute)
+        {
+            int count = 0;
+            foreach (var meal in due) { if (meal.DueAt > minute) break; count++; }
+            return count;
+        }
         // The person whose schedule, wallet inputs and traits a meal reads. From schema 27 that is always its owner.
         private CitizenState? Owner(ResidentMeal meal)
         {

@@ -34,7 +34,6 @@ public sealed class F5hMeasure
     {
         // Frames the day takes against the frames at an unheld native clock (half a game minute per frame at 60 FPS).
         double nominal = skip ? 1440 / 120.0 : 1440 / (30.0 / fps);
-        var busy = w.EventsPerHour.Where(e => e > 0).ToList();
         return new Dictionary<string, object>
         {
             ["size"] = size, ["arm"] = arm, ["personsAtStart"] = w.PersonsAtStart, ["personsAtEnd"] = w.PersonsAtEnd,
@@ -42,15 +41,17 @@ public sealed class F5hMeasure
             ["historicalClockMisses"] = w.HistoricalClockMisses, ["reloads"] = w.Reloads, ["fillReloads"] = w.FillReloads,
             ["fillUnits"] = w.FillUnits, ["fillCreated"] = w.FillCreated, ["postings"] = w.Postings,
             ["citizenUnits"] = w.CitizenUnits, ["foodContinuationUnits"] = w.FoodUnits,
-            ["eventsPerGameHour"] = new { max = w.EventsPerHour.Max(), mean = busy.Count == 0 ? 0 : Math.Round(busy.Average(), 1), total = w.EventsPerHour.Sum() },
-            ["peakQueue"] = new { persons = w.PeakPersonQueue, meals = w.PeakMealQueue }, ["peakPlanningFrames"] = w.PeakPlanningFrames,
+            ["eventsPerGameHour"] = new { max = w.EventsPerHour.Max(), mean = Math.Round(w.EventsPerHour.Average(), 1), total = w.EventsPerHour.Sum() }, ["plannedEvents"] = w.PlannedEvents,
+            ["queueOccupancy"] = new { persons = w.PeakPersonQueue, meals = w.PeakMealQueue },
+            ["dueBacklog"] = new { peak = w.PeakDueBacklog, framesWithBacklog = w.FramesWithBacklog, longestDrainFrames = w.LongestBacklogFrames }, ["peakPlanningFrames"] = w.PeakPlanningFrames,
             ["planning"] = new { requests = w.PlanningRequests, jobs = w.Jobs, paths = w.Paths, deferred = w.Deferred, maxPathsInFrame = w.MaxPathsInFrame, maxFramesWaited = w.MaxFramesWaited },
             ["portal"] = new { hits = w.PortalHits, misses = w.PortalMisses },
             ["frameMs"] = Stats(w.Frame), ["fillMs"] = Stats(w.FillMs), ["postingMs"] = Stats(w.PostingMs), ["planningMs"] = Stats(w.PlanningMs), ["eventMs"] = Stats(w.EventMs),
             ["fillUnitMs"] = Stats(w.FillUnitMs), ["fillUnitBytes"] = Stats(w.FillUnitBytes, 0), ["postingUnitMs"] = Stats(w.PostingUnitMs), ["citizenUnitMs"] = Stats(w.CitizenUnitMs), ["foodUnitMs"] = Stats(w.FoodUnitMs),
             ["spikes"] = new { atLeast5Ms = w.Spikes.Count, withGc = w.Spikes.Count(x => x.Gc >= 0), withGen2 = w.Spikes.Count(x => x.Gc == 2),
                 byComponent = w.Spikes.GroupBy(x => x.Component).ToDictionary(g => g.Key, g => g.Count()),
-                top = w.Spikes.OrderByDescending(x => x.Ms).Take(8).Select(x => $"{x.Ms:F1} ms {x.Component} @{x.Minute:F0} gc{x.Gc}").ToArray() },
+                top = w.Spikes.OrderByDescending(x => x.Ms).Take(8).Select(x => $"{x.Ms:F1} ms {x.Component} @{x.Minute:F0} gc{x.Gc}").ToArray(),
+                withoutGc = w.Spikes.Where(x => x.Gc < 0).Select(x => $"{x.Ms:F1} ms {x.Component} @{x.Minute:F0}").ToArray() },
             ["orders"] = w.Orders.Length, ["stateHash"] = Sha(w.Snapshot + string.Join(",", w.Orders)), ["buildMs"] = Math.Round(buildMs)
         };
     }
@@ -90,18 +91,18 @@ public sealed class F5hMeasure
     }
 
     /// <summary>One measured shape: homes, seeding factor, fill catalogue and the day whose 06:00 starts the window.</summary>
-    private sealed record Size(string Name, int Homes, int Factor, Func<PopulationFillCatalogue> Fill, int Day);
+    private sealed record Size(string Name, Func<F5hIntegratedAcceptanceTests.Shape> Shape, int Factor, int Day);
 
     // Residents are floor(6.3 × homes) (seven beds, 90% fill). Factor-1 sizes are filled toward their census targets before
     // the window; factor-2 sizes start fresh with R seeded commuters, and the window's first boundary creates 1,024 pool
-    // members. Their persisted count is 2R + 1,024 after it.
+    // members. Every shape's saved places are its census businesses (review Astra-r1-1).
     private static readonly Size[] Sizes =
     {
-        new("reference", F5hIntegratedAcceptanceTests.ReferenceHomes, 1, F5hIntegratedAcceptanceTests.ReferenceCatalogue, 3),
-        new("1914", F5hIntegratedAcceptanceTests.ReferenceHomes, 2, () => F5gPopulationFillTests.Catalogue(F5hIntegratedAcceptanceTests.ReferenceHomes, F5gPopulationFillTests.Base), 1),
-        new("10000", F5hIntegratedAcceptanceTests.StressHomes, 1, F5hIntegratedAcceptanceTests.StressCatalogue, 8),
-        new("50000", 3887, 2, () => F5gPopulationFillTests.Catalogue(3887, F5gPopulationFillTests.Base), 1),
-        new("100000", 7855, 2, () => F5gPopulationFillTests.Catalogue(7855, F5gPopulationFillTests.Base), 1),
+        new("reference", F5hIntegratedAcceptanceTests.ReferenceShape, 1, 3),
+        new("1914", F5hIntegratedAcceptanceTests.ReferenceShape, 2, 1),
+        new("10000", F5hIntegratedAcceptanceTests.StressShape, 1, 8),
+        new("50000", () => F5hIntegratedAcceptanceTests.ScaledShape(3887), 2, 1),
+        new("100000", () => F5hIntegratedAcceptanceTests.ScaledShape(7855), 2, 1),
     };
 
     /// <summary>Section 6 matrix: per size, one day at 60 FPS with Runtime's 60 FPS frame shape (128 units, 16 citizen events, 2 ms; <see cref="PopulationFrameBudget"/>), then the saved city's bytes, records,
@@ -115,8 +116,8 @@ public sealed class F5hMeasure
         foreach (var size in Sizes.Where(s => only.Contains(s.Name)))
         {
             long started = Stopwatch.GetTimestamp();
-            var fill = size.Fill();
-            string payload = F5hIntegratedAcceptanceTests.Prefilled(size.Homes, fill, size.Day, size.Factor);
+            var shape = size.Shape(); var fill = shape.Catalogue;
+            string payload = F5hIntegratedAcceptanceTests.Prefilled(shape, size.Day, size.Factor);
             double buildMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
             var caps = new PopulationFrameBudget(1 / 60.0, false);
             var w = F5hIntegratedAcceptanceTests.Accounting(payload, fill, 60, caps.Units, caps.Milliseconds, reload: false, skip: false, citizenLimit: caps.CitizenEvents);
@@ -129,18 +130,18 @@ public sealed class F5hMeasure
     /// <summary>The full F1 matrix at about 10,000 persons: from 06:00 on day 7 across the seventh boundary, which completes the
     /// fill. Every arm, with and without saves, must equal the 60/128/2 reference in save and orders.</summary>
     [Fact]
-    public void MeasureStressMatrix() => Matrix("10000", F5hIntegratedAcceptanceTests.StressHomes, F5hIntegratedAcceptanceTests.StressCatalogue, 7);
+    public void MeasureStressMatrix() => Matrix("10000", F5hIntegratedAcceptanceTests.StressShape, 7);
 
     /// <summary>The same matrix at the declared load, with timings (the ordinary test asserts equality only).</summary>
     [Fact]
-    public void MeasureReferenceMatrix() => Matrix("reference", F5hIntegratedAcceptanceTests.ReferenceHomes, F5hIntegratedAcceptanceTests.ReferenceCatalogue, 2);
+    public void MeasureReferenceMatrix() => Matrix("reference", F5hIntegratedAcceptanceTests.ReferenceShape, 2);
 
-    private static void Matrix(string name, int homes, Func<PopulationFillCatalogue> catalogue, int day)
+    private static void Matrix(string name, Func<F5hIntegratedAcceptanceTests.Shape> make, int day)
     {
         string? path = Output; if (path == null) return;
-        var fill = catalogue();
+        var shape = make(); var fill = shape.Catalogue;
         long started = Stopwatch.GetTimestamp();
-        string payload = F5hIntegratedAcceptanceTests.Prefilled(homes, fill, day);
+        string payload = F5hIntegratedAcceptanceTests.Prefilled(shape, day);
         double buildMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
         var reference = F5hIntegratedAcceptanceTests.Accounting(payload, fill, 60, 128, 2, reload: false, skip: false);
         File.AppendAllText(path, JsonConvert.SerializeObject(Row(name, "reference 60/128/2", reference, buildMs, 60, false)) + Environment.NewLine);
