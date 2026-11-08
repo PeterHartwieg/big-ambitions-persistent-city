@@ -8,6 +8,8 @@
     <Compile Include="EconomyFixture.cs" /><Compile Include="InterventionInputs.cs" />
     <Compile Include="EconomyRun.cs" /><Compile Include="EconomyMetrics.cs" />
     <Compile Include="InterventionArms.cs" /><Compile Include="SelfChecks.cs" />
+    <Compile Include="../movement-equivalence/MovementFixture.cs" Link="MovementFixture.cs" />
+    <Compile Include="../movement-equivalence/PresentationDriver.cs" Link="PresentationDriver.cs" />
     <Compile Include="Baseline.cs" /><Compile Include="Program.cs" />
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />

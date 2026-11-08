@@ -230,9 +230,17 @@ public static class EconomyFixture
         };
         for (int i = 0; i < Workplaces; i++)
             places.Add(new Place { Id = WorkplaceId(i), Name = "Work " + i, Kind = PlaceKind.Work, Capacity = residents / Workplaces + 1, Position = new Position(0, 1, 0) });
-        var state = Population.Create(Enumerable.Range(0, residents).Select(n => new CitizenIdentity {
+        var state = Population.Create(Enumerable.Range(0, Math.Min(residents, 5000)).Select(n => new CitizenIdentity {
             Id = "r" + n, Name = "Resident " + n, Persona = Persona.Foodie, Age = 30 }).ToArray(), places,
             "economy-interventions", "0.40.4", seed, StartMinute);
+        if (residents > 5000)
+        {
+            // The immutable donor catalogue is capped at 5,000. Stress cities grow through
+            // the same F5 housing expansion as the E5d save fixtures, retaining stable pc: IDs.
+            state.Places.Single(p => p.Id == "home").Capacity = (int)(((long)residents * 10 + 8) / 9);
+            Population.ExpandToHousing(state);
+            if (state.Citizens.Count != residents) throw new InvalidOperationException("stress housing target mismatch");
+        }
         foreach (var person in state.Citizens)
         {
             person.Phase = CitizenPhase.AtPlace; person.PlaceId = "home"; person.Activity = Activity.Home;

@@ -1,0 +1,1372 @@
+{
+  "schema": "persistentcity-f6h-review-measurements-1",
+  "writer": 33,
+  "platform": "macOS arm64, .NET 10 Release",
+  "components": [
+    {
+      "work": "rival reconstruction",
+      "consumers": 1914,
+      "rivals": 64,
+      "interval": {
+        "n": 10,
+        "p50": 0.19,
+        "p95": 3.3755,
+        "max": 3.3755,
+        "bytesPerOperation": 12968.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival arrival/completion",
+      "consumers": 1914,
+      "rivals": 64,
+      "lanes": 2,
+      "arrival": {
+        "n": 20000,
+        "p50": 0.0006,
+        "p95": 0.0007,
+        "max": 0.0437,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      },
+      "completion": {
+        "n": 20000,
+        "p50": 0.0,
+        "p95": 0.0001,
+        "max": 0.0412,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival arrival/completion",
+      "consumers": 1914,
+      "rivals": 64,
+      "lanes": 8,
+      "arrival": {
+        "n": 20000,
+        "p50": 0.0008,
+        "p95": 0.0009,
+        "max": 0.02,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      },
+      "completion": {
+        "n": 20000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0196,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival reconstruction",
+      "consumers": 10000,
+      "rivals": 1024,
+      "interval": {
+        "n": 10,
+        "p50": 0.3165,
+        "p95": 3.9993,
+        "max": 3.9993,
+        "bytesPerOperation": 233440.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival arrival/completion",
+      "consumers": 10000,
+      "rivals": 1024,
+      "lanes": 2,
+      "arrival": {
+        "n": 20000,
+        "p50": 0.0005,
+        "p95": 0.0005,
+        "max": 0.0291,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      },
+      "completion": {
+        "n": 20000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0118,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival arrival/completion",
+      "consumers": 10000,
+      "rivals": 1024,
+      "lanes": 8,
+      "arrival": {
+        "n": 20000,
+        "p50": 0.0007,
+        "p95": 0.0008,
+        "max": 0.0472,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      },
+      "completion": {
+        "n": 20000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0254,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival reconstruction",
+      "consumers": 100000,
+      "rivals": 20000,
+      "interval": {
+        "n": 10,
+        "p50": 8.9815,
+        "p95": 19.2995,
+        "max": 19.2995,
+        "bytesPerOperation": 4555296.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival arrival/completion",
+      "consumers": 100000,
+      "rivals": 20000,
+      "lanes": 2,
+      "arrival": {
+        "n": 20000,
+        "p50": 0.0006,
+        "p95": 0.0006,
+        "max": 0.0308,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      },
+      "completion": {
+        "n": 20000,
+        "p50": 0.0,
+        "p95": 0.0001,
+        "max": 0.0092,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival arrival/completion",
+      "consumers": 100000,
+      "rivals": 20000,
+      "lanes": 8,
+      "arrival": {
+        "n": 20000,
+        "p50": 0.0008,
+        "p95": 0.0009,
+        "max": 0.0448,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      },
+      "completion": {
+        "n": 20000,
+        "p50": 0.0,
+        "p95": 0.0001,
+        "max": 0.0278,
+        "bytesPerOperation": 0.0,
+        "spikes30": []
+      }
+    },
+    {
+      "work": "rival retained",
+      "rivals": 20000,
+      "bytes": -165569728
+    },
+    {
+      "work": "paged panel",
+      "consumers": 1914,
+      "shops": 1,
+      "interval": {
+        "n": 100,
+        "p50": 0.0214,
+        "p95": 0.0252,
+        "max": 0.1246,
+        "bytesPerOperation": 30152.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 1914,
+      "shops": 64,
+      "interval": {
+        "n": 100,
+        "p50": 0.4518,
+        "p95": 0.5682,
+        "max": 1.4029,
+        "bytesPerOperation": 323336.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 1914,
+      "shops": 1024,
+      "interval": {
+        "n": 100,
+        "p50": 2.0339,
+        "p95": 2.6998,
+        "max": 5.5471,
+        "bytesPerOperation": 610032.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 10000,
+      "shops": 1,
+      "interval": {
+        "n": 100,
+        "p50": 0.0206,
+        "p95": 0.0247,
+        "max": 0.0476,
+        "bytesPerOperation": 30232.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 10000,
+      "shops": 64,
+      "interval": {
+        "n": 100,
+        "p50": 0.3337,
+        "p95": 0.3913,
+        "max": 3.9007,
+        "bytesPerOperation": 323488.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 10000,
+      "shops": 1024,
+      "interval": {
+        "n": 100,
+        "p50": 0.684,
+        "p95": 1.3437,
+        "max": 7.7354,
+        "bytesPerOperation": 610184.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 100000,
+      "shops": 1,
+      "interval": {
+        "n": 100,
+        "p50": 0.0173,
+        "p95": 0.0229,
+        "max": 7.6727,
+        "bytesPerOperation": 30304.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 100000,
+      "shops": 64,
+      "interval": {
+        "n": 100,
+        "p50": 0.2404,
+        "p95": 0.3426,
+        "max": 14.7462,
+        "bytesPerOperation": 322976.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    },
+    {
+      "work": "paged panel",
+      "consumers": 100000,
+      "shops": 1024,
+      "interval": {
+        "n": 100,
+        "p50": 0.493,
+        "p95": 1.1625,
+        "max": 23.5717,
+        "bytesPerOperation": 610144.0,
+        "spikes30": []
+      },
+      "hiddenBytes": 0,
+      "hiddenBuilds": 0
+    }
+  ],
+  "independenceAndStress": [
+    {
+      "work": "cadence",
+      "fps": 30,
+      "units": 2,
+      "milliseconds": 0.1,
+      "consumers": 1914,
+      "days": 42,
+      "Frames": 822768,
+      "economicMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+      "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+      "ConservationChecks": 80388,
+      "EmploymentUnits": 202595375754213239,
+      "DiscretionaryUnits": 18570660125081600,
+      "Purchases": 26515,
+      "Seconds": 5.6541565
+    },
+    {
+      "work": "cadence",
+      "fps": 30,
+      "units": 256,
+      "milliseconds": 4.0,
+      "consumers": 1914,
+      "days": 42,
+      "Frames": 97448,
+      "economicMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+      "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+      "ConservationChecks": 80388,
+      "EmploymentUnits": 202595375754213239,
+      "DiscretionaryUnits": 18570660125081600,
+      "Purchases": 26515,
+      "Seconds": 5.555312
+    },
+    {
+      "work": "cadence",
+      "fps": 60,
+      "units": 2,
+      "milliseconds": 0.1,
+      "consumers": 1914,
+      "days": 42,
+      "Frames": 883417,
+      "economicMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+      "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+      "ConservationChecks": 80388,
+      "EmploymentUnits": 202595375754213239,
+      "DiscretionaryUnits": 18570660125081600,
+      "Purchases": 26515,
+      "Seconds": 5.5582575
+    },
+    {
+      "work": "cadence",
+      "fps": 60,
+      "units": 256,
+      "milliseconds": 4.0,
+      "consumers": 1914,
+      "days": 42,
+      "Frames": 158100,
+      "economicMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+      "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+      "ConservationChecks": 80388,
+      "EmploymentUnits": 202595375754213239,
+      "DiscretionaryUnits": 18570660125081600,
+      "Purchases": 26515,
+      "Seconds": 5.4864464
+    },
+    {
+      "work": "cadence",
+      "fps": 120,
+      "units": 2,
+      "milliseconds": 0.1,
+      "consumers": 1914,
+      "days": 42,
+      "Frames": 1004762,
+      "economicMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+      "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+      "ConservationChecks": 80388,
+      "EmploymentUnits": 202595375754213239,
+      "DiscretionaryUnits": 18570660125081600,
+      "Purchases": 26515,
+      "Seconds": 5.6486275
+    },
+    {
+      "work": "cadence",
+      "fps": 120,
+      "units": 256,
+      "milliseconds": 4.0,
+      "consumers": 1914,
+      "days": 42,
+      "Frames": 279419,
+      "economicMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+      "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+      "ConservationChecks": 80388,
+      "EmploymentUnits": 202595375754213239,
+      "DiscretionaryUnits": 18570660125081600,
+      "Purchases": 26515,
+      "Seconds": 5.478423
+    },
+    {
+      "work": "body-cap",
+      "status": "flagged evidence; no F2 divergence bound",
+      "consumers": 1914,
+      "days": 42,
+      "fps": 60,
+      "off": {
+        "cap": 0,
+        "BodyAcquisitions": 0,
+        "BodyObservations": 0,
+        "MaximumBodies": 0,
+        "EmploymentUnits": 202595375754213239,
+        "DiscretionaryUnits": 18570660125081600,
+        "Purchases": 26515,
+        "metricsSha": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+        "saveSha": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A"
+      },
+      "default": {
+        "pedestrians": 48,
+        "vehicles": 24,
+        "BodyAcquisitions": 7786,
+        "BodyObservations": 126450,
+        "MaximumBodies": 13,
+        "EmploymentUnits": 202488234478578341,
+        "DiscretionaryUnits": 18566069878784000,
+        "Purchases": 26481,
+        "metricsSha": "5BB2F1B0878A8BFE179A5563836C196E233D2B2AD7888385645F9283E0913A62",
+        "saveSha": "324A3E20C1D521181662C0DAB86DF80C838010925127A12AB3AB4BF70A59119F"
+      },
+      "deltas": {
+        "employmentUnits": -107141275634898,
+        "discretionaryUnits": -4590246297600,
+        "purchases": -34,
+        "dailyRowsDifferent": 42
+      }
+    },
+    {
+      "work": "integrated advancement",
+      "consumers": 1914,
+      "days": 7,
+      "citizenEventsPerSlice": 1,
+      "interval": {
+        "n": 236725,
+        "p50": 0.001,
+        "p95": 0.007,
+        "max": 5.4083,
+        "bytesPerOperation": null,
+        "spikes30": []
+      },
+      "ConservationChecks": 13398,
+      "EmploymentUnits": 18519632655609597,
+      "DiscretionaryUnits": 2615661926809600,
+      "Purchases": 4423,
+      "JournalEntries": 2,
+      "Seconds": 0.9653494,
+      "AllocatedBytes": 920491072,
+      "metricsSha": "E6671C41CA77FC9E8852A9FDC8D8D9FCC42F58CD2DE2689969B735F443D1ABE6"
+    },
+    {
+      "work": "integrated advancement",
+      "consumers": 10000,
+      "days": 7,
+      "citizenEventsPerSlice": 1,
+      "interval": {
+        "n": 1107885,
+        "p50": 0.0013,
+        "p95": 0.0075,
+        "max": 8.383,
+        "bytesPerOperation": null,
+        "spikes30": []
+      },
+      "ConservationChecks": 70000,
+      "EmploymentUnits": 98387351358529007,
+      "DiscretionaryUnits": 13676786483200000,
+      "Purchases": 5037,
+      "JournalEntries": 2,
+      "Seconds": 4.7877367,
+      "AllocatedBytes": 4398334480,
+      "metricsSha": "A5C546FCE7A641169F1983FFE3A77FF7AE75EF19EEAD7163BCBACA37CB3678A3"
+    },
+    {
+      "work": "integrated advancement",
+      "consumers": 100000,
+      "days": 7,
+      "citizenEventsPerSlice": 1,
+      "interval": {
+        "n": 10607016,
+        "p50": 0.002,
+        "p95": 0.008,
+        "max": 20.6573,
+        "bytesPerOperation": null,
+        "spikes30": []
+      },
+      "ConservationChecks": 700000,
+      "EmploymentUnits": 988150542424832004,
+      "DiscretionaryUnits": 136942347878400000,
+      "Purchases": 5453,
+      "JournalEntries": 2,
+      "Seconds": 63.1712627,
+      "AllocatedBytes": 42383103648,
+      "metricsSha": "22D4826D6A572A75BE8FDDBCB513F47E45C20C7BCA031E2AB2913D303182E81D"
+    }
+  ],
+  "wages": [
+    {
+      "name": "shift settlement",
+      "n": 20000,
+      "p50": 0.000125,
+      "p95": 0.000209,
+      "max": 0.023042,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "posting 100000 attendance=False",
+      "n": 12500,
+      "p50": 0.008083,
+      "p95": 0.011583,
+      "max": 0.097583,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "posting 100000 attendance=True",
+      "n": 12500,
+      "p50": 0.009375,
+      "p95": 0.012708,
+      "max": 0.074792,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "posting 10000 attendance=False",
+      "n": 1252,
+      "p50": 0.00675,
+      "p95": 0.0095,
+      "max": 0.031125,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "posting 10000 attendance=True",
+      "n": 1252,
+      "p50": 0.007166,
+      "p95": 0.010625,
+      "max": 0.033542,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "posting 1914 attendance=False",
+      "n": 240,
+      "p50": 0.005834,
+      "p95": 0.00625,
+      "max": 0.008875,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "posting 1914 attendance=True",
+      "n": 240,
+      "p50": 0.005875,
+      "p95": 0.0085,
+      "max": 0.029833,
+      "bytesPerOperation": 0.0,
+      "spikes30": []
+    },
+    {
+      "name": "fresh 957x2 write (1729129 characters)",
+      "n": 5,
+      "p50": 59.387666,
+      "p95": 105.042958,
+      "max": 105.042958,
+      "bytesPerOperation": null,
+      "spikes30": [
+        46.059542,
+        53.10525,
+        59.387666,
+        64.682042,
+        105.042958
+      ]
+    },
+    {
+      "name": "fresh 957x2 read",
+      "n": 5,
+      "p50": 224.680958,
+      "p95": 277.098333,
+      "max": 277.098333,
+      "bytesPerOperation": null,
+      "spikes30": [
+        75.505541,
+        84.20125,
+        224.680958,
+        237.750625,
+        277.098333
+      ]
+    },
+    {
+      "name": "fresh 5000x2 write (9043347 characters)",
+      "n": 5,
+      "p50": 185.238792,
+      "p95": 189.557875,
+      "max": 189.557875,
+      "bytesPerOperation": null,
+      "spikes30": [
+        170.538875,
+        175.606208,
+        185.238792,
+        186.233958,
+        189.557875
+      ]
+    },
+    {
+      "name": "fresh 5000x2 read",
+      "n": 5,
+      "p50": 397.897959,
+      "p95": 401.388083,
+      "max": 401.388083,
+      "bytesPerOperation": null,
+      "spikes30": [
+        394.3985,
+        394.890834,
+        397.897959,
+        398.268916,
+        401.388083
+      ]
+    },
+    {
+      "name": "fresh 50000x2 write (83838318 characters)",
+      "n": 5,
+      "p50": 1720.753541,
+      "p95": 1789.921833,
+      "max": 1789.921833,
+      "bytesPerOperation": null,
+      "spikes30": [
+        1651.062042,
+        1706.888834,
+        1720.753541,
+        1730.600583,
+        1789.921833
+      ]
+    },
+    {
+      "name": "fresh 50000x2 read",
+      "n": 5,
+      "p50": 3824.863083,
+      "p95": 3926.685083,
+      "max": 3926.685083,
+      "bytesPerOperation": null,
+      "spikes30": [
+        3700.903,
+        3701.408083,
+        3824.863083,
+        3837.762334,
+        3926.685083
+      ]
+    }
+  ],
+  "ordinary": [
+    {
+      "name": "admission gate",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0001,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "wallet lookup and admission 1914",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0001,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "wallet lookup and admission 10000",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0002,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "wallet lookup and admission 100000",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0001,
+      "max": 0.0136,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "admission and debit (reset outside conceptual operation)",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0001,
+      "max": 0.0191,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "naive wide counters",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 2.0157,
+      "bytesPerOperation": 64.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "delta wide counters",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0036,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "owner lookup 1",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0001,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "ownership refresh 1",
+      "n": 1000,
+      "p50": 0.0,
+      "p95": 0.0001,
+      "max": 0.0058,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": {
+        "retainedBytes": 2072,
+        "observations": 1000,
+        "rounds": 1000,
+        "maximumPlacesPerUnit": 16
+      }
+    },
+    {
+      "name": "owner lookup 1024",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0001,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "ownership refresh 1024",
+      "n": 64000,
+      "p50": 0.0008,
+      "p95": 0.001,
+      "max": 0.0505,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": {
+        "retainedBytes": 174376,
+        "observations": 1024000,
+        "rounds": 1000,
+        "maximumPlacesPerUnit": 16
+      }
+    },
+    {
+      "name": "owner lookup 20000",
+      "n": 20000,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0002,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": null
+    },
+    {
+      "name": "ownership refresh 20000",
+      "n": 37500,
+      "p50": 0.0009,
+      "p95": 0.0011,
+      "max": 0.0388,
+      "bytesPerOperation": 0.0,
+      "spikes30": [],
+      "extra": {
+        "retainedBytes": 1842832,
+        "observations": 600000,
+        "rounds": 30,
+        "maximumPlacesPerUnit": 16
+      }
+    },
+    {
+      "name": "requested outside total line",
+      "n": 5000,
+      "p50": 0.0003,
+      "p95": 0.0005,
+      "max": 0.0158,
+      "bytesPerOperation": 656.0,
+      "spikes30": [],
+      "extra": null
+    }
+  ],
+  "journal": [
+    "supply 1: n=2000 p50=0,000042ms p95=0,000083ms max=0,000084ms B/call=0,0 spikes>=30ms=0",
+    "hours 1: n=2000 p50=0,000125ms p95=0,000167ms max=0,000250ms B/call=0,0 spikes>=30ms=0",
+    "changed supply 1: n=2000 p50=0,000500ms p95=0,000667ms max=1,636334ms B/call=1040,1 spikes>=30ms=0",
+    "supply8 1: n=2000 p50=0,000250ms p95=0,000333ms max=0,000459ms B/call=0,0 spikes>=30ms=0",
+    "changed hours 1: n=100 p50=0,006208ms p95=0,006583ms max=0,006875ms B/call=8984,0 spikes>=30ms=0",
+    "panel 1: n=100 p50=0,006000ms p95=0,009125ms max=0,010500ms B/call=22008,0 spikes>=30ms=0",
+    "supply 64: n=2000 p50=0,000042ms p95=0,000084ms max=0,002125ms B/call=0,0 spikes>=30ms=0",
+    "hours 64: n=2000 p50=0,000125ms p95=0,000167ms max=0,017541ms B/call=0,0 spikes>=30ms=0",
+    "changed supply 64: n=2000 p50=0,000500ms p95=0,000667ms max=0,001125ms B/call=1053,6 spikes>=30ms=0",
+    "supply8 64: n=2000 p50=0,000209ms p95=0,000292ms max=0,000375ms B/call=0,0 spikes>=30ms=0",
+    "changed hours 64: n=128 p50=0,005917ms p95=0,008500ms max=0,009416ms B/call=8984,0 spikes>=30ms=0",
+    "panel 64: n=100 p50=0,114167ms p95=0,486542ms max=3,200042ms B/call=333984,2 spikes>=30ms=0",
+    "supply 1024: n=2000 p50=0,000042ms p95=0,000084ms max=0,009125ms B/call=0,0 spikes>=30ms=0",
+    "hours 1024: n=2000 p50=0,000125ms p95=0,000167ms max=0,002416ms B/call=0,0 spikes>=30ms=0",
+    "changed supply 1024: n=4096 p50=0,000500ms p95=0,000792ms max=0,050250ms B/call=851,4 spikes>=30ms=0",
+    "supply8 1024: n=2000 p50=0,000250ms p95=0,000333ms max=0,000583ms B/call=0,0 spikes>=30ms=0",
+    "changed hours 1024: n=2048 p50=0,005792ms p95=0,008417ms max=1,942208ms B/call=9139,5 spikes>=30ms=0",
+    "panel 1024: n=100 p50=0,452458ms p95=1,140208ms max=1,524333ms B/call=617947,2 spikes>=30ms=0",
+    "cache live replacement: n=2000 p50=0,000000ms p95=0,000042ms max=0,000292ms B/call=0,0 spikes>=30ms=0",
+    "cache image creation: n=2000 p50=0,000000ms p95=0,000042ms max=0,001959ms B/call=24,0 spikes>=30ms=0",
+    "save write fresh: n=50 p50=0,076417ms p95=0,109166ms max=0,205125ms B/call=44040,0 spikes>=30ms=0",
+    "save read fresh: n=50 p50=0,180958ms p95=0,314792ms max=0,786666ms B/call=79729,1 spikes>=30ms=0",
+    "save observed fixture: residents=75 visitors=150 chars=198523 predecessorChars=198376 records=(858, 858)",
+    "save write observed fixture: n=20 p50=3,212625ms p95=4,079167ms max=4,079167ms B/call=2407410,4 spikes>=30ms=0",
+    "save read observed fixture: n=20 p50=8,074958ms p95=8,487500ms max=8,487500ms B/call=4774558,8 spikes>=30ms=0"
+  ],
+  "saves": [
+    {
+      "name": "957x2",
+      "schema": 33,
+      "residents": 957,
+      "persons": 1914,
+      "places": 1032,
+      "before": {
+        "characters": 14881734,
+        "bytes": 14881734,
+        "Streaming": 186791,
+        "Semantic": 186567
+      },
+      "inactive": {
+        "characters": 16241966,
+        "bytes": 16241966,
+        "addedCharacters": 1360232,
+        "Streaming": 186791,
+        "Semantic": 186567
+      },
+      "after": {
+        "characters": 16255152,
+        "bytes": 16255152,
+        "Streaming": 187093,
+        "Semantic": 186869
+      },
+      "addedCharacters": 1373418,
+      "addedRecords": 302,
+      "composed": 48790392,
+      "composedRecords": 200123,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 24882,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 400.6088,
+        "p95": 423.9273,
+        "max": 423.9273,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 579.7652,
+        "p95": 625.5162,
+        "max": 625.5162,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 483.0205,
+        "p95": 483.5627,
+        "max": 483.5627,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 661.1395,
+        "p95": 667.829,
+        "max": 667.829,
+        "spikes30": 3
+      },
+      "sha256": "2902e77b513cece27dd7dec19ebc3fea73610eb2a4d6ffa472c803a35ce3fb71"
+    },
+    {
+      "name": "957x3",
+      "schema": 33,
+      "residents": 957,
+      "persons": 2871,
+      "places": 1032,
+      "before": {
+        "characters": 15368226,
+        "bytes": 15368226,
+        "Streaming": 189662,
+        "Semantic": 189438
+      },
+      "inactive": {
+        "characters": 16799276,
+        "bytes": 16799276,
+        "addedCharacters": 1431050,
+        "Streaming": 189662,
+        "Semantic": 189438
+      },
+      "after": {
+        "characters": 16812462,
+        "bytes": 16812462,
+        "Streaming": 189964,
+        "Semantic": 189740
+      },
+      "addedCharacters": 1444236,
+      "addedRecords": 302,
+      "composed": 49360143,
+      "composedRecords": 202994,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 37323,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 435.0759,
+        "p95": 438.192,
+        "max": 438.192,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 627.7155,
+        "p95": 628.039,
+        "max": 628.039,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 472.5041,
+        "p95": 476.6759,
+        "max": 476.6759,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 652.492,
+        "p95": 705.0147,
+        "max": 705.0147,
+        "spikes30": 3
+      },
+      "sha256": "dd2c6f8cf90d7b42b12f6d446d969f3cf9cbe345a42c6ba44343765cee3c1ec8"
+    },
+    {
+      "name": "5000x2",
+      "schema": 33,
+      "residents": 5000,
+      "persons": 10000,
+      "places": 1032,
+      "before": {
+        "characters": 25543184,
+        "bytes": 25543184,
+        "Streaming": 344468,
+        "Semantic": 344244
+      },
+      "inactive": {
+        "characters": 27501780,
+        "bytes": 27501780,
+        "addedCharacters": 1958596,
+        "Streaming": 344468,
+        "Semantic": 344244
+      },
+      "after": {
+        "characters": 27514966,
+        "bytes": 27514966,
+        "Streaming": 344770,
+        "Semantic": 344546
+      },
+      "addedCharacters": 1971782,
+      "addedRecords": 302,
+      "composed": 60155324,
+      "composedRecords": 357800,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 130000,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 588.1569,
+        "p95": 634.49,
+        "max": 634.49,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 998.5318,
+        "p95": 1072.842,
+        "max": 1072.842,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 746.8944,
+        "p95": 747.221,
+        "max": 747.221,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 1034.3177,
+        "p95": 1061.8707,
+        "max": 1061.8707,
+        "spikes30": 3
+      },
+      "sha256": "e5536d7e020f29b4e1058a1a9a044a0d519e8961eabfce2f40691fdfcd9eb669"
+    },
+    {
+      "name": "5000x3",
+      "schema": 33,
+      "residents": 5000,
+      "persons": 15000,
+      "places": 1032,
+      "before": {
+        "characters": 28084108,
+        "bytes": 28084108,
+        "Streaming": 359468,
+        "Semantic": 359244
+      },
+      "inactive": {
+        "characters": 30412704,
+        "bytes": 30412704,
+        "addedCharacters": 2328596,
+        "Streaming": 359468,
+        "Semantic": 359244
+      },
+      "after": {
+        "characters": 30425890,
+        "bytes": 30425890,
+        "Streaming": 359770,
+        "Semantic": 359546
+      },
+      "addedCharacters": 2341782,
+      "addedRecords": 302,
+      "composed": 63131248,
+      "composedRecords": 372800,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 195000,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 696.6784,
+        "p95": 730.7962,
+        "max": 730.7962,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 1068.3598,
+        "p95": 1126.7144,
+        "max": 1126.7144,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 732.2776,
+        "p95": 773.9205,
+        "max": 773.9205,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 1188.8547,
+        "p95": 1211.1311,
+        "max": 1211.1311,
+        "spikes30": 3
+      },
+      "sha256": "bfb16d6b8aaef07448592f8244e4420d41ba8aaebf5102fa47624a6479c22413"
+    },
+    {
+      "name": "50000x2",
+      "schema": 33,
+      "residents": 50000,
+      "persons": 100000,
+      "places": 1032,
+      "before": {
+        "characters": 137593657,
+        "bytes": 137593657,
+        "Streaming": 2099468,
+        "Semantic": 2099244
+      },
+      "inactive": {
+        "characters": 146212253,
+        "bytes": 146212253,
+        "addedCharacters": 8618596,
+        "Streaming": 2099468,
+        "Semantic": 2099244
+      },
+      "after": {
+        "characters": 146225439,
+        "bytes": 146225439,
+        "Streaming": 2099770,
+        "Semantic": 2099546
+      },
+      "addedCharacters": 8631782,
+      "addedRecords": 302,
+      "composed": 180035797,
+      "composedRecords": 2112800,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 1300000,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 2614.1793,
+        "p95": 2790.2067,
+        "max": 2790.2067,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 5122.1256,
+        "p95": 5379.2205,
+        "max": 5379.2205,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 3134.0649,
+        "p95": 3235.7496,
+        "max": 3235.7496,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 5484.0553,
+        "p95": 5679.3114,
+        "max": 5679.3114,
+        "spikes30": 3
+      },
+      "sha256": "7ef8dcd06abf6aae1ce73eac4c9cc334eaea2522c1a01a818bca871db3f2375b"
+    },
+    {
+      "name": "50000x3",
+      "schema": 33,
+      "residents": 50000,
+      "persons": 150000,
+      "places": 1032,
+      "before": {
+        "characters": 163042348,
+        "bytes": 163042348,
+        "Streaming": 2249468,
+        "Semantic": 2249244
+      },
+      "inactive": {
+        "characters": 175360944,
+        "bytes": 175360944,
+        "addedCharacters": 12318596,
+        "Streaming": 2249468,
+        "Semantic": 2249244
+      },
+      "after": {
+        "characters": 175374130,
+        "bytes": 175374130,
+        "Streaming": 2249770,
+        "Semantic": 2249546
+      },
+      "addedCharacters": 12331782,
+      "addedRecords": 302,
+      "composed": 209834488,
+      "composedRecords": 2262800,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 1950000,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 3189.6804,
+        "p95": 3758.3062,
+        "max": 3758.3062,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 6301.6047,
+        "p95": 7023.7085,
+        "max": 7023.7085,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 3799.1689,
+        "p95": 4273.4681,
+        "max": 4273.4681,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 6514.9976,
+        "p95": 6821.0722,
+        "max": 6821.0722,
+        "spikes30": 3
+      },
+      "sha256": "e03a42110d0fb26d9c16cbf60ead073500f239155f64187319df961e2cc6312e"
+    },
+    {
+      "name": "CF32",
+      "schema": 33,
+      "residents": 50000,
+      "persons": 150000,
+      "places": 14000,
+      "before": {
+        "characters": 167283178,
+        "bytes": 167283178,
+        "Streaming": 2256819,
+        "Semantic": 2250419
+      },
+      "inactive": {
+        "characters": 179601774,
+        "bytes": 179601774,
+        "addedCharacters": 12318596,
+        "Streaming": 2256819,
+        "Semantic": 2250419
+      },
+      "after": {
+        "characters": 179975056,
+        "bytes": 179975056,
+        "Streaming": 2266049,
+        "Semantic": 2259649
+      },
+      "addedCharacters": 12691878,
+      "addedRecords": 9230,
+      "composed": 214435414,
+      "composedRecords": 2279079,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 1950000,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 3436.3399,
+        "p95": 3641.2079,
+        "max": 3641.2079,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 6385.9698,
+        "p95": 6511.6489,
+        "max": 6511.6489,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 3865.2947,
+        "p95": 4833.9806,
+        "max": 4833.9806,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 7019.493,
+        "p95": 7583.6312,
+        "max": 7583.6312,
+        "spikes30": 3
+      },
+      "sha256": "280803f93628eee390673ac97e4437ac37eb3236f761f7b584d44a7679e30cba"
+    },
+    {
+      "name": "CF64",
+      "schema": 33,
+      "residents": 50000,
+      "persons": 150000,
+      "places": 14000,
+      "before": {
+        "characters": 205683178,
+        "bytes": 205683178,
+        "Streaming": 3856819,
+        "Semantic": 3850419
+      },
+      "inactive": {
+        "characters": 218001774,
+        "bytes": 218001774,
+        "addedCharacters": 12318596,
+        "Streaming": 3856819,
+        "Semantic": 3850419
+      },
+      "after": {
+        "characters": 218375056,
+        "bytes": 218375056,
+        "Streaming": 3866049,
+        "Semantic": 3859649
+      },
+      "addedCharacters": 12691878,
+      "addedRecords": 9230,
+      "composed": 252835414,
+      "composedRecords": 3879079,
+      "reserveChars": 32510358,
+      "reserveRecords": 13030,
+      "memoryHeadroom": 1950000,
+      "beforeWriteMs": {
+        "count": 3,
+        "p50": 4190.3973,
+        "p95": 4543.9751,
+        "max": 4543.9751,
+        "spikes30": 3
+      },
+      "beforeReadMs": {
+        "count": 3,
+        "p50": 7426.6623,
+        "p95": 9580.8857,
+        "max": 9580.8857,
+        "spikes30": 3
+      },
+      "writeMs": {
+        "count": 3,
+        "p50": 6359.3476,
+        "p95": 6816.7038,
+        "max": 6816.7038,
+        "spikes30": 3
+      },
+      "readMs": {
+        "count": 3,
+        "p50": 7922.661,
+        "p95": 8352.7469,
+        "max": 8352.7469,
+        "spikes30": 3
+      },
+      "sha256": "aa5891732ff59973ca5fa98f63c6caac81e263a23e3a56ddec881b73eb3f71e2"
+    }
+  ],
+  "reload": {
+    "residents": 957,
+    "consumers": 1914,
+    "days": 42,
+    "integrated": true,
+    "seed": 0,
+    "reloads": 1,
+    "inFlightAtReload": 6,
+    "metricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+    "reloadedMetricsSha256": "CE77BE246FAAE61690993CDF085FF5CF7A95D5F732160DF1991907519F15705A",
+    "saveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A",
+    "reloadedSaveSha256": "DAE7566D49F1DF145733025057357D87A0CD9917681F6AFC1C534F9143652A9A"
+  },
+  "initialStressFixtureRefusal": {
+    "message": "Invalid immutable identity source catalogue size.",
+    "resolution": "Above 5000 residents the offline fixture now uses 5000 donors and F5 housing expansion. No production limit or save contract change."
+  }
+}

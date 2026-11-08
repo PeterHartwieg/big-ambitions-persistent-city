@@ -1,6 +1,6 @@
 Status: implemented (offline); not verified by rig
 
-Refs #93. **Calibration acceptance: stopped** on the dominant-menu design criterion. No product defaults or schema changed. This record contains observations and candidate control envelopes, not approved release thresholds. The PR-description handoff and complete numbered rig list are in [checks](../checks/f6h.md); the uncompleted section 6 table is in [performance](f6h.md).
+Refs #93. **Calibration acceptance: stopped** on the dominant-menu design criterion. No product defaults or schema changed. This record contains observations and candidate control envelopes, not approved release thresholds. The PR-description handoff and complete numbered rig list are in [checks](../checks/f6h.md); the current section 6 offline table is in [performance](f6h.md).
 
 ## Protocol and retained evidence
 
@@ -75,6 +75,8 @@ At the upper-bound setting, menu +50% served-quantity arc elasticity mean is **-
 
 The source of the weak response is visible in `FoodChoicePolicy.WeightCore`: `1 + priceWeight × sensitivity × price / spendingLimit`. SpendingLimit is available savings after reserve, capped at $10,000. At the fixture's $3/$5/$8 menu, savings dwarf a meal price; the inverse-linear soft penalty changes little, while service capacity binds. The +50% arm remains below most affordability ceilings. For one offer with its non-price terms fixed, the offer-weight elasticity from this inverse-linear factor has magnitude `bP/(1+bP) < 1` for any positive finite coefficient b. A coefficient changes its scale, not that response shape. The integrated capacity/memory/affordability paths add further effects; the experiments below test the actual simulator rather than asserting a global theorem about them. This is evidence for a design review, not a claim that no conceivable combination of settings could force collapse and remove sales.
 
+**Capacity qualification:** control is capacity-bound at peak (60 served meals/hour in every seed, equal to the double's staffed input). A fresh F6h run after a choice-rule redesign must also measure otherwise matched price arms with non-binding capacity, for example a higher MealsPerHour profile, to distinguish capacity saturation from weak demand response.
+
 **Stop decision:** keep all defaults unchanged. Candidate design options are a meal-specific willingness-to-pay/reference price, a stronger price response function, or an explicitly revised acceptance criterion. Do not exhaust wallets through arbitrary C9 charges to manufacture price elasticity. No persisted field is required or proposed here; if a future design does require one, it must be reported rather than smuggled into writer 33. No questionnaire is sent to Peter.
 
 ## Household control envelope (diagnostic candidate only)
@@ -126,4 +128,4 @@ python3 -m unittest discover -s tools/economy-interventions -p test_acceptance.p
 dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~F6hIntegratedTests
 ```
 
-The default full test command and required game-assembly build are recorded in the performance file. No `tools/*-regression` matrix, game, rig, ModsLocal or bridge is run. Cadence, body-cap differences, 100,000-consumer integrated stress and full section 6 remeasurement remain uncompleted under the design stop, with no inferred pass from legacy unit/component tests. Rig checks are consolidated in the checks file; the body-cap item stays flagged before F2's contract.
+The default full test command and required game-assembly build are recorded in the performance file. No `tools/*-regression` matrix, game, rig, ModsLocal or bridge is run. The independent cadence, flagged body-cap differences, 100,000-consumer integrated stress and full section 6 offline remeasurement are now implemented in the review measurement batch, separately from the price stop. Their current results and machine evidence are in the performance record; no native or F2 divergence-bound pass is inferred. Rig checks are consolidated in the checks file; the body-cap item stays flagged before F2's contract.

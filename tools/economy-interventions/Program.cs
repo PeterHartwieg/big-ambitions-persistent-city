@@ -45,13 +45,20 @@ internal static class Program
                 Console.WriteLine($"{arm.Family}/{arm.Name} seed {seed}: {result.Seconds:F1} s, {result.ConservationChecks} conservation checks, {result.InputsPublished} inputs, metrics sha256 {EconomyRun.Sha256(result.Json)[..16]}");
                 list.Add(result);
             }
-            if (arm == InterventionArms.Control && !integrated)
+            if (arm == InterventionArms.Control)
             {
                 // Full-size save/reload equivalence on the measured fixture, outside any timing claim.
-                var reloaded = EconomyRun.Run(new RunOptions { Seed = 0, Residents = residents, ReloadAt = SelfChecks.MidEpochReload });
+                var reloaded = EconomyRun.Run(new RunOptions { Seed = 0, Residents = residents, ReloadAt = SelfChecks.MidEpochReload, Integrated = integrated, PriceWeight = priceWeight });
                 if (reloaded.Json != list[0].Json || reloaded.FinalSaveSha256 != list[0].FinalSaveSha256)
                     throw new InvalidOperationException("full-size mid-epoch reload changed metrics");
                 Console.WriteLine($"PASS {residents}-resident mid-epoch reload ({reloaded.InFlightAtReload} meals in flight): byte-identical metrics and final save");
+                var proof = new Json().Open().Field("residents", residents).Field("consumers", residents * EconomyFixture.RepresentationFactor)
+                    .Field("days", EconomyRun.Days).Field("integrated", integrated).Field("seed", 0)
+                    .Field("reloads", reloaded.Reloads).Field("inFlightAtReload", reloaded.InFlightAtReload)
+                    .Field("metricsSha256", EconomyRun.Sha256(list[0].Json))
+                    .Field("reloadedMetricsSha256", EconomyRun.Sha256(reloaded.Json))
+                    .Field("saveSha256", list[0].FinalSaveSha256).Field("reloadedSaveSha256", reloaded.FinalSaveSha256).Close();
+                File.WriteAllText(Path.Combine(outDir, "reload-equivalence.json"), proof.ToString());
             }
             results[arm.Family + "/" + arm.Name] = list;
         }

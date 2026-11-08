@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Diagnostics;
+using System.Numerics;
+using PersistentCity.MovementEquivalence;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 
@@ -25,6 +28,11 @@ public sealed class RunOptions
     public bool Integrated;
     public double PriceWeight = 1;
     public bool RivalListed = true, OwnListed = true;
+    // F1 cadence: 30 simulated minutes/real second as in AccountingScenario. Zero uses epoch drain.
+    public int FramesPerSecond, EventUnitsPerFrame = 256;
+    public double MillisecondsPerFrame = 4;
+    public int? BodyCap;
+    public bool MeasureSlices;
 }
 
 public sealed class RunResult
@@ -36,12 +44,17 @@ public sealed class RunResult
     public int Reloads, InFlightAtReload, JournalEntries;
     public double Seconds;
     public long AllocatedBytes;
+    public readonly List<double> SliceMilliseconds = new();
+    public long Frames, BodyAcquisitions, BodyObservations;
+    public int MaximumBodies;
+    public BigInteger EmploymentUnits, DiscretionaryUnits;
+    public long Purchases;
 }
 
 /// <summary>Deterministic Core scenario runner. The city advances epoch by epoch under the F1
 /// accounting boundary: drain the ending epoch, check the ledger at midnight, publish the inputs
 /// stamped at the boundary, enter the native epoch and only then observe it. No Runtime code,
-/// no frame cadence and no Core behaviour change: the harness only reads Core state.</summary>
+/// optional F1 frame cadence and F2a lease-driver inputs, with no Core behaviour change.</summary>
 public static class EconomyRun
 {
     public const string Schema = "persistentcity-f6a-metrics-1";
@@ -87,6 +100,52 @@ public static class EconomyRun
         var pending = new SortedDictionary<int, DayMetrics>();
         var previous = Household.Capture(city.State);
         var ordinaryDays = new Dictionary<int, long>();
+        var driver = options.BodyCap.HasValue ? new PresentationDriver(city, new DriverSettings {
+            Pedestrians = options.BodyCap.Value, Vehicles = options.BodyCap.Value == 0 ? 0 : 24, Seed = options.Seed }) : null;
+        if (driver != null && options.ReloadAt.HasValue) throw new ArgumentException("Body/reload arms are separate experiments");
+        void Advance(double target)
+        {
+            if (options.FramesPerSecond == 0)
+            {
+                if (!options.MeasureSlices) { Drain(city, target); return; }
+                while (!city.IsCaughtUpTo(target))
+                {
+                    long begin = Stopwatch.GetTimestamp();
+                    city.AdvanceFrameSlice(target, 1);
+                    result.SliceMilliseconds.Add(Stopwatch.GetElapsedTime(begin).TotalMilliseconds);
+                }
+                return;
+            }
+            // Same F1 native float-minute fence and budgeted AdvanceFrameSlice order as
+            // AccountingScenario, with the existing F6a/F1-derived fixture and all F6 loops.
+            int hour = (int)(Math.Max(city.State.Minute, market.Epoch) / 60);
+            float minute = (float)(Math.Max(city.State.Minute, market.Epoch) % 60);
+            double native = hour * 60.0 + minute;
+            while (!city.IsCaughtUpTo(target))
+            {
+                Require(AccountingClock.Compatible(city.State.Minute, native), "cadence input epoch escaped");
+                Require(city.IsAccountingEpochDrained(native), "cadence ending epoch escaped");
+                bool ready = city.IsCaughtUpTo(AccountingClock.Target(native));
+                float allowed = AccountingClock.Limit(ready, native, (float)(30.0 / options.FramesPerSecond));
+                minute += allowed;
+                while (minute >= 60) { minute -= 60; hour++; }
+                native = hour * 60.0 + minute;
+                Require((long)native == market.Epoch, "cadence crossed undrained epoch");
+                Require(city.BeginAccountingObservations(native), "cadence observation not published");
+                // F2a bodies move in real time even on F1 frames that hold native time.
+                driver?.MoveBodies(1.0 / options.FramesPerSecond, 30.0 / options.FramesPerSecond);
+                long begin = Stopwatch.GetTimestamp();
+                for (int unit = 0; unit < options.EventUnitsPerFrame; unit++)
+                {
+                    var advanced = city.AdvanceFrameSlice(Math.Min(target, AccountingClock.Target(native)), 1);
+                    if (advanced.CaughtUp || Stopwatch.GetElapsedTime(begin).TotalMilliseconds >= options.MillisecondsPerFrame) break;
+                }
+                city.SynchronizeSnapshot();
+                driver?.Update(new Position(2, 0, 0), false);
+                result.Frames++;
+                if (options.MeasureSlices) result.SliceMilliseconds.Add(Stopwatch.GetElapsedTime(begin).TotalMilliseconds);
+            }
+        }
         bool reloaded = false;
         for (long epoch = (long)start + 1; epoch <= end; epoch++)
         {
@@ -95,10 +154,10 @@ public static class EconomyRun
             // in flight (decision, travel or service), so the save interrupts real work.
             if (options.ReloadAt is double at && !reloaded && at != Math.Floor(at) && epoch - 0.5 >= at)
             {
-                Drain(city, epoch - 0.5);
+                Advance(epoch - 0.5);
                 if (InFlight(city) > 0) { city = Reload(city, market, routes, result, observer, ordinary); reloaded = true; }
             }
-            Drain(city, ending);
+            Advance(ending);
             bool drained = city.IsAccountingEpochDrained(epoch);
             Require(drained, "ending epoch did not drain");
             int day = (int)(epoch / 1440);
@@ -137,6 +196,13 @@ public static class EconomyRun
         Require(pending.Count == 0 && result.Days.Count == options.Days, "missing day samples");
         Require(result.Epochs == end - (long)start, "unexpected epoch count");
         Require(options.ReloadAt == null || reloaded, "requested reload did not happen");
+        driver?.BeforeSave();
+        result.BodyAcquisitions = driver?.Acquired ?? 0;
+        result.BodyObservations = driver?.LeaseObservations ?? 0;
+        result.MaximumBodies = driver?.MaxWalkers ?? 0;
+        result.EmploymentUnits = city.State.Food!.Residents.Aggregate(BigInteger.Zero, (total, m) => total + m.Budget!.Ledger.EmploymentIncome.Units);
+        result.DiscretionaryUnits = city.State.Food.Residents.Aggregate(BigInteger.Zero, (total, m) => total + m.Budget!.Ledger.Discretionary.Units);
+        result.Purchases = city.State.Food.Residents.Sum(m => m.Purchases);
         result.JournalEntries = city.State.Economy.Shops.Sum(s => s.Changes.Count);
         result.FinalSaveSha256 = Sha256(SaveCodec.Write(city.State));
         result.Json = Write(options, schedule, result.Days);

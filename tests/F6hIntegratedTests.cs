@@ -70,4 +70,19 @@ public sealed class F6hIntegratedTests
     [InlineData(Fault.DuplicateNativeOrder)]
     public void IntegratedAccountingFaultsTurnTheRunRed(Fault fault)
         => Assert.Throws<LedgerViolation>(() => EconomyRun.Run(Small(fault: fault)));
+    [Fact]
+    public void RepresentativeCadenceAndBudgetIdentity()
+    {
+        var reference = EconomyRun.Run(new RunOptions { Integrated = true, Seed = 3, Residents = 8, Days = 2 });
+        foreach (int fps in new[] { 30, 60, 120 })
+            foreach (int budget in new[] { 2, 256 })
+            {
+                var run = EconomyRun.Run(new RunOptions { Integrated = true, Seed = 3, Residents = 8, Days = 2,
+                    FramesPerSecond = fps, EventUnitsPerFrame = budget, MillisecondsPerFrame = budget == 2 ? .1 : 4 });
+                Assert.Equal(reference.Json, run.Json);
+                Assert.Equal(reference.FinalSaveSha256, run.FinalSaveSha256);
+                Assert.True(run.Frames > 0);
+            }
+    }
+
 }
