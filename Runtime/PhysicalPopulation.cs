@@ -980,7 +980,7 @@ namespace PersistentCity.Runtime
             float hurried = followClock - binding.HurrySince;
             if (!binding.Fading && hurried >= WalkerFollow.HurrySeconds) { binding.Fading = true; binding.FadeLeg = own.LegIndex; }
             if (!binding.Fading) return true;
-            if (body.CanFade && (own.LegIndex != binding.FadeLeg || own.Stationary || Position.Distance(before, own.To) <= 0.3))
+            if ((own.LegIndex != binding.FadeLeg || own.Stationary || Position.Distance(before, own.To) <= 0.3) && body.CanFade)
                 BeginFade(binding, true);
             return true;
         }
@@ -1017,14 +1017,26 @@ namespace PersistentCity.Runtime
             if (own.Stationary || own.AtEnd) { body.Pace(0); return true; }
             bool pose = logical.Mode == TravelMode.Walk && !logical.Stationary && own.LegIndex == logical.LegIndex;
             Position goal = pose ? logical.Position : own.To;
+            // A pose at the leg's own corner (the door at the end of the route) is always re-aimed, so a destination
+            // cached a few decimetres short can never strand the body before the door.
+            bool corner = Position.Distance(goal, own.To) <= 1e-6;
             bool retarget = binding.TargetLeg != own.LegIndex || binding.TargetIsPose != pose
-                || pose && Position.Distance(goal, binding.TargetPoint) >= WalkerFollow.RetargetMetres;
+                || pose && (Position.Distance(goal, binding.TargetPoint) >= WalkerFollow.RetargetMetres
+                    || corner && Position.Distance(goal, binding.TargetPoint) > 1e-6);
             if (retarget && !(pose && lag <= WalkerFollow.StopMetres))
             {
                 if (Time.unscaledTime < binding.NextTargetAttempt) { body.Pace(0); return true; }
-                if (!body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond))
-                { body.Stop(true); binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++; return true; }
-                binding.TargetLeg = own.LegIndex; binding.TargetIsPose = pose; binding.TargetPoint = goal;
+                Telemetry.PathRequests++;
+                // A pose between corners is projected onto the walkable surface first (a straight leg can cross a kerb
+                // or a crowned road without a NavMesh corner), then tried as given.
+                bool aimed = pose && !corner
+                    ? body.SetPoseTarget(goal, NativeTravelPace.WalkingMetresPerSecond) || body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond)
+                    : body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond);
+                if (aimed) { binding.TargetLeg = own.LegIndex; binding.TargetIsPose = pose; binding.TargetPoint = goal; }
+                // If a pose cannot be aimed at, keep walking to the previous destination on this route (an earlier
+                // pose or corner, never past the pose) and try again next frame, instead of stopping.
+                else if (pose && binding.TargetLeg >= 0 && binding.TargetLeg <= own.LegIndex) blockedSamples++;
+                else { body.Stop(true); binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++; return true; }
             }
             else if (retarget) { body.Pace(0); return true; }
             body.Pace(WalkerFollow.CommandSpeed(NativeTravelPace.WalkingMetresPerSecond * pace, lag, Time.deltaTime));

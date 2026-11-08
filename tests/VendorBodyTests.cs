@@ -244,7 +244,7 @@ public sealed class VendorBodyTests
         while (!f.City.AdvanceTo(leaves + 0.27).CaughtUp) { }
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-6);
+        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-4);
     }
 
     [Theory]
@@ -280,7 +280,7 @@ public sealed class VendorBodyTests
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.False(body.Agent.isStopped);
-        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-6);
+        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-4);
         Assert.Equal(acquisitions, f.Pool.Acquisitions.Count);
     }
 

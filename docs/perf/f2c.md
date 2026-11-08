@@ -12,7 +12,7 @@ Offline component timings on the development PC (20 logical cores), .NET 10 Rele
 | 2 | 0.733 µs |
 | 3 | 0.758 µs |
 
-At 48 walkers that is about 0.04 ms per frame. It replaces the per-body `ObservePhysicalJourney` rebase and lease observation for walk legs; the native calls are `Pace` per frame, `SetTarget` once per earlier leg and every 0.5 m on the logical pose's leg (about four per second per walker at native pace), and `OnScreen` only for a body being corrected.
+At 48 walkers that is about 0.04 ms per frame. It replaces the per-body `ObservePhysicalJourney` rebase and lease observation for walk legs; the native calls are `Pace` per frame, `SetTarget` once per earlier leg and every 0.5 m on the logical pose's leg, and `OnScreen` only for a body being corrected. Each re-aim is one synchronous NavMesh path request, preceded by a `SamplePosition` projection for a pose between corners. Their rate scales with game speed: at native walking pace about four per second per walker at speed 1, and proportionally more at higher speeds (about six times as many at 6×, so roughly 1,150 per second at 48 walkers). `pc movement status` counts them (`path_requests`); rig check 5 records the count and the game speed per window.
 
 ## `PhysicalPopulation.Update` at 48 walkers, before and after
 

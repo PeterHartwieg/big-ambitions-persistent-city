@@ -242,27 +242,31 @@ namespace PersistentCity.Runtime
         /// <summary>F2c Q3 fade: whether every renderer of this body can show a base-colour alpha (a transparent-queue
         /// material with a colour property, <see cref="WalkerFollow.MaterialCanFade"/>). Opaque characters cannot fade;
         /// their correction waits until they are out of view.</summary>
-        public bool CanFade
+        /// Read once per body (a new body is made for every acquisition).
+        public bool CanFade => canFade ??= ProbeFade();
+        private bool? canFade;
+        private bool ProbeFade()
         {
-            get
+            if (Character == null) return false;
+            Character.GetComponentsInChildren(true, probe);
+            bool any = false;
+            foreach (var renderer in probe)
             {
-                if (Character == null) return false;
-                Character.GetComponentsInChildren(true, probe);
-                bool any = false;
-                foreach (var renderer in probe)
+                if (renderer == null) continue;
+                foreach (var material in renderer.sharedMaterials)
                 {
-                    if (renderer == null) continue;
-                    foreach (var material in renderer.sharedMaterials)
-                    {
-                        bool colour = material != null && (material.HasProperty(BaseColorId) || material.HasProperty(ColorId));
-                        if (!WalkerFollow.MaterialCanFade(material != null ? material.renderQueue : 0, colour)) { probe.Clear(); return false; }
-                        any = true;
-                    }
+                    if (material == null) { probe.Clear(); return false; }
+                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
+                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
+                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
+                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination)) { probe.Clear(); return false; }
+                    any = true;
                 }
-                probe.Clear();
-                return any;
             }
+            probe.Clear();
+            return any;
         }
+        private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend"), DstBlendId = Shader.PropertyToID("_DstBlend");
         /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour, starting from the colour the renderer
         /// shows now (its property block's, else its material's). 1 restores the renderers.</summary>
         public void SetFade(float alpha)
@@ -306,6 +310,14 @@ namespace PersistentCity.Runtime
         private readonly List<Renderer> faded = new List<Renderer>(), probe = new List<Renderer>();
         private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
         private MaterialPropertyBlock? block;
+        /// <summary>F2c follow: aim at a logical pose between corners. The pose is projected onto the walkable surface
+        /// first (within 0.5 m), so a leg over a kerb or a crowned road does not fail the endpoint check of SetTarget.</summary>
+        public bool SetPoseTarget(Position pose, double metresPerScaledSecond)
+        {
+            if (!Valid || !Fits(pose)) return false;
+            if (!NavMesh.SamplePosition(Vector(pose), out NavMeshHit hit, 0.5f, WalkingRoutes.DryFilter)) return false;
+            return SetTarget(Point(hit.position), metresPerScaledSecond);
+        }
         /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
         public bool Warp(Position target)
         {

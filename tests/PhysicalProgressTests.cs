@@ -191,10 +191,13 @@ public sealed class PhysicalProgressTests
         => Assert.Equal(factor, WalkerFollow.PaceFactor(lag), 12);
 
     [Theory]
-    [InlineData(2000, true, false)] [InlineData(2450, true, false)] [InlineData(2500, true, false)]
-    [InlineData(2501, true, true)] [InlineData(3000, true, true)] [InlineData(3000, false, false)]
-    public void OnlyTransparentQueueMaterialsWithAColourCanFade(int queue, bool colour, bool fades)
-        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(queue, colour));
+    [InlineData(2000, true, 5f, 10f, false)] [InlineData(2450, true, 5f, 10f, false)] [InlineData(2500, true, 5f, 10f, false)]
+    [InlineData(2501, true, 5f, 10f, true)] [InlineData(3000, true, 5f, 10f, true)] [InlineData(3000, false, 5f, 10f, false)]
+    // A transparent queue with a colour but blending disabled (One/Zero), additive, or no blend properties at all.
+    [InlineData(3000, true, 1f, 0f, false)] [InlineData(3000, true, 5f, 1f, false)] [InlineData(3000, true, null, null, false)]
+    [InlineData(3000, true, 5f, null, false)]
+    public void OnlyAlphaBlendedTransparentMaterialsWithAColourCanFade(int queue, bool colour, float? source, float? destination, bool fades)
+        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(queue, colour, source, destination));
 
     [Fact]
     public void CorrectionStartsBeyondEightMetresOrOnAnotherMode()

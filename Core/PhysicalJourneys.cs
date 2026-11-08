@@ -277,10 +277,18 @@ namespace PersistentCity.Core
             return Math.Min(MaximumPaceFactor, 1 + (MaximumPaceFactor - 1) * rise);
         }
 
-        /// <summary>Whether a material can show the fade: its colour property exists and it renders in the
-        /// transparent queues (above 2500), where a base-colour alpha blends. An opaque material cannot fade, so the
-        /// body is kept until it is out of view instead.</summary>
-        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty) => hasColourProperty && renderQueue > 2500;
+        /// <summary>Unity BlendMode.SrcAlpha and BlendMode.OneMinusSrcAlpha, the alpha blend Unity's built-in and
+        /// URP shaders configure for their Fade/Transparent surface through the _SrcBlend/_DstBlend properties.</summary>
+        public const int SourceAlphaBlend = 5, OneMinusSourceAlphaBlend = 10;
+
+        /// <summary>Whether a material shows the fade: it has the colour property the fade scales, renders in a
+        /// transparent queue (above 2500), and declares alpha blending (_SrcBlend SrcAlpha, _DstBlend
+        /// OneMinusSrcAlpha). A queue override alone does not make an opaque shader blend, and a shader without those
+        /// blend properties is not recognized; either way the body is kept until it is out of view instead.</summary>
+        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty, float? sourceBlend, float? destinationBlend)
+            => hasColourProperty && renderQueue > 2500
+            && sourceBlend.HasValue && (int)sourceBlend.Value == SourceAlphaBlend
+            && destinationBlend.HasValue && (int)destinationBlend.Value == OneMinusSourceAlphaBlend;
 
         /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
         /// <paramref name="deltaSeconds"/>, so the body is never commanded past the logical pose, even while the
@@ -400,6 +408,8 @@ namespace PersistentCity.Core
         public long LagReleases { get; private set; }
         /// <summary>Mode boundaries where a walker reached the car, bus or subway and a body of the new kind is re-acquired.</summary>
         public long Handoffs { get; set; }
+        /// <summary>Walker path requests (one NavMesh CalculatePath each). Their rate scales with game speed.</summary>
+        public long PathRequests { get; set; }
         /// <summary>Acquisitions refused by the test-profile key MovementFaultAcquirePercent.</summary>
         public long FaultedAcquisitions { get; set; }
         public long LagSamples { get; private set; }
@@ -456,11 +466,12 @@ namespace PersistentCity.Core
         public string Status(int followers) => string.Format(CultureInfo.InvariantCulture,
             "followers={0}\nlag_samples={1}\nlag_p50_m={2:F2}\nlag_p95_m={3:F2}\nlag_max_m={4:F2}\ncorrections={5}\nmoves={6}\n"
             + "on_screen_moves={7}\nfades={8}\nlag_releases={9}\nhandoffs={10}\nfaulted_acquisitions={11}\nlast_sequence={12}\n"
+            + "path_requests={20}\n"
             + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};arrival_tail_s:{17};fade_out_s:{18};retarget_m:{19}",
             followers, LagSamples, LagQuantile(0.5), LagQuantile(0.95), MaximumLagMetres, Corrections, Moves, OnScreenMoves, Fades,
             LagReleases, Handoffs, FaultedAcquisitions, LastSequence, WalkerFollow.CatchUpMetres, WalkerFollow.CorrectionMetres,
             WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.ArrivalTailSeconds,
-            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres);
+            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres, PathRequests);
 
         public static string Format(WalkerCorrection c) => string.Format(CultureInfo.InvariantCulture,
             "seq={0} frame={1} person={2} kind={3} on_screen={4} before={5:R},{6:R},{7:R} after={8:R},{9:R},{10:R}",
