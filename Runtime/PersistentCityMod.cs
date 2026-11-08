@@ -803,11 +803,18 @@ namespace PersistentCity.Runtime
 
         /// <summary>C5e: the saved CityState.Research ledger reaches the survey through the C5b seam, the native bill
         /// through ResearchBilling and the agency dialog through its desk. Ordering stays hidden while
-        /// MarketResearchSettings.Available is false.</summary>
+        /// MarketResearchSettings.Available is false. A refused dialog or billing contract turns research off for the session:
+        /// the ledger stays in the save unchanged, nothing surveys or charges, and the city keeps running.</summary>
         private void AttachResearch(CityState state)
         {
+            if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))
+            {
+                log?.Warn("Research off for this session; saved research orders are kept unchanged. "
+                    + ResearchAgencyDialog.Status + " " + ResearchBilling.Status);
+                return;
+            }
             simulation!.AttachResearch(state.Research, settings.MarketResearch.MarketResearchConsumersPerUnit);
-            if (ResearchBilling.Installed) ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit);
+            ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit);
             ResearchAgencyDialog.Attach(new ResearchDesk(ResearchAttached, () => settings.MarketResearch.Available, ResearchEligible,
                 () => simulation?.Research, () => settings.MarketResearch.MarketResearchCatchmentMetres, Now, message => log?.Info(message)));
         }
@@ -815,7 +822,8 @@ namespace PersistentCity.Runtime
         private bool ResearchAttached() => !failed && !accountingStopped && simulation != null && saveEpoch != null
             && saveIdentity != null && ReferenceEquals(saveIdentity, SaveGameManager.Current);
 
-        /// <summary>Plan section 9, Q4: a player-rented business whose food scope Persistent City owns.</summary>
+        /// <summary>Plan section 9, Q4: a player-rented business whose food scope Persistent City owns and can serve now.
+        /// Ordering and billing use this one predicate.</summary>
         private bool ResearchEligible(BuildingRegistration registration)
         {
             if (registration == null || !registration.RentedByPlayer || string.IsNullOrEmpty(registration.BusinessName)) return false;
@@ -825,7 +833,10 @@ namespace PersistentCity.Runtime
             string place = NativeFoodMarket.PlaceId(registration);
             foreach (var scope in food.Shops)
                 if (scope.Channel == FoodScopeChannel.Shop && string.Equals(scope.PlaceId, place, StringComparison.Ordinal))
-                    return market.ObservedOwnShop(scope);
+                {
+                    bool observed = market.ObservedOwnShop(scope);
+                    return ResearchEligibility.Decide(true, scope.BusinessId, observed, observed ? NativeFoodOwnership.Find(registration) : null);
+                }
             return false;
         }
 

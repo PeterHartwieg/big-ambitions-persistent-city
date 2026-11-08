@@ -221,7 +221,7 @@ public sealed class ResearchMenuTests
         Assert.Contains("LastRefusal = ResearchDialogGate.TryExtend(__result, Read, entry => Extend(entry, __instance));", dialog);
         // Extend has exactly two assignments, both to the unused slot.
         string extend = Between(dialog, "private static void Extend(DialogEntry entry, MarketingAgencyDialog dialog)", "// Each field is read only");
-        Assert.Equal(new[] { "entry.OnSecondOption = () => OnResearch(dialog);", "entry.SecondOptionTextOverride = ResearchText.Button;" },
+        Assert.Equal(new[] { "entry.OnSecondOption = () => Guarded(() => OnResearch(dialog, entry));", "entry.SecondOptionTextOverride = ResearchText.Button;" },
             extend.Split('\n').Select(l => l.Trim()).Where(l => l.Contains(" = ")).ToArray());
         // The postfix never assigns any other native entry field, so OnConfirm, OnCancel and the template stay native.
         string postfix = Between(dialog, "private static void CampaignSettingsPostfix", "// The research button.");
@@ -239,10 +239,102 @@ public sealed class ResearchMenuTests
         Assert.Contains("(DialogEntry)moreHelpOffered!.Invoke(dialog, null)", dialog);
         Assert.Contains("OnVisible = moreHelp.ShowEntry", dialog);
         // No campaign, money or delivery work in the dialog; the order goes through the C5b runner.
-        foreach (string forbidden in new[] { "marketingCampaigns", "MarketingCampaign ", "UpdatePromotion", "ChangeMoney", "TextMessage", "SendMessage",
+        foreach (string forbidden in new[] { "marketingCampaigns", "MarketingCampaign ", "UpdatePromotion", "ChangeMoney", "new TextMessage", "SendMessage",
             "RegisterExternalLocalization", "ResearchBilling.Attach", "Ledger.TryOrder" })
             Assert.DoesNotContain(forbidden, dialog);
         Assert.Contains("runner.TryOrder(product.Code, NativeFoodMarket.PlaceId(business), AgencyId(contact), taxDeductible,", dialog);
+        // Menu entries hang up like the native campaign screen, with its own cancel message.
+        Assert.Contains("onCancelMessage = native.onCancelMessage", dialog);
+    }
+
+    [Fact]
+    public void EveryResearchButtonIsGuardedAndNoNativeCallFollowsAStoredOrder()
+    {
+        string dialog = Source("Runtime/ResearchAgencyDialog.cs");
+        // Each research callback (the campaign-screen button and both menu buttons) runs through Guarded.
+        Assert.Equal(3, Regex.Matches(dialog, @"= \(\) => Guarded\(\(\) => ").Count);
+        Assert.Equal(0, Regex.Matches(dialog, @"OnSecondOption = \(\) => (?!Guarded)").Count);
+        Assert.Equal(0, Regex.Matches(dialog, @"OnConfirm = \(\) => (?!Guarded)").Count);
+        string guarded = Between(dialog, "private static DialogEntry? Guarded(Func<DialogEntry?> click)", "// The research button.");
+        Assert.Contains("try { return click(); }", guarded);
+        Assert.Contains("Notifications.ShowError(ResearchText.Unavailable)", guarded);
+        Assert.Contains("return null;", guarded);
+        // PlaceOrder resolves the native continuation and builds the confirmation before TryOrder; after it only the
+        // contained log line and the return remain.
+        string place = Between(dialog, "private static DialogEntry? PlaceOrder(", "internal static string RefusalKey(");
+        int order = place.IndexOf("runner.TryOrder(", StringComparison.Ordinal);
+        Assert.True(place.IndexOf("continuation.Invoke(dialog, null)", StringComparison.Ordinal) is int invoke && invoke > 0 && invoke < order);
+        Assert.True(place.IndexOf("var confirmation = new DialogEntry", StringComparison.Ordinal) is int built && built > 0 && built < order);
+        Assert.DoesNotContain("moreHelpOffered!", dialog);
+        Assert.DoesNotContain("campaignSettings!.Invoke", dialog);
+        string after = place.Substring(place.IndexOf("current.Log(\"Research order \"", StringComparison.Ordinal));
+        Assert.StartsWith("current.Log(", after.Trim());
+        Assert.Contains("try { current.Log(\"Research order \"", place);
+    }
+
+    // ---- eligibility (ordering and billing share it) ----
+
+    [Fact]
+    public void EligibilityFollowsCurrentFoodAuthorityThroughWithdrawalAndReacquisition()
+    {
+        var authority = new FoodAuthority { PlaceId = "address:test:1:shop" };
+        authority.Observe("burger-shop", eligible: true, hour: 10);
+        Assert.True(authority.Boundary(11, oldWorkDrained: true, liveNativeCustomers: false, marketReady: true));
+        string first = authority.BusinessId;
+        Assert.True(ResearchEligibility.Decide(true, first, true, authority));
+        // Not rented or not named, no scope, or not the observed generation: never eligible.
+        Assert.False(ResearchEligibility.Decide(false, first, true, authority));
+        Assert.False(ResearchEligibility.Decide(true, null, true, authority));
+        Assert.False(ResearchEligibility.Decide(true, first, false, authority));
+        Assert.False(ResearchEligibility.Decide(true, first, true, null));
+
+        // An unsupported menu returns the business to native ownership. The scope, registration and BusinessId stay
+        // (the retained generation still matches), but the authority can no longer serve: refused at once.
+        authority.Observe("burger-shop", eligible: false, hour: 20);
+        Assert.Equal(first, authority.BusinessId);
+        Assert.True(authority.Managed);
+        Assert.False(authority.CanServe);
+        Assert.False(ResearchEligibility.Decide(true, first, true, authority));
+        Assert.True(authority.Boundary(21, true, false, true));
+        Assert.False(authority.Managed);
+        Assert.False(ResearchEligibility.Decide(true, first, true, authority));
+
+        // Reacquired at a later boundary: eligible again for the same generation.
+        authority.Observe("burger-shop", eligible: true, hour: 30);
+        Assert.False(ResearchEligibility.Decide(true, first, true, authority));
+        Assert.True(authority.Boundary(31, true, false, true));
+        Assert.True(ResearchEligibility.Decide(true, first, true, authority));
+
+        // A replaced business is a new generation: the old scope's ID no longer matches until the scope follows.
+        authority.Observe("pizza-shop", eligible: true, hour: 40);
+        Assert.NotEqual(first, authority.BusinessId);
+        Assert.False(ResearchEligibility.Decide(true, first, true, authority));
+
+        // Ordering (the dialog desk) and billing (the charge port) get the same predicate.
+        string mod = Source("Runtime/PersistentCityMod.cs");
+        Assert.Contains("ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit);", mod);
+        Assert.Contains("ResearchAgencyDialog.Attach(new ResearchDesk(ResearchAttached, () => settings.MarketResearch.Available, ResearchEligible,", mod);
+        string eligible = Between(mod, "private bool ResearchEligible(BuildingRegistration registration)", "private void Detach()");
+        Assert.Contains("ResearchEligibility.Decide(true, scope.BusinessId, observed, observed ? NativeFoodOwnership.Find(registration) : null)", eligible);
+    }
+
+    // ---- contract refusal keeps saved research idle ----
+
+    [Fact]
+    public void ARefusedDialogOrBillingContractLeavesSavedOrdersUnsurveyedAndUncharged()
+    {
+        Assert.True(ResearchEligibility.SessionEnabled(true, true));
+        Assert.False(ResearchEligibility.SessionEnabled(false, true));
+        Assert.False(ResearchEligibility.SessionEnabled(true, false));
+        Assert.False(ResearchEligibility.SessionEnabled(false, false));
+
+        // The refusal returns before the survey seam, the billing session and the desk are attached.
+        string attach = Between(Source("Runtime/PersistentCityMod.cs"), "private void AttachResearch(CityState state)", "private bool ResearchAttached()");
+        int gate = attach.IndexOf("if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))", StringComparison.Ordinal);
+        int stop = attach.IndexOf("return;", gate, StringComparison.Ordinal);
+        Assert.True(gate > 0 && stop > gate);
+        foreach (string step in new[] { "simulation!.AttachResearch(", "ResearchBilling.Attach(", "ResearchAgencyDialog.Attach(" })
+            Assert.True(attach.IndexOf(step, StringComparison.Ordinal) > stop, step);
     }
 
     [Fact]

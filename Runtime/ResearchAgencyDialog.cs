@@ -48,7 +48,7 @@ namespace PersistentCity.Runtime
         private static ResearchDesk? desk;
         private static ResearchMenu? menu;
         private static bool installed;
-        private static bool contained;
+        private static bool contained, clickContained;
 
         /// <summary>Empty when the contract check passed and the postfix is installed.</summary>
         internal static string Status { get; private set; } = "Research dialog is not installed.";
@@ -104,7 +104,7 @@ namespace PersistentCity.Runtime
         /// <summary>The only change to the native entry.</summary>
         private static void Extend(DialogEntry entry, MarketingAgencyDialog dialog)
         {
-            entry.OnSecondOption = () => OnResearch(dialog);
+            entry.OnSecondOption = () => Guarded(() => OnResearch(dialog, entry));
             entry.SecondOptionTextOverride = ResearchText.Button;
         }
 
@@ -138,40 +138,57 @@ namespace PersistentCity.Runtime
             return false;
         }
 
+        // Every research button runs inside a native button callback: an exception shows the research error and stays.
+        private static DialogEntry? Guarded(Func<DialogEntry?> click)
+        {
+            try { return click(); }
+            catch (Exception error)
+            {
+                if (!clickContained) { clickContained = true; Debug.LogWarning("[Persistent City] Research dialog click was contained: " + error); }
+                try { Notifications.ShowError(ResearchText.Unavailable); } catch { }
+                return null;
+            }
+        }
+
         // The research button. Null keeps the campaign screen, as native OnMarketingSettingsSet does on an error.
-        private static DialogEntry? OnResearch(MarketingAgencyDialog dialog)
+        // native is the campaign entry the button was added to; its hang-up message is reused.
+        private static DialogEntry? OnResearch(MarketingAgencyDialog dialog, DialogEntry native)
         {
             var current = desk;
             var built = menu;
             if (current == null || built == null || !current.Attached()) { Notifications.ShowError(ResearchText.Unavailable); return null; }
             var business = DialogController.current?.GetInputTransformSafe<MarketingCampaignSettings>()?.selectedBusiness;
             return ResearchClick.Run(business != null, business != null && current.Eligible(business),
-                key => Notifications.ShowError(key), () => Entry(dialog, built, ResearchMenu.Root, business!));
+                key => Notifications.ShowError(key), () => Entry(dialog, native, built, ResearchMenu.Root, business!));
         }
 
-        private static DialogEntry Entry(MarketingAgencyDialog dialog, ResearchMenu built, int index, BuildingRegistration business)
+        private static DialogEntry Entry(MarketingAgencyDialog dialog, DialogEntry native, ResearchMenu built, int index, BuildingRegistration business)
         {
             var node = built.Nodes[index];
             return new DialogEntry
             {
                 messageData = node.MessageKey.Localize(node.Arguments(business.BusinessName)),
                 Template = DialogEntry.TemplateType.Text,
-                OnConfirm = () => Follow(dialog, built, node, node.Confirm, business),
+                OnConfirm = () => Guarded(() => Follow(dialog, native, built, node, node.Confirm, business)),
                 ConfirmTextOverride = node.Confirm.TextKey.Localize(),
-                OnSecondOption = () => Follow(dialog, built, node, node.Second, business),
+                OnSecondOption = () => Guarded(() => Follow(dialog, native, built, node, node.Second, business)),
                 SecondOptionTextOverride = node.Second.TextKey,
-                OnCancel = DialogController.current.CancelDialog
+                OnCancel = DialogController.current.CancelDialog,
+                onCancelMessage = native.onCancelMessage
             };
         }
 
-        private static DialogEntry? Follow(MarketingAgencyDialog dialog, ResearchMenu built, ResearchMenuNode node, ResearchMenuChoice choice,
-            BuildingRegistration business)
+        private static DialogEntry? Follow(MarketingAgencyDialog dialog, DialogEntry native, ResearchMenu built, ResearchMenuNode node,
+            ResearchMenuChoice choice, BuildingRegistration business)
         {
             switch (choice.Target)
             {
-                case ResearchMenuTarget.Node: return Entry(dialog, built, choice.Node, business);
+                case ResearchMenuTarget.Node: return Entry(dialog, native, built, choice.Node, business);
                 // The native screen again, through the patched method, so the preconditions are read afresh.
-                case ResearchMenuTarget.CampaignScreen: return (DialogEntry)campaignSettings!.Invoke(dialog, null);
+                case ResearchMenuTarget.CampaignScreen:
+                    var screen = campaignSettings;
+                    if (screen == null) { Notifications.ShowError(ResearchText.Unavailable); return null; }
+                    return (DialogEntry)screen.Invoke(dialog, null);
                 default: return PlaceOrder(dialog, node.Product, business);
             }
         }
@@ -180,12 +197,27 @@ namespace PersistentCity.Runtime
         {
             var current = desk;
             var runner = current?.Runner();
-            if (current == null || runner == null || !current.Attached() || !current.Available() || !ResearchBilling.Installed)
+            var continuation = moreHelpOffered;
+            if (current == null || runner == null || continuation == null || !current.Attached() || !current.Available() || !ResearchBilling.Installed)
             { Notifications.ShowError(ResearchText.Unavailable); return null; }
             if (!current.Eligible(business)) { Notifications.ShowError(ResearchText.Ineligible); return null; }
             var contact = DialogController.current.contact;
             var building = BuildingHelper.GetBuilding(contact.Address);
             bool taxDeductible = building != null && building.SpecialService != null && building.SpecialService.hasTaxDeductiblePurchases;
+            // Everything the confirmation needs is built before the order is stored, so nothing native can fail after it.
+            // The native continuation after a campaign change: the agency's "more help" entry.
+            var moreHelp = (DialogEntry)continuation.Invoke(dialog, null);
+            var confirmation = new DialogEntry
+            {
+                messageData = ResearchText.Ordered.Localize(new Dictionary<string, string>(3, StringComparer.Ordinal)
+                {
+                    { ResearchText.ProductArgument, ResearchText.ProductName(product.Code) },
+                    { ResearchText.BusinessArgument, business.BusinessName },
+                    { ResearchText.PriceArgument, ResearchText.Price(product) }
+                }),
+                Template = DialogEntry.TemplateType.Text,
+                OnVisible = moreHelp.ShowEntry
+            };
             var refusal = runner.TryOrder(product.Code, NativeFoodMarket.PlaceId(business), AgencyId(contact), taxDeductible,
                 current.RadiusMetres(), current.Now(), out var order, out var ledgerRefusal);
             if (refusal != ResearchSurveyRefusal.None)
@@ -194,21 +226,8 @@ namespace PersistentCity.Runtime
                 current.Log("Research order refused: " + refusal + (refusal == ResearchSurveyRefusal.Ledger ? "/" + ledgerRefusal : "") + ".");
                 return null;
             }
-            current.Log("Research order " + order!.Id + " placed: " + product.Code + ".");
-            var arguments = new Dictionary<string, string>(3, StringComparer.Ordinal)
-            {
-                { ResearchText.ProductArgument, ResearchText.ProductName(product.Code) },
-                { ResearchText.BusinessArgument, business.BusinessName },
-                { ResearchText.PriceArgument, ResearchText.Price(product) }
-            };
-            // The native continuation after a campaign change: the agency's "more help" entry.
-            var moreHelp = (DialogEntry)moreHelpOffered!.Invoke(dialog, null);
-            return new DialogEntry
-            {
-                messageData = ResearchText.Ordered.Localize(arguments),
-                Template = DialogEntry.TemplateType.Text,
-                OnVisible = moreHelp.ShowEntry
-            };
+            try { current.Log("Research order " + order!.Id + " placed: " + product.Code + "."); } catch { }
+            return confirmation;
         }
 
         internal static string RefusalKey(ResearchSurveyRefusal refusal, ResearchOrderRefusal ledger)
@@ -237,6 +256,7 @@ namespace PersistentCity.Runtime
             if (moreHelpOffered == null || moreHelpOffered.ReturnType != typeof(DialogEntry)) return "MarketingAgencyDialog.OnMoreHelpOffered() changed.";
             string? field = Field(typeof(DialogEntry), "OnConfirm", typeof(Func<DialogEntry>)) ?? Field(typeof(DialogEntry), "OnSecondOption", typeof(Func<DialogEntry>))
                 ?? Field(typeof(DialogEntry), "OnCancel", typeof(Action)) ?? Field(typeof(DialogEntry), "OnVisible", typeof(Action))
+                ?? Field(typeof(DialogEntry), "onCancelMessage", typeof(TextMessage))
                 ?? Field(typeof(DialogEntry), "SecondOptionTextOverride", typeof(string))
                 ?? Field(typeof(DialogEntry), "ConfirmTextOverride", typeof(LanguageChangeEventDataHolder))
                 ?? Field(typeof(DialogEntry), "messageData", typeof(LanguageChangeEventDataHolder))

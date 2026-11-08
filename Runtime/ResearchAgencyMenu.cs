@@ -61,6 +61,20 @@ namespace PersistentCity.Runtime
         }
     }
 
+    /// <summary>Plan section 9, Q4, shared by ordering and billing: a player-rented, named business whose PC food scope
+    /// is the generation Persistent City observed and whose food authority can serve now. A business that went back to
+    /// native ownership (an unsupported menu, a closed interval) keeps its scope and generation but cannot serve.</summary>
+    internal static class ResearchEligibility
+    {
+        internal static bool Decide(bool rentedAndNamed, string? scopeBusinessId, bool observedOwnGeneration, FoodAuthority? authority)
+            => rentedAndNamed && !string.IsNullOrEmpty(scopeBusinessId) && observedOwnGeneration
+                && authority != null && string.Equals(authority.BusinessId, scopeBusinessId, StringComparison.Ordinal) && authority.CanServe;
+
+        /// <summary>Saved research runs (survey and bill) only when both the dialog and the billing contract passed.
+        /// Otherwise the ledger is kept in the save unchanged and nothing surveys or charges.</summary>
+        internal static bool SessionEnabled(bool dialogContract, bool billingContract) => dialogContract && billingContract;
+    }
+
     internal enum ResearchClickOutcome { SelectBusiness, Ineligible, Menu }
 
     internal static class ResearchClick

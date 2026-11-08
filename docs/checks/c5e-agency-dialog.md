@@ -11,7 +11,7 @@ Plan: [C5 section 4, row C5e](../plans/c5-agency-research.md#c5e--agency-dialog-
   - `Runtime/ResearchAgencyMenu.cs`: the pure gate, click rule, menu tree and localization keys. It is linked into the test project.
   - `Runtime/Localization/en.json`, the English table.
   - Wiring in `Runtime/PersistentCityMod.cs`: `ResearchBilling.Install` and `ResearchAgencyDialog.Install` at initialization. At attach, the saved `CityState.Research` goes through C5b's `AttachResearch`, `ResearchBilling.Attach` and the dialog desk. Detach and uninstall at detach and shutdown.
-  - `tests/ResearchMenuTests.cs` (16 cases).
+  - `tests/ResearchMenuTests.cs` (19 cases).
 - **Small edits outside the owned files, each needed for the wiring:**
   - one `Compile Include` in `tests/PersistentCity.Tests.csproj`;
   - a copy of `Runtime/Localization/*.json` to `<package>/Locales/` in `tools/build.py`;
@@ -34,7 +34,7 @@ Plan: [C5 section 4, row C5e](../plans/c5-agency-research.md#c5e--agency-dialog-
    - at least one registration is eligible.
 
    Then it sets only `OnSecondOption` and `SecondOptionTextOverride`. If any check fails, or an exception is contained, the native entry is returned as native built it.
-2. **Eligibility** (plan Q4): the business is rented by the player, has a business name, and its `NativeFoodMarket.PlaceId` is a Shop-channel food scope with `ObservedOwnShop`. The billing port (C5d) uses the same check.
+2. **Eligibility** (plan Q4, `ResearchEligibility.Decide`): the business is rented by the player and has a business name. Its `NativeFoodMarket.PlaceId` must be a Shop-channel food scope with `ObservedOwnShop`, and its current `FoodAuthority` must have the scope's `BusinessId` and `CanServe`. A business that went back to native ownership keeps its scope and generation, but it cannot serve, so it is refused. The billing port (C5d) uses the same predicate, so a pending order for it is cancelled at billing.
 3. **Click.** The handler reads native `MarketingCampaignSettings.selectedBusiness`.
    - If no business is selected, it shows native `Notifications.ShowError("common_notification_select_business")` and returns null.
    - If the business is not eligible, it shows the research error and returns null.
@@ -63,6 +63,8 @@ Plan: [C5 section 4, row C5e](../plans/c5-agency-research.md#c5e--agency-dialog-
    - the foreign-patch check.
 
    On a mismatch, the postfix is not installed and the log gets the status line "Research dialog off: …". Persistent City keeps running, and no substitute dialog is written. The foreign-patch check runs again on every screen that passed the cheaper checks.
+7. **Research off for the session.** `AttachResearch` attaches the survey seam, the billing session and the desk only when both the dialog and the billing contract passed (`ResearchEligibility.SessionEnabled`). Otherwise it logs "Research off for this session; saved research orders are kept unchanged." The saved ledger stays in `CityState.Research` and is written back unchanged; nothing surveys or charges.
+8. **Click guard.** Every research button (the campaign-screen button and both menu buttons) runs through `Guarded`. An exception logs once, shows the research error and stays on the entry. `PlaceOrder` resolves native `OnMoreHelpOffered()` and builds the confirmation before `TryOrder`, so no native call can fail after an order is stored. Menu entries carry the native campaign entry's `onCancelMessage`, so hanging up writes the same contact history as hanging up from the campaign screen.
 
 ## Native contract, re-verified
 
@@ -81,8 +83,8 @@ Read with read-only ILSpy on 8 November 2026. `BigAmbitions.dll` SHA-256 is `942
 | Check | Result |
 | --- | --- |
 | `python tools/build.py --game-managed "...\Big Ambitions_Data\Managed"` | passed; package has `Locales/en.json` |
-| `dotnet test tests/PersistentCity.Tests.csproj` | **3,911 / 3,911 passed** (16 new C5e cases), including the pinned writer-33 golden hash |
-| `dotnet test ... --filter ResearchMenuTests` | 16 / 16 passed; perf lines in [docs/perf/c5e-agency-dialog.md](../perf/c5e-agency-dialog.md) |
+| `dotnet test tests/PersistentCity.Tests.csproj` | **3,911 / 3,911 passed** (19 new C5e cases), including the pinned writer-33 golden hash |
+| `dotnet test ... --filter ResearchMenuTests` | 19 / 19 passed; perf lines in [docs/perf/c5e-agency-dialog.md](../perf/c5e-agency-dialog.md) |
 
 Cases in `tests/ResearchMenuTests.cs`:
 
@@ -115,9 +117,9 @@ These run on a named disposable FT city at the development head with the C5e bui
    - Rig-automated: existing capability `campaign` op and flow, RIG-PCSAVE extraction.
 3. **Localization table loaded from the mod folder.**
    - Setup: C5e build deployed with `Locales/en.json` next to `PersistentCity.dll`.
-   - Steps: in the console, evaluate `LocalizorManager.IsLocalizedKey("persistentcity_research_button")` and `"persistentcity_research_button".GetLocalization()`.
-   - Expected: true and "Market research". No "Localization for key 'persistentcity_research_…' not found" warning in the log.
-   - Rig-automated: existing capability `call: console` and log capture.
+   - Steps: load the fixture; capture the game log. Then probe the key.
+   - Expected: no "Localization for key 'persistentcity_research_…' not found" warning and no "Research dialog off" line in the log. The probe reports `IsLocalizedKey("persistentcity_research_button")` true and rendered text "Market research".
+   - Rig-automated: existing capability log capture for the warnings; pending capability R1 `research` op, `list` action, returning `IsLocalizedKey` and the rendered button text. No registered console command returns these before C5f's `pcresearch`.
 4. **Saved ledger attached, idle (plan check 10, idle window).**
    - Setup: C5e build, autosave off and checked before the window.
    - Steps: a matched idle window against the F6i base build, then a window with the agency campaign screen opened and closed five times.
