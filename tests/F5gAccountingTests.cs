@@ -107,7 +107,6 @@ public sealed class F5gAccountingTests
         CitySimulator Reload()
         {
             // Runtime's save callback: the open boundary's fill completes before capture.
-            city.CompleteFillForSave();
             Credit();
             string payload = SaveCodec.Write(city.State);
             var read = SaveCodec.Read(payload);
@@ -132,7 +131,7 @@ public sealed class F5gAccountingTests
             if (allowed == 0 && requested > 0)
             {
                 result.Held++;
-                if (city.State.Minute == boundary && city.PopulationFillUnits > 0) result.HeldAtBoundary++;
+                if (city.PopulationFillStaged > 0) result.HeldAtBoundary++;
             }
             // As the F1 scenario: the native clock is an hour plus a float minute.
             int nativeHour = (int)Math.Floor(native / 60); float nativeMinute = (float)(native - nativeHour * 60.0) + allowed;
@@ -143,7 +142,8 @@ public sealed class F5gAccountingTests
             target = Math.Max(city.State.Minute, AccountingClock.Target(native));
             long saveTicks = 0;
             // A save as the clock reaches midnight: the boundary's fill is open and the save runs its units (excluded from frame cost).
-            if (reload && !midnightReload && native >= boundary && city.State.Minute >= boundary - 1)
+            // A save right after midnight's publication (the boundary is crossed and its persons are in the city).
+            if (reload && !midnightReload && city.State.Minute == boundary)
             { long saveStarted = Stopwatch.GetTimestamp(); midnightReload = true; city = Reload(); saveTicks = Stopwatch.GetTimestamp() - saveStarted; }
             result.MaxLag = Math.Max(result.MaxLag, target - city.State.Minute);
             long unitsBefore = city.PopulationFillUnits;
@@ -157,8 +157,9 @@ public sealed class F5gAccountingTests
             city.SynchronizeSnapshot();
             if (city.PopulationFillUnits != unitsBefore) result.FillFrames++;
             costs.Add((Stopwatch.GetTimestamp() - started - saveTicks) * 1000.0 / Stopwatch.Frequency);
-            // A second save while the boundary's units are still running (reached when the midnight save did not land first).
-            if (reload && !fillReload && city.PopulationFillUnits > 0 && city.State.Minute == boundary)
+            // A save while midnight's persons are staged: the save stores the city before the boundary, and the reload stages
+            // them again from that state (no fill work runs in the save).
+            if (reload && !fillReload && city.PopulationFillStaged > 0)
             {
                 fillReload = true; result.FillReloads++; city = Reload();
             }
@@ -190,9 +191,9 @@ public sealed class F5gAccountingTests
         Assert.InRange(actual.MaxPathsInFrame, 1, AdmittedPlanner.PathsPerFrame);
         Assert.True(actual.Reloads >= 1);
         Assert.True(actual.Held > 0);
-        // The midnight save landed on the open boundary and ran its units, so the reloaded run advanced no unit itself.
-        Assert.True(reference.FillFrames > 0); Assert.Equal(0, actual.FillFrames);
         Assert.Equal(reference.FillCreated, actual.FillCreated);
+        // At one event per frame the staging spans frames, so a save lands while persons are staged.
+        if (budget == 1) Assert.True(actual.FillReloads > 0);
     }
 
     [Fact]

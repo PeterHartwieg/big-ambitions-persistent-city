@@ -47,6 +47,13 @@ namespace PersistentCity.Core
             foreach (var person in PersonTable.Schedules(state)) Add(person.DayPlaceId);
         }
 
+        /// <summary>Persons seated at a place (F5g staging adds its own staged seats to this).</summary>
+        public int Count(string placeId)
+        {
+            if (stale && city != null) Rebuild(city);
+            return Seated(placeId);
+        }
+
         public bool Vacant(Place place)
         {
             if (stale && city != null) Rebuild(city);

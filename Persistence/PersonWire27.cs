@@ -274,10 +274,10 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>Writer-27 person rules, on every read and before every write. Returns records charged.</summary>
         /// <summary>F5g: a sequence number below NextVisitorSequence without a visitor is one the fill skipped for a commuter,
-        /// so its frozen derived identity must be a student or retiree (owner decision, 8 Nov 2026). Any other missing number
-        /// is a lost person and refuses the payload, as the count equality did before.</summary>
+        /// so its frozen derived identity must be a student or retiree (owner decision, 8 Nov 2026). A missing number with a
+        /// working identity is a lost person and refuses the payload. A lost visitor whose identity is a student or retiree
+        /// cannot be told from a skipped number, so the guarantee is weaker than the old count equality for those.</summary>
         private static void ValidateSkippedSequences(CityState state, List<int> present)
         {
             long gaps = (long)state.NextVisitorSequence - 1 - present.Count;
@@ -287,6 +287,7 @@ namespace PersistentCity.Persistence
                 "Visitor creation and active counts disagree: a skipped visitor sequence is not a student or retiree.");
         }
 
+        /// <summary>Writer-27 person rules, on every read and before every write. Returns records charged.</summary>
         private static int ValidatePersons27(CityState state, Dictionary<string, Place> places, Dictionary<string, int> assigned, ref int embeddedRecords)
         {
             Require(state.Visitors != null && state.Portals != null && state.VisitorRoutines != null, "Missing person table.");

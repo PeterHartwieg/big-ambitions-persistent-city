@@ -93,10 +93,9 @@ public sealed class F5gPopulationFillTests
         return city;
     }
 
-    /// <summary>Saves as Runtime's save callback does (the open boundary's fill completes first), then loads.</summary>
+    /// <summary>Saves and loads. Persons staged for a coming boundary are not in the city, so they are not saved.</summary>
     internal static CitySimulator Reload(CitySimulator city, Schema27Tests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
     {
-        city.CompleteFillForSave();
         string payload = SaveCodec.Write(city.State);
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -341,7 +340,8 @@ public sealed class F5gPopulationFillTests
         var (commuters, pool) = Counts(state);
         Assert.Equal(1000, commuters);
         long capacity = city.PopulationFillTargets!.Value.VisitorCapacity;
-        Assert.Equal(Math.Min(city.PopulationFillTargets!.Value.PoolTarget, capacity - 1000), pool);
+        // The first boundary publishes at most 1,024 persons: all 1,000 commuters first, then 24 pool members.
+        Assert.Equal(Math.Min(Math.Min(city.PopulationFillTargets!.Value.PoolTarget, capacity - 1000), PopulationFillPolicy.MaximumPersonsPerBoundary - 1000), pool);
         var ids = state.Visitors.Select(v => v.Id).ToList();
         var wallets = state.Food!.Residents.Where(m => m.ResidentId.StartsWith("pv:")).ToDictionary(m => m.ResidentId, m => m.Budget!.OpeningBalance);
 
@@ -360,6 +360,7 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(1000, after.Commuters);
         Assert.Equal(Math.Min(shrunk.PoolTarget, capacity - 1000), after.Pool);
         Assert.True(shrunk.PoolTarget > after.Pool, "the pool's own target is above what the aggregate capacity allows");
+        Assert.True(after.Pool > pool, "the pool grew inside the remaining aggregate capacity while commuters stayed paused");
         Assert.All(ids, id => Assert.Contains(state.Visitors, v => v.Id == id));
         foreach (var (id, opening) in wallets) Assert.Equal(opening, state.Food.Residents.Single(m => m.ResidentId == id).Budget!.OpeningBalance);
         Invariants(state, "shrunk"); Conserved(state, "shrunk");
@@ -387,15 +388,16 @@ public sealed class F5gPopulationFillTests
         var fill = Fill();
         var city = Start(state, market, fill);
         double end = (2 + days) * 1440 + 30;
-        long units = 0; int reloads = 0, reloadedDay = -1;
+        long units = 0; int reloads = 0, reloadedDay = -1; double reloadedBoundary = -1;
         while (true)
         {
             bool caught;
             if (frameSlices) { var r = city.AdvanceFrameSlice(end, budget); caught = r.CaughtUp; }
             else caught = city.AdvanceTo(end, budget).CaughtUp;
             perFrame?.Invoke(city);
-            if (reloadMidFill && city.PopulationFillUnits != units && city.PopulationFillUnits % 2 == 1 && city.State.Minute % 1440 == 0)
-            { city = Reload(city, market, Fill()); reloads++; units = 0; continue; }
+            // A save while a boundary's persons are staged (once per boundary, since the reload stages them again).
+            if (reloadMidFill && city.PopulationFillStaged > 0 && city.PopulationFillBoundary > reloadedBoundary)
+            { reloadedBoundary = city.PopulationFillBoundary!.Value; city = Reload(city, market, Fill()); reloads++; units = 0; continue; }
             units = city.PopulationFillUnits;
             int today = (int)(city.State.Minute / 1440);
             if (reloadDaily && !caught && today > reloadedDay && city.State.Minute >= today * 1440 + 720)
@@ -497,23 +499,63 @@ public sealed class F5gPopulationFillTests
     }
 
     [Fact]
-    public void ASaveDuringTheFillCompletesItAndEqualsContinuing()
+    public void ASaveWhilePersonsAreStagedStoresThePreBoundaryCityAndTheReloadStagesThemAgain()
     {
+        // Review Sol-r2-2: the save does no fill work; staged persons are not in the city until the boundary publishes them.
         var (a, ma) = City(12, 1, seed: 52); var (b, mb) = City(12, 1, seed: 52);
         var fill = Catalogue(12, Base, Since(3));
         var plain = Start(a, ma, fill); var city = Start(b, mb, fill);
         Advance(plain, 3 * 1440 + 30);
-        // Stop after the first unit of the boundary's fill, then save there as Runtime does.
+        // Stop after the first staging unit of the boundary, then save there.
         while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(3 * 1440 + 30, 1);
-        Assert.Equal(2 * 1440.0, city.State.Minute);
-        int partial = city.State.Visitors.Count;
-        Assert.True(city.CompleteFillForSave() > 0);
-        Assert.True(city.State.Visitors.Count > partial);
-        Assert.Equal(0, city.CompleteFillForSave());
+        Assert.True(city.PopulationFillStaged > 0);
+        Assert.True(city.State.Minute < 2 * 1440);
+        Assert.Empty(city.State.Visitors);
+        string staged = SaveCodec.Write(city.State);
+        Assert.DoesNotContain("pv:", staged);
         city = Reload(city, mb, fill);
+        Assert.Equal(0, city.PopulationFillStaged);
         Advance(city, 3 * 1440 + 30);
         Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(city.State));
         Assert.Equal(ma.Orders, mb.Orders);
+    }
+
+    [Fact]
+    public void ABoundaryPublishesAtMostItsCapAndALargerDeficitFillsOverLaterDays()
+    {
+        // 90 homes (567 residents) and a commuter demand above the 1,134-visitor capacity: 1,024 persons on the first day,
+        // the remaining 110 on the second.
+        var (state, market) = City(90, 1, seed: 1234);
+        var city = Start(state, market, Catalogue(90, Base, Since(80)));
+        Advance(city, 2 * 1440 + 1);
+        Assert.Equal(PopulationFillPolicy.MaximumPersonsPerBoundary, state.Visitors.Count);
+        Assert.Equal(PopulationFillPolicy.MaximumPersonsPerBoundary, city.LastFillPublished);
+        Assert.True(city.PopulationFillUnits >= PopulationFillPolicy.MaximumPersonsPerBoundary / PopulationFillPolicy.MaximumPersonsPerUnit);
+        Advance(city, 3 * 1440 + 1);
+        Assert.Equal(2L * state.Citizens.Count, state.Visitors.Count);
+        Invariants(state, "two boundaries"); Conserved(state, "two boundaries");
+    }
+
+    [Fact]
+    public void CapabilitiesActivateAtTheFirstMidnightWithTheFillAttached()
+    {
+        // Review Sol-r2-1: crossing the first midnight by publication activates the city's capabilities, as ordinary
+        // advancing without the fill and the accounting-observation path both do.
+        foreach (bool slices in new[] { false, true })
+        {
+            var (plainState, plainMarket) = City(12, 1, seed: 71); var (state, market) = City(12, 1, seed: 71);
+            state.Capabilities.Active = plainState.Capabilities.Active = false;
+            var plain = Start(plainState, plainMarket, null);
+            var city = Start(state, market, Catalogue(12, Base, Since(3)));
+            foreach (double target in new[] { 2 * 1440 + 1.0, 3 * 1440 + 1.0 })
+            {
+                if (slices) { while (!city.AdvanceFrameSlice(target, 1).CaughtUp) { } while (!plain.AdvanceFrameSlice(target, 1).CaughtUp) { } }
+                else { Advance(city, target); Advance(plain, target); }
+                Assert.True(plainState.Capabilities.Active);
+                Assert.True(state.Capabilities.Active, (slices ? "slices " : "AdvanceTo ") + target);
+            }
+            Assert.NotEmpty(state.Visitors);
+        }
     }
 
     [Fact]
