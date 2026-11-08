@@ -130,6 +130,9 @@ namespace PersistentCity.Core
                 // Avoid recomputing a week's hashes/windows at every ordinary event.
                 if (currentDay >= day && next <= midnight + 1440) break;
             }
+            // F5g: a pool member can draw no visit day inside this window. Wake it at the first unchecked midnight to look
+            // further ahead instead of ending its Home span at the clock limit, which would leave it dormant for good.
+            if (next == MaxMinute && person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) next = Math.Min(MaxMinute, (day + 9) * 1440.0);
             return new RoutineSlot(person.HomeId, Activity.Home, next);
         }
 

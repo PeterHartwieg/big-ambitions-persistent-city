@@ -140,11 +140,12 @@ namespace PersistentCity.Core
             plan.Factory ??= new VisitorFactory(State, occupancy.Vacant, work => occupancy.Move("", work));
             var added = new List<(VisitorPerson Visitor, VisitorRoutine Routine)>(PopulationFillPolicy.MaximumPersonsPerUnit);
             int sequence = State.NextVisitorSequence;
-            while (added.Count < PopulationFillPolicy.MaximumPersonsPerUnit && plan.Next is VisitorPattern pattern)
+            // Bounds are checked before anything is seated, so a refusal leaves the occupancy index and sequence untouched.
+            long room = Math.Min(Math.Min(PopulationFillPolicy.MaximumPersonsPerUnit, PersonTable.MaximumVisitors - (long)State.Visitors.Count),
+                Math.Min(PersonTable.MaximumPersons - (long)PersonTable.PersonCount(State), int.MaxValue - (long)sequence));
+            if (room <= 0) throw new InvalidOperationException("Visitor bound exceeded.");
+            while (added.Count < room && plan.Next is VisitorPattern pattern)
             {
-                if (State.Visitors.Count + added.Count >= PersonTable.MaximumVisitors
-                    || PersonTable.PersonCount(State) + added.Count >= PersonTable.MaximumPersons || sequence == int.MaxValue)
-                    throw new InvalidOperationException("Visitor bound exceeded.");
                 added.Add(plan.Factory.Create(sequence++, pattern, State.Minute));
                 if (pattern == VisitorPattern.Commuter) plan.Commuters++; else plan.Pool++;
             }

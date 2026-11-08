@@ -8,7 +8,7 @@ Performance: [docs/perf/f5g.md](../perf/f5g.md).
 
 ## What is implemented
 
-- **Fill at day boundaries** (`Core/PopulationFill.cs`, `CitySimulator.AdvanceCore`). When the clock reaches a day boundary, every event at that minute runs first. Then fill units run, before any later event. Each unit creates at most 64 persons (`PopulationFillPolicy.MaximumPersonsPerUnit`) and counts as one event against the frame budget. A boundary with no event of its own still stops the clock, so its fill runs. The caught-up report (`IsCaughtUpTo`, `IsAccountingEpochDrained`) holds while a boundary inside the target is unreached or still has fill work. There is one scheduler and one event queue. Postings use the existing F3 units and F1 drain.
+- **Fill at day boundaries** (`Core/PopulationFill.cs`, `CitySimulator.AdvanceCore`). When the clock reaches a day boundary, every event at that minute runs first. Then fill units run, before any later event. Each unit creates at most 64 persons (`PopulationFillPolicy.MaximumPersonsPerUnit`) and counts as one event against the frame budget. A boundary with no event of its own still stops the clock, so its fill runs. The simulator does not report itself caught up while a boundary inside the target is unreached or still has fill work. `IsCaughtUpTo` and `IsAccountingEpochDrained` also hold while the boundary they stand on has fill work. There is one scheduler and one event queue. Postings use the existing F3 units and F1 drain.
 - **Targets come from the census formula.** `VisitorTargets.Compute` is now the single formula behind both `PopulationCensus.Compute` and the fill. `VisitorCapacity` is `min(2 × Residents, 100,000)`. Commuters are clamped first, then the pool takes the capacity left. Without a portal both targets are zero.
   - The fill reads Runtime's load-time catalogue (`PopulationFillCatalogue`: places and business facts, as F5a's census reads them), the residents' current assignments and the saved portals.
   - The plan for a boundary is latched when that boundary's own events have finished. A catalogue attached later in the day applies at the next boundary. One attached at a boundary that has already latched keeps the latched targets.
@@ -19,7 +19,7 @@ Performance: [docs/perf/f5g.md](../perf/f5g.md).
 - **Employment.** Commuters are seated with F5e's rule against the simulator's occupancy index. An unseated working adult carries an outside employer (`ExternalEmployment`). Day visitors never hold a city workplace. They carry an outside employer by the same rule, which only the ordinary job-loss draw ends (`ResidentLifecycle.BeginEmploymentCheck`). The wage and income rules are unchanged.
 - **Day-visitor stays** (`DailyRoutine`, `VisitorSchedules.VisitsOn`).
   - A pool member returns on the days drawn by `Hash(seed, PersonId, "visit", day)`. The weighting is 13.75% on each of the four weekdays and 40% on each of the three weekend days, which averages the census's 25%.
-  - On a visit day it goes from its portal to its shop and its leisure venue and back. On other days it stays dormant at its portal.
+  - On a visit day it goes from its portal to its shop and its leisure venue and back. On other days it stays dormant at its portal. When no visit day falls in the routine's nine-day window, it wakes at the window's end and looks again, so no member stays dormant for good.
   - Commuters keep F5d's weekday stays. Dormancy, meal skipping while dormant, deferred departure and the `LastArrival` guard are F5d's and apply to both patterns.
 - **Transport.** Visitors walk and take the subway through their portal with the existing planner and F3 admission. No visitor gets a car, a traffic record, a body or a lease. Routes are committed per person (`route.Commit()`). The shared Runtime geometry cache returns copies, so no route, queue position or choice is shared.
 - **Writer 33 unchanged.** The visitor tuple already had pattern code `D`. The strict reader and writer now accept it for a visitor with no Employment and no workplace, and refuse it otherwise ("A day visitor holds no employment.").
@@ -38,6 +38,8 @@ Performance: [docs/perf/f5g.md](../perf/f5g.md).
 4. **Saved portals count as the stations.** The fill uses `CityState.Portals`, the stations saved when the first roster was created. Stations discovered later never add a portal (F5d rule), so a city saved without portals never fills.
 5. **No new route cache.** Runtime's `WalkingRoutes` cache is the shared bounded cache for portal legs. It is keyed by endpoint positions, holds 1,024 entries and returns copies. A Core cache keyed by place pair would have shared one person's mode choice with another, because the planner's choice depends on each person's walking tolerance and fare weight. The offline tests use a model of that cache; native hit rates are batched for rig check 8.
 6. **Day visitors carry an outside employer.** They follow the rule that unseated commuter workers already follow, so their income is the same kind as any outside worker's.
+7. **The commuter target counts persons, not seated workers.** The plan counts each pattern's persisted persons against its target. A created commuter counts whatever its persona: a student is seated at a Study place, and a retiree or an unseated worker takes no seat. So Work places can stay below the census's 80% fill when commuters equal their target. Counting seated workers instead would be a different target and needs an owner decision.
+8. **Research surveys wait for a pending boundary.** With the fill attached, a survey due after a day boundary runs after that boundary's fill, whatever the cadence.
 
 ## Offline evidence
 
@@ -68,12 +70,21 @@ New tests in `tests/F5gPopulationFillTests.cs` (20 cases), plus the opt-in harne
    - `CashConserved` holds for every wallet and the city-wide `BigInteger` ledger at every hour.
    - Most pool members return on two or more days, and pool presence per weekend day exceeds that per weekday.
    - `DayVisitDrawsFollowTheirSeededDays`: a pool member is present only on its drawn day, or finishing the previous day's stay.
+   - `NoPoolMemberStaysDormantForGoodOverTenWeeks`: over 70 days with reloads, no pool member's next event is more than ten days ahead, and every member is active at least once.
 7. **Transport and arrival.**
    - `PortalRoutesShareCachedGeometryButNeverRoutesAndUnreachablePortalsNeverArrive`: with the cache model, portal requests hit and miss, and no two persons share a route or leg list. The journey index matches a scan, and no visitor gets a lease. When every portal route is refused, the visitors stay dormant at their portals with no arrival, journey, purchase or order through a reload, and the wallets stay conserved.
    - `DayVisitorShopArrivalAdmitsServiceThroughReloadAndNeverFabricatesIt`: every day visitor served at a player shop holds a `Shop` arrival at that place at or after the meal's desired minute, across reloads.
 8. **Writer 33.** `DayVisitorsRoundTripInWriter33AndMalformedDayVisitorsAreRefusedAndKept`: a city with day visitors round-trips byte-identically. A day visitor given an Employment is refused at write. A payload whose seated commuter is relabelled `D` is refused at read as `Invalid`, and the store keeps it and every other key. The current-writer goldens (`ChangeJournalTests.CurrentWriterGoldenSnapshotAndReload`, seeds 5150 and 9217) and the older-schema refusal (`OlderAttendancePayloadIsDistinctRefusalAndKept`) pass unchanged. No fixture or pin was edited.
 
 Bug found and fixed on the way: the first version left visitor queue indices stale after a merge, so `TryBeginMealVisit` refused visitor meal outings until a reload rebuilt the queue. Reloaded cities then diverged from unreloaded ones from game minute 3,383. The slot check by ID fixed it (the determinism and four-week tests fail before and pass after).
+
+Review round 1 (an independent review of the head) found:
+
+- **r1-1, fixed.** A pool member whose drawn visit days all fell outside the routine's nine-day window got a Home span up to the clock limit (minute 1e9) and never woke again. That affected roughly a tenth of members at each re-evaluation. `NoPoolMemberStaysDormantForGoodOverTenWeeks` was red before the fix (`pv:24 sleeps until 1000000000`) and is green after it.
+- **r1-2, fixed.** A research survey due after a day boundary, with no event in between, could run before that boundary's fill on a long advance but after it on a short one. The survey check now treats the pending boundary as the next work.
+- **r1-3, documented, not changed.** The commuter target counts persons, as the plan states (decision 7 above).
+- **r1-4, fixed.** The bounds are now checked before a unit seats anyone, so a refusal could no longer leave seats counted for persons that were never added. The case was unreachable under today's bounds.
+- **r1-5, fixed.** Doc wording: the test count, the caught-up wording, and the merge comment ("no copy" instead of "no allocation").
 
 No existing test needed a changed expectation.
 
@@ -82,15 +93,15 @@ No existing test needed a changed expectation.
 Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400), 8 November 2026. Each `dotnet` command ran only when no other dotnet test or run process was active.
 
 - `python3 tools/build.py --game-managed "<dll-import-shim>/Big Ambitions_Data/Managed"`: exit 0.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **3,916 passed, 0 failed, 0 skipped** (3 min 58 s).
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,917 passed, 0 failed, 0 skipped** (4 min 8 s), after the review round-1 fixes.
 - `tests/F5gMeasure.cs` (Release, opt-in): numbers in the perf file.
 
 ## Performance
 
 Summary; the tables are in [docs/perf/f5g.md](../perf/f5g.md). Offline, Release, synthetic.
 
-- A creation unit of 64 persons takes p95 3.43 ms at the reference load (2,532 persisted persons) and 1.42 ms at 10,017 persisted persons. The max is 7.61 ms, on the first unit of a boundary, which latches the plan. A unit allocates about 5 KB per person.
-- The mod-work proxy p95 is at most 2.93 ms in every budget arm. No frame slice reached 30 ms. Flagged: the single hidden-skip call of 48 game hours (246 ms and 596 ms), which is one call for the whole skip, not a frame.
+- A creation unit of 64 persons takes p95 3.87 ms at the reference load (2,532 persisted persons) and 1.46 ms at 10,017 persisted persons. The max is 7.52 ms, on the first unit of a boundary, which latches the plan. A unit allocates about 5 KB per person.
+- The mod-work proxy p95 is at most 2.87 ms in every budget arm. No frame slice reached 30 ms. Flagged: the single hidden-skip call of 48 game hours (201 ms and 651 ms), which is one call for the whole skip, not a frame.
 - Saves, orders and events are identical at budgets 1, 16 and 128 and in the skip. `HistoricalClockMisses` is 0.
 - Portal route model: 2,792 hits and 16 misses at the reference load, and 13,068 hits and 28 misses at 10,017 persons. The busiest game minute needs 12 and 15 frames at 16 paths per frame, if each request is one path.
 

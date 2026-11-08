@@ -2,7 +2,7 @@
 
 Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). Checks: [docs/checks/f5g.md](../checks/f5g.md).
 
-Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400, Release), 8 November 2026. Nothing here ran in the game or on the rig. Whole-frame and native timings are not measured here and are batched for the rig (checks file, check 8).
+Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400, Release), 8 November 2026, at the head after the review round-1 fixes. Nothing here ran in the game or on the rig. Whole-frame and native timings are not measured here and are batched for the rig (checks file, check 8).
 
 Harness: `tests/F5gMeasure.cs`, opt-in:
 
@@ -25,8 +25,8 @@ The reference commuter target is 999, not 1,000. Every band capacity is even, so
 
 | Arm | Units | Persons per unit | Unit ms p50 / p95 / max | Allocated bytes per unit p50 / p95 / max |
 | --- | ---: | ---: | --- | --- |
-| reference | 25 | 64 (last unit 39) | 0.63 / 3.43 / 6.00 | 313,856 / 438,808 / 536,552 |
-| stress-10k | 105 | 64 (last unit 22) | 0.20 / 1.42 / 7.61 | 314,744 / 446,080 / 1,283,816 |
+| reference | 25 | 64 (last unit 39) | 0.67 / 3.87 / 5.68 | 313,856 / 438,808 / 536,552 |
+| stress-10k | 105 | 64 (last unit 22) | 0.20 / 1.46 / 7.52 | 314,744 / 446,080 / 1,283,816 |
 
 - No unit takes 30 ms or more. The max is the first unit of the boundary, which also latches the plan (one census scan of residents and visitors) and builds the candidate lists.
 - Allocation per unit is about 5 KB per created person: identity, routine, traits, meal record and wallet, the person's queue entries, and the 64-entry merge list. The merge into the ordinal visitor lists moves existing references in place and allocates no copy of them.
@@ -36,16 +36,16 @@ The reference commuter target is 999, not 1,000. Every band capacity is even, so
 
 | Arm | Budget | Slices | Events | Slice ms p50 / p95 / max | Slices ≥ 30 ms | Fill slices p95 / max | State hash |
 | --- | --- | ---: | ---: | --- | ---: | --- | --- |
-| reference | 1 | 55,088 | 55,088 | 0.004 / 0.021 / 13.28 | 0 | 3.43 / 6.00 | `995b2eda9ce2dfdf` |
-| reference | 16 | 3,443 | 55,088 | 0.087 / 0.212 / 7.64 | 0 | 3.11 / 3.75 | `995b2eda9ce2dfdf` |
-| reference | 128 | 431 | 55,088 | 0.471 / 2.195 / 6.52 | 0 | 4.77 / 4.77 | `995b2eda9ce2dfdf` |
-| reference | skip | 1 | n/a | 245.98 (one call) | 1 | n/a | `995b2eda9ce2dfdf` |
-| stress-10k | 1 | 144,752 | 144,752 | 0.001 / 0.005 / 8.20 | 0 | 1.42 / 7.61 | `ee0947c396c2fc09` |
-| stress-10k | 16 | 9,047 | 144,752 | 0.030 / 0.063 / 10.60 | 0 | 3.31 / 5.37 | `ee0947c396c2fc09` |
-| stress-10k | 128 | 1,131 | 144,752 | 0.266 / 2.931 / 15.46 | 0 | 4.65 / 7.26 | `ee0947c396c2fc09` |
-| stress-10k | skip | 1 | n/a | 596.42 (one call) | 1 | n/a | `ee0947c396c2fc09` |
+| reference | 1 | 55,088 | 55,088 | 0.004 / 0.021 / 13.18 | 0 | 3.87 / 5.68 | `c55106e7e3ed581c` |
+| reference | 16 | 3,443 | 55,088 | 0.096 / 0.191 / 5.15 | 0 | 3.83 / 5.14 | `c55106e7e3ed581c` |
+| reference | 128 | 431 | 55,088 | 0.480 / 2.298 / 7.87 | 0 | 4.69 / 4.69 | `c55106e7e3ed581c` |
+| reference | skip | 1 | n/a | 201.07 (one call) | 1 | n/a | `c55106e7e3ed581c` |
+| stress-10k | 1 | 144,752 | 144,752 | 0.002 / 0.005 / 9.22 | 0 | 1.46 / 7.52 | `e0137f9b855b0ac3` |
+| stress-10k | 16 | 9,047 | 144,752 | 0.031 / 0.064 / 8.17 | 0 | 0.31 / 6.80 | `e0137f9b855b0ac3` |
+| stress-10k | 128 | 1,131 | 144,752 | 0.264 / 2.870 / 16.41 | 0 | 4.91 / 8.02 | `e0137f9b855b0ac3` |
+| stress-10k | skip | 1 | n/a | 651.11 (one call) | 1 | n/a | `e0137f9b855b0ac3` |
 
-- Mod-work proxy: the slice time, which includes fill units, citizen and meal events and postings. p95 stays under 5 ms in every budget arm (max p95 2.93 ms).
+- Mod-work proxy: the slice time, which includes fill units, citizen and meal events and postings. p95 stays under 5 ms in every budget arm (max p95 2.87 ms).
 - Flagged ≥ 30 ms: one sample per skip arm. Condition: a hidden skip that advances 48 game hours (minute 1,800 to 4,680) in a single `AdvanceTo` call, the fill included. Component: the whole simulation for that skip, not a frame. No frame-slice sample reached 30 ms.
 - Budget and cadence equality: every arm of a shape ends with the same save and order list (state hash column). `HistoricalClockMisses` is 0 in every arm.
 - Events per day are equal across budgets. The peak person queue and peak meal queue equal the persisted persons: one routine event and one meal event per person, dormant persons included.

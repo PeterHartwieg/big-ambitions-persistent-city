@@ -358,7 +358,8 @@ namespace PersistentCity.Core
                 double activation = State.Capabilities.Active ? double.PositiveInfinity : (Math.Floor(State.Minute / 1440) + 1) * 1440;
                 double next = Math.Min(activation, Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute)));
                 // A survey runs once everything through its SurveyAtMinute has drained, before the next event.
-                if (research != null && research.ReadyBefore(next, targetMinute))
+                // F5g: a pending day boundary counts as the next work, so a survey never runs ahead of that boundary's fill.
+                if (research != null && research.ReadyBefore(FillActive ? Math.Min(next, NextDayBoundary) : next, targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
                 // F5g: one bounded fill unit once the boundary's own events have run, before any later event.
                 if (FillUnitDue(next)) { RunFillUnit(); count++; continue; }

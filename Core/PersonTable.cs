@@ -64,8 +64,8 @@ namespace PersistentCity.Core
         }
 
         /// <summary>F5g: merges newly created visitors into the aligned ordinal <see cref="CityState.Visitors"/> and
-        /// <see cref="CityState.VisitorRoutines"/> lists in one backward pass, O(existing + added) moves and no sort or
-        /// allocation of the existing lists. <c>pv:&lt;n&gt;</c> IDs interleave ordinally with older ones (pv:101 sorts between
+        /// <see cref="CityState.VisitorRoutines"/> lists in one backward pass: O(existing + added) moves, no sort and no copy of
+        /// the existing entries (the lists may grow their backing arrays). <c>pv:&lt;n&gt;</c> IDs interleave ordinally with older ones (pv:101 sorts between
         /// pv:1009 and pv:1010), so appending alone would break the saved order. Refuses a duplicate person.</summary>
         internal static void InsertVisitors(CityState city, List<(VisitorPerson Visitor, VisitorRoutine Routine)> added)
         {

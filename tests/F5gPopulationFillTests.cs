@@ -644,6 +644,30 @@ public sealed class F5gPopulationFillTests
         Assert.True(visits.Count > pool.Count / 2);
     }
 
+    [Fact]
+    public void NoPoolMemberStaysDormantForGoodOverTenWeeks()
+    {
+        // Review r1-1: a member whose drawn visit days all fall outside the routine's nine-day window once got a Home span to
+        // the clock limit and never woke again. It now wakes at the window end and looks further ahead.
+        var (state, market) = City(12, 1, seed: 606);
+        var city = Start(state, market, Catalogue(12, Base));
+        Advance(city, 2 * 1440 + 1);
+        var pool = state.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit).ToList();
+        Assert.True(pool.Count >= 30);
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        for (double minute = 2 * 1440 + 60; minute <= 72 * 1440; minute += 60)
+        {
+            Advance(city, minute);
+            if (minute % (14 * 1440) == 720) city = Reload(city, market, Catalogue(12, Base));
+            foreach (var routine in city.State.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit))
+            {
+                Assert.True(routine.NextEventMinute <= minute + 10 * 1440, routine.Identity.Id + " sleeps until " + routine.NextEventMinute);
+                if (routine.Person!.Stay.Presence == VisitorPresence.Active) visited.Add(routine.Identity.Id);
+            }
+        }
+        Assert.All(pool, r => Assert.Contains(r.Identity.Id, visited));
+    }
+
     // ---- Transport ----
 
     /// <summary>A planner double with an endpoint-keyed bounded geometry cache like Runtime's WalkingRoutes (1,024 entries,
