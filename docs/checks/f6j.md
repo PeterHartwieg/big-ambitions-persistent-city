@@ -38,11 +38,12 @@ Review round 1:
 - **Sol-r1-1:** `TicketExpenseLowersAShopWeightButNotTheMainAnchor` (exact factor, +50% menu leaves it unchanged, price weight 0 disables it) and `CandidateTicketsEnterTheShopChoice` (two equal shops; only one sells extras, and fewer residents choose its croissant).
 - **Sol-r1-2:** `RefusedCheckoutAfterTheLimitFallsStillSaves` and `RefusedRivalSettlementAfterTheLimitFallsStillSaves` lower the wallet limit below a committed main with cash conserved, then save. Both fail on the previous code (`Price ≤ Allowance` broken) and pass now: checkout and rival ticket planning read the limit without overwriting `Allowance`.
 - **Sol-r1-3:** `ConfirmedReceiptSettlesTheSoldTicketAfterReload` (fully and partly sold tickets, with and without household budgets) confirms the real receipt format, loses the acknowledgement, reloads, and checks the held money is released down to the sold total, every sold line is recorded once and no order repeats. `PaidTicketEvidenceIsReadOnlyForItsOwnIntentionAndHeldTotal` covers the parser.
+- **Sol-r2-1 (also Astra-r2-1, Opus-r2-1):** a ticket held or settled after the wallet limit rose above the saved `Allowance` now records the limit it was planned within (`Allowance = max(saved, current limit)`, never lowered, so refusals keep their saved terms). `LargerTicketAfterTheLimitRisesStillSaves` (paid and uncertain player checkouts) and `LargerRivalTicketAfterTheLimitRisesStillSaves` fail on the previous code and pass now.
 - **Opus-r1-4:** candidate and checkout tickets share one filter (known, in-scope, stock net of other meals' reservations).
 
 Also covered: uncertain tickets keep their planned total held and are never replayed; a reload every 37 minutes through a policy day gives identical lines and save bytes; receipt identity, partial confirmation and prune.
 
-Full suite after review round 1: **3,934 passed**, 0 failed. Both writer-33 golden pins unchanged. Build passed.
+Full suite after review round 2: **3,937 passed**, 0 failed. Both writer-33 golden pins unchanged. Build passed.
 
 One existing expectation changed: `EconomyInterventionTests.CatchmentCountsOnlyMealsWhoseDecisionEvaluatedTheShopAndSurvivesReload` required shop-day purchases to equal meals choosing the shop. Shop-day purchases now count sold items, so the test checks `meals ≤ items ≤ 4 × meals`. No other test or hash changed.
 

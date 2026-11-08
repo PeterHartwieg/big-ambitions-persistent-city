@@ -513,10 +513,14 @@ namespace PersistentCity.Core
                     { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
                     // F6j: extras are planned from live terms; the wallet check and hold cover the whole ticket.
                     var mainPrice = meal.Price;
+                    var limit = CurrentAllowance(meal);
                     var ticket = CheckoutTicket(meal, now);
                     if (ticket != null) { meal.Price = ticket.Total; if (!CanSettle(meal)) { meal.Price = mainPrice; ticket = null; } }
                     if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price))
                     { meal.Price = mainPrice; Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+                    // A held ticket may exceed the limit saved at commitment when the wallet grew since; record the
+                    // limit it was planned and held within. Never lowered, so a refusal keeps its saved terms.
+                    if (ticket != null) meal.Allowance = Money.Max(meal.Allowance, limit);
                     if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                     // Persist uncertainty before entering native code. No exception can trigger a replay.
                     // An uncertain ticket keeps its planned total as Price and as the held amount.

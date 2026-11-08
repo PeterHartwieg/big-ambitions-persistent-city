@@ -266,10 +266,13 @@ namespace PersistentCity.Core
             { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             // F6j: the modeled ticket adds extras from the advertised menu; the wallet check covers the total.
             var mainPrice = meal.Price;
+            var limit = CurrentAllowance(meal);
             var ticket = RivalTicket(meal);
             if (ticket != null && ExternalFoodSettlement.CanPay(meal, ticket.Total)) meal.Price = ticket.Total;
             if (!ExternalFoodSettlement.TryPay(meal, state.Outflow, now))
             { meal.Price = mainPrice; Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
+            // A settled ticket may exceed the limit saved at commitment when the wallet grew since (never lowered).
+            if (meal.Price > mainPrice) meal.Allowance = Money.Max(meal.Allowance, limit);
             RivalSettlements++; meal.ServiceAt = now; rivalLoad.Paid(meal);
             RivalExperience(meal, ShopExperience.Served, now);
             Finish(meal, MealStatus.Paid, "Modeled rival food purchase; availability estimated");

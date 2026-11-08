@@ -491,6 +491,69 @@ public sealed class F6jMealExtrasTests
         var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
     }
 
+    // Sol-r2-1: the saved Allowance was the limit at commitment (here exactly the main). The wallet grows before
+    // checkout, so a larger ticket is held; the saved terms must still cover it. Paid and uncertain checkouts.
+    private static void RaiseLimitAfterCommitment(ResidentMeal meal)
+    {
+        var budget = meal.Budget!;
+        var delta = Money.FromCents(10000);
+        budget.Balance += delta; budget.OpeningBalance += delta;
+        meal.Allowance = meal.Price;
+        Assert.True(HouseholdFinance.CashConserved(budget));
+    }
+
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void LargerTicketAfterTheLimitRisesStillSaves(bool uncertain)
+    {
+        var (city, market) = Ready(60, new TicketMarket { ThrowFromDay = uncertain ? 2 : int.MaxValue }, finances: true);
+        var raised = new Dictionary<string, Money>();
+        for (double t = 2 * 1440; t < Until(city); t += 1)
+        {
+            Advance(city, t);
+            foreach (var m in city.State.Food!.Residents)
+                if ((m.Status == MealStatus.Serving || m.Status == MealStatus.Travelling) && !raised.ContainsKey(m.ResidentId))
+                { RaiseLimitAfterCommitment(m); raised[m.ResidentId] = m.Price; }
+        }
+        Advance(city, Until(city));
+        var grown = city.State.Food!.Residents.Where(m => raised.TryGetValue(m.ResidentId, out var main) && m.Price > main
+            && m.Status == (uncertain ? MealStatus.Uncertain : MealStatus.Paid)).ToArray();
+        Assert.NotEmpty(grown);
+        Assert.All(city.State.Food.Residents, m => Assert.True(m.Price <= m.Allowance));
+        Reload(city, market);
+    }
+
+    [Fact]
+    public void LargerRivalTicketAfterTheLimitRisesStillSaves()
+    {
+        // One resident, one draw per meal: follow several days. Every settlement must save, and some must be a
+        // ticket larger than its committed main.
+        var (city, market, _) = RivalOutflowTests.Ready(finances: true);
+        market.Rivals["rival0"].AdditionalProductIds = new() { FoodProducts.HotDog, FoodProducts.Burger };
+        market.Observations["rival0"] = new FoodAlternativeObservation("rival0", "s0", "street", 1, 1, "food", "rival-owner",
+            FoodAlternativeKind.Rival, true, true, false, null, 0,
+            new[] { new FoodAdvertisedOffer(FoodProducts.Croissant, Money.FromCents(100)), new FoodAdvertisedOffer(FoodProducts.HotDog, Money.FromCents(70)),
+                new FoodAdvertisedOffer(FoodProducts.Burger, Money.FromCents(60)) },
+            Enumerable.Range(0, 7).Select(d => new FoodAdvertisedHours(d, 0, 1440)));
+        city.InspectFoodAwareness("r");
+        var meal = city.State.Food!.Residents.Single();
+        int grown = 0, settled = 0;
+        for (int i = 0; i < 20 * 1440 && settled < 12; i++)
+        {
+            city.AdvanceTo(city.State.Minute + 1, 1);
+            if (meal.Status != MealStatus.Serving) continue;
+            var main = meal.Price;
+            RaiseLimitAfterCommitment(meal);
+            for (int j = 0; j < 4000 && meal.Status == MealStatus.Serving; j++) city.AdvanceTo(city.State.Minute + 1, 1);
+            Assert.Equal(MealStatus.Paid, meal.Status);
+            settled++; if (meal.Price > main) grown++;
+            Assert.True(meal.Price <= meal.Allowance);
+            var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
+        }
+        Assert.True(settled > 3, "settled " + settled);
+        Assert.True(grown > 0, "some rival ticket carries an extra");
+    }
+
     // Sol-r1-3: the receipt is confirmed but the acknowledgement is lost. After a reload the meal settles from the
     // receipt's sold lines: unsold extras are returned and each sold line is recorded once, with no second order.
     [Theory]

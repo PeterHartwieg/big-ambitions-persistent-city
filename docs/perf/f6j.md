@@ -26,6 +26,6 @@ Unmeasured native cost, for the rig: a player checkout at an extras-capable shop
 
 ## Local validation
 
-- Build (`tools/build.py` with the supplied Managed directory): passed. DLL SHA256 `a80c27715d9752a374a42cc7a83fb08ee7b05f1df7560f4ca08259686b4d8595`; after review round 1, `4ea764e41d72b76ecd2ec0030c8e997b16dc0a472e6eb9c54b0bd573be1aed89`.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **3,925 passed**, 0 failed or skipped, 3 min 53 s; after review round 1, **3,934 passed** in 3 min 49 s. Both writer-33 golden pins unchanged.
-- New `F6jMealExtrasTests`: 18 passed; 27 after review round 1.
+- Build (`tools/build.py` with the supplied Managed directory): passed. DLL SHA256 `a80c27715d9752a374a42cc7a83fb08ee7b05f1df7560f4ca08259686b4d8595`; after review round 1, `4ea764e41d72b76ecd2ec0030c8e997b16dc0a472e6eb9c54b0bd573be1aed89`; after round 2, `7ea7982deb187d6e8863f424b82ca04782eed4a9d0b5ada85683f829a1c098a4`.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,925 passed**, 0 failed or skipped, 3 min 53 s; after review round 1, **3,934 passed** in 3 min 49 s; after round 2, **3,937 passed** in 4 min 25 s. Both writer-33 golden pins unchanged.
+- New `F6jMealExtrasTests`: 18 passed; 27 after review round 1; 30 after round 2.
