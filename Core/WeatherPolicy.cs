@@ -112,7 +112,8 @@ namespace PersistentCity.Core
             }
             return capture;
         }
-        private WeatherCommitment CaptureQueueWeather(CitizenState person,double now)
+        // Called only by the logical wait event (WaitForOpening), never by presentation code.
+        internal WeatherCommitment CaptureQueueWeather(CitizenState person,double now)
         {
             var capture=person.W;
             if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute)
@@ -126,13 +127,13 @@ namespace PersistentCity.Core
         }
         public Dwell? QueueAtOpening(CitizenState person,Place place,double now,Dwell? committed=null)
         {
-            // Normal refresh only reads the event's capture. No camera-dependent sampling or new terms.
+            // Read-only (F2b): only the wait event's capture is read. No camera-dependent sampling, no new terms,
+            // and a wait without its capture gets no queue dwell instead of one captured by a body.
             if(person.Phase!=CitizenPhase.WaitingForOpening || person.PlaceId!=place.Id || person.DestinationId!=place.Id
                 || (person.DestinationActivity!=Activity.Shop && person.DestinationActivity!=Activity.Leisure)
                 || now>=person.NextEventMinute) return null;
             var capture=person.W;
-            if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute)
-                capture=CaptureQueueWeather(person,now); // migrated/pre-existing wait without a queue capture
+            if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute) return null;
             return DwellPlanner.QueueAtOpening(person,place,State.Seed,now,capture.Weather==WeatherSample.Rain,committed,capture.Value);
         }
     }

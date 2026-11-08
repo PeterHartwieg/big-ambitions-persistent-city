@@ -253,6 +253,7 @@ public sealed class WeatherTests
         p.PlaceId=p.DestinationId="shop";p.DestinationActivity=Activity.Shop;p.Activity=Activity.Shop;p.Phase=CitizenPhase.WaitingForOpening;
         p.NextEventMinute=now+8;p.ActivityUntilMinute=now+45;
         var source=new Source {Value=WeatherSample.Dry};var city=new CitySimulator(state,new Paths());city.AttachWeather(source);
+        city.CaptureQueueWeather(p,now); // the wait event's capture (F2b: the query never captures)
         var dry=city.QueueAtOpening(p,shop,now);Assert.NotNull(dry);source.Value=WeatherSample.Rain;
         Assert.Equal(dry,city.QueueAtOpening(p,shop,now+1));Assert.Equal(1,source.Calls);
         var loaded=Read(DevelopmentChain.Write(state));var resumed=new CitySimulator(loaded,new Paths());resumed.AttachWeather(source,new WeatherSettings {QueueRainLeadMinutes=2});
@@ -270,12 +271,13 @@ public sealed class WeatherTests
             if(DwellPlanner.QueueAtOpening(p,shop,seed,now,true)!=null) { state=trial;break; }
         }
         Assert.NotNull(state);var person=state!.Citizens[0];var source=new Source {Value=WeatherSample.Rain};
-        var settings=new WeatherSettings {QueueRainLeadMinutes=2};var sim=new CitySimulator(state,new Paths());sim.AttachWeather(source,settings);
+        var settings=new WeatherSettings {QueueRainLeadMinutes=2};var sim=new CitySimulator(state,new Paths());sim.AttachWeather(source,settings);sim.CaptureQueueWeather(person,state.Minute);
         var first=sim.QueueAtOpening(person,state.Places[1],state.Minute);Assert.NotNull(first);Assert.Equal(2,first!.Value.EndMinute-first.Value.StartMinute);
         settings.QueueRainLeadMinutes=10;source.Value=WeatherSample.Dry;
         Assert.Equal(first,sim.QueueAtOpening(person,state.Places[1],state.Minute+1));Assert.Equal(1,source.Calls);
         person.NextEventMinute+=1440;person.ActivityUntilMinute+=1440;state.Minute+=1440;
-        sim.QueueAtOpening(person,state.Places[1],state.Minute);Assert.Equal(2,source.Calls);Assert.Equal(10,person.W!.Value);
+        Assert.Null(sim.QueueAtOpening(person,state.Places[1],state.Minute));Assert.Equal(1,source.Calls); // read-only: a new opening needs its own wait event
+        sim.CaptureQueueWeather(person,state.Minute);Assert.Equal(2,source.Calls);Assert.Equal(10,person.W!.Value);
     }
     [Fact]
     public void SettingsClampOnceAndKeepFlatDefaults()
