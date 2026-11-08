@@ -172,7 +172,7 @@ namespace PersistentCity.Core
             replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             // F5g: the latched boundary plan carries over; its seat counter is rebuilt against the replacement's occupancy.
-            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan;
+            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan; replacement.fillOpen = fillOpen;
             if (fillPlan != null) fillPlan.Factory = null;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
@@ -291,6 +291,8 @@ namespace PersistentCity.Core
                 // skip it. No citizen, meal, budget, traffic or native transaction executes here.
                 if (!State.Capabilities.Active && Math.Floor(State.Minute / 1440) < Math.Floor(epoch / 1440))
                     State.Capabilities.Active = true;
+                // F5g: a boundary reached by publishing the epoch opens its fill as if the loop had reached it.
+                if (Math.Floor(State.Minute / 1440) < Math.Floor(epoch / 1440)) EnterDayBoundary(epoch);
                 State.Minute = epoch; SynchronizeSnapshot();
             }
             ordinaryOwnership?.ObserveBoundary(epoch);
@@ -361,13 +363,13 @@ namespace PersistentCity.Core
                 // F5g: an unreached day boundary, or fill work left on the boundary the clock stands on, counts as the next work,
                 // so a survey never runs ahead of that boundary's fill.
                 if (research != null && research.ReadyBefore(!FillActive ? next
-                    : AtDayBoundary && next > State.Minute && FillPlan().Next.HasValue ? State.Minute : Math.Min(next, NextDayBoundary), targetMinute))
+                    : FillOpenWork() ? State.Minute : Math.Min(next, NextDayBoundary), targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
-                // F5g: one bounded fill unit once the boundary's own events have run, before any later event.
-                if (FillUnitDue(next)) { RunFillUnit(); count++; continue; }
-                // F5g: stop the clock on a day boundary that has no event of its own, so its fill runs before later events.
-                if (FillActive && NextDayBoundary < next && NextDayBoundary <= targetMinute)
-                { double boundary = NextDayBoundary; traffic?.AdvanceTo(boundary, 0); State.Minute = boundary; continue; }
+                // F5g: the open boundary's bounded fill units, back to back, before any event at or after the boundary.
+                if (FillUnitDue()) { RunFillUnit(); count++; continue; }
+                // F5g: stop the clock on each day boundary before its own events and open its fill.
+                if (FillActive && NextDayBoundary <= next && NextDayBoundary <= targetMinute)
+                { double boundary = NextDayBoundary; traffic?.AdvanceTo(boundary, 0); State.Minute = boundary; EnterDayBoundary(boundary); continue; }
                 if (next > targetMinute) break;
                 State.Minute = next;
                 if (next == activation) { State.Capabilities.Active = true; count++; continue; }

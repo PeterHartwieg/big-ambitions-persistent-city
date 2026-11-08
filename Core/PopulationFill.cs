@@ -13,6 +13,12 @@ namespace PersistentCity.Core
     {
         /// <summary>Persons created by one fill unit (plan section 4: at most 64 persons per unit).</summary>
         public const int MaximumPersonsPerUnit = 64;
+        /// <summary>Owner decision (8 Nov 2026): the fill creates only working-persona commuters. Identities are derived from
+        /// <c>(seed, pv:&lt;n&gt;)</c> by the frozen identity policy, so a sequence number whose identity is a student or retiree
+        /// is skipped for a commuter: the number is used up and never reused. One commuter looks at most this many numbers.</summary>
+        public const int MaximumSkipsPerCommuter = 4096;
+        /// <summary>Skipped sequence numbers a city may hold (the reader's bound too). Commuter creation pauses before it.</summary>
+        public const int MaximumSkippedSequences = 4 * PopulationCensusPolicy.MaximumVisitors;
     }
 
     /// <summary>The census inputs that do not live in the saved city: Runtime's load-time place catalogue and business
@@ -69,9 +75,13 @@ namespace PersistentCity.Core
         internal VisitorTargets Targets;
         internal long Commuters, Pool;
         internal VisitorFactory? Factory;
+        /// <summary>No working identity was found within the skip bounds: commuter creation pauses for this boundary.</summary>
+        internal bool CommutersPaused;
+        /// <summary>A hard person bound was reached: this boundary creates nobody more (never reached under the clamp).</summary>
+        internal bool Refused;
         internal long Aggregate => Commuters + Pool;
-        internal VisitorPattern? Next => Aggregate >= Targets.VisitorCapacity ? (VisitorPattern?)null
-            : Commuters < Targets.CommuterTarget ? VisitorPattern.Commuter
+        internal VisitorPattern? Next => Refused || Aggregate >= Targets.VisitorCapacity ? (VisitorPattern?)null
+            : Commuters < Targets.CommuterTarget && !CommutersPaused ? VisitorPattern.Commuter
             : Pool < Targets.PoolTarget ? VisitorPattern.DayVisit : (VisitorPattern?)null;
     }
 
@@ -79,6 +89,10 @@ namespace PersistentCity.Core
     {
         private PopulationFillCatalogue? fillCatalogue;
         private PopulationFillPlan? fillPlan;
+        // The day boundary whose fill is open: the clock reached it in this process with the fill attached (review Sol-r1-1).
+        // A boundary the city was constructed or attached on is closed, because a save completes an open fill first
+        // (CompleteFillForSave): a saved boundary minute is either filled already or predates the fill.
+        private double fillOpen = -1;
         private static readonly IComparer<VisitorPerson> VisitorOrder = Comparer<VisitorPerson>.Create((a, b) => string.CompareOrdinal(a.Id, b.Id));
 
         /// <summary>Fill units run since construction (diagnostic, never saved).</summary>
@@ -86,6 +100,10 @@ namespace PersistentCity.Core
         /// <summary>Persons created by fill units since construction (diagnostic, never saved).</summary>
         public long PopulationFillCreated { get; private set; }
         public int LastFillUnitPersons { get; private set; }
+        /// <summary>Sequence numbers skipped for commuters since construction (diagnostic, never saved).</summary>
+        public long PopulationFillSkipped { get; private set; }
+        /// <summary>Boundaries whose fill stopped at a hard person bound (diagnostic; unreachable under the capacity clamp).</summary>
+        public long PopulationFillRefusals { get; private set; }
         /// <summary>The targets latched at the latest evaluated day boundary, if any.</summary>
         public VisitorTargets? PopulationFillTargets => fillPlan?.Targets;
         public double? PopulationFillBoundary => fillPlan?.Boundary;
@@ -93,19 +111,24 @@ namespace PersistentCity.Core
 
         /// <summary>F5g: fill toward the census targets of <paramref name="catalogue"/> at every later day boundary. Runtime
         /// attaches its load-time catalogue to every current-schema city, so filling is ordinary behaviour, not a switch-over.
-        /// A boundary already evaluated in this process keeps its latched targets: a catalogue change moves the target only
-        /// at the next day boundary. A refused catalogue detaches the fill (nothing is created, nothing removed).</summary>
+        /// A boundary already evaluated in this process keeps its latched targets, and a boundary the clock already stands on
+        /// stays closed: a catalogue change or first attachment moves the target only at the next day boundary. A refused
+        /// catalogue detaches the fill (nothing is created, nothing removed).</summary>
         public void AttachPopulationFill(PopulationFillCatalogue? catalogue)
         {
             fillCatalogue = catalogue == null || catalogue.Refused ? null : catalogue;
         }
 
         private bool FillActive => fillCatalogue != null && State.Food != null && food != null;
-        private bool AtDayBoundary => State.Minute > 0 && State.Minute == Math.Floor(State.Minute / 1440) * 1440;
         private double NextDayBoundary => (Math.Floor(State.Minute / 1440) + 1) * 1440;
 
-        // The boundary's plan, latched on first use. Callers evaluate it only once every event at the boundary minute has
-        // run (next > boundary), so targets read the residents as the boundary left them.
+        /// <summary>The clock has just reached <paramref name="boundary"/> from an earlier minute: open its fill.</summary>
+        private void EnterDayBoundary(double boundary)
+        {
+            if (FillActive && boundary > 0 && boundary == Math.Floor(boundary / 1440) * 1440) fillOpen = boundary;
+        }
+
+        // The boundary's plan, latched on first use, right after the clock reached the boundary and before any event at it.
         private PopulationFillPlan FillPlan()
         {
             if (fillPlan != null && fillPlan.Boundary == State.Minute) return fillPlan;
@@ -116,18 +139,34 @@ namespace PersistentCity.Core
             return fillPlan;
         }
 
-        /// <summary>A fill unit may run now: the clock stands on a day boundary, every event at that minute has run, and the
-        /// boundary's plan still has a pattern below its target inside the aggregate capacity.</summary>
-        private bool FillUnitDue(double next) => FillActive && AtDayBoundary && next > State.Minute && pending == null
-            && food!.HasPendingDecision != true && FillPlan().Next.HasValue;
+        /// <summary>The open boundary still has a pattern below its target inside the aggregate capacity; closes it otherwise.
+        /// Its units run back to back before any event at the boundary minute, including the new persons' own events.</summary>
+        private bool FillOpenWork()
+        {
+            if (!FillActive || fillOpen != State.Minute) return false;
+            if (pending == null && food!.HasPendingDecision != true && FillPlan().Next.HasValue) return true;
+            if (pending == null && food!.HasPendingDecision != true) fillOpen = -1;
+            return false;
+        }
 
-        /// <summary>Holds the caught-up report while a boundary inside the target is unreached or still has fill work. Placed
-        /// last in <see cref="NoEventsThrough"/>, so it evaluates a plan only after the boundary's events have drained.</summary>
+        private bool FillUnitDue() => FillOpenWork();
+
+        /// <summary>Holds the caught-up report while a boundary inside the target is unreached or still has fill work.</summary>
         private bool FillHolds(double targetMinute)
         {
             if (!FillActive) return false;
-            if (AtDayBoundary && State.Minute <= targetMinute && FillPlan().Next.HasValue) return true;
+            if (fillOpen == State.Minute && State.Minute <= targetMinute && FillOpenWork()) return true;
             return NextDayBoundary <= targetMinute;
+        }
+
+        /// <summary>Runs the open boundary's remaining fill units now, as the save callback does before capture, so a saved
+        /// boundary minute never holds a half-filled boundary. The result equals continuing: the units run back to back in
+        /// ordinary advancing too. Returns the units run.</summary>
+        public int CompleteFillForSave()
+        {
+            int units = 0;
+            while (FillOpenWork()) { RunFillUnit(); units++; }
+            return units;
         }
 
         /// <summary>One bounded unit: up to <see cref="PopulationFillPolicy.MaximumPersonsPerUnit"/> persons, commuters first
@@ -140,16 +179,32 @@ namespace PersistentCity.Core
             plan.Factory ??= new VisitorFactory(State, occupancy.Vacant, work => occupancy.Move("", work));
             var added = new List<(VisitorPerson Visitor, VisitorRoutine Routine)>(PopulationFillPolicy.MaximumPersonsPerUnit);
             int sequence = State.NextVisitorSequence;
-            // Bounds are checked before anything is seated, so a refusal leaves the occupancy index and sequence untouched.
+            long skippedBefore = (long)sequence - 1 - State.Visitors.Count, skipped = 0;
+            // Bounds are checked before anything is seated. The capacity clamp keeps them unreachable; if a bound ever bites,
+            // this boundary's fill ends with a diagnostic instead of stopping the simulation (review Opus-r1-4).
             long room = Math.Min(Math.Min(PopulationFillPolicy.MaximumPersonsPerUnit, PersonTable.MaximumVisitors - (long)State.Visitors.Count),
-                Math.Min(PersonTable.MaximumPersons - (long)PersonTable.PersonCount(State), int.MaxValue - (long)sequence));
-            if (room <= 0) throw new InvalidOperationException("Visitor bound exceeded.");
+                PersonTable.MaximumPersons - (long)PersonTable.PersonCount(State));
+            if (room <= 0) { plan.Refused = true; PopulationFillRefusals++; return; }
             while (added.Count < room && plan.Next is VisitorPattern pattern)
             {
-                added.Add(plan.Factory.Create(sequence++, pattern, State.Minute));
+                int at = sequence;
+                if (pattern == VisitorPattern.Commuter)
+                {
+                    // Owner decision: commuters are working personas only. Skip numbers whose frozen identity is not one.
+                    int limit = PopulationFillPolicy.MaximumSkipsPerCommuter;
+                    while (limit-- > 0 && at < int.MaxValue && !plan.Factory.Working(at)) at++;
+                    long gaps = skippedBefore + skipped + (at - sequence);
+                    if (at == int.MaxValue || !plan.Factory.Working(at) || gaps > PopulationFillPolicy.MaximumSkippedSequences)
+                    { plan.CommutersPaused = true; continue; }
+                }
+                else if (at == int.MaxValue) { plan.Refused = true; PopulationFillRefusals++; break; }
+                skipped += at - sequence;
+                added.Add(plan.Factory.Create(at, pattern, State.Minute));
+                sequence = at + 1;
                 if (pattern == VisitorPattern.Commuter) plan.Commuters++; else plan.Pool++;
             }
             State.NextVisitorSequence = sequence;
+            PopulationFillSkipped += skipped;
             PersonTable.InsertVisitors(State, added);
             foreach (var (visitor, routine) in added)
             {

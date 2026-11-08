@@ -93,8 +93,10 @@ public sealed class F5gPopulationFillTests
         return city;
     }
 
+    /// <summary>Saves as Runtime's save callback does (the open boundary's fill completes first), then loads.</summary>
     internal static CitySimulator Reload(CitySimulator city, Schema27Tests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
     {
+        city.CompleteFillForSave();
         string payload = SaveCodec.Write(city.State);
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -129,7 +131,12 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(persons.Count, roster.Count); Assert.Equal(persons.OrderBy(i => i, StringComparer.Ordinal), roster.OrderBy(i => i, StringComparer.Ordinal));
         Assert.All(state.Food.Residents, m => Assert.Equal(state.Food.HouseholdFinanceVersion != 0, m.Budget != null));
         for (int i = 1; i < state.Visitors.Count; i++) Assert.True(string.CompareOrdinal(state.Visitors[i - 1].Id, state.Visitors[i].Id) < 0, context);
-        Assert.Equal(state.Visitors.Count + 1, state.NextVisitorSequence);
+        // Every number below the sequence without a visitor was skipped for a commuter: its identity is no worker.
+        Assert.True(state.NextVisitorSequence - 1 >= state.Visitors.Count, context);
+        var present = state.Visitors.Select(v => int.Parse(v.Id.Substring(3))).ToHashSet();
+        var identities = IdentityPolicy.V1(state.SourceIdentities);
+        for (int n = 1; n < state.NextVisitorSequence; n++)
+            if (!present.Contains(n)) Assert.False(VisitorSchedules.WorkingPersona(identities.PersonaOf(state.Seed, PersonIds.Visitor(n))), context + ": pv:" + n);
         for (int i = 0; i < state.Visitors.Count; i++) Assert.Same(state.Visitors[i].Routine, state.VisitorRoutines[i]);
         Assert.All(state.Visitors.Where(v => v.Stay.Pattern == VisitorPattern.DayVisit), v => { Assert.Null(v.Employment); Assert.Equal("", v.Routine!.DayPlaceId); });
         Assert.All(state.VisitorRoutines, r => { Assert.Null(r.Car); Assert.False(r.Preferences.OwnsCar);
@@ -222,6 +229,11 @@ public sealed class F5gPopulationFillTests
         Assert.All(state.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit),
             r => Assert.Equal(ResidentLifecycle.IsWorker(r) && r.Identity.Age >= 18 ? ResidentIncomeSource.ExternalEmployment : (ResidentIncomeSource?)null, r.Carried));
         Assert.True(city.OccupancyMatchesFullCount());
+        // Owner decision (8 Nov 2026): the fill creates only working-persona commuters; the pool may hold any persona.
+        Assert.All(state.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.Commuter), r => Assert.True(VisitorSchedules.WorkingPersona(r.Identity.Persona)));
+        Assert.Contains(state.VisitorRoutines, r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit && !VisitorSchedules.WorkingPersona(r.Identity.Persona));
+        Assert.True(city.PopulationFillSkipped > 0);
+        Assert.Equal(state.NextVisitorSequence - 1 - state.Visitors.Count, city.PopulationFillSkipped);
     }
 
     [Fact]
@@ -401,7 +413,8 @@ public sealed class F5gPopulationFillTests
     public void CreationOrderIdsAndDrawsAreIndependentOfBudgetsCadenceSkipReloadAndOrder()
     {
         string reference = Run(null, 100000, false, false, false, false);
-        Assert.Contains("pv:1|", reference); Assert.Contains("pv:64|", reference); Assert.Contains("pv:65|", reference);
+        // More than one unit, so the reload arm reloads between units.
+        Assert.Matches("\\|pv:(6[5-9]|[7-9][0-9]|[1-9][0-9]{2,})\\|", reference);
         Assert.Equal(reference, Run(null, 1, true, false, false, false));
         Assert.Equal(reference, Run(null, 7, true, false, false, false));
         Assert.Equal(reference, Run(null, 64, false, false, false, false));
@@ -443,6 +456,95 @@ public sealed class F5gPopulationFillTests
         reloaded = Reload(reloaded, mb, fill);
         Advance(reloaded, 3 * 1440 + 60);
         Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(reloaded.State));
+    }
+
+    [Fact]
+    public void ACompletedBoundaryStaysClosedAcrossAttachmentAndReload()
+    {
+        // Review Sol-r1-1, case 1: after the fill at minute 2880 a larger catalogue attached in process waits for 4320, and a
+        // reload of the 2880 checkpoint with that catalogue does the same instead of re-filling 2880.
+        var (state, market) = City(12, 1);
+        market = new Schema27Tests.Market { Shops = Shops(state) };
+        var city = Start(state, market, Catalogue(12, Base));
+        Advance(city, 2 * 1440);
+        int filled = state.Visitors.Count;
+        Assert.True(filled > 0);
+        var larger = Catalogue(12, Base, Since(30));
+        string checkpoint = SaveCodec.Write(state);
+        city.AttachPopulationFill(larger);
+        Advance(city, 2 * 1440 + 1);
+        Assert.Equal(filled, state.Visitors.Count);
+        var read = SaveCodec.Read(checkpoint); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        // Its own market double, so the two cities' native orders are not shared.
+        var reloaded = Start(read.State!, new Schema27Tests.Market { Shops = Shops(read.State!) }, larger);
+        Advance(reloaded, 2 * 1440 + 1);
+        Assert.Equal(filled, read.State!.Visitors.Count); Assert.Equal(0, reloaded.PopulationFillCreated);
+        Advance(city, 3 * 1440 + 1); Advance(reloaded, 3 * 1440 + 1);
+        Assert.True(state.Visitors.Count > filled);
+        Assert.Equal(SaveCodec.Write(state), SaveCodec.Write(read.State!));
+
+        // Case 2: an existing city saved at exactly 2880 without fill, first attached there, fills at 4320, not 2880.
+        var (old, oldMarket) = City(12, 1);
+        var plain = Start(old, oldMarket, null);
+        Advance(plain, 2 * 1440);
+        var first = Reload(plain, oldMarket, Catalogue(12, Base));
+        Advance(first, 2 * 1440);
+        Advance(first, 3 * 1440 - 1);
+        Assert.Empty(first.State.Visitors);
+        Advance(first, 3 * 1440 + 1);
+        Assert.NotEmpty(first.State.Visitors);
+        Assert.Equal(3 * 1440.0, first.PopulationFillBoundary);
+    }
+
+    [Fact]
+    public void ASaveDuringTheFillCompletesItAndEqualsContinuing()
+    {
+        var (a, ma) = City(12, 1, seed: 52); var (b, mb) = City(12, 1, seed: 52);
+        var fill = Catalogue(12, Base, Since(3));
+        var plain = Start(a, ma, fill); var city = Start(b, mb, fill);
+        Advance(plain, 3 * 1440 + 30);
+        // Stop after the first unit of the boundary's fill, then save there as Runtime does.
+        while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(3 * 1440 + 30, 1);
+        Assert.Equal(2 * 1440.0, city.State.Minute);
+        int partial = city.State.Visitors.Count;
+        Assert.True(city.CompleteFillForSave() > 0);
+        Assert.True(city.State.Visitors.Count > partial);
+        Assert.Equal(0, city.CompleteFillForSave());
+        city = Reload(city, mb, fill);
+        Advance(city, 3 * 1440 + 30);
+        Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(city.State));
+        Assert.Equal(ma.Orders, mb.Orders);
+    }
+
+    [Fact]
+    public void SkippedCommuterNumbersAreOnlyNonWorkingIdentitiesOnRead()
+    {
+        var (state, market) = City(12, 1);
+        var city = Start(state, market, Catalogue(12, Base, Since(3)));
+        Advance(city, 2 * 1440 + 60);
+        Assert.True(city.PopulationFillSkipped > 0);
+        string payload = SaveCodec.Write(state);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
+        // Dropping a created visitor leaves a gap at a working identity: refused and kept, as a lost person.
+        var commuter = state.Visitors.First(v => v.Stay.Pattern == VisitorPattern.Commuter && int.Parse(v.Id.Substring(3)) > 1);
+        var copy = SaveCodec.Read(payload).State!;
+        int at = copy.Visitors.FindIndex(v => v.Id == commuter.Id);
+        var meal = copy.Food!.Residents.Single(m => m.ResidentId == commuter.Id);
+        copy.Visitors.RemoveAt(at); copy.VisitorRoutines.RemoveAt(at); copy.Food.Residents.Remove(meal);
+        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(copy));
+        var root = Newtonsoft.Json.Linq.JObject.Parse(payload);
+        var visitors = (Newtonsoft.Json.Linq.JArray)root["Visitors"]!;
+        int index = visitors.Select((v, i) => (v, i)).First(t => ((string)t.v!).Contains("|" + commuter.Id + "|")).i;
+        visitors.RemoveAt(index); ((Newtonsoft.Json.Linq.JArray)root["VisitorRoutines"]!).RemoveAt(index);
+        var refused = SaveCodec.Read(root.ToString(Newtonsoft.Json.Formatting.None));
+        Assert.NotEqual(SaveReadStatus.Loaded, refused.Status);
+        // A sequence number one past the last, at a working identity, is refused too.
+        var identities = IdentityPolicy.V1(state.SourceIdentities);
+        int next = state.NextVisitorSequence;
+        while (!VisitorSchedules.WorkingPersona(identities.PersonaOf(state.Seed, PersonIds.Visitor(next)))) next++;
+        var forged = Newtonsoft.Json.Linq.JObject.Parse(payload); forged["NextVisitorSequence"] = next + 1;
+        var forgedRead = SaveCodec.Read(forged.ToString(Newtonsoft.Json.Formatting.None));
+        Assert.Equal(SaveReadStatus.Invalid, forgedRead.Status); Assert.Contains("not a student or retiree", forgedRead.Error);
     }
 
     // ---- Enrolment ----

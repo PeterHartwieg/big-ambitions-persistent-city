@@ -777,6 +777,8 @@ namespace PersistentCity.Runtime
             if (saveEpoch?.CanPublish(ticket, SaveGameManager.Current, SaveGameManager.Current.modData) != true)
                 return SaveEpochCapture.Refused("Save epoch changed during capture; previous payload retained.");
             vendorMarket?.CompleteForSave();
+            // F5g (review Sol-r1-1): a saved day boundary never holds a half-filled boundary, so a load there keeps it closed.
+            simulation.CompleteFillForSave();
             // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
             var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
                 .WriteTo(SaveGameManager.Current.modData, simulation.State, cost);

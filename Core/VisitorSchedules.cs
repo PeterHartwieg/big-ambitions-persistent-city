@@ -98,6 +98,9 @@ namespace PersistentCity.Core
                 if (place.Capacity > 0 && candidates.TryGetValue(place.Kind, out var list)) list.Add(place);
         }
 
+        /// <summary>True when <c>pv:&lt;sequence&gt;</c>'s derived identity has a working persona (not a student or retiree).</summary>
+        internal bool Working(int sequence) => VisitorSchedules.WorkingPersona(identities.PersonaOf(city.Seed, PersonIds.Visitor(sequence)));
+
         /// <summary>The visitor <c>pv:&lt;sequence&gt;</c> of <paramref name="pattern"/>, off-map at its portal (Dormant) with its
         /// first event at <paramref name="minute"/>. A commuter is seated with today's rule; a day visitor never holds a city
         /// workplace. A working adult without a seat keeps an outside employer as its carried income source.</summary>
@@ -163,6 +166,21 @@ namespace PersistentCity.Core
             city.NextVisitorSequence += count;
             Order(city);
             return created;
+        }
+
+        /// <summary>Owner decision (8 Nov 2026): fill-created commuters have a working persona, so each takes a Work seat.</summary>
+        public static bool WorkingPersona(Persona persona) => persona != Persona.Student && persona != Persona.Retiree;
+
+        /// <summary>F5g reader rule: every sequence number below NextVisitorSequence without a visitor in
+        /// <paramref name="present"/> derives a student or retiree identity, the only numbers the fill skips for a commuter.</summary>
+        public static bool OnlyNonWorkingSkipped(CityState city, IReadOnlyCollection<int> present)
+        {
+            var used = new bool[city.NextVisitorSequence];
+            foreach (int n in present) if (n > 0 && n < used.Length) used[n] = true;
+            var identities = IdentityPolicy.V1(city.SourceIdentities);
+            for (int n = 1; n < used.Length; n++)
+                if (!used[n] && WorkingPersona(identities.PersonaOf(city.Seed, PersonIds.Visitor(n)))) return false;
+            return true;
         }
 
         /// <summary>F5g: a day-visitor pool member returns on the days drawn by <c>Hash(seed, PersonId, "visit", day)</c>

@@ -102,6 +102,47 @@ public sealed class F5gMeasure
         };
     }
 
+    /// <summary>Review Opus-r1-3: the first fill of a city at the resident bound, to its whole visitor capacity. 7,936 homes
+    /// give 49,997 residents and a capacity of 99,994 visitors; catalogue-only businesses push commuter demand above it, so
+    /// every created person is a commuter. Runs to the boundary, then drives the fill one unit per slice.</summary>
+    private static Dictionary<string, object> Capacity()
+    {
+        const int homes = 7936;
+        long build = Stopwatch.GetTimestamp();
+        var (state, market) = F5gPopulationFillTests.City(homes, 1, seed: 2026);
+        var fill = F5gPopulationFillTests.Catalogue(homes, F5gPopulationFillTests.Base, F5gPopulationFillTests.Since(5400));
+        var city = F5gPopulationFillTests.Start(state, market, fill);
+        double buildMs = Stopwatch.GetElapsedTime(build).TotalMilliseconds;
+        double boundary = 2 * 1440;
+        long run = Stopwatch.GetTimestamp();
+        while (!city.AdvanceTo(boundary - 1, 100000).CaughtUp) { }
+        double dayMs = Stopwatch.GetElapsedTime(run).TotalMilliseconds;
+        var unitMs = new List<double>(); var unitBytes = new List<double>();
+        long fillStarted = Stopwatch.GetTimestamp();
+        while (city.PopulationFillUnits == 0 || city.State.Minute == boundary && city.PopulationFillTargets!.Value.CommuterTarget > F5gPopulationFillTests.Counts(state).Commuters
+            && city.LastFillUnitPersons > 0 && unitMs.Count < 5000)
+        {
+            long units = city.PopulationFillUnits, bytes = GC.GetAllocatedBytesForCurrentThread(), started = Stopwatch.GetTimestamp();
+            city.AdvanceFrameSlice(boundary + 1, 1);
+            double ms = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            if (city.PopulationFillUnits != units) { unitMs.Add(ms); unitBytes.Add(GC.GetAllocatedBytesForCurrentThread() - bytes); }
+            if (city.State.Minute > boundary) break;
+        }
+        double fillMs = Stopwatch.GetElapsedTime(fillStarted).TotalMilliseconds;
+        var targets = city.PopulationFillTargets!.Value;
+        var (commuters, pool) = F5gPopulationFillTests.Counts(state);
+        return new Dictionary<string, object>
+        {
+            ["arm"] = "capacity-100k", ["residents"] = state.Citizens.Count, ["commuters"] = commuters, ["pool"] = pool,
+            ["visitorCapacity"] = targets.VisitorCapacity, ["commuterTarget"] = targets.CommuterTarget,
+            ["persistedPersons"] = state.Citizens.Count + state.Visitors.Count, ["fillUnits"] = city.PopulationFillUnits,
+            ["skipped"] = city.PopulationFillSkipped, ["unitMs"] = Stats(unitMs), ["unitAllocatedBytes"] = Stats(unitBytes),
+            ["fillWallMs"] = Math.Round(fillMs, 1), ["unitSumMs"] = Math.Round(unitMs.Sum(), 1),
+            ["heldFramesAtOneUnitPerFrame"] = unitMs.Count, ["heldFramesAt16UnitsPerFrame"] = (unitMs.Count + 15) / 16,
+            ["buildMs"] = Math.Round(buildMs, 1), ["dayToBoundaryMs"] = Math.Round(dayMs, 1)
+        };
+    }
+
     [Fact]
     public void Measure()
     {
@@ -133,6 +174,7 @@ public sealed class F5gMeasure
                 Assert.Equal(0L, (long)row["historicalClockMisses"]);
             }
         }
+        Emit(Capacity());
         Assert.NotEmpty(lines);
     }
 }

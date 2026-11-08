@@ -69,6 +69,9 @@ namespace PersistentCity.Core
             return new IdentityDraw(Version1, appearance, surname, persona);
         }
 
+        /// <summary>The derived identity's persona only, from the same draw as <see cref="Derive"/> (no strings built).</summary>
+        public Persona PersonaOf(int seed, string personId) => donors[Draw(seed, personId).Persona].Persona;
+
         /// <summary>The derived identity. Visitors have no home, so District is empty; the appearance donor fixes
         /// age, sex and appearance seed, and persona comes from a donor of a compatible age.</summary>
         public CitizenIdentity Derive(int seed, string personId)

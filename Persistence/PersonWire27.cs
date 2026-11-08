@@ -275,6 +275,18 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Writer-27 person rules, on every read and before every write. Returns records charged.</summary>
+        /// <summary>F5g: a sequence number below NextVisitorSequence without a visitor is one the fill skipped for a commuter,
+        /// so its frozen derived identity must be a student or retiree (owner decision, 8 Nov 2026). Any other missing number
+        /// is a lost person and refuses the payload, as the count equality did before.</summary>
+        private static void ValidateSkippedSequences(CityState state, List<int> present)
+        {
+            long gaps = (long)state.NextVisitorSequence - 1 - present.Count;
+            if (gaps == 0) return;
+            Require(gaps <= PopulationFillPolicy.MaximumSkippedSequences, "Visitor creation and active counts disagree.");
+            Require(state.SourceIdentities.Count > 0 && VisitorSchedules.OnlyNonWorkingSkipped(state, present),
+                "Visitor creation and active counts disagree: a skipped visitor sequence is not a student or retiree.");
+        }
+
         private static int ValidatePersons27(CityState state, Dictionary<string, Place> places, Dictionary<string, int> assigned, ref int embeddedRecords)
         {
             Require(state.Visitors != null && state.Portals != null && state.VisitorRoutines != null, "Missing person table.");
@@ -303,6 +315,7 @@ namespace PersistentCity.Persistence
             var residents = new HashSet<string>(state.Citizens.Select(c => c.Identity.Id), StringComparer.Ordinal);
             Require(state.Food != null || state.Visitors.Count == 0, "Visitor persons require a food roster.");
             int visitorSequences = 0;
+            var sequenceNumbers = new List<int>(state.Visitors.Count);
             string? previous = null;
             for (int i = 0; i < state.Visitors.Count; i++)
             {
@@ -316,7 +329,9 @@ namespace PersistentCity.Persistence
                 previous = visitor.Id;
                 Require(!residents.Contains(visitor.Id), "Visitor duplicates a resident ID.");
                 visitorSequences++;
-                Require(int.Parse(visitor.Id.Substring(PersonIds.VisitorPrefix.Length), CultureInfo.InvariantCulture) < state.NextVisitorSequence, "Visitor ID is not yet allocated.");
+                int sequenceNumber = int.Parse(visitor.Id.Substring(PersonIds.VisitorPrefix.Length), CultureInfo.InvariantCulture);
+                Require(sequenceNumber < state.NextVisitorSequence, "Visitor ID is not yet allocated.");
+                sequenceNumbers.Add(sequenceNumber);
                 Require(ReferenceEquals(visitor.Routine, routine) && ReferenceEquals(routine.Person, visitor)
                     && routine.Identity != null && routine.Identity.Id == visitor.Id, "Visitor routine is not its person's.");
                 var stay = visitor.Stay;
@@ -392,7 +407,8 @@ namespace PersistentCity.Persistence
                 if (routine.MealOuting != null) Require(state.Food != null, "Meal outing without economy.");
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             }
-            Require(state.NextVisitorSequence >= 1 && state.NextVisitorSequence - 1 == visitorSequences, "Visitor creation and active counts disagree.");
+            Require(state.NextVisitorSequence >= 1 && state.NextVisitorSequence - 1 >= visitorSequences, "Visitor creation and active counts disagree.");
+            ValidateSkippedSequences(state, sequenceNumbers);
             ValidateOwnership27(state);
             // One record per person tuple (resident P and visitor) and per station entry, as the streaming check charges.
             return state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
