@@ -89,6 +89,7 @@ namespace PersistentCity.Runtime
         internal bool ReuseRoadSceneForRetiming(MultimodalRoutes previous)
         {
             var city = CityManager.Instance;
+            if (objects != null && ReferenceEquals(objects, previous.objects)) stationActivity.Include(previous.stationActivity);
             if (roadSceneSearched || objects == null || !ReferenceEquals(objects, previous.objects)
                 || city == null || !ReferenceEquals(previous.roadCity, city)
                 || !previous.roadSceneSearched || previous.roadScene == null) return false;
@@ -620,6 +621,9 @@ namespace PersistentCity.Runtime
         {
             if (access == null) access = objects == null ? new PublicRoadAccess() : new PublicRoadAccess(objects.Doors);
         }
+        // Save-scoped: retimed routes take it over in ReuseRoadSceneForRetiming.
+        private readonly StaticSceneMemory stationActivity = new StaticSceneMemory();
+        public int ValidatedStations => stationActivity.Count;
         private void EnsureStations()
         {
             if (stations != null) return;
@@ -633,8 +637,13 @@ namespace PersistentCity.Runtime
             foreach (var station in (objects?.Stations ?? Object.FindObjectsByType<SubwayStation>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 .OrderBy(station => station.GetInstanceID()))
             {
-                if (station == null || !station.gameObject.activeInHierarchy
-                    || station.GetComponentsInParent<ToggleObjectDLC>(true).Any(t => t.showWhenOwned != t.dlc.DlcIsOwned())) continue;
+                if (station == null) continue;
+                // F2h: DLC visibility is a game reason, read every preparation. Activity counts once per static
+                // scene key, so a later deactivation keeps the station. A station without a static key keeps the live rule.
+                bool hidden = station.GetComponentsInParent<ToggleObjectDLC>(true).Any(t => t.showWhenOwned != t.dlc.DlcIsOwned());
+                bool active = station.gameObject.activeInHierarchy;
+                if (OutdoorPlaces.StaticSceneKey(station.transform, out string sceneKey)
+                    ? !stationActivity.Admit(sceneKey, active, hidden) : hidden || !active) continue;
                 Position position;
                 try { position = Point(station.GetNavMeshTargetPosition()); }
                 catch (Exception) { continue; }
