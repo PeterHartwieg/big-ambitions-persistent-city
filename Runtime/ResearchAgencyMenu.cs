@@ -70,9 +70,11 @@ namespace PersistentCity.Runtime
             => rentedAndNamed && !string.IsNullOrEmpty(scopeBusinessId) && observedOwnGeneration
                 && authority != null && string.Equals(authority.BusinessId, scopeBusinessId, StringComparison.Ordinal) && authority.CanServe;
 
-        /// <summary>Saved research runs (survey and bill) only when both the dialog and the billing contract passed.
-        /// Otherwise the ledger is kept in the save unchanged and nothing surveys or charges.</summary>
-        internal static bool SessionEnabled(bool dialogContract, bool billingContract) => dialogContract && billingContract;
+        /// <summary>Saved research runs (survey and bill) only when the dialog, billing and delivery (C5f) contracts all passed.
+        /// Otherwise the ledger is kept in the save unchanged and nothing surveys or charges, so no order is paid without
+        /// its delivery message.</summary>
+        internal static bool SessionEnabled(bool dialogContract, bool billingContract, bool deliveryContract)
+            => dialogContract && billingContract && deliveryContract;
     }
 
     internal enum ResearchClickOutcome { SelectBusiness, Ineligible, Menu }

@@ -804,14 +804,14 @@ namespace PersistentCity.Runtime
 
         /// <summary>C5e: the saved CityState.Research ledger reaches the survey through the C5b seam, the native bill
         /// through ResearchBilling and the agency dialog through its desk. C5f: MarketResearchSettings.Available is derived
-        /// from ResearchActivation; ordering stays hidden whenever a check fails. A refused dialog or billing contract turns
+        /// from ResearchActivation; ordering stays hidden whenever a check fails. A refused dialog, billing or delivery contract turns
         /// research off for the session: the ledger stays in the save unchanged, nothing surveys or charges, and the city keeps running.</summary>
         private void AttachResearch(CityState state)
         {
-            if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))
+            if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed))
             {
                 log?.Warn("Research off for this session; saved research orders are kept unchanged. "
-                    + ResearchAgencyDialog.Status + " " + ResearchBilling.Status);
+                    + ResearchAgencyDialog.Status + " " + ResearchBilling.Status + " " + ResearchMessages.Status);
                 return;
             }
             simulation!.AttachResearch(state.Research, settings.MarketResearch.MarketResearchConsumersPerUnit);

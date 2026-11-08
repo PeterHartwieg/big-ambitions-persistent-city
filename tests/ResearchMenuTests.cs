@@ -323,14 +323,12 @@ public sealed class ResearchMenuTests
     [Fact]
     public void ARefusedDialogOrBillingContractLeavesSavedOrdersUnsurveyedAndUncharged()
     {
-        Assert.True(ResearchEligibility.SessionEnabled(true, true));
-        Assert.False(ResearchEligibility.SessionEnabled(false, true));
-        Assert.False(ResearchEligibility.SessionEnabled(true, false));
-        Assert.False(ResearchEligibility.SessionEnabled(false, false));
+        for (int mask = 0; mask < 8; mask++)
+            Assert.Equal(mask == 7, ResearchEligibility.SessionEnabled((mask & 1) != 0, (mask & 2) != 0, (mask & 4) != 0));
 
         // The refusal returns before the survey seam, the billing session and the desk are attached.
         string attach = Between(Source("Runtime/PersistentCityMod.cs"), "private void AttachResearch(CityState state)", "private bool ResearchAttached()");
-        int gate = attach.IndexOf("if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))", StringComparison.Ordinal);
+        int gate = attach.IndexOf("if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed))", StringComparison.Ordinal);
         int stop = attach.IndexOf("return;", gate, StringComparison.Ordinal);
         Assert.True(gate > 0 && stop > gate);
         foreach (string step in new[] { "simulation!.AttachResearch(", "ResearchBilling.Attach(", "ResearchAgencyDialog.Attach(" })

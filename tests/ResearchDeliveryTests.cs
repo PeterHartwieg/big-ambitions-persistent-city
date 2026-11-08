@@ -431,6 +431,54 @@ public sealed class ResearchDeliveryTests
         Assert.Contains("() => settings.MarketResearch.Available", mod);
     }
 
+    [Fact]
+    public void AFailedDeliveryContractLeavesASavedSurveyedOrderUnchargedAndUnchanged()
+    {
+        // A saved city with a Surveyed order, loaded while the delivery contract failed (dialog and billing passed).
+        var ledger = new ResearchLedger();
+        var order = Surveyed(ledger, Shop(1));
+        var saved = ledger.CopyForSave();
+        var port = new Port();
+        var tracker = new ResearchNoticeTracker();
+        var sent = new List<ResearchNotice>();
+        // PersistentCityMod.AttachResearch: only an enabled session attaches the billing session.
+        ResearchChargeSession? session = ResearchEligibility.SessionEnabled(true, true, deliveryContract: false) ? Session(saved, port) : null;
+        Assert.Null(session);
+        for (int midnight = 0; midnight < 3; midnight++)
+            if (session != null) sent.AddRange(Boundary(session, tracker));
+        Assert.Equal(0, port.Charges);
+        Assert.Empty(port.Queue);
+        Assert.Equal(50000f, port.Money);
+        Assert.Empty(sent);
+        var kept = saved.Find(order.Id)!;
+        Assert.Equal(ResearchOrderState.Surveyed, kept.State);
+        Assert.Same(order.Report, kept.Report);
+
+        // With every contract passing the same saved order is billed and delivered once.
+        session = ResearchEligibility.SessionEnabled(true, true, true) ? Session(saved, port) : null;
+        Assert.Equal(ResearchNoticeKind.Delivered, Assert.Single(Boundary(session!, tracker)).Kind);
+        Assert.Equal(1, port.Charges);
+
+        // The runtime gate passes the delivery contract and returns before anything is attached.
+        string attach = Between(Source("Runtime/PersistentCityMod.cs"), "private void AttachResearch(CityState state)", "private bool ResearchAttached()");
+        int gate = attach.IndexOf("ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed)", StringComparison.Ordinal);
+        int stop = attach.IndexOf("return;", gate, StringComparison.Ordinal);
+        Assert.True(gate > 0 && stop > gate);
+        foreach (string step in new[] { "simulation!.AttachResearch(", "ResearchBilling.Attach(", "ResearchAgencyDialog.Attach(" })
+            Assert.True(attach.IndexOf(step, StringComparison.Ordinal) > stop, step);
+        // The delivery contract is checked at initialization, before any city attaches.
+        Assert.Contains("ResearchBilling.Install(); ResearchAgencyDialog.Install(); ResearchMessages.Check();", Source("Runtime/PersistentCityMod.cs"));
+    }
+
+    [Fact]
+    public void AgencyContactPrefersTheNativeRegistrationMatchOverTheStreetAddress()
+    {
+        string send = Between(Source("Runtime/ResearchDiagnostics.cs"), "private static Contact? AgencyContact(GameInstance save, string agency)", "/// <summary>C5f `pcresearch` console lines");
+        int registration = send.IndexOf("contact.id == registration.BusinessName && contact.description == registration.businessTypeName", StringComparison.Ordinal);
+        int address = send.IndexOf("contact.streetNumber == number", StringComparison.Ordinal);
+        Assert.True(registration > 0 && address > registration);
+    }
+
     // ---- cleanup ----
 
     [Fact]

@@ -103,18 +103,18 @@ namespace PersistentCity.Runtime
             return null;
         }
 
-        // The contact at the agency's address, else the one native Contact.GetContact keeps for the agency registration
-        // (same id and description). Never creates a contact.
+        // The contact native Contact.GetContact keeps for the agency registration (same id and description), else the
+        // contact at the agency's address. Never creates a contact.
         private static Contact? AgencyContact(GameInstance save, string agency)
         {
             var contacts = save.Contacts;
             if (contacts == null || !ResearchNoticeText.TryParseAgency(agency, out var street, out int number)) return null;
+            var registration = BuildingHelper.GetBuildingRegistration(new Address(street, number));
+            if (registration != null && !string.IsNullOrEmpty(registration.BusinessName))
+                foreach (var contact in contacts)
+                    if (contact != null && contact.id == registration.BusinessName && contact.description == registration.businessTypeName) return contact;
             foreach (var contact in contacts)
                 if (contact != null && contact.streetNumber == number && string.Equals(contact.streetName, street, StringComparison.Ordinal)) return contact;
-            var registration = BuildingHelper.GetBuildingRegistration(new Address(street, number));
-            if (registration == null || string.IsNullOrEmpty(registration.BusinessName)) return null;
-            foreach (var contact in contacts)
-                if (contact != null && contact.id == registration.BusinessName && contact.description == registration.businessTypeName) return contact;
             return null;
         }
     }
