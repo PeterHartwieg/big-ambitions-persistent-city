@@ -27,14 +27,19 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
         public string BusinessId = "", PlaceId = "";
         public readonly SortedDictionary<string, int> Prices = new(StringComparer.Ordinal);
         public int OpenMinute, CloseMinute;
-        // Recorded input only, as a percentage of the future F6b lane profile: today's Core has no
-        // rival lanes (unlimited parallel service).
+        // Percentage of the default F6b lanes; units remain fixed in the lane-only arm.
         public int EstimatedLanes;
         public bool Listed = true;
     }
     sealed class Batch : IDisposable { public void Dispose() { } }
     private static readonly Batch NoBatch = new();
 
+    // F6h shares the live settings instance with Core. Timestamped lane inputs therefore
+    // affect later evaluations/arrivals. The base's committed travellers still meet the
+    // live arrival limit; no held lane/unit fields or old-term replay are invented here.
+    public readonly RivalFoodSettings RivalSettings = new();
+    public FoodChoiceSettings ChoiceSettings = new();
+    public FoodChangeJournal? Journal;
     public readonly List<Shop> Shops = new();
     public readonly Rival RivalShop = new();
     public readonly SortedSet<string> ClosedWorkplaces = new(StringComparer.Ordinal);
@@ -82,7 +87,11 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
             case InputKind.WorkplaceClosed: if (input.Value != 0) ClosedWorkplaces.Add(input.Target); else ClosedWorkplaces.Remove(input.Target); break;
             case InputKind.WorkerRoutesBlockedPercent: WorkerRoutesBlockedPercent = input.Value; break;
             case InputKind.RivalPrice: RivalShop.Prices[input.Product] = input.Value; break;
-            case InputKind.RivalLanes: RivalShop.EstimatedLanes = input.Value; break;
+            case InputKind.RivalLanes:
+                RivalShop.EstimatedLanes = input.Value;
+                RivalSettings.RivalServiceLanes = RivalServiceCalibration.Scale(RivalServiceCalibration.DefaultLanes,
+                    input.Value, RivalServiceCalibration.MaximumLanes);
+                break;
             default: throw new InputViolation("unknown input kind");
         }
     }
@@ -92,11 +101,24 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
         => Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = from, ToMinute = to }).ToList();
     private static int Units(Shop shop, string product) => shop.StockOverride.TryGetValue(product, out var u) ? u : BaseStockUnits;
 
-    private FoodBusiness Business(Shop shop) => new FoodBusiness {
+    private FoodBusiness Business(Shop shop)
+    {
+        // Consume the exact image this detached native double already reads, as Runtime does.
+        // No extra observation or speculative sweep is introduced by the journal.
+        if (Journal != null)
+        {
+            var offers = shop.Prices.Select(p => new ShopObservedOffer { ProductId = p.Key,
+                PriceUnits = Money.FromCents(p.Value).Units, Stock = Units(shop, p.Key) }).ToArray();
+            Journal.ObserveSupply(shop.BusinessId, shop.PlaceId, (int)Epoch, offers, offers.Length,
+                (shop.MealsPerHour + 29) / 30);
+            Journal.ObserveHours(shop.BusinessId, shop.PlaceId, (int)Epoch, Daily(shop.OpenMinute, shop.CloseMinute));
+        }
+        return new FoodBusiness {
         Id = shop.BusinessId, PlaceId = shop.PlaceId, Name = shop.Name, MealsPerHour = shop.MealsPerHour,
         Hours = Daily(shop.OpenMinute, shop.CloseMinute), CustomerServicePercent = 50,
         ServiceUnavailableReason = shop.DoorClosed ? "Door temporarily closed" : "",
         Offers = shop.Prices.Select(p => new FoodOffer { ProductId = p.Key, Price = Money.FromCents(p.Value), Units = Units(shop, p.Key) }).ToList() };
+    }
 
     public IReadOnlyList<FoodBusiness> Read(double minute) { Fence(minute); return Shops.Where(s => s.SiteOpen).Select(Business).ToArray(); }
     public IDisposable BeginCapture(double minute) { Fence(minute); return NoBatch; }
@@ -208,9 +230,17 @@ public static class EconomyFixture
         };
         for (int i = 0; i < Workplaces; i++)
             places.Add(new Place { Id = WorkplaceId(i), Name = "Work " + i, Kind = PlaceKind.Work, Capacity = residents / Workplaces + 1, Position = new Position(0, 1, 0) });
-        var state = Population.Create(Enumerable.Range(0, residents).Select(n => new CitizenIdentity {
+        var state = Population.Create(Enumerable.Range(0, Math.Min(residents, 5000)).Select(n => new CitizenIdentity {
             Id = "r" + n, Name = "Resident " + n, Persona = Persona.Foodie, Age = 30 }).ToArray(), places,
             "economy-interventions", "0.40.4", seed, StartMinute);
+        if (residents > 5000)
+        {
+            // The immutable donor catalogue is capped at 5,000. Stress cities grow through
+            // the same F5 housing expansion as the E5d save fixtures, retaining stable pc: IDs.
+            state.Places.Single(p => p.Id == "home").Capacity = (int)(((long)residents * 10 + 8) / 9);
+            Population.ExpandToHousing(state);
+            if (state.Citizens.Count != residents) throw new InvalidOperationException("stress housing target mismatch");
+        }
         foreach (var person in state.Citizens)
         {
             person.Phase = CitizenPhase.AtPlace; person.PlaceId = "home"; person.Activity = Activity.Home;
@@ -242,7 +272,7 @@ public static class EconomyFixture
     public static CitySimulator Attach(CityState state, EconomyMarket market, EconomyRoutes routes, bool fresh)
     {
         var city = new CitySimulator(state, routes);
-        city.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings());
+        city.AttachFoodMarket(market, choiceSettings: market.ChoiceSettings, rivalSettings: market.RivalSettings);
         if (fresh)
         {
             city.EnableHouseholdFinances();
