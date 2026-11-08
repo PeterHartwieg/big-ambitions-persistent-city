@@ -11,6 +11,7 @@ namespace PersistentCity.Core
         public double FoodChoiceTemperature { get; set; }=1;
         public double FoodChoiceWeightFloor { get; set; }=.02;
         public double FoodChoiceTasteWeight { get; set; }=1;
+        // Strength of the meal-reference price response; 0 disables the soft signal, never the wallet gate.
         public double FoodChoicePriceWeight { get; set; }=1;
         public double FoodChoiceDistanceWeight { get; set; }=1;
         public double FoodChoiceDistanceScaleMinutes { get; set; }=10;
@@ -18,6 +19,7 @@ namespace PersistentCity.Core
         public double FoodChoiceQualityWeight { get; set; }=.5;
         public double FoodChoiceTimePressureWeight { get; set; }=1;
         public double FoodChoiceHealthWeight { get; set; }
+        // Funded cooking preference at the $5 meal-reference equivalent; no extra charge is booked.
         public double FoodChoiceHouseholdWeight { get; set; }=1;
         public double FoodShortlistTemperature { get; set; }=1;
 

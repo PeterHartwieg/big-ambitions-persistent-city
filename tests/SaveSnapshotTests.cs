@@ -10,26 +10,28 @@ namespace PersistentCity.Tests;
 /// <summary>
 /// F7c (issue #94, plan section 3.2 and section 4 row F7c): the current writer encodes a detached save snapshot captured
 /// on the calling thread, validation runs on that snapshot, and committed journey routes are immutable and shared. The
-/// bytes equal the base writer's on fresh fixtures in the current schema; the reader is unchanged.
+/// bytes equal the live writer's on the same fixtures; the reader is unchanged.
 /// </summary>
 public sealed class SaveSnapshotTests
 {
     /// <summary>SHA-256 and length of the pre-F7c writer (base 57607b2, live-graph encode) on the same fresh fixtures,
-    /// produced by tests/F7cMeasure.cs on that commit (docs/perf/f7c.md lists every fixture, including the larger ones).</summary>
+    /// produced by tests/F7cMeasure.cs on that commit (docs/perf/f7c.md lists every fixture, including the larger ones).
+    /// F6i repins only rush-957x2: it simulates food choices, so anchored prices change its meals/balances.
+    /// The other four inputs and all codec shape assertions remain unchanged.</summary>
     public static IEnumerable<object[]> BasePins() => new[]
     {
         new object[] { "representative-957x2", "D1CC4FB4EE3F3135AECC0A032FD63AA5257B9BC1739BB76FC98B807113EEE1AF", 2311290 },
         new object[] { "fresh-957x3", "A6DB1093D09D7B0540B56220C5F51F64027DAED008CE0BAB995829B071BAF0E9", 2900486 },
         new object[] { "saturated-957x3", "F32DC000A40718334FFACE8F5174E9004161DF7F07D7319A91DF15B18D7A901C", 4211558 },
         new object[] { "encoding-max", "D222381479282F55F8B0D26A78760E915A676A0BA43593D70367B67A8424696C", 2445781 },
-        new object[] { "rush-957x2", "8F6473A4AD620627E367852AE6AD122146B28185FB2054A71CC188B8B5A11A25", 2213842 },
+        new object[] { "rush-957x2", "F48B69FD42262E6589C8A385E3AC1C7B3A8B0B8626552B80A85D0E2DD9B1C5F8", 2240373 },
     };
 
     /// <summary>E6c: these pins are writer 29's, now the frozen C5c writer (the name is kept for docs/checks/f7c.md). The snapshot path for that schema still
-    /// gives the base bytes; the session and the reader use the current (vendor) writer.</summary>
+    /// gives the pinned bytes; the session and the reader use the current writer.</summary>
     [Theory]
     [MemberData(nameof(BasePins))]
-    public void CurrentWriterBytesEqualTheBaseWriterOnFreshFixtures(string fixture, string sha256, int characters)
+    public void SnapshotAndLiveWriterBytesMatchPinnedFixtures(string fixture, string sha256, int characters)
     {
         var state = F7cFixtures.Build(fixture, SaveCodec.ResearchSchema).State;
         const int frozen = SaveCodec.ResearchSchema;

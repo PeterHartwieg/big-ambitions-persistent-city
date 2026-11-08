@@ -11,7 +11,8 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-// This source also compiles at b2a0ab7 with F6D_BASELINE. The pinned hashes were collected there.
+// This source also compiles at b2a0ab7 with F6D_BASELINE. F6i repins simulated meals/balances
+// for anchored choice; predecessor/current codec equivalence and inactive-ledger assertions stay intact.
 public sealed class F6dInactiveTraceTests
 {
     private readonly ITestOutputHelper output;
@@ -69,8 +70,8 @@ public sealed class F6dInactiveTraceTests
         return Sha(trace.ToString());
     }
     [Theory]
-    [InlineData(5150, "256d605ec0384ff6fdaaa26d44dc48dd825706c88a4f195eab2297bb79679381")]
-    [InlineData(9217, "046eed1463692641d46f2d7c93ed1604ac3d181d49005184fe362521b921fbb7")]
+    [InlineData(5150, "349fe9ef16f15153e863b35ee97d7b683866ba5dcb57c49300cef291900b6c42")]
+    [InlineData(9217, "e57d5f17364034138f40207e75d339298fa916edffc71701333a905b153aa499")]
     public void FreshThreeDayStateAndOrderTraceMatchesThePredecessor(int seed, string pin)
     {
         string predecessor = Run(seed, true), current = Run(seed, false);

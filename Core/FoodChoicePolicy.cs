@@ -66,6 +66,12 @@ namespace PersistentCity.Core
     public static partial class FoodChoicePolicy
     {
         private static readonly double[] TasteRatios={.5,.75,1,1.5,2};
+        // F6i: a common $5 prepared-meal reference, independent of savings and the observed menu.
+        // At default strength a neutral resident gives a +50% markup exp(-1) of its reference weight.
+        private const double MealReferenceCents=500;
+        private static double PriceFactor(double cents,ResidentTraits traits,FoodChoiceSettings settings)
+            => Math.Exp(-2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity))
+                *(cents/MealReferenceCents-1));
         internal readonly struct DistancePreference
         {
             private readonly double weight,scale,divisor,floor,temperature;
@@ -92,23 +98,22 @@ namespace PersistentCity.Core
         // Bounded rational signals; unknown quality/demand are neutral. Health, loyalty and brand have no signal.
         // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,double weatherTravelMultiplier=1)
-            => WeightCore(o,t,allowance,s,OfferTaste(o,t),MealRhythm.ProductPenalty(o.Kind,o.ProductId),
+            => WeightCore(o,t,s,OfferTaste(o,t),MealRhythm.ProductPenalty(o.Kind,o.ProductId),
                 o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);
 
         // Pure E5c seam only. Live callers retain the historical overload until schema-25 capture/E5b.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,
             FoodProductMetadata metadata, double weatherTravelMultiplier=1)
-            => WeightCore(o,t,allowance,s,FoodProducts.KnownLegacy(o.ProductId) ? Taste(t,o.ProductId) : metadata.TasteBand,
+            => WeightCore(o,t,s,FoodProducts.KnownLegacy(o.ProductId) ? Taste(t,o.ProductId) : metadata.TasteBand,
                 FoodProducts.KnownLegacy(o.ProductId) ? MealRhythm.ProductPenalty(o.Kind,o.ProductId) : metadata.Penalty(o.Kind),
                 FoodProducts.KnownLegacy(o.ProductId) ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);
 
-        private static double WeightCore(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,
+        private static double WeightCore(EvaluatedFoodOffer o, ResidentTraits t, FoodChoiceSettings s,
             int band, int fitPenalty, double tasteWeight, double weatherTravelMultiplier)
         {
             double taste=TasteRatios[band];
             double w=tasteWeight==1 ? taste : Math.Pow(taste,tasteWeight);
-            w/=1+s.FoodChoicePriceWeight*(.5+.25*t.Band(ResidentTrait.PriceSensitivity))
-                *o.Price.ApproximateCents()/Math.Max(1,allowance.ApproximateCents());
+            w*=PriceFactor(o.Price.ApproximateCents(),t,s);
             w*=DistanceWeight(o.Travel,t,s,false,weatherTravelMultiplier,o.CampaignActive);
             w/=1+s.FoodChoiceQueueWeight*o.Queue/(2+3*t.Band(ResidentTrait.QueuePatience));
             double quality=(o.Quality.HasValue ? (o.Quality.Value-50)/100.0 : 0)
@@ -137,12 +142,16 @@ namespace PersistentCity.Core
         {
             if (offers.Count>MaximumShortlist*MaximumOffersPerShop || !traits.IsValid) throw new ArgumentException("Invalid policy inputs.");
             int selected=-1;
+            // Already-funded cooking is the reference-price equivalent outside option (price factor 1).
+            // HouseholdWeight scales its convenience/preference, without a second home-food debit.
             double best=fundedHousehold ? FoodDrawContext.Rank(draw.OfferHash("",""),
-                Positive(settings.FoodChoiceHouseholdWeight,settings.FoodChoiceWeightFloor,settings.FoodChoiceTemperature)) : double.PositiveInfinity;
+                Positive(settings.FoodChoiceHouseholdWeight*PriceFactor(MealReferenceCents,traits,settings),
+                    settings.FoodChoiceWeightFloor,settings.FoodChoiceTemperature)) : double.PositiveInfinity;
             for(int i=0;i<offers.Count;i++)
             {
-                var o=offers[i]; double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings,weatherTravelMultiplier)*o.AlternativeWeight);
+                var o=offers[i];
                 if(o.AlternativeWeight<=0 || o.Price<=Money.Zero || o.Price>allowance) continue;
+                double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings,weatherTravelMultiplier)*o.AlternativeWeight);
                 // The reserved empty household IDs precede real IDs in an exact tie.
                 int tie=selected<0 ? 1 : StringComparer.Ordinal.Compare(o.BusinessId,offers[selected].BusinessId);
                 if(tie==0) tie=StringComparer.Ordinal.Compare(o.ProductId,offers[selected].ProductId);
