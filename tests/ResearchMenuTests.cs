@@ -196,7 +196,7 @@ public sealed class ResearchMenuTests
             Assert.Equal(order[failed], ResearchDialogGate.Check(Preconditions(127 & ~(1 << failed))));
         Assert.Equal(ResearchDialogRefusal.None, ResearchDialogGate.Check(Preconditions(127)));
 
-        // C5e build: Available stays false, so the button is never added even with every other check passing.
+        // Settings with no attached checks (C5f derives Available from them) are unavailable, so the button is never added.
         Assert.False(new MarketResearchSettings().Available);
         Assert.False(typeof(MarketResearchSettings).GetProperty("Available")!.CanWrite);
         var settings = new MarketResearchSettings();
@@ -323,14 +323,12 @@ public sealed class ResearchMenuTests
     [Fact]
     public void ARefusedDialogOrBillingContractLeavesSavedOrdersUnsurveyedAndUncharged()
     {
-        Assert.True(ResearchEligibility.SessionEnabled(true, true));
-        Assert.False(ResearchEligibility.SessionEnabled(false, true));
-        Assert.False(ResearchEligibility.SessionEnabled(true, false));
-        Assert.False(ResearchEligibility.SessionEnabled(false, false));
+        for (int mask = 0; mask < 8; mask++)
+            Assert.Equal(mask == 7, ResearchEligibility.SessionEnabled((mask & 1) != 0, (mask & 2) != 0, (mask & 4) != 0));
 
         // The refusal returns before the survey seam, the billing session and the desk are attached.
         string attach = Between(Source("Runtime/PersistentCityMod.cs"), "private void AttachResearch(CityState state)", "private bool ResearchAttached()");
-        int gate = attach.IndexOf("if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))", StringComparison.Ordinal);
+        int gate = attach.IndexOf("if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed))", StringComparison.Ordinal);
         int stop = attach.IndexOf("return;", gate, StringComparison.Ordinal);
         Assert.True(gate > 0 && stop > gate);
         foreach (string step in new[] { "simulation!.AttachResearch(", "ResearchBilling.Attach(", "ResearchAgencyDialog.Attach(" })
@@ -374,11 +372,13 @@ public sealed class ResearchMenuTests
             Assert.Equal(key.ToLowerInvariant().Trim(), key);
             Assert.StartsWith(ResearchText.Prefix, key);
         }
-        var used = ResearchText.Keys(ResearchProducts.All).ToHashSet(StringComparer.Ordinal);
+        // C5f adds the agency delivery and decline messages to the same table.
+        var used = ResearchText.Keys(ResearchProducts.All).Concat(ResearchNoticeText.Keys()).ToHashSet(StringComparer.Ordinal);
         Assert.Equal(used.OrderBy(k => k, StringComparer.Ordinal), table.Keys.OrderBy(k => k, StringComparer.Ordinal));
         foreach (var value in table.Values) Assert.False(string.IsNullOrWhiteSpace(value));
         // Every placeholder is an argument the dialog passes.
-        var arguments = new[] { ResearchText.ProductArgument, ResearchText.DescriptionArgument, ResearchText.BusinessArgument, ResearchText.PriceArgument };
+        var arguments = new[] { ResearchText.ProductArgument, ResearchText.DescriptionArgument, ResearchText.BusinessArgument, ResearchText.PriceArgument,
+            ResearchNoticeText.BusinessNameArgument };
         foreach (var value in table.Values)
             foreach (Match match in Regex.Matches(value, @"\{(\w+)\}")) Assert.Contains(match.Groups[1].Value, arguments);
         // English only.

@@ -89,6 +89,7 @@ namespace PersistentCity.Runtime
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; economyRefresh.Invalidate(); input.Use(); }
             if (showEconomy) DrawEconomy(); else economyRect = default;
+            if (researchWindow.Open) researchWindow.Draw(ResearchLedgerNow, researchNames ??= ResearchBusinessName);
             if (!inspectorFailed) inspector.Draw();
         }
         private void DrawEconomy()
@@ -102,6 +103,7 @@ namespace PersistentCity.Runtime
             GUI.color = previousColor;
             GUILayout.BeginArea(panel, GUI.skin.box);
             GUILayout.BeginHorizontal(); GUILayout.Label("PERSISTENT CITY · FOOD BUSINESSES");
+            if (GUILayout.Button("Research reports", GUILayout.Width(140))) researchWindow.Toggle();
             if (GUILayout.Button("Close · Ctrl+F8", GUILayout.Width(140))) showEconomy = false;
             GUILayout.EndHorizontal();
             economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };

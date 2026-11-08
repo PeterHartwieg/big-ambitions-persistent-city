@@ -10,6 +10,8 @@
   "persistentcity_research_menu_other_product" : "Other research",
   "persistentcity_research_menu_back_to_campaigns" : "Back to campaigns",
   "persistentcity_research_menu_place_order" : "Order",
+  "persistentcity_research_message_delivered" : "Your market research for {businessName} is ready. Open Persistent City (Ctrl+F8) to read it.",
+  "persistentcity_research_message_declined" : "We could not bill the market research for {businessName}, so it was not delivered.",
   "persistentcity_research_menu_ordered" : "Noted. We bill {price} with tonight's marketing bill for {business}, and you get the {product} report tomorrow morning.",
   "persistentcity_research_product_basic-local" : "Neighbourhood snapshot",
   "persistentcity_research_product_basic-local_description" : "residents, meal opportunities, household food and budget bands around the business",

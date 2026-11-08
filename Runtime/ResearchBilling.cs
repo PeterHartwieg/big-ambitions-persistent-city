@@ -11,7 +11,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>C5d research billing (plan C5 sections 3.5 and 3.6). A postfix on native MarketingHelper.RunDaily
     /// bills each Surveyed order with its own ChangeMoneySafe call, before native CreateFinancialSummary(Day - 1).
-    /// Never touches native campaigns. Not installed or attached by any caller yet: C5e wires Install and Attach.
+    /// Never touches native campaigns. C5e wires Install and Attach; C5f sends the agency message after the bill.
     /// Main thread only.</summary>
     internal static class ResearchBilling
     {
@@ -19,11 +19,15 @@ namespace PersistentCity.Runtime
         private static readonly Harmony patches = new Harmony(PatchId);
         private static MethodInfo? runDaily;
         private static ResearchChargeSession? session;
+        private static Func<bool>? sessionActive;
+        private static readonly ResearchNoticeTracker notices = new ResearchNoticeTracker();
         private static bool installed;
 
         /// <summary>Empty when the contract check passed and the postfix is installed.</summary>
         internal static string Status { get; private set; } = "Research billing is not installed.";
         internal static bool Installed => installed;
+        /// <summary>A ledger is attached and no foreign patch turned billing off since.</summary>
+        internal static bool Attached => session != null;
         internal static ResearchChargeTally LastBoundary => session?.LastBoundary ?? default;
 
         /// <summary>Checks the native billing contract and installs the postfix. A mismatch leaves research billing off
@@ -50,7 +54,7 @@ namespace PersistentCity.Runtime
 
         internal static void Uninstall()
         {
-            session = null;
+            session = null; sessionActive = null;
             if (installed) patches.UnpatchAll(PatchId);
             installed = false; runDaily = null;
             Status = "Research billing is not installed.";
@@ -63,9 +67,10 @@ namespace PersistentCity.Runtime
         {
             if (!installed) throw new InvalidOperationException(Status);
             session = new ResearchChargeSession(ledger, new NativeResearchChargePort(eligible), active, guardedUnit);
+            sessionActive = active;
         }
 
-        internal static void Detach() => session = null;
+        internal static void Detach() { session = null; sessionActive = null; }
 
         // Native RunDaily calls this after every player business's campaign bill. Idle (no attached city or no
         // Surveyed order) reads one field and the open-order count.
@@ -78,9 +83,19 @@ namespace PersistentCity.Runtime
                 // A foreign prefix added after install could skip native RunDaily; refuse instead of billing.
                 string? foreign = ResearchBillingContract.ForeignPatch(runDaily!);
                 if (foreign != null) { Status = "Research billing off: " + foreign; session = null; Debug.LogWarning("[Persistent City] " + Status); return; }
-                var tally = current.Boundary();
-                if (tally.PaymentUnknown > 0 || tally.ChargingOff)
-                    Debug.LogWarning("[Persistent City] Research billing: paymentUnknown=" + tally.PaymentUnknown + " chargingOff=" + tally.ChargingOff);
+                notices.Before(current.Ledger);
+                try
+                {
+                    var tally = current.Boundary();
+                    if (tally.PaymentUnknown > 0 || tally.ChargingOff)
+                        Debug.LogWarning("[Persistent City] Research billing: paymentUnknown=" + tally.PaymentUnknown + " chargingOff=" + tally.ChargingOff);
+                }
+                finally
+                {
+                    // C5f: one agency message per order moved to Paid or Declined. A runtime stopped during the boundary
+                    // (for example by a refused save) publishes no later payload with the move, so it sends nothing.
+                    if (sessionActive?.Invoke() == true) notices.After(ResearchMessages.Send); else notices.Forget();
+                }
             }
             catch (Exception error)
             {

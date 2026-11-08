@@ -198,6 +198,7 @@ namespace PersistentCity.Runtime
         {
             log = context.Logger;
             RegisterVendorDiagnostics();
+            RegisterResearchDiagnostics();
             try
             {
                 FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
@@ -214,7 +215,7 @@ namespace PersistentCity.Runtime
                 log.Info("Food menu policy v1: configured="+settings.FoodMenuMaximumOffersPerShop+", effective native maximum="+Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop)+"; reserved product codes grant no sale permission.");
                 settings.MarketResearch.Clamp(message => log.Info(message));
                 // C5d/C5e native contract checks. A mismatch turns research off with a status line; the city still runs.
-                ResearchBilling.Install(); ResearchAgencyDialog.Install();
+                ResearchBilling.Install(); ResearchAgencyDialog.Install(); ResearchMessages.Check();
                 settings.Rivals.Clamp(message => log.Info(message));
                 log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit+", service limits "+RivalServiceCalibration.Label+": "+settings.Rivals.ServiceLimitsText());
                 settings.Awareness.Clamp(message => log.Info(message));
@@ -802,22 +803,30 @@ namespace PersistentCity.Runtime
         }
 
         /// <summary>C5e: the saved CityState.Research ledger reaches the survey through the C5b seam, the native bill
-        /// through ResearchBilling and the agency dialog through its desk. Ordering stays hidden while
-        /// MarketResearchSettings.Available is false. A refused dialog or billing contract turns research off for the session:
-        /// the ledger stays in the save unchanged, nothing surveys or charges, and the city keeps running.</summary>
+        /// through ResearchBilling and the agency dialog through its desk. C5f: MarketResearchSettings.Available is derived
+        /// from ResearchActivation; ordering stays hidden whenever a check fails. A refused dialog, billing or delivery contract turns
+        /// research off for the session: the ledger stays in the save unchanged, nothing surveys or charges, and the city keeps running.</summary>
         private void AttachResearch(CityState state)
         {
-            if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed))
+            if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed))
             {
                 log?.Warn("Research off for this session; saved research orders are kept unchanged. "
-                    + ResearchAgencyDialog.Status + " " + ResearchBilling.Status);
+                    + ResearchAgencyDialog.Status + " " + ResearchBilling.Status + " " + ResearchMessages.Status);
                 return;
             }
             simulation!.AttachResearch(state.Research, settings.MarketResearch.MarketResearchConsumersPerUnit);
             ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit);
             ResearchAgencyDialog.Attach(new ResearchDesk(ResearchAttached, () => settings.MarketResearch.Available, ResearchEligible,
                 () => simulation?.Research, () => settings.MarketResearch.MarketResearchCatchmentMetres, Now, message => log?.Info(message)));
+            settings.MarketResearch.DeriveAvailability(ResearchActivation);
         }
+
+        /// <summary>C5f: every attach and contract check research availability is derived from, read at call time. A later
+        /// foreign patch on the bill detaches billing, and a stopped runtime fails the attach check.</summary>
+        private MarketResearchActivation ResearchActivation() => new MarketResearchActivation(ResearchAttached(),
+            ResearchAgencyDialog.Installed && ResearchAgencyDialog.Status.Length == 0,
+            ResearchBilling.Installed && ResearchBilling.Status.Length == 0 && ResearchBilling.Attached,
+            ResearchMessages.ContractPassed, simulation?.Research != null);
 
         private bool ResearchAttached() => !failed && !accountingStopped && simulation != null && saveEpoch != null
             && saveIdentity != null && ReferenceEquals(saveIdentity, SaveGameManager.Current);
@@ -842,7 +851,7 @@ namespace PersistentCity.Runtime
 
         private void Detach()
         {
-            ResearchAgencyDialog.Detach(); ResearchBilling.Detach();
+            settings.MarketResearch.ClearAvailability(); ResearchAgencyDialog.Detach(); ResearchBilling.Detach();
             DetachSaveEpoch();
             NativeInteriorCityView.Stop();
             vendorMarket?.Dispose(); vendorMarket = null;
@@ -859,7 +868,7 @@ namespace PersistentCity.Runtime
         public void Shutdown()
         {
             ResearchAgencyDialog.Uninstall(); ResearchBilling.Uninstall();
-            UnregisterVendorDiagnostics();
+            UnregisterVendorDiagnostics(); UnregisterResearchDiagnostics();
             ResetCensus();
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.
