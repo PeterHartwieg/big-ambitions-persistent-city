@@ -83,7 +83,7 @@ Read with read-only ILSpy on 8 November 2026. `BigAmbitions.dll` SHA-256 is `942
 | Check | Result |
 | --- | --- |
 | `python tools/build.py --game-managed "...\Big Ambitions_Data\Managed"` | passed; package has `Locales/en.json` |
-| `dotnet test tests/PersistentCity.Tests.csproj` | **3,911 / 3,911 passed** (19 new C5e cases), including the pinned writer-33 golden hash |
+| `dotnet test tests/PersistentCity.Tests.csproj` | **3,914 / 3,914 passed** (19 new C5e cases), including the pinned writer-33 golden hash |
 | `dotnet test ... --filter ResearchMenuTests` | 19 / 19 passed; perf lines in [docs/perf/c5e-agency-dialog.md](../perf/c5e-agency-dialog.md) |
 
 Cases in `tests/ResearchMenuTests.cs`:
