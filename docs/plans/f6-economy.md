@@ -356,6 +356,8 @@ every reverted arm. F6a first records **today's** values, before F6b–F6g, so e
 slice reports before/after numbers. Thresholds are set in F6h from those measurements and
 recorded with seed bands. They are not invented in advance.
 
+*Later decision, 8 November 2026:* the +50 % menu profit-non-dominance condition above is no longer a stop or pass gate for F6h. Peter raised the default `FoodChoicePriceWeight` to 1.2 and deferred fine-tuning until closer to release; a markup that loses a seed-banded share of meals while revenue rises well under the price rise counts as costing demand. See [the price-weight decision](../decisions/2026-11-08-price-weight.md).
+
 **Rig protocol.** Matched checkpoints per arm in the disposable FT city: 1 game week
 baseline, 1 week intervention, 1 week recovery. Section 7 specifies the arms and reads. The
 rig span is shorter than the offline protocol because game time is expensive. It checks

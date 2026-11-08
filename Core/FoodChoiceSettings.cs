@@ -12,7 +12,7 @@ namespace PersistentCity.Core
         public double FoodChoiceWeightFloor { get; set; }=.02;
         public double FoodChoiceTasteWeight { get; set; }=1;
         // Strength of the meal-reference price response; 0 disables the soft signal, never the wallet gate.
-        public double FoodChoicePriceWeight { get; set; }=1;
+        public double FoodChoicePriceWeight { get; set; }=1.2;
         public double FoodChoiceDistanceWeight { get; set; }=1;
         public double FoodChoiceDistanceScaleMinutes { get; set; }=10;
         public double FoodChoiceQueueWeight { get; set; }=1;
@@ -41,7 +41,7 @@ namespace PersistentCity.Core
             FoodMenuHealthWeight=C(FoodMenuHealthWeight,0,2,0,nameof(FoodMenuHealthWeight));
             FoodChoiceWeightFloor=C(FoodChoiceWeightFloor,.001,.25,.02,nameof(FoodChoiceWeightFloor));
             FoodChoiceTasteWeight=C(FoodChoiceTasteWeight,0,3,1,nameof(FoodChoiceTasteWeight));
-            FoodChoicePriceWeight=C(FoodChoicePriceWeight,0,3,1,nameof(FoodChoicePriceWeight));
+            FoodChoicePriceWeight=C(FoodChoicePriceWeight,0,3,1.2,nameof(FoodChoicePriceWeight));
             FoodChoiceDistanceWeight=C(FoodChoiceDistanceWeight,0,3,1,nameof(FoodChoiceDistanceWeight));
             FoodChoiceDistanceScaleMinutes=C(FoodChoiceDistanceScaleMinutes,2,60,10,nameof(FoodChoiceDistanceScaleMinutes));
             FoodChoiceQueueWeight=C(FoodChoiceQueueWeight,0,3,1,nameof(FoodChoiceQueueWeight));
