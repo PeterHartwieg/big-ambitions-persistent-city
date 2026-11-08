@@ -37,6 +37,9 @@ namespace PersistentCity.Runtime
             public double VendorDepartureUntil; // captured logical departure plus catch-up grace; never saved
             public OptionalStopState? Optional;
             public bool OptionalReturning;
+            // The body could not reach or use the saved stop's spot, so it stands where it is until the
+            // stop ends. Presentation only: the saved stop, its partners and spot occupancy stay logical.
+            public bool OptionalStandsShort;
             public DoorQueue? Line;
             public int Slot = -1;
             public QueueStep Step;
@@ -448,7 +451,7 @@ namespace PersistentCity.Runtime
             {
                 if ((b.Queue.HasValue || b.VendorOpening > 0) && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
                     yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, b.Slot);
-                else if (b.Optional != null && !b.OptionalReturning)
+                else if (b.Optional != null && !b.OptionalReturning && !b.OptionalStandsShort)
                     for (int slot = 0; slot < line.Spots.Count; slot++)
                         if (Position.Distance(line.Spots[slot], b.Optional.Position) < 0.65)
                             yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, slot);
@@ -590,14 +593,13 @@ namespace PersistentCity.Runtime
             if (binding.Person == null || !OptionalVisible(binding.Citizen)
                 || simulation.OptionalStopStatus(binding.Citizen.OptionalStop!) != OptionalStopAvailability.Ready) return false;
             var stop = binding.Citizen.OptionalStop!;
-            // A queue keeps priority over an optional user of the same facade spot.
-            if (bindings.Values.Any(b => b.Queue.HasValue && b.Line != null && b.Slot >= 0
-                && Position.Distance(b.Line.Spots[b.Slot], stop.Position) < 0.65))
-            { simulation.CancelOptionalStop(binding.Citizen.Identity.Id); return false; }
-            if (!binding.Person.SetPathTarget(stop.Position, NativeTravelPace.WalkingMetresPerSecond))
-            { simulation.CancelOptionalStop(binding.Citizen.Identity.Id); return false; }
+            // A queue keeps the facade spot visually, and an unreachable spot cannot be walked to. In both
+            // cases the body stands where it is (near the entrance) and never cancels the saved stop (F2b).
+            bool shortOfSpot = bindings.Values.Any(b => b.Queue.HasValue && b.Line != null && b.Slot >= 0
+                && Position.Distance(b.Line.Spots[b.Slot], stop.Position) < 0.65)
+                || !binding.Person.SetPathTarget(stop.Position, NativeTravelPace.WalkingMetresPerSecond);
             binding.AwaitingArrival = false; binding.AwaitJourney = null;
-            binding.Optional = stop; binding.OptionalReturning = false; binding.StepWalked = 0;
+            binding.Optional = stop; binding.OptionalReturning = false; binding.OptionalStandsShort = shortOfSpot; binding.StepWalked = 0;
             return true;
         }
         private bool ObserveOptional(Binding binding)
@@ -610,10 +612,10 @@ namespace PersistentCity.Runtime
             if (!active && OptionalVisible(binding.Citizen) && binding.Citizen.OptionalStop!.SpotId == stop.SpotId
                 && binding.Citizen.OptionalStop.StartMinute == stop.StartMinute)
             { binding.Optional = stop = binding.Citizen.OptionalStop; active = true; }
-            if (!binding.OptionalReturning && (!active || RainHelper.isRaining || binding.StepWalked >= QueueStepSeconds))
+            // Only the logical stop ending (its time, or a Core cancellation such as rain) sends the body back.
+            if (!binding.OptionalReturning && !active)
             {
-                simulation.CancelOptionalStop(binding.Citizen.Identity.Id);
-                binding.OptionalReturning = true; binding.StepWalked = 0;
+                binding.OptionalReturning = true; binding.OptionalStandsShort = false; binding.StepWalked = 0;
                 body.Stop(false);
                 if (!body.SetPathTarget(stop.ReturnPosition, NativeTravelPace.WalkingMetresPerSecond))
                 { body.Stop(true); return true; }
@@ -637,7 +639,10 @@ namespace PersistentCity.Runtime
                 }
                 body.Tick(); return true;
             }
-            if (Position.Distance(body.Position, stop.Position) <= 0.3)
+            bool atSpot = !binding.OptionalStandsShort && Position.Distance(body.Position, stop.Position) <= 0.3;
+            // Blocked walking stops short of the spot after the bound; the saved stop is unchanged.
+            if (!atSpot && binding.StepWalked >= QueueStepSeconds) binding.OptionalStandsShort = true;
+            if (atSpot || binding.OptionalStandsShort)
             {
                 if (body.Agent.hasPath) body.Agent.ResetPath();
                 body.Stop(true); body.Face(stop.Facing); return true;

@@ -187,7 +187,10 @@ namespace PersistentCity.Runtime
         internal bool Valid = true;
         internal Position Position => Point(Character.transform.position);
         internal Position Target, Facing;
-        internal bool SetPathTarget(Position p, double _) { Target = p; Agent.hasPath = true; Agent.isStopped = false; return true; }
+        // F2b: a test can make a target unreachable (no complete NavMesh path).
+        internal static Func<Position, bool>? Unreachable;
+        internal bool SetPathTarget(Position p, double _)
+        { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isStopped = false; return true; }
         internal bool SetTarget(Position p, double speed) => SetPathTarget(p, speed);
         internal void Stop(bool value) { Agent.isStopped = value; }
         internal void Face(Position p) { Facing = p; }

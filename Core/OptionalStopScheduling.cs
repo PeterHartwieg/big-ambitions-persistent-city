@@ -168,6 +168,8 @@ namespace PersistentCity.Core
                     || item.Citizen.OptionalStop.StartMinute != stop.StartMinute)) stop.Cancelled = true;
             }
         }
+        // Logical callers only (meal outings, optional visits, a replaced visit). Presentation never cancels
+        // a stop: a body that cannot reach or use its spot stands short of it (F2b, PresentationBoundaryTests).
         public void CancelOptionalStop(string citizenId)
         {
             if (!citizenEvents.TryGetValue(citizenId, out var item) || item.Citizen.OptionalStop == null) return;
