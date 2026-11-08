@@ -373,7 +373,9 @@ namespace PersistentCity.Core
                 if (FillActive && NextDayBoundary <= next && NextDayBoundary <= targetMinute)
                 {
                     double boundary = NextDayBoundary;
-                    traffic?.AdvanceTo(boundary, 0);
+                    // Publish the traffic epoch with the city's (review Sol-r4-2): every earlier traffic event has run, and
+                    // events due exactly at midnight stay queued for after the fill, so the two clocks always agree.
+                    if (traffic != null && traffic.Clock < boundary) traffic.BeginObservationEpoch(boundary);
                     State.Minute = boundary;
                     if (!State.Capabilities.Active) { State.Capabilities.Active = true; count++; }
                     continue;

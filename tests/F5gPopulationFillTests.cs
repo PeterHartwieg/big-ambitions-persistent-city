@@ -588,6 +588,29 @@ public sealed class F5gPopulationFillTests
     }
 
     [Fact]
+    public void AFrameSliceStoppingOnMidnightKeepsTheTrafficClockWithTheCityWhenATrafficEventIsDueThere()
+    {
+        // Review Sol-r4-2: a traffic event due exactly at the fill boundary. The scheduler's own stop on midnight (no epoch
+        // publication) must move the traffic clock with the city's, or a save inside the fill is refused.
+        var (state, market) = City(12, 1, seed: 63);
+        // TrafficWalk's one link is 20 m at 36 km/h: two minutes, so a vehicle entered at 2878 exits exactly at 2880.
+        var city = Start(state, market, Catalogue(12, Base, Since(3)), new TrafficWalk());
+        Advance(city, 2 * 1440 - 2);
+        var kernel = (TrafficKernel)typeof(CitySimulator).GetField("traffic", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(city)!;
+        Assert.Equal(2 * 1440 - 2.0, kernel.Clock);
+        var link = new TrafficWalk().TrafficNetwork!.Links[0];
+        kernel.Enqueue("f5g-probe-vehicle", new[] { new TrafficRouteLeg { LinkId = link.Id, StartNominalMinutes = 0, EndNominalMinutes = link.FreeFlowMinutes } });
+        // The entry is processed now; the exit is then due exactly at midnight.
+        Advance(city, 2 * 1440 - 1);
+        Assert.Equal(2 * 1440.0, kernel.NextEventMinute);
+        while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(2 * 1440 + 1, 1);
+        Assert.Equal(2 * 1440.0, state.Minute);
+        Assert.Equal(state.Minute, kernel.Clock);
+        // The event due at midnight is still queued for after the fill.
+        Assert.Equal(2 * 1440.0, kernel.NextEventMinute);
+    }
+
+    [Fact]
     public void TheObservationEpochAndTrafficClockStayOnMidnightWhileTheFillRuns()
     {
         // Review Sol-r3-1: with a traffic kernel, publish the midnight epoch, run one fill unit, check the epoch and the

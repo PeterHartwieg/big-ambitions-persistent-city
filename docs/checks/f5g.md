@@ -127,6 +127,13 @@ PR review round 3 (Sol, Astra, Opus) found:
 - **Sol-r3-2, fixed.** There is no publication step any more: each unit of at most 64 persons does all of its persons' work, enrolment included. The largest measured unit is 6.9 ms.
 - **Opus-r3-2, fixed.** `CapabilitiesActivateAtTheFirstMidnightWithTheFillAttached` adds an accounting-observation arm. It publishes the first midnight epoch, checks the activation and the clock, and ends equal to the `AdvanceTo` city.
 
+PR review round 4 (Sol, Astra, Opus) found:
+
+- **Sol-r4-2, fixed.** When the scheduler stopped on midnight by itself, with a traffic event due exactly then, it left the traffic clock behind the city's, and a save inside the fill was refused. The stop now publishes the traffic epoch (`BeginObservationEpoch`) as the accounting-observation step does, keeping events due at midnight queued. Regression: `AFrameSliceStoppingOnMidnightKeepsTheTrafficClockWithTheCityWhenATrafficEventIsDueThere`. It is red with the old call (traffic clock 2,879 against city 2,880) and green with the fix.
+- **Sol-r4-1 (also Astra-r4-1), not changed.** A city without household finances has no wallet to show that a boundary's ordinary events began, so a reload at a filled boundary minute with a larger catalogue fills again there. Runtime always creates and requires household finances (`Runtime/PersistentCityMod.cs`, the `HouseholdFinanceVersion` check before the food market attaches), so no game city takes this path. It is documented under the plan-latch bullet above.
+- **Opus-r4-1, not changed.** No test reports a physical arrival at the midnight epoch. The cause, the clock left before the epoch, is gone, and the epoch tests assert the clock is on 2,880 with the epoch drained.
+- **Opus-r4-2, not changed.** Duplicate comments in `CitySimulator`; no effect on behaviour.
+
 Changed existing expectations: none. `Schema27Tests` still refuses a `NextVisitorSequence` raised past the count, because the number it opens derives a working identity.
 
 ## Validation run
@@ -134,7 +141,7 @@ Changed existing expectations: none. `Schema27Tests` still refuses a `NextVisito
 Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400), 8 November 2026. Each `dotnet` command ran only when no other dotnet test or run process was active.
 
 - `python3 tools/build.py --game-managed "<dll-import-shim>/Big Ambitions_Data/Managed"`: exit 0.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **3,930 passed, 0 failed, 0 skipped** (4 min 12 s), after the PR review round-3 fixes.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,931 passed, 0 failed, 0 skipped** (4 min 18 s), after the PR review round-4 fix.
 - `tests/F5gMeasure.cs` (Release, opt-in): numbers in the perf file.
 
 ## Performance
