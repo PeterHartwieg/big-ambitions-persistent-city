@@ -100,21 +100,31 @@ namespace PersistentCity.Core
             return (row == null || Money.TryAdd(row.Revenue, meal.Price, out _))
                 && (product == null || Money.TryAdd(product.Revenue, meal.Price, out _));
         }
-        private void RecordPurchase(ResidentMeal meal)
+        /// <summary>F6j: every sold line (main dish and each extra) is one item purchase in the shop-day row, so the
+        /// saved product, hour, meal and district counters keep reconciling. Without known extras (a receipt
+        /// reconciled later) the whole ticket stays on the main product's line.</summary>
+        private void RecordPurchase(ResidentMeal meal, IReadOnlyList<FoodTicketLine>? extras = null)
         {
             // Receipt reconciliation can happen days later; retain the actual checkout interval.
             int purchaseDay = (int)(meal.ServiceAt / 1440);
             if (purchaseDay < (int)(city.State.Minute / 1440) - 13) return;
-            var row = ShopDay(meal.PlaceId, meal.BusinessId, purchaseDay); row.Purchases++;
-            row.Revenue += meal.Price;
+            var row = ShopDay(meal.PlaceId, meal.BusinessId, purchaseDay);
+            string district = city.FindPlace(Owner(meal)!.HomeId).District;
+            var mainRevenue = meal.Price;
+            if (extras != null)
+                foreach (var extra in extras) { mainRevenue -= extra.Price; RecordLine(row, meal, extra.ProductId, extra.Price, district); }
+            RecordLine(row, meal, meal.ProductId, mainRevenue, district);
+        }
+        private static void RecordLine(FoodShopDay row, ResidentMeal meal, string productId, Money revenue, string district)
+        {
+            row.Purchases++; row.Revenue += revenue;
             if (meal.ExistingStop) row.ExistingStopPurchases++;
             row.PurchaseHours[(int)(meal.ServiceAt % 1440 / 60)]++;
             row.PurchaseMeals[(int)meal.Kind]++;
-            var product = row.ProductSales.FirstOrDefault(p => p.ProductId == meal.ProductId);
-            if (product == null) { product = new FoodProductSales { ProductId = meal.ProductId }; row.ProductSales.Add(product); }
-            product.Purchases++; product.Revenue += meal.Price;
+            var product = row.ProductSales.FirstOrDefault(p => p.ProductId == productId);
+            if (product == null) { product = new FoodProductSales { ProductId = productId }; row.ProductSales.Add(product); }
+            product.Purchases++; product.Revenue += revenue;
             product.PurchaseMeals[(int)meal.Kind]++;
-            string district = city.FindPlace(Owner(meal)!.HomeId).District;
             var group = row.BuyerDistricts.FirstOrDefault(d => d.DistrictId == district);
             if (group == null) { group = new FoodBuyerDistrict { DistrictId = district }; row.BuyerDistricts.Add(group); }
             group.Purchases++;

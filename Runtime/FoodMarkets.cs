@@ -6,7 +6,7 @@ using PersistentCity.Core;
 namespace PersistentCity.Runtime
 {
     /// <summary>One population market, with authority selected by the saved scope channel.</summary>
-    public sealed class FoodMarkets : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
+    public sealed class FoodMarkets : IFoodMarket, IFoodTicketMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
         IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IRivalFoodMarket, IFoodAwarenessRevision, IDisposable
     {
         private readonly FoodCommerceState state;
@@ -20,6 +20,9 @@ namespace PersistentCity.Runtime
         public long AwarenessRevision => ((shops as IFoodAwarenessRevision)?.AwarenessRevision ?? 0) + ((vehicles as IFoodAwarenessRevision)?.AwarenessRevision ?? 0);
         public IReadOnlyList<FoodBusiness> Read(double minute) => shops.Read(minute).Concat(vehicles.Read(minute)).ToArray();
         public FoodSale Buy(ResidentMeal meal, double minute) => Market(meal.BusinessId).Buy(meal, minute);
+        // F6j: only a seller with its own extras checkout (the shop market) receives a ticket; vehicles sell the main only.
+        public bool SellsExtras(string id) => Market(id) is IFoodTicketMarket tickets && tickets.SellsExtras(id);
+        public FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute) => ((IFoodTicketMarket)Market(meal.BusinessId)).BuyTicket(meal, ticket, minute);
         public FoodBusiness? ReadBusiness(string id, double minute) => ((ILocalFoodMarket)Market(id)).ReadBusiness(id, minute);
         public FoodBusiness? ReadFailureBusiness(string id, string place, double minute) => ((IFoodFailureMarket)Market(id)).ReadFailureBusiness(id, place, minute);
         public FoodBusiness? ReadClosedStand(string id, string place, double minute) => (Market(id) as IFoodClosedStandMarket)?.ReadClosedStand(id, place, minute);

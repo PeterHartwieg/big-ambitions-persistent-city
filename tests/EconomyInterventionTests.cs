@@ -187,7 +187,9 @@ public sealed class EconomyInterventionTests
                 Assert.Equal(c.Resolved, c.ThisShop + c.OtherOwn + c.Rival + c.Home + c.Skipped + c.Unconfirmed);
                 Assert.True(c.ThisShop <= Purchases(d, business));
             }
-            Assert.Equal(Purchases(d, EconomyFixture.Shop), d.Catchment(EconomyFixture.Shop, c => c.ThisShop));
+            // F6j: shop-day purchases count sold items, so a meal with extras adds up to 1 + 3 of them.
+            long meals = d.Catchment(EconomyFixture.Shop, c => c.ThisShop), items = Purchases(d, EconomyFixture.Shop);
+            Assert.InRange(items, meals, meals * (1 + FoodMealExtras.MaximumExtras));
             Assert.All(d.Offers.Values, o => Assert.True(o.Chosen <= o.Feasible && o.Feasible <= o.Considered));
         });
         // The dormant second site has no catchment until it opens, and one while it is open.

@@ -9,7 +9,7 @@ namespace PersistentCity.EconomyInterventions;
 /// observation and walking routes; it is the only place an intervention input changes anything.
 /// Player checkout is the sale authority (one order per intent, refused on changed terms). No rival
 /// checkout exists. Every read is fenced to the current input epoch.</summary>
-public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket,
+public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket,
     IFoodBusinessAuthority, IFoodSaleEvidence
 {
     public sealed class Shop
@@ -130,7 +130,11 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
         var shop = Find(businessId);
         return shop == null || !shop.SiteOpen ? null : Business(shop);
     }
-    public FoodSale Buy(ResidentMeal meal, double minute)
+    public FoodSale Buy(ResidentMeal meal, double minute) => Sell(meal, minute, null);
+    // F6j: extras sell as further lines of the same intent's one order, each refused on changed terms.
+    public bool SellsExtras(string businessId) => Find(businessId) != null;
+    public FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute) => Sell(meal, minute, ticket);
+    private FoodSale Sell(ResidentMeal meal, double minute, FoodMealTicket? ticket)
     {
         Fence(minute);
         if (minute < EarliestMinute || minute >= EarliestMinute + 60) throw new InputViolation("historical native checkout");
@@ -140,13 +144,23 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
         string? refusal = shop == null || !shop.SiteOpen ? "Business unavailable"
             : shop.DoorClosed ? "Door temporarily closed" : shop.MealsPerHour <= 0 ? "No staffed counter"
             : at < shop.OpenMinute || at >= shop.CloseMinute ? "Closed"
-            : !shop.Prices.TryGetValue(meal.ProductId, out var cents) || Money.FromCents(cents) != meal.Price ? "Timestamped price changed"
+            : !shop.Prices.TryGetValue(meal.ProductId, out var cents) || Money.FromCents(cents) != (ticket?.Main.Price ?? meal.Price) ? "Timestamped price changed"
             : Units(shop, meal.ProductId) <= 0 ? "Out of stock" : null;
         if (refusal != null) { Refusals++; return new FoodSale(false, refusal); }
         if (!paid.Add(meal.IntentId)) { DuplicateOrders++; return new FoodSale(false, "Duplicate native order"); }
-        NativeOrders++; NativeRevenueUnits += meal.Price.Units;
-        if (InjectDuplicateOrder) { InjectDuplicateOrder = false; DuplicateOrders++; NativeOrders++; NativeRevenueUnits += meal.Price.Units; }
-        return new FoodSale(true, "Native double confirmed");
+        var sold = new List<FoodTicketLine>();
+        if (ticket != null)
+            foreach (var extra in ticket.Extras)
+            {
+                if (!shop!.Prices.TryGetValue(extra.ProductId, out var extraCents) || Money.FromCents(extraCents) != extra.Price
+                    || Units(shop, extra.ProductId) <= 0) break;
+                sold.Add(extra);
+            }
+        var total = ticket?.Main.Price ?? meal.Price;
+        foreach (var line in sold) total += line.Price;
+        NativeOrders++; NativeRevenueUnits += total.Units;
+        if (InjectDuplicateOrder) { InjectDuplicateOrder = false; DuplicateOrders++; NativeOrders++; NativeRevenueUnits += total.Units; }
+        return new FoodSale(true, "Native double confirmed", null, sold);
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
 

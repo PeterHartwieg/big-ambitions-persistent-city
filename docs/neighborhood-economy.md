@@ -14,7 +14,7 @@ The initial enrollment is a fixed, narrow shop scope. Full live business-catalog
 
 ## Bounded menus — 0.9.0 / schema 12
 
-Residents choose one (shop, product) offer for the current meal. Stock reservations belong to the chosen product; all products at the same shop share the service queue and bags. Checkout rechecks supply, price and staff before committing a native order. There is no separate capacity allowance per menu item. Empty or unsupported shops do not trigger unnecessary pathfinding. Known impossibility now takes priority over missing route evidence, so some earlier unresolved decisions are classified as home-food declines; this is a reporting/decision clarification, not extra spending.
+Residents choose one (shop, product) main dish for the current meal. At checkout they may add up to three extras from the same shop's stocked menu, preferring items cheaper than the main, while the whole ticket stays within their wallet limit ([F6j decision](decisions/2026-11-08-multi-item-meals.md)). Each extra is one more native one-product order under the same receipt. Stock reservations belong to the chosen product; all products at the same shop share the service queue and bags. Checkout rechecks supply, price and staff before committing a native order. There is no separate capacity allowance per menu item. Empty or unsupported shops do not trigger unnecessary pathfinding. Known impossibility now takes priority over missing route evidence, so some earlier unresolved decisions are classified as home-food declines; this is a reporting/decision clarification, not extra spending.
 
 The provisional mismatch values below are added to perceived cost, never to the charged price. They are gameplay assumptions, not measured nutrition or a promised sales mix.
 
