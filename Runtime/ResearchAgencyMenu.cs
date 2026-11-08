@@ -21,7 +21,7 @@ namespace PersistentCity.Runtime
         internal bool Attached { get; }
         /// <summary>The dialog and billing contract checks passed and no foreign patch is on CampaignSettings.</summary>
         internal bool ContractPassed { get; }
-        /// <summary>MarketResearchSettings.Available. False until C5f.</summary>
+        /// <summary>MarketResearchSettings.Available, derived from the attach and contract checks (C5f).</summary>
         internal bool Available { get; }
         /// <summary>The returned entry is the native input entry with the campaign settings template and both handlers.</summary>
         internal bool NativeEntryShape { get; }

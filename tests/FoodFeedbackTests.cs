@@ -335,6 +335,10 @@ public sealed partial class FoodCommerceTests
             Assert.DoesNotContain(word, shown, StringComparison.OrdinalIgnoreCase);
         // The Q3 default switch (false: no share line) is the only permitted mention of a share.
         string panel = F6c_Source("Runtime/FoodEconomyPanel.cs"), core = F6c_Source("Core/FoodFeedback.cs").Replace("FreeMealShareLine", "");
+        // C5f's two lines open the separate paid report window; the free panel text itself names no research.
+        foreach (string c5f in new[] { "if (GUILayout.Button(\"Research reports\", GUILayout.Width(140))) researchWindow.Toggle();",
+            "if (researchWindow.Open) researchWindow.Draw(ResearchLedgerNow, researchNames ??= ResearchBusinessName);" })
+        { Assert.Contains(c5f, panel); panel = panel.Replace(c5f, ""); }
         foreach (string paid in new[] { "MarketResearch", "Research", "ProjectMarket", "Share" })
         { Assert.DoesNotContain(paid, panel); Assert.DoesNotContain(paid, core); }
         // F6b owns the rival wording: one neutral constant, used by the panel and nowhere redefined.
