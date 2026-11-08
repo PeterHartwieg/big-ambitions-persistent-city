@@ -177,7 +177,28 @@
     {
       "work": "rival retained",
       "rivals": 20000,
-      "bytes": -165569728
+      "method": "isolated non-inlined trials; same meal and empty-load roots; two full collections per snapshot",
+      "samples": [
+        {
+          "baselineBytes": 63849840,
+          "loadedBytes": 69987856,
+          "bytes": 6138016
+        },
+        {
+          "baselineBytes": 63849968,
+          "loadedBytes": 69987728,
+          "bytes": 6137760
+        },
+        {
+          "baselineBytes": 63849968,
+          "loadedBytes": 69987728,
+          "bytes": 6137760
+        }
+      ],
+      "supersededMeasurement": {
+        "bytes": -165569728,
+        "status": "invalid: unrelated preceding benchmark objects became collectible between snapshots"
+      }
     },
     {
       "work": "paged panel",

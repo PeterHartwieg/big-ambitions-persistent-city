@@ -68,7 +68,7 @@ Arrival/completion measure the added F6b lane/count/admit/paid load operations w
 | 10000 | 1024 | 3.999300 / 3.999300 | 233440 | 0 |
 | 100000 | 20000 | 19.299500 / 19.299500 | 4555296 | 0 |
 
-20,000-rival transient retained load: **-165,569,728 B**, managed collected-heap delta.
+20,000-rival transient retained load: **6,137,760–6,138,016 B** across three isolated trials (two Serving records/rival). This is an incremental managed collected-heap estimate, excluding the source records and empty load wrapper. `RetainedRivalLoadEvidence` warms the relevant caches, then uses a non-inlined scope per trial and keeps the identical source records and load wrapper rooted through both snapshots. Each snapshot forces a full collection, drains pending finalizers and forces a second full collection. The isolated foreground rerun passed; baseline, loaded and delta bytes for all three trials are in the evidence. This supersedes the invalid **-165,569,728 B** delta, which included unrelated objects becoming collectible after preceding benchmarks; the evidence retains that value explicitly as invalid.
 
 ### Full panel size matrix and change detection
 
@@ -88,6 +88,21 @@ The panel includes the current money-counter projection, 14 history rows and eig
 
 | Journal observation / shops | Samples | p95 / max | B/observation | ≥30 |
 | --- | --- | --- | --- | --- |
+| unchanged supply (1 offer) / 1 | 2000 | 0.000083 / 0.000084 | 0.0 | 0 |
+| unchanged hours / 1 | 2000 | 0.000167 / 0.000250 | 0.0 | 0 |
+| changed supply / 1 | 2000 | 0.000667 / 1.636334 | 1040.1 | 0 |
+| unchanged supply (8 offers) / 1 | 2000 | 0.000333 / 0.000459 | 0.0 | 0 |
+| changed hours / 1 | 100 | 0.006583 / 0.006875 | 8984.0 | 0 |
+| unchanged supply (1 offer) / 64 | 2000 | 0.000084 / 0.002125 | 0.0 | 0 |
+| unchanged hours / 64 | 2000 | 0.000167 / 0.017541 | 0.0 | 0 |
+| changed supply / 64 | 2000 | 0.000667 / 0.001125 | 1053.6 | 0 |
+| unchanged supply (8 offers) / 64 | 2000 | 0.000292 / 0.000375 | 0.0 | 0 |
+| changed hours / 64 | 128 | 0.008500 / 0.009416 | 8984.0 | 0 |
+| unchanged supply (1 offer) / 1024 | 2000 | 0.000084 / 0.009125 | 0.0 | 0 |
+| unchanged hours / 1024 | 2000 | 0.000167 / 0.002416 | 0.0 | 0 |
+| changed supply / 1024 | 4096 | 0.000792 / 0.050250 | 851.4 | 0 |
+| unchanged supply (8 offers) / 1024 | 2000 | 0.000333 / 0.000583 | 0.0 | 0 |
+| changed hours / 1024 | 2048 | 0.008417 / 1.942208 | 9139.5 | 0 |
 
 These are Core consumers of existing supply/hours images, including one/eight-offer unchanged supply, changed supply and changed hours. The current matched-read and source guards in the full unit suite remain the offline no-added-native-read checks. Actual native counter/fingerprint proof remains in the numbered rig list.
 
@@ -193,6 +208,18 @@ PC_F6H_MEASURE="$PWD/build/f6h-review" dotnet test tests/PersistentCity.Tests.cs
 dotnet run --project tools/economy-interventions -c Release -- build/f6h-review-reload --integrated --seeds 1 --arms control/control
 ```
 
-The component case invokes F6e/F6f/F6g/F6d helpers **sequentially** and restores their temporary environment variables. `measurements.jsonl`, `wages.jsonl`, `ordinary.jsonl`, `journal.txt` and `saves.jsonl` retain the individual rows; the committed review evidence combines them with the final cadence/body/stress run and `reload-equivalence.json`. Three opt-in facts return without running long sweeps in the default suite; one new fast cadence/budget identity assertion runs normally. No game, rig, ModsLocal or bridge is used. The original acceptance report's unmeasured labels describe the initial price experiment; this separate current review record closes the independent offline items, while price calibration and native evidence remain stopped/pending under their existing contracts.
+The component case invokes F6e/F6f/F6g/F6d helpers **sequentially** and restores their temporary environment variables. `measurements.jsonl`, `wages.jsonl`, `ordinary.jsonl`, `journal.txt` and `saves.jsonl` retain the individual rows; the committed review evidence combines them with the final cadence/body/stress run and `reload-equivalence.json`. Four opt-in facts return without running long sweeps in the default suite; one new fast cadence/budget identity assertion runs normally. No game, rig, ModsLocal or bridge is used. The original acceptance report's unmeasured labels describe the initial price experiment; this separate current review record closes the independent offline items, while price calibration and native evidence remain stopped/pending under their existing contracts.
 
 Review validation: the required build passed with unchanged DLL SHA256 `467e9f0f97c772e56c26415ec331e30e43eec170d1ff023f812aa63bf84660c1`; the full-size reload passed; the current component case and final cadence/body/stress cases passed. The required full foreground unit suite passed **3,870 tests**, zero failed/skipped, in **3 min 45 s** on the final report-only wide-sum code (the preceding full run also passed in 3 min 59 s), including the new fast cadence assertion, F6a–F6g, E6c/E6d/E6e and both unchanged writer-33 golden pins. The opt-in current-component case passed (8 min 45 s); the final cadence/body and integrated-stress cases passed (51 s and 1 min 11 s). The full-size reload interrupted six meals and passed both hash comparisons. `git diff --check` and the documentation-link check pass. All test/tool runs finish in the foreground, and SDK build servers are shut down before handoff. No push, PR or merge is performed.
+
+## Round 2 review corrections
+
+`Sol-r2-1`: isolated retained-load measurement and rerun as described above. Reproduce just this measurement with the task's Homebrew environment and a fresh output directory:
+
+```sh
+PC_F6H_MEASURE="$PWD/build/f6h-retained" dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F6hMeasurements.RetainedRivalLoadEvidence --logger 'console;verbosity=normal'
+```
+
+`Sol-r2-2`: the journal observation table now contains all 15 recorded supply/hours rows at 1/64/1,024 shops, transcribed from the existing evidence (no timing rerun). It includes p95, maximum, allocation and every ≥30 ms count; all counts are zero.
+
+Round 2 validation: the isolated retained-load fact passed (three measured trials after warmup); the required build passed with the unchanged DLL hash above; the required full foreground unit suite passed **3,871 tests**, zero failed/skipped, in **3 min 41 s**, including the unchanged writer-33 golden pins. All 15 journal rows match the evidence, the documentation-link check passes (378 files, zero broken relative links), and `git diff --check` passes. No game/rig run or product change is part of these corrections.

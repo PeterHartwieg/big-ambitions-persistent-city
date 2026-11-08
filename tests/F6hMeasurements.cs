@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Newtonsoft.Json;
 using PersistentCity.Core;
@@ -145,12 +146,41 @@ public sealed class F6hMeasurements
                 Assert.True(sink > 0); Write(new { work = "rival arrival/completion", consumers, rivals, lanes, arrival = interval, completion });
             }
         }
-        var retainedMeals = Enumerable.Range(0, 40000).Select(i => new ResidentMeal { PlaceId = "retained" + i / 2,
+    }
+    [Fact]
+    public void RetainedRivalLoadEvidence()
+    {
+        if (DirectoryPath == null) return;
+        Directory.CreateDirectory(DirectoryPath);
+        _ = RetainedRivalSnapshot(); // Warm generic/static caches before the measured trials.
+        var samples = new (long baselineBytes, long loadedBytes, long bytes)[3];
+        for (int i = 0; i < samples.Length; i++) samples[i] = RetainedRivalSnapshot();
+        foreach (var sample in samples) Assert.True(sample.bytes > 0, "retained-load delta must be positive");
+        Write(new { work = "rival retained", rivals = 20000,
+            method = "isolated non-inlined trials; same meal and empty-load roots; two full collections per snapshot",
+            samples = samples.Select(s => new { s.baselineBytes, s.loadedBytes, s.bytes }).ToArray() });
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static (long baselineBytes, long loadedBytes, long bytes) RetainedRivalSnapshot()
+    {
+        // This separate scope cannot retain a preceding benchmark's large fixture. Both
+        // snapshots keep the identical source records and load wrapper alive; only the
+        // wrapper's populated dictionaries/lists are added between them.
+        var meals = Enumerable.Range(0, 40000).Select(i => new ResidentMeal { PlaceId = "retained" + i / 2,
             Status = MealStatus.Serving, ServiceAt = 2141 + i % 2, External = "10" }).ToArray();
-        long before = GC.GetTotalMemory(true); var retained = new RivalServiceLoad();
-        foreach (var m in retainedMeals) retained.Admit(m);
-        long bytes = GC.GetTotalMemory(true) - before;
-        Write(new { work = "rival retained", rivals = 20000, bytes }); GC.KeepAlive(retained); GC.KeepAlive(retainedMeals);
+        var load = new RivalServiceLoad();
+        long baseline = CollectedHeapBytes();
+        foreach (var meal in meals) load.Admit(meal);
+        long loaded = CollectedHeapBytes();
+        GC.KeepAlive(load); GC.KeepAlive(meals);
+        return (baseline, loaded, loaded - baseline);
+    }
+    static long CollectedHeapBytes()
+    {
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+        return GC.GetTotalMemory(false);
     }
     void PanelRows()
     {
