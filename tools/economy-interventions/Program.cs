@@ -25,8 +25,9 @@ internal static class Program
             Console.Error.WriteLine("Integrated checks: dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~F6hIntegratedTests");
             return 2;
         }
-        double priceWeight = double.Parse(args.SkipWhile(a => a != "--price-weight").Skip(1).FirstOrDefault() ?? "1",
-            System.Globalization.CultureInfo.InvariantCulture);
+        string? priceArg = args.SkipWhile(a => a != "--price-weight").Skip(1).FirstOrDefault();
+        double priceWeight = priceArg == null ? new RunOptions().PriceWeight
+            : double.Parse(priceArg, System.Globalization.CultureInfo.InvariantCulture);
         // Integrated runs use the fast representative unit checks instead of silently running
         // the legacy 48-person six-week self-checks before every opt-in sweep.
         if (!integrated) SelfChecks.Run();

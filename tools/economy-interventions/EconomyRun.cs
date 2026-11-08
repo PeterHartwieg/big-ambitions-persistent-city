@@ -26,7 +26,7 @@ public sealed class RunOptions
     public int FaultDay = EconomyRun.BaselineDays + 2;
     public bool OrdinaryVisits;
     public bool Integrated;
-    public double PriceWeight = 1;
+    public double PriceWeight = new FoodChoiceSettings().FoodChoicePriceWeight;
     public FixtureProfile Profile = FixtureProfile.CapacityBound;
     public bool RivalListed = true, OwnListed = true;
     // F1 cadence: 30 simulated minutes/real second as in AccountingScenario. Zero uses epoch drain.

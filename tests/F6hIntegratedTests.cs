@@ -11,7 +11,7 @@ namespace PersistentCity.Tests;
 public sealed class F6hIntegratedTests
 {
     [Fact]
-    public void ExistingDefaultsStayPinnedUntilTradeoffGateCanPass()
+    public void OtherF6DefaultsStayPinnedAfterF6kPriceWeight()
     {
         Assert.Equal(34, CityState.CurrentSchema);
         var rivals = new RivalFoodSettings();
@@ -22,9 +22,9 @@ public sealed class F6hIntegratedTests
         var prices = new OrdinaryVisitPrices();
         Assert.Equal(Money.FromCents(500), prices.Price(OrdinaryVisitClass.Retail));
         Assert.Equal(Money.FromCents(1200), prices.Price(OrdinaryVisitClass.Leisure));
-        // The F6h rerun after F6j keeps the choice weights and the F6j extras rule (reserved for Peter).
+        // F6k (Peter, 8 Nov): only the price weight moves, 1 -> 1.2. Household weight and the F6j extras rule stay.
         var choice = new FoodChoiceSettings();
-        Assert.Equal(1, choice.FoodChoicePriceWeight);
+        Assert.Equal(1.2, choice.FoodChoicePriceWeight);
         Assert.Equal(1, choice.FoodChoiceHouseholdWeight);
         Assert.Equal((75, 125, .35, .05, 3), (FoodMealExtras.CheaperPercent, FoodMealExtras.SimilarPercent,
             FoodMealExtras.CheaperChance, FoodMealExtras.SimilarChance, FoodMealExtras.MaximumExtras));

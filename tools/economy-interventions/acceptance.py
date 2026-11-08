@@ -2,8 +2,9 @@
 
 python3 tools/economy-interventions/acceptance.py build/f6h --output build/f6h/acceptance.json
 No guessed wholesale prices: a dominance certificate covers every fixed per-product
-wholesale cost between zero and the baseline retail price. It can disprove acceptance,
-but cannot certify measured native operating profit or replace the rig throughput read.
+wholesale cost between zero and the baseline retail price. Since F6k it is a diagnostic,
+not an acceptance gate (docs/decisions/2026-11-08-price-weight.md). It cannot certify
+measured native operating profit or replace the rig throughput read.
 """
 import argparse
 import hashlib
@@ -254,9 +255,9 @@ def report(directory):
                                for key, runs in groups.items() if key == "control/control" or key.startswith("price/product-")}
                 certificates.append({"seed": seed, "week": week + 1, "minimumProfitAdvantageDollars": comparisons})
     dominant = len(certificates) == 10 and all(min(c["minimumProfitAdvantageDollars"].values()) > 0 for c in certificates)
+    # Diagnostic only since F6k (docs/decisions/2026-11-08-price-weight.md): profit non-dominance over the
+    # wholesale box is no longer an acceptance criterion, so a dominant +50% menu is reported but never fails.
     failures = []
-    if dominant:
-        failures.append("among price arms, menu +50% maximizes weekly revenue minus every fixed wholesale vector in [0, baseline retail] in every seed in weeks 3 and 4")
     for key, row in rows.items():
         if key == "control/control":
             continue
@@ -280,7 +281,7 @@ def report(directory):
     prices = price_arms(groups, controls, base_units, units) if any(k.startswith("price/") for k in groups) else {}
     return {"status": "stopped" if failures else "partial", "profile": profile, "unitsPerCent": units, "runs": len(hashes), "completeInterventionMatrix": len(groups) == 17,
             "dailyConservationChecks": conservation, "arms": rows, "householdControlSeedBands": household,
-            "familyEffectOutsideControlBand": families, "menuDominanceCertificates": certificates, "priceArms": prices,
+            "familyEffectOutsideControlBand": families, "menuDominanceCertificates": certificates, "menuPlus50DominantDiagnostic": dominant, "priceArms": prices,
             "failedCriteria": failures, "unmeasuredCriteria": ["measured native wholesale costs", "every gain has a measured cost / no Pareto dominant arm",
                 "native staffed-throughput calibration", "F1 cadence byte identity", "F2 body-cap flagged differences", "full section 6 perf and 100000-consumer stress"] + (["remaining intervention arms"] if len(groups) != 17 else []),
             "defaults": controls[0]["integrated"], "metricsSha256": hashes}

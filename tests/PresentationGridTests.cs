@@ -301,7 +301,7 @@ public sealed class PresentationGridTests
     [Fact]
     public void GridHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var plain = Spread(160); var probed = Spread(160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         var output = new List<CitizenState>();

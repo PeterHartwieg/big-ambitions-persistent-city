@@ -70,7 +70,7 @@ namespace PersistentCity.Core
     {
         private static readonly double[] TasteRatios={.5,.75,1,1.5,2};
         // F6i: common native-scale meal reference (retained rig prices span roughly $9-$17).
-        // A power curve gives a neutral resident the same 4/9 weight at +50%, at any price level.
+        // A power curve gives a neutral resident the same weight at +50% at any price level: (2/3)^2.4 = .38 at the F6k default 1.2.
         private const double MealReferenceCents=1250;
         private static double PriceFactor(double cents,ResidentTraits traits,FoodChoiceSettings settings)
             // Deep discounts must not saturate the final weight cap and erase taste/travel/memory.
