@@ -70,6 +70,8 @@ namespace PersistentCity.Core
                 person.CommutePreparation = new CommutePreparation();
                 return null;
             }
+            // F5g: a day-visitor pool member never holds a city workplace (contract B2); its carried employer only ends.
+            if (person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) return null;
             if (chance >= CityBalance.DailyJobFindingChance) return null;
             var home = places != null && places.TryGetValue(person.HomeId, out var indexed) ? indexed
                 : city.Places.First(p => p.Id == person.HomeId);

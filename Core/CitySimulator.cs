@@ -171,6 +171,9 @@ namespace PersistentCity.Core
             replacement.ordinaryLoadedHour = ordinaryLoadedHour; replacement.ordinaryObservedHour = ordinaryObservedHour;
             replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
+            // F5g: the latched boundary plan carries over; its seat counter is rebuilt against the replacement's occupancy.
+            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan;
+            if (fillPlan != null) fillPlan.Factory = null;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
             // A running survey is transient; the replacement starts it again from zero.
@@ -321,7 +324,9 @@ namespace PersistentCity.Core
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
             && (State.Food == null || (food != null ? food.NextMinute > targetMinute : inspectSavedFood && SavedFoodAfter(targetMinute)))
-            && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute);
+            && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute)
+            // Last: it latches a boundary's fill plan only after every other event through the target has drained.
+            && !FillHolds(targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
         {
@@ -355,6 +360,11 @@ namespace PersistentCity.Core
                 // A survey runs once everything through its SurveyAtMinute has drained, before the next event.
                 if (research != null && research.ReadyBefore(next, targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
+                // F5g: one bounded fill unit once the boundary's own events have run, before any later event.
+                if (FillUnitDue(next)) { RunFillUnit(); count++; continue; }
+                // F5g: stop the clock on a day boundary that has no event of its own, so its fill runs before later events.
+                if (FillActive && NextDayBoundary < next && NextDayBoundary <= targetMinute)
+                { double boundary = NextDayBoundary; traffic?.AdvanceTo(boundary, 0); State.Minute = boundary; continue; }
                 if (next > targetMinute) break;
                 State.Minute = next;
                 if (next == activation) { State.Capabilities.Active = true; count++; continue; }

@@ -73,6 +73,66 @@ namespace PersistentCity.Core
         }
     }
 
+    /// <summary>Creates one visitor person and routine at a time from catalogue candidates prepared once (review
+    /// Opus-r1-1 perf: no scan of every place per visitor). F5d's fresh roster and F5g's day-boundary fill both use it,
+    /// so a visitor's portal, identity, venues, seat and carried income are drawn by the same keys whichever creates it.
+    /// <paramref name="vacant"/> and <paramref name="seat"/> are the caller's capacity view (a recount or the
+    /// simulator's occupancy index); both count residents and every earlier visitor.</summary>
+    internal sealed class VisitorFactory
+    {
+        private readonly CityState city;
+        private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
+        private readonly Dictionary<PlaceKind, List<Place>> candidates = new Dictionary<PlaceKind, List<Place>>();
+        private readonly IdentityPolicy identities;
+        private readonly Func<Place, bool> vacant;
+        private readonly Action<string> seat;
+
+        internal VisitorFactory(CityState city, Func<Place, bool> vacant, Action<string> seat)
+        {
+            this.city = city; this.vacant = vacant; this.seat = seat;
+            identities = IdentityPolicy.V1(city.SourceIdentities);
+            foreach (var place in city.Places) places[place.Id] = place;
+            // The candidates of each kind once, in catalogue order. DestinationChoice keeps only these, so every choice is unchanged.
+            foreach (var kind in new[] { PlaceKind.Work, PlaceKind.Study, PlaceKind.Shop, PlaceKind.Leisure }) candidates[kind] = new List<Place>();
+            foreach (var place in city.Places)
+                if (place.Capacity > 0 && candidates.TryGetValue(place.Kind, out var list)) list.Add(place);
+        }
+
+        /// <summary>The visitor <c>pv:&lt;sequence&gt;</c> of <paramref name="pattern"/>, off-map at its portal (Dormant) with its
+        /// first event at <paramref name="minute"/>. A commuter is seated with today's rule; a day visitor never holds a city
+        /// workplace. A working adult without a seat keeps an outside employer as its carried income source.</summary>
+        internal (VisitorPerson Visitor, VisitorRoutine Routine) Create(int sequence, VisitorPattern pattern, double minute)
+        {
+            string id = PersonIds.Visitor(sequence);
+            string portalId = city.Portals[(int)(StableRandom.Hash(id + ":portal", city.Seed) % (uint)city.Portals.Count)];
+            var portal = places[portalId];
+            var identity = identities.Derive(city.Seed, id);
+            var persona = identity.Persona;
+            var dayKind = persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work;
+            string work = persona == Persona.Retiree || pattern != VisitorPattern.Commuter ? ""
+                : DestinationChoice.Choose(candidates[dayKind], portal, dayKind, id + ":day", city.Seed, vacant);
+            if (work.Length != 0) seat(work);
+            var routine = new VisitorRoutine
+            {
+                Identity = identity, HomeId = portalId, PlaceId = portalId, DayPlaceId = work,
+                ShopId = DestinationChoice.Choose(candidates[PlaceKind.Shop], portal, PlaceKind.Shop, id + ":shop", city.Seed),
+                LeisureId = DestinationChoice.Choose(candidates[PlaceKind.Leisure], portal, PlaceKind.Leisure, id + ":leisure", city.Seed),
+                Activity = Activity.Home, Phase = CitizenPhase.AtPlace, NextEventMinute = minute, ActivityUntilMinute = minute,
+                Preferences = VisitorSchedules.Preferences(id, persona, city.Seed),
+                Traits = ResidentTraits.Generate(city.Seed, id)
+            };
+            ResidentLifecycle.Initialize(routine, city.Seed, minute);
+            var visitor = new VisitorPerson { Id = id, Stay = new VisitorStay { OriginPortalId = portalId,
+                Pattern = pattern, Presence = VisitorPresence.Dormant, FirstDay = (int)Math.Floor(minute / 1440), NextStayStart = minute } };
+            // An unseated worker keeps an outside employer (carried income) until its own employment outcome.
+            if (work.Length == 0 && ResidentLifecycle.IsWorker(routine) && identity.Age >= 18)
+                routine.VisitorCarried = ResidentIncomeSource.ExternalEmployment;
+            VisitorSchedules.Link(visitor, routine);
+            VisitorSchedules.Sync(visitor);
+            return (visitor, routine);
+        }
+    }
+
     public static class VisitorSchedules
     {
         /// <summary>Visitors created with a fresh roster: K−1 per resident for the requested factor K (1–3), the
@@ -92,45 +152,11 @@ namespace PersistentCity.Core
             if (count == 0 || city.Portals.Count == 0) return created;
             if ((long)city.Visitors.Count + count > PersonTable.MaximumVisitors
                 || (long)city.NextVisitorSequence + count > int.MaxValue) throw new InvalidOperationException("Visitor bound exceeded.");
-            var places = new Dictionary<string, Place>(StringComparer.Ordinal);
-            foreach (var place in city.Places) places[place.Id] = place;
-            var identities = IdentityPolicy.V1(city.SourceIdentities);
             var used = Population.Assignments(city);
-            // Review Opus-r1-1 perf: the candidates of each kind once per call, in catalogue order, instead of scanning
-            // every place three times per visitor. DestinationChoice keeps only these, so every choice is unchanged.
-            var candidates = new Dictionary<PlaceKind, List<Place>>();
-            foreach (var kind in new[] { PlaceKind.Work, PlaceKind.Study, PlaceKind.Shop, PlaceKind.Leisure }) candidates[kind] = new List<Place>();
-            foreach (var place in city.Places)
-                if (place.Capacity > 0 && candidates.TryGetValue(place.Kind, out var list)) list.Add(place);
-            int day = (int)Math.Floor(city.Minute / 1440);
+            var factory = new VisitorFactory(city, p => Population.Used(used, p.Id) < p.Capacity, work => used[work] = Population.Used(used, work) + 1);
             for (int i = 0; i < count; i++)
             {
-                string id = PersonIds.Visitor(city.NextVisitorSequence + i);
-                string portalId = city.Portals[(int)(StableRandom.Hash(id + ":portal", city.Seed) % (uint)city.Portals.Count)];
-                var portal = places[portalId];
-                var identity = identities.Derive(city.Seed, id);
-                var persona = identity.Persona;
-                string work = persona == Persona.Retiree ? "" : DestinationChoice.Choose(candidates[persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work], portal,
-                    persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work, id + ":day", city.Seed,
-                    p => Population.Used(used, p.Id) < p.Capacity);
-                if (work.Length != 0) used[work] = Population.Used(used, work) + 1;
-                var routine = new VisitorRoutine
-                {
-                    Identity = identity, HomeId = portalId, PlaceId = portalId, DayPlaceId = work,
-                    ShopId = DestinationChoice.Choose(candidates[PlaceKind.Shop], portal, PlaceKind.Shop, id + ":shop", city.Seed),
-                    LeisureId = DestinationChoice.Choose(candidates[PlaceKind.Leisure], portal, PlaceKind.Leisure, id + ":leisure", city.Seed),
-                    Activity = Activity.Home, Phase = CitizenPhase.AtPlace, NextEventMinute = city.Minute, ActivityUntilMinute = city.Minute,
-                    Preferences = Preferences(id, persona, city.Seed),
-                    Traits = ResidentTraits.Generate(city.Seed, id)
-                };
-                ResidentLifecycle.Initialize(routine, city.Seed, city.Minute);
-                var visitor = new VisitorPerson { Id = id, Stay = new VisitorStay { OriginPortalId = portalId,
-                    Pattern = PersonPolicy.MigratedConsumerPattern, Presence = VisitorPresence.Dormant, FirstDay = day, NextStayStart = city.Minute } };
-                // An unseated worker keeps an outside employer (carried income) until its own employment outcome.
-                if (work.Length == 0 && ResidentLifecycle.IsWorker(routine) && identity.Age >= 18)
-                    routine.VisitorCarried = ResidentIncomeSource.ExternalEmployment;
-                Link(visitor, routine);
-                Sync(visitor);
+                var (visitor, routine) = factory.Create(city.NextVisitorSequence + i, PersonPolicy.MigratedConsumerPattern, city.Minute);
                 city.Visitors.Add(visitor); city.VisitorRoutines.Add(routine);
                 created.Add(routine);
             }
@@ -138,6 +164,14 @@ namespace PersistentCity.Core
             Order(city);
             return created;
         }
+
+        /// <summary>F5g: a day-visitor pool member returns on the days drawn by <c>Hash(seed, PersonId, "visit", day)</c>
+        /// against the census's weekend-weighted DayVisitProbability (plan section 3 Visitor lifecycle, Reuse).</summary>
+        public static bool VisitsOn(CitizenState person, int seed, int day)
+            => VisitsOn(RoutineKeys.For(person, seed), day, ((day - 1) % 7 + 7) % 7 >= 4);
+
+        internal static bool VisitsOn(RoutineKeys keys, int day, bool weekend)
+            => RoutineKeys.Draw(keys.VisitDay, day) % 10000 < (weekend ? PopulationCensusPolicy.DayVisitWeekendBasisPoints : PopulationCensusPolicy.DayVisitWeekdayBasisPoints);
 
         /// <summary>A visitor's travel preferences, derived from (seed, PersonId) and never stored. Section 9 Q1 default:
         /// visitors come by subway and walk; they own no car. Tolerance and fare weight follow the resident draws.</summary>

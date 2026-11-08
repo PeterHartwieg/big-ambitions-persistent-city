@@ -321,7 +321,10 @@ namespace PersistentCity.Persistence
                     && routine.Identity != null && routine.Identity.Id == visitor.Id, "Visitor routine is not its person's.");
                 var stay = visitor.Stay;
                 Known(stay.Pattern, "visitor stay pattern"); Known(stay.Presence, "visitor presence");
-                Require(stay.Pattern == VisitorPattern.Commuter, "Writer 27 creates commuter visitors only.");
+                // F5g fills the day-visitor pool in the same tuple shape (pattern code 'D', already in the alphabet). A day
+                // visitor never holds an Employment or a city workplace.
+                Require(stay.Pattern == VisitorPattern.Commuter || visitor.Employment == null && routine.DayPlaceId.Length == 0,
+                    "A day visitor holds no employment.");
                 Require(stay.OriginPortalId.Length != 0 && state.Portals.BinarySearch(stay.OriginPortalId, StringComparer.Ordinal) >= 0, "Visitor portal is missing from the station table.");
                 Require(routine.HomeId == stay.OriginPortalId, "A visitor's off-map home is its portal.");
                 Require(stay.FirstDay >= 0 && stay.FirstDay <= day, "Invalid visitor first day.");

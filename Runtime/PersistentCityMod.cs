@@ -706,6 +706,10 @@ namespace PersistentCity.Runtime
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop, economy: state.Economy);
             simulation.AttachFoodMarket(ComposeFoodMarkets(foodMarket), settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
+            // F5g: every current-schema city fills toward the census of this load's catalogue from its next day boundary.
+            var fill = new PopulationFillCatalogue(censusPlaces, censusWorkplaces);
+            if (fill.Refused) log?.Warn("Population fill detached: census refused the catalogue (" + fill.RefusalReason + "). No person is created or removed.");
+            simulation.AttachPopulationFill(fill);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeTravelPace.ResetReading();
