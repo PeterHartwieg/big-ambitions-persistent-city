@@ -193,6 +193,9 @@ public sealed class PersistenceTests
     public void ReaderValidatesWholeStateRatherThanAcceptingDeserializerDefaults(string corruption)
     {
         var json = SaveWire.Parse(SaveCodec.Write(Example()));
+        // F7d control: the unchanged body, indented by JObject.ToString(), is re-encoded and loads.
+        var control = SaveWire.Read(json.ToString());
+        Assert.True(control.Status == SaveReadStatus.Loaded, control.Error);
         var citizen = (JObject)json["Citizens"]![0]!;
         switch (corruption)
         {
@@ -209,8 +212,12 @@ public sealed class PersistenceTests
             case "string-bool": citizen["Identity"]!["Female"] = "true"; break;
             case "wrong-case": citizen["phase"] = citizen["Phase"]; citizen.Remove("Phase"); break;
         }
-        var read = SaveWire.Read(json.ToString());
+        // The mutated body reaches the product reader as a compact payload, so the semantic check is what refuses it.
+        string mutated = SaveWire.Payload(json.ToString());
+        Assert.StartsWith(SaveCodec.CompactPrefix, mutated);
+        var read = SaveCodec.Read(mutated);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.NotEmpty(read.Error);
+        Assert.DoesNotContain("compact", read.Error, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

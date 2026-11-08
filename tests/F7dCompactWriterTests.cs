@@ -281,6 +281,92 @@ public sealed class F7dCompactWriterTests
     }
 
     [Fact]
+    public void NoncanonicalTablesAreRefusedEvenWhenTheDecodedCityIsUnchanged()
+    {
+        // Duplicate routes: every reference gets its own entry, so identical journeys appear twice in the table. The
+        // decoded city would be the same, but the next write would merge them, so the reader refuses.
+        string rush = Small();
+        string duplicates = SaveCodec.CompactFromBody(SaveCodec.ExpandCompact(rush), shareRoutes: false);
+        Assert.NotEqual(rush, duplicates);
+        Assert.Equal(SaveCodec.ExpandCompact(rush), SaveCodec.CompactTree.Write(SaveCodec.CompactTree.Parse(SaveCodec.ExpandCompact(rush), 64, canonical: true), 1 << 16, int.MaxValue));
+        Assert.Contains("duplicate or unordered route", SaveCodec.Read(duplicates).Error);
+        RefusedAndKept(duplicates, SaveReadStatus.Invalid);
+
+        string minimal = SaveCodec.Write(CurrentSchemaOnlyTests.City());
+        var cases = new (string Name, string Payload, string Error)[]
+        {
+            ("unused ordinal-last string", Variant(minimal, o => SetField(o, "s", ((object?[])Field(o, "s")!).Append("￿ unused").ToArray())), "fewer than twice"),
+            ("unused ordinal-last shape", Variant(minimal, o =>
+            {
+                var shapes = (object?[])Field(o, "h")!; var keys = (object?[])Field(o, "k")!;
+                var last = (object?[])shapes[^1]!;
+                var extra = Enumerable.Range(0, keys.Length).Select(i => i.ToString()).First(i => !last.OfType<SaveCodec.CompactNumber>().Any(n => n.Text == i));
+                SetField(o, "h", shapes.Append(last.Append(new SaveCodec.CompactNumber(extra)).ToArray()).ToArray());
+            }), "unused shape"),
+            ("inline string seen twice", Variant(minimal, o =>
+            {
+                var inline = Columns(Field(o, "t"), 1).SelectMany(c => c.Skip(1).Select((v, i) => (Column: c, At: i + 1, Value: v))).Where(x => x.Value is string).ToList();
+                Assert.True(inline.Count >= 2, "the minimal city has inline strings");
+                inline[1].Column[inline[1].At] = inline[0].Value;
+            }), "inline"),
+            ("table string written inline", Variant(minimal, o =>
+            {
+                var table = (object?[])Field(o, "s")!;
+                var reference = Columns(Field(o, "t"), 1).SelectMany(c => c.Skip(1).Select((v, i) => (Column: c, At: i + 1, Value: v))).First(x => x.Value is SaveCodec.CompactNumber);
+                reference.Column[reference.At] = table[int.Parse(((SaveCodec.CompactNumber)reference.Value!).Text)];
+            }), "fewer than twice"),
+        };
+        foreach (var (name, payload, error) in cases)
+        {
+            Assert.False(payload == minimal, name);
+            var read = SaveCodec.Read(payload);
+            Assert.True(read.Status == SaveReadStatus.Invalid, name + ": " + read.Status);
+            Assert.True(read.Error.Contains(error) || name == "table string written inline" && read.Error.Contains("inline"), name + ": " + read.Error);
+            RefusedAndKept(payload, SaveReadStatus.Invalid);
+        }
+    }
+
+    private static long Allocated(Func<SaveReadResult> read, out SaveReadResult result)
+    {
+        read(); // warm up the code path once
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        result = read();
+        return GC.GetAllocatedBytesForCurrentThread() - before;
+    }
+
+    [Fact]
+    public void OverboundTablesAndColumnsAreRefusedBeforeTheirArraysAreAllocated()
+    {
+        const string head = "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Schema\"],\"h\":[[0,1]],\"s\":[],\"n\":0,\"r\":0,";
+        // 500,001 citizen slots from about 120 characters: refused by the body's own citizen bound before allocation.
+        string citizens = head + "\"t\":[4,0,[5,500001,[3,500001]],[0,34]]}";
+        long bytes = Allocated(() => SaveCodec.Read(citizens), out var read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("collection length", read.Error);
+        Assert.True(bytes < 64 * 1024, bytes + " B allocated");
+        // Within the citizen bound but far more slots than a payload this short can carry.
+        string dense = head + "\"t\":[4,0,[5," + SaveCodec.MaxResidents + ",[3," + SaveCodec.MaxResidents + "]],[0,34]]}";
+        bytes = Allocated(() => SaveCodec.Read(dense), out read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("decoded value bound", read.Error);
+        Assert.True(bytes < 64 * 1024, bytes + " B allocated");
+        // One key over the record bound: counted without building the table.
+        var keys = new StringBuilder("{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[");
+        for (int i = 0; i <= SaveCodec.MaxEmbeddedRecords; i++) { if (i > 0) keys.Append(','); keys.Append("\"k").Append(i.ToString("D7")).Append('"'); }
+        string overKeys = keys.Append("],\"h\":[],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
+        bytes = Allocated(() => SaveCodec.Read(overKeys), out read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("tables exceed the record bound", read.Error);
+        Assert.True(bytes < 64 * 1024, bytes + " B allocated");
+        output.WriteLine($"one-over key table: {overKeys.Length:N0} chars refused after {bytes:N0} B allocated");
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = overKeys };
+        Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "any").Status);
+        Assert.Same(overKeys, data[SaveStore.StateKey]);
+        // The early authority probe uses the same counts.
+        Assert.Contains("tables exceed the record bound", Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(overKeys)).Message);
+    }
+
+    [Fact]
     public void ACompactCityThatExpandsPastTheInputCapIsRefusedBeforeItsBodyIsMaterialized()
     {
         // One route holding a 1 Mi-character string, referenced 257 times: 1,001 characters of compact text, more than

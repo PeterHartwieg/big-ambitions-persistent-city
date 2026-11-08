@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -27,15 +28,31 @@ internal static class SaveWire
     public static string Payload(string text)
     {
         if (text == null || !text.StartsWith("{", StringComparison.Ordinal) || text.StartsWith(SaveCodec.CompactPrefix, StringComparison.Ordinal)) return text!;
+        SaveCodec.CompactObject root;
         try
         {
-            // Only a schema-34 body the writer could have spelled is re-encoded; its root fields may be in any order.
-            if (!(SaveCodec.CompactTree.Parse(text, int.MaxValue, canonical: true) is SaveCodec.CompactObject root)) return text;
-            int at = Array.IndexOf(root.Keys, "Schema");
-            if (at < 0 || !(root.Values[at] is SaveCodec.CompactNumber schema) || schema.Text != BodySchema) return text;
-            return SaveCodec.CompactFromBody(text);
+            // Whitespace between tokens is allowed (an indented JObject.ToString()); string spellings must still be the
+            // writer's, so a lexical corruption is not silently respelled. Root fields may be in any order.
+            if (!(SaveCodec.CompactTree.Parse(text, int.MaxValue, canonical: true, spaced: true) is SaveCodec.CompactObject parsed)) return text;
+            root = parsed;
         }
-        catch (SaveValidationException) { return text; }
+        catch (SaveValidationException error) { Trace(text, "lexical: " + error.Message); return text; }
+        int at = Array.IndexOf(root.Keys, "Schema");
+        if (at < 0 || !(root.Values[at] is SaveCodec.CompactNumber schema) || schema.Text != BodySchema) return text;
+        Converted++;
+        return SaveCodec.CompactFromBody(text);
+    }
+
+    /// <summary>Schema-34 bodies this helper re-encoded to the compact wire in this test process.</summary>
+    public static int Converted;
+
+    /// <summary>With <c>PC_SAVEWIRE_TRACE</c> naming a file, every body left unchanged because of its spelling is listed
+    /// with the reason, so a run can show that only lexical-corruption tests take that path.</summary>
+    private static void Trace(string text, string reason)
+    {
+        string? path = Environment.GetEnvironmentVariable("PC_SAVEWIRE_TRACE");
+        if (string.IsNullOrEmpty(path) || !text.Contains("\"Schema\":" + BodySchema)) return;
+        lock (BodySchema) System.IO.File.AppendAllText(path!, reason + " | " + Environment.StackTrace.Split((char)10).FirstOrDefault(l => l.Contains("PersistentCity.Tests.") && !l.Contains("SaveWire") && !l.Contains("EconomicLedgerTests.Refused"))?.Trim() + Environment.NewLine);
     }
 
     /// <summary>The body of the current writer's payload for <paramref name="state"/>, for tests that edit saved text.</summary>
