@@ -19,7 +19,7 @@ namespace PersistentCity.Core
         public double FoodChoiceQualityWeight { get; set; }=.5;
         public double FoodChoiceTimePressureWeight { get; set; }=1;
         public double FoodChoiceHealthWeight { get; set; }
-        // Funded cooking preference at the $5 meal-reference equivalent; no extra charge is booked.
+        // Funded cooking preference at the $12.50 meal-reference equivalent; no extra charge is booked.
         public double FoodChoiceHouseholdWeight { get; set; }=1;
         public double FoodShortlistTemperature { get; set; }=1;
 

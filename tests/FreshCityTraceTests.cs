@@ -110,9 +110,9 @@ public sealed class FreshCityTraceTests
     // Factors 2/3 retain their frozen represented-consumer codec; factor 1 retains its ledger codec.
     // The no-food trace still matches base e9995e5. See docs/checks/f6i.md for the scoped rebaseline.
     [Theory]
-    [InlineData(1, true, "62e0693582a17529109f981016aecbe883f0a10d6e8b69f039e0729c3e81f1ae")]
-    [InlineData(2, true, "d3a8f30e08ad40102b9b744311dd9799c096ad8cdd9af1c8a7ca2f30d0df7f64")]
-    [InlineData(3, true, "1fc3b91ae27ce800ec39b6f399cb168cb53f08a67a9b8e045f5ce8cad266527b")]
+    [InlineData(1, true, "2b9595cf3607f7ec8d0c36916710bcfcc769d6a692f2045e60ed80d16630bd39")]
+    [InlineData(2, true, "454ae66910ca557d96ad7ca7d9035de113241bf7a91783415332f1f18b210dd8")]
+    [InlineData(3, true, "a708826cbc417c10cd50506e992d0418641dc6b39ed8d8039e640667ff8f9fae")]
     [InlineData(1, false, "27c36028fbcc6b9ffe3ad602d8e81c4ce101a0395ac9d2a8d78b4b838cf34910")]
     public void FreshCityBehaviourTraceIsPinned(int factor, bool food, string expected)
         => Assert.Equal(expected, Trace(factor, food));

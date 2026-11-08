@@ -66,12 +66,14 @@ namespace PersistentCity.Core
     public static partial class FoodChoicePolicy
     {
         private static readonly double[] TasteRatios={.5,.75,1,1.5,2};
-        // F6i: a common $5 prepared-meal reference, independent of savings and the observed menu.
-        // At default strength a neutral resident gives a +50% markup exp(-1) of its reference weight.
-        private const double MealReferenceCents=500;
+        // F6i: common native-scale meal reference (retained rig prices span roughly $9-$17).
+        // A power curve gives a neutral resident the same 4/9 weight at +50%, at any price level.
+        private const double MealReferenceCents=1250;
         private static double PriceFactor(double cents,ResidentTraits traits,FoodChoiceSettings settings)
-            => Math.Exp(-2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity))
-                *(cents/MealReferenceCents-1));
+            // Deep discounts must not saturate the final weight cap and erase taste/travel/memory.
+            // This reward ceiling is inactive throughout the recorded $9-$17 range at default strength.
+            => Math.Min(4,Math.Pow(MealReferenceCents/cents,
+                2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity))));
         internal readonly struct DistancePreference
         {
             private readonly double weight,scale,divisor,floor,temperature;
@@ -97,6 +99,8 @@ namespace PersistentCity.Core
 
         // Bounded rational signals; unknown quality/demand are neutral. Health, loyalty and brand have no signal.
         // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
+        // Both Weight overloads ignore allowance, retained for caller compatibility. Select and HoldPurchase
+        // enforce affordability; wallet savings never scale the soft price preference.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,double weatherTravelMultiplier=1)
             => WeightCore(o,t,s,OfferTaste(o,t),MealRhythm.ProductPenalty(o.Kind,o.ProductId),
                 o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);

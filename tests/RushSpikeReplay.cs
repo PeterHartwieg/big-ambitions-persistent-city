@@ -94,8 +94,9 @@ public static class RushSpikeReplay
         private readonly HashSet<string> paid = new HashSet<string>(StringComparer.Ordinal);
         public long Reads;
         public double EarliestMinute => 0;
-        private static Money Price(string product) => product == FoodProducts.Croissant ? Money.FromCents(350)
-            : product == FoodProducts.Burger ? Money.FromCents(725) : Money.FromCents(480);
+        // Native price levels for the anchored policy; the third legacy product is a salad-price proxy.
+        private static Money Price(string product) => product == FoodProducts.Croissant ? Money.FromCents(924)
+            : product == FoodProducts.Burger ? Money.FromCents(1250) : Money.FromCents(1669);
         public IReadOnlyList<FoodBusiness> Read(double minute)
         {
             Reads++;

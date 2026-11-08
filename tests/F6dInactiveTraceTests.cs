@@ -70,8 +70,8 @@ public sealed class F6dInactiveTraceTests
         return Sha(trace.ToString());
     }
     [Theory]
-    [InlineData(5150, "349fe9ef16f15153e863b35ee97d7b683866ba5dcb57c49300cef291900b6c42")]
-    [InlineData(9217, "e57d5f17364034138f40207e75d339298fa916edffc71701333a905b153aa499")]
+    [InlineData(5150, "699b4f4776a967f660b0fbd47fa433c55b50ee35308ec955dc1d091081b6352b")]
+    [InlineData(9217, "4aa1001d9ce93a543944cd93aa7febb25e9438a761c9032a60d4db7f9d556b60")]
     public void FreshThreeDayStateAndOrderTraceMatchesThePredecessor(int seed, string pin)
     {
         string predecessor = Run(seed, true), current = Run(seed, false);

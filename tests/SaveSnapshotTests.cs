@@ -24,7 +24,7 @@ public sealed class SaveSnapshotTests
         new object[] { "fresh-957x3", "A6DB1093D09D7B0540B56220C5F51F64027DAED008CE0BAB995829B071BAF0E9", 2900486 },
         new object[] { "saturated-957x3", "F32DC000A40718334FFACE8F5174E9004161DF7F07D7319A91DF15B18D7A901C", 4211558 },
         new object[] { "encoding-max", "D222381479282F55F8B0D26A78760E915A676A0BA43593D70367B67A8424696C", 2445781 },
-        new object[] { "rush-957x2", "F48B69FD42262E6589C8A385E3AC1C7B3A8B0B8626552B80A85D0E2DD9B1C5F8", 2240373 },
+        new object[] { "rush-957x2", "464EE83F9DABEC5556B84F881344BDCC981210E0461E6F758175566D47DBE2BB", 2240738 },
     };
 
     /// <summary>E6c: these pins are writer 29's, now the frozen C5c writer (the name is kept for docs/checks/f7c.md). The snapshot path for that schema still

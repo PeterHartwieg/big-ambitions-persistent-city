@@ -152,9 +152,10 @@ public sealed class WeightedFoodChoiceTests
     {
         var settings=new FoodChoiceSettings();var neutral=new ResidentTraits {Bands="2222222222"};
         EvaluatedFoodOffer Offer(string id,string product,int price,double travel) => new(id,product,Money.FromCents(price),travel,0,travel+15,90,null,null,MealKind.Legacy);
-        var baseline=new[]{Offer("b0",FoodProducts.Burger,300,5),Offer("b1",FoodProducts.Croissant,300,5)};
-        var cheaper=new[]{Offer("b0",FoodProducts.Burger,100,5),baseline[1]};
-        var nearer=new[]{Offer("b0",FoodProducts.Burger,300,1),baseline[1]};
+        // Native-scale baseline and a discount below the reward ceiling preserve all three signals.
+        var baseline=new[]{Offer("b0",FoodProducts.Burger,924,5),Offer("b1",FoodProducts.Croissant,924,5)};
+        var cheaper=new[]{Offer("b0",FoodProducts.Burger,650,5),baseline[1]};
+        var nearer=new[]{Offer("b0",FoodProducts.Burger,924,1),baseline[1]};
         var taste=new ResidentTraits {Bands="2422222222"};
         int a=0,t=0,p=0,d=0;
         for(int seed=0;seed<4096;seed++)
@@ -473,4 +474,3 @@ public sealed class WeightedFoodChoiceTests
         Assert.Contains("queue",ResidentInsight.ReasonWords(MealReasonCode.NoLongerFits));
     }
 }
-

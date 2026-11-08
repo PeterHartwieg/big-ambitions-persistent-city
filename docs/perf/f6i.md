@@ -2,7 +2,77 @@ Status: implemented (offline); not verified by rig
 
 Refs #93. Base `6fdbc198`; writer 33. Formula and default-strength rationale: [price-anchor decision](../decisions/2026-11-08-price-anchor.md). These are headless macOS arm64 / .NET 10 Release measurements, sequential foreground runs. No game, rig, ModsLocal or bridge was used.
 
-## Matched short demand check
+## Review corrections Opus-r1-1 and Opus-r1-2
+
+The implemented rule now uses a native-scale **$12.50** fixed reference and `min(4, (reference/price)^(2 * priceWeight * sensitivity))`. [The decision](../decisions/2026-11-08-price-anchor.md) links the retained native croissant, burger and salad price records and explains why no new setting or wire field is needed. The `Weight` overloads document allowance as an ignored compatibility argument; hard affordability still lives in selection and checkout.
+
+### Native-price policy checks
+
+Eight new cases cover all four recorded price levels at neutral (band 2) and high (band 4) price sensitivity. All other factors are neutral, with no trip in this table; funded cooking has weight 1. Markups are exactly +50% in the native money unit, including half-cents. Each row also tests ordinary five-minute travel/twenty-minute used-time costs and asserts the marked-up weight remains above the floor. Baseline own/home counts use the same 4,096 deterministic sole-shop versus funded-home draws, not a native market-share measurement.
+
+| Price / sensitivity | Reviewed $5 rule baseline → markup weight | Corrected baseline → markup weight | Before baseline own/home | Corrected baseline → markup own/home |
+| --- | --- | --- | --- | --- |
+| $9.24 / 2 | 0.183416 → 0.028898 | 1.830105 → 0.813380 | 634 / 3462 | 2647 / 1449 → 1833 / 2263 |
+| $10.25 / 2 | 0.122456 → 0.020000 | 1.487210 → 0.660982 | 460 / 3636 | 2445 / 1651 → 1622 / 2474 |
+| $12.50 / 2 | 0.049787 → 0.020000 | 1.000000 → 0.444444 | 211 / 3885 | 2036 / 2060 → 1228 / 2868 |
+| $16.69 / 2 | 0.020000 → 0.020000 | 0.560928 → 0.249301 | 94 / 4002 | 1447 / 2649 → 800 / 3296 |
+| $9.24 / 4 | 0.078552 → 0.020000 | 2.475792 → 0.733568 | 309 / 3787 | 2929 / 1167 → 1733 / 2363 |
+| $10.25 / 4 | 0.042852 → 0.020000 | 1.813671 → 0.537384 | 174 / 3922 | 2634 / 1462 → 1403 / 2693 |
+| $12.50 / 4 | 0.020000 → 0.020000 | 1.000000 → 0.296296 | 94 / 4002 | 2036 / 2060 → 922 / 3174 |
+| $16.69 / 4 | 0.020000 → 0.020000 | 0.420108 → 0.124476 | 94 / 4002 | 1186 / 2910 → 464 / 3632 |
+
+At reference, each sensitivity has weight 1. All five bands retain **0.666667, 0.544331, 0.444444, 0.362887, 0.296296** of their weight at +50%, independent of price level before the existing bounds. Tight affordable wallets receive the same penalty; over-limit prices remain ineligible. A discount-reward ceiling of 4 prevents extremely cheap offers from saturating the final upper weight bound and erasing other signals; it is inactive for every native-price row above at default strength. The added deep-discount regression and the original $1 taste/fit/memory fixtures check that boundary.
+
+### Matched short check at native price levels
+
+The same three-day, seed-3, 128-resident + 128-visitor integrated fixture now reprices its three legacy products to **$9.24/$12.50/$16.69** at the first epoch in both arms and both own/rival menus. The third product is a salad-price-level proxy, not a claim that a native hot dog costs $16.69. The +50% intervention starts on day 2 ($16.69 rounds to $25.04 in this integer-cent fixture). The common 6,000/hour own-service input keeps supply non-binding. No ordinary price, wallet, wage, rival limit, product coefficient or production default is tuned. The following are affected-day own/home totals; baseline day own quantities match within each pair.
+
+| Rule / rival | Own control → markup | Quantity change / arc elasticity | Home control → markup |
+| --- | --- | --- | --- |
+| Reviewed $5 exponential / absent | 197 → 159 | −19.289% / −0.533708 | 683 → 722 |
+| Corrected power / absent | **548 → 395** | **−27.920% / −0.811241** | **332 → 485** |
+| Reviewed $5 exponential / present | 145 → 109 | −24.828% / −0.708661 | 602 → 634 |
+| Corrected power / present | **398 → 283** | **−28.894% / −0.844347** | **223 → 316** |
+
+Each of the four runs per rule passes 768 daily owner checks, exact receipt/outside-debit reconciliation, zero duplicate orders and zero HistoricalClockMisses. This is a matched price-scale regression check, not a new F6h acceptance/calibration run. The baseline quantities themselves expose the reviewed rule's collapse at ordinary price levels. Actual native baseline shares are explicitly required by rig check 1.
+
+### Matched timing
+
+The same opt-in measurement method below is rerun with the $18.75 offer and the native-level short fixture. Per-policy timings are 2,000 batches × 32 weights after 5,000 warm calls. Full-tool allocation is separate from the policy's zero steady-state allocation.
+
+| 32 weights | p95 / max ms | ≥30 ms | Allocated bytes |
+| --- | --- | ---: | ---: |
+| Reviewed exponential | 0.006100 / 6.402500 | 0 | 0 |
+| Corrected bounded power | 0.006200 / 6.036000 | 0 | 0 |
+
+| Rule / rival / arm | Slice samples | Slice p95 / max ms | ≥30 ms | Tool seconds | Tool allocated bytes |
+| --- | ---: | --- | ---: | ---: | ---: |
+| Before / absent / control | 14949 | 0.027000 / 6.088000 | 0 | 0.169629 | 42078480 |
+| Before / absent / markup | 14770 | 0.026800 / 4.055300 | 0 | 0.176274 | 41653840 |
+| After / absent / control | 17404 | 0.027600 / 1.728500 | 0 | 0.174997 | 47567984 |
+| After / absent / markup | 16671 | 0.023100 / 3.697300 | 0 | 0.186247 | 45999840 |
+| Before / present / control | 17979 | 0.039500 / 21.453600 | 0 | 0.436773 | 70633856 |
+| Before / present / markup | 17826 | 0.040500 / 2.137600 | 0 | 0.209145 | 64875832 |
+| After / present / control | 20600 | 0.040000 / 19.940000 | 0 | 0.458470 | 78343216 |
+| After / present / markup | 20127 | 0.040200 / 1.996600 | 0 | 0.227500 | 72061152 |
+
+No speedup is claimed; changed choices alter the work count. All measured p95 values remain <5 ms and every ≥30 ms count is zero. Native unified mod-work and whole-frame performance remain separate rig evidence.
+
+### Versioned rush fixture and retained precision flag
+
+The required full suite exposed cancellation noise under the old **$3.50/$7.25/$4.80** evening-rush fixture: with the corrected price curve, framed/uninterrupted saves differ in **17 journey/meal timestamp values**, each by one or two floating-point steps. All cash, identity and other fields match; the timing assertions pass. This is retained as a **flag**, not claimed as an arithmetic fix. A trial traffic-snapshot change was discarded; production traffic code and the traffic cadence tests remain unchanged.
+
+The evening-rush fixture now uses **$9.24/$12.50/$16.69** (the third legacy product is again a salad-price-level proxy), consistent with the native-scale anchor and F6i's short fixture. Its original exact save-hash assertion, p95 <5 ms, unit/frame max <30 ms, and peak traffic requirements all pass. The focused rush/traffic-cadence/relative-policy batch passes **11 tests**. Neither hashes nor timing comparisons are weakened, and no timing improvement versus the old fixture is claimed. This versioned fixture change does not erase the old cheap-input precision flag. Temporary save-diff instrumentation was removed; no fixture payload is committed.
+
+### Review validation
+
+With the initial 23 review cases added, `c6a4796` gives **15 failed / 8 passed**. The final corrected rule plus the added deep-discount case gives **24 passed** in **1.87 s** total test time. The required review-fix build passes, DLL SHA256 `2de5690b4fc4ceb0a730840de1f34d961871326ab0a4ae6ec49047d9c7d30f46`. The final required foreground suite passes **3,895 tests**, zero failed/skipped, in **3 min 53 s**, including both unchanged writer-33 golden pins. The required build and documentation-link/whitespace checks pass. The same older simulated state/trace fixtures are repinned for the corrected choices; all static and original writer-33 pins stay unedited. Reproduction uses the same filtered command below; the temporary pin-capture helper is removed before the final suite and is not committed.
+
+## Initial $5 implementation record (superseded)
+
+The following retains the original cheap-fixture measurements at `c6a4796`. It is historical evidence of the reviewed rule, not the current formula, current test count, or native-price calibration.
+
+### Matched short demand check
 
 `F6iPriceAnchorTests.ShortWholeMenuMarkupReducesQuantity` reuses the ordinary F6 integrated harness, with seed 3, 128 residents + 128 independent visitors, three days, one baseline day then two days of +50% whole-menu prices versus a matched control. The menu stays $3/$5/$8 before markup. Own capacity is an identical fixture input of 6,000 meals/hour in both arms, isolating demand from the stopped F6h fixture's peak supply saturation. It is not a production default change. All wages, person wallets, normal C9 prices, household funding, memory, rival limits and journal remain active. The second own site stays closed. The two cases differ only in whether the existing rival is listed.
 
@@ -19,7 +89,7 @@ Arc elasticity is `(q1-q0)/((q1+q0)/2) / 0.4`, using the +50% menu-price arc. Ba
 
 The policy-only monopoly experiment (4,096 stable draws, neutral traits, $10,000 allowance) changes $5 → $7.50 shop selections from **2,036 → 2,036 before**, to **2,036 → 1,098 after** with funded home cooking. Its weight ratio changes from **0.999750187** to **0.367879441**. The five sensitivity-band weight ratios after are **0.606531, 0.472367, 0.367879, 0.286505, 0.223130**. Affordable tight-wallet weights equal cap-wallet weights; the hard gates are checked separately.
 
-## Component timing and tool cost
+### Component timing and tool cost
 
 `PC_F6I_MEASURE=1` enables timing in the same tests. The policy microcheck warms 5,000 calls, then measures 2,000 batches of 32 offer weights (eight shortlisted shops × four default live offers; the pure policy's hard bound is 64). Samples include timer overhead. It measures the actual old/new `Weight` implementation, not a repeated formula.
 
@@ -45,7 +115,7 @@ Bounded advancement timings include Core scheduler and market/route doubles in e
 
 Tool totals include fixture construction, diagnostic sampling, doubles, daily accounting and final save/hash. They are not steady-state allocation claims. The rival-present control runs first and includes colder initialization. Changed choices also change event counts, so these are not isolated price-term speed comparisons. All measured units remain below 5 ms at p95; no sample reaches 30 ms. Native unified mod-work p95 <5 ms and whole-frame time remain separate rig measurements. No save timing or autosave setting is involved in the headless windows.
 
-## Validation and reproduction
+### Initial validation and reproduction
 
 First check `pgrep -f testhost`; wait for any running testhost, and run dotnet commands sequentially in the foreground with the task's Homebrew environment:
 

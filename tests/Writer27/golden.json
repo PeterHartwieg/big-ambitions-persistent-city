@@ -2,7 +2,7 @@
   "writer": 27,
   "note": "F5d (#92): SHA-256 of SaveCodec.Write for two seeded fresh fixtures (Schema27Tests.GoldenFixtures). A shape change without a schema bump must fail this pin; a bump adds a new pin file. F6i: this simulated fixture now uses anchored food choice; its meals and balances change, not its wire shape. beforeF6i retains the prior generated pin. Static fixtures stay unchanged.",
   "fixtures": {
-    "fresh-visitors-factor2-30h": { "sha256": "506a8eb34c36240b39260e0b4425570f80dfa8038087f1f90cac5967736a52c2", "characters": 12681, "beforeF6i": {"sha256": "f970fcec00bc6fc3666c77f7f04c4df294a73ac9b5b0cd72793c7a6389da33f3", "characters": 12433} },
+    "fresh-visitors-factor2-30h": { "sha256": "4ff9a1eb65968397f79ece18ee4c30d78835a0993025c4489906dae39fb79499", "characters": 12916, "beforeF6i": {"sha256": "f970fcec00bc6fc3666c77f7f04c4df294a73ac9b5b0cd72793c7a6389da33f3", "characters": 12433} },
     "current-schema-minimal": { "sha256": "8ad3eef8a62b66abbe12df5878f96640210f96d24417bdb420826bafe4b44d3c", "characters": 1754 }
   }
 }
