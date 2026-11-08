@@ -36,7 +36,7 @@ namespace PersistentCity.Core
                 reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int held);
                 menu.Add(new FoodExtraOffer(offer.ProductId, offer.Price, Math.Max(0, offer.Units.Value - held), ExtraTaste(meal, person!, offer.ProductId)));
             }
-            var ticket = PlanTicket(meal, person!, meal.BusinessId, meal.ProductId, meal.Price, menu, AvailableForMeal(meal));
+            var ticket = PlanTicket(meal, person!, meal.BusinessId, meal.ProductId, meal.Price, menu, CurrentAllowance(meal));
             return ticket.Extras.Count == 0 ? null : ticket;
         }
 
@@ -65,29 +65,69 @@ namespace PersistentCity.Core
             if (observation == null || person == null || observation.Id != meal.BusinessId) return null;
             var menu = observation.Offers.Where(o => FoodProducts.Known(o.ProductId))
                 .Select(o => new FoodExtraOffer(o.ProductId, o.Price, null, ExtraTaste(meal, person, o.ProductId))).ToList();
-            var ticket = PlanTicket(meal, person, meal.BusinessId, meal.ProductId, meal.Price, menu, AvailableForMeal(meal));
+            var ticket = PlanTicket(meal, person, meal.BusinessId, meal.ProductId, meal.Price, menu, CurrentAllowance(meal));
             return ticket.Extras.Count == 0 ? null : ticket;
         }
 
-        /// <summary>Diagnostic: each feasible candidate main's ticket from its captured menu, the same policy checkout
-        /// applies. Built only for an observed decision; nothing is saved or scored.</summary>
+        /// <summary>A wallet limit read that changes nothing: a refused checkout must keep its saved Price within
+        /// the saved Allowance, and an observed decision must not change state an unobserved one would not.</summary>
+        private static Money CurrentAllowance(ResidentMeal meal)
+            => meal.Budget != null ? HouseholdFinance.SpendingLimit(meal.Budget) : Money.Max(Money.Zero, meal.Allowance - meal.DayAllowanceUsed);
+
+        /// <summary>The ticket a candidate main would carry, from the shop's captured menu: the policy and filters
+        /// checkout applies (captured units already exclude other committed meals' reservations). Null when that
+        /// seller sells the main only.</summary>
+        private FoodMealTicket? CandidateTicket(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, string product, Money price, Money allowance)
+        {
+            bool rival = shop.AlternativeKind == FoodAlternativeKind.Rival;
+            if (!rival && !(market is IFoodTicketMarket t && t.SellsExtras(shop.BusinessId))) return null;
+            var menu = new List<FoodExtraOffer>(shop.Offers.Count);
+            foreach (var o in shop.Offers)
+                if (FoodProducts.Known(o.ProductId) && (rival || o.Units >= 0))
+                    menu.Add(new FoodExtraOffer(o.ProductId, o.Price, rival ? (int?)null : o.Units, ExtraTaste(meal, person, o.ProductId)));
+            return PlanTicket(meal, person, shop.BusinessId, product, price, menu, allowance);
+        }
+
+        /// <summary>Diagnostic: each feasible candidate main's ticket, as used for its expense in the choice.</summary>
         private IReadOnlyList<FoodMealTicket> CandidateTickets(ResidentMeal meal, CitizenState person, FoodDecisionState d, FoodIntent intent)
         {
             var tickets = new List<FoodMealTicket>();
-            // Read-only: an observed decision must not change wallet state an unobserved one would not.
-            Money allowance = meal.Budget != null ? HouseholdFinance.SpendingLimit(meal.Budget) : Money.Max(Money.Zero, meal.Allowance - meal.DayAllowanceUsed);
+            Money allowance = CurrentAllowance(meal);
             foreach (var choice in intent.Choices)
             {
                 if (!choice.ScoreCents.HasValue) continue;
                 var shop = d.Shops.FirstOrDefault(s => s.BusinessId == choice.BusinessId);
-                if (shop == null) continue;
-                bool rival = shop.AlternativeKind == FoodAlternativeKind.Rival;
-                if (!rival && !(market is IFoodTicketMarket t && t.SellsExtras(shop.BusinessId))) continue;
-                var menu = shop.Offers.Where(o => rival || o.Units >= 0)
-                    .Select(o => new FoodExtraOffer(o.ProductId, o.Price, rival ? (int?)null : o.Units, ExtraTaste(meal, person, o.ProductId)));
-                tickets.Add(PlanTicket(meal, person, shop.BusinessId, choice.ProductId, choice.Price, menu, allowance));
+                var ticket = shop == null ? null : CandidateTicket(meal, person, shop, choice.ProductId, choice.Price, allowance);
+                if (ticket != null) tickets.Add(ticket);
             }
             return tickets;
+        }
+
+        /// <summary>Evidence that an uncertain meal's checkout completed. A ticket-aware seller reports what sold;
+        /// otherwise a confirmed receipt means the whole held Price sold as one product.</summary>
+        private bool ConfirmedEvidence(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+        {
+            total = meal.Price; extras = Array.Empty<FoodTicketLine>();
+            if (market is IFoodTicketEvidence tickets)
+            {
+                if (!tickets.TryConfirmedTicket(meal, out total, out extras)) return false;
+                var main = total;
+                foreach (var line in extras) main -= line.Price;
+                if (total > meal.Price || main <= Money.Zero || extras.Count > FoodMealExtras.MaximumExtras)
+                    throw new InvalidOperationException("Confirmed ticket exceeds the held purchase.");
+                return true;
+            }
+            return market is IFoodSaleEvidence evidence && evidence.IsConfirmedPaid(meal);
+        }
+
+        /// <summary>Settle a confirmed uncertain meal: return unsold funds, book the sold total and every sold line once.</summary>
+        private void SettleConfirmed(ResidentMeal meal, Money total, IReadOnlyList<FoodTicketLine> extras, string reason)
+        {
+            var unsold = meal.Price - total;
+            if (meal.Budget != null) { HouseholdFinance.ReleasePart(meal.Budget, unsold); HouseholdFinance.ConfirmPurchase(meal.Budget); }
+            else meal.DayAllowanceUsed -= unsold;
+            meal.Price = total;
+            ConfirmPurchase(meal, reason, extras);
         }
     }
 }

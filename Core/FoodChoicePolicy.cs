@@ -8,9 +8,12 @@ namespace PersistentCity.Core
     public readonly struct EvaluatedFoodOffer
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
-            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1, bool campaignActive = false)
-        { CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
+            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1, bool campaignActive = false,
+            Money? ticket = null)
+        { Ticket=ticket ?? price; CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
+        /// <summary>F6j: main plus the extras this resident would add at this shop; equals Price without extras.</summary>
+        public Money Ticket { get; }
         public bool CampaignActive { get; }
         public double MemoryContribution { get; }
         public double AlternativeWeight { get; }
@@ -74,6 +77,11 @@ namespace PersistentCity.Core
             // This reward ceiling is inactive throughout the recorded $9-$17 range at default strength.
             => Math.Min(4,Math.Pow(MealReferenceCents/cents,
                 2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity))));
+        // F6j: the shop's expense is the whole ticket. Extras raise it relative to the main at the resident's own price
+        // sensitivity; the $12.50 meal anchor applies to the main only. Never above 1, so a cheap side is never a bargain.
+        private static double TicketFactor(double mainCents,double ticketCents,ResidentTraits traits,FoodChoiceSettings settings)
+            => ticketCents<=mainCents ? 1 : Math.Pow(mainCents/ticketCents,
+                2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity)));
         internal readonly struct DistancePreference
         {
             private readonly double weight,scale,divisor,floor,temperature;
@@ -118,6 +126,7 @@ namespace PersistentCity.Core
             double taste=TasteRatios[band];
             double w=tasteWeight==1 ? taste : Math.Pow(taste,tasteWeight);
             w*=PriceFactor(o.Price.ApproximateCents(),t,s);
+            w*=TicketFactor(o.Price.ApproximateCents(),o.Ticket.ApproximateCents(),t,s);
             w*=DistanceWeight(o.Travel,t,s,false,weatherTravelMultiplier,o.CampaignActive);
             w/=1+s.FoodChoiceQueueWeight*o.Queue/(2+3*t.Band(ResidentTrait.QueuePatience));
             double quality=(o.Quality.HasValue ? (o.Quality.Value-50)/100.0 : 0)

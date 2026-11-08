@@ -71,7 +71,35 @@ namespace PersistentCity.Persistence
             if (status == FoodReceiptStatus.Paid) return true;
             throw new InvalidOperationException("Native food receipt is uncertain or conflicts with this intention; no retry.");
         }
-        /// <summary><paramref name="extras"/> are the planned ticket extras; meal.Price is then the planned total.</summary>
+        /// <summary>F6j reconciliation without a checkout replay: a paid receipt for this intention, business and main
+        /// whose sold total is at most the meal's held Price (its planned total). Returns the sold total and the sold
+        /// extras, so the caller can return unsold funds and record every sold line. False for any other evidence.</summary>
+        public static bool TryReadPaidTicket(IDictionary<string, string> data, ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+        {
+            total = Money.Zero; extras = Array.Empty<FoodTicketLine>();
+            if (meal.TargetKind != FoodAlternativeKind.Player || meal.Price <= Money.Zero) return false;
+            if (data.ContainsKey(LegacyPrefix + meal.IntentId))
+            {
+                if (ReadStatus(data, meal) != FoodReceiptStatus.Paid) return false;
+                total = meal.Price; return true; // legacy receipts are always one product
+            }
+            if (!data.TryGetValue(Key(meal), out var value) || value == null) return false;
+            var parts = value.Split('|');
+            if (parts.Length < 4 || parts[0] != "paid" || !PositiveCents(parts[1], false)
+                || parts[2] != Uri.EscapeDataString(meal.BusinessId) || parts[3] != Uri.EscapeDataString(meal.ProductId)
+                || !ExtraFields(parts, 4) || !Money.TryParseCents(parts[1], Money.CentBits, out var paid)) return false;
+            var lines = new List<FoodTicketLine>();
+            var main = paid;
+            for (int i = 4; i < parts.Length; i++)
+            {
+                int colon = parts[i].IndexOf(':');
+                if (!Money.TryParseCents(parts[i].Substring(0, colon), Money.CentBits, out var price)) return false;
+                lines.Add(new FoodTicketLine(Uri.UnescapeDataString(parts[i].Substring(colon + 1)), price));
+                if (!Money.TryAdd(main, -price, out main)) return false;
+            }
+            if (paid > meal.Price || main <= Money.Zero) return false;
+            total = paid; extras = lines; return true;
+        }
         /// <summary>F6j: true only for a paid receipt of exactly this planned ticket; any other evidence throws.</summary>
         public static bool AlreadyPaid(IDictionary<string, string> data, ResidentMeal meal, IReadOnlyList<FoodTicketLine> extras)
         {
@@ -79,6 +107,7 @@ namespace PersistentCity.Persistence
             if (data.TryGetValue(Key(meal), out var value) && value == "paid|" + Identity(meal) + Lines(extras)) return true;
             throw new InvalidOperationException("Native food receipt conflicts with this ticket; no retry.");
         }
+        /// <summary><paramref name="extras"/> are the planned ticket extras; meal.Price is then the planned total.</summary>
         public static void Begin(IDictionary<string, string> data, ResidentMeal meal, IReadOnlyList<FoodTicketLine>? extras = null)
         {
             if (meal.TargetKind != FoodAlternativeKind.Player) throw new InvalidOperationException("Modeled food has no native receipt.");

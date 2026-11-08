@@ -9,7 +9,7 @@ namespace PersistentCity.EconomyInterventions;
 /// observation and walking routes; it is the only place an intervention input changes anything.
 /// Player checkout is the sale authority (one order per intent, refused on changed terms). No rival
 /// checkout exists. Every read is fenced to the current input epoch.</summary>
-public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket,
+public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket,
     IFoodBusinessAuthority, IFoodSaleEvidence
 {
     public sealed class Shop
@@ -158,11 +158,19 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodCandida
             }
         var total = ticket?.Main.Price ?? meal.Price;
         foreach (var line in sold) total += line.Price;
+        sales[meal.IntentId] = (total, sold.ToArray());
         NativeOrders++; NativeRevenueUnits += total.Units;
         if (InjectDuplicateOrder) { InjectDuplicateOrder = false; DuplicateOrders++; NativeOrders++; NativeRevenueUnits += total.Units; }
         return new FoodSale(true, "Native double confirmed", null, sold);
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
+    private readonly Dictionary<string, (Money Total, FoodTicketLine[] Extras)> sales = new(StringComparer.Ordinal);
+    public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+    {
+        bool found = sales.TryGetValue(meal.IntentId, out var sale);
+        total = found ? sale.Total : Money.Zero; extras = found ? sale.Extras : Array.Empty<FoodTicketLine>();
+        return found;
+    }
 
     public void CloseRivals() { }
     public bool NeedsRivalRefresh(double minute) => false;

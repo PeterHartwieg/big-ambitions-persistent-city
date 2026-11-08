@@ -12,13 +12,14 @@ Refs #93. Task `pc-f6j-multi-item-meals`, base `codex/persistent-city` at `1c295
 - `Persistence/FoodSaleReceipts.cs`: a receipt may carry `|cents:product` extra fields after the main identity; one-product receipts are unchanged. Prune accepts confirmed ticket receipts.
 - `Runtime/NativeFoodMarket.cs`, `FoodMarkets.cs`: extras sell as further one-product native orders, each with the main line's checks, under the meal's one receipt. Vehicles stay main-only.
 - `tools/economy-interventions`: the F6h native double sells extras, so the rerun measures whole tickets.
-- `FoodChoicePolicy`, `FoodChoiceSettings`, the F6i formula and the F6h criterion are untouched.
+- `Core/FoodChoicePolicy.cs` (review fix Sol-r1-1): a candidate's weight also multiplies by `(main/ticket)^(2 × priceWeight × sensitivity)`, using the ticket the decision plans from the captured menu. The F6i main factor, `FoodChoiceSettings`, both weights and the F6h criterion are untouched.
+- Review fix Sol-r1-3: new `IFoodTicketEvidence` and `FoodSaleReceipts.TryReadPaidTicket` settle an uncertain meal from its confirmed receipt's sold total and lines (native market, `FoodMarkets`, the F6h double).
 
 Re-verified at the base: `FoodChoicePolicy.PriceFactor`/`MealReferenceCents` ($12.50), `Select`'s nonpositive/over-limit skip, `HouseholdFinance.SpendingLimit`/`HoldPurchase`, `FoodSaleReceipts` v2 identity, `NativeFoodMarket.BuyLive` one-entry order checks, `ExternalFoodSettlement.TryPay`, and the saved market-history reconciliation in `SaveCodec.ValidateFood`.
 
 ## Offline validation
 
-`F6jMealExtrasTests`, 18 passed:
+`F6jMealExtrasTests`, 27 passed:
 
 | Requirement | Test |
 | --- | --- |
@@ -32,15 +33,26 @@ Re-verified at the base: `FoodChoicePolicy.PriceFactor`/`MealReferenceCents` ($1
 | (h) F6i main rule | `F6iPriceAnchorTests` unchanged and passing; `ObservedDecisionReportsCandidateTicketsWithoutChangingChoice` |
 | (i) +50% menu marks up the ticket | `WholeMenuMarkupMarksUpTheWholeTicket`: same extras, total exactly ×1.5 |
 
+Review round 1:
+
+- **Sol-r1-1:** `TicketExpenseLowersAShopWeightButNotTheMainAnchor` (exact factor, +50% menu leaves it unchanged, price weight 0 disables it) and `CandidateTicketsEnterTheShopChoice` (two equal shops; only one sells extras, and fewer residents choose its croissant).
+- **Sol-r1-2:** `RefusedCheckoutAfterTheLimitFallsStillSaves` and `RefusedRivalSettlementAfterTheLimitFallsStillSaves` lower the wallet limit below a committed main with cash conserved, then save. Both fail on the previous code (`Price ≤ Allowance` broken) and pass now: checkout and rival ticket planning read the limit without overwriting `Allowance`.
+- **Sol-r1-3:** `ConfirmedReceiptSettlesTheSoldTicketAfterReload` (fully and partly sold tickets, with and without household budgets) confirms the real receipt format, loses the acknowledgement, reloads, and checks the held money is released down to the sold total, every sold line is recorded once and no order repeats. `PaidTicketEvidenceIsReadOnlyForItsOwnIntentionAndHeldTotal` covers the parser.
+- **Opus-r1-4:** candidate and checkout tickets share one filter (known, in-scope, stock net of other meals' reservations).
+
 Also covered: uncertain tickets keep their planned total held and are never replayed; a reload every 37 minutes through a policy day gives identical lines and save bytes; receipt identity, partial confirmation and prune.
 
-Full suite: **3,925 passed**, 0 failed. Both writer-33 golden pins unchanged. Build passed.
+Full suite after review round 1: **3,934 passed**, 0 failed. Both writer-33 golden pins unchanged. Build passed.
 
 One existing expectation changed: `EconomyInterventionTests.CatchmentCountsOnlyMealsWhoseDecisionEvaluatedTheShopAndSurvivesReload` required shop-day purchases to equal meals choosing the shop. Shop-day purchases now count sold items, so the test checks `meals ≤ items ≤ 4 × meals`. No other test or hash changed.
 
 Process note: one full test run started while another worktree's `dotnet test` was still running (my `pgrep` check matched only its shell). That run had one failure, the expectation above. The final run, reported here, started with no other test process.
 
 ## Notes for the F6h rerun
+
+A resident who would add extras sees that shop as dearer (Sol-r1-1), so realised extras per meal are below the policy rates. The band edge at 75% is a step; at native prices a chosen $12.50 burger main expects about +44% in extras (Opus-r1-2, [decision](../decisions/2026-11-08-multi-item-meals.md)).
+
+Known UX change for the coordinator (Opus-r1-3): the management panel's weekly "Purchases" figures (`FoodFeedback`, `FoodFeedbackV2`) read shop-day purchases, which now count items, so they rise up to fourfold per meal from F6j on and week-over-week comparisons across the upgrade jump. Relabelling to "Items sold" is a UI change outside this slice. Native completed orders and bags also count per line; rig check 1 measures them.
 
 F6h's own-shop quantity reads shop-day purchases, which now count items rather than visits. Revenue is the whole ticket. A resident's `Purchases` stays one per meal.
 

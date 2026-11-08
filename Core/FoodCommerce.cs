@@ -29,7 +29,7 @@ namespace PersistentCity.Core
         public double ElapsedMilliseconds { get; set; }
         public FoodDecisionState? Decision { get; set; }
         /// <summary>F6j: each feasible candidate main with the extras the same policy would add from its captured
-        /// menu. Diagnostic only: extras never change a candidate's choice weight.</summary>
+        /// menu: the ticket whose total the choice compared as that shop's expense.</summary>
         public IReadOnlyList<FoodMealTicket> Tickets { get; set; } = Array.Empty<FoodMealTicket>();
         /// <summary>Shortlist/hash/traits/sampling work only, excluding supply capture, feasibility and routes.
         /// Null if this diagnostic did not observe the initial capture (for example after reload).</summary>
@@ -199,6 +199,12 @@ namespace PersistentCity.Core
         bool SellsExtras(string businessId);
         FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute);
     }
+    /// <summary>F6j: the seller's confirmed receipt for an uncertain meal, read without a checkout replay. Total is
+    /// what actually sold (at most the held planned total); extras are the sold extra lines.</summary>
+    public interface IFoodTicketEvidence
+    {
+        bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras);
+    }
     public interface IFoodBusinessAuthority
     {
         bool CanServe(string businessId);
@@ -362,11 +368,8 @@ namespace PersistentCity.Core
                 // original transaction. Movement remains unresolved after proof settles cash.
                 try
                 {
-                    if (market is IFoodSaleEvidence evidence && evidence.IsConfirmedPaid(meal))
-                    {
-                        if (meal.Budget != null) HouseholdFinance.ConfirmPurchase(meal.Budget);
-                        ConfirmPurchase(meal, "Original native receipt confirmed; no checkout replay");
-                    }
+                    if (ConfirmedEvidence(meal, out var paid, out var extras))
+                        SettleConfirmed(meal, paid, extras, "Original native receipt confirmed; no checkout replay");
                 }
                 catch (Exception) { /* Missing proof preserves held funds and the original receipt. */ }
             }
@@ -391,12 +394,12 @@ namespace PersistentCity.Core
                 if (meal.Status == MealStatus.Uncertain)
                 {
                     bool confirmed = false;
-                    try { confirmed = market is IFoodSaleEvidence evidence && evidence.IsConfirmedPaid(meal); }
+                    Money paid = Money.Zero; IReadOnlyList<FoodTicketLine> extras = Array.Empty<FoodTicketLine>();
+                    try { confirmed = ConfirmedEvidence(meal, out paid, out extras); }
                     catch (Exception) { /* Unavailable evidence cannot authorize spending or a refund. */ }
                     if (confirmed)
                     {
-                        if (meal.Budget != null) HouseholdFinance.ConfirmPurchase(meal.Budget);
-                        ConfirmPurchase(meal, "Original native receipt confirmed; no checkout replay");
+                        SettleConfirmed(meal, paid, extras, "Original native receipt confirmed; no checkout replay");
                         meal.DueAt = now + .001;
                     }
                     else meal.DueAt = (Math.Floor(now / 1440) + 1) * 1440;

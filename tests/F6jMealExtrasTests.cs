@@ -190,11 +190,13 @@ public sealed class F6jMealExtrasTests
         public Route Plan(Place from, Place to, double at, TravelPreferences preferences) => new()
         { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Minutes = 5, Mode = TravelMode.Walk } } };
     }
-    private sealed class TicketMarket : IFoodMarket, IFoodTicketMarket, IFoodSaleEvidence
+    private sealed class TicketMarket : IFoodMarket, IFoodTicketMarket, IFoodSaleEvidence, IFoodTicketEvidence
     {
         public bool Extras = true;
-        public int ThrowFromDay = int.MaxValue;
-        public int SellAtMost = 3;
+        public HashSet<string>? ExtrasAt;
+        // Native outcome lost before the receipt is confirmed (stays pending), or after it is confirmed.
+        public int ThrowFromDay = int.MaxValue, LoseAcknowledgementDay = -1;
+        public int SellAtMost = 3, MealsPerHour = 30;
         public readonly Dictionary<string, Dictionary<string, (Money Price, int Units)>> Menus = new()
         {
             ["b"] = new() { [FoodProducts.Croissant] = (Money.FromCents(1250), 50), [FoodProducts.Burger] = (Money.FromCents(900), 50),
@@ -203,17 +205,21 @@ public sealed class F6jMealExtrasTests
         };
         public readonly List<(string Intent, string Business, string Product, Money Price)> Lines = new();
         public readonly HashSet<string> Intents = new();
+        // The real native receipt format, kept like native save data across a population reload.
+        public readonly Dictionary<string, string> Receipts = new();
         public double EarliestMinute => 0;
-        public bool IsConfirmedPaid(ResidentMeal meal) => false;
+        public bool IsConfirmedPaid(ResidentMeal meal) => FoodSaleReceipts.ReadStatus(Receipts, meal) == FoodReceiptStatus.Paid;
+        public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+            => FoodSaleReceipts.TryReadPaidTicket(Receipts, meal, out total, out extras);
         public IReadOnlyList<FoodBusiness> Read(double minute) => Menus.Select(m => new FoodBusiness {
-            Id = m.Key, PlaceId = m.Key == "b" ? "shop" : "shop2", Name = m.Key, MealsPerHour = 30,
+            Id = m.Key, PlaceId = m.Key == "b" ? "shop" : "shop2", Name = m.Key, MealsPerHour = MealsPerHour,
             Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
             Offers = m.Value.Select(o => new FoodOffer { ProductId = o.Key, Price = o.Value.Price, Units = o.Value.Units }).ToList() }).ToArray();
-        public bool SellsExtras(string businessId) => Extras;
+        public bool SellsExtras(string businessId) => Extras && (ExtrasAt == null || ExtrasAt.Contains(businessId));
         public FoodSale Buy(ResidentMeal meal, double minute) => Sell(meal, null);
         public FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute)
         {
-            Assert.True(Extras); Assert.Equal(meal.Price, ticket.Total); Assert.Equal(meal.ProductId, ticket.Main.ProductId);
+            Assert.True(SellsExtras(meal.BusinessId)); Assert.Equal(meal.Price, ticket.Total); Assert.Equal(meal.ProductId, ticket.Main.ProductId);
             return Sell(meal, ticket);
         }
         private FoodSale Sell(ResidentMeal meal, FoodMealTicket? ticket)
@@ -222,6 +228,7 @@ public sealed class F6jMealExtrasTests
             var menu = Menus[meal.BusinessId];
             var main = menu[meal.ProductId];
             if (main.Units <= 0 || main.Price != (ticket?.Main.Price ?? meal.Price)) return new(false, "changed");
+            FoodSaleReceipts.Begin(Receipts, meal, ticket?.Extras);
             menu[meal.ProductId] = (main.Price, main.Units - 1); Lines.Add((meal.IntentId, meal.BusinessId, meal.ProductId, main.Price));
             var sold = new List<FoodTicketLine>();
             foreach (var extra in ticket?.Extras ?? Array.Empty<FoodTicketLine>())
@@ -231,10 +238,13 @@ public sealed class F6jMealExtrasTests
                 Lines.Add((meal.IntentId, meal.BusinessId, extra.ProductId, extra.Price));
             }
             if (meal.Day >= ThrowFromDay) throw new Exception("Lost native acknowledgement");
+            if (ticket == null) FoodSaleReceipts.Confirm(Receipts, meal);
+            else FoodSaleReceipts.Confirm(Receipts, meal, ticket.Main.Price, ticket.Extras, sold);
+            if (meal.Day == LoseAcknowledgementDay) throw new Exception("Receipt confirmed; acknowledgement lost");
             return new(true, "fake ticket", null, sold);
         }
     }
-    private static (CitySimulator City, TicketMarket Market) Ready(int count = 60, TicketMarket? market = null)
+    private static (CitySimulator City, TicketMarket Market) Ready(int count = 60, TicketMarket? market = null, bool finances = false, long? allowanceCents = null)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {
             Id = "r" + n, Name = "Resident " + n, Persona = Persona.Foodie, Age = 30 }).ToArray(), new[] {
@@ -249,7 +259,18 @@ public sealed class F6jMealExtrasTests
         DevelopmentChain.RepresentedSchema(state, 1);
         market ??= new TicketMarket();
         var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(market);
+        if (allowanceCents.HasValue) foreach (var meal in city.State.Food!.Residents) meal.Allowance = Money.FromCents(allowanceCents.Value);
+        if (finances)
+        {
+            city.EnableHouseholdFinances();
+            foreach (var meal in city.State.Food!.Residents) meal.Budget!.HomeFoodFundedDay = -1;
+        }
         return (city, market);
+    }
+    private static CitySimulator Reload(CitySimulator city, TicketMarket market)
+    {
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
+        var next = new CitySimulator(read.State!, new Walking()); next.AttachFoodMarket(market); return next;
     }
     private static void Advance(CitySimulator city, double at) { while (!city.AdvanceTo(at, 128).CaughtUp) { } }
     // Day 1 runs the legacy choice; day 2 is the first F6i policy day. Each run ends after day 2's meals.
@@ -366,6 +387,162 @@ public sealed class F6jMealExtrasTests
         Assert.Equal(plainMarket.Lines, observedMarket.Lines);
         Assert.NotEmpty(tickets);
         Assert.All(tickets, t => Assert.All(t.Extras, e => Assert.True(observedMarket.Menus[t.BusinessId].ContainsKey(e.ProductId))));
+    }
+
+    // Sol-r1-1: the shop expense compared in the choice is the whole ticket. The F6i main factor is unchanged.
+    [Fact]
+    public void TicketExpenseLowersAShopWeightButNotTheMainAnchor()
+    {
+        var traits = ResidentTraits.Generate(3, "neutral-traits");
+        var settings = new FoodChoiceSettings(); settings.Clamp();
+        EvaluatedFoodOffer O(long main, long? ticket) => new("b", "p", Money.FromCents(main), 5, 0, 20, 60, null, null, MealKind.Lunch,
+            ticket: ticket.HasValue ? Money.FromCents(ticket.Value) : null);
+        double alone = FoodChoicePolicy.Weight(O(1250, null), traits, Money.FromCents(100000), settings);
+        Assert.Equal(alone, FoodChoicePolicy.Weight(O(1250, 1250), traits, Money.FromCents(100000), settings));
+        double withSide = FoodChoicePolicy.Weight(O(1250, 1850), traits, Money.FromCents(100000), settings);
+        Assert.True(withSide < alone);
+        int band = traits.Band(ResidentTrait.PriceSensitivity);
+        double expected = Math.Pow(1250.0 / 1850, 2 * (.5 + .25 * band));
+        Assert.Equal(expected, withSide / alone, 9);
+        // A whole-menu +50% keeps the ticket/main ratio: only the F6i main factor moves.
+        double marked = FoodChoicePolicy.Weight(O(1875, 2775), traits, Money.FromCents(100000), settings);
+        double markedAlone = FoodChoicePolicy.Weight(O(1875, null), traits, Money.FromCents(100000), settings);
+        Assert.Equal(expected, marked / markedAlone, 9);
+        // Price weight 0 disables the soft ticket signal as it does the main's.
+        var off = new FoodChoiceSettings { FoodChoicePriceWeight = 0 }; off.Clamp();
+        Assert.Equal(FoodChoicePolicy.Weight(O(1250, null), traits, Money.FromCents(100000), off),
+            FoodChoicePolicy.Weight(O(1250, 1850), traits, Money.FromCents(100000), off));
+    }
+
+    // Sol-r1-1 integrated: two equal shops with the same $12.50 croissant and $6 hot dog; only one sells extras,
+    // so only there does the croissant's planned ticket include a side. Fewer residents choose that croissant.
+    [Fact]
+    public void CandidateTicketsEnterTheShopChoice()
+    {
+        TicketMarket Market(bool extrasAtB) { var m = new TicketMarket { ExtrasAt = new() { extrasAtB ? "b" : "none" } };
+            m.Menus["b"] = new() { [FoodProducts.Croissant] = (Money.FromCents(1250), 500), [FoodProducts.HotDog] = (Money.FromCents(600), 500) };
+            m.Menus["b2"] = new() { [FoodProducts.Croissant] = (Money.FromCents(1250), 500), [FoodProducts.HotDog] = (Money.FromCents(600), 500) }; return m; }
+        (CitySimulator, TicketMarket) Build(bool extrasAtB)
+        {
+            var (city, market) = Ready(400, Market(extrasAtB));
+            city.State.Food!.Shops[0].AdditionalProductIds = new() { FoodProducts.HotDog };
+            city.State.Food.Shops[1].ProductId = FoodProducts.Croissant; city.State.Food.Shops[1].AdditionalProductIds = new() { FoodProducts.HotDog };
+            return (city, market);
+        }
+        var (withExtras, a) = Build(true); var (without, b) = Build(false);
+        var observed = new List<FoodMealTicket>();
+        withExtras.FoodDecisionObserved += t => observed.AddRange(t.Tickets);
+        Advance(withExtras, Until(withExtras)); Advance(without, Until(without));
+        int Mains(TicketMarket m, string business) => m.Lines.Where(l => l.Intent.EndsWith(":2")).GroupBy(l => l.Intent)
+            .Count(g => g.First().Business == business && g.First().Product == FoodProducts.Croissant);
+        Assert.Contains(observed, t => t.BusinessId == "b" && t.Main.ProductId == FoodProducts.Croissant && t.Extras.Count > 0);
+        Assert.DoesNotContain(observed, t => t.BusinessId == "b2");
+        Assert.True(Mains(a, "b") < Mains(b, "b"), Mains(a, "b") + " vs " + Mains(b, "b"));
+        Assert.True(Mains(a, "b2") >= Mains(b, "b2"));
+    }
+
+    private static void LowerLimitBelow(ResidentMeal meal, Money price)
+    {
+        var budget = meal.Budget!;
+        var target = HouseholdFinance.SpendingReserve(budget) + price - Money.FromCents(1);
+        var delta = budget.Balance - target;
+        budget.Balance -= delta; budget.OpeningBalance -= delta;
+        Assert.True(HouseholdFinance.CashConserved(budget));
+        Assert.True(HouseholdFinance.SpendingLimit(budget) < price);
+    }
+
+    // Sol-r1-2: a checkout refused because the wallet limit fell keeps a savable commitment.
+    [Fact]
+    public void RefusedCheckoutAfterTheLimitFallsStillSaves()
+    {
+        var (city, market) = Ready(40, finances: true);
+        ResidentMeal? target = null;
+        for (double t = 2 * 1440; t < Until(city) && target == null; t += 1)
+        {
+            Advance(city, t);
+            target = city.State.Food!.Residents.FirstOrDefault(m => m.Status == MealStatus.Serving || m.Status == MealStatus.Travelling);
+        }
+        Assert.NotNull(target);
+        LowerLimitBelow(target!, target!.Price);
+        Advance(city, Until(city));
+        Assert.Equal(MealStatus.Missed, target.Status);
+        Assert.DoesNotContain(market.Intents, i => i == target.IntentId);
+        Assert.True(target.Price <= target.Allowance);
+        Reload(city, market);
+    }
+
+    [Fact]
+    public void RefusedRivalSettlementAfterTheLimitFallsStillSaves()
+    {
+        var (city, market, paths) = RivalOutflowTests.Ready(finances: true);
+        market.Rivals["rival0"].AdditionalProductIds = new() { FoodProducts.HotDog };
+        market.Observations["rival0"] = new FoodAlternativeObservation("rival0", "s0", "street", 1, 1, "food", "rival-owner",
+            FoodAlternativeKind.Rival, true, true, false, null, 0,
+            new[] { new FoodAdvertisedOffer(FoodProducts.Croissant, Money.FromCents(100)), new FoodAdvertisedOffer(FoodProducts.HotDog, Money.FromCents(40)) },
+            Enumerable.Range(0, 7).Select(d => new FoodAdvertisedHours(d, 0, 1440)));
+        city.InspectFoodAwareness("r");
+        var meal = city.State.Food!.Residents.Single();
+        for (int i = 0; i < 4000 && meal.Status != MealStatus.Serving; i++) city.AdvanceTo(city.State.Minute + 1, 1);
+        Assert.Equal(MealStatus.Serving, meal.Status);
+        LowerLimitBelow(meal, meal.Price);
+        for (int i = 0; i < 4000 && meal.Status == MealStatus.Serving; i++) city.AdvanceTo(city.State.Minute + 1, 1);
+        Assert.Equal(MealStatus.Missed, meal.Status);
+        Assert.True(meal.Price <= meal.Allowance);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
+    }
+
+    // Sol-r1-3: the receipt is confirmed but the acknowledgement is lost. After a reload the meal settles from the
+    // receipt's sold lines: unsold extras are returned and each sold line is recorded once, with no second order.
+    [Theory]
+    [InlineData(3, false)] [InlineData(0, false)] [InlineData(3, true)] [InlineData(0, true)]
+    public void ConfirmedReceiptSettlesTheSoldTicketAfterReload(int sellAtMost, bool finances)
+    {
+        var market = new TicketMarket { LoseAcknowledgementDay = 2, SellAtMost = sellAtMost };
+        var (city, _) = Ready(120, market, finances, finances ? null : 5000);
+        Advance(city, Until(city));
+        var uncertainMeals = city.State.Food!.Residents.Where(m => m.Status == MealStatus.Uncertain).ToArray();
+        var uncertain = uncertainMeals.Select(m => m.ResidentId).ToHashSet();
+        // Some held tickets planned extras: fully sold (3) or only the main sold, extras unsold (0).
+        Assert.Contains(uncertainMeals, m => m.Price > market.Lines.First(l => l.Intent == m.IntentId).Price);
+        city = Reload(city, market);
+        // TicketMarket asserts one checkout per intention, so a replayed order would fail here.
+        Advance(city, Until(city) + 1440);
+        var day2 = market.Lines.Where(l => l.Intent.EndsWith(":2")).GroupBy(l => l.Intent).ToDictionary(g => g.Key, g => g.ToArray());
+        Assert.Contains(day2.Values, g => sellAtMost == 0 ? g.Length == 1 : g.Length > 1);
+        if (sellAtMost == 0) Assert.All(day2.Values, g => Assert.Single(g));
+        foreach (var m in city.State.Food!.Residents.Where(m => uncertain.Contains(m.ResidentId)))
+        {
+            Assert.NotEqual(MealStatus.Uncertain, m.Status);
+            Assert.Equal(market.Lines.Where(l => l.Intent.StartsWith("food:" + m.ResidentId + ":")).Aggregate(Money.Zero, (s, l) => s + l.Price), m.Spent);
+            if (m.Budget != null) { Assert.Equal(Money.Zero, m.Budget.HeldPurchase); Assert.True(HouseholdFinance.CashConserved(m.Budget)); }
+        }
+        var rows = city.State.Food.History.Where(h => h.BusinessId == "b").ToArray();
+        Assert.Equal(market.Lines.Count(l => l.Business == "b"), rows.Sum(r => r.Purchases));
+        foreach (var product in new[] { FoodProducts.Croissant, FoodProducts.Burger, FoodProducts.HotDog })
+            Assert.Equal(market.Lines.Where(l => l.Business == "b" && l.Product == product).Aggregate(Money.Zero, (s, l) => s + l.Price),
+                rows.SelectMany(r => r.ProductSales).Where(p => p.ProductId == product).Aggregate(Money.Zero, (s, p) => s + p.Revenue));
+        Reload(city, market);
+    }
+
+    [Fact]
+    public void PaidTicketEvidenceIsReadOnlyForItsOwnIntentionAndHeldTotal()
+    {
+        var extras = new[] { new FoodTicketLine(FoodProducts.Burger, Money.FromCents(300)), new FoodTicketLine(FoodProducts.HotDog, Money.FromCents(250)) };
+        var data = new Dictionary<string, string>(); var meal = ReceiptMeal(1250);
+        Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, meal, out _, out _));
+        FoodSaleReceipts.Begin(data, meal, extras);
+        Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, meal, out _, out _));
+        FoodSaleReceipts.Confirm(data, meal, Money.FromCents(700), extras, extras.Take(1).ToArray());
+        Assert.True(FoodSaleReceipts.TryReadPaidTicket(data, meal, out var total, out var sold));
+        Assert.Equal(Money.FromCents(1000), total);
+        Assert.Equal(FoodProducts.Burger, Assert.Single(sold).ProductId);
+        Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, ReceiptMeal(999), out _, out _)); // more than held
+        var other = ReceiptMeal(1250); other.ProductId = FoodProducts.HotDog;
+        Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, other, out _, out _));
+        var single = new Dictionary<string, string>(); var one = ReceiptMeal(700);
+        FoodSaleReceipts.Begin(single, one); FoodSaleReceipts.Confirm(single, one);
+        Assert.True(FoodSaleReceipts.TryReadPaidTicket(single, one, out total, out sold));
+        Assert.Equal(Money.FromCents(700), total); Assert.Empty(sold);
     }
 
     // ---- Native receipt identity. ----

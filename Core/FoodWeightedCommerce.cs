@@ -328,18 +328,21 @@ namespace PersistentCity.Core
             }
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
             var evaluated=new List<EvaluatedFoodOffer>();
+            var allowance=AvailableForMeal(meal);
             foreach(var c in intent.Choices)
             {
                 if(!c.ScoreCents.HasValue) continue;
                 var b=businesses.First(x=>x.Id==c.BusinessId);
+                // F6j: the expense compared is the whole ticket, planned from the captured menu by the checkout policy.
+                var ticket=CandidateTicket(meal,person,d.Shops.First(s=>s.BusinessId==c.BusinessId),c.ProductId,c.Price,allowance);
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
                     c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Shops.First(s=>s.BusinessId==c.BusinessId).AlternativeWeight,
-                    FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1, campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true));
+                    FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1, campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket?.Total));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);
+            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),allowance,Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);
             if(choiceMilliseconds.HasValue) choiceMilliseconds+=(System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency;
             d.Result=pick.Outside ? FoodDecisionResult.Outside : pick.Index>=0 ? FoodDecisionResult.Selected : FoodDecisionResult.NoFeasible;
             d.Reason=pick.Reason;d.Factor1=pick.Factor1;d.Factor2=pick.Factor2;

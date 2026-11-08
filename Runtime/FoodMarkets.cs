@@ -6,7 +6,7 @@ using PersistentCity.Core;
 namespace PersistentCity.Runtime
 {
     /// <summary>One population market, with authority selected by the saved scope channel.</summary>
-    public sealed class FoodMarkets : IFoodMarket, IFoodTicketMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
+    public sealed class FoodMarkets : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
         IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IRivalFoodMarket, IFoodAwarenessRevision, IDisposable
     {
         private readonly FoodCommerceState state;
@@ -28,6 +28,12 @@ namespace PersistentCity.Runtime
         public FoodBusiness? ReadClosedStand(string id, string place, double minute) => (Market(id) as IFoodClosedStandMarket)?.ReadClosedStand(id, place, minute);
         public bool CanServe(string id) => ((IFoodBusinessAuthority)Market(id)).CanServe(id);
         public bool IsConfirmedPaid(ResidentMeal meal) => ((IFoodSaleEvidence)Market(meal.BusinessId)).IsConfirmedPaid(meal);
+        public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+        {
+            if (Market(meal.BusinessId) is IFoodTicketEvidence tickets) return tickets.TryConfirmedTicket(meal, out total, out extras);
+            total = meal.Price; extras = Array.Empty<FoodTicketLine>();
+            return IsConfirmedPaid(meal);
+        }
         public bool IsCandidate(FoodScope scope) => ((IFoodCandidateMarket)(scope.Channel == FoodScopeChannel.Vehicle ? vehicles : shops)).IsCandidate(scope);
         public FoodBusiness? CaptureBusiness(string id, double minute) => ((IFoodCandidateMarket)Market(id)).CaptureBusiness(id, minute);
         public IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double tolerance, int maximumCandidates)

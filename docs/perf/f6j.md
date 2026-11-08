@@ -20,12 +20,12 @@ A native-price menu next to a $12.50 burger main ($9.24 and $5 cheaper, $10.25 s
 
 ## Cost
 
-`FoodMealExtras.Plan` on an eight-item menu: **1.51 µs** per call (mean of 200,000 calls after 2,000 warmup, Release). Checkout calls it once per paid player or rival meal. An observed decision also calls it once per feasible candidate, for the diagnostic trace only.
+`FoodMealExtras.Plan` on an eight-item menu: **1.51 µs** per call (mean of 200,000 calls after 2,000 warmup, Release). Checkout calls it once per paid player or rival meal. Since review fix Sol-r1-1 every decision also calls it once per feasible candidate (at most 64), so a decision with a full eight-shop, eight-offer shortlist adds about 0.1 ms of pure policy work at this rate; an observed decision calls it once more per candidate for the trace.
 
 Unmeasured native cost, for the rig: a player checkout at an extras-capable shop now makes one decision read (`ReadBusiness`, which may hit the per-minute supply cache) before the hold, and each sold extra adds one `FullServiceBusinessSimulator` setup, one `ProcessCustomer` call and one live menu supply read. With at most three extras that is at most four native orders in one checkout call. Rig check 4 measures it. No mod-work or whole-frame number is claimed here.
 
 ## Local validation
 
-- Build (`tools/build.py` with the supplied Managed directory): passed. DLL SHA256 `a80c27715d9752a374a42cc7a83fb08ee7b05f1df7560f4ca08259686b4d8595`.
-- `dotnet test tests/PersistentCity.Tests.csproj`: **3,925 passed**, 0 failed or skipped, 3 min 53 s. Both writer-33 golden pins unchanged.
-- New `F6jMealExtrasTests`: 18 passed.
+- Build (`tools/build.py` with the supplied Managed directory): passed. DLL SHA256 `a80c27715d9752a374a42cc7a83fb08ee7b05f1df7560f4ca08259686b4d8595`; after review round 1, `4ea764e41d72b76ecd2ec0030c8e997b16dc0a472e6eb9c54b0bd573be1aed89`.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,925 passed**, 0 failed or skipped, 3 min 53 s; after review round 1, **3,934 passed** in 3 min 49 s. Both writer-33 golden pins unchanged.
+- New `F6jMealExtrasTests`: 18 passed; 27 after review round 1.
