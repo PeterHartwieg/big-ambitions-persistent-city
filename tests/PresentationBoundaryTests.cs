@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Stopwatch = System.Diagnostics.Stopwatch;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -37,14 +39,15 @@ public sealed class PresentationBoundaryTests
         internal PhysicalPedestrians Pool => PhysicalPedestrians.Last!;
         internal CitizenState A => City.State.Citizens.Single(c => c.Identity.Id == "a");
         internal CitizenState B => City.State.Citizens.Single(c => c.Identity.Id == "b");
-        internal Fixture(bool withQueuer = false)
+        internal Fixture(bool withQueuer = false, int solo = 0)
         {
             StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrianBody.Unreachable = null;
             NativeTravelPace.Focus = Shop; Time.Next(3);
             var ids = new List<CitizenIdentity> { new() { Id = "a", Name = "A", Age = 30 }, new() { Id = "b", Name = "B", Age = 31 } };
             if (withQueuer) ids.Add(new() { Id = "q", Name = "Q", Age = 32 });
+            for (int i = 0; i < solo; i++) ids.Add(new() { Id = "s" + i.ToString("D2"), Name = "S" + i, Age = 20 + i % 40 });
             var state = Population.Create(ids, new[] {
-                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 4, Position = new(60, 0, 0) },
+                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 4 + solo, Position = new(60, 0, 0) },
                 new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Leisure, Position = Shop } }, "f2b", "0.40.4", 3, 1440 + 600);
             double now = state.Minute;
             foreach (var c in state.Citizens.Where(c => c.Identity.Id != "q"))
@@ -59,6 +62,15 @@ public sealed class PresentationBoundaryTests
                 StartMinute = now - 1, EndMinute = now + 10, VisitMinute = now - 1, ResumeEventMinute = now + 30, Members = new List<string>(members) };
             state.Citizens.Single(c => c.Identity.Id == "a").OptionalStop = Stop(SpotA, SpotB);
             state.Citizens.Single(c => c.Identity.Id == "b").OptionalStop = Stop(SpotB, SpotA);
+            // Solo window-shopping stops on their own spots (perf fixture only).
+            foreach (var c in state.Citizens.Where(c => c.Identity.Id.StartsWith("s", StringComparison.Ordinal)))
+            {
+                int i = int.Parse(c.Identity.Id.Substring(1), CultureInfo.InvariantCulture);
+                var at = new Position(106 + i % 8, 0, 2 + i / 8);
+                c.OptionalStop = new() { Kind = DwellKind.WindowShopping, PlaceId = "shop", SpotId = "solo:" + i, TargetId = "front:" + i,
+                    Position = at, Facing = new Position(at.X, 0, at.Z + 1), ReturnPosition = Shop, StartMinute = now - 1, EndMinute = now + 10,
+                    VisitMinute = now - 1, ResumeEventMinute = now + 30 };
+            }
             if (withQueuer)
             {
                 var q = state.Citizens.Single(c => c.Identity.Id == "q");
@@ -67,7 +79,7 @@ public sealed class PresentationBoundaryTests
             }
             City = new CitySimulator(state, new Paths());
             var parent = new Transform { Component = new PopulationRuntime() };
-            Bodies = new(parent, City, new MultimodalRoutes(), typeof(Fixture).Assembly, new VendorBodyTests.Log(), 8, 3, 100, new DwellSpots());
+            Bodies = new(parent, City, new MultimodalRoutes(), typeof(Fixture).Assembly, new VendorBodyTests.Log(), Math.Max(8, 2 + solo), 3, 100, new DwellSpots());
         }
         internal void Tick(float seconds = 0.3f) { Time.Next(seconds); Bodies.Update(); }
         internal PhysicalPedestrianBody Body(string id) => Pool.Active[id];
@@ -159,6 +171,43 @@ public sealed class PresentationBoundaryTests
         f.Tick();
         Assert.Equal(Shop, body.Target); Assert.False(body.Agent.isStopped);
         Assert.Equal(before, f.Logical());
+    }
+
+    // Opt-in offline component timing (docs/perf/f2b.md): set PC_F2B_MEASURE to an output file.
+    [Fact]
+    public void MeasureUpdateWithOptionalStopBodies()
+    {
+        string? path = System.Environment.GetEnvironmentVariable("PC_F2B_MEASURE");
+        if (path == null) return;
+        void Measure(string label, Fixture f, int count = 2000)
+        {
+            for (int i = 0; i < 100; i++) f.Tick(0.016f);
+            var times = new List<double>(count);
+            for (int i = 0; i < count; i++)
+            {
+                Time.Next(0.016f); long start = Stopwatch.GetTimestamp();
+                f.Bodies.Update();
+                times.Add((Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency);
+            }
+            times.Sort();
+            File.AppendAllText(path, string.Format(CultureInfo.InvariantCulture,
+                "{0}: bodies={1}, n={2}, p50={3:F4} ms, p95={4:F4} ms, max={5:F4} ms, spikes>=30ms={6}{7}", label, f.Pool.Active.Count, count,
+                times[count / 2], times[(int)Math.Ceiling(count * .95) - 1], times[^1], times.Count(t => t >= 30), System.Environment.NewLine));
+        }
+        foreach (int solo in new[] { 6, 46 })
+        {
+            using (var f = new Fixture(solo: solo))
+            {
+                for (int i = 0; i < 20; i++) f.Tick();
+                foreach (var b in f.Pool.Active.Values) b.Character.transform.position = PhysicalPedestrianBody.Vector(b.Target);
+                Measure("at spots, " + (solo + 2) + " stops", f);
+            }
+            using (var f = new Fixture(solo: solo))
+            {
+                for (int i = 0; i < 20; i++) f.Tick();
+                Measure("walking without progress (first 20 s, then the bound), " + (solo + 2) + " stops", f, 1500);
+            }
+        }
     }
 
     private static CityState WaitState(out Place shop)
