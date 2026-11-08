@@ -16,7 +16,7 @@ public sealed class PersistenceTests
         string expected = SaveCodec.Write(Example());
         var operations = Enumerable.Range(0, 32).Select(_ => System.Threading.Tasks.Task.Run(() =>
         {
-            var loaded = SaveCodec.Read(expected);
+            var loaded = SaveWire.Read(expected);
             Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
             Assert.Equal(expected, SaveCodec.Write(loaded.State!));
             loaded.State!.Citizens[0].NextEventMinute = double.NaN;
@@ -31,7 +31,7 @@ public sealed class PersistenceTests
     {
         var original = Example();
         string encoded = SaveCodec.Write(original);
-        var result = SaveCodec.Read(encoded);
+        var result = SaveWire.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, result.Status);
         var loaded = Assert.IsType<CityState>(result.State);
         var before = original.Citizens[0]; var after = loaded.Citizens[0];
@@ -52,7 +52,7 @@ public sealed class PersistenceTests
         var continuous = new CitySimulator(Example(), new DirectRoutes());
         continuous.AdvanceTo(20.75);
         Assert.Equal(CitizenPhase.Travelling, continuous.State.Citizens[0].Phase);
-        var read = SaveCodec.Read(SaveCodec.Write(continuous.State));
+        var read = SaveWire.Read(SaveCodec.Write(continuous.State));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new DirectRoutes());
         continuous.AdvanceTo(2500);
@@ -81,8 +81,8 @@ public sealed class PersistenceTests
     [Fact]
     public void MissingAndUnsupportedOldVersionAreDistinct()
     {
-        Assert.Equal(SaveReadStatus.Missing, SaveCodec.Read(null).Status);
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read("{\"Schema\":0}").Status);
+        Assert.Equal(SaveReadStatus.Missing, SaveWire.Read(null).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read("{\"Schema\":0}").Status);
         var data = new Dictionary<string, string>();
         Assert.Equal(SaveReadStatus.Missing, SaveStore.ReadFrom(data, "population-a").Status);
         Assert.True(SaveStore.WriteTo(data, Example()).Success);
@@ -97,8 +97,8 @@ public sealed class PersistenceTests
     {
         var state = Example(); state.Minute = invalid;
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
-        var json = JObject.Parse(SaveCodec.Write(Example())); json["Minute"] = invalid;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+        var json = SaveWire.Parse(SaveCodec.Write(Example())); json["Minute"] = invalid;
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(json.ToString()).Status);
         state = Example(); state.Places[0].Position = new Position(invalid, 2, 3);
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
         state = Example(); state.Citizens[0].Journey!.Legs[0].Minutes = invalid;
@@ -108,9 +108,9 @@ public sealed class PersistenceTests
     [Fact]
     public void MissingPositionComponentCannotSilentlyBecomeZero()
     {
-        var json = JObject.Parse(SaveCodec.Write(Example()));
+        var json = SaveWire.Parse(SaveCodec.Write(Example()));
         ((JObject)json["Places"]![0]!["Position"]!).Remove("X");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(json.ToString()).Status);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class PersistenceTests
         citizen.Phase = CitizenPhase.AtPlace; citizen.DestinationId = ""; citizen.Journey = null; citizen.DepartureMinute = 0;
         citizen.NextEventMinute = state.Minute; citizen.ActivityUntilMinute = state.Minute;
         InitializeFixture(state);
-        var json = JObject.Parse(SaveCodec.Write(state));
+        var json = SaveWire.Parse(SaveCodec.Write(state));
         // Leave identity and population fingerprint untouched, as in a damaged assignment record.
         json["Citizens"]![0]!["DayPlaceId"] = wrongPlace;
         string payload = json.ToString();
@@ -159,7 +159,7 @@ public sealed class PersistenceTests
         {
             var state = Example(); state.Citizens[0].Identity.Persona = persona; state.Citizens[0].DayPlaceId = "";
             InitializeFixture(state);
-            Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+            Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         }
     }
 
@@ -192,7 +192,7 @@ public sealed class PersistenceTests
     [InlineData("wrong-case")]
     public void ReaderValidatesWholeStateRatherThanAcceptingDeserializerDefaults(string corruption)
     {
-        var json = JObject.Parse(SaveCodec.Write(Example()));
+        var json = SaveWire.Parse(SaveCodec.Write(Example()));
         var citizen = (JObject)json["Citizens"]![0]!;
         switch (corruption)
         {
@@ -209,14 +209,14 @@ public sealed class PersistenceTests
             case "string-bool": citizen["Identity"]!["Female"] = "true"; break;
             case "wrong-case": citizen["phase"] = citizen["Phase"]; citizen.Remove("Phase"); break;
         }
-        var read = SaveCodec.Read(json.ToString());
+        var read = SaveWire.Read(json.ToString());
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.NotEmpty(read.Error);
     }
 
     [Fact]
     public void OversizedInputCollectionsAndStringsAreRejected()
     {
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(new string(' ', SaveCodec.MaxInputCharacters + 1)).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(new string(' ', SaveCodec.MaxInputCharacters + 1)).Status);
         Reject(state => { while (state.Places.Count <= SaveCodec.MaxPlaces) state.Places.Add(state.Places[0]); });
         Reject(state => { while (state.Citizens.Count <= SaveCodec.MaxCitizens) state.Citizens.Add(state.Citizens[0]); });
         Reject(state => state.PopulationKey = new string('a', 257));
@@ -248,7 +248,7 @@ public sealed class PersistenceTests
         var state = Example(); state.Citizens[0].DayPlaceId = ""; state.Citizens[0].ShopId = ""; state.Citizens[0].LeisureId = "";
         state.Citizens[0].ActivityUntilMinute = 1;
         state.Citizens[0].Identity.District = ""; state.Places[0].District = ""; InitializeFixture(state);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public sealed class PersistenceTests
     {
         var state = Example(); var citizen = state.Citizens[0];
         citizen.Phase = CitizenPhase.WaitingForRoute; citizen.Journey = null; citizen.DepartureMinute = 0; citizen.NextEventMinute = 30;
-        var read = SaveCodec.Read(SaveCodec.Write(state));
+        var read = SaveWire.Read(SaveCodec.Write(state));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var loaded = read.State!.Citizens[0];
         Assert.Null(loaded.Journey); Assert.Equal("work", loaded.DestinationId); Assert.Equal(Activity.Work, loaded.DestinationActivity); Assert.Equal(30, loaded.NextEventMinute);
@@ -270,14 +270,14 @@ public sealed class PersistenceTests
         citizen.Phase = CitizenPhase.WaitingForOpening; citizen.Journey = null; citizen.DepartureMinute = 0;
         citizen.NextEventMinute = 60; citizen.ActivityUntilMinute = 480;
         string encoded = SaveCodec.Write(state);
-        var read = SaveCodec.Read(encoded);
+        var read = SaveWire.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(encoded, SaveCodec.Write(read.State!));
         foreach (string field in new[] { "ActivityUntilMinute", "NextEventMinute" })
         {
-            var json = JObject.Parse(encoded);
+            var json = SaveWire.Parse(encoded);
             json["Citizens"]![0]![field] = field == "ActivityUntilMinute" ? 60 : 59;
-            Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+            Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(json.ToString()).Status);
         }
         citizen.ActivityUntilMinute = 60;
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
@@ -290,7 +290,7 @@ public sealed class PersistenceTests
         state.Places[1].WeeklyHours.Add(new OpeningWindow { Day = 0, FromMinute = 1320, ToMinute = 120 });
         state.Places[1].WeeklyHours.Add(new OpeningWindow { Day = 6, FromMinute = 0, ToMinute = 1440 });
         string payload = SaveCodec.Write(state);
-        var result = SaveCodec.Read(payload);
+        var result = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, result.Status);
         var windows = result.State!.Places[1].WeeklyHours;
         Assert.Equal(2, windows.Count);
@@ -314,9 +314,9 @@ public sealed class PersistenceTests
     {
         var state = Example(); state.Places[1].WeeklyHours.Add(new OpeningWindow { Day = day, FromMinute = from, ToMinute = to });
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
-        var json = JObject.Parse(SaveCodec.Write(Example()));
+        var json = SaveWire.Parse(SaveCodec.Write(Example()));
         ((JArray)json["Places"]![1]!["WeeklyHours"]!).Add(new JObject { ["Day"] = day, ["FromMinute"] = from, ["ToMinute"] = to });
-        var result = SaveCodec.Read(json.ToString());
+        var result = SaveWire.Read(json.ToString());
         Assert.Equal(SaveReadStatus.Invalid, result.Status); Assert.Null(result.State);
     }
 
@@ -326,11 +326,11 @@ public sealed class PersistenceTests
         Reject(state => state.Places[0].WeeklyHours = null!);
         Reject(state => state.Places[0].WeeklyHours.Add(null!));
         Reject(state => { for (int i = 0; i <= SaveCodec.MaxOpeningWindows; i++) state.Places[0].WeeklyHours.Add(new OpeningWindow { Day = 0, FromMinute = 0, ToMinute = 1440 }); });
-        var json = JObject.Parse(SaveCodec.Write(Example()));
+        var json = SaveWire.Parse(SaveCodec.Write(Example()));
         ((JArray)json["Places"]![1]!["WeeklyHours"]!).Add(new JObject { ["Day"] = 0.5, ["FromMinute"] = 0, ["ToMinute"] = 120 });
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
-        json = JObject.Parse(SaveCodec.Write(Example())); ((JObject)json["Places"]![1]!).Remove("WeeklyHours");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(json.ToString()).Status);
+        json = SaveWire.Parse(SaveCodec.Write(Example())); ((JObject)json["Places"]![1]!).Remove("WeeklyHours");
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(json.ToString()).Status);
     }
 
     private static void Reject(Action<CityState> mutation)

@@ -30,7 +30,7 @@ namespace PersistentCity.Tests
         [Fact]
         public void EveryCandidateRoundTripsTheRepresentativeFixtureExactly()
         {
-            string writer25 = SaveCodec.Write(RepresentativeFixture.Build(957).State);
+            string writer25 = SaveWire.Text(RepresentativeFixture.Build(957).State);
             var tree = WireTree.Parse(writer25);
             Assert.Equal(writer25, WireTree.Write(tree));
             foreach (var candidate in Candidate.All)
@@ -42,9 +42,9 @@ namespace PersistentCity.Tests
                 Assert.Equal(payload, candidate.Encode(decoded));
                 if (candidate.Id != "A") Assert.True(payload.Length < writer25.Length, candidate.Id + " is not smaller.");
             }
-            var strict = SaveCodec.Read(WireTree.Write(Candidate.Get("C").Decode(Candidate.Get("C").Encode(tree))));
+            var strict = SaveWire.Read(WireTree.Write(Candidate.Get("C").Decode(Candidate.Get("C").Encode(tree))));
             Assert.Equal(SaveReadStatus.Loaded, strict.Status);
-            Assert.Equal(writer25, SaveCodec.Write(strict.State!));
+            Assert.Equal(writer25, SaveWire.Text(strict.State!));
         }
 
         // Edge shapes the fixtures do not all reach: number spellings that must not be normalized, nulls mixed with

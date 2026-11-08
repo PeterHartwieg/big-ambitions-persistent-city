@@ -42,7 +42,7 @@ public sealed class RhythmContinuityTests
         while (true)
         {
             bool caughtUp = reloaded.AdvanceTo(end, 1).CaughtUp;
-            var read = SaveCodec.Read(SaveCodec.Write(reloaded.State));
+            var read = SaveWire.Read(SaveCodec.Write(reloaded.State));
             Assert.Equal(SaveReadStatus.Loaded, read.Status);
             reloaded = new CitySimulator(read.State!, new Routes());
             if (caughtUp) break;
@@ -77,7 +77,7 @@ public sealed class RhythmContinuityTests
         var departureMinutes = routes.Queries.Where(query => query.From == "home" && query.At >= 2 * 1440)
             .Select(query => query.At % 1440).Distinct().ToArray();
         Assert.True(departureMinutes.Length >= 6, "Personal shifts should distribute departures across several minutes.");
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(city)).Status);
     }
 
     private const double Midnight = 6 * 1440;
@@ -99,7 +99,7 @@ public sealed class RhythmContinuityTests
 
     private static CitySimulator Reload(CityState city, Routes routes)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(city));
+        var read = SaveWire.Read(SaveCodec.Write(city));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         return new CitySimulator(read.State!, routes);
     }

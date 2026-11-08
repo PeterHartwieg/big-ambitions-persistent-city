@@ -81,7 +81,7 @@ public sealed partial class FoodCommerceTests
     [InlineData("metadata-old-policy")] [InlineData("missing-start")] [InlineData("future-start")]
     public void E5d_BadNewShapesAndSemanticsPreserveExactDictionaryReference(string damage)
     {
-        var (city, _) = S17_Full(); var root = JObject.Parse(DevelopmentChain.Write(city.State));
+        var (city, _) = S17_Full(); var root = SaveWire.Parse(DevelopmentChain.Write(city.State));
         var names = (JArray)root["ProductNames"]!; var offer = E5d_Offer(root);
         switch (damage)
         {
@@ -128,7 +128,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(name, next.State!.Food!.History.First().ProductSales.Single().ProductId);
         next.State.Food.History.RemoveAt(1);
         Assert.Equal(first, DevelopmentChain.Write(next.State));
-        var table = JObject.Parse(changed)["ProductNames"]!.Values<string>().ToArray();
+        var table = SaveWire.Parse(changed)["ProductNames"]!.Values<string>().ToArray();
         Assert.Equal(table.OrderBy(n => n, StringComparer.Ordinal), table);
     }
 
@@ -137,7 +137,7 @@ public sealed partial class FoodCommerceTests
     public void E5d_DanglingProductReferencesCannotFallBackToFixedE4Codes(int reference)
     {
         var (city, _) = S17_Full(); city.State.Food!.History.Add(E5d_Row("foodtrucks:itemname_dumplings"));
-        var root = JObject.Parse(DevelopmentChain.Write(city.State));
+        var root = SaveWire.Parse(DevelopmentChain.Write(city.State));
         root["Food"]!["History"]![0]!["ProductSales"]![0]![0] = reference;
         E5d_Refused(root.ToString(Formatting.None), city.State);
     }
@@ -254,7 +254,7 @@ public sealed partial class FoodCommerceTests
     public void E5d_Source24IsValidatedBeforeAnyNewShapeCanBeDefaulted(string damage)
     {
         var (city, _) = S17_Full(); city.State.Food!.History.Add(E5d_Row(FoodProducts.Burger));
-        var root = JObject.Parse(E5d_Wire24(city.State));
+        var root = SaveWire.Parse(E5d_Wire24(city.State));
         switch (damage)
         {
             case "new-table": root["ProductNames"] = new JArray(); break;
@@ -277,13 +277,13 @@ public sealed partial class FoodCommerceTests
         string paddedTable = source.Replace("\"ProductNames\":[", "\"ProductNames\":[" + new string(' ', FoodNameIdentity.MaximumTableWire));
         E5d_Refused(paddedTable, city.State);
         Assert.Contains("character/UTF-8 budget", DevelopmentChain.Read(paddedTable).Error);
-        var unicodeRoot = JObject.Parse(source);
+        var unicodeRoot = SaveWire.Parse(source);
         unicodeRoot["ProductNames"] = new JArray(Enumerable.Range(0, 256).Select(i => new string('\ue001', 253) + i.ToString("D3")));
         string unicodeTable = unicodeRoot.ToString(Formatting.None).Replace("\"ProductNames\":[", "\"ProductNames\":[" + new string(' ', 330000));
         Assert.True(unicodeTable.Length < FoodNameIdentity.MaximumTableWire);
         E5d_Refused(unicodeTable, city.State);
         Assert.Contains("character/UTF-8 budget", DevelopmentChain.Read(unicodeTable).Error);
-        var root = JObject.Parse(source);
+        var root = SaveWire.Parse(source);
         var offer = E5d_Offer(root); offer["Metadata"] = new JArray(2,1,2,900,100,450);
         string tuple = offer["Metadata"]!.ToString(Formatting.None);
         string paddedTuple = root.ToString(Formatting.None).Replace("\"Metadata\":" + tuple,
@@ -318,7 +318,7 @@ public sealed partial class FoodCommerceTests
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(64, read.State!.Food!.Residents.Sum(m => m.Decision?.Shops.Sum(s => s.Offers.Count) ?? 0));
         Assert.Equal(source, DevelopmentChain.Write(read.State));
-        var root = JObject.Parse(source);
+        var root = SaveWire.Parse(source);
         var meals = (JArray)root["Food"]!["Residents"]!;
         var second = meals.First(m => m[8]!.Type == JTokenType.Null);
         second[8] = meals.First(m => m[8]!.Type == JTokenType.Object)[8]!.DeepClone();
@@ -336,7 +336,7 @@ public sealed partial class FoodCommerceTests
         var (city, _) = S17_Full(); string source = DevelopmentChain.Write(city.State);
         string key = "\"" + field + "\":";
         int cap = field == "ProductNames" ? FoodNameIdentity.MaximumTableWire : FoodNameIdentity.MaximumHeldWire;
-        var root = JObject.Parse(source);
+        var root = SaveWire.Parse(source);
         int used = field == "ProductNames" ? root[field]!.ToString(Formatting.None).Length + 16
             : 2 + root["Food"]!["Residents"]!.Select(m => m[8]).OfType<JObject>()
                 .SelectMany(d => d["Shops"]!).SelectMany(s => s["Offers"]!)

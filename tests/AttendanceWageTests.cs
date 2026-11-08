@@ -46,7 +46,7 @@ public sealed class AttendanceWageTests
     private static CitySimulator Reload(CitySimulator city, Routes routes)
     {
         string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         var loaded = new CitySimulator(read.State!, routes); loaded.AttachFoodMarket(new Market()); return loaded;
     }
@@ -55,12 +55,12 @@ public sealed class AttendanceWageTests
     public void NextFreeWriterRefusesInactiveLedgerCityWithoutOverwritingAnything()
     {
         Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.AttendanceSchema);
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var state = Fresh().State;
         string old = DevelopmentChain.WriteLedger(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadLedgerWriter(old).Status);
         EconomicLedgerTests.Refused(old, SaveReadStatus.DevelopmentSchema);
-        Assert.Contains("start a new city", SaveCodec.Read(old).Error);
+        Assert.Contains("start a new city", SaveWire.Read(old).Error);
         Assert.DoesNotContain("WageStartsDay", SaveCodec.Write(state));
     }
 

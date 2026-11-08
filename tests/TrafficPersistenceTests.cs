@@ -33,7 +33,7 @@ public sealed class TrafficPersistenceTests
     [Fact]
     public void OldTrafficSchemaIsRefusedWithoutChangingTheOwnedQueue()
     {
-        var state = QueuedCity(); var wire = JObject.Parse(DevelopmentChain.Write(state)); wire["Traffic"]!["Schema"] = 1;
+        var state = QueuedCity(); var wire = SaveWire.Parse(DevelopmentChain.Write(state)); wire["Traffic"]!["Schema"] = 1;
         string payload = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "unchanged" };
         var read = SaveStore.ReadFrom(data, state.PopulationKey);
@@ -58,7 +58,7 @@ public sealed class TrafficPersistenceTests
     public void SchemaSixIsRefusedWithoutInventingTrafficOrReplacingTheJourney()
     {
         var state = QueuedCity(); state.Traffic = null; state.TrafficTopologyId = "";
-        var wire = JObject.Parse(DevelopmentChain.Write(state)); wire["Schema"] = 6;
+        var wire = SaveWire.Parse(DevelopmentChain.Write(state)); wire["Schema"] = 6;
         wire.Remove("Traffic"); wire.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(wire);
         string payload = wire.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var read = SaveStore.ReadFrom(data, state.PopulationKey);
@@ -81,7 +81,7 @@ public sealed class TrafficPersistenceTests
     [InlineData("topology")]
     public void InvalidTrafficIsRejectedWithoutOverwritingOriginalPayload(string defect)
     {
-        var state = QueuedCity(); var wire = JObject.Parse(DevelopmentChain.Write(state));
+        var state = QueuedCity(); var wire = SaveWire.Parse(DevelopmentChain.Write(state));
         var traffic = (JObject)wire["Traffic"]!;
         if (defect == "clock") traffic["Clock"] = state.Minute + 1;
         if (defect == "identity") traffic["Vehicles"]![0]!["VehicleId"] = "unowned";

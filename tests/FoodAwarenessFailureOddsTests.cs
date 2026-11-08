@@ -69,7 +69,7 @@ public sealed class FoodAwarenessFailureOddsTests
         }
         CityState Load(CityState saved)
         {
-            var read = SaveCodec.Read(SaveCodec.Write(saved));
+            var read = SaveWire.Read(SaveCodec.Write(saved));
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             return read.State!;
         }

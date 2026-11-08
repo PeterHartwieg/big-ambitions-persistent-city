@@ -76,7 +76,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
         int currentSchema=changed.State.Schema; string currentMenu=changed.State.MenuPolicy; changed.State.MenuPolicy=FoodMenuPolicy.Wire;
         changed.State.Schema=sourceSchema < 20 ? 19 : sourceSchema;
-        var root = JObject.Parse(sourceSchema < 20 ? DevelopmentChain.Legacy(changed.State, () => PopulationSchema19.Write(changed.State)) : sourceSchema>=21 ? DevelopmentChain.Legacy(changed.State, () => SaveCodec.WriteForSchema(changed.State, sourceSchema)) : DevelopmentChain.Legacy(changed.State, () => PopulationSchema20.Write(changed.State)));
+        var root = SaveWire.Parse(sourceSchema < 20 ? DevelopmentChain.Legacy(changed.State, () => PopulationSchema19.Write(changed.State)) : sourceSchema>=21 ? DevelopmentChain.Legacy(changed.State, () => SaveCodec.WriteForSchema(changed.State, sourceSchema)) : DevelopmentChain.Legacy(changed.State, () => PopulationSchema20.Write(changed.State)));
         changed.State.Schema=currentSchema; changed.State.MenuPolicy=currentMenu;
         bool legacy18 = sourceSchema == 18;
         if (legacy18)

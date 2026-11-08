@@ -41,7 +41,7 @@ public sealed class ActivationValidationTests
         string before = SaveCodec.Write(state);
         SaveCodec.ValidateForActivation(state);
         Assert.Equal(before, SaveCodec.Write(state));
-        var resumed = SaveCodec.Read(before);
+        var resumed = SaveWire.Read(before);
         Assert.Equal(SaveReadStatus.Loaded, resumed.Status);
         SaveCodec.ValidateForActivation(resumed.State!);
         Assert.Equal(before, SaveCodec.Write(resumed.State!));
@@ -49,7 +49,7 @@ public sealed class ActivationValidationTests
         var context = typeof(SaveCodec).GetNestedType("WireContext", BindingFlags.NonPublic)!.GetMethod("FromState")!.Invoke(null, new object[] { state });
         var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, new[] { context })!;
         using (var json = new JsonTextWriter(counter)) JsonSerializer.CreateDefault(settings).Serialize(json, state);
-        Assert.Equal(before.Length, Count(counter));
+        Assert.Equal(SaveWire.Body(before).Length, Count(counter));
     }
 
     [Fact]
@@ -139,7 +139,8 @@ public sealed class ActivationValidationTests
                 Assert.Throws<SaveValidationException>(() => SaveCodec.ValidateForActivation(state)).Message);
             // Small output proves the global converter is also used by the retained save path.
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Converters = { new ExactLengthConverter(7) } };
-            Assert.Equal("\"aaaaa\"", SaveCodec.Write(state));
+            // F7d: the compact writer refuses a body that is not a city object, so the converter reached the save path.
+            Assert.Contains("not an object", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
             SaveCodec.ValidateForActivation(state);
         }
         finally { JsonConvert.DefaultSettings = previous; }

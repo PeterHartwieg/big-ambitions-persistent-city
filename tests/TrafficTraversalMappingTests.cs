@@ -53,7 +53,7 @@ public sealed class TrafficTraversalMappingTests
         var (state, citizen) = State(route); var simulation = new CitySimulator(state, planner); simulation.AdvanceTo(100);
         Assert.True(simulation.TryAcquirePhysicalJourney(citizen.Identity.Id, out var lease));
         simulation.AdvanceTo(102); Assert.True(simulation.ObservePhysicalJourney(lease!, factor));
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         var restored = new CitySimulator(decoded.State!, new Planner());
         Assert.True(restored.TryAcquirePhysicalJourney(citizen.Identity.Id, out var reacquired));
         Assert.Equal(factor, reacquired!.ObservedMinutes);
@@ -67,14 +67,14 @@ public sealed class TrafficTraversalMappingTests
         var (state, citizen) = State(Uniform()); var simulation = new CitySimulator(state, new Planner()); simulation.AdvanceTo(100);
         Assert.True(simulation.TryAcquirePhysicalJourney(citizen.Identity.Id, out var lease));
         simulation.AdvanceTo(102); Assert.True(simulation.ObservePhysicalJourney(lease!, 1.5));
-        state = SaveCodec.Read(SaveCodec.Write(state)).State!;
+        state = SaveWire.Read(SaveCodec.Write(state)).State!;
         Assert.True(TravelTiming.Apply(state, 2, 2));
         var newNetwork = new Planner(2).TrafficNetwork;
         var saved = Assert.Single(state.Traffic!.Vehicles);
         Assert.Equal(1.5, saved.Route[0].StartNominalMinutes);
         Assert.Equal(6, saved.Route[0].FreeFlowMinutes, 12);
         newNetwork.ValidateRemainingMapping(state.Citizens[0].Journey!, saved.Route, saved.NominalMinutes);
-        state = SaveCodec.Read(SaveCodec.Write(state)).State!;
+        state = SaveWire.Read(SaveCodec.Write(state)).State!;
         var restored = new CitySimulator(state, new Planner(2));
         Assert.Equal(1, restored.Traffic!.VehicleCount);
         Assert.Equal(7.5, restored.State.Citizens[0].Journey!.Minutes);

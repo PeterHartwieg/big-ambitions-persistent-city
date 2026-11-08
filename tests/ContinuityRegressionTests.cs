@@ -63,7 +63,7 @@ public sealed class ContinuityRegressionTests
         Assert.Equal("work", city.Citizens[0].DestinationId);
         Assert.Equal(1440 + 480, city.Citizens[0].NextEventMinute);
         Assert.Equal(0, city.Citizens[0].MissedActivities);
-        var read = SaveCodec.Read(SaveCodec.Write(city));
+        var read = SaveWire.Read(SaveCodec.Write(city));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new Routes());
         resumed.AdvanceTo(5 * 1440);
@@ -96,14 +96,14 @@ public sealed class ContinuityRegressionTests
         Assert.Equal(start + 30, person.NextEventMinute);
         Assert.Equal(0, person.MissedActivities);
         Assert.DoesNotContain(person.RecentVisits, visit => visit.Activity == Activity.Shop);
-        var read = SaveCodec.Read(SaveCodec.Write(city));
+        var read = SaveWire.Read(SaveCodec.Write(city));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, routes);
         resumed.AdvanceTo(start + 35);
         Assert.Equal(CitizenPhase.AtPlace, resumed.State.Citizens[0].Phase);
         Assert.Equal(start + 30, Assert.Single(resumed.State.Citizens[0].RecentVisits).AtMinute);
         while (!resumed.AdvanceTo(start + 65, 1).CaughtUp)
-            resumed = new CitySimulator(SaveCodec.Read(SaveCodec.Write(resumed.State)).State!, routes);
+            resumed = new CitySimulator(SaveWire.Read(SaveCodec.Write(resumed.State)).State!, routes);
         engine.AdvanceTo(start + 65);
         Assert.Equal(SaveCodec.Write(engine.State), SaveCodec.Write(resumed.State));
         person = resumed.State.Citizens[0];
@@ -132,7 +132,7 @@ public sealed class ContinuityRegressionTests
         var engine = new CitySimulator(city, new Routes { Reachable = false });
         engine.AdvanceTo(1440 + 600);
         Assert.Equal(0, city.Citizens[0].MissedActivities);
-        var resumed = new CitySimulator(SaveCodec.Read(SaveCodec.Write(city)).State!, new Routes { Reachable = false });
+        var resumed = new CitySimulator(SaveWire.Read(SaveCodec.Write(city)).State!, new Routes { Reachable = false });
         resumed.AdvanceTo(2 * 1440);
         Assert.Equal(1, resumed.State.Citizens[0].MissedActivities);
         Assert.Equal(0, resumed.State.Citizens[0].CompletedJourneys);
@@ -168,7 +168,7 @@ public sealed class ContinuityRegressionTests
         Assert.DoesNotContain(person.RecentVisits, visit => visit.Activity == Activity.Shop);
         Assert.Equal(200, engine.PositionOf(person).X);
 
-        var saved = SaveCodec.Read(SaveCodec.Write(engine.State));
+        var saved = SaveWire.Read(SaveCodec.Write(engine.State));
         Assert.Equal(SaveReadStatus.Loaded, saved.Status);
         var resumed = new CitySimulator(saved.State!, new Routes());
         resumed.AdvanceTo(start + 30);
@@ -178,7 +178,7 @@ public sealed class ContinuityRegressionTests
         Assert.Equal(2, person.CompletedJourneys);
         Assert.Equal(1, person.MissedActivities);
         Assert.DoesNotContain(person.RecentVisits, visit => visit.Activity == Activity.Shop);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(resumed.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(resumed.State)).Status);
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public sealed class ContinuityRegressionTests
         city.Places.Single(p => p.Id == "shop").CloseMinute = 1050 + Shift + 5;
         engine.AdvanceTo(start + 12);
         Assert.Equal(CitizenPhase.WaitingForRoute, engine.State.Citizens[0].Phase);
-        var saved = SaveCodec.Read(SaveCodec.Write(engine.State));
+        var saved = SaveWire.Read(SaveCodec.Write(engine.State));
         Assert.Equal(SaveReadStatus.Loaded, saved.Status);
         var resumed = new CitySimulator(saved.State!, new Routes { HomeReachable = false });
         resumed.AdvanceTo(start + 80);
@@ -201,7 +201,7 @@ public sealed class ContinuityRegressionTests
         Assert.Equal(CitizenPhase.WaitingForRoute, person.Phase);
         Assert.Equal(1, person.MissedActivities);
         Assert.Empty(person.RecentVisits);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(resumed.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(resumed.State)).Status);
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public sealed class ContinuityRegressionTests
         Assert.Equal(1, person.MissedActivities);
         Assert.DoesNotContain(person.RecentVisits, visit => visit.Activity == Activity.Work);
         Assert.Equal("home", person.DestinationId);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(engine.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(engine.State)).Status);
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public sealed class ContinuityRegressionTests
         Assert.Equal(0, engine.State.Citizens[0].MissedActivities);
         engine.AdvanceTo(start + 480);
         Assert.Equal(1, engine.State.Citizens[0].MissedActivities);
-        var saved = SaveCodec.Read(SaveCodec.Write(engine.State));
+        var saved = SaveWire.Read(SaveCodec.Write(engine.State));
         Assert.Equal(SaveReadStatus.Loaded, saved.Status);
         var resumed = new CitySimulator(saved.State!, new Routes { Reachable = false });
         resumed.AdvanceTo(start + 1440 + 479);
@@ -255,7 +255,7 @@ public sealed class ContinuityRegressionTests
         while (true)
         {
             bool caughtUp = budgeted.AdvanceTo(end, 1).CaughtUp;
-            var read = SaveCodec.Read(SaveCodec.Write(budgeted.State));
+            var read = SaveWire.Read(SaveCodec.Write(budgeted.State));
             Assert.Equal(SaveReadStatus.Loaded, read.Status);
             budgeted = new CitySimulator(read.State!, new Routes());
             if (caughtUp) break;
@@ -351,7 +351,7 @@ public sealed class ContinuityRegressionTests
         Assert.Equal(start + 20, person.NextEventMinute);
         Assert.Equal(0, person.MissedActivities);
         Assert.Single(person.RecentVisits, visit => visit.Activity == Activity.Shop);
-        var read = SaveCodec.Read(SaveCodec.Write(engine.State));
+        var read = SaveWire.Read(SaveCodec.Write(engine.State));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new Routes());
         resumed.AdvanceTo(start + 20);

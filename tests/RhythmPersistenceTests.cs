@@ -102,7 +102,7 @@ public sealed class RhythmPersistenceTests
     [InlineData("late-preparation")] [InlineData("retired")]
     public void SchemaSixRequiresExactPreparationShapeAndCoherentMeasuredAttempt(string defect)
     {
-        var root = JObject.Parse(DevelopmentChain.Write(City())); var person = (JObject)root["Citizens"]![0]!;
+        var root = SaveWire.Parse(DevelopmentChain.Write(City())); var person = (JObject)root["Citizens"]![0]!;
         var preparation = (JObject)person["CommutePreparation"]!;
         switch (defect)
         {
@@ -139,7 +139,7 @@ public sealed class RhythmPersistenceTests
     [InlineData("PreparedAt", double.NegativeInfinity)] [InlineData("TravelMinutes", double.NaN)]
     public void PreparationNumericBoundsRejectBothReadAndWrite(string field, double value)
     {
-        var city = City(); var root = JObject.Parse(DevelopmentChain.Write(city));
+        var city = City(); var root = SaveWire.Parse(DevelopmentChain.Write(city));
         root["Citizens"]![0]!["CommutePreparation"]![field] = value;
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(root.ToString()).Status);
         typeof(CommutePreparation).GetProperty(field)!.SetValue(city.Citizens[0].CommutePreparation, value);
@@ -208,7 +208,7 @@ public sealed class RhythmPersistenceTests
 
     private static JObject Legacy(CityState city, int schema)
     {
-        var wire = JObject.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
+        var wire = SaveWire.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
         wire.Remove("Traffic"); wire.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(wire);
         foreach (var person in wire["Citizens"]!.Cast<JObject>()) person.Remove("CommutePreparation");
         if (schema < 5)

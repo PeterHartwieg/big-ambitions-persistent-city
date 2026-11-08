@@ -200,7 +200,7 @@ public sealed class RivalMemoryTests
         city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
         string neutral = DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(neutral).Status);
-        var root = JObject.Parse(neutral);
+        var root = SaveWire.Parse(neutral);
         root["Food"]!["Residents"]![0]![9]!["Shops"]![0]!["MemoryContribution"] = 1;
         string forged = root.ToString(Formatting.None);
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(forged).Status);

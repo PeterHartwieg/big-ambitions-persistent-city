@@ -33,14 +33,14 @@ public sealed class HousingPersistenceTests
         Assert.Equal(Math.Min(400, count), city.InitialImportedResidents);
         Assert.Equal(count - city.InitialImportedResidents + 1, city.NextResidentSequence);
         var json = SaveCodec.Write(city);
-        var result = SaveCodec.Read(json);
+        var result = SaveWire.Read(json);
         Assert.Equal(SaveReadStatus.Loaded, result.Status);
 
         Assert.Equal(json, SaveCodec.Write(result.State!));
-        var changed = JObject.Parse(json); changed["InitialImportedResidents"] = city.InitialImportedResidents - 1;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(changed.ToString()).Status);
-        changed = JObject.Parse(json); changed["PopulationTarget"] = count + 1;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(changed.ToString()).Status);
+        var changed = SaveWire.Parse(json); changed["InitialImportedResidents"] = city.InitialImportedResidents - 1;
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(changed.ToString()).Status);
+        changed = SaveWire.Parse(json); changed["PopulationTarget"] = count + 1;
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(changed.ToString()).Status);
     }
 
     [Theory]
@@ -78,7 +78,7 @@ public sealed class HousingPersistenceTests
         string json = SaveCodec.Write(city);
         var writeTime = watch.Elapsed;
         string source = json;
-        var read = SaveCodec.Read(source);
+        var read = SaveWire.Read(source);
         watch.Stop();
         output.WriteLine($"Residents={city.Citizens.Count}; legs={legs}; travelling=1/{travellingEvery}; chars={json.Length}; UTF8 bytes={System.Text.Encoding.UTF8.GetByteCount(json)}; write={writeTime.TotalSeconds:F2}s; total={watch.Elapsed.TotalSeconds:F2}s; allocated={GC.GetTotalAllocatedBytes(true) - allocated} bytes; managed snapshot={GC.GetTotalMemory(false)} bytes");
         Assert.True(json.Length > 4 * 1024 * 1024);
@@ -98,7 +98,7 @@ public sealed class HousingPersistenceTests
         // A bounded version of the old whole-property experiment: 90 occupants in
         // one home now discovered as a two-person rentable interior.
         var original = Housing(100, 4);
-        var read = SaveCodec.Read(SaveCodec.Write(original));
+        var read = SaveWire.Read(SaveCodec.Write(original));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var city = read.State!;
         int activeCount = city.Citizens.Count;
@@ -125,7 +125,7 @@ public sealed class HousingPersistenceTests
         Assert.Equal((long)city.Citizens.Count, (long)city.InitialImportedResidents + city.NextResidentSequence - 1);
         Assert.Equal(activeCount, city.Citizens.Count(c => c.HomeId == home.Id));
         string saved = SaveCodec.Write(city);
-        var reloaded = SaveCodec.Read(saved);
+        var reloaded = SaveWire.Read(saved);
         Assert.Equal(SaveReadStatus.Loaded, reloaded.Status);
         Assert.Equal(saved, SaveCodec.Write(reloaded.State!));
     }
@@ -143,11 +143,11 @@ public sealed class HousingPersistenceTests
     [InlineData("number")]
     public void StreamingReaderRetainsStrictNestedShape(string fault)
     {
-        string json = SaveCodec.Write(Housing(10, 2));
+        string json = SaveWire.Text(Housing(10, 2));
         if (fault == "duplicate") json = json.Replace("\"JobChanges\":0", "\"JobChanges\":0,\"JobChanges\":0");
         if (fault == "missing") json = json.Replace("\"JobChanges\":0,", "");
         if (fault == "unknown") json = json.Replace("\"JobChanges\":0", "\"JobChanges\":0,\"Foreign\":0");
         if (fault == "number") json = json.Replace("\"JobChanges\":0", "\"JobChanges\":0.0");
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(json).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(json).Status);
     }
 }

@@ -83,7 +83,7 @@ public sealed class OptionalStopHandoffTests
         Assert.Equal(default, sim.OptionalStopChances); // wet admissions do not consume the denominator or stock
         if (reload)
         {
-            var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             sim = new CitySimulator(read.State!, new Walking()); sim.AttachOptionalStops(env, 25);
             people = sim.State.Citizens.ToDictionary(c => c.Identity.Id);
         }
@@ -93,7 +93,7 @@ public sealed class OptionalStopHandoffTests
         Assert.Equal(DwellKind.WindowShopping, people["dry"].OptionalStop!.Kind);
         Assert.Equal(new OptionalStopChanceTally { Eligible = 1, Realised = 1, HandedOn = 1 }, sim.OptionalStopChances);
         Assert.Equal(Until, people["dry"].NextEventMinute);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(sim.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(sim.State)).Status);
     }
 
     // The nominal bound is two, but an expired stop record still occupies its resident's slot until departure.
@@ -112,7 +112,7 @@ public sealed class OptionalStopHandoffTests
         // Opening pending = 1: two new draws = one stop + unchanged pending + one drop.
         var t = sim.OptionalStopChances;
         Assert.Equal(t.Drawn, t.Realised + sim.State.Citizens.Count(Pending) - 1 + t.Dropped);
-        var read = SaveCodec.Read(SaveCodec.Write(sim.State));
+        var read = SaveWire.Read(SaveCodec.Write(sim.State));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(read.State!));
     }
@@ -147,7 +147,7 @@ public sealed class OptionalStopHandoffTests
         var sim = Scene(Array.Empty<Holder>(), new[] { new Arrival("h", "far", 1450, true) }, out var p);
         Through(sim, ArrivalOf(p, "h")); Assert.True(Pending(p["h"]));
         Through(sim, Until + 1); Assert.False(p["h"].Phase == CitizenPhase.AtPlace && p["h"].PlaceId == "far"); Assert.True(Pending(p["h"]));
-        var reloaded = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(reloaded.Status == SaveReadStatus.Loaded, reloaded.Error);
+        var reloaded = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(reloaded.Status == SaveReadStatus.Loaded, reloaded.Error);
         Assert.True(reloaded.State!.Citizens.Single().OptionalStopChoice);
 
         // An undrawn visit carrying such a chance uses its own and leaves the other holder's alone.
@@ -175,7 +175,7 @@ public sealed class OptionalStopHandoffTests
         // The park has only conversation spots, so the drawn arrival now waits with its own chance.
         Assert.Null(p["w"].OptionalStop); Assert.Null(p["r"].OptionalStop); Assert.True(Pending(p["r"]));
         // Reloaded just after the hand-on, the result is the same.
-        var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(new Venues(), Rate);
         loaded.AdvanceTo(sim.State.Minute);
         Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(loaded.State));
@@ -198,10 +198,10 @@ public sealed class OptionalStopHandoffTests
         Assert.Equal(new OptionalStopChanceTally { Eligible = 1, Realised = 2, HandedOn = 1 }, sim.OptionalStopChances);
         string after = SaveCodec.Write(sim.State);
         // Saved before the arrival or just after it, a reload reaches the same state and keeps the pair.
-        var read = SaveCodec.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var replay = new CitySimulator(read.State!, new Walking()); replay.AttachOptionalStops(new Venues(), Rate); replay.AdvanceTo(sim.State.Minute);
         Assert.Equal(after, SaveCodec.Write(replay.State));
-        read = SaveCodec.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(new Venues(), Rate); loaded.RefreshOptionalStops();
         Assert.Equal(after, SaveCodec.Write(loaded.State));
         Assert.False(loaded.State.Citizens.Single(c => c.Identity.Id == "t").OptionalStop!.Cancelled);
@@ -243,10 +243,10 @@ public sealed class OptionalStopHandoffTests
         Assert.False(p[remote].OptionalStopChoice); Assert.Null(p[remote].OptionalStop);
         Assert.Equal(new OptionalStopChanceTally { Eligible = 1, Realised = 2, HandedOn = 1 }, sim.OptionalStopChances);
         string after = SaveCodec.Write(sim.State);
-        var read = SaveCodec.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var replay = new CitySimulator(read.State!, new Walking()); replay.AttachOptionalStops(new Venues(), Rate); replay.AdvanceTo(sim.State.Minute);
         Assert.Equal(after, SaveCodec.Write(replay.State));
-        read = SaveCodec.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(new Venues(), Rate); loaded.RefreshOptionalStops();
         Assert.Equal(after, SaveCodec.Write(loaded.State));
         Assert.True(loaded.OptionalStopIndexesMatchState());
@@ -266,7 +266,7 @@ public sealed class OptionalStopHandoffTests
         Assert.True(Pending(p["b"])); Assert.Null(p["c"].OptionalStopChoice);
         Assert.True(p["h"].OptionalStopChoice); Assert.Equal(venue == "shop", p["h"].OptionalStop != null);
         Assert.Equal(new OptionalStopChanceTally { Eligible = 1, Drawn = 1, Realised = venue == "shop" ? 1 : 0, PassedOn = 1 }, sim.OptionalStopChances);
-        var read = SaveCodec.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var replay = new CitySimulator(read.State!, new Walking()); replay.AttachOptionalStops(new Venues(), Rate); replay.AdvanceTo(sim.State.Minute);
         Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(replay.State));
     }
@@ -282,7 +282,7 @@ public sealed class OptionalStopHandoffTests
         var holders = Enumerable.Range(0, 20).Select(i => "h" + i.ToString("D2")).ToArray();
         var sim = Scene(holders.Select(id => new Holder(id)),
             Enumerable.Range(0, 20).Select(i => new Arrival("t" + i.ToString("D2"), "shop", 1450 + i * 6, false)), out _);
-        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(new Venues(), rate);
         var q = loaded.State.Citizens.ToDictionary(c => c.Identity.Id);
         Through(loaded, ArrivalOf(q, "t00"));

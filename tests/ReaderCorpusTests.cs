@@ -23,7 +23,7 @@ public sealed class ReaderCorpusTests
     public void ReaderCorpus_PackagingCoversEverySupportedSchemaWithOneFolderAndOneReader()
     {
         var folders = Directory.GetDirectories(ReaderCorpus.Root).Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal).ToArray();
-        var expected = Schemas().Select(s => ReaderCorpus.SchemaFolder((int)s[0])).ToArray();
+        var expected = Schemas().Select(s => ReaderCorpus.SchemaFolder((int)s[0])).Append(ReaderCorpus.SchemaFolder(ReaderCorpus.Compact.OwnMin)).ToArray();
         Assert.Equal(expected, folders);
         // Readers tile 13..current with no gap or overlap; the newest is the live codec.
         int next = ReaderCorpus.OldestSupportedSchema;
@@ -204,6 +204,104 @@ public sealed class ReaderCorpusTests
     }
 
     public static IEnumerable<object[]> ReaderNewestSchemas() => ReaderCorpus.Readers.Select(r => new object[] { r.OwnMax });
+
+    // ---- F7d: the compact writer's own corpus (schema 34, no migration) ----
+
+    private static readonly (string File, string Builder, Func<CityState> City)[] CompactCities =
+    {
+        ("full.json", "ChangeJournalTests.Fixture(5150) (3-shop fresh city after 2,000 minutes, journal and meal-period causes)", () => ChangeJournalTests.Fixture(5150)),
+        ("minimal.json", "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)", CurrentSchemaOnlyTests.City),
+    };
+
+    /// <summary>Writes <c>schema-34</c> once. Runs only when <c>PC_READER_CORPUS_WRITE</c> names the <c>tests/ReaderCorpus</c>
+    /// directory and never replaces an existing folder.</summary>
+    [Fact]
+    public void ReaderCorpus_GenerateCompactFolderOnlyWhenExplicitlyRequested()
+    {
+        string? target = Environment.GetEnvironmentVariable("PC_READER_CORPUS_WRITE");
+        if (string.IsNullOrEmpty(target)) return;
+        string folder = Path.Combine(target, ReaderCorpus.SchemaFolder(ReaderCorpus.Compact.OwnMin));
+        if (Directory.Exists(folder)) return;
+        Directory.CreateDirectory(folder);
+        var fixtures = new Newtonsoft.Json.Linq.JArray();
+        foreach (var (file, builder, city) in CompactCities)
+        {
+            string text = SaveCodec.Write(city());
+            Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(text).Status);
+            File.WriteAllBytes(Path.Combine(folder, file), new UTF8Encoding(false).GetBytes(text));
+            fixtures.Add(new Newtonsoft.Json.Linq.JObject
+            {
+                ["file"] = file, ["sha256"] = ReaderCorpus.Sha256(text), ["characters"] = text.Length, ["builder"] = builder,
+                ["recipe"] = "SaveCodec.Write(city) (fresh city in the compact writer, no migration)",
+                ["kind"] = "synthetic offline payload from test builders; not a native save",
+            });
+        }
+        var manifest = new Newtonsoft.Json.Linq.JObject
+        {
+            ["schema"] = ReaderCorpus.Compact.OwnMin, ["readerWhenFrozen"] = ReaderCorpus.Compact.Name, ["writerCommit"] = null,
+            ["rigFixture"] = "none: a fresh compact city on the rig is F7d batched rig check 1", ["fixtures"] = fixtures,
+        };
+        File.WriteAllText(Path.Combine(folder, "corpus.json"), manifest.ToString(Newtonsoft.Json.Formatting.Indented) + "\n");
+    }
+
+    [Fact]
+    public void ReaderCorpus_CompactCorpusLoadsAsPinnedRewritesItsOwnBytesAndOlderReadersReportFuture()
+    {
+        var fixtures = ReaderCorpus.Load(ReaderCorpus.Compact.OwnMin);
+        Assert.Equal(CompactCities.Select(c => c.File).OrderBy(f => f, StringComparer.Ordinal), fixtures.Select(f => f.File).OrderBy(f => f, StringComparer.Ordinal));
+        foreach (var fixture in fixtures)
+        {
+            string key = ReaderCorpus.Key(fixture);
+            Assert.StartsWith(SaveCodec.CompactPrefix, fixture.Text);
+            var read = ReaderCorpus.Compact.Read(fixture.Text);
+            Assert.True(read.Status == SaveReadStatus.Loaded, key + ": " + read.Error);
+            Assert.Equal(CityState.CompactSchema, read.SourceSchema);
+            // Decode -> re-encode is byte-identical, and the builder still produces the pinned bytes.
+            Assert.Equal(fixture.Text, SaveCodec.Write(read.State!));
+            Assert.Equal(fixture.Text, SaveCodec.Write(CompactCities.Single(c => c.File == fixture.File).City()));
+            // Every frozen chain reader and the frozen writer-33 reader see a newer schema and keep it.
+            foreach (var reader in ReaderCorpus.Readers)
+            {
+                var older = reader.Read(fixture.Text);
+                Assert.True(older.Status == SaveReadStatus.Future, key + " via " + reader.Name + ": " + older.Status + " " + older.Error);
+                Assert.Equal(CityState.CompactSchema, older.SourceSchema);
+            }
+            Assert.Equal(SaveReadStatus.Future, SaveCodec.ReadWriter33(fixture.Text).Status);
+            string future = fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":35,\"f\":");
+            Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future).Status);
+            AssertCompactRefusedAndPreserved(future, read.State!, SaveReadStatus.Future, key + " future");
+            AssertCompactRefusedAndPreserved(fixture.Text.Substring(0, fixture.Text.Length - 1), read.State!, SaveReadStatus.Invalid, key + " truncated");
+            AssertCompactRefusedAndPreserved(fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":33,\"f\":"), read.State!, SaveReadStatus.DevelopmentSchema, key + " relabelled 33");
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Schemas))]
+    public void ReaderCorpus_TheCompactReaderRefusesEveryChainSchemaAsAnOlderDevelopmentCity(int schema)
+    {
+        foreach (var fixture in ReaderCorpus.Load(schema))
+        {
+            var read = ReaderCorpus.Compact.Read(fixture.Text);
+            Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
+            Assert.Equal(schema, read.SourceSchema);
+            Assert.Contains("start a new city", read.Error);
+            AssertCompactRefusedAndPreserved(fixture.Text, CurrentSchemaOnlyTests.City(), SaveReadStatus.DevelopmentSchema, ReaderCorpus.Key(fixture));
+        }
+    }
+
+    private static void AssertCompactRefusedAndPreserved(string payload, CityState valid, SaveReadStatus expected, string label)
+    {
+        var read = SaveCodec.Read(payload);
+        Assert.True(read.Status == expected, $"{label}: {read.Status} {read.Error}"); Assert.Null(read.State);
+        var data = Keys(payload);
+        var before = data.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+        var session = SaveSession.Open(data, valid.PopulationKey);
+        Assert.Equal(expected, session.InitialReadResult.Status);
+        Assert.False(session.WriteTo(data, valid).Success, label);
+        Assert.False(SaveStore.WriteTo(data, valid).Success, label);
+        Assert.Equal(before.Count, data.Count);
+        foreach (var (key, value) in before) Assert.Same(value, data[key]);
+    }
 
     // Every reader checks the length before it reads the schema, so one 256 Mi-character payload per reader (labelled
     // with that reader's newest schema) covers the bound; per-schema copies cost about 250 ms each without adding a case.

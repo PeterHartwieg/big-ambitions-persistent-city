@@ -52,7 +52,7 @@ public sealed class TrafficFragmentPersistenceTests
         double progress = duration - 1e-8;
         simulation.AdvanceTo(progress); Assert.True(simulation.ObservePhysicalJourney(lease!, progress));
         Assert.True(simulation.ReleasePhysicalJourney(lease!)); state.PrepareForSave();
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Equal(3, citizen.Journey!.Legs.Count);
         double metres = Position.Distance(Tail(state).From, Tail(state).To);
@@ -73,7 +73,7 @@ public sealed class TrafficFragmentPersistenceTests
         Assert.Equal(progress, direct.Traffic!.GetPermission("car").NominalMinutes);
         Position pose = state.Citizens[0].Journey!.PositionAt(progress);
         string wire = SaveCodec.Write(state);
-        var decoded = SaveCodec.Read(wire); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(wire); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         Assert.Equal(wire, SaveCodec.Write(decoded.State!));
         var rebound = new CitySimulator(decoded.State!, new Planner(2, boundary));
         Assert.Equal(progress, rebound.Traffic!.GetPermission("car").NominalMinutes);
@@ -99,8 +99,8 @@ public sealed class TrafficFragmentPersistenceTests
         string valid = SaveCodec.Write(state);
         EditableTail(state).ServiceId = service;
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
-        var wire = JObject.Parse(valid); wire["Citizens"]![0]!["Journey"]!["Legs"]![1]!["ServiceId"] = service;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        var wire = SaveWire.Parse(valid); wire["Citizens"]![0]!["Journey"]!["Legs"]![1]!["ServiceId"] = service;
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(wire.ToString()).Status);
     }
 
     [Theory]
@@ -110,13 +110,13 @@ public sealed class TrafficFragmentPersistenceTests
     public void FragmentTagCannotAuthorizeStationaryWalkingOrNonfiniteTraffic(string defect)
     {
         var (state, _) = Retimed(); var tail = EditableTail(state);
-        var wire = JObject.Parse(SaveCodec.Write(state));
+        var wire = SaveWire.Parse(SaveCodec.Write(state));
         if (defect == "zero") tail.From = tail.To;
         if (defect == "walk") tail.Mode = TravelMode.Walk;
         if (defect == "nonfinite") tail.From = new Position(double.NaN, tail.From.Y, tail.From.Z);
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
         wire["Citizens"]![0]!["Journey"]!["Legs"]![1] = JObject.FromObject(tail);
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(wire.ToString()).Status);
     }
 
     [Theory]
@@ -126,7 +126,7 @@ public sealed class TrafficFragmentPersistenceTests
     public void SyntaxAcceptanceStillRequiresActualGraphProvenanceAtBinding(string service)
     {
         var (state, _) = Retimed(); EditableTail(state).ServiceId = service;
-        var decoded = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
+        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         Assert.Throws<ArgumentException>(() => new CitySimulator(decoded.State!, new Planner(2)));
     }
 }

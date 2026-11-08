@@ -59,9 +59,9 @@ public sealed class WeatherTests
         Assert.Equal(WeatherSample.Unknown,read.Citizens[0].W!.Weather);Assert.Equal(0,rain.Calls);
         Assert.Equal(DevelopmentChain.Write(read),DevelopmentChain.Write(Read(DevelopmentChain.Write(read))));
         city.AdvanceTo(state.Minute+1440);Assert.Equal(WeatherSample.Rain,read.Citizens[0].W!.Weather);Assert.True(rain.Calls>0);
-        var forbidden=JObject.Parse(old);forbidden["WeatherStartsDay"]=0;
+        var forbidden=SaveWire.Parse(old);forbidden["WeatherStartsDay"]=0;
         Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(forbidden.ToString()).Status);
-        forbidden=JObject.Parse(old);forbidden["Schema"]=CityState.CurrentSchema+1;Assert.Equal(SaveReadStatus.Future,DevelopmentChain.Read(forbidden.ToString()).Status);
+        forbidden=SaveWire.Parse(old);forbidden["Schema"]=CityState.CurrentSchema+1;Assert.Equal(SaveReadStatus.Future,DevelopmentChain.Read(forbidden.ToString()).Status);
         forbidden["Schema"]=12;Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(forbidden.ToString()).Status);
     }
     [Theory] [InlineData(WeatherSample.Dry)] [InlineData(WeatherSample.Rain)] [InlineData(WeatherSample.Unknown)]
@@ -193,7 +193,7 @@ public sealed class WeatherTests
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);city.AttachWeather(new Source {Value=WeatherSample.Rain});
         city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt,1);
-        var root=JObject.Parse(DevelopmentChain.Write25(city.State));root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
+        var root=SaveWire.Parse(DevelopmentChain.Write25(city.State));root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
         var meal=(JArray)root["Food"]!["Residents"]![0]!;var d=(JObject)meal[9]!;
         if(damage=="code") d["Weather"]=3;
         if(damage=="low") d["WeatherTravelMultiplier"]=0;
@@ -297,7 +297,7 @@ public sealed class WeatherTests
         Assert.Equal(22,"\"W\":\"".Length+state.Citizens[0].W!.ToWire().Length+2);
         var charged=SaveCodec.CountRecords(state,after);Assert.Equal(count.Streaming+1,charged.Streaming);Assert.Equal(count.Semantic+1,charged.Semantic);
         foreach(string damage in new[] {"1O00AAAAAAAAAAA","2O21AAAAAAAAAAA","1O91AAAAAAAAAAA","1O22AAAAAAAAAAA","1Q21AAAAAAAAAAA","1O21AAAAAAAAAA/"})
-        {var token=JObject.Parse(after);token["Citizens"]![0]!["W"]=damage;Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(token.ToString()).Status);}
+        {var token=SaveWire.Parse(after);token["Citizens"]![0]!["W"]=damage;Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(token.ToString()).Status);}
         Assert.Equal(after,DevelopmentChain.Write(Read(after)));
     }
 }

@@ -63,7 +63,7 @@ public sealed class F5dMeasure
     {
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         long baseline = GC.GetTotalMemory(true);
-        var kept = SaveCodec.Read(payload);
+        var kept = SaveWire.Read(payload);
         long bytes = GC.GetTotalMemory(true) - baseline;
         GC.KeepAlive(kept);
         return bytes;
@@ -121,7 +121,7 @@ public sealed class F5dMeasure
         {
             while (!city.IsCaughtUpTo(at)) city.AdvanceFrameSlice(at, 64);
             city.SynchronizeSnapshot();
-            var root = JObject.Parse(SaveCodec.Write(state));
+            var root = SaveWire.Parse(SaveCodec.Write(state));
             var tuples = (JArray)root["Visitors"]!; var routines = (JArray)root["VisitorRoutines"]!;
             for (int i = 0; i < tuples.Count; i++)
                 sizes.Add((state.Visitors[i].Stay.Presence, state.VisitorRoutines[i].Journey != null,
@@ -149,7 +149,7 @@ public sealed class F5dMeasure
             string payload = SaveCodec.Write(state);
             var records = SaveCodec.CountRecords(state, payload); var baseRecords = SaveCodec.CountRecords(baseRun.State, basePayload);
             // Per-visitor wire: its tuple plus its routine object, by presence.
-            var root = JObject.Parse(payload);
+            var root = SaveWire.Parse(payload);
             var tuples = (JArray)root["Visitors"]!; var routines = (JArray)root["VisitorRoutines"]!;
             var perVisitor = new List<(bool Dormant, int Characters)>();
             for (int i = 0; i < tuples.Count; i++)
@@ -157,12 +157,12 @@ public sealed class F5dMeasure
                     JsonConvert.ToString((string)tuples[i]!).Length + routines[i]!.ToString(Formatting.None).Length + 2));
             root = null; tuples = routines = null;
             var writes = new List<double>(); var reads = new List<double>();
-            SaveCodec.Read(SaveCodec.Write(state)); // warm
+            SaveWire.Read(SaveCodec.Write(state)); // warm
             for (int i = 0; i < samples; i++)
             {
                 long t = Stopwatch.GetTimestamp(); string again = SaveCodec.Write(state); writes.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
                 if (again != payload) throw new InvalidOperationException("Writer is not deterministic.");
-                t = Stopwatch.GetTimestamp(); var read = SaveCodec.Read(payload); reads.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
+                t = Stopwatch.GetTimestamp(); var read = SaveWire.Read(payload); reads.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
                 if (read.Status != SaveReadStatus.Loaded) throw new InvalidOperationException(read.Error);
             }
             long kept = Retained(payload), keptBase = Retained(basePayload);

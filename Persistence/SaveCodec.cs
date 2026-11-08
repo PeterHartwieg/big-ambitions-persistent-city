@@ -97,12 +97,18 @@ namespace PersistentCity.Persistence
             Require(snapshot.Schema == schema, "The snapshot was captured for another writer schema.");
             var state = snapshot.Wire;
             cost?.Enter(SaveCostPhase.Validate);
-            Validate(state,schema);
+            int records = Validate(state,schema);
             cost?.Enter(SaveCostPhase.Encode);
             var json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             int bytes = System.Text.Encoding.UTF8.GetByteCount(json);
             Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
+            // F7d: writer 34 stores the compact columnar form of this body; every frozen JSON writer stores the body itself.
+            if (schema == CityState.CompactSchema)
+            {
+                json = EncodeCompact(json, records + StreamingOnlyRecords(state));
+                bytes = System.Text.Encoding.UTF8.GetByteCount(json);
+            }
             cost?.Payload(json.Length, bytes);
             return json;
         }
@@ -168,13 +174,15 @@ namespace PersistentCity.Persistence
             if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
             try
             {
+                // F7d: the writer's own prefix goes straight to the strict compact reader, which checks the whole envelope.
+                if (source.StartsWith(CompactPrefix, StringComparison.Ordinal)) return ReadCompact(source);
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
                 // No migration before release (owner decision, 6 November 2026): the older codec chain is unreachable here.
                 if (schema >= 1 && schema <= LatestDevelopmentSchema)
                     return new SaveReadResult(SaveReadStatus.DevelopmentSchema, null, DevelopmentSchemaMessage + " (schema " + schema.ToString(CultureInfo.InvariantCulture) + ")", schema);
                 Require(schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload.");
-                return ReadExact(source, schema);
+                return ReadCompact(source);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
             { return Invalid("Invalid state: " + exception.Message); }
@@ -268,7 +276,27 @@ namespace PersistentCity.Persistence
             { return Invalid("Invalid state: " + exception.Message); }
         }
 
-        private static SaveReadResult ReadExact(string source, int schema)
+        /// <summary>The frozen exact writer-33 reader (F6g's JSON body, the last JSON writer before F7d's compact wire).
+        /// Unreachable from <see cref="Read"/>, which refuses schema 33 as an older development city; kept for its own tests.</summary>
+        internal static SaveReadResult ReadWriter33(string source)
+        {
+            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
+            try
+            {
+                int schema = ReadSchema(source);
+                if (schema > CityState.ChangeJournalSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
+                Require(schema == CityState.ChangeJournalSchema, "Not the frozen writer-33 schema.");
+                return ReadExact(source, schema);
+            }
+            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
+            { return Invalid("Invalid state: " + exception.Message); }
+        }
+
+        private static SaveReadResult ReadExact(string source, int schema) => ReadExact(source, schema, 0, intern: false);
+
+        /// <summary>The strict body reader. F7d's compact reader passes its table entries, charged with the body's own
+        /// records against <see cref="MaxEmbeddedRecords"/> exactly as the writer charged them, and interns string values.</summary>
+        private static SaveReadResult ReadExact(string source, int schema, int tableRecords, bool intern)
         {
             Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
             var tokenText = new TokenText(source);
@@ -282,11 +310,13 @@ namespace PersistentCity.Persistence
                 Require(!shape.Read(), "State contains trailing JSON content.");
             }
             using var reader = Reader(source);
+            if (intern) serializer.Converters.Add(new InternConverter());
             var state = serializer.Deserialize<CityState>(reader);
             Require(state != null, "State is null.");
             if (schema >= IndependentSchema) DerivePersons27(state!);
             else if (schema >= PersonSchema) DerivePersons26(state!);
-            Validate(state!,schema);
+            int semantic = Validate(state!,schema);
+            if (tableRecords > 0) Require((long)semantic + StreamingOnlyRecords(state!) + tableRecords <= MaxEmbeddedRecords, "Too many embedded records with the compact tables charged.");
             return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
         }
 
@@ -572,11 +602,12 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema28Contracts = new StateContractResolver(WorkplaceCapacitySchema);
         private static readonly IContractResolver Schema31Contracts = new StateContractResolver(EconomicLedgerSchema);
         private static readonly IContractResolver Schema32Contracts = new StateContractResolver(CityState.AttendanceSchema);
+        private static readonly IContractResolver Schema33Contracts = new StateContractResolver(CityState.ChangeJournalSchema);
         private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -652,10 +683,13 @@ namespace PersistentCity.Persistence
 
         private static readonly Money MaximumAllowance = Money.FromCents(1000000);
 
+        private static int StreamingOnlyRecords(CityState state) => state.Citizens.Sum(c => c.OptionalStop?.Members.Count ?? 0)
+            + (state.Food?.Shops.Sum(s => s.AdditionalProductIds.Count) ?? 0);
+
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema), "Unsupported state schema.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
@@ -768,8 +802,7 @@ namespace PersistentCity.Persistence
             int totalRecords = ValidateTraffic(state, embeddedRecords);
             // The frozen semantic counter did not charge scope menu strings or optional-stop members;
             // CheckShape did. Keep both reported counts, but never let a write spend that difference.
-            int streamingOnly = state.Citizens.Sum(c => c.OptionalStop?.Members.Count ?? 0)
-                + (state.Food?.Shops.Sum(s => s.AdditionalProductIds.Count) ?? 0);
+            int streamingOnly = StreamingOnlyRecords(state);
             Require(totalRecords + streamingOnly <= MaxEmbeddedRecords, "Too many embedded records in the streaming count.");
             return totalRecords;
             void CountAssignment(string id)

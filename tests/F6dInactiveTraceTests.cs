@@ -27,7 +27,7 @@ public sealed class F6dInactiveTraceTests
     private static SaveReadResult ReadVendor(string payload)
     {
 #if F6D_BASELINE
-        return SaveCodec.Read(payload);
+        return SaveWire.Read(payload);
 #else
         return SaveCodec.ReadWriter30(payload);
 #endif
@@ -58,7 +58,7 @@ public sealed class F6dInactiveTraceTests
             if (hour % 24 == 0)
             {
 #if F6D_BASELINE
-                var read = predecessor ? ReadVendor(AsVendorWriter(city.State)) : SaveCodec.Read(SaveCodec.Write(city.State));
+                var read = predecessor ? ReadVendor(AsVendorWriter(city.State)) : SaveWire.Read(SaveCodec.Write(city.State));
 #else
                 var read = predecessor ? ReadVendor(AsVendorWriter(city.State)) : SaveCodec.ReadLedgerWriter(DevelopmentChain.WriteLedger(city.State));
 #endif

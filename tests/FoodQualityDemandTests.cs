@@ -110,7 +110,7 @@ public sealed class FoodQualityDemandTests
     public void StrictSchemaTwoMigrationKeepsOldChoicesAndAddsNoInventedSignals()
     {
         var state = Scenario(0, 0); new FoodDemand(state).AdvanceTo(2165);
-        var old = JObject.Parse(FoodShadowCodec.Write(state)); LegacyMoney(old); RemoveV3Fields(old); old["Schema"] = 2;
+        var old = SaveWire.Parse(FoodShadowCodec.Write(state)); LegacyMoney(old); RemoveV3Fields(old); old["Schema"] = 2;
         var migrated = FoodShadowCodec.Read(old.ToString(), "city");
         Assert.Equal(FoodShadowState.CurrentSchema, migrated.Schema); Assert.Null(migrated.Businesses[0].CustomerServicePercent);
         Assert.Equal(0, migrated.Consumers[0].ServiceQualityValueCents);

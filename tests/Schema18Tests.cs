@@ -53,7 +53,7 @@ public sealed partial class FoodCommerceTests
         var visits = city.State.Citizens[0].RecentVisits;
         visits.Add(new VisitRecord { AtMinute = -0.0, PlaceId = city.State.Places.Last().Id, Activity = Activity.Shop });
         visits.Add(new VisitRecord { AtMinute = Math.PI, PlaceId = city.State.Places.Last().Id, Activity = Activity.Shop });
-        var wire = JObject.Parse(DevelopmentChain.Write(city.State));
+        var wire = SaveWire.Parse(DevelopmentChain.Write(city.State));
         var places = (JArray)wire["Places"]!; var reversed = places.Reverse().Select(p => p.DeepClone()).ToArray(); wire["Places"] = new JArray(reversed);
         var reordered = new JObject(wire.Properties().Reverse().Select(p => new JProperty(p.Name, p.Value.DeepClone())));
         var read = DevelopmentChain.Read(reordered.ToString(Formatting.None)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -146,7 +146,7 @@ public sealed partial class FoodCommerceTests
         var (city, _) = S17_Full(); var state = city.State; city.EnableHouseholdFinances();
         state.Citizens[0].RecentVisits.Add(new VisitRecord { PlaceId = state.Citizens[0].HomeId });
         state.Food!.BusinessReferences.Add(new BusinessReference { BusinessId = "retained", PlaceId = "shop" });
-        var root = JObject.Parse(DevelopmentChain.Write(state)); var meal = (JArray)root["Food"]!["Residents"]![0]!;
+        var root = SaveWire.Parse(DevelopmentChain.Write(state)); var meal = (JArray)root["Food"]!["Residents"]![0]!;
         var budget = (JArray)meal[2]!; /* roster tuple v3 (schema 26) omits AnchorId and Slot */ var table = (JArray)root["Food"]!["BusinessReferences"]!;
         var visits = (JArray)root["Citizens"]![0]!["RecentVisits"]!;
         switch (damage)
@@ -204,7 +204,7 @@ public sealed partial class FoodCommerceTests
     public void B0_LegacySchemaCannotSmuggleAnInactiveOrActiveCapabilityHeader(int schema)
     {
         var (city, source) = S17_Full();
-        var old = JObject.Parse(S17_Old(source, schema));
+        var old = SaveWire.Parse(S17_Old(source, schema));
         foreach (bool active in new[] { false, true })
         {
             old["Capabilities"] = new JObject { ["Code"] = "B", ["Revision"] = 1, ["Active"] = active };
@@ -222,7 +222,7 @@ public sealed partial class FoodCommerceTests
         var chosen = city.State.Food!.Residents.Single(m => m.Decision != null).Decision!.Shops[0];
         while (chosen.Offers.Count < 5) chosen.Offers.Add(new FoodDecisionOffer { ProductId = "extra:" + chosen.Offers.Count });
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
-        var old = JObject.Parse(legacy); var shop = old["Food"]!["Residents"]!.First(m => m["Decision"]!.Type != JTokenType.Null)!["Decision"]!["Shops"]![0]!;
+        var old = SaveWire.Parse(legacy); var shop = old["Food"]!["Residents"]!.First(m => m["Decision"]!.Type != JTokenType.Null)!["Decision"]!["Shops"]![0]!;
         var offers = (JArray)shop["Offers"]!;
         while (offers.Count < 5) offers.Add(offers[0]!.DeepClone());
         B0_Preserve(old.ToString(Formatting.None), S17_Full().city.State);

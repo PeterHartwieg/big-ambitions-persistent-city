@@ -92,7 +92,7 @@ public sealed class AccountingBacklogTests
         double target = AccountingClock.Target(native);
         while (!city.AdvanceTo(target, 1).CaughtUp) { }
         string before = PersistentCity.Persistence.SaveCodec.Write(city.State);
-        var read = PersistentCity.Persistence.SaveCodec.Read(before);
+        var read = SaveWire.Read(before);
         var restoredState = read.State!;
         Assert.Equal(CityState.CurrentSchema, restoredState.Schema); Assert.Equal(before, PersistentCity.Persistence.SaveCodec.Write(restoredState));
         Assert.True(AccountingClock.Compatible(restoredState.Minute, native));

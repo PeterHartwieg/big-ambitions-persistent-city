@@ -64,7 +64,7 @@ public sealed class TrafficJourneyTests
         Assert.Equal(0, engine.SampleJourney(citizen).ElapsedMinutes);
         Assert.Equal(0, engine.Traffic!.VehicleCount);
         Assert.Equal(1500, citizen.DepartureMinute);
-        var saved = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal("", saved.Error);
+        var saved = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal("", saved.Error);
         Assert.Equal(1500, saved.State!.Citizens[0].DepartureMinute);
         Assert.Equal(2880, citizen.ActivityUntilMinute);
         Assert.True(engine.ReleasePhysicalJourney(hold!));
@@ -105,7 +105,7 @@ public sealed class TrafficJourneyTests
         var engine=new CitySimulator(state,Coalesced(1)); engine.AdvanceTo(1441.8);
         Assert.Equal(18,engine.PositionOf(citizen).X,8); state.PrepareForSave();
         Assert.True(TravelTiming.Apply(state,2,2));
-        var parsed=SaveCodec.Read(SaveCodec.Write(state)); Assert.True(parsed.Status==SaveReadStatus.Loaded,parsed.Error);
+        var parsed=SaveWire.Read(SaveCodec.Write(state)); Assert.True(parsed.Status==SaveReadStatus.Loaded,parsed.Error);
         var restored=new CitySimulator(parsed.State!,Coalesced(2));
         Assert.Equal(18,restored.PositionOf(restored.State.Citizens[0]).X,8);
         Assert.Single(restored.Traffic!.Capture().Vehicles);
@@ -157,7 +157,7 @@ public sealed class TrafficJourneyTests
         Assert.Equal(positions,converted.State.Citizens.Select(c=>converted.PositionOf(c).X));
         converted.AdvanceTo(1500);
         Assert.All(converted.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(converted.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveCodec.Write(converted.State)).Status);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public sealed class TrafficJourneyTests
         Assert.All(engine.State.Citizens, c =>
         { Assert.Equal(1,c.CompletedJourneys); Assert.Equal("work",c.PlaceId); Assert.Equal(24,c.Car!.ParkedPosition.X); });
         Assert.Equal(0,engine.Traffic!.VehicleCount);
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(engine.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveCodec.Write(engine.State)).Status);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public sealed class TrafficJourneyTests
     public void InterruptedQueuesReloadWithoutDuplicatingOrSkippingResidents()
     {
         var engine=Engine(15,2,3); engine.AdvanceTo(1445.1);
-        string saved=SaveCodec.Write(engine.State); var read=SaveCodec.Read(saved);
+        string saved=SaveCodec.Write(engine.State); var read=SaveWire.Read(saved);
         Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         var restored=new CitySimulator(read.State!,new Planner());
         Assert.Equal(engine.State.Citizens.Select(c=>engine.PositionOf(c).X),restored.State.Citizens.Select(c=>restored.PositionOf(c).X));
@@ -231,7 +231,7 @@ public sealed class TrafficJourneyTests
         var engine=Engine(4); engine.AdvanceTo(1440);
         Assert.True(engine.TryAcquirePhysicalJourney(engine.State.Citizens[0].Identity.Id,out var lease));
         engine.AdvanceTo(1440.5); Assert.True(engine.ObservePhysicalJourney(lease!,0.3));
-        var read=SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        var read=SaveWire.Read(SaveCodec.Write(engine.State)); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         var restored=new CitySimulator(read.State!,new Planner()); engine.ReleasePhysicalJourney(lease!);
         engine.AdvanceTo(1500); restored.AdvanceTo(1500);
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));

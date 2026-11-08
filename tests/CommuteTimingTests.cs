@@ -69,7 +69,7 @@ public sealed class CommuteTimingTests
         var engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(shift.StartsAt);
         Assert.Equal("work", c.PlaceId); Assert.Equal(CitizenPhase.WaitingForOpening, c.Phase);
         Assert.Equal(shift.StartsAt + 30, c.NextEventMinute); Assert.Empty(c.RecentVisits);
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new NativePacePlanner()); resumed.AdvanceTo(shift.StartsAt + 30);
         Assert.Single(resumed.State.Citizens[0].RecentVisits);
     }
@@ -83,7 +83,7 @@ public sealed class CommuteTimingTests
         engine.AdvanceTo(state.Minute + 1); Assert.True(engine.ObservePhysicalJourney(lease!, 120)); engine.AdvanceTo(state.Minute);
         Assert.Equal("work", c.PlaceId); Assert.Equal(CitizenPhase.WaitingForOpening, c.Phase);
         Assert.Equal(shift.StartsAt, c.NextEventMinute); Assert.Empty(c.RecentVisits);
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new NativePacePlanner()); resumed.AdvanceTo(shift.StartsAt);
         Assert.Single(resumed.State.Citizens[0].RecentVisits);
         Assert.Equal(shift.StartsAt, resumed.State.Citizens[0].RecentVisits[0].AtMinute);
@@ -96,7 +96,7 @@ public sealed class CommuteTimingTests
         double early = state.Citizens[0].NextEventMinute;
         // A bounded snapshot may have the next citizen event due exactly at its current clock.
         state.Minute = early;
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new NativePacePlanner());
         engine.AdvanceTo(early); resumed.AdvanceTo(early);
         Assert.Equal(CitizenPhase.Travelling, resumed.State.Citizens[0].Phase);
@@ -173,7 +173,7 @@ public sealed class CommuteTimingTests
         Assert.Equal(2, planner.Calls); Assert.Equal(CitizenPhase.WaitingForRoute, c.Phase);
         Assert.Equal("work", c.DestinationId); Assert.Equal(deadline, c.ActivityUntilMinute);
         Assert.Equal(departure + 30, c.NextEventMinute); Assert.Equal(0, c.DepartureMinute);
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         planner.Reachable = true; planner.Minutes = 160;
         var resumed = new CitySimulator(read.State!, planner); resumed.AdvanceTo(departure + 30);
         c = resumed.State.Citizens[0];
@@ -230,7 +230,7 @@ public sealed class CommuteTimingTests
         Assert.Equal(1, c.MissedActivities); Assert.Equal(2, c.CompletedJourneys);
         Assert.Equal(shiftEnd, c.ActivityUntilMinute);
         Assert.Equal(3, planner.Calls); // Estimate, fresh outbound route, return home.
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         engine = new CitySimulator(read.State!, planner); engine.AdvanceTo(shiftEnd - 1);
         c = engine.State.Citizens[0];
         Assert.Equal("home", c.PlaceId); Assert.Equal(CitizenPhase.AtPlace, c.Phase);
@@ -290,7 +290,7 @@ public sealed class CommuteTimingTests
         Assert.Equal(1, planner.Calls); Assert.Equal(CitizenPhase.WaitingForRoute, person.Phase);
         Assert.Equal(shift.StartsAt - 90, person.NextEventMinute); Assert.Equal(shift.EndsAt, person.ActivityUntilMinute);
         Assert.Equal(120, person.CommutePreparation.TravelMinutes);
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         planner.Reachable = true; engine = new CitySimulator(read.State!, planner); engine.AdvanceTo(shift.StartsAt - 90);
         person = engine.State.Citizens[0];
         Assert.Equal(2, planner.Calls); Assert.Equal(CitizenPhase.Travelling, person.Phase);
@@ -347,7 +347,7 @@ public sealed class CommuteTimingTests
         var state = City(); var person = state.Citizens[0];
         var shift = DailyRoutine.NextWork(person, state.Seed, state.Minute)!.Value;
         person.MissedActivities = 1; person.ActivityUntilMinute = person.NextEventMinute = shift.EndsAt;
-        var read = SaveCodec.Read(SaveCodec.Write(state));
+        var read = SaveWire.Read(SaveCodec.Write(state));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         state = read.State!; person = state.Citizens[0];
         Assert.Equal(shift.EndsAt, person.ActivityUntilMinute); Assert.Equal(shift.EndsAt, person.NextEventMinute);

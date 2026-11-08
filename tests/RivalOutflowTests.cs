@@ -326,10 +326,10 @@ public sealed class RivalOutflowTests
         Assert.Equal(2, read.State.Food!.RivalStartsDay); Assert.Equal(source, store[SaveCodec.StateKey]);
         string current = DevelopmentChain.Write(read.State); Assert.Equal(current, DevelopmentChain.Write(DevelopmentChain.Read(current).State!));
         foreach (int futureSchema in new[] { 24, 99 })
-        { var json = JObject.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, DevelopmentChain.Read(json.ToString(Formatting.None)).Status); }
-        var foreign = JObject.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
+        { var json = SaveWire.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, DevelopmentChain.Read(json.ToString(Formatting.None)).Status); }
+        var foreign = SaveWire.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString(Formatting.None)).Status);
-        foreign = JObject.Parse(source); ((JArray)foreign["Food"]!["Residents"]![0]!).Add("");
+        foreign = SaveWire.Parse(source); ((JArray)foreign["Food"]!["Residents"]![0]!).Add("");
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString(Formatting.None)).Status);
         Assert.Equal(source, store[SaveCodec.StateKey]);
     }
@@ -375,7 +375,7 @@ public sealed class RivalOutflowTests
     {
         var (city, _, _) = Ready(); city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food!.Residents.Single().DesiredAt, 1);
-        var root=JObject.Parse(DevelopmentChain.Write(city.State));
+        var root=SaveWire.Parse(DevelopmentChain.Write(city.State));
         var meal=(JArray)root["Food"]!["Residents"]![0]!;
         var decision=meal[8]!;var shop=decision["Shops"]![0]!; // roster tuple v3
         switch(damage)

@@ -84,7 +84,7 @@ public sealed class PhysicalPersistenceTests
         if (defect == "future-departure") person.DepartureMinute = Math.BitIncrement(city.Minute);
         if (defect == "expired-route") person.DepartureMinute -= .00001;
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city));
-        var json = JObject.Parse(encoded);
+        var json = SaveWire.Parse(encoded);
         json["Citizens"]![0]!["NextEventMinute"] = person.NextEventMinute;
         json["Citizens"]![0]!["DepartureMinute"] = person.DepartureMinute;
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(json.ToString()).Status);
@@ -98,7 +98,7 @@ public sealed class PhysicalPersistenceTests
 
     private static JObject SchemaFour(CityState city)
     {
-        var root = JObject.Parse(DevelopmentChain.Write(city)); root["Schema"] = 4;
+        var root = SaveWire.Parse(DevelopmentChain.Write(city)); root["Schema"] = 4;
         root.Remove("TravelTimingVersion"); root.Remove("TravelClockRate");
         root.Remove("Traffic"); root.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(root);
         foreach (JObject person in root["Citizens"]!) person.Remove("CommutePreparation");
@@ -161,7 +161,7 @@ public sealed class PhysicalPersistenceTests
         if (defect == "model-long") city.Citizens[0].Car!.ModelId = new string('a', 129);
         if (defect == "model-null") city.Citizens[0].Car!.ModelId = null!;
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city));
-        var json = JObject.Parse(DevelopmentChain.Write(Journey()));
+        var json = SaveWire.Parse(DevelopmentChain.Write(Journey()));
         json["TravelTimingVersion"] = city.TravelTimingVersion; json["TravelClockRate"] = city.TravelClockRate;
         json["Citizens"]![0]!["Car"]!["ModelId"] = city.Citizens[0].Car!.ModelId;
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(json.ToString()).Status);
@@ -176,7 +176,7 @@ public sealed class PhysicalPersistenceTests
     [InlineData("string-paint")]
     public void CurrentPhysicalFieldsHaveStrictRequiredShape(string defect)
     {
-        var json = JObject.Parse(DevelopmentChain.Write(Journey())); var car = (JObject)json["Citizens"]![0]!["Car"]!;
+        var json = SaveWire.Parse(DevelopmentChain.Write(Journey())); var car = (JObject)json["Citizens"]![0]!["Car"]!;
         if (defect == "missing-clock") json.Remove("TravelClockRate");
         if (defect == "string-clock") json["TravelClockRate"] = "1.75";
         if (defect == "float-version") json["TravelTimingVersion"] = 1.0;

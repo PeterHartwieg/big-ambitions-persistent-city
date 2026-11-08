@@ -178,7 +178,7 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
 
         var (sliced, env, _) = City(25, 400); while (!sliced.AdvanceTo(Start + Window / 2, 7).CaughtUp) { }
         string saved = SaveCodec.Write(sliced.State);
-        var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking());
         // A different rate on reload neither re-rolls nor drops saved stops, choices or handed-on chances.
         loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new Walking()); loaded.RefreshOptionalStops();
@@ -236,13 +236,13 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             sim.AdvanceTo(next, 1);
             if (!sim.State.Citizens.Any(c => old[c.Identity.Id] == true && c.OptionalStopChoice == false)) continue;
             // Saved just before: the reload makes the same hand-on.
-            var read = SaveCodec.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = SaveWire.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 25);
             loaded.AdvanceTo(next, 1);
             string after = SaveCodec.Write(sim.State);
             Assert.Equal(after, SaveCodec.Write(loaded.State));
             // Saved just after: reload at another rate changes nothing until resumed at 25.
-            read = SaveCodec.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new Walking());
             Assert.Equal(after, SaveCodec.Write(loaded.State));
             loaded.AttachOptionalStops(env, 25);
@@ -265,7 +265,7 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         string saved = SaveCodec.Write(sim.State);
         CitySimulator Load(int rate)
         {
-            var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, rate);
             loaded.AdvanceTo(Start + Window + 45); return loaded;
         }
@@ -337,12 +337,12 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         var (whole, env, _) = Pairs(25); whole.AdvanceTo(1460);
         var (sim, _, _) = Pairs(25); sim.AdvanceTo(1455);
         Assert.True(Pending(sim) > 100);
-        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 25);
         loaded.AdvanceTo(1460);
         string after = SaveCodec.Write(loaded.State);
         Assert.Equal(SaveCodec.Write(whole.State), after);
-        read = SaveCodec.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 25); loaded.RefreshOptionalStops();
         Assert.Equal(after, SaveCodec.Write(loaded.State));
         AssertConversationsAreWellFormed(loaded);

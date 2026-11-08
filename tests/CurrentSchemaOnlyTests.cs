@@ -20,7 +20,7 @@ public sealed class CurrentSchemaOnlyTests
     [InlineData(13)] [InlineData(24)] [InlineData(25)] [InlineData(26)] [InlineData(27)] [InlineData(28)] [InlineData(29)] [InlineData(30)]
     public void EveryOldDevelopmentSchemaBlocksCodecStoreAndSessionWrites(int schema)
     {
-        var city = City(); var wire = JObject.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
+        var city = City(); var wire = SaveWire.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
         string payload = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "owned by RLO" };
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
@@ -38,7 +38,7 @@ public sealed class CurrentSchemaOnlyTests
     {
         var city = City(); var data = new Dictionary<string,string>();
         var session = SaveSession.Open(data, city.PopulationKey); Assert.True(session.WriteTo(data, city).Success);
-        var wire = JObject.Parse(data[SaveStore.StateKey]); wire["Schema"] = 12;
+        var wire = SaveWire.Parse(data[SaveStore.StateKey]); wire["Schema"] = 12;
         string oldPayload = wire.ToString(); data[SaveStore.StateKey] = oldPayload;
         Assert.False(session.WriteTo(data, city).Success);
         Assert.Same(oldPayload, data[SaveStore.StateKey]);
@@ -47,7 +47,7 @@ public sealed class CurrentSchemaOnlyTests
     [Fact]
     public void CurrentVersionRequiresCurrentShapeRatherThanFillingMissingFields()
     {
-        var city = City(); var wire = JObject.Parse(DevelopmentChain.Write(city)); wire.Remove("Food");
+        var city = City(); var wire = SaveWire.Parse(DevelopmentChain.Write(city)); wire.Remove("Food");
         string incomplete = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = incomplete };
         Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, city.PopulationKey).Status);

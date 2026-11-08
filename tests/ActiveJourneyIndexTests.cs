@@ -85,7 +85,7 @@ public sealed class ActiveJourneyIndexTests
 
     private static CitySimulator Reload(CitySimulator sim, IRoutePlanner planner)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, planner); loaded.AttachOptionalStops(new Geometry(), 100);
         return loaded;
     }
@@ -276,7 +276,7 @@ public sealed class ActiveJourneyIndexTests
     [Fact]
     public void IndexHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var plain = Mixed(new Walking(), 160); var probed = Mixed(new Walking(), 160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         probed.ActivityObserved += (_, _, _) => { _ = probed.ActiveJourneyIndexMatchesState(); _ = probed.ActiveJourneys.BodyCandidates.Count; };

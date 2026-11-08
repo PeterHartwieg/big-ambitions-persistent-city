@@ -106,7 +106,7 @@ public sealed partial class FoodCommerceTests
 
     private static string S17_Old(string current, int schema)
     {
-        var token = JObject.Parse(current);
+        var token = SaveWire.Parse(current);
         if (schema <= 14) LegacyMoneyWire.ToLegacy(token, wholeCents: schema == 13);
         return LegacyMoneyWire.AsSchema(token, schema).ToString(Formatting.None);
     }
@@ -282,7 +282,7 @@ public sealed partial class FoodCommerceTests
     public void S17_DamagedOrForeignSchema17IsRefusedAndPreserved(string damage, string error)
     {
         var (city, json) = S17_Full();
-        var wire = JObject.Parse(json);
+        var wire = SaveWire.Parse(json);
         var residents = (JArray)wire["Food"]!["Residents"]!;
         var slot0 = (JObject)residents.First(m => (int)m["Slot"]! == 0); var slot1 = (JObject)residents.First(m => (int)m["Slot"]! == 1);
         var decided = (JObject)residents.First(m => m["Decision"]!.Type != JTokenType.Null);
@@ -536,13 +536,13 @@ public sealed partial class FoodCommerceTests
         var (city, json) = S17_Full();
         foreach (int schema in new[] { CityState.CurrentSchema+1, CityState.CurrentSchema+2, 1000 })
         {
-            var wire = JObject.Parse(json); wire["Schema"] = schema; string payload = wire.ToString(Formatting.None);
+            var wire = SaveWire.Parse(json); wire["Schema"] = schema; string payload = wire.ToString(Formatting.None);
             Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(payload).Status);
             var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload };
             Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Same(payload, data[SaveStore.StateKey]);
         }
         // An earlier schema cannot carry schema-17 fields, and a schema-17 payload cannot omit them.
-        var stripped = LegacyMoneyWire.AsSchema(JObject.Parse(json), 16); stripped["Schema"] = 17;
+        var stripped = LegacyMoneyWire.AsSchema(SaveWire.Parse(json), 16); stripped["Schema"] = 17;
         Assert.Contains("Missing object fields", DevelopmentChain.Read(stripped.ToString(Formatting.None)).Error);
     }
 
@@ -558,11 +558,11 @@ public sealed partial class FoodCommerceTests
             while (meal.Status != MealStatus.Paid) Advance(city, until += 1);
             string current = LegacyWire.Write(city.State);
             // The same paid meal, recorded live and synthesized by a schema-16 upgrade.
-            string json = upgraded ? LegacyWire.Write(DevelopmentChain.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 16).ToString(Formatting.None)).State!) : current;
+            string json = upgraded ? LegacyWire.Write(DevelopmentChain.Read(LegacyMoneyWire.AsSchema(SaveWire.Parse(current), 16).ToString(Formatting.None)).State!) : current;
             var record = meal.Today!.Find(meal.Kind)!;
             Assert.Equal((MealOutcomeStatus.Bought, meal.PlaceId, meal.ProductId, (int)Math.Floor(meal.ServiceAt)),
                 (record.Status, record.PlaceId, record.ProductId, record.CheckoutAt));
-            var wire = JObject.Parse(json);
+            var wire = SaveWire.Parse(json);
             var outcomes = (JArray)wire["Food"]!["Residents"]![0]!["Today"]!["Meals"]!;
             int index = outcomes.ToList().FindIndex(m => S17_Get(m, "Kind") == ((int)meal.Kind).ToString());
             switch (damage)

@@ -58,10 +58,10 @@ public sealed class VendorSaveTests
         /// fresh coordinator (its lease and image are transient).</summary>
         public string Reload()
         {
-            string payload = SaveCodec.Write(City.State);
-            var read = SaveCodec.Read(payload);
+            string payload = SaveWire.Text(City.State);
+            var read = SaveWire.Read(payload);
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            Assert.Equal(payload, SaveWire.Text(read.State!));
             City = new CitySimulator(read.State!, planner);
             City.AttachFoodMarket(market);
             Vendors = Coordinator();
@@ -98,17 +98,17 @@ public sealed class VendorSaveTests
     }
 
     private static string Sha(string payload) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
-    private static JObject Wire(string payload) => JObject.Parse(payload);
+    private static JObject Wire(string payload) => SaveWire.Parse(payload);
     private static string Text(JObject root) => root.ToString(Formatting.None);
     private static JArray Rows(JObject root) => (JArray)((JArray)root["Vendors"]!)[1];
     private static void Refused(string payload, string message)
     {
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains(message, read.Error);
     }
     private static void WriteRefused(CityState state, string message)
-        => Assert.Contains(message, Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
+        => Assert.Contains(message, Assert.Throws<SaveValidationException>(() => SaveWire.Text(state)).Message);
 
     private static VendorVehicle Menu(params string[] items)
     {
@@ -174,10 +174,10 @@ public sealed class VendorSaveTests
     public void VendorsTakeTheNextFreeWriterAndOlderWritersOmitTheTable()
     {
         Assert.Equal(SaveCodec.ResearchSchema + 1, SaveCodec.VendorSchema);
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
         var city = Table(2, 1, 1).State;
-        string payload = SaveCodec.Write(city);
+        string payload = SaveWire.Text(city);
         Assert.Contains("\"Vendors\":[1,[", payload);
         Assert.Contains("\"Channel\":1,", payload);
         // A frozen writer never drops vendor state silently: it refuses a table or a vehicle scope.
@@ -213,10 +213,10 @@ public sealed class VendorSaveTests
         var stand = city.State.Vendors.Find("l0001")!;
         stand.DeferredStand = new VendorStand { OpeningId = 9, Position = new Position(400.125, 1, 2), OpenedDay = 3, OpenedMinute = 600, Published = false };
         stand.Authority.HandbackPending = true; stand.Authority.Suspended = true;
-        string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload);
+        string payload = SaveWire.Text(city.State);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         var before = city.State.Vendors; var after = read.State!.Vendors;
         Assert.Equal((before.Live, before.Retired, before.Tombstones), (after.Live, after.Retired, after.Tombstones));
         Assert.Equal(JsonConvert.SerializeObject(before.Rows), JsonConvert.SerializeObject(after.Rows));
@@ -239,7 +239,7 @@ public sealed class VendorSaveTests
     public void ARouteRebuildKeepsTheRestoredVendorPlaces()
     {
         var city = Table(1, 0, 0);
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)).State!;
+        var read = SaveWire.Read(SaveWire.Text(city.State)).State!;
         var loaded = new CitySimulator(read, new WeightedFoodChoiceTests.Planner());
         var place = loaded.FindPlace("vendor:l0000");
         var rebuilt = loaded.RebuildRoutes(new WeightedFoodChoiceTests.Planner());
@@ -252,21 +252,21 @@ public sealed class VendorSaveTests
     public void SixtyFourLiveRowsSaveAndSixtyFiveAreRefused()
     {
         var city = Table(64, 0, 0);
-        string payload = SaveCodec.Write(city.State);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
+        string payload = SaveWire.Text(city.State);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status);
         var ids = city.State.Vendors.Rows.Select(r => r.VehicleId).ToList();
-        string over = WithRows(SaveCodec.Write(Table(0, 0, 0).State), ids.Append("zz").Select(LiveRow));
+        string over = WithRows(SaveWire.Text(Table(0, 0, 0).State), ids.Append("zz").Select(LiveRow));
         Refused(over, "Live vendor rows exceed the bound of 64.");
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(WithRows(SaveCodec.Write(Table(0, 0, 0).State), ids.Select(LiveRow))).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(WithRows(SaveWire.Text(Table(0, 0, 0).State), ids.Select(LiveRow))).Status);
     }
 
     [Fact]
     public void OneHundredTwentyEightLiveAndRetiredRowsSaveAnd129AreRefused()
     {
         var city = Table(64, 64, 0);
-        string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        string empty = SaveCodec.Write(Table(0, 0, 0).State);
+        string payload = SaveWire.Text(city.State);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        string empty = SaveWire.Text(Table(0, 0, 0).State);
         var rows = Enumerable.Range(0, 64).Select(i => LiveRow("l" + i.ToString("D3"))).Concat(Enumerable.Range(0, 65).Select(i => RetiredRow("r" + i.ToString("D3"))));
         Refused(WithRows(empty, rows.OrderBy(r => r.Substring(4), StringComparer.Ordinal)), "Live and retired vendor rows exceed the bound of 128.");
         // 129 retired rows alone are refused by the same bound.
@@ -277,10 +277,10 @@ public sealed class VendorSaveTests
     public void OneThousandTwentyFourTombstonesSaveAnd1025AreRefused()
     {
         var city = Table(0, 0, 1024);
-        string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        string payload = SaveWire.Text(city.State);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(1024, read.State!.Vendors.Tombstones);
-        string empty = SaveCodec.Write(Table(0, 0, 0).State);
+        string empty = SaveWire.Text(Table(0, 0, 0).State);
         Refused(WithRows(empty, Enumerable.Range(0, 1025).Select(i => TombstoneRow("t" + i.ToString("D4")))), "Vendor tombstones exceed the bound of 1,024.");
     }
 
@@ -292,9 +292,9 @@ public sealed class VendorSaveTests
         var food = city.State.Food!;
         int slot = 0;
         foreach (var row in city.State.Vendors.Rows) food.BusinessReferences.Add(new BusinessReference { Slot = slot++, BusinessId = row.BusinessId, PlaceId = row.PlaceId });
-        string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string payload = SaveWire.Text(city.State);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         var cells = ((JArray)Wire(payload)["Food"]!["BusinessReferences"]!).Select(r => (string)r[3]!).ToList();
         Assert.Equal(SaveCodec.MaxVendorRows, cells.Count);
         Assert.Equal("v00", cells[0]); Assert.Equal("v" + MemoryWire.Number(1151, 2), cells[^1]);
@@ -511,7 +511,7 @@ public sealed class VendorSaveTests
         food.BusinessReferences.Add(new BusinessReference { Slot = 0, BusinessId = "b0", PlaceId = "s0" });
         int slot = 1;
         foreach (var row in city.State.Vendors.Rows) food.BusinessReferences.Add(new BusinessReference { Slot = slot++, BusinessId = row.BusinessId, PlaceId = row.PlaceId });
-        return (city.State, SaveCodec.Write(city.State));
+        return (city.State, SaveWire.Text(city.State));
     }
 
     [Fact]
@@ -521,7 +521,7 @@ public sealed class VendorSaveTests
         var cells = ((JArray)Wire(payload)["Food"]!["BusinessReferences"]!).Select(r => (string)r[3]!).ToArray();
         int city = state.Places.Select(p => p.Id).OrderBy(id => id, StringComparer.Ordinal).ToList().IndexOf("s0");
         Assert.Equal(new[] { MemoryWire.Number(city, 3), "v00", "v01", "v02" }, cells);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(new[] { "s0", "vendor:l0000", "vendor:r0000", "vendor:t0000" }, read.State!.Food!.BusinessReferences.Select(r => r.PlaceId));
     }
 
@@ -573,7 +573,7 @@ public sealed class VendorSaveTests
         Assert.NotEqual(frozen, forged);
         var read = SaveCodec.ReadWriter29(forged);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Contains("Invalid vendor business place reference.", read.Error);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveCodec.Read(forged).Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveWire.Read(forged).Status);
     }
 
     [Fact]
@@ -597,17 +597,17 @@ public sealed class VendorSaveTests
     {
         var city = Table(1, 1, 1, idLength: 128);
         Assert.All(city.State.Vendors.Rows, r => Assert.Equal(128, r.VehicleId.Length));
-        string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string payload = SaveWire.Text(city.State);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         string id = new string('x', 129);
-        Refused(WithRows(SaveCodec.Write(Table(0, 0, 0).State), new[] { TombstoneRow(id) }), "Invalid vendor vehicle id.");
+        Refused(WithRows(SaveWire.Text(Table(0, 0, 0).State), new[] { TombstoneRow(id) }), "Invalid vendor vehicle id.");
         // Non-ASCII ids escape into the place and signature and round-trip exactly.
         string unicode = "Café é 🚚";
         var escaped = Table(0, 0, 0);
         var row = escaped.State.Vendors.Admit(unicode, ""); escaped.State.Vendors.Move(row, VendorRowState.Tombstone);
-        string text = SaveCodec.Write(escaped.State);
-        Assert.Equal(unicode, SaveCodec.Read(text).State!.Vendors.Rows.Single().VehicleId);
+        string text = SaveWire.Text(escaped.State);
+        Assert.Equal(unicode, SaveWire.Read(text).State!.Vendors.Rows.Single().VehicleId);
         Refused(WithRows(text, new[] { "[2,\"a\\u0001\",1,\"vendor:a%01\",\"streetfood:vehicle:a%01:generation:1\"]" }), "Invalid vendor vehicle id.");
     }
 
@@ -654,9 +654,9 @@ public sealed class VendorSaveTests
         meal.Today = new ResidentFoodToday { Day = day };
         meal.Today.Meals.Add(new MealOutcomeRecord { Kind = MealKind.Legacy, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.ReceiptConfirmed,
             PlaceId = row.PlaceId, ProductId = FoodProducts.HotDog, At = (int)state.Minute });
-        string payload = SaveCodec.Write(state);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string payload = SaveWire.Text(state);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         Assert.Equal(new[] { other, id }.OrderBy(x => x, StringComparer.Ordinal), read.State!.Vendors.Rows.Select(r => r.VehicleId));
         Assert.Contains("\"" + VendorNames.PlaceId(id) + "\"", payload);
         Assert.Equal(row.PlaceId, read.State.Citizens.Single().PlaceId);
@@ -680,7 +680,7 @@ public sealed class VendorSaveTests
         row.Stand = new VendorStand { OpeningId = 1, Position = new Position(15, 0, 0), OpenedDay = 1, OpenedMinute = 0, ClosesDay = 1, ClosesMinute = 1380, Published = true };
         city.PublishVendorPlace(row, Menu(FoodProducts.Croissant)); row.PlacePublished = true;
         Assert.True(row.PlaceId.Length > 256);
-        var read = SaveCodec.Read(SaveCodec.Write(city.State));
+        var read = SaveWire.Read(SaveWire.Text(city.State));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, planner);
         loaded.AttachFoodMarket(market);
@@ -691,7 +691,7 @@ public sealed class VendorSaveTests
         target += 1440;
         while (!loaded.AdvanceTo(target, 64).CaughtUp) { }
         Assert.Equal(target, loaded.State.Minute);
-        var again = SaveCodec.Read(SaveCodec.Write(loaded.State));
+        var again = SaveWire.Read(SaveWire.Text(loaded.State));
         Assert.True(again.Status == SaveReadStatus.Loaded, again.Error);
     }
 
@@ -728,9 +728,9 @@ public sealed class VendorSaveTests
                 person.DepartureMinute = state.Minute; person.NextEventMinute = state.Minute + 5; person.ActivityUntilMinute = state.Minute + 30;
             }
             else person.RecentVisits.Add(new VisitRecord { AtMinute = state.Minute, PlaceId = "vendor:r0000", Activity = Activity.Shop });
-            string payload = SaveCodec.Write(state);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, arm + ": " + read.Error);
-            Assert.Equal(payload, SaveCodec.Write(read.State!));
+            string payload = SaveWire.Text(state);
+            var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, arm + ": " + read.Error);
+            Assert.Equal(payload, SaveWire.Text(read.State!));
             var loaded = read.State!.Citizens.Single();
             if (arm == "at") Assert.Equal(live.PlaceId, loaded.PlaceId);
             else if (arm == "travelling") Assert.Equal(live.PlaceId, loaded.DestinationId);
@@ -751,7 +751,7 @@ public sealed class VendorSaveTests
     {
         var state = Table(1, 1, 0).State;
         state.Citizens.Single().RecentVisits.Add(new VisitRecord { AtMinute = state.Minute, PlaceId = "vendor:r0000", Activity = Activity.Shop });
-        string payload = SaveCodec.Write(state);
+        string payload = SaveWire.Text(state);
         string visit = (string)((JArray)((JArray)Wire(payload)["Citizens"]!)[0]["RecentVisits"]!).Last()!;
         Refused(payload.Replace(visit, visit.Substring(0, 17) + cell + visit.Substring(20)), message);
         // A visit at a vendor place in an older writer is refused as unknown, never written with a city index.
@@ -793,9 +793,9 @@ public sealed class VendorSaveTests
         var visitor = state.Visitors[state.VisitorRoutines.IndexOf(routine)];
         var arrival = new VisitRecord { AtMinute = state.Minute, PlaceId = live.PlaceId, Activity = Activity.Shop };
         routine.PlaceId = live.PlaceId; routine.RecentVisits.Clear(); routine.RecentVisits.Add(arrival); visitor.LastArrival = arrival;
-        string payload = SaveCodec.Write(state);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string payload = SaveWire.Text(state);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         int at = state.VisitorRoutines.IndexOf(routine);
         Assert.Equal(live.PlaceId, read.State!.VisitorRoutines[at].PlaceId);
         Assert.Equal(live.PlaceId, read.State.Visitors[at].LastArrival!.PlaceId);
@@ -807,7 +807,7 @@ public sealed class VendorSaveTests
     [Fact]
     public void DuplicateOrUnorderedVehicleIdsAreRefused()
     {
-        string empty = SaveCodec.Write(Table(0, 0, 0).State);
+        string empty = SaveWire.Text(Table(0, 0, 0).State);
         Refused(WithRows(empty, new[] { TombstoneRow("a"), TombstoneRow("a") }), "Duplicate or unordered vendor vehicle id.");
         Refused(WithRows(empty, new[] { TombstoneRow("b"), TombstoneRow("a") }), "Duplicate or unordered vendor vehicle id.");
         Refused(WithRows(empty, new[] { LiveRow("a"), RetiredRow("a") }), "Duplicate or unordered vendor vehicle id.");
@@ -822,9 +822,9 @@ public sealed class VendorSaveTests
     [InlineData("[0,\"a\",\"van\",1,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1,false]]", "Unknown vendor kind.")]
     [InlineData("[0,\"a\",\"cart\",1,\"vendor:a\",null,null,[false,-1,-1,-2,false,-1,false]]", "Invalid vendor until hour.")]
     [InlineData("[0,\"a\",\"cart\",1,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1]]", "Invalid vendor handback flag.")]
-    [InlineData("[0,\"a\",\"cart\",01,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1,false]]", "Invalid vendor generation.")]
+    [InlineData("[0,\"a\",\"cart\",01,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1,false]]", "Invalid state")] // F7d: "01" is not a JSON number, so the compact wire cannot carry it
     public void MalformedRowsAreRefused(string row, string message)
-        => Refused(WithRows(SaveCodec.Write(Table(0, 0, 0).State), new[] { row }), message);
+        => Refused(WithRows(SaveWire.Text(Table(0, 0, 0).State), new[] { row }), message);
 
     // ---- Channel-aware scope and food-place checks ----
 
@@ -832,7 +832,7 @@ public sealed class VendorSaveTests
     public void AVehicleScopeWithoutItsRowIsRefused()
     {
         var city = Table(1, 0, 0);
-        string payload = SaveCodec.Write(city.State);
+        string payload = SaveWire.Text(city.State);
         Refused(WithRows(payload, Array.Empty<string>()), "A vehicle scope has no live or retired vendor row with a stand.");
         city.State.Vendors.Remove(city.State.Vendors.Rows[0]);
         WriteRefused(city.State, "A vehicle scope has no live or retired vendor row with a stand.");
@@ -842,7 +842,7 @@ public sealed class VendorSaveTests
     public void ARowWithAStandButNoScopeIsRefused()
     {
         var city = Table(1, 0, 0);
-        string payload = SaveCodec.Write(city.State);
+        string payload = SaveWire.Text(city.State);
         var root = Wire(payload);
         var shops = (JArray)root["Food"]!["Shops"]!;
         shops.Where(s => ((string)s["PlaceId"]!).StartsWith("vendor:", StringComparison.Ordinal)).ToList().ForEach(s => s.Remove());
@@ -857,8 +857,8 @@ public sealed class VendorSaveTests
         var state = Table(1, 0, 1).State;
         var meal = state.Food!.Residents[0];
         meal.PlaceId = "vendor:l0000"; meal.BusinessId = "streetfood:vehicle:l0000:generation:1"; meal.ProductId = FoodProducts.HotDog;
-        string payload = SaveCodec.Write(state);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
+        string payload = SaveWire.Text(state);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status);
         foreach (string missing in new[] { "vendor:nobody", "vendor:t0000" }) // unknown, and a tombstone (no food place)
         {
             meal.PlaceId = missing;
@@ -876,7 +876,7 @@ public sealed class VendorSaveTests
         var state = Table(1, 0, 0).State;
         var vehicle = state.Food!.Shops.Single(s => s.Channel == FoodScopeChannel.Vehicle);
         var shop = state.Food.Shops.First(s => s.Channel == FoodScopeChannel.Shop);
-        string payload = SaveCodec.Write(state);
+        string payload = SaveWire.Text(state);
         shop.UseChannel(FoodScopeChannel.Vehicle);
         WriteRefused(state, "A vehicle scope names a city place.");
         shop.UseChannel(FoodScopeChannel.Shop); vehicle.UseChannel(FoodScopeChannel.Shop);
@@ -899,7 +899,7 @@ public sealed class VendorSaveTests
     {
         var state = Table(1, 0, 0).State;
         var row = state.Vendors.Rows[0];
-        string payload = SaveCodec.Write(state);
+        string payload = SaveWire.Text(state);
         // A deferred stand needs the stand (and so the place) it replaces.
         var root = Wire(payload);
         var wireRow = (JArray)Rows(root)[0];
@@ -931,7 +931,7 @@ public sealed class VendorSaveTests
     [Fact]
     public void AVendorTableIsRefusedWhenItIsNotAnArrayOrHasAnotherVersion()
     {
-        string payload = SaveCodec.Write(Table(0, 0, 0).State);
+        string payload = SaveWire.Text(Table(0, 0, 0).State);
         Refused(payload.Replace("\"Vendors\":[1,[]]", "\"Vendors\":null"), "");
         Refused(payload.Replace("\"Vendors\":[1,[]]", "\"Vendors\":[2,[]]"), "Invalid vendor table version.");
         Refused(payload.Replace("\"Vendors\":[1,[]]", "\"Vendors\":[1,[],0]"), "Surplus vendor table slot.");
@@ -943,7 +943,7 @@ public sealed class VendorSaveTests
     private static void RefusedAndPreserved(string payload, SaveReadStatus status, string? message = null)
     {
         var replacement = CurrentSchemaOnlyTests.City();
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == status, read.Status + ": " + read.Error); Assert.Null(read.State);
         if (message != null) Assert.Contains(message, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "kept", [FoodAuthorityStore.Key] = "manifest" };
@@ -960,14 +960,14 @@ public sealed class VendorSaveTests
     [Fact]
     public void AnOlderDevelopmentCityIsRefusedWithTheNewCityStatusAndKept()
     {
-        var pins = JObject.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
+        var pins = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
         var older = pins["refusedOlder"]!;
         string payload = File.ReadAllText(Path.Combine(WriterFolder, (string)older["file"]!));
         Assert.Equal((string)older["sha256"]!, Sha(payload));
         Assert.Equal(SaveCodec.ResearchSchema, (int)older["schema"]!);
         Assert.Equal(payload, DevelopmentChain.Write29(CurrentSchemaOnlyTests.City()));
         RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
-        Assert.Equal(SaveCodec.ResearchSchema, SaveCodec.Read(payload).SourceSchema);
+        Assert.Equal(SaveCodec.ResearchSchema, SaveWire.Read(payload).SourceSchema);
         DevelopmentChain.RequireRefusedCapabilities(payload);
         // The frozen reader still decodes it, so the refusal is about its schema, not corruption.
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter29(payload).Status);
@@ -976,7 +976,7 @@ public sealed class VendorSaveTests
     [Fact]
     public void AFutureCityIsRefusedAndKept()
     {
-        string payload = SaveCodec.Write(Table(1, 1, 1).State)
+        string payload = SaveWire.Text(Table(1, 1, 1).State)
             .Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + (CityState.CurrentSchema + 1) + ",");
         RefusedAndPreserved(payload, SaveReadStatus.Future);
     }
@@ -995,7 +995,7 @@ public sealed class VendorSaveTests
     [Fact]
     public void GoldenVendorWriterBytesArePinned()
     {
-        var pins = JObject.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
+        var pins = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
         Assert.Equal(SaveCodec.VendorSchema, (int)pins["writer"]!);
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
@@ -1014,7 +1014,7 @@ public sealed class VendorSaveTests
     [Fact]
     public void GoldenFixturesAreDeterministic()
     {
-        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
+        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveWire.Text(build()), SaveWire.Text(build()));
     }
 
     // ---- Snapshot ----
@@ -1024,7 +1024,7 @@ public sealed class VendorSaveTests
     {
         var city = Table(3, 2, 4);
         var state = city.State;
-        string expected = SaveCodec.Write(state);
+        string expected = SaveWire.Text(state);
         var snapshot = SaveCodec.Capture(state);
         Assert.NotSame(state.Vendors, snapshot.Wire.Vendors);
         for (int i = 0; i < state.Vendors.Rows.Count; i++)
@@ -1036,6 +1036,6 @@ public sealed class VendorSaveTests
         var live = state.Vendors.Find("l0002")!;
         live.Authority.Desired = false; live.Stand!.Published = false;
         state.Food!.Shops.Single(s => s.PlaceId == "vendor:l0000").UseChannel(FoodScopeChannel.Shop);
-        Assert.Equal(expected, SaveCodec.Encode(snapshot));
+        Assert.Equal(expected, SaveWire.Body(SaveCodec.Encode(snapshot)));
     }
 }

@@ -141,7 +141,7 @@ public sealed class HeldFoodTuningTests
         Assert.Equal(FoodDecisionResult.Selected, meal.Decision!.Result);
         string wire = LegacyWire.Write(city.State);
         if (!legacy17) {
-            var root = JObject.Parse(DevelopmentChain.Write(city.State)); var d = root["Food"]!["Residents"]![0]![8]!;
+            var root = SaveWire.Parse(DevelopmentChain.Write(city.State)); var d = root["Food"]!["Residents"]![0]![8]!;
             ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
             wire = root.ToString(Formatting.None);
         }
@@ -157,7 +157,7 @@ public sealed class HeldFoodTuningTests
         string wire;
         if (legacy17) wire = LegacyWire.Write(city.State);
         else {
-            var root = JObject.Parse(DevelopmentChain.Write(city.State));
+            var root = SaveWire.Parse(DevelopmentChain.Write(city.State));
             var d = root["Food"]!["Residents"]![0]![8]!; ((JObject)d).Remove("Tuning");
             foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
             wire = root.ToString(Formatting.None);
@@ -179,7 +179,7 @@ public sealed class HeldFoodTuningTests
     [InlineData(7)] [InlineData(9)]
     public void MalformedImagesAndReservedMemoryRefuseWithoutReplacement(int corruption)
     {
-        var root = JObject.Parse(Checkpoint(1)); var d = root["Food"]!["Residents"]![0]![8]!;
+        var root = SaveWire.Parse(Checkpoint(1)); var d = root["Food"]!["Residents"]![0]![8]!;
         string valid = (string)d["Tuning"]!;
         switch (corruption) {
             case 0: d["Tuning"] = valid + "0"; break;
@@ -227,7 +227,7 @@ public sealed class HeldFoodTuningTests
     {
         var (city, _, _) = WeightedFoodChoiceTests.Ready(2, 8); var meal = city.State.Food!.Residents.Single();
         city.AdvanceFrameSlice(meal.DesiredAt, 1);
-        string wire = DevelopmentChain.Write(city.State); var root = JObject.Parse(wire); var d = root["Food"]!["Residents"]![0]![8]!;
+        string wire = DevelopmentChain.Write(city.State); var root = SaveWire.Parse(wire); var d = root["Food"]!["Residents"]![0]![8]!;
         ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
         string before = root.ToString(Formatting.None);
         Assert.Equal(405, wire.Length - before.Length);
@@ -238,7 +238,7 @@ public sealed class HeldFoodTuningTests
         // Frozen old resolver still writes the same schema-17 facts, and refuses an injected new field.
         string legacy = LegacyWire.Write(city.State);
         Assert.DoesNotContain("Tuning", legacy); Assert.DoesNotContain("MemoryContribution", legacy);
-        var named = JObject.Parse(legacy); named["Food"]!["Residents"]![0]!["Decision"]!["Tuning"] = meal.Decision!.Tuning!.ToWire();
+        var named = SaveWire.Parse(legacy); named["Food"]!["Residents"]![0]!["Decision"]!["Tuning"] = meal.Decision!.Tuning!.ToWire();
         Assert.Equal(SaveReadStatus.Invalid, LegacyPopulationCodec.Read(named.ToString(Formatting.None)).Status);
     }
 

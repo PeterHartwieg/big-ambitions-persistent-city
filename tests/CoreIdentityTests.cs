@@ -267,7 +267,7 @@ public sealed class CoreIdentityTests
             if (day == 2)
             {
                 // Reload: transient fields are rebuilt from the loaded strings with the same results.
-                var read = SaveCodec.Read(expected);
+                var read = SaveWire.Read(expected);
                 Assert.Equal(SaveReadStatus.Loaded, read.Status);
                 b = new CitySimulator(read.State!, new Planner());
                 b.ActivityObserved += (id, p, m) => eb.Add(Observation(id, p, m));
@@ -428,7 +428,7 @@ public sealed class CoreIdentityTests
         foreach (var person in state.Citizens) foreach (var leg in person.Journey?.Legs ?? new List<RouteLeg>()) _ = leg.RoadTag;
         Assert.All(state.Citizens, p => Assert.NotNull(p.RoutineKeys));
         Assert.Equal(before, SaveCodec.Write(state));
-        Assert.Equal(before, SaveCodec.Write(SaveCodec.Read(before).State!));
+        Assert.Equal(before, SaveCodec.Write(SaveWire.Read(before).State!));
 
         var person0 = state.Citizens[0];
         var keys = person0.RoutineKeys;

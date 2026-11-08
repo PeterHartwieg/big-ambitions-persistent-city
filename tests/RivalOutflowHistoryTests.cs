@@ -142,7 +142,7 @@ public sealed class RivalOutflowHistoryTests
         string source = DevelopmentChain.Write(city.State);
         foreach (var value in new JToken?[] { null, JValue.CreateNull(), new JValue("1|0|1|1|0|0"), new JValue(new string('1', 1025)) })
         {
-            var json = JObject.Parse(source);
+            var json = SaveWire.Parse(source);
             if (value == null) ((JObject)json["Food"]!).Remove("Outflow"); else json["Food"]!["Outflow"] = value;
             string bad = json.ToString(Formatting.None), original = bad;
             Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(bad).Status); Assert.Equal(original, bad);
@@ -151,9 +151,9 @@ public sealed class RivalOutflowHistoryTests
             Assert.False(SaveSession.Open(store, city.State.PopulationKey).WriteTo(store, city.State).Success);
             Assert.Same(original, store[SaveStore.StateKey]);
         }
-        var future = JObject.Parse(source); future["Schema"] = CityState.CurrentSchema + 1;
+        var future = SaveWire.Parse(source); future["Schema"] = CityState.CurrentSchema + 1;
         Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(future.ToString()).Status);
-        var foreign = JObject.Parse(source); foreign["Schema"] = 23;
+        var foreign = SaveWire.Parse(source); foreign["Schema"] = 23;
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString()).Status);
     }
     [Fact]

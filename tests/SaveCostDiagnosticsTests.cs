@@ -131,9 +131,9 @@ public sealed class SaveCostDiagnosticsTests
         Assert.Equal(957, state.Visitors.Count);
         Assert.All(state.Food.Residents, meal => { Assert.Contains(meal.HostId, persons); Assert.Equal(meal.ResidentId, meal.HostId); });
         string payload = SaveCodec.Write(state);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
     }
 }

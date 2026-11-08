@@ -100,8 +100,9 @@ public sealed class ResearchSaveTests
 
     private static void RefusedAndPreserved(string payload, SaveReadStatus expected, string? error = null)
     {
+        payload = SaveWire.Payload(payload);
         var replacement = City(AllStates());
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == expected, read.Status + ": " + read.Error); Assert.Null(read.State);
         if (error != null) Assert.Contains(error, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "kept", [FoodAuthorityStore.Key] = "manifest" };
@@ -114,7 +115,7 @@ public sealed class ResearchSaveTests
     /// <summary>The payload with one change to its research section, written compactly like the writer.</summary>
     private static string Mutate(string payload, Action<JArray> change)
     {
-        var root = JObject.Parse(payload, new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
+        var root = SaveWire.Parse(payload, new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
         change((JArray)root["Research"]!);
         return root.ToString(Formatting.None);
     }
@@ -131,10 +132,10 @@ public sealed class ResearchSaveTests
     {
         Assert.Equal(SaveCodec.WorkplaceCapacitySchema + 1, SaveCodec.ResearchSchema);
         // E6c: writer 29 is now the frozen C5c writer; the vendor writer keeps the research section.
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
         var city = City(AllStates());
-        Assert.Contains("\"Research\":[", SaveCodec.Write(city));
+        Assert.Contains("\"Research\":[", SaveWire.Text(city));
         Assert.Contains("\"Research\":[", DevelopmentChain.Write29(city));
         Assert.DoesNotContain("Research", DevelopmentChain.Write28(city));
         Assert.DoesNotContain("Research", DevelopmentChain.Write27(city));
@@ -143,9 +144,9 @@ public sealed class ResearchSaveTests
     [Fact]
     public void AFreshCityHasAnEmptyLedger()
     {
-        string payload = SaveCodec.Write(City());
+        string payload = SaveWire.Text(City());
         Assert.Contains("\"Research\":[1,1,[],[],[]]", payload);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(1, read.State!.Research.NextSequence);
         Assert.False(read.State.Research.HasOpenOrders);
     }
@@ -156,9 +157,9 @@ public sealed class ResearchSaveTests
     public void EveryOrderStateRoundTripsByteForByte()
     {
         var ledger = AllStates();
-        string payload = SaveCodec.Write(City(ledger));
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string payload = SaveWire.Text(City(ledger));
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         var restored = read.State!.Research;
         Assert.Equal(ledger.NextSequence, restored.NextSequence);
         var states = restored.Open.Concat(restored.Kept).Concat(restored.Closed).Select(o => o.State).Distinct().OrderBy(s => s).ToArray();
@@ -190,10 +191,10 @@ public sealed class ResearchSaveTests
     [Fact]
     public void TheSectionAtItsBoundsRoundTripsAndStaysUnderSixtyFourKilobytes()
     {
-        var empty = SaveCodec.Write(City());
-        string payload = SaveCodec.Write(City(AtBounds()));
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        var empty = SaveWire.Text(City());
+        string payload = SaveWire.Text(City(AtBounds()));
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         int section = Encoding.UTF8.GetByteCount(payload) - Encoding.UTF8.GetByteCount(empty);
         output.WriteLine("research section at bounds: " + section + " bytes over the empty ledger");
         // 24 report-holding orders of 62 sold cells plus 16 closed rows, with three 256-character addresses per report-holding
@@ -202,7 +203,7 @@ public sealed class ResearchSaveTests
         Assert.True(section + 4 * 62 * 24 < 64 * 1024, section + " bytes");
         // Both record counters charge one record per order.
         var records = SaveCodec.CountRecords(read.State!, payload);
-        var baseline = SaveCodec.CountRecords(SaveCodec.Read(empty).State!, empty);
+        var baseline = SaveCodec.CountRecords(SaveWire.Read(empty).State!, empty);
         Assert.Equal(40, records.Streaming - baseline.Streaming);
         Assert.Equal(40, records.Semantic - baseline.Semantic);
     }
@@ -276,11 +277,11 @@ public sealed class ResearchSaveTests
     [MemberData(nameof(Refusals))]
     public void AnyOutOfBoundUnknownOrInconsistentValueIsRefusedAndKept(string name, Action<JArray> change)
     {
-        string original = SaveCodec.Write(City(AllStates()));
+        string original = SaveWire.Text(City(AllStates()));
         Assert.Equal(original, Mutate(original, _ => { }));
         string payload = Mutate(original, change);
         Assert.NotEqual(original, payload);
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload).Status);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(payload).Status);
         RefusedAndPreserved(payload, SaveReadStatus.Invalid);
         Assert.False(string.IsNullOrEmpty(name));
     }
@@ -294,7 +295,7 @@ public sealed class ResearchSaveTests
     public void NonCanonicalNumbersAreRefusedAndKept(string slot, string form)
     {
         var ledger = AllStates();
-        string payload = SaveCodec.Write(City(ledger));
+        string payload = SaveWire.Text(City(ledger));
         var order = ledger.Open[0];
         string original = slot switch
         {
@@ -326,8 +327,8 @@ public sealed class ResearchSaveTests
     [Fact]
     public void AMissingNullOrDuplicatedSectionIsRefusedAndKept()
     {
-        string payload = SaveCodec.Write(City(AllStates()));
-        var root = JObject.Parse(payload);
+        string payload = SaveWire.Text(City(AllStates()));
+        var root = SaveWire.Parse(payload);
         var missing = (JObject)root.DeepClone(); missing.Remove("Research");
         RefusedAndPreserved(missing.ToString(Formatting.None), SaveReadStatus.Invalid);
         var empty = (JObject)root.DeepClone(); empty["Research"] = JValue.CreateNull();
@@ -348,13 +349,13 @@ public sealed class ResearchSaveTests
         var cells = new[] { new MarketResearchCell(MarketResearchMetric.Consumers, MarketResearchBand.All, 7) };
         Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(order.Id, new MarketResearchReport("q-short", MarketResearchTier.Basic, 1, "address:a", 500, cells)));
         var city = City(ledger);
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city));
+        Assert.Throws<SaveValidationException>(() => SaveWire.Text(city));
         Assert.Throws<SaveValidationException>(() => SaveCodec.ValidateForActivation(city));
         var data = new Dictionary<string, string>();
         Assert.False(SaveStore.WriteTo(data, city).Success);
         Assert.False(data.ContainsKey(SaveStore.StateKey));
         city.Research = null!;
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city));
+        Assert.Throws<SaveValidationException>(() => SaveWire.Text(city));
     }
 
     // ---- Older development cities ----
@@ -368,7 +369,7 @@ public sealed class ResearchSaveTests
         var city = City(AllStates());
         string payload = DevelopmentChain.Write28(city);
         Assert.Contains("\"Schema\":" + SaveCodec.WorkplaceCapacitySchema + ",", payload);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Equal(SaveCodec.WorkplaceCapacitySchema, read.SourceSchema);
         Assert.Contains("start a new city", read.Error);
         RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
@@ -376,12 +377,12 @@ public sealed class ResearchSaveTests
         DevelopmentChain.RequireRefusedCapabilities(payload);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter28(payload).Status);
         // A current payload relabelled as the older schema is still a development city, never read as current.
-        string relabelled = SaveCodec.Write(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + SaveCodec.WorkplaceCapacitySchema + ",");
+        string relabelled = SaveWire.Text(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + SaveCodec.WorkplaceCapacitySchema + ",");
         RefusedAndPreserved(relabelled, SaveReadStatus.DevelopmentSchema, "start a new city");
         // The frozen writer-28 reader refuses the section it never had.
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.ReadWriter28(relabelled).Status);
         // A future label is refused as future and kept.
-        RefusedAndPreserved(SaveCodec.Write(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + (CityState.CurrentSchema + 1) + ","), SaveReadStatus.Future);
+        RefusedAndPreserved(SaveWire.Text(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + (CityState.CurrentSchema + 1) + ","), SaveReadStatus.Future);
     }
 
     private static string WriterFolder => Path.Combine(AppContext.BaseDirectory, "Writer" + SaveCodec.ResearchSchema.ToString(CultureInfo.InvariantCulture));
@@ -391,7 +392,7 @@ public sealed class ResearchSaveTests
     [Fact]
     public void TheFrozenWriter28CorpusPayloadIsRefusedAndKept()
     {
-        var manifest = JObject.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
+        var manifest = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
         var entry = (JObject)manifest["refusedOlder"]!;
         string payload = File.ReadAllText(Path.Combine(WriterFolder, (string)entry["file"]!));
         Assert.Equal((string)entry["sha256"]!, Sha(payload));
@@ -429,7 +430,7 @@ public sealed class ResearchSaveTests
     [Fact]
     public void GoldenResearchWriterBytesArePinned()
     {
-        var pins = JObject.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
+        var pins = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
         Assert.Equal(SaveCodec.ResearchSchema, (int)pins["writer"]!);
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
@@ -474,19 +475,19 @@ public sealed class ResearchSaveTests
     {
         if (Environment.GetEnvironmentVariable("PC_C5C_MEASURE") == null) return;
         var full = City(AtBounds()); var empty = City();
-        string fullPayload = SaveCodec.Write(full), emptyPayload = SaveCodec.Write(empty);
-        for (int i = 0; i < 200; i++) { SaveCodec.Read(SaveCodec.Write(full)); SaveCodec.Read(SaveCodec.Write(empty)); }
+        string fullPayload = SaveWire.Text(full), emptyPayload = SaveWire.Text(empty);
+        for (int i = 0; i < 200; i++) { SaveWire.Read(SaveWire.Text(full)); SaveWire.Read(SaveWire.Text(empty)); }
         const int runs = 2000;
         var write = new double[runs]; var read = new double[runs]; var writeEmpty = new double[runs]; var readEmpty = new double[runs];
         long allocFull = 0, allocEmpty = 0;
         for (int i = 0; i < runs; i++)
         {
             long a0 = GC.GetAllocatedBytesForCurrentThread();
-            var watch = Stopwatch.StartNew(); SaveCodec.Write(full); write[i] = watch.Elapsed.TotalMilliseconds;
-            watch.Restart(); var loaded = SaveCodec.Read(fullPayload); read[i] = watch.Elapsed.TotalMilliseconds;
+            var watch = Stopwatch.StartNew(); SaveWire.Text(full); write[i] = watch.Elapsed.TotalMilliseconds;
+            watch.Restart(); var loaded = SaveWire.Read(fullPayload); read[i] = watch.Elapsed.TotalMilliseconds;
             long a1 = GC.GetAllocatedBytesForCurrentThread();
-            watch.Restart(); SaveCodec.Write(empty); writeEmpty[i] = watch.Elapsed.TotalMilliseconds;
-            watch.Restart(); SaveCodec.Read(emptyPayload); readEmpty[i] = watch.Elapsed.TotalMilliseconds;
+            watch.Restart(); SaveWire.Text(empty); writeEmpty[i] = watch.Elapsed.TotalMilliseconds;
+            watch.Restart(); SaveWire.Read(emptyPayload); readEmpty[i] = watch.Elapsed.TotalMilliseconds;
             long a2 = GC.GetAllocatedBytesForCurrentThread();
             allocFull += a1 - a0; allocEmpty += a2 - a1;
             Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
@@ -494,7 +495,7 @@ public sealed class ResearchSaveTests
         string Stats(double[] v) { var s = v.OrderBy(x => x).ToArray(); return "p50 " + s[runs / 2].ToString("F4", CultureInfo.InvariantCulture)
             + " p95 " + s[runs * 95 / 100].ToString("F4", CultureInfo.InvariantCulture) + " max " + s[runs - 1].ToString("F4", CultureInfo.InvariantCulture) + " ms"; }
         output.WriteLine("payload bytes: empty ledger " + Encoding.UTF8.GetByteCount(emptyPayload) + ", at bounds " + Encoding.UTF8.GetByteCount(fullPayload)
-            + ", at bounds with 32-character addresses " + Encoding.UTF8.GetByteCount(SaveCodec.Write(City(AtBounds(32)))));
+            + ", at bounds with 32-character addresses " + Encoding.UTF8.GetByteCount(SaveWire.Text(City(AtBounds(32)))));
         output.WriteLine("write at bounds " + Stats(write) + "; empty " + Stats(writeEmpty));
         output.WriteLine("read at bounds " + Stats(read) + "; empty " + Stats(readEmpty));
         output.WriteLine("allocation per write+read: at bounds " + allocFull / runs + " B, empty " + allocEmpty / runs + " B");

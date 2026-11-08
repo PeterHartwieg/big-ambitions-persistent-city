@@ -138,7 +138,7 @@ public sealed class EconomyInterventionTests
         Assert.DoesNotContain("\"commuter\":{", run.Json);
         Assert.Contains("\"diagnosticOnly\":true", run.Json);
         Assert.True(EconomyRun.MarketShareDiagnosticOnly);
-        Newtonsoft.Json.Linq.JObject.Parse(run.Json);
+        SaveWire.Parse(run.Json);
     }
 
     [Fact]
