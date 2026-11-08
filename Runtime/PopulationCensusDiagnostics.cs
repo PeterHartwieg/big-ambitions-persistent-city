@@ -41,7 +41,7 @@ namespace PersistentCity.Runtime
             try
             {
                 CommandHelper.AddCommand<string, string>("pc", "Persistent City read-only diagnostics: pc population census", CensusCommand);
-                CommandHelper.AddCommand<string, string, string>("pc", "Persistent City read-only diagnostics: pc population census workplaces | pc population person <id>", CensusDetailCommand);
+                CommandHelper.AddCommand<string, string, string>("pc", "Persistent City read-only diagnostics: pc population census workplaces | pc population person <id> | pc population manifest", CensusDetailCommand);
                 censusCommandRegistered = true;
             }
             catch (Exception error) { log?.Warn("Population census console command not registered: " + error.Message); }
@@ -84,11 +84,14 @@ namespace PersistentCity.Runtime
             // F5d: `pc population person <id>` prints one person's stored routine, presence, meal and wallet facts.
             if (string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) && string.Equals(action, "person", StringComparison.OrdinalIgnoreCase))
             { PersonCommand(detail); return; }
+            // F5g: `pc population manifest` prints persisted persons per pattern and presence, and the latched fill targets.
+            if (string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) && string.Equals(action, "manifest", StringComparison.OrdinalIgnoreCase))
+            { ManifestCommand(); return; }
             bool details = string.Equals(detail, "workplaces", StringComparison.OrdinalIgnoreCase);
             if (!string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) || !string.Equals(action, "census", StringComparison.OrdinalIgnoreCase)
                 || detail.Length > 0 && !details)
             {
-                Debug.LogWarning("[Persistent City] Unknown command. Use: pc population census [workplaces] | pc population person <id>");
+                Debug.LogWarning("[Persistent City] Unknown command. Use: pc population census [workplaces] | pc population person <id> | pc population manifest");
                 return;
             }
             var current = simulation;
@@ -120,6 +123,14 @@ namespace PersistentCity.Runtime
                 + "\ndetached_compute_ms=" + result.ComputeMilliseconds.ToString("F3", CultureInfo.InvariantCulture)
                 + "\nnext=" + (censusTask == null ? "none" : "pending"));
             if (details && !result.Refused) Debug.Log("[Persistent City] population census workplaces\n" + result.Detail);
+        }
+
+        private void ManifestCommand()
+        {
+            var current = simulation;
+            if (failed || current == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
+            { Debug.LogWarning("[Persistent City] manifest unavailable: no active Persistent City population in this save."); return; }
+            Debug.Log("[Persistent City] population manifest (read-only)\n" + current.PopulationManifest());
         }
 
         private void PersonCommand(string id)
