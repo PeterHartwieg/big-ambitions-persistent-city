@@ -1,6 +1,6 @@
 Status: implemented (offline); not verified by rig
 
-Refs #93. Base `6fdbc198`; writer 33. Formula and default-strength rationale: [price-anchor decision](../decisions/2026-11-08-price-anchor.md). These are headless macOS arm64 / .NET 10 Release measurements, sequential foreground runs. No game, rig, ModsLocal or bridge was used.
+Refs #93. Base `6fdbc198`; writer 33. Formula and default-strength rationale: [price-anchor decision](../decisions/2026-11-08-price-anchor.md). The initial and first-review measurements use headless macOS arm64 / .NET 10 Release; the round-2 cadence checks below use the required default Debug configuration. All runs are sequential and foreground. No game, rig, ModsLocal or bridge was used.
 
 ## Review corrections Opus-r1-1 and Opus-r1-2
 
@@ -58,13 +58,26 @@ The same opt-in measurement method below is rerun with the $18.75 offer and the 
 
 No speedup is claimed; changed choices alter the work count. All measured p95 values remain <5 ms and every ≥30 ms count is zero. Native unified mod-work and whole-frame performance remain separate rig evidence.
 
-### Versioned rush fixture and retained precision flag
+### Round-2 cadence correction (Sol-r2-1; also Opus-r2-1)
 
-The required full suite exposed cancellation noise under the old **$3.50/$7.25/$4.80** evening-rush fixture: with the corrected price curve, framed/uninterrupted saves differ in **17 journey/meal timestamp values**, each by one or two floating-point steps. All cash, identity and other fields match; the timing assertions pass. This is retained as a **flag**, not claimed as an arithmetic fix. A trial traffic-snapshot change was discarded; production traffic code and the traffic cadence tests remain unchanged.
+The earlier menu replacement hid a valid failure. Both **$3.50/$7.25/$4.80** (the original/default menu) and **$9.24/$12.50/$16.69** now run as automated evening-rush cases over minutes **3990–4050**. Each keeps the existing exact save-hash comparison against uninterrupted advancement, rush population requirements, p95 <5 ms and unit/frame maximum <30 ms. No timestamp normalization, tolerance or hash rebaseline is used.
 
-The evening-rush fixture now uses **$9.24/$12.50/$16.69** (the third legacy product is again a salad-price-level proxy), consistent with the native-scale anchor and F6i's short fixture. Its original exact save-hash assertion, p95 <5 ms, unit/frame max <30 ms, and peak traffic requirements all pass. The focused rush/traffic-cadence/relative-policy batch passes **11 tests**. Neither hashes nor timing comparisons are weakened, and no timing improvement versus the old fixture is claimed. This versioned fixture change does not erase the old cheap-input precision flag. Temporary save-diff instrumentation was removed; no fixture payload is committed.
+Before the scheduler correction, the restored original menu fails: framed hash `1A697AD9A2D107D597C4C9AA6B3DBEC0C15B2C11E8F5F2D00F6A7A7BDE24801D` differs from uninterrupted `BD5863E4F9A241A09812F18B3A62D03B55C847AEBB3384142AA689492CCD78B7`; the native-price case passes. The previously retained save comparison has **17 persisted journey/meal timestamp differences**, each one or two floating-point steps. This is now an automated red regression rather than a retained flag.
 
-### Review validation
+The cause is meal retry scheduling reading `CitizenState.NextEventMinute` while its traffic estimate was last published by an arbitrary frame/snapshot. Food events already advance the traffic clock to their own logical minute. Retry scheduling now queries traffic progress at that minute to derive the same journey-completion estimate without mutating the snapshot or kernel. Non-traffic residents retain their scheduled event minute. This applies to own and represented meal waits; traffic movement, snapshot publication, affordability, choice scoring and save wire are unchanged.
+
+The focused **11-test** batch (both rush menus plus all nine traffic adversarial cases) passes. Both menu hashes below match their uninterrupted saves exactly. These detached timings include each replay's bounded advancement interval and snapshot synchronization, with market/route/stop doubles; they exclude warmup, serialization and hashing. They are not Unity mod-work or whole-frame measurements.
+
+| Menu | Before p95 / frame max / unit max ms | After p95 / frame max / unit max ms | Before / after frame ≥30 ms | Before / after unit ≥30 ms | After matched hash |
+| --- | --- | --- | --- | --- | --- |
+| Original | 0.100459 / 3.444792 / 2.537833 | 0.110000 / 4.412709 / 2.645917 | 0 / 0 | 0 / 0 | `743E286ADEC6CAC648FBF8039BD6697118D93822A5A8D81CFD493E853423EBB8` |
+| Native prices | 0.172667 / 4.724792 / 4.486500 | 0.173583 / 3.844792 / 2.990292 | 0 / 0 | 0 / 0 | `E58D0465DA31E831B72151F2A1BD66F91E8F8B8BE8595117725F7A460FAF87AC` |
+
+No speedup is claimed. Reproduce sequentially after `pgrep -f testhost` with the task's Homebrew environment and `dotnet test tests/PersistentCity.Tests.csproj --filter 'FullyQualifiedName~RushSpikeReplayTests|FullyQualifiedName~TrafficAdversarialTests' --logger 'console;verbosity=detailed'`. No fixture payload is committed. Writer 33 and its original golden pins remain unchanged.
+
+The round-2 required foreground build passes, DLL SHA256 `91c9839028c2888da4d6be1eb4cff56e01744bbd9c2b3df8d2336fe5a113574f`. The required full foreground suite passes **3,896 tests**, zero failed/skipped, in **4 min 3 s**, including both original writer-33 golden pins. No persisted format or simulated golden/trace expectation changes are needed for this correction. Documentation links and whitespace checks pass.
+
+### First-review validation
 
 With the initial 23 review cases added, `c6a4796` gives **15 failed / 8 passed**. The final corrected rule plus the added deep-discount case gives **24 passed** in **1.87 s** total test time. The required review-fix build passes, DLL SHA256 `2de5690b4fc4ceb0a730840de1f34d961871326ab0a4ae6ec49047d9c7d30f46`. The final required foreground suite passes **3,895 tests**, zero failed/skipped, in **3 min 53 s**, including both unchanged writer-33 golden pins. The required build and documentation-link/whitespace checks pass. The same older simulated state/trace fixtures are repinned for the corrected choices; all static and original writer-33 pins stay unedited. Reproduction uses the same filtered command below; the temporary pin-capture helper is removed before the final suite and is not committed.
 
