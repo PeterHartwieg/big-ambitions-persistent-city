@@ -53,6 +53,11 @@ public sealed class DayMetrics
     public long Resolved, OwnMeals, RivalMeals, HomeMeals, Skipped, Unconfirmed;
     public readonly long[] OutcomeMeals = new long[4];
     public readonly long[] RivalHours = new long[24];
+    // F6j: shop-day purchases count items (main + extras); own meals (visits) by checkout hour per business
+    // come from outcomes, so capacity (meals/hour) is compared with meals, not items.
+    public readonly SortedDictionary<string, long[]> OwnMealHours = new(StringComparer.Ordinal);
+    // Sold player tickets per (business, main dish): meals, sold extras and extras planned within the wallet.
+    public readonly SortedDictionary<(string Business, string Main), (long Meals, long Extras, long Planned)> Tickets = new();
     public readonly SortedDictionary<string, ShopRow> Shops = new(StringComparer.Ordinal);
     // Section 3.5 catchment: meal opportunities whose decision evaluated the own business.
     public readonly SortedDictionary<string, CatchmentRow> Catchments = new(StringComparer.Ordinal);
@@ -82,11 +87,17 @@ public sealed class DayMetrics
         json.OpenArray("shops");
         foreach (var (id, s) in Shops)
         {
+            var mealHours = OwnMealHours.TryGetValue(id, out var h) ? h : new long[24];
             json.Open().Field("businessId", id).Field("purchases", s.Purchases).Field("revenueUnits", s.RevenueUnits)
+                .Field("meals", mealHours.Sum()).Values("mealsByCheckoutHour", mealHours)
                 .Values("byMeal", s.Meals).Values("byHour", s.Hours)
                 .Open("offers").Field("considered", s.Considered).Field("chosen", s.Chosen).Field("price", s.Price)
                 .Field("travelTime", s.Access).Field("closedLate", s.Closed).Field("stock", s.Stock).Field("noStaffedCounter", s.Staff)
                 .Field("serviceQueue", s.Service).Field("unknown", s.Unknown).Field("preferredAnother", s.Preferred).Close();
+            json.OpenArray("tickets");
+            foreach (var ((business, main), t) in Tickets.Where(t => t.Key.Business == id))
+                json.Open().Field("mainProductId", main).Field("meals", t.Meals).Field("extras", t.Extras).Field("plannedExtras", t.Planned).Close();
+            json.CloseArray();
             json.OpenArray("products");
             foreach (var (product, p) in s.Products) json.Open().Field("productId", product).Field("purchases", p.Purchases).Field("revenueUnits", p.RevenueUnits).Close();
             json.CloseArray().Close();

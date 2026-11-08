@@ -159,11 +159,17 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
         var total = ticket?.Main.Price ?? meal.Price;
         foreach (var line in sold) total += line.Price;
         sales[meal.IntentId] = (total, sold.ToArray());
+        var key = (meal.Day, meal.BusinessId, meal.ProductId);
+        Tickets.TryGetValue(key, out var tally);
+        Tickets[key] = (tally.Meals + 1, tally.Extras + sold.Count, tally.Planned + (ticket?.Extras.Count ?? 0));
         NativeOrders++; NativeRevenueUnits += total.Units;
         if (InjectDuplicateOrder) { InjectDuplicateOrder = false; DuplicateOrders++; NativeOrders++; NativeRevenueUnits += total.Units; }
         return new FoodSale(true, "Native double confirmed", null, sold);
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
+    // Harness evidence only: sold tickets per (meal day, business, main dish). Planned extras are what checkout
+    // planned within the wallet; sold extras are what this double confirmed. Lives across reloads with the double.
+    public readonly SortedDictionary<(int Day, string Business, string Main), (long Meals, long Extras, long Planned)> Tickets = new();
     private readonly Dictionary<string, (Money Total, FoodTicketLine[] Extras)> sales = new(StringComparer.Ordinal);
     public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
     {

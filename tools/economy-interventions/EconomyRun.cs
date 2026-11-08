@@ -182,7 +182,7 @@ public static class EconomyRun
             }
             if (epoch % 1440 == OutcomeSampleMinute && pending.TryGetValue(day - 1, out var sample))
             {
-                Outcomes(city.State, day - 1, sample, observer);
+                Outcomes(city.State, day - 1, sample, observer, market);
                 result.Days.Add(sample); pending.Remove(day - 1);
             }
             if (options.Fault == Fault.DuplicateNativeOrder && epoch == options.FaultDay * 1440L + 12 * 60)
@@ -295,7 +295,7 @@ public static class EconomyRun
         return (long)total;
     }
 
-    private static void Outcomes(CityState state, int day, DayMetrics metrics, DecisionObserver observer)
+    private static void Outcomes(CityState state, int day, DayMetrics metrics, DecisionObserver observer, EconomyMarket market)
     {
         foreach (var meal in state.Food!.Residents)
         {
@@ -306,7 +306,13 @@ public static class EconomyRun
             foreach (var o in today.Meals)
             {
                 metrics.Resolved++; metrics.OutcomeMeals[MealOutcomes.Index(o.Kind)]++;
-                if (o.Status == MealOutcomeStatus.Bought) { if (o.TargetKind == FoodAlternativeKind.Rival) { metrics.RivalMeals++; metrics.RivalHours[o.CheckoutAt % 1440 / 60]++; } else metrics.OwnMeals++; }
+                if (o.Status == MealOutcomeStatus.Bought) { if (o.TargetKind == FoodAlternativeKind.Rival) { metrics.RivalMeals++; metrics.RivalHours[o.CheckoutAt % 1440 / 60]++; } else
+                    {
+                        metrics.OwnMeals++;
+                        string business = o.PlaceId == EconomyFixture.PlaceOf(EconomyFixture.FarShop) ? EconomyFixture.FarShop : EconomyFixture.Shop;
+                        if (!metrics.OwnMealHours.TryGetValue(business, out var hours)) metrics.OwnMealHours[business] = hours = new long[24];
+                        hours[o.CheckoutAt % 1440 / 60]++;
+                    } }
                 else if (o.Status == MealOutcomeStatus.ChoseAlternative) metrics.HomeMeals++;
                 else if (o.Status == MealOutcomeStatus.Skipped) metrics.Skipped++;
                 else metrics.Unconfirmed++;
@@ -326,6 +332,8 @@ public static class EconomyRun
                 }
             }
         }
+        foreach (var (key, tally) in market.Tickets.Where(t => t.Key.Day == day)) metrics.Tickets[(key.Business, key.Main)] = tally;
+        foreach (var key in market.Tickets.Keys.Where(k => k.Day <= day).ToList()) market.Tickets.Remove(key);
         foreach (var (key, offer) in observer.OffersOn(day)) metrics.Offers[key] = offer;
         observer.Prune(day);
         foreach (var row in state.Food.History.Where(h => h.Day == day).OrderBy(h => h.BusinessId, StringComparer.Ordinal))

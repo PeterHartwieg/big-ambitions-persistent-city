@@ -49,7 +49,7 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_household_thresholds_are_the_rerun_control_band_rounded_outward(self):
         # Pinned: a rerun that changes the canonical control band must re-derive the thresholds.
-        report = json.loads((EVIDENCE / "f6h-rerun-acceptance.json").read_text())
+        report = json.loads((EVIDENCE / "f6h-f6j-rerun-acceptance.json").read_text())
         household = report["householdControlSeedBands"]
         self.assertEqual(HOUSEHOLD_THRESHOLDS, derive_household_thresholds(household))
         self.assertTrue(all(household["withinThresholdsPerSeed"]))
@@ -71,6 +71,43 @@ class AcceptanceTests(unittest.TestCase):
         self.assertAlmostEqual(-0.1, menu["revenueChange"]["mean"])
         self.assertAlmostEqual(-0.5 / 0.4, menu["arcElasticity"]["mean"])
         self.assertAlmostEqual(0.01, menu["unaffordableRefusalShare"]["mean"])
+
+    def test_capacity_and_meal_quantity_read_meals_not_items_after_f6j(self):
+        # 50 meals/hour carrying 80 items/hour is below a 60/hour meal capacity.
+        def day(meals, items, cents, peak_meals, peak_items):
+            shop = {"meals": meals, "mealsByCheckoutHour": [peak_meals], "byHour": [peak_items], "offers": {"price": 0, "considered": 100}}
+            return {"own": {"purchases": items, "revenueUnits": items * cents, "shops": [shop]}, "share": {"city": {"home": 1000 - meals}}}
+        def arm(meals, items, cents, peak_meals, peak_items):
+            return [{"days": [day(meals, items, cents, peak_meals, peak_items)] * 42, "fixture": {"mealsPerHour": 60}} for _ in range(5)]
+        controls = arm(100, 120, 10, 50, 80)
+        table = price_arms({"control/control": controls, "price/menu-plus-50": arm(80, 100, 15, 40, 70)}, controls, {}, 1)
+        self.assertFalse(table["control/control"]["capacityBinding"])
+        self.assertAlmostEqual(1.2, table["control/control"]["itemsPerMeal"]["mean"])
+        self.assertAlmostEqual(12.0 / 100, table["control/control"]["ticketDollarsPerMeal"]["mean"])
+        menu = table["price/menu-plus-50"]
+        self.assertAlmostEqual(-0.2, menu["mealQuantityChange"]["mean"])
+        self.assertAlmostEqual(100 / 120 - 1, menu["quantityChange"]["mean"])
+        self.assertAlmostEqual(1500 / 1200 - 1, menu["revenueChange"]["mean"])
+
+
+    def test_extras_change_splits_into_main_mix_and_within_main(self):
+        # Control: 50 meals of main a (1 extra each), 50 of b (none). Arm: 20 of a, 60 of b, a keeps 1 extra:
+        # all of the drop is mix. A second arm halves a's extras at control's mix: all of it is within-main.
+        def arm(tickets):
+            meals = sum(t["meals"] for t in tickets); items = meals + sum(t["extras"] for t in tickets)
+            shop = {"meals": meals, "mealsByCheckoutHour": [1], "byHour": [1], "offers": {"price": 0, "considered": 1}, "tickets": tickets}
+            day = {"own": {"purchases": items, "revenueUnits": items, "shops": [shop]}, "share": {"city": {"home": 1}}}
+            return [{"days": [day] * 42, "fixture": {"mealsPerHour": 60}} for _ in range(5)]
+        t = lambda main, meals, extras: {"mainProductId": main, "meals": meals, "extras": extras, "plannedExtras": extras}
+        controls = arm([t("a", 50, 50), t("b", 50, 0)])
+        table = price_arms({"control/control": controls, "price/menu-plus-50": arm([t("a", 20, 20), t("b", 60, 0)]),
+                            "price/product-plus-25": arm([t("a", 50, 25), t("b", 50, 0)])}, controls, {}, 1)
+        mix = table["price/menu-plus-50"]
+        self.assertAlmostEqual(20 / 80 - 0.5, mix["extrasPerMealChangeFromMainMix"]["mean"])
+        self.assertAlmostEqual(0, mix["extrasPerMealChangeWithinMain"]["mean"])
+        within = table["price/product-plus-25"]
+        self.assertAlmostEqual(0, within["extrasPerMealChangeFromMainMix"]["mean"])
+        self.assertAlmostEqual(-0.25, within["extrasPerMealChangeWithinMain"]["mean"])
 
 
 if __name__ == "__main__":
