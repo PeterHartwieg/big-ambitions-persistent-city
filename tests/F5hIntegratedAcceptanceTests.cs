@@ -14,8 +14,25 @@ namespace PersistentCity.Tests;
 /// commuter target at or below 1,000, so the fill grows it to about 2,500 persisted persons over two day boundaries. Every
 /// check here runs in the ordinary test project; the 10,000-person matrix and the stress measurements are opt-in
 /// (<see cref="F5hMeasure"/>).</summary>
-public sealed class F5hIntegratedAcceptanceTests
+public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAcceptanceTests.Runs>
 {
+    /// <summary>The expensive runs, shared by this class's facts. A class fixture, not static fields, so xUnit drops the
+    /// finished cities when the class is done: retained for the whole process they would enlarge every later GC, which
+    /// the timed RushSpikeReplayTests intervals measure.</summary>
+    public sealed class Runs
+    {
+        private readonly Lazy<(SevenDays Plain, SevenDays Reloaded)> sevenDays = new(() => (RunSevenDays(false, 100_000), RunSevenDays(true, 7)));
+        private readonly Lazy<string> referenceDay2 = new(() => Prefilled(ReferenceHomes, ReferenceCatalogue(), 2));
+        private readonly Lazy<Window> referenceWindow;
+        public Runs() { referenceWindow = new(() => Accounting(referenceDay2.Value, ReferenceCatalogue(), 60, 128, 2, reload: false, skip: false)); }
+        internal (SevenDays Plain, SevenDays Reloaded) SevenDays => sevenDays.Value;
+        internal string ReferenceDay2 => referenceDay2.Value;
+        internal Window ReferenceWindow => referenceWindow.Value;
+    }
+
+    private readonly Runs runs;
+    public F5hIntegratedAcceptanceTests(Runs runs) { this.runs = runs; }
+
     // ---- Reference city ----
 
     internal const int ReferenceHomes = 152;
@@ -154,12 +171,11 @@ public sealed class F5hIntegratedAcceptanceTests
         return run;
     }
 
-    private static readonly Lazy<(SevenDays Plain, SevenDays Reloaded)> sevenDays = new(() => (RunSevenDays(false, 100_000), RunSevenDays(true, 7)));
 
     [Fact]
     public void FreshReferenceCityRunsSevenDaysWithASaveAndReloadAtEveryDayBoundaryAndEqualsTheUninterruptedRun()
     {
-        var (plain, reloaded) = sevenDays.Value;
+        var (plain, reloaded) = runs.SevenDays;
         Assert.Equal(CityState.CurrentSchema, reloaded.State.Schema);
         Assert.StartsWith("{\"Schema\":" + CityState.CompactSchema + ",", reloaded.Final);
         // Seven boundaries (2,880 … 11,520), each reloaded on its minute; the first two also reloaded between fill units.
@@ -179,7 +195,7 @@ public sealed class F5hIntegratedAcceptanceTests
     [Fact]
     public void PopulationFillConvergesToTheCensusTargetsAtTheDeclaredLoadWithoutOvershoot()
     {
-        var (plain, _) = sevenDays.Value;
+        var (plain, _) = runs.SevenDays;
         var first = plain.Boundaries[0];
         // The first boundary publishes its cap; the second reaches both clamped targets; later ones add nobody.
         Assert.Equal(PopulationFillPolicy.MaximumPersonsPerBoundary, first.Created);
@@ -212,7 +228,7 @@ public sealed class F5hIntegratedAcceptanceTests
     [Fact]
     public void TheIntegratedCityWrittenByTheOlderWriterIsRefusedWithStartANewCityAndKept()
     {
-        var (_, reloaded) = sevenDays.Value;
+        var (_, reloaded) = runs.SevenDays;
         string older = DevelopmentChain.Write33(reloaded.State);
         Assert.Equal(CityState.ChangeJournalSchema, SaveCodec.DevelopmentSchemaOf(older));
         var read = SaveCodec.Read(older);
@@ -447,8 +463,6 @@ public sealed class F5hIntegratedAcceptanceTests
         new object[] { 30, 32, 4.0, false }, new object[] { 60, 16, 2.0, false }, new object[] { 120, 128, 2.0, false }, new object[] { 60, 32, 4.0, true },
     };
 
-    private static readonly Lazy<string> referenceDay2 = new(() => Prefilled(ReferenceHomes, ReferenceCatalogue(), 2));
-    private static readonly Lazy<Window> referenceWindow = new(() => Accounting(referenceDay2.Value, ReferenceCatalogue(), 60, 128, 2, reload: false, skip: false));
 
     /// <summary>The declared load through the F1 matrix: from 06:00 on day 2 (957 residents and the first boundary's 1,024
     /// visitors) to 06:00 on day 3, across the second boundary that completes the fill. Every arm, with a save at
@@ -457,13 +471,13 @@ public sealed class F5hIntegratedAcceptanceTests
     [MemberData(nameof(Arms))]
     public void DeclaredLoadF1MatrixEqualsTheReferenceAcrossBudgetsCadencesSkipAndReload(int fps, int budget, double milliseconds, bool skip)
     {
-        var reference = referenceWindow.Value;
+        var reference = runs.ReferenceWindow;
         Assert.Equal(957 + PopulationFillPolicy.MaximumPersonsPerBoundary, reference.PersonsAtStart);
         Assert.InRange(reference.PersonsAtEnd, 2230, 2870);
         Assert.True(reference.FillCreated > 0);
         foreach (bool reload in new[] { false, true })
         {
-            var actual = Accounting(referenceDay2.Value, ReferenceCatalogue(), fps, budget, milliseconds, reload, skip);
+            var actual = Accounting(runs.ReferenceDay2, ReferenceCatalogue(), fps, budget, milliseconds, reload, skip);
             Assert.Equal(reference.Snapshot, actual.Snapshot);
             Assert.Equal(reference.Orders, actual.Orders);
             Assert.Equal(0, actual.HistoricalClockMisses);
