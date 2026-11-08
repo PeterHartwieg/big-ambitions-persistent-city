@@ -131,6 +131,7 @@ Offline only, on this Mac (Apple M1 Pro, .NET 10.0.400), 8 November 2026. Each `
 
 - `python3 tools/build.py --game-managed "<dll-import-shim>/Big Ambitions_Data/Managed"`: exit 0.
 - `dotnet test tests/PersistentCity.Tests.csproj`: **4,094 passed, 0 failed, 0 skipped** (5 min 49 s), after the PR review round-2 fix. Before the F5g test port the same suite had 2 failures, both listed under "Defect found".
+- `RushSpikeReplay.Run`, an existing perf test, changed in F5h (commit `f491cd5`): it now runs a blocking garbage collection after its warm-up and before its timed window. Two full-suite runs had failed when one gen-0 collection (42.7 ms, then 33.0 ms) of earlier tests' garbage landed in a timed interval. The replay's own units peaked at 1.1–1.5 ms. The 30 ms threshold and every assertion are unchanged, and collections from the window's own allocations still count. The F5h acceptance runs also moved from static fields to an xUnit class fixture, so they are released when their class finishes.
 - `tests/F5hMeasure.cs` (Release, opt-in): numbers in the perf file.
 
 ## Performance
