@@ -20,26 +20,32 @@ public static class InterventionArms
     public const int RivalLanesHalvedPercent = 50, RivalLanesDefaultPercent = 100;
 
     private static double At(int day, int minuteOfDay = 0) => day * 1440.0 + minuteOfDay;
-    private static int Base(string product) => EconomyFixture.Menu.Single(m => m.Product == product).Cents;
-    private static int Scaled(string product, int percent) => (int)Math.Round(Base(product) * percent / 100.0, MidpointRounding.AwayFromZero);
+    private static int Scaled(FixtureProfile profile, string product, int percent)
+        => (int)Math.Round(profile.Base(product) * percent / 100.0, MidpointRounding.AwayFromZero);
     private static IEnumerable<int> InterventionDays() => Enumerable.Range(FirstInterventionDay, EconomyRun.InterventionDays);
 
     private static IEnumerable<InterventionInput> Window(Func<double, IEnumerable<InterventionInput>> apply, Func<double, IEnumerable<InterventionInput>> revert)
         => apply(At(FirstInterventionDay)).Concat(revert(At(FirstRevertedDay)));
     private static InterventionInput Price(double at, string product, int cents) => new(at, InputKind.ProductPrice, EconomyFixture.Shop, product, cents);
 
+    /// <summary>The three price arms, scaled from the profile's own menu.</summary>
+    public static IReadOnlyList<Arm> Price(FixtureProfile profile) => new List<Arm>
+    {
+        new("price", "product-minus-25", "Burger price -25 %", Window(
+            a => new[] { Price(a, Product, Scaled(profile, Product, 75)) }, r => new[] { Price(r, Product, profile.Base(Product)) }).ToList()),
+        new("price", "product-plus-25", "Burger price +25 %", Window(
+            a => new[] { Price(a, Product, Scaled(profile, Product, 125)) }, r => new[] { Price(r, Product, profile.Base(Product)) }).ToList()),
+        new("price", "menu-plus-50", "Whole menu +50 %", Window(
+            a => profile.Menu.Select(m => Price(a, m.Product, Scaled(profile, m.Product, 150))),
+            r => profile.Menu.Select(m => Price(r, m.Product, m.Cents))).ToList()),
+    };
+
     public static IReadOnlyList<Arm> All()
     {
         var shop = EconomyFixture.Shop;
-        var arms = new List<Arm>
+        var profile = FixtureProfile.CapacityBound;
+        var arms = new List<Arm>(Price(profile))
         {
-            new("price", "product-minus-25", "Burger price -25 %", Window(
-                a => new[] { Price(a, Product, Scaled(Product, 75)) }, r => new[] { Price(r, Product, Base(Product)) }).ToList()),
-            new("price", "product-plus-25", "Burger price +25 %", Window(
-                a => new[] { Price(a, Product, Scaled(Product, 125)) }, r => new[] { Price(r, Product, Base(Product)) }).ToList()),
-            new("price", "menu-plus-50", "Whole menu +50 %", Window(
-                a => EconomyFixture.Menu.Select(m => Price(a, m.Product, Scaled(m.Product, 150))),
-                r => EconomyFixture.Menu.Select(m => Price(r, m.Product, m.Cents))).ToList()),
             new("staffing", "lunch-counters-halved", "Lunch staffed counters halved (60 -> 30 meals/h, 11:00-14:00)",
                 InterventionDays().SelectMany(d => new[] {
                     new InterventionInput(At(d, LunchFrom), InputKind.MealsPerHour, shop, "", EconomyFixture.MealsPerHour / 2),
@@ -80,7 +86,7 @@ public static class InterventionArms
                 a => new[] { new InterventionInput(a, InputKind.RivalLanes, EconomyFixture.RivalBusiness, "", RivalLanesHalvedPercent) },
                 r => new[] { new InterventionInput(r, InputKind.RivalLanes, EconomyFixture.RivalBusiness, "", RivalLanesDefaultPercent) }).ToList()),
             new("rival", "price-minus-25", "Rival price -25 % (whole menu)", Window(
-                a => EconomyFixture.Menu.Select(m => new InterventionInput(a, InputKind.RivalPrice, EconomyFixture.RivalBusiness, m.Product, Scaled(m.Product, 75))),
+                a => EconomyFixture.Menu.Select(m => new InterventionInput(a, InputKind.RivalPrice, EconomyFixture.RivalBusiness, m.Product, Scaled(profile, m.Product, 75))),
                 r => EconomyFixture.Menu.Select(m => new InterventionInput(r, InputKind.RivalPrice, EconomyFixture.RivalBusiness, m.Product, m.Cents))).ToList()),
         };
         return arms;

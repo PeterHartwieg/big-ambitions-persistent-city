@@ -85,4 +85,52 @@ public sealed class F6hIntegratedTests
             }
     }
 
+    static readonly FixtureProfile NonBindingNative = new("non-binding-6000-native-menu", 6000, EconomyFixture.NativeMenu);
+
+    [Fact]
+    public void PriceProfileIsMatchedAcrossShopsAndArmsAndCanonicalBytesStayUnchanged()
+    {
+        var market = EconomyFixture.Build(3, 8, profile: NonBindingNative).Market;
+        Assert.All(market.Shops, s => Assert.Equal(6000, s.MealsPerHour));
+        foreach (var (product, cents) in EconomyFixture.NativeMenu)
+        {
+            Assert.All(market.Shops, s => Assert.Equal(cents, s.Prices[product]));
+            Assert.Equal(cents, market.RivalShop.Prices[product]);
+        }
+        // Menu +50% scales from the profile's own menu; revert restores it exactly.
+        var menu = InterventionArms.Price(NonBindingNative).Single(a => a.Name == "menu-plus-50");
+        Assert.Equal(new[] { 1875, 1386, 2504 }, menu.Inputs.Take(3).Select(i => i.Value));
+        Assert.Equal(EconomyFixture.NativeMenu.Select(m => m.Cents), menu.Inputs.Skip(3).Select(i => i.Value));
+        // The canonical fixture's price arms and metric bytes are unchanged by the profile seam.
+        Assert.Equal(InterventionArms.Price(FixtureProfile.CapacityBound).SelectMany(a => a.Inputs),
+            InterventionArms.All().Where(a => a.Family == "price").SelectMany(a => a.Inputs));
+        var canonical = EconomyRun.Run(new RunOptions { Integrated = true, Seed = 3, Residents = 8, Days = 1 });
+        Assert.DoesNotContain("\"profile\"", canonical.Json);
+        Assert.Contains("\"mealsPerHour\":60", canonical.Json);
+        var profiled = EconomyRun.Run(new RunOptions { Integrated = true, Seed = 3, Residents = 8, Days = 1, Profile = NonBindingNative });
+        Assert.Contains("\"name\":\"non-binding-6000-native-menu\"", profiled.Json);
+    }
+
+    [Fact]
+    public void NonBindingMenuMarkupCostsDemandWithoutWalletExhaustion()
+    {
+        // Representative of the six-week non-binding native-menu arm (-26.0% quantity, +11.2% revenue,
+        // refusals 2.07% -> 2.16%). Four days, 128 residents + 128 visitors; +50% from day 2.
+        var markup = EconomyFixture.NativeMenu.Select(m => new InterventionInput(2 * 1440, InputKind.ProductPrice,
+            EconomyFixture.Shop, m.Product, (int)Math.Round(m.Cents * 1.5, MidpointRounding.AwayFromZero))).ToArray();
+        RunResult Run(InterventionInput[] inputs) => EconomyRun.Run(new RunOptions {
+            Integrated = true, Seed = 3, Residents = 128, Days = 4, Profile = NonBindingNative, Inputs = inputs });
+        var control = Run(Array.Empty<InterventionInput>());
+        var high = Run(markup);
+        Assert.Equal(control.Days[0].OwnPurchases, high.Days[0].OwnPurchases);
+        double Sum(RunResult r, Func<DayMetrics, long> f) => r.Days.Skip(1).Sum(f);
+        double q0 = Sum(control, d => d.OwnPurchases), q1 = Sum(high, d => d.OwnPurchases);
+        double r0 = Sum(control, d => d.OwnRevenueUnits), r1 = Sum(high, d => d.OwnRevenueUnits);
+        double Refused(RunResult r) => Sum(r, d => d.Shops.Values.Sum(s => s.Price)) / Sum(r, d => d.Shops.Values.Sum(s => s.Considered));
+        Assert.True(q1 < q0 * .85, $"markup must cost at least 15% quantity: {q0} -> {q1}");
+        Assert.True(r1 < r0 * 1.25, $"revenue must rise well under one-for-one: {r0} -> {r1}");
+        Assert.True(Refused(high) - Refused(control) < .01, $"affordability refusals {Refused(control):P2} -> {Refused(high):P2}");
+        Assert.True(high.Days.Skip(1).Sum(d => d.HomeMeals) > control.Days.Skip(1).Sum(d => d.HomeMeals));
+        Assert.All(control.Days.Concat(high.Days), d => Assert.True(d.Shops.Values.Max(s => s.Hours.Max()) < 6000));
+    }
 }

@@ -27,6 +27,7 @@ public sealed class RunOptions
     public bool OrdinaryVisits;
     public bool Integrated;
     public double PriceWeight = 1;
+    public FixtureProfile Profile = FixtureProfile.CapacityBound;
     public bool RivalListed = true, OwnListed = true;
     // F1 cadence: 30 simulated minutes/real second as in AccountingScenario. Zero uses epoch drain.
     public int FramesPerSecond, EventUnitsPerFrame = 256;
@@ -75,7 +76,7 @@ public static class EconomyRun
             throw new ArgumentOutOfRangeException(nameof(options.PriceWeight));
         long allocated = GC.GetTotalAllocatedBytes(true);
         var timer = System.Diagnostics.Stopwatch.StartNew();
-        var (state, market) = EconomyFixture.Build(options.Seed, options.Residents, options.RivalListed, options.OwnListed);
+        var (state, market) = EconomyFixture.Build(options.Seed, options.Residents, options.RivalListed, options.OwnListed, options.Profile);
         market.ChoiceSettings.FoodChoicePriceWeight = options.PriceWeight;
         if (options.Integrated) market.Journal = new FoodChangeJournal(state.Food!, state.Economy);
         bool ordinary = options.OrdinaryVisits || options.Integrated;
@@ -384,10 +385,17 @@ public static class EconomyRun
         json.Open().Field("schema", options.Integrated ? "persistentcity-f6h-metrics-1" : Schema).Field("family", options.Family).Field("arm", options.Arm).Field("seed", options.Seed)
             .Open("fixture").Field("residents", options.Residents).Field("consumers", options.Residents * EconomyFixture.RepresentationFactor)
             .Field("days", options.Days).Field("rivalListed", options.RivalListed).Field("ownListed", options.OwnListed)
-            .Field("mealsPerHour", EconomyFixture.MealsPerHour).Field("walkingRouteMinutes", 1).Field("unitsPerCent", Money.UnitsPerCent).Close()
+            .Field("mealsPerHour", options.Profile.MealsPerHour).Field("walkingRouteMinutes", 1).Field("unitsPerCent", Money.UnitsPerCent).Close()
             .Open("population").Field("ownerKind", ordinary ? "person-wallet" : OwnerKind).Field("perPersonWallets", ordinary)
             .Raw("kindsMeasured", ordinary ? "[\"resident\",\"visitor\"]" : "[\"resident\"]")
             .Raw("kindsReserved", ordinary ? "[]" : "[\"commuter\",\"dayVisitor\"]").Close();
+        // Older sweeps carry no profile block; the default profile keeps their bytes unchanged.
+        if (options.Profile != FixtureProfile.CapacityBound)
+        {
+            json.Open("profile").Field("name", options.Profile.Name).Field("mealsPerHour", options.Profile.MealsPerHour).OpenArray("menuCents");
+            foreach (var (product, cents) in options.Profile.Menu) json.RawItem("{\"product\":\"" + product + "\",\"cents\":" + cents + "}");
+            json.CloseArray().Close();
+        }
         if (options.Integrated) json.Open("integrated").Field("writer", CityState.CurrentSchema)
             .Ratio("priceWeight", options.PriceWeight).Field("rivalLanes", RivalServiceCalibration.DefaultLanes)
             .Field("rivalUnits", RivalServiceCalibration.DefaultMealPeriodUnits)
