@@ -223,3 +223,34 @@ PC_F6H_MEASURE="$PWD/build/f6h-retained" dotnet test tests/PersistentCity.Tests.
 `Sol-r2-2`: the journal observation table now contains all 15 recorded supply/hours rows at 1/64/1,024 shops, transcribed from the existing evidence (no timing rerun). It includes p95, maximum, allocation and every ≥30 ms count; all counts are zero.
 
 Round 2 validation: the isolated retained-load fact passed (three measured trials after warmup); the required build passed with the unchanged DLL hash above; the required full foreground unit suite passed **3,871 tests**, zero failed/skipped, in **3 min 41 s**, including the unchanged writer-33 golden pins. All 15 journal rows match the evidence, the documentation-link check passes (378 files, zero broken relative links), and `git diff --check` passes. No game/rig run or product change is part of these corrections.
+
+## Acceptance rerun after F6i, 8 November 2026
+
+Base `3f734cb6` (F6i #150), writer 33, foreground macOS arm64 / .NET 10 Release, one dotnet process at a time. Price calibration is still **stopped**; the measurements, price-arm table and options are in [calibration](f6h-calibration.md#acceptance-rerun-after-f6i-8-november-2026). Everything above is the first F6h run and stays as recorded. No Core or Runtime optimization is taken and no speedup is claimed. The four parked hotspots (physical population, closure refresh, optional-stop refresh, save serialization) stay parked.
+
+### Sweep tool cost
+
+86 canonical-fixture runs (85-run matrix + full-size reload) and 147 profile runs (7 profiles × 20 + 7 reloads). After the first warm run (7.3 s), canonical six-week runs took 4.8–5.5 s; profile runs at 6,000 meals/hour took 4.4–6.2 s, first runs up to 8.4 s. More meals per day means more checkout work. These are tool wall times including fixture construction, doubles, daily all-owner checks and the final save hash. They are not mod-work.
+
+### Cadence, body cap and 100,000-consumer stress (rerun)
+
+`F6hMeasurements.CadenceAndBodyEvidence` and `IntegratedPostingAdvancementStress` rerun on the F6i base, because the anchor changes choices. Rows are in [f6h-rerun-measurements.json](../../tools/economy-interventions/evidence/f6h-rerun-measurements.json).
+
+All six 30/60/120 FPS × 2-unit/0.1 ms and 256-unit/4 ms arms give byte-identical 42-day economic metrics and final saves. Metrics SHA256 `28551C17A6D080575EE1980565DA117716637A7DB58E6C4CB0863B61F44BACEA` matches canonical control seed 0; save SHA256 `154CA839408A3C9383C6E624D0D465A6950423C339A5031CACCFFD4ABDDEEA44`. Frames per arm range from 98,121 (30 FPS, 256 units) to 1,005,442 (120 FPS, 2 units).
+
+Body cap, **flagged evidence and not a pass**. F2 has no declared divergence bound. Cap 0 is byte-identical to the cadence reference. The default 48/24 cap acquires 7,775 bodies with 121,814 lease observations and at most 12 concurrent walkers. Against cap 0 it differs by −111,405,516,158,826 employment units (about −$4,150.18), −1,905,891,737,600 C9 units (−$71.00) and 0 purchases; all 42 daily rows differ. The first run differed by −34 purchases, −$3,991.32 and −$171.00. The walking-only fixture still excludes vehicles, door queues, interiors and departure holds.
+
+| Consumers | Days | Slice samples | p95 / max ms | ≥30 ms | Daily wallet checks | Price journal entries | First run p95 / max ms |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1914 | 7 | 236,618 | 0.007000 / 6.209000 | 0 | 13,398 | 2 | 0.007000 / 5.408300 |
+| 10000 | 7 | 1,103,069 | 0.007600 / 8.346400 | 0 | 70,000 | 2 | 0.007500 / 8.383000 |
+| 100000 | 7 | 10,649,131 | 0.008000 / 22.730500 | 0 | 700,000 | 2 | 0.008000 / 20.657300 |
+
+Same method as the first run: each sample is one `AdvanceFrameSlice(..., 1)` with wages, rival limits, C9 admission, journal and meal causes active. These are detached units, not the Unity mod-work union or whole-frame time. No sample reaches 30 ms; the 100,000-consumer maximum is 2.07 ms higher than the first run's single worst sample and stays recorded. The section 6 component table above is unchanged by this rerun: none of its components changed code, and the anchor only changes which offers people pick.
+
+### Rerun validation
+
+- Representative tests in the default suite: `F6hIntegratedTests` gains two checks. One proves price profiles are matched across own shops, rival and arms while canonical metric bytes stay unchanged. The other is a four-day, 128-resident non-binding native-menu markup that must lose ≥15% quantity, raise revenue <25%, raise unaffordable refusals <1 percentage point and raise home meals.
+- Python reader checks: **6 passed**, including the household thresholds pinned to the committed rerun evidence and the price-table arithmetic.
+- Opt-in cadence/body and stress cases: **2 passed** (2 min 2 s).
+- Required build, full test suite, golden pins and docs checks: recorded in [checks](../checks/f6h.md#acceptance-rerun-after-f6i-8-november-2026).
