@@ -12,10 +12,11 @@ import math
 import statistics as st
 from pathlib import Path
 
-# Household control thresholds from the 8 Nov 2026 rerun after F6i (base 3f734cb6): canonical
+# Household control thresholds from the 8 Nov 2026 rerun after F6j extras (base ec186f97): canonical
 # capacity-bound fixture, five seeds, week-6 control seed band (mean +/- 2 sd), rounded outward.
-# Measured: arrears 0.18808% [high 0.46057%], unfed 2.0 owner-days [high 5.16], p10 $691.43 [low $656.75].
-HOUSEHOLD_THRESHOLDS = {"week6ArrearsShareMax": 0.0047, "week6UnfedOwnerDaysMax": 5.2, "week6P10DollarsMin": 656.0}
+# Measured: arrears 0.18808% [high 0.46057%], unfed 1.8 owner-days [high 5.65], p10 $689.99 [low $659.00].
+# Post-F6i rerun (3f734cb6): arrears <= 0.47%, unfed <= 5.2, p10 >= $656.
+HOUSEHOLD_THRESHOLDS = {"week6ArrearsShareMax": 0.0047, "week6UnfedOwnerDaysMax": 5.7, "week6P10DollarsMin": 658.0}
 
 
 def band(values):
@@ -27,6 +28,38 @@ def band(values):
 
 def inside(value, seed_band):
     return seed_band["low"] <= value <= seed_band["high"]
+
+
+def day_meals(d):
+    """Own meals (visits) on a day. Since F6j shop purchases count items (main + extras); pre-F6j runs have
+    no per-shop meals field and their purchases are meals."""
+    shops = d["own"]["shops"]
+    return sum(s["meals"] for s in shops) if shops and all("meals" in s for s in shops) else d["own"]["purchases"]
+
+
+def meal_hours(shop):
+    return shop["mealsByCheckoutHour"] if "mealsByCheckoutHour" in shop else shop["byHour"]
+
+
+def staffing_checks(key, runs, controls):
+    """Staffing cuts are judged on served meals, never items: fewer extras must not hide more meals."""
+    def active_meals(run):
+        if key.endswith("zero-staff-day"):
+            return day_meals(run["days"][16])
+        return sum(sum(meal_hours(shop)[11:14]) for d in run["days"][14:28] for shop in d["own"]["shops"])
+    return {
+        "staffingDoesNotRaiseFortnightMeals": all(sum(day_meals(d) for d in r["days"][14:28]) <= sum(day_meals(d) for d in c["days"][14:28])
+                                                  for r, c in zip(runs, controls)),
+        "staffingActiveWindowDeltaMealsPerSeed": [active_meals(r) - active_meals(c) for r, c in zip(runs, controls)],
+        "staffingWeeklyDeltaMealsPerSeed": [[sum(day_meals(d) for d in r["days"][w * 7:(w + 1) * 7]) -
+            sum(day_meals(d) for d in c["days"][w * 7:(w + 1) * 7]) for w in (2, 3)] for r, c in zip(runs, controls)],
+        "staffingDaysWithMoreMealsThanControlPerSeed": [[d["day"] for d, c in zip(r["days"][14:28], control["days"][14:28])
+            if day_meals(d) > day_meals(c)] for r, control in zip(runs, controls)],
+    }
+
+
+def staffing_raises_meals(row):
+    return row["staffingDoesNotRaiseFortnightMeals"] is False or any(delta > 0 for delta in row.get("staffingActiveWindowDeltaMealsPerSeed", []))
 
 
 def trailing(run, day):
@@ -81,9 +114,18 @@ def price_arms(groups, controls, base_units, units):
     def fortnight(run):
         days = run["days"][14:28]
         shops = [s for d in days for s in d["own"]["shops"]]
-        return {"q": sum(d["own"]["purchases"] for d in days), "r": sum(d["own"]["revenueUnits"] for d in days),
-                "home": sum(d["share"]["city"]["home"] for d in days),
-                "peak": max(max(s["byHour"]) for s in shops),
+        # F6j: shop purchases count items (main + extras). Meals are visits, from outcomes; capacity is
+        # meals per hour, so the binding test reads meals by checkout hour (pre-F6j runs: byHour = meals).
+        hours = "mealsByCheckoutHour" if all("mealsByCheckoutHour" in s for s in shops) else "byHour"
+        meals = sum(s["meals"] for s in shops) if hours != "byHour" else sum(d["own"]["purchases"] for d in days)
+        mains = {}
+        for s in shops:
+            for t in s.get("tickets", []):
+                m = mains.setdefault(t["mainProductId"], [0, 0, 0])
+                m[0] += t["meals"]; m[1] += t["extras"]; m[2] += t["plannedExtras"]
+        return {"q": sum(d["own"]["purchases"] for d in days), "r": sum(d["own"]["revenueUnits"] for d in days), "mains": mains,
+                "meals": meals, "home": sum(d["share"]["city"]["home"] for d in days),
+                "peak": max(max(s[hours]) for s in shops),
                 "refused": sum(s["offers"]["price"] for s in shops), "considered": sum(s["offers"]["considered"] for s in shops)}
     capacity = controls[0]["fixture"]["mealsPerHour"]
     table = {}
@@ -97,6 +139,10 @@ def price_arms(groups, controls, base_units, units):
             "ownPurchasesPerDay": band([x["q"] / 14 for x in rows]),
             "revenueDollarsPerDay": band([x["r"] / units / 100 / 14 for x in rows]),
             "homeMealsPerDay": band([x["home"] / 14 for x in rows]),
+            "ownMealsPerDay": band([x["meals"] / 14 for x in rows]),
+            "itemsPerMeal": band([x["q"] / x["meals"] for x in rows]),
+            "extrasPerMeal": band([sum(m[1] for m in x["mains"].values()) / sum(m[0] for m in x["mains"].values()) for x in rows]) if all(x["mains"] for x in rows) else None,
+            "ticketDollarsPerMeal": band([x["r"] / units / 100 / x["meals"] for x in rows]),
             "unaffordableRefusalShare": band([x["refused"] / x["considered"] for x in rows]),
             "peakServedPerHour": [x["peak"] for x in rows], "capacityPerHour": capacity,
             "capacityBinding": any(x["peak"] >= capacity for x in rows),
@@ -107,6 +153,22 @@ def price_arms(groups, controls, base_units, units):
             # Menu arc uses own purchases; product arms use all own purchases too (cross-product
             # substitution included), so their value is a shop-level response, not own-product.
             entry["arcElasticity"] = band([(x["q"] - b["q"]) / ((x["q"] + b["q"]) / 2) / arc_price for x, b in zip(rows, base)])
+            entry["mealQuantityChange"] = band([x["meals"] / b["meals"] - 1 for x, b in zip(rows, base)])
+            entry["mealArcElasticity"] = band([(x["meals"] - b["meals"]) / ((x["meals"] + b["meals"]) / 2) / arc_price for x, b in zip(rows, base)])
+            entry["homeMealsChange"] = band([x["home"] / b["home"] - 1 for x, b in zip(rows, base)])
+            if all(x["mains"] for x in rows):
+                # Extras per meal, arm minus control, split into a main-mix part (arm's mains at control's per-main
+                # extras rate) and a within-main part (arm's per-main rate change at arm's mix). Under a whole-menu
+                # markup the extras bands and draws are unchanged, so a wallet that cuts extras shows up within-main.
+                def split(x, b):
+                    meals, base_meals = sum(m[0] for m in x["mains"].values()), sum(m[0] for m in b["mains"].values())
+                    rate = lambda m: m[1] / m[0] if m[0] else 0
+                    mix = sum(m[0] / meals * rate(b["mains"].get(k, [0, 0, 0])) for k, m in x["mains"].items()) - sum(m[1] for m in b["mains"].values()) / base_meals
+                    within = sum(m[1] for m in x["mains"].values()) / meals - sum(m[0] / meals * rate(b["mains"].get(k, [0, 0, 0])) for k, m in x["mains"].items())
+                    return mix, within
+                parts = [split(x, b) for x, b in zip(rows, base)]
+                entry["extrasPerMealChangeFromMainMix"] = band([m for m, _ in parts])
+                entry["extrasPerMealChangeWithinMain"] = band([w for _, w in parts])
         table[key] = entry
     return table
 
@@ -167,19 +229,9 @@ def report(directory):
             row["recoveryDaysPerSeed"] = [recovery(r, controls) for r in runs]
             row["recoveryWithin14Days"] = all(d is not None and d <= 14 for d in row["recoveryDaysPerSeed"])
             row["residualPurchasesPerDayAfter14Days"] = [trailing(r, 42) - trailing(c, 42) for r, c in zip(runs, controls)]
-            row["staffingDoesNotRaiseFortnightMeals"] = all(
-                sum(d["own"]["purchases"] for d in r["days"][14:28]) <= sum(d["own"]["purchases"] for d in c["days"][14:28])
-                for r, c in zip(runs, controls)) if key.startswith("staffing/") else None
+            row["staffingDoesNotRaiseFortnightMeals"] = None
         if key.startswith("staffing/"):
-            def active_meals(run):
-                if key.endswith("zero-staff-day"):
-                    return run["days"][16]["own"]["purchases"]
-                return sum(sum(shop["byHour"][11:14]) for d in run["days"][14:28] for shop in d["own"]["shops"])
-            row["staffingActiveWindowDeltaMealsPerSeed"] = [active_meals(r) - active_meals(c) for r, c in zip(runs, controls)]
-            row["staffingWeeklyDeltaMealsPerSeed"] = [[sum(d["own"]["purchases"] for d in r["days"][w * 7:(w + 1) * 7]) -
-                sum(d["own"]["purchases"] for d in c["days"][w * 7:(w + 1) * 7]) for w in (2, 3)] for r, c in zip(runs, controls)]
-            row["staffingDaysWithMoreMealsThanControlPerSeed"] = [[d["day"] for d, c in zip(r["days"][14:28], control["days"][14:28])
-                if d["own"]["purchases"] > c["own"]["purchases"]] for r, control in zip(runs, controls)]
+            row.update(staffing_checks(key, runs, controls))
         rows[key] = row
     household = {}
     for name, measure in {
@@ -210,7 +262,7 @@ def report(directory):
             continue
         if not row["recoveryWithin14Days"]:
             failures.append(key + ": recovery exceeds 14 days in at least one seed")
-        if row["staffingDoesNotRaiseFortnightMeals"] is False or any(delta > 0 for delta in row.get("staffingActiveWindowDeltaMealsPerSeed", [])):
+        if staffing_raises_meals(row):
             failures.append(key + ": staffing cut raises served meals")
     if any(household["p10FallsEveryWeekPerSeed"]):
         failures.append("control p10 falls every week in at least one seed")
