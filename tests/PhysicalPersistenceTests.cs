@@ -52,9 +52,10 @@ public sealed class PhysicalPersistenceTests
                     Minutes = example == 0 ? 86731.89583988494 : 567634.374533236, Mode = TravelMode.Walk });
             }
             citizen.DepartureMinute = clock; citizen.NextEventMinute = clock + citizen.Journey.Minutes;
-            var engine = new CitySimulator(state, new Direct());
-            Assert.True(engine.TryAcquirePhysicalJourney(citizen.Identity.Id, out var lease));
-            Assert.True(engine.ObservePhysicalJourney(lease!, citizen.Journey.Minutes));
+            // A completed journey stores departure = clock - duration (traffic completion does this; before F2c a
+            // walk lease did). Walk legs are no longer leased (F2c), so the completed state is set as that rebase leaves it.
+            Assert.False(new CitySimulator(state, new Direct()).TryAcquirePhysicalJourney(citizen.Identity.Id, out _));
+            citizen.DepartureMinute = clock - citizen.Journey.Minutes; citizen.NextEventMinute = clock;
             if (citizen.DepartureMinute + citizen.Journey.Minutes < clock) roundedBelowClock++;
             if (retime) Assert.True(TravelTiming.Apply(state, 2, 2));
             string encoded = DevelopmentChain.Write(state); var read = DevelopmentChain.Read(encoded);

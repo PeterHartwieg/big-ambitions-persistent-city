@@ -175,20 +175,16 @@ public sealed class ActiveJourneyIndexTests
     }
 
     [Fact]
-    public void PhysicalLeaseAcquireObserveAndReleaseKeepTheIndex()
+    public void WalkJourneysAreNotLeasedAndTheIndexFollowsTheLogicalClock()
     {
         var sim = Travellers("c0", "c1", "c2");
         AssertIndexed(sim); Assert.Equal(3, sim.ActiveJourneys.Count);
         var c = sim.State.Citizens[0];
-        Assert.True(sim.TryAcquirePhysicalJourney(c.Identity.Id, out var lease));
-        AssertIndexed(sim); Assert.True(sim.ActiveJourneys.Contains(c));
-        // The leased journey is frozen while the others arrive at work and leave the index.
-        sim.AdvanceTo(1460); AssertIndexed(sim);
-        Assert.Equal(new[] { "c0" }, Members(sim));
-        Assert.True(sim.ObservePhysicalJourney(lease!, 6)); AssertIndexed(sim);
-        // Save and reload while leased: the lease is not saved; the journey continues from the measured point.
+        // F2c: a walk leg is never leased, so no body can freeze it.
+        Assert.False(sim.TryAcquirePhysicalJourney(c.Identity.Id, out _));
+        sim.AdvanceTo(1446); AssertIndexed(sim);
+        Assert.Equal(new[] { "c0", "c1", "c2" }, Members(sim));
         var loaded = Reload(sim, new Walking()); AssertIndexed(loaded); Assert.Equal(Members(sim), Members(loaded));
-        Assert.True(sim.ReleasePhysicalJourney(lease!)); AssertIndexed(sim); Assert.True(sim.ActiveJourneys.Contains(c));
         sim.AdvanceTo(1480); AssertIndexed(sim);
         Assert.Equal(CitizenPhase.AtPlace, c.Phase); Assert.Equal(0, sim.ActiveJourneys.Count);
         loaded.AdvanceTo(1480); AssertIndexed(loaded);

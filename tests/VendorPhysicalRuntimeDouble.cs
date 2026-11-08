@@ -193,6 +193,12 @@ namespace PersistentCity.Runtime
         { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isStopped = false; return true; }
         internal bool SetTarget(Position p, double speed) => SetPathTarget(p, speed);
         internal void Stop(bool value) { Agent.isStopped = value; }
+        // F2c follower hooks: the commanded pace, an off-screen move, and the test-controlled on-screen flag.
+        internal double Speed;
+        internal int Warps;
+        internal bool OnScreen;
+        internal void Pace(double v) { Speed = v > 0 ? v : 0; Agent.isStopped = !(v > 0); }
+        internal bool Warp(Position p) { Character.transform.position = Vector(p); Agent.hasPath = false; Agent.isStopped = true; Warps++; return true; }
         internal void Face(Position p) { Facing = p; }
         internal void Tick() { }
         internal static Vector3 Vector(Position p) => new((float)p.X, (float)p.Y, (float)p.Z);

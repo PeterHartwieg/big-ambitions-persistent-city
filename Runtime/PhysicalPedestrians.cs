@@ -226,6 +226,35 @@ namespace PersistentCity.Runtime
             stopped = false; Tick(); return true;
         }
         public void Stop(bool stop) { stopped = stop; Tick(); }
+        /// <summary>F2c follow pace along the current path; zero or less stands the body still.</summary>
+        public void Pace(double metresPerScaledSecond)
+        {
+            if (!Valid) return;
+            if (!(metresPerScaledSecond > 0) || metresPerScaledSecond > 12) { stopped = true; Tick(); return; }
+            Agent.speed = (float)metresPerScaledSecond;
+            stopped = false; Tick();
+        }
+        /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
+        public bool Warp(Position target)
+        {
+            if (!Valid || !Fits(target)) return false;
+            if (!NavMesh.SamplePosition(Vector(target), out NavMeshHit hit, 0.5f, WalkingRoutes.DryFilter)) return false;
+            if (!Agent.Warp(hit.position) || !Agent.isOnNavMesh) return false;
+            Agent.ResetPath(); stopped = true; Tick();
+            return Valid;
+        }
+        /// <summary>Inside the main camera's frustum with an enabled, visible renderer this frame. Unknown visibility
+        /// (no camera, no renderer) counts as on screen, so a correction never moves a body that might be seen.</summary>
+        public bool OnScreen
+        {
+            get
+            {
+                if (!Valid) return false;
+                Renderer? renderer = Character.appearanceSetter != null ? Character.appearanceSetter.lastMergedMeshRenderer : null;
+                if (renderer == null) renderer = Character.GetComponentInChildren<Renderer>();
+                return ScreenVisibility.Contains(renderer);
+            }
+        }
         /// <summary>Turn a standing body toward a point, level with the ground.</summary>
         public void Face(Position target)
         {
@@ -278,6 +307,25 @@ namespace PersistentCity.Runtime
         internal static Position Point(Vector3 p) => new Position(p.x, p.y, p.z);
         private static float DistanceToSegment(Vector3 p, Vector3 a, Vector3 b)
         { Vector3 d = b-a; float t = d.sqrMagnitude > 0 ? Mathf.Clamp01(Vector3.Dot(p-a,d)/d.sqrMagnitude) : 0; return Vector3.Distance(p,a+d*t); }
+    }
+
+    /// <summary>The main camera's frustum planes, computed at most once per frame for F2c on-screen checks.</summary>
+    internal static class ScreenVisibility
+    {
+        private static readonly Plane[] planes = new Plane[6];
+        private static int frame = -1;
+        private static Camera? camera;
+        internal static bool Contains(Renderer? renderer)
+        {
+            if (frame != Time.frameCount)
+            {
+                frame = Time.frameCount;
+                camera = Camera.main;
+                if (camera != null) GeometryUtility.CalculateFrustumPlanes(camera, planes);
+            }
+            if (camera == null || renderer == null) return true;
+            return renderer.enabled && renderer.isVisible && GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+        }
     }
 
     internal sealed class PhysicalPedestrianCrosswalk : MonoBehaviour

@@ -31,38 +31,34 @@ public sealed partial class TrafficClosureRefreshTests
 }
 public sealed partial class PhysicalJourneyTests
 {
+    // F2c: a body observation can no longer create arrival work at an epoch boundary, because walk legs are never
+    // leased. The arrival is the logical one, at its own minute, before and after a boundary save.
     [Theory]
     [InlineData(false)] [InlineData(true)]
-    public void BeforeAdvanceArrivalUsesNewEpochWithoutLosingTheArrival(bool publish)
+    public void BeforeAdvanceObservationCannotCreateArrivalWork(bool publish)
     {
-        var city = Engine(); var lease = Acquire(city);
+        var city = Engine(); var c = city.State.Citizens[0];
+        Assert.False(city.TryAcquirePhysicalJourney(c.Identity.Id, out _));
         city.AdvanceTo(AccountingClock.PreviousEpochTarget(1500));
         Assert.True(city.IsAccountingEpochDrained(1500));
         if (publish) Assert.True(city.BeginAccountingObservations(1500));
-        Assert.True(city.ObservePhysicalJourney(lease, 12));
-        Assert.Equal(publish, city.IsAccountingEpochDrained(1500));
-        if (!publish) return; // Reproduces the old legitimate-observation refusal.
-        Assert.Equal(1500, city.State.Citizens[0].NextEventMinute);
-        city.AdvanceTo(1500, 1);
-        Assert.Equal(1, city.State.Citizens[0].CompletedJourneys);
-        Assert.Single(city.State.Citizens[0].RecentVisits);
-        Assert.Equal(1500, city.State.Citizens[0].RecentVisits[0].AtMinute);
+        Assert.True(city.IsAccountingEpochDrained(1500));
+        Assert.Equal(1, c.CompletedJourneys);
+        Assert.Equal(1452, Assert.Single(c.RecentVisits).AtMinute);
     }
     [Fact]
-    public void BeforeSaveArrivalAtBoundaryReloadsAsPendingNewEpochWork()
+    public void BeforeSaveAtBoundaryReloadsTheLogicalArrival()
     {
-        var city = Engine(); var lease = Acquire(city);
+        var city = Engine();
         city.AdvanceTo(AccountingClock.PreviousEpochTarget(1500));
         Assert.True(city.BeginAccountingObservations(1500));
-        Assert.True(city.ObservePhysicalJourney(lease, 12)); // BeforeSave observation.
         string payload = SaveCodec.Write(city.State);
         var read = SaveCodec.Read(payload); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var restored = new CitySimulator(read.State!, new Planner());
         Assert.True(AccountingClock.Compatible(restored.State.Minute, 1500));
         Assert.True(restored.IsAccountingEpochDrained(1500));
-        Assert.False(restored.IsCaughtUpTo(1500));
         restored.AdvanceTo(1500, 1); restored.AdvanceTo(1500, 1);
         Assert.Equal(1, restored.State.Citizens[0].CompletedJourneys);
-        Assert.Single(restored.State.Citizens[0].RecentVisits);
+        Assert.Equal(1452, Assert.Single(restored.State.Citizens[0].RecentVisits).AtMinute);
     }
 }

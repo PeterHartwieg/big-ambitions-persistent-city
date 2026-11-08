@@ -277,14 +277,15 @@ public sealed class PresentationBoundaryTests
     }
 
     // Every CitySimulator member that Runtime/Physical*.cs may reach through `simulation.`. Adding a member
-    // needs a reviewed change here. After F2c/F2d the lease group is empty; F2e adds HoldForPlayer.
+    // needs a reviewed change here. F2c removed TryHoldPhysicalDeparture and every walker lease call; the lease
+    // group remains for traffic legs until F2d empties it. F2e adds HoldForPlayer.
     private static readonly string[] ReadOnlyMembers = {
         "State", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
         "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission",
     };
     private static readonly string[] LeaseMembers = {
         "TryAcquirePhysicalJourney", "ObservePhysicalJourney", "ReleasePhysicalJourney", "IsPhysicalJourneyValid",
-        "TrySamplePhysicalJourney", "TryHoldPhysicalDeparture",
+        "TrySamplePhysicalJourney",
     };
     // Core's own logical rules (rain, closing, phase, availability, partners), run before a save exactly as
     // PersistentCityMod runs them every frame. The answer does not depend on any body.
@@ -318,6 +319,14 @@ public sealed class PresentationBoundaryTests
         // Every allowed member exists on CitySimulator.
         var members = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Select(m => m.Name).ToHashSet();
         Assert.All(allowed, name => Assert.Contains(name, members));
+        // F2c: the walker follow, its corrections and both tails read only; the lease API is reached only from the car paths.
+        string population = File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs"));
+        int from = population.IndexOf("private bool ObserveWalker(", StringComparison.Ordinal), to = population.IndexOf("private bool ObserveCar(", StringComparison.Ordinal);
+        Assert.True(from > 0 && to > from);
+        var walker = new SortedSet<string>(Regex.Matches(population.Substring(from, to - from), @"\bsimulation\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)")
+            .Select(m => m.Groups[1].Value), StringComparer.Ordinal);
+        Assert.Empty(walker.Except(ReadOnlyMembers));
+        Assert.DoesNotContain("TryHoldPhysicalDeparture", typeof(CitySimulator).GetMembers().Select(m => m.Name));
         // The Runtime rain check is gone from the body paths; logical rain stays in Core.
         Assert.DoesNotContain("RainHelper", File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs")));
     }

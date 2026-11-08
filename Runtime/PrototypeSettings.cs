@@ -187,6 +187,14 @@ namespace PersistentCity.Runtime
         public int MaximumPedestrians { get; set; } = 48;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;
+        private int movementFaultAcquirePercent;
+        /// <summary>F2c test-profile key: share of body acquisitions refused after selection, 0-100 (default 0).
+        /// Rig check 5 compares 0 and 50; outcomes must not change.</summary>
+        public int MovementFaultAcquirePercent
+        {
+            get => movementFaultAcquirePercent;
+            set => movementFaultAcquirePercent = Math.Max(0, Math.Min(100, value));
+        }
 
         private string interiorCityView = "off";
         private double interiorRadius = 60;

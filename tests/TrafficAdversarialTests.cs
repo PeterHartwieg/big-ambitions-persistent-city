@@ -69,13 +69,12 @@ public sealed class TrafficAdversarialTests
         var planner=new Planner();planner.Closed.Add(0);
         var city=City(1,planner);city.AdvanceTo(1440);
         var citizen=city.State.Citizens[0];
-        Assert.True(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out var lease));
-        city.AdvanceTo(1450);
-        Assert.True(city.ObservePhysicalJourney(lease!,2));
+        // F2c: the access walk is not leased; it reaches the car on the logical clock and waits at the closed section.
+        Assert.False(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out _));
         city.AdvanceTo(1450);
         Assert.True(city.TryGetTrafficPermission(citizen.Identity.Id,out var permission));
         Assert.Null(permission.LinkId);
-        Assert.False(city.ObservePhysicalJourney(lease!,4.4));
+        Assert.False(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out _));
         Assert.Equal(0,citizen.CompletedJourneys);
         Assert.Equal(0,city.CarPositionOf(citizen)!.Value.X);
     }
@@ -183,18 +182,20 @@ public sealed class TrafficAdversarialTests
     }
 
     [Fact]
-    public void LeaseSurvivesLastRoadTransferThenEgressWithoutSecondAdmission()
+    public void LeaseEndsAtLastRoadTransferAndEgressWalksOnTheLogicalClockWithoutSecondAdmission()
     {
         var city=City(1,new Planner(),0,3);city.AdvanceTo(1440);
         var citizen=city.State.Citizens[0];
         Assert.True(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out var lease));
         city.AdvanceTo(1442);Assert.True(city.ObservePhysicalJourney(lease!,1.2));city.AdvanceTo(1442);
-        city.AdvanceTo(1444);Assert.True(city.ObservePhysicalJourney(lease!,2.4));city.AdvanceTo(1444);
+        city.AdvanceTo(1444);city.ObservePhysicalJourney(lease!,2.4);city.AdvanceTo(1444);
+        // F2c: traffic completion ends the lease; the egress walk is never leased and is not frozen.
         Assert.False(city.TryGetTrafficPermission(citizen.Identity.Id,out _));
-        Assert.True(city.IsPhysicalJourneyValid(lease!));Assert.Equal(0,citizen.CompletedJourneys);
-        city.AdvanceTo(1450);Assert.True(city.ObservePhysicalJourney(lease!,5.4));
-        Assert.Equal(0,citizen.CompletedJourneys);city.AdvanceTo(1450);
-        Assert.Equal(1,citizen.CompletedJourneys);Assert.False(city.IsPhysicalJourneyValid(lease!));
+        Assert.False(city.IsPhysicalJourneyValid(lease!));Assert.Equal(0,citizen.CompletedJourneys);
+        Assert.False(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out _));
+        Assert.Equal(TravelMode.Walk,city.SampleJourney(citizen).Mode);
+        city.AdvanceTo(1450);
+        Assert.Equal(1,citizen.CompletedJourneys);
         Assert.False(city.ReleasePhysicalJourney(lease!));city.AdvanceTo(1500);Assert.Equal(1,citizen.CompletedJourneys);
     }
 }

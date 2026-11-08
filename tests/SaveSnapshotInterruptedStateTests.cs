@@ -124,20 +124,16 @@ public sealed class SaveSnapshotInterruptedStateTests
     {
         var built = F7cFixtures.Build("rush-957x2");
         var city = built.City; var state = built.State;
-        PhysicalJourneyLease? lease = null;
-        var person = state.Citizens.First(c => c.Journey != null && city.TryAcquirePhysicalJourney(c.Identity.Id, out lease));
-        Assert.NotNull(lease);
-        // The body is blocked where it is: equal progress rebases the departure to the clock.
-        Assert.True(city.ObservePhysicalJourney(lease!, lease!.Progress));
+        // F2c: a walking journey with a visible body is not leased; the capture is its logical state.
+        var person = state.Citizens.First(c => c.Journey != null && c.Phase == CitizenPhase.Travelling
+            && c.Journey.Legs.All(l => l.Mode == TravelMode.Walk));
+        Assert.False(city.TryAcquirePhysicalJourney(person.Identity.Id, out _));
         string atCapture = SaveCodec.Write(state);
         var snapshot = SaveCodec.Capture(state);
         double departure = person.DepartureMinute;
-        // After the capture the body keeps moving and the lease is released into background travel.
+        // After the capture the city keeps moving.
         double later = state.Minute + 2;
         while (!city.IsCaughtUpTo(later)) city.AdvanceFrameSlice(later, 64);
-        double progressed = Math.Min(lease.Route.Minutes, lease.Progress + 1);
-        Assert.True(city.ObservePhysicalJourney(lease, progressed));
-        Assert.True(city.ReleasePhysicalJourney(lease));
         string payload = SaveCodec.Encode(snapshot);
         Assert.Equal(atCapture, payload);
         var loaded = Reload(payload);

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using PersistentCity.Core;
 using Xunit;
 
@@ -171,5 +172,110 @@ public sealed class PhysicalProgressTests
     {
         Assert.False(PhysicalProgress.TryProject(Sample(4), new Position(double.NaN,0,0), false, out double progress)); Assert.Equal(4, progress);
         Assert.False(PhysicalProgress.TryProject(default, new Position(0,0,0), true, out progress));
+    }
+
+    // F2c walker follow (plan Decision 2): pure follower arithmetic and the bounded correction ring.
+    private static Route FollowRoute() => new Route { Legs = new()
+    {
+        new RouteLeg { From = new Position(0,0,0), To = new Position(10,0,0), Minutes = 10, Mode = TravelMode.Walk },
+        new RouteLeg { From = new Position(10,0,0), To = new Position(10,0,0), Minutes = 2, Mode = TravelMode.Walk, ServiceId = "preparation" },
+        new RouteLeg { From = new Position(10,0,0), To = new Position(10,0,20), Minutes = 10, Mode = TravelMode.Walk },
+        new RouteLeg { From = new Position(10,0,20), To = new Position(50,0,20), Minutes = 4, Mode = TravelMode.Subway },
+        new RouteLeg { From = new Position(50,0,20), To = new Position(52,0,20), Minutes = 2, Mode = TravelMode.Walk }
+    } };
+
+    [Theory]
+    [InlineData(-1, 0)] [InlineData(0, 0)] [InlineData(WalkerFollow.StopMetres, 0)] [InlineData(0.2, 1)] [InlineData(1.5, 1)]
+    [InlineData(2.25, 1.25)] [InlineData(3, 1.5)] [InlineData(40, 1.5)] [InlineData(double.NaN, 0)]
+    public void FollowPaceIsNativeUpToCatchUpAndNeverAboveOneAndAHalf(double lag, double factor)
+        => Assert.Equal(factor, WalkerFollow.PaceFactor(lag), 12);
+
+    [Fact]
+    public void CorrectionStartsBeyondEightMetresOrOnAnotherMode()
+    {
+        Assert.False(WalkerFollow.NeedsCorrection(8, TravelMode.Walk));
+        Assert.True(WalkerFollow.NeedsCorrection(8.01, TravelMode.Walk));
+        Assert.True(WalkerFollow.NeedsCorrection(double.NaN, TravelMode.Walk));
+        Assert.True(WalkerFollow.NeedsCorrection(0, TravelMode.Subway));
+        Assert.True(WalkerFollow.NeedsCorrection(0, TravelMode.Car));
+    }
+
+    [Fact]
+    public void RouteMetresMeasureAlongCommittedLegs()
+    {
+        var route = FollowRoute();
+        Assert.Equal(5, WalkerFollow.RouteMetres(route, 0, 5), 12);
+        Assert.Equal(10, WalkerFollow.RouteMetres(route, 0, 12), 12);   // the wait leg adds no distance
+        Assert.Equal(15, WalkerFollow.RouteMetres(route, 5, 17), 12);
+        Assert.Equal(70, WalkerFollow.RouteMetres(route, 0, 26), 12);
+        Assert.Equal(0, WalkerFollow.RouteMetres(route, 7, 7));
+        Assert.Equal(0, WalkerFollow.RouteMetres(route, 9, 3));
+    }
+
+    [Fact]
+    public void BodyProgressIsNeverAheadOfTheLogicalPose()
+    {
+        var route = FollowRoute();
+        // Physically ahead of a logical pose at 4 m: credited only up to the logical progress.
+        Assert.Equal(4, WalkerFollow.Advance(route, 0, 4, new Position(9,0,0)), 12);
+        // Behind on the same leg: the projection.
+        Assert.Equal(3, WalkerFollow.Advance(route, 0, 8, new Position(3,0,0.1)), 12);
+        // Pushed aside: no credit, the previous progress stays.
+        Assert.Equal(2, WalkerFollow.Advance(route, 2, 8, new Position(3,0,5)), 12);
+        // At the corner it passes onto the wait leg and waits with the logical clock, never past it.
+        Assert.Equal(11, WalkerFollow.Advance(route, 9, 11, new Position(10,0,0)), 12);
+        Assert.Equal(12, WalkerFollow.Advance(route, 9, 13, new Position(10,0,0)), 12);
+        // At the station it stops at the start of the subway leg even when the logical pose is past it.
+        Assert.Equal(22, WalkerFollow.Advance(route, 21, 25, new Position(10,0,20)), 12);
+        Assert.Equal(TravelMode.Subway, WalkerFollow.Sample(route, 22).Mode);
+        // Never below zero or above the route, whatever the inputs.
+        Assert.Equal(0, WalkerFollow.Advance(route, -5, double.NaN, new Position(0,0,0)));
+        Assert.Equal(route.Minutes, WalkerFollow.Advance(route, 27, 1e9, new Position(52,0,20)), 12);
+    }
+
+    [Fact]
+    public void CorrectionRingKeepsTheLast512AndReportsAGapAfterEviction()
+    {
+        var log = new WalkerMovementTelemetry();
+        var entries = new System.Collections.Generic.List<WalkerCorrection>();
+        log.Since(0, entries, out bool gap);
+        Assert.Empty(entries); Assert.False(gap); Assert.Equal(0, log.LastSequence);
+        for (int i = 1; i <= 600; i++)
+            Assert.Equal(i, log.Record(i * 10, "p" + i, (WalkerCorrectionKind)(i % 3), new Position(i,0,0), new Position(i,0,1), i % 7 == 0));
+        Assert.Equal(600, log.LastSequence); Assert.Equal(89, log.OldestSequence);
+        log.Since(0, entries, out gap);
+        Assert.True(gap); Assert.Equal(512, entries.Count); Assert.Equal(89, entries[0].Sequence); Assert.Equal(600, entries[^1].Sequence);
+        entries.Clear(); log.Since(87, entries, out gap);
+        Assert.True(gap); Assert.Equal(512, entries.Count);
+        entries.Clear(); log.Since(88, entries, out gap);
+        Assert.False(gap); Assert.Equal(512, entries.Count);
+        entries.Clear(); log.Since(590, entries, out gap);
+        Assert.False(gap); Assert.Equal(Enumerable.Range(591, 10).Select(i => (long)i), entries.Select(e => e.Sequence));
+        var last = entries[^1];
+        Assert.Equal("p600", last.PersonId); Assert.Equal(6000, last.Frame); Assert.Equal(600, last.Before.X); Assert.Equal(1, last.After.Z);
+        Assert.Equal(WalkerCorrectionKind.Move, last.Kind);
+        entries.Clear(); log.Since(600, entries, out gap);
+        Assert.Empty(entries); Assert.False(gap);
+        Assert.Equal(600, log.Corrections); Assert.Equal(200, log.Moves); Assert.Equal(200, log.Fades); Assert.Equal(200, log.LagReleases);
+        // Moves on screen are what the Q3 default prohibits; they are counted separately.
+        Assert.Equal(Enumerable.Range(1, 600).Count(i => i % 3 == 0 && i % 7 == 0), log.OnScreenMoves);
+        Assert.Contains("on_screen_moves=" + log.OnScreenMoves, log.Status(3));
+        Assert.Contains("kind=Move on_screen=false", WalkerMovementTelemetry.Format(last));
+    }
+
+    [Fact]
+    public void LagQuantilesComeFromEverySample()
+    {
+        var log = new WalkerMovementTelemetry();
+        Assert.Equal(0, log.LagQuantile(0.95));
+        for (int i = 0; i < 100; i++) log.RecordLag(i < 95 ? 0.52 : 20);
+        log.RecordLag(double.NaN); log.RecordLag(-1);
+        Assert.Equal(100, log.LagSamples);
+        Assert.Equal(0.55, log.LagQuantile(0.5), 9);
+        Assert.Equal(0.55, log.LagQuantile(0.95), 9);
+        Assert.Equal(20, log.LagQuantile(0.96), 9);
+        Assert.Equal(20, log.MaximumLagMetres);
+        log.RecordLag(500);
+        Assert.Equal(500, log.LagQuantile(1));
     }
 }

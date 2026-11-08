@@ -55,22 +55,14 @@ public sealed class TrafficJourneyTests
     }
 
     [Fact]
-    public void DepartureHoldPrecedesTrafficAdmissionAndRebasesSaveUntilReleased()
+    public void DepartureIsNeverHeldForABodyAndTrafficAdmitsOnTheLogicalClock()
     {
+        // F2c removed TryHoldPhysicalDeparture: a body returning from a stop no longer holds the new journey.
         var engine = Engine(1); var citizen = engine.State.Citizens[0];
         Assert.False(engine.TryAcquirePhysicalJourney(citizen.Identity.Id, out _));
-        Assert.True(engine.TryHoldPhysicalDeparture(citizen.Identity.Id, out var hold));
+        Assert.DoesNotContain(typeof(CitySimulator).GetMethods(), m => m.Name == "TryHoldPhysicalDeparture");
         engine.AdvanceTo(1500);
-        Assert.Equal(0, engine.SampleJourney(citizen).ElapsedMinutes);
-        Assert.Equal(0, engine.Traffic!.VehicleCount);
-        Assert.Equal(1500, citizen.DepartureMinute);
-        var saved = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal("", saved.Error);
-        Assert.Equal(1500, saved.State!.Citizens[0].DepartureMinute);
-        Assert.Equal(2880, citizen.ActivityUntilMinute);
-        Assert.True(engine.ReleasePhysicalJourney(hold!));
-        engine.AdvanceTo(1500);
-        Assert.True(engine.Traffic.VehicleCount > 0);
-        Assert.False(engine.TryHoldPhysicalDeparture(citizen.Identity.Id, out _));
+        Assert.Equal(1, citizen.CompletedJourneys);
     }
 
     [Fact]

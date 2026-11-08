@@ -22,6 +22,7 @@ namespace PersistentCity.Runtime
                 // One router per existing pc arity, preserving the population console commands.
                 CommandHelper.AddCommand<string, string>("pc", "pc population census | pc vendor status | pc vendor sales | pc food decisions", RoutePcCommand);
                 CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc vendor withdraw <vehicle> (FT cities only)", RoutePcDetail);
+                CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq>", RoutePcMovement);
                 vendorCommands = true;
             }
             catch (Exception e) { log?.Warn("Vendor diagnostics registration failed: " + e.Message); }
@@ -34,6 +35,8 @@ namespace PersistentCity.Runtime
             catch (Exception e) { log?.Warn("Vendor diagnostics command removal failed: " + e.Message); }
             try { CommandHelper.RemoveCommand<string, string, string>(RoutePcDetail); }
             catch (Exception e) { log?.Warn("Vendor diagnostics detail command removal failed: " + e.Message); }
+            try { CommandHelper.RemoveCommand<string, string, string, string>(RoutePcMovement); }
+            catch (Exception e) { log?.Warn("Movement diagnostics command removal failed: " + e.Message); }
             if (vendorObservedCity != null) vendorObservedCity.FoodDecisionObserved -= RecordVendorDecision;
             vendorObservedCity = null; vendorDecisions.Clear();
         }
@@ -62,8 +65,14 @@ namespace PersistentCity.Runtime
             }
         }
         private void RoutePcCommand(string area, string action) => RoutePcDetail(area, action, "");
+        private void RoutePcMovement(string area, string action, string detail, string value)
+        {
+            if (area == "movement") MovementCommand(action, detail, value);
+            else Debug.LogWarning("[Persistent City] Unknown command. Use: pc movement corrections since <seq>");
+        }
         private void RoutePcDetail(string area, string action, string detail)
         {
+            if (area == "movement") { MovementCommand(action, detail, ""); return; }
             if (area == "workplace") { WorkplaceCommand(action, detail); return; }
             if (area != "vendor" && !(area == "food" && action == "decisions"))
             { if (detail.Length == 0) CensusCommand(area, action); else CensusDetailCommand(area, action, detail); return; }

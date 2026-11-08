@@ -175,16 +175,14 @@ public sealed class PresentationGridTests
         var grid = sim.ActiveJourneys.Grid;
         long filed = grid.Filings;
         Assert.Equal(3, filed);
-        // Frames between events, queries, shadow checks and a physical lease never re-file a committed route.
+        // Frames between events, queries and shadow checks never re-file a committed route; walk legs take no lease (F2c).
         for (int i = 1; i <= 40; i++)
         {
             sim.AdvanceFrameSlice(1440 + i * 0.25);
             _ = grid.Query(sim.PositionOf(sim.State.Citizens[0]), 120, new List<CitizenState>());
             Assert.True(sim.ActiveJourneyIndexMatchesState());
         }
-        Assert.True(sim.TryAcquirePhysicalJourney("c0", out var lease));
-        Assert.True(sim.ObservePhysicalJourney(lease!, lease!.ObservedMinutes + 0.5));
-        Assert.True(sim.ReleasePhysicalJourney(lease!));
+        Assert.False(sim.TryAcquirePhysicalJourney("c0", out _));
         Assert.Equal(filed, grid.Filings);
         Assert.True(sim.ActiveJourneyIndexMatchesState());
         // Arrival leaves the index and the grid.
