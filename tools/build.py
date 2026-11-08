@@ -69,6 +69,11 @@ response = root / "build/csc.rsp"  # Outside the package folder.
 response.write_text("".join('"' + a + '"\n' for a in arguments), encoding="utf-8")
 subprocess.run(command[:4] + ["@" + str(response)], check=True)
 shutil.copy2(root / "config/persistent-city.json", output / "persistent-city.json")
+# The native mod loader registers <mod>/Locales; LocalizorManager reads <folder>/<locale>.json (C5e).
+locales = output / "Locales"
+locales.mkdir(exist_ok=True)
+for table in sorted((root / "Runtime/Localization").glob("*.json")):
+    shutil.copy2(table, locales / table.name)
 if (root / "README.md").exists():
     shutil.copy2(root / "README.md", output / "README.md")
 print("Package:", output)

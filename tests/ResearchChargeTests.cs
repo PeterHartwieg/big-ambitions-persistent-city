@@ -729,10 +729,14 @@ public sealed class ResearchChargeTests
         // Entry is marked immediately before the native call.
         int entering = billing.IndexOf("enteringNative();", StringComparison.Ordinal);
         Assert.True(entering > 0 && billing.IndexOf("GameManager.ChangeMoneySafe(", entering, StringComparison.Ordinal) - entering < 40);
-        // C5d is not wired: no caller installs or attaches it yet, and research stays unavailable.
+        // C5e wires it from PersistentCityMod.cs only (the agency dialog reads Installed); research stays unavailable.
         foreach (var file in Directory.GetFiles(Path.Combine(root, "Runtime"), "*.cs"))
-            if (!file.EndsWith("ResearchBilling.cs", StringComparison.Ordinal))
+            if (!file.EndsWith("ResearchBilling.cs", StringComparison.Ordinal) && !file.EndsWith("PersistentCityMod.cs", StringComparison.Ordinal)
+                && !file.EndsWith("ResearchAgencyDialog.cs", StringComparison.Ordinal))
                 Assert.DoesNotContain("ResearchBilling.", File.ReadAllText(file));
+        Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchAgencyDialog.cs")));
+        Assert.Contains("ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit)",
+            File.ReadAllText(Path.Combine(root, "Runtime", "PersistentCityMod.cs")));
         Assert.False(new MarketResearchSettings().Available);
     }
 

@@ -1,0 +1,20 @@
+{
+  "persistentcity_research_button" : "Market research",
+  "persistentcity_research_notification_ineligible" : "Market research is only available for food businesses that Persistent City serves",
+  "persistentcity_research_notification_open_order" : "This business already has market research waiting for tonight's bill",
+  "persistentcity_research_notification_order_limit" : "Too many market research orders are waiting for tonight's bill",
+  "persistentcity_research_notification_unavailable" : "Market research cannot be ordered right now",
+  "persistentcity_research_menu_product" : "{product} for {business}: {description}. Price {price}.",
+  "persistentcity_research_menu_confirmation" : "Order {product} for {business} for {price}? It is billed with tonight's marketing bill, and the report arrives tomorrow morning.",
+  "persistentcity_research_menu_choose" : "Choose",
+  "persistentcity_research_menu_other_product" : "Other research",
+  "persistentcity_research_menu_back_to_campaigns" : "Back to campaigns",
+  "persistentcity_research_menu_place_order" : "Order",
+  "persistentcity_research_menu_ordered" : "Noted. We bill {price} with tonight's marketing bill for {business}, and you get the {product} report tomorrow morning.",
+  "persistentcity_research_product_basic-local" : "Neighbourhood snapshot",
+  "persistentcity_research_product_basic-local_description" : "residents, meal opportunities, household food and budget bands around the business",
+  "persistentcity_research_product_detailed-local" : "Customer profile",
+  "persistentcity_research_product_detailed-local_description" : "the neighbourhood snapshot plus taste and lifestyle bands and work and study groups around the business",
+  "persistentcity_research_product_detailed-city" : "City profile",
+  "persistentcity_research_product_detailed-city_description" : "the customer profile for the whole city"
+}
