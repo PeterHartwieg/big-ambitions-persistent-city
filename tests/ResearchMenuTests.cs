@@ -236,7 +236,7 @@ public sealed class ResearchMenuTests
         // Native error for a missing business, native hang-up, native continuation after an order.
         Assert.Contains("key => Notifications.ShowError(key)", dialog);
         Assert.Contains("OnCancel = DialogController.current.CancelDialog", dialog);
-        Assert.Contains("(DialogEntry)moreHelpOffered!.Invoke(dialog, null)", dialog);
+        Assert.Contains("(DialogEntry)continuation.Invoke(dialog, null)", dialog);
         Assert.Contains("OnVisible = moreHelp.ShowEntry", dialog);
         // No campaign, money or delivery work in the dialog; the order goes through the C5b runner.
         foreach (string forbidden in new[] { "marketingCampaigns", "MarketingCampaign ", "UpdatePromotion", "ChangeMoney", "new TextMessage", "SendMessage",
@@ -253,8 +253,8 @@ public sealed class ResearchMenuTests
         string dialog = Source("Runtime/ResearchAgencyDialog.cs");
         // Each research callback (the campaign-screen button and both menu buttons) runs through Guarded.
         Assert.Equal(3, Regex.Matches(dialog, @"= \(\) => Guarded\(\(\) => ").Count);
-        Assert.Equal(0, Regex.Matches(dialog, @"OnSecondOption = \(\) => (?!Guarded)").Count);
-        Assert.Equal(0, Regex.Matches(dialog, @"OnConfirm = \(\) => (?!Guarded)").Count);
+        Assert.Empty(Regex.Matches(dialog, @"OnSecondOption = \(\) => (?!Guarded)"));
+        Assert.Empty(Regex.Matches(dialog, @"OnConfirm = \(\) => (?!Guarded)"));
         string guarded = Between(dialog, "private static DialogEntry? Guarded(Func<DialogEntry?> click)", "// The research button.");
         Assert.Contains("try { return click(); }", guarded);
         Assert.Contains("Notifications.ShowError(ResearchText.Unavailable)", guarded);
