@@ -515,19 +515,7 @@ namespace PersistentCity.Persistence
             {
                 Require(token == JsonToken.StartArray, "Expected an array.");
                 var item = array.CollectionItemType!;
-                int limit = item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? (schema>=22 ? 32 : 24) : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
-                    : item == typeof(FoodDecisionOffer) ? MenuLimit(schema)
-                    : item == typeof(FoodProductSales) ? MenuLimit(schema) : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces
-                    : item == typeof(ResidentMeal) ? schema >= PersonSchema ? MaxPersons : MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
-                    : item == typeof(FoodRoutineStop) ? schema >= PersonSchema ? MaxPersons : MaxCitizens
-                    : item == typeof(VisitorPerson) || item == typeof(VisitorRoutine) ? MaxVisitors
-                    : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? schema >= PersonSchema ? MaxResidents : MaxCitizens
-                    : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
-                    : item == typeof(RouteLeg) ? MaxRouteLegs : item == typeof(VisitRecord) ? MaxRecentVisits
-                    : item == typeof(TrafficRouteLeg) ? MaxRouteLegs : item == typeof(TrafficVehicleState) ? MaxTrafficVehicles
-                    : item == typeof(TrafficLinkDefinition) || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) ? MaxTrafficLinks
-                    : item == typeof(string) ? MaxCitizens
-                    : item == typeof(OpeningWindow) ? MaxOpeningWindows : MaxEmbeddedRecords;
+                int limit = CollectionLimit(item, schema);
                 int tableStart = item == typeof(BusinessReference) ? text.End((IJsonLineInfo)reader) - 1 : 0;
                 int count = 0;
                 bool personRows = schema >= PersonSchema && (item == typeof(CitizenState) || item == typeof(VisitorPerson));
@@ -587,6 +575,22 @@ namespace PersistentCity.Persistence
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (type == typeof(FoodDecisionState) && !names.Contains("Tuning") ? 1 : 0)
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
         }
+
+        /// <summary>The token reader's bound for a saved collection of <paramref name="item"/> (CheckShape); F7d's compact reader
+        /// derives its per-field bounds from the same table.</summary>
+        internal static int CollectionLimit(Type item, int schema) => item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? (schema>=22 ? 32 : 24) : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
+                    : item == typeof(FoodDecisionOffer) ? MenuLimit(schema)
+                    : item == typeof(FoodProductSales) ? MenuLimit(schema) : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces
+                    : item == typeof(ResidentMeal) ? schema >= PersonSchema ? MaxPersons : MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
+                    : item == typeof(FoodRoutineStop) ? schema >= PersonSchema ? MaxPersons : MaxCitizens
+                    : item == typeof(VisitorPerson) || item == typeof(VisitorRoutine) ? MaxVisitors
+                    : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? schema >= PersonSchema ? MaxResidents : MaxCitizens
+                    : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
+                    : item == typeof(RouteLeg) ? MaxRouteLegs : item == typeof(VisitRecord) ? MaxRecentVisits
+                    : item == typeof(TrafficRouteLeg) ? MaxRouteLegs : item == typeof(TrafficVehicleState) ? MaxTrafficVehicles
+                    : item == typeof(TrafficLinkDefinition) || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) ? MaxTrafficLinks
+                    : item == typeof(string) ? MaxCitizens
+                    : item == typeof(OpeningWindow) ? MaxOpeningWindows : MaxEmbeddedRecords;
 
         private static bool NullableRecord(Type type) => type == typeof(RivalOutflowHistory) || type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)

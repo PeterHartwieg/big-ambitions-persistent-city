@@ -362,6 +362,29 @@ public sealed class F7dCompactWriterTests
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = overKeys };
         Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "any").Status);
         Assert.Same(overKeys, data[SaveStore.StateKey]);
+        // One shape naming 4,000,001 fields against a one-key table: bounded by the key count during the count pass.
+        var shape = new StringBuilder("{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Schema\"],\"h\":[[");
+        for (int i = 0; i <= SaveCodec.MaxEmbeddedRecords; i++) { if (i > 0) shape.Append(','); shape.Append('0'); }
+        string overShape = shape.Append("]],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
+        bytes = Allocated(() => SaveCodec.Read(overShape), out read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("more fields than the key table", read.Error);
+        Assert.True(bytes < 64 * 1024, bytes + " B allocated");
+        // A typed table: a key that is not a string is refused before the table is built.
+        Assert.Contains("not a string", SaveCodec.Read(head.Replace("\"k\":[\"Citizens\",\"Schema\"]", "\"k\":[\"Citizens\",[0]]") + "\"t\":0}").Error);
+        // 1,025 food scopes: within the value budget (a long table string makes room) but over the body's 1,024-scope
+        // bound, refused before the scope array is allocated.
+        Assert.Equal(1024, SaveCodec.CompactCollectionLimit("Shops")); // FoodScope and ShopObservation both allow 1,024
+        Assert.Equal(SaveCodec.MaxResidents, SaveCodec.CompactCollectionLimit("Citizens"));
+        Assert.Equal(SaveCodec.MaxRecentVisits, SaveCodec.CompactCollectionLimit("RecentVisits"));
+        int shopBound = SaveCodec.CompactCollectionLimit("Shops");
+        string scopes = "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Food\",\"Schema\",\"Shops\"],\"h\":[[0,1],[2]],\"s\":[\"" + new string('x', shopBound) + "\"],\"n\":0,\"r\":0,"
+            + "\"t\":[4,0,[4,1,[5," + (shopBound + 1) + ",[3," + (shopBound + 1) + "]]],[0,34]]}";
+        bytes = Allocated(() => SaveCodec.Read(scopes), out read);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status);
+        Assert.Contains("collection length", read.Error);
+        Assert.True(bytes < 64 * 1024 + 4L * shopBound, bytes + " B allocated");
+        output.WriteLine($"Shops bound {shopBound}; one-over refused after {bytes:N0} B");
         // The early authority probe uses the same counts.
         Assert.Contains("tables exceed the record bound", Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(overKeys)).Message);
     }

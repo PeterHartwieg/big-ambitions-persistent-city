@@ -117,9 +117,6 @@ Fresh current-schema versions of E5d's stress set (`tests/F7dStressFixtures.cs`,
 
 Both writers write and read every stress city; every round trip is exact (the harness checks the writer-34 body equals the writer-33 bytes relabelled). Writer 34 is 26.4–30.0 % of writer 33. CF64 carries 3,912,310 streaming records with the 80,190 table entries charged, inside the unchanged 4,000,000-record cap. Its 17,968,983 decoded values are 4.6 per record and 0.264 per payload character, so neither `MaxCompactValues` (67,108,864) nor the per-character bound (4 × 68,107,977) binds before the record cap: a city the record cap allows would need about 14.6 values per record (the highest measured, fresh-50000x3) at more than 4,000,000 records to reach 64 Mi, and every measured fixture is far below 4 values per character. The 256 Mi character cap applies to the body: CF64's body is 235,889,099 characters, so a city whose body passes 256 Mi is refused by writer 34 as by writer 33, even though its compact string would be about 77 M characters.
 
-### Peak transient memory
-
-
 ### Peak transient managed heap (above the live city, one save or one read; budget = snapshot allocation + 2 × payload UTF-16 bytes)
 
 | Fixture | Snapshot allocation B | Save peak 33 → 34 B | Budget 33 / 34 B | Save within budget 33 / 34 | Read peak 33 → 34 B |

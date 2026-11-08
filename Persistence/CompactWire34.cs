@@ -53,16 +53,42 @@ namespace PersistentCity.Persistence
 
         internal static long CompactValueBudget(int payloadCharacters) => Math.Min(MaxCompactValues, (long)MaxCompactValuesPerCharacter * payloadCharacters);
 
-        /// <summary>The body reader's own bound for each collection field whose name belongs to one saved collection
-        /// (<c>CheckShape</c>). The compact reader checks every decoded array of that field against it before allocating
-        /// the array; every other array is bounded by <see cref="MaxEmbeddedRecords"/>, the largest body bound.</summary>
-        internal static int CompactCollectionLimit(string key) => key switch
+        /// <summary>The body reader's own bound (<see cref="CollectionLimit"/>) for the array value of each named field: every
+        /// public collection property of a Core or Persistence type, keyed by its name. A name several types use takes their
+        /// largest bound, so the compact reader is never stricter than the body reader; other fields get
+        /// <see cref="MaxEmbeddedRecords"/>, the largest body bound. Checked before any array of that length is allocated.</summary>
+        internal static int CompactCollectionLimit(string key) => FieldLimits.TryGetValue(key, out int limit) ? limit : MaxEmbeddedRecords;
+
+        private static readonly Dictionary<string, int> FieldLimits = BuildFieldLimits();
+
+        private static Dictionary<string, int> BuildFieldLimits()
         {
-            "Citizens" => MaxResidents, "Visitors" => MaxVisitors, "VisitorRoutines" => MaxVisitors, "Places" => MaxPlaces,
-            "RecentVisits" => MaxRecentVisits, "Legs" => MaxRouteLegs, "Route" => MaxRouteLegs, "History" => 14 * MaxPlaces,
-            "WeeklyHours" => MaxOpeningWindows, "Definitions" => MaxTrafficLinks, "Events" => MaxTrafficLinks,
-            _ => MaxEmbeddedRecords,
-        };
+            var limits = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var assembly in new[] { typeof(CityState).Assembly, typeof(SaveCodec).Assembly })
+            {
+                Type[] types;
+                try { types = assembly.GetTypes(); }
+                catch (System.Reflection.ReflectionTypeLoadException e) { types = e.Types.Where(t => t != null).ToArray()!; }
+                foreach (var type in types)
+                    foreach (var property in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                    {
+                        var item = ItemType(property.PropertyType);
+                        if (item == null) continue;
+                        int limit = CollectionLimit(item, CityState.CompactSchema);
+                        limits[property.Name] = limits.TryGetValue(property.Name, out int known) ? Math.Max(known, limit) : limit;
+                    }
+            }
+            return limits;
+        }
+
+        private static Type? ItemType(Type type)
+        {
+            if (type == typeof(string)) return null;
+            if (type.IsArray) return type.GetElementType();
+            var list = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>) ? type
+                : type.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            return list?.GetGenericArguments()[0];
+        }
         internal static readonly string[] CompactEnvelope = { "Schema", "f", "v", "k", "h", "s", "n", "r", "t" };
         internal static readonly string[] CompactRouteFields = { "Journey", "Route" };
         internal const string CompactRoadField = "ServiceId";
@@ -144,6 +170,7 @@ namespace PersistentCity.Persistence
             parser.Expect('{');
             var header = new object?[6];
             long entries = 0;
+            int keyCount = 0;
             for (int i = 0; i < CompactEnvelope.Length; i++)
             {
                 if (i > 0) parser.Expect(',');
@@ -152,10 +179,10 @@ namespace PersistentCity.Persistence
                 if (i == 6 || i == 7) { parser.SkipValue(1); continue; } // the route count and table never hold a header
                 if (i >= 3 && i <= 5)
                 {
-                    entries += parser.CountArray(1);
+                    entries += parser.CountTable(1, i == 4 ? CompactTree.Parser.TableKind.Shapes : CompactTree.Parser.TableKind.Strings, keyCount);
                     Require(entries <= MaxEmbeddedRecords, "Compact tables exceed the record bound.");
                 }
-                if (i < 6) { header[i] = parser.Value(1); continue; }
+                if (i < 6) { header[i] = parser.Value(1); if (i == 3) keyCount = ((object?[])header[3]!).Length; continue; }
                 var decoder = new CompactDecoder(source.Length);
                 decoder.Header(header);
                 parser.Expect('['); Require(CompactDecoder.Int(parser.Value(2)) == 4, "Compact root is not an object.");
@@ -163,7 +190,7 @@ namespace PersistentCity.Persistence
                 var shape = decoder.Shape(CompactDecoder.Index(parser.Value(2), decoder.ShapeCount));
                 Require(shape.Length >= 3 && shape[0] == "Schema" && shape[1] == "Capabilities" && shape[2] == "MenuPolicy", "Missing population capabilities.");
                 var values = new object?[3];
-                for (int field = 0; field < 3; field++) { parser.Expect(','); values[field] = decoder.Column(parser.Value(2), 1, shape[field], false)[0]; }
+                for (int field = 0; field < 3; field++) { parser.Expect(','); values[field] = decoder.Column(parser.Value(2), 1, shape[field], false, field: true)[0]; }
                 Require(values[0] is CompactNumber schema && schema.Text == CityState.CompactSchema.ToString(CultureInfo.InvariantCulture), "Unsupported population schema; preserve the payload.");
                 var capabilities = values[1] as CompactObject;
                 int revisionValue = 0;
@@ -602,6 +629,50 @@ namespace PersistentCity.Persistence
                             Expect(']'); break;
                         }
                     else Position++;
+                    Position = start;
+                    return count;
+                }
+
+                internal enum TableKind { Strings, Shapes }
+
+                /// <summary>Entries of the table at the current position, counted without allocating: every entry must be a
+                /// string, or for shapes an array of at most <paramref name="keys"/> numbers (a shape names each key at most once).
+                /// The position is left unchanged.</summary>
+                public long CountTable(int depth, TableKind kind, int keys)
+                {
+                    int start = Position;
+                    if (Peek() != '[') Fail("Expected a compact array.");
+                    Open(depth); Position++;
+                    long count = 0;
+                    if (Peek() == ']') { Position = start; return 0; }
+                    while (true)
+                    {
+                        if (kind == TableKind.Strings)
+                        {
+                            if (Peek() != '"') Fail("Compact table entry is not a string.");
+                            SkipString();
+                        }
+                        else
+                        {
+                            if (Peek() != '[') Fail("Compact shape is not an array.");
+                            Open(depth + 1); Position++;
+                            int fields = 0;
+                            if (Peek() == ']') Position++;
+                            else
+                                while (true)
+                                {
+                                    char c = Peek();
+                                    if (c != '-' && (c < '0' || c > '9')) Fail("Compact shape field is not a key index.");
+                                    ScanNumber();
+                                    if (++fields > keys) Fail("Compact shape names more fields than the key table holds.");
+                                    if (Peek() == ',') { Position++; continue; }
+                                    Expect(']'); break;
+                                }
+                        }
+                        count++;
+                        if (Peek() == ',') { Position++; continue; }
+                        Expect(']'); break;
+                    }
                     Position = start;
                     return count;
                 }
@@ -1149,6 +1220,7 @@ namespace PersistentCity.Persistence
                 var parser = new CompactTree.Parser(payload, MaxCompactNesting, canonical: true, internKeys: true);
                 var top = new object?[CompactEnvelope.Length];
                 long entries = 0;
+                int keyCount = 0;
                 parser.Expect('{');
                 for (int i = 0; i < CompactEnvelope.Length; i++)
                 {
@@ -1157,10 +1229,12 @@ namespace PersistentCity.Persistence
                     parser.Expect(':');
                     if (i >= 3 && i <= 5)
                     {
-                        entries += parser.CountArray(1);
+                        // Counted, typed and (for shapes) length-bounded without allocating, then built.
+                        entries += parser.CountTable(1, i == 4 ? CompactTree.Parser.TableKind.Shapes : CompactTree.Parser.TableKind.Strings, keyCount);
                         Require(entries <= MaxEmbeddedRecords, "Compact tables exceed the record bound.");
                     }
                     top[i] = parser.Value(1);
+                    if (i == 3) keyCount = ((object?[])top[3]!).Length;
                     if (i == 6)
                     {
                         int declared = Int(top[6]);
@@ -1174,7 +1248,7 @@ namespace PersistentCity.Persistence
                 Require(count >= 0 && (long)tableEntries + count <= MaxEmbeddedRecords, "Compact route table exceeds the record bound.");
                 tableEntries += count;
                 decodingRoutes = true;
-                routes = Column(top[7], count, "", true);
+                routes = Column(top[7], count, "Route", true, field: true);
                 decodingRoutes = false;
                 foreach (var route in routes) Require(route is CompactObject || route is object?[], "Compact route table holds a non-route value.");
                 // The writer stores each distinct route once, in ordinal order of its exact spelling.
@@ -1270,7 +1344,7 @@ namespace PersistentCity.Persistence
 
             private static void Count(object?[] column, long length) => Require(column.Length == length, "Compact column length.");
 
-            public object?[] Column(object? column, int n, string key, bool routeTable)
+            public object?[] Column(object? column, int n, string key, bool routeTable, bool field = false)
             {
                 Require(n >= 0, "Negative compact column length.");
                 Charge(n);
@@ -1336,14 +1410,14 @@ namespace PersistentCity.Persistence
                         Require(Int(c[1]) == n, "Compact null count.");
                         return new object?[n];
                     case 4: return Objects(c, n, routeTable);
-                    case 5: return Arrays(c, n, key, false, routeTable);
-                    case 10: return Arrays(c, n, key, true, routeTable);
+                    case 5: return Arrays(c, n, key, false, routeTable, field);
+                    case 10: return Arrays(c, n, key, true, routeTable, field);
                     case 6:
                     {
                         Count(c, (long)n + 1);
                         var result = new object?[n];
                         int kinds = 0;
-                        for (int i = 0; i < n; i++) { result[i] = Column(c[i + 1], 1, key, routeTable)[0]; kinds |= Kind(result[i]); }
+                        for (int i = 0; i < n; i++) { result[i] = Column(c[i + 1], 1, key, routeTable, field)[0]; kinds |= Kind(result[i]); }
                         Require(BitCount(kinds & ~1) >= 2, "Noncanonical mixed compact column.");
                         return result;
                     }
@@ -1354,7 +1428,7 @@ namespace PersistentCity.Persistence
                         Require(positions.Length > 0 && positions.Length < n, "Noncanonical nullable compact column.");
                         var isNull = new bool[n]; int last = -1;
                         foreach (var p in positions) { int at = Index(p, n); Require(at > last, "Compact null rows are not ascending."); isNull[at] = true; last = at; }
-                        var rest = Column(c[2], n - positions.Length, key, routeTable);
+                        var rest = Column(c[2], n - positions.Length, key, routeTable, field);
                         int kinds = 0;
                         foreach (var v in rest) { Require(v != null, "Null inside a nullable compact column body."); kinds |= Kind(v); }
                         Require(BitCount(kinds) == 1, "Noncanonical nullable compact column.");
@@ -1461,17 +1535,17 @@ namespace PersistentCity.Persistence
                 {
                     int m = 0;
                     for (int i = 0; i < n; i++) if (at[rowShapes[i]][u] >= 0) m++;
-                    var column = Column(c[u + 2], m, union[u], routeTable);
+                    var column = Column(c[u + 2], m, union[u], routeTable, field: true);
                     for (int i = 0, j = 0; i < n; i++) { int position = at[rowShapes[i]][u]; if (position >= 0) ((CompactObject)rows[i]!).Values[position] = column[j++]; }
                 }
                 return rows;
             }
 
-            private object?[] Arrays(object?[] c, int n, string key, bool positional, bool routeTable)
+            private object?[] Arrays(object?[] c, int n, string key, bool positional, bool routeTable, bool field)
             {
                 Require(c.Length >= 2, "Compact array column without lengths.");
                 // The body reader's bound for this field, checked here before any array of that length is allocated.
-                int limit = CompactCollectionLimit(key);
+                int limit = field ? CompactCollectionLimit(key) : MaxEmbeddedRecords;
                 var lengths = new int[n];
                 if (c[1] is object?[] perRow)
                 {
