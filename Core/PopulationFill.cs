@@ -17,8 +17,8 @@ namespace PersistentCity.Core
         /// <c>(seed, pv:&lt;n&gt;)</c> by the frozen identity policy, so a sequence number whose identity is a student or retiree
         /// is skipped for a commuter: the number is used up and never reused. One commuter looks at most this many numbers.</summary>
         public const int MaximumSkipsPerCommuter = 4096;
-        /// <summary>Persons one day boundary publishes at most (review Sol-r2-2). Staging runs in units of
-        /// <see cref="MaximumPersonsPerUnit"/>; this bounds the one publication step. A larger deficit fills over later days.</summary>
+        /// <summary>Persons one day boundary creates at most, in units of <see cref="MaximumPersonsPerUnit"/>, so the clock stands
+        /// on a boundary for at most 16 units (review Opus-r1-3). A larger deficit fills over later days.</summary>
         public const int MaximumPersonsPerBoundary = 1024;
         /// <summary>Skipped sequence numbers a city may hold (the reader's bound too). Commuter creation pauses before it.</summary>
         public const int MaximumSkippedSequences = 4 * PopulationCensusPolicy.MaximumVisitors;
@@ -69,32 +69,27 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>One day boundary's fill: the targets latched when the clock first stood before the boundary with every
-    /// earlier event done, the persisted per-pattern counts (active and dormant persons), and the persons staged so far.
-    /// Staged persons are not in the city until the boundary publishes them, so a save during staging stores the city as
-    /// it was before the boundary, and the reload stages them again from the same state. Never saved.</summary>
+    /// <summary>One day boundary's fill: the targets latched as the clock stood on the boundary before its ordinary events,
+    /// the persisted per-pattern counts (active and dormant persons) and the persons already created at this boundary.
+    /// Never saved: after a reload at the boundary minute the plan is computed again from the saved city, so units already
+    /// run are counted from the persons they created and the remaining units continue.</summary>
     internal sealed class PopulationFillPlan
     {
         internal double Boundary;
         internal VisitorTargets Targets;
-        internal long BaseCommuters, BasePool, Commuters, Pool;
+        internal long Commuters, Pool, CreatedHere;
         internal VisitorFactory? Factory;
-        internal readonly List<(VisitorPerson Visitor, VisitorRoutine Routine)> Staged = new List<(VisitorPerson, VisitorRoutine)>();
-        internal readonly Dictionary<string, int> StagedSeats = new Dictionary<string, int>(StringComparer.Ordinal);
-        internal int NextSequence;
-        internal long Skipped;
+        /// <summary>The boundary's ordinary events had begun (its midnight postings ran) before this plan: nothing is created.</summary>
+        internal bool Closed;
         /// <summary>No working identity was found within the skip bounds: commuter creation pauses for this boundary.</summary>
         internal bool CommutersPaused;
         /// <summary>A hard person bound was reached: this boundary creates nobody more (never reached under the clamp).</summary>
         internal bool Refused;
         internal long Aggregate => Commuters + Pool;
-        internal VisitorPattern? Next => Refused || Staged.Count >= PopulationFillPolicy.MaximumPersonsPerBoundary || Aggregate >= Targets.VisitorCapacity ? (VisitorPattern?)null
+        internal VisitorPattern? Next => Closed || Refused || CreatedHere >= PopulationFillPolicy.MaximumPersonsPerBoundary
+            || Aggregate >= Targets.VisitorCapacity ? (VisitorPattern?)null
             : Commuters < Targets.CommuterTarget && !CommutersPaused ? VisitorPattern.Commuter
             : Pool < Targets.PoolTarget ? VisitorPattern.DayVisit : (VisitorPattern?)null;
-
-        /// <summary>The same boundary and targets with nothing staged (a route-planner rebuild drops staged work).</summary>
-        internal PopulationFillPlan Restart(int nextSequence) => new PopulationFillPlan { Boundary = Boundary, Targets = Targets,
-            BaseCommuters = BaseCommuters, BasePool = BasePool, Commuters = BaseCommuters, Pool = BasePool, NextSequence = nextSequence };
     }
 
     public sealed partial class CitySimulator
@@ -103,14 +98,12 @@ namespace PersistentCity.Core
         private PopulationFillPlan? fillPlan;
         private static readonly IComparer<VisitorPerson> VisitorOrder = Comparer<VisitorPerson>.Create((a, b) => string.CompareOrdinal(a.Id, b.Id));
 
-        /// <summary>Fill units (staging, at most 64 persons each) run since construction (diagnostic, never saved).</summary>
+        /// <summary>Fill units (at most 64 persons each) run since construction (diagnostic, never saved).</summary>
         public long PopulationFillUnits { get; private set; }
-        /// <summary>Persons published by day boundaries since construction (diagnostic, never saved).</summary>
+        /// <summary>Persons created by fill units since construction (diagnostic, never saved).</summary>
         public long PopulationFillCreated { get; private set; }
         public int LastFillUnitPersons { get; private set; }
-        /// <summary>Persons published by the latest boundary publication.</summary>
-        public int LastFillPublished { get; private set; }
-        /// <summary>Sequence numbers skipped for commuters by published boundaries since construction (diagnostic, never saved).</summary>
+        /// <summary>Sequence numbers skipped for commuters since construction (diagnostic, never saved).</summary>
         public long PopulationFillSkipped { get; private set; }
         /// <summary>Boundaries whose fill stopped at a hard person bound (diagnostic; unreachable under the capacity clamp).</summary>
         public long PopulationFillRefusals { get; private set; }
@@ -118,58 +111,83 @@ namespace PersistentCity.Core
         public VisitorTargets? PopulationFillTargets => fillPlan?.Targets;
         public double? PopulationFillBoundary => fillPlan?.Boundary;
         public bool PopulationFillAttached => fillCatalogue != null;
-        /// <summary>Persons staged for the coming boundary and not yet in the city.</summary>
-        public int PopulationFillStaged => fillPlan != null && fillPlan.Boundary > State.Minute ? fillPlan.Staged.Count : 0;
+        /// <summary>True while the clock stands on a day boundary whose fill still has units to run.</summary>
+        public bool PopulationFillPending => FillUnitDue();
 
-        /// <summary>F5g: fill toward the census targets of <paramref name="catalogue"/> at every later day boundary. Runtime
-        /// attaches its load-time catalogue to every current-schema city, so filling is ordinary behaviour, not a switch-over.
-        /// A boundary is filled only as the clock crosses it, so a catalogue change or first attachment moves the target only
-        /// at the next day boundary, and a boundary already latched in this process keeps its targets. A refused catalogue
-        /// detaches the fill (nothing is created, nothing removed).</summary>
+        /// <summary>F5g: fill toward the census targets of <paramref name="catalogue"/> at every day boundary the clock reaches.
+        /// Runtime attaches its load-time catalogue to every current-schema city, so filling is ordinary behaviour, not a
+        /// switch-over. A boundary already latched in this process keeps its targets, and a boundary whose midnight postings
+        /// already ran is closed, so a catalogue change or first attachment moves the target only at the next boundary. A
+        /// refused catalogue detaches the fill (nothing is created, nothing removed).</summary>
         public void AttachPopulationFill(PopulationFillCatalogue? catalogue)
         {
             fillCatalogue = catalogue == null || catalogue.Refused ? null : catalogue;
         }
 
         private bool FillActive => fillCatalogue != null && State.Food != null && food != null;
+        private bool AtDayBoundary => State.Minute > 0 && State.Minute == Math.Floor(State.Minute / 1440) * 1440;
         private double NextDayBoundary => (Math.Floor(State.Minute / 1440) + 1) * 1440;
 
-        /// <summary>The coming boundary's plan, latched on first use: every event before the boundary has run, and nothing
-        /// after it has. A boundary the clock has passed is complete; the clock passes it only by its publication.</summary>
-        private PopulationFillPlan FillPlan(double boundary)
+        // The plan of the boundary the clock stands on, latched on first use and cached for that boundary.
+        private PopulationFillPlan FillPlan()
         {
+            double boundary = State.Minute;
             if (fillPlan != null && fillPlan.Boundary == boundary) return fillPlan;
-            long commuters = 0, pool = 0;
-            foreach (var visitor in State.Visitors)
-                if (visitor.Stay.Pattern == VisitorPattern.DayVisit) pool++; else commuters++;
-            fillPlan = new PopulationFillPlan { Boundary = boundary, Targets = fillCatalogue!.Targets(State), BaseCommuters = commuters,
-                BasePool = pool, Commuters = commuters, Pool = pool, NextSequence = State.NextVisitorSequence };
+            long commuters = 0, pool = 0, here = 0;
+            for (int i = 0; i < State.Visitors.Count; i++)
+            {
+                if (State.Visitors[i].Stay.Pattern == VisitorPattern.DayVisit) pool++; else commuters++;
+                if (State.VisitorRoutines[i].JoinedMinute == boundary) here++;
+            }
+            fillPlan = new PopulationFillPlan { Boundary = boundary, Targets = fillCatalogue!.Targets(State), Commuters = commuters, Pool = pool,
+                CreatedHere = here, Closed = OrdinaryBoundaryEventsBegan(boundary) };
             return fillPlan;
         }
 
-        /// <summary>Holds the caught-up report while a boundary inside the target is not yet crossed (staged or published).</summary>
-        private bool FillHolds(double targetMinute) => FillActive && NextDayBoundary <= targetMinute;
-
-        /// <summary>One bounded staging unit for <paramref name="boundary"/>: up to
-        /// <see cref="PopulationFillPolicy.MaximumPersonsPerUnit"/> persons, commuters first while below their clamped target,
-        /// then pool members, never past the aggregate VisitorCapacity or the boundary's
-        /// <see cref="PopulationFillPolicy.MaximumPersonsPerBoundary"/>. The persons are built and seated against the occupancy
-        /// index plus earlier staged seats, but nothing enters the city. Returns false when the boundary has nothing more to stage.</summary>
-        private bool StageFillUnit(double boundary)
+        /// <summary>True once a wallet of a person older than <paramref name="boundary"/> has posted that day: the boundary's
+        /// ordinary events have begun, and its midnight postings are the first of them. The fill runs before them, so a city
+        /// saved inside a fill never has such a posting, while a city saved after crossing the boundary (or saved by a build
+        /// without the fill) does. Without finances no wallet tells, and the fill runs at the boundary the city was saved on.</summary>
+        private bool OrdinaryBoundaryEventsBegan(double boundary)
         {
-            var plan = FillPlan(boundary);
-            if (plan.Next == null) return false;
-            plan.Factory ??= new VisitorFactory(State, p => occupancy.Count(p.Id) + Staged(plan, p.Id) < p.Capacity,
-                work => plan.StagedSeats[work] = Staged(plan, work) + 1);
-            int sequence = plan.NextSequence;
-            long skippedBefore = (long)State.NextVisitorSequence - 1 - State.Visitors.Count;
+            int day = (int)(boundary / 1440);
+            foreach (var meal in State.Food!.Residents)
+            {
+                if (meal.Budget == null || meal.Budget.LastPostedDay < day) continue;
+                var owner = FindCitizen(meal.HostId);
+                if (owner != null && owner.JoinedMinute < boundary) return true;
+            }
+            return false;
+        }
+
+        /// <summary>A fill unit may run: the clock stands on a day boundary before its ordinary events, and the boundary's
+        /// plan still has a pattern below its target inside the aggregate capacity and the boundary's cap.</summary>
+        private bool FillUnitDue() => FillActive && AtDayBoundary && pending == null && food!.HasPendingDecision != true && FillPlan().Next.HasValue;
+
+        /// <summary>Holds the caught-up report while a boundary inside the target is unreached or still has fill work. Placed
+        /// last in <see cref="NoEventsThrough"/>.</summary>
+        private bool FillHolds(double targetMinute) => FillActive
+            && (AtDayBoundary && State.Minute <= targetMinute && FillUnitDue() || NextDayBoundary <= targetMinute);
+
+        /// <summary>One bounded unit at the boundary minute: up to <see cref="PopulationFillPolicy.MaximumPersonsPerUnit"/>
+        /// persons, commuters first while below their clamped target, then pool members, never past the aggregate
+        /// VisitorCapacity or the boundary's <see cref="PopulationFillPolicy.MaximumPersonsPerBoundary"/>. Each person gets the
+        /// next <c>pv:&lt;n&gt;</c>, is merged into the ordinal lists, queued, seated against the occupancy index and enrolled
+        /// once in the food roster and finances, all inside the unit (review Sol-r3-2). Existing persons, wallets and
+        /// obligations are never touched.</summary>
+        private void RunFillUnit()
+        {
+            var plan = FillPlan();
+            plan.Factory ??= new VisitorFactory(State, occupancy.Vacant, work => occupancy.Move("", work));
+            var added = new List<(VisitorPerson Visitor, VisitorRoutine Routine)>(PopulationFillPolicy.MaximumPersonsPerUnit);
+            int sequence = State.NextVisitorSequence;
+            long skippedBefore = (long)sequence - 1 - State.Visitors.Count, skipped = 0;
             // Bounds are checked before anything is seated. The capacity clamp keeps them unreachable; if a bound ever bites,
             // this boundary's fill ends with a diagnostic instead of stopping the simulation (review Opus-r1-4).
-            long room = Math.Min(Math.Min(PopulationFillPolicy.MaximumPersonsPerUnit, PersonTable.MaximumVisitors - (long)State.Visitors.Count - plan.Staged.Count),
-                PersonTable.MaximumPersons - (long)PersonTable.PersonCount(State) - plan.Staged.Count);
-            if (room <= 0) { plan.Refused = true; PopulationFillRefusals++; return false; }
-            int made = 0;
-            while (made < room && plan.Next is VisitorPattern pattern)
+            long room = Math.Min(Math.Min(PopulationFillPolicy.MaximumPersonsPerUnit, PersonTable.MaximumVisitors - (long)State.Visitors.Count),
+                PersonTable.MaximumPersons - (long)PersonTable.PersonCount(State));
+            if (room <= 0) { plan.Refused = true; PopulationFillRefusals++; return; }
+            while (added.Count < room && plan.Next is VisitorPattern pattern)
             {
                 int at = sequence;
                 if (pattern == VisitorPattern.Commuter)
@@ -177,39 +195,19 @@ namespace PersistentCity.Core
                     // Owner decision: commuters are working personas only. Skip numbers whose frozen identity is not one.
                     int limit = PopulationFillPolicy.MaximumSkipsPerCommuter;
                     while (limit-- > 0 && at < int.MaxValue && !plan.Factory.Working(at)) at++;
-                    long gaps = skippedBefore + plan.Skipped + (at - sequence);
+                    long gaps = skippedBefore + skipped + (at - sequence);
                     if (at == int.MaxValue || !plan.Factory.Working(at) || gaps > PopulationFillPolicy.MaximumSkippedSequences)
                     { plan.CommutersPaused = true; continue; }
                 }
                 else if (at == int.MaxValue) { plan.Refused = true; PopulationFillRefusals++; break; }
-                plan.Skipped += at - sequence;
-                plan.Staged.Add(plan.Factory.Create(at, pattern, boundary));
-                sequence = at + 1; made++;
+                skipped += at - sequence;
+                added.Add(plan.Factory.Create(at, pattern, State.Minute));
+                sequence = at + 1;
+                plan.CreatedHere++;
                 if (pattern == VisitorPattern.Commuter) plan.Commuters++; else plan.Pool++;
             }
-            plan.NextSequence = sequence;
-            LastFillUnitPersons = made;
-            PopulationFillUnits++;
-            return true;
-        }
-
-        private static int Staged(PopulationFillPlan plan, string placeId) => plan.StagedSeats.TryGetValue(placeId, out int n) ? n : 0;
-
-        /// <summary>Crosses <paramref name="boundary"/>: the clock moves onto it, the first midnight publishes the city's
-        /// capability activation as ordinary advancing does (review Sol-r2-1), and every staged person enters the city at once:
-        /// the next sequence, the ordinal merge, the queue, the occupancy index and one roster record and wallet each. No event
-        /// at the boundary has run yet, so the boundary's own events see the new persons. At most
-        /// <see cref="PopulationFillPolicy.MaximumPersonsPerBoundary"/> persons are published by one boundary.</summary>
-        private void PublishBoundary(double boundary)
-        {
-            traffic?.AdvanceTo(boundary, 0);
-            State.Minute = boundary;
-            if (!State.Capabilities.Active) State.Capabilities.Active = true;
-            var plan = fillPlan != null && fillPlan.Boundary == boundary ? fillPlan : null;
-            LastFillPublished = 0;
-            if (plan == null || plan.Staged.Count == 0) return;
-            var added = new List<(VisitorPerson Visitor, VisitorRoutine Routine)>(plan.Staged);
-            State.NextVisitorSequence = plan.NextSequence;
+            State.NextVisitorSequence = sequence;
+            PopulationFillSkipped += skipped;
             PersonTable.InsertVisitors(State, added);
             foreach (var (visitor, routine) in added)
             {
@@ -220,12 +218,10 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new InvalidOperationException("Duplicate citizen event.");
                 citizenEvents.Add(visitor.Id, item);
                 activeJourneys.File(routine);
-                if (routine.DayPlaceId.Length != 0) occupancy.Move("", routine.DayPlaceId);
             }
             foreach (var (_, routine) in added) food!.EnrolCreated(routine);
-            LastFillPublished = added.Count;
-            PopulationFillCreated += added.Count; PopulationFillSkipped += plan.Skipped;
-            plan.Staged.Clear(); plan.StagedSeats.Clear(); plan.Factory = null;
+            LastFillUnitPersons = added.Count;
+            PopulationFillUnits++; PopulationFillCreated += added.Count;
         }
 
         /// <summary>Read-only person manifest for <c>pc population manifest</c>: persisted counts per pattern and presence,

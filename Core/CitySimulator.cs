@@ -172,9 +172,9 @@ namespace PersistentCity.Core
             replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             // F5g: the latched boundary plan carries over; its seat counter is rebuilt against the replacement's occupancy.
-            // F5g: the latched targets carry over; staged persons are dropped and staged again against the replacement.
-            replacement.fillCatalogue = fillCatalogue;
-            replacement.fillPlan = fillPlan == null || fillPlan.Boundary <= State.Minute ? fillPlan : fillPlan.Restart(State.NextVisitorSequence);
+            // F5g: the latched plan carries over; its seat counter is rebuilt against the replacement's occupancy.
+            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan;
+            if (fillPlan != null) fillPlan.Factory = null;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
             // A running survey is transient; the replacement starts it again from zero.
@@ -285,9 +285,9 @@ namespace PersistentCity.Core
             if (!AccountingClock.Compatible(State.Minute, nativeMinute) || !IsAccountingEpochDrained(nativeMinute)) return false;
             double epoch = Math.Floor(nativeMinute);
             if (traffic != null && traffic.Clock < epoch) traffic.BeginObservationEpoch(epoch);
-            // F5g: with the fill attached a day boundary is crossed only by its publication in AdvanceCore (staged persons and
-            // the capability fact together), so the epoch publication leaves the clock before that midnight.
-            if (State.Minute < epoch && !(FillActive && Math.Floor(State.Minute / 1440) < Math.Floor(epoch / 1440)))
+            // F5g: the clock moves onto a midnight epoch as before (review Sol-r3-1); that boundary's fill then runs at the
+            // epoch minute before its ordinary events, so physical and traffic observations stay in the new epoch.
+            if (State.Minute < epoch)
             {
                 // This boundary was implicit in the predecessor clock. Publish its calendar
                 // capability fact too, or deriving the next midnight from the new clock would
@@ -363,15 +363,20 @@ namespace PersistentCity.Core
                 // A survey runs once everything through its SurveyAtMinute has drained, before the next event.
                 // F5g: an unreached day boundary, or fill work left on the boundary the clock stands on, counts as the next work,
                 // so a survey never runs ahead of that boundary's fill.
-                if (research != null && research.ReadyBefore(FillActive ? Math.Min(next, NextDayBoundary) : next, targetMinute))
+                // F5g: fill work at the boundary the clock stands on, or an unreached boundary, counts as the next work.
+                if (research != null && research.ReadyBefore(!FillActive ? next : FillUnitDue() ? State.Minute : Math.Min(next, NextDayBoundary), targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
-                // F5g: once every event before a day boundary inside the target has run, stage the boundary's persons in
-                // bounded units, then cross it by publishing them, before any event at or after the boundary.
+                // F5g: a bounded fill unit at the boundary minute, before the boundary's ordinary events.
+                if (FillUnitDue()) { RunFillUnit(); count++; continue; }
+                // F5g: once every event before a day boundary inside the target has run, stop the clock on the boundary,
+                // with the first midnight's capability activation (review Sol-r2-1), so its fill runs before its events.
                 if (FillActive && NextDayBoundary <= next && NextDayBoundary <= targetMinute)
                 {
                     double boundary = NextDayBoundary;
-                    if (!StageFillUnit(boundary)) PublishBoundary(boundary);
-                    count++; continue;
+                    traffic?.AdvanceTo(boundary, 0);
+                    State.Minute = boundary;
+                    if (!State.Capabilities.Active) { State.Capabilities.Active = true; count++; }
+                    continue;
                 }
                 if (next > targetMinute) break;
                 State.Minute = next;

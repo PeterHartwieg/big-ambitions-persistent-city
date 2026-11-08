@@ -45,7 +45,6 @@ public sealed class F5gMeasure
         var unitMs = new List<double>(); var unitBytes = new List<double>(); var unitPersons = new List<double>();
         var sliceMs = new List<double>(); var fillSliceMs = new List<double>();
         var requestsPerMinute = new Dictionary<long, long>();
-        var publishMs = new List<double>(); var publishPersons = new List<double>();
         long events = 0;
         int peakPersonQueue = 0, peakMealQueue = 0, fillDays = 0;
         // Fill phase: a boundary publishes at most 1,024 persons, so cross boundaries until one publishes nobody. Then the
@@ -92,11 +91,6 @@ public sealed class F5gMeasure
                     // Budget 1 isolates one unit per slice: its time and allocation are the unit's own.
                     if (arm.Budget == 1) { unitMs.Add(ms); unitBytes.Add(allocated); unitPersons.Add(city.LastFillUnitPersons); }
                 }
-                else if (city.PopulationFillCreated != published)
-                {
-                    fillSliceMs.Add(ms);
-                    if (arm.Budget == 1) { publishMs.Add(ms); publishPersons.Add(city.LastFillPublished); }
-                }
                 if (!measured) { sliceMs.Clear(); events = 0; }
                 long minute = (long)state.Minute;
                 requestsPerMinute[minute] = (requestsPerMinute.TryGetValue(minute, out var r) ? r : 0) + planner.Requests - requests;
@@ -116,7 +110,7 @@ public sealed class F5gMeasure
             ["persistedPersons"] = state.Citizens.Count + state.Visitors.Count,
             ["commuterTarget"] = targets.CommuterTarget, ["poolTarget"] = targets.PoolTarget, ["visitorCapacity"] = targets.VisitorCapacity,
             ["fillUnits"] = city.PopulationFillUnits, ["fillCreated"] = city.PopulationFillCreated, ["fillBoundaries"] = fillDays + 1,
-            ["skipped"] = city.PopulationFillSkipped, ["publishMs"] = Stats(publishMs), ["publishPersons"] = Stats(publishPersons),
+            ["skipped"] = city.PopulationFillSkipped,
             ["measuredFrom"] = measuredFrom,
             ["unitMs"] = Stats(unitMs), ["unitAllocatedBytes"] = Stats(unitBytes), ["unitPersons"] = Stats(unitPersons),
             ["fillSliceMs"] = Stats(fillSliceMs), ["sliceMs"] = Stats(sliceMs), ["events"] = events,
@@ -132,7 +126,7 @@ public sealed class F5gMeasure
 
     /// <summary>Review Opus-r1-3 and Sol-r2-2: a fill boundary at the resident bound. 7,936 homes give 49,996 residents and a
     /// capacity of 99,992 visitors; factor 2 seeds 49,996 commuters, and catalogue-only businesses keep commuter demand above
-    /// the capacity. The first boundary stages 1,024 more commuters in 16 units and publishes them in one step, merging them
+    /// the capacity. The first boundary creates 1,024 more commuters in 16 units of 64, each merging its persons
     /// into about 50,000 visitors. The remaining deficit fills over later boundaries.</summary>
     private static Dictionary<string, object> Capacity()
     {
@@ -148,15 +142,13 @@ public sealed class F5gMeasure
         double dayMs = Stopwatch.GetElapsedTime(run).TotalMilliseconds;
         int seeded = state.Visitors.Count;
         var unitMs = new List<double>(); var unitBytes = new List<double>();
-        double publishMs = 0; long publishBytes = 0;
-        while (state.Minute < boundary)
+        while (state.Minute < boundary || city.PopulationFillPending)
         {
-            long units = city.PopulationFillUnits, created = city.PopulationFillCreated, bytes = GC.GetAllocatedBytesForCurrentThread(), started = Stopwatch.GetTimestamp();
+            long units = city.PopulationFillUnits, bytes = GC.GetAllocatedBytesForCurrentThread(), started = Stopwatch.GetTimestamp();
             city.AdvanceFrameSlice(boundary + 1, 1);
             double ms = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
             long allocated = GC.GetAllocatedBytesForCurrentThread() - bytes;
             if (city.PopulationFillUnits != units) { unitMs.Add(ms); unitBytes.Add(allocated); }
-            else if (city.PopulationFillCreated != created) { publishMs = ms; publishBytes = allocated; }
         }
         var targets = city.PopulationFillTargets!.Value;
         var (commuters, pool) = F5gPopulationFillTests.Counts(state);
@@ -165,9 +157,9 @@ public sealed class F5gMeasure
         {
             ["arm"] = "capacity-boundary", ["residents"] = state.Citizens.Count, ["seededVisitors"] = seeded, ["commuters"] = commuters, ["pool"] = pool,
             ["visitorCapacity"] = targets.VisitorCapacity, ["commuterTarget"] = targets.CommuterTarget,
-            ["persistedPersons"] = state.Citizens.Count + state.Visitors.Count, ["published"] = city.LastFillPublished,
-            ["stagingUnits"] = unitMs.Count, ["skipped"] = city.PopulationFillSkipped, ["unitMs"] = Stats(unitMs), ["unitAllocatedBytes"] = Stats(unitBytes),
-            ["publishMs"] = Math.Round(publishMs, 3), ["publishAllocatedBytes"] = publishBytes, ["unitSumMs"] = Math.Round(unitMs.Sum(), 1),
+            ["persistedPersons"] = state.Citizens.Count + state.Visitors.Count, ["created"] = city.PopulationFillCreated,
+            ["fillUnits"] = unitMs.Count, ["skipped"] = city.PopulationFillSkipped, ["unitMs"] = Stats(unitMs), ["unitAllocatedBytes"] = Stats(unitBytes),
+            ["unitSumMs"] = Math.Round(unitMs.Sum(), 1),
             ["remainingVisitors"] = remaining, ["remainingBoundaries"] = (remaining + PopulationFillPolicy.MaximumPersonsPerBoundary - 1) / PopulationFillPolicy.MaximumPersonsPerBoundary,
             ["buildMs"] = Math.Round(buildMs, 1), ["dayToBoundaryMs"] = Math.Round(dayMs, 1)
         };

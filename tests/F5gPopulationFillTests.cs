@@ -396,7 +396,8 @@ public sealed class F5gPopulationFillTests
             else caught = city.AdvanceTo(end, budget).CaughtUp;
             perFrame?.Invoke(city);
             // A save while a boundary's persons are staged (once per boundary, since the reload stages them again).
-            if (reloadMidFill && city.PopulationFillStaged > 0 && city.PopulationFillBoundary > reloadedBoundary)
+            // A save between two units of a boundary's fill (once per boundary).
+            if (reloadMidFill && city.PopulationFillPending && city.PopulationFillUnits > 0 && city.PopulationFillBoundary > reloadedBoundary)
             { reloadedBoundary = city.PopulationFillBoundary!.Value; city = Reload(city, market, Fill()); reloads++; units = 0; continue; }
             units = city.PopulationFillUnits;
             int today = (int)(city.State.Minute / 1440);
@@ -499,23 +500,24 @@ public sealed class F5gPopulationFillTests
     }
 
     [Fact]
-    public void ASaveWhilePersonsAreStagedStoresThePreBoundaryCityAndTheReloadStagesThemAgain()
+    public void ASaveInsideABoundarysFillStoresItsUnitsAndTheReloadContinuesTheRest()
     {
-        // Review Sol-r2-2: the save does no fill work; staged persons are not in the city until the boundary publishes them.
+        // Reviews Sol-r2-2 and Sol-r3-2: the save does no fill work. Each unit's persons are in the city with their
+        // wallets; a reload at the boundary minute continues with the remaining units before the boundary's events.
         var (a, ma) = City(12, 1, seed: 52); var (b, mb) = City(12, 1, seed: 52);
         var fill = Catalogue(12, Base, Since(3));
         var plain = Start(a, ma, fill); var city = Start(b, mb, fill);
         Advance(plain, 3 * 1440 + 30);
-        // Stop after the first staging unit of the boundary, then save there.
+        // Stop after the first unit of the boundary, then save there.
         while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(3 * 1440 + 30, 1);
-        Assert.True(city.PopulationFillStaged > 0);
-        Assert.True(city.State.Minute < 2 * 1440);
-        Assert.Empty(city.State.Visitors);
-        string staged = SaveCodec.Write(city.State);
-        Assert.DoesNotContain("pv:", staged);
+        Assert.Equal(2 * 1440.0, city.State.Minute);
+        Assert.True(city.PopulationFillPending);
+        Assert.Equal(PopulationFillPolicy.MaximumPersonsPerUnit, city.State.Visitors.Count);
+        Invariants(city.State, "inside the fill"); Conserved(city.State, "inside the fill");
         city = Reload(city, mb, fill);
-        Assert.Equal(0, city.PopulationFillStaged);
+        Assert.True(city.PopulationFillPending);
         Advance(city, 3 * 1440 + 30);
+        Assert.True(city.PopulationFillCreated > 0);
         Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(city.State));
         Assert.Equal(ma.Orders, mb.Orders);
     }
@@ -529,7 +531,7 @@ public sealed class F5gPopulationFillTests
         var city = Start(state, market, Catalogue(90, Base, Since(80)));
         Advance(city, 2 * 1440 + 1);
         Assert.Equal(PopulationFillPolicy.MaximumPersonsPerBoundary, state.Visitors.Count);
-        Assert.Equal(PopulationFillPolicy.MaximumPersonsPerBoundary, city.LastFillPublished);
+        Assert.True(city.LastFillUnitPersons <= PopulationFillPolicy.MaximumPersonsPerUnit);
         Assert.True(city.PopulationFillUnits >= PopulationFillPolicy.MaximumPersonsPerBoundary / PopulationFillPolicy.MaximumPersonsPerUnit);
         Advance(city, 3 * 1440 + 1);
         Assert.Equal(2L * state.Citizens.Count, state.Visitors.Count);
@@ -556,6 +558,64 @@ public sealed class F5gPopulationFillTests
             }
             Assert.NotEmpty(state.Visitors);
         }
+        // Review Opus-r3-2: the accounting-observation path across the same midnight. The epoch publication moves the clock
+        // onto midnight with the activation, and the fill then runs there; both paths end in the same city.
+        var (observedState, observedMarket) = City(12, 1, seed: 71); var (directState, directMarket) = City(12, 1, seed: 71);
+        observedState.Capabilities.Active = directState.Capabilities.Active = false;
+        var observed = Start(observedState, observedMarket, Catalogue(12, Base, Since(3)));
+        var direct = Start(directState, directMarket, Catalogue(12, Base, Since(3)));
+        Advance(observed, AccountingClock.PreviousEpochTarget(2 * 1440 + .5));
+        Assert.True(observed.BeginAccountingObservations(2 * 1440 + .5));
+        Assert.Equal(2 * 1440.0, observedState.Minute);
+        Assert.True(observedState.Capabilities.Active);
+        Advance(observed, 2 * 1440 + 30); Advance(direct, 2 * 1440 + 30);
+        Assert.True(directState.Capabilities.Active);
+        Assert.NotEmpty(observedState.Visitors);
+        Assert.Equal(SaveCodec.Write(directState), SaveCodec.Write(observedState));
+    }
+
+    /// <summary>Walking routes plus a two-node road network, so the simulator runs a traffic kernel with its own clock.</summary>
+    private sealed class TrafficWalk : IRoutePlanner, ITrafficRoutePlanner
+    {
+        public TrafficNetwork? TrafficNetwork { get; } = new TrafficNetwork("f5g-test-roads", new[]
+        {
+            new TrafficNetworkNode { Id = 0, Position = new Position(5000, 0, 0), KilometresPerHour = 36, AllowsCar = true, Boundary = true, Successors = new[] { 1 } },
+            new TrafficNetworkNode { Id = 1, Position = new Position(5020, 0, 0), KilometresPerHour = 36, AllowsCar = true, Boundary = true }
+        }, 1);
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+        public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => new FreshCityTraceTests.Walk().Plan(from, to, at, preferences);
+    }
+
+    [Fact]
+    public void TheObservationEpochAndTrafficClockStayOnMidnightWhileTheFillRuns()
+    {
+        // Review Sol-r3-1: with a traffic kernel, publish the midnight epoch, run one fill unit, check the epoch and the
+        // clocks, save there and reload, and end equal to the uninterrupted city.
+        var (a, ma) = City(12, 1, seed: 63); var (b, mb) = City(12, 1, seed: 63);
+        var fill = Catalogue(12, Base, Since(3));
+        var plain = Start(a, ma, fill, new TrafficWalk()); var city = Start(b, mb, fill, new TrafficWalk());
+        double native = 2 * 1440 + .25;
+        foreach (var c in new[] { plain, city })
+        {
+            Advance(c, AccountingClock.PreviousEpochTarget(native));
+            Assert.True(c.BeginAccountingObservations(native));
+            Assert.Equal(2 * 1440.0, c.State.Minute);
+        }
+        Advance(plain, AccountingClock.Target(native));
+        // One unit, then the observation guarantees of the new epoch still hold.
+        while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(AccountingClock.Target(native), 1);
+        Assert.Equal(2 * 1440.0, city.State.Minute);
+        Assert.True(AccountingClock.Compatible(city.State.Minute, native));
+        Assert.True(city.IsAccountingEpochDrained(native));
+        Assert.True(city.PopulationFillPending);
+        city = Reload(city, mb, fill, new TrafficWalk());
+        Advance(city, AccountingClock.Target(native));
+        Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(city.State));
+        Advance(plain, 3 * 1440 + 60); Advance(city, 3 * 1440 + 60);
+        Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(city.State));
+        Assert.Equal(ma.Orders, mb.Orders);
+        Invariants(city.State, "traffic"); Conserved(city.State, "traffic");
     }
 
     [Fact]

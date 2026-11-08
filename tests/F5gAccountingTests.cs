@@ -131,7 +131,7 @@ public sealed class F5gAccountingTests
             if (allowed == 0 && requested > 0)
             {
                 result.Held++;
-                if (city.PopulationFillStaged > 0) result.HeldAtBoundary++;
+                if (city.PopulationFillPending) result.HeldAtBoundary++;
             }
             // As the F1 scenario: the native clock is an hour plus a float minute.
             int nativeHour = (int)Math.Floor(native / 60); float nativeMinute = (float)(native - nativeHour * 60.0) + allowed;
@@ -142,7 +142,7 @@ public sealed class F5gAccountingTests
             target = Math.Max(city.State.Minute, AccountingClock.Target(native));
             long saveTicks = 0;
             // A save as the clock reaches midnight: the boundary's fill is open and the save runs its units (excluded from frame cost).
-            // A save right after midnight's publication (the boundary is crossed and its persons are in the city).
+            // A save as the clock reaches midnight, before or between the fill's units.
             if (reload && !midnightReload && city.State.Minute == boundary)
             { long saveStarted = Stopwatch.GetTimestamp(); midnightReload = true; city = Reload(); saveTicks = Stopwatch.GetTimestamp() - saveStarted; }
             result.MaxLag = Math.Max(result.MaxLag, target - city.State.Minute);
@@ -157,9 +157,9 @@ public sealed class F5gAccountingTests
             city.SynchronizeSnapshot();
             if (city.PopulationFillUnits != unitsBefore) result.FillFrames++;
             costs.Add((Stopwatch.GetTimestamp() - started - saveTicks) * 1000.0 / Stopwatch.Frequency);
-            // A save while midnight's persons are staged: the save stores the city before the boundary, and the reload stages
-            // them again from that state (no fill work runs in the save).
-            if (reload && !fillReload && city.PopulationFillStaged > 0)
+            // A save between two units of midnight's fill: the reload continues with the remaining units (no fill work runs
+            // in the save).
+            if (reload && !fillReload && city.PopulationFillPending && city.PopulationFillUnits > 0)
             {
                 fillReload = true; result.FillReloads++; city = Reload();
             }
