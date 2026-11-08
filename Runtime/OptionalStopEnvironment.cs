@@ -29,8 +29,8 @@ namespace PersistentCity.Runtime
         private readonly StaticSceneMemory frontageActivity = new StaticSceneMemory();
         private readonly StaticSceneMemory parkActivity = new StaticSceneMemory();
         private readonly PerformerSites performers = new PerformerSites();
-        // F2h cache size: validated scene objects, catalogued performer sites and places with a site list.
-        public int ValidatedSceneObjects => frontageActivity.Count + parkActivity.Count + performers.Validated;
+        // F2h cache size: validated frontages and park volumes, catalogued performer sites and places with a site list.
+        public int ValidatedSceneObjects => frontageActivity.Count + parkActivity.Count;
         public int PerformerSiteCount => performers.Count;
         public int PerformerSitePlaces => performers.CachedPlaces;
         public OptionalStopEnvironment(IEnumerable<Place> places, DwellSpots doors)
@@ -309,8 +309,9 @@ namespace PersistentCity.Runtime
         }
         // F2h: the native performer spawns only while its spawner is in the 60 m culling band around the player,
         // by chance and at a random point in the spawner's area. Catalogue the authored areas instead, inactive
-        // spawners included, and rescan only when the scene set changes. Spawner settings and DLC visibility
-        // are game reasons.
+        // spawners included whatever their activity at the scan (CityMapHider deactivates city objects while the
+        // player is indoors or the map is open), and rescan only when the scene set changes. Spawner settings
+        // and DLC visibility are the game reasons that exclude a site.
         private readonly List<int> performerScenes = new List<int>();
         private bool performersRead;
         public long PerformerScans { get; private set; }
@@ -331,7 +332,7 @@ namespace PersistentCity.Runtime
                     // expected performer position.
                     var center = area == null ? zone.transform.position
                         : area.transform.position + area.transform.rotation * new Vector3(area.bounds.center.x, 0, area.bounds.center.z);
-                    readings.Add(new PerformerSiteReading(key, zone.isActiveAndEnabled, excluded,
+                    readings.Add(new PerformerSiteReading(key, excluded,
                         PhysicalPedestrianBody.Point(center), zone, area == null ? (object)zone : area));
                 }
                 catch (Exception) { }

@@ -56,7 +56,7 @@ public sealed class FocusIndependentInputsTests
         {
             if (read == revision) return;
             read = revision;
-            Sites.Replace(Performers.Select(o => new PerformerSiteReading(o.Key, o.Active, o.Excluded, o.Position, o, o)));
+            Sites.Replace(Performers.Select(o => new PerformerSiteReading(o.Key, o.Excluded, o.Position, o, o)));
         }
         private IReadOnlyList<OptionalStopSpot> Ring(string target, Position center, double radius, Position? facing = null)
             => Enumerable.Range(0, Capacity).Select(i => new OptionalStopSpot
@@ -227,10 +227,6 @@ public sealed class FocusIndependentInputsTests
         var locked = FullScene(); locked.Frontages["venue"].Excluded = true;
         var (shop, _) = Ready(DwellKind.WindowShopping, 4, locked); shop.AdvanceTo(1450);
         Assert.All(shop.State.Citizens, c => Assert.Null(c.OptionalStop));
-        // Never seen active: kept out, as today.
-        var dark = FullScene(); dark.Performers[0].Active = false;
-        var (unseen, _) = Ready(DwellKind.Audience, 4, dark); unseen.AdvanceTo(1450);
-        Assert.All(unseen.State.Citizens, c => Assert.Null(c.OptionalStop));
         // A validated frontage that the game then closes still ends the saved stop.
         var (open, openScene) = Ready(DwellKind.WindowShopping, 2); open.AdvanceTo(1450);
         var stop = open.State.Citizens.First(c => c.OptionalStop != null).OptionalStop!;
@@ -245,6 +241,72 @@ public sealed class FocusIndependentInputsTests
         var orphan = gone.State.Citizens.First(c => c.OptionalStop != null).OptionalStop!;
         goneScene.Performers.Clear(); goneScene.SceneSetChanged(); gone.RefreshOptionalStops();
         Assert.True(orphan.Cancelled);
+    }
+
+    [Fact]
+    public void SpawnerInactiveAtTheFirstScanIsCataloguedLikeAnActiveOne()
+    {
+        // CityMapHider deactivates city objects while the player is indoors or the city map is open, including
+        // when a save loads inside a building. The performer catalogue must not depend on that first scan.
+        var indoors = FullScene(); indoors.Performers[0].Active = false;
+        var (loadedIndoors, indoorScene) = Ready(DwellKind.Audience, 4, indoors);
+        var (loadedOutdoors, _) = Ready(DwellKind.Audience, 4);
+        loadedIndoors.AdvanceTo(1450); loadedOutdoors.AdvanceTo(1450);
+        Assert.Equal(1, indoorScene.Sites.Count);
+        Assert.Contains(loadedIndoors.State.Citizens, c => c.OptionalStop != null);
+        // The spawner becomes active later (the player walks out); nothing changes and no rescan is needed.
+        indoors.Performers[0].Active = true; loadedIndoors.RefreshOptionalStops(); loadedOutdoors.RefreshOptionalStops();
+        Assert.Equal(DevelopmentChain.Write(loadedOutdoors.State), DevelopmentChain.Write(loadedIndoors.State));
+        loadedIndoors.AdvanceTo(1600); loadedOutdoors.AdvanceTo(1600);
+        Assert.Equal(DevelopmentChain.Write(loadedOutdoors.State), DevelopmentChain.Write(loadedIndoors.State));
+    }
+
+    // Base-shape model of the removed live performer check, for the RefreshOptionalStops baseline: per audience stop,
+    // the target and zone lookups, a reflection read of the spawner's private performer field, an activity flag, a
+    // transform identity compare and the facing distance. Spots come from the same scene double. It models CPU work
+    // only; Unity's native property costs (activeInHierarchy, transform.position) are not included.
+    private sealed class LivePerformerModel : IOptionalStopEnvironment
+    {
+        private sealed class Zone { private readonly object? _streetPerformer; public Zone(object p) => _streetPerformer = p; public object? Peek() => _streetPerformer; }
+        private sealed class Performer { public bool Active = true; public Position At; }
+        private static readonly System.Reflection.FieldInfo Field = typeof(Zone).GetField("_streetPerformer",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        private readonly Scene scene;
+        private readonly Dictionary<string, Performer> targets = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, Zone> zones = new(StringComparer.Ordinal);
+        public LivePerformerModel(Scene scene) => this.scene = scene;
+        public bool Raining => scene.Raining;
+        public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind)
+        {
+            var spots = scene.Spots(place, kind);
+            foreach (var spot in spots)
+                if (!targets.ContainsKey(spot.TargetId))
+                { var live = new Performer { At = spot.Facing }; targets[spot.TargetId] = live; zones[spot.TargetId] = new Zone(live); }
+            return spots;
+        }
+        public OptionalStopAvailability Available(OptionalStopState stop)
+            => targets.TryGetValue(stop.TargetId, out var target) && target.Active
+                && zones.TryGetValue(stop.TargetId, out var zone) && Field.GetValue(zone) is Performer live
+                && ReferenceEquals(live, target) && Position.Distance(stop.Facing, live.At) <= 0.5
+                ? OptionalStopAvailability.Ready : OptionalStopAvailability.Unavailable;
+    }
+
+    private static (double P50, double P95, double Max, int Stops) RefreshCost(bool liveModel)
+    {
+        var (sim, scene) = Ready(DwellKind.Audience, 48);
+        scene.Performers.AddRange(Enumerable.Range(0, 5).Select(i => new SceneObject { Key = "City/Extra[" + i + "]", Position = new Position(10 + i, 0, -3) }));
+        if (liveModel) sim.AttachOptionalStops(new LivePerformerModel(scene), 100);
+        sim.AdvanceTo(1450);
+        double activeMinute = sim.State.Citizens.Where(c => c.OptionalStop != null).Max(c => c.OptionalStop!.StartMinute) + 0.1;
+        sim.AdvanceTo(activeMinute);
+        // After: the scene is deactivated (the stops survive). Before: performers stay live, so both arms keep every stop.
+        if (!liveModel) scene.DeactivateAll();
+        int stops = sim.State.Citizens.Count(c => c.OptionalStop is { Cancelled: false });
+        var clock = new Stopwatch(); var samples = new List<double>();
+        for (int r = 0; r < 2000; r++) { clock.Restart(); sim.RefreshOptionalStops(); samples.Add(clock.Elapsed.TotalMilliseconds); }
+        samples.Sort();
+        Assert.Equal(stops, sim.State.Citizens.Count(c => c.OptionalStop is { Cancelled: false }));
+        return (samples[1000], samples[1900], samples[^1], stops);
     }
 
     private sealed class Station { public string Key = ""; public string Name = ""; public bool Active = true; public bool DlcHidden; }
@@ -284,8 +346,8 @@ public sealed class FocusIndependentInputsTests
         var sites = new PerformerSites();
         object zone = new();
         var center = new Position(13, 0, 0);
-        sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", true, false, center, zone, zone),
-            new PerformerSiteReading("City/Spawner[9]", true, false, new Position(40, 0, 0), new object(), new object()) });
+        sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", false, center, zone, zone),
+            new PerformerSiteReading("City/Spawner[9]", false, new Position(40, 0, 0), new object(), new object()) });
         var place = new Place { Id = "venue", Position = Venue };
         var near = sites.Near(place);
         Assert.Equal(new[] { "performer:City/Spawner[7]" }, near.Select(t => t.Id));
@@ -296,10 +358,11 @@ public sealed class FocusIndependentInputsTests
         Assert.True(sites.Available("performer:City/Spawner[7]", new Position(13.4, 0, 0)));
         Assert.False(sites.Available("performer:City/Spawner[7]", new Position(13.6, 0, 0)));
         Assert.False(sites.Available("performer:City/Spawner[8]", center));
-        // An inactive rescan keeps the validated site.
-        sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", false, false, center, zone, zone) });
+        // A rescan keeps the site; only a game reason removes it.
+        sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", false, center, zone, zone) });
         Assert.True(sites.Available("performer:City/Spawner[7]", center));
-        Assert.Equal(2, sites.Validated);
+        sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", true, center, zone, zone) });
+        Assert.False(sites.Available("performer:City/Spawner[7]", center));
     }
 
     private static string Root()
@@ -335,7 +398,7 @@ public sealed class FocusIndependentInputsTests
     public void OfflineCostOfCachedSceneAnswers()
     {
         // Offline component timings only, not in-game mod-work. 200 spawners, 64 places, 1,000 saved audience stops.
-        var readings = Enumerable.Range(0, 200).Select(i => new PerformerSiteReading("City/Spawner[" + i + "]", true, false,
+        var readings = Enumerable.Range(0, 200).Select(i => new PerformerSiteReading("City/Spawner[" + i + "]", false,
             new Position(i * 5, 0, (i % 7) * 3), new object(), new object())).ToArray();
         var places = Enumerable.Range(0, 64).Select(i => new Place { Id = "p" + i, Position = new Position(i * 15, 0, 2) }).ToArray();
         var sites = new PerformerSites();
@@ -360,19 +423,13 @@ public sealed class FocusIndependentInputsTests
         clock.Restart();
         for (int r = 0; r < 100; r++) for (int i = 0; i < 1000; i++) memory.Admit("k" + i, false, false);
         double admit = clock.Elapsed.TotalMilliseconds / 100;
-        // RefreshOptionalStops with 48 active audience stops, against the deactivated scene double.
-        var (sim, scene) = Ready(DwellKind.Audience, 48);
-        scene.Performers.AddRange(Enumerable.Range(0, 5).Select(i => new SceneObject { Key = "City/Extra[" + i + "]", Position = new Position(10 + i, 0, -3) }));
-        sim.AdvanceTo(1450);
-        double activeMinute = sim.State.Citizens.Where(c => c.OptionalStop != null).Max(c => c.OptionalStop!.StartMinute) + 0.1;
-        sim.AdvanceTo(activeMinute); scene.DeactivateAll();
-        int stopsActive = sim.State.Citizens.Count(c => c.OptionalStop is { Cancelled: false });
-        var refresh = new List<double>();
-        for (int r = 0; r < 2000; r++) { clock.Restart(); sim.RefreshOptionalStops(); refresh.Add(clock.Elapsed.TotalMilliseconds); }
-        refresh.Sort();
-        Assert.Equal(stopsActive, sim.State.Citizens.Count(c => c.OptionalStop is { Cancelled: false }));
-        output.WriteLine($"F2H-PERF sites={sites.Count} validated={sites.Validated} cachedPlaces={sites.CachedPlaces} memory={memory.Count}");
+        // RefreshOptionalStops, same fixture and sampling: base-shape live performer model, then this build.
+        var before = RefreshCost(liveModel: true);
+        var after = RefreshCost(liveModel: false);
+        Assert.Equal(before.Stops, after.Stops);
+        output.WriteLine($"F2H-PERF sites={sites.Count} cachedPlaces={sites.CachedPlaces} memory={memory.Count}");
         output.WriteLine($"F2H-PERF replace200={replace:F4}ms scanPerQuery={scan * 1000:F3}us nearPerQuery={near * 1000:F3}us available1000={available:F4}ms admit1000={admit:F4}ms");
-        output.WriteLine($"F2H-PERF refresh stops={stopsActive} p50={refresh[1000]:F4}ms p95={refresh[1900]:F4}ms max={refresh[^1]:F4}ms");
+        output.WriteLine($"F2H-PERF refresh-before stops={before.Stops} p50={before.P50:F4}ms p95={before.P95:F4}ms max={before.Max:F4}ms");
+        output.WriteLine($"F2H-PERF refresh-after stops={after.Stops} p50={after.P50:F4}ms p95={after.P95:F4}ms max={after.Max:F4}ms");
     }
 }

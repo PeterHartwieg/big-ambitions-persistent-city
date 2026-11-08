@@ -29,13 +29,14 @@ namespace PersistentCity.Runtime
     }
 
     /// <summary>One street-performer spawner as the scene reports it. Center is the spawner's authored performer
-    /// area (its position giver), never a spawned performer.</summary>
+    /// area (its position giver), never a spawned performer. It carries no activity: a spawner can be inactive
+    /// because of player state (CityMapHider hides city objects while the player is indoors or the map is open),
+    /// so only game reasons exclude a site.</summary>
     internal readonly struct PerformerSiteReading
     {
-        public PerformerSiteReading(string key, bool active, bool gameExcluded, Position center, object zone, object area)
-        { Key = key; Active = active; GameExcluded = gameExcluded; Center = center; Zone = zone; Area = area; }
+        public PerformerSiteReading(string key, bool gameExcluded, Position center, object zone, object area)
+        { Key = key; GameExcluded = gameExcluded; Center = center; Zone = zone; Area = area; }
         public string Key { get; }
-        public bool Active { get; }
         public bool GameExcluded { get; }
         public Position Center { get; }
         public object Zone { get; }
@@ -50,13 +51,11 @@ namespace PersistentCity.Runtime
     {
         public const double PassingRadius = 8;
         public const double FacingTolerance = 0.5;
-        private readonly StaticSceneMemory memory = new StaticSceneMemory();
         private readonly Dictionary<string, AudienceTarget> sites = new Dictionary<string, AudienceTarget>(StringComparer.Ordinal);
         private readonly List<AudienceTarget> ordered = new List<AudienceTarget>();
         private readonly Dictionary<string, (Position Origin, AudienceTarget[] Targets)> near
             = new Dictionary<string, (Position, AudienceTarget[])>(StringComparer.Ordinal);
         public int Count => sites.Count;
-        public int Validated => memory.Count;
         public int CachedPlaces => near.Count;
         /// <summary>Replaces the catalogue from a scene read. Called when the loaded scene set changes, not per query.</summary>
         public void Replace(IEnumerable<PerformerSiteReading> readings)
@@ -64,7 +63,7 @@ namespace PersistentCity.Runtime
             sites.Clear(); ordered.Clear(); near.Clear();
             foreach (var reading in readings)
             {
-                if (!reading.Center.IsFinite || !memory.Admit(reading.Key, reading.Active, reading.GameExcluded)) continue;
+                if (!reading.Center.IsFinite || reading.GameExcluded) continue;
                 string id = "performer:" + reading.Key;
                 if (sites.ContainsKey(id)) continue;
                 var site = new AudienceTarget(reading.Zone, reading.Area, id, reading.Center);
