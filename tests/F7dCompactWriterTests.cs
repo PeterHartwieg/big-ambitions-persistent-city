@@ -204,6 +204,21 @@ public sealed class F7dCompactWriterTests
         return found;
     }
 
+    /// <summary>The product refuses <paramref name="payload"/> through every entry point and keeps every key; unlike the
+    /// shared helper it never re-encodes a body, so a bare schema-34 body reaches the reader as stored.</summary>
+    private static void RefusedAndKept(string payload, SaveReadStatus status)
+    {
+        var replacement = CurrentSchemaOnlyTests.City();
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["persistentcity:food-sale-v2:i"] = "pending", ["other"] = "kept" };
+        var before = new Dictionary<string, string>(data);
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == status, read.Error); Assert.Null(read.State);
+        Assert.Equal(status, SaveStore.ReadFrom(data, replacement.PopulationKey).Status);
+        Assert.Equal(status, SaveSession.Open(data, replacement.PopulationKey).InitialReadResult.Status);
+        Assert.False(SaveStore.WriteTo(data, replacement).Success);
+        Assert.False(SaveSession.Open(data, replacement.PopulationKey).WriteTo(data, replacement).Success);
+        Assert.Equal(before, data); Assert.Same(payload, data[SaveStore.StateKey]);
+    }
+
     private static string Variant(string payload, Action<SaveCodec.CompactObject> edit)
     {
         var top = Envelope(payload);
@@ -261,7 +276,7 @@ public sealed class F7dCompactWriterTests
             Assert.False(payload == valid, name + " did not change the payload");
             var read = SaveCodec.Read(payload);
             Assert.True(read.Status == status, name + ": " + read.Status + " " + read.Error);
-            EconomicLedgerTests.Refused(payload, status);
+            RefusedAndKept(payload, status);
         }
     }
 
@@ -277,7 +292,7 @@ public sealed class F7dCompactWriterTests
         var read = SaveCodec.Read(payload);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("input size limit", read.Error);
-        EconomicLedgerTests.Refused(payload);
+        RefusedAndKept(payload, SaveReadStatus.Invalid);
         // The body writer's own bound: exactly the limit is written, one more character is refused.
         var tree = SaveCodec.CompactTree.Parse("{\"a\":[1,2,3]}", 8, canonical: true);
         Assert.Equal("{\"a\":[1,2,3]}", SaveCodec.CompactTree.Write(tree, 16, 13));
