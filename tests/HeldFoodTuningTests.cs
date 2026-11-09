@@ -245,10 +245,10 @@ public sealed class HeldFoodTuningTests
     [Fact]
     public void ImageStoresAllTwelveExactCoefficientsAndClampsOnlyCapture()
     {
-        var settings = new FoodChoiceSettings();
+        var settings = LegacyFoodChoice.Settings(); // revision 1: the four-offer menu fields (E5b5 made eight the default)
         var properties = typeof(FoodChoiceSettings).GetProperties().Where(p=>!p.Name.StartsWith("FoodMenu",StringComparison.Ordinal)).ToArray(); Assert.Equal(12, properties.Length);
         foreach (var property in properties) {
-            var changed = new FoodChoiceSettings(); property.SetValue(changed, .37); changed.Clamp();
+            var changed = LegacyFoodChoice.Settings(); property.SetValue(changed, .37); changed.Clamp();
             var capture = FoodDecisionTuning.Capture(changed); string wire = capture.ToWire();
             Assert.Equal(FoodDecisionTuning.WireLength, wire.Length);
             Assert.True(FoodDecisionTuning.TryParse(wire, out var restored)); Assert.Equal(wire, restored!.ToWire());

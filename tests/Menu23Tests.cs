@@ -154,7 +154,8 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(10,ResidentTraits.Count);Assert.Equal(1,ResidentTraits.CurrentVersion);
         Assert.Equal(new[]{FoodProducts.Croissant,FoodProducts.Burger,FoodProducts.HotDog},FoodProducts.Ids);
         foreach(int code in new[]{4,5,6}) Assert.False(FoodProducts.Known(FoodMenuPolicy.Product(code)!));
-        Assert.Equal(193,FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire().Length);
+        Assert.Equal(193,FoodDecisionTuning.Capture(LegacyFoodChoice.Settings()).ToWire().Length);
+        Assert.Equal(241,FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire().Length); // E5b5: eight is explicit
         var settings=new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=8,FoodMenuNewTasteWeight=.5,FoodMenuHealthWeight=2};
         string held=FoodDecisionTuning.Capture(settings).ToWire();settings.FoodMenuMaximumOffersPerShop=1;
         Assert.True(FoodDecisionTuning.TryParse(held,out var replay));Assert.Equal(held,replay!.ToWire());

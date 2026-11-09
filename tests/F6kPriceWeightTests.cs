@@ -66,12 +66,17 @@ public sealed class F6kPriceWeightTests
     public void WriterAndTuningWireAreUnchangedAndAStoredOneIsKept()
     {
         Assert.Equal(36, CityState.CurrentSchema); // E5b4 took writer 36; this slice changes no wire
-        var fresh = FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire();
+        // E5b5: the eight-offer default is revision 2; the four-offer menu fields keep revision 1's exact bytes.
+        var wide = FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire();
+        Assert.Equal(241, wide.Length);
+        Assert.True(FoodDecisionTuning.TryParse(wide, out var wideImage));
+        Assert.Equal(wide, wideImage!.ToWire());
+        var fresh = FoodDecisionTuning.Capture(LegacyFoodChoice.Settings()).ToWire();
         Assert.Equal(FoodDecisionTuning.WireLength, fresh.Length);
         Assert.True(FoodDecisionTuning.TryParse(fresh, out var image));
         Assert.Equal(fresh, image!.ToWire());
         // A held image captured at weight 1 reads back as 1; nothing rewrites it to the new default.
-        var old = FoodDecisionTuning.Capture(new FoodChoiceSettings { FoodChoicePriceWeight = 1 }).ToWire();
+        var old = FoodDecisionTuning.Capture(LegacyFoodChoice.Settings().Also(s => s.FoodChoicePriceWeight = 1)).ToWire();
         Assert.Equal(fresh.Length, old.Length);
         Assert.NotEqual(fresh, old);
         Assert.True(FoodDecisionTuning.TryParse(old, out var held));

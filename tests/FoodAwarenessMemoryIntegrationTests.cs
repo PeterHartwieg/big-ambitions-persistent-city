@@ -23,7 +23,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
                 meal.Memory.Entries.Add(new ShopMemory { BusinessRef = i, Day = 1, Served = 3, Affinity = i % 2 == 0 ? 8 : -8,
                     Outcome = i % 2 == 0 ? ShopExperience.Served : ShopExperience.Stockout });
         var city = new CitySimulator(state, paths);
-        city.AttachFoodMarket(market, awarenessSettings: new FoodAwarenessSettings { DrawsPerAnchor = 0, DiscoveryProbability = .001 });
+        city.AttachFoodMarket(market, LegacyFoodChoice.Settings(), awarenessSettings: new FoodAwarenessSettings { DrawsPerAnchor = 0, DiscoveryProbability = .001 });
         return (city, market, paths);
     }
 

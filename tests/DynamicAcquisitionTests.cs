@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using PersistentCity.Core;
+using PersistentCity.Persistence;
+using PersistentCity.Runtime;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -257,6 +259,47 @@ public sealed class DynamicAcquisitionTests
     }
 
     [Fact]
+    public void ACatalogueRebuildKeepsADynamicShopOwnedAndARemovalAfterPublicationRefuses()
+    {
+        var world = World();
+        world.Policy = null;
+        world.PolicySource = new FoodProductPolicySource(() => world.Catalogue.Names, () => FoodProductMetadataResolver.Empty,
+            _ => FoodProductMetadataSnapshot.Empty);
+        var shop = world.AddShop("address:main:1:shop", Burger, Dumplings);
+        world.Own(shop);
+        Assert.True(world.PolicySource.Current.Executable(Dumplings));
+
+        // A W11 hint: the catalogue rebuilds with every product still installed. The source publishes no loaded names.
+        world.Catalogue.MarkDirty();
+        Assert.Null(world.PolicySource.Current.LoadedNames);
+        world.VisitAll();
+        Assert.Equal(FoodLiveMenuRefusal.None, world.LiveMenu(shop));
+        Assert.True(shop.Row.Desired);
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        int waits = world.CatalogueWaits;
+        Assert.Null(world.Select(shop)); // captures and sales wait for the catalogue
+        Assert.True(world.CatalogueWaits > waits);
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.DoesNotContain(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+        Assert.True(shop.Row.CanServe);
+
+        // The identical catalogue publishes again: service resumes with no hand-back or recovery.
+        world.RebuildCatalogue(); world.Drain(); world.VisitAll();
+        Assert.True(shop.Row.CanServe);
+        Assert.NotNull(world.Checkout(world.Select(shop)!, Dumplings, "after-rebuild"));
+
+        // A real removal: the next published catalogue lacks the product, so the shop is refused and handed back.
+        world.Items.Remove(Dumplings);
+        world.Catalogue.MarkDirty(); world.VisitAll();
+        Assert.True(shop.Row.Desired); // still only rebuilding
+        world.RebuildCatalogue(); world.VisitAll();
+        Assert.Equal(FoodLiveMenuRefusal.NotLoaded, world.LiveMenu(shop));
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        Assert.False(shop.Row.Desired);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+    }
+
+    [Fact]
     public void APriceOnlyChangeKeepsOwnershipAndTheNextCaptureUsesTheNewPrice()
     {
         var world = World();
@@ -333,6 +376,48 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
+    [Fact]
+    public void HeldTuningKeepsRevisionOneAtFourOffersAndWritesEightExplicitly()
+    {
+        var four = FoodDecisionTuning.Capture(LegacyFoodChoice.Settings()).ToWire();
+        var eight = FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire();
+        Assert.Equal('1', four[0]); Assert.Equal(FoodDecisionTuning.WireLength, four.Length);
+        Assert.Equal('2', eight[0]); Assert.Equal(241, eight.Length);
+        foreach (var wire in new[] { four, eight })
+        {
+            Assert.True(FoodDecisionTuning.IsCanonicalWire(wire));
+            Assert.True(FoodDecisionTuning.TryParse(wire, out var image));
+            Assert.Equal(wire, image!.ToWire());
+        }
+        // A historical revision-1 image replays at four offers although the settings default is now eight: re-captured
+        // from its own settings it gives the same bytes, never the eight-offer wire.
+        Assert.True(FoodDecisionTuning.TryParse(four, out var historical));
+        Assert.NotEqual(eight, historical!.ToWire());
+        // The tuple 4/1/0 is only ever written as revision 1; revision 2 with it stays noncanonical.
+        Assert.False(FoodDecisionTuning.IsCanonicalWire("2" + four.Substring(1) + Word(4) + Word(1) + Word(0)));
+        Assert.True(FoodDecisionTuning.IsCanonicalWire("2" + four.Substring(1) + Word(8) + Word(1) + Word(0)));
+    }
+    private static string Word(double value) => BitConverter.DoubleToInt64Bits(value).ToString("X16", System.Globalization.CultureInfo.InvariantCulture);
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(8)]
+    public void AHeldDecisionSavesAndReloadsExactlyAtFourAndEightOffers(int offers)
+    {
+        var (prepared, market, planner) = WeightedFoodChoiceTests.Ready(79, 4);
+        var city = new CitySimulator(prepared.State, planner);
+        city.AttachFoodMarket(market, new FoodChoiceSettings { FoodMenuMaximumOffersPerShop = offers });
+        var meal = city.State.Food!.Residents[0];
+        city.AdvanceTo(meal.DesiredAt, 1);
+        var held = meal.Decision!.Tuning!.ToWire();
+        Assert.Equal(offers == 4 ? '1' : '2', held[0]);
+        string saved = DevelopmentChain.Write(city.State);
+        var read = DevelopmentChain.Read(saved);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(held, read.State!.Food!.Residents[0].Decision!.Tuning!.ToWire());
+        Assert.Equal(saved, DevelopmentChain.Write(read.State));
+    }
+
     /// <summary>Offline perf arms for docs/perf/e5b5.md. Not a gate beyond the asserted bounds.</summary>
     [Fact]
     public void EightOfferCostsAndA1024ShopRecoveryWave()
@@ -407,4 +492,12 @@ public sealed class DynamicAcquisitionTests
         double At(double q) => sorted[Math.Min(sorted.Length - 1, (int)Math.Ceiling(sorted.Length * q) - 1)];
         return (At(.5), At(.95), sorted[^1]);
     }
+}
+
+/// <summary>E5b5 raised the offers default to eight, which a held tuning writes as revision 2. Fixtures that write a held
+/// decision through a pre-schema-23 writer stand for cities from before that change, so they capture the historical
+/// four-offer setting that revision 1 encodes.</summary>
+internal static class LegacyFoodChoice
+{
+    public static FoodChoiceSettings Settings() => new FoodChoiceSettings { FoodMenuMaximumOffersPerShop = FoodDecisionTuning.RevisionOneOffers };
 }

@@ -17,6 +17,24 @@ namespace PersistentCity.Core
         MealClass
     }
 
+    /// <summary>E5b5: the product policy the live menu rule reads. While the catalogue rebuilds, the loaded-name image is
+    /// unavailable, which is not the same as a product being removed: the last policy that had loaded names keeps
+    /// deciding, and captures and sales wait at the catalogue gate. Once a catalogue is published again, its policy
+    /// decides, and a product missing from it is refused.</summary>
+    public sealed class FoodLivePolicy
+    {
+        private FoodProductPolicy? published;
+        /// <param name="current">The policy source's current policy.</param>
+        /// <param name="catalogueRebuilding">The loaded-name image is unavailable because the catalogue is dirty or
+        /// being rebuilt (not because the policy publication failed).</param>
+        public FoodProductPolicy Resolve(FoodProductPolicy current, bool catalogueRebuilding)
+        {
+            if (current.LoadedNames != null) { published = current; return current; }
+            return catalogueRebuilding && published != null ? published : current;
+        }
+        public void Clear() => published = null;
+    }
+
     /// <summary>Schema 23 envelope, separate from native sale permission. Append codes; never renumber.</summary>
     public static partial class FoodMenuPolicy
     {

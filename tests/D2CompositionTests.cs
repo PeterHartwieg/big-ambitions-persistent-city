@@ -55,7 +55,7 @@ public sealed class D2CompositionTests
         var campaign=new FoodCampaignSource(food,state.Seed,new FoodCampaignSettings {ReachProbability=1});
         var city=new CitySimulator(state,paths);
         city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
-        city.AttachFoodMarket(market,campaign:campaign,rivalSettings:new RivalFoodSettings {RivalChoiceWeight=.7});
+        city.AttachFoodMarket(market,LegacyFoodChoice.Settings(),campaign:campaign,rivalSettings:new RivalFoodSettings {RivalChoiceWeight=.7});
         food.ChoiceStartsDay=food.AwarenessStartsDay=food.RivalStartsDay=1;
         city.InspectFoodAwareness("r");var meal=food.Residents[0];
         city.AdvanceTo(meal.DesiredAt,1);

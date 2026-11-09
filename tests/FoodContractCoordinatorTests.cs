@@ -164,7 +164,12 @@ internal sealed class ContractWorld
     /// <summary>The market's product policy (Runtime ProductPolicySource); null stands for an unset source.</summary>
     public FoodProductPolicy? Policy;
     public bool DynamicAcquisition => Active && !Warming && CapabilitiesPassed;
-    private FoodProductPolicy CurrentPolicy => Policy ?? FoodProductPolicy.OriginalThree;
+    /// <summary>When set, the real E5b4 source over this world's catalogue revision supplies the policy (Runtime wiring).</summary>
+    public FoodProductPolicySource? PolicySource;
+    private readonly FoodLivePolicy livePolicy = new FoodLivePolicy();
+    // Runtime CurrentProductPolicy: a rebuilding catalogue keeps the last policy that had loaded names.
+    private FoodProductPolicy CurrentPolicy => livePolicy.Resolve(PolicySource?.Current ?? Policy ?? FoodProductPolicy.OriginalThree,
+        Catalogue.Names == null);
     // Runtime LiveMenu: an all-original menu never reads the policy.
     public FoodLiveMenuRefusal LiveMenu(Shop s)
         => FoodMenuPolicy.LiveMenu(s.Menu, s.Menu.All(FoodProducts.Known) || !DynamicAcquisition ? null : CurrentPolicy);

@@ -186,7 +186,10 @@ namespace PersistentCity.Runtime
         // Decision 12: dynamic acquisition only while every capability passed at city start and the coordinator is active.
         // Warming and fallback keep the original-three guard.
         private bool DynamicAcquisition => contractMode == ContractMode.Active && contractCapabilities.AllPassed;
-        private FoodProductPolicy CurrentProductPolicy => ProductPolicySource?.Current ?? FoodProductPolicy.OriginalThree;
+        private readonly FoodLivePolicy livePolicy = new FoodLivePolicy();
+        // A rebuilding catalogue (no current loaded-name image while the reader runs) is not a removed product.
+        private FoodProductPolicy CurrentProductPolicy => livePolicy.Resolve(ProductPolicySource?.Current ?? FoodProductPolicy.OriginalThree,
+            contractReader != null && contractReader.LoadedNames == null);
         // Image admission (CompleteFoodMenu.Check) classes products with the same resolver, also while warming, so a
         // dynamic shop has a passing image when the coordinator turns active.
         private FoodProductMetadataResolver AdmissionResolver
