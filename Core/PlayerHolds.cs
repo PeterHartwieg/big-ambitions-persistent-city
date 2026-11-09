@@ -75,6 +75,9 @@ namespace PersistentCity.Core
         public const string LinePrefix = "[Persistent City] hold seq=";
         /// <summary>Replayed holds are logged with this prefix, which the stream parser never reads as an original.</summary>
         public const string ReplayLinePrefix = "[Persistent City] hold replay seq=";
+        /// <summary>`pc movement holds since` prints its copies with this prefix, so a log that holds both the original
+        /// events and a readback still parses to one record per sequence.</summary>
+        public const string ReadbackLinePrefix = "[Persistent City] hold readback seq=";
 
         public static string CauseName(PlayerHoldCause cause) => cause == PlayerHoldCause.PlayerVehicle ? "player-vehicle" : "player-foot";
         public static bool TryCause(string text, out PlayerHoldCause cause)
@@ -85,9 +88,13 @@ namespace PersistentCity.Core
 
         private static string D(double value) => value.ToString("G17", CultureInfo.InvariantCulture);
 
-        public static string Format(PlayerHoldRecord record, bool replay = false)
+        public static string Format(PlayerHoldRecord record, bool replay = false) => Format(record, replay ? ReplayLinePrefix : LinePrefix);
+
+        /// <summary>The line with another prefix (<see cref="ReplayLinePrefix"/> or <see cref="ReadbackLinePrefix"/>).</summary>
+        public static string Format(PlayerHoldRecord record, string prefix)
         {
-            var text = new StringBuilder(160).Append(replay ? ReplayLinePrefix : LinePrefix)
+            if (prefix != LinePrefix && prefix != ReplayLinePrefix && prefix != ReadbackLinePrefix) throw new ArgumentException("Unknown hold line prefix.", nameof(prefix));
+            var text = new StringBuilder(160).Append(prefix)
                 .Append(record.Sequence.ToString(CultureInfo.InvariantCulture))
                 .Append(" minute=").Append(D(record.Minute))
                 .Append(" person=").Append(Uri.EscapeDataString(record.PersonId))
@@ -162,6 +169,34 @@ namespace PersistentCity.Core
             return true;
         }
 
+        public const string SegmentLinePrefix = "segment start=";
+
+        /// <summary>
+        /// Reads a replay file for <c>pc movement replay-holds</c>: the original hold lines (every other line, including
+        /// replayed and readback copies, is ignored) and exactly one <c>segment start=&lt;seq&gt; end=&lt;seq&gt;</c> line with
+        /// the two checkpoints' saved sequences. The bounds come from the checkpoints, never from the records, so a missing
+        /// tail or an empty file is refused. The records must also form a valid segment between those bounds.
+        /// </summary>
+        public static bool ReadSegment(IEnumerable<string> lines, out List<PlayerHoldRecord> records, out long start, out long end, out string error)
+        {
+            records = new List<PlayerHoldRecord>(); start = end = -1; error = "";
+            bool bounded = false;
+            foreach (string line in lines)
+            {
+                if (TryParse(line, out var record)) { records.Add(record); continue; }
+                int at = line.IndexOf(SegmentLinePrefix, StringComparison.Ordinal);
+                if (at < 0) continue;
+                string[] parts = line.Substring(at + SegmentLinePrefix.Length).Trim().Split(' ');
+                if (bounded || parts.Length != 2 || !parts[1].StartsWith("end=", StringComparison.Ordinal)
+                    || !long.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out start)
+                    || !long.TryParse(parts[1].Substring("end=".Length), NumberStyles.None, CultureInfo.InvariantCulture, out end) || end < start)
+                { error = bounded ? "more than one segment line" : "unreadable segment line"; return false; }
+                bounded = true;
+            }
+            if (!bounded) { error = "no segment line: give the checkpoints' sequences as 'segment start=<seq> end=<seq>'"; return false; }
+            return ValidateSegment(records, start, end, out error);
+        }
+
         internal static bool SameBits(double a, double b) => BitConverter.DoubleToInt64Bits(a) == BitConverter.DoubleToInt64Bits(b)
             || double.IsNaN(a) && double.IsNaN(b);
     }
@@ -173,6 +208,16 @@ namespace PersistentCity.Core
         public const int Capacity = 256;
         private readonly PlayerHoldRecord[] ring = new PlayerHoldRecord[Capacity];
         private int count, head;
+        private object? owner;
+
+        /// <summary>The ring belongs to one loaded city (its <see cref="CityState"/>). A different city, from a load or a
+        /// save change, starts it empty; a presentation rebuild over the same state keeps it.</summary>
+        public void Bind(object city)
+        {
+            if (city == null) throw new ArgumentNullException(nameof(city));
+            if (ReferenceEquals(owner, city)) return;
+            owner = city; count = 0; head = 0;
+        }
         public int Count => count;
         public long LastSequence => count == 0 ? 0 : ring[(head + count - 1) % Capacity].Sequence;
         public long OldestSequence => count == 0 ? 0 : ring[head].Sequence;
@@ -279,7 +324,7 @@ namespace PersistentCity.Core
             {
                 if (cause != PlayerHoldCause.PlayerVehicle) return new PlayerHoldResult(PlayerHoldRefusal.WrongLeg);
                 if (!traffic.GetPermission(citizenId).LinkId.HasValue) return new PlayerHoldResult(PlayerHoldRefusal.NoLink);
-                var held = traffic.HoldVehicle(citizenId, input);
+                var held = traffic.HoldVehicle(citizenId, input, remaining);
                 if (!held.Applied) return new PlayerHoldResult(PlayerHoldRefusal.Unchanged);
                 charge = held.Charge;
                 // The published journey follows the kernel's rebased coordinate, as SynchronizeSnapshot would.

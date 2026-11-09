@@ -229,12 +229,15 @@ namespace PersistentCity.Core
         /// entered, never goes below its NominalMinutes floor and never lands inside its follower's storage spacing (the
         /// follower's sampled position is unchanged). ReadyAt becomes max(old, Clock + (1 - u) * FreeFlowMinutes). The charge
         /// is the change of the vehicle's own earliest discharge (or curb exit); headway or a signal can absorb part of the
-        /// input. A hold that changes neither motion nor discharge is refused and changes nothing. Applied once, here; the
+        /// input. <paramref name="maximumCharge"/> bounds the charge (a journey's remaining allowance): a hold that would miss a
+        /// signal window by more is shortened until it fits. A hold that changes neither motion nor discharge is refused and
+        /// changes nothing. Applied once, here; the
         /// kernel keeps no hold state afterwards, and Reconsider reschedules the link.
         /// </summary>
-        public TrafficHoldResult HoldVehicle(string vehicleId, double minutes)
+        public TrafficHoldResult HoldVehicle(string vehicleId, double minutes, double maximumCharge = double.PositiveInfinity)
         {
             if (!Finite(minutes) || minutes <= 0) throw new ArgumentOutOfRangeException(nameof(minutes));
+            if (double.IsNaN(maximumCharge) || maximumCharge <= 0) throw new ArgumentOutOfRangeException(nameof(maximumCharge));
             if (vehicleId == null || !vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle)
                 || vehicle.Completed || vehicle.RouteIndex < 0 || vehicle.PhysicalControl) return default;
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
@@ -269,9 +272,29 @@ namespace PersistentCity.Core
                 u = step < 64 ? Math.Min(now, NextDouble(u)) : now;
                 Set(u);
             }
-            double after = DischargeAt(link, node);
-            double charge = double.IsPositiveInfinity(before) || double.IsPositiveInfinity(after) ? 0 : Math.Max(0, after - before);
-            if (!(u < now) && !(charge > 0))
+            double Charge()
+            {
+                double after = DischargeAt(link, node);
+                return double.IsPositiveInfinity(before) || double.IsPositiveInfinity(after) ? 0 : Math.Max(0, after - before);
+            }
+            double charge = Charge();
+            // A small hold can miss a signal window and delay the discharge by a whole cycle. The charge only falls as u
+            // rises, so take the largest hold (smallest u, toward u_now) whose charge fits the caller's bound.
+            if (charge > maximumCharge)
+            {
+                double low = u, high = now;
+                for (int step = 0; step < 128; step++)
+                {
+                    double middle = low + (high - low) / 2;
+                    if (middle <= low || middle >= high) break;
+                    Set(middle);
+                    if (Charge() > maximumCharge) low = middle; else high = middle;
+                }
+                u = high;
+                Set(u);
+                charge = Charge();
+            }
+            if (!(u < now) && !(charge > 0) || charge > maximumCharge)
             {
                 vehicle.MotionStartFraction = start; vehicle.MotionStartedAt = at; vehicle.ReadyAt = ready;
                 return default;

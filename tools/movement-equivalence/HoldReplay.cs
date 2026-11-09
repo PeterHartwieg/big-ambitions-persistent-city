@@ -111,9 +111,12 @@ public static class HoldReplay
 
     /// <summary>Replays <paramref name="segment"/> from <paramref name="from"/> to <paramref name="to"/>. A segment the
     /// validation refuses throws <see cref="ArgumentException"/> before anything runs.</summary>
-    public static Outcome Replay(HoldCheckpoint from, HoldCheckpoint to, IReadOnlyList<PlayerHoldRecord> segment)
+    /// <param name="withoutHolds">A bodies-off reference: run from <paramref name="from"/> to <paramref name="to"/>'s minute
+    /// applying no hold at all (the segment must be empty); its bytes show what the holds changed.</param>
+    public static Outcome Replay(HoldCheckpoint from, HoldCheckpoint to, IReadOnlyList<PlayerHoldRecord> segment, bool withoutHolds = false)
     {
-        var replay = new PlayerHoldReplay(segment, from.Sequence, to.Sequence);
+        if (withoutHolds && segment.Count != 0) throw new ArgumentException("A reference without holds takes no segment.");
+        var replay = new PlayerHoldReplay(segment, from.Sequence, withoutHolds ? from.Sequence : to.Sequence);
         var read = SaveCodec.Read(from.Payload);
         if (read.Status != SaveReadStatus.Loaded) throw new HarnessViolation("checkpoint refused: " + read.Error);
         var market = from.Market.Copy();

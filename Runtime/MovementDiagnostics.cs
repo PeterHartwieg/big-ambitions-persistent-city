@@ -49,7 +49,8 @@ namespace PersistentCity.Runtime
                 && long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long holdSequence) && holdSequence >= 0)
             {
                 movementHolds.Clear();
-                PlayerContact.Ring.Since(holdSequence, movementHolds, out bool gap);
+                bool gap = false;
+                if (simulation != null) PlayerContact.Since(simulation.State, holdSequence, movementHolds, out gap);
                 var text = new StringBuilder("[Persistent City] movement holds since ")
                     .Append(holdSequence.ToString(CultureInfo.InvariantCulture))
                     .Append(" (read-only)\ngap=").Append(gap ? "true" : "false")
@@ -61,18 +62,21 @@ namespace PersistentCity.Runtime
                     .Append(" applied=").Append(PlayerContact.Applied.ToString(CultureInfo.InvariantCulture))
                     .Append(" refused=").Append(PlayerContact.Refused.ToString(CultureInfo.InvariantCulture))
                     .Append("\ncount=").Append(movementHolds.Count.ToString(CultureInfo.InvariantCulture));
-                foreach (var hold in movementHolds) text.Append('\n').Append(PlayerHolds.Format(hold));
+                // Readback copies carry their own prefix, so they never enter the original hold stream.
+                foreach (var hold in movementHolds) text.Append('\n').Append(PlayerHolds.Format(hold, PlayerHolds.ReadbackLinePrefix));
                 movementHolds.Clear();
                 Debug.Log(text.ToString());
                 return;
             }
             if (action == "replay-holds" && detail.Length > 0 && value.Length == 0) { StartHoldReplay(detail); return; }
+            if (action == "replay-holds") { Debug.LogWarning("[Persistent City] hold replay refused: give one file path without spaces, e.g. /tmp/pc-holds.txt"); return; }
             Debug.LogWarning("[Persistent City] Unknown command. Use: pc movement status | pc movement corrections since <seq> | pc movement holds since <seq> | pc movement replay-holds <file>");
         }
 
         /// <summary>
-        /// Starts the in-game E2 replay (rig check 8). The file holds Player.log hold lines and, optionally, one line
-        /// <c>segment start=&lt;seq&gt; end=&lt;seq&gt;</c> with the two checkpoints' saved sequences. The loaded city must be the
+        /// Starts the in-game E2 replay (rig check 8). The file holds Player.log hold lines and exactly one required line
+        /// <c>segment start=&lt;seq&gt; end=&lt;seq&gt;</c> with the two checkpoints' saved sequences. The path cannot contain spaces
+        /// (the console splits arguments on them). The loaded city must be the
         /// starting checkpoint (its saved PlayerHoldSequence is the start) with bodies off. A gap, duplicate, reordering or
         /// wrong start/end refuses the file before anything is applied.
         /// </summary>
@@ -81,36 +85,27 @@ namespace PersistentCity.Runtime
             if (failed || simulation == null) { Debug.LogWarning("[Persistent City] hold replay refused: no active city."); return; }
             if (settings.PhysicalEnabled || physical != null) { Debug.LogWarning("[Persistent City] hold replay refused: set PhysicalEnabled = false and load the starting checkpoint."); return; }
             if (holdReplay != null && ReferenceEquals(holdReplayCity, simulation)) { Debug.LogWarning("[Persistent City] hold replay refused: a replay is already running."); return; }
-            var records = new List<PlayerHoldRecord>();
-            long? start = null, end = null;
+            List<PlayerHoldRecord> records;
+            long start, end;
+            string error;
             try
             {
                 var file = new FileInfo(path);
                 if (!file.Exists || file.Length > MaxHoldReplayCharacters) { Debug.LogWarning("[Persistent City] hold replay refused: missing or oversized file " + path); return; }
-                foreach (string line in File.ReadAllLines(path))
-                {
-                    if (PlayerHolds.TryParse(line, out var record)) { records.Add(record); continue; }
-                    int at = line.IndexOf("segment start=", StringComparison.Ordinal);
-                    if (at < 0) continue;
-                    string[] parts = line.Substring(at).Trim().Split(' ');
-                    if (start.HasValue || parts.Length != 3 || !parts[2].StartsWith("end=", StringComparison.Ordinal)
-                        || !long.TryParse(parts[1].Substring("start=".Length), NumberStyles.None, CultureInfo.InvariantCulture, out long s)
-                        || !long.TryParse(parts[2].Substring("end=".Length), NumberStyles.None, CultureInfo.InvariantCulture, out long e))
-                    { Debug.LogWarning("[Persistent City] hold replay refused: unreadable segment line."); return; }
-                    start = s; end = e;
-                }
+                if (!PlayerHolds.ReadSegment(File.ReadAllLines(path), out records, out start, out end, out error))
+                { Debug.LogWarning("[Persistent City] hold replay refused: " + error); return; }
             }
-            catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is ArgumentException || error is NotSupportedException)
-            { Debug.LogWarning("[Persistent City] hold replay refused: " + error.Message); return; }
+            catch (Exception failure) when (failure is IOException || failure is UnauthorizedAccessException || failure is ArgumentException || failure is NotSupportedException)
+            { Debug.LogWarning("[Persistent City] hold replay refused: " + failure.Message); return; }
             long city = simulation.State.PlayerHoldSequence;
-            if (start.HasValue && start.Value != city)
-            { Debug.LogWarning("[Persistent City] hold replay refused: the segment starts at " + start.Value + " but the loaded city is at " + city + "; load the starting checkpoint."); return; }
+            if (start != city)
+            { Debug.LogWarning("[Persistent City] hold replay refused: the segment starts at " + start + " but the loaded city is at " + city + "; load the starting checkpoint."); return; }
             if (records.Count != 0 && records[0].Minute < simulation.State.Minute)
             { Debug.LogWarning("[Persistent City] hold replay refused: the first hold is stamped before the loaded city's clock."); return; }
-            try { holdReplay = new PlayerHoldReplay(records, city, end ?? (records.Count == 0 ? city : records[records.Count - 1].Sequence)); }
-            catch (ArgumentException error) { Debug.LogWarning("[Persistent City] hold replay refused: " + error.Message); return; }
+            try { holdReplay = new PlayerHoldReplay(records, start, end); }
+            catch (ArgumentException failure) { Debug.LogWarning("[Persistent City] hold replay refused: " + failure.Message); return; }
             holdReplayCity = simulation;
-            Debug.Log("[Persistent City] hold replay started count=" + records.Count + " start=" + city + " end=" + (end ?? city + records.Count));
+            Debug.Log("[Persistent City] hold replay started count=" + records.Count + " start=" + start + " end=" + end);
         }
 
         /// <summary>The advance target while a replay runs: never past the next stamped hold minute.</summary>
@@ -128,7 +123,7 @@ namespace PersistentCity.Runtime
             if (replay == null || simulation == null || !ReferenceEquals(holdReplayCity, simulation)) return;
             int before = replay.Applied;
             bool ok = replay.ApplyDue(simulation);
-            for (int i = before; i < replay.Applied; i++) PlayerContact.Publish(replay[i], replay: true);
+            for (int i = before; i < replay.Applied; i++) PlayerContact.Publish(replay[i], simulation.State, replay: true);
             if (!ok) { Debug.LogWarning("[Persistent City] hold replay refused: " + replay.Failure); holdReplay = null; holdReplayCity = null; return; }
             if (replay.Done)
             {

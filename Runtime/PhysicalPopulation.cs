@@ -1298,7 +1298,7 @@ namespace PersistentCity.Runtime
             double report = contact.Observe(citizen.Identity.Id, route, car, minute - citizen.DepartureMinute, binding.BodyMinutes,
                 at, own.From, own.To, player, minute, Time.frameCount);
             if (report > 0)
-                contact.Settle(citizen.Identity.Id, simulation.HoldForPlayer(citizen.Identity.Id, report, car ? PlayerHoldCause.PlayerVehicle : PlayerHoldCause.PlayerFoot));
+                contact.Settle(citizen.Identity.Id, simulation.HoldForPlayer(citizen.Identity.Id, report, car ? PlayerHoldCause.PlayerVehicle : PlayerHoldCause.PlayerFoot), simulation.State);
         }
 
         public void ObserveForSave()

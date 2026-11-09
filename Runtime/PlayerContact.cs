@@ -107,11 +107,11 @@ namespace PersistentCity.Runtime
 
         /// <summary>Core's answer to a report. A hold refused only because the simulator had not drained its minute keeps the
         /// blocked time for the next frame; any other answer ends this report.</summary>
-        internal void Settle(string id, PlayerHoldResult result)
+        internal void Settle(string id, PlayerHoldResult result, CityState city)
         {
             if (!tracks.TryGetValue(id, out var track)) return;
             if (result.Refusal == PlayerHoldRefusal.NotDrained) return;
-            if (result.Applied) { Applied++; Publish(result.Record); } else Refused++;
+            if (result.Applied) { Applied++; Publish(result.Record, city); } else Refused++;
             // The journey's allowance is used up: no further report for it (the walker steps around, the car waits).
             track.Spent |= result.Refusal == PlayerHoldRefusal.AllowanceSpent;
             track.Blocked = 0; track.LastReport = track.Minute;
@@ -136,11 +136,21 @@ namespace PersistentCity.Runtime
             return dx * dx + dz * dz <= reach * reach;
         }
 
-        /// <summary>The Player.log hold stream line and the ring entry of an applied hold.</summary>
-        internal static void Publish(PlayerHoldRecord record, bool replay = false)
+        /// <summary>The Player.log hold stream line and the ring entry of an applied hold of <paramref name="city"/>. A replayed
+        /// hold is also this city's hold, so it enters the ring; its log line keeps the replay prefix.</summary>
+        internal static void Publish(PlayerHoldRecord record, CityState city, bool replay = false)
         {
-            if (!replay) Ring.Add(record);
+            Ring.Bind(city);
+            Ring.Add(record);
             Debug.Log(PlayerHolds.Format(record, replay));
+        }
+
+        /// <summary>`pc movement holds since`: the kept holds of <paramref name="city"/> after <paramref name="sequence"/>.
+        /// Holds of a city that is no longer loaded are never reported.</summary>
+        internal static void Since(CityState city, long sequence, List<PlayerHoldRecord> into, out bool gap)
+        {
+            Ring.Bind(city);
+            Ring.Since(sequence, into, out gap);
         }
 
         /// <summary>Is the player ahead of the body within the contact distance (walker), or ahead of the car on the same road

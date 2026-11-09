@@ -413,10 +413,12 @@ public sealed class PlayerHoldTests
             var outcome = HoldReplay.Replay(from, end, HoldReplay.Segment(live.Holds, from, end));
             Assert.True(outcome.Equal, "from " + from.Minute + ": " + outcome.Failure);
         }
-        // Without the stream the bodies-off run differs: the holds are real outcomes.
-        var bare = HoldReplay.Replay(end, end, Array.Empty<PlayerHoldRecord>());
-        Assert.True(bare.Equal);
-        Assert.NotEqual(live.Checkpoints[0].Payload, end.Payload);
+        // Without the stream the bodies-off run from the same checkpoint to the same minute differs: the holds are real outcomes.
+        var bare = HoldReplay.Replay(live.Checkpoints[0], end, Array.Empty<PlayerHoldRecord>(), withoutHolds: true);
+        Assert.Equal("", bare.Failure);
+        Assert.NotEqual(end.Payload, bare.Payload);
+        // A segment that starts and ends at one checkpoint is that checkpoint.
+        Assert.True(HoldReplay.Replay(end, end, Array.Empty<PlayerHoldRecord>()).Equal);
     }
 
     [Fact]
@@ -458,6 +460,134 @@ public sealed class PlayerHoldTests
         tampered[walk] = new PlayerHoldRecord(w.Sequence, w.Minute, w.PersonId, w.Cause, w.Input, Ulp(w.Charge));
         outcome = HoldReplay.Replay(from, end, tampered);
         Assert.False(outcome.Equal); Assert.Contains("did not reproduce", outcome.Failure);
+    }
+
+    [Fact]
+    public void ATrafficHoldThatWouldMissASignalWindowIsShortenedToTheRemainingAllowanceWithReplayAndReloadEquality()
+    {
+        // Review Sol-r1-1: readiness at minute 1, green [0, 1.05) of a 3-minute cycle. Unbounded, a 0.1 hold at 0.95 pushes
+        // readiness to 1.10, past the green, and the discharge to 3.0 (charge 2). Bounded by a 0.1 allowance it is shortened.
+        TrafficKernel Build()
+        {
+            var k = new TrafficKernel(new[] { Link(1, 2, 1, 0, new TrafficSignalSchedule { CycleMinutes = 3, GreenStartMinutes = 0, GreenDurationMinutes = 1.05 }) });
+            Enter(k, "a", 0, Leg(1));
+            k.AdvanceTo(0.95, 1000);
+            return k;
+        }
+        var unbounded = Build();
+        Assert.Equal(2, unbounded.HoldVehicle("a", 0.1).Charge, 9);
+        var kernel = Build();
+        string checkpoint = Json(kernel);
+        var held = kernel.HoldVehicle("a", 0.1, maximumCharge: 0.1);
+        Assert.True(held.Applied);
+        Assert.True(held.Charge > 0 && held.Charge <= 0.1, held.Charge.ToString("R", CultureInfo.InvariantCulture));
+        Assert.True(held.MotionStartFraction < 0.95, "the motion still moved back");
+        Assert.True(held.ReadyAt < 1.05, "readiness stays inside the green");
+        var replay = TrafficKernel.Restore(JsonSerializer.Deserialize<TrafficKernelState>(checkpoint)!);
+        var again = replay.HoldVehicle("a", 0.1, maximumCharge: 0.1);
+        SameBits(held.Charge, again.Charge); SameBits(held.MotionStartFraction, again.MotionStartFraction); SameBits(held.ReadyAt, again.ReadyAt);
+        var reloaded = Copy(kernel);
+        foreach (var k in new[] { kernel, replay, reloaded }) k.AdvanceTo(10, 1000);
+        Assert.Equal(1 + held.Charge, kernel.GetPermission("a").CompletedAt!.Value, 12);
+        Assert.Equal(Json(kernel), Json(replay)); Assert.Equal(Json(kernel), Json(reloaded));
+        // The bound is a journey's remaining allowance, so it is always positive.
+        Assert.Throws<ArgumentOutOfRangeException>(() => Build().HoldVehicle("a", 0.1, maximumCharge: 0));
+    }
+
+    [Fact]
+    public void NearTheAllowanceACityCarHoldNeverChargesMoreThanIsLeftAndTheSavedMinutesEqualTheCharges()
+    {
+        var city = City();
+        int applied = 0;
+        for (double t = city.State.Minute; applied < 40 && t <= MovementFixture.StartMinute + 12 * 60; t += 0.1)
+        {
+            city.AdvanceTo(t);
+            foreach (var c in city.State.Citizens)
+            {
+                if (!city.TryGetTrafficPermission(c.Identity.Id, out var p) || !p.LinkId.HasValue || p.IsCompleted) continue;
+                if (c.PlayerHoldMinutes == 0) c.PlayerHoldMinutes = 0.95; // as if 0.95 was already charged on this journey
+                double used = c.PlayerHoldMinutes;
+                var hold = city.HoldForPlayer(c.Identity.Id, 0.25, PlayerHoldCause.PlayerVehicle);
+                if (!hold.Applied) continue;
+                applied++;
+                Assert.True(hold.Record.Charge <= PlayerHolds.MaximumMinutesPerJourney - used + 1e-15, hold.Record.Charge + " after " + used);
+                Assert.Equal(used + hold.Record.Charge, c.PlayerHoldMinutes, 15);
+            }
+        }
+        Assert.True(applied > 0);
+        var reloaded = Load(SaveCodec.Write(city.State));
+        Assert.Equal(SaveCodec.Write(city.State), SaveCodec.Write(reloaded.State));
+    }
+
+    // ---- Replay file and readback ----
+
+    private static string[] SegmentFile(IEnumerable<PlayerHoldRecord> records, long start, long end, bool header = true)
+    {
+        var lines = new List<string> { "Player.log header line" };
+        if (header) lines.Add("segment start=" + start + " end=" + end);
+        lines.AddRange(records.Select(r => "12:00:00 " + PlayerHolds.Format(r)));
+        return lines.ToArray();
+    }
+
+    [Fact]
+    public void TheReplayFileNeedsCheckpointBoundsSoAMissingTailOrAnEmptyFileIsRefused()
+    {
+        var records = Enumerable.Range(1, 3).Select(i => new PlayerHoldRecord(i, 1000 + i, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1)).ToList();
+        Assert.True(PlayerHolds.ReadSegment(SegmentFile(records, 0, 3), out var read, out long start, out long end, out string error), error);
+        Assert.Equal(3, read.Count); Assert.Equal(0, start); Assert.Equal(3, end);
+        // Review Sol-r1-3: the end comes from the checkpoint, never from the last remaining record.
+        Assert.False(PlayerHolds.ReadSegment(SegmentFile(records.Take(2), 0, 3), out _, out _, out _, out error));
+        Assert.Contains("does not end", error);
+        Assert.False(PlayerHolds.ReadSegment(SegmentFile(records, 0, 3, header: false), out _, out _, out _, out error));
+        Assert.Contains("no segment line", error);
+        Assert.False(PlayerHolds.ReadSegment(Array.Empty<string>(), out _, out _, out _, out error));
+        Assert.False(PlayerHolds.ReadSegment(SegmentFile(Array.Empty<PlayerHoldRecord>(), 0, 3), out _, out _, out _, out error));
+        Assert.Contains("does not end", error);
+        Assert.True(PlayerHolds.ReadSegment(SegmentFile(Array.Empty<PlayerHoldRecord>(), 3, 3), out read, out _, out _, out error), error);
+        Assert.Empty(read);
+        var twice = SegmentFile(records, 0, 3).ToList(); twice.Add("segment start=0 end=3");
+        Assert.False(PlayerHolds.ReadSegment(twice, out _, out _, out _, out error)); Assert.Contains("more than one", error);
+        Assert.False(PlayerHolds.ReadSegment(new[] { "segment start=4 end=3" }, out _, out _, out _, out error));
+    }
+
+    [Fact]
+    public void AHoldsReadbackInTheSameLogIsNeverReadAsAnOriginalHold()
+    {
+        // Review Sol-r1-2: Player.log holds the original events and, after a checkpoint query, readback copies of them.
+        var records = Enumerable.Range(1, 3).Select(i => new PlayerHoldRecord(i, 1000 + i, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1)).ToList();
+        var log = SegmentFile(records, 0, 3).ToList();
+        log.Add("[Persistent City] movement holds since 0 (read-only)");
+        log.AddRange(records.Select(r => PlayerHolds.Format(r, PlayerHolds.ReadbackLinePrefix)));
+        log.AddRange(records.Select(r => PlayerHolds.Format(r, replay: true)));
+        Assert.All(records, r => Assert.False(PlayerHolds.TryParse(PlayerHolds.Format(r, PlayerHolds.ReadbackLinePrefix), out _)));
+        Assert.True(PlayerHolds.ReadSegment(log, out var read, out _, out _, out string error), error);
+        Assert.Equal(new long[] { 1, 2, 3 }, read.Select(r => r.Sequence));
+        // A true duplicate original line is still refused.
+        log.Add(PlayerHolds.Format(records[2]));
+        Assert.False(PlayerHolds.ReadSegment(log, out _, out _, out _, out error));
+        Assert.Contains("duplicate", error);
+        Assert.Throws<ArgumentException>(() => PlayerHolds.Format(records[0], "[Persistent City] other seq="));
+    }
+
+    [Fact]
+    public void TheHoldReadbackBelongsToTheLoadedCityAcrossReloadsAndPresentationRebuilds()
+    {
+        // Review Sol-r1-4: a city reloaded from an earlier checkpoint, or another city, never sees the discarded run's holds,
+        // even without a new contact; a rebuild over the same state keeps them.
+        var played = CurrentSchemaOnlyTests.City(); var loaded = CurrentSchemaOnlyTests.City();
+        for (long s = 1; s <= 10; s++) PlayerContact.Publish(new PlayerHoldRecord(s, s, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1), played);
+        var list = new List<PlayerHoldRecord>();
+        PlayerContact.Since(played, 0, list, out bool gap);
+        Assert.Equal(10, list.Count); Assert.False(gap);
+        list.Clear(); PlayerContact.Since(played, 0, list, out _);
+        Assert.Equal(10, list.Count); // same state: kept
+        list.Clear(); PlayerContact.Since(loaded, 0, list, out gap);
+        Assert.Empty(list); Assert.False(gap);
+        // A replayed hold is the loaded city's own hold and enters its ring.
+        PlayerContact.Publish(new PlayerHoldRecord(1, 1, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1), loaded, replay: true);
+        list.Clear(); PlayerContact.Since(loaded, 0, list, out _);
+        Assert.Equal(new long[] { 1 }, list.Select(h => h.Sequence));
+        Assert.StartsWith(PlayerHolds.ReplayLinePrefix, Debug.Lines().Last());
     }
 
     // ---- Stream line and ring ----
