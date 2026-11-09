@@ -64,6 +64,17 @@ Also covered: TRX counts and failed names, a filter that matches nothing reports
 
 Validation after the review fixes: required build unchanged (DLL SHA-256 `d77eaf13…`); `python -m unittest discover -s tools/acceptance -p test_*.py` 49 passed; `dotnet test tests/PersistentCity.Tests.csproj` 4,288 passed, 0 failed (5 min 49 s). One earlier gate run failed only `FoodContractCoordinatorTests.RecheckBoundaryRebuildAndCommitGateCosts` at its wall-clock check (`Assert.Equal(0, units.Count(u => u >= 30))`, actual 1) while other worktrees' tests shared the machine. That E5b3 test is not touched by this slice. It passed in the rerun above and in the first-round gate.
 
+## Review round 2
+
+| Finding | Change | Test |
+| --- | --- | --- |
+| Sol-r2-1 conflicting DLL hashes accepted | When both the offline run and the rig file record `persistentCityDllSha256` and they differ, the rig stages are `incomplete`. | `Summarize.test_rig_evidence_for_a_different_dll_is_not_accepted` |
+| Sol-r2-2 evidence prefixes reused across merges | Prefixes are numbered after every earlier import and skip existing directories. | `Summarize.test_successive_merges_never_overwrite_earlier_evidence` |
+| Sol-r2-3 foreign failed rig stage failed the run | Source- or artifact-mismatched stages become `incomplete` whatever their verdict; the original verdict is kept in `importedEvidence[].stages`. | `Summarize.test_failed_rig_record_from_another_source_does_not_fail_this_run` |
+| Opus-r2-1 perf record still described `tasklist` | Probe re-timed and the perf record updated; the probe now runs once per stage. | [perf](../perf/f9a.md) |
+
+Validation after round 2: required build unchanged (`d77eaf13…`); 52 Python tests pass; `dotnet test` 4,288 passed, 0 failed (5 min 43 s); real `quick` run `20261109T185449Z-b1fa5dca` summary incomplete (`city-s`, `rig`), `population` 10, `economy-fast` 22 and `saves` 188 passed.
+
 ## In-game checks for the next batched rig
 
 From the plan's [section 7](../plans/f9-city-acceptance.md#7-in-game-checks-for-the-next-batched-rig). All run on the headless agent rig in the combined native/perf batch, in the disposable **FT-F9** city with one player food business, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup. Functional steps that save run outside F4's timing windows. None is left to Peter, a playtest or a by-hand check. The rig writes each result as a `persistentcity-acceptance-1` stage record, class `native` (pending capability **RIG-ACCEPT**), and check 10 merges them with this slice's `summarize`. **Locked-PC**: runs on the locked rig PC through FT console/rig commands. **Input-only**: also needs injected UI input.

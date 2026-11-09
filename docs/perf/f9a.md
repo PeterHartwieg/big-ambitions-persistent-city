@@ -4,9 +4,9 @@ Refs #96. F9a adds an offline Python runner under `tools/acceptance/`. It change
 
 ## Runner overhead per stage
 
-`runnerOverheadSeconds` = stage wall time − child process time − time spent waiting for another session's `testhost`. It covers expanding the argv, the `tasklist` check, TRX parsing, hashing evidence and the adapters.
+`runnerOverheadSeconds` = stage wall time − child process time − time spent waiting for another session's `testhost`. It covers expanding the argv, the test-process probe, TRX parsing, hashing evidence and the adapters. Since review round 1 the probe is a CIM query of `dotnet`/`testhost` command lines (`TEST_PROBE` in `run.py`), so it also sees a `dotnet test` still restoring or building; the first measurements below used the earlier `tasklist` check.
 
-| Stage (quick, run `quick-3`) | Wall s | Child s | Wait s | Overhead s |
+| Stage (quick, run `quick-3`, `tasklist` probe) | Wall s | Child s | Wait s | Overhead s |
 | --- | --- | --- | --- | --- |
 | provenance | 0.0 | – | – | 0.0 |
 | test-build | 2.12 | 1.79 | 0 | 0.33 |
@@ -15,7 +15,17 @@ Refs #96. F9a adds an offline Python runner under `tools/acceptance/`. It change
 | saves | 25.27 | 24.96 | 0 | 0.31 |
 | city-s | 2.02 | 1.68 | 0 | 0.35 |
 
-Runner overhead is 0.31–0.38 s per .NET stage, almost all of it the `tasklist` check. Provenance (git status/diff, `dotnet --version`, source reads, config hash) is taken once before the first stage; quick's total wall time (58.2 s) minus its stage times (57.8 s) leaves about 0.4 s for it and the result write. Reusing the `unit` TRX for a filter stage in `full` took 0.1 s per stage (`population`, `saves`) instead of a second `dotnet test`.
+With `tasklist`, runner overhead was 0.31–0.38 s per .NET stage, almost all of it the probe. After review round 1 (CIM probe, once per stage), run `quick-r2` (`20261109T185449Z-b1fa5dca`, `acceptance.json` SHA-256 `e0583d16…`):
+
+| Stage (quick-r2, CIM probe) | Wall s | Child s | Wait s | Overhead s |
+| --- | --- | --- | --- | --- |
+| test-build | 11.89 | 11.49 | 0 | 0.41 |
+| population | 1123.16 | 28.40 | 1094.76 | 0.01 (the probe time is inside the wait) |
+| economy-fast | 3.17 | 2.79 | 0 | 0.38 |
+| saves | 28.42 | 28.02 | 0 | 0.40 |
+| city-s | 1.64 | 1.25 | 0 | 0.39 |
+
+Overhead is now 0.38–0.41 s per .NET stage, about 0.05 s more than with `tasklist`; the probe alone took 0.42–0.99 s per call (median 0.45 s, five calls) under load from other worktrees' tests. `quick-r2` took 19 min 28 s of wall time, of which 18 min 15 s was waiting for other worktrees' tests; without the wait it is 73.5 s (`test-build` rebuilt the test project after the review commits: 11.9 s instead of about 2 s warm). Provenance (git status/diff, `dotnet --version`, source reads, config hash) is taken once before the first stage; quick's total wall time (58.2 s) minus its stage times (57.8 s) leaves about 0.4 s for it and the result write. Reusing the `unit` TRX for a filter stage in `full` took 0.1 s per stage (`population`, `saves`) instead of a second `dotnet test`.
 
 ## Profile wall time
 
@@ -41,5 +51,5 @@ About 2 s (4%) faster. More usefully, every filtered stage now tests the same bu
 
 ## Not taken
 
-- The `tasklist` check before each .NET step costs about 0.3 s. It is the section 3.9 safety check and stays.
+- The test-process probe (now the CIM query, 0.42–0.99 s per call) is the section 3.9 safety check and stays. It now runs once per stage rather than once per step (taken win; only `economy` has two steps, and its second is Python).
 - Running filter stages in parallel would break the one-`dotnet`-at-a-time rule.
