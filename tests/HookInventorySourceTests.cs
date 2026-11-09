@@ -13,6 +13,7 @@ namespace PersistentCity.Tests;
 /// <summary>F8a (docs/plans/f8-capability-boundaries.md D8): the source inventory test. It reads the production sources
 /// and fails when a file adds a Harmony owner or a patch target that <see cref="NativeHookInventory"/> does not declare,
 /// or when a declared one is gone. The checker is a pure function over file contents so injected sources prove it red.</summary>
+[Collection(F8aSerial.Collection)]
 public sealed class HookInventorySourceTests
 {
     private static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;

@@ -11,7 +11,13 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
+/// <summary>The F8a classes run alone: the source scan and the perf arm are CPU-heavy and, run in parallel, push runtime
+/// tier-up work into other classes' allocation and timing windows (FoodContractCoordinatorTests).</summary>
+[CollectionDefinition(Collection, DisableParallelization = true)]
+public sealed class F8aSerial { public const string Collection = "F8a serial"; }
+
 /// <summary>F8a (docs/plans/f8-capability-boundaries.md D1, D2): the capability model in Core, without game assemblies.</summary>
+[Collection(F8aSerial.Collection)]
 public sealed class NativeCapabilityTests
 {
     private readonly ITestOutputHelper output;
