@@ -137,6 +137,7 @@ namespace PersistentCity.Runtime
                 journalReady = true;
                 patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
                     prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
+                StartContractShadow(); // E5b2 hint hooks and stamps; shadow only, never throws.
             }
             catch { Dispose(); throw; }
         }
@@ -564,6 +565,7 @@ namespace PersistentCity.Runtime
         {
             ((object)this as IRivalFoodMarket)?.CloseRivals();
             patches.UnpatchAll(PatchId);
+            StopContractShadow();
             NativeFoodOwnership.Detach(this);
             authoredBagPolicies = new ConditionalWeakTable<object, BagPolicy>(); authoredTagFields.Clear();
             refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();

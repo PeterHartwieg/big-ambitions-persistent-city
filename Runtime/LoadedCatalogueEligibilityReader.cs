@@ -11,11 +11,12 @@ using Seasons;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Explicit main-thread E5a reader. No hooks, timers or gameplay caller.
-    /// Future notification owners call dirty methods after native mutation, then Continue at a
-    /// simulation boundary. Clean cache access never touches native data. Reset before city unload.
+    /// <summary>Main-thread E5a reader, live in shadow since E5b2: it publishes images and the loaded-name image
+    /// but grants no authority. Dirty sources are Decision 1 hints (<see cref="IFoodContractHintSink"/>) and the
+    /// Decision 2 stamp compared on each discovery <see cref="Visit"/>; neither is relied on for correctness.
+    /// Continue runs one bounded unit. Clean frames touch no definition or holder. Reset before city unload.
     /// Arbitrary in-place third-party writes are not a proven notification surface.</summary>
-    public sealed class LoadedCatalogueEligibilityReader : IDisposable
+    public sealed class LoadedCatalogueEligibilityReader : IDisposable, IFoodContractHintSink
     {
         static LoadedCatalogueEligibilityReader() { } // Bind only on explicit main-thread use.
         private sealed class ReferenceComparer : IEqualityComparer<object>
@@ -55,22 +56,44 @@ namespace PersistentCity.Runtime
                 rows ? whitelist : null, rows ? outputs : null);
         }
 
-        private sealed class Shop
+        private sealed class Shop : IContractDirtyUnit
         {
-            internal Shop(BuildingRegistration registration, int limit) { Registration = registration; Limit = limit; }
+            internal Shop(string key, BuildingRegistration registration, int limit) { Key = key; Registration = registration; Limit = limit; }
+            internal readonly string Key;
             internal BuildingRegistration Registration;
+            internal ShopAddress Address;
             internal int Limit;
             internal long Revision, PublishedCatalogue;
             internal FoodEligibilityImage? Image;
-            internal bool Queued;
+            // Taken when the pass starts, so a write during a multi-frame pass mismatches at the next visit.
+            internal ShopContractStamp Start, Stamp;
+            public bool Queued { get; set; }
+        }
+        private readonly struct ShopAddress : IEquatable<ShopAddress>
+        {
+            internal ShopAddress(string street, int number) { Street = street; Number = number; }
+            internal readonly string Street;
+            internal readonly int Number;
+            public bool Equals(ShopAddress other) => Number == other.Number && string.Equals(Street, other.Street, StringComparison.Ordinal);
+            public override bool Equals(object? obj) => obj is ShopAddress other && Equals(other);
+            public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Street ?? "") * 31 + Number;
+        }
+        private sealed class AddressComparer : IEqualityComparer<ShopAddress>
+        {
+            internal static readonly AddressComparer Instance = new AddressComparer();
+            public bool Equals(ShopAddress a, ShopAddress b) => a.Equals(b);
+            public int GetHashCode(ShopAddress a) => a.GetHashCode();
         }
         private readonly Dictionary<string, Shop> shops = new Dictionary<string, Shop>(StringComparer.Ordinal);
-        private readonly Queue<Shop> dirty = new Queue<Shop>();
+        // Hint lookup only; both hold exactly the shops above and are cleared with them.
+        private readonly Dictionary<object, Shop> byRegistration = new Dictionary<object, Shop>(ReferenceComparer.Instance);
+        private readonly Dictionary<ShopAddress, Shop> byAddress = new Dictionary<ShopAddress, Shop>(AddressComparer.Instance);
+        private readonly ContractDirtyQueue<Shop> dirty = new ContractDirtyQueue<Shop>();
         private IEnumerator<Item>? catalogueCursor;
-        private LoadedStockCatalogue? buildingCatalogue;
-        private LoadedStockCatalogue? catalogue;
-        private bool catalogueDirty = true;
-        private long catalogueRevision = 1;
+        private readonly LoadedCatalogueRevision revision = new LoadedCatalogueRevision();
+        private LoadedStockCatalogue? catalogue => revision.Catalogue;
+        private bool catalogueDirty => revision.Dirty;
+        private long catalogueRevision => revision.Revision;
         private Shop? scanning;
         private long scanningRevision;
         private LoadedStockMenuBuilder? menu;
@@ -79,24 +102,65 @@ namespace PersistentCity.Runtime
         private readonly StockCargoFields[] cargoBuffer = new StockCargoFields[LoadedStockLimits.Rows];
         // Transient only; catches shared cargo references, including sharing with storage.
         private readonly HashSet<object> cargoIdentities = new HashSet<object>(ReferenceComparer.Instance);
+        // Decision 2 readers, bound by Prepare. Null until then or when a capability failed: Visit stays idle.
+        private static CollectionVersionReader<List<string>>? menuVersion;
+        private static CollectionVersionReader<List<RetailPrice>>? priceVersion;
+        private static CollectionVersionReader<Dictionary<string, ItemInstance>>? furnitureVersion;
+        private static bool stampsReady;
+
+        /// <summary>Binds and self-tests the three Decision 2 version readers. Main thread, city start.</summary>
+        public static bool Prepare(FoodContractCapabilities report)
+        {
+            stampsReady = false;
+            menuVersion = CollectionVersionReader<List<string>>.Bind(out var menuFailure);
+            priceVersion = CollectionVersionReader<List<RetailPrice>>.Bind(out var priceFailure);
+            furnitureVersion = CollectionVersionReader<Dictionary<string, ItemInstance>>.Bind(out var furnitureFailure);
+            bool bound = report.Record("version reader cachedAvailableProducts List<String>._version int", menuVersion == null ? menuFailure : null)
+                & report.Record("version reader retailPrices List<RetailPrice>._version int", priceVersion == null ? priceFailure : null)
+                & report.Record("version reader itemInstances Dictionary<String,ItemInstance>._version int", furnitureVersion == null ? furnitureFailure : null);
+            bool tested = report.Record("self-test List<String> add, set, remove", FoodContractSelfTest.List(menuVersion, "a", "b"))
+                & report.Record("self-test List<RetailPrice> add, set, remove", FoodContractSelfTest.List<RetailPrice>(priceVersion, null!, null!))
+                & report.Record("self-test Dictionary<String,ItemInstance> add, set, remove", FoodContractSelfTest.Dictionary<ItemInstance>(furnitureVersion, null!, null!));
+            stampsReady = bound && tested;
+            return stampsReady;
+        }
+        public static bool StampsReady => stampsReady;
+        private static ShopContractStamp Stamp(BuildingRegistration r)
+        {
+            var menu = r.cachedAvailableProducts; var prices = r.retailPrices; var furniture = r.itemInstances;
+            return new ShopContractStamp(CollectionStamp.Of(menuVersion!, menu, menu?.Count ?? 0),
+                CollectionStamp.Of(priceVersion!, prices, prices?.Count ?? 0),
+                CollectionStamp.Of(furnitureVersion!, furniture, furniture?.Count ?? 0),
+                r.businessTypeName, r.RentedByPlayer, r.HasEstablishedBusiness, r.AvailableForRent, r.temporarilyClosed);
+        }
+
         public long CatalogueRevision => catalogueRevision;
+        /// <summary>The loaded-name image of the current catalogue revision, or null while it is dirty or rebuilding.</summary>
+        public LoadedNameImage? LoadedNames => revision.Names;
+        public LoadedNameImage? LastLoadedNames => revision.LastPublished;
+        public bool CatalogueBuilding => revision.Building != null;
+        public int TrackedShops => shops.Count;
+        public long StampReads { get; private set; }
+        public long StampMismatches { get; private set; }
+        public long HintUnits => dirty.Marks - dirty.Coalesced;
+        public long HintsCoalesced => dirty.Coalesced;
         public int CatalogueCount => catalogue?.Count ?? 0;
         public FoodEligibilityRefusal CatalogueRefusal => catalogueDirty ? FoodEligibilityRefusal.Dirty
             : catalogue?.Refusal ?? FoodEligibilityRefusal.CatalogueUnavailable;
         public int PendingShops => dirty.Count + (scanning == null ? 0 : 1);
+        public long CatalogueBumps => revision.Bumps;
         public long DefinitionsRead { get; private set; }
         public long HoldersRead { get; private set; }
         public long CataloguePasses { get; private set; }
         public long ShopPasses { get; private set; }
 
-        public void MarkCatalogueDirty()
+        public bool MarkCatalogueDirty()
         {
             // Repeated notifications coalesce until work starts. In-progress work is discarded.
-            if (catalogueDirty && buildingCatalogue == null) return;
-            catalogueRevision++;
-            catalogueDirty = true; catalogue = null;
+            if (!revision.MarkDirty()) return false;
             CloseCatalogue(); CancelShop();
             foreach (var shop in shops.Values) Enqueue(shop);
+            return true;
         }
         public bool MarkShopDirty(string key, BuildingRegistration registration, int maximumOffers = LoadedStockLimits.Offers)
         {
@@ -104,15 +168,63 @@ namespace PersistentCity.Runtime
             if (!shops.TryGetValue(key, out var shop))
             {
                 if (shops.Count == LoadedStockLimits.Shops) return false;
-                shop = new Shop(registration, maximumOffers); shops.Add(key, shop);
+                shop = new Shop(key, registration, maximumOffers); shops.Add(key, shop);
+                Index(shop, registration);
             }
+            else if (!ReferenceEquals(shop.Registration, registration)) { Unindex(shop); Index(shop, registration); }
             shop.Registration = registration; shop.Limit = maximumOffers;
-            shop.Revision++; shop.Image = null;
-            if (ReferenceEquals(shop, scanning)) CancelShop();
-            Enqueue(shop); return true;
+            Dirty(shop); return true;
         }
-        private void Enqueue(Shop shop)
-        { if (!shop.Queued) { shop.Queued = true; dirty.Enqueue(shop); } }
+        private bool Dirty(Shop shop)
+        {
+            shop.Revision++; shop.Image = null; shop.Stamp = default;
+            if (ReferenceEquals(shop, scanning)) { CancelShop(); return true; }
+            return Enqueue(shop);
+        }
+        private bool Enqueue(Shop shop) => dirty.Enqueue(shop);
+        private void Index(Shop shop, BuildingRegistration registration)
+        {
+            byRegistration[registration] = shop;
+            if (string.IsNullOrEmpty(registration.StreetName)) return;
+            shop.Address = new ShopAddress(registration.StreetName, registration.StreetNumber);
+            byAddress[shop.Address] = shop;
+        }
+        private void Unindex(Shop shop)
+        {
+            byRegistration.Remove(shop.Registration);
+            if (shop.Address.Street != null && byAddress.TryGetValue(shop.Address, out var indexed) && ReferenceEquals(indexed, shop))
+                byAddress.Remove(shop.Address);
+            shop.Address = default;
+        }
+
+        /// <summary>Decision 2, once per existing discovery visit: constant time, no allocation for a tracked shop.
+        /// The first visit, a replaced registration or a stamp mismatch queues one coalesced rebuild. Shadow only:
+        /// no ownership or admission reads this.</summary>
+        public void Visit(string key, BuildingRegistration registration, int maximumOffers)
+        {
+            if (!stampsReady || registration == null) return;
+            if (!shops.TryGetValue(key, out var shop) || !ReferenceEquals(shop.Registration, registration))
+            { MarkShopDirty(key, registration, maximumOffers); return; }
+            if (shop.Queued || ReferenceEquals(shop, scanning) || shop.Image == null) return;
+            StampReads++;
+            var now = Stamp(registration);
+            if (!now.Matches(shop.Stamp)) { StampMismatches++; shop.Limit = maximumOffers; Dirty(shop); }
+        }
+        /// <summary>Current versus published stamp of one tracked shop (diagnostic).</summary>
+        public bool TryStamp(string key, out ShopContractStamp published, out ShopContractStamp current)
+        {
+            published = default; current = default;
+            if (!stampsReady || !shops.TryGetValue(key, out var shop)) return false;
+            published = shop.Stamp; current = Stamp(shop.Registration); return true;
+        }
+        public IEnumerable<string> ShopKeys => shops.Keys;
+
+        FoodContractHint IFoodContractHintSink.Catalogue() => MarkCatalogueDirty() ? FoodContractHint.NewUnit : FoodContractHint.Coalesced;
+        FoodContractHint IFoodContractHintSink.Registration(object registration)
+            => byRegistration.TryGetValue(registration, out var shop) ? Hint(shop) : FoodContractHint.Unknown;
+        FoodContractHint IFoodContractHintSink.Holder(string street, int number)
+            => byAddress.TryGetValue(new ShopAddress(street, number), out var shop) ? Hint(shop) : FoodContractHint.Unknown;
+        private FoodContractHint Hint(Shop shop) => Dirty(shop) ? FoodContractHint.NewUnit : FoodContractHint.Coalesced;
         public bool TryGet(string key, out FoodEligibilityImage image)
         {
             image = null!;
@@ -125,8 +237,8 @@ namespace PersistentCity.Runtime
             if (catalogueDirty) { ContinueCatalogue(); return true; }
             if (scanning == null)
             {
-                if (dirty.Count == 0) return false;
-                scanning = dirty.Dequeue(); scanning.Queued = false; scanningRevision = scanning.Revision;
+                if (!dirty.TryDequeue(out var next)) return false;
+                scanning = next; scanningRevision = scanning.Revision;
                 StartShop(scanning);
             }
             ContinueShop(); return true;
@@ -135,9 +247,9 @@ namespace PersistentCity.Runtime
         {
             try
             {
-                if (buildingCatalogue == null)
+                if (revision.Building == null)
                 {
-                    buildingCatalogue = new LoadedStockCatalogue(catalogueRevision); CataloguePasses++;
+                    revision.Begin(); CataloguePasses++;
                     var all = ItemsGetter.AllItems;
                     if (all == null) { PublishCatalogue(FoodEligibilityRefusal.CatalogueUnavailable); return; }
                     catalogueCursor = all.GetEnumerator();
@@ -146,7 +258,8 @@ namespace PersistentCity.Runtime
                 {
                     if (!catalogueCursor!.MoveNext()) { PublishCatalogue(); return; }
                     // The sole extra enumeration step detects overflow without reading Current.
-                    if (buildingCatalogue.Count == LoadedStockLimits.Catalogue)
+                    var buildingCatalogue = revision.Building!;
+                    if (buildingCatalogue.Catalogue.Count == LoadedStockLimits.Catalogue)
                     { PublishCatalogue(FoodEligibilityRefusal.CatalogueBounds); return; }
                     var item = catalogueCursor.Current; DefinitionsRead++;
                     if (item == null || !LoadedStockLimits.CanonicalName(item.itemName))
@@ -160,15 +273,17 @@ namespace PersistentCity.Runtime
         }
         private void PublishCatalogue(FoodEligibilityRefusal refusal = FoodEligibilityRefusal.None)
         {
-            buildingCatalogue!.Seal(refusal); catalogue = buildingCatalogue;
-            CloseCatalogue(); catalogueDirty = false;
+            // Catalogue and loaded-name image are published in one step from the same accepted definitions.
+            revision.Publish(refusal);
+            catalogueCursor?.Dispose(); catalogueCursor = null;
         }
         private void CloseCatalogue()
-        { catalogueCursor?.Dispose(); catalogueCursor = null; buildingCatalogue = null; }
+        { catalogueCursor?.Dispose(); catalogueCursor = null; }
         private void StartShop(Shop shop)
         {
             ShopPasses++;
             var r = shop.Registration;
+            shop.Start = stampsReady ? Stamp(r) : default;
             try
             {
                 var type = BusinessTypeHelper.GetData(r.businessTypeName);
@@ -233,20 +348,24 @@ namespace PersistentCity.Runtime
         private void PublishShop()
         {
             var result = menu!.Finish();
-            scanning!.Image = result; scanning.PublishedCatalogue = catalogueRevision;
+            scanning!.Image = result; scanning.PublishedCatalogue = catalogueRevision; scanning.Stamp = scanning.Start;
             CancelShop(false);
         }
         private void CancelShop(bool requeue = true)
         {
             if (furnitureOpen) { furnitureCursor.Dispose(); furnitureCursor = default; furnitureOpen = false; }
             if (scanning != null && requeue) Enqueue(scanning);
+            if (scanning != null) scanning.Start = default;
             scanning = null; menu = null; cargoIdentities.Clear(); Array.Clear(cargoBuffer, 0, cargoBuffer.Length);
         }
+        /// <summary>Drops every native reference: registrations, indexes, cursors and images.</summary>
         public void Reset()
         {
-            CloseCatalogue(); CancelShop(false); dirty.Clear(); shops.Clear(); catalogue = null;
-            catalogueRevision++; catalogueDirty = true;
+            CloseCatalogue(); CancelShop(false); dirty.Clear(); shops.Clear(); byRegistration.Clear(); byAddress.Clear();
+            revision.Reset();
         }
+        public int RetainedNativeReferences => shops.Count + byRegistration.Count + byAddress.Count + dirty.Count
+            + (scanning == null ? 0 : 1) + (catalogueCursor == null ? 0 : 1) + (furnitureOpen ? 1 : 0);
         public void Dispose() => Reset();
     }
 }

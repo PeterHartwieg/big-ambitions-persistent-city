@@ -92,6 +92,7 @@ One line per slice. Before/after numbers and limits are in each file.
 - E4 — [perf/e4-wider-menu.md](perf/e4-wider-menu.md)
 - E5a — [perf/e5a-catalogue-eligibility.md](perf/e5a-catalogue-eligibility.md)
 - E5b — [perf/e5b-complete-menu.md](perf/e5b-complete-menu.md)
+- E5b2 — [perf/e5b2.md](perf/e5b2.md)
 - E5c — [perf/e5c-neutral-metadata.md](perf/e5c-neutral-metadata.md)
 - E5d — [perf/e5d-name-identity-save.md](perf/e5d-name-identity-save.md)
 - E5e — [perf/e5e-metadata-api.md](perf/e5e-metadata-api.md)

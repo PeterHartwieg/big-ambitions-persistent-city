@@ -82,7 +82,7 @@ namespace PersistentCity.Runtime
         // Called every frame. The 64-slot slice keeps the first observation of a newly eligible business
         // in the frame it changes, which fixes FoodAuthority.RequestedHour and therefore the acquisition hour.
         // Place IDs are memoized per slot, so a slice over unchanged addresses builds no strings.
-        public void RefreshDiscovery() => DiscoverShops(64);
+        public void RefreshDiscovery() { DiscoverShops(64); ContinueContractShadow(); }
         /// <summary>Escaped place IDs discovery has built (diagnostic); unchanged addresses reuse theirs.</summary>
         internal long DiscoveryPlaceIdBuilds { get; private set; }
         private void DiscoverShops(int budget)
@@ -101,6 +101,7 @@ namespace PersistentCity.Runtime
                 if (!routinePlaces.ContainsKey(place)) {WithdrawAddress(place);continue;}
                 if (!reg.RentedByPlayer && !registrations.ContainsKey(place)) continue;
                 registrations[place] = reg; shopControllers[place] = controller;
+                VisitContract(place, reg);
                 var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(controller));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
                 else { Candidate(authority.BusinessId,false); if (!authority.Managed && scopesByPlace.TryGetValue(authority.PlaceId, out var retired)) changeJournal?.Clear(retired.BusinessId); }

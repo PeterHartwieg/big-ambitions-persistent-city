@@ -35,6 +35,7 @@ Sorted by slice ID. Status: planned, implemented, partial, stopped, verified by 
 | E4 wider menu, schema 23 | implemented | pending | [e4-wider-menu.md](docs/checks/e4-wider-menu.md) |
 | E5a catalogue eligibility | implemented | pending | [e5a-catalogue-eligibility.md](docs/checks/e5a-catalogue-eligibility.md) |
 | E5b complete menu | partial | pending | [e5b-complete-menu.md](docs/checks/e5b-complete-menu.md) |
+| E5b2 structural stamps and dirty hints (shadow) | implemented | pending | [e5b2.md](docs/checks/e5b2.md) |
 | E5c product metadata | implemented | pending | [e5c-neutral-metadata.md](docs/checks/e5c-neutral-metadata.md) |
 | E5d name identity, schema 25 | implemented | pending | [e5d-name-identity-save.md](docs/checks/e5d-name-identity-save.md) |
 | E5e metadata API | implemented | pending | [e5e-metadata-api.md](docs/checks/e5e-metadata-api.md) |
