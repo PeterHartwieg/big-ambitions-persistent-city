@@ -285,7 +285,8 @@ namespace PersistentCity.Runtime
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
             // F2f: the active-journey index members filed in the grid cells within the radius (F5i: residents and
-            // visitors), or every resident after a shadow mismatch. Filters and order below are the same for both sources.
+            // visitors), or every resident after a shadow mismatch (visitors get no body in that fallback, by design: they
+            // receive bodies through the index only). Filters and order below are the same for both sources.
             var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
@@ -1288,6 +1289,9 @@ namespace PersistentCity.Runtime
         private void ObservePlayerContact(Binding binding, in PlayerPose player)
         {
             var citizen = binding.Citizen; var route = binding.Journey;
+            // F5i: Core refuses holds for visitors (PlayerHoldRefusal.Visitor), so a blocked visitor body is not reported;
+            // it lags and is corrected like any other body.
+            if (citizen.IsVisitor) return;
             if (route == null || binding.Tail || !float.IsNaN(binding.FadeOutSince) || citizen.Phase != CitizenPhase.Travelling
                 || !ReferenceEquals(citizen.Journey, route)) return;
             bool car = binding.Car != null;

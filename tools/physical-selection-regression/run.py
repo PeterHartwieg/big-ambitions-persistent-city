@@ -48,7 +48,8 @@ before_f0['selection'] = before_f0['selection'].replace(full_pool_check, '')
 # current text by restoring the F5f roster line, so every other line stays production code.
 before_f2f = dict(current)
 f2f_loop = '''            // F2f: the active-journey index members filed in the grid cells within the radius (F5i: residents and
-            // visitors), or every resident after a shadow mismatch. Filters and order below are the same for both sources.
+            // visitors), or every resident after a shadow mismatch (visitors get no body in that fallback, by design: they
+            // receive bodies through the index only). Filters and order below are the same for both sources.
             var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
 '''
 f5f_roster = '''            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every

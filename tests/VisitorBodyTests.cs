@@ -156,6 +156,8 @@ public sealed class VisitorBodyTests
         Assert.DoesNotContain("Visitor", order);
         // The inspector pick skips visitor bodies: CitySimulator.Inspect returns nothing for a visitor.
         Assert.Contains("|| binding.Citizen.IsVisitor ||", Between(population, "public void PickWalker(", "public bool TryWalkerRect("));
+        // Player contact does not report visitor bodies: Core refuses their holds (review Opus-r1-1).
+        Assert.Contains("if (citizen.IsVisitor) return;", Between(population, "private void ObservePlayerContact(", "contact.Observe("));
     }
 
     /// <summary>Residents keep today's bodies: a resident-only city is the F2 harness result recorded before F5i (pinned
