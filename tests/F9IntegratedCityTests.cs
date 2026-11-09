@@ -109,7 +109,11 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
         Assert.True(reference.Orders.Count > (size == "city-s" ? 200 : 2000), "orders " + reference.Orders.Count);
         Assert.True(reference.VendorSales.Count > 50, "vendor sales " + reference.VendorSales.Count);
         Assert.True(reference.Ledger.Count(l => l.StartsWith("a|", StringComparison.Ordinal)) > reference.State.Citizens.Count * CityScenario.Days);
-        Assert.Equal(CityFixture.Inputs(reference.State).Length, reference.InputsPublished);
+        Assert.Equal(reference.Inputs.Count, reference.InputsPublished);
+        Assert.Equal(reference.Inputs.Select(i => i.Json()), arm.Inputs.Select(i => i.Json()));
+        // Daily and shift postings are events in the ledger, in the same order as the reference's.
+        Assert.True(reference.Postings > reference.State.Citizens.Count, "postings " + reference.Postings);
+        Assert.Equal(reference.Postings, arm.Postings);
         output.WriteLine($"{size} {name}: {arm.Seconds:F2} s tool time ({arm.ToolMsPerDay:F0} ms per simulated day), {arm.Frames} frames, "
             + $"{arm.Ledger.Count} events; reference {reference.Seconds:F2} s ({reference.ToolMsPerDay:F0} ms per day)");
     }
@@ -171,7 +175,7 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
         Assert.All(closed, minute => Assert.InRange(minute, 2 * 1440 + 5 * 60, 3 * 1440 + 60 + 24 * 60));
         // Each input appears once in the ledger, at its own minute, in schedule order.
         var published = reference.Ledger.Where(l => l.StartsWith("i|", StringComparison.Ordinal)).Select(l => l.Substring(2)).ToList();
-        Assert.Equal(CityFixture.Inputs(reference.State).OrderBy(i => i.Minute).Select(i => i.Json()), published);
+        Assert.Equal(reference.Inputs.Select(i => i.Json()), published);
     }
 
     // ---- C5 research and the E6 vehicle in the same city ----
@@ -197,6 +201,10 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
             }
             // One charge per order at its price; native money moved by exactly the three prices.
             Assert.Equal(3, run.ResearchCharges);
+            // Each charge is booked to the native day its midnight bill closes (Runtime's port: the previous day).
+            Assert.Equal(run.Research.Values.Select(f => (int)(f.BilledAt / 1440) - 1).OrderBy(d => d),
+                run.ResearchChargeDays.Select(c => c.Day).OrderBy(d => d));
+            Assert.All(run.ResearchChargeDays, c => Assert.Equal((int)(run.State.Research.Find(c.Order)!.OrderMinute / 1440), c.Day));
             Assert.Equal(3, run.State.Research.Kept.Count);
             Assert.Empty(run.State.Research.Open);
             Assert.Empty(run.State.Research.Closed);
@@ -247,6 +255,22 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
         var copy = new CityRun { Arm = "dropped" };
         copy.Ledger.AddRange(reference.Ledger.Where((l, i) => i != reference.Ledger.FindIndex(x => x.StartsWith("i|", StringComparison.Ordinal))));
         Assert.Contains("differs", Assert.Throws<CityViolation>(() => CityOracles.Equal(reference, copy)).Message);
+    }
+
+    [Fact, Trait("Size", "city-s")]
+    public void APostingMovedAcrossASaleFailsTheEventOrderOracle()
+    {
+        // A posting moved before a sale with every balance kept: the ledger differs.
+        var reference = runs.Run("city-s", "reference");
+        int sale = reference.Ledger.FindIndex(l => l.StartsWith("o|", StringComparison.Ordinal));
+        int posting = reference.Ledger.FindIndex(sale, l => l.StartsWith("p|", StringComparison.Ordinal));
+        Assert.True(sale >= 0 && posting > sale);
+        var copy = new CityRun { Arm = "reordered" };
+        copy.Ledger.AddRange(reference.Ledger);
+        (copy.Ledger[sale], copy.Ledger[posting]) = (copy.Ledger[posting], copy.Ledger[sale]);
+        Assert.Contains("differs", Assert.Throws<CityViolation>(() => CityOracles.Equal(reference, copy)).Message);
+        // Each sale row carries its buyer's wallet as checkout found it, so a real reorder also changes the sale itself.
+        Assert.All(reference.Orders, o => Assert.Equal(7, o.Split('|')[6].Split('/').Length));
     }
 
     // ---- Saves ----

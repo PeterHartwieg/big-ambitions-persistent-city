@@ -31,12 +31,13 @@ Re-read at this base: `tests/F5hIntegratedAcceptanceTests.cs` (`Shape`, `Referen
   - **Vendor sales:** every sale happened under the stand-in's lease and PC's ownership, with unique sequences.
   - **Schedule:** every input stamped before the minute was published once, at its own minute.
 - **Event order and equality** (`CityOracles.Equal`). One ordered ledger per arm:
-  - journey events (`ActivityObserved`), routine misses, meal decisions, native orders, vendor sales and vendor script events;
+  - journey events (`ActivityObserved`), routine misses, meal decisions, native orders (each with the buyer's wallet as checkout found it), vendor sales and vendor script events;
+  - every wallet posting (daily bill, income, shift wage), one row per wallet at the minute it drained;
   - published inputs, research orders, state moves, bills and notices;
   - the hourly identity and wallet totals.
   - Each arm must equal the reference in the ledger, the save bytes at every drained day boundary, the native orders, the vendor sales and the final save. A vendor sale is compared without the stand-in's lease end, because a reload renews the transient lease at other minutes.
   - The scenario compares runs with each other and pins none of its own save hashes.
-- **`tests/F9IntegratedCityTests.cs`**, 28 facts. Traits `Size=city-s` and `Size=city-m` select one size; both run in the default suite (perf below).
+- **`tests/F9IntegratedCityTests.cs`**, 29 facts. Traits `Size=city-s` and `Size=city-m` select one size; both run in the default suite (perf below).
 
 ### Technical choices
 
@@ -53,14 +54,14 @@ Re-read at this base: `tests/F5hIntegratedAcceptanceTests.cs` (`Shape`, `Referen
 Mac (Apple M1 Pro), at this branch's head:
 
 - Build: `python3 tools/build.py --game-managed "…/dll-import-shim/Big Ambitions_Data/Managed"` passed.
-- `dotnet test tests/PersistentCity.Tests.csproj`: 4,316 passed, 0 failed, 7 min 5 s.
-- `dotnet test … --filter "FullyQualifiedName~F9IntegratedCityTests"`: 28 passed, 23.5 s. Size filters: `&Size=city-s` 16 passed in 5.0 s, `&Size=city-m` 10 passed in 20.9 s.
+- `dotnet test tests/PersistentCity.Tests.csproj`: 4,317 passed, 0 failed, 7 min 17 s (after review round 1; 4,316 in 7 min 5 s before).
+- `dotnet test … --filter "FullyQualifiedName~F9IntegratedCityTests"`: 29 passed, 38.6 s after review round 1 (23.5 s before postings joined the ledger). Size filters before round 1: `&Size=city-s` 16 passed in 5.0 s, `&Size=city-m` 10 passed in 20.9 s.
 
 | Required test | Facts |
 | --- | --- |
 | Every arm equals the reference (ledger, saves at day boundaries, native orders) | `SmallArmEqualsTheReference`, `MediumArmEqualsTheReference` × fps30, fps60, fps120, hidden-skip, reload |
 | Each reload state is reached and asserted | `SmallReloadArmReachesEveryInFlightState`, `MediumReloadArmReachesEveryInFlightState` |
-| Fault injection fails loudly | `AnInjectedFaultFailsTheScenario` × duplicate sale, skipped input, research charge without a report, vendor sale outside its lease; `AnArmThatSkipsAnInputDiffersFromTheReferenceEvenWithoutTheScheduleOracle` |
+| Fault injection fails loudly | `AnInjectedFaultFailsTheScenario` × duplicate sale, skipped input, research charge without a report, vendor sale outside its lease; `AnArmThatSkipsAnInputDiffersFromTheReferenceEvenWithoutTheScheduleOracle`, `APostingMovedAcrossASaleFailsTheEventOrderOracle` |
 | One research order of each product billed once, reported the next morning | `SmallResearchOrderOfEachProductIsBilledOnceAndReportedTheNextMorning`, `Medium…` (reference and reload arms) |
 | A vendor scope sells to residents and hands back on release | `SmallVendorScopeSellsToResidentsAndHandsBackOnRelease`, `Medium…` |
 | Timestamped native changes take effect at their minute | `SmallNativeChangesTakeEffectAtTheirMinute`, `Medium…` |
@@ -70,7 +71,7 @@ Mac (Apple M1 Pro), at this branch's head:
 
 The faults fail with these messages:
 
-- Duplicate sale: `duplicate native order` at 13:00 on day 1.
+- Duplicate sale: `duplicate native order <intent>`, found in the booked orders, at 13:00 on day 1.
 - Skipped input: `scheduled input … WorkplaceClosed … skipped` at 05:00 on day 2.
 - Charge without a report: `research charge pcr-999 without a delivered report` at the day-2 bill.
 - Sale outside the lease: `vendor sale outside its lease at 2206 (lease until 2205)` once the stand-in's lease lapsed.
@@ -93,9 +94,9 @@ All run on the headless agent rig in the combined native/perf batch, in the disp
    - Steps: create the city; rent and fit one food shop with staff, stock and prices through the shop fixture; age to day 3; save as checkpoint `f9-city-ready`.
    - Expected: PC runs at the current writer with no refusal; `pc population manifest` is at its targets; the shop is owned by PC; `pc food decisions` shows decisions at that shop.
    - Rig capability: existing `produce_fixture.py`, `shop_fixture`, `shop_state`, FT `save`/`console`; pending RIG-SHOPRENT (the 6 Nov run refused native rental).
-2. **Three days with daily save/reload against an uninterrupted copy** (plan check 4, the F9c window). Locked-PC.
+2. **Seven days with daily save/reload against an uninterrupted copy** (plan check 4). Locked-PC.
    - Setup: `f9-city-ready` and a copy.
-   - Steps: run both copies three game days; save and reload one at each midnight in a fresh process.
+   - Steps: as F5h check 4, with the player business open: run both copies seven game days; save and reload one at each midnight in a fresh process. (The offline scenario covers three days; the rig keeps the plan's seven.)
    - Expected: equal PC state extracts and native order lists at each daily checkpoint; ledger conservation at each.
    - Rig capability: existing `rig flow run`, FT `time`/`save`/`load`/`console`; pending RIG-PCSAVE, RIG-LEDGER, RIG-LIVE.
 3. **Timestamped native changes across cadences** (plan check 5). Locked-PC.
@@ -105,7 +106,7 @@ All run on the headless agent rig in the combined native/perf batch, in the disp
    - Rig capability: existing RIG-SHOPEDIT `shop_edit`, RIG-CHECKPOINTS, FT `time`; pending RIG-FRAMECAP, RIG-PCSAVE.
 4. **In-flight reload with bodies off** (plan check 6, bodies-off half). Locked-PC.
    - Setup: `f9-city-ready` at 07:30 with `PhysicalEnabled = false`.
-   - Steps: save and reload in a fresh process at these points:
+   - Steps: skip 2 hours (hidden skip), then save and reload in a fresh process at these points:
      - mid-journey (a resident travelling);
      - with a meal decision held;
      - at midnight while the fill runs;

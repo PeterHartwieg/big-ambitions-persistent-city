@@ -80,7 +80,11 @@ internal static class CityOracles
             if (meal.Status == MealStatus.Uncertain && native.Markets!.IsConfirmedPaid(meal)) uncertain += meal.Price.Units;
         }
         if (sources != uses) throw new CityViolation(context + ": city ledger " + sources + " != " + uses);
-        if (native.Shops.Duplicates != 0) throw new CityViolation(context + ": duplicate native order");
+        // Data-level: no intent appears twice among the booked native orders.
+        var intents = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var order in native.Shops.Orders)
+            if (!intents.Add(order.Split('|')[2])) throw new CityViolation(context + ": duplicate native order " + order.Split('|')[2]);
+        if (native.Shops.Duplicates != 0) throw new CityViolation(context + ": repeated checkout of a paid intent");
         if (native.Shops.HistoricalCheckouts != 0) throw new CityViolation(context + ": historical native checkout");
         BigInteger booked = native.Shops.RevenueUnits;
         foreach (var sale in native.Api.Sales) booked += Money.FromCents(sale.Cents).Units;
@@ -155,6 +159,15 @@ internal static class CityOracles
 
     /// <summary>A sale without the stand-in's lease end: a reload arm renews the transient lease at other minutes.</summary>
     private static string Sale(CityVendorApi.Sale s) => s.Minute + "|" + s.Vehicle + "|" + s.Opening + "|" + s.Item + "|" + s.Cents + "|" + s.Sequence + "|" + s.Owner;
+
+    /// <summary>The wallet fields a sale reads, as checkout found them.</summary>
+    public static string Wallet(ResidentBudget? b) => b == null ? "-" : b.Balance.Units + "/" + b.IncomeReceived.Units + "/" + b.Ledger.EmploymentIncome.Units
+        + "/" + b.EssentialsPaid.Units + "/" + b.HomeFoodPaid.Units + "/" + b.Arrears.Units + "/" + b.LastPostedDay;
+
+    /// <summary>The fields only a daily or shift posting moves (income, wages, essentials, home food, arrears and the posting
+    /// schedule). A sale moves none of them.</summary>
+    public static string Posting(ResidentBudget b) => b.IncomeReceived.Units + "/" + b.Ledger.EmploymentIncome.Units + "/" + b.EssentialsPaid.Units
+        + "/" + b.HomeFoodPaid.Units + "/" + b.Arrears.Units + "/" + b.LastPostedDay + "/" + M(b.NextPostingMinute);
 
     public static string Sha(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
 }

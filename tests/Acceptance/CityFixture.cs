@@ -13,7 +13,7 @@ namespace PersistentCity.Tests.Acceptance;
 /// <summary>F9c (plan f9-city-acceptance.md, Decision 3): one integrated city in two sizes. Both sizes are the F5h reference
 /// composition (F5g housing, census catalogue, two portals, seed 2026) with the player food shops, one rival under the F6b
 /// service limits, one crew-run Street Food vehicle through the contract stand-in and C5 research on the saved ledger.
-/// <c>city-m</c> is F5h's declared load (957 residents, three shops); <c>city-s</c> is the same composition at about 128
+/// <c>city-m</c> is F5h's declared load (957 residents, three shops); <c>city-s</c> is the same composition at 126
 /// residents and one shop. Offline only: every native side is a double that lives outside the saved city.</summary>
 internal sealed class CitySize
 {
@@ -25,7 +25,7 @@ internal sealed class CitySize
     public int Homes => Shape.Homes;
     public PopulationFillCatalogue Catalogue => Shape.Catalogue;
 
-    /// <summary>F5h's base businesses on 20 homes of seven beds: 128 residents.</summary>
+    /// <summary>F5h's base businesses on 20 homes of seven beds: 126 residents.</summary>
     public static CitySize Small() => new("city-s", new F5hIntegratedAcceptanceTests.Shape(20, F5gPopulationFillTests.Base), 1);
     public static CitySize Medium() => new("city-m", F5hIntegratedAcceptanceTests.ReferenceShape(), 3);
 }
@@ -244,14 +244,16 @@ internal sealed class CityShopMarket : IFoodMarket, ILocalFoodMarket, IFoodCandi
         if (refusal != null) return new FoodSale(false, refusal);
         if (!paid.Add(meal.IntentId)) { Duplicates++; return new FoodSale(false, "Duplicate native order"); }
         Book(meal, minute);
-        if (InjectDuplicate) { InjectDuplicate = false; Duplicates++; Book(meal, minute); }
+        if (InjectDuplicate) { InjectDuplicate = false; Book(meal, minute); }
         if (Lose(meal)) throw new InvalidOperationException("Lost native acknowledgement");
         return new FoodSale(true, "Confirmed");
     }
     private void Book(ResidentMeal meal, double minute)
     {
         RevenueUnits += meal.Price.Units;
-        string row = "o|" + CityOracles.M(minute) + "|" + meal.IntentId + "|" + meal.BusinessId + "|" + meal.ProductId + "|" + meal.Price.Units.ToString(CultureInfo.InvariantCulture);
+        // The buyer's wallet as checkout found it, so a posting moved across this sale changes the row.
+        string row = "o|" + CityOracles.M(minute) + "|" + meal.IntentId + "|" + meal.BusinessId + "|" + meal.ProductId + "|" + meal.Price.Units.ToString(CultureInfo.InvariantCulture)
+            + "|" + CityOracles.Wallet(meal.Budget);
         Orders.Add(row);
         Booked?.Invoke(row);
     }
@@ -319,7 +321,8 @@ internal sealed class CityResearchPort : IResearchChargePort
     public bool ChargeWithoutReport;
     public bool TagStored => true;
     public float Balance => Money;
-    public int BilledDay => Day;
+    /// <summary>The native day being billed: the marketing boundary closes the previous day, as Runtime's port reads it.</summary>
+    public int BilledDay => Day - 1;
     public bool TryResolve(ResearchOrder order, out ResearchChargeTarget? target)
     { target = new ResearchChargeTarget("Shop " + order.BusinessAddress, order.BusinessAddress); return true; }
     public void CollectTagged(List<ResearchChargeRecord> into) => into.AddRange(Queue);

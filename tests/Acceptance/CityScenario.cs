@@ -41,7 +41,11 @@ internal sealed class CityRun
     public List<CityVendorApi.Sale> VendorSales = new();
     public readonly List<(CityReload State, double Minute)> Reloads = new();
     public readonly Dictionary<string, ResearchFact> Research = new(StringComparer.Ordinal);
-    public long Frames, Checkpoints, HistoricalClockMisses, HistoricalCheckouts, InputsPublished;
+    public long Frames, Checkpoints, HistoricalClockMisses, HistoricalCheckouts, InputsPublished, Postings;
+    /// <summary>The schedule this arm ran, derived from its checkpoint.</summary>
+    public IReadOnlyList<InterventionInput> Inputs = Array.Empty<InterventionInput>();
+    /// <summary>Each agency charge: the order it bills and the native day it was booked to.</summary>
+    public List<(string Order, int Day)> ResearchChargeDays = new();
     public string VendorBusiness = "";
     public double MaxLag, Seconds;
     public long? HandbackMinute;
@@ -86,6 +90,8 @@ internal sealed class CityScenario
     private readonly long end;
     private bool dayReloadDue;
     private bool skippedOne;
+    private long missesBeforeReload;
+    private readonly Dictionary<string, string> postings = new(StringComparer.Ordinal);
 
     private CityScenario(CityCheckpoint checkpoint, CityArm arm)
     {
@@ -96,6 +102,7 @@ internal sealed class CityScenario
         var read = SaveCodec.Read(checkpoint.Payload);
         if (read.Status != SaveReadStatus.Loaded) throw new CityViolation("fixture refused: " + read.Error);
         schedule = new InputSchedule(CityFixture.Inputs(read.State!).Where(i => i.Minute < end), CityFixture.StartMinute, end);
+        run.Inputs = schedule.Inputs;
         planner = arm.Reference ? new CityFixture.SyncWalk() : new F5hIntegratedAcceptanceTests.AdmittedPortalPlanner();
         if (arm.Reloads) foreach (CityReload state in Enum.GetValues(typeof(CityReload))) pendingReloads.Add(state);
         native.Shops.Booked = row => run.Ledger.Add(row);
@@ -135,6 +142,9 @@ internal sealed class CityScenario
     private void Reload(CityReload reason)
     {
         native.Vendor!.CompleteForSave();
+        // The miss counter belongs to the simulator being replaced: keep it for the whole run.
+        missesBeforeReload += city.HistoricalClockMisses;
+        if (missesBeforeReload != 0) throw new CityViolation("historical clock miss before the reload at " + reason);
         string saved = SaveCodec.Write(city.State);
         var read = SaveCodec.Read(saved);
         if (read.Status != SaveReadStatus.Loaded) throw new CityViolation("reload refused at " + reason + ": " + read.Error);
@@ -187,6 +197,7 @@ internal sealed class CityScenario
         if (!city.IsAccountingEpochDrained(epoch)) throw new CityViolation("ending epoch not drained at " + epoch);
         if (city.State.Minute >= epoch) throw new CityViolation("epoch " + epoch + " observed before its inputs");
         clock = epoch; native.SetClock(epoch);
+        Postings(epoch);
         if (epoch % 60 == 0) Checkpoint(epoch);
         if (epoch % 1440 == 0)
         {
@@ -196,6 +207,22 @@ internal sealed class CityScenario
         Publish(epoch);
         Vendor(epoch);
         Research(epoch);
+    }
+
+    /// <summary>Every wallet posting (daily bill, income or shift wage) made in the minute that just drained, one row per wallet
+    /// in roster order. Sales carry the buyer's wallet as checkout saw it, so a posting moved across a sale changes the ledger.</summary>
+    private void Postings(long epoch)
+    {
+        foreach (var meal in city.State.Food!.Residents)
+        {
+            if (meal.Budget == null) continue;
+            string now = CityOracles.Posting(meal.Budget);
+            if (postings.TryGetValue(meal.ResidentId, out var was) && was == now) continue;
+            postings[meal.ResidentId] = now;
+            if (was == null) continue; // a new wallet: its opening state is in the hourly identity row
+            run.Postings++;
+            run.Ledger.Add("p|" + epoch.ToString(CultureInfo.InvariantCulture) + "|" + meal.ResidentId + "|" + now);
+        }
     }
 
     private void Checkpoint(long epoch)
@@ -305,6 +332,7 @@ internal sealed class CityScenario
     private void Crossing0(long start)
     {
         clock = start; native.SetClock(start);
+        Postings(start);
         Checkpoint(start);
         native.EnterMinute(start);
         while (native.Vendor!.Prepare(start)) { }
@@ -365,7 +393,8 @@ internal sealed class CityScenario
     {
         city.SynchronizeSnapshot();
         if (!city.OccupancyMatchesFullCount()) throw new CityViolation("occupancy differs from its full count");
-        run.HistoricalClockMisses = city.HistoricalClockMisses;
+        run.HistoricalClockMisses = missesBeforeReload + city.HistoricalClockMisses;
+        run.ResearchChargeDays = native.Port.Queue.Select(r => (r.Tag!, r.Day)).ToList();
         run.HistoricalCheckouts = native.Shops.HistoricalCheckouts;
         run.Orders = native.Shops.Orders.ToList();
         run.VendorSales = native.Api.Sales.ToList();
