@@ -51,6 +51,7 @@ namespace PersistentCity.Runtime
         private readonly List<string> contractRecoveries = new List<string>(FoodContractCoordinator.RecoveriesPerFrame);
         private readonly List<FoodDefinitionDependency> contractChanged = new List<FoodDefinitionDependency>();
         private readonly List<Item> contractRecopy = new List<Item>();
+        private readonly List<object> contractStale = new List<object>();
         private readonly List<string> contractNamesBuffer = new List<string>(16);
         private readonly Money[] contractPrices = new Money[FoodMenuPolicy.MaximumOffers];
         private Func<FoodAuthority, FoodContractImage, bool>? contractGate;
@@ -155,21 +156,27 @@ namespace PersistentCity.Runtime
                     {
                         long hour = AccountingHour();
                         contracts.TakeRecoveries(hour, contractRecoveries);
-                        foreach (var key in contractRecoveries)
+                        // Units left over by the budget go back to the queue for the next frame, never dropped.
+                        double previous = 0;
+                        for (int i = 0; i < contractRecoveries.Count; i++)
                         {
+                            string key = contractRecoveries[i];
+                            if (i > 0 && Elapsed(frameStart) + previous >= ContractFrameBudgetMilliseconds) { contracts.Requeue(key, hour); continue; }
                             any = true; long started = Stopwatch.GetTimestamp();
                             RecoverContract(key, hour); contractRecoveryUnits++;
-                            RecordUnit(Elapsed(started));
-                            if (Elapsed(frameStart) >= ContractFrameBudgetMilliseconds) break;
+                            previous = Elapsed(started); RecordUnit(previous);
                         }
                     }
                 }
+                // Stop before a unit that would likely overrun the budget (the previous unit's cost as the estimate).
+                double last = 0;
                 for (int i = 0; i < ContractUnitsPerFrame; i++)
                 {
+                    if (i > 0 && Elapsed(frameStart) + last >= ContractFrameBudgetMilliseconds) break;
                     long started = Stopwatch.GetTimestamp();
                     if (!reader.Continue()) break;
-                    any = true; RecordUnit(Elapsed(started));
-                    if (Elapsed(frameStart) >= ContractFrameBudgetMilliseconds) break;
+                    last = Elapsed(started);
+                    any = true; RecordUnit(last);
                 }
                 if (contractMode == ContractMode.Warming) FinishWarming(reader);
             }
@@ -219,12 +226,24 @@ namespace PersistentCity.Runtime
             if (image != null)
             {
                 contractLive.Bind(reg); contractChanged.Clear();
-                var refusal = FoodContractRecheck.Definitions(image, contractLive, preparationEpoch, contractChanged);
-                if (refusal == FoodContractRecheckRefusal.None) refusal = FoodContractRecheck.BusinessType(image, contractLive);
-                if (refusal != FoodContractRecheckRefusal.None)
+                if (image.Passed)
                 {
-                    Recopy(reg, refusal);
-                    if (contractMode == ContractMode.Active) RefuseContractImage(reg, "preparation: " + refusal);
+                    var refusal = FoodContractRecheck.Definitions(image, contractLive, preparationEpoch, contractChanged);
+                    if (refusal == FoodContractRecheckRefusal.None) refusal = FoodContractRecheck.BusinessType(image, contractLive);
+                    if (refusal != FoodContractRecheckRefusal.None)
+                    {
+                        Recopy(reg, refusal);
+                        if (contractMode == ContractMode.Active) RefuseContractImage(reg, "preparation: " + refusal);
+                    }
+                }
+                // The catalogue's current copies, for passing and failed images alike (an in-place repair after hand-back).
+                var catalogue = reader.Catalogue;
+                contractStale.Clear();
+                if (catalogue != null && FoodContractRecheck.StaleCopies(image.Definitions, catalogue, contractLive, preparationEpoch, contractStale) > 0)
+                {
+                    contractRecopy.Clear();
+                    foreach (var live in contractStale) if (live is Item item) contractRecopy.Add(item);
+                    contractRecopyEvents++; reader.RecopyDefinitions(contractRecopy.ToArray());
                 }
             }
             reader.MarkShopDirty(key, reg, menuLimit);
@@ -276,11 +295,29 @@ namespace PersistentCity.Runtime
                 if (contractLive.ReadBusinessType(out var type)) business = new FoodBusinessTypeCopy(type);
                 admission = Admission(key, reg, eligibility, eligibility.CatalogueRevision == reader.CatalogueRevision);
             }
+            // A failed image keeps the dependencies it can name, so preparation still sees an in-place repair.
+            if (!eligibility.StockContractMatched) definitions = FailedDependencies(key, reg, catalogue);
             var image = new FoodContractImage(key, hour, eligibility, holders, definitions, business, admission, stamp);
             contracts.Publish(image); contractWarming.Remove(key);
             if (!image.Passed && contractMode == ContractMode.Active) WithdrawFailedImage(reg);
         }
         private void AddName(string name) { if (!contractNamesBuffer.Contains(name)) contractNamesBuffer.Add(name); }
+        // Menu products plus every dependency of the last image that named any. Bounded by the menu and that image.
+        private FoodDefinitionDependency[] FailedDependencies(string key, BuildingRegistration reg, LoadedStockCatalogue catalogue)
+        {
+            contractNamesBuffer.Clear();
+            var menu = reg.cachedAvailableProducts;
+            if (menu != null && menu.Count <= LoadedStockLimits.Offers) foreach (var name in menu) if (name != null) AddName(name);
+            var previous = contracts.Image(key);
+            if (previous != null) foreach (var d in previous.Definitions) AddName(d.Name);
+            var result = new List<FoodDefinitionDependency>(contractNamesBuffer.Count);
+            foreach (var name in contractNamesBuffer)
+            {
+                var item = ItemsGetter.GetByName(name, true);
+                if (item != null && catalogue.TryGet(name, out var copy)) result.Add(new FoodDefinitionDependency(name, item, copy));
+            }
+            return result.ToArray();
+        }
 
         // Decision 8. nativeContract is true only because Decisions 2, 3 and 3a just passed for this image; Decision 5
         // runs at every supply read that follows and refuses the shop there.
@@ -376,6 +413,14 @@ namespace PersistentCity.Runtime
         internal void BeginContractCommit() { boundaryEpoch.Begin(); contractBoundaryCommitMs = 0; }
         internal FoodContractBoundary.Outcome CommitBoundary(FoodAuthority row, long hour, bool liveNativeCustomers)
         {
+            // Warming: no acquisition before every seeded shop has an image; hand-backs are never held.
+            if (contractMode == ContractMode.Warming)
+            {
+                if (row.Pending(hour, true, liveNativeCustomers, true) != FoodBoundaryStep.Acquire)
+                    return row.Boundary(hour, true, liveNativeCustomers, true) ? FoodContractBoundary.Outcome.HandedBack : FoodContractBoundary.Outcome.None;
+                row.Boundary(hour, true, liveNativeCustomers, true, false);
+                return FoodContractBoundary.Outcome.Deferred;
+            }
             var coordinator = contractMode == ContractMode.Fallback ? null : contracts;
             long started = Stopwatch.GetTimestamp();
             var outcome = FoodContractBoundary.Commit(row, coordinator, hour, liveNativeCustomers, true,

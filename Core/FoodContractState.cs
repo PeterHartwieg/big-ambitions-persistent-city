@@ -149,11 +149,35 @@ namespace PersistentCity.Core
             if (next == null || next.Length != prices.Length) throw new ArgumentException("Price row count differs.");
             return new FoodContractImage(this, (Money[])next.Clone());
         }
-        public bool HasHolder(object instance)
+        public bool HasHolder(object instance) => HolderIndex(instance) >= 0;
+
+        // Decision 5 lookup: holder index by instance reference, built once per image on first use. Main thread.
+        private Dictionary<object, int>? index;
+        private int[]? marks;
+        private int markEpoch;
+        internal int HolderIndex(object instance)
         {
-            for (int i = 0; i < holders.Length; i++) if (ReferenceEquals(holders[i].Instance, instance)) return true;
-            return false;
+            if (index == null)
+            {
+                index = new Dictionary<object, int>(holders.Length, ReferenceKey.Instance);
+                for (int i = 0; i < holders.Length; i++)
+                    if (holders[i].Instance != null && !index.ContainsKey(holders[i].Instance!)) index.Add(holders[i].Instance!, i);
+            }
+            return instance != null && index.TryGetValue(instance, out int found) ? found : -1;
         }
+        internal int[] Marks(out int epoch)
+        {
+            marks ??= new int[holders.Length];
+            if (++markEpoch == int.MaxValue) { Array.Clear(marks, 0, marks.Length); markEpoch = 1; }
+            epoch = markEpoch; return marks;
+        }
+    }
+
+    internal sealed class ReferenceKey : IEqualityComparer<object>
+    {
+        internal static readonly ReferenceKey Instance = new ReferenceKey();
+        public new bool Equals(object? a, object? b) => ReferenceEquals(a, b);
+        public int GetHashCode(object value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value);
     }
 
     /// <summary>Runtime reads the native world through this; tests implement it with doubles. Each call reads one
@@ -244,6 +268,27 @@ namespace PersistentCity.Core
             }
             return refusal;
         }
+        /// <summary>Decision 3a and Decision 7 at preparation: each dependency's live content against the catalogue's
+        /// <em>current</em> copy. Live objects whose copy is stale go to <paramref name="stale"/> (re-copy). This also
+        /// runs for refused shops, whose failed image carries the dependencies forward, so an in-place definition
+        /// repair after a hand-back reaches the next image.</summary>
+        public static int StaleCopies(IReadOnlyList<FoodDefinitionDependency> dependencies, LoadedStockCatalogue catalogue,
+            IFoodContractLive live, FoodDefinitionEpoch epoch, List<object> stale)
+        {
+            int found = 0;
+            for (int i = 0; i < dependencies.Count; i++)
+            {
+                string name = dependencies[i].Name;
+                if (!catalogue.TryGet(name, out var copy) || !live.ReadDefinition(name, out var current, out var facts) || current == null) continue;
+                var probe = new FoodDefinitionDependency(name, current, copy);
+                if (epoch.TryGet(probe, out bool same)) continue; // first sight already recorded it
+                same = copy.Matches(facts);
+                epoch.Set(probe, same, true);
+                if (!same && !stale.Contains(current)) { stale.Add(current); found++; }
+            }
+            return found;
+        }
+
         public static FoodContractRecheckRefusal BusinessType(FoodContractImage image, IFoodContractLive live)
             => image.Business == null || !live.ReadBusinessType(out var type) || !image.Business.Matches(type)
                 ? FoodContractRecheckRefusal.BusinessType : FoodContractRecheckRefusal.None;
@@ -288,33 +333,27 @@ namespace PersistentCity.Core
             IReadOnlyList<string> menu, Func<object, int> liveAmount)
         {
             var holders = image.Holders;
+            var marks = image.Marks(out int epoch);
             for (int n = 0; n < native.Count; n++)
             {
                 var entry = native[n];
-                bool found = false;
+                int i = image.HolderIndex(entry.Instance);
                 if (entry.Counter)
                 {
-                    for (int i = 0; i < holders.Count && !found; i++)
-                        found = holders[i].IsBagCounter && ReferenceEquals(holders[i].Instance, entry.Instance);
-                    if (!found) return FoodReconciliationRefusal.NativeCounterNotInImage;
+                    if (i < 0 || !holders[i].IsBagCounter) return FoodReconciliationRefusal.NativeCounterNotInImage;
                     continue;
                 }
                 if (entry.Workstation) return FoodReconciliationRefusal.Workstation;
-                for (int i = 0; i < holders.Count && !found; i++)
-                    found = !holders[i].IsBagCounter && ReferenceEquals(holders[i].Instance, entry.Instance)
-                        && string.Equals(holders[i].ResourceId, entry.Product, StringComparison.Ordinal);
-                if (!found) return FoodReconciliationRefusal.UnvalidatedProducer;
+                if (i < 0 || holders[i].IsBagCounter || !string.Equals(holders[i].ResourceId, entry.Product, StringComparison.Ordinal))
+                    return FoodReconciliationRefusal.UnvalidatedProducer;
+                marks[i] = epoch;
             }
             // A validated holder with positive stock that native setup left out is unknown, never zero.
             for (int i = 0; i < holders.Count; i++)
             {
                 var h = holders[i];
-                if (h.IsBagCounter || h.Stock == null || !Contains(menu, h.ResourceId) || liveAmount(h.Stock) <= 0) continue;
-                bool indexed = false;
-                for (int n = 0; n < native.Count && !indexed; n++)
-                    indexed = !native[n].Counter && ReferenceEquals(native[n].Instance, h.Instance)
-                        && string.Equals(native[n].Product, h.ResourceId, StringComparison.Ordinal);
-                if (!indexed) return FoodReconciliationRefusal.OmittedPositiveHolder;
+                if (h.IsBagCounter || h.Stock == null || marks[i] == epoch || !Contains(menu, h.ResourceId) || liveAmount(h.Stock) <= 0) continue;
+                return FoodReconciliationRefusal.OmittedPositiveHolder;
             }
             return FoodReconciliationRefusal.None;
         }
@@ -484,6 +523,13 @@ namespace PersistentCity.Core
                 e.LastRecoveryHour = hour; into.Add(e.Key);
             }
             return into.Count;
+        }
+        /// <summary>Returns a unit taken this frame but not run (frame budget) to the queue, still due this hour.</summary>
+        public void Requeue(string key, long hour)
+        {
+            if (!entries.TryGetValue(key, out var e) || e.RecoveryQueued || e.RefusedHour < 0) return;
+            if (e.LastRecoveryHour == hour) e.LastRecoveryHour = -1;
+            e.RecoveryQueued = true; recovery.Enqueue(e);
         }
         /// <summary>Requeues a refused shop whose held passing image waits for a later hour (start of each hour).</summary>
         public bool RequeueRecovery(string key)
