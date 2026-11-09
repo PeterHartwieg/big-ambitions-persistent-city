@@ -41,8 +41,12 @@ namespace PersistentCity.Runtime
         private ConditionalWeakTable<BuildingRegistration, ContractRefusal> refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();
         private long lastContractRecoveryHour = -1;
         private void RefuseContract(BuildingRegistration registration)
-        { if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration,
-            new ContractRefusal(SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour)); }
+        {
+            long hour = SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
+            if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration, new ContractRefusal(hour));
+            // E5b3 Decision 7: the coordinator keeps the same first refused hour for its recovery gates.
+            if (contractMode != ContractMode.Fallback) contracts.Refuse(PlaceId(registration), hour);
+        }
         private readonly Harmony patches = new Harmony(PatchId);
         private static readonly MethodInfo Process = AccessTools.Method(typeof(RetailBusinessSimulator), "ProcessCustomer");
         private bool buying;
@@ -111,6 +115,7 @@ namespace PersistentCity.Runtime
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
             if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
+            contractEconomy = economy;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
             this.rivalWarning = rivalWarning;
             menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));
@@ -166,8 +171,9 @@ namespace PersistentCity.Runtime
                 bags = tags.Contains("ba:businesstag_customersneedpaperbags");
             authoredBagPolicies.Add(type, new BagPolicy(bags));
         }
+        // E5b3: also the published contract image plus its stamp (Decision 2); E5b1 rules while the coordinator is not active.
         private bool SupportedMenu(BuildingRegistration r) => !refusedContracts.TryGetValue(r, out _) && SupportedBusiness(r)
-            && r.cachedAvailableProducts.Count <= menuLimit;
+            && r.cachedAvailableProducts.Count <= menuLimit && ContractAdmits(r);
         private bool CurrentAuthoredBagPolicy(BuildingRegistration r)
         {
             var type = BusinessTypeHelper.GetData(r.businessTypeName);
@@ -288,10 +294,17 @@ namespace PersistentCity.Runtime
                     RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(b.PlaceId);
                     continue;
                 }
+                // E5b3 Decision 3: a selected capture or checkout rechecks the published image before any supply read.
+                if ((observed != null || capture) && !ContractRecheck(reg, observed != null))
+                {
+                    supplyExclusions[b.PlaceId] = "Excluded: complete food contract changed since its published image";
+                    continue;
+                }
                 b.Offers.RemoveAll(o => !scope.ContainsProduct(o.ProductId));
                 var products = scope.Products().ToArray();
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.
-                var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products)
+                // E5b3 Decision 5: every pre-sale read reconciles native effective holders with the image.
+                var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg))
                     : DecisionMenu(observationMinute, b.PlaceId, reg, b.Id, products);
                 // A live capture supersedes any older decision image without another native read.
                 if ((observed != null || capture) && decisionSupply.TryGetValue(b.PlaceId, out var cachedImage))
@@ -384,7 +397,7 @@ namespace PersistentCity.Runtime
                 && decisionSupply.TryGetValue(placeId, out var cached) && cached.Matches(reg, businessId, products))
             { DecisionSupplyHits++; return cached.Supply; }
             DecisionSupplyMisses++;
-            var supply = FoodSupplyReader.ReadMenu(reg, products);
+            var supply = FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg));
             decisionSupply[placeId] = new DecisionSupply(reg, businessId, products, supply);
             return supply;
         }
@@ -455,7 +468,7 @@ namespace PersistentCity.Runtime
             if (observed.TryGetValue(meal.PlaceId, out var seen) && ReferenceEquals(seen.Registration, reg)
                 && seen.Products.SequenceEqual(products, StringComparer.Ordinal) && seen.Supply.Values.All(s => s.AtMinute == now))
             { before = seen.Supply; CheckoutSupplyReuses++; }
-            else before = FoodSupplyReader.ReadMenu(reg, products);
+            else before = FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg));
             if (before.Values.Any(s => !s.Units.HasValue)) return new FoodSale(false, "Menu supply contract changed");
             var refusal = SellLine(meal, minute, reg, business!, scope, meal.ProductId, mainPrice, before,
                 () => FoodSaleReceipts.Begin(data, meal, ticket?.Extras), out before);
@@ -517,8 +530,10 @@ namespace PersistentCity.Runtime
                     return new FoodSale(false, "Approved price changed during native setup");
                 // Setup/open checks may invoke native callbacks. Check the whole approved menu
                 // again, not only the chosen price, before creating a receipt or native order.
+                // E5b3 Decision 3: the published image's holders, definitions and price rows, after native setup.
                 if (!CompletePricesMatch(reg, business) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
-                    || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true)
+                    || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true
+                    || !ContractRecheck(reg, true))
                 {
                     return RefuseCheckoutContract(reg);
                 }
