@@ -19,7 +19,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>Automatic whole-business food authority. Saves use the same native snapshot
     /// as population/meal records. Native code owns inventory, orders and daily accounting.</summary>
-    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IDisposable
+    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IFoodStartupValidation, IDisposable
     {
         public const string Product = "ba:itemname_croissant";
         private const string PatchId = "persistentcity.food-routines";
@@ -205,16 +205,24 @@ namespace PersistentCity.Runtime
         // Startup: from construction until the coordinator first leaves warming (shadow not started yet, or warming).
         private bool StartupPhase => contractMode == ContractMode.Warming
             || contractMode == ContractMode.Fallback && contractFallback == ShadowNotStarted;
-        // E5b5: a shop the saved city already owns keeps service through startup under the E5b1 contract, as original-three
-        // shops do, so a reload does not drop its travelling or serving meals while images warm. Its names are checked
-        // against the policy once loaded names exist. New acquisitions stay guarded, and a failed capability ends startup
-        // (Fallback), which withdraws the shop as Decision 12 requires.
+        // E5b5: a shop the saved city already owns keeps its ownership and desire through startup, so a reload does not
+        // withdraw it while images warm. It sells nothing until its contract image is validated: it is not a capture
+        // candidate, checkout refuses it, and Core holds its travelling or serving meals (IFoodStartupValidation). Its
+        // names are checked against the policy once loaded names exist. New acquisitions stay guarded, and a failed
+        // capability ends startup (Fallback), which withdraws the shop as Decision 12 requires.
         private FoodLiveMenuRefusal LiveMenu(BuildingRegistration r)
         {
             var menu = LiveMenu(r.cachedAvailableProducts);
-            if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !StartupPhase || NativeFoodOwnership.Find(r)?.Managed != true) return menu;
+            if (!StartupHeld(r, menu)) return menu;
             return FoodMenuPolicy.LiveMenu(r.cachedAvailableProducts, CurrentProductPolicy, loadedNamesPending: true);
         }
+        private bool StartupHeld(BuildingRegistration r, FoodLiveMenuRefusal menu)
+            => menu == FoodLiveMenuRefusal.OriginalThreeGuard && StartupPhase && NativeFoodOwnership.Find(r)?.Managed == true;
+        private bool StartupHeld(BuildingRegistration r) => StartupHeld(r, LiveMenu(r.cachedAvailableProducts));
+        public bool AwaitingValidation(string businessId)
+            => ReferenceEquals(save, SaveGameManager.Current) && scopesByBusiness.TryGetValue(businessId, out var scope)
+                && registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg);
+        public const string StartupValidationRefusal = "Waiting: saved food contract is validated after load; no sale before";
         // E5b5: a mod removed (or a product reclassed) under an owned or wanted shop is a recorded refusal, so desire is
         // withdrawn now, the hand-back waits for the boundary, and a return goes through Decision 7 recovery with a
         // fresh image before any reacquisition. History and receipts are untouched.
@@ -262,6 +270,8 @@ namespace PersistentCity.Runtime
         {
             if (registrations.TryGetValue(placeId, out var menuReg) && menuReg.cachedAvailableProducts != null)
             {
+                // Held at startup: no read, capture or sale until the image is validated (ownership kept).
+                if (StartupHeld(menuReg)) return StartupValidationRefusal;
                 var menu = LiveMenu(menuReg);
                 if (menu == FoodLiveMenuRefusal.OriginalThreeGuard)
                     return contractMode == ContractMode.Warming ? "Waiting: food contract warming; non-original products wait for every shop's first image"
@@ -497,6 +507,7 @@ namespace PersistentCity.Runtime
                 FoodSaleReceipts.Prune(data, receiptDay, state.Residents
                     .Where(m => m.Status == MealStatus.Uncertain).Select(m => m.IntentId));
             }
+            if (AwaitingValidation(meal.BusinessId)) return new FoodSale(false, StartupValidationRefusal); // Core never asks here
             if (!CanServe(meal.BusinessId)) return new FoodSale(false, "Business is no longer owned by Persistent City");
             var observed = new Dictionary<string, SupplyObservation>(1, StringComparer.Ordinal);
             FoodBusiness? business;

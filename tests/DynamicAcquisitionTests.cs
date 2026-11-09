@@ -59,7 +59,11 @@ public sealed class DynamicAcquisitionTests
         Assert.DoesNotContain("FoodProducts.Known(r.cachedAvailableProducts", market);
         Assert.Contains("if (LiveMenu(r) != FoodLiveMenuRefusal.None) return false;", market);
         // Startup hold for saved owned shops, and a rebuild of every shop on a new policy publication.
-        Assert.Contains("if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !StartupPhase || NativeFoodOwnership.Find(r)?.Managed != true) return menu;", market);
+        Assert.Contains("=> menu == FoodLiveMenuRefusal.OriginalThreeGuard && StartupPhase && NativeFoodOwnership.Find(r)?.Managed == true;", market);
+        Assert.Contains("if (StartupHeld(menuReg)) return StartupValidationRefusal;", market); // no read, capture or sale
+        Assert.Contains("if (AwaitingValidation(meal.BusinessId)) return new FoodSale(false, StartupValidationRefusal);", market);
+        Assert.Contains("public bool AwaitingValidation(string id) => Market(id) is IFoodStartupValidation startup && startup.AwaitingValidation(id);",
+            File.ReadAllText(Path.Combine(root, "Runtime", "FoodMarkets.cs")));
         Assert.Contains("if (!first) { contractPolicyRequeues++; reader.RequeueAllShops(); }", coordinator);
         Assert.Contains("ObserveProductPolicy(reader);", coordinator);
         Assert.Contains("private bool DynamicAcquisition => contractMode == ContractMode.Active && contractCapabilities.AllPassed;", market);
@@ -485,10 +489,66 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(2, market.Attempts); // never replayed
     }
 
+    /// <summary>A seller that reports its saved business as awaiting startup validation, then valid or withdrawn.</summary>
+    private sealed class StartupMarket : IFoodMarket, IFoodBusinessAuthority, IFoodStartupValidation
+    {
+        public readonly WeightedFoodChoiceTests.Market Inner;
+        public StartupMarket(WeightedFoodChoiceTests.Market inner) { Inner = inner; }
+        public bool Awaiting, Withdrawn;
+        public int Attempts, AwaitingAsks;
+        public double EarliestMinute => 0;
+        public IReadOnlyList<FoodBusiness> Read(double at) => Inner.Read(at);
+        public bool CanServe(string businessId) => !Withdrawn;
+        public bool AwaitingValidation(string businessId) { if (Awaiting) AwaitingAsks++; return Awaiting; }
+        public FoodSale Buy(ResidentMeal m, double at)
+        {
+            Attempts++;
+            Assert.False(Awaiting); // Core never checks out a business that awaits validation
+            return Inner.Buy(m, at);
+        }
+    }
+
     [Theory]
-    [InlineData(false)] // the catalogue is published during warm-up
-    [InlineData(true)]  // the catalogue is still building: loaded names pending
-    public void AReloadKeepsASavedDynamicShopServingThroughAMultiFrameWarmUp(bool catalogueBuilding)
+    [InlineData(false)] // validation passes: the held commitment is bought
+    [InlineData(true)]  // validation fails: the commitment ends with no checkout attempt
+    public void CoreHoldsACommitmentWhileItsBusinessAwaitsStartupValidation(bool withdrawn)
+    {
+        var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
+        var market = new StartupMarket(inner);
+        var city = new CitySimulator(prepared.State, planner); city.AttachFoodMarket(market, LegacyFoodChoice.Settings());
+        var m = city.State.Food!.Residents[0]; double at = m.DesiredAt;
+        for (int i = 0; i < 400 && m.Decision?.Result != FoodDecisionResult.Selected; i++) city.AdvanceTo(at, 1);
+        Assert.Equal(FoodDecisionResult.Selected, m.Decision!.Result);
+        string intent = m.IntentId;
+        market.Awaiting = true; // the save reloaded; its contract images are warming
+        var statuses = new HashSet<MealStatus>();
+        for (double t = at; t <= at + 6; t += .5) { city.AdvanceTo(t, 1); statuses.Add(city.State.Food!.Residents[0].Status); }
+        m = city.State.Food!.Residents[0];
+        Assert.True(market.AwaitingAsks > 0);
+        Assert.All(statuses, s => Assert.True(s == MealStatus.Travelling || s == MealStatus.Serving, s.ToString()));
+        Assert.Equal(0, market.Attempts); Assert.Empty(inner.Orders);
+        Assert.Equal(intent, m.IntentId);
+        market.Awaiting = false; market.Withdrawn = withdrawn;
+        while (!city.AdvanceTo(at + 30, 1).CaughtUp) { }
+        m = city.State.Food!.Residents[0];
+        if (withdrawn)
+        {
+            Assert.Equal(MealStatus.Missed, m.Status);
+            Assert.Equal(0, market.Attempts); Assert.Empty(inner.Orders);
+            Assert.Equal(Money.Zero, m.Spent); Assert.Equal(Money.Zero, m.DayAllowanceUsed);
+        }
+        else
+        {
+            Assert.Equal(MealStatus.Paid, m.Status);
+            Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(1, market.Attempts);
+        }
+    }
+
+    [Theory]
+    [InlineData(false, false)] // valid reload, catalogue published during warm-up
+    [InlineData(true, false)]  // valid reload, catalogue still building: loaded names pending
+    [InlineData(false, true)]  // a loaded holder definition changed between sessions: the image fails validation
+    public void AReloadKeepsASavedDynamicShopOwnedThroughWarmUpAndSellsOnlyAfterValidation(bool catalogueBuilding, bool invalidHolder)
     {
         var before = World();
         var owned = before.AddShop("address:main:1:shop", Burger, Donut);
@@ -501,31 +561,54 @@ public sealed class DynamicAcquisitionTests
         world.PolicySource = new FoodProductPolicySource(() => world.Catalogue.Names, () => FoodProductMetadataResolver.Empty,
             _ => FoodProductMetadataSnapshot.Empty);
         world.Active = false; world.Warming = true;
+        if (invalidHolder)
+        {
+            // The showcase now produces only burgers: native setup would index it as a workstation-like producer.
+            world.Items[ContractWorld.ShelfItem].itemsToProduce = new[] { Burger };
+            world.RebuildCatalogue();
+        }
         var shop = world.AddShop(owned.Key, Burger, Donut);
         shop.Row = owned.Row;
         var fresh = world.AddShop("address:main:2:shop", Burger, Donut); // never owned: stays guarded while warming
         if (catalogueBuilding) world.Catalogue.MarkDirty();
         world.VisitAll();
+        // Ownership and desire kept, so Core holds the commitment instead of dropping it ...
         Assert.True(shop.Row.CanServe);
+        Assert.True(world.AwaitingValidation(shop));
         Assert.False(fresh.Row.Desired);
-        // A travelling meal's checkout and a new capture during warm-up both run, under the E5b1 contract.
-        var capture = world.Select(shop)!;
-        Assert.NotNull(capture);
-        Assert.Equal("during-warmup", world.Checkout(capture, Donut, "during-warmup"));
+        // ... but nothing is captured or sold before the image is validated.
+        var held = new ContractWorld.Capture(shop, shop.Menu.ToDictionary(p => p, p => Money.FromNative(shop.PriceOf(p).price)));
+        Assert.Null(world.Select(shop));
+        Assert.Null(world.Checkout(held, Donut, "travelling-meal"));
         if (catalogueBuilding) world.RebuildCatalogue();
         int frames = 0;
         while (world.Warming && frames < 100)
         {
             world.Frame(units: 1); world.VisitAll(); frames++;
-            Assert.True(shop.Row.CanServe, "frame " + frames);
+            if (world.Warming)
+            {
+                Assert.True(shop.Row.CanServe, "frame " + frames);
+                Assert.Null(world.Checkout(held, Donut, "travelling-meal"));
+            }
         }
         Assert.True(frames > 1);
         Assert.True(world.Active);
+        Assert.Empty(world.Orders); // no receipt or order before validation
         world.VisitAll();
+        Assert.False(world.AwaitingValidation(shop));
+        if (invalidHolder)
+        {
+            Assert.False(world.Coordinator.Image(shop.Key)!.Passed);
+            Assert.False(shop.Row.CanServe); // Core then drops the commitment; nothing was sold on the invalid contract
+            Assert.Null(world.Checkout(held, Donut, "travelling-meal"));
+            Assert.Empty(world.Orders);
+            Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+            return;
+        }
         Assert.True(shop.Row.CanServe);
         Assert.DoesNotContain(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         Assert.True(shop.Row.CanServe);
-        Assert.NotNull(world.Checkout(world.Select(shop)!, Donut, "after-warmup"));
+        Assert.NotNull(world.Checkout(world.Select(shop)!, Donut, "travelling-meal")); // the held commitment completes
         for (int i = 0; i < 3 && !fresh.Row.CanServe; i++) { world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); }
         Assert.True(fresh.Row.CanServe); // acquired normally once active
 

@@ -181,6 +181,8 @@ internal sealed class ContractWorld
         if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !Warming || !s.Row.Managed) return menu;
         return FoodMenuPolicy.LiveMenu(s.Menu, CurrentPolicy, loadedNamesPending: true);
     }
+    /// <summary>Runtime AwaitingValidation (StartupHeld): ownership kept, but no read, capture or sale until validated.</summary>
+    public bool AwaitingValidation(Shop s) => Warming && s.Row.Managed && LiveMenu(s) == FoodLiveMenuRefusal.OriginalThreeGuard;
     // E5b5 SupportedBusiness: Core LiveMenu (the original-three guard only while dynamic acquisition is off).
     public bool SupportedBusiness(Shop s)
     {
@@ -465,6 +467,7 @@ internal sealed class ContractWorld
     /// <summary>A selected capture: SupportedMenu, CanServe, the Decision 3 recheck, then live prices.</summary>
     public Capture? Select(Shop s)
     {
+        if (AwaitingValidation(s)) return null; // Runtime MenuStatus: StartupValidationRefusal
         CaptureEpoch.Begin();
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!s.Row.CanServe || !Recheck(s, false)) return null;
@@ -477,6 +480,7 @@ internal sealed class ContractWorld
     {
         var s = c.Shop;
         if (Orders.Contains(intent)) return intent;
+        if (AwaitingValidation(s)) return null; // Runtime BuyLive: StartupValidationRefusal
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!s.Row.CanServe || !Recheck(s, true)) return null;
         int reconciled = Reconciliations;

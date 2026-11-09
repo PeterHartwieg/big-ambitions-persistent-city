@@ -172,6 +172,12 @@ namespace PersistentCity.Core
         public bool Paid { get; }
         public string Reason { get; }
     }
+    /// <summary>E5b5: a market whose saved businesses can be briefly unvalidated after a load (contract images warming).
+    /// Core neither checks out nor drops a commitment to such a business; it waits a minute and asks again.</summary>
+    public interface IFoodStartupValidation
+    {
+        bool AwaitingValidation(string businessId);
+    }
     /// <summary>One main-thread sale call must finish before saving the native world plus CityState.
     /// Exceptions leave a persisted Uncertain decision which is never retried automatically.</summary>
     public interface IFoodMarket
@@ -388,6 +394,11 @@ namespace PersistentCity.Core
             // obligations (an uncertain receipt above, a held purchase) stay with the same person and wallet.
             if (person.IsVisitor && VisitorSchedules.Dormant(person) && !Active(meal) && meal.Status != MealStatus.Uncertain)
             { SkipDormantMeals(meal, person, now); return; }
+            // E5b5: a saved commitment to a business still being validated after a load waits; it is neither bought nor
+            // dropped. Deadlines and every other check apply unchanged once validation ends.
+            if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodStartupValidation startup
+                && startup.AwaitingValidation(meal.BusinessId))
+            { meal.DueAt = Math.Max(meal.DueAt, now + 1); return; }
             FoodBusiness? closedStand = null;
             if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
             {
