@@ -144,7 +144,7 @@ namespace PersistentCity.Core
                 {
                     bool later = false;
                     for (int j = i + 1; j < records.Count && !later; j++) later = records[j].Sequence == expected;
-                    error = i == 0 && record.Sequence != expected && !later
+                    error = i == 0 && (record.Sequence < expected || !later)
                         ? "the stream does not start at the checkpoint sequence " + start + " (first seq=" + record.Sequence + ")"
                         : i > 0 && record.Sequence == records[i - 1].Sequence ? "duplicate hold seq=" + record.Sequence
                         : later || record.Sequence < expected ? "hold seq=" + record.Sequence + " is out of order (expected " + expected + ")"

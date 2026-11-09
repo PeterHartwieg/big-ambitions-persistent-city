@@ -120,6 +120,14 @@ public static class HoldReplay
         if (!city.BeginAccountingObservations(native)) throw new HarnessViolation("replay epoch not published");
         double frameSeconds = 1.0 / from.FramesPerSecond;
         var outcome = new Outcome();
+        if (native >= to.Minute)
+        {
+            // A segment that ends where it starts: nothing to apply, the checkpoint is the result.
+            outcome.Failure = replay.Count != 0 ? "the replay ended with " + replay.Count + " holds unapplied" : "";
+            outcome.Payload = SaveCodec.Write(city.State);
+            outcome.Equal = outcome.Failure.Length == 0 && outcome.Payload == to.Payload;
+            return outcome;
+        }
         bool first = true;
         for (long frames = 0; ; frames++)
         {
