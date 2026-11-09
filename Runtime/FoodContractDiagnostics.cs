@@ -322,8 +322,11 @@ namespace PersistentCity.Runtime
         private void AddName(string name) { if (!contractNamesBuffer.Contains(name)) contractNamesBuffer.Add(name); }
         private bool ServingStaleForCatalogue(string key, LoadedStockCatalogue catalogue)
         {
+            // Content against the current catalogue, and live references against the loaded definitions (contractLive
+            // is bound to this registration), so a replaced definition is refused whichever runs first.
             var serving = contracts.Serving(key);
-            return serving != null && contracts.VerifiedCatalogue(key) != catalogue.Revision && !FoodContractRecheck.CatalogueCurrent(serving, catalogue);
+            return serving != null && (contracts.VerifiedCatalogue(key) != catalogue.Revision && !FoodContractRecheck.CatalogueCurrent(serving, catalogue)
+                || !FoodContractRecheck.ReferencesCurrent(serving, contractLive));
         }
         /// <summary>The coordinator is active and the catalogue is rebuilding: a sale waits, without a contract refusal.</summary>
         private bool ContractCatalogueWaiting => contractMode == ContractMode.Active && contractReader != null && contractReader.Catalogue == null;

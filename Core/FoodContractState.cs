@@ -306,6 +306,16 @@ namespace PersistentCity.Core
             return true;
         }
 
+        /// <summary>Every dependency still resolves to the loaded object the image recorded. A field-identical
+        /// replacement object is a different definition (Decision 3a reference check), whatever its content.</summary>
+        public static bool ReferencesCurrent(FoodContractImage image, IFoodContractLive live)
+        {
+            var definitions = image.Definitions;
+            for (int i = 0; i < definitions.Count; i++)
+                if (!live.ReadDefinition(definitions[i].Name, out var current, out _) || !ReferenceEquals(current, definitions[i].Live)) return false;
+            return true;
+        }
+
         public static FoodContractRecheckRefusal BusinessType(FoodContractImage image, IFoodContractLive live)
             => image.Business == null || !live.ReadBusinessType(out var type) || !image.Business.Matches(type)
                 ? FoodContractRecheckRefusal.BusinessType : FoodContractRecheckRefusal.None;

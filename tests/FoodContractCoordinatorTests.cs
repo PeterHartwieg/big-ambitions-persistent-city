@@ -366,8 +366,8 @@ internal sealed class ContractWorld
         if (live.ReadBusinessType(out var facts)) business = new FoodBusinessTypeCopy(facts);
         var image = new FoodContractImage(s.Key, Hour, eligibility, holders, definitions, business, admission, start);
         var serving = Coordinator.Serving(s.Key);
-        bool staleCatalogue = Active && serving != null && Coordinator.VerifiedCatalogue(s.Key) != catalogue.Revision
-            && !FoodContractRecheck.CatalogueCurrent(serving, catalogue);
+        bool staleCatalogue = Active && serving != null && (Coordinator.VerifiedCatalogue(s.Key) != catalogue.Revision
+            && !FoodContractRecheck.CatalogueCurrent(serving, catalogue) || !FoodContractRecheck.ReferencesCurrent(serving, live));
         Coordinator.Publish(image); Publishes++;
         if (staleCatalogue && Interest(s)) Refuse(s);
         else if (!image.Passed && Active && Interest(s)) Refuse(s);
@@ -749,6 +749,34 @@ public sealed class FoodContractCoordinatorTests
         world.RebuildCatalogue(); world.Drain(); world.VisitAll();
         Assert.False(world.Refused.ContainsKey(shop.Key));
         Assert.True(shop.Row.CanServe);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AReplacedDefinitionObjectIsRefusedWhicheverRunsFirst(bool publicationFirst)
+    {
+        var (world, shop) = Owned();
+        var capture = world.Select(shop)!;
+        var old = world.Items[ContractWorld.ShelfItem];
+        // A field-identical new object under the same name (W11 re-register): same content, different reference.
+        world.Items[ContractWorld.ShelfItem] = new ContractWorld.Item { itemName = old.itemName, showcase = old.showcase,
+            itemsThatCanShowcase = (string[])old.itemsThatCanShowcase!.Clone(), itemsToProduce = old.itemsToProduce, tags = new List<string>(old.tags!),
+            cargoCapacity = old.cargoCapacity };
+        world.RebuildCatalogue();
+        if (publicationFirst) { world.Drain(); world.VisitAll(); }
+        else Assert.Null(world.Checkout(capture, Burger, "x"));
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        Assert.False(shop.Row.Desired);
+        Assert.True(shop.Row.Managed);
+        Assert.Empty(world.Orders);
+        // The same safe sequence in both orders: hand-back, recovery against the new object, later acquisition.
+        world.Drain(); world.VisitAll();
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+        world.Drain(); world.VisitAll();
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.Same(world.Items[ContractWorld.ShelfItem], world.Coordinator.Serving(shop.Key)!.Definitions.Single(d => d.Name == ContractWorld.ShelfItem).Live);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
     }
 
     [Fact]
