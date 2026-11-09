@@ -12,6 +12,8 @@ namespace PersistentCity.Core
         bool Executable(string name);
         /// <summary>Revision-1 legacy metadata for an original product, revision-2 resolver metadata otherwise.</summary>
         FoodOfferMetadata Capture(string name, ResidentTraits traits, int seed, string consumerId);
+        /// <summary>The taste band <see cref="Capture"/> would hold, without allocating a held tuple (live checkout re-plan).</summary>
+        int TasteBand(string name, ResidentTraits traits, int seed, string consumerId);
     }
 
     /// <summary>A market that supplies the product policy for its next uncaptured context.</summary>
@@ -46,6 +48,13 @@ namespace PersistentCity.Core
             if (FoodProducts.Known(name)) return LegacyFoodOfferMetadata.Capture(traits, seed, consumerId, name);
             if (!Executable(name)) throw new ArgumentException("Product is not executable under this policy.");
             return resolver.Capture(name, traits, seed, consumerId);
+        }
+
+        public int TasteBand(string name, ResidentTraits traits, int seed, string consumerId)
+        {
+            if (FoodProducts.Known(name)) return FoodMenuPolicy.Taste(traits, seed, consumerId, name);
+            if (!Executable(name)) throw new ArgumentException("Product is not executable under this policy.");
+            return resolver.Resolve(name, traits, seed, consumerId).TasteBand;
         }
     }
 }

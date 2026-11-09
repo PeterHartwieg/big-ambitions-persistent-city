@@ -426,8 +426,16 @@ public sealed class HeldPolicyExecutionTests
         image = new LoadedNameImage(3, new[] { ChoppedCheese }, FoodEligibilityRefusal.CargoBounds);
         Assert.False(composite.ProductPolicy.Executable(ChoppedCheese));
         // A failed publication falls back to the original three and recovers at a later read.
-        var failing = new FoodProductPolicySource(() => Image(1, Dumplings), () => config, _ => throw new InvalidOperationException("Metadata publication requires the bound host main thread."));
+        // Review Opus-r1-2: while the inputs are unchanged a failure is neither rebuilt nor rethrown, and it is reported once.
+        var failingImage = Image(1, Dumplings); bool unbound = true; var reports = new List<string>();
+        var failing = new FoodProductPolicySource(() => failingImage, () => config,
+            c => unbound ? throw new InvalidOperationException("Metadata publication requires the bound host main thread.") : FoodProductMetadataSnapshot.Empty,
+            reports.Add);
         Assert.Same(FoodProductPolicy.OriginalThree, failing.Current); Assert.Contains("main thread", failing.Failure);
+        for (int i = 0; i < 50; i++) Assert.Same(FoodProductPolicy.OriginalThree, failing.Current);
+        Assert.Equal(1, failing.PublishAttempts); Assert.Single(reports);
+        unbound = false; failingImage = Image(2, ChoppedCheese); // a new image retries
+        Assert.True(failing.Current.Executable(ChoppedCheese)); Assert.Equal("", failing.Failure); Assert.Single(reports);
         // A composite without a source supplies the original three.
         Assert.Same(FoodProductPolicy.OriginalThree, new FoodMarkets(new FoodCommerceState(), new Seller(), new Seller(), _ => new Position(0, 0, 0)).ProductPolicy);
         Assert.True(apiCalls > 0);
@@ -453,6 +461,13 @@ public sealed class HeldPolicyExecutionTests
             FoodChoicePolicy.Select(offers, traits, Money.FromCents(100000), draw, settings, true);
             FoodChoicePolicy.Weight(held, traits, Money.Zero, settings, held.Metadata!.Value);
         }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        // Review Opus-r1-3: the checkout taste lookup equals the held capture's and allocates nothing.
+        var policy = source.Current;
+        Assert.Equal(policy.Capture(Dumplings, traits, 957, "pc:1").TasteBand, policy.TasteBand(Dumplings, traits, 957, "pc:1"));
+        Assert.Equal(policy.Capture(FoodProducts.Burger, traits, 957, "pc:1").TasteBand, policy.TasteBand(FoodProducts.Burger, traits, 957, "pc:1"));
+        before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++) _ = policy.TasteBand(Dumplings, traits, 957, "pc:1");
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 

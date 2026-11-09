@@ -109,20 +109,27 @@ namespace PersistentCity.Runtime
         private readonly Func<LoadedNameImage?> names;
         private readonly Func<FoodProductMetadataResolver> config;
         private readonly Func<FoodProductMetadataLoadedNames?, FoodProductMetadataSnapshot> api;
+        private readonly Action<string>? report;
         private LoadedNameImage? image;
         private FoodProductMetadataLoadedNames? loaded;
-        private FoodProductMetadataResolver? lastConfig;
+        private string imageFailure = "";
+        private FoodProductMetadataResolver? lastConfig, failedConfig;
         private FoodProductMetadataSnapshot? lastSnapshot;
+        private FoodProductMetadataLoadedNames? failedLoaded;
         private FoodProductPolicy current = FoodProductPolicy.OriginalThree;
 
+        /// <param name="report">Called once per distinct failure message (the host logs it); never on a clean read.</param>
         public FoodProductPolicySource(Func<LoadedNameImage?> names, Func<FoodProductMetadataResolver> config,
-            Func<FoodProductMetadataLoadedNames?, FoodProductMetadataSnapshot> api)
+            Func<FoodProductMetadataLoadedNames?, FoodProductMetadataSnapshot> api, Action<string>? report = null)
         {
             this.names = names ?? throw new ArgumentNullException(nameof(names));
             this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.api = api ?? throw new ArgumentNullException(nameof(api));
+            this.report = report;
         }
         public long Publications { get; private set; }
+        /// <summary>Calls to the API publication, for tests: a failed publication is not retried until an input changes.</summary>
+        public long PublishAttempts { get; private set; }
         /// <summary>Empty while the last publication succeeded; otherwise why the policy fell back to the original three.</summary>
         public string Failure { get; private set; } = "";
 
@@ -130,30 +137,50 @@ namespace PersistentCity.Runtime
         {
             get
             {
+                var next = names();
+                if (!ReferenceEquals(next, image))
+                {
+                    // The set is built once per image object, also when it fails: an unchanged image never rebuilds.
+                    image = next; loaded = null; imageFailure = "";
+                    // A refused or missing image admits no dynamic name; a dirty catalogue publishes null.
+                    if (next != null && next.Refusal == FoodEligibilityRefusal.None)
+                    {
+                        try { loaded = new FoodProductMetadataLoadedNames(next.Names); }
+                        catch (ArgumentException e) { imageFailure = "loaded-name image refused: " + e.Message; }
+                    }
+                }
+                var resolver = config();
+                // A failed publication is retried only when the config or the image changes (or at the next city load,
+                // which builds a new source), so a persistent cause costs no rebuild and no exception per context.
+                if (failedConfig != null && ReferenceEquals(resolver, failedConfig) && ReferenceEquals(loaded, failedLoaded)) return current;
                 try
                 {
-                    var next = names();
-                    if (!ReferenceEquals(next, image))
-                    {
-                        image = next;
-                        // A refused or missing image admits no dynamic name; a dirty catalogue publishes null.
-                        loaded = next == null || next.Refusal != FoodEligibilityRefusal.None ? null : new FoodProductMetadataLoadedNames(next.Names);
-                    }
-                    var resolver = config(); var snapshot = api(loaded);
-                    if (Failure.Length > 0 || !ReferenceEquals(resolver, lastConfig) || !ReferenceEquals(snapshot, lastSnapshot) || !ReferenceEquals(loaded, current.LoadedNames))
+                    PublishAttempts++;
+                    var snapshot = api(loaded);
+                    if (!ReferenceEquals(resolver, lastConfig) || !ReferenceEquals(snapshot, lastSnapshot) || !ReferenceEquals(loaded, current.LoadedNames))
                     {
                         current = new FoodProductPolicy(resolver.WithApi(snapshot), loaded);
-                        lastConfig = resolver; lastSnapshot = snapshot; Publications++; Failure = "";
+                        lastConfig = resolver; lastSnapshot = snapshot; Publications++;
                     }
+                    failedConfig = null; failedLoaded = null;
+                    Fail(imageFailure);
                 }
                 catch (Exception e) when (e is ArgumentException || e is InvalidOperationException)
                 {
                     // Never a partial policy: new contexts hold the original three until a later publication succeeds.
-                    Failure = e.GetType().Name + ": " + e.Message; current = FoodProductPolicy.OriginalThree;
-                    image = null; loaded = null; lastConfig = null; lastSnapshot = null;
+                    current = FoodProductPolicy.OriginalThree; lastConfig = null; lastSnapshot = null;
+                    failedConfig = resolver; failedLoaded = loaded;
+                    Fail(e.GetType().Name + ": " + e.Message);
                 }
                 return current;
             }
+        }
+
+        private void Fail(string message)
+        {
+            if (message == Failure) return;
+            Failure = message;
+            if (message.Length > 0) report?.Invoke(message);
         }
     }
 }
