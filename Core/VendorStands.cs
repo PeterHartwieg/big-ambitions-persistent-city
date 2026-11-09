@@ -40,7 +40,8 @@ namespace PersistentCity.Core
         /// <summary>A stand within this distance of the current one is the same spot, not a move.</summary>
         public const double SameStandMetres = 0.1;
 
-        /// <summary>Until E5b's held-policy execution lands, only the original three products are executable.</summary>
+        /// <summary>The predicate of a coordinator built without a product policy. The live vehicle market passes the
+        /// held policy's <see cref="IFoodProductPolicy.Executable"/> instead (E6f).</summary>
         public static bool OriginalThree(string item) => FoodProducts.KnownLegacy(item);
 
         /// <summary>Null when PC may own this vehicle's openings, otherwise why the whole vehicle stays with Street Food.
@@ -299,6 +300,11 @@ namespace PersistentCity.Core
         }
 
         public void Resume() { stopped = false; applyPending = true; Reason = ""; }
+
+        /// <summary>The executable predicate's answers changed (E6f: a new product policy). The current image is applied
+        /// again at the next unit, so a vehicle whose menu turned non-executable is handed back after drain and a vehicle
+        /// whose menu turned executable is admitted, without waiting for a new Street Food revision.</summary>
+        public void Revalidate() { if (api != null && !stopped) applyPending = true; }
 
         /// <summary>At a save-consistent event boundary: removes retired rows nothing names, or keeps them as tombstones
         /// when memory names their place. <paramref name="pendingReceipt"/> reports a pending or uncertain receipt.</summary>

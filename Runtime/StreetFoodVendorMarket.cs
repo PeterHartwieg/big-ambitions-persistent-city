@@ -39,6 +39,9 @@ namespace PersistentCity.Runtime
         private readonly IDictionary<string, string> receipts;
         private readonly Func<double> nativeMinute;
         private readonly Func<bool> sameSave;
+        private readonly Func<IFoodProductPolicy>? productPolicy;
+        private readonly Func<string, bool> executable;
+        private IFoodProductPolicy? policy;
         private readonly VendorVehicle before = new VendorVehicle(), after = new VendorVehicle();
         private readonly Dictionary<string, long> withdrawn = new Dictionary<string, long>(StringComparer.Ordinal);
         private readonly VendorReferences references = new VendorReferences();
@@ -47,13 +50,17 @@ namespace PersistentCity.Runtime
         private long withdrawalMinute = -1;
         private bool pending, disposed, capturing;
         private double captureMinute;
+        /// <param name="productPolicy">E6f: the market's held product policy (shared with shops through the composite). Read
+        /// once per logical minute; its <see cref="IFoodProductPolicy.Executable"/> decides whole-vehicle admission. Without
+        /// it only the original three are admitted.</param>
         public StreetFoodVendorMarket(CitySimulator city, IVendorApi? api, string unavailableReason, IVendorStandSampler sampler,
-            IDictionary<string, string> receipts, Func<double> nativeMinute, Func<bool> sameSave)
+            IDictionary<string, string> receipts, Func<double> nativeMinute, Func<bool> sameSave, Func<IFoodProductPolicy>? productPolicy = null)
         {
             this.city = city; state = city.State.Food ?? throw new InvalidOperationException("Vendor market needs food state.");
             this.api = api == null ? null : new ExactPriceApi(api); this.receipts = receipts; this.nativeMinute = nativeMinute; this.sameSave = sameSave;
+            this.productPolicy = productPolicy; executable = Executable;
             ValidatePopulation(state, city.State.Vendors, receipts);
-            Coordinator = new VendorCoordinator(city.State.Vendors, this.api, unavailableReason, new Places(this), sampler);
+            Coordinator = new VendorCoordinator(city.State.Vendors, this.api, unavailableReason, new Places(this), sampler, executable);
             // A saved handback in progress remains withdrawn while its committed residents drain.
             foreach (var row in city.State.Vendors.Rows)
                 if (!row.Authority.Desired && row.Authority.Managed && row.Authority.OpeningId >= 0)
@@ -112,6 +119,18 @@ namespace PersistentCity.Runtime
             public void CollectVendorReferences(VendorReferences into) => owner.city.CollectVendorReferences(into);
         }
         public VendorCoordinator Coordinator { get; }
+        /// <summary>Whole-vehicle admission: the policy read at the last logical minute, or the original three before the
+        /// first read and without a policy. Drink, Bundle, NonFood and Unknown names keep the whole vehicle with Street Food.</summary>
+        private bool Executable(string item) => policy?.Executable(item) ?? VendorRules.OriginalThree(item);
+        // A new policy object means config, API publication or the loaded-name image changed: apply the image again.
+        private void RefreshPolicy()
+        {
+            if (productPolicy == null) return;
+            var next = productPolicy();
+            if (ReferenceEquals(next, policy)) return;
+            policy = next;
+            Coordinator.Revalidate();
+        }
         public double EarliestMinute => Math.Floor(nativeMinute());
         public long AwarenessRevision { get; private set; }
         public long Purchases { get; private set; }
@@ -139,6 +158,7 @@ namespace PersistentCity.Runtime
             if (polled != minute)
             {
                 polled = minute;
+                RefreshPolicy();
                 if (receiptDay != minute / 1440)
                 {
                     receiptDay = (int)(minute / 1440);
@@ -276,7 +296,7 @@ namespace PersistentCity.Runtime
         }
         private bool LiveOpening(VendorRow row, VendorVehicle v, long minute) => v.OwnedByPersistentCity && v.Kind == row.Kind
             && v.OpeningId == row.Stand?.OpeningId && row.DeferredStand == null && row.Stand.Published
-            && VendorRules.OpeningRefusal(v) == null && VendorRules.MenuRefusal(v, VendorRules.OriginalThree) == null
+            && VendorRules.OpeningRefusal(v) == null && VendorRules.MenuRefusal(v, executable) == null
             && minute >= v.OpenedAt && minute < v.ClosesAt && Coordinator.Lease.Valid(minute)
             && Position.Distance(v.Window, row.Stand.Position) <= VendorRules.StandRadiusMetres;
         public FoodSale Buy(ResidentMeal meal, double minute)
