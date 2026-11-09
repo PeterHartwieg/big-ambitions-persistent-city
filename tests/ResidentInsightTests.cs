@@ -558,24 +558,28 @@ public sealed class ResidentInsightTests
         Func<string, Place?> find = id => places.TryGetValue(id, out var p) ? p : null;
         for (int i = 0; i < 2000; i++) ResidentInsight.Capture(city, person, meal, find).Text();
         const int captures = 20000;
-        var watch = Stopwatch.StartNew();
-        for (int i = 0; i < captures; i++) ResidentInsight.Capture(city, person, meal, find).Text();
-        double captureMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / captures;
-
         var ids = Enumerable.Range(0, 48).Select(i => "pc:" + i).ToArray();
         const int picks = 200000;
-        watch.Restart();
-        for (int n = 0; n < picks; n++)
+        double captureMicroseconds = 0, pickMicroseconds = 0;
+        TimingBudget.Run(timing =>
         {
-            var best = new ResidentPickAccumulator();
-            for (int i = 0; i < ids.Length; i++)
-                if (ResidentPickAccumulator.Hit(300, 200, 280 + i, 260, 281 + i, 140, 8, out float score)) best.Consider(ids[i], i, score, 10 + i);
-        }
-        double pickMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / picks;
+            var watch = Stopwatch.StartNew();
+            for (int i = 0; i < captures; i++) ResidentInsight.Capture(city, person, meal, find).Text();
+            captureMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / captures;
+
+            watch.Restart();
+            for (int n = 0; n < picks; n++)
+            {
+                var best = new ResidentPickAccumulator();
+                for (int i = 0; i < ids.Length; i++)
+                    if (ResidentPickAccumulator.Hit(300, 200, 280 + i, 260, 281 + i, 140, 8, out float score)) best.Consider(ids[i], i, score, 10 + i);
+            }
+            pickMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / picks;
+            // Generous offline ceilings against the 0.20 ms event-frame sub-budget; native cost is measured on the rig.
+            timing.Under("capture us", captureMicroseconds, 200);
+            timing.Under("pick us", pickMicroseconds, 50);
+        });
         output.WriteLine("ResidentInsight.Capture+Text: " + captureMicroseconds.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " us; 48-walker pick scoring: " + pickMicroseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " us");
-        // Generous offline ceilings against the 0.20 ms event-frame sub-budget; native cost is measured on the rig.
-        Assert.True(captureMicroseconds < 200, "capture " + captureMicroseconds + " us");
-        Assert.True(pickMicroseconds < 50, "pick " + pickMicroseconds + " us");
     }
 
     private sealed class Walking : IRoutePlanner

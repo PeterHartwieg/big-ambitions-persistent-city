@@ -72,9 +72,22 @@ internal static class TimingBudget
                 throw new XunitException("Wall-clock budget missed on all " + attempt + " attempts (best attempt per check): " + string.Join("; ", missed.Select(m =>
                     string.Format(CultureInfo.InvariantCulture, "{0}: {1:0.####} ms at load factor {2:0.00}, budget {3:0.####} ms", m.Key, m.Value.Value, m.Value.Factor, m.Value.Budget))));
             Interlocked.Increment(ref retries);
+            Log(attempt, factor, missed.Select(m => m.Key));
             // Give a briefly busy machine a moment before measuring again.
             Thread.Sleep(20 * attempt);
         }
+    }
+
+    private static readonly object LogLock = new();
+
+    // With PC_TIMING_LOG set to a file path, every retry appends one line, for the perf notes.
+    private static void Log(int attempt, double factor, IEnumerable<string> missed)
+    {
+        string? path = Environment.GetEnvironmentVariable("PC_TIMING_LOG");
+        if (string.IsNullOrEmpty(path)) return;
+        lock (LogLock)
+            System.IO.File.AppendAllText(path, string.Format(CultureInfo.InvariantCulture, "retry after attempt {0}, load factor {1:0.00}: {2}{3}",
+                attempt, factor, string.Join(", ", missed), Environment.NewLine));
     }
 
     /// <summary>Wall-clock time over thread CPU time, at least 1. With no thread clock, or no CPU time to judge by

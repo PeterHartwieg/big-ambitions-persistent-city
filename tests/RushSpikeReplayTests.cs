@@ -21,14 +21,26 @@ public sealed class RushSpikeReplayTests
     {
         // Day 3 18:30-19:30 around the rig's 19:19 spike, warmed through two whole days first.
         const double from = 2 * 1440 + 1110, to = 2 * 1440 + 1170;
-        var result = RushSpikeReplay.Run(from, to, nativePrices: nativePrices);
-        output.WriteLine($"nativePrices={nativePrices}; p95={result.FrameP95:F6}ms; frameMax={result.FrameMax:F6}ms; unitMax={result.UnitMax:F6}ms; frame/unit spikes30={result.FrameSpikes30}/{result.UnitSpikes30}; hash={result.SaveSha256}");
-        Assert.True(result.PeakTravelling > 250 && result.PeakVehicles > 50, "fixture lost its rush: " + result.PeakTravelling + " travelling, " + result.PeakVehicles + " cars");
-        Assert.True(result.UnitMax < 30, "single unit " + result.UnitMax + " ms (" + result.MaxUnitKind + ")");
-        Assert.True(result.FrameMax < 30, "advancement interval " + result.FrameMax + " ms at minute " + result.MaxFrameMinute
-            + " with " + result.CollectionsInMaxFrame + " garbage collections during it");
-        Assert.True(result.FrameP95 < 5, "advancement p95 " + result.FrameP95 + " ms");
+        // X3: the replay builds its own city, so a missed wall-clock budget re-runs it (TimingBudget). The row and the
+        // spike details are written once, from the last attempt, also when the budget fails.
+        RushSpikeReplay.Result? result = null;
+        try
+        {
+            TimingBudget.Run(timing =>
+            {
+                result = RushSpikeReplay.Run(from, to, nativePrices: nativePrices);
+                Assert.True(result.PeakTravelling > 250 && result.PeakVehicles > 50, "fixture lost its rush: " + result.PeakTravelling + " travelling, " + result.PeakVehicles + " cars");
+                timing.Under("single unit max", result.UnitMax, 30);
+                timing.Under("advancement interval max", result.FrameMax, 30);
+                timing.Under("advancement p95", result.FrameP95, 5);
+            });
+        }
+        finally
+        {
+            if (result != null)
+                output.WriteLine($"nativePrices={nativePrices}; p95={result.FrameP95:F6}ms; frameMax={result.FrameMax:F6}ms at minute {result.MaxFrameMinute} with {result.CollectionsInMaxFrame} garbage collections; unitMax={result.UnitMax:F6}ms ({result.MaxUnitKind}); frame/unit spikes30={result.FrameSpikes30}/{result.UnitSpikes30}; hash={result.SaveSha256}");
+        }
         // Frame cadence never changes the city: the sliced replay saves the same bytes as one uninterrupted advance.
-        Assert.Equal(RushSpikeReplay.RunUninterrupted(from, to, nativePrices), result.SaveSha256);
+        Assert.Equal(RushSpikeReplay.RunUninterrupted(from, to, nativePrices), result!.SaveSha256);
     }
 }

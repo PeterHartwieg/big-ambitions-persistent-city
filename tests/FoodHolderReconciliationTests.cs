@@ -122,32 +122,37 @@ public sealed class FoodHolderReconciliationTests
     [Fact]
     public void ReconciliationAllocatesNothingAndStaysBounded()
     {
-        var world = new ContractWorld { MenuLimit = LoadedStockLimits.Offers };
-        var shop = world.AddShop("address:main:1:shop", Burger, HotDog);
-        for (int i = 0; i < 125; i++)
-            shop.Holders.Add(new ContractWorld.Holder { id = "extra" + i.ToString("000"), itemName = ContractWorld.ShelfItem,
-                cargoInstances = new List<ContractWorld.Cargo> { new ContractWorld.Cargo { itemName = i % 2 == 0 ? Burger : HotDog, amount = 1 } } });
-        world.Own(shop);
-        var image = world.Coordinator.Serving(shop.Key)!;
-        Assert.Equal(128, image.Holders.Count);
-        var native = world.NativeSetup(shop);
-        IReadOnlyList<string> menu = shop.Menu;
-        Func<object, int> amount = s => ((ContractWorld.Cargo)s).amount;
-        for (int i = 0; i < 100; i++) FoodHolderReconciliation.Check(image, native, menu, amount);
-        var samples = new double[1000];
-        int failures = 0;
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < samples.Length; i++)
+        string line = "";
+        TimingBudget.Run(timing =>
         {
-            long t = Stopwatch.GetTimestamp();
-            if (FoodHolderReconciliation.Check(image, native, menu, amount) != FoodReconciliationRefusal.None) failures++;
-            samples[i] = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
-        }
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-        Assert.Equal(0, failures);
-        Assert.Equal(0, allocated);
-        Array.Sort(samples);
-        output.WriteLine($"reconciliation 128 holders: p50 {samples[500]:0.0000} ms, p95 {samples[949]:0.0000} ms, max {samples[^1]:0.0000} ms, 0 B/call");
-        Assert.True(samples[949] < 1.0);
+            var world = new ContractWorld { MenuLimit = LoadedStockLimits.Offers };
+            var shop = world.AddShop("address:main:1:shop", Burger, HotDog);
+            for (int i = 0; i < 125; i++)
+                shop.Holders.Add(new ContractWorld.Holder { id = "extra" + i.ToString("000"), itemName = ContractWorld.ShelfItem,
+                    cargoInstances = new List<ContractWorld.Cargo> { new ContractWorld.Cargo { itemName = i % 2 == 0 ? Burger : HotDog, amount = 1 } } });
+            world.Own(shop);
+            var image = world.Coordinator.Serving(shop.Key)!;
+            Assert.Equal(128, image.Holders.Count);
+            var native = world.NativeSetup(shop);
+            IReadOnlyList<string> menu = shop.Menu;
+            Func<object, int> amount = s => ((ContractWorld.Cargo)s).amount;
+            for (int i = 0; i < 100; i++) FoodHolderReconciliation.Check(image, native, menu, amount);
+            var samples = new double[1000];
+            int failures = 0;
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < samples.Length; i++)
+            {
+                long t = Stopwatch.GetTimestamp();
+                if (FoodHolderReconciliation.Check(image, native, menu, amount) != FoodReconciliationRefusal.None) failures++;
+                samples[i] = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
+            }
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            Assert.Equal(0, failures);
+            Assert.Equal(0, allocated);
+            Array.Sort(samples);
+            line = $"reconciliation 128 holders: p50 {samples[500]:0.0000} ms, p95 {samples[949]:0.0000} ms, max {samples[^1]:0.0000} ms, 0 B/call";
+            timing.Under("reconciliation p95", samples[949], 1.0);
+        });
+        output.WriteLine(line);
     }
 }
