@@ -255,7 +255,7 @@ namespace PersistentCity.Core
         public bool Managed => FromHour >= 0 && UntilHour < 0;
     }
 
-    public sealed class VendorRow
+    public sealed class VendorRow : IVendorRowView
     {
         internal VendorRow(string vehicleId, string kind)
         {
@@ -278,6 +278,22 @@ namespace PersistentCity.Core
         public bool PlacePublished { get; internal set; }
         /// <summary>Why this vehicle is not served right now (diagnostic, never saved).</summary>
         public string Reason { get; internal set; } = "";
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IVendorRowView.VehicleId => VehicleId;
+        string IVendorRowView.Kind => Kind;
+        int IVendorRowView.Generation => Generation;
+        VendorRowState IVendorRowView.State => State;
+        string IVendorRowView.PlaceId => PlaceId;
+        string IVendorRowView.Signature => Signature;
+        string IVendorRowView.BusinessId => BusinessId;
+        bool IVendorRowView.PlacePublished => PlacePublished;
+        string IVendorRowView.Reason => Reason;
+        bool IVendorRowView.AuthorityDesired => Authority.Desired;
+        bool IVendorRowView.AuthorityManaged => Authority.Managed;
+        bool IVendorRowView.Suspended => Authority.Suspended;
+        bool IVendorRowView.HandbackPending => Authority.HandbackPending;
+        long IVendorRowView.OpeningId => Authority.OpeningId;
+        bool IVendorRowView.HasStand => Stand != null;
     }
 
     /// <summary>The vendor rows, ordinal by vehicle id, with the capacity invariant of plan 3.5:
