@@ -205,8 +205,8 @@ namespace PersistentCity.Runtime
             foreach (var line in new[] { ResearchAgencyDialog.Status, ResearchBilling.Status, ResearchMessages.Status })
                 if (line.Length > 0) text.AppendLine(line);
             text.Append("lastCampaignScreen=").Append(ResearchAgencyDialog.LastRefusal).AppendLine();
-            text.Append("orders open=").Append(ledger?.Open.Count ?? 0).Append(" delivered=").Append(ledger?.Kept.Count ?? 0)
-                .Append(" closed=").Append(ledger?.Closed.Count ?? 0).Append(" nextSequence=").Append(ledger?.NextSequence ?? 0).AppendLine();
+            text.Append("orders open=").Append(ledger?.OpenOrders.Count ?? 0).Append(" delivered=").Append(ledger?.KeptOrders.Count ?? 0)
+                .Append(" closed=").Append(ledger?.ClosedOrders.Count ?? 0).Append(" nextSequence=").Append(ledger?.NextSequence ?? 0).AppendLine();
             text.Append("lastBill attempts=").Append(boundary.Attempts).Append(" paid=").Append(boundary.Paid + boundary.PaidFromScan)
                 .Append(" declined=").Append(boundary.Declined + boundary.BalancePrecision).Append(" cancelled=").Append(boundary.Cancelled)
                 .Append(" paymentUnknown=").Append(boundary.PaymentUnknown).Append(" deferred=").Append(boundary.Deferred).AppendLine();
