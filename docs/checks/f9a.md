@@ -62,7 +62,7 @@ Also covered: TRX counts and failed names, a filter that matches nothing reports
 | Astra-r1-7 `--dotnet` not used by `build.py` | An explicit host's directory goes first on every stage's `PATH`; `host.dotnetSdk` is read from that host. | `Stages.test_explicit_sdk_is_first_on_path_for_build_and_recorded` |
 | Opus-r1-3 crashed test host reported `not-run` | No result with a non-zero exit is `fail` unless the log says no test matched. | `Stages.test_test_host_crash_with_an_empty_trx_fails` |
 
-FIXRESULTS
+Validation after the review fixes: required build unchanged (DLL SHA-256 `d77eaf13…`); `python -m unittest discover -s tools/acceptance -p test_*.py` 49 passed; `dotnet test tests/PersistentCity.Tests.csproj` 4,288 passed, 0 failed (5 min 49 s). One earlier gate run failed only `FoodContractCoordinatorTests.RecheckBoundaryRebuildAndCommitGateCosts` at its wall-clock check (`Assert.Equal(0, units.Count(u => u >= 30))`, actual 1) while other worktrees' tests shared the machine. That E5b3 test is not touched by this slice. It passed in the rerun above and in the first-round gate.
 
 ## In-game checks for the next batched rig
 
