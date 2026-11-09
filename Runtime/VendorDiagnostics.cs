@@ -20,8 +20,8 @@ namespace PersistentCity.Runtime
             try
             {
                 // One router per existing pc arity, preserving the population console commands.
-                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc vendor status | pc vendor sales | pc food decisions", RoutePcCommand);
-                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc vendor withdraw <vehicle> (FT cities only)", RoutePcDetail);
+                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc vendor status | pc vendor sales | pc food decisions | pc food contract", RoutePcCommand);
+                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
                 CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq>", RoutePcMovement);
                 vendorCommands = true;
             }
@@ -74,6 +74,7 @@ namespace PersistentCity.Runtime
         {
             if (area == "movement") { MovementCommand(action, detail, ""); return; }
             if (area == "workplace") { WorkplaceCommand(action, detail); return; }
+            if (area == "food" && action == "contract") { FoodContractCommand(detail); return; }
             if (area != "vendor" && !(area == "food" && action == "decisions"))
             { if (detail.Length == 0) CensusCommand(area, action); else CensusDetailCommand(area, action, detail); return; }
             var save = SaveGameManager.Current;
