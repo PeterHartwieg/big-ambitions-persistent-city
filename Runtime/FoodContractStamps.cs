@@ -223,6 +223,18 @@ namespace PersistentCity.Runtime
             Catalogue = building.Catalogue; published = image; Building = null; Dirty = false;
         }
         public void Reset() { Revision++; Bumps++; Dirty = true; Catalogue = null; Building = null; published = null; }
+        /// <summary>E5b3 Decision 3a: publishes the next revision with the given definitions re-copied and every
+        /// other definition shared. The names are unchanged, so the name image is republished with the same names.
+        /// False (nothing changes) while dirty or when the catalogue cannot take the replacements.</summary>
+        public bool Replace(IReadOnlyList<LoadedStockDefinition> changed)
+        {
+            if (Dirty || Catalogue == null || published == null) return false;
+            var next = Catalogue.WithReplacements(Revision + 1, changed);
+            if (next == null) return false;
+            Revision++; Bumps++; Catalogue = next;
+            published = new LoadedNameImage(Revision, published.Names, published.Refusal);
+            return true;
+        }
     }
 
     public interface IContractDirtyUnit { bool Queued { get; set; } }

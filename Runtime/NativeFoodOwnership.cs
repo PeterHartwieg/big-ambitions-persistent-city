@@ -301,10 +301,18 @@ namespace PersistentCity.Runtime
                     // Drained native callbacks may have changed eligibility or introduced customers.
                     market?.RefreshKnownOwnership();
                     bool changed = false;
-                    foreach (var row in records.Values.ToArray())
+                    // E5b3 Decision 4 step 4: oldest request first, so the 16-acquisition commit budget never
+                    // depends on dictionary or controller order. Each acquisition passes readiness and the gate.
+                    var rows = records.Values.ToArray();
+                    Array.Sort(rows, FoodContractBoundary.Order);
+                    market?.BeginContractCommit();
+                    foreach (var row in rows)
                     {
                         observed.TryGetValue(row.PlaceId, out var reg);
-                        if (!row.Boundary(Hour, true, HasNativeCustomers(row), market != null)) continue;
+                        bool live = HasNativeCustomers(row);
+                        var outcome = market != null ? market.CommitBoundary(row, Hour, live)
+                            : row.Boundary(Hour, true, live, false) ? FoodContractBoundary.Outcome.HandedBack : FoodContractBoundary.Outcome.None;
+                        if (outcome != FoodContractBoundary.Outcome.Acquired && outcome != FoodContractBoundary.Outcome.HandedBack) continue;
                         changed = true;
                         if (row.Managed) market!.ActivateScope(row, reg!);
                         // Regenerate only the new native hour and future hours. Native helper keeps
@@ -335,8 +343,13 @@ namespace PersistentCity.Runtime
             finally { boundary = false; }
         }
         private static bool HasNativeCustomers(FoodAuthority row) => observed.TryGetValue(row.PlaceId, out var reg)
-            && BuildingManager.Instance != null && ReferenceEquals(BuildingManager.Instance.buildingRegistration, reg)
-            && IndoorCustomerSpawner.Customers.Count > 0;
+            && LiveNativeCustomers(reg);
+        /// <summary>E5b3 Decision 7: native customers are inside this registration's interior now.</summary>
+        internal static bool LiveNativeCustomers(BuildingRegistration reg) => BuildingManager.Instance != null
+            && ReferenceEquals(BuildingManager.Instance.buildingRegistration, reg) && IndoorCustomerSpawner.Customers.Count > 0;
+        /// <summary>E5b3 diagnostics and admission: the row at a place, with no side effect on observation state.</summary>
+        internal static FoodAuthority? Row(string place)
+            => ReferenceEquals(save, SaveGameManager.Current) && records.TryGetValue(place, out var row) ? row : null;
         private static void ResetRegistration(BuildingRegistration __instance)
         {
             EnsureSave();
