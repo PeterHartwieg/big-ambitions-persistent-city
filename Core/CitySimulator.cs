@@ -51,7 +51,13 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, Due> citizenEvents = new Dictionary<string, Due>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
         private readonly IRoutePlanner routes;
+        /// <summary>The mutable city: load, save and the simulator's own writers. Observers read <see cref="View"/> instead
+        /// (F9e); tests/OwnershipBoundaryTests.cs lists the Runtime files that may still read this property.</summary>
         public CityState State { get; }
+        private CityView? view;
+        /// <summary>F9e: the read-only city for observers (diagnostics, panel, inspector, F9 oracles). Created once and
+        /// read live, so a read allocates nothing; see <see cref="ICityView"/>.</summary>
+        public ICityView View => view ??= new CityView(State);
         private FoodCommerce? food;
         public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
         /// <summary>F5d diagnostic counter: food/finance reads of a person other than the meal's owner (zero from schema 27).</summary>
@@ -93,7 +99,8 @@ namespace PersistentCity.Core
             // Visitors have no body before F5i, so nothing selects them for the resident inspector.
             if (person == null || person.IsVisitor) return null;
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
-            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop);
+            return ResidentInsight.Capture(View, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop,
+                ResidentInsight.MemoryFood(State));
         }
         public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
@@ -200,7 +207,7 @@ namespace PersistentCity.Core
             if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
             state.Capabilities.RequireExecutable();
             if (state.Schema > CityState.CurrentSchema || state.Schema >= 23
-                && state.MenuPolicy != (state.Schema >= 25 ? FoodNameIdentity.Wire : FoodMenuPolicy.Wire))
+                && state.MenuPolicy != CityState.ExecutableMenuPolicy(state.Schema))
                 throw new InvalidOperationException("Unsupported menu product policy; preserve the payload.");
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)

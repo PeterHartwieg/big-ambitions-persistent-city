@@ -333,7 +333,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
     {
         Assert.Equal(34, CityState.CompactSchema);
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
         string payload = DevelopmentChain.Write34(ChangeJournalTests.Fixture(seed));
         Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
         Assert.Equal(characters, payload.Length);

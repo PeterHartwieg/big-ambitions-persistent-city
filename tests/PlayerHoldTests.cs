@@ -781,17 +781,18 @@ public sealed class PlayerHoldTests
     [Theory]
     [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
     [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
+    // E5b4 took writer 36: the writer-35 bytes are now the frozen shape (DevelopmentChain.Write35), unchanged, and the product
+    // refuses them as an older development city. E5b4 pins its own golden (HeldPolicyExecutionTests).
     public void TheCurrentWriterGoldenIsPinned(int seed, string pin, int characters)
     {
         Assert.Equal(35, CityState.PlayerHoldSchema);
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema + 1, CityState.CurrentSchema);
         var state = ChangeJournalTests.Fixture(seed);
-        string payload = SaveCodec.Write(state);
+        string payload = DevelopmentChain.Write35(state);
         Assert.StartsWith("{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[", payload);
         var read = SaveCodec.Read(payload);
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(state)));
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
+        Assert.Contains("start a new city", read.Error);
         string actual = EconomicLedgerTests.Sha(payload) + " " + payload.Length;
         Assert.True(pin + " " + characters == actual, actual);
     }

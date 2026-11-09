@@ -87,14 +87,9 @@ static class Program
     }
     // Isolate C2a's added bytes against its frozen schema-18 source shape. E1's
     // additive weather bytes are reported separately, never passed to the old reader.
+    // X1 removed the frozen schema-19 writer from the current tree; run this projection against an archived source tree.
     static string Projection19(CityState state)
-    {
-        var predecessor=typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.PopulationSchema19");
-        if(predecessor==null) throw new Exception("Frozen schema-19 fixture writer missing");
-        int schema=state.Schema;
-        try {state.Schema=19;return (string)predecessor.GetMethod("Write")!.Invoke(null,new object[]{state})!;}
-        finally {state.Schema=schema;}
-    }
+        => throw new NotSupportedException("X1 removed the frozen schema-19 fixture writer ("+state.Citizens.Count+" residents).");
     static JObject WithoutWeather20(JObject root)
     {
         ((JObject)root["Food"]!).Remove("Campaigns");root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");

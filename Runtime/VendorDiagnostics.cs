@@ -96,9 +96,10 @@ namespace PersistentCity.Runtime
                     Debug.Log("[Persistent City] vendor sales\n" + JsonConvert.SerializeObject(new {
                         market.Purchases, receipts = save.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)
                             && p.Value.Contains(Uri.EscapeDataString(VendorNames.SignaturePrefix))),
-                        meals = simulation.State.Food!.Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId))
-                            .Select(m => new { m.IntentId, m.ResidentId, m.BusinessId, m.ProductId, cents = m.Price.ToCentsText(),
-                                m.Status, receipt = FoodSaleReceipts.ReadStatus(save.modData, m).ToString(), wallet = m.Budget }) }));
+                        // F9e: detached records of the vendor-place meals and copies of their wallets.
+                        meals = CityViewReports.VendorMeals(simulation.View)
+                            .Select(v => new { v.Record.IntentId, v.Record.ResidentId, v.Record.BusinessId, v.Record.ProductId, cents = v.Record.Price.ToCentsText(),
+                                v.Record.Status, receipt = FoodSaleReceipts.ReadStatus(save.modData, v.Record).ToString(), wallet = v.Wallet }) }));
                     break;
                 case "withdraw":
                     Debug.Log("[Persistent City] vendor withdraw " + JsonConvert.SerializeObject(new { vehicle = detail, accepted = market.Withdraw(detail) }));

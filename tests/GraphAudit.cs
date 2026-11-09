@@ -57,6 +57,8 @@ internal sealed class GraphAudit
             {
                 string name = field.Name.StartsWith("<", StringComparison.Ordinal) ? field.Name.Substring(1, field.Name.IndexOf('>') - 1) : field.Name;
                 if (Transient.Contains(name)) continue;
+                // E5b4: an unset policy reads as its schema's default; compare the value a save writes, not the backing field.
+                if (a is CityState city && name == "menuPolicy") { Walk(city.MenuPolicy, ((CityState)b).MenuPolicy, path + ".MenuPolicy"); continue; }
                 Walk(field.GetValue(a), field.GetValue(b), path + "." + name);
             }
     }

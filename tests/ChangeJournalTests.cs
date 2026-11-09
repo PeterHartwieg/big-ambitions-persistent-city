@@ -49,7 +49,7 @@ public sealed class ChangeJournalTests
     {
         // F7d: writer 33 is now the frozen predecessor JSON writer; its pins and reader are unchanged.
         Assert.Equal(CityState.AttendanceSchema + 1, CityState.ChangeJournalSchema);
-        Assert.Equal(CityState.ChangeJournalSchema + 2, CityState.CurrentSchema); // F7d's 34, then F2e's 35
+        Assert.Equal(CityState.ChangeJournalSchema + 3, CityState.CurrentSchema); // F7d's 34, F2e's 35, then E5b4's 36
         var state = Fixture(seed); string payload = DevelopmentChain.Write33(state);
         output.WriteLine($"F6g golden {seed}: {EconomicLedgerTests.Sha(payload)} chars={payload.Length}");
         var read = SaveCodec.ReadWriter33(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);

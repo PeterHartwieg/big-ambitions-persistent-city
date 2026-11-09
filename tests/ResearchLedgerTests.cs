@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using PersistentCity.Core;
+using PersistentCity.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -509,38 +510,42 @@ public sealed class ResearchLedgerTests
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
 
         const int samples = 20000;
-        var grant = new double[samples];
-        var order = new double[samples];
-        long grantBytes = 0, orderBytes = 0;
-        var watch = new Stopwatch();
-        for (int i = 0; i < samples; i++)
-        {
-            before = GC.GetAllocatedBytesForCurrentThread();
-            watch.Restart();
-            ledger.TryGet(lastPaid, out _);
-            watch.Stop();
-            grantBytes += GC.GetAllocatedBytesForCurrentThread() - before;
-            grant[i] = watch.Elapsed.TotalMilliseconds;
-
-            before = GC.GetAllocatedBytesForCurrentThread();
-            watch.Restart();
-            var refusal = ledger.TryOrder("basic-local", "perf-biz", "agency-1", false, 500, Minute, out var placed);
-            watch.Stop();
-            orderBytes += GC.GetAllocatedBytesForCurrentThread() - before;
-            order[i] = watch.Elapsed.TotalMilliseconds;
-            Assert.Equal(ResearchOrderRefusal.None, refusal);
-            Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(placed!.Id, ReportFor(placed)));
-            Assert.Equal(ResearchMoveRefusal.None, ledger.TryCancel(placed.Id));
-        }
         string Line(string name, double[] values, long bytes)
         {
             Array.Sort(values);
             return $"{name}: p50 {values[samples / 2] * 1000:0.00} us, p95 {values[samples * 95 / 100] * 1000:0.00} us, "
                 + $"max {values[^1] * 1000:0.00} us, {bytes / (double)samples:0} B/call";
         }
-        output.WriteLine(Line("TryGet (paid, worst-case position)", grant, grantBytes));
-        output.WriteLine(Line("TryOrder (7 open, 16 kept, 16 closed)", order, orderBytes));
-        Array.Sort(grant); Array.Sort(order);
-        Assert.True(grant[samples * 95 / 100] < 0.5); Assert.True(order[samples * 95 / 100] < 0.5);
+        string grantLine = "", orderLine = "";
+        // The ledger is shared across attempts: each sample orders, seals and cancels, so it stays at the same bounds.
+        TimingBudget.Run(timing =>
+        {
+            var grant = new double[samples];
+            var order = new double[samples];
+            long grantBytes = 0, orderBytes = 0;
+            for (int i = 0; i < samples; i++)
+            {
+                before = GC.GetAllocatedBytesForCurrentThread();
+                var window = timing.Start();
+                ledger.TryGet(lastPaid, out _);
+                grant[i] = timing.Stop(window, "TryGet p95");
+                grantBytes += GC.GetAllocatedBytesForCurrentThread() - before;
+
+                before = GC.GetAllocatedBytesForCurrentThread();
+                window = timing.Start();
+                var refusal = ledger.TryOrder("basic-local", "perf-biz", "agency-1", false, 500, Minute, out var placed);
+                order[i] = timing.Stop(window, "TryOrder p95");
+                orderBytes += GC.GetAllocatedBytesForCurrentThread() - before;
+                Assert.Equal(ResearchOrderRefusal.None, refusal);
+                Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(placed!.Id, ReportFor(placed)));
+                Assert.Equal(ResearchMoveRefusal.None, ledger.TryCancel(placed.Id));
+            }
+            grantLine = Line("TryGet (paid, worst-case position)", grant, grantBytes);
+            orderLine = Line("TryOrder (7 open, 16 kept, 16 closed)", order, orderBytes);
+            timing.Under("TryGet p95", grant[samples * 95 / 100], 0.5);
+            timing.Under("TryOrder p95", order[samples * 95 / 100], 0.5);
+        });
+        output.WriteLine(grantLine);
+        output.WriteLine(orderLine);
     }
 }

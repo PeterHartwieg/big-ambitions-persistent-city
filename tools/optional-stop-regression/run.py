@@ -7,7 +7,7 @@ import os, shutil
 # Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
 dotnet = shutil.which('dotnet') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/dotnet/dotnet.exe')
 root=Path(__file__).resolve().parents[2]
-source=(root/'Runtime/PhysicalPopulation.cs').read_text()
+source=''.join((root/f'Runtime/PhysicalPopulation{part}.cs').read_text() for part in ('', '.Following', '.Queues', '.Selection'))
 methods=source[source.index('        private void OnOptionalDeparture('):source.index('        private bool MotionPermission(')]
 arrival=source[source.index('        private bool TryAwaitArrival('):source.index('        /// <summary>Join the door', source.index('        private bool TryAwaitArrival('))]
 standing=source[source.index('        private IEnumerable<KeyValuePair<string, int>> Standing('):source.index('        private bool TryLine(')]

@@ -268,8 +268,8 @@ public sealed partial class FoodCommerceTests
         var snapshot = city.FoodMoney!.Snapshot();
         Assert.True(snapshot.Budgets == 6 && snapshot.IncomeReceived > 0 && snapshot.EssentialsPaid > 0);
         Assert.Equal(uncertain, snapshot.Uncertain > 0);
-        // Exact schema-24 predecessor migrates to writer 25; totals rebuild from the migrated records.
-        string source = E5d_Wire24(city.State);
+        // A reload through the current writer rebuilds the totals from the loaded records.
+        string source = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var migrated = new CitySimulator(read.State!, routes); migrated.AttachFoodMarket(market);
         Check(migrated); Assert.Equal(snapshot, migrated.FoodMoney!.Snapshot());
@@ -358,7 +358,7 @@ public sealed partial class FoodCommerceTests
         string before = DevelopmentChain.Write(city.State);
         _ = city.FoodMoney!.Snapshot(); _ = city.FoodMoney.Snapshot().Text();
         Assert.Equal(before, DevelopmentChain.Write(city.State));
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema); Assert.Equal(CityState.CurrentSchema, DevelopmentChain.Read(before).State!.Schema);
+        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema); Assert.Equal(CityState.CurrentSchema, DevelopmentChain.Read(before).State!.Schema);
         Assert.DoesNotContain("counters", before, StringComparison.OrdinalIgnoreCase);
         var restored = Reload(city, market, routes);
         Assert.Equal(before, DevelopmentChain.Write(restored.State));

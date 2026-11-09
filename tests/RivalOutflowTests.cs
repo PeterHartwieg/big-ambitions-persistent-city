@@ -305,59 +305,6 @@ public sealed class RivalOutflowTests
         Assert.False(FoodSaleReceipts.AlreadyPaid(receipts, m)); Assert.Equal(saved, receipts.Single().Value);
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Begin(new Dictionary<string, string>(), m));
     }
-    [Theory] [InlineData(19)] [InlineData(20)]
-    public void ExactPredecessorMigrationAndForeignOrFutureRefusalsPreserveSource(int schema)
-    {
-        var (city, _, _) = Ready(); city.State.Schema = schema;
-        if(schema==20)
-        {
-            city.State.WeatherStartsDay=1;
-            city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
-            city.State.Food!.Residents[0].Memory.Weather=WeatherSample.Rain;
-        }
-        string weather=JsonConvert.SerializeObject(city.State.Citizens[0].W);
-        string source = schema==20 ? DevelopmentChain.Legacy(city.State, () => PopulationSchema20.Write(city.State)) : DevelopmentChain.Legacy(city.State, () => PopulationSchema19.Write(city.State));
-        var store = new Dictionary<string, string> { [SaveCodec.StateKey] = source };
-        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
-        Assert.Equal(schema==20 ? 1 : 2,read.State.WeatherStartsDay);
-        Assert.Equal(weather,JsonConvert.SerializeObject(read.State.Citizens[0].W));
-        Assert.Equal(schema==20 ? WeatherSample.Rain : WeatherSample.Unknown,read.State.Food!.Residents[0].Memory.Weather);
-        Assert.Equal(2, read.State.Food!.RivalStartsDay); Assert.Equal(source, store[SaveCodec.StateKey]);
-        string current = DevelopmentChain.Write(read.State); Assert.Equal(current, DevelopmentChain.Write(DevelopmentChain.Read(current).State!));
-        foreach (int futureSchema in new[] { 24, 99 })
-        { var json = SaveWire.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, DevelopmentChain.Read(json.ToString(Formatting.None)).Status); }
-        var foreign = SaveWire.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString(Formatting.None)).Status);
-        foreign = SaveWire.Parse(source); ((JArray)foreign["Food"]!["Residents"]![0]!).Add("");
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString(Formatting.None)).Status);
-        Assert.Equal(source, store[SaveCodec.StateKey]);
-    }
-    [Theory] [InlineData(false,21)] [InlineData(true,21)] [InlineData(false,22)] [InlineData(true,22)]
-    public void Schema21And22MigrationPreservesHeldAndSettledRivalWeatherAndMoney(bool paid,int schema)
-    {
-        var (city, market, paths)=Ready();city.InspectFoodAwareness("r");
-        city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
-        double at=city.State.Food!.Residents.Single().DesiredAt;
-        if(paid) Advance(city,at+7);else city.AdvanceTo(at,1);
-        var meal=city.State.Food.Residents.Single();
-        if(paid) Assert.Equal(MealStatus.Paid,meal.Status);else Assert.NotNull(meal.Decision);
-        city.State.Schema=schema;
-        string source=DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
-        var read=DevelopmentChain.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema);Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);
-        Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
-        read.State.Schema=schema;Assert.Equal(source,DevelopmentChain.Legacy(read.State, () => SaveCodec.WriteForSchema(read.State, schema)));
-        read.State.Schema=CityState.CurrentSchema;
-        var resumed=new CitySimulator(read.State,paths);
-        resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),
-            new WeatherSettings {Enabled=false,RainTravelWeightMultiplier=2});
-        resumed.AttachFoodMarket(market,rivalSettings:new RivalFoodSettings {RivalChoiceWeight=0,RivalAssumedServiceMinutes=30});
-        Advance(resumed,at+7);
-        var after=resumed.State.Food!.Residents.Single();
-        Assert.Equal(1,after.Purchases);Assert.Equal(Money.FromCents(100),after.LegacyExternalFoodSpent);
-        Assert.Equal(0,market.NativeBuys);
-    }
     [Fact]
     public void FlatSettingsClampOnceAndRetainExistingNumericConventions()
     {

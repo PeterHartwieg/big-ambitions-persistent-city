@@ -5,12 +5,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5c-lite: <see cref="SaveCodec.Read"/> refuses schemas 1-25 as DevelopmentSchema and no product path
-/// reaches the older codecs. Tests of those frozen codecs call the preserved chain explicitly until the slice that
-/// removes them. For schema-26 payloads and states both members are exactly SaveCodec.Read/Write.</summary>
+/// <summary>F5c-lite: <see cref="SaveCodec.Read"/> refuses every older development schema as DevelopmentSchema. X1 removed
+/// the pre-26 reader chain, so a payload up to schema 25 reads exactly as the product reads it; the frozen exact
+/// readers from 26 on remain for their own tests.</summary>
 internal static class DevelopmentChain
 {
-    /// <summary>The frozen pre-26 chain migrates every schema up to 25 to exactly writer 25.</summary>
+    /// <summary>The frozen writer 25 (the last JSON writer before the person table). Its payloads are refused.</summary>
     public const int ChainOutput = 25;
     /// <summary>F5d: the frozen writer-26 shape (represented consumers on their host's excursion schedule). Schema 27
     /// has no represented consumer, so tests of that path build their city in this schema.</summary>
@@ -31,7 +31,7 @@ internal static class DevelopmentChain
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.WorkplaceCapacitySchema ? SaveCodec.ReadWriter28(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.VendorSchema ? SaveCodec.ReadWriter30(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.ResearchSchema ? SaveCodec.ReadWriter29(source)
-        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveWire.Read(source);
+        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.Read(source) : SaveWire.Read(source);
 
     /// <summary>F5e: the frozen writer-27 shape (F5d's, seated under the fixed BusinessAllocation of 16). Writer 28 has
     /// the same shape and differs only in the capacity rule its cities were seated under.</summary>
@@ -39,71 +39,70 @@ internal static class DevelopmentChain
 
     /// <summary>The frozen writer-27 bytes of a current state (same shape), relabelled; the state is restored.</summary>
     public static string Write27(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = Independent27; return SaveCodec.WriteForSchema(state, Independent27); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, Independent27);
 
     /// <summary>C5c: the frozen writer-28 shape (F5e's, before the research section).</summary>
     public const int Workplace28 = SaveCodec.WorkplaceCapacitySchema;
 
     /// <summary>The frozen writer-28 bytes of a current state (its research section is not written); the state is restored.</summary>
     public static string Write28(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = Workplace28; return SaveCodec.WriteForSchema(state, Workplace28); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, Workplace28);
 
     /// <summary>E6c: the frozen writer-29 shape (C5c's, before the vendor table and the scope channel).</summary>
     public const int Research29 = SaveCodec.ResearchSchema;
 
     /// <summary>The frozen writer-29 bytes of a current state without vendor rows or vehicle scopes; the state is restored.</summary>
     public static string Write29(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = Research29; return SaveCodec.WriteForSchema(state, Research29); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, Research29);
 
     public static string WriteLedger(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = SaveCodec.EconomicLedgerSchema; return SaveCodec.WriteForSchema(state, state.Schema); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, SaveCodec.EconomicLedgerSchema);
 
     public static string Write30(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = SaveCodec.VendorSchema; return SaveCodec.WriteForSchema(state, SaveCodec.VendorSchema); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, SaveCodec.VendorSchema);
 
     /// <summary>F7d: the frozen writer-33 JSON body (F6g's shape, the predecessor of the compact wire) of a current
     /// state; the state is restored.</summary>
     public static string Write33(CityState state)
+        => Frozen(state, CityState.ChangeJournalSchema);
+
+    /// <summary>E5b4: the frozen writer-35 bytes (F2e's compact wire, original-name policy); the state is restored.</summary>
+    public static string Write35(CityState state)
+        => Frozen(state, CityState.PlayerHoldSchema);
+
+    /// <summary>A frozen writer's bytes of this state, with the schema relabelled and, unless the state holds revision-2
+    /// tuples, the policy that writer executed (E5b4: only writer 36 executes DynamicWire). Both are restored.</summary>
+    private static string Frozen(CityState state, int frozen)
     {
-        int schema = state.Schema;
-        try { state.Schema = CityState.ChangeJournalSchema; return SaveCodec.WriteForSchema(state, CityState.ChangeJournalSchema); }
-        finally { state.Schema = schema; }
+        int schema = state.Schema; object? policy = PolicyField.GetValue(state);
+        try
+        {
+            bool dynamic = state.MenuPolicy == FoodNameIdentity.DynamicWire;
+            state.Schema = frozen;
+            if (dynamic && !HoldsDynamicTuples(state)) state.MenuPolicy = CityState.ExecutableMenuPolicy(frozen);
+            return SaveCodec.WriteForSchema(state, frozen);
+        }
+        finally { state.Schema = schema; PolicyField.SetValue(state, policy); }
+    }
+    // The unset backing field is restored as unset, so the state's default still follows its schema.
+    private static readonly System.Reflection.FieldInfo PolicyField = typeof(CityState).GetField("menuPolicy",
+        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+    private static bool HoldsDynamicTuples(CityState state)
+    {
+        if (state.Food?.Residents == null) return false;
+        foreach (var meal in state.Food.Residents)
+            if (meal?.Decision?.Shops != null) foreach (var shop in meal.Decision.Shops)
+                if (shop?.Offers != null) foreach (var offer in shop.Offers)
+                    if (offer?.Metadata?.Revision == 2) return true;
+        return false;
     }
 
     /// <summary>F2e: the frozen writer-34 bytes (F7d's compact wire without the schema-35 hold fields); the state is restored.</summary>
     public static string Write34(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = CityState.CompactSchema; return SaveCodec.WriteForSchema(state, CityState.CompactSchema); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, CityState.CompactSchema);
 
     public static string WriteAttendance(CityState state)
-    {
-        int schema = state.Schema;
-        try { state.Schema = CityState.AttendanceSchema; return SaveCodec.WriteForSchema(state, CityState.AttendanceSchema); }
-        finally { state.Schema = schema; }
-    }
+        => Frozen(state, CityState.AttendanceSchema);
 
     public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema || state.Schema == SaveCodec.EconomicLedgerSchema
         ? SaveCodec.WriteForSchema(state, state.Schema) : SaveWire.Text(state); // F7d: the compact payload's body
@@ -148,20 +147,6 @@ internal static class DevelopmentChain
     /// <summary>Roster tuple slot of the held decision: tuple v3 (schema 26) omits AnchorId and Slot.</summary>
     public static int DecisionSlot(Newtonsoft.Json.Linq.JToken root) => (int)root["Schema"]! >= SaveCodec.PersonSchema ? 8 : 9;
 
-    /// <summary>The product session refuses an older development payload with DevelopmentSchema and keeps every
-    /// key byte-identical; the frozen chain still decodes it for the old-codec tests.</summary>
-    public static SaveReadResult RefusedThenRead(IDictionary<string, string> data, string populationKey)
-    {
-        var before = new Dictionary<string, string>(data);
-        var refused = SaveSession.Open(data, populationKey).InitialReadResult;
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, refused.Status); Assert.Null(refused.State);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveStore.ReadFrom(data, populationKey).Status);
-        Assert.Equal(before, data);
-        var read = SaveCodec.ReadDevelopmentChain(data[SaveStore.StateKey]);
-        if (read.Status == SaveReadStatus.Loaded) Assert.Equal(populationKey, read.State!.PopulationKey);
-        return read;
-    }
-
     /// <summary>F5d: the product reader refuses a frozen writer-26 payload as an older development city before its shape.</summary>
     public static SaveReadStatus ProductStatus(string payload, SaveReadStatus frozen)
         => SaveCodec.DevelopmentSchemaOf(payload) != null ? SaveReadStatus.DevelopmentSchema : frozen;
@@ -172,7 +157,9 @@ internal static class DevelopmentChain
     {
         if (SaveCodec.DevelopmentSchemaOf(payload) != SaveCodec.PersonSchema) { SaveCodec.RequireExecutableCapabilities(payload); return; }
         RequireRefusedCapabilities(payload);
-        SaveCodec.RequireExecutableCapabilities(payload.Replace("\"Schema\":26,", "\"Schema\":" + CityState.CurrentSchema + ","));
+        // E5b4: relabelled to the current writer, the header also carries that writer's executable policy.
+        SaveCodec.RequireExecutableCapabilities(payload.Replace("\"Schema\":26,", "\"Schema\":" + CityState.CurrentSchema + ",")
+            .Replace("\"MenuPolicy\":\"" + FoodNameIdentity.Wire + "\"", "\"MenuPolicy\":\"" + CityState.ExecutableMenuPolicy(CityState.CurrentSchema) + "\""));
     }
 
     /// <summary>The early authority probe refuses an older development payload with the development message.</summary>

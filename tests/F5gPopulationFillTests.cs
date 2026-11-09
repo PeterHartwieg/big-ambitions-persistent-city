@@ -942,8 +942,8 @@ public sealed class F5gPopulationFillTests
             Assert.Equal(active.Count, active.Select(r => r.Legs).Distinct(ReferenceEqualityComparer.Instance).Count());
             journeys.AddRange(active);
             Assert.True(city.ActiveJourneyIndexMatchesState());
-            // No visitor is ever a body candidate or receives a body.
-            Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.False(ActiveJourneyIndex.ReceivesBody(r)));
+            // F5i: a travelling visitor is a body candidate.
+            Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.True(ActiveJourneyIndex.ReceivesBody(r) && city.ActiveJourneys.BodyCandidates.Contains(r)));
         }
         Assert.True(planner.PortalHits > 0 && planner.PortalMisses > 0, $"hits {planner.PortalHits} misses {planner.PortalMisses}");
         Assert.True(planner.PortalHits > planner.PortalMisses);
@@ -1001,7 +1001,7 @@ public sealed class F5gPopulationFillTests
     public void DayVisitorsRoundTripInWriter33AndMalformedDayVisitorsAreRefusedAndKept()
     {
         // F7d (writer 34) landed before this slice merged: the visitor shape is writer 33's, carried in the compact wire.
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
         var (state, market) = City(12, 1);
         var city = Start(state, market, Catalogue(12, Base, Since(2)));
         Advance(city, 2 * 1440 + 600);

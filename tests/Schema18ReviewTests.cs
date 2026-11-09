@@ -56,7 +56,7 @@ public sealed class Schema18ReviewTests
     {
         const string capability = "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}";
         // Schema 23 and later also carry the menu-policy header before the population graph.
-        string menu = "\"MenuPolicy\":\"" + FoodNameIdentity.Wire + "\",";
+        string menu = "\"MenuPolicy\":\"" + CityState.ExecutableMenuPolicy(CityState.CurrentSchema) + "\",";
         string current = "\"Schema\":" + CityState.CurrentSchema + ",";
         string prefix = capabilitiesFirst ? "{" + capability + "," + current + menu : "{" + current + capability + "," + menu;
         string damaged = prefix + "\"UnreadBody\":[";
@@ -103,7 +103,7 @@ public sealed class Schema18ReviewTests
     [Fact]
     public void ProbeSupportsPrettyHeadersAndAllPublishedLegacySchemas()
     {
-        SaveCodec.RequireExecutableCapabilities("{\r\n \"Capabilities\": {\r \"Code\":\"B\",\n\"Active\":false,\r\n\"Revision\":1},\r\n\"Schema\":" + CityState.CurrentSchema + ",\r\n\"MenuPolicy\":\"" + FoodNameIdentity.Wire + "\",\"UnreadBody\":[");
+        SaveCodec.RequireExecutableCapabilities("{\r\n \"Capabilities\": {\r \"Code\":\"B\",\n\"Active\":false,\r\n\"Revision\":1},\r\n\"Schema\":" + CityState.CurrentSchema + ",\r\n\"MenuPolicy\":\"" + CityState.ExecutableMenuPolicy(CityState.CurrentSchema) + "\",\"UnreadBody\":[");
         // F5c-lite: every older development schema, in each integer grammar the legacy probe accepted, is refused
         // with the development message, so the native authority bootstrap never takes PC ownership.
         foreach (string schema in new[] { "0xD", "13", "17", "18", "25", "26", "27", "28", "29" })

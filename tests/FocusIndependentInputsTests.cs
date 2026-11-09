@@ -389,7 +389,7 @@ public sealed class FocusIndependentInputsTests
         Assert.Contains("stationActivity.Admit(sceneKey, active, hidden)", stations);
         Assert.Single(stations.Split('\n'), line => line.Contains("activeInHierarchy"));
         // Q4: a visible audience member at its spot faces the saved facing point; no native performer is consulted.
-        string bodies = File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs"));
+        string bodies = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs"))));
         Assert.Contains("body.Face(stop.Facing)", bodies);
         Assert.DoesNotMatch(livePerformer, bodies);
     }

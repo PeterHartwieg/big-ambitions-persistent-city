@@ -64,7 +64,6 @@ namespace PersistentCity.Persistence
 
         internal static string WriteForSchema(CityState state,int schema,SaveCostRecorder? cost)
         {
-            if (schema < 25) return PopulationSchema24.WriteForSchema(state, schema);
             return EncodeForSchema(CaptureForSchema(state, schema, cost), schema, cost);
         }
 
@@ -123,7 +122,7 @@ namespace PersistentCity.Persistence
 
         internal static void ValidateForActivation(CityState state,int schema)
         {
-            if (schema < 25) { PopulationSchema24.ValidateForActivation(state, schema); return; }
+            if (schema < 25) throw new ArgumentOutOfRangeException(nameof(schema), "Activation validation starts at writer 25.");
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
             InitializeOutflow24(state, schema);
@@ -188,30 +187,6 @@ namespace PersistentCity.Persistence
                     return new SaveReadResult(SaveReadStatus.DevelopmentSchema, null, DevelopmentSchemaMessage + " (schema " + schema.ToString(CultureInfo.InvariantCulture) + ")", schema);
                 Require(schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload.");
                 return ReadCompact(source);
-            }
-            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
-            { return Invalid("Invalid state: " + exception.Message); }
-        }
-
-        /// <summary>The pre-26 development chain (13-24 via the frozen readers, then exact 25). Unreachable from
-        /// <see cref="Read"/>; kept only so the frozen codecs and their tests compile until their removal slice.</summary>
-        internal static SaveReadResult ReadDevelopmentChain(string source)
-        {
-            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
-            try
-            {
-                int schema = ReadSchema(source);
-                if (schema > 25) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
-                if (schema <= 24)
-                {
-                    var old = PopulationSchema24.Read(source);
-                    if (old.Status != SaveReadStatus.Loaded) return old;
-                    MigrateNames25(old.State!);
-                    ValidateForActivation(old.State!, 25);
-                    return new SaveReadResult(SaveReadStatus.Loaded, old.State, "", old.SourceSchema);
-                }
-                Require(schema == 25, "Not a development schema.");
-                return ReadExact(source, schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
             { return Invalid("Invalid state: " + exception.Message); }
@@ -622,11 +597,12 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema32Contracts = new StateContractResolver(CityState.AttendanceSchema);
         private static readonly IContractResolver Schema33Contracts = new StateContractResolver(CityState.ChangeJournalSchema);
         private static readonly IContractResolver Schema34Contracts = new StateContractResolver(CityState.CompactSchema);
+        private static readonly IContractResolver Schema35Contracts = new StateContractResolver(CityState.PlayerHoldSchema);
         private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : schema == CityState.CompactSchema ? Schema34Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : schema == CityState.CompactSchema ? Schema34Contracts : schema == CityState.PlayerHoldSchema ? Schema35Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -708,9 +684,11 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema || schema==CityState.PlayerHoldSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema || schema==CityState.PlayerHoldSchema || schema==CityState.HeldPolicySchema), "Unsupported state schema.");
             Require(state.PlayerHoldSequence >= 0 && state.PlayerHoldSequence < long.MaxValue, "Invalid player hold sequence.");
-            if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
+            // E5b4: the held-policy writer stores DynamicWire only; the frozen 25-35 writers kept both readable.
+            if(schema>=23) Require(schema >= CityState.HeldPolicySchema ? state.MenuPolicy == FoodNameIdentity.DynamicWire
+                : schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
