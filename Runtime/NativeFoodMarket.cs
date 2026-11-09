@@ -563,9 +563,9 @@ namespace PersistentCity.Runtime
         }
         public void Dispose()
         {
+            StopContractShadow(); // First: guarded, so it can neither be skipped nor abort the rest.
             ((object)this as IRivalFoodMarket)?.CloseRivals();
             patches.UnpatchAll(PatchId);
-            StopContractShadow();
             NativeFoodOwnership.Detach(this);
             authoredBagPolicies = new ConditionalWeakTable<object, BagPolicy>(); authoredTagFields.Clear();
             refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();

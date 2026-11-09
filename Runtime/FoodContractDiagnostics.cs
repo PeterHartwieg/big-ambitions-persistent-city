@@ -54,11 +54,21 @@ namespace PersistentCity.Runtime
             var hooks = contractHooks; contractHooks = null;
             try { hooks?.Dispose(); } catch (Exception) { }
             var reader = contractReader; contractReader = null;
-            reader?.Dispose();
+            try { reader?.Dispose(); } catch (Exception) { }
         }
 
-        // Existing discovery visit, once per visited registration.
-        private void VisitContract(string place, BuildingRegistration registration) => contractReader?.Visit(place, registration, menuLimit);
+        // Existing discovery visit, once per visited registration. A fault stops the shadow, never discovery.
+        private void VisitContract(string place, BuildingRegistration registration)
+        {
+            var reader = contractReader;
+            if (reader == null) return;
+            try { reader.Visit(place, registration, menuLimit); }
+            catch (Exception e)
+            {
+                contractCapabilities.Record("shadow visit", e.GetType().Name + ": " + e.Message);
+                StopContractShadow();
+            }
+        }
 
         // Once per frame after discovery: one bounded reader unit when work is pending; a clean frame reads nothing native.
         private void ContinueContractShadow()

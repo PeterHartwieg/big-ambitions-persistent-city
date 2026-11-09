@@ -224,6 +224,12 @@ namespace PersistentCity.Runtime
             => byRegistration.TryGetValue(registration, out var shop) ? Hint(shop) : FoodContractHint.Unknown;
         FoodContractHint IFoodContractHintSink.Holder(string street, int number)
             => byAddress.TryGetValue(new ShopAddress(street, number), out var shop) ? Hint(shop) : FoodContractHint.Unknown;
+        FoodContractHint IFoodContractHintSink.AllShops()
+        {
+            bool queued = false;
+            foreach (var shop in shops.Values) queued |= Dirty(shop);
+            return queued ? FoodContractHint.NewUnit : FoodContractHint.Coalesced;
+        }
         private FoodContractHint Hint(Shop shop) => Dirty(shop) ? FoodContractHint.NewUnit : FoodContractHint.Coalesced;
         public bool TryGet(string key, out FoodEligibilityImage image)
         {

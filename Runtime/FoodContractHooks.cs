@@ -76,6 +76,8 @@ namespace PersistentCity.Runtime
         FoodContractHint Catalogue();
         FoodContractHint Registration(object registration);
         FoodContractHint Holder(string street, int number);
+        /// <summary>Requeue every tracked shop without touching the catalogue revision.</summary>
+        FoodContractHint AllShops();
     }
 
     /// <summary>Installs one hook; returns null on success or the failure. UnpatchAll removes every hook it installed.</summary>
@@ -88,8 +90,8 @@ namespace PersistentCity.Runtime
     /// <summary>Routes Decision 1 postfixes to the active sink. At most one router is active; postfix bodies read
     /// <see cref="Active"/> once and do nothing without it, so a disposed city's hooks cannot reach its reader even
     /// if unpatching failed. Every install and dispose advances <see cref="Generation"/>. Steady-state routing
-    /// allocates nothing. Calls off the main thread are counted and turned into one catalogue-wide hint at the
-    /// next main-thread <see cref="Drain"/>.</summary>
+    /// allocates nothing. Calls off the main thread are counted and turned into one hint at the next
+    /// main-thread <see cref="Drain"/>: a catalogue hint for W11 rows, a requeue of every shop otherwise.</summary>
     public sealed class FoodContractHintRouter : IDisposable
     {
         private static FoodContractHintRouter? active;
@@ -106,7 +108,7 @@ namespace PersistentCity.Runtime
         private readonly long[] unknown = new long[FoodContractHookTable.All.Count];
         private readonly string?[] failures = new string?[FoodContractHookTable.All.Count];
         private long offThread;
-        private int pendingOffThread;
+        private int pendingCatalogue, pendingShops;
 
         private FoodContractHintRouter(IFoodContractHintSink sink, IFoodContractPatcher patcher, int mainThread)
         { this.sink = sink; this.patcher = patcher; this.mainThread = mainThread; }
@@ -147,8 +149,10 @@ namespace PersistentCity.Runtime
             if (Environment.CurrentManagedThreadId != mainThread)
             {
                 Interlocked.Increment(ref offThread);
-                if (kind != FoodContractHookKind.Quantity && kind != FoodContractHookKind.Unattributed)
-                    Interlocked.Exchange(ref pendingOffThread, 1);
+                // A shop hint says nothing about catalogue membership, so only W11 calls rebuild the catalogue.
+                if (kind == FoodContractHookKind.Catalogue) Interlocked.Exchange(ref pendingCatalogue, 1);
+                else if (kind != FoodContractHookKind.Quantity && kind != FoodContractHookKind.Unattributed)
+                    Interlocked.Exchange(ref pendingShops, 1);
                 return false;
             }
             calls[hook]++;
@@ -194,11 +198,19 @@ namespace PersistentCity.Runtime
             if (r != null) r.Enter(hook, FoodContractHookKind.Unattributed);
         }
 
-        /// <summary>Main thread, once per frame: turns any off-thread structural call into one catalogue-wide hint.</summary>
+        /// <summary>Main thread, once per frame: an off-thread catalogue call becomes one catalogue hint (which also
+        /// requeues every shop); an off-thread shop call becomes one requeue of every tracked shop.</summary>
         public void Drain()
         {
-            if (sink == null || Interlocked.Exchange(ref pendingOffThread, 0) == 0) return;
-            try { sink.Catalogue(); } catch (Exception e) { Fault(e); }
+            if (sink == null) return;
+            bool catalogue = Interlocked.Exchange(ref pendingCatalogue, 0) != 0;
+            bool shops = Interlocked.Exchange(ref pendingShops, 0) != 0;
+            try
+            {
+                if (catalogue) sink.Catalogue();
+                else if (shops) sink.AllShops();
+            }
+            catch (Exception e) { Fault(e); }
         }
 
         public void Dispose()

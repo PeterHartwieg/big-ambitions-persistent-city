@@ -57,6 +57,12 @@ public sealed class FoodContractHookTests
         }
         public FoodContractHint Holder(string street, int number)
             => ByAddress.TryGetValue((street, number), out var unit) ? Mark(unit) : FoodContractHint.Unknown;
+        public FoodContractHint AllShops()
+        {
+            bool queued = false;
+            foreach (var unit in Units) queued |= Queue.Enqueue(unit);
+            return queued ? FoodContractHint.NewUnit : FoodContractHint.Coalesced;
+        }
         private FoodContractHint Mark(Unit unit) => Queue.Enqueue(unit) ? FoodContractHint.NewUnit : FoodContractHint.Coalesced;
         public List<string> Drain()
         {
@@ -365,7 +371,7 @@ public sealed class FoodContractHookTests
     }
 
     [Fact]
-    public void OffThreadCallsBecomeOneMainThreadCatalogueHint()
+    public void OffThreadCallsBecomeOneMainThreadHint()
     {
         var sink = new Sink(); sink.Publish("ba:itemname_burger");
         object shop = new object(); sink.Track("A", shop, "Main Street", 5);
@@ -380,15 +386,23 @@ public sealed class FoodContractHookTests
         Assert.Equal(0, router.TotalCalls);
         Assert.Equal(0, sink.Queue.Count);
         router.Drain();
-        Assert.Equal(revision + 1, sink.Revision.Revision);
+        // A shop hint requeues every shop and leaves the catalogue, and its name image, published.
+        Assert.Equal(revision, sink.Revision.Revision);
+        Assert.NotNull(sink.Revision.Names);
         Assert.Equal(1, sink.Queue.Count);
         router.Drain();
-        Assert.Equal(revision + 1, sink.Revision.Revision);
+        Assert.Equal(1, sink.Queue.Count);
         // Quantity-only off-thread calls leave nothing pending.
         var quantity = new Thread(() => FoodContractHintRouter.Quantity(10));
         quantity.Start(); quantity.Join();
         router.Drain();
+        Assert.Equal(revision, sink.Revision.Revision);
+        // Only an off-thread W11 call rebuilds the catalogue.
+        var catalogue = new Thread(() => FoodContractHintRouter.Catalogue(1));
+        catalogue.Start(); catalogue.Join();
+        router.Drain();
         Assert.Equal(revision + 1, sink.Revision.Revision);
+        Assert.Null(sink.Revision.Names);
     }
 
     [Fact]
