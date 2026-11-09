@@ -49,6 +49,10 @@ namespace PersistentCity.Core
         public int VehicleCount => vehicles.Count;
         public int PendingEventCount => events.Count;
         public int LinkCount => links.Count;
+        /// <summary>Diagnostic counters for this kernel instance (F2d perf): link reconsiderations and processed link
+        /// events since construction or restore. Never saved; a forecast projection keeps its own.</summary>
+        public long Reconsiders { get; private set; }
+        public long ProcessedEvents { get; private set; }
         public event Action<string, double>? VehicleCompleted;
         /// <summary>Stable detached closure-refresh set: demand/occupancy plus blocked heads' immediate receivers.</summary>
         public IEnumerable<int> RelevantLinkIds
@@ -138,6 +142,7 @@ namespace PersistentCity.Core
                 Clock = item.At;
                 Process(link);
                 processed++;
+                ProcessedEvents++;
             }
             bool reached = events.Count == 0 || events.Min!.At > targetMinute;
             if (reached) Clock = targetMinute;
@@ -496,6 +501,7 @@ namespace PersistentCity.Core
 
         private void Reconsider(Link link)
         {
+            Reconsiders++;
             UpdateActivity(link);
             if (link.Queue.First != null)
             {

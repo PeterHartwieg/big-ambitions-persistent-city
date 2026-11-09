@@ -199,6 +199,7 @@ public static class MovementRun
         Require(city.BeginAccountingObservations(native), "initial epoch not published");
         double nextFifo = start + FifoSampleMinutes;
         bool reloaded = false, faultInjected = false, hiddenChecked = false;
+        long priorReconsiders = 0, priorTrafficEvents = 0;
         double frameSeconds = 1.0 / options.FramesPerSecond;
         while (boundaries.Count > 0)
         {
@@ -279,6 +280,7 @@ public static class MovementRun
                 Require(read.Status == SaveReadStatus.Loaded, "mid-journey reload refused: " + read.Error);
                 Require(SaveCodec.Write(read.State!) == json, "mid-journey save round trip changed bytes");
                 city.ActivityObserved -= ledger.Observe;
+                priorReconsiders += city.Traffic?.Reconsiders ?? 0; priorTrafficEvents += city.Traffic?.ProcessedEvents ?? 0;
                 city = MovementFixture.Attach(read.State!, market, planner, fresh: false);
                 city.ActivityObserved += ledger.Observe;
                 ledger.Rebind(city.State);
@@ -298,6 +300,10 @@ public static class MovementRun
                 ledger.Records + "--sales--\n" + string.Join("\n", market.Sales) + "\n");
         result.FifoSha256 = fifo.Sha; result.FifoSamples = fifo.Samples; result.QueuedFifoSamples = fifo.Queued;
         Summarize(result, city, market, ledger, drivers);
+        // F2d perf: kernel work over the whole run (every kernel, across a reload).
+        result.Metrics["traffic.reconsiders"] = priorReconsiders + (city.Traffic?.Reconsiders ?? 0);
+        result.Metrics["traffic.events"] = priorTrafficEvents + (city.Traffic?.ProcessedEvents ?? 0);
+        result.Metrics["run.frames"] = result.Frames;
         result.Seconds = timer.Elapsed.TotalSeconds;
         result.AllocatedBytes = GC.GetTotalAllocatedBytes(true) - allocated;
         return result;
