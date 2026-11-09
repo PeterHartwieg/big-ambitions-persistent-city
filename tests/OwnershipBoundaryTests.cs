@@ -461,8 +461,12 @@ public sealed class OwnershipBoundaryTests
     }
 
     /// <summary>The <c>pc vendor sales</c> meal list (receipts against an empty receipt dictionary).</summary>
-    private static string VendorSales(IEnumerable<ResidentMeal> meals) => JsonConvert.SerializeObject(meals.Select(m => new { m.IntentId, m.ResidentId, m.BusinessId,
-        m.ProductId, cents = m.Price.ToCentsText(), m.Status, receipt = FoodSaleReceipts.ReadStatus(new Dictionary<string, string>(), m).ToString(), wallet = m.Budget }));
+    private static string VendorSales(IEnumerable<ResidentMeal> meals, IDictionary<string, string>? receipts = null) => JsonConvert.SerializeObject(meals.Select(m => new { m.IntentId,
+        m.ResidentId, m.BusinessId, m.ProductId, cents = m.Price.ToCentsText(), m.Status, receipt = FoodSaleReceipts.ReadStatus(receipts ?? new Dictionary<string, string>(), m).ToString(), wallet = m.Budget }));
+    /// <summary>The same list as VendorDiagnostics builds it from the reports.</summary>
+    private static string VendorSales(IEnumerable<VendorMealReport> meals, IDictionary<string, string>? receipts = null) => JsonConvert.SerializeObject(meals.Select(v => new { v.Record.IntentId,
+        v.Record.ResidentId, v.Record.BusinessId, v.Record.ProductId, cents = v.Record.Price.ToCentsText(), v.Record.Status,
+        receipt = FoodSaleReceipts.ReadStatus(receipts ?? new Dictionary<string, string>(), v.Record).ToString(), wallet = v.Wallet }));
 
     /// <summary>What the panel (BuildEconomyText and the F6c overview), the economy overview, the accounting line, the research
     /// status, orders and reports, the vendor sales, the save-cost record counts, the census capture, the person command and
@@ -646,7 +650,7 @@ public sealed class OwnershipBoundaryTests
         ["DescribePerson"] = "string",
         ["CaptureCensusResidents"] = "a new array of readonly structs",
         ["ResearchSnapshot"] = "a detached ledger copy",
-        ["VendorMeals"] = "detached meal and wallet copies",
+        ["VendorMeals"] = "VendorMealReport: a new meal record of strings and values and a detached wallet",
     };
 
     [Fact]
@@ -687,7 +691,7 @@ public sealed class OwnershipBoundaryTests
         Assert.Equal(meals, JsonConvert.SerializeObject(food.Residents.Select(m => new { m.IntentId, m.Status, m.Price, m.Budget })));
         var vendorMeals = CityViewReports.VendorMeals(view);
         Assert.Equal(food.Residents.Count(m => VendorNames.IsVendorPlace(m.PlaceId)), vendorMeals.Count);
-        Assert.DoesNotContain(vendorMeals, m => food.Residents.Any(r => ReferenceEquals(r, m) || m.Budget != null && ReferenceEquals(r.Budget, m.Budget)));
+        Assert.DoesNotContain(vendorMeals, v => food.Residents.Any(r => ReferenceEquals(r, v.Record) || v.Wallet != null && ReferenceEquals(r.Budget, v.Wallet)));
         output.WriteLine("vendor meals " + vendorMeals.Count + ", history rows " + copies.Length + ", meals " + detached.Count);
 
         // The research copy has the same orders; ordering on it leaves the city's ledger as it was.
@@ -699,6 +703,47 @@ public sealed class OwnershipBoundaryTests
         Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder(ResearchProducts.BasicLocalCode, CityFixture.ResearchBusiness, CityFixture.Agency, false,
             CityFixture.ResearchRadius, state.Minute, out _));
         Assert.Equal((next, open), (state.Research.NextSequence, state.Research.Open.Count));
+    }
+
+    /// <summary>Review Sol-r2-1: a failed vendor meal keeps its vendor place, and a later food-stop retry holds a new decision
+    /// with its tuning, which has no parameterless constructor and cannot be deep-copied. <c>pc vendor sales</c> still lists
+    /// the meal, with the same text as the base code's projection of the live meal, and shares nothing with the city.</summary>
+    [Fact]
+    public void VendorSalesListAVendorMealHoldingARetryDecision()
+    {
+        var city = new CitySimulator(SaveCodec.Read(SaveCodec.Write(F9cCity().State)).State!, new CityFixture.SyncWalk());
+        var food = city.State.Food!;
+        var meals = food.Residents.Where(m => m.Budget != null).Take(3).ToList();
+        Assert.Equal(3, meals.Count);
+        string vendorPlace = VendorNames.PlaceId(CityFixture.Vehicle);
+        foreach (var meal in meals)
+        {
+            meal.PlaceId = vendorPlace; meal.BusinessId = VendorNames.Signature(CityFixture.Vehicle) + ":generation:1";
+            meal.Status = MealStatus.Declined;
+            meal.Decision = new FoodDecisionState { Tuning = FoodDecisionTuning.Capture(new FoodChoiceSettings()) };
+        }
+        // The full deep copy of round 1 refused this state.
+        Assert.Throws<NotSupportedException>(() => CityViewReports.Detach(meals[0]));
+        // One paid receipt, one conflicting, one missing, so the receipt column takes three values.
+        var receipts = new Dictionary<string, string>
+        {
+            [FoodSaleReceipts.Prefix + meals[1].IntentId] = "paid|" + meals[1].Price.ToCentsText() + "|" + Uri.EscapeDataString(meals[1].BusinessId) + "|" + Uri.EscapeDataString(meals[1].ProductId),
+            [FoodSaleReceipts.Prefix + meals[2].IntentId] = "paid|x",
+        };
+        var reports = CityViewReports.VendorMeals(city.View);
+        Assert.Equal(meals.Count, reports.Count);
+        string live = VendorSales(food.Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId)), receipts);
+        Assert.Equal(live, VendorSales(reports, receipts));
+        foreach (var status in new[] { "\"receipt\":\"Paid\"", "\"receipt\":\"Conflict\"", "\"receipt\":\"Missing\"" }) Assert.Contains(status, live);
+        output.WriteLine(live.Length + " characters: " + live.Substring(0, Math.Min(240, live.Length)));
+        // Nothing in a report is the city's: editing it leaves the live projection as it was.
+        foreach (var report in reports)
+        {
+            Assert.DoesNotContain(food.Residents, r => ReferenceEquals(r, report.Record) || ReferenceEquals(r.Budget, report.Wallet));
+            Assert.Null(report.Record.Decision); Assert.Null(report.Record.Budget);
+            report.Record.Status = MealStatus.Paid; report.Record.ResidentId = "edited"; report.Wallet!.Balance = Money.FromCents(1);
+        }
+        Assert.Equal(live, VendorSales(food.Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId)), receipts));
     }
 
     [Fact]

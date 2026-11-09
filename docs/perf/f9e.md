@@ -38,7 +38,7 @@ The observer paths that used to receive the city's objects now get copies. Same 
 | Research ledger copy (`ResearchSnapshot`) | 0.0003 ms, 1,016 B | 0.0001 ms, 608 B |
 | Economy overview, base (`FoodEconomyInsight.Capture`) | 0.168 ms, 97 KB | 1.35 ms, 867 KB |
 | Economy overview, detached (`EconomyOverview`) | 0.258 ms, 126 KB | 1.38 ms, 894 KB |
-| Vendor-place meal copies (`VendorMeals`, 0 meals in both) | 0.0015 ms | 0.012 ms |
+| Vendor-meal reports (`VendorMeals`, 0 meals in both; round 2: record fields and a wallet copy per meal) | 0.0015 ms | 0.012 ms |
 | Rejected option: decode the published payload for save-cost counts | 29.5 ms, 10 MB | 221 ms, 72 MB |
 
 - The research window takes a new ledger copy at most every 0.25 s while it is open and nothing while it is closed. Console commands take one per command.
@@ -52,4 +52,4 @@ None taken. No measured cost moved beyond noise except the inspector's 1.4 µs p
 
 ## Test time
 
-`OwnershipBoundaryTests`: 7 facts (8 test cases), about 3 s together, mostly the F9c city-s reference run (about 1 s) and the F5h city build. Whole suite: see the [checks file](../checks/f9e.md#validation-run).
+`OwnershipBoundaryTests`: 9 facts (10 test cases), about 6 s together, mostly the F9c city-s reference run (about 1 s) and the F5h city build. Whole suite: see the [checks file](../checks/f9e.md#validation-run).

@@ -12,7 +12,7 @@ Re-read at this base: `Core/CitySimulator.cs` (`State` at `:54`, `Inspect`), `Co
   - `ICityView`: `Minute`, `ResidentList`, `VisitorRoutineList`, `VisitorCount`, `PortalCount`, `PlaceList`, `Food` (null until the city owns a food scope), `Economy`, `Research`, `VendorRowList` and `FindVendor`.
   - Entity views: `IPersonView`, `IPlaceView`, `IFoodView`, `IFoodScopeView`, `IEconomicLedgerView`, `IResearchView`, `IResearchOrderView`, `IVendorRowView`. Every member returns a view, an enum, a primitive, a string, `Position`, `Money` or an `IReadOnlyList` of those.
   - `CityView`, the one internal implementation. It reads the state's current lists and values on every access, so a replaced list or changed value shows at once.
-  - `CityViewReports`, observer reports that run an existing Core helper on the state behind a view and return text, values or detached copies: the economy overview (history rows copied), the money rescan, the food history report and its recording days, the city economy lines, the person line, the census capture, a research ledger copy and copies of the vendor-place meals.
+  - `CityViewReports`, observer reports that run an existing Core helper on the state behind a view and return text, values or detached copies: the economy overview (history rows copied), the money rescan, the food history report and its recording days, the city economy lines, the person line, the census capture, a research ledger copy and vendor-meal reports.
   - `FoodHistoryReport`: the history indexed once per panel refresh. The saved day rows stay inside it; the panel gets the weeks, periods, journal and latest-day text.
 - **`CitySimulator.View`** (next to `State`). It creates the view once; later reads allocate nothing.
 - **Entity classes** (`CitizenState`, `Place`, `FoodScope`, `ResearchOrder`, `VendorRow`, `EconomicLedger`) implement their views with explicit, getter-only members. No field, public member, wire or save change.
@@ -20,20 +20,20 @@ Re-read at this base: `Core/CitySimulator.cs` (`State` at `:54`, `Inspect`), `Co
   - `Runtime/FoodEconomyPanel.cs`: the panel text, the page count, the F6c overview and the economy overview.
   - `Runtime/AccountingStatus.cs`: the logical minute and lag.
   - `Runtime/ResearchDiagnostics.cs`: the `pcresearch status` counts through the view; `pcresearch orders` and `pcresearch report` on a fresh detached ledger copy; the research window on a detached copy refreshed at most every 0.25 s while it draws.
-  - `Runtime/VendorDiagnostics.cs`: `pc vendor sales` on detached copies of the vendor-place meals and their wallets.
+  - `Runtime/VendorDiagnostics.cs`: `pc vendor sales` on `VendorMealReport`s: a new meal record of each vendor-place meal's strings and values, and a detached copy of its wallet.
   - `Runtime/SaveCostStatus.cs`: holds no state. The save owner passes the record-count function (see below).
   - `Runtime/PopulationCensusDiagnostics.cs`: `pc population person`, the census capture and its minute.
   - The resident inspector: `CitySimulator.Inspect` passes the view to `ResidentInsight.Capture`, which reads the minute, the household count and whether food is active through it.
   - The F9c oracles: persons, households, places, vendor rows and research orders in `CityOracles.Checkpoint`, the research-charge oracle, and the reload-state and minute reads in `CityScenario`.
-- **`tests/OwnershipBoundaryTests.cs`**: 8 facts, 9 test cases (table below).
+- **`tests/OwnershipBoundaryTests.cs`**: 9 facts, 10 test cases (table below).
 
 ### Technical choices
 
 - **No observer file reads `State`** (review round 1 removed the three named sinks of the first version). Where a sink outside F9e's files takes an entity, the observer gets a detached copy:
   - Research: `ResearchReportText` and the research window take a `ResearchLedger`. `CityViewReports.ResearchSnapshot` returns the F7c save copy (`ResearchLedger.CopyForSave`: same orders, states and order; reports are immutable and shared). Ordering on the copy leaves the city's ledger unchanged.
-  - Vendor sales: `FoodSaleReceipts.ReadStatus` takes a `ResidentMeal`. `CityViewReports.VendorMeals` returns deep copies of the vendor-place meals and their wallets.
+  - Vendor sales: `FoodSaleReceipts.ReadStatus` takes a `ResidentMeal`. `CityViewReports.VendorMeals` returns a `VendorMealReport` per vendor-place meal: `Record`, a new meal holding the meal's public settable strings and values (IDs, day, kind, target, price, status, place), so `IntentId`, `TargetKind` and the receipt key read the same; and `Wallet`, a deep copy of the wallet. A held decision is not copied. Round 2 replaced the round-1 deep copy of the whole meal, which threw on a held retry decision (`FoodDecisionTuning` has no parameterless constructor; review Sol-r2-1).
   - Economy overview: `FoodEconomyInsight.Capture` returns the saved history rows. `CityViewReports.EconomyOverview` returns its fields in the same order with the rows copied, so the bridge JSON is unchanged.
-  - The copies come from one reflection copier in `CityView.cs` (public settable properties, lists and arrays element by element; anything outside Core is refused). It runs only for these on-demand diagnostics.
+  - Wallets and history rows are copied by one reflection copier in `CityView.cs`: public settable properties, lists and arrays element by element. A copy holds public state only; fields and members with non-public setters (a meal's host assignment, a product's opaque-identity flag) are reset to their defaults, and a type outside Core or without a parameterless constructor is refused. Nothing the diagnostics print reads those members. The copier runs only for these on-demand diagnostics.
 - **Save-cost counts come from the save owner.** `SaveCodec.CountRecords` validates the state it wrote. Decoding the published payload instead would cost 221 ms and 72 MB on the main thread at 957 residents ([perf](../perf/f9e.md)), a spike inside an explicitly requested save-profiling run. So `PersistentCityMod.cs`, the load and save owner already on the allowed list, passes `payload => SaveCodec.CountRecords(simulation!.State, payload)` into `CountSavedRecords`, which only times and records it. This is the one edit outside F9e's Owns list in Runtime: one call line in an allowed owner file.
 - **Reports instead of new helper signatures.** `FoodEconomyInsight`, `FoodMoneyCounters`, `FoodFeedback`, `FoodFeedbackV2`, `VisitorSchedules` and `PopulationCensusInput` keep their concrete parameters, because their files are outside F9e. `CityViewReports` unwraps the view inside Core and returns the helper's result, so the observer files hold only `ICityView`. A foreign `ICityView` is refused.
 - **Allowed files.** The plan names `PersistentCityMod.cs`, `AccountingRecovery.cs`, `StreetFoodVendorMarket.cs` and `PhysicalPopulation.cs` (until F9g). Two files that read `simulation.State` at this base are not in the plan's list and not in F9e's Owns, so they are allowed by name:
@@ -58,8 +58,8 @@ These are named, not closed:
 Mac (Apple M1 Pro), at this branch's head:
 
 - Build: `python3 tools/build.py --game-managed "…/dll-import-shim/Big Ambitions_Data/Managed"` passed.
-- `dotnet test tests/PersistentCity.Tests.csproj`: 4,352 passed ([validation run](#validation-run)).
-- `dotnet test … --filter "FullyQualifiedName~OwnershipBoundaryTests"`: 9 passed.
+- `dotnet test tests/PersistentCity.Tests.csproj`: 4,353 tests ([validation run](#validation-run)).
+- `dotnet test … --filter "FullyQualifiedName~OwnershipBoundaryTests"`: 10 passed.
 - Before and after on the same cities: the observer outputs (table below) hashed at base `9cb1490` with the base code's `State` reads, and at this head through `View`. After review round 1 the projection also covers `pcresearch orders` and `report` text, `pc vendor sales`, the save-cost record counts and the panel's whole per-shop history block. The base run used a scratch copy of `ThroughState` and its helpers on an export of `9cb1490`; the scratch file is not committed.
 
 | City | Base `9cb1490` (State reads) | This head (View reads) | Characters |
@@ -76,6 +76,7 @@ Mac (Apple M1 Pro), at this branch's head:
 | Current-writer golden pins unchanged | `CurrentWriterGoldenHashIsUnchanged` (writer 36, E5b4's pins for seeds 5150 and 9217) |
 | No allocation per read in the panel refresh | `PanelRefreshReadsThroughTheViewAllocateNothing`: 0 bytes over 1,000 refreshes of the panel's view reads (255 places, 3 shops) |
 | The live view | `TheViewIsLiveAndAStateWithoutFoodHasNoFoodView` |
+| Vendor sales with held retry decisions (review round 2) | `VendorSalesListAVendorMealHoldingARetryDecision`: three vendor-place meals holding a decision with its tuning (the round-1 deep copy throws on it); `pc vendor sales` text from the reports equals the base projection of the live meals, with paid, conflicting and missing receipts; editing the reports leaves the live projection unchanged |
 | Observer reports share no saved object (review round 1) | `ObserverReportsShareNoSavedObjectWithTheCity`: every public report is classified (a new one fails until listed); `FoodHistoryReport` returns only text; the overview's JSON is unchanged and editing its rows leaves the city's overview JSON unchanged; all 202 F9c meals and wallets detach to the same JSON and editing the copies changes nothing; ordering on the research copy leaves the city's ledger unchanged |
 
 ### Validation run
@@ -83,7 +84,7 @@ Mac (Apple M1 Pro), at this branch's head:
 Mac (Apple M1 Pro), after review round 1:
 
 - Build: passed (`DLL SHA256: 363626de361dca8290edf2796c14c1d336952cb8cda73918d76911333c848492`).
-- `dotnet test tests/PersistentCity.Tests.csproj`: 4,352 passed, 0 failed, 8 min 23 s (another session's tests ran on the machine just before). Before review: 4,351 passed, 6 min 55 s at `54029ab`.
+- `dotnet test tests/PersistentCity.Tests.csproj` after review round 2: 4,352 passed, 1 failed, 7 min 41 s. The failure is `FoodContractCoordinatorTests.RecheckBoundaryRebuildAndCommitGateCosts`, a wall-clock cost bound in a file this branch does not touch; it passed when rerun alone (644 ms) and in the round-1 run. Round 1: 4,352 passed, 0 failed, 8 min 23 s. Before review: 4,351 passed, 6 min 55 s at `54029ab`.
 - An earlier full run, before the collection renames, failed two tests: `F7dCompactWriterTests.SpecializedBodyBoundsApplyToMenuIdsProductNamesAndPortals`, which found the loosened saved bound (see *View collections are named apart from saved fields*), and `FoodContractCoordinatorTests.RecheckBoundaryRebuildAndCommitGateCosts`, a timing test that passed alone and in the run above.
 
 This is offline evidence only. No game, rig, ModsLocal or bridge was used.

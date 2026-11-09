@@ -245,16 +245,32 @@ namespace PersistentCity.Core
         /// <summary>A detached copy of the research ledger (the F7c save copy: same orders, states and order, shared immutable
         /// reports) for the research window and report text, which take a ledger. Changing it changes nothing in the city.</summary>
         public static ResearchLedger ResearchSnapshot(ICityView view) => Of(view).Research.CopyForSave();
-        /// <summary>Detached copies of the meal records at Street Food vendor places, wallets included, for <c>pc vendor sales</c>
-        /// and its receipt check.</summary>
-        public static IReadOnlyList<ResidentMeal> VendorMeals(ICityView view)
-            => FoodOf(view).Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId)).Select(Detach).ToArray();
+        /// <summary>The meal records at Street Food vendor places for <c>pc vendor sales</c> and its receipt check, each as a
+        /// detached <see cref="VendorMealReport"/>.</summary>
+        public static IReadOnlyList<VendorMealReport> VendorMeals(ICityView view)
+            => FoodOf(view).Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId)).Select(m => new VendorMealReport(m)).ToArray();
+
+        /// <summary>A new meal record with the meal's public settable strings and values only (IDs, day, kind, target,
+        /// price, status, place); held decisions, wallets and lists stay behind. Its computed members (IntentId,
+        /// TargetKind) read the same as the meal's.</summary>
+        internal static ResidentMeal Record(ResidentMeal meal)
+        {
+            var record = new ResidentMeal();
+            foreach (var property in typeof(ResidentMeal).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                if (property.GetIndexParameters().Length == 0 && property.SetMethod != null && property.SetMethod.IsPublic
+                    && (property.PropertyType == typeof(string) || property.PropertyType.IsValueType))
+                    property.SetValue(record, property.GetValue(meal));
+            return record;
+        }
 
         internal static T Detach<T>(T value) where T : class => (T)Copy(value)!;
 
-        /// <summary>A deep copy through public members: strings and value types as they are, arrays and lists element by
-        /// element, a Core class by its parameterless constructor and its public settable properties (a get-only list is
-        /// refilled). Used only for on-demand diagnostics; anything else is refused rather than shared.</summary>
+        /// <summary>A deep copy of public state: strings and value types as they are, arrays and lists element by element, a
+        /// Core class by its parameterless constructor and its public settable properties (a get-only list is refilled).
+        /// A copy holds public state only: fields, and members with non-public setters (for example a meal's host
+        /// assignment or a product's opaque-identity flag), are reset to their defaults, and transient counters are not
+        /// attached. A type outside Core or without a parameterless constructor is refused rather than shared. Used only
+        /// for on-demand diagnostics, on wallets and history rows.</summary>
         private static object? Copy(object? value)
         {
             if (value == null) return null;
@@ -284,6 +300,20 @@ namespace PersistentCity.Core
             }
             return result;
         }
+    }
+
+    /// <summary>One vendor-place meal for <c>pc vendor sales</c>: its record fields (<see cref="CityViewReports.Record"/>,
+    /// also the receipt key) and a detached copy of its wallet. Nothing in it is part of the city.</summary>
+    public sealed class VendorMealReport
+    {
+        internal VendorMealReport(ResidentMeal meal)
+        {
+            Record = CityViewReports.Record(meal);
+            Wallet = meal.Budget == null ? null : CityViewReports.Detach(meal.Budget);
+        }
+        /// <summary>A new meal record with the meal's strings and values, for display and FoodSaleReceipts.ReadStatus.</summary>
+        public ResidentMeal Record { get; }
+        public ResidentBudget? Wallet { get; }
     }
 
     /// <summary>The kept food history indexed by shop for one panel refresh (<see cref="FoodFeedback.IndexHistory"/>). The
