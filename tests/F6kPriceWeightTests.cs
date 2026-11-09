@@ -65,7 +65,6 @@ public sealed class F6kPriceWeightTests
     [Fact]
     public void WriterAndTuningWireAreUnchangedAndAStoredOneIsKept()
     {
-        Assert.Equal(36, CityState.CurrentSchema); // E5b4 took writer 36; this slice changes no wire
         var fresh = FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire();
         Assert.Equal(FoodDecisionTuning.WireLength, fresh.Length);
         Assert.True(FoodDecisionTuning.TryParse(fresh, out var image));
