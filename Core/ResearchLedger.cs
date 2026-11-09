@@ -13,7 +13,7 @@ namespace PersistentCity.Core
     public enum ResearchMoveRefusal { None, UnknownOrder, WrongState, InvalidReport, InvalidReason }
 
     /// <summary>One research order. Only the ledger changes it.</summary>
-    public sealed class ResearchOrder
+    public sealed class ResearchOrder : IResearchOrderView
     {
         internal ResearchOrder(long sequence, ResearchProduct product, string business, string agency, bool taxDeductible,
             int radiusMetres, double orderMinute, double surveyAtMinute)
@@ -46,6 +46,23 @@ namespace PersistentCity.Core
         /// <summary>Held only while Surveyed or Paid. Numbers still need TryRead with this ledger.</summary>
         public MarketResearchReport? Report { get; internal set; }
         public bool IsOpen => State == ResearchOrderState.Ordered || State == ResearchOrderState.Surveyed;
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IResearchOrderView.Id => Id;
+        long IResearchOrderView.Sequence => Sequence;
+        string IResearchOrderView.ProductCode => ProductCode;
+        int IResearchOrderView.PriceDollars => Product.PriceDollars;
+        Money IResearchOrderView.Price => Price;
+        string IResearchOrderView.BusinessAddress => BusinessAddress;
+        string IResearchOrderView.AgencyAddress => AgencyAddress;
+        bool IResearchOrderView.TaxDeductible => TaxDeductible;
+        int IResearchOrderView.RadiusMetres => RadiusMetres;
+        double IResearchOrderView.OrderMinute => OrderMinute;
+        double IResearchOrderView.SurveyAtMinute => SurveyAtMinute;
+        ResearchOrderState IResearchOrderView.State => State;
+        ResearchDeclineReason IResearchOrderView.DeclineReason => DeclineReason;
+        string IResearchOrderView.ReportId => ReportId;
+        bool IResearchOrderView.HasReport => Report != null;
+        bool IResearchOrderView.IsOpen => IsOpen;
     }
 
     /// <summary>Per-city research orders and the C5 entitlement. Not attached to CityState yet (C5c).
