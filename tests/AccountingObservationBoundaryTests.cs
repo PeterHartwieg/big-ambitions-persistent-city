@@ -38,7 +38,6 @@ public sealed partial class PhysicalJourneyTests
     public void BeforeAdvanceObservationCannotCreateArrivalWork(bool publish)
     {
         var city = Engine(); var c = city.State.Citizens[0];
-        Assert.False(city.TryAcquirePhysicalJourney(c.Identity.Id, out _));
         city.AdvanceTo(AccountingClock.PreviousEpochTarget(1500));
         Assert.True(city.IsAccountingEpochDrained(1500));
         if (publish) Assert.True(city.BeginAccountingObservations(1500));

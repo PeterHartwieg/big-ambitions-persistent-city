@@ -174,13 +174,17 @@ namespace PersistentCity.Runtime
         internal void Release(PhysicalVehicleBody body)
         {
             if (!Active.TryGetValue(body.CitizenId, out var current) || !ReferenceEquals(current, body)) return;
+            if (body.Valid) body.SetFade(1);
             Active.Remove(body.CitizenId); body.Valid = false;
         }
         /// <summary>One native fixed step for every car: move along the commanded direction by at most the command's
         /// advance (nothing while held), at <paramref name="speed"/> metres per second; a car standing on a corner
         /// <paramref name="corner"/> returns raises Gley's reached marker for it.</summary>
+        internal static float LastStepSeconds = 1 / 60f;
+        internal bool? NativeRed(PhysicalVehicleBody body) => body.NativeRed;
         internal void Drive(float seconds, double speed, Func<PhysicalVehicleBody, Position?>? corner = null)
         {
+            LastStepSeconds = seconds;
             foreach (var body in new List<PhysicalVehicleBody>(Active.Values))
             {
                 if (!body.Valid || CommandLimit == null) continue;
@@ -212,6 +216,16 @@ namespace PersistentCity.Runtime
             marker = reached.Peek(); return true;
         }
         internal bool ConsumeReached(Position p) { if (!TryPeekReached(p, out _)) return false; reached.Dequeue(); return true; }
+        // F2d follower hooks: native speed (from the last Drive step), the test-controlled on-screen flag,
+        // whether the car's materials can fade, and the fade itself.
+        internal double Speed => Moved / Math.Max(1e-6, PhysicalVehicles.LastStepSeconds);
+        internal bool OnScreen;
+        internal bool CanFade;
+        internal float Alpha = 1;
+        internal readonly List<float> Fades = new();
+        internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
+        // Gley's target waypoint light for this car: true red, false green, null unknown.
+        internal bool? NativeRed;
     }
     internal sealed class Actor
     {

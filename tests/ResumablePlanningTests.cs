@@ -328,7 +328,6 @@ public sealed class ResumablePlanningTests
         // Another frame slice does nothing while the answer is outstanding.
         var again = city.AdvanceFrameSlice(Target(3), 1);
         Assert.True(again.PlanningPending); Assert.Equal(0, again.Events); Assert.Equal(held, city.State.Minute);
-        Assert.False(city.TryAcquirePhysicalJourney(live.Identity.Id, out _));
         Assert.False(city.TryBeginOptionalShopVisit(live.Identity.Id, "shop-1", new Route { Legs = { new RouteLeg { From = new(0, 0, 0), To = new(150, 0, 120), Minutes = 2, Mode = TravelMode.Walk } } }, 2, 10, held + 30));
         Assert.False(city.ContinuePlanning(0)); Assert.Equal(before, JsonConvert.SerializeObject(live)); Assert.Equal(held, city.State.Minute);
         Assert.False(city.ContinuePlanning(0)); Assert.Equal(before, JsonConvert.SerializeObject(live));

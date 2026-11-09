@@ -199,7 +199,7 @@ public static class EconomyRun
         Require(options.ReloadAt == null || reloaded, "requested reload did not happen");
         driver?.BeforeSave();
         result.BodyAcquisitions = driver?.Acquired ?? 0;
-        result.BodyObservations = driver?.LeaseObservations ?? 0;
+        result.BodyObservations = driver?.Observations ?? 0;
         result.MaximumBodies = driver?.MaxWalkers ?? 0;
         result.EmploymentUnits = city.State.Food!.Residents.Aggregate(BigInteger.Zero, (total, m) => total + m.Budget!.Ledger.EmploymentIncome.Units);
         result.DiscretionaryUnits = city.State.Food.Residents.Aggregate(BigInteger.Zero, (total, m) => total + m.Budget!.Ledger.Discretionary.Units);

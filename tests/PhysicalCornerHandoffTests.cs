@@ -3,6 +3,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
+// F2d: the corner handoff only shapes the visible turn. A car Gley reports past a corner holds its pose and yaw while
+// the kernel's coordinate is short of the marker's projection onto the next leg; it never credits progress.
 public sealed class PhysicalCornerHandoffTests
 {
     private sealed class Planner : IRoutePlanner
@@ -26,47 +28,38 @@ public sealed class PhysicalCornerHandoffTests
     [Theory]
     [InlineData(false, 9, .5)]
     [InlineData(true, 9, 0)]
-    public void UnmovedNativeCornerReceiptCannotBecomeAnUnpermittedSecondMovement(bool obtuse, double x, double z)
+    public void UnmovedNativeCornerReceiptHoldsTheTurnUntilTheKernelReachesIt(bool obtuse, double x, double z)
     {
         var marker = new Position(x,0,z);
         var previous = Sample(9, obtuse); var next = Sample(10, obtuse);
         Assert.True(PhysicalProgress.TryProject(previous, marker, true, out double corner));
         Assert.Equal(10, corner);
         Assert.True(PhysicalProgress.TryProject(next, marker, false, out double reprojected));
-        Assert.True(reprojected > 10.1); // The old observer discarded the unmoved body here.
+        Assert.True(reprojected > 10.1); // The marker already projects ahead onto the next leg.
         var handoff = new PhysicalCornerHandoff(); handoff.Begin(previous, next, marker);
-        Assert.True(handoff.MustHold(next, 10.1));
-        Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(next, marker, 10.1));
         for (int frame = 0; frame < 100; frame++)
         {
-            Assert.True(handoff.TryHold(Sample(10.1, obtuse), marker, 10.1, out double accepted));
-            Assert.Equal(10.1, accepted); // No elapsed frames, queue advance or extra capacity invented.
+            // No elapsed frames, queue advance or extra capacity lets the car turn ahead of the kernel.
+            Assert.True(handoff.MustHold(next, 10.1));
+            Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(next, marker, 10.1));
         }
+        // Once the kernel's coordinate passes the projection the hold ends for good.
+        Assert.False(handoff.MustHold(next, reprojected + 1e-6));
+        Assert.False(handoff.MustHold(next, 10.1));
     }
 
     [Fact]
-    public void ReceiptDoesNotExcuseNewForwardMotionEvenWhenObservationWasDelayed()
-    {
-        var handoff = new PhysicalCornerHandoff();
-        handoff.Begin(Sample(9), Sample(10), new Position(9,0,.5));
-        Assert.False(handoff.TryHold(Sample(10), new Position(9,0,.51), 10.1, out _));
-        Assert.False(handoff.TryHold(Sample(10), new Position(9,0,.561434), 10.1, out _));
-        Assert.True(handoff.TryHold(Sample(10), new Position(9,0,.5), 10.1, out double accepted));
-        Assert.Equal(10.1, accepted);
-    }
-
-    [Fact]
-    public void OpenedReceivingPermissionReleasesHoldAndCannotLeaveAnOvershootExemption()
+    public void OpenedReceivingPermissionReleasesHoldForGood()
     {
         var handoff = new PhysicalCornerHandoff(); var sample = Sample(10);
         handoff.Begin(Sample(9), sample, new Position(9,0,.5));
         Assert.True(handoff.MustHold(sample, 10.1));
         Assert.False(handoff.MustHold(sample, 10.5));
-        Assert.False(handoff.TryHold(sample, new Position(9,0,.6), 10.1, out _));
+        Assert.False(handoff.MustHold(sample, 10.1));
     }
 
     [Fact]
-    public void DistantReceiptAndUnrelatedLegNeverReceiveCornerExemption()
+    public void DistantReceiptAndUnrelatedLegNeverHold()
     {
         var handoff = new PhysicalCornerHandoff();
         handoff.Begin(Sample(9), Sample(10), new Position(9,0,2));
@@ -74,27 +67,16 @@ public sealed class PhysicalCornerHandoffTests
         handoff.Begin(Sample(9), Sample(20), new Position(9,0,.5));
         Assert.False(handoff.MustHold(Sample(20), 20));
         handoff.Begin(Sample(9), Sample(10), new Position(9,0,.5));
-        Assert.False(handoff.TryHold(Sample(20), new Position(10,0,10), 20, out _));
+        Assert.False(handoff.MustHold(Sample(20), 20));
     }
 
     [Fact]
-    public void NonfiniteMeasurementOrRegressedPermissionCannotHold()
+    public void NonfiniteMarkerOrPermissionCannotHold()
     {
         var handoff = new PhysicalCornerHandoff();
+        handoff.Begin(Sample(9), Sample(10), new Position(double.NaN,0,.5));
+        Assert.False(handoff.MustHold(Sample(10), 10));
         handoff.Begin(Sample(9), Sample(10), new Position(9,0,.5));
-        Assert.False(handoff.TryHold(Sample(10), new Position(double.NaN,0,.5), 10, out _));
-        Assert.False(handoff.TryHold(Sample(10.1), new Position(9,0,.5), 10, out _));
-    }
-
-    [Fact]
-    public void NormalizedNextLegRetainsExactRawLeaseAccountingDuringCornerHold()
-    {
-        double credited = System.Math.BitDecrement(10);
-        var next = Sample(10); var marker = new Position(9,0,.5);
-        var handoff = new PhysicalCornerHandoff(); handoff.Begin(Sample(9), next, marker);
-        Assert.True(handoff.TryHold(next, marker, credited, credited, out double held));
-        Assert.Equal(credited, held);
-        Assert.False(handoff.TryHold(next, new Position(9,0,.51), credited, credited, out _));
-        Assert.False(handoff.TryHold(next, marker, credited, 10, out _));
+        Assert.False(handoff.MustHold(Sample(10), double.NaN));
     }
 }

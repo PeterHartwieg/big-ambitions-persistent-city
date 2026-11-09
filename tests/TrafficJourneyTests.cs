@@ -57,10 +57,11 @@ public sealed class TrafficJourneyTests
     [Fact]
     public void DepartureIsNeverHeldForABodyAndTrafficAdmitsOnTheLogicalClock()
     {
-        // F2c removed TryHoldPhysicalDeparture: a body returning from a stop no longer holds the new journey.
+        // F2c removed TryHoldPhysicalDeparture: a body returning from a stop no longer holds the new journey. F2d removed
+        // the traffic lease: no body holds a traffic leg either.
         var engine = Engine(1); var citizen = engine.State.Citizens[0];
-        Assert.False(engine.TryAcquirePhysicalJourney(citizen.Identity.Id, out _));
         Assert.DoesNotContain(typeof(CitySimulator).GetMethods(), m => m.Name == "TryHoldPhysicalDeparture");
+        Assert.DoesNotContain(typeof(CitySimulator).GetMethods(), m => m.Name == "TryAcquirePhysicalJourney");
         engine.AdvanceTo(1500);
         Assert.Equal(1, citizen.CompletedJourneys);
     }
@@ -190,54 +191,72 @@ public sealed class TrafficJourneyTests
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
 
+    /// <summary>F2d: a visible head car no longer holds its followers. The queue discharges in FIFO order on the kernel's
+    /// clock, exactly as without bodies.</summary>
     [Fact]
-    public void VisibleHeadHoldsItsPlaceAndBackgroundFollowers()
+    public void VisibleHeadNoLongerHoldsItsPlaceOrItsFollowers()
     {
         var engine=Engine(4); engine.AdvanceTo(1440);
-        var head=engine.State.Citizens[0];
-        Assert.True(engine.TryAcquirePhysicalJourney(head.Identity.Id,out var lease));
-        engine.AdvanceTo(1480);
-        Assert.Equal(0,head.CompletedJourneys); Assert.Equal(0,engine.PositionOf(head).X);
-        Assert.All(engine.State.Citizens,c=>Assert.Equal(0,c.CompletedJourneys));
-        Assert.True(engine.ReleasePhysicalJourney(lease!));
-        engine.AdvanceTo(1500);
+        var plain=Engine(4); plain.AdvanceTo(1440);
+        var order=new List<string>(); engine.Traffic!.VehicleCompleted+=(id,_)=>order.Add(id);
+        var queued=engine.Traffic.Capture().Links.SelectMany(l=>l.Vehicles).Concat(engine.Traffic.Capture().Links.SelectMany(l=>l.WaitingSources)).ToList();
+        engine.AdvanceTo(1480); plain.AdvanceTo(1480);
+        Assert.True(order.Count>0);
+        Assert.Equal(order.OrderBy(id=>queued.IndexOf(id)).ToList(),order);
+        Assert.False(engine.Traffic.HasPhysicalControl);
+        engine.AdvanceTo(1500); plain.AdvanceTo(1500);
         Assert.All(engine.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
+        Assert.Equal(SaveCodec.Write(plain.State),SaveCodec.Write(engine.State));
     }
 
+    /// <summary>F2d: a car body ahead of its kernel coordinate gains nothing. The follower's progress is capped at the
+    /// kernel's permission and the queue behind it keeps its finite storage.</summary>
     [Fact]
-    public void PhysicalOvershootCannotBypassFiniteStorage()
+    public void FollowerAheadOfItsKernelCoordinateCannotBypassFiniteStorage()
     {
-        var engine=Engine(4); engine.AdvanceTo(1440);
-        var citizen=engine.State.Citizens[0];
-        Assert.True(engine.TryAcquirePhysicalJourney(citizen.Identity.Id,out var lease));
-        Assert.False(engine.ObservePhysicalJourney(lease!,2.4));
-        Assert.Equal(0,citizen.CompletedJourneys);
-        Assert.InRange(engine.PositionOf(citizen).X,0,12);
-        engine.ReleasePhysicalJourney(lease!);
-        engine.AdvanceTo(1500); Assert.Equal(1,citizen.CompletedJourneys);
+        var engine=Engine(4); engine.AdvanceTo(1440.2);
+        var queued=engine.State.Citizens.Where(c=>engine.TryGetTrafficPermission(c.Identity.Id,out var p)&&p.LinkId.HasValue).ToList();
+        Assert.True(queued.Count>=2);
+        var behind=queued.OrderBy(c=>engine.Traffic!.GetPermission(c.Identity.Id).MaximumNominalMinutes).First();
+        var permission=engine.Traffic!.GetPermission(behind.Identity.Id);
+        string before=SaveCodec.Write(engine.State);
+        // A body standing at the end of the road, with Gley's receipt for the first corner.
+        double body=CarFollow.Advance(behind.Journey!,0,CarFollow.Cap(behind.Journey!,0,permission.MaximumNominalMinutes),new Position(24,0,0),0);
+        Assert.True(body<=permission.MaximumNominalMinutes);
+        Assert.Equal(permission.MaximumNominalMinutes,engine.Traffic.GetPermission(behind.Identity.Id).MaximumNominalMinutes);
+        Assert.Equal(before,SaveCodec.Write(engine.State));
+        engine.AdvanceTo(1500); Assert.All(engine.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
     }
 
+    /// <summary>An older development city saved with its head car under physical control (the state the removed lease
+    /// left) resumes as the same background queue: the reader releases it at its saved coordinate.</summary>
     [Fact]
-    public void SavedPhysicalQueueResumesAsSameBackgroundQueue()
+    public void OlderSavedPhysicalQueueResumesAsSameBackgroundQueue()
     {
         var engine=Engine(4); engine.AdvanceTo(1440);
-        Assert.True(engine.TryAcquirePhysicalJourney(engine.State.Citizens[0].Identity.Id,out var lease));
-        engine.AdvanceTo(1440.5); Assert.True(engine.ObservePhysicalJourney(lease!,0.3));
-        var read=SaveWire.Read(SaveCodec.Write(engine.State)); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        var restored=new CitySimulator(read.State!,new Planner()); engine.ReleasePhysicalJourney(lease!);
+        string id=engine.State.Citizens[0].Identity.Id;
+        LegacyTrafficLease.Report(engine,id,1440.5,0.3,release:false);
+        string older=LegacyTrafficLease.OlderSave(engine);
+        var read=SaveWire.Read(older); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.True(read.State!.Traffic!.Vehicles.Single(v=>v.VehicleId==id).PhysicalControl);
+        var restored=new CitySimulator(read.State,new Planner());
+        Assert.False(restored.Traffic!.HasPhysicalControl);
+        Assert.Equal(0.3,restored.Traffic.GetPermission(id).NominalMinutes);
+        // The in-memory original releases the same way Restore does.
+        engine.Traffic!.SetPhysicalControl(id,false);
         engine.AdvanceTo(1500); restored.AdvanceTo(1500);
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
 
     [Fact]
-    public void ObservingAndReleasingATrafficLegLeaseNeverRefilesTheRoute()
+    public void FollowingATrafficLegNeverRefilesTheRoute()
     {
-        // The presentation grid property that walk leases used to cover (PresentationGridTests); traffic legs keep a lease until F2d.
+        // The presentation grid property that walk and traffic leases used to cover (PresentationGridTests).
         var engine=Engine(4); engine.AdvanceTo(1440);
         var grid=engine.ActiveJourneys.Grid; long filed=grid.Filings;
-        Assert.True(engine.TryAcquirePhysicalJourney(engine.State.Citizens[0].Identity.Id,out var lease));
-        engine.AdvanceTo(1440.5); Assert.True(engine.ObservePhysicalJourney(lease!,0.3));
-        Assert.True(engine.ReleasePhysicalJourney(lease!));
+        var c=engine.State.Citizens[0];
+        _=engine.SampleJourney(c); _=engine.TryGetTrafficPermission(c.Identity.Id,out _);
+        engine.AdvanceTo(1440.5); _=engine.SampleJourney(c);
         Assert.Equal(filed,grid.Filings);
         Assert.True(engine.ActiveJourneyIndexMatchesState());
     }

@@ -4,22 +4,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>An exclusive, simulator-local authority over one committed journey. Never persist this handle.</summary>
-    public sealed class PhysicalJourneyLease
-    {
-        internal PhysicalJourneyLease(CitySimulator owner, long generation, CitizenState citizen)
-        { Owner = owner; Generation = generation; Citizen = citizen; Identity = citizen.Identity; Route = citizen.Journey!; CitizenId = citizen.Identity.Id; }
-        internal CitySimulator Owner { get; }
-        internal CitizenState Citizen { get; }
-        internal CitizenIdentity Identity { get; }
-        internal Route Route { get; }
-        internal double Progress;
-        /// <summary>Exact credited route minutes, before geometric boundary normalization in a sample.</summary>
-        public double ObservedMinutes => Progress;
-        public string CitizenId { get; }
-        public long Generation { get; }
-    }
-
     public readonly struct PhysicalJourneySample
     {
         internal PhysicalJourneySample(double elapsed, double total, int leg, double fraction, RouteLeg segment, Position position, Position? car, TravelMode? nextMode)
@@ -54,42 +38,6 @@ namespace PersistentCity.Core
 
     public sealed partial class CitySimulator
     {
-        private readonly Dictionary<string, PhysicalJourneyLease> physicalJourneys = new Dictionary<string, PhysicalJourneyLease>(StringComparer.Ordinal);
-        private long physicalGeneration;
-
-        /// <summary>Acquire after advancing the city, for a journey on a traffic leg only (F2c: walk, wait and transit
-        /// legs are never leased; their bodies follow the logical pose). Traffic progress then follows the body's
-        /// reports until observed or released (F2d removes this).</summary>
-        public bool TryAcquirePhysicalJourney(string citizenId, out PhysicalJourneyLease? lease)
-        {
-            lease = null;
-            if (citizenId == null) throw new ArgumentNullException(nameof(citizenId));
-            if (physicalJourneys.ContainsKey(citizenId) || !citizenEvents.TryGetValue(citizenId, out var item) || InProgress(item)) return false;
-            var c = item.Citizen;
-            // Visitors receive no body or lease before F5i (plan B5): their journeys stay purely logical.
-            if (!ActiveJourneyIndex.ReceivesBody(c)) return false;
-            if (c.Phase != CitizenPhase.Travelling || c.Journey == null || c.Identity.Id != citizenId || !CurrentCitizenSlot(item, c)) return false;
-            if (!trafficCitizens.ContainsKey(citizenId)) return false;
-            double progress = JourneyProgress(c);
-            if (progress < 0 || progress >= c.Journey.Minutes) return false;
-            if (!traffic!.TryGetVehicle(citizenId, out var trafficPosition) || !trafficPosition.LinkId.HasValue) return false;
-            ValidateRoute(c.Journey, places[c.PlaceId].Position, places[c.DestinationId].Position);
-            ValidateCarRoute(c.Journey, c);
-            lease = new PhysicalJourneyLease(this, checked(++physicalGeneration), c) { Progress = progress };
-            traffic.SetPhysicalControl(citizenId, true);
-            physicalJourneys.Add(citizenId, lease);
-            return true;
-        }
-
-        public bool IsPhysicalJourneyValid(PhysicalJourneyLease lease) => ValidPhysicalLease(lease);
-
-        private bool ValidPhysicalLease(PhysicalJourneyLease? lease) => lease != null && ReferenceEquals(lease.Owner, this)
-            && physicalJourneys.TryGetValue(lease.CitizenId, out var current) && ReferenceEquals(current, lease)
-            && ReferenceEquals(lease.Citizen.Identity, lease.Identity) && lease.Citizen.Identity.Id == lease.CitizenId
-            && ReferenceEquals(lease.Citizen.Journey, lease.Route) && lease.Citizen.Phase == CitizenPhase.Travelling
-            && citizenEvents.TryGetValue(lease.CitizenId, out var item) && ReferenceEquals(item.Citizen, lease.Citizen)
-            && CurrentCitizenSlot(item, lease.Citizen);
-
         // F5g: a visitor's slot is found by its ID in the ordinal visitor list, not by the queued index, because fill units
         // merge new visitors into that list and shift later positions. Before F5g both gave the same answer.
         private bool CurrentCitizenSlot(Due item, CitizenState citizen)
@@ -112,52 +60,6 @@ namespace PersistentCity.Core
             return -1;
         }
 
-        /// <summary>
-        /// Report measured progress along the persisted legs, expressed in their nominal route minutes.
-        /// Equal progress means blocked/waiting. Call after AdvanceTo; progress cannot exceed the city clock
-        /// because schema 4 represents it as a nonnegative departure time. No admission happens here.
-        /// </summary>
-        public bool ObservePhysicalJourney(PhysicalJourneyLease lease, double routeElapsedMinutes)
-        {
-            if (!Position.Finite(routeElapsedMinutes) || routeElapsedMinutes < 0) throw new ArgumentOutOfRangeException(nameof(routeElapsedMinutes));
-            if (!ValidPhysicalLease(lease)) return false;
-            if (routeElapsedMinutes < lease.Progress || routeElapsedMinutes > lease.Route.Minutes || routeElapsedMinutes > State.Minute)
-                throw new ArgumentOutOfRangeException(nameof(routeElapsedMinutes), "Progress must be monotonic and inside the route and city clock.");
-            // Leases exist only on traffic legs, and traffic completion ends them (TrafficCompleted).
-            if (!trafficCitizens.ContainsKey(lease.CitizenId)) return false;
-            double accepted = traffic!.ReportPhysicalProgress(lease.CitizenId, routeElapsedMinutes);
-            // The report can complete the traffic leg, which ends the lease and resumes the logical walk.
-            if (!ValidPhysicalLease(lease)) return false;
-            // The adapter must constrain commanded movement before this boundary. Refuse a
-            // material physical overshoot instead of crediting movement through a queue.
-            if (routeElapsedMinutes - accepted > 1e-7)
-            { lease.Progress = accepted; RebasePhysicalJourney(lease); return false; }
-            routeElapsedMinutes = accepted;
-            lease.Progress = routeElapsedMinutes;
-            RebasePhysicalJourney(lease);
-            // Arrival runs through the ordinary due queue (including its budget and opening checks).
-            if (routeElapsedMinutes == lease.Route.Minutes) ReturnPhysicalEvent(lease);
-            return true;
-        }
-
-        /// <summary>Resume background travel at the last observed point with the remaining route duration.</summary>
-        public bool ReleasePhysicalJourney(PhysicalJourneyLease lease)
-        {
-            if (!ValidPhysicalLease(lease)) return false;
-            RebasePhysicalJourney(lease);
-            if (trafficCitizens.ContainsKey(lease.CitizenId)) traffic!.SetPhysicalControl(lease.CitizenId, false);
-            ReturnPhysicalEvent(lease);
-            return true;
-        }
-
-        public bool TrySamplePhysicalJourney(PhysicalJourneyLease lease, out PhysicalJourneySample sample)
-        {
-            sample = default;
-            if (!ValidPhysicalLease(lease)) return false;
-            sample = SampleJourney(lease.Citizen, lease.Progress);
-            return true;
-        }
-
         /// <summary>Sample committed geometry, including zero-distance preparation/wait legs and the parked/driven car.</summary>
         public PhysicalJourneySample SampleJourney(CitizenState citizen)
         {
@@ -167,8 +69,8 @@ namespace PersistentCity.Core
             return SampleJourney(citizen, elapsed);
         }
 
-        // A completed lease stores departure = clock - duration. Reversing that subtraction can
-        // exceed duration by an ulp at a large city clock; this is not evidence of extra travel.
+        // A completed traffic leg (or, before F2c/F2d, a completed lease) stores departure = clock - duration. Reversing
+        // that subtraction can exceed duration by an ulp at a large city clock; this is not evidence of extra travel.
         internal static double JourneyClockTolerance(double clock, double total) =>
             4 * 2.2204460492503131e-16 * Math.Max(1, Math.Max(Math.Abs(clock), Math.Abs(total)));
 
@@ -201,7 +103,7 @@ namespace PersistentCity.Core
                 var leg = route.Legs[i];
                 // Summing fractional legs and then subtracting them can leave an endpoint a few
                 // ulps short. Snap only a negligible fraction of this leg, so a reached corner
-                // cannot remain leased forever while the native body has already stopped there.
+                // cannot stay unreached forever while a body has already stopped there.
                 double boundaryTolerance = Math.Min(leg.Minutes * 1e-9, Math.Max(1e-12, Math.Abs(routeElapsedMinutes) * 1e-14));
                 if (Math.Abs(remaining - leg.Minutes) <= boundaryTolerance)
                 {
@@ -222,38 +124,6 @@ namespace PersistentCity.Core
                 remaining -= leg.Minutes;
             }
             throw new InvalidOperationException("Invalid route.");
-        }
-
-        private void ReturnPhysicalEvent(PhysicalJourneyLease lease)
-        {
-            physicalJourneys.Remove(lease.CitizenId);
-            if (trafficCitizens.ContainsKey(lease.CitizenId)) return;
-            var item = citizenEvents[lease.CitizenId];
-            item.Minute = ScheduledMinute(item.Citizen);
-            if (!due.Add(item)) throw new InvalidOperationException("Duplicate physical journey event.");
-        }
-
-        private void RebasePhysicalJourney(PhysicalJourneyLease lease)
-        {
-            double totalMinutes = lease.Route.Minutes;
-            lease.Citizen.DepartureMinute = State.Minute - lease.Progress;
-            lease.Citizen.NextEventMinute = lease.Progress == totalMinutes
-                ? State.Minute : lease.Citizen.DepartureMinute + totalMinutes;
-        }
-
-        private void ValidatePhysicalClock(double target)
-        {
-            foreach (var lease in physicalJourneys.Values)
-            {
-                if (!ValidPhysicalLease(lease)) throw new InvalidOperationException("Physical journey ownership changed outside the simulator.");
-                if (target + (lease.Route.Minutes - lease.Progress) > 1e9)
-                    throw new ArgumentOutOfRangeException(nameof(target), "Delayed arrival exceeds the supported clock.");
-            }
-        }
-
-        private void SynchronizePhysicalJourneys()
-        {
-            foreach (var lease in physicalJourneys.Values) RebasePhysicalJourney(lease);
         }
     }
 
@@ -400,14 +270,15 @@ namespace PersistentCity.Core
         Move,
         /// <summary>Q3: an on-screen body that hurried for the bound faded out at a corner; it reappears at the logical pose once that is out of view.</summary>
         Fade,
-        /// <summary>An off-screen body released because of lag: the person is no longer walking, or the arrival tail ended short of the door.</summary>
+        /// <summary>An off-screen body released because of lag: the person is no longer walking, the arrival tail ended short of the door,
+        /// or (F2d) a car fell behind the kernel; it reappears at the logical pose.</summary>
         LagRelease,
     }
 
     public readonly struct WalkerCorrection
     {
-        public WalkerCorrection(long sequence, long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen)
-        { Sequence = sequence; Frame = frame; PersonId = personId; Kind = kind; Before = before; After = after; OnScreen = onScreen; }
+        public WalkerCorrection(long sequence, long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen, bool car = false)
+        { Sequence = sequence; Frame = frame; PersonId = personId; Kind = kind; Before = before; After = after; OnScreen = onScreen; Car = car; }
         public long Sequence { get; }
         public long Frame { get; }
         public string PersonId { get; }
@@ -418,50 +289,96 @@ namespace PersistentCity.Core
         public Position After { get; }
         /// <summary>Inside the camera frustum with a visible renderer at that frame.</summary>
         public bool OnScreen { get; }
+        /// <summary>F2d: the corrected body was a car (false: a walker).</summary>
+        public bool Car { get; }
     }
 
     /// <summary>
-    /// F2c walker movement telemetry, held in Runtime memory and never saved: the bounded correction ring (last 512, with
-    /// sequence numbers and gap detection), counters and a lag histogram for pc movement status.
+    /// F2c walker and (F2d) car movement telemetry, held in Runtime memory and never saved: one bounded correction ring
+    /// (last 512, with sequence numbers and gap detection) for both kinds of body, counters, a lag histogram per kind and
+    /// the visible cars' signal phase-mismatch counts for pc movement status.
     /// </summary>
     public sealed class WalkerMovementTelemetry
     {
         public const int Capacity = 512;
-        // 0.05 m bins up to 64 m; larger lags share the last bin, and the exact maximum is kept separately.
-        private const double BinMetres = 0.05;
-        private const int Bins = 1281;
+        private sealed class LagHistogram
+        {
+            // 0.05 m bins up to 64 m; larger lags share the last bin, and the exact maximum is kept separately.
+            private const double BinMetres = 0.05;
+            private const int Bins = 1281;
+            private readonly long[] histogram = new long[Bins];
+            internal long Samples;
+            internal double Maximum;
+            internal void Record(double metres)
+            {
+                if (!Position.Finite(metres) || metres < 0) return;
+                Samples++;
+                if (metres > Maximum) Maximum = metres;
+                histogram[Math.Min(Bins - 1, (int)(metres / BinMetres))]++;
+            }
+            internal double Quantile(double quantile)
+            {
+                if (Samples == 0) return 0;
+                long rank = Math.Max(1, (long)Math.Ceiling(Math.Max(0, Math.Min(1, quantile)) * Samples));
+                long seen = 0;
+                for (int bin = 0; bin < Bins; bin++)
+                {
+                    seen += histogram[bin];
+                    if (seen >= rank) return bin == Bins - 1 ? Maximum : Math.Min(Maximum, (bin + 1) * BinMetres);
+                }
+                return Maximum;
+            }
+        }
         private readonly WalkerCorrection[] ring = new WalkerCorrection[Capacity];
-        private readonly long[] histogram = new long[Bins];
+        private readonly LagHistogram walkers = new LagHistogram(), cars = new LagHistogram();
         private long nextSequence = 1;
 
+        /// <summary>All corrections, walkers and cars.</summary>
         public long Corrections { get; private set; }
         public long Moves { get; private set; }
         public long OnScreenMoves { get; private set; }
         public long Fades { get; private set; }
         public long LagReleases { get; private set; }
-        /// <summary>Mode boundaries where a walker reached the car, bus or subway and a body of the new kind is re-acquired.</summary>
+        /// <summary>Mode boundaries where a walker reached the car, bus or subway, or a car its parking point, and a body
+        /// of the new kind is re-acquired.</summary>
         public long Handoffs { get; set; }
         /// <summary>Walker path calculations: every SetTarget a follower issues (one NavMesh CalculatePath each, the
         /// projected and the raw attempt counted separately). Their rate scales with game speed.</summary>
         public long PathRequests { get; set; }
         /// <summary>Acquisitions refused by the test-profile key MovementFaultAcquirePercent.</summary>
         public long FaultedAcquisitions { get; set; }
-        public long LagSamples { get; private set; }
-        public double MaximumLagMetres { get; private set; }
+        public long LagSamples => walkers.Samples;
+        public double MaximumLagMetres => walkers.Maximum;
+        /// <summary>F2d car counters: corrections, fades and lag releases among the totals above, car handoffs to a walker,
+        /// and frames a visible car spent catching up (lag beyond <see cref="CarFollow.CatchUpMetres"/>).</summary>
+        public long CarCorrections { get; private set; }
+        public long CarFades { get; private set; }
+        public long CarLagReleases { get; private set; }
+        public long CarHandoffs { get; set; }
+        public long CarCatchUpFrames { get; set; }
+        public long CarLagSamples => cars.Samples;
+        public double CarMaximumLagMetres => cars.Maximum;
+        /// <summary>F2d Decision 6: episodes in which a standing visible car was held by the kernel at a native green, or
+        /// stopped by the native light at a kernel green, and the follow-clock seconds spent in each.</summary>
+        public long KernelHeldAtNativeGreen { get; private set; }
+        public long NativeStopAtKernelGreen { get; private set; }
+        public double KernelHeldAtNativeGreenSeconds { get; private set; }
+        public double NativeStopAtKernelGreenSeconds { get; private set; }
         /// <summary>Sequence of the latest correction; 0 before the first.</summary>
         public long LastSequence => nextSequence - 1;
         /// <summary>Oldest sequence still in the ring (1 while nothing was evicted).</summary>
         public long OldestSequence => Math.Max(1, nextSequence - Capacity);
 
-        public long Record(long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen)
+        public long Record(long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen, bool car = false)
         {
             if (personId == null) throw new ArgumentNullException(nameof(personId));
             long sequence = nextSequence++;
-            ring[(int)((sequence - 1) % Capacity)] = new WalkerCorrection(sequence, frame, personId, kind, before, after, onScreen);
+            ring[(int)((sequence - 1) % Capacity)] = new WalkerCorrection(sequence, frame, personId, kind, before, after, onScreen, car);
             Corrections++;
+            if (car) CarCorrections++;
             if (kind == WalkerCorrectionKind.Move) { Moves++; if (onScreen) OnScreenMoves++; }
-            else if (kind == WalkerCorrectionKind.Fade) Fades++;
-            else LagReleases++;
+            else if (kind == WalkerCorrectionKind.Fade) { Fades++; if (car) CarFades++; }
+            else { LagReleases++; if (car) CarLagReleases++; }
             return sequence;
         }
 
@@ -475,29 +392,27 @@ namespace PersistentCity.Core
                 into.Add(ring[(int)((s - 1) % Capacity)]);
         }
 
-        public void RecordLag(double metres)
-        {
-            if (!Position.Finite(metres) || metres < 0) return;
-            LagSamples++;
-            if (metres > MaximumLagMetres) MaximumLagMetres = metres;
-            histogram[Math.Min(Bins - 1, (int)(metres / BinMetres))]++;
-        }
+        public void RecordLag(double metres) => walkers.Record(metres);
+        public void RecordCarLag(double metres) => cars.Record(metres);
 
         /// <summary>Upper edge of the histogram bin holding the quantile (at most the exact maximum); 0 without samples.</summary>
-        public double LagQuantile(double quantile)
+        public double LagQuantile(double quantile) => walkers.Quantile(quantile);
+        public double CarLagQuantile(double quantile) => cars.Quantile(quantile);
+
+        /// <summary>One frame of a visible car's phase state: a new episode when the kind differs from the car's previous
+        /// frame, and the frame's seconds added to the kind's total.</summary>
+        public void RecordPhase(CarPhaseMismatch kind, CarPhaseMismatch previous, double seconds)
         {
-            if (LagSamples == 0) return 0;
-            long rank = Math.Max(1, (long)Math.Ceiling(Math.Max(0, Math.Min(1, quantile)) * LagSamples));
-            long seen = 0;
-            for (int bin = 0; bin < Bins; bin++)
-            {
-                seen += histogram[bin];
-                if (seen >= rank) return bin == Bins - 1 ? MaximumLagMetres : Math.Min(MaximumLagMetres, (bin + 1) * BinMetres);
-            }
-            return MaximumLagMetres;
+            if (kind == CarPhaseMismatch.None) return;
+            double add = Position.Finite(seconds) && seconds > 0 ? seconds : 0;
+            if (kind == CarPhaseMismatch.KernelHeldAtNativeGreen)
+            { if (previous != kind) KernelHeldAtNativeGreen++; KernelHeldAtNativeGreenSeconds += add; }
+            else { if (previous != kind) NativeStopAtKernelGreen++; NativeStopAtKernelGreenSeconds += add; }
         }
 
-        public string Status(int followers) => string.Format(CultureInfo.InvariantCulture,
+        public string Status(int followers) => Status(followers, 0);
+
+        public string Status(int followers, int carFollowers) => string.Format(CultureInfo.InvariantCulture,
             "followers={0}\nlag_samples={1}\nlag_p50_m={2:F2}\nlag_p95_m={3:F2}\nlag_max_m={4:F2}\ncorrections={5}\nmoves={6}\n"
             + "on_screen_moves={7}\nfades={8}\nlag_releases={9}\nhandoffs={10}\nfaulted_acquisitions={11}\nlast_sequence={12}\n"
             + "path_requests={20}\n"
@@ -505,19 +420,29 @@ namespace PersistentCity.Core
             followers, LagSamples, LagQuantile(0.5), LagQuantile(0.95), MaximumLagMetres, Corrections, Moves, OnScreenMoves, Fades,
             LagReleases, Handoffs, FaultedAcquisitions, LastSequence, WalkerFollow.CatchUpMetres, WalkerFollow.CorrectionMetres,
             WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.ArrivalTailSeconds,
-            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres, PathRequests);
+            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres, PathRequests)
+            + string.Format(CultureInfo.InvariantCulture,
+            "\ncar_followers={0}\ncar_lag_samples={1}\ncar_lag_p50_m={2:F2}\ncar_lag_p95_m={3:F2}\ncar_lag_max_m={4:F2}\n"
+            + "car_catch_up_frames={5}\ncar_corrections={6}\ncar_fades={7}\ncar_lag_releases={8}\ncar_handoffs={9}\n"
+            + "phase_kernel_held_native_green={10}\nphase_kernel_held_native_green_s={11:F1}\n"
+            + "phase_native_stop_kernel_green={12}\nphase_native_stop_kernel_green_s={13:F1}\n"
+            + "car_thresholds=catch_up_m:{14};correct_m:{15};hurry_s:{16};fade_out_s:{17};stopped_mps:{18}",
+            carFollowers, CarLagSamples, CarLagQuantile(0.5), CarLagQuantile(0.95), CarMaximumLagMetres, CarCatchUpFrames,
+            CarCorrections, CarFades, CarLagReleases, CarHandoffs, KernelHeldAtNativeGreen, KernelHeldAtNativeGreenSeconds,
+            NativeStopAtKernelGreen, NativeStopAtKernelGreenSeconds, CarFollow.CatchUpMetres, CarFollow.CorrectionMetres,
+            CarFollow.HurrySeconds, CarFollow.FadeOutSeconds, CarFollow.StoppedMetresPerSecond);
 
         public static string Format(WalkerCorrection c) => string.Format(CultureInfo.InvariantCulture,
-            "seq={0} frame={1} person={2} kind={3} on_screen={4} before={5:R},{6:R},{7:R} after={8:R},{9:R},{10:R}",
+            "seq={0} frame={1} person={2} kind={3} on_screen={4} before={5:R},{6:R},{7:R} after={8:R},{9:R},{10:R} body={11}",
             c.Sequence, c.Frame, c.PersonId, c.Kind, c.OnScreen ? "true" : "false",
-            c.Before.X, c.Before.Y, c.Before.Z, c.After.X, c.After.Y, c.After.Z);
+            c.Before.X, c.Before.Y, c.Before.Z, c.After.X, c.After.Y, c.After.Z, c.Car ? "car" : "walker");
     }
 
     /// <summary>
     /// F5f active-journey candidate index (city audit F5 #92, docs/plans/f5-population.md section 3). The derived,
     /// in-memory set of persons whose phase can make them a physical-body candidate: travelling, waiting at a door
     /// (queue planning), holding an optional stop, or at an outdoor scene. Physical selection iterates this set instead
-    /// of every citizen. It holds no saved state and decides nothing: caps, leases, the candidate filters and their
+    /// of every citizen. It holds no saved state and decides nothing: caps, the candidate filters and their
     /// priority order stay with Runtime's selection, and movement authority stays with F2 #89.
     /// Visitors are indexed with their kind but withheld from <see cref="BodyCandidates"/> until F5i.
     /// F2f files every body candidate into a <see cref="PresentationGrid"/> from inside File and Rebuild, so selection
@@ -525,7 +450,7 @@ namespace PersistentCity.Core
     /// </summary>
     public sealed class ActiveJourneyIndex
     {
-        /// <summary>F5i switch. Visitors receive no body or lease before F2's movement contract lands (plan B5).</summary>
+        /// <summary>F5i switch. Visitors receive no body before F2's movement contract lands (plan B5).</summary>
         public const bool VisitorsReceiveBodies = false;
         /// <summary>Prefix of native outdoor scene places (Runtime OutdoorPlaces: parks, beaches, party piers).</summary>
         public const string OutdoorScenePrefix = "scene-";

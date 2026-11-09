@@ -29,7 +29,7 @@ namespace PersistentCity.Core
     {
         private sealed class Due
         {
-            // Never rebind a lease after external removal, replacement or reordering
+            // Never rebind a queued event after external removal, replacement or reordering
             // of the public snapshot list. Residents retain their identities.
             public readonly int ListIndex;
             public Due(int listIndex) { ListIndex = listIndex; }
@@ -350,7 +350,6 @@ namespace PersistentCity.Core
             if (eventBudget < 1) throw new ArgumentOutOfRangeException(nameof(eventBudget));
             if (State.Food != null && food == null) throw new InvalidOperationException("Saved food economy requires its market before advancing.");
             EnsureTrafficNetwork();
-            ValidatePhysicalClock(targetMinute);
             int count = 0, trafficCount = 0, foodContinuationCount = 0, researchCount = 0;
             if (pending != null)
             {

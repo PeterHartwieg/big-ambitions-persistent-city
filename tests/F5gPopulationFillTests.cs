@@ -942,8 +942,8 @@ public sealed class F5gPopulationFillTests
             Assert.Equal(active.Count, active.Select(r => r.Legs).Distinct(ReferenceEqualityComparer.Instance).Count());
             journeys.AddRange(active);
             Assert.True(city.ActiveJourneyIndexMatchesState());
-            // No visitor is ever a body candidate or receives a lease.
-            Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.False(city.TryAcquirePhysicalJourney(r.Identity.Id, out _)));
+            // No visitor is ever a body candidate or receives a body.
+            Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.False(ActiveJourneyIndex.ReceivesBody(r)));
         }
         Assert.True(planner.PortalHits > 0 && planner.PortalMisses > 0, $"hits {planner.PortalHits} misses {planner.PortalMisses}");
         Assert.True(planner.PortalHits > planner.PortalMisses);

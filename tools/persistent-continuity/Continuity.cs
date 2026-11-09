@@ -67,7 +67,7 @@ namespace FoodDemandAuditProbe
                         ["residentId"] = citizen.Identity.Id, ["carId"] = citizen.Car?.Id,
                         ["modelId"] = citizen.Car?.ModelId, ["paintSeed"] = citizen.Car?.PaintSeed,
                         ["bodyId"] = Value(ObserveProperty(car, "Id")), ["bodyGeneration"] = Value(ObserveProperty(car, "Generation")),
-                        ["leaseGeneration"] = Value(ObserveProperty(ObserveField(binding, "Lease"), "Generation")),
+                        ["bodyMinutes"] = Value(ObserveField(binding, "BodyMinutes")),
                         ["valid"] = Value(ObserveProperty(car, "Valid")), ["ownershipLossReason"] = Value(ObserveProperty(car, "OwnershipLossReason")),
                         ["position"] = ObserveProperty(car, "Position") is Position actual ? PositionValue(actual) : null,
                         ["nativeObjectId"] = vehicle == null ? null : (JToken)vehicle.GetInstanceID(),
@@ -89,8 +89,9 @@ namespace FoodDemandAuditProbe
                             row["inMainCameraFrustum"] = viewport.z > 0 && viewport.x >= 0 && viewport.x <= 1 && viewport.y >= 0 && viewport.y <= 1;
                         }
                     }
-                    if (ObserveField(binding, "Lease") is PhysicalJourneyLease lease && simulation.TrySamplePhysicalJourney(lease, out var sample))
-                        row["sample"] = SampleValue(sample);
+                    // F2d: bodies hold no lease; a car follows its journey's logical (kernel) pose.
+                    if (citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null)
+                        row["sample"] = SampleValue(simulation.SampleJourney(citizen));
                     bodies.Add(row);
                 }
             var residents = new JArray();

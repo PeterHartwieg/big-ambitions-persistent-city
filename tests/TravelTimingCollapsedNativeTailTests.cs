@@ -41,11 +41,10 @@ public sealed class TravelTimingCollapsedNativeTailTests
         citizen.Preferences.OwnsCar = true; citizen.Car = new CarState { Id = "car:car", ParkedPosition = route.Legs[0].From };
         state.TravelTimingVersion = 1; state.TravelClockRate = 1;
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: sectionBoundary, rise: sloped ? .5 : 0)); simulation.AdvanceTo(0);
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
         double raw = minutes - gap;
         if (gap == 0) for (int i = 0; i < ulps; i++) raw = Math.BitDecrement(raw);
-        simulation.AdvanceTo(raw); Assert.True(simulation.ObservePhysicalJourney(lease!, raw));
-        Assert.True(simulation.ReleasePhysicalJourney(lease!)); state.PrepareForSave();
+        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
+        Assert.Equal(raw, LegacyTrafficLease.Report(simulation, "car", raw, raw)); state.PrepareForSave();
         Assert.Equal(raw, state.Traffic!.Vehicles.Single().NominalMinutes);
         return (state, citizen, raw);
     }
@@ -77,10 +76,9 @@ public sealed class TravelTimingCollapsedNativeTailTests
         state.Places.Single(place => place.Id == "a").Position = route.Legs[0].From;
         state.Places.Single(place => place.Id == "b").Position = route.Legs[^1].To;
         var planner = new ShortContinuationPlanner(continuation); var simulation = new CitySimulator(state, planner); simulation.AdvanceTo(0);
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
         double raw = 6 - 4 * 2.2204460492503131e-16 * 6;
-        simulation.AdvanceTo(raw); Assert.True(simulation.ObservePhysicalJourney(lease!, raw));
-        Assert.Equal(raw, lease!.ObservedMinutes); Assert.True(simulation.ReleasePhysicalJourney(lease)); state.PrepareForSave();
+        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
+        Assert.Equal(raw, LegacyTrafficLease.Report(simulation, "car", raw, raw)); state.PrepareForSave();
         planner.TrafficNetwork.ValidateRemainingMapping(route, state.Traffic!.Vehicles.Single().Route, raw);
         Assert.Equal(P(1060), route.PositionAt(raw));
         return (state, citizen, raw);
@@ -245,11 +243,10 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.True(TravelTiming.Apply(state, 2, 2));
         var planner = new Planner(2, sectionBoundary, .5);
         var simulation = new CitySimulator(state, planner);
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
         double endpoint = citizen.Journey!.Legs[0].Minutes + citizen.Journey.Legs[1].Minutes;
         double raw = Math.BitDecrement(endpoint);
-        simulation.AdvanceTo(raw); Assert.True(simulation.ObservePhysicalJourney(lease!, raw));
-        Assert.True(simulation.ReleasePhysicalJourney(lease!)); state.PrepareForSave();
+        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
+        Assert.Equal(raw, LegacyTrafficLease.Report(simulation, "car", raw, raw)); state.PrepareForSave();
         Assert.StartsWith("native:road:fragment1:", citizen.Journey.Legs[1].ServiceId);
         planner.TrafficNetwork.ValidateRemainingMapping(citizen.Journey, state.Traffic!.Vehicles[0].Route, raw);
         Position pose = citizen.Journey.PositionAt(raw); Assert.False(pose.Equals(citizen.Journey.Legs[1].To));
@@ -309,10 +306,9 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var (original, _, _) = Captured(sectionBoundary: true);
         var state = SaveWire.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: true));
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
-        simulation.AdvanceTo(1); Assert.True(simulation.ObservePhysicalJourney(lease!, 1)); simulation.AdvanceTo(1);
-        simulation.AdvanceTo(1.5); Assert.True(simulation.ObservePhysicalJourney(lease!, 1.5));
-        Assert.True(simulation.ReleasePhysicalJourney(lease!)); state.PrepareForSave();
+        // Body-reported coordinates, as an older (pre-F2d) build saved them (LegacyTrafficLease).
+        Assert.Equal(1, LegacyTrafficLease.Report(simulation, "car", 1, 1, release: false)); simulation.AdvanceTo(1);
+        Assert.Equal(1.5, LegacyTrafficLease.Report(simulation, "car", 1.5, 1.5)); state.PrepareForSave();
         Assert.Equal(1, state.Traffic!.Vehicles.Single().RouteIndex);
         Assert.True(TravelTiming.Apply(state, 2, 2));
         var historical = state.Traffic!.Vehicles.Single().Route[0];
@@ -352,9 +348,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = clock;
         citizen.DepartureMinute = clock; citizen.NextEventMinute = clock + 7;
         var simulation = new CitySimulator(state, new ShortContinuationPlanner(10)); simulation.AdvanceTo(clock);
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
-        simulation.AdvanceTo(clock + 10); Assert.True(simulation.ObservePhysicalJourney(lease!, nominal));
-        Assert.Equal(nominal, lease!.ObservedMinutes); Assert.True(simulation.ReleasePhysicalJourney(lease)); state.PrepareForSave();
+        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
+        Assert.Equal(nominal, LegacyTrafficLease.Report(simulation, "car", clock + 10, nominal)); state.PrepareForSave();
         double elapsed = state.Minute - citizen.DepartureMinute;
         string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         _ = new CitySimulator(SaveWire.Read(json).State!, new ShortContinuationPlanner(10));
@@ -516,8 +511,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         citizen.Car!.ParkedPosition = P(x[0]); state.Places.Single(place => place.Id == "a").Position = P(x[0]);
         state.Places.Single(place => place.Id == "b").Position = P(x[^1]);
         var simulation = new CitySimulator(state, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream)); simulation.AdvanceTo(state.Minute);
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease)); simulation.AdvanceTo(state.Minute + 10);
-        Assert.True(simulation.ObservePhysicalJourney(lease!, nominal)); Assert.True(simulation.ReleasePhysicalJourney(lease!));
+        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
+        Assert.Equal(nominal, LegacyTrafficLease.Report(simulation, "car", state.Minute + 10, nominal));
         state.PrepareForSave();
         string json = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(json).Status);
         _ = new CitySimulator(SaveWire.Read(json).State!, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream));

@@ -48,10 +48,9 @@ public sealed class TrafficFragmentPersistenceTests
         citizen.Preferences.OwnsCar = true; citizen.Car = new CarState { Id = "car:car", ParkedPosition = Point(0) };
         state.TravelTimingVersion = 1; state.TravelClockRate = 1;
         var simulation = new CitySimulator(state, new Planner(boundary: boundary)); simulation.AdvanceTo(0);
-        Assert.True(simulation.TryAcquirePhysicalJourney("car", out var lease));
         double progress = duration - 1e-8;
-        simulation.AdvanceTo(progress); Assert.True(simulation.ObservePhysicalJourney(lease!, progress));
-        Assert.True(simulation.ReleasePhysicalJourney(lease!)); state.PrepareForSave();
+        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
+        Assert.Equal(progress, LegacyTrafficLease.Report(simulation, "car", progress, progress)); state.PrepareForSave();
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Equal(3, citizen.Journey!.Legs.Count);

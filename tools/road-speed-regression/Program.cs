@@ -108,7 +108,8 @@ internal static class Program
         citizen.Car = new CarState { Id = "speed-proof:car", ParkedPosition = route.Legs[0].From };
         citizen.Journey = route; citizen.NextEventMinute = 100 + route.Minutes;
         var sim = new CitySimulator(state, planner); sim.AdvanceTo(100);
-        Check(sim.TryAcquirePhysicalJourney(citizen.Identity.Id, out _), "actual simulator lease was not admitted");
+        // F2d: a body follows the kernel; check only that the simulator admitted the committed journey to traffic.
+        Check(sim.TryGetTrafficPermission(citizen.Identity.Id, out var admitted) && admitted.LinkId.HasValue, "actual simulator traffic was not admitted");
         return sim;
     }
     private static void Persistence(CitySimulator sim, RoadRoutes roads)
