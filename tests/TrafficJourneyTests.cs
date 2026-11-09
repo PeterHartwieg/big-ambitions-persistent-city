@@ -228,4 +228,17 @@ public sealed class TrafficJourneyTests
         engine.AdvanceTo(1500); restored.AdvanceTo(1500);
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
+
+    [Fact]
+    public void ObservingAndReleasingATrafficLegLeaseNeverRefilesTheRoute()
+    {
+        // The presentation grid property that walk leases used to cover (PresentationGridTests); traffic legs keep a lease until F2d.
+        var engine=Engine(4); engine.AdvanceTo(1440);
+        var grid=engine.ActiveJourneys.Grid; long filed=grid.Filings;
+        Assert.True(engine.TryAcquirePhysicalJourney(engine.State.Citizens[0].Identity.Id,out var lease));
+        engine.AdvanceTo(1440.5); Assert.True(engine.ObservePhysicalJourney(lease!,0.3));
+        Assert.True(engine.ReleasePhysicalJourney(lease!));
+        Assert.Equal(filed,grid.Filings);
+        Assert.True(engine.ActiveJourneyIndexMatchesState());
+    }
 }

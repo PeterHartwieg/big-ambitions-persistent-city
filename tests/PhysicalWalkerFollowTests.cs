@@ -124,7 +124,7 @@ public sealed class PhysicalWalkerFollowTests
         // While the game is paused (the city clock stands still) the tail bound does not run.
         for (int i = 0; i < 5; i++) f.Tick(3);
         Assert.True(f.Bound);
-        // On screen the tail is not cut short: past the 10 s bound it still walks to the door, unfaded.
+        // On screen on the last leg the tail is not cut short: past the 10 s bound it still walks to the door, unfaded.
         for (int i = 0; i < 6; i++) f.Run(3);
         Assert.True(f.Bound); Assert.True(f.Body.Speed > 0); Assert.Equal(1, f.Body.Alpha); Assert.Empty(f.Corrections());
         // Out of view after the bound it is released, recorded as an off-screen lag release.
@@ -134,6 +134,36 @@ public sealed class PhysicalWalkerFollowTests
         var release = Assert.Single(f.Corrections());
         Assert.Equal(WalkerCorrectionKind.LagRelease, release.Kind); Assert.False(release.OnScreen);
         Assert.Equal(new Position(80, 0, 0), release.Before); Assert.Equal(Work, release.After);
+        f.AssertSameAsBodiesOff();
+    }
+
+    [Fact]
+    public void AVisibleArrivalTailPastTheBoundFadesAtTheNextIntermediateCorner()
+    {
+        using var f = new Fixture();
+        long onScreenMoves = PhysicalPopulation.Telemetry.OnScreenMoves;
+        f.Tick();
+        // The arrival is processed while the body is still at home, 30 m before the midpoint corner.
+        f.Advance(Now + 30);
+        f.Body.OnScreen = true;
+        f.Tick();
+        Assert.True(f.Bound);
+        // Past the 10 s bound, mid-leg, it keeps walking to the corner: no fade between corners.
+        for (int i = 0; i < 4; i++) f.Run(3);
+        Assert.True(f.Bound); Assert.Equal(1, f.Body.Alpha); Assert.True(f.Body.Speed > 0); Assert.Empty(f.Corrections());
+        // At the corner (70 m) it stops and fades out there, instead of keeping its route and body slot.
+        f.Place(new Position(70, 0, 0));
+        var body = f.Body;
+        f.Run();
+        Assert.True(f.Bound); Assert.Equal(0, body.Speed);
+        f.Run(0.6f);
+        Assert.True(f.Bound); Assert.InRange(body.Alpha, 0.3f, 0.5f); Assert.Equal(new Position(70, 0, 0), body.Position);
+        f.Run(0.6f);
+        Assert.False(f.Bound); Assert.Equal(0, body.Alpha); Assert.Equal(0, body.Warps);
+        var fade = Assert.Single(f.Corrections());
+        Assert.Equal(WalkerCorrectionKind.Fade, fade.Kind); Assert.True(fade.OnScreen);
+        Assert.Equal(new Position(70, 0, 0), fade.Before); Assert.Equal(Work, fade.After);
+        Assert.Equal(onScreenMoves, PhysicalPopulation.Telemetry.OnScreenMoves);
         f.AssertSameAsBodiesOff();
     }
 

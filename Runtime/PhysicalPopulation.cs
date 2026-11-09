@@ -1054,10 +1054,11 @@ namespace PersistentCity.Runtime
 
         /// <summary>
         /// Arrival tail: the logical arrival is processed, and the visible walker keeps walking to the door. At the door it
-        /// joins a vendor line, an optional stop or the door queue (ObserveArrival), or goes in (released). Off screen the
-        /// tail is bounded at 10 s on the follow clock and then released as a lag release; on screen it is not cut short,
-        /// so a body never disappears mid-path. A journey committed meanwhile is followed from the door; one that starts
-        /// elsewhere ends the tail at once off screen, or at the door on screen.
+        /// joins a vendor line, an optional stop or the door queue (ObserveArrival), or goes in (released). The tail is
+        /// bounded at 10 s on the follow clock: off screen it is then released as a lag release; on screen a fade-capable
+        /// body stops at its next intermediate corner and fades out there, and on the last leg it still walks to the door.
+        /// Nobody is moved on screen. A journey committed meanwhile is followed from the door; one that starts elsewhere
+        /// ends the tail at once off screen, or at the door or a corner fade on screen.
         /// </summary>
         private bool ObserveArrivalTail(Binding binding, PhysicalJourneySample own, double lag)
         {
@@ -1080,6 +1081,16 @@ namespace PersistentCity.Runtime
             {
                 Telemetry.Record(Time.frameCount, citizen.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, door, false);
                 return false;
+            }
+            // On screen past the bound, the Q3 flow applies: a body whose materials can fade stops at the next
+            // intermediate corner and fades out there. On the last leg it walks on to the door, so the door queue,
+            // a vendor line or entry still take it. An opaque body keeps walking until it is out of view.
+            if (expired && body.CanFade)
+            {
+                if (!binding.Fading) { binding.Fading = true; binding.FadeLeg = own.LegIndex; }
+                bool corner = own.LegIndex != binding.FadeLeg
+                    || own.LegIndex < route.Legs.Count - 1 && (own.Stationary || Position.Distance(body.Position, own.To) <= 0.3);
+                if (corner) { BeginFade(binding, true); return FadeOut(binding, door); }
             }
             return WalkLeg(binding, own, Math.Max(lag, WalkerFollow.StopMetres * 2), WalkerFollow.Sample(route, route.Minutes));
         }
