@@ -1419,80 +1419,7 @@ public sealed class FoodContractCoordinatorTests
     public void RecheckBoundaryRebuildAndCommitGateCosts()
     {
         var rows = new List<string>();
-        // Recheck at 1/4/8 offers and 2/16/128 holders (target p95 <= 0.05 ms).
-        foreach (int decor in new[] { 0, 32 })
-        foreach (int offers in new[] { 1, 4, 8 })
-        foreach (int holders in new[] { 2, 16, 128 })
-        {
-            var (image, live) = Synthetic(offers, holders, decor);
-            var epoch = new FoodDefinitionEpoch();
-            var samples = new double[2000];
-            for (int i = 0; i < 200; i++) { epoch.Begin(); FoodContractRecheck.Structure(image, live, epoch); FoodContractRecheck.Prices(image, live); }
-            long allocated = GC.GetAllocatedBytesForCurrentThread();
-            int failures = 0;
-            for (int i = 0; i < samples.Length; i++)
-            {
-                long t = Stopwatch.GetTimestamp();
-                epoch.Begin();
-                if (FoodContractRecheck.Structure(image, live, epoch) != FoodContractRecheckRefusal.None
-                    | FoodContractRecheck.Prices(image, live) == FoodPriceVerdict.Refused) failures++;
-                samples[i] = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
-            }
-            long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / samples.Length;
-            Assert.Equal(0, failures);
-            Array.Sort(samples);
-            rows.Add($"recheck offers={offers} holders={holders} decor={decor} dependencies={image.Definitions.Count}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call");
-            PerfGate.Under(samples[1899], 1.0, "recheck p95");
-            Assert.Equal(0, bytes);
-        }
-        // Boundary rebuild of 1/64/1,024 owned shops under the 0.5 ms frame budget (target unit p95 <= 0.05 ms).
-        foreach (int count in new[] { 1, 64, 1024 })
-        {
-            var world = new ContractWorld();
-            var shops = Enumerable.Range(0, count).Select(i => world.AddShop("address:perf:" + i + ":shop", Burger, HotDog)).ToArray();
-            world.VisitAll(); world.Drain(); world.VisitAll();
-            foreach (var s in shops) { s.Row.Boundary(world.Hour + 1, true, false, true); }
-            world.BeginHour(world.Hour + 1);
-            var units = new List<double>(); var frames = new List<double>(); var frameUnits = new List<int>();
-            while (world.PendingRebuilds > 0 || world.Coordinator.PendingPreparations > 0)
-            {
-                // The Runtime frame loop: stop before a unit whose estimated cost (the previous unit's) would overrun 0.5 ms.
-                long frame = Stopwatch.GetTimestamp(); int n = 0; double last = 0;
-                while (n == 0 || (Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency + last < 0.5)
-                {
-                    long t = Stopwatch.GetTimestamp();
-                    if (!world.Step()) break;
-                    last = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
-                    n++; units.Add(last);
-                }
-                frames.Add((Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency); frameUnits.Add(n);
-            }
-            units.Sort(); frames.Sort();
-            rows.Add($"rebuild shops={count}: units {units.Count}, unit p95 {units[(int)(units.Count * 0.95)]:0.0000} ms, max {units[^1]:0.0000} ms, frames {frames.Count}, frame p95 {frames[(int)(frames.Count * 0.95)]:0.0000} ms, frame max {frames[^1]:0.0000} ms, max units/frame {frameUnits.Max()}, units >= 30 ms {units.Count(u => u >= 30)}");
-            Assert.All(shops, s => Assert.Equal(world.Hour, world.Coordinator.Image(s.Key)!.BuiltHour));
-            PerfGate.Under(units[^1], 30, "rebuild unit max");
-        }
-        // Commit-gate boundary-frame cost at 1/16 acquisitions, including the distinct-definition comparison and price rows.
-        foreach (int count in new[] { 1, 16 })
-        {
-            var samples = new List<double>();
-            for (int run = 0; run < 50; run++)
-            {
-                var world = new ContractWorld();
-                var shops = Enumerable.Range(0, count).Select(i => world.AddShop("address:gate:" + i + ":shop", Burger, HotDog)).ToArray();
-                world.VisitAll(); world.Drain(); world.VisitAll(); world.BeginHour(world.Hour + 1);
-                long t = Stopwatch.GetTimestamp();
-                world.BoundaryEpoch.Begin();
-                foreach (var s in shops)
-                    Assert.Equal(FoodContractBoundary.Outcome.Acquired, FoodContractBoundary.Commit(s.Row, world.Coordinator, world.Hour, false, true, world.Catalogue.Revision,
-                        (row, image) => FoodContractRecheck.Structure(image, new ContractWorld.Live(world, s), world.BoundaryEpoch) == FoodContractRecheckRefusal.None
-                            && FoodContractRecheck.Prices(image, new ContractWorld.Live(world, s)) != FoodPriceVerdict.Refused));
-                if (run >= 10) samples.Add((Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency);
-            }
-            samples.Sort();
-            rows.Add($"commit gate acquisitions={count}: p95 {samples[(int)(samples.Count * 0.95)]:0.0000} ms, max {samples[^1]:0.0000} ms");
-            PerfGate.Under(samples[^1], 30, "commit gate max");
-        }
+        RecheckBoundaryRebuildAndCommitGateTimings(rows);
         // Retained image bytes per shop.
         foreach (int holders in new[] { 3, 16, 128 })
         {
@@ -1505,6 +1432,103 @@ public sealed class FoodContractCoordinatorTests
             Assert.True(bytes < 32 * 1024);
         }
         foreach (var row in rows) output.WriteLine(row);
+    }
+    // The wall-clock part of RecheckBoundaryRebuildAndCommitGateCosts; TimingBudgetTests also runs it beside a CPU load.
+    internal static void RecheckBoundaryRebuildAndCommitGateTimings(List<string> rows)
+    {
+        // Recheck at 1/4/8 offers and 2/16/128 holders (target p95 <= 0.05 ms).
+        foreach (int decor in new[] { 0, 32 })
+        foreach (int offers in new[] { 1, 4, 8 })
+        foreach (int holders in new[] { 2, 16, 128 })
+        {
+            string line = "";
+            TimingBudget.Run(timing =>
+            {
+                var (image, live) = Synthetic(offers, holders, decor);
+                var epoch = new FoodDefinitionEpoch();
+                var samples = new double[2000];
+                for (int i = 0; i < 200; i++) { epoch.Begin(); FoodContractRecheck.Structure(image, live, epoch); FoodContractRecheck.Prices(image, live); }
+                long allocated = GC.GetAllocatedBytesForCurrentThread();
+                int failures = 0;
+                for (int i = 0; i < samples.Length; i++)
+                {
+                    var t = timing.Start();
+                    epoch.Begin();
+                    if (FoodContractRecheck.Structure(image, live, epoch) != FoodContractRecheckRefusal.None
+                        | FoodContractRecheck.Prices(image, live) == FoodPriceVerdict.Refused) failures++;
+                    samples[i] = timing.Stop(t, "recheck p95");
+                }
+                long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / samples.Length;
+                Assert.Equal(0, failures);
+                Array.Sort(samples);
+                line = $"recheck offers={offers} holders={holders} decor={decor} dependencies={image.Definitions.Count}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call";
+                timing.Under("recheck p95", samples[1899], 1.0);
+                Assert.Equal(0, bytes);
+            });
+            rows.Add(line);
+        }
+        // Boundary rebuild of 1/64/1,024 owned shops under the 0.5 ms frame budget (target unit p95 <= 0.05 ms).
+        foreach (int count in new[] { 1, 64, 1024 })
+        {
+            string line = "";
+            TimingBudget.Run(timing =>
+            {
+                var world = new ContractWorld();
+                var shops = Enumerable.Range(0, count).Select(i => world.AddShop("address:perf:" + i + ":shop", Burger, HotDog)).ToArray();
+                world.VisitAll(); world.Drain(); world.VisitAll();
+                foreach (var s in shops) { s.Row.Boundary(world.Hour + 1, true, false, true); }
+                world.BeginHour(world.Hour + 1);
+                var units = new List<double>(); var frames = new List<double>(); var frameUnits = new List<int>();
+                while (world.PendingRebuilds > 0 || world.Coordinator.PendingPreparations > 0)
+                {
+                    // The Runtime frame loop: stop before a unit whose estimated cost (the previous unit's) would overrun 0.5 ms.
+                    long frame = Stopwatch.GetTimestamp(); int n = 0; double last = 0;
+                    while (n == 0 || (Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency + last < 0.5)
+                    {
+                        var t = timing.Start();
+                        bool stepped = world.Step();
+                        var sample = timing.End(t);
+                        last = sample.Ms;
+                        if (!stepped) break;
+                        n++; units.Add(timing.Keep("rebuild unit max", sample));
+                    }
+                    frames.Add((Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency); frameUnits.Add(n);
+                }
+                units.Sort(); frames.Sort();
+                line = $"rebuild shops={count}: units {units.Count}, unit p95 {units[(int)(units.Count * 0.95)]:0.0000} ms, max {units[^1]:0.0000} ms, frames {frames.Count}, frame p95 {frames[(int)(frames.Count * 0.95)]:0.0000} ms, frame max {frames[^1]:0.0000} ms, max units/frame {frameUnits.Max()}, units >= 30 ms {units.Count(u => u >= 30)}";
+                Assert.All(shops, s => Assert.Equal(world.Hour, world.Coordinator.Image(s.Key)!.BuiltHour));
+                // No unit at or above the 30 ms spike line.
+                timing.MaxUnder("rebuild unit max", units[^1], 30);
+            });
+            rows.Add(line);
+        }
+        // Commit-gate boundary-frame cost at 1/16 acquisitions, including the distinct-definition comparison and price rows.
+        foreach (int count in new[] { 1, 16 })
+        {
+            string line = "";
+            TimingBudget.Run(timing =>
+            {
+                var samples = new List<double>();
+                for (int run = 0; run < 50; run++)
+                {
+                    var world = new ContractWorld();
+                    var shops = Enumerable.Range(0, count).Select(i => world.AddShop("address:gate:" + i + ":shop", Burger, HotDog)).ToArray();
+                    world.VisitAll(); world.Drain(); world.VisitAll(); world.BeginHour(world.Hour + 1);
+                    var t = timing.Start();
+                    world.BoundaryEpoch.Begin();
+                    foreach (var s in shops)
+                        Assert.Equal(FoodContractBoundary.Outcome.Acquired, FoodContractBoundary.Commit(s.Row, world.Coordinator, world.Hour, false, true, world.Catalogue.Revision,
+                            (row, image) => FoodContractRecheck.Structure(image, new ContractWorld.Live(world, s), world.BoundaryEpoch) == FoodContractRecheckRefusal.None
+                                && FoodContractRecheck.Prices(image, new ContractWorld.Live(world, s)) != FoodPriceVerdict.Refused));
+                    var sample = timing.End(t);
+                    if (run >= 10) samples.Add(timing.Keep("commit gate max", sample));
+                }
+                samples.Sort();
+                line = $"commit gate acquisitions={count}: p95 {samples[(int)(samples.Count * 0.95)]:0.0000} ms, max {samples[^1]:0.0000} ms";
+                timing.MaxUnder("commit gate max", samples[^1], 30);
+            });
+            rows.Add(line);
+        }
     }
     private static FoodContractImage Rebuild(FoodContractImage source)
     {

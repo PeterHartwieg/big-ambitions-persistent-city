@@ -13,6 +13,7 @@ Peter decided these rules on 9 November 2026 after measuring the harness runs fr
 
   `test-focused.py` finds the changed `tests/**/*.cs` files since the merge base with `origin/codex/persistent-city` (uncommitted and untracked files included) and runs their classes through `dotnet test --filter` (`FullyQualifiedName~.Class.`, or `~Class.` in the few files without a namespace). It does not take the dotnet lock. You can also run your own `--filter` without the lock.
 - **The full suite runs once**, on the approved head before merge. The harness does this with `test_scope: final`, and only that run takes the dotnet lock (`wait-other-dotnet.ps1`). Implementers and fixers do not run the full suite, except for a broad refactor that the task names as one.
+- **Wall-clock budgets in tests** go through `TimingBudget` (tests/Support/TimingBudget.cs) or `PerfGate.Under`, never a bare `Assert.True(elapsed < budget)`. Both are judged only with `PC_PERF_ASSERTS=1` (see "Wall-clock limits in unit tests" below). When judged, `TimingBudget` discounts a busy machine by the test thread's CPU time and retries up to five times. Counters and byte sizes stay exact asserts ([X3](../checks/x3.md)).
 - A red full run goes to the local-test fixer, which is how the harness handles any red local test.
 
 Harness `task.yaml` block for a slice (replace the worktree path):

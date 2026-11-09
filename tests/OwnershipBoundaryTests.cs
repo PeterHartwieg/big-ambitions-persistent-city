@@ -38,6 +38,10 @@ public sealed class OwnershipBoundaryTests
         ["AccountingRecovery.cs"] = "accounting epoch recovery",
         ["StreetFoodVendorMarket.cs"] = "E6 market: vendor-row writes and the food state it serves",
         ["PhysicalPopulation.cs"] = "presentation, until F9g",
+        // X2 (#184) split PhysicalPopulation into partial files; the same class, the same permission.
+        ["PhysicalPopulation.Queues.cs"] = "presentation, until F9g (PhysicalPopulation partial)",
+        ["PhysicalPopulation.Selection.cs"] = "presentation, until F9g (PhysicalPopulation partial)",
+        ["PhysicalPopulation.Following.cs"] = "presentation, until F9g (PhysicalPopulation partial)",
         ["MovementDiagnostics.cs"] = "F2e player-hold publication and replay (writes)",
         ["WeatherDiagnostics.cs"] = "observer outside F9e's Owns; listed in docs/checks/f9e.md",
     };
@@ -69,6 +73,7 @@ public sealed class OwnershipBoundaryTests
         ("VendorDiagnostics.cs", "r", "VendorRow"), // market.Coordinator.Table.Rows.Select(r => ...)
         ("StreetFoodVendorMarket.cs", "row", "VendorRow"), // Coordinator.Table.Find, table.FindPlace, table.Rows
         ("PhysicalPopulation.cs", "row", "VendorRow"), // simulation.State.Vendors.FindPlace(id)
+        ("PhysicalPopulation.Queues.cs", "row", "VendorRow"), // the same read, moved by X2 (#184)
         ("ResearchReportText.cs", "open", "ResearchOrder"), // open[i], open = ledger.Open
         ("ResearchReportText.cs", "order", "ResearchOrder"), // ResearchOrder parameters and ledger.Open/Kept/Closed items
         ("PersistentCityMod.cs", "stored", "SaveReadResult"), // stored = session.InitialReadResult
