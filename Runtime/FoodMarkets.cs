@@ -7,14 +7,18 @@ namespace PersistentCity.Runtime
 {
     /// <summary>One population market, with authority selected by the saved scope channel.</summary>
     public sealed class FoodMarkets : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
-        IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IRivalFoodMarket, IFoodAwarenessRevision, IDisposable
+        IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IRivalFoodMarket, IFoodAwarenessRevision, IFoodProductPolicyMarket, IDisposable
     {
         private readonly FoodCommerceState state;
         private readonly IFoodMarket shops, vehicles;
         private readonly Func<string, Position> position;
+        private readonly FoodProductPolicySource? policy;
         private bool disposed;
-        public FoodMarkets(FoodCommerceState state, IFoodMarket shops, IFoodMarket vehicles, Func<string, Position> position)
-        { this.state = state; this.shops = shops; this.vehicles = vehicles; this.position = position; }
+        public FoodMarkets(FoodCommerceState state, IFoodMarket shops, IFoodMarket vehicles, Func<string, Position> position,
+            FoodProductPolicySource? policy = null)
+        { this.state = state; this.shops = shops; this.vehicles = vehicles; this.position = position; this.policy = policy; }
+        /// <summary>E5b4: one policy for shop and vehicle scopes alike, so both channels hold the same names and metadata.</summary>
+        public IFoodProductPolicy ProductPolicy => policy?.Current ?? FoodProductPolicy.OriginalThree;
         private IFoodMarket Market(string id) => state.Shops.Any(s => s.BusinessId == id && s.Channel == FoodScopeChannel.Vehicle) ? vehicles : shops;
         public double EarliestMinute => Math.Max(shops.EarliestMinute, vehicles.EarliestMinute);
         public long AwarenessRevision => ((shops as IFoodAwarenessRevision)?.AwarenessRevision ?? 0) + ((vehicles as IFoodAwarenessRevision)?.AwarenessRevision ?? 0);
@@ -94,6 +98,89 @@ namespace PersistentCity.Runtime
             foreach (var row in rows.Values.Where(r => r.FromHour >= 0))
                 if (!state.Shops.Any(s => s.Channel == FoodScopeChannel.Shop && s.PlaceId == row.PlaceId && matches(row, s)))
                     refuse("Saved food authority has no corresponding population scope");
+        }
+    }
+
+    /// <summary>E5b4: the market's product policy, rebuilt from config, the API publication and the published loaded-name
+    /// image only when one of them is a new object. A clean read returns the cached policy and allocates nothing. Read
+    /// once per uncaptured decision context, on the main thread; held tuples never read it.</summary>
+    public sealed class FoodProductPolicySource
+    {
+        private readonly Func<LoadedNameImage?> names;
+        private readonly Func<FoodProductMetadataResolver> config;
+        private readonly Func<FoodProductMetadataLoadedNames?, FoodProductMetadataSnapshot> api;
+        private readonly Action<string>? report;
+        private LoadedNameImage? image;
+        private FoodProductMetadataLoadedNames? loaded;
+        private string imageFailure = "";
+        private FoodProductMetadataResolver? lastConfig, failedConfig;
+        private FoodProductMetadataSnapshot? lastSnapshot;
+        private FoodProductMetadataLoadedNames? failedLoaded;
+        private FoodProductPolicy current = FoodProductPolicy.OriginalThree;
+
+        /// <param name="report">Called once per distinct failure message (the host logs it); never on a clean read.</param>
+        public FoodProductPolicySource(Func<LoadedNameImage?> names, Func<FoodProductMetadataResolver> config,
+            Func<FoodProductMetadataLoadedNames?, FoodProductMetadataSnapshot> api, Action<string>? report = null)
+        {
+            this.names = names ?? throw new ArgumentNullException(nameof(names));
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
+            this.api = api ?? throw new ArgumentNullException(nameof(api));
+            this.report = report;
+        }
+        public long Publications { get; private set; }
+        /// <summary>Calls to the API publication, for tests: a failed publication is not retried until an input changes.</summary>
+        public long PublishAttempts { get; private set; }
+        /// <summary>Empty while the last publication succeeded; otherwise why the policy fell back to the original three.</summary>
+        public string Failure { get; private set; } = "";
+
+        public FoodProductPolicy Current
+        {
+            get
+            {
+                var next = names();
+                if (!ReferenceEquals(next, image))
+                {
+                    // The set is built once per image object, also when it fails: an unchanged image never rebuilds.
+                    image = next; loaded = null; imageFailure = "";
+                    // A refused or missing image admits no dynamic name; a dirty catalogue publishes null.
+                    if (next != null && next.Refusal == FoodEligibilityRefusal.None)
+                    {
+                        try { loaded = new FoodProductMetadataLoadedNames(next.Names); }
+                        catch (ArgumentException e) { imageFailure = "loaded-name image refused: " + e.Message; }
+                    }
+                }
+                var resolver = config();
+                // A failed publication is retried only when the config or the image changes (or at the next city load,
+                // which builds a new source), so a persistent cause costs no rebuild and no exception per context.
+                if (failedConfig != null && ReferenceEquals(resolver, failedConfig) && ReferenceEquals(loaded, failedLoaded)) return current;
+                try
+                {
+                    PublishAttempts++;
+                    var snapshot = api(loaded);
+                    if (!ReferenceEquals(resolver, lastConfig) || !ReferenceEquals(snapshot, lastSnapshot) || !ReferenceEquals(loaded, current.LoadedNames))
+                    {
+                        current = new FoodProductPolicy(resolver.WithApi(snapshot), loaded);
+                        lastConfig = resolver; lastSnapshot = snapshot; Publications++;
+                    }
+                    failedConfig = null; failedLoaded = null;
+                    Fail(imageFailure);
+                }
+                catch (Exception e) when (e is ArgumentException || e is InvalidOperationException)
+                {
+                    // Never a partial policy: new contexts hold the original three until a later publication succeeds.
+                    current = FoodProductPolicy.OriginalThree; lastConfig = null; lastSnapshot = null;
+                    failedConfig = resolver; failedLoaded = loaded;
+                    Fail(e.GetType().Name + ": " + e.Message);
+                }
+                return current;
+            }
+        }
+
+        private void Fail(string message)
+        {
+            if (message == Failure) return;
+            Failure = message;
+            if (message.Length > 0) report?.Invoke(message);
         }
     }
 }

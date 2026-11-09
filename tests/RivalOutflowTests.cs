@@ -348,7 +348,7 @@ public sealed class RivalOutflowTests
         Assert.Equal(schema,read.SourceSchema);Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);
         Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         read.State.Schema=schema;Assert.Equal(source,DevelopmentChain.Legacy(read.State, () => SaveCodec.WriteForSchema(read.State, schema)));
-        read.State.Schema=CityState.CurrentSchema;
+        read.State.Schema=CityState.CurrentSchema;read.State.MenuPolicy=CityState.ExecutableMenuPolicy(CityState.CurrentSchema); // E5b4: the current writer executes DynamicWire
         var resumed=new CitySimulator(read.State,paths);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),
             new WeatherSettings {Enabled=false,RainTravelWeightMultiplier=2});

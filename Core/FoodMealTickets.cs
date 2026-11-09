@@ -29,12 +29,16 @@ namespace PersistentCity.Core
             var scope = state.Shops.FirstOrDefault(s => s.PlaceId == meal.PlaceId && s.BusinessId == meal.BusinessId);
             if (scope == null) return null;
             var menu = new List<FoodExtraOffer>(business.Offers.Count);
+            // E5b4: checkout re-plans from the live menu, so a dynamic extra uses the market's current policy.
+            var policy = ProductPolicy();
             foreach (var offer in business.Offers)
             {
                 // A player shop's extra needs a known sellable unit, like its main dish.
-                if (!offer.Units.HasValue || !FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) continue;
+                if (!offer.Units.HasValue || !policy.Executable(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) continue;
                 reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int held);
-                menu.Add(new FoodExtraOffer(offer.ProductId, offer.Price, Math.Max(0, offer.Units.Value - held), ExtraTaste(meal, person!, offer.ProductId)));
+                int taste = FoodProducts.Known(offer.ProductId) ? ExtraTaste(meal, person!, offer.ProductId)
+                    : policy.TasteBand(offer.ProductId, Traits(meal, person!), city.State.Seed, meal.ResidentId);
+                menu.Add(new FoodExtraOffer(offer.ProductId, offer.Price, Math.Max(0, offer.Units.Value - held), taste));
             }
             var ticket = PlanTicket(meal, person!, meal.BusinessId, meal.ProductId, meal.Price, menu, CurrentAllowance(meal));
             return ticket.Extras.Count == 0 ? null : ticket;
@@ -83,8 +87,14 @@ namespace PersistentCity.Core
             if (!rival && !(market is IFoodTicketMarket t && t.SellsExtras(shop.BusinessId))) return null;
             var menu = new List<FoodExtraOffer>(shop.Offers.Count);
             foreach (var o in shop.Offers)
-                if (FoodProducts.Known(o.ProductId) && (rival || o.Units >= 0))
-                    menu.Add(new FoodExtraOffer(o.ProductId, o.Price, rival ? (int?)null : o.Units, ExtraTaste(meal, person, o.ProductId)));
+            {
+                // E5b4: the captured menu replays as held. A revision-2 Food offer is an extra with its held taste;
+                // the current policy is never read here.
+                bool dynamic = o.Metadata != null && o.Metadata.Revision == 2 && o.Metadata.MealClass == FoodMealClass.Food;
+                if ((FoodProducts.Known(o.ProductId) || dynamic) && (rival || o.Units >= 0))
+                    menu.Add(new FoodExtraOffer(o.ProductId, o.Price, rival ? (int?)null : o.Units,
+                        dynamic && !FoodProducts.Known(o.ProductId) ? o.Metadata!.TasteBand : ExtraTaste(meal, person, o.ProductId)));
+            }
             return PlanTicket(meal, person, shop.BusinessId, product, price, menu, allowance);
         }
 

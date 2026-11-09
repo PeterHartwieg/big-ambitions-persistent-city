@@ -344,8 +344,18 @@ namespace PersistentCity.Core
         /// <summary>F2e: the next writer after F7d's compact schema, in the same compact wire. It adds the per-journey
         /// <see cref="CitizenState.PlayerHoldMinutes"/> and the city-wide <see cref="PlayerHoldSequence"/>.</summary>
         public const int PlayerHoldSchema = CompactSchema + 1;
-        public const int CurrentSchema = PlayerHoldSchema;
-        public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
+        /// <summary>E5b4: the next writer after F2e's player-hold schema, in the same compact wire and entity shape. New cities
+        /// are created with <see cref="FoodNameIdentity.DynamicWire"/>, which this writer executes (Decision 9).</summary>
+        public const int HeldPolicySchema = PlayerHoldSchema + 1;
+        public const int CurrentSchema = HeldPolicySchema;
+        /// <summary>The one executable menu policy of a schema: DynamicWire from <see cref="HeldPolicySchema"/>, the
+        /// original-name policy for 25 to 35, and E4's code policy for 23 and 24.</summary>
+        public static string ExecutableMenuPolicy(int schema)
+            => schema >= HeldPolicySchema ? FoodNameIdentity.DynamicWire : schema >= 25 ? FoodNameIdentity.Wire : FoodMenuPolicy.Wire;
+        private string? menuPolicy;
+        /// <summary>Until set, the executable policy of this state's <see cref="Schema"/>: a new city (current writer) holds
+        /// <see cref="FoodNameIdentity.DynamicWire"/>; a state relabelled to a frozen writer keeps that writer's policy.</summary>
+        public string MenuPolicy { get => menuPolicy ?? ExecutableMenuPolicy(Schema); set => menuPolicy = value; }
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
         public int NamePolicyStartsDay { get; set; }

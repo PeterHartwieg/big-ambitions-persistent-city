@@ -143,7 +143,10 @@ namespace PersistentCity.Runtime
             vendorMarket.WorkSpike = (component, ms) => log?.Warn("Vendor mod-work spike >= 30 ms: " + component + "="
                 + ms.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms");
             AttachVendorDecisionDiagnostics(current);
-            return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position);
+            // E5b4: one product policy for shops and vehicles, from config, the API publication and E5b2's loaded-name image.
+            var policy = new FoodProductPolicySource(() => shops.LoadedNames, () => settings.FoodProductOverrides.Resolver, FoodProductMetadataApi.PublishSnapshot,
+                message => log?.Warn("Food product policy fell back to the original three: " + message));
+            return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position, policy);
         }
         public void EnableHouseholdFinances()
         {

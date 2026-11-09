@@ -24,7 +24,7 @@ public sealed class ReaderCorpusTests
     {
         var folders = Directory.GetDirectories(ReaderCorpus.Root).Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal).ToArray();
         var expected = Schemas().Select(s => ReaderCorpus.SchemaFolder((int)s[0])).Append(ReaderCorpus.SchemaFolder(ReaderCorpus.RefusedCompact))
-            .Append(ReaderCorpus.SchemaFolder(ReaderCorpus.Compact.OwnMin)).ToArray();
+            .Append(ReaderCorpus.SchemaFolder(ReaderCorpus.RefusedHoldCompact)).Append(ReaderCorpus.SchemaFolder(ReaderCorpus.Compact.OwnMin)).ToArray();
         Assert.Equal(expected, folders);
         // Readers tile 13..current with no gap or overlap; the newest is the live codec.
         int next = ReaderCorpus.OldestSupportedSchema;
@@ -206,7 +206,7 @@ public sealed class ReaderCorpusTests
 
     public static IEnumerable<object[]> ReaderNewestSchemas() => ReaderCorpus.Readers.Select(r => new object[] { r.OwnMax });
 
-    // ---- F7d: the compact writer's own corpus (schema 34 by F7d, schema 35 since F2e; no migration) ----
+    // ---- F7d: the compact writer's own corpus (schema 34 by F7d, 35 by F2e, 36 since E5b4; no migration) ----
 
     private static readonly (string File, string Builder, Func<CityState> City)[] CompactCities =
     {
@@ -214,7 +214,7 @@ public sealed class ReaderCorpusTests
         ("minimal.json", "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)", CurrentSchemaOnlyTests.City),
     };
 
-    /// <summary>Writes the current compact writer's folder (<c>schema-35</c> since F2e) once. Runs only when <c>PC_READER_CORPUS_WRITE</c> names the <c>tests/ReaderCorpus</c>
+    /// <summary>Writes the current compact writer's folder (<c>schema-36</c> since E5b4) once. Runs only when <c>PC_READER_CORPUS_WRITE</c> names the <c>tests/ReaderCorpus</c>
     /// directory and never replaces an existing folder.</summary>
     [Fact]
     public void ReaderCorpus_GenerateCompactFolderOnlyWhenExplicitlyRequested()
@@ -268,30 +268,35 @@ public sealed class ReaderCorpusTests
                 Assert.Equal(CityState.CurrentSchema, older.SourceSchema);
             }
             Assert.Equal(SaveReadStatus.Future, SaveCodec.ReadWriter33(fixture.Text).Status);
-            string future = fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":36,\"f\":");
+            string future = fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":37,\"f\":");
             Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future).Status);
             AssertCompactRefusedAndPreserved(future, read.State!, SaveReadStatus.Future, key + " future");
             AssertCompactRefusedAndPreserved(fixture.Text.Substring(0, fixture.Text.Length - 1), read.State!, SaveReadStatus.Invalid, key + " truncated");
             AssertCompactRefusedAndPreserved(fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":33,\"f\":"), read.State!, SaveReadStatus.DevelopmentSchema, key + " relabelled 33");
             AssertCompactRefusedAndPreserved(fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":34,\"f\":"), read.State!, SaveReadStatus.DevelopmentSchema, key + " relabelled 34");
+            AssertCompactRefusedAndPreserved(fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":35,\"f\":"), read.State!, SaveReadStatus.DevelopmentSchema, key + " relabelled 35");
         }
     }
 
     /// <summary>F2e: F7d's writer-34 folder is unchanged; the frozen writer-34 shape still builds its bytes, and the current
-    /// reader refuses each one as an older development city with the "start a new city" status and keeps every key.</summary>
-    [Fact]
-    public void ReaderCorpus_TheWriter34CompactCorpusIsRefusedAsAnOlderDevelopmentCityAndStillRebuildsItsBytes()
+    /// reader refuses each one as an older development city with the "start a new city" status and keeps every key.
+    /// E5b4: the same holds for F2e's writer-35 folder.</summary>
+    [Theory]
+    [InlineData(ReaderCorpus.RefusedCompact)]
+    [InlineData(ReaderCorpus.RefusedHoldCompact)]
+    public void ReaderCorpus_TheWriter34CompactCorpusIsRefusedAsAnOlderDevelopmentCityAndStillRebuildsItsBytes(int schema)
     {
-        var fixtures = ReaderCorpus.Load(ReaderCorpus.RefusedCompact);
+        var fixtures = ReaderCorpus.Load(schema);
         Assert.Equal(CompactCities.Select(c => c.File).OrderBy(f => f, StringComparer.Ordinal), fixtures.Select(f => f.File).OrderBy(f => f, StringComparer.Ordinal));
         foreach (var fixture in fixtures)
         {
             string key = ReaderCorpus.Key(fixture);
-            Assert.StartsWith("{\"Schema\":34,\"f\":", fixture.Text);
-            Assert.Equal(fixture.Text, DevelopmentChain.Write34(CompactCities.Single(c => c.File == fixture.File).City()));
+            Assert.StartsWith("{\"Schema\":" + schema + ",\"f\":", fixture.Text);
+            var city = CompactCities.Single(c => c.File == fixture.File).City();
+            Assert.Equal(fixture.Text, schema == ReaderCorpus.RefusedCompact ? DevelopmentChain.Write34(city) : DevelopmentChain.Write35(city));
             var read = SaveCodec.Read(fixture.Text);
             Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
-            Assert.Equal(ReaderCorpus.RefusedCompact, read.SourceSchema);
+            Assert.Equal(schema, read.SourceSchema);
             Assert.Contains("start a new city", read.Error);
             AssertCompactRefusedAndPreserved(fixture.Text, CurrentSchemaOnlyTests.City(), SaveReadStatus.DevelopmentSchema, key);
         }

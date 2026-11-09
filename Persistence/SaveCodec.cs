@@ -622,11 +622,12 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema32Contracts = new StateContractResolver(CityState.AttendanceSchema);
         private static readonly IContractResolver Schema33Contracts = new StateContractResolver(CityState.ChangeJournalSchema);
         private static readonly IContractResolver Schema34Contracts = new StateContractResolver(CityState.CompactSchema);
+        private static readonly IContractResolver Schema35Contracts = new StateContractResolver(CityState.PlayerHoldSchema);
         private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : schema == CityState.CompactSchema ? Schema34Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : schema == CityState.CompactSchema ? Schema34Contracts : schema == CityState.PlayerHoldSchema ? Schema35Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -708,9 +709,11 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema || schema==CityState.PlayerHoldSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema || schema==CityState.PlayerHoldSchema || schema==CityState.HeldPolicySchema), "Unsupported state schema.");
             Require(state.PlayerHoldSequence >= 0 && state.PlayerHoldSequence < long.MaxValue, "Invalid player hold sequence.");
-            if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
+            // E5b4: the held-policy writer stores DynamicWire only; the frozen 25-35 writers kept both readable.
+            if(schema>=23) Require(schema >= CityState.HeldPolicySchema ? state.MenuPolicy == FoodNameIdentity.DynamicWire
+                : schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");

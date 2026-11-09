@@ -35,8 +35,8 @@ public sealed class F7dCompactWriterTests
     {
         Assert.Equal(CityState.ChangeJournalSchema + 1, CityState.CompactSchema);
         Assert.Equal(CityState.CompactSchema + 1, CityState.PlayerHoldSchema);
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
-        Assert.Equal(CityState.CompactSchema, SaveCodec.LatestDevelopmentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema + 1, CityState.CurrentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema, SaveCodec.LatestDevelopmentSchema);
         var state = ChangeJournalTests.Fixture(seed);
         string payload = DevelopmentChain.Write34(state);
         output.WriteLine($"F7d golden {seed}: {EconomicLedgerTests.Sha(payload)} chars={payload.Length} json33={DevelopmentChain.Write33(state).Length}");
@@ -91,6 +91,9 @@ public sealed class F7dCompactWriterTests
         var a = fromJson.State!; var b = fromCompact.State!;
         Assert.Equal(33, a.Schema); Assert.Equal(CityState.CurrentSchema, b.Schema);
         a.Schema = CityState.CurrentSchema;
+        // E5b4: the writer's policy is the one field that differs between writers 33 and 36 for the same city.
+        Assert.Equal(CityState.ExecutableMenuPolicy(33), a.MenuPolicy); Assert.Equal(FoodNameIdentity.DynamicWire, b.MenuPolicy);
+        a.MenuPolicy = b.MenuPolicy;
         var audit = GraphAudit.Compare(a, b);
         Assert.True(audit.Differences.Count == 0, string.Join("; ", audit.Differences));
         // IDs and money are exact against the live city, not only against each other.
@@ -240,8 +243,8 @@ public sealed class F7dCompactWriterTests
 
         var refusals = new (string Name, string Payload, SaveReadStatus Status)[]
         {
-            ("future schema", valid.Replace("{\"Schema\":35,", "{\"Schema\":36,"), SaveReadStatus.Future),
-            ("far future schema", valid.Replace("{\"Schema\":35,", "{\"Schema\":99,"), SaveReadStatus.Future),
+            ("future schema", valid.Replace("{\"Schema\":36,", "{\"Schema\":37,"), SaveReadStatus.Future),
+            ("far future schema", valid.Replace("{\"Schema\":36,", "{\"Schema\":99,"), SaveReadStatus.Future),
             ("unknown format", valid.Replace(",\"f\":\"pcc-c\",", ",\"f\":\"pcc-d\","), SaveReadStatus.Invalid),
             ("unknown version", valid.Replace(",\"v\":1,", ",\"v\":2,"), SaveReadStatus.Invalid),
             ("unknown field", valid.Substring(0, valid.Length - 1) + ",\"x\":0}", SaveReadStatus.Invalid),
@@ -254,7 +257,7 @@ public sealed class F7dCompactWriterTests
             ("whitespace", valid.Replace(",\"k\":[", ", \"k\":["), SaveReadStatus.Invalid),
             ("noncanonical escape", valid.Replace(",\"f\":\"pcc-c\",", ",\"f\":\"pcc\\u002dc\","), SaveReadStatus.Invalid),
             ("bare JSON body in the current writer", SaveCodec.ExpandCompact(valid), SaveReadStatus.Invalid),
-            ("body schema mismatch", SaveCodec.CompactFromBody(SaveCodec.ExpandCompact(valid).Replace("{\"Schema\":35,", "{\"Schema\":34,")), SaveReadStatus.Invalid),
+            ("body schema mismatch", SaveCodec.CompactFromBody(SaveCodec.ExpandCompact(valid).Replace("{\"Schema\":36,", "{\"Schema\":35,")), SaveReadStatus.Invalid),
             ("bad string index", Variant(valid, o => { var s = (object?[])Field(o, "s")!; var c = Columns(Field(o, "t"), 1).First(col => col.Skip(1).Any(v => v is SaveCodec.CompactNumber));
                 int at = Array.FindIndex(c, 1, v => v is SaveCodec.CompactNumber); c[at] = new SaveCodec.CompactNumber(s.Length.ToString()); }), SaveReadStatus.Invalid),
             ("negative string index", Variant(valid, o => { var c = Columns(Field(o, "t"), 1).First(col => col.Skip(1).Any(v => v is SaveCodec.CompactNumber));
@@ -340,21 +343,21 @@ public sealed class F7dCompactWriterTests
     [Fact]
     public void OverboundTablesAndColumnsAreRefusedBeforeTheirArraysAreAllocated()
     {
-        const string head = "{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Schema\"],\"h\":[[0,1]],\"s\":[],\"n\":0,\"r\":0,";
+        const string head = "{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Schema\"],\"h\":[[0,1]],\"s\":[],\"n\":0,\"r\":0,";
         // 500,001 citizen slots from about 120 characters: refused by the body's own citizen bound before allocation.
-        string citizens = head + "\"t\":[4,0,[5,500001,[3,500001]],[0,35]]}";
+        string citizens = head + "\"t\":[4,0,[5,500001,[3,500001]],[0,36]]}";
         long bytes = Allocated(() => SaveCodec.Read(citizens), out var read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("collection length", read.Error);
         Assert.True(bytes < 64 * 1024, bytes + " B allocated");
         // Within the citizen bound but far more slots than a payload this short can carry.
-        string dense = head + "\"t\":[4,0,[5," + SaveCodec.MaxResidents + ",[3," + SaveCodec.MaxResidents + "]],[0,35]]}";
+        string dense = head + "\"t\":[4,0,[5," + SaveCodec.MaxResidents + ",[3," + SaveCodec.MaxResidents + "]],[0,36]]}";
         bytes = Allocated(() => SaveCodec.Read(dense), out read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("decoded value bound", read.Error);
         Assert.True(bytes < 64 * 1024, bytes + " B allocated");
         // One key over the record bound: counted without building the table.
-        var keys = new StringBuilder("{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[");
+        var keys = new StringBuilder("{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[");
         for (int i = 0; i <= SaveCodec.MaxEmbeddedRecords; i++) { if (i > 0) keys.Append(','); keys.Append("\"k").Append(i.ToString("D7")).Append('"'); }
         string overKeys = keys.Append("],\"h\":[],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
         bytes = Allocated(() => SaveCodec.Read(overKeys), out read);
@@ -366,7 +369,7 @@ public sealed class F7dCompactWriterTests
         Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "any").Status);
         Assert.Same(overKeys, data[SaveStore.StateKey]);
         // One shape naming 4,000,001 fields against a one-key table: bounded by the key count during the count pass.
-        var shape = new StringBuilder("{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Schema\"],\"h\":[[");
+        var shape = new StringBuilder("{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Schema\"],\"h\":[[");
         for (int i = 0; i <= SaveCodec.MaxEmbeddedRecords; i++) { if (i > 0) shape.Append(','); shape.Append('0'); }
         string overShape = shape.Append("]],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
         bytes = Allocated(() => SaveCodec.Read(overShape), out read);
@@ -381,8 +384,8 @@ public sealed class F7dCompactWriterTests
         Assert.Equal(SaveCodec.MaxResidents, SaveCodec.CompactCollectionLimit("Citizens"));
         Assert.Equal(SaveCodec.MaxRecentVisits, SaveCodec.CompactCollectionLimit("RecentVisits"));
         int shopBound = SaveCodec.CompactCollectionLimit("Shops");
-        string scopes = "{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Food\",\"Schema\",\"Shops\"],\"h\":[[0,1],[2]],\"s\":[\"" + new string('x', shopBound) + "\"],\"n\":0,\"r\":0,"
-            + "\"t\":[4,0,[4,1,[5," + (shopBound + 1) + ",[3," + (shopBound + 1) + "]]],[0,35]]}";
+        string scopes = "{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Food\",\"Schema\",\"Shops\"],\"h\":[[0,1],[2]],\"s\":[\"" + new string('x', shopBound) + "\"],\"n\":0,\"r\":0,"
+            + "\"t\":[4,0,[4,1,[5," + (shopBound + 1) + ",[3," + (shopBound + 1) + "]]],[0,36]]}";
         bytes = Allocated(() => SaveCodec.Read(scopes), out read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("collection length", read.Error);
@@ -393,7 +396,7 @@ public sealed class F7dCompactWriterTests
     }
 
     private static string Envelope(IEnumerable<string> keys, string shapes, string strings, string root)
-        => "{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[" + string.Join(",", keys.Select(k => "\"" + k + "\"")) + "],\"h\":" + shapes
+        => "{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[" + string.Join(",", keys.Select(k => "\"" + k + "\"")) + "],\"h\":" + shapes
             + ",\"s\":" + strings + ",\"n\":0,\"r\":0,\"t\":" + root + "}";
 
     [Fact]
@@ -433,11 +436,11 @@ public sealed class F7dCompactWriterTests
         var cases = new[]
         {
             ("menu IDs", Envelope(new[] { "AdditionalProductIds", "Food", "Schema", "Shops" }, "[[0],[1,2],[3]]", pad(64),
-                "[4,1,[4,2,[5,1,[4,0,[5," + FoodMenuPolicy.MaximumOffers + ",[3," + FoodMenuPolicy.MaximumOffers + "]]]]],[0,35]]")),
+                "[4,1,[4,2,[5,1,[4,0,[5," + FoodMenuPolicy.MaximumOffers + ",[3," + FoodMenuPolicy.MaximumOffers + "]]]]],[0,36]]")),
             ("product names", Envelope(new[] { "ProductNames", "Schema" }, "[[0,1]]", pad(FoodNameIdentity.MaximumNames),
-                "[4,0,[5," + (FoodNameIdentity.MaximumNames + 1) + ",[3," + (FoodNameIdentity.MaximumNames + 1) + "]],[0,35]]")),
+                "[4,0,[5," + (FoodNameIdentity.MaximumNames + 1) + ",[3," + (FoodNameIdentity.MaximumNames + 1) + "]],[0,36]]")),
             ("portals", Envelope(new[] { "Portals", "Schema" }, "[[0,1]]", pad(SaveCodec.MaxPortals),
-                "[4,0,[5," + (SaveCodec.MaxPortals + 1) + ",[3," + (SaveCodec.MaxPortals + 1) + "]],[0,35]]")),
+                "[4,0,[5," + (SaveCodec.MaxPortals + 1) + ",[3," + (SaveCodec.MaxPortals + 1) + "]],[0,36]]")),
         };
         foreach (var (name, payload) in cases)
         {
@@ -467,8 +470,8 @@ public sealed class F7dCompactWriterTests
         // 256 Mi characters of body. The reader stops writing the body at the cap.
         string big = new string('x', 1 << 20);
         var refs = string.Join(",", Enumerable.Repeat("0", 257));
-        string payload = "{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Journey\",\"Legs\",\"Schema\"],\"h\":[[0,3],[1],[2]],\"s\":[],"
-            + "\"n\":1,\"r\":[4,2,[5,1,[1,\"" + big + "\"]]],\"t\":[4,0,[5,257,[4,1,[8," + refs + "]]],[0,35]]}";
+        string payload = "{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Journey\",\"Legs\",\"Schema\"],\"h\":[[0,3],[1],[2]],\"s\":[],"
+            + "\"n\":1,\"r\":[4,2,[5,1,[1,\"" + big + "\"]]],\"t\":[4,0,[5,257,[4,1,[8," + refs + "]]],[0,36]]}";
         var read = SaveCodec.Read(payload);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("input size limit", read.Error);
@@ -510,7 +513,7 @@ public sealed class F7dCompactWriterTests
 
     // ---- Exact number spelling, strings, shared routes and road ranges ----
 
-    private const string EdgeBody = "{\"Schema\":35,"
+    private const string EdgeBody = "{\"Schema\":36,"
         + "\"Numbers\":[0,-0,-1,1E-05,0.1,-0.0,12.0,9223372036854775807,-9223372036854775808,92233720368547758070,-92233720368547758090,1.7976931348623157E+308,5e3,-1E-07],"
         + "\"Ints\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,9223372036854775807,-9223372036854775808],"
         + "\"Deltas\":[1000,1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1011,1012,1013],"

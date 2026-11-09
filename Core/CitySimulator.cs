@@ -200,7 +200,7 @@ namespace PersistentCity.Core
             if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
             state.Capabilities.RequireExecutable();
             if (state.Schema > CityState.CurrentSchema || state.Schema >= 23
-                && state.MenuPolicy != (state.Schema >= 25 ? FoodNameIdentity.Wire : FoodMenuPolicy.Wire))
+                && state.MenuPolicy != CityState.ExecutableMenuPolicy(state.Schema))
                 throw new InvalidOperationException("Unsupported menu product policy; preserve the payload.");
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)

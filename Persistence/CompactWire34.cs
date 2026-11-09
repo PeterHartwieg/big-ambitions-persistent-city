@@ -206,7 +206,7 @@ namespace PersistentCity.Persistence
                     && int.TryParse(revision.Text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out revisionValue);
                 Require(valid, "Invalid population capabilities.");
                 ValidateCapabilities(new PopulationCapabilities { Active = (bool)capabilities!.Values[0]!, Code = (string)capabilities.Values[1]!, Revision = revisionValue });
-                Require(values[2] is string policy && policy == FoodNameIdentity.Wire, "Unsupported menu product policy.");
+                Require(values[2] is string policy && policy == CityState.ExecutableMenuPolicy(CityState.CurrentSchema), "Unsupported menu product policy.");
                 return; // Full population startup still decodes every column and the whole body.
             }
         }
@@ -1294,7 +1294,9 @@ namespace PersistentCity.Persistence
             {
                 // F2e: the compact wire is the same at 34 (F7d) and 35 (current); Read reaches this decoder only for the current
                 // writer's prefix, and the body reader then requires the current schema, so a writer-34 city is still refused.
+                // E5b4: 36 is the same compact wire again, so the frozen 34 and 35 shapes still decode for their tests.
                 Require(header[0] is CompactNumber schema && (schema.Text == CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture)
+                    || schema.Text == CityState.PlayerHoldSchema.ToString(CultureInfo.InvariantCulture)
                     || schema.Text == CityState.CompactSchema.ToString(CultureInfo.InvariantCulture)), "Unsupported compact state schema.");
                 Require(header[1] is string format && format == CompactFormat, "Unknown compact format.");
                 Require(Int(header[2]) == CompactFormatVersion, "Unsupported compact format version.");
