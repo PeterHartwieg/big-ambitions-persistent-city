@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace PersistentCity.Core
@@ -213,12 +216,23 @@ namespace PersistentCity.Core
         private static FoodCommerceState FoodOf(ICityView view)
             => Of(view).Food ?? throw new InvalidOperationException("The city has no food scope.");
 
-        /// <summary><see cref="FoodEconomyInsight.Capture"/>: the on-demand economy overview.</summary>
-        public static object EconomyOverview(ICityView view) => FoodEconomyInsight.Capture(Of(view));
+        /// <summary><see cref="FoodEconomyInsight.Capture"/>: the on-demand economy overview, field for field in the same order,
+        /// with its history rows replaced by detached copies, so nothing in the result is part of the city.</summary>
+        public static IReadOnlyDictionary<string, object?> EconomyOverview(ICityView view)
+        {
+            object overview = FoodEconomyInsight.Capture(Of(view));
+            var fields = new Dictionary<string, object?>(StringComparer.Ordinal);
+            foreach (var property in overview.GetType().GetProperties())
+            {
+                object? value = property.GetValue(overview);
+                fields.Add(property.Name, value is FoodShopDay[] rows ? Detach(rows) : value);
+            }
+            return fields;
+        }
         /// <summary><see cref="FoodMoneyCounters.Rescan"/>: city money totals from a full scan of the wallets.</summary>
         public static FoodMoneySnapshot RescanFoodMoney(ICityView view) => FoodMoneyCounters.Rescan(FoodOf(view));
-        /// <summary><see cref="FoodFeedback.IndexHistory"/> over the kept food history: a new index of the shared day rows.</summary>
-        public static Dictionary<(string, string), List<FoodShopDay>> IndexFoodHistory(ICityView view) => FoodFeedback.IndexHistory(FoodOf(view).History);
+        /// <summary>The kept food history, indexed once for one panel refresh. The rows stay inside the report.</summary>
+        public static FoodHistoryReport FoodHistory(ICityView view) => new FoodHistoryReport(FoodOf(view).History);
         public static int FoodRecordingSince(ICityView view) => FoodFeedback.RecordingSince(FoodOf(view));
         public static int FoodRecordingSinceV2(ICityView view) => FoodFeedbackV2.RecordingSince(FoodOf(view));
         /// <summary><see cref="FoodFeedbackV2.AppendCity"/> with the city's economic ledger.</summary>
@@ -228,5 +242,90 @@ namespace PersistentCity.Core
         public static string? DescribePerson(ICityView view, string id, long anchorReads) => VisitorSchedules.DescribePerson(Of(view), id, anchorReads);
         /// <summary><see cref="PopulationCensusInput.CaptureResidents"/>: detached census facts of the residents.</summary>
         public static CensusResident[] CaptureCensusResidents(ICityView view) => PopulationCensusInput.CaptureResidents(Of(view).Citizens);
+        /// <summary>A detached copy of the research ledger (the F7c save copy: same orders, states and order, shared immutable
+        /// reports) for the research window and report text, which take a ledger. Changing it changes nothing in the city.</summary>
+        public static ResearchLedger ResearchSnapshot(ICityView view) => Of(view).Research.CopyForSave();
+        /// <summary>Detached copies of the meal records at Street Food vendor places, wallets included, for <c>pc vendor sales</c>
+        /// and its receipt check.</summary>
+        public static IReadOnlyList<ResidentMeal> VendorMeals(ICityView view)
+            => FoodOf(view).Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId)).Select(Detach).ToArray();
+
+        internal static T Detach<T>(T value) where T : class => (T)Copy(value)!;
+
+        /// <summary>A deep copy through public members: strings and value types as they are, arrays and lists element by
+        /// element, a Core class by its parameterless constructor and its public settable properties (a get-only list is
+        /// refilled). Used only for on-demand diagnostics; anything else is refused rather than shared.</summary>
+        private static object? Copy(object? value)
+        {
+            if (value == null) return null;
+            var type = value.GetType();
+            if (value is string || type.IsValueType) return value;
+            if (value is Array array)
+            {
+                var copy = Array.CreateInstance(type.GetElementType()!, array.Length);
+                for (int i = 0; i < array.Length; i++) copy.SetValue(Copy(array.GetValue(i)), i);
+                return copy;
+            }
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                var copy = (IList)Activator.CreateInstance(type)!;
+                foreach (var item in (IList)value) copy.Add(Copy(item));
+                return copy;
+            }
+            if (type.Namespace != typeof(CityState).Namespace || type.GetConstructor(Type.EmptyTypes) == null)
+                throw new NotSupportedException("Cannot detach " + type.FullName + ".");
+            object result = Activator.CreateInstance(type)!;
+            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (property.GetIndexParameters().Length > 0 || property.GetMethod == null) continue;
+                if (property.SetMethod != null && property.SetMethod.IsPublic) property.SetValue(result, Copy(property.GetValue(value)));
+                else if (property.GetValue(result) is IList target && !target.IsReadOnly && property.GetValue(value) is IList source)
+                { target.Clear(); foreach (var item in source) target.Add(Copy(item)); }
+            }
+            return result;
+        }
+    }
+
+    /// <summary>The kept food history indexed by shop for one panel refresh (<see cref="FoodFeedback.IndexHistory"/>). The
+    /// saved day rows never leave it: callers get text only.</summary>
+    public sealed class FoodHistoryReport
+    {
+        private static readonly List<FoodShopDay> NoRows = new List<FoodShopDay>();
+        private readonly Dictionary<(string, string), List<FoodShopDay>> index;
+        internal FoodHistoryReport(IReadOnlyList<FoodShopDay> history) { index = FoodFeedback.IndexHistory(history); }
+        private List<FoodShopDay> Rows(string placeId, string businessId)
+            => index.TryGetValue(FoodFeedback.Key(placeId, businessId), out var rows) ? rows : NoRows;
+
+        /// <summary><see cref="FoodFeedback.Weeks"/> text of one shop.</summary>
+        public string WeeksText(string placeId, string businessId, int today, int recordingSince)
+            => FoodFeedback.Weeks(Rows(placeId, businessId), placeId, businessId, today, recordingSince).Text();
+        public void AppendPeriods(StringBuilder text, string placeId, string businessId, int today, int recordingSince)
+            => FoodFeedbackV2.AppendPeriods(text, Rows(placeId, businessId), today, recordingSince);
+        public void AppendJournal(StringBuilder text, ShopObservation? journal, string placeId, string businessId, int today, int recordingSince,
+            Func<string, string> productName)
+            => FoodFeedbackV2.AppendJournal(text, journal, Rows(placeId, businessId), today, recordingSince, productName);
+
+        /// <summary>The panel's shop-days block: "No evaluated food offers recorded yet.", or the weeks and the latest
+        /// recorded day (purchases, meals, products, offer outcomes and purchase hours).</summary>
+        public void AppendShopDays(StringBuilder text, string placeId, string businessId, int today, int recordingSince,
+            Func<Money, string> amount, Func<string, string> productName)
+        {
+            var rows = Rows(placeId, businessId);
+            FoodShopDay? observed = null;
+            foreach (var row in rows) if (observed == null || row.Day > observed.Day) observed = row;
+            if (observed == null) { text.AppendLine("No evaluated food offers recorded yet."); return; }
+            FoodFeedback.Weeks(rows, placeId, businessId, today, recordingSince).AppendTo(text);
+            text.AppendLine("Latest recorded day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + amount(observed.Revenue) + " sales");
+            text.AppendLine("Meals: breakfast " + observed.PurchaseMeals[1] + " · lunch " + observed.PurchaseMeals[2] + " · dinner " + observed.PurchaseMeals[3]
+                + (observed.PurchaseMeals[0] > 0 ? " · earlier single-meal routine " + observed.PurchaseMeals[0] : ""));
+            foreach (var product in observed.ProductSales.OrderByDescending(p => p.Purchases))
+                text.AppendLine(productName(product.ProductId) + ": " + product.Purchases + " sales · breakfast " + product.PurchaseMeals[1]
+                    + " / lunch " + product.PurchaseMeals[2] + " / dinner " + product.PurchaseMeals[3]);
+            text.AppendLine("Evaluated offer outcomes that day: " + observed.PriceRejections + " unaffordable, " + observed.AccessRejections + " travel/time, "
+                + observed.ClosedRejections + " closed/late, " + observed.StockRejections + " stock unavailable, " + observed.StaffRejections + " no staffed counter, " + observed.ServiceRejections + " service/queue, "
+                + observed.PreferredAlternatives + " preferred another option, " + observed.UnknownEvidence + " unknown.");
+            text.AppendLine("Purchase hours: " + string.Join(", ", observed.PurchaseHours.Select((n, h) => new { n, h })
+                .Where(p => p.n > 0).Select(p => p.h.ToString("00") + ":00 " + p.n)));
+        }
     }
 }

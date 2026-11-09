@@ -151,10 +151,27 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Research console detail command not removed: " + error.Message); }
         }
 
-        /// <summary>The attached city's saved ledger, or null. F9e named exception: the research window and
-        /// ResearchReportText take the ledger itself; status counts read <see cref="ResearchViewNow"/>.</summary>
-        private ResearchLedger? ResearchLedgerNow => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
-            ? null : simulation.State.Research;
+        private ResearchLedger? researchSnapshot;
+        private CitySimulator? researchSnapshotCity;
+        private float researchSnapshotUntil;
+        /// <summary>For the open research window: a detached copy of the attached city's ledger (F9e), or null. Taken at most
+        /// every 0.25 s while the window draws, so OnGUI does not copy the ledger on every call; the window itself rebuilds at
+        /// most once a second.</summary>
+        private ResearchLedger? ResearchLedgerNow
+        {
+            get
+            {
+                var city = failed || !ReferenceEquals(saveIdentity, SaveGameManager.Current) ? null : simulation;
+                if (city == null) { researchSnapshot = null; researchSnapshotCity = null; return null; }
+                float now = Time.unscaledTime;
+                if (!ReferenceEquals(city, researchSnapshotCity) || now >= researchSnapshotUntil)
+                { researchSnapshot = CityViewReports.ResearchSnapshot(city.View); researchSnapshotCity = city; researchSnapshotUntil = now + .25f; }
+                return researchSnapshot;
+            }
+        }
+        /// <summary>For console commands: a fresh detached copy of the attached city's ledger, or null.</summary>
+        private ResearchLedger? ResearchLedgerFresh => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
+            ? null : CityViewReports.ResearchSnapshot(simulation.View);
         /// <summary>The attached city's research through its read-only view, or null.</summary>
         private IResearchView? ResearchViewNow => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
             ? null : simulation.View.Research;
@@ -172,7 +189,7 @@ namespace PersistentCity.Runtime
         {
             if (string.Equals(action, "report", StringComparison.OrdinalIgnoreCase))
             {
-                var ledger = ResearchLedgerNow;
+                var ledger = ResearchLedgerFresh;
                 var order = ledger?.Find(detail);
                 if (ledger == null) Debug.LogWarning("[Persistent City] research unavailable: no active Persistent City population in this save.");
                 else if (order == null) Debug.LogWarning("[Persistent City] Unknown research order: " + detail);
@@ -217,7 +234,7 @@ namespace PersistentCity.Runtime
 
         private string ResearchOrdersText()
         {
-            var ledger = ResearchLedgerNow;
+            var ledger = ResearchLedgerFresh;
             if (ledger == null) return "No active Persistent City population in this save.";
             var text = new StringBuilder(1024);
             foreach (var order in ResearchReportText.Orders(ledger))

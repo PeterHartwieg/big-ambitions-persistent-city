@@ -29,6 +29,23 @@ Median per call, two runs each (run 1 / run 2):
 - **Allocation per panel refresh:** the view reads themselves allocate nothing. `PanelRefreshReadsThroughTheViewAllocateNothing` measures 0 bytes over 1,000 refreshes of the panel's view reads. The panel walks the view's lists with index loops, because a `foreach` over an `IReadOnlyList` would box an enumerator per refresh. The 2,848 B above are the history index and money rescan, the same in both builds.
 - **`CitySimulator.View`** allocates the view and its two inner views once per simulator, on first use.
 
+## Review round 1: detached copies
+
+The observer paths that used to receive the city's objects now get copies. Same Mac, one run, median per call:
+
+| Work | F9c city-s (3 orders, 7 history rows) | F5h (0 orders, 6 history rows) |
+| --- | ---: | ---: |
+| Research ledger copy (`ResearchSnapshot`) | 0.0003 ms, 1,016 B | 0.0001 ms, 608 B |
+| Economy overview, base (`FoodEconomyInsight.Capture`) | 0.168 ms, 97 KB | 1.35 ms, 867 KB |
+| Economy overview, detached (`EconomyOverview`) | 0.258 ms, 126 KB | 1.38 ms, 894 KB |
+| Vendor-place meal copies (`VendorMeals`, 0 meals in both) | 0.0015 ms | 0.012 ms |
+| Rejected option: decode the published payload for save-cost counts | 29.5 ms, 10 MB | 221 ms, 72 MB |
+
+- The research window takes a new ledger copy at most every 0.25 s while it is open and nothing while it is closed. Console commands take one per command.
+- The overview and vendor sales are on-demand bridge and console diagnostics, not frame work.
+- The save-cost decode would have been a main-thread spike of 221 ms in an explicitly requested save-profiling run. The save owner passes the count function instead, so the counted path and its timing are the base code's.
+- The panel's history now goes through `FoodHistoryReport`: the same index and the same text, built inside Core.
+
 ## Cheap wins
 
 None taken. No measured cost moved beyond noise except the inspector's 1.4 µs per build, which I judged not worth a type check against the view's purpose.

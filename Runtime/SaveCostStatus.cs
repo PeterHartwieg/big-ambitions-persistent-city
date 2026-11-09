@@ -1,3 +1,4 @@
+using System;
 using PersistentCity.Persistence;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
@@ -58,15 +59,16 @@ namespace PersistentCity.Runtime
             }
         }
 
-        /// <summary>Requested-only record counts after publication; timed separately and never thrown into native Save.</summary>
-        private void CountSavedRecords(SaveCostRecorder cost)
+        /// <summary>Requested-only record counts after publication; timed separately and never thrown into native Save.
+        /// F9e: the save owner supplies <paramref name="count"/> (the codec's count against the state it wrote), so this
+        /// observer never holds the city.</summary>
+        private void CountSavedRecords(SaveCostRecorder cost, Func<string, (int Streaming, int Semantic)> count)
         {
             if (simulation == null || !SaveGameManager.Current.modData.TryGetValue(SaveStore.StateKey, out var payload)) return;
             long start = Stopwatch.GetTimestamp();
             try
             {
-                // F9e named exception: the save codec counts records of the state it wrote.
-                var counts = SaveCodec.CountRecords(simulation.State, payload);
+                var counts = count(payload);
                 cost.Counts(counts.Streaming, counts.Semantic, (Stopwatch.GetTimestamp() - start) * MillisecondsPerTimestamp);
             }
             catch (System.Exception error) { log?.Warn("Save-cost record count failed: " + error.Message); }

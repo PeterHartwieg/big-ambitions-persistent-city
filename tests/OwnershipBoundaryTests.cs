@@ -17,9 +17,9 @@ namespace PersistentCity.Tests;
 
 /// <summary>F9e (plan f9-city-acceptance.md, Decision 8): observers read the city through <see cref="CitySimulator.View"/>.
 /// A source test finds every <c>.State</c> access in Runtime by the type of its receiver (no Roslyn: each file's and its
-/// partial siblings' declarations), allows <see cref="CitySimulator"/> receivers only in the owner files and three named
-/// observer sinks, and fails on a receiver it cannot resolve. A reflection test walks every type reachable from
-/// <see cref="ICityView"/>. The output test compares what the panel, inspector and diagnostics read through the view with
+/// partial siblings' declarations), allows <see cref="CitySimulator"/> receivers only in the owner files, and fails on a
+/// receiver it cannot resolve. A reflection test walks every type reachable from <see cref="ICityView"/> and classifies every
+/// <see cref="CityViewReports"/> result; detachment tests show the reports share no saved object. The output test compares what the panel, inspector and diagnostics read through the view with
 /// the same reads through the state, on the F5h and F9c cities.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class OwnershipBoundaryTests
@@ -42,19 +42,10 @@ public sealed class OwnershipBoundaryTests
         ["WeatherDiagnostics.cs"] = "observer outside F9e's Owns; listed in docs/checks/f9e.md",
     };
 
-    /// <summary>The F9e observer files. Each simulator <c>.State</c> read in them must be one of <see cref="NamedSinks"/>.</summary>
+    /// <summary>The F9e observer files: no simulator <c>.State</c> read and no cast back to an entity.</summary>
     internal static readonly string[] ObserverFiles =
     {
         "FoodEconomyPanel.cs", "AccountingStatus.cs", "ResearchDiagnostics.cs", "SaveCostStatus.cs", "VendorDiagnostics.cs", "PopulationCensusDiagnostics.cs",
-    };
-
-    /// <summary>Observer reads that hand the mutable object to a sink whose signature lives outside F9e: the line must contain
-    /// the fragment, and each fragment is used exactly once.</summary>
-    internal static readonly (string File, string Fragment, string Reason)[] NamedSinks =
-    {
-        ("SaveCostStatus.cs", "SaveCodec.CountRecords(simulation.State, payload)", "Persistence's record counter takes the state it wrote"),
-        ("ResearchDiagnostics.cs", "? null : simulation.State.Research;", "the research window and ResearchReportText take the ledger"),
-        ("VendorDiagnostics.cs", "simulation.State.Food!.Residents.Where(", "meals and FoodSaleReceipts.ReadStatus are not in the view"),
     };
 
     /// <summary>Types that own a <c>.State</c> member other than the simulator's, each with a cited example.</summary>
@@ -71,7 +62,8 @@ public sealed class OwnershipBoundaryTests
     };
 
     /// <summary>Receivers whose type the scan cannot read from a declaration (lambda parameters, <c>var</c> of a call), with
-    /// the type of the expression before <c>.State</c>. An entry applies to every use of that name in its file.</summary>
+    /// the type of the expression before <c>.State</c>. An entry is a fallback: it applies only where the declarations leave
+    /// the name unresolved, so a name declared CitySimulator is never overridden.</summary>
     internal static readonly (string File, string Receiver, string Type)[] KnownReceivers =
     {
         ("VendorDiagnostics.cs", "r", "VendorRow"), // market.Coordinator.Table.Rows.Select(r => ...)
@@ -221,15 +213,16 @@ public sealed class OwnershipBoundaryTests
             {
                 int line = text.Take(m.Index).Count(ch => ch == '\n');
                 string receiver = Receiver(text, m.Index, out bool indexed);
-                string? type = KnownReceivers.Where(k => k.File == file && k.Receiver == receiver).Select(k => k.Type).FirstOrDefault();
-                if (type != null) { }
-                else if (OtherStateOwners.ContainsKey(receiver)) type = receiver;
+                string? type;
+                if (OtherStateOwners.ContainsKey(receiver)) type = receiver;
                 else if (receiver.Contains('.') || receiver.StartsWith("(", StringComparison.Ordinal)) type = null;
                 else
                 {
                     type = Single(Lookup(file, receiver));
                     if (type != null && indexed) type = Element(type);
                     if (type == "?") type = null;
+                    // Declarations first; the cited fallback only for a name they leave unresolved.
+                    if (type == null) type = KnownReceivers.Where(k => k.File == file && k.Receiver == receiver).Select(k => k.Type).FirstOrDefault();
                 }
                 found.Add(new Access(file, line + 1, receiver, type, lines[line].Trim()));
             }
@@ -274,7 +267,6 @@ public sealed class OwnershipBoundaryTests
     internal static List<string> Violations(IReadOnlyDictionary<string, string> files)
     {
         var violations = new List<string>();
-        var used = new Dictionary<(string, string), int>();
         foreach (var a in Scan(files))
         {
             string where = a.File + ":" + a.Line + " '" + a.LineText + "'";
@@ -284,13 +276,8 @@ public sealed class OwnershipBoundaryTests
                 if (!OtherStateOwners.ContainsKey(a.Type)) violations.Add(where + ": receiver type " + a.Type + " is not a known .State owner");
                 continue;
             }
-            if (AllowedFiles.ContainsKey(a.File)) continue;
-            var sink = NamedSinks.FirstOrDefault(s => s.File == a.File && a.LineText.Contains(s.Fragment, StringComparison.Ordinal));
-            if (sink.File == null) { violations.Add(where + ": reads CitySimulator.State outside the allowed files; observers read .View"); continue; }
-            used[(sink.File, sink.Fragment)] = used.TryGetValue((sink.File, sink.Fragment), out var n) ? n + 1 : 1;
+            if (!AllowedFiles.ContainsKey(a.File)) violations.Add(where + ": reads CitySimulator.State outside the allowed files; observers read .View");
         }
-        foreach (var ((file, fragment), count) in used)
-            if (count > 1) violations.Add(file + ": named sink '" + fragment + "' used " + count + " times");
         foreach (var (file, text) in files)
         {
             if (!ObserverFiles.Contains(file)) continue;
@@ -313,12 +300,11 @@ public sealed class OwnershipBoundaryTests
         var accesses = Scan(files);
         foreach (var a in accesses) output.WriteLine(a.File + ":" + a.Line + " " + a.Receiver + " -> " + (a.Type ?? "unresolved"));
         Assert.Empty(Violations(files));
-        // Every listed file and sink exists, so the lists cannot go stale silently.
+        // Every listed file exists, so the lists cannot go stale silently.
         foreach (var file in AllowedFiles.Keys.Concat(ObserverFiles)) Assert.True(files.ContainsKey(file), file + " is listed but missing");
-        foreach (var (file, fragment, _) in NamedSinks)
-            Assert.Single(accesses, a => a.File == file && a.Type == "CitySimulator" && a.LineText.Contains(fragment, StringComparison.Ordinal));
-        // The observers that read the city at all read it through the view.
-        foreach (var file in new[] { "FoodEconomyPanel.cs", "AccountingStatus.cs", "ResearchDiagnostics.cs", "PopulationCensusDiagnostics.cs" })
+        // No observer file reads the simulator's state at all; those that read the city read it through the view.
+        Assert.DoesNotContain(accesses, a => a.Type == "CitySimulator" && ObserverFiles.Contains(a.File));
+        foreach (var file in new[] { "FoodEconomyPanel.cs", "AccountingStatus.cs", "ResearchDiagnostics.cs", "PopulationCensusDiagnostics.cs", "VendorDiagnostics.cs" })
             Assert.Contains(".View", Code(files[file]));
         // The simulator reads found are the receivers the plan names, under every handle name.
         Assert.Contains(accesses, a => a.Type == "CitySimulator" && a.Receiver == "city" && a.File == "StreetFoodVendorMarket.cs");
@@ -356,11 +342,18 @@ public sealed class OwnershipBoundaryTests
         var quiet = new Dictionary<string, string>(files, StringComparer.Ordinal)
             { ["PopulationCensusDiagnostics.cs"] = Plant("var m = \"simulation.State\"; // current.State\n /* simulation.State */") };
         Assert.Empty(Violations(quiet));
-        // A second use of a named sink fails.
-        var twice = new Dictionary<string, string>(files, StringComparer.Ordinal);
-        twice["SaveCostStatus.cs"] = files["SaveCostStatus.cs"].Replace("var counts = SaveCodec.CountRecords(simulation.State, payload);",
-            "var counts = SaveCodec.CountRecords(simulation.State, payload); counts = SaveCodec.CountRecords(simulation.State, payload);");
-        Assert.Contains(Violations(twice), v => v.Contains("used 2 times", StringComparison.Ordinal));
+        // The former sinks are refused again if they return.
+        var saveCost = new Dictionary<string, string>(files, StringComparer.Ordinal);
+        saveCost["SaveCostStatus.cs"] = files["SaveCostStatus.cs"].Replace("var counts = count(payload);",
+            "var counts = SaveCodec.CountRecords(simulation.State, payload);");
+        Assert.Contains("observers read .View", Assert.Single(Violations(saveCost)));
+        // A declared CitySimulator wins over a cited receiver-name fallback: VendorDiagnostics' lambda 'r' is a VendorRow,
+        // but a parameter 'CitySimulator r' in the same file is a simulator read (review Sol-r1-3).
+        string vendor = files["VendorDiagnostics.cs"];
+        int end = vendor.LastIndexOf('}'); end = vendor.LastIndexOf('}', end - 1);
+        var shadow = new Dictionary<string, string>(files, StringComparer.Ordinal)
+            { ["VendorDiagnostics.cs"] = vendor.Insert(end, "\n        private void Probe(CitySimulator r) { var s = r.State; }\n    ") };
+        Assert.Contains(Violations(shadow), v => v.Contains("var s = r.State", StringComparison.Ordinal) && v.Contains("observers read .View", StringComparison.Ordinal));
     }
 
     // ---- Reflection ----
@@ -436,9 +429,45 @@ public sealed class OwnershipBoundaryTests
 
     // ---- Outputs before and after ----
 
+    private static string Amount(Money amount) => ((decimal)amount.Units / Money.UnitsPerDollar).ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+    private static string Name(string id) => "<" + id + ">";
+
+    /// <summary>The base panel's per-shop history text (F6c overview weeks and V2 text, then BuildEconomyText's block), as the
+    /// base code built it from the shared rows.</summary>
+    private static void BaseShopText(StringBuilder text, List<FoodShopDay> rows, string placeId, string businessId, int day, int since, int since2)
+    {
+        text.AppendLine(FoodFeedback.Weeks(rows, placeId, businessId, day, since).Text());
+        FoodFeedbackV2.AppendPeriods(text, rows, day, since2); FoodFeedbackV2.AppendJournal(text, null, rows, day, since2, Name);
+        FoodShopDay? observed = null;
+        foreach (var row in rows) if (observed == null || row.Day > observed.Day) observed = row;
+        if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
+        else
+        {
+            FoodFeedback.Weeks(rows, placeId, businessId, day, since).AppendTo(text);
+            text.AppendLine("Latest recorded day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + Amount(observed.Revenue) + " sales");
+            text.AppendLine("Meals: breakfast " + observed.PurchaseMeals[1] + " · lunch " + observed.PurchaseMeals[2] + " · dinner " + observed.PurchaseMeals[3]
+                + (observed.PurchaseMeals[0] > 0 ? " · earlier single-meal routine " + observed.PurchaseMeals[0] : ""));
+            foreach (var product in observed.ProductSales.OrderByDescending(p => p.Purchases))
+                text.AppendLine(Name(product.ProductId) + ": " + product.Purchases + " sales · breakfast " + product.PurchaseMeals[1]
+                    + " / lunch " + product.PurchaseMeals[2] + " / dinner " + product.PurchaseMeals[3]);
+            text.AppendLine("Evaluated offer outcomes that day: " + observed.PriceRejections + " unaffordable, " + observed.AccessRejections + " travel/time, "
+                + observed.ClosedRejections + " closed/late, " + observed.StockRejections + " stock unavailable, " + observed.StaffRejections + " no staffed counter, " + observed.ServiceRejections + " service/queue, "
+                + observed.PreferredAlternatives + " preferred another option, " + observed.UnknownEvidence + " unknown.");
+            text.AppendLine("Purchase hours: " + string.Join(", ", observed.PurchaseHours.Select((n, h) => new { n, h })
+                .Where(p => p.n > 0).Select(p => p.h.ToString("00") + ":00 " + p.n)));
+        }
+        FoodFeedbackV2.AppendPeriods(text, rows, day, since2);
+        FoodFeedbackV2.AppendJournal(text, null, rows, day, since2, Name);
+    }
+
+    /// <summary>The <c>pc vendor sales</c> meal list (receipts against an empty receipt dictionary).</summary>
+    private static string VendorSales(IEnumerable<ResidentMeal> meals) => JsonConvert.SerializeObject(meals.Select(m => new { m.IntentId, m.ResidentId, m.BusinessId,
+        m.ProductId, cents = m.Price.ToCentsText(), m.Status, receipt = FoodSaleReceipts.ReadStatus(new Dictionary<string, string>(), m).ToString(), wallet = m.Budget }));
+
     /// <summary>What the panel (BuildEconomyText and the F6c overview), the economy overview, the accounting line, the research
-    /// status, the census capture, the person command and the inspector read, through the state (the base code's reads).</summary>
-    internal static string ThroughState(CitySimulator sim)
+    /// status, orders and reports, the vendor sales, the save-cost record counts, the census capture, the person command and
+    /// the inspector read, through the state (the base code's reads). <paramref name="payload"/> is the city's save.</summary>
+    internal static string ThroughState(CitySimulator sim, string payload)
     {
         var city = sim.State; var food = city.Food!; var text = new StringBuilder();
         int day = (int)(city.Minute / 1440);
@@ -450,8 +479,7 @@ public sealed class OwnershipBoundaryTests
             var place = city.Places.FirstOrDefault(p => p.Id == scope.PlaceId);
             text.AppendLine(scope.PlaceId + "|" + scope.BusinessId + "|" + place?.Name);
             var rows = history.TryGetValue(FoodFeedback.Key(scope.PlaceId, scope.BusinessId), out var r) ? r : new();
-            text.AppendLine(FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day, since).Text());
-            FoodFeedbackV2.AppendPeriods(text, rows, day, since2);
+            BaseShopText(text, rows, scope.PlaceId, scope.BusinessId, day, since, since2);
         }
         var money = FoodMoneyCounters.Rescan(food);
         text.AppendLine(money.ToString());
@@ -460,7 +488,10 @@ public sealed class OwnershipBoundaryTests
         text.AppendLine("minute " + city.Minute.ToString("R"));
         var ledger = city.Research;
         text.AppendLine(ledger.Open.Count + "|" + ledger.Kept.Count + "|" + ledger.Closed.Count + "|" + ledger.NextSequence);
-        foreach (var order in ResearchReportText.Orders(ledger)) text.AppendLine(ResearchReportText.Line(order, order.BusinessAddress));
+        foreach (var order in ResearchReportText.Orders(ledger))
+            text.AppendLine(ResearchReportText.Line(order, order.BusinessAddress)).AppendLine(ResearchReportText.Report(ledger, order, order.BusinessAddress));
+        text.AppendLine(VendorSales(food.Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId))));
+        text.AppendLine(SaveCodec.CountRecords(city, payload).ToString());
         foreach (var r in city.Vendors.Rows) text.AppendLine(r.VehicleId + "|" + r.BusinessId + "|" + r.PlaceId + "|" + r.State + "|" + r.Reason);
         foreach (var c in PopulationCensusInput.CaptureResidents(city.Citizens)) text.Append(c.HomeId).Append(c.DayPlaceId).Append(c.Persona).Append(',');
         text.AppendLine();
@@ -471,20 +502,22 @@ public sealed class OwnershipBoundaryTests
     }
 
     /// <summary>The same reads as the observer files now make them: through <see cref="CitySimulator.View"/>.</summary>
-    internal static string ThroughView(CitySimulator sim)
+    internal static string ThroughView(CitySimulator sim, string payload)
     {
         var city = sim.View; var food = city.Food!; var text = new StringBuilder();
         int day = (int)(city.Minute / 1440);
         text.AppendLine(PopulationWords.Headline(day, city.ResidentList.Count, city.VisitorCount, food.ConsumerCount));
         text.AppendLine(food.MealRhythmVersion + "|" + PopulationWords.Lines(city.VisitorCount, city.PortalCount) + "|" + food.ScopeList.Count);
-        var history = CityViewReports.IndexFoodHistory(city); int since = CityViewReports.FoodRecordingSince(city), since2 = CityViewReports.FoodRecordingSinceV2(city);
+        var history = CityViewReports.FoodHistory(city); int since = CityViewReports.FoodRecordingSince(city), since2 = CityViewReports.FoodRecordingSinceV2(city);
         foreach (var scope in food.ScopeList)
         {
             var place = city.PlaceList.FirstOrDefault(p => p.Id == scope.PlaceId);
             text.AppendLine(scope.PlaceId + "|" + scope.BusinessId + "|" + place?.Name);
-            var rows = history.TryGetValue(FoodFeedback.Key(scope.PlaceId, scope.BusinessId), out var r) ? r : new();
-            text.AppendLine(FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day, since).Text());
-            FoodFeedbackV2.AppendPeriods(text, rows, day, since2);
+            text.AppendLine(history.WeeksText(scope.PlaceId, scope.BusinessId, day, since));
+            history.AppendPeriods(text, scope.PlaceId, scope.BusinessId, day, since2); history.AppendJournal(text, null, scope.PlaceId, scope.BusinessId, day, since2, Name);
+            history.AppendShopDays(text, scope.PlaceId, scope.BusinessId, day, since, Amount, Name);
+            history.AppendPeriods(text, scope.PlaceId, scope.BusinessId, day, since2);
+            history.AppendJournal(text, null, scope.PlaceId, scope.BusinessId, day, since2, Name);
         }
         var money = CityViewReports.RescanFoodMoney(city);
         text.AppendLine(money.ToString());
@@ -493,10 +526,14 @@ public sealed class OwnershipBoundaryTests
         text.AppendLine("minute " + city.Minute.ToString("R"));
         var research = city.Research;
         text.AppendLine(research.OpenOrders.Count + "|" + research.KeptOrders.Count + "|" + research.ClosedOrders.Count + "|" + research.NextSequence);
-        // The orders command still hands the ledger to ResearchReportText (a named sink); its order ids are the view's.
-        var ids = ResearchReportText.Orders(sim.State.Research).Select(o => o.Id).ToList();
-        Assert.Equal(ids.OrderBy(i => i, StringComparer.Ordinal), research.OpenOrders.Concat(research.KeptOrders).Concat(research.ClosedOrders).Select(o => o.Id).OrderBy(i => i, StringComparer.Ordinal));
-        foreach (var order in ResearchReportText.Orders(sim.State.Research)) text.AppendLine(ResearchReportText.Line(order, order.BusinessAddress));
+        // The orders, report and window text read a detached copy of the ledger; its order ids are the view's.
+        var ledger = CityViewReports.ResearchSnapshot(city);
+        Assert.Equal(ResearchReportText.Orders(ledger).Select(o => o.Id), research.OpenOrders.Concat(research.KeptOrders).Concat(research.ClosedOrders).Select(o => o.Id));
+        foreach (var order in ResearchReportText.Orders(ledger))
+            text.AppendLine(ResearchReportText.Line(order, order.BusinessAddress)).AppendLine(ResearchReportText.Report(ledger, order, order.BusinessAddress));
+        text.AppendLine(VendorSales(CityViewReports.VendorMeals(city)));
+        // The save owner (PersistentCityMod) supplies the save-cost count; the status file only times it.
+        text.AppendLine(SaveCodec.CountRecords(sim.State, payload).ToString());
         foreach (var r in city.VendorRowList) text.AppendLine(r.VehicleId + "|" + r.BusinessId + "|" + r.PlaceId + "|" + r.State + "|" + r.Reason);
         foreach (var c in CityViewReports.CaptureCensusResidents(city)) text.Append(c.HomeId).Append(c.DayPlaceId).Append(c.Persona).Append(',');
         text.AppendLine();
@@ -536,7 +573,8 @@ public sealed class OwnershipBoundaryTests
     {
         foreach (var (name, city) in new[] { ("f5h", F5hCity()), ("f9c", F9cCity()) })
         {
-            string before = ThroughState(city), after = ThroughView(city);
+            string payload = SaveCodec.Write(city.State);
+            string before = ThroughState(city, payload), after = ThroughView(city, payload);
             output.WriteLine(name + " outputs sha256 " + CityOracles.Sha(after) + ", " + after.Length + " characters");
             Assert.Equal(before, after);
             // Non-trivial city: the reads cover residents, places, shops and (in F9c) research and vendor rows.
@@ -594,6 +632,73 @@ public sealed class OwnershipBoundaryTests
             Assert.Equal((s.Visitors.Count, s.Portals.Count, s.Food.Residents.Count, s.Food.MealRhythmVersion, s.Food.ChoiceStartsDay),
                 (v.VisitorCount, v.PortalCount, v.Food.ConsumerCount, v.Food.MealRhythmVersion, v.Food.ChoiceStartsDay));
         }
+    }
+
+    /// <summary>Every public report and what makes its result safe to hand to an observer (review Sol-r1-1, Sol-r1-2). A new
+    /// report fails here until it is classified and covered below.</summary>
+    private static readonly Dictionary<string, string> Reports = new(StringComparer.Ordinal)
+    {
+        ["EconomyOverview"] = "values and detached history rows",
+        ["RescanFoodMoney"] = "FoodMoneySnapshot: get-only totals",
+        ["FoodHistory"] = "FoodHistoryReport: text only",
+        ["FoodRecordingSince"] = "int", ["FoodRecordingSinceV2"] = "int",
+        ["AppendCityEconomy"] = "text only",
+        ["DescribePerson"] = "string",
+        ["CaptureCensusResidents"] = "a new array of readonly structs",
+        ["ResearchSnapshot"] = "a detached ledger copy",
+        ["VendorMeals"] = "detached meal and wallet copies",
+    };
+
+    [Fact]
+    public void ObserverReportsShareNoSavedObjectWithTheCity()
+    {
+        var reports = typeof(CityViewReports).GetMethods(BindingFlags.Public | BindingFlags.Static).Select(m => m.Name).ToHashSet(StringComparer.Ordinal);
+        Assert.Equal(Reports.Keys.OrderBy(k => k, StringComparer.Ordinal), reports.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.All(typeof(FoodHistoryReport).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.DeclaringType == typeof(FoodHistoryReport)),
+            m => Assert.True(m.ReturnType == typeof(string) || m.ReturnType == typeof(void), m.Name + " returns " + m.ReturnType.Name));
+        Assert.Empty(typeof(FoodHistoryReport).GetProperties());
+        Assert.All(typeof(FoodMoneySnapshot).GetProperties(), p => Assert.False(p.CanWrite, p.Name));
+        Assert.True(typeof(CensusResident).IsValueType && typeof(CensusResident).GetProperties().All(p => !p.CanWrite));
+
+        var city = F9cCity(); var view = city.View; var state = city.State; var food = state.Food!;
+        Assert.NotEmpty(food.History);
+        var rows = new HashSet<object>(food.History, ReferenceEqualityComparer.Instance);
+
+        // The overview: the same JSON, no saved row inside, and editing its rows leaves the city as it was.
+        string json = JsonConvert.SerializeObject(FoodEconomyInsight.Capture(state));
+        var overview = CityViewReports.EconomyOverview(view);
+        Assert.Equal(json, JsonConvert.SerializeObject(overview));
+        var copies = Assert.IsType<FoodShopDay[]>(overview["history"]);
+        Assert.Equal(food.History.Count, copies.Length);
+        Assert.DoesNotContain(copies, r => rows.Contains(r) || food.History.Any(h => ReferenceEquals(h.ProductSales, r.ProductSales) || ReferenceEquals(h.PurchaseHours, r.PurchaseHours)));
+        foreach (var row in copies) { row.Purchases += 1000; row.PurchaseHours[0] += 7; row.ProductSales.Clear(); row.PeriodCauses.Counts[0] += 3; }
+        Assert.Equal(json, JsonConvert.SerializeObject(FoodEconomyInsight.Capture(state)));
+
+        // Every meal record and wallet detaches to the same JSON and shares no object with the city.
+        string meals = JsonConvert.SerializeObject(food.Residents.Select(m => new { m.IntentId, m.Status, m.Price, m.Budget }));
+        var detached = food.Residents.Select(CityViewReports.Detach).ToList();
+        Assert.Equal(meals, JsonConvert.SerializeObject(detached.Select(m => new { m.IntentId, m.Status, m.Price, m.Budget })));
+        for (int i = 0; i < detached.Count; i++)
+        {
+            Assert.NotSame(food.Residents[i], detached[i]);
+            if (food.Residents[i].Budget != null) { Assert.NotSame(food.Residents[i].Budget, detached[i].Budget); detached[i].Budget!.Balance = Money.FromCents(1); }
+            detached[i].Status = MealStatus.Uncertain;
+        }
+        Assert.Equal(meals, JsonConvert.SerializeObject(food.Residents.Select(m => new { m.IntentId, m.Status, m.Price, m.Budget })));
+        var vendorMeals = CityViewReports.VendorMeals(view);
+        Assert.Equal(food.Residents.Count(m => VendorNames.IsVendorPlace(m.PlaceId)), vendorMeals.Count);
+        Assert.DoesNotContain(vendorMeals, m => food.Residents.Any(r => ReferenceEquals(r, m) || m.Budget != null && ReferenceEquals(r.Budget, m.Budget)));
+        output.WriteLine("vendor meals " + vendorMeals.Count + ", history rows " + copies.Length + ", meals " + detached.Count);
+
+        // The research copy has the same orders; ordering on it leaves the city's ledger as it was.
+        var ledger = CityViewReports.ResearchSnapshot(view);
+        Assert.NotSame(state.Research, ledger);
+        Assert.Equal(state.Research.Kept.Select(o => o.Id + "=" + o.State), ledger.Kept.Select(o => o.Id + "=" + o.State));
+        Assert.DoesNotContain(ledger.Open.Concat(ledger.Kept).Concat(ledger.Closed), o => state.Research.Find(o.Id) == o);
+        long next = state.Research.NextSequence; int open = state.Research.Open.Count;
+        Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder(ResearchProducts.BasicLocalCode, CityFixture.ResearchBusiness, CityFixture.Agency, false,
+            CityFixture.ResearchRadius, state.Minute, out _));
+        Assert.Equal((next, open), (state.Research.NextSequence, state.Research.Open.Count));
     }
 
     [Fact]

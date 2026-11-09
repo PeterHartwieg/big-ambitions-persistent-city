@@ -96,8 +96,8 @@ namespace PersistentCity.Runtime
                     Debug.Log("[Persistent City] vendor sales\n" + JsonConvert.SerializeObject(new {
                         market.Purchases, receipts = save.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)
                             && p.Value.Contains(Uri.EscapeDataString(VendorNames.SignaturePrefix))),
-                        // F9e named exception: meals and their receipts are not part of the city view.
-                        meals = simulation.State.Food!.Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId))
+                        // F9e: detached copies of the vendor-place meals and their wallets.
+                        meals = CityViewReports.VendorMeals(simulation.View)
                             .Select(m => new { m.IntentId, m.ResidentId, m.BusinessId, m.ProductId, cents = m.Price.ToCentsText(),
                                 m.Status, receipt = FoodSaleReceipts.ReadStatus(save.modData, m).ToString(), wallet = m.Budget }) }));
                     break;

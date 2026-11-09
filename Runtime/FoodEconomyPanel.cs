@@ -36,21 +36,19 @@ namespace PersistentCity.Runtime
                 if (money == null || city == null || food == null) return new { active = false };
                 long requests = money.Requests, rebuilds = money.Rebuilds;
                 var current = money.Snapshot(); var rescan = CityViewReports.RescanFoodMoney(city);
-                int day = (int)(city.Minute / 1440); var index = CityViewReports.IndexFoodHistory(city);
+                int day = (int)(city.Minute / 1440); var history = CityViewReports.FoodHistory(city);
                 int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
                 return new { active = true, day, panelBuilds = economyRefresh.Builds, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
                     counters = current.ToString(), rescan = rescan.ToString(), moneyText = current.Text(), rivalLabel = FoodFeedback.RivalEstimateLabel,
-                    shops = food.ScopeList.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
-                        index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text(),
-                        feedbackV2 = FeedbackV2Text(index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var v2Rows) ? v2Rows : new List<FoodShopDay>(),
-                            foodMarket?.JournalFor(s.BusinessId), day, v2RecordingSince),
+                    shops = food.ScopeList.Select(s => new { s.PlaceId, s.BusinessId, weeks = history.WeeksText(s.PlaceId, s.BusinessId, day, recordingSince),
+                        feedbackV2 = FeedbackV2Text(history, s.PlaceId, s.BusinessId, foodMarket?.JournalFor(s.BusinessId), day, v2RecordingSince),
                         evicted = foodMarket?.JournalFor(s.BusinessId)?.Evicted ?? 0 }).ToArray() };
             }
         }
-        private static string FeedbackV2Text(IReadOnlyList<FoodShopDay> rows, ShopObservation? journal, int day, int recordingSince)
+        private static string FeedbackV2Text(FoodHistoryReport history, string placeId, string businessId, ShopObservation? journal, int day, int recordingSince)
         {
-            var text = new StringBuilder(); FoodFeedbackV2.AppendPeriods(text, rows, day, recordingSince);
-            FoodFeedbackV2.AppendJournal(text, journal, rows, day, recordingSince, LocalizedName); return text.ToString();
+            var text = new StringBuilder(); history.AppendPeriods(text, placeId, businessId, day, recordingSince);
+            history.AppendJournal(text, journal, placeId, businessId, day, recordingSince, LocalizedName); return text.ToString();
         }
         // Whole-dollar display only; never changes a settlement amount. Totals may exceed one amount's range.
         private static string Amount(Money amount) => Amount(amount.Units);
@@ -159,7 +157,7 @@ namespace PersistentCity.Runtime
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
             var regulars = simulation.ProjectRegulars(ObservedOwnShop);
-            var history = CityViewReports.IndexFoodHistory(city); int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
+            var history = CityViewReports.FoodHistory(city); int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
             var shopPlaces = new Dictionary<string, IPlaceView?>(scopes.Count, StringComparer.Ordinal);
             for (int i = 0; i < scopes.Count; i++) shopPlaces[scopes[i].PlaceId] = null;
             var places = city.PlaceList;
@@ -170,39 +168,20 @@ namespace PersistentCity.Runtime
                 if (!accountsByPlace.TryGetValue(a.PlaceId, out var list)) accountsByPlace.Add(a.PlaceId, list = new List<NativeFoodAccount>());
                 list.Add(a);
             }
-            var noRows = new List<FoodShopDay>();
             int firstShop = economyShopPage * FoodFeedbackV2.ShopsPerPage;
             for (int shopIndex = firstShop; shopIndex < Math.Min(scopes.Count, firstShop + FoodFeedbackV2.ShopsPerPage); shopIndex++)
             {
                 var scope = scopes[shopIndex];
                 string? regularText = regulars?.OwnShopText(scope.BusinessId);
                 var place = shopPlaces[scope.PlaceId] ?? throw new InvalidOperationException("Managed shop place is missing.");
-                var rows = history.TryGetValue(FoodFeedback.Key(scope.PlaceId, scope.BusinessId), out var shopRows) ? shopRows : noRows;
-                FoodShopDay? observed = null;
-                foreach (var row in rows) if (observed == null || row.Day > observed.Day) observed = row;
                 text.AppendLine(foodMarket?.NameOf(scope.PlaceId) ?? (place.Name.Length > 0 ? place.Name : scope.PlaceId));
                 if (regularText != null) text.AppendLine(regularText);
                 var excluded = foodMarket?.ScopeStatus(scope.PlaceId) ?? "Waiting for business ownership";
                 if (excluded.Length > 0) text.AppendLine(excluded + ". Resident sales are paused for this shop.");
-                if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
-                else
-                {
-                    FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day, recordingSince).AppendTo(text);
-                    text.AppendLine("Latest recorded day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + Amount(observed.Revenue) + " sales");
-                    text.AppendLine("Meals: breakfast " + observed.PurchaseMeals[1] + " · lunch " + observed.PurchaseMeals[2] + " · dinner " + observed.PurchaseMeals[3]
-                        + (observed.PurchaseMeals[0] > 0 ? " · earlier single-meal routine " + observed.PurchaseMeals[0] : ""));
-                    foreach (var product in observed.ProductSales.OrderByDescending(p => p.Purchases))
-                        text.AppendLine(LocalizedName(product.ProductId) + ": " + product.Purchases + " sales · breakfast " + product.PurchaseMeals[1]
-                            + " / lunch " + product.PurchaseMeals[2] + " / dinner " + product.PurchaseMeals[3]);
-                    text.AppendLine("Evaluated offer outcomes that day: " + observed.PriceRejections + " unaffordable, " + observed.AccessRejections + " travel/time, "
-                        + observed.ClosedRejections + " closed/late, " + observed.StockRejections + " stock unavailable, " + observed.StaffRejections + " no staffed counter, " + observed.ServiceRejections + " service/queue, "
-                        + observed.PreferredAlternatives + " preferred another option, " + observed.UnknownEvidence + " unknown.");
-                    text.AppendLine("Purchase hours: " + string.Join(", ", observed.PurchaseHours.Select((n, h) => new { n, h })
-                        .Where(p => p.n > 0).Select(p => p.h.ToString("00") + ":00 " + p.n)));
-                }
-                FoodFeedbackV2.AppendPeriods(text, rows, day, v2RecordingSince);
-                FoodFeedbackV2.AppendJournal(text, foodMarket?.JournalFor(scope.BusinessId),
-                    rows, day, v2RecordingSince, LocalizedName);
+                history.AppendShopDays(text, scope.PlaceId, scope.BusinessId, day, recordingSince, Amount, LocalizedName);
+                history.AppendPeriods(text, scope.PlaceId, scope.BusinessId, day, v2RecordingSince);
+                history.AppendJournal(text, foodMarket?.JournalFor(scope.BusinessId),
+                    scope.PlaceId, scope.BusinessId, day, v2RecordingSince, LocalizedName);
                 var accounts = accountsByPlace.TryGetValue(scope.PlaceId, out var placeAccounts)
                     ? placeAccounts.OrderByDescending(a => a.Day).Take(3).ToArray() : Array.Empty<NativeFoodAccount>();
                 foreach (var a in accounts)
