@@ -4,6 +4,31 @@ Refs [#91](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues
 
 **Offline only.** Windows 11 (10.0.26200) development PC, Intel64 Family 6 Model 183, 20 logical processors, .NET 10.0.13, Release, 9 November 2026, base `3655662` (writer 35). Other sessions' dotnet processes shared the machine between runs; each run was one foreground process. All numbers are .NET Stopwatch time of Core advancement and the F2a presentation driver double. They are not the PC union, not Mono, not presented frames, and nothing here ran in the game or on the rig. The report is `perf-gate-report/v1` with `source=offline` and is never mixed with native windows.
 
+Since the base sync, the tool writes F4a's `perf-gate-export/v1` and F4a's analyzer writes the report (see the next section). The summary and per-window tables further down are the round-1 run at base `3655662` on the Windows PC.
+
+## Rerun at the synced base (round 2)
+
+macOS 26.5.2, Apple Arm64, 8 logical processors, .NET 10.0.11, Release, 9 November 2026, synced head on base `966ec06`. One full run, through F4a's analyzer. Fixture hash `56dbb803a01a3f8c8cb6ee57a0c7c4c0c5551f6ecb297db3af3af2914fb1d030`.
+
+The base sync changed the fixture. The pre-sync head (`264ab4c`) on the same Mac still builds `f769b3a3…` and gives 40 median walkers in W-evening S-stationary at 60 FPS, the Windows figures. The synced head gives `56dbb803…` and 47. The platform did not cause the difference. Rig check 5 now reads the median from the regenerated report.
+
+| Window (60 FPS unless noted) | Mod p95 ms | Mod max ms | Median walkers | Held % | S3 (window row) |
+| --- | ---: | ---: | ---: | ---: | --- |
+| W-morning, 30 / 60 / 120 FPS | 0.0383 / 0.0100 / 0.0054 | 3.51 / 3.08 / 2.75 | 18 / 19 / 19 | 0.89 / 0.92 / 0.46 | pass |
+| W-lunch, 30 / 60 / 120 FPS | 0.0041 / 0.0026 / 0.0018 | 2.77 / 2.61 / 2.42 | 10 | 0.00 / 0.26 / 0.13 | pass |
+| W-evening, 30 / 60 / 120 FPS | 0.0190 / 0.0144 / 0.0094 | 2.88 / 2.89 / 3.28 | 47 | 1.33 / 1.58 / 0.80 | fail / fail / pass |
+| W-evening S-path | 0.0117 | 2.66 | 16 | 1.57 | fail |
+| W-midnight and W-idle, all rates | ≤ 0.0002 | ≤ 0.47 | 0 | ≤ 0.03 | pass |
+| W-accounting (pooled) | 0.0075 | 2.61 | – | – | not established |
+| G9a speed 1 / 2 / 3 | 0.0020 / 0.0397 / 0.0555 | 0.10 / 2.24 / 2.81 | 6 / 20 / 24 | 0.05 / 3.97 / 12.46 | pass / fail / fail |
+| G9a speed 6 hidden (report-only) | 0.0621 | 2.57 | released | 2.15 | n/a |
+| G9a skip 120 (report-only) | 0.1442 | 2.15 | released | 0.00 | n/a |
+| G9b day at speed 3 | 0.0277 | 3.92 | 7 | 2.96 | fail |
+
+Every window's M1, M3, M4, S1, S2 and S4 rows pass. No frame reaches 30 ms. S5 passes: 1.171× in the worst hour and 1.035× for the day. The analyzer judges S3 per window, so G9's speed-2 hour and the day now fail on held share as well (the round-1 table already showed 3.97 % and 2.94 %). Every window is invalid as a gate window because the rig receipts are `n/a` offline, so every aggregated window row reads `not established`, and so does the overall verdict.
+
+Tool cost: 23.0 s for the full matrix with the analyzer (fixture and checkpoints 5.1 s, allocated 8.9 GB) and 15.6 s for the self-test. The export holds every frame and is about 65 MB.
+
 ## Mod work of this slice
 
 F4e adds a tool only: no Core, Persistence or Runtime file changes, so in-game mod-work p95, ≥ 30 ms spikes and whole-frame timing of the product are unchanged. No cheap mod-work win applies to a tool slice. The four parked hotspots stay parked. Frame budgets, caps, radius and the clock factor are unchanged (Decision 9).
@@ -28,10 +53,12 @@ F4e adds a tool only: no Core, Persistence or Runtime file changes, so in-game m
 ## Method
 
 ```
-dotnet run --project tools/perf-gate-offline -c Release -- --out build/perf-gate-offline/report-offline.json
+dotnet run --project tools/perf-gate-offline -c Release -- --out build/perf-gate-offline
 ```
 
-FT-F4-Declared's shape: the F5h reference city (seed 2026, 957 residents, 1,018 commuters, 576 pool members, 2,551 persons, three player food shops, household finances and wages) aged to 06:00 on day 3, with the F6 change journal and ordinary visits attached. Fixture hash `f769b3a3c9be440f29b954d0b8babe2ab328753d9ad9db125ef7ff152e6bc550`. Each window loads its checkpoint, collects garbage, then runs Runtime's frame shape under the F1 accounting clock with the F2a driver at 48/24 around a kerb point 3 m from the first shop (S-stationary) or along kerb → city centroid → farthest home (S-path, 1.4 m/s). Declared pace: factor 1/3 at speed 1, 0.3043 game minutes per real second; fastest traveller: factor 1, speeds assumed linear. Bodies are commanded at the F2a runner's fixed real-time walking speed (2 m/s, `GridPlanner.ClockRate` game minutes per real second), also on held frames and at every clock factor. The first window is run once and discarded (JIT), as Decision 3 discards each process's first window. Percentiles are nearest rank over one window's frames; W-accounting pools raw frames. Every window's state hash equals an uninterrupted advance over the same span.
+(Round 1 wrote `--out build/perf-gate-offline/report-offline.json` in the tool's own format.)
+
+FT-F4-Declared's shape: the F5h reference city (seed 2026, 957 residents, 1,018 commuters, 576 pool members, 2,551 persons, three player food shops, household finances and wages) aged to 06:00 on day 3, with the F6 change journal and ordinary visits attached. Fixture hash `f769b3a3c9be440f29b954d0b8babe2ab328753d9ad9db125ef7ff152e6bc550` at `3655662` (`56dbb803…` at the synced base). Each window loads its checkpoint, collects garbage, then runs Runtime's frame shape under the F1 accounting clock with the F2a driver at 48/24 around a kerb point 3 m from the first shop (S-stationary) or along kerb → city centroid → farthest home (S-path, 1.4 m/s). Declared pace: factor 1/3 at speed 1, 0.3043 game minutes per real second; fastest traveller: factor 1, speeds assumed linear. Bodies are commanded at the F2a runner's fixed real-time walking speed (2 m/s, `GridPlanner.ClockRate` game minutes per real second), also on held frames and at every clock factor. The first window is run once and discarded (JIT), as Decision 3 discards each process's first window. Percentiles are nearest rank over one window's frames; W-accounting pools raw frames. Every window's state hash equals an uninterrupted advance over the same span.
 
 Two full runs after review round 1; the tables show run 1. Between the runs p95 values moved by at most 0.023 ms, maxima by up to 1.9 ms, frame counts by one frame (the 2 ms soft limit is wall time); held shares within 0.01 percentage points, pace ratios within 0.001, and state hashes were identical.
 

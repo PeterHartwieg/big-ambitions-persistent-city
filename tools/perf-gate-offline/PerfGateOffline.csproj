@@ -15,6 +15,8 @@
     <Compile Include="$(SourceRoot)/Persistence/*.cs" />
     <Compile Include="$(SourceRoot)/Compatibility/*.cs" />
     <Compile Include="../../tests/*.cs" />
+    <Compile Include="../../tests/Acceptance/*.cs" />
+    <Compile Include="../../tests/Support/*.cs" />
     <Compile Include="../../tools/accounting-backlog-regression/AccountingScenario.cs" />
     <Compile Include="../../tools/market-research-regression/ResearchFixture.cs" />
     <Compile Include="../../Runtime/DecisionSupplyImage.cs" />
@@ -23,6 +25,9 @@
     <Compile Include="../../Runtime/OrdinaryOwnershipIndex.cs" />
     <Compile Include="../../Runtime/DwellSpots.cs" />
     <Compile Include="../../Runtime/PhysicalPopulation.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.Following.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.Queues.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.Selection.cs" />
     <Compile Include="../../Runtime/PlayerContact.cs" />
     <Compile Include="../../Runtime/FoodMarkets.cs" />
     <Compile Include="../../Runtime/StreetFoodVendorMarket.cs" />
@@ -55,7 +60,7 @@
     <Compile Include="../../tools/compact-format/ColumnarCodec.cs" />
     <Compile Include="../../tools/compact-format/Candidates.cs" />
     <Compile Include="Windows.cs" />
-    <Compile Include="Report.cs" />
+    <Compile Include="Export.cs" />
     <Compile Include="SelfTest.cs" />
     <Compile Include="Program.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />

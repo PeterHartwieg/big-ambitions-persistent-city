@@ -1,11 +1,13 @@
 # F4e offline pre-gate
 
-Offline expectations for the F4 gate's M and S rows, written as `perf-gate-report/v1` with `source=offline` ([F4 plan](../../docs/plans/f4-perf-gate.md), F4e row and Decision 8). It runs before the rig batch and never replaces it.
+Offline expectations for the F4 gate's M and S rows ([F4 plan](../../docs/plans/f4-perf-gate.md), F4e row and Decision 8). The tool writes F4a's `perf-gate-export/v1` with `source=offline` and runs F4a's analyzer (`tools/perf-gate/analyze.py` against `contract-v1.json`) on it, which writes the `perf-gate-report/v1` JSON and Markdown. It runs before the rig batch and never replaces it.
 
 ```
-dotnet run --project tools/perf-gate-offline -c Release -- --out build/perf-gate-offline/report-offline.json
+dotnet run --project tools/perf-gate-offline -c Release -- --out build/perf-gate-offline
 dotnet run --project tools/perf-gate-offline -c Release -- --self-test
 ```
+
+Output in the `--out` directory: `offline.export.json` (about 65 MB, every frame), `offline.report.json` and `offline.report.md`. Python 3 must be on the path (`$PYTHON`, else `python3`, or `python` on Windows).
 
 Options: `--seed N` (default 2026, the F5h seed), `--only <window id prefix>`, for example `--only W-evening`. The full run takes about 20 s; the self-test about 15 s. Run one dotnet process at a time.
 
@@ -20,7 +22,13 @@ Options: `--seed N` (default 2026, the F5h seed), `--only <window id prefix>`, f
 
 ## What it measures
 
-Per window: frame cost of Core advancement (`coreFrameMs`), of the driver (`driverMs`) and their sum (`modWorkMs`, the offline proxy for M1–M4), p50/p95/p99/max/mean by nearest rank; every frame of 30 ms or more with its component and GC generation (M2); GC collections; the slowest single unit; held frames, holds, the longest hold and the longest recovery to lag ≤ 0.1 (S3, S4), with held frames grouped by why the frame before them stopped (`citizen-events`, `path-admission`, `milliseconds`); lag (S2); `historicalClockMisses` (S1); per game hour: frames, simulated real seconds, pace ratio against the unheld clock, held seconds and lag (S5); body counts. Verdict rows cover M1–R1: P, L and R rows are `not established` offline, and the overall verdict is always `not established`.
+Each export window has one frame row per frame: `mod_work_ms` is Core advancement plus the driver (the offline proxy for M1–M4), with components `AdvancePopulation` and `presentation-driver` and the frame's GC count. Offline has no game frame, so `whole_frame_ms` equals `mod_work_ms`. The `accounting` block has `historicalClockMisses` (S1), a lag sample after every frame (S2, S4) and each calendar hold as a start and end in simulated real seconds (S3, S4). `density` and `bodies` come from the driver. G9's hours and day go into `measurements.S5`. F4a's analyzer computes every row from these fields.
+
+Each window's `offline` block keeps detail the contract has no field for, and the analyzer ignores it: pace ratio, held frames grouped by why the frame before them stopped (`citizen-events`, `path-admission`, `milliseconds`), the slowest single unit, the finer M2 component (`planning`, `fill`, `food` and so on), per game hour frames, real seconds, pace ratio, held seconds and lag, and the state hashes.
+
+**Every offline window is invalid as a gate window.** The contract's rig receipts (`no_dotnet_activity`, `priority_high`, `focused`, `settings_read_back`, `probe_coverage`, `probe_flags`, `presentation_trace`) are `n/a` offline, and the contract does not allow `n/a` on a candidate window. Most windows are also shorter than 300 clean real seconds. The report therefore keeps the offline expectations as each window's own rows (M1, M3, M4, S1–S4), and every aggregated window row reads `not established` ("no valid candidate window"). S5 comes from the measurements block. The overall verdict is never `pass`.
+
+Arms: Decision 3's declared windows and G9's speed 1–3 segments with bodies are `primary`. Speed 6 with bodies released and the time-machine skip are `report-only`. Each condition carries its frame rate (`W-evening@60fps`), so the analyzer never pools or pairs 30, 60 and 120 FPS frames.
 
 Every window also replays its game span uninterrupted from the same checkpoint and requires the same state hash (saved city plus native orders); the run fails if any window differs.
 
@@ -28,13 +36,13 @@ Every window also replays its game span uninterrupted from the same checkpoint a
 
 1. Same seed: two fixtures built from nothing are byte-identical, their window checkpoints are identical, and the same window run on each ends with the same state hash. A different seed builds a different fixture.
 2. Sliced = uninterrupted: 30, 60 and 120 FPS with bodies, speed 6 with bodies released, a time-machine skip, and a window starting on an hour rollover each end in the state of the uninterrupted advance.
-3. Report: the built report has every Decision 8 field and `source=offline`; removing any header, machine, window, receipt or verdict field, setting `source=native`, an overall `pass`, or an empty commit is refused (71 mutations).
+3. F4a's analyzer accepts the export and writes `perf-gate-report/v1`, contract `perf-gate/v1`, `source=offline`, with every window invalid and an overall verdict other than `pass`. The same analyzer refuses the export with any contract header field removed, a machine or fixture field removed, a wrong contract version, one window marked `native`, or the whole export marked `native` with its offline `n/a` fields (20 mutations).
 4. Bodies get the same movement per frame on held frames and at every clock factor (Runtime's fixed real-time walking speed).
-5. Verdicts: a slow fastest-traveller speed-3 window or slow W-accounting frames fail M1; with no speed 1-3 window, M1, M3, M4, S3, S4 and S5 are `not established`.
+5. Expectations through F4a's analyzer: a slow speed-3 window and slow W-accounting frames fail their window's M1, and a fast declared window passes. Without G9's day window S5 is `not established`, and speed 6 is `report-only`.
 
-## Schema validation
+## Header
 
-F4a's `tools/perf-gate/contract-v1.json` is not merged at this base. `Report.Validate` checks the plan's documented field list instead. When F4a merges, validate the offline report with F4a's analyzer and retire `Report.Validate`. Fields that only a native run has carry `n/a (offline)` instead of being left out, so a missing field is still a refusal.
+Contract field names. The offline-allowed fields (probe hash, scope list hash, game build, mod set, rig commit and overlay, settings read-back, rig capabilities) are `n/a`. `pc_dll_sha256` is the SHA-256 of the PerfGateOffline assembly, because Core and Persistence are compiled into it from source and there is no PersistentCity.dll. Machine fields that only a game has read `none (offline)`. The fixture's `provenance_hash` is the aged fixture's SHA-256.
 
 ## Limits
 
@@ -45,4 +53,4 @@ F4a's `tools/perf-gate/contract-v1.json` is not merged at this base. `Report.Val
 
 ## Build
 
-`PerfGateOffline.csproj` compiles Core, Persistence and Compatibility by path, as `tools/rush-spike-replay` does, and every test source with the test project's linked files, so the fixture is the code the unit tests run. When `tests/PersistentCity.Tests.csproj` links a new file, add the same line here. Nullable warnings that differ between netstandard2.1 and net10.0 annotations of the shared sources are not errors in this tool.
+`PerfGateOffline.csproj` compiles Core, Persistence and Compatibility by path, as `tools/rush-spike-replay` does, and every test source (`tests/*.cs`, `tests/Acceptance/*.cs`, `tests/Support/*.cs`) with the test project's linked files, so the fixture is the code the unit tests run. When `tests/PersistentCity.Tests.csproj` links a new file or the tests gain a folder, add the same line here. Nullable warnings that differ between netstandard2.1 and net10.0 annotations of the shared sources are not errors in this tool.

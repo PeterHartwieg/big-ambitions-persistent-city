@@ -255,6 +255,11 @@ internal sealed class WindowResult
     /// <summary>Game minutes of body movement supplied to the driver, in all frames and in held frames.</summary>
     public double BodyMoveMinutes, HeldBodyMoveMinutes;
     public List<double> FrameMinute = new();
+    /// <summary>Per frame: collections of any generation during the frame, and the lag after it (the export's frame rows and lag samples).</summary>
+    public List<int> FrameGc = new();
+    public List<double> FrameLag = new();
+    /// <summary>Calendar holds as frame ranges: first held frame and first frame after it (frame indices from 0); -1 when still held at the end.</summary>
+    public List<(long Start, long End)> HoldSpans = new();
 }
 
 /// <summary>The F4e frame loop: Runtime's PopulationRuntime frame shape (PopulationFrameBudget units, citizen events and
@@ -375,17 +380,21 @@ internal static class WindowRunner
             int gc = d2 > 0 ? 2 : d1 > 0 ? 1 : d0 > 0 ? 0 : -1;
             double modWork = coreMs + driverMs;
             r.CoreMs.Add(coreMs); r.DriverMs.Add(driverMs); r.ModWorkMs.Add(modWork); r.FrameMinute.Add(native);
+            r.FrameGc.Add(d0 + d1 + d2); r.FrameLag.Add(lag);
             if (modWork >= 30) r.Spikes.Add((r.Frames, city.State.Minute, modWork, coreMs, driverMs, coreMs >= driverMs ? component : "presentation-driver", gc, d0, d1, d2));
 
             // S rows: holds (consecutive held frames), recovery to lag <= 0.1 after a hold, lag and pace per game hour.
             if (held)
             {
-                r.HeldFrames++; holdFrames++; if (holdFrames == 1) r.Holds++; recoveryFrames = 0;
+                r.HeldFrames++; holdFrames++; recoveryFrames = 0;
+                if (holdFrames == 1) { r.Holds++; r.HoldSpans.Add((r.Frames - 1, -1)); }
                 r.HoldCauses[previousStop] = r.HoldCauses.TryGetValue(previousStop, out long n) ? n + 1 : 1;
             }
             else
             {
-                r.LongestHoldSeconds = Math.Max(r.LongestHoldSeconds, holdFrames / (double)spec.Fps); holdFrames = 0;
+                r.LongestHoldSeconds = Math.Max(r.LongestHoldSeconds, holdFrames / (double)spec.Fps);
+                if (holdFrames > 0) r.HoldSpans[^1] = (r.HoldSpans[^1].Start, r.Frames - 1);
+                holdFrames = 0;
                 if (recoveryFrames >= 0)
                 {
                     recoveryFrames++;

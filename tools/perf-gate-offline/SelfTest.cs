@@ -6,8 +6,8 @@ using Newtonsoft.Json.Linq;
 namespace PersistentCity.PerfGateOffline;
 
 /// <summary>The F4e row's offline tests: same seed, same state hashes; frame-sliced runs equal an uninterrupted advance
-/// at every cadence and presentation (as the #128 replay does); the report carries every documented field with
-/// source=offline, and a report missing any of them is refused.</summary>
+/// at every cadence and presentation (as the #128 replay does); F4a's analyzer accepts the export as source=offline and
+/// refuses it with any contract header field missing.</summary>
 internal static class SelfTest
 {
     private static int failures;
@@ -59,28 +59,34 @@ internal static class SelfTest
         var fromHour = Window(ca[3 * 1440 + 19 * 60.0], 60, Presentation.Bodies, to, pace);
         Check(fromHour.StateHash == fromHour.UninterruptedHash, "a window starting on an hour rollover equals the uninterrupted advance");
 
-        // 3. The report carries every documented field with source=offline; each missing field or a wrong source is refused.
-        var inputs = new Report.Inputs { Aged = a, Seed = seed, Windows = { first, fast, skip }, CommandLine = "--self-test" };
+        // 3. F4a's analyzer accepts the export as source=offline; a missing contract header field, a wrong contract version,
+        // a native window mixed in, or the offline n/a fields under source=native are refused by the same analyzer.
+        string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "perf-gate-offline-self-test-" + Environment.ProcessId);
+        var inputs = new Export.Inputs { Aged = a, Seed = seed, Windows = { first, fast, skip }, CommandLine = "--self-test" };
         for (int i = 0; i < first.FrameMinute.Count; i++) if (Math.Abs(first.FrameMinute[i] - (3 * 1440 + 19 * 60)) <= 1) inputs.Accounting.Add((first, i));
-        var report = Report.Build(inputs);
-        var errors = Report.Validate(report);
-        Check(errors.Count == 0, "report validates against the plan's field list" + (errors.Count > 0 ? ": " + string.Join("; ", errors) : ""));
-        Check((string?)report["source"] == "offline", "report source=offline");
+        var export = Export.Build(inputs);
+        var report = Analyzer.Analyze(export, dir, "accepted", out int code, out string output);
+        Check(code == 0, "F4a's analyzer accepts the offline export" + (code != 0 ? ": " + output : ""));
+        Check((string?)report["format"] == "perf-gate-report/v1" && (string?)report["source"] == "offline" && (string?)report["contract"] == "perf-gate/v1",
+            "the report is perf-gate-report/v1, contract perf-gate/v1, source=offline");
+        Check((string?)report["overall"] != "pass" && report["windows"]!.All(w => (bool?)w["valid"] == false),
+            "every offline window is invalid as a gate window and the overall verdict is " + report["overall"]);
+        Check(report["windows"]!.Count() == 4 && report["windows"]!.All(w => (string?)w["rows"]?["M1"]?["verdict"] is "pass" or "fail"),
+            "each window, W-accounting included, carries its own M1 expectation");
         int refused = 0, mutations = 0;
         void Refuses(string what, Action<JObject> mutate)
         {
-            var copy = (JObject)report.DeepClone(); mutate(copy); mutations++;
-            if (Report.Validate(copy).Count > 0) refused++; else Console.Error.WriteLine("FAIL not refused: " + what);
+            var copy = (JObject)export.DeepClone(); mutate(copy); mutations++;
+            Analyzer.Analyze(copy, dir, "refused", out int exit, out string text);
+            if (exit == 2) refused++; else Console.Error.WriteLine("FAIL not refused (exit " + exit + "): " + what + " " + text);
         }
-        foreach (var f in Report.HeaderFields) Refuses("header." + f, r => ((JObject)r["header"]!).Remove(f));
-        foreach (var f in Report.MachineFields) Refuses("header.machine." + f, r => ((JObject)r["header"]!["machine"]!).Remove(f));
-        foreach (var f in Report.WindowFields) Refuses("window." + f, r => ((JObject)r["windows"]![0]!).Remove(f));
-        foreach (var f in Report.ReceiptFields) Refuses("receipt." + f, r => ((JObject)r["windows"]![0]!["receipts"]!).Remove(f));
-        foreach (var row in Report.Rows) Refuses("verdict " + row, r => ((JArray)r["verdicts"]!).First(v => (string?)v["row"] == row).Remove());
-        Refuses("source=native", r => r["source"] = "native");
-        Refuses("overall pass", r => r["overall"]!["verdict"] = "pass");
-        Refuses("empty commit", r => r["header"]!["sourceCommit"] = "");
-        Check(refused == mutations, refused + " of " + mutations + " mutated reports refused");
+        foreach (var f in Analyzer.RequiredHeaderFields()) Refuses("header." + f, r => ((JObject)r["header"]!).Remove(f));
+        Refuses("header.machine.cpu", r => ((JObject)r["header"]!["machine"]!).Remove("cpu"));
+        Refuses("fixture provenance_hash", r => ((JObject)r["header"]!["fixtures"]![0]!).Remove("provenance_hash"));
+        Refuses("contract_version", r => r["header"]!["contract_version"] = "perf-gate/v0");
+        Refuses("a native window", r => r["windows"]![0]!["source"] = "native");
+        Refuses("source=native with offline n/a fields", r => { r["source"] = "native"; foreach (var w in r["windows"]!) w["source"] = "native"; });
+        Check(refused == mutations, refused + " of " + mutations + " mutated exports refused by F4a's analyzer");
 
         // 4. Bodies move at the fixed real-time walking speed: also on held frames, and the same per frame at factor 1/3 and 1.
         var (_, perFrame) = WindowRunner.BodyMovement(60);
@@ -90,27 +96,28 @@ internal static class SelfTest
         Check(Math.Abs(first.BodyMoveMinutes / first.Frames - perFrame) < 1e-12 && Math.Abs(fastBodies.BodyMoveMinutes / fastBodies.Frames - perFrame) < 1e-12,
             "body movement per frame is the same at factor 1/3 speed 1 and factor 1 speed 3");
 
-        // 5. Verdicts cover every applicable window and are not established without one (synthetic windows).
+        // 5. Expectations through F4a's analyzer: per-window M1 follows the frames, and S5 needs G9's day window.
         WindowResult Synthetic(string condition, string arm, int speed, Presentation presentation, double ms)
         {
             var w = new WindowResult { Spec = new WindowSpec(condition, "S-stationary", arm, 0, 60, 60, Pace.At(Pace.FastestFactor, Math.Max(1, speed)), presentation, 1, speed),
                 Frames = 100, StateHash = "x" };
-            for (int i = 0; i < 100; i++) { w.ModWorkMs.Add(ms); w.CoreMs.Add(ms); w.DriverMs.Add(0); w.FrameMinute.Add(i * .6); }
+            for (int i = 0; i < 100; i++) { w.ModWorkMs.Add(ms); w.CoreMs.Add(ms); w.DriverMs.Add(0); w.FrameMinute.Add(i * .6); w.FrameGc.Add(0); w.FrameLag.Add(0); }
             return w;
         }
-        string Verdict(Report.Inputs i, string row) => (string)Report.Build(i)["verdicts"]!.First(v => (string?)v["row"] == row)!["verdict"]!;
+        JObject Analyzed(Export.Inputs i) => Analyzer.Analyze(Export.Build(i), dir, "synthetic", out _, out _);
+        string M1(JObject r, string condition) => (string)r["windows"]!.First(w => ((string)w["id"]!).StartsWith(condition, StringComparison.Ordinal))["rows"]!["M1"]!["verdict"]!;
         var okDeclared = Synthetic("synthetic-declared", "declared", 1, Presentation.Bodies, .1);
         var slowFastest = Synthetic("synthetic-speed3", "fastest-traveller", 3, Presentation.Bodies, 8);
-        Check(Verdict(new Report.Inputs { Aged = a, Windows = { okDeclared, slowFastest } }, "M1") == "fail", "a slow fastest-traveller speed-3 window fails M1");
-        var accounting = new Report.Inputs { Aged = a, Windows = { okDeclared } };
-        var slowAccounting = Synthetic("synthetic-lunch", "declared", 1, Presentation.Bodies, .1);
-        for (int i = 0; i < 100; i++) slowAccounting.ModWorkMs[i] = 8;
+        var both = Analyzed(new Export.Inputs { Aged = a, Windows = { okDeclared, slowFastest } });
+        Check(M1(both, "synthetic-speed3") == "fail" && M1(both, "synthetic-declared") == "pass", "a slow speed-3 window fails M1, a fast declared window passes");
+        var accounting = new Export.Inputs { Aged = a, Windows = { okDeclared } };
+        var slowAccounting = Synthetic("synthetic-lunch", "declared", 1, Presentation.Bodies, 8);
         for (int i = 0; i < 100; i++) accounting.Accounting.Add((slowAccounting, i));
-        Check(Verdict(accounting, "M1") == "fail", "slow W-accounting frames fail M1");
-        Check(Verdict(new Report.Inputs { Aged = a, Windows = { okDeclared } }, "M1") == "pass", "a fast declared window alone passes M1");
-        var hiddenOnly = new Report.Inputs { Aged = a, Windows = { Synthetic("synthetic-speed6", "fastest-traveller", 6, Presentation.Hidden, .1) } };
-        Check(new[] { "M1", "M3", "M4", "S3", "S4", "S5" }.All(row => Verdict(hiddenOnly, row) == Report.NotEstablished),
-            "with no speed 1-3 window, M1, M3, M4, S3, S4 and S5 are not established");
+        Check(M1(Analyzed(accounting), "W-accounting") == "fail", "slow W-accounting frames fail M1");
+        var hiddenOnly = Analyzed(new Export.Inputs { Aged = a, Windows = { Synthetic("synthetic-speed6", "fastest-traveller", 6, Presentation.Hidden, .1) } });
+        Check((string?)hiddenOnly["rows"]?["S5"]?["verdict"] == "not established" && (string?)hiddenOnly["windows"]![0]!["arm"] == "report-only",
+            "without G9's day window S5 is not established; speed 6 is report-only");
+        try { System.IO.Directory.Delete(dir, true); } catch (System.IO.IOException) { }
 
         Console.Error.WriteLine(failures == 0 ? "self-test passed" : failures + " self-test checks failed");
         return failures == 0 ? 0 : 1;

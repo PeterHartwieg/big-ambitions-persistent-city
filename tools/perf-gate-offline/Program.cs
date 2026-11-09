@@ -11,7 +11,8 @@ using PersistentCity.Tests;
 namespace PersistentCity.PerfGateOffline;
 
 // F4e offline pre-gate (docs/plans/f4-perf-gate.md, F4e row). Usage:
-//   dotnet run --project tools/perf-gate-offline -c Release -- [--out <report.json>] [--seed N] [--only <window prefix>]
+//   dotnet run --project tools/perf-gate-offline -c Release -- [--out <directory>] [--seed N] [--only <window prefix>]
+// Writes export-offline.json (F4a's perf-gate-export/v1, source=offline) and F4a's analyzer report beside it.
 //   dotnet run --project tools/perf-gate-offline -c Release -- --self-test
 static class Program
 {
@@ -22,7 +23,7 @@ static class Program
         string? Arg(string name) { int i = Array.IndexOf(args, name); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
         int seed = int.TryParse(Arg("--seed"), NumberStyles.Integer, CultureInfo.InvariantCulture, out int s) ? s : Fixture.DefaultSeed;
         if (args.Contains("--self-test")) return SelfTest.Run(seed);
-        string output = Arg("--out") ?? System.IO.Path.Combine("build", "perf-gate-offline", "report-offline.json");
+        string output = Arg("--out") ?? System.IO.Path.Combine("build", "perf-gate-offline");
         string? only = Arg("--only");
 
         var total = Stopwatch.StartNew();
@@ -37,7 +38,7 @@ static class Program
 
         var read = Persistence.SaveCodec.Read(aged.Payload).State!;
         var (commuters, pool) = F5gPopulationFillTests.Counts(read);
-        var inputs = new Report.Inputs
+        var inputs = new Export.Inputs
         {
             Aged = aged, Seed = seed, Residents = read.Citizens.Count, Commuters = (int)commuters, Pool = (int)pool,
             Persons = read.Citizens.Count + read.Visitors.Count, CommandLine = string.Join(" ", args),
@@ -53,7 +54,7 @@ static class Program
             var result = WindowRunner.Run(spec, checkpoints[spec.From], shape.Catalogue, spec.Script == "S-path" ? path : stationary, uninterruptedCheck: true);
             inputs.Windows.Add(result);
             var mod = result.ModWorkMs.OrderBy(v => v).ToArray();
-            Console.Error.WriteLine($"{spec.Id,-48} frames {result.Frames,7} p95 {Report.Percentile(mod, .95):F4} p99 {Report.Percentile(mod, .99):F4} max {mod[^1]:F3} ms"
+            Console.Error.WriteLine($"{spec.Id,-48} frames {result.Frames,7} p95 {Rank(mod, 95):F4} p99 {Rank(mod, 99):F4} max {mod[^1]:F3} ms"
                 + $" >=30 {result.Spikes.Count} lag {result.MaxLag:F3} held {result.HeldFrames} bodies {result.MedianBodies} sliced=uninterrupted {result.StateHash == result.UninterruptedHash} ({result.ToolSeconds:F1} s)");
             if (result.StateHash != result.UninterruptedHash) { Console.Error.WriteLine("FAIL: sliced run differs from the uninterrupted advance in " + spec.Id); return 1; }
             if (spec.Arm == "declared" && spec.Fps == 60 && (spec.Condition == "W-lunch" || spec.Condition == "W-evening") && spec.Script == "S-stationary")
@@ -66,15 +67,19 @@ static class Program
         inputs.FixtureSeconds = fixtureSeconds;
         inputs.TotalSeconds = total.Elapsed.TotalSeconds;
         inputs.AllocatedBytes = GC.GetTotalAllocatedBytes(true) - allocated;
-        var report = Report.Build(inputs);
-        var errors = Report.Validate(report);
-        if (errors.Count > 0) { foreach (var e in errors) Console.Error.WriteLine("report invalid: " + e); return 1; }
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(output))!);
-        File.WriteAllText(output, report.ToString(Formatting.Indented) + "\n");
-        foreach (var v in report["verdicts"]!) Console.Error.WriteLine($"{v["row"],-3} {v["verdict"],-16} {v["worst"]?.ToString(Formatting.None)} {v["reason"]}");
-        Console.Error.WriteLine($"wrote {output} ({total.Elapsed.TotalSeconds:F1} s)");
+        var export = Export.Build(inputs);
+        var report = Analyzer.Analyze(export, output, "offline", out int code, out string analyzerOutput);
+        Console.Error.WriteLine(analyzerOutput);
+        if (code != 0) { Console.Error.WriteLine("F4a's analyzer refused the offline export (exit " + code + ")"); return 1; }
+        // Every offline window is invalid as a gate window (rig receipts n/a), so the expectations are the per-window rows.
+        foreach (var w in report["windows"]!)
+            Console.Error.WriteLine($"{w["id"],-48} " + string.Join(" ", new[] { "M1", "M3", "M4", "S1", "S2", "S3", "S4" }.Select(r => r + "=" + (w["rows"]?[r]?["verdict"] ?? "-"))));
+        Console.Error.WriteLine($"overall {report["overall"]}; wrote {System.IO.Path.Combine(output, "offline.export.json")} and offline.report.json/.md ({total.Elapsed.TotalSeconds:F1} s)");
         return 0;
     }
+
+    /// <summary>Nearest-rank percentile of an ascending array (Decision 4), for the console line only.</summary>
+    static double Rank(double[] sorted, int p) => sorted.Length == 0 ? double.NaN : sorted[Math.Max(0, (int)Math.Ceiling(p / 100.0 * sorted.Length) - 1)];
 
     /// <summary>Decision 3's windows on FT-F4-Declared (day 3, idle on day 4), the declared arm at 30/60/120 FPS with the
     /// driver at 48/24, and G9's fastest-traveller sequence and day at 60 FPS.</summary>
