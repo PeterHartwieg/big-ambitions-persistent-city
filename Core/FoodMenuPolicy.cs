@@ -50,6 +50,10 @@ namespace PersistentCity.Core
         /// Food by its resolver, the same rule as <see cref="FoodProductPolicy.Executable"/>. The stock contract and
         /// <see cref="CompleteFoodMenu.Check"/> still decide through the published contract image. Allocation-free.</summary>
         public static FoodLiveMenuRefusal LiveMenu(IReadOnlyList<string>? menu, FoodProductPolicy? dynamic)
+            => LiveMenu(menu, dynamic, false);
+        /// <param name="loadedNamesPending">Startup only: a policy without a loaded-name image skips the loaded check
+        /// (the catalogue is not published yet) instead of refusing as <see cref="FoodLiveMenuRefusal.NotLoaded"/>.</param>
+        public static FoodLiveMenuRefusal LiveMenu(IReadOnlyList<string>? menu, FoodProductPolicy? dynamic, bool loadedNamesPending)
         {
             if (menu == null || menu.Count < 1) return FoodLiveMenuRefusal.Empty;
             if (menu.Count > LiveMaximumOffers) return FoodLiveMenuRefusal.Width;
@@ -60,7 +64,7 @@ namespace PersistentCity.Core
                 {
                     if (dynamic == null) return FoodLiveMenuRefusal.OriginalThreeGuard;
                     if (!FoodNameIdentity.IsCanonical(name)) return FoodLiveMenuRefusal.Name;
-                    if (dynamic.LoadedNames == null || !dynamic.LoadedNames.Contains(name)) return FoodLiveMenuRefusal.NotLoaded;
+                    if (dynamic.LoadedNames == null ? !loadedNamesPending : !dynamic.LoadedNames.Contains(name)) return FoodLiveMenuRefusal.NotLoaded;
                     if (dynamic.Resolver.ResolveMealClass(name) != MealClass.Food) return FoodLiveMenuRefusal.MealClass;
                 }
                 for (int j = 0; j < i; j++) if (string.Equals(name, menu[j], StringComparison.Ordinal)) return FoodLiveMenuRefusal.Duplicate;

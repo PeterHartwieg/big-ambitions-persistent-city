@@ -202,6 +202,19 @@ namespace PersistentCity.Runtime
             for (int i = 0; i < menu.Count && original; i++) original = FoodProducts.Known(menu[i]);
             return FoodMenuPolicy.LiveMenu(menu, original || !DynamicAcquisition ? null : CurrentProductPolicy);
         }
+        // Startup: from construction until the coordinator first leaves warming (shadow not started yet, or warming).
+        private bool StartupPhase => contractMode == ContractMode.Warming
+            || contractMode == ContractMode.Fallback && contractFallback == ShadowNotStarted;
+        // E5b5: a shop the saved city already owns keeps service through startup under the E5b1 contract, as original-three
+        // shops do, so a reload does not drop its travelling or serving meals while images warm. Its names are checked
+        // against the policy once loaded names exist. New acquisitions stay guarded, and a failed capability ends startup
+        // (Fallback), which withdraws the shop as Decision 12 requires.
+        private FoodLiveMenuRefusal LiveMenu(BuildingRegistration r)
+        {
+            var menu = LiveMenu(r.cachedAvailableProducts);
+            if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !StartupPhase || NativeFoodOwnership.Find(r)?.Managed != true) return menu;
+            return FoodMenuPolicy.LiveMenu(r.cachedAvailableProducts, CurrentProductPolicy, loadedNamesPending: true);
+        }
         // E5b5: a mod removed (or a product reclassed) under an owned or wanted shop is a recorded refusal, so desire is
         // withdrawn now, the hand-back waits for the boundary, and a return goes through Decision 7 recovery with a
         // fresh image before any reacquisition. History and receipts are untouched.
@@ -234,7 +247,7 @@ namespace PersistentCity.Runtime
             if (!r.RentedByPlayer || !r.HasEstablishedBusiness || r.AvailableForRent) return false;
             // E5b5: width, duplicates and the name rule (Decision 12); the published image and CompleteFoodMenu.Check
             // decide the rest through ContractAdmits.
-            if (LiveMenu(r.cachedAvailableProducts) != FoodLiveMenuRefusal.None) return false;
+            if (LiveMenu(r) != FoodLiveMenuRefusal.None) return false;
             var type = BusinessTypeHelper.GetData(r.businessTypeName);
             return type?.simulator?.GetType() == typeof(FullServiceBusinessSimulator) && !type.hasEntranceFee
                 && authoredBagPolicies.TryGetValue(type, out var bags) && bags.Bags;
@@ -249,7 +262,7 @@ namespace PersistentCity.Runtime
         {
             if (registrations.TryGetValue(placeId, out var menuReg) && menuReg.cachedAvailableProducts != null)
             {
-                var menu = LiveMenu(menuReg.cachedAvailableProducts);
+                var menu = LiveMenu(menuReg);
                 if (menu == FoodLiveMenuRefusal.OriginalThreeGuard)
                     return contractMode == ContractMode.Warming ? "Waiting: food contract warming; non-original products wait for every shop's first image"
                         : DynamicIntegrationRefusal + ": " + DynamicRefusalReason;

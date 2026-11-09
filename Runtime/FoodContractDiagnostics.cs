@@ -29,7 +29,8 @@ namespace PersistentCity.Runtime
 
         internal enum ContractMode { Fallback, Warming, Active }
         private ContractMode contractMode = ContractMode.Fallback;
-        private string contractFallback = "shadow not started";
+        private const string ShadowNotStarted = "shadow not started";
+        private string contractFallback = ShadowNotStarted;
         private readonly FoodContractCoordinator contracts = new FoodContractCoordinator();
         // Capture batches, checkouts, recoveries and boundaries each compare a distinct definition once.
         private readonly FoodDefinitionEpoch contractEpoch = new FoodDefinitionEpoch();
@@ -142,6 +143,7 @@ namespace PersistentCity.Runtime
             var reader = contractReader;
             if (reader == null) return;
             contractHooks?.Drain();
+            ObserveProductPolicy(reader);
             long frameStart = Stopwatch.GetTimestamp();
             bool any = false;
             try
@@ -191,6 +193,20 @@ namespace PersistentCity.Runtime
             contractFrames++;
             if (frame > contractFrameMax) contractFrameMax = frame;
             if (frame > ContractFrameBudgetMilliseconds) contractFramesOverBudget++;
+        }
+        // E5b5: a new product policy publication (config, API metadata or loaded names) can change a product's class with no
+        // native edit, so every shop is rebuilt against it. A shop refused for its class (never owned or wanted, so not
+        // in the hourly preparation) acquires once its fresh image passes. Coalesced in the reader's dirty queue.
+        private FoodProductPolicy? observedPolicy;
+        private long contractPolicyRequeues;
+        private void ObserveProductPolicy(LoadedCatalogueEligibilityReader reader)
+        {
+            if (contractMode == ContractMode.Fallback || ProductPolicySource == null) return;
+            var policy = ProductPolicySource.Current;
+            if (ReferenceEquals(policy, observedPolicy)) return;
+            bool first = observedPolicy == null;
+            observedPolicy = policy;
+            if (!first) { contractPolicyRequeues++; reader.RequeueAllShops(); }
         }
         private static double Elapsed(long started) => (Stopwatch.GetTimestamp() - started) * ContractMillisecondsPerTimestamp;
         private void RecordUnit(double ms)
@@ -593,7 +609,7 @@ namespace PersistentCity.Runtime
                             : "E5b1 fallback: " + contractFallback,
                         capabilitiesPassed = report.AllPassed, firstFailure = report.FirstFailure, dynamicAcquisition = DynamicAcquisition,
                         productPolicy = ProductPolicySource == null ? "unset" : ProductPolicySource.Failure.Length == 0 ? "published" : ProductPolicySource.Failure,
-                        priceOnlyCheckoutRefusals = CheckoutPriceOnlyRefusals,
+                        priceOnlyCheckoutRefusals = CheckoutPriceOnlyRefusals, policyRequeues = contractPolicyRequeues,
                         stampsReady = LoadedCatalogueEligibilityReader.StampsReady,
                         catalogue = reader == null ? null : new {
                             revision = reader.CatalogueRevision, refusal = reader.CatalogueRefusal.ToString(), count = reader.CatalogueCount,

@@ -57,7 +57,11 @@ public sealed class DynamicAcquisitionTests
         // Decision 12: the original-three guard is gone from admission; LiveMenu decides with the policy only while every
         // capability passed and the coordinator is active.
         Assert.DoesNotContain("FoodProducts.Known(r.cachedAvailableProducts", market);
-        Assert.Contains("if (LiveMenu(r.cachedAvailableProducts) != FoodLiveMenuRefusal.None) return false;", market);
+        Assert.Contains("if (LiveMenu(r) != FoodLiveMenuRefusal.None) return false;", market);
+        // Startup hold for saved owned shops, and a rebuild of every shop on a new policy publication.
+        Assert.Contains("if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !StartupPhase || NativeFoodOwnership.Find(r)?.Managed != true) return menu;", market);
+        Assert.Contains("if (!first) { contractPolicyRequeues++; reader.RequeueAllShops(); }", coordinator);
+        Assert.Contains("ObserveProductPolicy(reader);", coordinator);
         Assert.Contains("private bool DynamicAcquisition => contractMode == ContractMode.Active && contractCapabilities.AllPassed;", market);
         Assert.Contains("FoodMenuPolicy.LiveMenu(menu, original || !DynamicAcquisition ? null : CurrentProductPolicy)", market);
         Assert.Contains("DynamicIntegrationRefusal + \": \" + DynamicRefusalReason", market);
@@ -479,6 +483,81 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(used, after.DayAllowanceUsed);
         Assert.Equal(heldFunds, after.Budget?.HeldPurchase ?? Money.Zero);
         Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(2, market.Attempts); // never replayed
+    }
+
+    [Theory]
+    [InlineData(false)] // the catalogue is published during warm-up
+    [InlineData(true)]  // the catalogue is still building: loaded names pending
+    public void AReloadKeepsASavedDynamicShopServingThroughAMultiFrameWarmUp(bool catalogueBuilding)
+    {
+        var before = World();
+        var owned = before.AddShop("address:main:1:shop", Burger, Donut);
+        before.Own(owned);
+        Assert.True(owned.Row.CanServe);
+
+        // Reload: a fresh coordinator in warming, the saved authority row (owned, wanted) and the same shop.
+        var world = World();
+        world.Policy = null;
+        world.PolicySource = new FoodProductPolicySource(() => world.Catalogue.Names, () => FoodProductMetadataResolver.Empty,
+            _ => FoodProductMetadataSnapshot.Empty);
+        world.Active = false; world.Warming = true;
+        var shop = world.AddShop(owned.Key, Burger, Donut);
+        shop.Row = owned.Row;
+        var fresh = world.AddShop("address:main:2:shop", Burger, Donut); // never owned: stays guarded while warming
+        if (catalogueBuilding) world.Catalogue.MarkDirty();
+        world.VisitAll();
+        Assert.True(shop.Row.CanServe);
+        Assert.False(fresh.Row.Desired);
+        // A travelling meal's checkout and a new capture during warm-up both run, under the E5b1 contract.
+        var capture = world.Select(shop)!;
+        Assert.NotNull(capture);
+        Assert.Equal("during-warmup", world.Checkout(capture, Donut, "during-warmup"));
+        if (catalogueBuilding) world.RebuildCatalogue();
+        int frames = 0;
+        while (world.Warming && frames < 100)
+        {
+            world.Frame(units: 1); world.VisitAll(); frames++;
+            Assert.True(shop.Row.CanServe, "frame " + frames);
+        }
+        Assert.True(frames > 1);
+        Assert.True(world.Active);
+        world.VisitAll();
+        Assert.True(shop.Row.CanServe);
+        Assert.DoesNotContain(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+        Assert.True(shop.Row.CanServe);
+        Assert.NotNull(world.Checkout(world.Select(shop)!, Donut, "after-warmup"));
+        for (int i = 0; i < 3 && !fresh.Row.CanServe; i++) { world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); }
+        Assert.True(fresh.Row.CanServe); // acquired normally once active
+
+        // A failed capability is not startup: the saved dynamic shop is withdrawn and handed back (Decision 12).
+        var failed = World();
+        failed.Active = false; failed.CapabilitiesPassed = false;
+        var kept = failed.AddShop(owned.Key, Burger, Donut);
+        kept.Row = new FoodAuthority { PlaceId = owned.Key };
+        kept.Row.Observe(kept.Signature, true, failed.Hour - 2); kept.Row.Boundary(failed.Hour - 1, true, false, true);
+        Assert.True(kept.Row.CanServe);
+        failed.VisitAll();
+        Assert.False(kept.Row.Desired);
+        Assert.Contains(failed.Boundary(failed.Hour + 1), o => o.Key == kept.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+    }
+
+    [Fact]
+    public void AClassRefusedShopAcquiresAfterAFoodReclassificationWithoutANativeEdit()
+    {
+        var world = World((Donut, MealClass.Drink));
+        var shop = world.AddShop("address:main:1:shop", Burger, Donut);
+        world.VisitAll(); world.Drain(); world.VisitAll();
+        for (int i = 0; i < 2; i++) { world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); }
+        Assert.Equal(CompleteFoodMenuRefusal.MealClass, world.Coordinator.Image(shop.Key)!.Admission);
+        Assert.False(shop.Row.Desired);
+        var stamp = shop.Stamp();
+        world.Policy = Policy(world.Items.Keys); // the metadata now classes donut Food; no native edit
+        world.Frame(); world.Drain(); world.VisitAll(); // Runtime observes the policy every frame
+        Assert.True(stamp.Matches(shop.Stamp()));
+        Assert.Equal(CompleteFoodMenuRefusal.None, world.Coordinator.Image(shop.Key)!.Admission);
+        Assert.True(shop.Row.Desired);
+        for (int i = 0; i < 4 && !shop.Row.CanServe; i++) { world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); }
+        Assert.True(shop.Row.CanServe);
     }
 
     [Theory]

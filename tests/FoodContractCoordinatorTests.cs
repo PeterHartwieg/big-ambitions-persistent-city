@@ -166,6 +166,7 @@ internal sealed class ContractWorld
     public bool DynamicAcquisition => Active && !Warming && CapabilitiesPassed;
     /// <summary>When set, the real E5b4 source over this world's catalogue revision supplies the policy (Runtime wiring).</summary>
     public FoodProductPolicySource? PolicySource;
+    private FoodProductPolicy? observedPolicy;
     private readonly FoodLivePolicy livePolicy = new FoodLivePolicy();
     // Runtime CurrentProductPolicy: a rebuilding catalogue keeps the last policy that had loaded names.
     private FoodProductPolicy CurrentPolicy => livePolicy.Resolve(PolicySource?.Current ?? Policy ?? FoodProductPolicy.OriginalThree,
@@ -173,11 +174,18 @@ internal sealed class ContractWorld
     // Runtime LiveMenu: an all-original menu never reads the policy.
     public FoodLiveMenuRefusal LiveMenu(Shop s)
         => FoodMenuPolicy.LiveMenu(s.Menu, s.Menu.All(FoodProducts.Known) || !DynamicAcquisition ? null : CurrentPolicy);
+    // Runtime LiveMenu(registration): a shop the save already owns keeps service through startup (warming).
+    public FoodLiveMenuRefusal ServiceMenu(Shop s)
+    {
+        var menu = LiveMenu(s);
+        if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !Warming || !s.Row.Managed) return menu;
+        return FoodMenuPolicy.LiveMenu(s.Menu, CurrentPolicy, loadedNamesPending: true);
+    }
     // E5b5 SupportedBusiness: Core LiveMenu (the original-three guard only while dynamic acquisition is off).
     public bool SupportedBusiness(Shop s)
     {
         if (!s.Rented || !s.Established || s.ForRent) return false;
-        if (LiveMenu(s) != FoodLiveMenuRefusal.None) return false;
+        if (ServiceMenu(s) != FoodLiveMenuRefusal.None) return false;
         return Types.TryGetValue(s.BusinessTypeName, out var t) && t.simulator == typeof(FullService) && !t.hasEntranceFee && CachedBags(t);
     }
     // Runtime's authoredBagPolicies: read once per type, re-cached only by a business-type re-copy or RefreshBagPolicy.
@@ -280,6 +288,13 @@ internal sealed class ContractWorld
     /// <summary>One frame: preparation units, recovery units and at most <paramref name="units"/> shop passes.</summary>
     public void Frame(int units = 64)
     {
+        // Runtime ObserveProductPolicy: a new policy publication rebuilds every shop.
+        var policy = PolicySource?.Current ?? Policy;
+        if ((Active || Warming) && policy != null && !ReferenceEquals(policy, observedPolicy))
+        {
+            if (observedPolicy != null) foreach (var s in Shops) Requeue(s);
+            observedPolicy = policy;
+        }
         for (int i = 0; i < 64 && Coordinator.TryNextPrepare(out var key); i++) PrepareUnit(Find(key));
         if (Active && Coordinator.PendingRecoveries > 0)
         {
