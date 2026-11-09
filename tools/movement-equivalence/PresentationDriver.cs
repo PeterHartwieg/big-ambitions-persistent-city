@@ -314,7 +314,12 @@ public sealed class PresentationDriver
     private bool ObserveCar(Binding binding)
     {
         var c = binding.Citizen; var route = binding.Journey!; var body = binding.Body;
-        if (c.Phase != CitizenPhase.Travelling || !ReferenceEquals(c.Journey, route)) return false;
+        if (c.Phase != CitizenPhase.Travelling || !ReferenceEquals(c.Journey, route))
+        {
+            // The journey ended while the car still drove: off screen it is released.
+            Walking.Record(frame, c.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, route.Legs[route.Legs.Count - 1].To, false, car: true);
+            return false;
+        }
         var logical = simulation.SampleJourney(c);
         bool admitted = simulation.TryGetTrafficPermission(c.Identity.Id, out var permission) && permission.LinkId.HasValue && !permission.IsCompleted;
         double logicalMinutes = admitted ? permission.MaximumNominalMinutes : logical.ElapsedMinutes;

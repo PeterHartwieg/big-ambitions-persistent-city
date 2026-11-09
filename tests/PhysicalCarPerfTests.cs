@@ -95,6 +95,7 @@ public sealed class PhysicalCarPerfTests
         string? path = System.Environment.GetEnvironmentVariable("PC_F2D_MEASURE");
         if (path == null) return;
         var lines = new List<string>();
+        int warmFrames = 0;
         StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
         MultimodalRoutes.CarSamples = true;
         try
@@ -116,6 +117,7 @@ public sealed class PhysicalCarPerfTests
             }
             int warm = 0;
             while (pool.Active.Count < Cars && warm++ < 600) { Frame(); bodies.Update(); }
+            warmFrames = warm;
             int count = 1800, seen = 0;
             var times = new List<double>(count);
             long reconsiders = city.Traffic!.Reconsiders, events = city.Traffic.ProcessedEvents;
@@ -137,6 +139,16 @@ public sealed class PhysicalCarPerfTests
                 (city.Traffic.Reconsiders - reconsiders) / (double)count, (city.Traffic.ProcessedEvents - events) / hours, pool.Acquisitions));
         }
         finally { MultimodalRoutes.CarSamples = false; }
+        {
+            // The same city without bodies: the kernel's own events per game hour over the same window.
+            var plain = City();
+            double minute = plain.State.Minute; const float frame = 1 / 60f;
+            for (int i = 0; i < warmFrames; i++) { minute += frame / 3.0; plain.AdvanceTo(minute); }
+            long events = plain.Traffic!.ProcessedEvents; double start = plain.State.Minute;
+            for (int i = 0; i < 1800; i++) { minute += frame / 3.0; plain.AdvanceTo(minute); }
+            lines.Add(string.Format(CultureInfo.InvariantCulture, "bodies-off same window: kernel events/game hour={0:F1}",
+                (plain.Traffic.ProcessedEvents - events) / ((plain.State.Minute - start) / 60)));
+        }
 
         // The movement harness (957 residents, one day): kernel work and lag with up to 24 visible cars.
         foreach (var (name, change) in new (string, Action<MovementOptions>)[] {

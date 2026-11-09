@@ -867,16 +867,20 @@ namespace PersistentCity.Runtime
         private bool CarCommand(PhysicalVehicleBody body, out Binding binding, out PhysicalJourneySample own, out double cap)
         {
             own = default; cap = 0;
-            if (!bindings.TryGetValue(body.CitizenId, out binding!) || !ReferenceEquals(binding.Car, body) || binding.Journey == null
-                || binding.Citizen.Phase != CitizenPhase.Travelling || !ReferenceEquals(binding.Citizen.Journey, binding.Journey)) return false;
+            if (!bindings.TryGetValue(body.CitizenId, out binding!) || !ReferenceEquals(binding.Car, body) || binding.Journey == null) return false;
             own = WalkerFollow.Sample(binding.Journey, binding.BodyMinutes);
             if (own.Mode != TravelMode.Car || !own.ServiceId.StartsWith("native:road:v1:", StringComparison.Ordinal)) return false;
-            cap = CarFollow.Cap(binding.Journey, binding.BodyMinutes, LogicalCarMinutes(binding.Citizen));
+            cap = CarFollow.Cap(binding.Journey, binding.BodyMinutes, LogicalCarMinutes(binding.Citizen, binding.Journey));
             return true;
         }
-        private double LogicalCarMinutes(CitizenState citizen)
-            => simulation.TryGetTrafficPermission(citizen.Identity.Id, out var permission) && permission.LinkId.HasValue && !permission.IsCompleted
+        // The kernel's coordinate while the vehicle holds a link, the logical pose after the kernel completed it, and the
+        // route's end once the journey itself has ended (the car then drives on only to its parking point).
+        private double LogicalCarMinutes(CitizenState citizen, Route route)
+        {
+            if (citizen.Phase != CitizenPhase.Travelling || !ReferenceEquals(citizen.Journey, route)) return route.Minutes;
+            return simulation.TryGetTrafficPermission(citizen.Identity.Id, out var permission) && permission.LinkId.HasValue && !permission.IsCompleted
                 ? permission.MaximumNominalMinutes : simulation.SampleJourney(citizen).ElapsedMinutes;
+        }
         private static readonly Position HoldDirection = new Position(1, 0, 0);
         /// <summary>F2d native command: Gley drives at its own pace toward the kernel's coordinate on the car's own leg and
         /// is braked so it never passes it. A corner Gley has reported is driven through on the next leg's limit; the
@@ -1110,16 +1114,23 @@ namespace PersistentCity.Runtime
         /// take the along-route lag and count the phase state. Up to 5 m the car follows, beyond it catches up at Gley's
         /// pace, never past the kernel's coordinate (CommandLimit). Beyond 30 m, or once the kernel has completed the
         /// traffic leg while the car still drives, the car is corrected (<see cref="CorrectCar"/>). Reaching its parking
-        /// point hands over to a walker at the logical pose. A changed journey reference or phase ends the follow. Reads
-        /// only; nothing is written to the simulation or the kernel.
+        /// point hands over to a walker at the logical pose. When the journey ends (arrival or replacement) while the car
+        /// still drives, an on-screen car drives on to its parking point under the same correction rule and an
+        /// off-screen one is released. Reads only; nothing is written to the simulation or the kernel.
         /// </summary>
         private bool ObserveCar(Binding binding)
         {
             var body = binding.Car!; var citizen = binding.Citizen; var route = binding.Journey!;
-            if (citizen.Phase != CitizenPhase.Travelling || !ReferenceEquals(citizen.Journey, route)) return false;
-            var logical = simulation.SampleJourney(citizen);
+            bool following = citizen.Phase == CitizenPhase.Travelling && ReferenceEquals(citizen.Journey, route);
+            var logical = following ? simulation.SampleJourney(citizen) : WalkerFollow.Sample(route, route.Minutes);
             if (!float.IsNaN(binding.FadeOutSince)) return FadeOutCar(binding, logical.Position);
-            bool admitted = simulation.TryGetTrafficPermission(citizen.Identity.Id, out var permission)
+            if (!following && !body.OnScreen)
+            {
+                Telemetry.Record(Time.frameCount, citizen.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, logical.Position, false, car: true);
+                return false;
+            }
+            var permission = default(TrafficVehicleSnapshot);
+            bool admitted = following && simulation.TryGetTrafficPermission(citizen.Identity.Id, out permission)
                 && permission.LinkId.HasValue && !permission.IsCompleted;
             double logicalMinutes = admitted ? permission.MaximumNominalMinutes : logical.ElapsedMinutes;
             var own = WalkerFollow.Sample(route, binding.BodyMinutes);
@@ -1129,11 +1140,8 @@ namespace PersistentCity.Runtime
             binding.BodyMinutes = CarFollow.Advance(route, binding.BodyMinutes, CarFollow.Cap(route, binding.BodyMinutes, logicalMinutes),
                 body.Position, binding.ReachedCarLeg);
             var after = WalkerFollow.Sample(route, binding.BodyMinutes);
-            if (after.LegIndex != own.LegIndex)
-            {
-                if (binding.ReachedCarLeg == own.LegIndex && after.LegIndex == own.LegIndex + 1) binding.CornerHandoff.Begin(own, after, binding.ReachedCarMarker);
-                binding.TargetLeg = -1;
-            }
+            if (after.LegIndex == own.LegIndex + 1 && binding.ReachedCarLeg == own.LegIndex)
+                binding.CornerHandoff.Begin(own, after, binding.ReachedCarMarker);
             double lag = WalkerFollow.RouteMetres(route, binding.BodyMinutes, logical.ElapsedMinutes);
             if (binding.LagFrame != Time.frameCount)
             {

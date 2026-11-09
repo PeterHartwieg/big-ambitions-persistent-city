@@ -88,7 +88,8 @@ public sealed class PhysicalCarFollowTests
         internal Position? Corner(PhysicalVehicleBody body)
         {
             Position? best = null; double nearest = double.PositiveInfinity;
-            foreach (var leg in Person(body.CitizenId).Journey!.Legs.Where(l => l.Mode == TravelMode.Car))
+            // Every person drives the same committed road, also after the journey ended.
+            foreach (var leg in Journey().Legs.Where(l => l.Mode == TravelMode.Car))
             {
                 double d = Position.Distance(body.Position, leg.To);
                 if (d < nearest && leg.To.X >= body.Position.X - 1e-9) { nearest = d; best = leg.To; }
@@ -248,6 +249,26 @@ public sealed class PhysicalCarFollowTests
         f.Until(() => f.Walkers.Active.ContainsKey("c0"), 30);
         Assert.Equal(TravelMode.Walk, f.City.SampleJourney(f.Person("c0")).Mode);
         Assert.InRange(Position.Distance(f.Walkers.Active["c0"].Position, f.City.PositionOf(f.Person("c0"))), 0, 1);
+        f.AssertSameAsBodiesOff();
+    }
+
+    /// <summary>Q3 at the journey's end: the person arrives (traffic completed, egress walked) while an opaque car still
+    /// lags on screen. The car is not removed in view: it drives on to its parking point and hands over there.</summary>
+    [Fact]
+    public void ArrivalWhileAVisibleCarLagsKeepsItUntilItParks()
+    {
+        using var f = new Fixture();
+        f.Until(() => f.Car("c0") != null, 600);
+        var body = f.Car("c0")!;
+        body.OnScreen = true; body.CanFade = false; body.Pace = 0;
+        f.Until(() => f.Person("c0").Phase != CitizenPhase.Travelling, 4000);
+        Assert.Same(body, f.Car("c0"));
+        Assert.Empty(f.Corrections());
+        body.Pace = 1.5;
+        f.Until(() => f.Car("c0") == null, 4000);
+        Assert.True(body.Position.X >= Node(Sections).X - 1e-6, "the car drove on to its parking point");
+        Assert.Equal(f.Handoffs + 1, f.T.CarHandoffs);
+        Assert.Empty(f.Corrections());
         f.AssertSameAsBodiesOff();
     }
 
