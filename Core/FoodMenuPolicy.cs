@@ -4,14 +4,51 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
+    /// <summary>E5b5: why a live player shop menu is not admitted. Any refusal keeps the whole shop with the game's customers.</summary>
+    public enum FoodLiveMenuRefusal
+    {
+        None, Empty, Width, Duplicate, Name,
+        /// <summary>A non-original product while dynamic acquisition is off (Decision 12: a capability failed or the
+        /// coordinator is not active).</summary>
+        OriginalThreeGuard,
+        /// <summary>Not in the published loaded-name image (mod removed, catalogue rebuilding or policy fallback).</summary>
+        NotLoaded,
+        /// <summary>The resolver classes the product Drink, Bundle, NonFood or Unknown.</summary>
+        MealClass
+    }
+
     /// <summary>Schema 23 envelope, separate from native sale permission. Append codes; never renumber.</summary>
     public static partial class FoodMenuPolicy
     {
         public const int MaximumOffers = 8;
-        public const int LiveMaximumOffers = 4;
+        /// <summary>E5b5 (Q1 default): live width is the hard limit; a shop with more products keeps the game's customers.</summary>
+        public const int LiveMaximumOffers = MaximumOffers;
         public const int MaximumDefinitions = 16;
         public const int Version = 1;
         public const string Wire = "1|1=croissant|2=burger|3=hotdog|4=donut|5=cupcake|6=salad";
+        /// <summary>E5b5 (Decision 12, R12): the name rule of a live player shop menu, in place of the historical
+        /// original-three guard. <paramref name="dynamic"/> is null while dynamic acquisition is off, so only the original
+        /// three pass. Otherwise every product must be canonical, in the policy's published loaded-name image and classed
+        /// Food by its resolver, the same rule as <see cref="FoodProductPolicy.Executable"/>. The stock contract and
+        /// <see cref="CompleteFoodMenu.Check"/> still decide through the published contract image. Allocation-free.</summary>
+        public static FoodLiveMenuRefusal LiveMenu(IReadOnlyList<string>? menu, FoodProductPolicy? dynamic)
+        {
+            if (menu == null || menu.Count < 1) return FoodLiveMenuRefusal.Empty;
+            if (menu.Count > LiveMaximumOffers) return FoodLiveMenuRefusal.Width;
+            for (int i = 0; i < menu.Count; i++)
+            {
+                string name = menu[i];
+                if (!FoodProducts.Known(name))
+                {
+                    if (dynamic == null) return FoodLiveMenuRefusal.OriginalThreeGuard;
+                    if (!FoodNameIdentity.IsCanonical(name)) return FoodLiveMenuRefusal.Name;
+                    if (dynamic.LoadedNames == null || !dynamic.LoadedNames.Contains(name)) return FoodLiveMenuRefusal.NotLoaded;
+                    if (dynamic.Resolver.ResolveMealClass(name) != MealClass.Food) return FoodLiveMenuRefusal.MealClass;
+                }
+                for (int j = 0; j < i; j++) if (string.Equals(name, menu[j], StringComparison.Ordinal)) return FoodLiveMenuRefusal.Duplicate;
+            }
+            return FoodLiveMenuRefusal.None;
+        }
         static partial void TestCode(string product, ref int code);
         static partial void TestProduct(int code, ref string? product);
         public static int Code(string product)

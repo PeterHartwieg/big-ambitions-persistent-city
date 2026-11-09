@@ -162,15 +162,16 @@ public sealed partial class FoodCommerceTests
     }
 
     [Theory]
-    [InlineData("{}",4,1,0)]
+    // E5b5 (Q1): the default and the fallback for an invalid value are the live limit of eight.
+    [InlineData("{}",8,1,0)]
     [InlineData("{\"FoodMenuMaximumOffersPerShop\":99,\"FoodMenuNewTasteWeight\":\"Infinity\",\"FoodMenuHealthWeight\":-1}",8,2,0)]
-    [InlineData("{\"FoodMenuMaximumOffersPerShop\":1.5,\"FoodMenuNewTasteWeight\":{},\"FoodMenuHealthWeight\":\"NaN\"}",4,1,0)]
+    [InlineData("{\"FoodMenuMaximumOffersPerShop\":1.5,\"FoodMenuNewTasteWeight\":{},\"FoodMenuHealthWeight\":\"NaN\"}",8,1,0)]
     [InlineData("{\"FoodMenuMaximumOffersPerShop\":\"1\",\"FoodMenuNewTasteWeight\":\"0.5\",\"FoodMenuHealthWeight\":\"1.5\"}",1,.5,1.5)]
     public void E4_FlatSettingsLoadClampAndReload(string json,int limit,double taste,double health)
     {
         var settings=JsonConvert.DeserializeObject<PrototypeSettings>(json)!;var logs=new List<string>();settings.FoodChoice.Clamp(logs.Add);
         Assert.Equal(limit,settings.FoodMenuMaximumOffersPerShop);Assert.Equal(taste,settings.FoodMenuNewTasteWeight);Assert.Equal(health,settings.FoodMenuHealthWeight);
-        Assert.InRange(Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop),1,4);
+        Assert.InRange(Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop),1,8);
         int count=logs.Count;settings.FoodChoice.Clamp(logs.Add);Assert.Equal(count,logs.Count);
     }
 

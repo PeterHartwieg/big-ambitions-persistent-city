@@ -13,11 +13,11 @@ using Debug = UnityEngine.Debug;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>E5b2 shadow reader plus the E5b3 contract coordinator (Decisions 3, 3a, 4-8, 13). The original-three guard
-    /// in <c>SupportedBusiness</c> and <c>DynamicIntegrationRefusal</c> still decide which products are admitted; the
-    /// coordinator only makes original-three shops stricter: published images, rechecks, reconciliation, the boundary
-    /// commit gate and dynamic recovery. When the capabilities fail, the shadow faults or the catalogue is refused, the
-    /// market runs on the E5b1 contract unchanged (<see cref="ContractMode.Fallback"/>) and the status says why.</summary>
+    /// <summary>E5b2 shadow reader plus the E5b3 contract coordinator (Decisions 3, 3a, 4-8). While it is active and every
+    /// Decision 12 capability passed, E5b5 admits any loaded Food product through the published image (dynamic
+    /// acquisition): published images, rechecks, reconciliation, the boundary commit gate and dynamic recovery. When the
+    /// capabilities fail, the shadow faults or the catalogue is refused, the market runs on the E5b1 contract with the
+    /// original-three guard (<see cref="ContractMode.Fallback"/>) and the status says why.</summary>
     public sealed partial class NativeFoodMarket
     {
         private LoadedCatalogueEligibilityReader? contractReader;
@@ -341,16 +341,11 @@ namespace PersistentCity.Runtime
             }
             return result.ToArray();
         }
-        // E5b1's original-three food-shop shape, without the cached bag policy: the shops whose contract failures
-        // are recorded for hourly recovery, whether or not they were owned or wanted when they failed.
+        // The live food-shop shape (E5b5 LiveMenu: original three, or dynamic names while Decision 12 holds), without the
+        // cached bag policy: the shops whose contract failures are recorded for hourly recovery, whether or not they
+        // were owned or wanted when they failed.
         private bool ContractCandidate(BuildingRegistration r)
-        {
-            var menu = r.cachedAvailableProducts;
-            if (!r.RentedByPlayer || !r.HasEstablishedBusiness || r.AvailableForRent || menu == null || menu.Count < 1
-                || menu.Count > FoodMenuPolicy.LiveMaximumOffers) return false;
-            for (int i = 0; i < menu.Count; i++) if (!FoodProducts.Known(menu[i])) return false;
-            return true;
-        }
+            => r.RentedByPlayer && r.HasEstablishedBusiness && !r.AvailableForRent && LiveMenu(r.cachedAvailableProducts) == FoodLiveMenuRefusal.None;
         private bool ContractInterest(string key, BuildingRegistration r)
         {
             var row = NativeFoodOwnership.Row(key);
@@ -374,7 +369,7 @@ namespace PersistentCity.Runtime
         {
             string business = NativeFoodOwnership.Row(key)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(reg);
             CompleteFoodMenu.HistoryProducts(state.History, key, business, SaveGameManager.Current.Day, contractHistory);
-            return CompleteFoodMenu.Check(eligibility, FoodProductMetadataResolver.Empty, currentRevision, true, contractHistory, contractNames.Names);
+            return CompleteFoodMenu.Check(eligibility, AdmissionResolver, currentRevision, true, contractHistory, contractNames.Names);
         }
         // A failed image of an owned, wanted or candidate food shop is a recorded refusal, so the shop is prepared
         // every hour and an in-place repair (no stamp, no hint) reaches recovery.
@@ -593,10 +588,12 @@ namespace PersistentCity.Runtime
                     return new {
                         shadow = reader != null,
                         authority = contractMode == ContractMode.Active
-                            ? "coordinator (E5b3): original-three guard and DynamicIntegrationRefusal unchanged; images, rechecks, reconciliation, commit gate and recovery active"
+                            ? "coordinator active: dynamic acquisition (E5b5) up to " + FoodMenuPolicy.LiveMaximumOffers + " offers; images, rechecks, reconciliation, commit gate and recovery active"
                             : contractMode == ContractMode.Warming ? "warming: E5b1 contract until every seeded shop has an image; acquisitions deferred"
                             : "E5b1 fallback: " + contractFallback,
-                        capabilitiesPassed = report.AllPassed, firstFailure = report.FirstFailure,
+                        capabilitiesPassed = report.AllPassed, firstFailure = report.FirstFailure, dynamicAcquisition = DynamicAcquisition,
+                        productPolicy = ProductPolicySource == null ? "unset" : ProductPolicySource.Failure.Length == 0 ? "published" : ProductPolicySource.Failure,
+                        priceOnlyCheckoutRefusals = CheckoutPriceOnlyRefusals,
                         stampsReady = LoadedCatalogueEligibilityReader.StampsReady,
                         catalogue = reader == null ? null : new {
                             revision = reader.CatalogueRevision, refusal = reader.CatalogueRefusal.ToString(), count = reader.CatalogueCount,

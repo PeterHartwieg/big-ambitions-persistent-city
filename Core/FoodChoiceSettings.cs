@@ -5,7 +5,7 @@ namespace PersistentCity.Core
     /// <summary>Clamped once at configuration load. Absent keys retain defaults; no tunable enters a draw key.</summary>
     public sealed class FoodChoiceSettings
     {
-        public int FoodMenuMaximumOffersPerShop { get; set; }=4;
+        public int FoodMenuMaximumOffersPerShop { get; set; }=FoodMenuPolicy.LiveMaximumOffers; // E5b5 Q1 default
         public double FoodMenuNewTasteWeight { get; set; }=1;
         public double FoodMenuHealthWeight { get; set; }
         public double FoodChoiceTemperature { get; set; }=1;
@@ -27,7 +27,7 @@ namespace PersistentCity.Core
 
         public void Clamp(Action<string>? log=null)
         {
-            int limit=FoodMenuMaximumOffersPerShop==int.MinValue ? 4 : Math.Max(1,Math.Min(FoodMenuPolicy.MaximumOffers,FoodMenuMaximumOffersPerShop));
+            int limit=FoodMenuMaximumOffersPerShop==int.MinValue ? FoodMenuPolicy.LiveMaximumOffers : Math.Max(1,Math.Min(FoodMenuPolicy.MaximumOffers,FoodMenuMaximumOffersPerShop));
             if(limit!=FoodMenuMaximumOffersPerShop) log?.Invoke("FoodMenuMaximumOffersPerShop clamped to "+limit);
             FoodMenuMaximumOffersPerShop=limit;
             double C(double v,double min,double max,double fallback,string key)

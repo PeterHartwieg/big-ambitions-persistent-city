@@ -109,7 +109,7 @@ internal sealed class ContractWorld
     /// <summary>Runtime's warming mode after a load: E5b1 rules until every shop has an image; acquisitions deferred.</summary>
     public bool Warming;
     public int MenuLimit = FoodMenuPolicy.LiveMaximumOffers;
-    public int CatalogueWaits;
+    public int CatalogueWaits, PriceOnlyRefusals;
     public int Recopies, FullRebuilds, Discards, Publishes, GateRuns, RecoveryUnits, MaxRecoveriesInFrame, Reconciliations;
     public FoodReconciliationRefusal LastReconciliation;
     /// <summary>Runs between the passes's start stamp and its publish (a write during a multi-frame pass).</summary>
@@ -159,11 +159,20 @@ internal sealed class ContractWorld
     }
     public Shop Find(string key) => Shops.Single(s => s.Key == key);
 
-    // E5b1 SupportedBusiness: still the original-three guard (Decision 13).
+    /// <summary>E5b5 Decision 12: every runtime capability passed at city start (Runtime contractCapabilities.AllPassed).</summary>
+    public bool CapabilitiesPassed = true;
+    /// <summary>The market's product policy (Runtime ProductPolicySource); null stands for an unset source.</summary>
+    public FoodProductPolicy? Policy;
+    public bool DynamicAcquisition => Active && !Warming && CapabilitiesPassed;
+    private FoodProductPolicy CurrentPolicy => Policy ?? FoodProductPolicy.OriginalThree;
+    // Runtime LiveMenu: an all-original menu never reads the policy.
+    public FoodLiveMenuRefusal LiveMenu(Shop s)
+        => FoodMenuPolicy.LiveMenu(s.Menu, s.Menu.All(FoodProducts.Known) || !DynamicAcquisition ? null : CurrentPolicy);
+    // E5b5 SupportedBusiness: Core LiveMenu (the original-three guard only while dynamic acquisition is off).
     public bool SupportedBusiness(Shop s)
     {
-        if (!s.Rented || !s.Established || s.ForRent || s.Menu.Count < 1 || s.Menu.Count > FoodMenuPolicy.LiveMaximumOffers) return false;
-        if (s.Menu.Any(p => !FoodProducts.Known(p)) || s.Menu.Distinct().Count() != s.Menu.Count) return false;
+        if (!s.Rented || !s.Established || s.ForRent) return false;
+        if (LiveMenu(s) != FoodLiveMenuRefusal.None) return false;
         return Types.TryGetValue(s.BusinessTypeName, out var t) && t.simulator == typeof(FullService) && !t.hasEntranceFee && CachedBags(t);
     }
     // Runtime's authoredBagPolicies: read once per type, re-cached only by a business-type re-copy or RefreshBagPolicy.
@@ -178,10 +187,23 @@ internal sealed class ContractWorld
         if (Types.TryGetValue(s.BusinessTypeName, out var t) && BagPolicies.TryGetValue(t, out bool cached) && cached != t.tags.Contains(NeedsBags))
             BagPolicies[t] = t.tags.Contains(NeedsBags);
     }
-    public bool SupportedMenu(Shop s) => !Refused.ContainsKey(s.Key) && SupportedBusiness(s) && ContractAdmits(s);
-    // Runtime ContractCandidate: the original-three shape without the cached bag policy.
-    public bool Candidate(Shop s) => s.Rented && s.Established && !s.ForRent && s.Menu.Count >= 1
-        && s.Menu.Count <= FoodMenuPolicy.LiveMaximumOffers && s.Menu.All(FoodProducts.Known);
+    public bool SupportedMenu(Shop s)
+    {
+        if (Refused.ContainsKey(s.Key)) return false;
+        if (!SupportedBusiness(s)) { RefuseRemovedProduct(s); return false; }
+        return s.Menu.Count <= MenuLimit && ContractAdmits(s);
+    }
+    // Runtime RefuseRemovedProduct: a product leaving the loaded image or the Food class under an owned or wanted shop.
+    private void RefuseRemovedProduct(Shop s)
+    {
+        if (!DynamicAcquisition || !s.Row.Managed && !s.Row.Desired) return;
+        var menu = LiveMenu(s);
+        if (menu != FoodLiveMenuRefusal.NotLoaded && menu != FoodLiveMenuRefusal.MealClass) return;
+        if (!Refused.ContainsKey(s.Key)) Refused[s.Key] = Hour;
+        Coordinator.Refuse(s.Key, Hour);
+    }
+    // Runtime ContractCandidate: the live food-shop shape without the cached bag policy.
+    public bool Candidate(Shop s) => s.Rented && s.Established && !s.ForRent && LiveMenu(s) == FoodLiveMenuRefusal.None;
     private bool Interest(Shop s) => s.Row.Managed || s.Row.Desired || Candidate(s);
     private void RefuseStructural(Shop s)
     {
@@ -376,7 +398,9 @@ internal sealed class ContractWorld
     {
         var products = new List<string>();
         CompleteFoodMenu.HistoryProducts(History, s.Key, s.Row.BusinessId, (int)(Hour / 24), products);
-        return CompleteFoodMenu.Check(eligibility, FoodProductMetadataResolver.Empty, current, true, products, Names.Names);
+        // Runtime AdmissionResolver: the policy's resolver once the capabilities passed, also while warming.
+        return CompleteFoodMenu.Check(eligibility, CapabilitiesPassed ? CurrentPolicy.Resolver : FoodProductMetadataResolver.Empty,
+            current, true, products, Names.Names);
     }
     private void Recopy(List<FoodDefinitionDependency> changed, FoodContractRecheckRefusal refusal)
     {
@@ -438,17 +462,22 @@ internal sealed class ContractWorld
         int reconciled = Reconciliations;
         if (!Supply(s, out var units)) { if (Reconciliations != reconciled) Refuse(s); return null; }
         if (units[product] <= 0) return null;
-        // After native setup (E5b1 CompletePricesMatch, then Decision 3 again).
+        // After native setup (Runtime CompletePrices, then Decision 3 again). E5b5 Q2: a different valid price is
+        // price-only; the sale is refused below without a hand-back.
+        var verdict = FoodPriceVerdict.Same;
+        if (s.Menu.Count != c.Prices.Count) { Refuse(s); return null; }
         foreach (var p in s.Menu)
         {
             var rows = s.Prices.Where(r => r.itemName == p).ToArray();
-            if (rows.Length != 1 || !Money.TryFromNative(rows[0].price, out var live) || live != c.Prices[p]) { Refuse(s); return null; }
+            if (!c.Prices.ContainsKey(p) || rows.Length != 1 || !Money.TryFromNative(rows[0].price, out var live)) { Refuse(s); return null; }
+            if (live != c.Prices[p]) verdict = FoodPriceVerdict.PriceOnly;
         }
         AfterNativeSetup?.Invoke();
         // Runtime SellLine: a rebuilding catalogue waits; any other false here is RefuseCheckoutContract.
         if (Active && Catalogue.Catalogue == null) return null;
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!Recheck(s, true)) { Refuse(s); return null; }
+        if (verdict == FoodPriceVerdict.PriceOnly) { PriceOnlyRefusals++; return null; }
         Orders.Add(intent);
         var stock = s.Holders.Values.First(h => h.cargoInstances.Count == 1 && h.cargoInstances[0].itemName == product && h.cargoInstances[0].amount > 0);
         stock.cargoInstances[0].amount--; // W1 in place: quantity only
@@ -610,7 +639,8 @@ public sealed class FoodContractCoordinatorTests
     }
 
     // Section 2.2 writer rows, each applied between a capture and its checkout.
-    public static IEnumerable<object[]> WriterRows() => new[] { "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10-row", "W10-price", "W11-field", "W11-unregister" }
+    // W10-price (a valid in-place price) is Q2's price-only change since E5b5: DynamicAcquisitionTests covers it.
+    public static IEnumerable<object[]> WriterRows() => new[] { "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10-row", "W11-field", "W11-unregister" }
         .Select(w => new object[] { w });
     private static void Write(ContractWorld world, ContractWorld.Shop shop, string row)
     {
@@ -1325,16 +1355,10 @@ public sealed class FoodContractCoordinatorTests
     }
 
     [Fact]
-    public void AcquisitionStaysGatedByTheOriginalThreeAndTheDynamicRefusalIsUnchanged()
+    public void WithoutAPublishedPolicyADynamicProductIsNeverAcquired()
     {
-        var root = ContractRecoveryTestPaths.Root();
-        string market = File.ReadAllText(Path.Combine(root, "Runtime", "NativeFoodMarket.cs"));
-        Assert.Contains("if (!FoodProducts.Known(r.cachedAvailableProducts[i])) return false;", market);
-        Assert.Contains("if (!FoodProducts.Known(dynamicReg.cachedAvailableProducts[i])) return DynamicIntegrationRefusal;", market);
-        Assert.Contains("public const string DynamicIntegrationRefusal = \"E5b dynamic native integration incomplete: mutation notifications, holder reconciliation and held execution need implementation and RIG-CAT/RIG-SHOPEDIT proof\";", market);
-        Assert.Contains("menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));", market);
-        Assert.Equal(4, FoodMenuPolicy.LiveMaximumOffers);
-        // A dynamic product never passes SupportedBusiness in the model either, whatever its image says.
+        // E5b5 replaced the original-three guard with Core LiveMenu (pinned in DynamicAcquisitionTests). With no product
+        // policy (no loaded-name image), a dynamic product never passes SupportedBusiness, whatever its image says.
         var world = new ContractWorld();
         world.Add(new ContractWorld.Item { itemName = "foodtrucks:itemname_dumplings", retail = true });
         world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase = new[] { Burger, HotDog, ContractWorld.Croissant, "foodtrucks:itemname_dumplings" };

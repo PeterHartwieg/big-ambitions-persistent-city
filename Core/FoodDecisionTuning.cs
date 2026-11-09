@@ -18,7 +18,9 @@ namespace PersistentCity.Core
         }
         public string ToWire()
         {
-            bool extended=Settings.FoodMenuMaximumOffersPerShop!=4 || Settings.FoodMenuNewTasteWeight!=1 || Settings.FoodMenuHealthWeight!=0;
+            // Revision 1 omits the menu fields, which then take their defaults. E5b5 raised the offers default to the
+            // live limit of eight (Q1), so a default capture keeps its exact bytes.
+            bool extended=Settings.FoodMenuMaximumOffersPerShop!=FoodMenuPolicy.LiveMaximumOffers || Settings.FoodMenuNewTasteWeight!=1 || Settings.FoodMenuHealthWeight!=0;
             var text = new StringBuilder(extended ? 241 : WireLength); text.Append(extended ? '2' : '1');
             void Add(double value) => text.Append(BitConverter.DoubleToInt64Bits(value).ToString("X16", CultureInfo.InvariantCulture));
             Add(Settings.FoodChoiceTemperature);
