@@ -7,6 +7,7 @@ player-hold calls) must still exist where the list says. Any construct the scann
 recognise is a failure, never a silent pass. Exit 0 only when everything matches.
 """
 import argparse
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -247,11 +248,115 @@ def nameof(arg, raw_arg):
     return m.group(1) if m else None
 
 
+METHOD_CALL = re.compile(r'(AccessTools\s*\.\s*(?:Method|DeclaredMethod)|\.\s*GetMethod)\s*\(')
+
+
+def top_level_cut(expr, token):
+    """expr up to the first depth-0 occurrence of token."""
+    depth = 0
+    for k, c in enumerate(expr):
+        if c in '([{':
+            depth += 1
+        elif c in ')]}':
+            depth -= 1
+        elif depth == 0 and expr.startswith(token, k):
+            return expr[:k]
+    return expr
+
+
+def statement_end(code, start):
+    depth = 0
+    for k in range(start, len(code)):
+        c = code[k]
+        if c in '([{':
+            depth += 1
+        elif c in ')]}':
+            depth -= 1
+        elif c == ';' and depth <= 0:
+            return k
+    return len(code)
+
+
+def assignments(f, name, pos):
+    """(position, raw right-hand side) pairs assigned to `name`; the last one before pos in its method when there is one."""
+    found = []
+    for m in re.finditer(r'(?<![\w.])' + re.escape(name) + r'\s*=(?![=>])', f.code):
+        rhs = f.raw[m.end():statement_end(f.code, m.end())].strip()
+        if not re.fullmatch(r'(?:\w+\s*=\s*)*(?:null!?|default)', rhs):  # resets, including chained ones (a = b = null)
+            found.append((m.start(), rhs))
+    host = f.enclosing_method(pos) if pos is not None else None
+    if host:
+        local = [a for a in found if host[2] <= a[0] < pos]
+        if local:
+            return [local[-1]]
+    return found
+
+
+def type_of_variable(f, name, pos, depth):
+    if not re.fullmatch(r'\w+', name) or depth > 4:
+        return None
+    types = set()
+    for _, rhs in assignments(f, name, pos):
+        t = re.search(r'GetType\s*\(\s*"([\w.]+)"', rhs) or re.search(r'typeof\s*\(\s*([\w.]+)\s*\)', rhs)
+        types.add(short(t.group(1)) if t else None)
+    return types.pop() if len(types) == 1 and None not in types else None
+
+
+def target_of(f, expr, pos, depth=0):
+    """Native 'Type.Method' named by a method-reference expression, following local and field assignments; None if unknown."""
+    expr = top_level_cut(expr.strip(), '??').strip().rstrip('!').strip()
+    if depth > 4 or not expr:
+        return None
+    if re.fullmatch(r'\w+', expr):
+        targets = {target_of(f, text, at, depth + 1) for at, text in assignments(f, expr, pos)}
+        return targets.pop() if len(targets) == 1 and None not in targets else None
+    m = METHOD_CALL.search(expr)
+    if not m:
+        return None
+    close = match_close(expr, m.end() - 1)
+    args = split_args(expr[m.end():close - 1])
+    if not args:
+        return None
+    if 'GetMethod' in m.group(1):
+        t = re.search(r'typeof\s*\(\s*([\w.]+)\s*\)\s*$', expr[:m.start()])
+        typ, name_arg = (short(t.group(1)) if t else None), args[0]
+    else:
+        t = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', args[0])
+        typ = short(t.group(1)) if t else type_of_variable(f, args[0], pos, depth + 1)
+        name_arg = args[1] if len(args) > 1 else ''
+    name = nameof(name_arg, name_arg)
+    return f'{typ}.{name}' if typ and name else None
+
+
+def substitute(text, names, values):
+    """Replace a helper's parameter names in its template expression with the call's argument texts."""
+    for name, value in zip(names, values):
+        text = re.sub(r'(?<![\w."])' + re.escape(name) + r'(?![\w"])', lambda _, v=value: v, text)
+    return text
+
+
+def contract_table(files):
+    """FoodContractHookTable rows: id -> 'Type.Method', the targets of the dynamic HookN postfixes."""
+    table = {}
+    for f in files:
+        for m in re.finditer(r'new\s+FoodContractHook\s*\(\s*(\d+)\s*,\s*"\w+"\s*,\s*"(\w+)"\s*,\s*"(\w+)"', f.raw):
+            table[int(m.group(1))] = m.group(2) + '.' + m.group(3)
+    return table
+
+
+# Method references inside an inventoried transpiler. AccessTools.Method/DeclaredMethod and typeof(T).GetMethod are parsed;
+# the other forms (delegates, CodeInstruction.Call, function pointers, other AccessTools method lookups) fail closed.
+TRANSPILER_REFERENCES = re.compile(r'AccessTools\s*\.\s*(\w+)\s*\(|\.\s*GetMethod\s*\(|\bSymbolExtensions\b|\bCodeInstruction\s*\.\s*Call\w*'
+                                   r'|\bEmitDelegate\b|\bTranspilers\s*\.\s*\w+|\bCreateDelegate\b|\bOpCodes\s*\.\s*Ldv?i?r?t?ftn\b|\bnew\s+CodeInstruction\s*\(')
+NON_METHOD_ACCESS = {'Field', 'DeclaredField', 'FieldRefAccess', 'StaticFieldRefAccess', 'TypeByName', 'Inner'}
+
+
 def scan(root):
     """Returns (found dict of sets, problems list)."""
     files = load(root)
     problems = []
-    found = dict(patches=set(), messages=set(), events=set(), helpers=set())
+    found = dict(patches=[], messages=[], events=[], helpers=[])  # multisets: a repeated registration counts twice
+    table = contract_table(files)
     behaviours = set()
     for f in files:
         for name, _, _, bases in f.classes:
@@ -289,7 +394,16 @@ def scan(root):
                     kind = re.search(r'(\w+)\s*:\s*$', f.code[body:body + m.start()])
                     t = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', inner[0]) if inner else None
                     if len(inner) == 2 and t and inner[1] in names and kind and kind.group(1) in PATCH_KINDS:
-                        helpers[pos] = (names, kind.group(1), short(t.group(1)), names.index(inner[1]))
+                        # The template's target: the Patch call's first argument, or the local it was assigned from.
+                        calls = list(re.finditer(r'\bPatch\s*\(', f.code[body:body + m.start()]))
+                        template = ''
+                        if calls:
+                            open_at = body + calls[-1].end() - 1
+                            template = split_args(f.raw[open_at + 1:match_close(f.code, open_at) - 1])[0]
+                            if re.fullmatch(r'\w+', template) and template not in names:
+                                local = assignments(f, template, body + calls[-1].start())
+                                template = local[-1][1] if len(local) == 1 else ''
+                        helpers[pos] = (names, kind.group(1), short(t.group(1)), names.index(inner[1]), template)
             for m in re.finditer(r'\bPatch\s*\(', f.code):
                 if any(m.start() == pos for name, pos, *_ in f.methods if name == 'Patch'):
                     continue  # a definition
@@ -305,6 +419,8 @@ def scan(root):
                     if host and host[0] == 'Patch' and host[1] in helpers:
                         continue  # the helper's own template call
                     parts = split_args(args_text)
+                    raw_first = split_args(raw_args)[0] if parts else ''
+                    target = target_of(f, raw_first, m.start())
                     offsets, k = [], 0
                     for p in parts:  # raw counterparts by position
                         k = args_text.find(p, k)
@@ -327,7 +443,9 @@ def scan(root):
                         raw_second = split_args(raw_inner.group(1))[1] if raw_inner and len(inner) == 2 else ''
                         method = nameof(inner[1], raw_second) if len(inner) == 2 else None
                         if t and method:
-                            found['patches'].add((owner, kind.capitalize(), short(t.group(1)), method, f.rel))
+                            if target is None:
+                                problems.append(f'{f.rel}:{line}: cannot resolve the native target of this Patch call ({raw_first.strip()[:60]!r})')
+                            found['patches'].append((owner, kind.capitalize(), short(t.group(1)), method, target, f.rel))
                             if kind == 'transpiler':
                                 transpilers.append((f, short(t.group(1)), method))
                         elif len(inner) == 1 and re.fullmatch(r'\w+', inner[0]) and host:
@@ -344,7 +462,10 @@ def scan(root):
                             if not ids:
                                 problems.append(f'{f.rel}:{line}: no {dyn.group(2)}N methods in {dyn.group(1)}')
                             for method_name in ids:
-                                found['patches'].add((owner, kind.capitalize(), dyn.group(1), method_name, f.rel))
+                                hook_target = table.get(int(method_name[len(dyn.group(2)):]))
+                                if hook_target is None:
+                                    problems.append(f'{f.rel}:{line}: {method_name} has no FoodContractHook table row')
+                                found['patches'].append((owner, kind.capitalize(), dyn.group(1), method_name, hook_target, f.rel))
                         else:
                             problems.append(f'{f.rel}:{line}: unrecognised HarmonyMethod arguments {", ".join(inner)[:80]!r}')
                     if owner is None:
@@ -360,7 +481,10 @@ def scan(root):
                     if not method:
                         problems.append(f'{f.rel}:{line}: helper Patch call without a nameof/literal patch method')
                         continue
-                    found['patches'].add((owner, helper[1].capitalize(), helper[2], method, f.rel))
+                    hook_target = target_of(f, substitute(helper[4], helper[0], raw_parts), None) if helper[4] else None
+                    if hook_target is None:
+                        problems.append(f'{f.rel}:{line}: cannot resolve the native target of this helper Patch call')
+                    found['patches'].append((owner, helper[1].capitalize(), helper[2], method, hook_target, f.rel))
                 else:
                     problems.append(f'{f.rel}:{line}: unrecognised Patch call without HarmonyMethod {args_text.strip()[:80]!r}')
             for m in re.finditer(r'\bHarmonyMethod\b', f.code):
@@ -374,7 +498,7 @@ def scan(root):
             nested = [c for c in f.classes if start < c[1] and c[2] <= end]
             for mname, pos, *_ in f.methods:
                 if start < pos < end and mname in UNITY_MESSAGES and not any(c[1] < pos < c[2] for c in nested):
-                    found['messages'].add((name, mname, f.rel))
+                    found['messages'].append((name, mname, f.rel))
         # Native event subscriptions.
         for m in re.finditer(r'\b' + EVENT_SOURCES + r'\s*\.\s*(\w+)\s*\+=\s*([^;]+);', f.code):
             source = re.match(r'\w+', m.group(0)).group(0)
@@ -385,7 +509,7 @@ def scan(root):
             if not hm or cls is None:
                 problems.append(f'{f.rel}:{line}: unrecognised native event subscription {m.group(0)[:80]!r} (lambda or expression handler)')
                 continue
-            found['events'].add((source + '.' + m.group(1), cls[0], hm.group(1), f.rel))
+            found['events'].append((source + '.' + m.group(1), cls[0], hm.group(1), f.rel))
         for m in re.finditer(r'\b' + EVENT_SOURCES + r'\s*\.\s*\w+\s*(?:\+=|=)\s*(?:\(|delegate\b|new\b)', f.code):
             problems.append(f'{f.rel}:{f.code.count(chr(10), 0, m.start()) + 1}: unrecognised native event subscription (lambda or delegate)')
     for f, cls, name in transpilers:
@@ -393,10 +517,24 @@ def scan(root):
         if len(defs) != 1:
             problems.append(f'{f.rel}: transpiler {cls}.{name} definition not found exactly once')
             continue
-        body = f.code[defs[0][2]:defs[0][3]]
-        for m in re.finditer(r'AccessTools\s*\.\s*Method\s*\(\s*typeof\s*\(\s*([\w.]+)\s*\)\s*,\s*nameof\s*\(\s*([\w.]+)\s*\)', body):
-            if short(m.group(1)) in pc_classes:
-                found['helpers'].add((name, short(m.group(1)), short(m.group(2)), f.rel))
+        start, end = defs[0][2], defs[0][3]
+        for m in TRANSPILER_REFERENCES.finditer(f.code, start, end):
+            line = f.code.count('\n', 0, m.start()) + 1
+            access = m.group(1)
+            if access in NON_METHOD_ACCESS:
+                continue
+            if not (access in ('Method', 'DeclaredMethod') or (access is None and 'GetMethod' in m.group(0))):
+                problems.append(f'{f.rel}:{line}: unrecognised method reference in transpiler {cls}.{name} ({m.group(0).strip()})')
+                continue
+            paren = m.end() - 1
+            begin = max(f.code.rfind(c, start, m.start()) for c in ';{=,') + 1
+            resolved = target_of(f, f.raw[begin:match_close(f.code, paren)], None)
+            if resolved is None:
+                problems.append(f'{f.rel}:{line}: unresolved method reference in transpiler {cls}.{name}')
+                continue
+            typ, method_name = resolved.split('.')
+            if typ in pc_classes:
+                found['helpers'].append((name, typ, method_name, f.rel))
     return files, found, problems
 
 
@@ -453,10 +591,10 @@ def inventory_hash(root=None, path=INVENTORY):
 def expected_sets(path=INVENTORY):
     _, rows = parse_inventory(path)
     return dict(
-        patches={(owner, kind, short(typ), method, file) for owner, kind, typ, method, target, file in rows['P']},
-        messages={(short(typ), method, file) for typ, method, file in rows['M']},
-        events={(evt, short(typ), method, file) for evt, typ, method, file in rows['E']},
-        helpers={(transpiler, short(typ), method, file) for transpiler, typ, method, file in rows['H']},
+        patches=[(owner, kind, short(typ), method, target, file) for owner, kind, typ, method, target, file in rows['P']],
+        messages=[(short(typ), method, file) for typ, method, file in rows['M']],
+        events=[(evt, short(typ), method, file) for evt, typ, method, file in rows['E']],
+        helpers=[(transpiler, short(typ), method, file) for transpiler, typ, method, file in rows['H']],
     ), rows
 
 
@@ -465,9 +603,11 @@ def check(root, inventory=INVENTORY):
     files, found, problems = scan(root)
     expected, rows = expected_sets(inventory)
     for key in ('patches', 'messages', 'events', 'helpers'):
-        for row in sorted(found[key] - expected[key], key=str):
+        # Multisets: the same callback registered again, or on another native target, is a difference.
+        source, listed = Counter(found[key]), Counter(expected[key])
+        for row in sorted((source - listed).elements(), key=str):
             problems.append(f'{key}: in source but not in ScopeInventory.cs: {" ".join(str(x) for x in row)}')
-        for row in sorted(expected[key] - found[key], key=str):
+        for row in sorted((listed - source).elements(), key=str):
             problems.append(f'{key}: in ScopeInventory.cs but not in source: {" ".join(str(x) for x in row)}')
     by_rel = {f.rel: f for f in files}
     for typ, method, params, file in rows['C']:

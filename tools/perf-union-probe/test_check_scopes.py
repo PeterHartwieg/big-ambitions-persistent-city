@@ -92,6 +92,68 @@ class CheckScopesTests(unittest.TestCase):
             problems = src.problems()
         self.assertTrue(any('ExtraPostfix' in p and 'not in ScopeInventory' in p for p in problems), problems)
 
+    def test_fails_when_a_callback_is_reused_on_another_target(self):
+        # Sol-r1-3: same owner, kind and callback, different native target.
+        with SourceCopy() as src:
+            src.edit('Runtime/StationaryCrowds.cs', 'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));',
+                     'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));\n'
+                     '                harmony.Patch(AccessTools.Method(typeof(PedestrianSpawner), "SetActivePedestrians"), '
+                     'prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));')
+            problems = src.problems()
+        self.assertTrue(any('SpawnPrefix PedestrianSpawner.SetActivePedestrians' in p and 'not in ScopeInventory' in p for p in problems), problems)
+
+    def test_fails_on_a_repeated_registration(self):
+        with SourceCopy() as src:
+            src.edit('Runtime/StationaryCrowds.cs', 'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));',
+                     'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));\n'
+                     '                harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));')
+            problems = src.problems()
+        self.assertTrue(any('SpawnPrefix StationaryAiSpawner.Spawn' in p and 'not in ScopeInventory' in p for p in problems), problems)
+
+    def test_fails_when_an_existing_target_changes(self):
+        cases = [
+            ('Runtime/StationaryCrowds.cs', 'AccessTools.Method(typeof(StationaryAiSpawner), "Spawn"',
+             'AccessTools.Method(typeof(StationaryAiSpawner), "SpawnAll"', 'StationaryAiSpawner.SpawnAll'),  # field-initialised variable
+            ('Runtime/NativeFoodOwnership.cs', 'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',
+             'Patch(typeof(BuildingRegistration), "Clear", nameof(ResetRegistration));', 'BuildingRegistration.Clear'),  # helper call
+            ('Runtime/PhysicalTrafficHooks.cs', 'Patch(typeof(DrivingAI), "WaypointRequested"',
+             'Patch(typeof(DrivingAI), "WaypointGranted"', 'DrivingAI.WaypointGranted'),  # helper through a local
+            ('Runtime/ResearchBilling.cs', 'GetMethod("RunDaily"', 'GetMethod("RunWeekly"', 'MarketingHelper.RunWeekly'),  # out parameter
+        ]
+        for rel, old, new, expected in cases:
+            with self.subTest(expected=expected), SourceCopy() as src:
+                src.edit(rel, old, new)
+                problems = src.problems()
+                self.assertTrue(any(expected in p and 'not in ScopeInventory' in p for p in problems), problems)
+
+    def test_fails_on_an_unresolvable_target(self):
+        with SourceCopy() as src:
+            src.edit('Runtime/StationaryCrowds.cs', 'harmony.Patch(spawn, prefix:', 'harmony.Patch(Lookup(), prefix:')
+            problems = src.problems()
+        self.assertTrue(any('cannot resolve the native target' in p for p in problems), problems)
+
+    def test_fails_on_a_string_named_transpiler_helper(self):
+        # Astra-r1-2: a helper resolved by a string literal must be inventoried.
+        with SourceCopy() as src:
+            src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
+                     'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n'
+                     '            var other = AccessTools.Method(typeof(PhysicalTrafficHooks), "SelectOther");')
+            problems = src.problems()
+        self.assertTrue(any('SelectOther' in p and 'not in ScopeInventory' in p for p in problems), problems)
+
+    def test_fails_closed_on_other_transpiler_method_references(self):
+        snippets = ['var other = typeof(PhysicalTrafficHooks).GetMethod("SelectOther");',
+                    'var call = CodeInstruction.Call(typeof(PhysicalTrafficHooks), "SelectOther");',
+                    'var getter = AccessTools.PropertyGetter(typeof(PhysicalTrafficHooks), "Other");',
+                    'var dynamicName = AccessTools.Method(typeof(PhysicalTrafficHooks), "Select" + "Other");']
+        expected = ['SelectOther', 'unrecognised method reference', 'unrecognised method reference', 'unresolved method reference']
+        for snippet, needle in zip(snippets, expected):
+            with self.subTest(snippet=snippet), SourceCopy() as src:
+                src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
+                         'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n            ' + snippet)
+                problems = src.problems()
+                self.assertTrue(any(needle in p for p in problems), problems)
+
     def test_fails_on_extra_helper_patch_call(self):
         with SourceCopy() as src:
             src.edit('Runtime/NativeFoodOwnership.cs', 'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',

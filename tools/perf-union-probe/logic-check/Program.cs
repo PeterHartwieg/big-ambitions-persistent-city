@@ -40,6 +40,8 @@ internal static class Program
         AdvanceRecords();
         Union();
         Inventory(expectHash);
+        CoverageLifecycle();
+        Capacity();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
@@ -208,6 +210,92 @@ internal static class Program
         Check(all.All(s => s.File.Length > 0 && s.Type.Length > 0 && s.Method.Length > 0), "every row names a file, type and method");
         Check(ScopeInventory.Hash() == ScopeInventory.Hash() && ScopeInventory.Hash().Length == 64, "hash is stable");
         if (expectHash != null) Check(ScopeInventory.Hash() == expectHash, "C# canonical hash equals check_scopes.py's (" + expectHash + ")");
+    }
+
+    private static ObservedPatch Observed(ExpectedScope row, string target = null, string owner = null, string kind = null) => new ObservedPatch
+    { Owner = owner ?? row.Owner, Kind = kind ?? row.Kind.ToString(), Type = row.Type, Method = row.Method, Target = target ?? row.Target, PcAssembly = true };
+
+    /// <summary>Sol-r1-1/Sol-r1-3: hooks installed after arming stay timed and complete; drift and duplicates fail closed.</summary>
+    private static void CoverageLifecycle()
+    {
+        const string probe = "f4b.perf-union-probe";
+        var patches = ScopeInventory.Patches;
+        CoverageTracker Armed() => new CoverageTracker(patches, _ => true, probe);
+        var installedLater = patches.Where(p => p.Owner == "hart.persistentcity.physicalvehicles.v1" || p.Owner == "hart.persistentcity.ambientpedestrians.v1").ToArray();
+        var early = patches.Where(p => !installedLater.Contains(p) && p.Method != "RidePrefix" && p.Method != "RidePostfix").ToArray();
+
+        // Arm inside a building: traffic and ambient hooks are not installed yet.
+        var t = Armed();
+        t.Observe(early.Select(p => Observed(p)));
+        Check(t.Complete && !t.Installed(installedLater[0]), "arming before physical hooks exist is complete; they show as not installed");
+        // Exit the building: PhysicalPopulation installs its hooks after arming. They were bound at arm, so they are timed.
+        t.Observe(early.Concat(installedLater).Select(p => Observed(p)));
+        Check(t.Complete && installedLater.All(t.Installed) && t.UnexpectedAtLastScan == 0, "hooks installed after arming are expected and stay complete");
+        // And removed again (bodies released): still complete.
+        t.Observe(early.Select(p => Observed(p)));
+        Check(t.Complete, "hooks uninstalled after arming stay complete");
+
+        var extra = Armed();
+        extra.Observe(early.Select(p => Observed(p)).Concat(new[] { new ObservedPatch { Owner = "hart.persistentcity.stationarycrowds.v1", Kind = "Postfix",
+            Type = "PersistentCity.Runtime.StationaryCrowds", Method = "ExtraPostfix", Target = "StationaryAiSpawner.Spawn", PcAssembly = true } }));
+        Check(!extra.Complete && extra.Unexpected.Count == 1, "a PC patch added after arming makes coverage incomplete");
+        extra.Observe(early.Select(p => Observed(p)));
+        Check(!extra.Complete, "an unexpected patch is never forgotten when it disappears");
+
+        var spawn = patches.Single(p => p.Method == "SpawnPrefix");
+        var drift = Armed();
+        drift.Observe(new[] { Observed(spawn, target: "PedestrianSpawner.SetActivePedestrians") });
+        Check(!drift.Complete, "an expected callback on another native target is unexpected");
+        var twice = Armed();
+        twice.Observe(new[] { Observed(spawn), Observed(spawn) });
+        Check(!twice.Complete, "an expected callback registered twice is unexpected");
+        var manipulator = Armed();
+        manipulator.Observe(new[] { Observed(spawn, kind: "ILManipulators") });
+        Check(!manipulator.Complete, "a PC IL manipulator is unexpected");
+        var foreignOwner = Armed();
+        foreignOwner.Observe(new[] { Observed(spawn, owner: "someone.else") });
+        Check(!foreignOwner.Complete, "a PC-assembly patch under a foreign owner is unexpected");
+        var others = Armed();
+        others.Observe(new[] { new ObservedPatch { Owner = "someone.else", Kind = "Prefix", Type = "Other.Mod", Method = "Prefix", Target = "GameManager.RunMainGameTick" },
+            new ObservedPatch { Owner = probe, Kind = "Prefix", Type = "PerfUnionProbe.ScopePatch", Method = "Before", Target = "NativeCityClock.TickPrefix" } });
+        Check(others.Complete, "foreign mods and the probe's own patches are ignored");
+        var unbindable = new CoverageTracker(patches, p => p.Method != "SpawnPrefix", probe);
+        Check(!unbindable.Complete && unbindable.Unbindable.Count == 1, "an expected callback the probe cannot patch is incomplete");
+        var transpilerOnly = new CoverageTracker(patches, p => p.Kind != ScopeKind.Transpiler, probe);
+        Check(transpilerOnly.Complete, "transpilers are never scopes, so they cannot be unbindable");
+    }
+
+    /// <summary>Sol-r1-2: the planned windows fit, by buffer or by draining while measuring.</summary>
+    private static void Capacity()
+    {
+        long Run(int capacity, long rows, int drainEvery, int page)
+        {
+            var ring = new RingCursor(capacity);
+            long next = 0;
+            for (long i = 0; i < rows; i++)
+            {
+                ring.TryWrite(out _);
+                if (drainEvery > 0 && (i + 1) % drainEvery == 0)
+                    while (ring.Page(next, page, out int took) && took > 0) next += took;
+            }
+            return ring.Dropped;
+        }
+        const int fps = 90;
+        long g13 = 20L * 60 * fps; // 20 real minutes at the declared 90 FPS cap
+        Check(g13 <= ProbeCapacity.Frames && Run(ProbeCapacity.Frames, g13, 0, 0) == 0, "a 20-minute G13 window at 90 FPS fits the frame buffer undrained");
+        Check(Run(ProbeCapacity.Ticks, g13, 0, 0) == 0, "its ticks (one native tick per frame) fit undrained");
+        Check(Run(ProbeCapacity.Diagnostics, 20 * 60, 0, 0) == 0, "its once-per-second diagnostics fit undrained");
+        long soak = 4L * 3600 * fps; // longer than G14's three game days at speed 3 (about 80 real minutes)
+        Check(Run(ProbeCapacity.Frames, soak, 0, 0) > 0, "an undrained 4-hour window reports dropped frames, never silent overwrite");
+        Check(Run(ProbeCapacity.Frames, soak, 60 * fps, ProbeCapacity.FramePage) == 0, "a 4-hour window drained once per real minute loses no frame");
+        Check(Run(ProbeCapacity.Ticks, soak, 60 * fps, ProbeCapacity.TickPage) == 0, "and no tick");
+        Check(Run(ProbeCapacity.Diagnostics, 4 * 3600, 600, ProbeCapacity.DiagnosticPage) == 0, "diagnostics drained every 10 minutes lose no sample");
+        var r = new RingCursor(4);
+        for (int i = 0; i < 4; i++) r.TryWrite(out _);
+        Check(!r.TryWrite(out _) && r.Dropped == 1 && r.Written == 4, "a full ring drops new rows and keeps undrained ones");
+        Check(r.Page(0, 2, out int a) && a == 2 && r.Page(0, 2, out _) && r.Page(2, 2, out _) && r.Drained == 2, "paging acknowledges earlier rows; the same page may be read again");
+        Check(!r.Page(1, 2, out _) && !r.Page(5, 2, out _), "a drained or future offset is refused");
+        Check(r.TryWrite(out int slot) && slot == 0 && r.Written == 5, "drained slots are reused");
     }
 
     // ---- Offline overhead on a stub loop (docs/perf/f4b.md) ----

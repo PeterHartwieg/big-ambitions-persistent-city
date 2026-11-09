@@ -48,7 +48,9 @@ namespace PerfUnionProbe
     {
         // Deliberately outside the persistentcity owner namespaces, so the inventory never sees the probe.
         internal const string PatchId = "f4b.perf-union-probe";
-        private const int FrameLimit = 65536, TickLimit = 131072, HoldLimit = 16384, CallLimit = 4096, DiagnosticLimit = 4096, ReplyLimit = 48000;
+        // ProbeCapacity: a 20-minute window at the 90 FPS cap fits without draining; longer windows drain through `page`.
+        internal const int FrameLimit = ProbeCapacity.Frames, TickLimit = ProbeCapacity.Ticks, CallLimit = ProbeCapacity.Calls,
+            DiagnosticLimit = ProbeCapacity.Diagnostics, ReplyLimit = 48000;
         internal static readonly BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
         internal static readonly double ToMs = 1000.0 / Stopwatch.Frequency;
         private static readonly Harmony patches = new Harmony(PatchId);
@@ -85,13 +87,16 @@ namespace PerfUnionProbe
         private static string[] componentNames = Array.Empty<string>();
         internal static UnionClock union = new UnionClock(0, 0, Stopwatch.Frequency);
         internal static readonly HoldTracker holds = new HoldTracker();
-        private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound, coverageComplete;
+        private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound, patchSetChanged;
+        private static CoverageTracker coverage;
+        private static int unexpectedAtWindowStart;
 
         // Frame recording.
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
         private static float[] frameComponents = Array.Empty<float>();
-        private static int frameCount, currentFrame = -1, firstMeasureFrame = -1;
-        private static long frameDropped, frameStartQpc, nextDiagnosticQpc;
+        private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
+        private static int currentFrame = -1, firstMeasureFrame = -1;
+        private static long frameStartQpc, nextDiagnosticQpc;
         internal static long observerTicks;
         private static long boundaryTicks;
         private static int gcAtFrameStart, frameSaves, totalSaves, totalSceneEvents;
@@ -102,13 +107,13 @@ namespace PerfUnionProbe
 
         // Per-tick holds, per-call advancement records, per-second diagnostics.
         internal static readonly TickRecord[] ticks = new TickRecord[TickLimit];
-        internal static int tickCount;
-        internal static long tickDropped;
+        internal static readonly RingCursor tickRing = new RingCursor(TickLimit);
         internal static readonly AdvanceCallRecord[] calls = new AdvanceCallRecord[CallLimit];
         internal static int callCount;
         internal static long callDropped, advanceCalls;
-        private static readonly List<Sample> samples = new List<Sample>();
-        private static long sampleDropped;
+        private static readonly Sample[] samples = new Sample[DiagnosticLimit];
+        private static readonly RingCursor sampleRing = new RingCursor(DiagnosticLimit);
+        private static long sampleFailures;
 
         // Persistent City reads, bound once at arm.
         internal static Func<long> heldOrdinary, heldSkip, boundaryClips;
@@ -217,7 +222,7 @@ namespace PerfUnionProbe
                     patches.Patch(tick, prefix: new HarmonyMethod(typeof(ShimPatch), nameof(ShimPatch.Prefix)) { priority = Priority.First + 1 });
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
-                    coverageComplete = false; // n/a: no Persistent City scopes exist in this arm.
+                    coverage = null; // n/a: no Persistent City scopes exist in this arm.
                 }
                 else
                 {
@@ -262,50 +267,26 @@ namespace PerfUnionProbe
             saveEpochDiagnostics = runtimeType.GetProperty("SaveEpochDiagnostics", BindingFlags.Public | BindingFlags.Instance);
         }
 
-        /// <summary>Decision 5: every PC patch in Harmony's patch info, plus messages, native event handlers, transpiler
-        /// helpers and components. An unexpected or unbindable PC entry makes coverage incomplete.</summary>
+        /// <summary>Decision 5: every expected PC callback (patch methods, messages, native event handlers, transpiler helpers)
+        /// is timed from arm on, whether or not Persistent City has installed its native patch yet, so hooks installed after
+        /// arming are timed too. Harmony's patch info is rescanned at arm, at window edges and once per real second; any PC
+        /// patch that is not an expected row on its expected target makes coverage incomplete (CoverageTracker).</summary>
         private static void BindInventory()
         {
             bindings.Clear(); scopeIndex.Clear(); componentIndex.Clear(); scopeFast.Clear(); componentFast.Clear();
-            var owners = new HashSet<string>(ScopeInventory.Owners, StringComparer.Ordinal);
-            var expected = ScopeInventory.Patches.ToDictionary(p => p.Owner + "|" + p.Kind + "|" + p.Type + "|" + p.Method, StringComparer.Ordinal);
-            var seen = new HashSet<string>(StringComparer.Ordinal);
             var timed = new List<KeyValuePair<MethodBase, Binding>>();
-            foreach (var target in Harmony.GetAllPatchedMethods().ToArray())
-            {
-                var info = Harmony.GetPatchInfo(target);
-                if (info == null) continue;
-                var lists = new List<KeyValuePair<ScopeKind, IEnumerable<Patch>>> {
-                    new KeyValuePair<ScopeKind, IEnumerable<Patch>>(ScopeKind.Prefix, info.Prefixes),
-                    new KeyValuePair<ScopeKind, IEnumerable<Patch>>(ScopeKind.Postfix, info.Postfixes),
-                    new KeyValuePair<ScopeKind, IEnumerable<Patch>>(ScopeKind.Finalizer, info.Finalizers),
-                    new KeyValuePair<ScopeKind, IEnumerable<Patch>>(ScopeKind.Transpiler, info.Transpilers) };
-                // Any other patch list a later Harmony adds (IL manipulators) is unexpected for a PC owner.
-                foreach (var property in typeof(Patches).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                    if (property.Name != "Prefixes" && property.Name != "Postfixes" && property.Name != "Finalizers" && property.Name != "Transpilers"
-                        && property.Name != "Owners" && property.GetValue(info) is IEnumerable<Patch> extra)
-                        foreach (var patch in extra)
-                            if (owners.Contains(patch.owner) || patch.PatchMethod?.DeclaringType?.Assembly == pc)
-                                bindings.Add(new Binding { Label = property.Name + ":" + patch.PatchMethod?.Name, Kind = property.Name, Status = "unexpected", Owner = patch.owner, Target = Name(target) });
-                foreach (var list in lists)
-                    foreach (var patch in list.Value)
-                    {
-                        var method = patch.PatchMethod;
-                        if (patch.owner == PatchId) continue;
-                        if (!owners.Contains(patch.owner) && method?.DeclaringType?.Assembly != pc) continue;
-                        string key = patch.owner + "|" + list.Key + "|" + method?.DeclaringType?.FullName + "|" + method?.Name;
-                        var row = new Binding { Kind = list.Key.ToString(), Owner = patch.owner, Method = method?.DeclaringType?.FullName + "." + method?.Name, Target = Name(target) };
-                        if (!expected.TryGetValue(key, out var exp) || exp.Target != target.DeclaringType?.Name + "." + target.Name || !seen.Add(key))
-                        { row.Label = method?.Name ?? "unknown"; row.Status = "unexpected"; bindings.Add(row); continue; }
-                        row.Expected = exp; row.Label = exp.Label;
-                        if (list.Key == ScopeKind.Transpiler) row.Status = "untimed-transpiled"; // Its code runs inside the native method.
-                        else { row.Status = "timed"; timed.Add(new KeyValuePair<MethodBase, Binding>(method, row)); }
-                        bindings.Add(row);
-                    }
-            }
             foreach (var exp in ScopeInventory.Patches)
-                if (!seen.Contains(exp.Owner + "|" + exp.Kind + "|" + exp.Type + "|" + exp.Method))
-                    bindings.Add(new Binding { Expected = exp, Label = exp.Label, Kind = exp.Kind.ToString(), Owner = exp.Owner, Target = exp.Target, Status = "not-installed" });
+            {
+                var row = new Binding { Expected = exp, Label = exp.Label, Kind = exp.Kind.ToString(), Owner = exp.Owner, Target = exp.Target, Method = exp.Type + "." + exp.Method };
+                if (exp.Kind == ScopeKind.Transpiler) row.Status = "untimed-transpiled"; // Its code runs inside the native method.
+                else
+                {
+                    var method = Find(exp, null);
+                    row.Status = method == null ? "unbindable" : "timed";
+                    if (method != null) timed.Add(new KeyValuePair<MethodBase, Binding>(method, row));
+                }
+                bindings.Add(row);
+            }
             foreach (var exp in ScopeInventory.Messages.Concat(ScopeInventory.Events).Concat(ScopeInventory.TranspilerHelpers))
             {
                 var method = Find(exp, null);
@@ -334,6 +315,8 @@ namespace PerfUnionProbe
                 }
                 catch { foreach (var row in bindings.Where(b => b.Scope == pair.Value)) row.Status = "unbindable"; }
             }
+            coverage = new CoverageTracker(ScopeInventory.Patches, exp => bindings.Any(b => ReferenceEquals(b.Expected, exp) && b.Status == "timed"), PatchId);
+            ScanPatches();
             for (int i = 0; i < components.Length; i++)
             {
                 var method = Find(components[i], components[i].Target);
@@ -372,8 +355,33 @@ namespace PerfUnionProbe
                 }
                 catch { holdsBound = false; }
             }
-            coverageComplete = bindings.All(b => b.Status != "unexpected" && b.Status != "unbindable");
         }
+
+        /// <summary>Reads Harmony's patch info for every patched method and checks the PC patches against the inventory.</summary>
+        private static void ScanPatches()
+        {
+            if (coverage == null) return;
+            var observed = new List<ObservedPatch>();
+            foreach (var target in Harmony.GetAllPatchedMethods().ToArray())
+            {
+                var info = Harmony.GetPatchInfo(target);
+                if (info == null) continue;
+                // Every patch list Harmony exposes; a list other than the four kinds (IL manipulators) is never expected.
+                foreach (var property in typeof(Patches).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (!(property.GetValue(info) is IEnumerable<Patch> list)) continue;
+                    string kind = property.Name == "Prefixes" ? "Prefix" : property.Name == "Postfixes" ? "Postfix"
+                        : property.Name == "Finalizers" ? "Finalizer" : property.Name == "Transpilers" ? "Transpiler" : property.Name;
+                    foreach (var patch in list)
+                        observed.Add(new ObservedPatch { Owner = patch.owner, Kind = kind, Type = patch.PatchMethod?.DeclaringType?.FullName,
+                            Method = patch.PatchMethod?.Name, Target = target.DeclaringType?.Name + "." + target.Name,
+                            PcAssembly = pc != null && patch.PatchMethod?.DeclaringType?.Assembly == pc });
+                }
+            }
+            coverage.Observe(observed);
+        }
+
+        private static bool CoverageComplete() => coverage != null && coverage.Complete && bindings.All(b => b.Status != "unbindable");
 
         private static string Name(MethodBase method) => method.DeclaringType?.FullName + "." + method.Name;
         private static MethodBase Find(ExpectedScope exp, string parameters)
@@ -484,6 +492,7 @@ namespace PerfUnionProbe
                 nextDiagnosticQpc = now + Stopwatch.Frequency;
                 frameDiagnostic = true; // Sampled outside timed scopes; the frame is flagged diagnostic.
                 SampleDiagnostics(now);
+                Rescan(); // Catches PC patches installed or changed after arming.
             }
             boundaryTicks += Stopwatch.GetTimestamp() - now;
         }
@@ -497,7 +506,8 @@ namespace PerfUnionProbe
             if (union.Depth != 0)
             {
                 crossFrame++; union.Abandon();
-                if (measuring) { error = "f4b_cross_frame_scope"; StopMeasurement("cross_frame"); }
+                // The closing frame is already written; do not write it again as a partial stop row.
+                if (measuring) { error = "f4b_cross_frame_scope"; StopMeasurement("cross_frame", writeStopFrame: false); }
             }
             if (measuring && pendingWindowStart) { pendingWindowStart = false; holds.BeginWindow(nowFrame, now); }
             currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); observerTicks = boundaryTicks = 0;
@@ -508,28 +518,34 @@ namespace PerfUnionProbe
 
         private static void WriteFrame(int nextFrame, long end, bool partial)
         {
-            if (frameCount >= FrameLimit) { frameDropped++; return; }
-            frames[frameCount] = new FrameRow { frame = currentFrame, skipped = Math.Max(0, nextFrame - currentFrame - 1), qpc = frameStartQpc,
+            if (!frameRing.TryWrite(out int slot)) return; // Counted in frameRing.Dropped.
+            frames[slot] = new FrameRow { frame = currentFrame, skipped = Math.Max(0, nextFrame - currentFrame - 1), qpc = frameStartQpc,
                 modWorkMs = union.FrameTicks * ToMs, wholeFrameMs = (end - frameStartQpc) * ToMs, observerMs = observerTicks * ToMs,
                 boundaryMs = boundaryTicks * ToMs, gc = GC.CollectionCount(0) - gcAtFrameStart, saves = frameSaves, scene = frameScene,
                 loading = frameLoading, diagnostic = frameDiagnostic, lateBoundary = frameLate, partial = partial, crossFrame = !partial && union.Depth != 0,
                 nativeMinute = frameNative, logicalMinute = frameLogical };
             int components = union.Components;
-            for (int c = 0; c < components; c++) frameComponents[frameCount * components + c] = (float)(union.FrameComponentTicks(c) * ToMs);
-            frameCount++;
+            for (int c = 0; c < components; c++) frameComponents[slot * components + c] = (float)(union.FrameComponentTicks(c) * ToMs);
         }
 
         private static void SampleDiagnostics(long now)
         {
             if (mode != "candidate" || runtime == null) return;
-            if (samples.Count >= DiagnosticLimit) { sampleDropped++; return; }
             try
             {
-                samples.Add(new Sample { frame = Time.frameCount, qpc = now,
+                var sample = new Sample { frame = Time.frameCount, qpc = now,
                     accounting = accountingDiagnostics == null ? null : JObject.FromObject(accountingDiagnostics.GetValue(runtime)),
-                    saveEpoch = saveEpochDiagnostics == null ? null : JObject.FromObject(saveEpochDiagnostics.GetValue(runtime)) });
+                    saveEpoch = saveEpochDiagnostics == null ? null : JObject.FromObject(saveEpochDiagnostics.GetValue(runtime)) };
+                if (sampleRing.TryWrite(out int slot)) samples[slot] = sample;
             }
-            catch { sampleDropped++; }
+            catch { sampleFailures++; }
+        }
+
+        private static void Rescan()
+        {
+            if (coverage == null) return;
+            try { ScanPatches(); } catch { error = "f4b_patch_scan_failed"; }
+            if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
         }
 
         private static void StartMeasurement(JObject args)
@@ -539,7 +555,8 @@ namespace PerfUnionProbe
             string label = (string)args["window"] ?? "";
             Require(label.Length <= 64 && label.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' || ch == '.'), "f4b_invalid_window_label");
             window = label; error = ""; stopReason = "measuring";
-            frameCount = tickCount = callCount = 0; frameDropped = tickDropped = callDropped = sampleDropped = advanceCalls = 0; samples.Clear();
+            frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); callCount = 0; callDropped = sampleFailures = advanceCalls = 0;
+            Rescan(); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
             long now = Stopwatch.GetTimestamp();
@@ -548,12 +565,13 @@ namespace PerfUnionProbe
             pendingWindowStart = true; measuring = true;
         }
 
-        private static void StopMeasurement(string reason)
+        private static void StopMeasurement(string reason, bool writeStopFrame = true)
         {
             if (!measuring) return;
+            if (reason == "explicit-stop") Rescan();
             long now = Stopwatch.GetTimestamp();
             // The stop frame is written as a partial, diagnostic row so hold events inside it stay inside the window.
-            if (currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
+            if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, now);
             measuring = false; stopReason = reason;
@@ -570,7 +588,7 @@ namespace PerfUnionProbe
                 SceneManager.sceneLoaded -= SceneLoaded; SceneManager.sceneUnloaded -= SceneUnloaded;
                 GlobalEvents.onSaveGame -= SaveObserved; eventsSubscribed = false;
             }
-            union.Abandon(); shimInstalled = holdsBound = advanceBound = coverageComplete = false;
+            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null;
             mode = "none"; runtime = null; pc = null; shimFactor = double.NaN;
             heldOrdinary = heldSkip = boundaryClips = null; withheld = null; accountingLimited = null; clockFactor = null;
             readSimulation = readState = readStopEnvironment = null; readMinute = readSeam = null;
@@ -598,22 +616,25 @@ namespace PerfUnionProbe
                 ["prototype"] = true, ["native_validated"] = false, ["packaged"] = false, ["mode"] = mode, ["armed"] = armed, ["measuring"] = measuring,
                 ["window"] = window, ["error"] = error, ["stop_reason"] = stopReason,
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
-                ["coverage_complete"] = NotApplicable(() => coverageComplete),
+                ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
+                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
-                    ["untimed_transpiled"] = Names("untimed-transpiled"), ["not_installed"] = Names("not-installed"),
-                    ["unexpected"] = Names("unexpected"), ["unbindable"] = Names("unbindable"),
+                    ["untimed_transpiled"] = Names("untimed-transpiled"),
+                    ["not_installed"] = new JArray(bindings.Where(b => b.Status == "timed" && b.Expected?.Kind <= ScopeKind.Finalizer && coverage != null && !coverage.Installed(b.Expected)).Select(b => b.Label).Take(64)),
+                    ["unexpected"] = new JArray((coverage?.Unexpected ?? (IReadOnlyCollection<string>)Array.Empty<string>()).Take(64)), ["unbindable"] = Names("unbindable"),
                     ["components"] = new JArray(componentNames), ["component_unbound"] = Names("component-unbound") }),
                 ["holds_bound"] = NotApplicable(() => holdsBound), ["advance_records_bound"] = NotApplicable(() => advanceBound),
                 ["optional_stop_seam_bound"] = NotApplicable(() => readSeam != null),
                 ["calendar_factor"] = candidate ? (JToken)(clockFactor?.Invoke() ?? double.NaN) : shimFactor,
                 ["pace_shim"] = mode == "reference" ? (JToken)new JObject { ["active"] = shimInstalled, ["factor"] = shimFactor,
                     ["ticks"] = shimTicks, ["multiplied"] = shimMultiplied, ["changes_native_state"] = true } : "n/a",
-                ["frames"] = frameCount, ["frame_dropped"] = frameDropped,
-                ["ticks"] = NotApplicable(() => tickCount), ["tick_dropped"] = NotApplicable(() => tickDropped),
+                ["frames"] = frameRing.Written, ["frames_drained"] = frameRing.Drained, ["frame_dropped"] = frameRing.Dropped, ["frame_capacity"] = FrameLimit,
+                ["ticks"] = NotApplicable(() => tickRing.Written), ["ticks_drained"] = NotApplicable(() => tickRing.Drained), ["tick_dropped"] = NotApplicable(() => tickRing.Dropped),
                 ["hold_events"] = NotApplicable(() => holds.Events.Count), ["held_now"] = NotApplicable(() => holds.Held),
                 ["advance_calls"] = NotApplicable(() => advanceCalls), ["advance_records_ge30"] = NotApplicable(() => callCount),
                 ["advance_record_dropped"] = NotApplicable(() => callDropped),
-                ["diagnostic_samples"] = NotApplicable(() => samples.Count), ["diagnostic_dropped"] = NotApplicable(() => sampleDropped),
+                ["diagnostic_samples"] = NotApplicable(() => sampleRing.Written), ["diagnostic_dropped"] = NotApplicable(() => sampleRing.Dropped),
+                ["diagnostic_failures"] = NotApplicable(() => sampleFailures),
                 ["cross_frame_scopes"] = crossFrame, ["timed_exceptions"] = timedExceptions, ["off_main_callbacks"] = Volatile.Read(ref offMainCallbacks),
                 ["unknown_scope_calls"] = unknownScopeCalls, ["union_underflows"] = union.Underflows, ["components_outside_union"] = union.ComponentsOutsideUnion,
                 ["saves_in_window"] = totalSaves, ["scene_events_in_window"] = totalSceneEvents,
@@ -630,39 +651,53 @@ namespace PerfUnionProbe
         private static JObject Page(JObject args)
         {
             string section = (string)args["section"];
-            Require(!measuring, "f4b_stop_before_exporting");
-            int offset = Number(args, "offset", 0, int.MaxValue);
-            var rows = new JArray(); int count;
-            if (section == "frames")
+            // Frames, ticks and diagnostics stream: they can be drained while measuring (paging from an offset acknowledges
+            // every earlier row). The other sections are exported after measure-stop.
+            bool streamed = section == "frames" || section == "ticks" || section == "diagnostics";
+            Require(streamed || !measuring, "f4b_stop_before_exporting");
+            long offset = (long?)args["offset"] ?? 0;
+            Require(offset >= 0, "f4b_invalid_offset");
+            var rows = new JArray(); long count;
+            if (streamed)
             {
-                count = frameCount; int limit = Number(args, "limit", 64, 96), components = union.Components;
-                for (int i = offset; i < Math.Min(count, offset + limit); i++)
+                var ring = section == "frames" ? frameRing : section == "ticks" ? tickRing : sampleRing;
+                int limit = section == "frames" ? Number(args, "limit", 64, ProbeCapacity.FramePage) : section == "ticks" ? Number(args, "limit", 128, ProbeCapacity.TickPage)
+                    : Number(args, "limit", 16, ProbeCapacity.DiagnosticPage);
+                Require(ring.Page(offset, limit, out int take), "f4b_rows_already_drained_or_beyond_end");
+                count = ring.Written;
+                int components = union.Components;
+                for (long index = offset; index < offset + take; index++)
                 {
-                    var f = frames[i];
-                    var row = new JObject { ["frame"] = f.frame, ["qpc"] = f.qpc, ["skipped"] = f.skipped, ["mod_work_ms"] = f.modWorkMs,
-                        ["whole_frame_ms"] = f.wholeFrameMs, ["observer_ms"] = f.observerMs, ["boundary_ms"] = f.boundaryMs, ["gc"] = f.gc,
-                        ["saves"] = f.saves, ["scene"] = f.scene, ["loading"] = f.loading, ["diagnostic"] = f.diagnostic,
-                        ["late_boundary"] = f.lateBoundary, ["partial"] = f.partial, ["cross_frame"] = f.crossFrame, ["native_minute"] = f.nativeMinute,
-                        ["logical_minute"] = double.IsNaN(f.logicalMinute) ? JValue.CreateNull() : (JToken)f.logicalMinute };
-                    if (components > 0) row["components_ms"] = new JArray(Enumerable.Range(0, components).Select(c => (double)frameComponents[i * components + c]));
-                    rows.Add(row);
+                    int i = ring.Slot(index);
+                    if (section == "frames")
+                    {
+                        var f = frames[i];
+                        var row = new JObject { ["index"] = index, ["frame"] = f.frame, ["qpc"] = f.qpc, ["skipped"] = f.skipped, ["mod_work_ms"] = f.modWorkMs,
+                            ["whole_frame_ms"] = f.wholeFrameMs, ["observer_ms"] = f.observerMs, ["boundary_ms"] = f.boundaryMs, ["gc"] = f.gc,
+                            ["saves"] = f.saves, ["scene"] = f.scene, ["loading"] = f.loading, ["diagnostic"] = f.diagnostic,
+                            ["late_boundary"] = f.lateBoundary, ["partial"] = f.partial, ["cross_frame"] = f.crossFrame, ["native_minute"] = f.nativeMinute,
+                            ["logical_minute"] = double.IsNaN(f.logicalMinute) ? JValue.CreateNull() : (JToken)f.logicalMinute };
+                        if (components > 0) row["components_ms"] = new JArray(Enumerable.Range(0, components).Select(c => (double)frameComponents[i * components + c]));
+                        rows.Add(row);
+                    }
+                    else if (section == "ticks")
+                    {
+                        var t = ticks[i];
+                        rows.Add(new JObject { ["index"] = index, ["frame"] = t.Frame, ["qpc"] = t.Qpc, ["held"] = t.Held, ["boundary_clip"] = t.BoundaryClip,
+                            ["accounting_limited"] = t.AccountingLimited, ["counters_reset"] = t.CountersReset, ["withheld_minutes"] = t.WithheldMinutes,
+                            ["native_minute"] = t.NativeMinute, ["logical_minute"] = double.IsNaN(t.LogicalMinute) ? JValue.CreateNull() : (JToken)t.LogicalMinute });
+                    }
+                    else rows.Add(new JObject { ["index"] = index, ["frame"] = samples[i].frame, ["qpc"] = samples[i].qpc,
+                        ["accounting"] = samples[i].accounting, ["save_epoch"] = samples[i].saveEpoch });
                 }
+                return new JObject { ["section"] = section, ["rows"] = rows, ["count"] = count, ["drained"] = ring.Drained, ["dropped"] = ring.Dropped,
+                    ["components"] = section == "frames" ? new JArray(componentNames) : null,
+                    ["next"] = offset + rows.Count < count ? (JToken)(offset + rows.Count) : JValue.CreateNull() };
             }
-            else if (section == "ticks")
-            {
-                count = tickCount; int limit = Number(args, "limit", 128, 256);
-                for (int i = offset; i < Math.Min(count, offset + limit); i++)
-                {
-                    var t = ticks[i];
-                    rows.Add(new JObject { ["frame"] = t.Frame, ["qpc"] = t.Qpc, ["held"] = t.Held, ["boundary_clip"] = t.BoundaryClip,
-                        ["accounting_limited"] = t.AccountingLimited, ["counters_reset"] = t.CountersReset, ["withheld_minutes"] = t.WithheldMinutes,
-                        ["native_minute"] = t.NativeMinute, ["logical_minute"] = double.IsNaN(t.LogicalMinute) ? JValue.CreateNull() : (JToken)t.LogicalMinute });
-                }
-            }
-            else if (section == "holds")
+            if (section == "holds")
             {
                 count = holds.Events.Count; int limit = Number(args, "limit", 128, 256);
-                for (int i = offset; i < Math.Min(count, offset + limit); i++)
+                for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++)
                 {
                     var h = holds.Events[i];
                     rows.Add(new JObject { ["kind"] = h.Kind == HoldEventKind.Hold ? "hold" : "resume", ["frame"] = h.Frame, ["qpc"] = h.Qpc,
@@ -672,7 +707,7 @@ namespace PerfUnionProbe
             else if (section == "calls")
             {
                 count = callCount; int limit = Number(args, "limit", 128, 256);
-                for (int i = offset; i < Math.Min(count, offset + limit); i++)
+                for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++)
                 {
                     var c = calls[i];
                     rows.Add(new JObject { ["frame"] = c.Frame, ["start_qpc"] = c.StartQpc, ["duration_ms"] = c.DurationTicks * ToMs,
@@ -680,19 +715,14 @@ namespace PerfUnionProbe
                         ["optional_stop_ms"] = double.IsNaN(c.OptionalStopMilliseconds) ? JValue.CreateNull() : (JToken)c.OptionalStopMilliseconds });
                 }
             }
-            else if (section == "diagnostics")
-            {
-                count = samples.Count; int limit = Number(args, "limit", 16, 32);
-                for (int i = offset; i < Math.Min(count, offset + limit); i++)
-                    rows.Add(new JObject { ["frame"] = samples[i].frame, ["qpc"] = samples[i].qpc, ["accounting"] = samples[i].accounting, ["save_epoch"] = samples[i].saveEpoch });
-            }
             else if (section == "scopes")
             {
                 count = bindings.Count; int limit = Number(args, "limit", 32, 64);
-                for (int i = offset; i < Math.Min(count, offset + limit); i++)
+                for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++)
                 {
                     var b = bindings[i];
                     var row = new JObject { ["label"] = b.Label, ["kind"] = b.Kind, ["status"] = b.Status, ["owner"] = b.Owner, ["method"] = b.Method, ["target"] = b.Target };
+                    if (b.Expected != null && b.Expected.Kind <= ScopeKind.Transpiler && coverage != null) row["installed"] = coverage.Installed(b.Expected);
                     if (b.Scope >= 0 && b.Scope < union.Scopes)
                     {
                         row["calls"] = union.Calls(b.Scope); row["inclusive_ms"] = union.Ticks(b.Scope) * ToMs;
@@ -818,7 +848,7 @@ namespace PerfUnionProbe
                 record ? Session.NativeMinute() : double.NaN, record ? Session.LogicalMinute() : double.NaN);
             if (record)
             {
-                if (Session.tickCount < Session.ticks.Length) Session.ticks[Session.tickCount++] = tick; else Session.tickDropped++;
+                if (Session.tickRing.TryWrite(out int slot)) Session.ticks[slot] = tick; // A full ring counts tickRing.Dropped.
             }
             if (Session.measuring) Session.observerTicks += Stopwatch.GetTimestamp() - now;
         }

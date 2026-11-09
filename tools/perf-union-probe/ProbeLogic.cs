@@ -181,4 +181,102 @@ namespace PerfUnionProbe
         /// <summary>Abandons open scopes (cross-frame or error); the frame is flagged by the caller.</summary>
         public void Abandon() => depth = 0;
     }
+    /// <summary>One patch Harmony reports on a native method, as plain strings.</summary>
+    public struct ObservedPatch
+    {
+        public string Owner, Kind, Type, Method, Target;
+        /// <summary>The patch method lives in the Persistent City assembly.</summary>
+        public bool PcAssembly;
+    }
+
+    /// <summary>Fail-closed coverage (Decision 5). Every expected callback is timed from arm on, whether or not Persistent City
+    /// has installed its native patch yet, so hooks installed after arming (entering the street, physical bodies starting)
+    /// are timed. Each scan of Harmony's patch info checks that every PC patch is an expected row on its expected native
+    /// target, registered once. An unexpected patch seen at any scan while armed makes coverage incomplete for the rest
+    /// of the capture; it is never forgotten when it later disappears.</summary>
+    public sealed class CoverageTracker
+    {
+        private readonly Dictionary<string, ExpectedScope> expected = new Dictionary<string, ExpectedScope>(StringComparer.Ordinal);
+        private readonly HashSet<string> owners;
+        private readonly SortedSet<string> unbindable = new SortedSet<string>(StringComparer.Ordinal);
+        private readonly SortedSet<string> unexpected = new SortedSet<string>(StringComparer.Ordinal);
+        private HashSet<string> installed = new HashSet<string>(StringComparer.Ordinal);
+        private readonly string probeOwner;
+
+        public CoverageTracker(IEnumerable<ExpectedScope> patches, Func<ExpectedScope, bool> bindable, string probeOwner)
+        {
+            this.probeOwner = probeOwner;
+            owners = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in patches)
+            {
+                expected[Key(row.Owner, row.Kind.ToString(), row.Type, row.Method)] = row;
+                owners.Add(row.Owner);
+                // A transpiler is never a scope; every other row must be patchable before PC installs it.
+                if (row.Kind != ScopeKind.Transpiler && !bindable(row)) unbindable.Add(row.Label);
+            }
+        }
+
+        public static string Key(string owner, string kind, string type, string method) => owner + "|" + kind + "|" + type + "|" + method;
+        public long Scans { get; private set; }
+        public int UnexpectedAtLastScan { get; private set; }
+        public bool Complete => unbindable.Count == 0 && unexpected.Count == 0;
+        public IReadOnlyCollection<string> Unbindable => unbindable;
+        public IReadOnlyCollection<string> Unexpected => unexpected;
+        public bool Installed(ExpectedScope row) => installed.Contains(Key(row.Owner, row.Kind.ToString(), row.Type, row.Method));
+
+        /// <summary>Returns the number of unexpected patches in this scan.</summary>
+        public int Observe(IEnumerable<ObservedPatch> observed)
+        {
+            var now = new HashSet<string>(StringComparer.Ordinal);
+            int found = 0;
+            foreach (var p in observed)
+            {
+                if (p.Owner == probeOwner) continue;
+                if (!owners.Contains(p.Owner ?? "") && !p.PcAssembly) continue;
+                string key = Key(p.Owner, p.Kind, p.Type, p.Method);
+                if (!expected.TryGetValue(key, out var row) || row.Target != p.Target || !now.Add(key))
+                { unexpected.Add(p.Kind + " " + p.Type + "." + p.Method + " on " + p.Target + " by " + p.Owner); found++; }
+            }
+            installed = now; Scans++; UnexpectedAtLastScan = found;
+            return found;
+        }
+    }
+
+    /// <summary>Buffer sizes. Frames: 131,072 rows hold a 20-minute window (G13) at the declared 90 FPS cap (108,000 frames)
+    /// without draining; longer windows (G14 soak) drain frames, ticks and diagnostics while measuring.</summary>
+    public static class ProbeCapacity
+    {
+        public const int Frames = 131072, Ticks = 262144, Calls = 4096, Diagnostics = 8192;
+        public const int FramePage = 96, TickPage = 256, DiagnosticPage = 32;
+    }
+
+    /// <summary>Bounded buffer that the rig can drain while measuring. Rows have absolute indices; paging from
+    /// <c>offset</c> acknowledges every earlier row. A write that would overwrite an unacknowledged row is dropped
+    /// and counted, so a gap is always visible.</summary>
+    public sealed class RingCursor
+    {
+        public RingCursor(int capacity) { if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity)); Capacity = capacity; }
+        public int Capacity { get; }
+        public long Written { get; private set; }
+        public long Drained { get; private set; }
+        public long Dropped { get; private set; }
+        public bool TryWrite(out int slot)
+        {
+            if (Written - Drained >= Capacity) { Dropped++; slot = -1; return false; }
+            slot = (int)(Written % Capacity); Written++;
+            return true;
+        }
+        public int Slot(long index) => (int)(index % Capacity);
+        /// <summary>False when <paramref name="offset"/> was already drained or is beyond the last row.</summary>
+        public bool Page(long offset, int limit, out int count)
+        {
+            count = 0;
+            if (offset < Drained || offset > Written || limit < 0) return false;
+            Drained = offset;
+            count = (int)Math.Min(limit, Written - offset);
+            return true;
+        }
+        public void Reset() { Written = Drained = Dropped = 0; }
+    }
 }
+
