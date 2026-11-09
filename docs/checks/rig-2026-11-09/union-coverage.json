@@ -1,0 +1,297 @@
+{
+  "assembly": "PersistentCity",
+  "bound": 55,
+  "entry_points": [
+    {
+      "name": "PopulationRuntime.OnGUI",
+      "group": "gui",
+      "source": "unity:OnGUI"
+    },
+    {
+      "name": "PopulationRuntime.OnDestroy",
+      "group": "unity_message",
+      "source": "unity:OnDestroy"
+    },
+    {
+      "name": "PopulationRuntime.Update",
+      "group": "frame_update",
+      "source": "unity:Update"
+    },
+    {
+      "name": "FoodAuthorityBootstrap.get_RelativeAssetBundlePaths",
+      "group": "mod_lifecycle",
+      "source": "interface:IModBigAmbitions"
+    },
+    {
+      "name": "FoodAuthorityBootstrap.OnLoadAsync",
+      "group": "mod_lifecycle",
+      "source": "interface:IModBigAmbitions"
+    },
+    {
+      "name": "FoodAuthorityBootstrap.OnUnloadAsync",
+      "group": "mod_lifecycle",
+      "source": "interface:IModBigAmbitions"
+    },
+    {
+      "name": "PersistentCityMod.get_RelativeAssetBundlePaths",
+      "group": "mod_lifecycle",
+      "source": "interface:IModBigAmbitions"
+    },
+    {
+      "name": "PersistentCityMod.OnLoadAsync",
+      "group": "mod_lifecycle",
+      "source": "interface:IModBigAmbitions"
+    },
+    {
+      "name": "PersistentCityMod.OnUnloadAsync",
+      "group": "mod_lifecycle",
+      "source": "interface:IModBigAmbitions"
+    },
+    {
+      "name": "PhysicalPedestrianCrosswalk.OnTriggerEnter",
+      "group": "unity_message",
+      "source": "unity:OnTriggerEnter"
+    },
+    {
+      "name": "PhysicalPedestrianCrosswalk.OnTriggerExit",
+      "group": "unity_message",
+      "source": "unity:OnTriggerExit"
+    },
+    {
+      "name": "AmbientPedestrians.SetActivePrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.FixedStepPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.FixedStepPostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+      "group": "native_hook",
+      "source": "harmony:Finalizers"
+    },
+    {
+      "name": "NativeCityClock.TickPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeCityClock.AccountingPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeFoodOwnership.AfterNativeTick",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "NativeTravelPace.ObserveTickPostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.RequestPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.ReachedPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeFoodOwnership.HourlyCustomers",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeFoodOwnership.CustomerSale",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeFoodOwnership.CustomerDraw",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeFoodOwnership.GenerateCustomers",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeFoodOwnership.ResetRegistration",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "ResidentInspector.MouseRunPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "ResidentInspector.CameraInputPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "ResidentInspector.CameraInputPostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "ResearchBilling.RunDailyPostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "ResearchAgencyDialog.CampaignSettingsPostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "NativeCityClock.RidePrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "NativeCityClock.RidePostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "NativeFoodMarket.ResidentPrice",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalIntersections.SetActivePrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalIntersections.UpdatePostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.SpeedChangingPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.CrashPostfix",
+      "group": "native_hook",
+      "source": "harmony:Postfixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.RescuePrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.DespawnerPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "AmbientPedestrians.EndCyclePrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "AmbientPedestrians.ChangeStatePrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "StationaryCrowds.SpawnPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "ResidentInspector.UiRaycastPrefix",
+      "group": "native_hook",
+      "source": "harmony:Prefixes"
+    },
+    {
+      "name": "PhysicalTrafficHooks.ApplyBodyForce",
+      "group": "transpiled_call",
+      "source": "harmony:transpiled:TrafficManager.FixedUpdate"
+    },
+    {
+      "name": "PhysicalTrafficHooks.ApplyBodyRotation",
+      "group": "transpiled_call",
+      "source": "harmony:transpiled:TrafficManager.FixedUpdate"
+    },
+    {
+      "name": "PhysicalTrafficHooks.SelectIdle",
+      "group": "transpiled_call",
+      "source": "harmony:transpiled:DensityManager.AddVehicle"
+    },
+    {
+      "name": "PopulationRuntime.Shutdown",
+      "group": "event:onGameUnloaded",
+      "source": "event:onGameUnloaded"
+    },
+    {
+      "name": "PopulationRuntime.Save",
+      "group": "event:onSaveGame",
+      "source": "event:onSaveGame"
+    },
+    {
+      "name": "RouteObjectDiscovery.SceneLoaded",
+      "group": "event:sceneLoaded",
+      "source": "event:sceneLoaded"
+    },
+    {
+      "name": "RouteObjectDiscovery.SceneUnloaded",
+      "group": "event:sceneUnloaded",
+      "source": "event:sceneUnloaded"
+    },
+    {
+      "name": "advancement",
+      "group": "advancement",
+      "source": "component"
+    },
+    {
+      "name": "route_preparation",
+      "group": "route_preparation",
+      "source": "component"
+    },
+    {
+      "name": "physical_population",
+      "group": "physical_population",
+      "source": "component"
+    },
+    {
+      "name": "inspector",
+      "group": "inspector",
+      "source": "component"
+    }
+  ],
+  "untimed": [
+    {
+      "name": "PhysicalTrafficHooks.BodyForceTranspiler",
+      "source": "harmony:Transpilers",
+      "reason": "transpiler"
+    },
+    {
+      "name": "PhysicalTrafficHooks.SelectTranspiler",
+      "source": "harmony:Transpilers",
+      "reason": "transpiler"
+    }
+  ],
+  "missing_components": [],
+  "patch_failures": [],
+  "complete": true,
+  "qualification": "Union of the mod assembly's Unity messages (Update/LateUpdate/FixedUpdate/OnGUI, Start/OnDestroy, OnTrigger*/OnCollision* and the rest), its Harmony prefixes/postfixes/finalizers, the mod methods its transpilers inject into native IL, GlobalEvents and SceneManager subscribers and IModBigAmbitions methods, timed in place. Coroutines, worker threads and callbacks registered with other native events are not timed. Observer overhead of nested scopes stays inside the union."
+}

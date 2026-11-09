@@ -1,0 +1,1294 @@
+[
+  {
+    "run": "base-declared",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T08:18:12.293951+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "base-producer",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:27:31.748829+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "verify/preserve preexisting native saves",
+        "ok": true
+      },
+      {
+        "action": "restore exact isolated lifecycle",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify lease free",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "base-refusal",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:42:03.556131+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "base-save",
+    "role": "rig_test",
+    "status": "INFRA",
+    "exit_code": 3,
+    "finished_utc": "2026-11-09T07:33:22.762473+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": false,
+        "error": "BridgeError"
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "base-types",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:49:26.230662+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove native recover saves",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-business-age",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T08:51:34.348029+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-business-perf",
+    "role": "rig_test",
+    "status": "FAIL",
+    "exit_code": 1,
+    "finished_utc": "2026-11-09T11:01:58.347877+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-declared",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T08:02:46.792515+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-declared-types",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T11:05:38.366766+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove native recover saves",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-diag",
+    "role": "rig_test",
+    "status": "INPUT_ERROR",
+    "exit_code": 3,
+    "finished_utc": "2026-11-09T08:19:17.136372+00:00",
+    "cleanup": [],
+    "lease_after": null
+  },
+  {
+    "run": "head-diag-r2",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T08:24:05.965023+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-producer",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:25:17.867538+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "verify/preserve preexisting native saves",
+        "ok": true
+      },
+      {
+        "action": "restore exact isolated lifecycle",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify lease free",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-refusal",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:39:44.589145+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-reload",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:37:29.122775+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-save",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:30:20.118858+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove pcsave scratch",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-shop-1",
+    "role": "rig_test",
+    "status": "FAIL",
+    "exit_code": 1,
+    "finished_utc": "2026-11-09T08:26:16.889241+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-shop-2",
+    "role": "rig_test",
+    "status": "FAIL",
+    "exit_code": 1,
+    "finished_utc": "2026-11-09T08:30:19.199229+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-shop-3",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T08:34:19.294764+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "head-types",
+    "role": "rig_test",
+    "status": "INPUT_ERROR",
+    "exit_code": 3,
+    "finished_utc": "2026-11-09T07:42:43.857152+00:00",
+    "cleanup": [],
+    "lease_after": null
+  },
+  {
+    "run": "head-types-r2",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T07:45:55.123846+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "restore save mode",
+        "ok": true
+      },
+      {
+        "action": "remove native recover saves",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  },
+  {
+    "run": "native-control",
+    "role": "rig_test",
+    "status": "PASS",
+    "exit_code": 0,
+    "finished_utc": "2026-11-09T08:57:25.879901+00:00",
+    "cleanup": [
+      {
+        "action": "mouse release",
+        "ok": true
+      },
+      {
+        "action": "pause",
+        "ok": true
+      },
+      {
+        "action": "stop",
+        "ok": true
+      },
+      {
+        "action": "confirm stopped",
+        "ok": true
+      },
+      {
+        "action": "log evidence",
+        "ok": true
+      },
+      {
+        "action": "restore mod DLL set",
+        "ok": true
+      },
+      {
+        "action": "remove fixture copies",
+        "ok": true
+      },
+      {
+        "action": "verify fixture inputs",
+        "ok": true
+      },
+      {
+        "action": "end file reservation",
+        "ok": true
+      },
+      {
+        "action": "release lease",
+        "ok": true
+      },
+      {
+        "action": "verify released",
+        "ok": true
+      }
+    ],
+    "lease_after": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    }
+  }
+]

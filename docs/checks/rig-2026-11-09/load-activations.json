@@ -1,0 +1,190 @@
+[
+  {
+    "run": "base-declared",
+    "label": "save-1",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 5014732,
+      "backgroundReadMs": 874.0335,
+      "backgroundCreateMs": 0.658,
+      "backgroundValidateMs": 348.5643,
+      "mainThreadMs": 60.2612,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "base-save",
+    "label": "activation",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 5014732,
+      "backgroundReadMs": 1007.8575000000001,
+      "backgroundCreateMs": 0.7581,
+      "backgroundValidateMs": 415.38840000000005,
+      "mainThreadMs": 68.2998,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "base-types",
+    "label": "midnightsave-1",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 5014732,
+      "backgroundReadMs": 879.6319000000001,
+      "backgroundCreateMs": 0.7906000000000001,
+      "backgroundValidateMs": 365.0826,
+      "mainThreadMs": 66.9929,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "head-business-perf",
+    "label": "d2-06-10-cost",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 3397680,
+      "backgroundReadMs": 1478.6012,
+      "backgroundCreateMs": 0.9777,
+      "backgroundValidateMs": 508.6714,
+      "mainThreadMs": 78.4696,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "head-declared",
+    "label": "save-1",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 1171321,
+      "backgroundReadMs": 1020.192,
+      "backgroundCreateMs": 0.7203,
+      "backgroundValidateMs": 318.2961,
+      "mainThreadMs": 63.840900000000005,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "head-declared-types",
+    "label": "midnightsave-1",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 3964095,
+      "backgroundReadMs": 1535.9195,
+      "backgroundCreateMs": 0.9254,
+      "backgroundValidateMs": 502.692,
+      "mainThreadMs": 69.3094,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "head-reload",
+    "label": "activation",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 1503604,
+      "backgroundReadMs": 796.4038,
+      "backgroundCreateMs": 0.12200000000000001,
+      "backgroundValidateMs": 291.7265,
+      "mainThreadMs": 28.718,
+      "mainThreadAtLeast30Ms": false
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs"
+    ],
+    "main_thread_over_50ms": false
+  },
+  {
+    "run": "head-save",
+    "label": "activation",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 1171321,
+      "backgroundReadMs": 954.4386000000001,
+      "backgroundCreateMs": 0.7015,
+      "backgroundValidateMs": 295.2729,
+      "mainThreadMs": 70.3805,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  },
+  {
+    "run": "head-types-r2",
+    "label": "midnightsave-1",
+    "activation": {
+      "sequence": 1,
+      "success": true,
+      "hadPayload": true,
+      "payloadCharacters": 1171321,
+      "backgroundReadMs": 1277.27,
+      "backgroundCreateMs": 1.0147000000000002,
+      "backgroundValidateMs": 313.04740000000004,
+      "mainThreadMs": 69.2395,
+      "mainThreadAtLeast30Ms": true
+    },
+    "flags_30ms": [
+      "backgroundReadMs",
+      "backgroundValidateMs",
+      "mainThreadMs"
+    ],
+    "main_thread_over_50ms": true
+  }
+]

@@ -1,0 +1,550 @@
+{
+  "save_samples": [
+    {
+      "group": "head-1914-Default",
+      "label": "save-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 32022,
+      "semanticRecords": 32022
+    },
+    {
+      "group": "head-1914-Default",
+      "label": "save-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 32022,
+      "semanticRecords": 32022
+    },
+    {
+      "group": "head-1914-Default",
+      "label": "save-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 32301,
+      "semanticRecords": 32301
+    },
+    {
+      "group": "head-1914-Default",
+      "label": "save-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 33426,
+      "semanticRecords": 33426
+    },
+    {
+      "group": "head-1914-Default",
+      "label": "save-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 34289,
+      "semanticRecords": 34289
+    },
+    {
+      "group": "head-1914-MidnightSave",
+      "label": "midnightsave-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 66845,
+      "semanticRecords": 66845
+    },
+    {
+      "group": "head-1914-MidnightSave",
+      "label": "midnightsave-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67414,
+      "semanticRecords": 67414
+    },
+    {
+      "group": "head-1914-MidnightSave",
+      "label": "midnightsave-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-MidnightSave",
+      "label": "midnightsave-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-MidnightSave",
+      "label": "midnightsave-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-RecoverSave",
+      "label": "recoversave-1",
+      "sequence": 6,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-RecoverSave",
+      "label": "recoversave-2",
+      "sequence": 7,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-RecoverSave",
+      "label": "recoversave-3",
+      "sequence": 8,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-RecoverSave",
+      "label": "recoversave-4",
+      "sequence": 9,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-1914-RecoverSave",
+      "label": "recoversave-5",
+      "sequence": 10,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 67638,
+      "semanticRecords": 67638
+    },
+    {
+      "group": "head-2871-Default",
+      "label": "save-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56080,
+      "semanticRecords": 56080
+    },
+    {
+      "group": "head-2871-Default",
+      "label": "save-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56080,
+      "semanticRecords": 56080
+    },
+    {
+      "group": "head-2871-Default",
+      "label": "save-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56080,
+      "semanticRecords": 56080
+    },
+    {
+      "group": "head-2871-Default",
+      "label": "save-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56080,
+      "semanticRecords": 56080
+    },
+    {
+      "group": "head-2871-Default",
+      "label": "save-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56080,
+      "semanticRecords": 56080
+    },
+    {
+      "group": "head-2871-MidnightSave",
+      "label": "midnightsave-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-MidnightSave",
+      "label": "midnightsave-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-MidnightSave",
+      "label": "midnightsave-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-MidnightSave",
+      "label": "midnightsave-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-MidnightSave",
+      "label": "midnightsave-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-RecoverSave",
+      "label": "recoversave-1",
+      "sequence": 6,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-RecoverSave",
+      "label": "recoversave-2",
+      "sequence": 7,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-RecoverSave",
+      "label": "recoversave-3",
+      "sequence": 8,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-RecoverSave",
+      "label": "recoversave-4",
+      "sequence": 9,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "head-2871-RecoverSave",
+      "label": "recoversave-5",
+      "sequence": 10,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 56408,
+      "semanticRecords": 56408
+    },
+    {
+      "group": "base-1914-Default",
+      "label": "save-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": -0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 29817,
+      "semanticRecords": 29817
+    },
+    {
+      "group": "base-1914-Default",
+      "label": "save-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 29817,
+      "semanticRecords": 29817
+    },
+    {
+      "group": "base-1914-Default",
+      "label": "save-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 30847,
+      "semanticRecords": 30847
+    },
+    {
+      "group": "base-1914-Default",
+      "label": "save-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 32753,
+      "semanticRecords": 32753
+    },
+    {
+      "group": "base-1914-Default",
+      "label": "save-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 33712,
+      "semanticRecords": 33712
+    },
+    {
+      "group": "base-1914-MidnightSave",
+      "label": "midnightsave-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 60051,
+      "semanticRecords": 60051
+    },
+    {
+      "group": "base-1914-MidnightSave",
+      "label": "midnightsave-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 61018,
+      "semanticRecords": 61018
+    },
+    {
+      "group": "base-1914-MidnightSave",
+      "label": "midnightsave-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 61768,
+      "semanticRecords": 61768
+    },
+    {
+      "group": "base-1914-MidnightSave",
+      "label": "midnightsave-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62078,
+      "semanticRecords": 62078
+    },
+    {
+      "group": "base-1914-MidnightSave",
+      "label": "midnightsave-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62453,
+      "semanticRecords": 62453
+    },
+    {
+      "group": "base-1914-RecoverSave",
+      "label": "recoversave-1",
+      "sequence": 6,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62453,
+      "semanticRecords": 62453
+    },
+    {
+      "group": "base-1914-RecoverSave",
+      "label": "recoversave-2",
+      "sequence": 7,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62453,
+      "semanticRecords": 62453
+    },
+    {
+      "group": "base-1914-RecoverSave",
+      "label": "recoversave-3",
+      "sequence": 8,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62453,
+      "semanticRecords": 62453
+    },
+    {
+      "group": "base-1914-RecoverSave",
+      "label": "recoversave-4",
+      "sequence": 9,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62453,
+      "semanticRecords": 62453
+    },
+    {
+      "group": "base-1914-RecoverSave",
+      "label": "recoversave-5",
+      "sequence": 10,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 62453,
+      "semanticRecords": 62453
+    },
+    {
+      "group": "base-1914-day2-Default",
+      "label": "save-1",
+      "sequence": 1,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 44050,
+      "semanticRecords": 44050
+    },
+    {
+      "group": "base-1914-day2-Default",
+      "label": "save-2",
+      "sequence": 2,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 44050,
+      "semanticRecords": 44050
+    },
+    {
+      "group": "base-1914-day2-Default",
+      "label": "save-3",
+      "sequence": 3,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 44050,
+      "semanticRecords": 44050
+    },
+    {
+      "group": "base-1914-day2-Default",
+      "label": "save-4",
+      "sequence": 4,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 44050,
+      "semanticRecords": 44050
+    },
+    {
+      "group": "base-1914-day2-Default",
+      "label": "save-5",
+      "sequence": 5,
+      "success": true,
+      "phase_sum_error_ms": 0.0,
+      "utf16_eq_2chars": true,
+      "streamingRecords": 44050,
+      "semanticRecords": 44050
+    }
+  ],
+  "refusals": {
+    "head-refusal": {
+      "all_pc_values_identical": true,
+      "keys": [
+        "persistentcity:food-authority-v1",
+        "persistentcity:save-epoch_v1",
+        "persistentcity:state_v1"
+      ],
+      "before_hashes": {
+        "persistentcity:food-authority-v1": "a271d2b8ede1244c0c290ea6767d0effdb1272479eb24a3a2d4fb30228a3e290",
+        "persistentcity:save-epoch_v1": "ad4fafa9a6d320fa57d3248bb9fbb0a9835b5cb655db25144ddca56193361952",
+        "persistentcity:state_v1": "efa62a509cc1fda489e4728c4bfdef49907eba009769e64cb5433b83fea3c70d"
+      },
+      "after_hashes": {
+        "persistentcity:food-authority-v1": "a271d2b8ede1244c0c290ea6767d0effdb1272479eb24a3a2d4fb30228a3e290",
+        "persistentcity:save-epoch_v1": "ad4fafa9a6d320fa57d3248bb9fbb0a9835b5cb655db25144ddca56193361952",
+        "persistentcity:state_v1": "efa62a509cc1fda489e4728c4bfdef49907eba009769e64cb5433b83fea3c70d"
+      },
+      "accounting_stop_present": false
+    },
+    "base-refusal": {
+      "all_pc_values_identical": true,
+      "keys": [
+        "persistentcity:food-authority-v1",
+        "persistentcity:save-epoch_v1",
+        "persistentcity:state_v1"
+      ],
+      "before_hashes": {
+        "persistentcity:food-authority-v1": "a271d2b8ede1244c0c290ea6767d0effdb1272479eb24a3a2d4fb30228a3e290",
+        "persistentcity:save-epoch_v1": "22b3d2249947bf868b6a3f2c1c2bc311fb2143f82b653d91d351816e730eb93e",
+        "persistentcity:state_v1": "0a5bdbcb1d1bcfdffcde8cfe5e1ade9264cacab04587fd877bae73153294ff09"
+      },
+      "after_hashes": {
+        "persistentcity:food-authority-v1": "a271d2b8ede1244c0c290ea6767d0effdb1272479eb24a3a2d4fb30228a3e290",
+        "persistentcity:save-epoch_v1": "22b3d2249947bf868b6a3f2c1c2bc311fb2143f82b653d91d351816e730eb93e",
+        "persistentcity:state_v1": "0a5bdbcb1d1bcfdffcde8cfe5e1ade9264cacab04587fd877bae73153294ff09"
+      },
+      "accounting_stop_present": false
+    }
+  },
+  "save_assertions": {
+    "count": 50,
+    "all_success": true,
+    "all_phase_sums_within_0_01ms": true,
+    "all_utf16_eq_2chars": true
+  }
+}

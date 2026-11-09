@@ -1,0 +1,2446 @@
+{
+  "base-declared": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 8.319,
+        "max_advance_ms": 8.319,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 48,
+        "whole_frame_max_ms": 338.51
+      },
+      "speed=6 until day 2 00:30": {
+        "observations": 13,
+        "frames": 16997,
+        "advance_mean_ms_per_frame": 1.2925263281755603,
+        "max_advance_ms": 120.131,
+        "max_lag": 0.2,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 25,
+        "whole_frame_p95_le_worst": 104,
+        "whole_frame_max_ms": 1559.78
+      }
+    },
+    "flags_ge30": [
+      {
+        "segment": "speed=6 until day 2 00:30",
+        "line": 2072,
+        "clock": 2537.9,
+        "lag": 0.0,
+        "frames": 1127,
+        "events": 2933,
+        "total_ms": 2420.38,
+        "maximum_advance_ms": 120.131,
+        "slowest_unit_ms": 119.937,
+        "unit_kind": "citizen",
+        "optional_stop_reads_ms": 119.645,
+        "gc_collections": 0,
+        "park_trigger_scans": 0
+      }
+    ],
+    "physical": [
+      {
+        "line": 1572,
+        "pedestrians": "2",
+        "cars": "0",
+        "journeyIndex": "15",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 1684,
+        "pedestrians": "48",
+        "cars": "6",
+        "journeyIndex": "1248",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "598"
+      },
+      {
+        "line": 1743,
+        "pedestrians": "48",
+        "cars": "14",
+        "journeyIndex": "1306",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "640"
+      },
+      {
+        "line": 1787,
+        "pedestrians": "37",
+        "cars": "15",
+        "journeyIndex": "1185",
+        "journeyIndexChecks": "5",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "545"
+      },
+      {
+        "line": 1835,
+        "pedestrians": "29",
+        "cars": "18",
+        "journeyIndex": "844",
+        "journeyIndexChecks": "7",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "335"
+      },
+      {
+        "line": 1904,
+        "pedestrians": "15",
+        "cars": "8",
+        "journeyIndex": "646",
+        "journeyIndexChecks": "9",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "237"
+      },
+      {
+        "line": 1965,
+        "pedestrians": "20",
+        "cars": "7",
+        "journeyIndex": "649",
+        "journeyIndexChecks": "11",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "248"
+      },
+      {
+        "line": 2014,
+        "pedestrians": "27",
+        "cars": "7",
+        "journeyIndex": "799",
+        "journeyIndexChecks": "13",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "326"
+      },
+      {
+        "line": 2072,
+        "pedestrians": "11",
+        "cars": "8",
+        "journeyIndex": "738",
+        "journeyIndexChecks": "15",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "309"
+      },
+      {
+        "line": 2126,
+        "pedestrians": "15",
+        "cars": "7",
+        "journeyIndex": "689",
+        "journeyIndexChecks": "17",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "297"
+      },
+      {
+        "line": 2194,
+        "pedestrians": "21",
+        "cars": "8",
+        "journeyIndex": "627",
+        "journeyIndexChecks": "19",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "265"
+      },
+      {
+        "line": 2257,
+        "pedestrians": "19",
+        "cars": "7",
+        "journeyIndex": "438",
+        "journeyIndexChecks": "21",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "164"
+      },
+      {
+        "line": 2322,
+        "pedestrians": "14",
+        "cars": "4",
+        "journeyIndex": "317",
+        "journeyIndexChecks": "23",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "123"
+      },
+      {
+        "line": 2487,
+        "pedestrians": "9",
+        "cars": "1",
+        "journeyIndex": "245",
+        "journeyIndexChecks": "25",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "95"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "base-producer": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 4.036,
+        "max_advance_ms": 4.036,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 0,
+        "whole_frame_p95_le_worst": null,
+        "whole_frame_max_ms": null
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1630,
+        "pedestrians": "0",
+        "cars": "0",
+        "journeyIndex": "0",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "base-refusal": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 0,
+        "frames": 0,
+        "advance_mean_ms_per_frame": null,
+        "max_advance_ms": null,
+        "max_lag": null,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 44,
+        "whole_frame_max_ms": 200.41
+      }
+    },
+    "flags_ge30": [],
+    "physical": [],
+    "pc_stop_lines": [
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ]
+  },
+  "base-save": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 8.331,
+        "max_advance_ms": 8.331,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 0,
+        "whole_frame_p95_le_worst": null,
+        "whole_frame_max_ms": null
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1582,
+        "pedestrians": "2",
+        "cars": "0",
+        "journeyIndex": "15",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "base-types": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 2,
+        "frames": 1192,
+        "advance_mean_ms_per_frame": 3.5832986577181205,
+        "max_advance_ms": 19.579,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 2,
+        "whole_frame_p95_le_worst": 104,
+        "whole_frame_max_ms": 1932.21
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1570,
+        "pedestrians": "2",
+        "cars": "0",
+        "journeyIndex": "15",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 1659,
+        "pedestrians": "46",
+        "cars": "0",
+        "journeyIndex": "886",
+        "journeyIndexChecks": "2",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "409"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-business-age": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 7.56,
+        "max_advance_ms": 7.56,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 54,
+        "whole_frame_max_ms": 342.51
+      },
+      "speed=6 until day 1 11:00": {
+        "observations": 2,
+        "frames": 3262,
+        "advance_mean_ms_per_frame": 0.6550744941753526,
+        "max_advance_ms": 20.27,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 4,
+        "whole_frame_p95_le_worst": 59,
+        "whole_frame_max_ms": 420.35
+      },
+      "speed=6 until day 2 00:30": {
+        "observations": 9,
+        "frames": 15799,
+        "advance_mean_ms_per_frame": 0.9997678967023229,
+        "max_advance_ms": 109.736,
+        "max_lag": 0.1,
+        "observations_ge30": 2,
+        "whole_frame_blocks": 19,
+        "whole_frame_p95_le_worst": 45,
+        "whole_frame_max_ms": 4258.65
+      }
+    },
+    "flags_ge30": [
+      {
+        "segment": "speed=6 until day 2 00:30",
+        "line": 2481,
+        "clock": 2500.8,
+        "lag": 0.0,
+        "frames": 1784,
+        "events": 3170,
+        "total_ms": 3030.201,
+        "maximum_advance_ms": 109.736,
+        "slowest_unit_ms": 109.583,
+        "unit_kind": "citizen",
+        "optional_stop_reads_ms": 109.271,
+        "gc_collections": 0,
+        "park_trigger_scans": 0
+      },
+      {
+        "segment": "speed=6 until day 2 00:30",
+        "line": 2686,
+        "clock": 2843.7,
+        "lag": 0.0,
+        "frames": 1779,
+        "events": 1526,
+        "total_ms": 1712.026,
+        "maximum_advance_ms": 40.304,
+        "slowest_unit_ms": 40.03,
+        "unit_kind": "route-planning",
+        "optional_stop_reads_ms": 0.0,
+        "gc_collections": 1,
+        "park_trigger_scans": 0
+      }
+    ],
+    "physical": [
+      {
+        "line": 1574,
+        "pedestrians": "4",
+        "cars": "0",
+        "journeyIndex": "915",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "420"
+      },
+      {
+        "line": 2131,
+        "pedestrians": "48",
+        "cars": "9",
+        "journeyIndex": "1242",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "595"
+      },
+      {
+        "line": 2208,
+        "pedestrians": "48",
+        "cars": "17",
+        "journeyIndex": "1260",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "604"
+      },
+      {
+        "line": 2266,
+        "pedestrians": "47",
+        "cars": "17",
+        "journeyIndex": "1141",
+        "journeyIndexChecks": "5",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "517"
+      },
+      {
+        "line": 2321,
+        "pedestrians": "37",
+        "cars": "12",
+        "journeyIndex": "839",
+        "journeyIndexChecks": "7",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "326"
+      },
+      {
+        "line": 2374,
+        "pedestrians": "23",
+        "cars": "13",
+        "journeyIndex": "647",
+        "journeyIndexChecks": "9",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "224"
+      },
+      {
+        "line": 2432,
+        "pedestrians": "46",
+        "cars": "9",
+        "journeyIndex": "763",
+        "journeyIndexChecks": "11",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "299"
+      },
+      {
+        "line": 2481,
+        "pedestrians": "39",
+        "cars": "10",
+        "journeyIndex": "829",
+        "journeyIndexChecks": "13",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "341"
+      },
+      {
+        "line": 2536,
+        "pedestrians": "29",
+        "cars": "11",
+        "journeyIndex": "719",
+        "journeyIndexChecks": "15",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "283"
+      },
+      {
+        "line": 2587,
+        "pedestrians": "30",
+        "cars": "8",
+        "journeyIndex": "622",
+        "journeyIndexChecks": "17",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "243"
+      },
+      {
+        "line": 2637,
+        "pedestrians": "19",
+        "cars": "10",
+        "journeyIndex": "423",
+        "journeyIndexChecks": "19",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "150"
+      },
+      {
+        "line": 2686,
+        "pedestrians": "22",
+        "cars": "3",
+        "journeyIndex": "310",
+        "journeyIndexChecks": "21",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "119"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-business-perf": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 4.226,
+        "max_advance_ms": 4.226,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 48,
+        "whole_frame_max_ms": 375.1
+      },
+      "speed=6 until day 2 06:00": {
+        "observations": 4,
+        "frames": 6732,
+        "advance_mean_ms_per_frame": 1.5816919191919192,
+        "max_advance_ms": 40.651,
+        "max_lag": 0.0,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 8,
+        "whole_frame_p95_le_worst": 57,
+        "whole_frame_max_ms": 691.71
+      },
+      "speed=1 until day 2 10:00": {
+        "observations": 13,
+        "frames": 23095,
+        "advance_mean_ms_per_frame": 0.3185957133578697,
+        "max_advance_ms": 42.483,
+        "max_lag": 0.0,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 26,
+        "whole_frame_p95_le_worst": 43,
+        "whole_frame_max_ms": 446.15
+      },
+      "speed=1 until day 2 14:00": {
+        "observations": 13,
+        "frames": 23131,
+        "advance_mean_ms_per_frame": 0.24485218970213135,
+        "max_advance_ms": 6.588,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 26,
+        "whole_frame_p95_le_worst": 43,
+        "whole_frame_max_ms": 355.1
+      },
+      "speed=1 until day 2 18:00": {
+        "observations": 13,
+        "frames": 23145,
+        "advance_mean_ms_per_frame": 0.37856089868222076,
+        "max_advance_ms": 129.328,
+        "max_lag": 0.0,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 27,
+        "whole_frame_p95_le_worst": 44,
+        "whole_frame_max_ms": 368.42
+      },
+      "speed=1 until day 2 22:00": {
+        "observations": 15,
+        "frames": 26703,
+        "advance_mean_ms_per_frame": 0.48970048309178743,
+        "max_advance_ms": 97.324,
+        "max_lag": 0.0,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 28,
+        "whole_frame_p95_le_worst": 46,
+        "whole_frame_max_ms": 519.62
+      },
+      "speed=1 until day 3 02:00": {
+        "observations": 12,
+        "frames": 21416,
+        "advance_mean_ms_per_frame": 0.1400918939110945,
+        "max_advance_ms": 6.614,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 25,
+        "whole_frame_p95_le_worst": 40,
+        "whole_frame_max_ms": 805.04
+      },
+      "speed=1 until day 3 07:00": {
+        "observations": 15,
+        "frames": 26812,
+        "advance_mean_ms_per_frame": 0.070867783082202,
+        "max_advance_ms": 4.992,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 31,
+        "whole_frame_p95_le_worst": 40,
+        "whole_frame_max_ms": 1700.04
+      },
+      "speed=1 until day 3 09:30": {
+        "observations": 9,
+        "frames": 15866,
+        "advance_mean_ms_per_frame": 0.465119878986512,
+        "max_advance_ms": 32.438,
+        "max_lag": 0.0,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 17,
+        "whole_frame_p95_le_worst": 40,
+        "whole_frame_max_ms": 4386.45
+      },
+      "speed=6 until day 3 11:30": {
+        "observations": 1,
+        "frames": 1690,
+        "advance_mean_ms_per_frame": 0.6717556213017751,
+        "max_advance_ms": 4.885,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 2,
+        "whole_frame_p95_le_worst": 41,
+        "whole_frame_max_ms": 336.55
+      },
+      "speed=1 until day 3 14:30": {
+        "observations": 10,
+        "frames": 17806,
+        "advance_mean_ms_per_frame": 0.2040731775805908,
+        "max_advance_ms": 5.961,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 19,
+        "whole_frame_p95_le_worst": 40,
+        "whole_frame_max_ms": 818.71
+      },
+      "speed=6 until day 3 17:30": {
+        "observations": 2,
+        "frames": 3483,
+        "advance_mean_ms_per_frame": 0.5747998851564743,
+        "max_advance_ms": 11.216,
+        "max_lag": 0.1,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 4,
+        "whole_frame_p95_le_worst": 41,
+        "whole_frame_max_ms": 323.89
+      },
+      "speed=1 until day 3 20:30": {
+        "observations": 11,
+        "frames": 19549,
+        "advance_mean_ms_per_frame": 0.5679500230190803,
+        "max_advance_ms": 6.154,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 22,
+        "whole_frame_p95_le_worst": 40,
+        "whole_frame_max_ms": 457.48
+      }
+    },
+    "flags_ge30": [
+      {
+        "segment": "speed=6 until day 2 06:00",
+        "line": 1743,
+        "clock": 2975.7,
+        "lag": 0.0,
+        "frames": 1673,
+        "events": 2501,
+        "total_ms": 2914.35,
+        "maximum_advance_ms": 40.651,
+        "slowest_unit_ms": 39.003,
+        "unit_kind": "route-planning",
+        "optional_stop_reads_ms": 0.0,
+        "gc_collections": 1,
+        "park_trigger_scans": 0
+      },
+      {
+        "segment": "speed=1 until day 2 10:00",
+        "line": 2397,
+        "clock": 3412.1,
+        "lag": 0.0,
+        "frames": 1771,
+        "events": 2591,
+        "total_ms": 702.116,
+        "maximum_advance_ms": 42.483,
+        "slowest_unit_ms": 39.688,
+        "unit_kind": "route-planning",
+        "optional_stop_reads_ms": 0.0,
+        "gc_collections": 1,
+        "park_trigger_scans": 0
+      },
+      {
+        "segment": "speed=1 until day 2 18:00",
+        "line": 3910,
+        "clock": 3931.2,
+        "lag": 0.0,
+        "frames": 1784,
+        "events": 1675,
+        "total_ms": 2289.332,
+        "maximum_advance_ms": 129.328,
+        "slowest_unit_ms": 129.271,
+        "unit_kind": "citizen",
+        "optional_stop_reads_ms": 128.755,
+        "gc_collections": 0,
+        "park_trigger_scans": 0
+      },
+      {
+        "segment": "speed=1 until day 2 22:00",
+        "line": 4208,
+        "clock": 4024.2,
+        "lag": 0.0,
+        "frames": 1788,
+        "events": 3645,
+        "total_ms": 1584.778,
+        "maximum_advance_ms": 97.324,
+        "slowest_unit_ms": 97.232,
+        "unit_kind": "citizen",
+        "optional_stop_reads_ms": 97.089,
+        "gc_collections": 0,
+        "park_trigger_scans": 1
+      },
+      {
+        "segment": "speed=1 until day 3 09:30",
+        "line": 6656,
+        "clock": 4760.2,
+        "lag": 0.0,
+        "frames": 1791,
+        "events": 1039,
+        "total_ms": 758.838,
+        "maximum_advance_ms": 32.438,
+        "slowest_unit_ms": 29.688,
+        "unit_kind": "route-planning",
+        "optional_stop_reads_ms": 0.0,
+        "gc_collections": 1,
+        "park_trigger_scans": 0
+      }
+    ],
+    "physical": [
+      {
+        "line": 1575,
+        "pedestrians": "4",
+        "cars": "0",
+        "journeyIndex": "358",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "197"
+      },
+      {
+        "line": 1679,
+        "pedestrians": "7",
+        "cars": "0",
+        "journeyIndex": "354",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "195"
+      },
+      {
+        "line": 1743,
+        "pedestrians": "12",
+        "cars": "0",
+        "journeyIndex": "425",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "227"
+      },
+      {
+        "line": 1803,
+        "pedestrians": "13",
+        "cars": "4",
+        "journeyIndex": "690",
+        "journeyIndexChecks": "5",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "362"
+      },
+      {
+        "line": 1846,
+        "pedestrians": "34",
+        "cars": "9",
+        "journeyIndex": "1374",
+        "journeyIndexChecks": "7",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "859"
+      },
+      {
+        "line": 1915,
+        "pedestrians": "44",
+        "cars": "9",
+        "journeyIndex": "1705",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1116"
+      },
+      {
+        "line": 1957,
+        "pedestrians": "48",
+        "cars": "12",
+        "journeyIndex": "1685",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1103"
+      },
+      {
+        "line": 2003,
+        "pedestrians": "7",
+        "cars": "8",
+        "journeyIndex": "1694",
+        "journeyIndexChecks": "5",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1110"
+      },
+      {
+        "line": 2052,
+        "pedestrians": "5",
+        "cars": "2",
+        "journeyIndex": "1682",
+        "journeyIndexChecks": "7",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1103"
+      },
+      {
+        "line": 2112,
+        "pedestrians": "4",
+        "cars": "2",
+        "journeyIndex": "1651",
+        "journeyIndexChecks": "9",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1075"
+      },
+      {
+        "line": 2156,
+        "pedestrians": "4",
+        "cars": "1",
+        "journeyIndex": "1642",
+        "journeyIndexChecks": "11",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1075"
+      },
+      {
+        "line": 2199,
+        "pedestrians": "4",
+        "cars": "2",
+        "journeyIndex": "1660",
+        "journeyIndexChecks": "13",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1084"
+      },
+      {
+        "line": 2272,
+        "pedestrians": "12",
+        "cars": "3",
+        "journeyIndex": "1800",
+        "journeyIndexChecks": "15",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1205"
+      },
+      {
+        "line": 2342,
+        "pedestrians": "12",
+        "cars": "3",
+        "journeyIndex": "1555",
+        "journeyIndexChecks": "17",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1035"
+      },
+      {
+        "line": 2397,
+        "pedestrians": "7",
+        "cars": "1",
+        "journeyIndex": "1208",
+        "journeyIndexChecks": "19",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "782"
+      },
+      {
+        "line": 2454,
+        "pedestrians": "19",
+        "cars": "3",
+        "journeyIndex": "1111",
+        "journeyIndexChecks": "21",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "701"
+      },
+      {
+        "line": 2525,
+        "pedestrians": "15",
+        "cars": "1",
+        "journeyIndex": "1048",
+        "journeyIndexChecks": "23",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "656"
+      },
+      {
+        "line": 2583,
+        "pedestrians": "9",
+        "cars": "1",
+        "journeyIndex": "901",
+        "journeyIndexChecks": "25",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "539"
+      },
+      {
+        "line": 2659,
+        "pedestrians": "23",
+        "cars": "3",
+        "journeyIndex": "838",
+        "journeyIndexChecks": "27",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "517"
+      },
+      {
+        "line": 2698,
+        "pedestrians": "15",
+        "cars": "2",
+        "journeyIndex": "803",
+        "journeyIndexChecks": "29",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "503"
+      },
+      {
+        "line": 2744,
+        "pedestrians": "7",
+        "cars": "3",
+        "journeyIndex": "649",
+        "journeyIndexChecks": "31",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "376"
+      },
+      {
+        "line": 2790,
+        "pedestrians": "9",
+        "cars": "2",
+        "journeyIndex": "598",
+        "journeyIndexChecks": "33",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "349"
+      },
+      {
+        "line": 2843,
+        "pedestrians": "14",
+        "cars": "3",
+        "journeyIndex": "650",
+        "journeyIndexChecks": "35",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "394"
+      },
+      {
+        "line": 2889,
+        "pedestrians": "22",
+        "cars": "2",
+        "journeyIndex": "676",
+        "journeyIndexChecks": "37",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "411"
+      },
+      {
+        "line": 2944,
+        "pedestrians": "20",
+        "cars": "4",
+        "journeyIndex": "547",
+        "journeyIndexChecks": "39",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "319"
+      },
+      {
+        "line": 2995,
+        "pedestrians": "11",
+        "cars": "2",
+        "journeyIndex": "357",
+        "journeyIndexChecks": "41",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "183"
+      },
+      {
+        "line": 3044,
+        "pedestrians": "12",
+        "cars": "1",
+        "journeyIndex": "305",
+        "journeyIndexChecks": "43",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "148"
+      },
+      {
+        "line": 3086,
+        "pedestrians": "8",
+        "cars": "2",
+        "journeyIndex": "250",
+        "journeyIndexChecks": "45",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "116"
+      },
+      {
+        "line": 3137,
+        "pedestrians": "12",
+        "cars": "0",
+        "journeyIndex": "226",
+        "journeyIndexChecks": "47",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "106"
+      },
+      {
+        "line": 3195,
+        "pedestrians": "6",
+        "cars": "0",
+        "journeyIndex": "207",
+        "journeyIndexChecks": "49",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "95"
+      },
+      {
+        "line": 3252,
+        "pedestrians": "5",
+        "cars": "0",
+        "journeyIndex": "183",
+        "journeyIndexChecks": "51",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "85"
+      },
+      {
+        "line": 3321,
+        "pedestrians": "6",
+        "cars": "0",
+        "journeyIndex": "177",
+        "journeyIndexChecks": "53",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "80"
+      },
+      {
+        "line": 3381,
+        "pedestrians": "9",
+        "cars": "1",
+        "journeyIndex": "161",
+        "journeyIndexChecks": "55",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "65"
+      },
+      {
+        "line": 3428,
+        "pedestrians": "6",
+        "cars": "0",
+        "journeyIndex": "124",
+        "journeyIndexChecks": "57",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "42"
+      },
+      {
+        "line": 3485,
+        "pedestrians": "7",
+        "cars": "0",
+        "journeyIndex": "90",
+        "journeyIndexChecks": "59",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "11"
+      },
+      {
+        "line": 3533,
+        "pedestrians": "4",
+        "cars": "0",
+        "journeyIndex": "82",
+        "journeyIndexChecks": "61",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "12"
+      },
+      {
+        "line": 3582,
+        "pedestrians": "4",
+        "cars": "0",
+        "journeyIndex": "82",
+        "journeyIndexChecks": "63",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "14"
+      },
+      {
+        "line": 3655,
+        "pedestrians": "6",
+        "cars": "0",
+        "journeyIndex": "223",
+        "journeyIndexChecks": "65",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "121"
+      },
+      {
+        "line": 3716,
+        "pedestrians": "22",
+        "cars": "5",
+        "journeyIndex": "395",
+        "journeyIndexChecks": "67",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "244"
+      },
+      {
+        "line": 3764,
+        "pedestrians": "38",
+        "cars": "6",
+        "journeyIndex": "592",
+        "journeyIndexChecks": "69",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "355"
+      },
+      {
+        "line": 3817,
+        "pedestrians": "30",
+        "cars": "9",
+        "journeyIndex": "471",
+        "journeyIndexChecks": "71",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "261"
+      },
+      {
+        "line": 3868,
+        "pedestrians": "20",
+        "cars": "8",
+        "journeyIndex": "420",
+        "journeyIndexChecks": "73",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "239"
+      },
+      {
+        "line": 3910,
+        "pedestrians": "32",
+        "cars": "4",
+        "journeyIndex": "853",
+        "journeyIndexChecks": "75",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "578"
+      },
+      {
+        "line": 3958,
+        "pedestrians": "48",
+        "cars": "5",
+        "journeyIndex": "1117",
+        "journeyIndexChecks": "77",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "756"
+      },
+      {
+        "line": 4031,
+        "pedestrians": "30",
+        "cars": "10",
+        "journeyIndex": "751",
+        "journeyIndexChecks": "79",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "466"
+      },
+      {
+        "line": 4079,
+        "pedestrians": "45",
+        "cars": "8",
+        "journeyIndex": "827",
+        "journeyIndexChecks": "81",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "550"
+      },
+      {
+        "line": 4118,
+        "pedestrians": "48",
+        "cars": "6",
+        "journeyIndex": "1004",
+        "journeyIndexChecks": "83",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "700"
+      },
+      {
+        "line": 4163,
+        "pedestrians": "38",
+        "cars": "8",
+        "journeyIndex": "636",
+        "journeyIndexChecks": "85",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "409"
+      },
+      {
+        "line": 4208,
+        "pedestrians": "48",
+        "cars": "11",
+        "journeyIndex": "965",
+        "journeyIndexChecks": "87",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "629"
+      },
+      {
+        "line": 4251,
+        "pedestrians": "48",
+        "cars": "13",
+        "journeyIndex": "1157",
+        "journeyIndexChecks": "89",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "736"
+      },
+      {
+        "line": 4293,
+        "pedestrians": "37",
+        "cars": "7",
+        "journeyIndex": "724",
+        "journeyIndexChecks": "91",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "396"
+      },
+      {
+        "line": 4350,
+        "pedestrians": "26",
+        "cars": "5",
+        "journeyIndex": "517",
+        "journeyIndexChecks": "93",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "292"
+      },
+      {
+        "line": 4396,
+        "pedestrians": "48",
+        "cars": "5",
+        "journeyIndex": "914",
+        "journeyIndexChecks": "95",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "583"
+      },
+      {
+        "line": 4441,
+        "pedestrians": "48",
+        "cars": "5",
+        "journeyIndex": "1243",
+        "journeyIndexChecks": "97",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "800"
+      },
+      {
+        "line": 4484,
+        "pedestrians": "48",
+        "cars": "8",
+        "journeyIndex": "783",
+        "journeyIndexChecks": "99",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "444"
+      },
+      {
+        "line": 4530,
+        "pedestrians": "21",
+        "cars": "6",
+        "journeyIndex": "276",
+        "journeyIndexChecks": "101",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "126"
+      },
+      {
+        "line": 4571,
+        "pedestrians": "14",
+        "cars": "5",
+        "journeyIndex": "141",
+        "journeyIndexChecks": "103",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "77"
+      },
+      {
+        "line": 4615,
+        "pedestrians": "20",
+        "cars": "4",
+        "journeyIndex": "88",
+        "journeyIndexChecks": "105",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "42"
+      },
+      {
+        "line": 4657,
+        "pedestrians": "20",
+        "cars": "1",
+        "journeyIndex": "197",
+        "journeyIndexChecks": "107",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "130"
+      },
+      {
+        "line": 4729,
+        "pedestrians": "22",
+        "cars": "1",
+        "journeyIndex": "305",
+        "journeyIndexChecks": "109",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "211"
+      },
+      {
+        "line": 4779,
+        "pedestrians": "12",
+        "cars": "2",
+        "journeyIndex": "186",
+        "journeyIndexChecks": "111",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "116"
+      },
+      {
+        "line": 4824,
+        "pedestrians": "11",
+        "cars": "1",
+        "journeyIndex": "120",
+        "journeyIndexChecks": "113",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "68"
+      },
+      {
+        "line": 4884,
+        "pedestrians": "12",
+        "cars": "0",
+        "journeyIndex": "235",
+        "journeyIndexChecks": "115",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "160"
+      },
+      {
+        "line": 4930,
+        "pedestrians": "17",
+        "cars": "2",
+        "journeyIndex": "252",
+        "journeyIndexChecks": "117",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "169"
+      },
+      {
+        "line": 4969,
+        "pedestrians": "19",
+        "cars": "3",
+        "journeyIndex": "114",
+        "journeyIndexChecks": "119",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "57"
+      },
+      {
+        "line": 5037,
+        "pedestrians": "11",
+        "cars": "3",
+        "journeyIndex": "24",
+        "journeyIndexChecks": "121",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "3"
+      },
+      {
+        "line": 5080,
+        "pedestrians": "9",
+        "cars": "3",
+        "journeyIndex": "12",
+        "journeyIndexChecks": "123",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5121,
+        "pedestrians": "10",
+        "cars": "2",
+        "journeyIndex": "12",
+        "journeyIndexChecks": "125",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5179,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "10",
+        "journeyIndexChecks": "127",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5234,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "129",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5283,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "131",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5349,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "133",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5402,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "135",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5453,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "137",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5501,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "139",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5549,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "141",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5596,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "143",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5648,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "145",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5700,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "9",
+        "journeyIndexChecks": "147",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5754,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "10",
+        "journeyIndexChecks": "149",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5808,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "14",
+        "journeyIndexChecks": "151",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 5856,
+        "pedestrians": "8",
+        "cars": "1",
+        "journeyIndex": "23",
+        "journeyIndexChecks": "152",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "4"
+      },
+      {
+        "line": 5911,
+        "pedestrians": "8",
+        "cars": "1",
+        "journeyIndex": "44",
+        "journeyIndexChecks": "154",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "15"
+      },
+      {
+        "line": 5965,
+        "pedestrians": "8",
+        "cars": "1",
+        "journeyIndex": "84",
+        "journeyIndexChecks": "156",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "33"
+      },
+      {
+        "line": 6020,
+        "pedestrians": "12",
+        "cars": "0",
+        "journeyIndex": "155",
+        "journeyIndexChecks": "158",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "71"
+      },
+      {
+        "line": 6071,
+        "pedestrians": "11",
+        "cars": "0",
+        "journeyIndex": "249",
+        "journeyIndexChecks": "160",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "133"
+      },
+      {
+        "line": 6604,
+        "pedestrians": "11",
+        "cars": "2",
+        "journeyIndex": "355",
+        "journeyIndexChecks": "162",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "197"
+      },
+      {
+        "line": 6656,
+        "pedestrians": "20",
+        "cars": "2",
+        "journeyIndex": "556",
+        "journeyIndexChecks": "164",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "307"
+      },
+      {
+        "line": 6705,
+        "pedestrians": "30",
+        "cars": "3",
+        "journeyIndex": "875",
+        "journeyIndexChecks": "166",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "500"
+      },
+      {
+        "line": 6748,
+        "pedestrians": "39",
+        "cars": "9",
+        "journeyIndex": "1346",
+        "journeyIndexChecks": "168",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "850"
+      },
+      {
+        "line": 6793,
+        "pedestrians": "48",
+        "cars": "12",
+        "journeyIndex": "1788",
+        "journeyIndexChecks": "170",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1197"
+      },
+      {
+        "line": 6855,
+        "pedestrians": "48",
+        "cars": "10",
+        "journeyIndex": "1565",
+        "journeyIndexChecks": "172",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "1060"
+      },
+      {
+        "line": 6906,
+        "pedestrians": "16",
+        "cars": "9",
+        "journeyIndex": "1134",
+        "journeyIndexChecks": "174",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "775"
+      },
+      {
+        "line": 6945,
+        "pedestrians": "22",
+        "cars": "8",
+        "journeyIndex": "896",
+        "journeyIndexChecks": "176",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "591"
+      },
+      {
+        "line": 6987,
+        "pedestrians": "18",
+        "cars": "5",
+        "journeyIndex": "574",
+        "journeyIndexChecks": "178",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "332"
+      },
+      {
+        "line": 7071,
+        "pedestrians": "39",
+        "cars": "5",
+        "journeyIndex": "720",
+        "journeyIndexChecks": "2",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "452"
+      },
+      {
+        "line": 7138,
+        "pedestrians": "35",
+        "cars": "5",
+        "journeyIndex": "690",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "446"
+      },
+      {
+        "line": 7180,
+        "pedestrians": "29",
+        "cars": "5",
+        "journeyIndex": "567",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "360"
+      },
+      {
+        "line": 7228,
+        "pedestrians": "16",
+        "cars": "3",
+        "journeyIndex": "313",
+        "journeyIndexChecks": "5",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "186"
+      },
+      {
+        "line": 7280,
+        "pedestrians": "10",
+        "cars": "2",
+        "journeyIndex": "193",
+        "journeyIndexChecks": "7",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "111"
+      },
+      {
+        "line": 7324,
+        "pedestrians": "11",
+        "cars": "1",
+        "journeyIndex": "160",
+        "journeyIndexChecks": "9",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "100"
+      },
+      {
+        "line": 7372,
+        "pedestrians": "6",
+        "cars": "0",
+        "journeyIndex": "119",
+        "journeyIndexChecks": "11",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "69"
+      },
+      {
+        "line": 7420,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "102",
+        "journeyIndexChecks": "13",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "64"
+      },
+      {
+        "line": 7462,
+        "pedestrians": "8",
+        "cars": "0",
+        "journeyIndex": "85",
+        "journeyIndexChecks": "15",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "53"
+      },
+      {
+        "line": 7513,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "83",
+        "journeyIndexChecks": "17",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "53"
+      },
+      {
+        "line": 7556,
+        "pedestrians": "11",
+        "cars": "0",
+        "journeyIndex": "64",
+        "journeyIndexChecks": "19",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "40"
+      },
+      {
+        "line": 7656,
+        "pedestrians": "8",
+        "cars": "0",
+        "journeyIndex": "43",
+        "journeyIndexChecks": "2",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "23"
+      },
+      {
+        "line": 7705,
+        "pedestrians": "48",
+        "cars": "3",
+        "journeyIndex": "768",
+        "journeyIndexChecks": "4",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "504"
+      },
+      {
+        "line": 7767,
+        "pedestrians": "42",
+        "cars": "7",
+        "journeyIndex": "955",
+        "journeyIndexChecks": "2",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "631"
+      },
+      {
+        "line": 7811,
+        "pedestrians": "40",
+        "cars": "9",
+        "journeyIndex": "873",
+        "journeyIndexChecks": "4",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "560"
+      },
+      {
+        "line": 7854,
+        "pedestrians": "20",
+        "cars": "9",
+        "journeyIndex": "439",
+        "journeyIndexChecks": "6",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "231"
+      },
+      {
+        "line": 7896,
+        "pedestrians": "41",
+        "cars": "4",
+        "journeyIndex": "622",
+        "journeyIndexChecks": "8",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "398"
+      },
+      {
+        "line": 7939,
+        "pedestrians": "34",
+        "cars": "5",
+        "journeyIndex": "541",
+        "journeyIndexChecks": "10",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "347"
+      },
+      {
+        "line": 7996,
+        "pedestrians": "48",
+        "cars": "4",
+        "journeyIndex": "1006",
+        "journeyIndexChecks": "12",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "654"
+      },
+      {
+        "line": 8048,
+        "pedestrians": "48",
+        "cars": "5",
+        "journeyIndex": "1210",
+        "journeyIndexChecks": "14",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "751"
+      },
+      {
+        "line": 8094,
+        "pedestrians": "40",
+        "cars": "4",
+        "journeyIndex": "721",
+        "journeyIndexChecks": "16",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "382"
+      },
+      {
+        "line": 8144,
+        "pedestrians": "23",
+        "cars": "2",
+        "journeyIndex": "477",
+        "journeyIndexChecks": "18",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "252"
+      },
+      {
+        "line": 8189,
+        "pedestrians": "41",
+        "cars": "1",
+        "journeyIndex": "970",
+        "journeyIndexChecks": "20",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "631"
+      },
+      {
+        "line": 8262,
+        "pedestrians": "48",
+        "cars": "1",
+        "journeyIndex": "1282",
+        "journeyIndexChecks": "22",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "842"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-declared": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 7.85,
+        "max_advance_ms": 7.85,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 46,
+        "whole_frame_max_ms": 386.96
+      },
+      "speed=6 until day 2 00:30": {
+        "observations": 11,
+        "frames": 18895,
+        "advance_mean_ms_per_frame": 0.8913336861603599,
+        "max_advance_ms": 99.452,
+        "max_lag": 0.0,
+        "observations_ge30": 1,
+        "whole_frame_blocks": 21,
+        "whole_frame_p95_le_worst": 50,
+        "whole_frame_max_ms": 3931.24
+      }
+    },
+    "flags_ge30": [
+      {
+        "segment": "speed=6 until day 2 00:30",
+        "line": 1989,
+        "clock": 2554.3,
+        "lag": 0.0,
+        "frames": 1781,
+        "events": 3517,
+        "total_ms": 2420.113,
+        "maximum_advance_ms": 99.452,
+        "slowest_unit_ms": 99.349,
+        "unit_kind": "citizen",
+        "optional_stop_reads_ms": 99.085,
+        "gc_collections": 0,
+        "park_trigger_scans": 0
+      }
+    ],
+    "physical": [
+      {
+        "line": 1569,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "11",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 1697,
+        "pedestrians": "48",
+        "cars": "8",
+        "journeyIndex": "1244",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "595"
+      },
+      {
+        "line": 1756,
+        "pedestrians": "48",
+        "cars": "11",
+        "journeyIndex": "1258",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "601"
+      },
+      {
+        "line": 1809,
+        "pedestrians": "30",
+        "cars": "13",
+        "journeyIndex": "1080",
+        "journeyIndexChecks": "5",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "476"
+      },
+      {
+        "line": 1854,
+        "pedestrians": "22",
+        "cars": "15",
+        "journeyIndex": "765",
+        "journeyIndexChecks": "7",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "284"
+      },
+      {
+        "line": 1900,
+        "pedestrians": "13",
+        "cars": "13",
+        "journeyIndex": "604",
+        "journeyIndexChecks": "9",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "202"
+      },
+      {
+        "line": 1943,
+        "pedestrians": "48",
+        "cars": "10",
+        "journeyIndex": "860",
+        "journeyIndexChecks": "11",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "349"
+      },
+      {
+        "line": 1989,
+        "pedestrians": "25",
+        "cars": "14",
+        "journeyIndex": "765",
+        "journeyIndexChecks": "13",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "303"
+      },
+      {
+        "line": 2055,
+        "pedestrians": "23",
+        "cars": "12",
+        "journeyIndex": "650",
+        "journeyIndexChecks": "15",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "250"
+      },
+      {
+        "line": 2121,
+        "pedestrians": "21",
+        "cars": "11",
+        "journeyIndex": "449",
+        "journeyIndexChecks": "17",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "152"
+      },
+      {
+        "line": 2178,
+        "pedestrians": "19",
+        "cars": "6",
+        "journeyIndex": "326",
+        "journeyIndexChecks": "19",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "117"
+      },
+      {
+        "line": 2345,
+        "pedestrians": "9",
+        "cars": "7",
+        "journeyIndex": "387",
+        "journeyIndexChecks": "21",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "197"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-declared-types": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 2,
+        "frames": 1195,
+        "advance_mean_ms_per_frame": 1.88249539748954,
+        "max_advance_ms": 11.357,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 2,
+        "whole_frame_p95_le_worst": 85,
+        "whole_frame_max_ms": 2301.39
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1577,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "387",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "197"
+      },
+      {
+        "line": 1673,
+        "pedestrians": "9",
+        "cars": "0",
+        "journeyIndex": "384",
+        "journeyIndexChecks": "2",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "195"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-diag-r2": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 4,
+        "frames": 5011,
+        "advance_mean_ms_per_frame": 1.1125795250449013,
+        "max_advance_ms": 20.824,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 6,
+        "whole_frame_p95_le_worst": 76,
+        "whole_frame_max_ms": 1260.28
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1570,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "11",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 2159,
+        "pedestrians": "42",
+        "cars": "0",
+        "journeyIndex": "917",
+        "journeyIndexChecks": "2",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "422"
+      },
+      {
+        "line": 2255,
+        "pedestrians": "45",
+        "cars": "7",
+        "journeyIndex": "1107",
+        "journeyIndexChecks": "4",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "538"
+      },
+      {
+        "line": 2303,
+        "pedestrians": "35",
+        "cars": "14",
+        "journeyIndex": "984",
+        "journeyIndexChecks": "6",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "449"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-producer": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 4.032,
+        "max_advance_ms": 4.032,
+        "max_lag": 0.0,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 0,
+        "whole_frame_p95_le_worst": null,
+        "whole_frame_max_ms": null
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1629,
+        "pedestrians": "0",
+        "cars": "0",
+        "journeyIndex": "0",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-refusal": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 0,
+        "frames": 0,
+        "advance_mean_ms_per_frame": null,
+        "max_advance_ms": null,
+        "max_lag": null,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 46,
+        "whole_frame_max_ms": 215.82
+      }
+    },
+    "flags_ge30": [],
+    "physical": [],
+    "pc_stop_lines": [
+      "[Mod:PersistentCity] Persistent City stopped: This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged. Persistent City takes no food ownership; owned shops return to native customers after the current hour."
+    ]
+  },
+  "head-reload": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 2,
+        "frames": 2,
+        "advance_mean_ms_per_frame": 6.047499999999999,
+        "max_advance_ms": 7.979,
+        "max_lag": 0.7,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 2,
+        "whole_frame_p95_le_worst": 47,
+        "whole_frame_max_ms": 346.26
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1569,
+        "pedestrians": "4",
+        "cars": "0",
+        "journeyIndex": "60",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 2735,
+        "pedestrians": "4",
+        "cars": "0",
+        "journeyIndex": "60",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-save": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 8.299,
+        "max_advance_ms": 8.299,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 0,
+        "whole_frame_p95_le_worst": null,
+        "whole_frame_max_ms": null
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1595,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "11",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-shop-1": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {},
+    "flags_ge30": [],
+    "physical": [],
+    "pc_stop_lines": []
+  },
+  "head-shop-2": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 8.665,
+        "max_advance_ms": 8.665,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 48,
+        "whole_frame_max_ms": 349.47
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1568,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "11",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-shop-3": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 1,
+        "frames": 1,
+        "advance_mean_ms_per_frame": 7.676,
+        "max_advance_ms": 7.676,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 2,
+        "whole_frame_p95_le_worst": 103,
+        "whole_frame_max_ms": 679.59
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1577,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "11",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "head-types-r2": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 2,
+        "frames": 1177,
+        "advance_mean_ms_per_frame": 3.5139447748513164,
+        "max_advance_ms": 21.102,
+        "max_lag": 0.3,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 3,
+        "whole_frame_p95_le_worst": 250,
+        "whole_frame_max_ms": 2981.81
+      }
+    },
+    "flags_ge30": [],
+    "physical": [
+      {
+        "line": 1573,
+        "pedestrians": "1",
+        "cars": "0",
+        "journeyIndex": "11",
+        "journeyIndexChecks": "1",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "0"
+      },
+      {
+        "line": 1652,
+        "pedestrians": "48",
+        "cars": "0",
+        "journeyIndex": "915",
+        "journeyIndexChecks": "3",
+        "journeyIndexMismatches": "0",
+        "journeyIndexFallback": "False",
+        "journeyIndexWithheldVisitors": "420"
+      }
+    ],
+    "pc_stop_lines": []
+  },
+  "native-control": {
+    "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+    "segments": {
+      "startup": {
+        "observations": 0,
+        "frames": 0,
+        "advance_mean_ms_per_frame": null,
+        "max_advance_ms": null,
+        "max_lag": null,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 1,
+        "whole_frame_p95_le_worst": 42,
+        "whole_frame_max_ms": 191.14
+      },
+      "speed=6 until day 2 11:00": {
+        "observations": 0,
+        "frames": 0,
+        "advance_mean_ms_per_frame": null,
+        "max_advance_ms": null,
+        "max_lag": null,
+        "observations_ge30": 0,
+        "whole_frame_blocks": 4,
+        "whole_frame_p95_le_worst": 43,
+        "whole_frame_max_ms": 394.35
+      }
+    },
+    "flags_ge30": [],
+    "physical": [],
+    "pc_stop_lines": []
+  }
+}

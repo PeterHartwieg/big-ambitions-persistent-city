@@ -1,6 +1,7 @@
 # Combined locked-PC rig checklist — 6 November 2026
 
 Results of the first batched run (head `e9995e5`): [rig-2026-11-06-results.md](rig-2026-11-06-results.md).
+Results of the intermediate batched run (head `c2fc1b0`): [rig-2026-11-09-results.md](rig-2026-11-09-results.md).
 
 ## E5b complete menu and refusal/recovery
 

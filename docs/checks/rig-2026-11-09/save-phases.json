@@ -1,0 +1,5916 @@
+{
+  "head-1914-Default": {
+    "build": "head",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "representative",
+    "requested_load": 1914,
+    "run": "head-save",
+    "type": "Default",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1.9401,
+          "p95": 2.9945,
+          "max": 2.9945,
+          "min": 1.7171
+        },
+        "samples": [
+          2.9945,
+          1.7171,
+          2.0195,
+          1.8129,
+          1.9401
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 5.9394,
+          "p95": 7.1915,
+          "max": 7.1915,
+          "min": 5.6671
+        },
+        "samples": [
+          7.1915,
+          5.6671,
+          5.9394,
+          5.9965,
+          5.9209
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 9.0041,
+          "p95": 14.0157,
+          "max": 14.0157,
+          "min": 8.3442
+        },
+        "samples": [
+          14.0157,
+          8.3442,
+          9.0041,
+          12.6646,
+          8.8709
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 30.0631,
+          "p95": 65.6549,
+          "max": 65.6549,
+          "min": 28.8272
+        },
+        "samples": [
+          28.8272,
+          29.1988,
+          30.0631,
+          65.6549,
+          32.551
+        ],
+        "flags_30ms": [
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 374.4396,
+          "p95": 400.6553,
+          "max": 400.6553,
+          "min": 342.6851
+        },
+        "samples": [
+          374.4396,
+          342.6851,
+          400.6553,
+          368.763,
+          393.0639
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0086,
+          "p95": 0.3281,
+          "max": 0.3281,
+          "min": 0.0048
+        },
+        "samples": [
+          0.3281,
+          0.0086,
+          0.0048,
+          0.0086,
+          0.0089
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 442.3557,
+          "p95": 454.9005,
+          "max": 454.9005,
+          "min": 387.6209
+        },
+        "samples": [
+          427.7966,
+          387.6209,
+          447.6862,
+          454.9005,
+          442.3557
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 402.7547,
+          "p95": 444.7171,
+          "max": 444.7171,
+          "min": 335.49260000000004
+        },
+        "samples": [
+          367.0735,
+          444.7171,
+          335.49260000000004,
+          402.7547,
+          417.73080000000004
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 139.235,
+          "p95": 154.056,
+          "max": 154.056,
+          "min": 132.062
+        },
+        "samples": [
+          133.385,
+          139.235,
+          132.062,
+          148.458,
+          154.056
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.81,
+          "p95": 2.16,
+          "max": 2.16,
+          "min": 0.548
+        },
+        "samples": [
+          2.16,
+          0.994,
+          0.548,
+          0.81,
+          0.688
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 9.321,
+          "p95": 15.853,
+          "max": 15.853,
+          "min": 7.862
+        },
+        "samples": [
+          15.853,
+          12.65,
+          8.3,
+          9.321,
+          7.862
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 893.83,
+          "p95": 972.549,
+          "max": 972.549,
+          "min": 818.928
+        },
+        "samples": [
+          972.549,
+          879.662,
+          818.928,
+          893.83,
+          901.401
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 26.468,
+          "p95": 98.71,
+          "max": 98.71,
+          "min": 21.606
+        },
+        "samples": [
+          98.71,
+          26.468,
+          22.42,
+          21.606,
+          27.756
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.001
+        },
+        "samples": [
+          0.004,
+          0.001,
+          0.001,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.008,
+          "max": 0.008,
+          "min": 0.002
+        },
+        "samples": [
+          0.008,
+          0.002,
+          0.003,
+          0.003,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.606,
+          "p95": 8.384,
+          "max": 8.384,
+          "min": 0.567
+        },
+        "samples": [
+          8.384,
+          0.567,
+          0.582,
+          0.606,
+          0.792
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.263,
+          "max": 0.263,
+          "min": 0.003
+        },
+        "samples": [
+          0.263,
+          0.003,
+          0.003,
+          0.004,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.329,
+          "max": 0.329,
+          "min": 0.004
+        },
+        "samples": [
+          0.329,
+          0.005,
+          0.005,
+          0.006,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 832.396,
+          "p95": 860.112,
+          "max": 860.112,
+          "min": 783.201
+        },
+        "samples": [
+          796.476,
+          832.396,
+          783.201,
+          857.677,
+          860.112
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.14,
+          "max": 0.14,
+          "min": 0.002
+        },
+        "samples": [
+          0.14,
+          0.003,
+          0.002,
+          0.003,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.975,
+          "p95": 24.454,
+          "max": 24.454,
+          "min": 0.922
+        },
+        "samples": [
+          24.454,
+          2.634,
+          0.975,
+          0.948,
+          0.922
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.086,
+          "p95": 0.523,
+          "max": 0.523,
+          "min": 0.08
+        },
+        "samples": [
+          0.523,
+          0.087,
+          0.08,
+          0.086,
+          0.084
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 483.6701999999999,
+          "p95": 605.4755,
+          "max": 605.4755,
+          "min": 434.9449
+        },
+        "samples": [
+          605.4755,
+          434.9449,
+          483.43539999999996,
+          491.0753,
+          483.6701999999999
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 0.975,
+          "p95": 24.454,
+          "max": 24.454,
+          "min": 0.922
+        },
+        "samples": [
+          24.454,
+          2.634,
+          0.975,
+          0.948,
+          0.922
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 10.131,
+          "p95": 18.012999999999998,
+          "max": 18.012999999999998,
+          "min": 8.55
+        },
+        "samples": [
+          18.012999999999998,
+          13.644,
+          8.848,
+          10.131,
+          8.55
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 11.079,
+          "p95": 42.467,
+          "max": 42.467,
+          "min": 9.472000000000001
+        },
+        "samples": [
+          42.467,
+          16.278,
+          9.823,
+          11.079,
+          9.472000000000001
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 18.476108381082508,
+          "p95": 84.2723728166745,
+          "max": 84.2723728166745,
+          "min": 15.701144847893797
+        },
+        "samples": [
+          84.2723728166745,
+          22.5967091856118,
+          18.476108381082508,
+          15.701144847893797,
+          18.45964761998505
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 108.83103590644596,
+          "p95": 118.87006209228726,
+          "max": 118.87006209228726,
+          "min": 102.45782799194468
+        },
+        "samples": [
+          113.87570102474044,
+          118.87006209228726,
+          108.83103590644596,
+          107.88487280517529,
+          102.45782799194468
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 1213459,
+      "p95": 1503604,
+      "max": 1503604,
+      "min": 1171321
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 1213460,
+      "p95": 1503605,
+      "max": 1503605,
+      "min": 1171322
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 2426918,
+      "p95": 3007208,
+      "max": 3007208,
+      "min": 2342642
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.290421,
+      "p95": 0.336496,
+      "max": 0.336496,
+      "min": 0.283192
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 982462464,
+      "p95": 1115676672,
+      "max": 1115676672,
+      "min": 874549248
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1078525952,
+      "p95": 1162113024,
+      "max": 1162113024,
+      "min": 982151168
+    },
+    "os_memory_available": false
+  },
+  "head-1914-MidnightSave": {
+    "build": "head",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "representative",
+    "requested_load": 1914,
+    "run": "head-types-r2",
+    "type": "MidnightSave",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 3.3578,
+          "p95": 4.4355,
+          "max": 4.4355,
+          "min": 3.339
+        },
+        "samples": [
+          4.4355,
+          3.342,
+          3.339,
+          3.3578,
+          3.9397
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 6.0724,
+          "p95": 7.0057,
+          "max": 7.0057,
+          "min": 5.9414
+        },
+        "samples": [
+          7.0057,
+          6.0648,
+          6.0754,
+          5.9414,
+          6.0724
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 8.8052,
+          "p95": 14.7981,
+          "max": 14.7981,
+          "min": 8.6042
+        },
+        "samples": [
+          14.7981,
+          8.6797,
+          8.6042,
+          8.8052,
+          9.361
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 44.593,
+          "p95": 67.7721,
+          "max": 67.7721,
+          "min": 43.7086
+        },
+        "samples": [
+          52.7516,
+          67.7721,
+          44.3232,
+          44.593,
+          43.7086
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 986.0963,
+          "p95": 1218.0918,
+          "max": 1218.0918,
+          "min": 963.8837
+        },
+        "samples": [
+          980.2438,
+          963.8837,
+          1218.0918,
+          1006.1116,
+          986.0963
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0088,
+          "p95": 0.4366,
+          "max": 0.4366,
+          "min": 0.0061
+        },
+        "samples": [
+          0.4366,
+          0.0138,
+          0.0088,
+          0.0061,
+          0.0082
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1059.6713,
+          "p95": 1280.4424,
+          "max": 1280.4424,
+          "min": 1049.1862
+        },
+        "samples": [
+          1059.6713,
+          1049.7561,
+          1280.4424,
+          1068.8151,
+          1049.1862
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1119.7252,
+          "p95": 1320.0894,
+          "max": 1320.0894,
+          "min": 1042.6765
+        },
+        "samples": [
+          1320.0894,
+          1042.6765,
+          1119.7252,
+          1281.9544,
+          1046.0261
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 398.805,
+          "p95": 425.324,
+          "max": 425.324,
+          "min": 391.087
+        },
+        "samples": [
+          391.087,
+          395.4,
+          408.51,
+          425.324,
+          398.805
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.529,
+          "p95": 2.177,
+          "max": 2.177,
+          "min": 0.452
+        },
+        "samples": [
+          2.177,
+          0.529,
+          0.517,
+          1.268,
+          0.452
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 10.147,
+          "p95": 20.907,
+          "max": 20.907,
+          "min": 8.704
+        },
+        "samples": [
+          20.907,
+          10.966,
+          9.733,
+          10.147,
+          8.704
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 2405.684,
+          "p95": 2573.179,
+          "max": 2573.179,
+          "min": 2137.624
+        },
+        "samples": [
+          2573.179,
+          2140.943,
+          2446.315,
+          2405.684,
+          2137.624
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 32.272,
+          "p95": 112.083,
+          "max": 112.083,
+          "min": 27.986
+        },
+        "samples": [
+          112.083,
+          32.272,
+          31.298,
+          36.723,
+          27.986
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.001
+        },
+        "samples": [
+          0.004,
+          0.001,
+          0.001,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.011,
+          "max": 0.011,
+          "min": 0.002
+        },
+        "samples": [
+          0.011,
+          0.002,
+          0.003,
+          0.003,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.569,
+          "p95": 7.592,
+          "max": 7.592,
+          "min": 0.564
+        },
+        "samples": [
+          7.592,
+          0.586,
+          0.569,
+          0.564,
+          0.564
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.004,
+          "p95": 0.26,
+          "max": 0.26,
+          "min": 0.003
+        },
+        "samples": [
+          0.26,
+          0.004,
+          0.003,
+          0.003,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.338,
+          "max": 0.338,
+          "min": 0.004
+        },
+        "samples": [
+          0.338,
+          0.007,
+          0.005,
+          0.004,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 2350.824,
+          "p95": 2400.191,
+          "max": 2400.191,
+          "min": 2092.455
+        },
+        "samples": [
+          2381.071,
+          2092.455,
+          2400.191,
+          2350.824,
+          2095.249
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.111,
+          "max": 0.111,
+          "min": 0.002
+        },
+        "samples": [
+          0.111,
+          0.002,
+          0.002,
+          0.002,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 1.536,
+          "p95": 24.736,
+          "max": 24.736,
+          "min": 0.935
+        },
+        "samples": [
+          24.736,
+          0.935,
+          0.976,
+          1.965,
+          1.536
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.068,
+          "p95": 0.505,
+          "max": 0.505,
+          "min": 0.064
+        },
+        "samples": [
+          0.505,
+          0.078,
+          0.064,
+          0.068,
+          0.064
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1123.7296000000001,
+          "p95": 1326.5898,
+          "max": 1326.5898,
+          "min": 1091.5978999999998
+        },
+        "samples": [
+          1253.0896,
+          1098.2665000000002,
+          1326.5898,
+          1123.7296000000001,
+          1091.5978999999998
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 1.536,
+          "p95": 24.736,
+          "max": 24.736,
+          "min": 0.935
+        },
+        "samples": [
+          24.736,
+          0.935,
+          0.976,
+          1.965,
+          1.536
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 11.415000000000001,
+          "p95": 23.084,
+          "max": 23.084,
+          "min": 9.156
+        },
+        "samples": [
+          23.084,
+          11.495,
+          10.25,
+          11.415000000000001,
+          9.156
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 12.43,
+          "p95": 47.82,
+          "max": 47.82,
+          "min": 10.692
+        },
+        "samples": [
+          47.82,
+          12.43,
+          11.225999999999999,
+          13.38,
+          10.692
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 5.033766415269508,
+          "p95": 17.719242886249553,
+          "max": 17.719242886249553,
+          "min": 4.345943028174712
+        },
+        "samples": [
+          17.719242886249553,
+          5.033766415269508,
+          4.860263163575078,
+          5.702710849126704,
+          4.345943028174712
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 61.93038695602144,
+          "p95": 66.04851970683131,
+          "max": 66.04851970683131,
+          "min": 61.67424518460471
+        },
+        "samples": [
+          61.82708834216321,
+          61.67424518460471,
+          63.437475396257106,
+          66.04851970683131,
+          61.93038695602144
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 6439569,
+      "p95": 6439569,
+      "max": 6439569,
+      "min": 6325496
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 6439570,
+      "p95": 6439570,
+      "max": 6439570,
+      "min": 6325497
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 12879138,
+      "p95": 12879138,
+      "max": 12879138,
+      "min": 12650992
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.684742,
+      "p95": 0.684742,
+      "max": 0.684742,
+      "min": 0.680871
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1160450048,
+      "p95": 1369821184,
+      "max": 1369821184,
+      "min": 976498688
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1344253952,
+      "p95": 1655259136,
+      "max": 1655259136,
+      "min": 1149157376
+    },
+    "os_memory_available": false
+  },
+  "head-1914-RecoverSave": {
+    "build": "head",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "representative",
+    "requested_load": 1914,
+    "run": "head-types-r2",
+    "type": "RecoverSave",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 3.405,
+          "p95": 4.4367,
+          "max": 4.4367,
+          "min": 3.2719
+        },
+        "samples": [
+          3.475,
+          4.4367,
+          3.405,
+          3.3474,
+          3.2719
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 5.6571,
+          "p95": 6.4557,
+          "max": 6.4557,
+          "min": 5.5097
+        },
+        "samples": [
+          6.4557,
+          6.3075,
+          5.5097,
+          5.6571,
+          5.5216
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 8.8169,
+          "p95": 9.4274,
+          "max": 9.4274,
+          "min": 8.4719
+        },
+        "samples": [
+          9.4274,
+          8.9063,
+          8.8169,
+          8.4719,
+          8.7823
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 45.2962,
+          "p95": 52.9538,
+          "max": 52.9538,
+          "min": 44.9629
+        },
+        "samples": [
+          45.1582,
+          46.3823,
+          44.9629,
+          52.9538,
+          45.2962
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 984.9423,
+          "p95": 1245.5493,
+          "max": 1245.5493,
+          "min": 956.6872
+        },
+        "samples": [
+          1239.0527,
+          956.6872,
+          984.9423,
+          1245.5493,
+          965.8643
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0081,
+          "p95": 0.0095,
+          "max": 0.0095,
+          "min": 0.0055
+        },
+        "samples": [
+          0.0081,
+          0.0081,
+          0.0055,
+          0.0095,
+          0.0056
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1047.6423,
+          "p95": 1315.989,
+          "max": 1315.989,
+          "min": 1022.7281
+        },
+        "samples": [
+          1303.5771,
+          1022.7281,
+          1047.6423,
+          1315.989,
+          1028.7419
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1073.6105,
+          "p95": 1312.9167,
+          "max": 1312.9167,
+          "min": 1036.9531
+        },
+        "samples": [
+          1036.9531,
+          1306.2083,
+          1073.6105,
+          1071.289,
+          1312.9167
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 414.434,
+          "p95": 420.794,
+          "max": 420.794,
+          "min": 401.058
+        },
+        "samples": [
+          420.794,
+          403.352,
+          416.288,
+          401.058,
+          414.434
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.46,
+          "p95": 0.674,
+          "max": 0.674,
+          "min": 0.432
+        },
+        "samples": [
+          0.432,
+          0.674,
+          0.46,
+          0.457,
+          0.588
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 7.655,
+          "p95": 10.162,
+          "max": 10.162,
+          "min": 7.513
+        },
+        "samples": [
+          7.76,
+          10.162,
+          7.55,
+          7.513,
+          7.655
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 2383.273,
+          "p95": 2427.896,
+          "max": 2427.896,
+          "min": 2161.893
+        },
+        "samples": [
+          2384.099,
+          2374.264,
+          2161.893,
+          2427.896,
+          2383.273
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 28.402,
+          "p95": 30.68,
+          "max": 30.68,
+          "min": 27.572
+        },
+        "samples": [
+          30.68,
+          28.826,
+          28.135,
+          27.572,
+          28.402
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.002,
+          "max": 0.002,
+          "min": 0.001
+        },
+        "samples": [
+          0.002,
+          0.001,
+          0.001,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.003,
+          "max": 0.003,
+          "min": 0.002
+        },
+        "samples": [
+          0.002,
+          0.002,
+          0.002,
+          0.003,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.611,
+          "p95": 0.848,
+          "max": 0.848,
+          "min": 0.566
+        },
+        "samples": [
+          0.589,
+          0.848,
+          0.611,
+          0.632,
+          0.566
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.002
+        },
+        "samples": [
+          0.003,
+          0.003,
+          0.004,
+          0.004,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.006,
+          "p95": 0.006,
+          "max": 0.006,
+          "min": 0.004
+        },
+        "samples": [
+          0.004,
+          0.004,
+          0.006,
+          0.006,
+          0.006
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 2340.555,
+          "p95": 2387.303,
+          "max": 2387.303,
+          "min": 2121.274
+        },
+        "samples": [
+          2340.555,
+          2328.964,
+          2121.274,
+          2387.303,
+          2341.688
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.003,
+          "max": 0.003,
+          "min": 0.002
+        },
+        "samples": [
+          0.002,
+          0.003,
+          0.002,
+          0.002,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.995,
+          "p95": 1.243,
+          "max": 1.243,
+          "min": 0.935
+        },
+        "samples": [
+          0.935,
+          1.215,
+          0.995,
+          0.981,
+          1.243
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.075,
+          "p95": 0.116,
+          "max": 0.116,
+          "min": 0.067
+        },
+        "samples": [
+          0.07,
+          0.116,
+          0.086,
+          0.075,
+          0.067
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1088.2825,
+          "p95": 1356.6070000000002,
+          "max": 1356.6070000000002,
+          "min": 1068.0557000000001
+        },
+        "samples": [
+          1347.1459000000002,
+          1068.0557000000001,
+          1088.2825,
+          1356.6070000000002,
+          1070.3563000000001
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 0.995,
+          "p95": 1.243,
+          "max": 1.243,
+          "min": 0.935
+        },
+        "samples": [
+          0.935,
+          1.215,
+          0.995,
+          0.981,
+          1.243
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.192,
+          "p95": 10.836,
+          "max": 10.836,
+          "min": 7.97
+        },
+        "samples": [
+          8.192,
+          10.836,
+          8.01,
+          7.97,
+          8.243
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 9.127,
+          "p95": 12.051,
+          "max": 12.051,
+          "min": 8.951
+        },
+        "samples": [
+          9.127,
+          12.051,
+          9.004999999999999,
+          8.951,
+          9.486
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 4.410543624891666,
+          "p95": 4.764294007875372,
+          "max": 4.764294007875372,
+          "min": 4.281653011249666
+        },
+        "samples": [
+          4.764294007875372,
+          4.476386540776254,
+          4.36908122267189,
+          4.281653011249666,
+          4.410543624891666
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 64.3574127398899,
+          "p95": 65.34505647815871,
+          "max": 65.34505647815871,
+          "min": 62.280255091606286
+        },
+        "samples": [
+          65.34505647815871,
+          62.63649011292526,
+          64.64532020698901,
+          62.280255091606286,
+          64.3574127398899
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 6439569,
+      "p95": 6439569,
+      "max": 6439569,
+      "min": 6439569
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 6439570,
+      "p95": 6439570,
+      "max": 6439570,
+      "min": 6439570
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 12879138,
+      "p95": 12879138,
+      "max": 12879138,
+      "min": 12879138
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.684742,
+      "p95": 0.684742,
+      "max": 0.684742,
+      "min": 0.684742
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1276088320,
+      "p95": 1407098880,
+      "max": 1407098880,
+      "min": 1035837440
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1397837824,
+      "p95": 1711742976,
+      "max": 1711742976,
+      "min": 1263239168
+    },
+    "os_memory_available": false
+  },
+  "head-2871-Default": {
+    "build": "head",
+    "declared_load": 2871,
+    "actual_load": 2871,
+    "scenario": "day2-declared-load-attempt",
+    "requested_load": 2871,
+    "run": "head-declared",
+    "type": "Default",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 2.0183,
+          "p95": 3.1354,
+          "max": 3.1354,
+          "min": 1.9885
+        },
+        "samples": [
+          3.1354,
+          2.0744,
+          1.9885,
+          2.0166,
+          2.0183
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 7.7563,
+          "p95": 9.6709,
+          "max": 9.6709,
+          "min": 7.6865
+        },
+        "samples": [
+          9.6709,
+          7.8886,
+          7.6978,
+          7.7563,
+          7.6865
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 12.2248,
+          "p95": 21.4266,
+          "max": 21.4266,
+          "min": 11.8542
+        },
+        "samples": [
+          21.4266,
+          12.0666,
+          13.5123,
+          12.2248,
+          11.8542
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 50.8581,
+          "p95": 56.9744,
+          "max": 56.9744,
+          "min": 48.2542
+        },
+        "samples": [
+          52.8953,
+          48.2542,
+          50.8581,
+          49.0978,
+          56.9744
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 670.8909,
+          "p95": 732.0966,
+          "max": 732.0966,
+          "min": 612.3137
+        },
+        "samples": [
+          732.0966,
+          612.3137,
+          648.7686,
+          681.7574,
+          670.8909
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0086,
+          "p95": 0.4168,
+          "max": 0.4168,
+          "min": 0.0047
+        },
+        "samples": [
+          0.4168,
+          0.0097,
+          0.0086,
+          0.0047,
+          0.006
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 749.4303,
+          "p95": 819.6416,
+          "max": 819.6416,
+          "min": 682.6072
+        },
+        "samples": [
+          819.6416,
+          682.6072,
+          722.8339,
+          752.8576,
+          749.4303
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 788.0806,
+          "p95": 1003.1123,
+          "max": 1003.1123,
+          "min": 718.0959
+        },
+        "samples": [
+          774.2575,
+          939.2552000000001,
+          788.0806,
+          718.0959,
+          1003.1123
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 272.244,
+          "p95": 281.428,
+          "max": 281.428,
+          "min": 270.797
+        },
+        "samples": [
+          272.244,
+          281.428,
+          270.797,
+          271.032,
+          272.64
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.538,
+          "p95": 5.682,
+          "max": 5.682,
+          "min": 0.44
+        },
+        "samples": [
+          5.682,
+          0.749,
+          0.538,
+          0.44,
+          0.454
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 8.317,
+          "p95": 17.962,
+          "max": 17.962,
+          "min": 7.822
+        },
+        "samples": [
+          17.962,
+          9.824,
+          7.822,
+          7.984,
+          8.317
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1668.875,
+          "p95": 1819.857,
+          "max": 1819.857,
+          "min": 1508.957
+        },
+        "samples": [
+          1819.857,
+          1668.875,
+          1551.074,
+          1508.957,
+          1791.751
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 25.814,
+          "p95": 143.957,
+          "max": 143.957,
+          "min": 24.052
+        },
+        "samples": [
+          143.957,
+          28.514,
+          25.814,
+          24.052,
+          24.557
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.007,
+          "max": 0.007,
+          "min": 0.001
+        },
+        "samples": [
+          0.007,
+          0.001,
+          0.002,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.013,
+          "max": 0.013,
+          "min": 0.002
+        },
+        "samples": [
+          0.013,
+          0.002,
+          0.003,
+          0.002,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.761,
+          "p95": 15.058,
+          "max": 15.058,
+          "min": 0.746
+        },
+        "samples": [
+          15.058,
+          0.746,
+          0.749,
+          0.77,
+          0.761
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.458,
+          "max": 0.458,
+          "min": 0.003
+        },
+        "samples": [
+          0.458,
+          0.003,
+          0.003,
+          0.003,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.528,
+          "max": 0.528,
+          "min": 0.004
+        },
+        "samples": [
+          0.528,
+          0.004,
+          0.004,
+          0.005,
+          0.01
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1595.518,
+          "p95": 1752.577,
+          "max": 1752.577,
+          "min": 1470.977
+        },
+        "samples": [
+          1595.518,
+          1621.888,
+          1510.94,
+          1470.977,
+          1752.577
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.164,
+          "max": 0.164,
+          "min": 0.002
+        },
+        "samples": [
+          0.164,
+          0.002,
+          0.003,
+          0.004,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 1.703,
+          "p95": 33.481,
+          "max": 33.481,
+          "min": 1.404
+        },
+        "samples": [
+          33.481,
+          2.604,
+          1.535,
+          1.404,
+          1.703
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.088,
+          "p95": 0.61,
+          "max": 0.61,
+          "min": 0.08
+        },
+        "samples": [
+          0.61,
+          0.089,
+          0.088,
+          0.08,
+          0.084
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 788.6387,
+          "p95": 1045.5994999999998,
+          "max": 1045.5994999999998,
+          "min": 729.6197999999999
+        },
+        "samples": [
+          1045.5994999999998,
+          729.6197999999999,
+          762.9934000000001,
+          790.8611000000001,
+          788.6387
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 1.703,
+          "p95": 33.481,
+          "max": 33.481,
+          "min": 1.404
+        },
+        "samples": [
+          33.481,
+          2.604,
+          1.535,
+          1.404,
+          1.703
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.771,
+          "p95": 23.644,
+          "max": 23.644,
+          "min": 8.36
+        },
+        "samples": [
+          23.644,
+          10.573,
+          8.36,
+          8.424,
+          8.771
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 10.474,
+          "p95": 57.125,
+          "max": 57.125,
+          "min": 9.828
+        },
+        "samples": [
+          57.125,
+          13.177,
+          9.895,
+          9.828,
+          10.474
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 6.511952917374583,
+          "p95": 36.315224534225344,
+          "max": 36.315224534225344,
+          "min": 6.06746306534026
+        },
+        "samples": [
+          36.315224534225344,
+          7.193066765554307,
+          6.511952917374583,
+          6.06746306534026,
+          6.194856581388691
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 68.67746610512614,
+          "p95": 70.99426224649005,
+          "max": 70.99426224649005,
+          "min": 68.31243953537945
+        },
+        "samples": [
+          68.67746610512614,
+          70.99426224649005,
+          68.31243953537945,
+          68.3717216666099,
+          68.77736280285916
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 3964095,
+      "p95": 3964095,
+      "max": 3964095,
+      "min": 3964095
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 3964096,
+      "p95": 3964096,
+      "max": 3964096,
+      "min": 3964096
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 7928190,
+      "p95": 7928190,
+      "max": 7928190,
+      "min": 7928190
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.569852,
+      "p95": 0.569852,
+      "max": 0.569852,
+      "min": 0.569852
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1171525632,
+      "p95": 1377062912,
+      "max": 1377062912,
+      "min": 1072058368
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1280573440,
+      "p95": 1460011008,
+      "max": 1460011008,
+      "min": 1071452160
+    },
+    "os_memory_available": false
+  },
+  "head-2871-MidnightSave": {
+    "build": "head",
+    "declared_load": 2871,
+    "actual_load": 2871,
+    "scenario": "declared-load",
+    "requested_load": 2871,
+    "run": "head-declared-types",
+    "type": "MidnightSave",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1.9153,
+          "p95": 2.7738,
+          "max": 2.7738,
+          "min": 1.7928
+        },
+        "samples": [
+          2.7738,
+          1.9257,
+          1.9153,
+          1.7928,
+          1.8224
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 7.2,
+          "p95": 7.3362,
+          "max": 7.3362,
+          "min": 6.8096
+        },
+        "samples": [
+          7.3362,
+          7.2,
+          6.8096,
+          6.9752,
+          7.2618
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 11.3771,
+          "p95": 18.4677,
+          "max": 18.4677,
+          "min": 10.653
+        },
+        "samples": [
+          18.4677,
+          11.3771,
+          10.653,
+          11.5074,
+          11.1828
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 47.8113,
+          "p95": 54.9328,
+          "max": 54.9328,
+          "min": 46.239
+        },
+        "samples": [
+          47.8113,
+          48.4078,
+          54.9328,
+          47.679,
+          46.239
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 674.9142,
+          "p95": 690.7398,
+          "max": 690.7398,
+          "min": 651.9091
+        },
+        "samples": [
+          690.7398,
+          685.1863,
+          674.9142,
+          651.9091,
+          672.3039
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.006,
+          "p95": 0.3543,
+          "max": 0.3543,
+          "min": 0.0041
+        },
+        "samples": [
+          0.3543,
+          0.0041,
+          0.0053,
+          0.0066,
+          0.006
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 749.2302,
+          "p95": 767.4831,
+          "max": 767.4831,
+          "min": 719.8701
+        },
+        "samples": [
+          767.4831,
+          754.101,
+          749.2302,
+          719.8701,
+          738.8159
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 773.6205,
+          "p95": 981.8846000000001,
+          "max": 981.8846000000001,
+          "min": 718.0053
+        },
+        "samples": [
+          981.8846000000001,
+          718.0053,
+          773.6205,
+          762.8428,
+          939.0238
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 276.632,
+          "p95": 278.54,
+          "max": 278.54,
+          "min": 271.585
+        },
+        "samples": [
+          276.632,
+          274.702,
+          278.204,
+          271.585,
+          278.54
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.598,
+          "p95": 2.368,
+          "max": 2.368,
+          "min": 0.421
+        },
+        "samples": [
+          2.368,
+          0.426,
+          0.598,
+          0.647,
+          0.421
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 8.019,
+          "p95": 19.375,
+          "max": 19.375,
+          "min": 7.61
+        },
+        "samples": [
+          19.375,
+          9.752,
+          8.019,
+          7.643,
+          7.61
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1564.241,
+          "p95": 1938.457,
+          "max": 1938.457,
+          "min": 1513.111
+        },
+        "samples": [
+          1938.457,
+          1513.111,
+          1564.241,
+          1521.98,
+          1715.932
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 26.196,
+          "p95": 105.367,
+          "max": 105.367,
+          "min": 25.654
+        },
+        "samples": [
+          105.367,
+          26.133,
+          27.324,
+          26.196,
+          25.654
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.001
+        },
+        "samples": [
+          0.004,
+          0.001,
+          0.001,
+          0.002,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.01,
+          "max": 0.01,
+          "min": 0.002
+        },
+        "samples": [
+          0.01,
+          0.002,
+          0.002,
+          0.003,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.628,
+          "p95": 7.703,
+          "max": 7.703,
+          "min": 0.596
+        },
+        "samples": [
+          7.703,
+          0.596,
+          0.628,
+          0.65,
+          0.598
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.261,
+          "max": 0.261,
+          "min": 0.003
+        },
+        "samples": [
+          0.261,
+          0.004,
+          0.003,
+          0.003,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.321,
+          "max": 0.321,
+          "min": 0.004
+        },
+        "samples": [
+          0.321,
+          0.005,
+          0.005,
+          0.005,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1522.876,
+          "p95": 1750.745,
+          "max": 1750.745,
+          "min": 1472.131
+        },
+        "samples": [
+          1750.745,
+          1472.131,
+          1522.876,
+          1482.737,
+          1677.862
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.126,
+          "max": 0.126,
+          "min": 0.002
+        },
+        "samples": [
+          0.126,
+          0.002,
+          0.003,
+          0.002,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 1.246,
+          "p95": 27.133,
+          "max": 27.133,
+          "min": 1.015
+        },
+        "samples": [
+          27.133,
+          1.142,
+          1.771,
+          1.246,
+          1.015
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.071,
+          "p95": 0.476,
+          "max": 0.476,
+          "min": 0.064
+        },
+        "samples": [
+          0.476,
+          0.072,
+          0.071,
+          0.064,
+          0.068
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 790.6205,
+          "p95": 956.5724,
+          "max": 956.5724,
+          "min": 759.1372
+        },
+        "samples": [
+          956.5724,
+          795.1057000000001,
+          790.6205,
+          759.1372,
+          776.9082
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 1.246,
+          "p95": 27.133,
+          "max": 27.133,
+          "min": 1.015
+        },
+        "samples": [
+          27.133,
+          1.142,
+          1.771,
+          1.246,
+          1.015
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.617,
+          "p95": 21.743,
+          "max": 21.743,
+          "min": 8.031
+        },
+        "samples": [
+          21.743,
+          10.178,
+          8.617,
+          8.29,
+          8.031
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 10.388000000000002,
+          "p95": 48.876,
+          "max": 48.876,
+          "min": 9.046000000000001
+        },
+        "samples": [
+          48.876,
+          11.32,
+          10.388000000000002,
+          9.536,
+          9.046000000000001
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 6.456130181373488,
+          "p95": 25.968203879247987,
+          "max": 25.968203879247987,
+          "min": 6.322551674795979
+        },
+        "samples": [
+          25.968203879247987,
+          6.440603528394921,
+          6.734131206132584,
+          6.456130181373488,
+          6.322551674795979
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 68.1772867740766,
+          "p95": 68.6475225499989,
+          "max": 68.6475225499989,
+          "min": 66.93342935212699
+        },
+        "samples": [
+          68.1772867740766,
+          67.70162899235225,
+          68.56471373411321,
+          66.93342935212699,
+          68.6475225499989
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 4057539,
+      "p95": 4057539,
+      "max": 4057539,
+      "min": 4057539
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 4057540,
+      "p95": 4057540,
+      "max": 4057540,
+      "min": 4057540
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 8115078,
+      "p95": 8115078,
+      "max": 8115078,
+      "min": 8115078
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.575549,
+      "p95": 0.575549,
+      "max": 0.575549,
+      "min": 0.575549
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 983670784,
+      "p95": 1209438208,
+      "max": 1209438208,
+      "min": 890908672
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1151520768,
+      "p95": 1436549120,
+      "max": 1436549120,
+      "min": 940965888
+    },
+    "os_memory_available": false
+  },
+  "head-2871-RecoverSave": {
+    "build": "head",
+    "declared_load": 2871,
+    "actual_load": 2871,
+    "scenario": "declared-load",
+    "requested_load": 2871,
+    "run": "head-declared-types",
+    "type": "RecoverSave",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1.8695,
+          "p95": 1.9819,
+          "max": 1.9819,
+          "min": 1.7687
+        },
+        "samples": [
+          1.8978,
+          1.7687,
+          1.8336,
+          1.9819,
+          1.8695
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 7.1525,
+          "p95": 8.0544,
+          "max": 8.0544,
+          "min": 6.5937
+        },
+        "samples": [
+          7.1348,
+          6.5937,
+          7.1525,
+          7.7177,
+          8.0544
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 11.8256,
+          "p95": 29.8901,
+          "max": 29.8901,
+          "min": 11.038
+        },
+        "samples": [
+          11.038,
+          29.8901,
+          11.2834,
+          11.8256,
+          12.1774
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 48.7903,
+          "p95": 78.4813,
+          "max": 78.4813,
+          "min": 46.1418
+        },
+        "samples": [
+          46.1418,
+          78.4813,
+          47.3222,
+          50.3118,
+          48.7903
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 667.7264,
+          "p95": 690.7944,
+          "max": 690.7944,
+          "min": 628.2316
+        },
+        "samples": [
+          677.7859,
+          631.4189,
+          628.2316,
+          667.7264,
+          690.7944
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0073,
+          "p95": 0.0078,
+          "max": 0.0078,
+          "min": 0.0057
+        },
+        "samples": [
+          0.0057,
+          0.0073,
+          0.0078,
+          0.0073,
+          0.0073
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 744.004,
+          "p95": 761.6933,
+          "max": 761.6933,
+          "min": 695.8311
+        },
+        "samples": [
+          744.004,
+          748.16,
+          695.8311,
+          739.5707,
+          761.6933
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 775.7512,
+          "p95": 974.715,
+          "max": 974.715,
+          "min": 729.316
+        },
+        "samples": [
+          729.316,
+          775.7512,
+          974.715,
+          756.6852,
+          972.2955000000001
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 273.738,
+          "p95": 275.168,
+          "max": 275.168,
+          "min": 272.086
+        },
+        "samples": [
+          272.129,
+          273.738,
+          275.168,
+          274.663,
+          272.086
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.473,
+          "p95": 0.536,
+          "max": 0.536,
+          "min": 0.438
+        },
+        "samples": [
+          0.475,
+          0.536,
+          0.473,
+          0.438,
+          0.44
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 7.589,
+          "p95": 8.617,
+          "max": 8.617,
+          "min": 7.211
+        },
+        "samples": [
+          7.489,
+          8.617,
+          7.589,
+          7.605,
+          7.211
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1565.497,
+          "p95": 1772.23,
+          "max": 1772.23,
+          "min": 1510.985
+        },
+        "samples": [
+          1510.985,
+          1565.497,
+          1708.988,
+          1533.474,
+          1772.23
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 25.164,
+          "p95": 27.278,
+          "max": 27.278,
+          "min": 24.502
+        },
+        "samples": [
+          24.841,
+          27.278,
+          25.164,
+          24.502,
+          26.066
+        ],
+        "flags_30ms": []
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.002,
+          "max": 0.002,
+          "min": 0.001
+        },
+        "samples": [
+          0.001,
+          0.001,
+          0.002,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.003,
+          "max": 0.003,
+          "min": 0.002
+        },
+        "samples": [
+          0.002,
+          0.002,
+          0.002,
+          0.003,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.625,
+          "p95": 0.769,
+          "max": 0.769,
+          "min": 0.611
+        },
+        "samples": [
+          0.611,
+          0.625,
+          0.618,
+          0.769,
+          0.691
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.003
+        },
+        "samples": [
+          0.004,
+          0.003,
+          0.003,
+          0.003,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.006,
+          "max": 0.006,
+          "min": 0.004
+        },
+        "samples": [
+          0.005,
+          0.005,
+          0.005,
+          0.004,
+          0.006
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1523.942,
+          "p95": 1734.01,
+          "max": 1734.01,
+          "min": 1473.344
+        },
+        "samples": [
+          1473.344,
+          1523.942,
+          1670.569,
+          1496.282,
+          1734.01
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.002,
+          "max": 0.002,
+          "min": 0.002
+        },
+        "samples": [
+          0.002,
+          0.002,
+          0.002,
+          0.002,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 1.09,
+          "p95": 1.186,
+          "max": 1.186,
+          "min": 1.056
+        },
+        "samples": [
+          1.099,
+          1.186,
+          1.056,
+          1.09,
+          1.06
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.081,
+          "p95": 0.082,
+          "max": 0.082,
+          "min": 0.063
+        },
+        "samples": [
+          0.082,
+          0.081,
+          0.082,
+          0.068,
+          0.063
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 781.6689999999999,
+          "p95": 799.9345,
+          "max": 799.9345,
+          "min": 734.273
+        },
+        "samples": [
+          781.6689999999999,
+          789.7458,
+          734.273,
+          776.7887999999999,
+          799.9345
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 1.09,
+          "p95": 1.186,
+          "max": 1.186,
+          "min": 1.056
+        },
+        "samples": [
+          1.099,
+          1.186,
+          1.056,
+          1.09,
+          1.06
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.043000000000001,
+          "p95": 9.153,
+          "max": 9.153,
+          "min": 7.651000000000001
+        },
+        "samples": [
+          7.9639999999999995,
+          9.153,
+          8.062000000000001,
+          8.043000000000001,
+          7.651000000000001
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 9.118000000000002,
+          "p95": 10.339,
+          "max": 10.339,
+          "min": 8.711
+        },
+        "samples": [
+          9.062999999999999,
+          10.339,
+          9.118000000000002,
+          9.133000000000001,
+          8.711
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 6.201788818296016,
+          "p95": 6.7227942849101385,
+          "max": 6.7227942849101385,
+          "min": 6.038635734616475
+        },
+        "samples": [
+          6.122183914929715,
+          6.7227942849101385,
+          6.201788818296016,
+          6.038635734616475,
+          6.42409105617962
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 67.46404655629928,
+          "p95": 67.81647693343182,
+          "max": 67.81647693343182,
+          "min": 67.05690321152797
+        },
+        "samples": [
+          67.06750076832287,
+          67.46404655629928,
+          67.81647693343182,
+          67.6920172547941,
+          67.05690321152797
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 4057539,
+      "p95": 4057539,
+      "max": 4057539,
+      "min": 4057539
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 4057540,
+      "p95": 4057540,
+      "max": 4057540,
+      "min": 4057540
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 8115078,
+      "p95": 8115078,
+      "max": 8115078,
+      "min": 8115078
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.575549,
+      "p95": 0.575549,
+      "max": 0.575549,
+      "min": 0.575549
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1189933056,
+      "p95": 1229271040,
+      "max": 1229271040,
+      "min": 947343360
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1181683712,
+      "p95": 1222291456,
+      "max": 1222291456,
+      "min": 950341632
+    },
+    "os_memory_available": false
+  },
+  "base-1914-Default": {
+    "build": "base",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "representative",
+    "requested_load": 1914,
+    "run": "base-save",
+    "type": "Default",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 1.976,
+          "p95": 2.4196,
+          "max": 2.4196,
+          "min": 1.7029
+        },
+        "samples": [
+          2.4196,
+          2.1563,
+          1.7029,
+          1.976,
+          1.7602
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 5.9913,
+          "p95": 7.1384,
+          "max": 7.1384,
+          "min": 5.3815
+        },
+        "samples": [
+          7.1384,
+          5.9913,
+          5.8446,
+          6.3075,
+          5.3815
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 8.4593,
+          "p95": 18.586,
+          "max": 18.586,
+          "min": 8.3067
+        },
+        "samples": [
+          14.627,
+          8.4593,
+          8.3514,
+          8.3067,
+          18.586
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 31.3873,
+          "p95": 46.8041,
+          "max": 46.8041,
+          "min": 30.065
+        },
+        "samples": [
+          30.065,
+          31.0661,
+          31.3873,
+          31.5442,
+          46.8041
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 262.6413,
+          "p95": 410.1034,
+          "max": 410.1034,
+          "min": 256.8083
+        },
+        "samples": [
+          256.8083,
+          258.7806,
+          262.6413,
+          280.3004,
+          410.1034
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0066,
+          "p95": 0.5338,
+          "max": 0.5338,
+          "min": 0.0054
+        },
+        "samples": [
+          0.5338,
+          0.0072,
+          0.0054,
+          0.0057,
+          0.0066
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 311.5921,
+          "p95": 482.6418,
+          "max": 482.6418,
+          "min": 306.4608
+        },
+        "samples": [
+          311.5921,
+          306.4608,
+          309.9329,
+          328.4405,
+          482.6418
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 282.0267,
+          "p95": 361.4219,
+          "max": 361.4219,
+          "min": 232.36020000000002
+        },
+        "samples": [
+          264.4087,
+          282.0267,
+          232.36020000000002,
+          293.1433,
+          361.4219
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 176.217,
+          "p95": 210.399,
+          "max": 210.399,
+          "min": 165.61
+        },
+        "samples": [
+          165.61,
+          171.035,
+          176.217,
+          190.617,
+          210.399
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.623,
+          "p95": 2.55,
+          "max": 2.55,
+          "min": 0.559
+        },
+        "samples": [
+          2.55,
+          0.603,
+          0.559,
+          0.76,
+          0.623
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 7.416,
+          "p95": 16.234,
+          "max": 16.234,
+          "min": 6.792
+        },
+        "samples": [
+          16.234,
+          12.375,
+          6.792,
+          7.416,
+          7.096
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 665.582,
+          "p95": 889.166,
+          "max": 889.166,
+          "min": 582.48
+        },
+        "samples": [
+          761.961,
+          637.903,
+          582.48,
+          665.582,
+          889.166
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 31.114,
+          "p95": 109.395,
+          "max": 109.395,
+          "min": 27.989
+        },
+        "samples": [
+          109.395,
+          31.114,
+          27.989,
+          29.264,
+          32.344
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          5
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.006,
+          "max": 0.006,
+          "min": 0.001
+        },
+        "samples": [
+          0.006,
+          0.002,
+          0.001,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.012,
+          "max": 0.012,
+          "min": 0.002
+        },
+        "samples": [
+          0.012,
+          0.003,
+          0.003,
+          0.002,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.64,
+          "p95": 6.941,
+          "max": 6.941,
+          "min": 0.546
+        },
+        "samples": [
+          6.941,
+          0.64,
+          0.546,
+          0.82,
+          0.595
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.004,
+          "p95": 0.247,
+          "max": 0.247,
+          "min": 0.003
+        },
+        "samples": [
+          0.247,
+          0.005,
+          0.004,
+          0.003,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.32,
+          "max": 0.32,
+          "min": 0.004
+        },
+        "samples": [
+          0.32,
+          0.005,
+          0.004,
+          0.005,
+          0.006
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 588.514,
+          "p95": 844.086,
+          "max": 844.086,
+          "min": 542.317
+        },
+        "samples": [
+          577.319,
+          588.514,
+          542.317,
+          621.606,
+          844.086
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.106,
+          "max": 0.106,
+          "min": 0.002
+        },
+        "samples": [
+          0.106,
+          0.002,
+          0.002,
+          0.002,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 1.021,
+          "p95": 25.507,
+          "max": 25.507,
+          "min": 0.915
+        },
+        "samples": [
+          25.507,
+          1.021,
+          0.915,
+          0.931,
+          1.166
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.09,
+          "p95": 0.491,
+          "max": 0.491,
+          "min": 0.079
+        },
+        "samples": [
+          0.491,
+          0.096,
+          0.079,
+          0.08,
+          0.09
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 372.4387,
+          "p95": 527.7441000000001,
+          "max": 527.7441000000001,
+          "min": 350.1198
+        },
+        "samples": [
+          497.5523,
+          355.8763,
+          350.1198,
+          372.4387,
+          527.7441000000001
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 1.021,
+          "p95": 25.507,
+          "max": 25.507,
+          "min": 0.915
+        },
+        "samples": [
+          25.507,
+          1.021,
+          0.915,
+          0.931,
+          1.166
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.176,
+          "p95": 18.784000000000002,
+          "max": 18.784000000000002,
+          "min": 7.351
+        },
+        "samples": [
+          18.784000000000002,
+          12.978,
+          7.351,
+          8.176,
+          7.719
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 9.107,
+          "p95": 44.291000000000004,
+          "max": 44.291000000000004,
+          "min": 8.266
+        },
+        "samples": [
+          44.291000000000004,
+          13.998999999999999,
+          8.266,
+          9.107,
+          8.885
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 5.367747280403889,
+          "p95": 21.81472509398309,
+          "max": 21.81472509398309,
+          "min": 5.045472006113049
+        },
+        "samples": [
+          21.81472509398309,
+          6.204519005203069,
+          5.298185491198526,
+          5.045472006113049,
+          5.367747280403889
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 33.357045721623884,
+          "p95": 34.9174084853357,
+          "max": 34.9174084853357,
+          "min": 32.864705350917546
+        },
+        "samples": [
+          33.024696035600705,
+          34.106508583110724,
+          33.357045721623884,
+          32.864705350917546,
+          34.9174084853357
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 5282752,
+      "p95": 6025619,
+      "max": 6025619,
+      "min": 5014732
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 5282753,
+      "p95": 6025620,
+      "max": 6025620,
+      "min": 5014733
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 10565504,
+      "p95": 12051238,
+      "max": 12051238,
+      "min": 10029464
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.641464,
+      "p95": 0.671129,
+      "max": 0.671129,
+      "min": 0.629403
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 999899136,
+      "p95": 1243566080,
+      "max": 1243566080,
+      "min": 863424512
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1059401728,
+      "p95": 1368023040,
+      "max": 1368023040,
+      "min": 884621312
+    },
+    "os_memory_available": false
+  },
+  "base-1914-MidnightSave": {
+    "build": "base",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "representative",
+    "requested_load": 1914,
+    "run": "base-types",
+    "type": "MidnightSave",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 3.7725,
+          "p95": 5.9361,
+          "max": 5.9361,
+          "min": 2.8739
+        },
+        "samples": [
+          5.9361,
+          3.7725,
+          2.8739,
+          3.0976,
+          4.3964
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 6.433,
+          "p95": 54.3935,
+          "max": 54.3935,
+          "min": 6.062
+        },
+        "samples": [
+          54.3935,
+          6.062,
+          6.433,
+          6.1352,
+          8.3082
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 10.2562,
+          "p95": 16.6129,
+          "max": 16.6129,
+          "min": 8.5564
+        },
+        "samples": [
+          16.6129,
+          8.5564,
+          10.2562,
+          8.9215,
+          12.261
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 46.0695,
+          "p95": 48.5971,
+          "max": 48.5971,
+          "min": 43.9934
+        },
+        "samples": [
+          46.0695,
+          44.089,
+          48.334,
+          43.9934,
+          48.5971
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 601.3644,
+          "p95": 623.6396,
+          "max": 623.6396,
+          "min": 552.0372
+        },
+        "samples": [
+          552.0372,
+          611.0175,
+          570.5729,
+          623.6396,
+          601.3644
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0082,
+          "p95": 0.4025,
+          "max": 0.4025,
+          "min": 0.0072
+        },
+        "samples": [
+          0.4025,
+          0.0082,
+          0.0099,
+          0.0072,
+          0.0074
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 674.9345,
+          "p95": 685.7945,
+          "max": 685.7945,
+          "min": 638.4799
+        },
+        "samples": [
+          675.4517,
+          673.5056,
+          638.4799,
+          685.7945,
+          674.9345
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 577.6305,
+          "p95": 653.9876,
+          "max": 653.9876,
+          "min": 545.9454000000001
+        },
+        "samples": [
+          562.2951,
+          577.6305,
+          653.9876,
+          545.9454000000001,
+          583.3881
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 475.01,
+          "p95": 559.723,
+          "max": 559.723,
+          "min": 468.601
+        },
+        "samples": [
+          478.668,
+          559.723,
+          472.525,
+          468.601,
+          475.01
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.675,
+          "p95": 2.387,
+          "max": 2.387,
+          "min": 0.49
+        },
+        "samples": [
+          2.387,
+          0.675,
+          0.995,
+          0.652,
+          0.49
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 7.745,
+          "p95": 19.687,
+          "max": 19.687,
+          "min": 7.107
+        },
+        "samples": [
+          19.687,
+          10.268,
+          7.293,
+          7.745,
+          7.107
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1350.347,
+          "p95": 1455.92,
+          "max": 1455.92,
+          "min": 1287.868
+        },
+        "samples": [
+          1455.92,
+          1350.347,
+          1351.224,
+          1287.868,
+          1314.102
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 42.857,
+          "p95": 128.475,
+          "max": 128.475,
+          "min": 42.025
+        },
+        "samples": [
+          128.475,
+          79.878,
+          42.857,
+          42.141,
+          42.025
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.006,
+          "max": 0.006,
+          "min": 0.001
+        },
+        "samples": [
+          0.006,
+          0.003,
+          0.002,
+          0.001,
+          0.005
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.004,
+          "p95": 0.012,
+          "max": 0.012,
+          "min": 0.002
+        },
+        "samples": [
+          0.012,
+          0.007,
+          0.002,
+          0.002,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.912,
+          "p95": 9.611,
+          "max": 9.611,
+          "min": 0.606
+        },
+        "samples": [
+          9.611,
+          1.162,
+          0.653,
+          0.606,
+          0.912
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.004,
+          "p95": 0.264,
+          "max": 0.264,
+          "min": 0.003
+        },
+        "samples": [
+          0.264,
+          0.008,
+          0.004,
+          0.003,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.008,
+          "p95": 0.344,
+          "max": 0.344,
+          "min": 0.004
+        },
+        "samples": [
+          0.344,
+          0.011,
+          0.004,
+          0.005,
+          0.008
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1251.183,
+          "p95": 1292.493,
+          "max": 1292.493,
+          "min": 1231.766
+        },
+        "samples": [
+          1239.298,
+          1251.183,
+          1292.493,
+          1231.766,
+          1258.347
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.142,
+          "max": 0.142,
+          "min": 0.003
+        },
+        "samples": [
+          0.142,
+          0.004,
+          0.003,
+          0.003,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.953,
+          "p95": 24.171,
+          "max": 24.171,
+          "min": 0.931
+        },
+        "samples": [
+          24.171,
+          1.683,
+          0.953,
+          0.931,
+          0.945
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.125,
+          "p95": 0.529,
+          "max": 0.529,
+          "min": 0.066
+        },
+        "samples": [
+          0.529,
+          0.17,
+          0.08,
+          0.066,
+          0.125
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 741.9225999999999,
+          "p95": 893.6249,
+          "max": 893.6249,
+          "min": 697.2363999999999
+        },
+        "samples": [
+          893.6249,
+          772.7165,
+          697.2363999999999,
+          741.9225999999999,
+          730.7139000000001
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 0.953,
+          "p95": 24.171,
+          "max": 24.171,
+          "min": 0.931
+        },
+        "samples": [
+          24.171,
+          1.683,
+          0.953,
+          0.931,
+          0.945
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.397,
+          "p95": 22.074,
+          "max": 22.074,
+          "min": 7.597
+        },
+        "samples": [
+          22.074,
+          10.943000000000001,
+          8.288,
+          8.397,
+          7.597
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 9.328,
+          "p95": 46.245000000000005,
+          "max": 46.245000000000005,
+          "min": 8.542
+        },
+        "samples": [
+          46.245000000000005,
+          12.626000000000001,
+          9.241,
+          9.328,
+          8.542
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 3.19937471212197,
+          "p95": 9.863406313455252,
+          "max": 9.863406313455252,
+          "min": 3.090111474162955
+        },
+        "samples": [
+          9.863406313455252,
+          6.036207724801281,
+          3.19937471212197,
+          3.1231238264014203,
+          3.090111474162955
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 35.275090086693744,
+          "p95": 42.29705671585352,
+          "max": 42.29705671585352,
+          "min": 34.72862409946446
+        },
+        "samples": [
+          36.748760251013806,
+          42.29705671585352,
+          35.275090086693744,
+          34.72862409946446,
+          34.92763477316229
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 13395430,
+      "p95": 13599833,
+      "max": 13599833,
+      "min": 13025419
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 13395431,
+      "p95": 13599834,
+      "max": 13599834,
+      "min": 13025420
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 26790860,
+      "p95": 27199666,
+      "max": 27199666,
+      "min": 26050838
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.819386,
+      "p95": 0.821616,
+      "max": 0.821616,
+      "min": 0.815203
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1012011008,
+      "p95": 1023066112,
+      "max": 1023066112,
+      "min": 927481856
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1096531968,
+      "p95": 1151819776,
+      "max": 1151819776,
+      "min": 995704832
+    },
+    "os_memory_available": false
+  },
+  "base-1914-RecoverSave": {
+    "build": "base",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "representative",
+    "requested_load": 1914,
+    "run": "base-types",
+    "type": "RecoverSave",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 2.9764,
+          "p95": 3.057,
+          "max": 3.057,
+          "min": 2.8214
+        },
+        "samples": [
+          2.8214,
+          2.9764,
+          3.0017,
+          2.876,
+          3.057
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 5.8955,
+          "p95": 6.2853,
+          "max": 6.2853,
+          "min": 5.6958
+        },
+        "samples": [
+          5.8955,
+          5.8403,
+          5.6958,
+          6.0249,
+          6.2853
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 9.5338,
+          "p95": 9.6172,
+          "max": 9.6172,
+          "min": 8.4586
+        },
+        "samples": [
+          8.4586,
+          9.5338,
+          9.5688,
+          9.6172,
+          9.1229
+        ],
+        "flags_30ms": []
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 45.1897,
+          "p95": 54.267,
+          "max": 54.267,
+          "min": 43.8229
+        },
+        "samples": [
+          43.8229,
+          46.1503,
+          54.267,
+          45.1897,
+          44.8908
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 593.455,
+          "p95": 614.1258,
+          "max": 614.1258,
+          "min": 570.5499
+        },
+        "samples": [
+          608.4213,
+          593.455,
+          588.7828,
+          614.1258,
+          570.5499
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0075,
+          "p95": 0.0144,
+          "max": 0.0144,
+          "min": 0.0063
+        },
+        "samples": [
+          0.0144,
+          0.0075,
+          0.0065,
+          0.0082,
+          0.0063
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 661.3226,
+          "p95": 677.8418,
+          "max": 677.8418,
+          "min": 633.9122
+        },
+        "samples": [
+          669.4341,
+          657.9633,
+          661.3226,
+          677.8418,
+          633.9122
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 592.6510000000001,
+          "p95": 772.3061,
+          "max": 772.3061,
+          "min": 546.8327
+        },
+        "samples": [
+          551.63,
+          772.3061,
+          592.6510000000001,
+          546.8327,
+          596.2054
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 487.382,
+          "p95": 505.233,
+          "max": 505.233,
+          "min": 476.16
+        },
+        "samples": [
+          477.553,
+          505.233,
+          491.494,
+          487.382,
+          476.16
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.515,
+          "p95": 0.875,
+          "max": 0.875,
+          "min": 0.448
+        },
+        "samples": [
+          0.552,
+          0.875,
+          0.488,
+          0.448,
+          0.515
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 7.686,
+          "p95": 8.765,
+          "max": 8.765,
+          "min": 7.131
+        },
+        "samples": [
+          7.709,
+          8.765,
+          7.686,
+          7.379,
+          7.131
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1285.93,
+          "p95": 1494.445,
+          "max": 1494.445,
+          "min": 1278.06
+        },
+        "samples": [
+          1281.427,
+          1494.445,
+          1308.958,
+          1278.06,
+          1285.93
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 41.876,
+          "p95": 47.535,
+          "max": 47.535,
+          "min": 39.785
+        },
+        "samples": [
+          45.957,
+          47.535,
+          40.682,
+          39.785,
+          41.876
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.002,
+          "max": 0.002,
+          "min": 0.001
+        },
+        "samples": [
+          0.002,
+          0.001,
+          0.001,
+          0.001,
+          0.001
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.003,
+          "max": 0.003,
+          "min": 0.002
+        },
+        "samples": [
+          0.002,
+          0.002,
+          0.002,
+          0.003,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.606,
+          "p95": 0.817,
+          "max": 0.817,
+          "min": 0.589
+        },
+        "samples": [
+          0.6,
+          0.606,
+          0.817,
+          0.698,
+          0.589
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.004,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.003
+        },
+        "samples": [
+          0.004,
+          0.004,
+          0.004,
+          0.003,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.004,
+          "p95": 0.005,
+          "max": 0.005,
+          "min": 0.004
+        },
+        "samples": [
+          0.005,
+          0.004,
+          0.004,
+          0.004,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 1230.141,
+          "p95": 1430.307,
+          "max": 1430.307,
+          "min": 1221.086
+        },
+        "samples": [
+          1221.086,
+          1430.307,
+          1253.997,
+          1224.698,
+          1230.141
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.004,
+          "max": 0.004,
+          "min": 0.002
+        },
+        "samples": [
+          0.003,
+          0.002,
+          0.002,
+          0.003,
+          0.004
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.985,
+          "p95": 1.375,
+          "max": 1.375,
+          "min": 0.948
+        },
+        "samples": [
+          0.993,
+          1.375,
+          0.948,
+          0.973,
+          0.985
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.078,
+          "p95": 0.091,
+          "max": 0.091,
+          "min": 0.065
+        },
+        "samples": [
+          0.08,
+          0.091,
+          0.078,
+          0.071,
+          0.065
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 722.1388999999999,
+          "p95": 731.2272999999999,
+          "max": 731.2272999999999,
+          "min": 689.7246
+        },
+        "samples": [
+          729.7969999999999,
+          722.1388999999999,
+          716.307,
+          731.2272999999999,
+          689.7246
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 0.985,
+          "p95": 1.375,
+          "max": 1.375,
+          "min": 0.948
+        },
+        "samples": [
+          0.993,
+          1.375,
+          0.948,
+          0.973,
+          0.985
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.174,
+          "p95": 9.64,
+          "max": 9.64,
+          "min": 7.646
+        },
+        "samples": [
+          8.261,
+          9.64,
+          8.174,
+          7.827,
+          7.646
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 9.122,
+          "p95": 11.015,
+          "max": 11.015,
+          "min": 8.631
+        },
+        "samples": [
+          9.254,
+          11.015,
+          9.122,
+          8.8,
+          8.631
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 3.079155457276571,
+          "p95": 3.4952635080151353,
+          "max": 3.4952635080151353,
+          "min": 2.9254035692938287
+        },
+        "samples": [
+          3.37923267146001,
+          3.4952635080151353,
+          2.991360261556153,
+          2.9254035692938287,
+          3.079155457276571
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 35.837351826305515,
+          "p95": 37.149941473546036,
+          "max": 37.149941473546036,
+          "min": 35.01219463503706
+        },
+        "samples": [
+          35.11462236337755,
+          37.149941473546036,
+          36.13970848024384,
+          35.837351826305515,
+          35.01219463503706
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 13599833,
+      "p95": 13599833,
+      "max": 13599833,
+      "min": 13599833
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 13599834,
+      "p95": 13599834,
+      "max": 13599834,
+      "min": 13599834
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 27199666,
+      "p95": 27199666,
+      "max": 27199666,
+      "min": 27199666
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.821616,
+      "p95": 0.821616,
+      "max": 0.821616,
+      "min": 0.821616
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1023778816,
+      "p95": 1114497024,
+      "max": 1114497024,
+      "min": 929206272
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1122754560,
+      "p95": 1338523648,
+      "max": 1338523648,
+      "min": 1008676864
+    },
+    "os_memory_available": false
+  },
+  "base-1914-day2-Default": {
+    "build": "base",
+    "declared_load": 1914,
+    "actual_load": 1914,
+    "scenario": "day2-declared-load-attempt",
+    "requested_load": 2871,
+    "run": "base-declared",
+    "type": "Default",
+    "phases": {
+      "PC observeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 2.0133,
+          "p95": 3.7017,
+          "max": 3.7017,
+          "min": 2.0055
+        },
+        "samples": [
+          3.7017,
+          2.0133,
+          2.0055,
+          2.6786,
+          2.0066
+        ],
+        "flags_30ms": []
+      },
+      "PC synchronizeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 7.5458,
+          "p95": 17.7197,
+          "max": 17.7197,
+          "min": 7.3923
+        },
+        "samples": [
+          17.7197,
+          7.5142,
+          7.3923,
+          8.8931,
+          7.5458
+        ],
+        "flags_30ms": []
+      },
+      "PC captureMs": {
+        "stats": {
+          "n": 5,
+          "p50": 10.9481,
+          "p95": 35.8868,
+          "max": 35.8868,
+          "min": 10.0817
+        },
+        "samples": [
+          35.8868,
+          10.0817,
+          10.1186,
+          12.346,
+          10.9481
+        ],
+        "flags_30ms": [
+          1
+        ]
+      },
+      "PC validateMs": {
+        "stats": {
+          "n": 5,
+          "p50": 38.4871,
+          "p95": 67.8146,
+          "max": 67.8146,
+          "min": 37.4152
+        },
+        "samples": [
+          67.8146,
+          37.4152,
+          38.4809,
+          45.5055,
+          38.4871
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC encodeMs": {
+        "stats": {
+          "n": 5,
+          "p50": 360.8023,
+          "p95": 485.3399,
+          "max": 485.3399,
+          "min": 356.546
+        },
+        "samples": [
+          455.9853,
+          360.8023,
+          356.546,
+          485.3399,
+          357.7327
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC publishMs": {
+        "stats": {
+          "n": 5,
+          "p50": 0.0064,
+          "p95": 0.4361,
+          "max": 0.4361,
+          "min": 0.0058
+        },
+        "samples": [
+          0.4361,
+          0.0063,
+          0.0058,
+          0.0341,
+          0.0064
+        ],
+        "flags_30ms": []
+      },
+      "PC totalMs": {
+        "stats": {
+          "n": 5,
+          "p50": 417.833,
+          "p95": 581.5442,
+          "max": 581.5442,
+          "min": 414.5491
+        },
+        "samples": [
+          581.5442,
+          417.833,
+          414.5491,
+          554.7972,
+          416.7267
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 347.5416,
+          "p95": 541.8561,
+          "max": 541.8561,
+          "min": 332.73330000000004
+        },
+        "samples": [
+          377.6784,
+          346.9567,
+          541.8561,
+          347.5416,
+          332.73330000000004
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native CompressSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 271.671,
+          "p95": 300.714,
+          "max": 300.714,
+          "min": 270.414
+        },
+        "samples": [
+          271.671,
+          300.714,
+          279.193,
+          270.414,
+          270.974
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native GenerateSaveGameTexture": {
+        "stats": {
+          "n": 5,
+          "p50": 0.748,
+          "p95": 2.582,
+          "max": 2.582,
+          "min": 0.443
+        },
+        "samples": [
+          2.582,
+          1.052,
+          0.748,
+          0.487,
+          0.443
+        ],
+        "flags_30ms": []
+      },
+      "native PortraitGenerator.Create": {
+        "stats": {
+          "n": 5,
+          "p50": 7.556,
+          "p95": 13.713,
+          "max": 13.713,
+          "min": 7.336
+        },
+        "samples": [
+          13.713,
+          10.011,
+          7.336,
+          7.556,
+          7.372
+        ],
+        "flags_30ms": []
+      },
+      "native Save": {
+        "stats": {
+          "n": 5,
+          "p50": 947.085,
+          "p95": 1151.558,
+          "max": 1151.558,
+          "min": 793.591
+        },
+        "samples": [
+          1151.558,
+          819.235,
+          1002.333,
+          947.085,
+          793.591
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "native SerializeSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 31.079,
+          "p95": 125.725,
+          "max": 125.725,
+          "min": 29.691
+        },
+        "samples": [
+          125.725,
+          32.433,
+          31.079,
+          30.415,
+          29.691
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "subscriber BuildingManager.<Awake>b__59_1": {
+        "stats": {
+          "n": 5,
+          "p50": 0.001,
+          "p95": 0.005,
+          "max": 0.005,
+          "min": 0.001
+        },
+        "samples": [
+          0.005,
+          0.001,
+          0.001,
+          0.001,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber CityPerformance.FrameTrace.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.002,
+          "p95": 0.016,
+          "max": 0.016,
+          "min": 0.002
+        },
+        "samples": [
+          0.016,
+          0.002,
+          0.002,
+          0.002,
+          0.003
+        ],
+        "flags_30ms": []
+      },
+      "subscriber FoodTrucks.FoodTrucksSession.OnSaveGame": {
+        "stats": {
+          "n": 5,
+          "p50": 0.852,
+          "p95": 12.474,
+          "max": 12.474,
+          "min": 0.762
+        },
+        "samples": [
+          12.474,
+          0.762,
+          0.787,
+          0.949,
+          0.852
+        ],
+        "flags_30ms": []
+      },
+      "subscriber GameManager+<>c.<Start>b__70_2": {
+        "stats": {
+          "n": 5,
+          "p50": 0.005,
+          "p95": 0.276,
+          "max": 0.276,
+          "min": 0.003
+        },
+        "samples": [
+          0.276,
+          0.003,
+          0.003,
+          0.005,
+          0.005
+        ],
+        "flags_30ms": []
+      },
+      "subscriber Helpers.PlayerHelper.SaveCurrentPosition": {
+        "stats": {
+          "n": 5,
+          "p50": 0.006,
+          "p95": 0.544,
+          "max": 0.544,
+          "min": 0.005
+        },
+        "samples": [
+          0.544,
+          0.006,
+          0.005,
+          0.006,
+          0.006
+        ],
+        "flags_30ms": []
+      },
+      "subscriber PersistentCity.Runtime.PopulationRuntime.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 902.366,
+          "p95": 960.66,
+          "max": 960.66,
+          "min": 749.486
+        },
+        "samples": [
+          960.66,
+          764.81,
+          956.429,
+          902.366,
+          749.486
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "subscriber RealLifeOverhaul.Guard+Calls+Caught.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 0.003,
+          "p95": 0.168,
+          "max": 0.168,
+          "min": 0.002
+        },
+        "samples": [
+          0.168,
+          0.002,
+          0.003,
+          0.006,
+          0.002
+        ],
+        "flags_30ms": []
+      },
+      "subscriber RealLifeOverhaul.SaveHook.Run": {
+        "stats": {
+          "n": 5,
+          "p50": 1.939,
+          "p95": 28.663,
+          "max": 28.663,
+          "min": 1.504
+        },
+        "samples": [
+          28.663,
+          4.878,
+          1.939,
+          1.53,
+          1.504
+        ],
+        "flags_30ms": []
+      },
+      "subscriber UI.DraggableWindows.DraggableWindows.Save": {
+        "stats": {
+          "n": 5,
+          "p50": 0.092,
+          "p95": 0.606,
+          "max": 0.606,
+          "min": 0.076
+        },
+        "samples": [
+          0.606,
+          0.076,
+          0.09,
+          0.092,
+          0.11
+        ],
+        "flags_30ms": []
+      },
+      "native Save minus PC recordCountMs": {
+        "stats": {
+          "n": 5,
+          "p50": 472.2783,
+          "p95": 773.8796,
+          "max": 773.8796,
+          "min": 460.4769
+        },
+        "samples": [
+          773.8796,
+          472.2783,
+          460.4769,
+          599.5434,
+          460.85769999999997
+        ],
+        "flags_30ms": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "derived remaining onSaveGame subscribers after PC ms": {
+        "stats": {
+          "n": 5,
+          "p50": 1.939,
+          "p95": 28.663,
+          "max": 28.663,
+          "min": 1.504
+        },
+        "samples": [
+          28.663,
+          4.878,
+          1.939,
+          1.53,
+          1.504
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived portrait plus screenshot dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 8.084,
+          "p95": 16.294999999999998,
+          "max": 16.294999999999998,
+          "min": 7.8149999999999995
+        },
+        "samples": [
+          16.294999999999998,
+          11.062999999999999,
+          8.084,
+          8.043,
+          7.8149999999999995
+        ],
+        "flags_30ms": [],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived remaining subscribers plus portrait dispatch ms": {
+        "stats": {
+          "n": 5,
+          "p50": 10.023,
+          "p95": 44.958,
+          "max": 44.958,
+          "min": 9.318999999999999
+        },
+        "samples": [
+          44.958,
+          15.940999999999999,
+          10.023,
+          9.572999999999999,
+          9.318999999999999
+        ],
+        "flags_30ms": [
+          1
+        ],
+        "qualification": "Synchronous ordered durations; potential overlap interval inferred from native contract, not an observed worker overlap or async screenshot completion."
+      },
+      "derived SerializeSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 4.080695862437785,
+          "p95": 16.50778619984525,
+          "max": 16.50778619984525,
+          "min": 3.8984504279944745
+        },
+        "samples": [
+          16.50778619984525,
+          4.258477071541706,
+          4.080695862437785,
+          3.9935121675744143,
+          3.8984504279944745
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      },
+      "derived CompressSaveGame ms per million PC chars": {
+        "stats": {
+          "n": 5,
+          "p50": 35.670604769919734,
+          "p95": 39.483972314975254,
+          "max": 39.483972314975254,
+          "min": 35.5055597331076
+        },
+        "samples": [
+          35.670604769919734,
+          39.483972314975254,
+          36.65824897588701,
+          35.5055597331076,
+          35.57908815046225
+        ],
+        "flags_30ms": [],
+        "qualification": "Ratio of whole native phase to PC characters, not marginal PC-attributable cost; units ms/million chars, not latency ms."
+      }
+    },
+    "pc_sample_count": 5,
+    "native_sample_count": 5,
+    "all_save_success": true,
+    "payload_chars": {
+      "n": 5,
+      "p50": 7616103,
+      "p95": 7616103,
+      "max": 7616103,
+      "min": 7616103
+    },
+    "payload_utf8": {
+      "n": 5,
+      "p50": 7616104,
+      "p95": 7616104,
+      "max": 7616104,
+      "min": 7616104
+    },
+    "payload_utf16": {
+      "n": 5,
+      "p50": 15232206,
+      "p95": 15232206,
+      "max": 15232206,
+      "min": 15232206
+    },
+    "utf16_share": {
+      "n": 5,
+      "p50": 0.719186,
+      "p95": 0.719186,
+      "max": 0.719186,
+      "min": 0.719186
+    },
+    "gc_heap_before": {
+      "n": 5,
+      "p50": 1155796992,
+      "p95": 1284358144,
+      "max": 1284358144,
+      "min": 1110999040
+    },
+    "gc_heap_after": {
+      "n": 5,
+      "p50": 1221959680,
+      "p95": 1435029504,
+      "max": 1435029504,
+      "min": 1020116992
+    },
+    "os_memory_available": false
+  }
+}
