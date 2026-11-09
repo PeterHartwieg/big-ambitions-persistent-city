@@ -312,10 +312,21 @@ namespace PersistentCity.Runtime
             else definitions = Dependencies(passDefinitions, catalogue);
             if (contractLive.ReadBusinessType(out var type)) business = new FoodBusinessTypeCopy(type);
             var image = new FoodContractImage(key, hour, eligibility, holders, definitions, business, admission, stamp);
+            // Decision 1 before the swap: if the serving image no longer describes the current catalogue, record the
+            // refusal now, whether discovery saw it first or this rebuild finished first.
+            bool staleCatalogue = contractMode == ContractMode.Active && ServingStaleForCatalogue(key, catalogue);
             contracts.Publish(image); contractWarming.Remove(key);
-            if (!image.Passed && contractMode == ContractMode.Active) WithdrawFailedImage(reg);
+            if (staleCatalogue && ContractInterest(key, reg)) { contractLastRefusal = "catalogue"; RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); }
+            else if (!image.Passed && contractMode == ContractMode.Active) WithdrawFailedImage(reg);
         }
         private void AddName(string name) { if (!contractNamesBuffer.Contains(name)) contractNamesBuffer.Add(name); }
+        private bool ServingStaleForCatalogue(string key, LoadedStockCatalogue catalogue)
+        {
+            var serving = contracts.Serving(key);
+            return serving != null && contracts.VerifiedCatalogue(key) != catalogue.Revision && !FoodContractRecheck.CatalogueCurrent(serving, catalogue);
+        }
+        /// <summary>The coordinator is active and the catalogue is rebuilding: a sale waits, without a contract refusal.</summary>
+        private bool ContractCatalogueWaiting => contractMode == ContractMode.Active && contractReader != null && contractReader.Catalogue == null;
         // Every resolvable definition a pass read. Bounded by the reader's 512 names per pass.
         private static FoodDefinitionDependency[] Dependencies(IReadOnlyList<string> names, LoadedStockCatalogue catalogue)
         {

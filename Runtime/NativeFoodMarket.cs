@@ -297,7 +297,8 @@ namespace PersistentCity.Runtime
                 // E5b3 Decision 3: a selected capture or checkout rechecks the published image before any supply read.
                 if ((observed != null || capture) && !ContractRecheck(reg, observed != null))
                 {
-                    supplyExclusions[b.PlaceId] = "Excluded: complete food contract changed since its published image";
+                    supplyExclusions[b.PlaceId] = ContractCatalogueWaiting ? "Waiting: food catalogue rebuilding"
+                        : "Excluded: complete food contract changed since its published image";
                     continue;
                 }
                 b.Offers.RemoveAll(o => !scope.ContainsProduct(o.ProductId));
@@ -536,6 +537,8 @@ namespace PersistentCity.Runtime
                     return new FoodSale(false, "Approved price changed during native setup");
                 // Setup/open checks may invoke native callbacks. Check the whole approved menu
                 // again, not only the chosen price, before creating a receipt or native order.
+                // A catalogue that started rebuilding during setup cannot vouch for the image: this sale waits.
+                if (ContractCatalogueWaiting) return new FoodSale(false, "Food catalogue rebuilding; this sale waits");
                 // E5b3 Decision 3: the published image's holders, definitions and price rows, after native setup.
                 if (!CompletePricesMatch(reg, business) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
                     || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true

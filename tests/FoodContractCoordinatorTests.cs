@@ -116,6 +116,8 @@ internal sealed class ContractWorld
     public Action<Shop>? DuringPass;
     /// <summary>Runs after the drain and before the commit gates (a write between drain and commit).</summary>
     public Action? AfterDrain;
+    /// <summary>Runs inside a checkout after native setup, before the second recheck.</summary>
+    public Action? AfterNativeSetup;
 
     public ContractWorld(long hour = 100)
     {
@@ -363,8 +365,12 @@ internal sealed class ContractWorld
             .Select(n => { catalogue.TryGet(n, out var copy); return new FoodDefinitionDependency(n, Items[n], copy); }).ToArray();
         if (live.ReadBusinessType(out var facts)) business = new FoodBusinessTypeCopy(facts);
         var image = new FoodContractImage(s.Key, Hour, eligibility, holders, definitions, business, admission, start);
+        var serving = Coordinator.Serving(s.Key);
+        bool staleCatalogue = Active && serving != null && Coordinator.VerifiedCatalogue(s.Key) != catalogue.Revision
+            && !FoodContractRecheck.CatalogueCurrent(serving, catalogue);
         Coordinator.Publish(image); Publishes++;
-        if (!image.Passed && Active && Interest(s)) Refuse(s);
+        if (staleCatalogue && Interest(s)) Refuse(s);
+        else if (!image.Passed && Active && Interest(s)) Refuse(s);
     }
     public CompleteFoodMenuRefusal Admission(Shop s, FoodEligibilityImage eligibility, bool current)
     {
@@ -438,8 +444,11 @@ internal sealed class ContractWorld
             var rows = s.Prices.Where(r => r.itemName == p).ToArray();
             if (rows.Length != 1 || !Money.TryFromNative(rows[0].price, out var live) || live != c.Prices[p]) { Refuse(s); return null; }
         }
+        AfterNativeSetup?.Invoke();
+        // Runtime SellLine: a rebuilding catalogue waits; any other false here is RefuseCheckoutContract.
+        if (Active && Catalogue.Catalogue == null) return null;
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
-        if (!Recheck(s, true)) return null;
+        if (!Recheck(s, true)) { Refuse(s); return null; }
         Orders.Add(intent);
         var stock = s.Holders.Values.First(h => h.cargoInstances.Count == 1 && h.cargoInstances[0].itemName == product && h.cargoInstances[0].amount > 0);
         stock.cargoInstances[0].amount--; // W1 in place: quantity only
@@ -719,6 +728,44 @@ public sealed class FoodContractCoordinatorTests
         world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase![2] = "ba:itemname_other";
         world.RebuildCatalogue(); world.VisitAll();
         Assert.All(shops, s => { Assert.True(world.Refused.ContainsKey(s.Key)); Assert.False(s.Row.Desired); });
+    }
+
+    [Fact]
+    public void ACatalogueChangeIsRefusedEvenWhenThePassingRebuildPublishesBeforeTheNextVisit()
+    {
+        var (world, shop) = Owned();
+        world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase![2] = "ba:itemname_other"; // a dependency's content
+        world.RebuildCatalogue(); world.Drain(); world.VisitAll(); // the rebuild publishes first, then discovery
+        Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        Assert.False(shop.Row.Desired);
+        Assert.True(shop.Row.Managed);
+        // The same safe sequence as discovery-first: hand-back at the next boundary, recovery, later acquisition.
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+        world.Drain(); world.VisitAll();
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+        // An unchanged rebuild published before the visit is rebased, not refused.
+        world.RebuildCatalogue(); world.Drain(); world.VisitAll();
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.True(shop.Row.CanServe);
+    }
+
+    [Fact]
+    public void ACheckoutDuringACatalogueRebuildWaitsWithoutARefusal()
+    {
+        var (world, shop) = Owned();
+        var capture = world.Select(shop)!;
+        world.AfterNativeSetup = () => world.Catalogue.MarkDirty(); // a W11 hint during native setup
+        Assert.Null(world.Checkout(capture, Burger, "wait"));
+        Assert.Empty(world.Orders);
+        Assert.Empty(world.Refused);
+        Assert.True(shop.Row.CanServe);
+        world.AfterNativeSetup = null;
+        world.RebuildCatalogue(); world.VisitAll();
+        Assert.Equal("wait", world.Checkout(world.Select(shop)!, Burger, "wait"));
+        string market = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "NativeFoodMarket.cs"));
+        Assert.Contains("if (ContractCatalogueWaiting) return new FoodSale(false, \"Food catalogue rebuilding; this sale waits\");", market);
     }
 
     [Fact]
@@ -1345,10 +1392,11 @@ public sealed class FoodContractCoordinatorTests
     {
         var rows = new List<string>();
         // Recheck at 1/4/8 offers and 2/16/128 holders (target p95 <= 0.05 ms).
+        foreach (int decor in new[] { 0, 32 })
         foreach (int offers in new[] { 1, 4, 8 })
         foreach (int holders in new[] { 2, 16, 128 })
         {
-            var (image, live) = Synthetic(offers, holders);
+            var (image, live) = Synthetic(offers, holders, decor);
             var epoch = new FoodDefinitionEpoch();
             var samples = new double[2000];
             for (int i = 0; i < 200; i++) { epoch.Begin(); FoodContractRecheck.Structure(image, live, epoch); FoodContractRecheck.Prices(image, live); }
@@ -1365,7 +1413,7 @@ public sealed class FoodContractCoordinatorTests
             long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / samples.Length;
             Assert.Equal(0, failures);
             Array.Sort(samples);
-            rows.Add($"recheck offers={offers} holders={holders}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call");
+            rows.Add($"recheck offers={offers} holders={holders} decor={decor} dependencies={image.Definitions.Count}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call");
             Assert.True(samples[1899] < 1.0);
             Assert.Equal(0, bytes);
         }
@@ -1440,7 +1488,8 @@ public sealed class FoodContractCoordinatorTests
         return new FoodContractImage(source.Key, source.BuiltHour, source.Eligibility, slots, deps, business, source.Admission, (object)default(ShopContractStamp));
     }
     // A passing image with N offers and N holders (counter included), built through the world model.
-    private static (FoodContractImage Image, IFoodContractLive Live) Synthetic(int offers, int holders)
+    // decor: extra non-participating furniture, each with its own definition (a dependency since review round 1).
+    private static (FoodContractImage Image, IFoodContractLive Live) Synthetic(int offers, int holders, int decor = 0)
     {
         var world = new ContractWorld { MenuLimit = LoadedStockLimits.Offers };
         var products = Enumerable.Range(0, offers).Select(i => i < 3 ? new[] { Burger, HotDog, ContractWorld.Croissant }[i] : "fixture:p" + i).ToArray();
@@ -1451,6 +1500,12 @@ public sealed class FoodContractCoordinatorTests
         for (int i = shop.Holders.Count; i < holders; i++)
             shop.Holders.Add(new ContractWorld.Holder { id = "extra" + i, itemName = ContractWorld.ShelfItem,
                 cargoInstances = new List<ContractWorld.Cargo> { new ContractWorld.Cargo { itemName = products[i % offers], amount = 2 } } });
+        for (int i = 0; i < decor; i++)
+        {
+            world.Add(new ContractWorld.Item { itemName = "fixture:decor" + i.ToString("00") });
+            shop.Holders.Add(new ContractWorld.Holder { id = "decor" + i, itemName = "fixture:decor" + i.ToString("00") });
+        }
+        if (decor > 0) world.RebuildCatalogue();
         world.Active = false; // the E5a menu bound (8) is the builder's; SupportedBusiness's 4 is not involved here
         world.VisitAll(); world.Drain();
         var image = world.Coordinator.Image(shop.Key)!;
