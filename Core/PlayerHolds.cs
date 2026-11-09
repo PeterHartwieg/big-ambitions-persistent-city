@@ -305,7 +305,8 @@ namespace PersistentCity.Core
                 if (State.Minute - departure < legStart) departure = State.Minute - legStart;
                 charge = departure - person.DepartureMinute;
                 if (!(charge > 0)) return new PlayerHoldResult(PlayerHoldRefusal.AtLegStart);
-                if (!due.Remove(item)) throw new InvalidOperationException("A travelling walker has no queued event to hold.");
+                // Its event is not queued (an event in flight or a rebuild in progress): nothing to move at this minute.
+                if (!due.Remove(item)) return new PlayerHoldResult(PlayerHoldRefusal.NotDrained);
                 person.DepartureMinute = departure;
                 person.NextEventMinute += charge;
                 item.Minute = ScheduledMinute(person);
