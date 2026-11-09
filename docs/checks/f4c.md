@@ -65,7 +65,7 @@ Whole-frame or presented time minus the PC union is never PC's (`not_pc_ms` in e
 
 Also: PresentMon 2.x and 1.x parsing, the QPC frequency requirement and the process filter (`TraceParsingTests`); the 9 November RLO excerpt and unique-duration attachment (`RloLineTests`); the end-to-end path into `analyze.py` with P1/P2 equal to the nearest rank of the joined series, P3 failing on a ≥ 250 ms `pc-union` stall, a P4 pair with a value, and whole-frame and presented classes in the analyzer's stall table (`EndToEndTests.test_enriched_export_feeds_p1_to_p4`); F4b-shaped rows with `components_ms`; an unchanged input export; the CLI; a 10-minute session in seconds.
 
-Build: `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"`. Unit tests: `dotnet test tests/PersistentCity.Tests.csproj`. Results are in the PR description; the golden-hash test for writer 36 is unchanged.
+Build: `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"`, OK. Unit tests: `dotnet test tests/PersistentCity.Tests.csproj`, 4,350 passed and 2 failed. Both failures are `VisitorBodyTests.CurrentWriterGoldenHashIsUnchanged` (two seeds). They are already at the base: F5i #179 pinned `CurrentSchema == 35` there, and E5b4 #180 then moved the writer to 36. F4c changes no C# file, and the writer-36 golden-hash tests in `F5hIntegratedAcceptanceTests` and `F9IntegratedCityTests` pass.
 
 ## In-game checks
 
