@@ -801,7 +801,7 @@ namespace PersistentCity.Core
         private static TrafficKernel Restore(TrafficKernelState state, bool releasePhysicalControl, bool rebuildWakeups)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
-            if (state.Schema != 2) throw new ArgumentException("Unsupported traffic schema.", nameof(state));
+            if (state.Schema != TrafficKernelState.CurrentSchema) throw new ArgumentException("Unsupported traffic schema.", nameof(state));
             RequireTime(state.Clock, nameof(state));
             RequireTime(state.RequestedTime, nameof(state));
             if (state.RequestedTime < state.Clock || state.NextEventOrder < 0 || state.NextVehicleOrder < 0 ||

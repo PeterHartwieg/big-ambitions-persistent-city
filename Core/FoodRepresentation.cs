@@ -90,56 +90,12 @@ namespace PersistentCity.Core
         }
 
         // Represented consumers per resident for today's excursion schedule (scheduling adapter, not ownership).
-        // Up to schema 25 it is the stored RepresentationFactor. From 26 the stored factor is 1 (one own record per
-        // person); a fresh roster reads the requested factor once, a saved one counts its visitor persons.
+        // Every visitor is its own person with its own routine, so this is always 1.
         private int representation = 1;
 
-        private void InitializeRepresentation()
-        {
-            if (city.State.Schema >= PersonTable.IndependentSchema) { InitializePersons(); return; }
-            bool own = city.State.Schema >= PersonTable.OwnRosterSchema;
-            int residents = city.State.Citizens.Count;
-            if (own && records.Count != 0)
-            {
-                if (state.RepresentationFactor != 1 || residents == 0 || city.State.Visitors.Count % residents != 0)
-                    throw new InvalidOperationException("A schema-26 roster has one own record per person.");
-                representation = 1 + city.State.Visitors.Count / residents;
-            }
-            else representation = state.RepresentationFactor;
-            if (representation < 1 || representation > 3)
-                throw new InvalidOperationException("Representation factor must be fixed between one and three at city initialization.");
-            var identities = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var person in city.State.Citizens)
-                for (int slot = 0; slot < representation; slot++)
-                    if (!identities.Add(FoodRepresentation.ConsumerId(person.Identity.Id, slot)))
-                        throw new InvalidOperationException("Consumer identity collides with another stable anchor or slot.");
-            foreach (var stop in state.RoutineStops) routineStops.Add(stop.AnchorId, stop);
-            // A populated roster is persistent ownership, never permission to multiply wallets.
-            if (records.Count != 0)
-            {
-                if (records.Count != residents * representation)
-                    throw new InvalidOperationException("Saved consumer roster does not match its fixed representation factor.");
-                foreach (var person in city.State.Citizens)
-                    for (int slot = 0; slot < representation; slot++)
-                    {
-                        string id = FoodRepresentation.ConsumerId(person.Identity.Id, slot);
-                        if (!records.TryGetValue(id, out var meal)
-                            || (own ? meal.AnchorId != id || meal.Slot != 0 : meal.AnchorId != person.Identity.Id || meal.Slot != slot))
-                            throw new InvalidOperationException("Saved consumer identity does not match its anchor and slot.");
-                        meal.AssignHost(person.Identity.Id, slot);
-                    }
-                return;
-            }
-            foreach (var person in city.State.Citizens)
-            {
-                CaptureRoutineStop(person);
-                for (int slot = 0; slot < representation; slot++) Enrol(person, slot);
-            }
-            PersonTable.OrderVisitors(city.State);
-            if (own) state.RepresentationFactor = 1; // factor-1 roster rule; scheduling keeps `representation`
-        }
+        private void InitializeRepresentation() => InitializePersons();
 
-        // Schema 27 (F5d): one own record per person and no represented consumer, host, routine stop or excursion. A
+        // F5d: one own record per person and no represented consumer, host, routine stop or excursion. A
         // fresh roster creates the requested factor's K-1 visitors per resident as persons with their own routines.
         // A saved roster enrols any person without a record (for example residents appended by ExpandToHousing),
         // closing the gap where they had no meals or wallet; existing records are never re-seeded.
@@ -149,7 +105,7 @@ namespace PersistentCity.Core
             var city = this.city.State;
             if (state.RepresentationFactor < 1 || state.RepresentationFactor > 3)
                 throw new InvalidOperationException("Representation factor must be fixed between one and three at city initialization.");
-            if (state.RoutineStops.Count != 0) throw new InvalidOperationException("Schema 27 has no represented routine stops.");
+            if (state.RoutineStops.Count != 0) throw new InvalidOperationException("A city has no represented routine stops.");
             // A populated roster is persistent ownership, never permission to multiply wallets.
             if (records.Count != 0 && state.RepresentationFactor != 1) throw new InvalidOperationException("A saved roster has one own record per person.");
             if (records.Count == 0 && city.Visitors.Count == 0

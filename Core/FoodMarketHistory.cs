@@ -63,7 +63,6 @@ namespace PersistentCity.Core
                 var shop = businesses.First(b => b.Id == choice.BusinessId);
                 if (shop.AlternativeKind == FoodAlternativeKind.Rival) continue;
                 var row = ShopDay(shop.PlaceId, shop.Id, intent.Day); row.OffersConsidered++;
-                if (city.State.Schema >= CityState.ChangeJournalSchema)
                 {
                     int cause = choice.Reason == "No staffed counter" ? 0 : choice.Reason.StartsWith("Out of stock", StringComparison.Ordinal) ? 1
                         : choice.Reason == "Closed or too late" ? 3

@@ -683,7 +683,7 @@ namespace PersistentCity.Runtime
             { StopAccounting(); return; }
             // F5d: a city whose first roster is about to be created gets its portal places now, before routes and
             // the scheduler index the catalogue. A saved city keeps its own station table.
-            if (state.Food == null && state.Schema >= PersonTable.IndependentSchema && state.Portals.Count == 0 && state.Visitors.Count == 0)
+            if (state.Food == null && state.Portals.Count == 0 && state.Visitors.Count == 0)
             {
                 PortalPlaces.Add(state, NativePortalStations.Read());
                 log?.Info("Visitor portals: " + state.Portals.Count + " subway stations.");

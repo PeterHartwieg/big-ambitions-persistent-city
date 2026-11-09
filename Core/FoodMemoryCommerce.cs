@@ -45,7 +45,7 @@ namespace PersistentCity.Core
 
         private void Experience(ResidentMeal meal, ShopExperience cause, double at)
         {
-            if (city.State.Schema >= CityState.ChangeJournalSchema && meal.TargetKind == FoodAlternativeKind.Player && cause == ShopExperience.Stockout)
+            if (meal.TargetKind == FoodAlternativeKind.Player && cause == ShopExperience.Stockout)
                 ShopDay(meal.PlaceId, meal.BusinessId, (int)(at / 1440)).StockoutObserved = true;
             if (meal.TargetKind == FoodAlternativeKind.Player && city.State.Capabilities.Active)
                 memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, Owner(meal)!), MemorySettings);
