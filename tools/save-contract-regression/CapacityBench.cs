@@ -16,17 +16,11 @@ static partial class Program
     private static int SchemaVersion => CityState.CurrentSchema;
     // Compiles unchanged against the archived A3 source. Reflection here is fixture infrastructure,
     // never production simulation. Run each case in a fresh process for process-peak memory.
+    // X1 removed the frozen schema-17 writer from the current tree; the comparison runs only against an archived source.
     private static string Legacy17(CityState state)
     {
         if (SchemaVersion < 18) return SaveCodec.Write(state);
-        int schema = state.Schema;
-        try
-        {
-            state.Schema = 17;
-            return (string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.LegacyPopulationCodec")!.GetMethod("Write")!.Invoke(null, new object[] { state })!;
-        }
-        catch (TargetInvocationException e) { throw e.InnerException!; }
-        finally { state.Schema = schema; }
+        throw new NotSupportedException("X1 removed the frozen schema-17 writer; run this comparison against an archived source tree.");
     }
     private static object? Counts(CityState state, string json)
         => typeof(SaveCodec).GetMethod("CountRecords")?.Invoke(null, new object[] { state, json });

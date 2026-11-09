@@ -276,9 +276,9 @@ public sealed partial class FoodCommerceTests
         var meal = city.State.Food.Residents.Single();
         Assert.Single(market.Orders);
         Assert.Equal(interrupt ? MealStatus.Uncertain : MealStatus.Paid, meal.Status);
-        string encoded = LegacyWire.Write(city.State);
+        string encoded = DevelopmentChain.Write(city.State);
         city = Reload(city, market, routes);
-        Assert.Equal(encoded, LegacyWire.Write(city.State));
+        Assert.Equal(encoded, DevelopmentChain.Write(city.State));
         if (interrupt)
         {
             market.ConfirmEvidence = true;
@@ -292,93 +292,5 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(market.Price, Money.Sum(city.State.Food.History.Select(h => h.Revenue)));
         city = Reload(city, market, routes);
         Assert.Single(market.Orders);
-    }
-
-    [Fact]
-    public void EarlierSchema14TwelveDigitCentsAreRefusedAndPreserved()
-    {
-        var (city, market, routes) = Ready();
-        var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
-        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
-        Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
-        // The amount twelve-digit conversion stored for 10.2528f: not a whole number of 2^-28 cents.
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(LegacyWire.Write(city.State)), wholeCents: false), 14);
-        token["Food"]!["Residents"]![0]!["PriceCents"] = 1025.279998779297m;
-        string legacy = token.ToString(Newtonsoft.Json.Formatting.None);
-        Assert.Contains("\"PriceCents\":1025.279998779297", legacy);
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = legacy };
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(legacy).Status);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(legacy, data[SaveStore.StateKey]);
-    }
-
-    [Fact]
-    public void EarlierSchema14ExactDecimalCentsMigrateExactlyAndKeepReceiptIdentity()
-    {
-        var (city, market, routes) = Ready();
-        market.Price = Money.FromNative(10.2528f);
-        var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
-        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
-        market.ThrowAfterSale = true;
-        Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
-        Assert.Equal(MealStatus.Uncertain, city.State.Food.Residents.Single().Status);
-        string current = LegacyWire.Write(city.State);
-        // What the decimal-cents writer produced for this state: the same amounts as decimal cents.
-        string legacy = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(current), wholeCents: false), 14).ToString(Newtonsoft.Json.Formatting.None);
-        Assert.Contains("\"PriceCents\":1025.279998779296875", legacy);
-        Assert.Contains("\"BalanceCents\":", legacy); Assert.DoesNotContain("\"Balance\":", legacy);
-        var read = DevelopmentChain.Read(legacy);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(14, read.SourceSchema);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
-        // A native v2 receipt written before the unit change still identifies this intention.
-        var meal = read.State!.Food!.Residents.Single();
-        var receipt = new Dictionary<string, string> { [FoodSaleReceipts.Prefix + meal.IntentId] = "paid|1025.279998779296875|b|" + Uri.EscapeDataString(FoodProducts.Croissant) };
-        Assert.Equal(FoodReceiptStatus.Paid, FoodSaleReceipts.ReadStatus(receipt, meal));
-        // Mixing both field generations is refused rather than guessed.
-        string mixed = legacy.Replace("\"ArrearsCents\":0.0", "\"Arrears\":0");
-        Assert.NotEqual(legacy, mixed);
-        var refused = DevelopmentChain.Read(mixed);
-        Assert.Equal(SaveReadStatus.Invalid, refused.Status); Assert.Contains("mixes money field generations", refused.Error);
-    }
-
-    [Fact]
-    public void MigrationStillRejectsLegacyLedgerOverflowAndPreservesThePayload()
-    {
-        var (city, _, _) = Ready(); city.EnableHouseholdFinances();
-        var token = SaveWire.Parse(Schema13(city.State));
-        var b = token["Food"]!["Residents"]![0]!["Budget"]!;
-        // Whole cents above the unit's range (about $343.6 million per amount) cannot convert exactly.
-        b["OpeningBalanceCents"] = long.MaxValue; b["BalanceCents"] = long.MaxValue;
-        b["IncomeReceivedCents"] = 1; b["EssentialsPaidCents"] = 1;
-        string old = token.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = old };
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(old).Status);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(old, data[SaveStore.StateKey]);
-    }
-
-    private static string Schema13(CityState state)
-    {
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(LegacyWire.Write(state)), wholeCents: true), 13);
-        return token.ToString();
-    }
-
-    [Theory]
-    [InlineData(0)] [InlineData(1)] [InlineData(6)] [InlineData(40)]
-    public void Schema13MigratesWholeCentBalancesAndJourneysWithoutReplayingSales(int elapsed)
-    {
-        var (city, market, routes) = Ready(); city.EnableHouseholdFinances();
-        Advance(city, city.State.Food!.Residents.Single().DesiredAt + elapsed);
-        string old = Schema13(city.State); int orders = market.Orders.Count;
-        var data = new Dictionary<string,string> { [SaveStore.StateKey] = old };
-        var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(13, read.SourceSchema);
-        Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
-        var loaded = new CitySimulator(read.State, routes); loaded.AttachFoodMarket(market);
-        Assert.Equal(orders, market.Orders.Count);
-        // No migration publication: the stored schema-13 payload is never replaced.
-        Assert.False(SaveStore.WriteTo(data, loaded.State).Success); Assert.Equal(old, data[SaveStore.StateKey]);
-        var damaged = SaveWire.Parse(old); damaged["Food"]!["Residents"]![0]!["PriceCents"] = 1.1;
-        data[SaveStore.StateKey] = damaged.ToString(); string bad = data[SaveStore.StateKey];
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(bad).Status);
-        Assert.False(SaveStore.WriteTo(data, loaded.State).Success); Assert.Equal(bad, data[SaveStore.StateKey]);
     }
 }
