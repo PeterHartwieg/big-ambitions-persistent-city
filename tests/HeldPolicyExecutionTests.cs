@@ -433,6 +433,29 @@ public sealed class HeldPolicyExecutionTests
         Assert.True(apiCalls > 0);
     }
 
+    /// <summary>Steady path 0 B added: a clean policy read, a legacy weight and Select over legacy offers allocate nothing.</summary>
+    [Fact]
+    public void ThePolicyReadAndTheLegacyWeightPathAllocateNothingInSteadyState()
+    {
+        var image = Image(1, Dumplings, ChoppedCheese);
+        var config = FoodProductMetadataResolver.Empty; var snapshot = FoodProductMetadataSnapshot.Empty;
+        var source = new FoodProductPolicySource(() => image, () => config, _ => snapshot);
+        var traits = new ResidentTraits { Bands = "2222222222" }; var settings = new FoodChoiceSettings();
+        var draw = new FoodDrawContext(957, "pc:1", 3, MealKind.Lunch, "ctx", 1);
+        var offers = Enumerable.Range(0, 8).Select(i => new EvaluatedFoodOffer("b" + i, FoodProducts.Burger, Money.FromCents(900 + i), 4, 0, 20, 60, 60, 50, MealKind.Lunch)).ToArray();
+        var held = new EvaluatedFoodOffer("b9", Dumplings, Money.FromCents(900), 4, 0, 20, 60, 60, 50, MealKind.Lunch, newTasteBand: 3,
+            metadata: new FoodProductMetadata(MealClass.Food, 3, 900, 100, 450));
+        for (int i = 0; i < 100; i++) { _ = source.Current; FoodChoicePolicy.Select(offers, traits, Money.FromCents(100000), draw, settings, true); }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10000; i++)
+        {
+            _ = source.Current.Executable(Dumplings);
+            FoodChoicePolicy.Select(offers, traits, Money.FromCents(100000), draw, settings, true);
+            FoodChoicePolicy.Weight(held, traits, Money.Zero, settings, held.Metadata!.Value);
+        }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
     [Fact]
     public void RivalsStayOriginalThree()
     {
