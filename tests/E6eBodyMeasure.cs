@@ -33,9 +33,9 @@ public sealed class E6eBodyMeasure
             times = new List<double>(count); bytes = 0;
             for (int i = 0; i < count; i++)
             {
-                long allocation = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+                long allocation = GC.GetAllocatedBytesForCurrentThread(); var start = timing.Start();
                 action();
-                times.Add((Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency);
+                times.Add(timing.Stop(start));
                 bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
             }
             times.Sort();

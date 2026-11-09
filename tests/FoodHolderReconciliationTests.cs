@@ -142,9 +142,9 @@ public sealed class FoodHolderReconciliationTests
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < samples.Length; i++)
             {
-                long t = Stopwatch.GetTimestamp();
+                var t = timing.Start();
                 if (FoodHolderReconciliation.Check(image, native, menu, amount) != FoodReconciliationRefusal.None) failures++;
-                samples[i] = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
+                samples[i] = timing.Stop(t);
             }
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert.Equal(0, failures);

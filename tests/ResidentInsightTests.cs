@@ -563,18 +563,18 @@ public sealed class ResidentInsightTests
         double captureMicroseconds = 0, pickMicroseconds = 0;
         TimingBudget.Run(timing =>
         {
-            var watch = Stopwatch.StartNew();
+            var window = timing.Start();
             for (int i = 0; i < captures; i++) ResidentInsight.Capture(city, person, meal, find).Text();
-            captureMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / captures;
+            captureMicroseconds = timing.Stop(window) * 1000 / captures;
 
-            watch.Restart();
+            window = timing.Start();
             for (int n = 0; n < picks; n++)
             {
                 var best = new ResidentPickAccumulator();
                 for (int i = 0; i < ids.Length; i++)
                     if (ResidentPickAccumulator.Hit(300, 200, 280 + i, 260, 281 + i, 140, 8, out float score)) best.Consider(ids[i], i, score, 10 + i);
             }
-            pickMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / picks;
+            pickMicroseconds = timing.Stop(window) * 1000 / picks;
             // Generous offline ceilings against the 0.20 ms event-frame sub-budget; native cost is measured on the rig.
             timing.Under("capture us", captureMicroseconds, 200);
             timing.Under("pick us", pickMicroseconds, 50);

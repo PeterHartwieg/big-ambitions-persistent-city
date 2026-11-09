@@ -1452,11 +1452,11 @@ public sealed class FoodContractCoordinatorTests
                 int failures = 0;
                 for (int i = 0; i < samples.Length; i++)
                 {
-                    long t = Stopwatch.GetTimestamp();
+                    var t = timing.Start();
                     epoch.Begin();
                     if (FoodContractRecheck.Structure(image, live, epoch) != FoodContractRecheckRefusal.None
                         | FoodContractRecheck.Prices(image, live) == FoodPriceVerdict.Refused) failures++;
-                    samples[i] = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
+                    samples[i] = timing.Stop(t);
                 }
                 long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / samples.Length;
                 Assert.Equal(0, failures);
@@ -1485,9 +1485,10 @@ public sealed class FoodContractCoordinatorTests
                     long frame = Stopwatch.GetTimestamp(); int n = 0; double last = 0;
                     while (n == 0 || (Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency + last < 0.5)
                     {
-                        long t = Stopwatch.GetTimestamp();
-                        if (!world.Step()) break;
-                        last = (Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency;
+                        var t = timing.Start();
+                        bool stepped = world.Step();
+                        last = timing.Stop(t);
+                        if (!stepped) break;
                         n++; units.Add(last);
                     }
                     frames.Add((Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency); frameUnits.Add(n);
@@ -1512,13 +1513,14 @@ public sealed class FoodContractCoordinatorTests
                     var world = new ContractWorld();
                     var shops = Enumerable.Range(0, count).Select(i => world.AddShop("address:gate:" + i + ":shop", Burger, HotDog)).ToArray();
                     world.VisitAll(); world.Drain(); world.VisitAll(); world.BeginHour(world.Hour + 1);
-                    long t = Stopwatch.GetTimestamp();
+                    var t = timing.Start();
                     world.BoundaryEpoch.Begin();
                     foreach (var s in shops)
                         Assert.Equal(FoodContractBoundary.Outcome.Acquired, FoodContractBoundary.Commit(s.Row, world.Coordinator, world.Hour, false, true, world.Catalogue.Revision,
                             (row, image) => FoodContractRecheck.Structure(image, new ContractWorld.Live(world, s), world.BoundaryEpoch) == FoodContractRecheckRefusal.None
                                 && FoodContractRecheck.Prices(image, new ContractWorld.Live(world, s)) != FoodPriceVerdict.Refused));
-                    if (run >= 10) samples.Add((Stopwatch.GetTimestamp() - t) * 1000.0 / Stopwatch.Frequency);
+                    double elapsed = timing.Stop(t);
+                    if (run >= 10) samples.Add(elapsed);
                 }
                 samples.Sort();
                 line = $"commit gate acquisitions={count}: p95 {samples[(int)(samples.Count * 0.95)]:0.0000} ms, max {samples[^1]:0.0000} ms";

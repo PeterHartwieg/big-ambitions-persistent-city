@@ -21,7 +21,7 @@ public sealed class TimingBudgetTests
 
     // The semantic tests fix the load factor so they do not depend on how busy the machine is.
     private static int Run(Action<TimingChecks> measure, int attempts = TimingBudget.Attempts, double factor = 1)
-        => TimingBudget.Run(measure, attempts, (_, _) => factor);
+        => TimingBudget.Run(t => { t.Stop(t.Start()); measure(t); }, attempts, (_, _) => factor); // one window, so the factor applies
 
     [Fact]
     public void QuietPassTakesOneRun()
@@ -63,16 +63,58 @@ public sealed class TimingBudgetTests
         // 9 ms measured while the thread had a third of the wall-clock time is 3 ms of its own time.
         Assert.Equal(1, Run(t => t.Under("value", 9, 4), factor: 3));
         Assert.Throws<XunitException>(() => Run(t => t.Under("value", 9, 2), attempts: 2, factor: 3));
-        Assert.Equal(3, TimingBudget.LoadFactor(30, 10));
-        Assert.Equal(1, TimingBudget.LoadFactor(5, 10));
+        Assert.Equal(3, TimingBudget.LoadFactor(3000, 1000));
+        Assert.Equal(1, TimingBudget.LoadFactor(500, 1000));
         Assert.Equal(1, TimingBudget.LoadFactor(5, double.NaN));
+        // Too little timed CPU time to judge by: no discount.
+        Assert.Equal(1, TimingBudget.LoadFactor(ThreadCpu.MinimumMs * 1.5, ThreadCpu.MinimumMs / 2));
+    }
+
+    [Fact]
+    public void MeasurementWithoutATimedWindowGetsNoDiscount()
+    {
+        // The factor comes from timed windows only; with none, a busy attempt is judged on retries alone.
+        Assert.Throws<XunitException>(() => TimingBudget.Run(t => t.Under("value", 9, 4), 2, (_, _) => 3));
+        Assert.Equal(1, TimingBudget.Run(t => { t.Stop(t.Start()); t.Under("value", 9, 4); }, 2, (_, _) => 3));
+    }
+
+    [Fact]
+    public void DelayOutsideTheTimedWindowDoesNotLoosenTheBudget()
+    {
+        // Review round 1: a 100 ms pause in setup, then about 20 ms of timed CPU work against 5 ms. Setup is not
+        // timed, so the factor stays near 1 and the work misses on every attempt.
+        long work = SpinFor(20);
+        var error = Assert.Throws<XunitException>(() => TimingBudget.Run(t =>
+        {
+            Thread.Sleep(100);
+            var w = t.Start();
+            Spin(work);
+            t.Under("work", t.Stop(w), 5);
+        }, attempts: 2));
+        Assert.Contains("work:", error.Message);
+    }
+
+    [Fact]
+    public void WaitInsideTheTimedWindowIsDiscounted()
+    {
+        // The other side: wall time the thread spent off the CPU inside the window is load, not work.
+        if (ThreadCpu.MinimumMs > 1) return; // Windows: 2 ms of CPU is below what its tick clock can judge
+        long work = SpinFor(2);
+        Assert.Equal(1, TimingBudget.Run(t =>
+        {
+            var w = t.Start();
+            Thread.Sleep(100);
+            Spin(work);
+            t.Under("work", t.Stop(w), 50);
+        }, attempts: 1));
+        Assert.True(TimingBudget.LastLoadFactor > 10, "load factor " + TimingBudget.LastLoadFactor);
     }
 
     [Fact]
     public void ThreadCpuClockRuns()
     {
         double before = ThreadCpu.Milliseconds();
-        Spin(SpinFor(5));
+        Spin(SpinFor(OperatingSystem.IsWindows() ? 100 : 5)); // Windows counts whole 15.6 ms ticks
         double spent = ThreadCpu.Milliseconds() - before;
         Assert.False(double.IsNaN(spent), "no thread CPU clock on this platform");
         Assert.InRange(spent, 1, 1000);
@@ -102,7 +144,7 @@ public sealed class TimingBudgetTests
             // A synthetic per-call p95 against the 5 ms mod-work gate, and E5b3's real budgets, which went red under load on 9 Nov.
             long call = SpinFor(0.2);
             double p95 = 0;
-            int runs = TimingBudget.Run(t => t.Under("spin p95", p95 = P95(400, () => Spin(call)), 5));
+            int runs = TimingBudget.Run(t => t.Under("spin p95", p95 = P95(t, 400, () => Spin(call)), 5));
             output.WriteLine($"spin p95 {p95:0.000} ms at load factor {TimingBudget.LastLoadFactor:0.00} after {runs} run(s)");
             FoodContractCoordinatorTests.RecheckBoundaryRebuildAndCommitGateTimings(new List<string>());
         }
@@ -116,16 +158,16 @@ public sealed class TimingBudgetTests
         long iterations = SpinFor(1.0);
         double quiet = Enumerable.Range(0, 5).Min(_ => Time(() => Spin(iterations)));
         double budget = 3 * quiet;
-        TimingBudget.Under("quiet", budget, () => Time(() => Spin(iterations)));
-        Assert.Throws<XunitException>(() => TimingBudget.Under("slowed", budget, () => Time(() => Spin(10 * iterations))));
+        TimingBudget.Under("quiet", budget, () => Spin(iterations));
+        Assert.Throws<XunitException>(() => TimingBudget.Under("slowed", budget, () => Spin(10 * iterations)));
         using (new CpuLoad())
-            Assert.Throws<XunitException>(() => TimingBudget.Under("slowed under load", budget, () => Time(() => Spin(10 * iterations))));
+            Assert.Throws<XunitException>(() => TimingBudget.Under("slowed under load", budget, () => Spin(10 * iterations)));
     }
 
-    private static double P95(int samples, Action call)
+    private static double P95(TimingChecks timing, int samples, Action call)
     {
         var times = new double[samples];
-        for (int i = 0; i < samples; i++) times[i] = Time(call);
+        for (int i = 0; i < samples; i++) { var w = timing.Start(); call(); times[i] = timing.Stop(w); }
         Array.Sort(times);
         return times[samples * 95 / 100];
     }

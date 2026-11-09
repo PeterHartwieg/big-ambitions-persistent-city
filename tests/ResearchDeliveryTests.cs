@@ -540,9 +540,9 @@ public sealed class ResearchDeliveryTests
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < runs; i++)
             {
-                long start = Stopwatch.GetTimestamp();
+                var start = timing.Start();
                 call();
-                samples[i] = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
+                samples[i] = timing.Stop(start);
             }
             long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
             Array.Sort(samples);

@@ -523,22 +523,19 @@ public sealed class ResearchLedgerTests
             var grant = new double[samples];
             var order = new double[samples];
             long grantBytes = 0, orderBytes = 0;
-            var watch = new Stopwatch();
             for (int i = 0; i < samples; i++)
             {
                 before = GC.GetAllocatedBytesForCurrentThread();
-                watch.Restart();
+                var window = timing.Start();
                 ledger.TryGet(lastPaid, out _);
-                watch.Stop();
+                grant[i] = timing.Stop(window);
                 grantBytes += GC.GetAllocatedBytesForCurrentThread() - before;
-                grant[i] = watch.Elapsed.TotalMilliseconds;
 
                 before = GC.GetAllocatedBytesForCurrentThread();
-                watch.Restart();
+                window = timing.Start();
                 var refusal = ledger.TryOrder("basic-local", "perf-biz", "agency-1", false, 500, Minute, out var placed);
-                watch.Stop();
+                order[i] = timing.Stop(window);
                 orderBytes += GC.GetAllocatedBytesForCurrentThread() - before;
-                order[i] = watch.Elapsed.TotalMilliseconds;
                 Assert.Equal(ResearchOrderRefusal.None, refusal);
                 Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(placed!.Id, ReportFor(placed)));
                 Assert.Equal(ResearchMoveRefusal.None, ledger.TryCancel(placed.Id));

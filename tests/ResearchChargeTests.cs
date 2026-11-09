@@ -788,13 +788,13 @@ public sealed class ResearchChargeTests
                         string place = "address:" + Uri.EscapeDataString(street) + ":" + number + ":shop";
                         Surveyed(ledger, port, place, ResearchProducts.All[i % 3].Code);
                     }
-                    long start = Stopwatch.GetTimestamp();
+                    var start = timing.Start();
                     long allocated = GC.GetAllocatedBytesForCurrentThread();
                     if (session.HasWork) session.Boundary();
-                    long end = Stopwatch.GetTimestamp();
+                    double elapsed = timing.Stop(start);
                     if (run < 20) continue;
                     bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
-                    samples[run - 20] = (end - start) * 1000.0 / Stopwatch.Frequency;
+                    samples[run - 20] = elapsed;
                     Assert.Equal(orders, port.Charges);
                     Assert.Equal(orders, ledger.Kept.Count);
                 }
@@ -855,9 +855,9 @@ public sealed class ResearchChargeTests
                 long allocated = GC.GetAllocatedBytesForCurrentThread();
                 for (int i = 0; i < runs; i++)
                 {
-                    long start = Stopwatch.GetTimestamp();
+                    var start = timing.Start();
                     Check();
-                    samples[i] = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
+                    samples[i] = timing.Stop(start);
                 }
                 long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / runs;
                 Array.Sort(samples);

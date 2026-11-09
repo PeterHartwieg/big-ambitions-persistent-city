@@ -35,9 +35,9 @@ public sealed class E6dVehicleMarketMeasure
             times = new List<double>(count); bytes = 0;
             for (int i = 0; i < count; i++)
             {
-                long allocation = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+                long allocation = GC.GetAllocatedBytesForCurrentThread(); var start = timing.Start();
                 action();
-                double elapsed = Ms(start); bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
+                double elapsed = timing.Stop(start); bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
                 times.Add(elapsed);
             }
             times.Sort();
@@ -53,8 +53,6 @@ public sealed class E6dVehicleMarketMeasure
         var f = new VehicleMarketTests.Fixture(64, 8);
         foreach (var v in StreetFoodHooks.Vehicles) { v.Units[0] = v.Units[1] = 1000000; }
         StreetFoodHooks.Revision++; f.Run(f.Now + 1);
-        var shops = new VehicleMarketTests.ShopMarket(f.City.State.Food!, f.Receipts);
-        var combined = new FoodMarkets(f.City.State.Food!, shops, f.Market, id => f.City.FindPlace(id).Position);
         Measure("Read snapshot, 64 vehicles", () => Assert.Equal(64, f.Market.Read(f.Now).Count));
         Measure("capture batch, 8 vehicles", () => {
             using (f.Market.BeginCapture(f.Now))
@@ -69,23 +67,29 @@ public sealed class E6dVehicleMarketMeasure
         Measure("current rank then materialize 8", () => Assert.Equal(8, f.Market.ReadLocal(origin, f.Now, 1000, 8).Count));
         var meal = f.Meal("v63");
         Measure("checkout, vehicle 64 of 64", () => { f.Receipts.Clear(); Assert.True(f.Market.Buy(meal, f.Now).Paid); });
-        var meals = Enumerable.Range(0, 64).Select(i => f.Meal("v" + i.ToString("D2"), i)).ToArray();
         var windows = new List<double>(160); var units = new List<double>(1280); long allBytes = 0, unitBytes = 0;
-        // A retry continues the lunch from the minute the previous attempt reached.
+        // Each attempt builds its own lunch: the vendors are open for 300 minutes, so a retry cannot continue the last one.
         TimingBudget.Run(timing =>
         {
+            StreetFoodHooks.Reset();
+            var lunch = new VehicleMarketTests.Fixture(64, 8);
+            foreach (var v in StreetFoodHooks.Vehicles) { v.Units[0] = v.Units[1] = 1000000; }
+            StreetFoodHooks.Revision++; lunch.Run(lunch.Now + 1);
+            var lunchShops = new VehicleMarketTests.ShopMarket(lunch.City.State.Food!, lunch.Receipts);
+            var lunchMarkets = new FoodMarkets(lunch.City.State.Food!, lunchShops, lunch.Market, id => lunch.City.FindPlace(id).Position);
+            var meals = Enumerable.Range(0, 64).Select(i => lunch.Meal("v" + i.ToString("D2"), i)).ToArray();
             windows = new List<double>(160); units = new List<double>(1280); allBytes = 0; unitBytes = 0;
             for (int round = 0; round < 180; round++)
             {
-                f.Now++; StreetFoodHooks.Now = f.Now; StreetFoodHooks.Expire();
-                f.Receipts.Clear(); long allocation = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+                lunch.Now++; StreetFoodHooks.Now = lunch.Now; StreetFoodHooks.Expire();
+                lunch.Receipts.Clear(); long allocation = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
                 for (int group = 0; group < 8; group++)
                 {
-                    long b = GC.GetAllocatedBytesForCurrentThread(), unit = Stopwatch.GetTimestamp();
-                    while (f.Market.Prepare(f.Now)) { } // full copy/apply cost included in this conservative offline group
-                    combined.ReadLocal(origin, f.Now, 1000, 8);
-                    for (int i = group * 8; i < group * 8 + 8; i++) Assert.True(combined.Buy(meals[i], f.Now).Paid);
-                    double elapsed = Ms(unit);
+                    long b = GC.GetAllocatedBytesForCurrentThread(); var unit = timing.Start();
+                    while (lunch.Market.Prepare(lunch.Now)) { } // full copy/apply cost included in this conservative offline group
+                    lunchMarkets.ReadLocal(origin, lunch.Now, 1000, 8);
+                    for (int i = group * 8; i < group * 8 + 8; i++) Assert.True(lunchMarkets.Buy(meals[i], lunch.Now).Paid);
+                    double elapsed = timing.Stop(unit);
                     if (round >= 20) { units.Add(elapsed); unitBytes += GC.GetAllocatedBytesForCurrentThread() - b; }
                 }
                 double total = Ms(start);

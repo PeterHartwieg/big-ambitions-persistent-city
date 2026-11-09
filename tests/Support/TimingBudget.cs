@@ -12,14 +12,21 @@ namespace PersistentCity.Tests;
 /// <summary>The shared rule for wall-clock budgets in tests (X3). A busy machine stretches wall-clock time by
 /// keeping the test thread waiting for a core; a code regression makes the thread itself do more work. So:
 /// <list type="number">
-/// <item>Each attempt measures its load factor: wall-clock time over the test thread's own CPU time, never below 1.
-/// A quiet machine gives about 1. A value counts as within budget when <c>value &lt; budget × load factor</c>.</item>
+/// <item>Timed code runs between <see cref="TimingChecks.Start"/> and <see cref="TimingChecks.Stop"/>. Over those
+/// windows only, each attempt measures its load factor: wall-clock time over the test thread's own CPU time, never
+/// below 1. Setup, warm-up, sorting and reporting between the windows do not count. A quiet machine gives about 1.
+/// A value counts as within budget when <c>value &lt; budget × load factor</c>.</item>
 /// <item>A missed budget re-runs the whole measurement, at most <see cref="Attempts"/> times, and each check is judged
 /// on its best attempt (lowest value ÷ load factor), because load comes and goes.</item>
 /// </list>
 /// A quiet run passes on the first attempt with factor about 1, so it catches exactly what the bare assertion caught.
 /// A code regression costs CPU time as well as wall time, so the factor does not hide it. Timed code must run on the
-/// calling thread and must not sleep or wait on I/O, or the factor overstates the load.
+/// calling thread and must not sleep or wait on I/O, or the factor overstates the load. A measurement that marks no
+/// window (its times come from code that cannot see <see cref="TimingChecks"/>) gets factor 1: retries only.
+///
+/// The factor is one average over the attempt's windows. It discounts load that is spread over the samples, which is
+/// what moves a p95. A single long preemption inside one sample barely moves it, so a max check against a spike line
+/// is helped mainly by the retries.
 ///
 /// Use it for every Stopwatch value compared against a fixed budget. Inside the measurement, compare with
 /// <see cref="TimingChecks.Under"/> instead of <c>Assert.True</c>. Deterministic values (allocation bytes, counts,
@@ -42,7 +49,7 @@ internal static class TimingBudget
     public static int Run(Action<TimingChecks> measure, int attempts = Attempts) => Run(measure, attempts, LoadFactor);
 
     /// <summary><see cref="Run(Action{TimingChecks}, int)"/> with the load factor taken from
-    /// <paramref name="loadFactor"/>(wall ms, thread CPU ms); TimingBudgetTests fixes it.</summary>
+    /// <paramref name="loadFactor"/>(timed wall ms, timed thread CPU ms); TimingBudgetTests fixes it.</summary>
     internal static int Run(Action<TimingChecks> measure, int attempts, Func<double, double, double> loadFactor)
     {
         if (attempts < 1) throw new ArgumentOutOfRangeException(nameof(attempts));
@@ -51,10 +58,8 @@ internal static class TimingBudget
         for (int attempt = 1; ; attempt++)
         {
             var checks = new TimingChecks();
-            long wall = Stopwatch.GetTimestamp();
-            double cpu = ThreadCpu.Milliseconds();
             measure(checks);
-            double factor = loadFactor((Stopwatch.GetTimestamp() - wall) * 1000.0 / Stopwatch.Frequency, ThreadCpu.Milliseconds() - cpu);
+            double factor = checks.Windows == 0 ? 1 : loadFactor(checks.TimedWallMs, checks.TimedCpuMs);
             LastLoadFactor = factor;
             foreach (var (label, value, budget) in checks.Entries)
             {
@@ -90,22 +95,46 @@ internal static class TimingBudget
                 attempt, factor, string.Join(", ", missed), Environment.NewLine));
     }
 
-    /// <summary>Wall-clock time over thread CPU time, at least 1. With no thread clock, or no CPU time to judge by
-    /// (under 10 µs), the factor is 1: the budget is not loosened.</summary>
+    /// <summary>Timed wall-clock time over timed thread CPU time, at least 1. With no thread clock, or less timed CPU
+    /// time than the clock can judge (<see cref="ThreadCpu.MinimumMs"/>), the factor is 1: the budget is not
+    /// loosened.</summary>
     internal static double LoadFactor(double wallMs, double cpuMs)
-        => double.IsNaN(cpuMs) || cpuMs < 0.01 ? 1 : Math.Max(1, wallMs / cpuMs);
+        => double.IsNaN(cpuMs) || cpuMs < ThreadCpu.MinimumMs ? 1 : Math.Max(1, wallMs / cpuMs);
 
-    /// <summary>One timed value against one budget: shorthand for a measurement with a single check.</summary>
-    public static int Under(string label, double budgetMs, Func<double> measureMs, int attempts = Attempts)
-        => Run(t => t.Under(label, measureMs(), budgetMs), attempts);
+    /// <summary>One timed piece of work against one budget: shorthand for a measurement with a single window and
+    /// a single check.</summary>
+    public static int Under(string label, double budgetMs, Action work, int attempts = Attempts)
+        => Run(t => { var w = t.Start(); work(); t.Under(label, t.Stop(w), budgetMs); }, attempts);
 }
 
-/// <summary>The wall-clock checks of one measurement attempt. Values must stay below their budget (strictly), in
-/// the same unit as the budget; milliseconds unless the label says otherwise.</summary>
+/// <summary>The timed windows and wall-clock checks of one measurement attempt. Values must stay below their budget
+/// (strictly), in the same unit as the budget; milliseconds unless the label says otherwise.</summary>
 internal sealed class TimingChecks
 {
     private readonly List<(string Label, double Value, double Budget)> entries = new();
     internal IReadOnlyList<(string Label, double Value, double Budget)> Entries => entries;
+    internal int Windows { get; private set; }
+    internal double TimedWallMs { get; private set; }
+    internal double TimedCpuMs { get; private set; }
+
+    /// <summary>Opens a timed window. The thread clock is read before the timestamp, so its cost stays outside.</summary>
+    public TimingWindow Start()
+    {
+        double cpu = ThreadCpu.Milliseconds();
+        return new TimingWindow(Stopwatch.GetTimestamp(), cpu);
+    }
+
+    /// <summary>Closes a window and returns its wall-clock milliseconds; the window's wall and CPU time go into
+    /// this attempt's load factor.</summary>
+    public double Stop(TimingWindow window)
+    {
+        double wall = (Stopwatch.GetTimestamp() - window.Timestamp) * 1000.0 / Stopwatch.Frequency;
+        double cpu = ThreadCpu.Milliseconds();
+        Windows++;
+        TimedWallMs += wall;
+        TimedCpuMs += cpu - window.CpuMs;
+        return wall;
+    }
 
     /// <summary>Records that <paramref name="value"/> should be below <paramref name="budget"/>. Labels must be
     /// unique within one attempt and stable across attempts.</summary>
@@ -117,14 +146,23 @@ internal sealed class TimingChecks
     }
 }
 
+/// <summary>An open timed window: its start timestamp and the thread's CPU milliseconds at that moment.</summary>
+internal readonly record struct TimingWindow(long Timestamp, double CpuMs);
+
 /// <summary>CPU time the calling thread has run, in milliseconds; NaN where the platform clock is unavailable.</summary>
 internal static class ThreadCpu
 {
+    /// <summary>The least timed CPU time a load factor is computed from. macOS and Linux count thread CPU time in
+    /// nanoseconds, so 10 µs is enough. Windows charges thread time once per scheduler tick (about 15.6 ms), so
+    /// short windows read 0 or a whole tick; summed over many windows the count is right on average, and 250 ms
+    /// (16 ticks) keeps the error near a quarter. Below it Windows gets factor 1, retries only.</summary>
+    public static readonly double MinimumMs = OperatingSystem.IsWindows() ? 250 : 0.01;
+
     public static double Milliseconds()
     {
         try
         {
-            if (OperatingSystem.IsWindows()) return Windows.Milliseconds();
+            if (OperatingSystem.IsWindows()) return Windows();
             if (OperatingSystem.IsMacOS()) return Posix(16); // CLOCK_THREAD_CPUTIME_ID on Darwin
             if (OperatingSystem.IsLinux()) return Posix(3);
         }
@@ -144,39 +182,18 @@ internal static class ThreadCpu
     [DllImport("libc", SetLastError = true)]
     private static extern int clock_gettime(int clock, out Timespec time);
 
-    // GetThreadTimes only moves once per scheduler tick (about 15.6 ms), so Windows counts the thread's cycles and
-    // converts them with the cycle rate, measured once as the fastest cycles-per-millisecond of a few short spins.
-    private static class Windows
+    // Kernel plus user time in 100 ns units. QueryThreadCycleTime is finer, but Microsoft documents that its cycles
+    // must not be converted to elapsed time.
+    private static double Windows()
     {
-        private static readonly double CyclesPerMs = Rate();
-
-        public static double Milliseconds()
-        {
-            QueryThreadCycleTime(GetCurrentThread(), out ulong cycles);
-            return cycles / CyclesPerMs;
-        }
-
-        private static double Rate()
-        {
-            double best = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                IntPtr thread = GetCurrentThread();
-                QueryThreadCycleTime(thread, out ulong c0);
-                long t0 = Stopwatch.GetTimestamp();
-                while ((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency < 2) { }
-                QueryThreadCycleTime(thread, out ulong c1);
-                // Waiting for a core adds wall time but no cycles, so the fastest rate is the true one.
-                best = Math.Max(best, (c1 - c0) / ((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency));
-            }
-            return best;
-        }
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetCurrentThread();
-
-        [DllImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool QueryThreadCycleTime(IntPtr thread, out ulong cycles);
+        if (!GetThreadTimes(GetCurrentThread(), out _, out _, out long kernel, out long user)) return double.NaN;
+        return (kernel + user) / 10_000.0;
     }
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr GetCurrentThread();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetThreadTimes(IntPtr thread, out long creation, out long exit, out long kernel, out long user);
 }
