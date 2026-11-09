@@ -1,0 +1,71 @@
+{
+  "contract": "perf-gate/v1",
+  "frozen": "2026-11-09",
+  "plan": "docs/plans/f4-perf-gate.md, Decision 4",
+  "change_rule": "Changing any value needs a new contract version and a decision record in docs/decisions/.",
+  "statistics": {
+    "percentile": "nearest-rank",
+    "percentile_rank": "ceil(p / 100 * n), 1-based, over every clean frame of one window",
+    "pooling": "Pooled figures pool raw frames across windows of the same condition, script, build and arm. The gate never averages percentiles and never takes a percentile of percentiles."
+  },
+  "windows": {
+    "min_clean_real_seconds": 300,
+    "warmup_real_seconds": 60,
+    "discard_first_window_per_process": true,
+    "builds": ["candidate", "reference"],
+    "arms": {
+      "primary": "judged on every row; counts toward the overall verdict",
+      "stress": "judged on M1, M2, S1 and S2 only; other rows recorded",
+      "report-only": "judged on M1, M2, S1 and S2 only; other rows recorded"
+    },
+    "secondary_arm_rows": ["M1", "M2", "S1", "S2"]
+  },
+  "matching": {
+    "same_checkpoint_minute": true,
+    "game_span_tolerance_minutes": 1.0,
+    "reference_pace_tolerance_fraction": 0.02
+  },
+  "density": {
+    "min_median_pedestrians": 36,
+    "min_median_cars": 12,
+    "rule": "A window below either value is reported as not dense; the threshold is never lowered to pass."
+  },
+  "attribution": {
+    "summary_maximum_match_tolerance_ms": 0.1,
+    "rule": "Fix-128 summary fields describe the observation's maximum advancement call only. They attach to the one M2 frame whose advancement time matches that maximum; other advancement spikes get unknown; spikes outside advancement get no advancement fields."
+  },
+  "receipts": {
+    "required": ["autosave", "no_dotnet_activity", "priority_high", "focused", "settings_read_back", "probe_coverage", "probe_flags", "presentation_trace", "pc_readiness", "accounting_diagnostics"],
+    "reference_may_be_na": ["pc_readiness", "accounting_diagnostics", "probe_coverage"],
+    "values": ["pass", "fail", "n/a"]
+  },
+  "header": {
+    "required": ["source_commit", "pc_dll_sha256", "probe_dll_sha256", "expected_scope_list_hash", "game_build", "mod_set", "rig_commit", "rig_overlay", "machine", "settings_read_back", "pc_config", "fixtures", "contract_version", "movement_state", "rig_capabilities"],
+    "machine_fields": ["cpu", "gpu", "ram", "os_build", "gpu_driver", "refresh_hz", "power_plan"],
+    "settings_fields": ["resolution", "preset", "vsync", "frame_cap"],
+    "mod_set_fields": ["name", "sha256"],
+    "fixture_fields": ["name", "provenance_hash"],
+    "capability_fields": ["name", "version"],
+    "offline_may_be_na": ["probe_dll_sha256", "expected_scope_list_hash", "game_build", "mod_set", "rig_commit", "rig_overlay", "settings_read_back", "rig_capabilities"]
+  },
+  "rows": [
+    {"id": "M1", "measure": "PC mod-work union p95", "kind": "window", "statistic": "p95", "series": "mod_work_ms", "comparator": "<", "threshold": 5.0, "unit": "ms", "builds": ["candidate"]},
+    {"id": "M2", "measure": "Every frame with mod-work >= 30 ms", "kind": "flag", "series": "mod_work_ms", "threshold": 30.0, "unit": "ms", "builds": ["candidate"], "note": "Flagged with condition, component, GC count and frame; a flag, not a fail by itself."},
+    {"id": "M3", "measure": "PC mod-work union p99", "kind": "window", "statistic": "p99", "series": "mod_work_ms", "comparator": "<=", "threshold": 10.0, "unit": "ms", "builds": ["candidate"]},
+    {"id": "M4", "measure": "PC mod-work mean (total mod cost per frame)", "kind": "window", "statistic": "mean", "series": "mod_work_ms", "comparator": "<=", "threshold": 1.5, "unit": "ms", "builds": ["candidate"]},
+    {"id": "P1", "measure": "Presented-frame interval p95, candidate", "kind": "window", "statistic": "p95", "series": "presented_ms", "comparator": "<=", "threshold": 16.7, "unit": "ms", "builds": ["candidate"], "native_baseline": true},
+    {"id": "P2", "measure": "Presented-frame interval p99, candidate", "kind": "window", "statistic": "p99", "series": "presented_ms", "comparator": "<=", "threshold": 25.0, "unit": "ms", "builds": ["candidate"], "native_baseline": true},
+    {"id": "P3", "measure": "Stalls: presented interval >= 50 ms", "kind": "stalls", "series": "presented_ms", "stall_ms": 50.0, "max_stalls_per_5_min": 2, "severe_stall_ms": 250.0, "severe_forbidden_class": "pc-union", "unit": "ms", "builds": ["candidate"]},
+    {"id": "P4", "measure": "Matched delta, candidate - reference, same window and script", "kind": "delta", "series": "presented_ms", "p95_max_ms": 1.5, "p99_max_ms": 3.0, "unit": "ms", "builds": ["candidate"]},
+    {"id": "S1", "measure": "historicalClockMisses", "kind": "accounting", "comparator": "==", "threshold": 0, "unit": "misses", "builds": ["candidate"]},
+    {"id": "S2", "measure": "Lag (AccountingDiagnostics.lagMinutes) at every sample", "kind": "accounting", "comparator": "<=", "threshold": 1.0, "unit": "game minutes", "builds": ["candidate"]},
+    {"id": "S3", "measure": "Calendar holds at native speeds 1-3", "kind": "accounting", "held_fraction_max": 0.01, "longest_hold_max_s": 3.0, "native_speeds": [1, 2, 3], "unit": "real s", "builds": ["candidate"]},
+    {"id": "S4", "measure": "Recovery after a hold or stall", "kind": "accounting", "recovered_lag_minutes": 0.1, "within_real_s": 5.0, "unit": "real s", "builds": ["candidate"]},
+    {"id": "S5", "measure": "Fastest-traveller pace", "kind": "measurement", "hour_ratio_max": 2.0, "day_ratio_max": 1.25, "unit": "x unheld clock"},
+    {"id": "L1", "measure": "Cold start: city loaded to population active", "kind": "measurement", "comparator": "<=", "threshold": 60.0, "unit": "real s"},
+    {"id": "L2", "measure": "Reload main-thread activation (CompleteInitialization)", "kind": "measurement", "comparator": "<=", "threshold": 50.0, "flag_ms": 30.0, "unit": "ms"},
+    {"id": "L3", "measure": "Calendar held after load (Preparing Persistent City)", "kind": "measurement", "comparator": "<=", "threshold": 30.0, "unit": "real s"},
+    {"id": "L4", "measure": "Time-machine skip of 120 game minutes", "kind": "measurement", "ratio_max": 2.0, "unit": "x dependency-only reference"},
+    {"id": "R1", "measure": "Soak, 3 game days at speed 3", "kind": "measurement", "heap_growth_per_day_max": 0.05, "m1_drift_max": 0.20, "unit": "fraction"}
+  ]
+}
