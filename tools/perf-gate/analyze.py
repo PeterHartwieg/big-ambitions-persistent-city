@@ -333,6 +333,8 @@ def spikes_of(window, clean, contract, valid):
     threshold = contract['_rows']['M2']['threshold']
     calls = {c['frame']: c for c in window.get('advance_calls') or []}
     spikes = []
+    # Absence of advancement is confirmed only when the AdvancePopulation sub-scope is bound in this window.
+    bound = ADVANCE_COMPONENT in (window.get('bound_components') or ()) or any(ADVANCE_COMPONENT in f['components'] for f in clean)
     for f in clean:
         if f['mod_work_ms'] < threshold:
             continue
@@ -342,11 +344,13 @@ def spikes_of(window, clean, contract, valid):
         advance_ms, advance_source = components.get(ADVANCE_COMPONENT), 'component'
         if advance_ms is None and call is not None:
             advance_ms, advance_source = call.get('duration_ms'), 'per-call record'
+        if advance_ms is None:
+            advance_source = None if bound else UNKNOWN
         spikes.append(dict(window=window['id'], window_valid=valid, arm=window.get('arm', 'primary'), condition=window.get('condition'),
                            script=window.get('script'), frame=f['frame'], mod_work_ms=f['mod_work_ms'], whole_frame_ms=f['whole_frame_ms'],
                            gc=UNKNOWN if f['gc'] is None else f['gc'],
                            components=components, component=max(components, key=components.get) if components else UNKNOWN,
-                           advance_ms=advance_ms, advance_source=advance_source if advance_ms is not None else None, advance_call=call))
+                           advance_ms=advance_ms, advance_source=advance_source, advance_call=call))
     summary_lines.attach_fix128(spikes, observations_of(window), contract['attribution']['summary_maximum_match_tolerance_ms'])
     return spikes
 

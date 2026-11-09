@@ -115,13 +115,15 @@ UNKNOWN = 'unknown'
 def attach_fix128(spikes, observations, tolerance_ms):
     """Attach each observation's slowest-advance fields to the one spike that matches its maximum.
 
-    spikes: dicts with 'frame' and 'advance_ms' (None when the frame ran no advancement call).
+    spikes: dicts with 'frame', 'advance_ms' (None when no advancement time is known) and optional
+    'advance_source' ('unknown' when advancement timing is unbound, so absence is not established).
     observations: dicts with 'summary' (parse_line output) and optional 'first_frame'/'last_frame'.
-    Every advancement spike starts with unknown unit fields; a spike outside advancement gets none.
+    Every advancement spike, and every spike whose advancement is unknown, starts with unknown unit
+    fields; only a spike confirmed outside advancement gets none.
     A maximum that matches no spike, or more than one, attaches to nothing.
     """
     for spike in spikes:
-        if spike.get('advance_ms') is None:
+        if spike.get('advance_ms') is None and spike.get('advance_source') != UNKNOWN:
             spike['advancement_unit'] = None
         else:
             spike['advancement_unit'] = dict(unit_kind=UNKNOWN, unit_ms=UNKNOWN, optional_stop_ms=UNKNOWN,

@@ -63,7 +63,10 @@ def render_markdown(report):
         unit = s['advancement_unit']
         unit_text = 'n/a (outside advancement)' if unit is None else (
             f"{unit['unit_kind']} {unit['unit_ms']} ms, optional-stop {unit['optional_stop_ms']} ms, GC {unit['gc_count']} ({unit['source']})")
-        advance = '-' if s['advance_ms'] is None else f"{_ms(s['advance_ms'])} ({s['advance_source']})"
+        if s['advance_ms'] is not None:
+            advance = f"{_ms(s['advance_ms'])} ({s['advance_source']})"
+        else:
+            advance = 'unknown (timing unbound)' if s['advance_source'] == 'unknown' else 'none (scope bound)'
         lines.append(f"| {s['window']} | {s['arm']} | {'yes' if s['window_valid'] else 'no'} | {s['frame']} | {_ms(s['mod_work_ms'])} | {_ms(s['whole_frame_ms'])} | "
                      f"{s['component']} | {s['gc']} | {advance} | {call.get('gc_delta', '-')} / {call.get('optional_stop_ms', '-')} | {unit_text} |")
     if not report['spikes']:

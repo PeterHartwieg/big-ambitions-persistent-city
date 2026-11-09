@@ -514,12 +514,22 @@ class SummaryLineTests(unittest.TestCase):
         spike = run(w)['spikes'][0]
         self.assertEqual((spike['advance_ms'], spike['advance_source']), (42.49, 'per-call record'))
         self.assertEqual(spike['advancement_unit']['unit_kind'], 'route-planning')
-        # Without either evidence the spike is outside advancement, and its component stays unknown.
+        # Without either evidence, absence of advancement is not established: unit fields stay unknown.
         w['advance_calls'] = []
-        spike = run(w)['spikes'][0]
+        r = run(w)
+        spike = r['spikes'][0]
         self.assertIsNone(spike['advance_ms'])
-        self.assertIsNone(spike['advancement_unit'])
+        self.assertEqual(spike['advance_source'], 'unknown')
+        self.assertEqual(set(spike['advancement_unit'].values()), {'unknown'})
         self.assertEqual(spike['component'], 'unknown')
+        md = report.render_markdown(r)
+        self.assertIn('unknown (timing unbound)', md)
+        self.assertNotIn('outside advancement', md)
+        # Declared bound but not timed in this frame: confirmed outside advancement.
+        w['bound_components'] = ['AdvancePopulation']
+        spike = run(w)['spikes'][0]
+        self.assertIsNone(spike['advance_source'])
+        self.assertIsNone(spike['advancement_unit'])
 
 
 class ReportTests(unittest.TestCase):
