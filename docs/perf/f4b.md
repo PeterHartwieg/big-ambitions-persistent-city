@@ -33,10 +33,21 @@ So `observerMs` reports a small part of the probe's own cost; most of it is the 
 
 The frame-start entry (close the prior frame row, copy 11 component values, read the native and logical minute) is reported per frame as `boundary_ms` and measured in game only; it runs outside every PC scope and is not mod-work.
 
+## Patch-info rescan (review r2)
+
+To catch PC hooks installed or changed after arming, the probe rescans Harmony's patch info at arm, at window edges and once per real second while measuring. The per-second scan runs at the frame boundary on a frame already flagged diagnostic, so its cost lands in that frame's `boundary_ms` and whole frame, not in mod-work. `ScanPerf` in logic-check times one scan (`HarmonyScan` over synthetic `Patches` objects, plus `CoverageTracker.Observe`) against the pinned 0Harmony.dll. 51 runs after 20 warm-ups, on 9 November 2026 while other sessions' `dotnet test` runs loaded the machine:
+
+| Synthetic patch infos | Patches | Before: field reflection per info, median (max) | After: field array cached once, median (max) |
+| ---: | ---: | ---: | ---: |
+| 100 | 400 | 0.58 ms (1.88 ms) | 0.62 ms (1.16 ms) |
+| 300 | 1,200 | 1.54 ms (7.77 ms) | 1.76 ms (16.6 ms) |
+
+Caching the field array made no measurable difference: .NET already caches the reflection metadata, so most of the cost is building the observations and the tracker lookups. The cached version stays because it reads the six patch-list fields in one fixed place (`HarmonyScan.PatchLists`), which the adapter check pins. Expect one diagnostic frame per second with about 0.5–2 ms of extra boundary work at these patch counts, more under Mono; G2 records the real `boundary_ms`. The same run measured scope overhead at 47.7 ns (reference cache) against 58.3 ns (default comparer) under that load; the quiet-machine figures above stand.
+
 ## Tool cost
 
-- `check_scopes.py` on the base (266 source files): **20.1 s before, 3.3 s after** a cheap win. The method finder sliced and stripped the whole file text before every identifier followed by `(` (quadratic); it now steps back over whitespace from the match. Same findings and the same 24 passing tests. The Python suite, which runs the check on about 15 edited source copies, takes about 60 s.
-- `build_probe.py`: one Roslyn compile of three files, a few seconds; it runs `check_scopes.py` first.
+- `check_scopes.py` on the base (266 source files): **20.1 s before, 3.3 s after** a cheap win. The method finder sliced and stripped the whole file text before every identifier followed by `(` (quadratic); it now steps back over whitespace from the match. Same findings and the same 24 passing tests. With the review r1–r3 target, helper and transpiler checks it runs in about 2.2 s; the Python suite (about 40 tests on edited source copies) takes 2–3 minutes.
+- `build_probe.py`: one Roslyn compile of four files, a few seconds; it runs `check_scopes.py` first.
 - `logic-check --perf`: about 10 s.
 
 ## Standing gate

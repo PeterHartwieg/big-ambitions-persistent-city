@@ -45,8 +45,8 @@ Run on the PC (Windows), base `b8feb06`:
 | `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"` | passed; `PersistentCity.dll` SHA-256 `d77eaf13…a4d8`, the same before and after this slice |
 | `python tools/perf-union-probe/check_scopes.py` | PASS; expected-scope hash `7dafd98f51599a5c637306797c644f467407a370d4402668c830cc8338fe1dc1`; patches 58, messages 5, events 8, helpers 3 |
 | `python tools/perf-union-probe/build_probe.py --game-managed …` | passed; `PerfUnionProbe.dll` compiles against the game assemblies with warnings as errors |
-| `dotnet run -c Release --project tools/perf-union-probe/logic-check/LogicCheck.csproj -- --expect-hash 7dafd98f… --perf` | 63/63 checks passed; the C# hash equals `check_scopes.py`'s |
-| `python -m unittest discover -s tools/perf-union-probe -p test_*.py` | 24 tests OK, including the two-build manifest test (not skipped on this PC) |
+| `dotnet run -c Release --project tools/perf-union-probe/logic-check/LogicCheck.csproj -- --expect-hash 7dafd98f… --perf` | 93/93 checks passed (rules, coverage lifecycle, capacity, Harmony adapter on the pinned 0Harmony.dll); the C# hash equals `check_scopes.py`'s |
+| `python -m unittest discover -s tools/perf-union-probe -p test_*.py` | 36 tests OK, including the two-build manifest test (not skipped on this PC) and the review r1–r3 bypass regressions |
 | `dotnet test tests/PersistentCity.Tests.csproj` | 4,288 passed, 0 failed |
 
 What the tests cover (F4b row):
