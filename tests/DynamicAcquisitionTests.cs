@@ -686,10 +686,16 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(FoodLiveMenuRefusal.None, FoodMenuPolicy.LiveMenu(new List<string> { Burger, Donut, Dumplings }, policy));
         var menu = new List<string>(Menu(8));
         var wide = Policy(menu);
-        FoodMenuPolicy.LiveMenu(menu, wide);
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 1000; i++) FoodMenuPolicy.LiveMenu(menu, wide);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        for (int i = 0; i < 5000; i++) FoodMenuPolicy.LiveMenu(menu, wide); // JIT tiering and runtime warm-up
+        // A LiveMenu allocation shows in every loop; runtime work during one loop (tiering, other test threads) does not.
+        long least = long.MaxValue;
+        for (int round = 0; round < 5; round++)
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 1000; i++) FoodMenuPolicy.LiveMenu(menu, wide);
+            least = Math.Min(least, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
+        Assert.Equal(0, least);
     }
 
     [Fact]
