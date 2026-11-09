@@ -32,7 +32,7 @@ Re-read at this base: `tests/F5hIntegratedAcceptanceTests.cs` (`Shape`, `Referen
   - **Schedule:** every input stamped before the minute was published once, at its own minute.
 - **Event order and equality** (`CityOracles.Equal`). One ordered ledger per arm:
   - journey events (`ActivityObserved`), routine misses, meal decisions, native orders (each with the buyer's wallet as checkout found it), vendor sales and vendor script events;
-  - every wallet posting (daily bill, income, shift wage), one row per wallet at the minute it drained;
+  - every wallet posting (daily bill, income, shift wage) where it executes: its scheduled minute, the run-wide posting sequence, the wallet and its posted fields. The harness sets Core's test bound `BudgetPostingsPerEvent` to 1 (reference and every arm), so the wallet a unit posts is the posting queue's minimum just before it;
   - published inputs, research orders, state moves, bills and notices;
   - the hourly identity and wallet totals.
   - Each arm must equal the reference in the ledger, the save bytes at every drained day boundary, the native orders, the vendor sales and the final save. A vendor sale is compared without the stand-in's lease end, because a reload renews the transient lease at other minutes.
@@ -54,14 +54,14 @@ Re-read at this base: `tests/F5hIntegratedAcceptanceTests.cs` (`Shape`, `Referen
 Mac (Apple M1 Pro), at this branch's head:
 
 - Build: `python3 tools/build.py --game-managed "…/dll-import-shim/Big Ambitions_Data/Managed"` passed.
-- `dotnet test tests/PersistentCity.Tests.csproj`: 4,317 passed, 0 failed, 7 min 17 s (after review round 1; 4,316 in 7 min 5 s before).
-- `dotnet test … --filter "FullyQualifiedName~F9IntegratedCityTests"`: 29 passed, 38.6 s after review round 1 (23.5 s before postings joined the ledger). Size filters before round 1: `&Size=city-s` 16 passed in 5.0 s, `&Size=city-m` 10 passed in 20.9 s.
+- `dotnet test tests/PersistentCity.Tests.csproj`: 4,317 passed, 0 failed, 7 min 11 s (after review round 2; 7 min 17 s in round 1, 4,316 in 7 min 5 s before).
+- `dotnet test … --filter "FullyQualifiedName~F9IntegratedCityTests"`: 29 passed, 24.8 s after review round 2 (38.6 s in round 1 with the per-minute wallet scan; 23.5 s before postings joined the ledger). Size filters before round 1: `&Size=city-s` 16 passed in 5.0 s, `&Size=city-m` 10 passed in 20.9 s.
 
 | Required test | Facts |
 | --- | --- |
 | Every arm equals the reference (ledger, saves at day boundaries, native orders) | `SmallArmEqualsTheReference`, `MediumArmEqualsTheReference` × fps30, fps60, fps120, hidden-skip, reload |
 | Each reload state is reached and asserted | `SmallReloadArmReachesEveryInFlightState`, `MediumReloadArmReachesEveryInFlightState` |
-| Fault injection fails loudly | `AnInjectedFaultFailsTheScenario` × duplicate sale, skipped input, research charge without a report, vendor sale outside its lease; `AnArmThatSkipsAnInputDiffersFromTheReferenceEvenWithoutTheScheduleOracle`, `APostingMovedAcrossASaleFailsTheEventOrderOracle` |
+| Fault injection fails loudly | `AnInjectedFaultFailsTheScenario` × duplicate sale, skipped input, research charge without a report, vendor sale outside its lease; `AnArmThatSkipsAnInputDiffersFromTheReferenceEvenWithoutTheScheduleOracle`, `PostingsSwappedInExecutionWithEqualBalancesFailTheEventOrderOracle` (two midnight wallets swapped in the posting queue: equal balances, hourly rows and final save; the ledger differs at the first posting) |
 | One research order of each product billed once, reported the next morning | `SmallResearchOrderOfEachProductIsBilledOnceAndReportedTheNextMorning`, `Medium…` (reference and reload arms) |
 | A vendor scope sells to residents and hands back on release | `SmallVendorScopeSellsToResidentsAndHandsBackOnRelease`, `Medium…` |
 | Timestamped native changes take effect at their minute | `SmallNativeChangesTakeEffectAtTheirMinute`, `Medium…` |

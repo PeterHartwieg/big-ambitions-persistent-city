@@ -258,18 +258,20 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
     }
 
     [Fact, Trait("Size", "city-s")]
-    public void APostingMovedAcrossASaleFailsTheEventOrderOracle()
+    public void PostingsSwappedInExecutionWithEqualBalancesFailTheEventOrderOracle()
     {
-        // A posting moved before a sale with every balance kept: the ledger differs.
+        // The posting queue's first two midnight wallets post in the other order. Every oracle passes and every amount is
+        // equal; only the posting capture, which records each posting where it executes, sees the change.
         var reference = runs.Run("city-s", "reference");
-        int sale = reference.Ledger.FindIndex(l => l.StartsWith("o|", StringComparison.Ordinal));
-        int posting = reference.Ledger.FindIndex(sale, l => l.StartsWith("p|", StringComparison.Ordinal));
-        Assert.True(sale >= 0 && posting > sale);
-        var copy = new CityRun { Arm = "reordered" };
-        copy.Ledger.AddRange(reference.Ledger);
-        (copy.Ledger[sale], copy.Ledger[posting]) = (copy.Ledger[posting], copy.Ledger[sale]);
-        Assert.Contains("differs", Assert.Throws<CityViolation>(() => CityOracles.Equal(reference, copy)).Message);
-        // Each sale row carries its buyer's wallet as checkout found it, so a real reorder also changes the sale itself.
+        var swapped = CityScenario.Run(runs.Checkpoint("city-s"), CityArm.ReferenceArm with { Name = "fault-reordered-postings", Fault = CityFault.ReorderedPostings });
+        Assert.Equal(reference.Postings, swapped.Postings);
+        Assert.Equal(reference.Ledger.Where(l => l.StartsWith("h|", StringComparison.Ordinal)), swapped.Ledger.Where(l => l.StartsWith("h|", StringComparison.Ordinal)));
+        Assert.Equal(reference.Final, swapped.Final);
+        var error = Assert.Throws<CityViolation>(() => CityOracles.Equal(reference, swapped));
+        Assert.Contains("differs", error.Message);
+        Assert.Contains("'p|" + (2 * 1440), error.Message);
+        output.WriteLine(error.Message);
+        // Each sale row also carries its buyer's wallet as checkout found it.
         Assert.All(reference.Orders, o => Assert.Equal(7, o.Split('|')[6].Split('/').Length));
     }
 

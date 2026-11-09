@@ -46,6 +46,21 @@ The ledger now also records every wallet posting (a scan of all wallets at each 
 
 `F9IntegratedCityTests` (29 tests) now takes 38.6 s; city-m about doubled, from the per-minute wallet scan over 2,552 wallets. That is still within the unit-test budget, so city-m stays in the default suite. Ledgers: 10,235 events (city-s), 102,088 (city-m).
 
+## After review round 2: postings captured where they execute
+
+The per-minute wallet scan is gone. Each simulator unit now reads the posting queue's minimum before it runs and records a posting only when the unit made one (one wallet per posting unit). One run:
+
+| Arm | city-s | city-m |
+| --- | ---: | ---: |
+| reference | 0.66 s / 220 ms | 2.49 s / 831 ms |
+| fps30 | 0.44 s / 148 ms | 2.57 s / 858 ms |
+| fps60 | 0.43 s / 144 ms | 2.60 s / 865 ms |
+| fps120 | 0.43 s / 142 ms | 2.54 s / 847 ms |
+| hidden skip | 0.44 s / 148 ms | 2.55 s / 849 ms |
+| reload | 1.07 s / 356 ms | 5.95 s / 1,983 ms |
+
+`F9IntegratedCityTests` (29 tests) takes 24.8 s, back near the original 23.5 s. Ledgers: 10,539 events (city-s), 107,862 (city-m).
+
 ## Cheap wins
 
 None taken. The scenario is cheap enough that no change was worth its review cost. The largest share is the reload arm's save and read through the compact writer, which is production code outside F9c's scope. The four parked hotspots stay parked; F9c touches no product code.

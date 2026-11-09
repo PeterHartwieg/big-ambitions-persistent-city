@@ -14,7 +14,9 @@ namespace PersistentCity.Tests.Acceptance;
 internal enum CityReload { DayBoundary, BetweenFillUnits, UncertainReceipt, ResearchPendingBilling, VendorLeaseOpen, HeldMealDecision, MidJourney }
 
 /// <summary>Faults the oracles must catch (F9c tests): each makes the run throw <see cref="CityViolation"/>.</summary>
-public enum CityFault { None, DuplicateSale, SkippedInput, ResearchChargeWithoutReport, VendorSaleOutsideLease }
+public enum CityFault { None, DuplicateSale, SkippedInput, ResearchChargeWithoutReport, VendorSaleOutsideLease,
+    /// <summary>Not an oracle failure: two same-minute postings swap execution order with equal amounts; only the ledger comparison can see it.</summary>
+    ReorderedPostings }
 
 /// <summary>One arm of the scenario. The reference drains every native minute synchronously (no frame loop, synchronous
 /// planner); every other arm runs F1's frame loop with F5h's admitted planner at its cadence and budget.</summary>
@@ -91,7 +93,6 @@ internal sealed class CityScenario
     private bool dayReloadDue;
     private bool skippedOne;
     private long missesBeforeReload;
-    private readonly Dictionary<string, string> postings = new(StringComparer.Ordinal);
 
     private CityScenario(CityCheckpoint checkpoint, CityArm arm)
     {
@@ -131,6 +132,7 @@ internal sealed class CityScenario
         city.AttachPopulationFill(checkpoint.Size.Catalogue);
         city.AttachResearch(state.Research);
         city.AttachWorkplaceAvailability(native.Shops);
+        AttachPostingCapture();
         city.ActivityObserved += (id, person, minute) => run.Ledger.Add("a|" + CityOracles.M(minute) + "|" + id + "|" + person.Phase + "|" + person.PlaceId + "|" + person.Activity);
         city.RoutineObserved += r => run.Ledger.Add("r|" + CityOracles.M(r.Minute) + "|" + r.CitizenId + "|" + r.DestinationId + "|" + r.Outcome + "|" + r.Reason);
         city.FoodDecisionObserved += t => run.Ledger.Add("d|" + CityOracles.M(city.State.Minute) + "|" + t.Intent.ConsumerId + "|" + t.Intent.Id + "|"
@@ -197,32 +199,73 @@ internal sealed class CityScenario
         if (!city.IsAccountingEpochDrained(epoch)) throw new CityViolation("ending epoch not drained at " + epoch);
         if (city.State.Minute >= epoch) throw new CityViolation("epoch " + epoch + " observed before its inputs");
         clock = epoch; native.SetClock(epoch);
-        Postings(epoch);
         if (epoch % 60 == 0) Checkpoint(epoch);
         if (epoch % 1440 == 0)
         {
             run.DaySaves.Add((epoch, SaveCodec.Write(city.State)));
             dayReloadDue = arm.Reloads;
         }
+        if (arm.Fault == CityFault.ReorderedPostings && epoch == 2 * 1440) ReorderNextPostings();
         Publish(epoch);
         Vendor(epoch);
         Research(epoch);
     }
 
-    /// <summary>Every wallet posting (daily bill, income or shift wage) made in the minute that just drained, one row per wallet
-    /// in roster order. Sales carry the buyer's wallet as checkout saw it, so a posting moved across a sale changes the ledger.</summary>
-    private void Postings(long epoch)
+    // ---- Posting capture ----
+
+    private static readonly System.Reflection.FieldInfo BudgetDueField = typeof(FoodCommerce).GetField("budgetDue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+    private FoodCommerce food = null!;
+    private object budgetDue = null!;
+    private System.Reflection.PropertyInfo budgetMin = null!, budgetCount = null!, budgetMinute = null!;
+
+    /// <summary>The harness posts one wallet per posting unit (Core's own test bound, <c>BudgetPostingsPerEvent</c>), so the
+    /// wallet a unit posts is the posting queue's minimum just before it. Results do not depend on the bound; the reference
+    /// and every arm use the same one.</summary>
+    private void AttachPostingCapture()
     {
-        foreach (var meal in city.State.Food!.Residents)
+        food = F5hIntegratedAcceptanceTests.Food(city);
+        food.BudgetPostingsPerEvent = 1;
+        budgetDue = BudgetDueField.GetValue(food)!;
+        budgetMin = budgetDue.GetType().GetProperty("Min")!;
+        budgetCount = budgetDue.GetType().GetProperty("Count")!;
+        budgetMinute = budgetDue.GetType().GetProperty("Minute")!;
+    }
+
+    /// <summary>One simulator unit. A unit that posts a wallet (daily bill, income or shift wage) appends that posting to the
+    /// ledger at its execution point: its scheduled minute, the run-wide posting sequence, the wallet and its posted fields.</summary>
+    private AdvanceResult Step(double target)
+    {
+        var next = (int)budgetCount.GetValue(budgetDue)! > 0 ? (ResidentMeal)budgetMin.GetValue(budgetDue)! : null;
+        double due = (double)budgetMinute.GetValue(budgetDue)!;
+        long before = food.BudgetPostings;
+        var advanced = city.AdvanceFrameSlice(target, 1);
+        long posted = food.BudgetPostings - before;
+        if (posted > 1) throw new CityViolation("a unit posted " + posted + " wallets");
+        if (posted == 1)
         {
-            if (meal.Budget == null) continue;
-            string now = CityOracles.Posting(meal.Budget);
-            if (postings.TryGetValue(meal.ResidentId, out var was) && was == now) continue;
-            postings[meal.ResidentId] = now;
-            if (was == null) continue; // a new wallet: its opening state is in the hourly identity row
             run.Postings++;
-            run.Ledger.Add("p|" + epoch.ToString(CultureInfo.InvariantCulture) + "|" + meal.ResidentId + "|" + now);
+            if (due > city.State.Minute) throw new CityViolation("wallet " + next!.ResidentId + " posted before its minute " + CityOracles.M(due));
+            // The posting's own minute (daily bill or shift end); the simulator clock at that unit depends on the frame target.
+            run.Ledger.Add("p|" + CityOracles.M(due) + "|" + run.Postings.ToString(CultureInfo.InvariantCulture) + "|" + next!.ResidentId
+                + "|" + CityOracles.Posting(next.Budget!));
         }
+        return advanced;
+    }
+
+    /// <summary>Fault: the next posting minute's first two wallets swap places in the posting queue, so they post in the other
+    /// order with the same amounts. Balances and saves stay equal; only the execution order changes.</summary>
+    private void ReorderNextPostings()
+    {
+        var items = (System.Collections.IList)budgetDue.GetType().GetField("items", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(budgetDue)!;
+        var entry = items[0]!.GetType();
+        var minute = entry.GetField("Minute", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var index = entry.GetField("Index", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        double first = (double)minute.GetValue(items[0])!;
+        int other = -1;
+        for (int i = 1; i < items.Count && other < 0; i++) if ((double)minute.GetValue(items[i])! == first) other = i;
+        if (other < 0) throw new CityViolation("no two wallets post at minute " + first);
+        (items[0], items[other]) = (items[other], items[0]);
+        index.SetValue(items[0], 0); index.SetValue(items[other], other);
     }
 
     private void Checkpoint(long epoch)
@@ -321,7 +364,7 @@ internal sealed class CityScenario
         {
             double ending = AccountingClock.PreviousEpochTarget(epoch);
             int guard = 0;
-            while (!city.AdvanceTo(ending, 100_000).CaughtUp) if (++guard > 100_000) throw new CityViolation("nonterminating epoch " + epoch);
+            while (!Step(ending).CaughtUp) if (++guard > 10_000_000) throw new CityViolation("nonterminating epoch " + epoch);
             Crossing(epoch);
             if (epoch == end) break;
             if (!city.BeginAccountingObservations(epoch)) throw new CityViolation("observation epoch not published at " + epoch);
@@ -332,7 +375,6 @@ internal sealed class CityScenario
     private void Crossing0(long start)
     {
         clock = start; native.SetClock(start);
-        Postings(start);
         Checkpoint(start);
         native.EnterMinute(start);
         while (native.Vendor!.Prepare(start)) { }
@@ -378,7 +420,7 @@ internal sealed class CityScenario
                     if (Elapsed() >= milliseconds) break;
                     continue;
                 }
-                var advanced = city.AdvanceFrameSlice(target);
+                var advanced = Step(target);
                 // A reload arm ends the frame between two fill units, so the save falls inside the boundary's fill.
                 if (pendingReloads.Contains(CityReload.BetweenFillUnits) && Holds(CityReload.BetweenFillUnits)) break;
                 if (advanced.PlanningPending) { if (Elapsed() >= milliseconds) break; continue; }
