@@ -30,16 +30,57 @@ public sealed class OwnershipBoundaryTests
     // ---- The source scan ----
 
     /// <summary>Files that may read the simulator's mutable state: load and save, accounting recovery, the E6 market that
-    /// owns vendor-row writes, presentation until F9g, F2e's hold publication and replay, and weather diagnostics (an
-    /// observer outside F9e's file list, named in docs/checks/f9e.md as still reading the state).</summary>
+    /// owns vendor-row writes, F2e's hold publication and replay, and weather diagnostics (an observer outside F9e's file
+    /// list, named in docs/checks/f9e.md as still reading the state). Presentation has no file allowance since F9g: only
+    /// the lines in <see cref="PresentationExceptions"/>.</summary>
     internal static readonly Dictionary<string, string> AllowedFiles = new(StringComparer.Ordinal)
     {
         ["PersistentCityMod.cs"] = "load and save",
         ["AccountingRecovery.cs"] = "accounting epoch recovery",
         ["StreetFoodVendorMarket.cs"] = "E6 market: vendor-row writes and the food state it serves",
-        ["PhysicalPopulation.cs"] = "presentation, until F9g",
         ["MovementDiagnostics.cs"] = "F2e player-hold publication and replay (writes)",
         ["WeatherDiagnostics.cs"] = "observer outside F9e's Owns; listed in docs/checks/f9e.md",
+    };
+
+    /// <summary>F9g (plan f9-city-acceptance.md, Decision 8, Presentation): the presentation files. They read the city
+    /// through <see cref="CitySimulator.View"/> and the candidate queries' <see cref="IPersonView"/>s. A simulator
+    /// <c>.State</c> read, or an entity type named in code (a signature, field, local type or cast), is allowed only on a
+    /// line that holds one of <see cref="PresentationExceptions"/>.</summary>
+    internal static readonly string[] PresentationFiles =
+    {
+        "PhysicalPopulation.cs", "PhysicalPopulation.Following.cs", "PhysicalPopulation.Queues.cs", "PhysicalPopulation.Selection.cs", "PhysicalVehicles.cs",
+    };
+
+    private const string NoJourneyView = "IPersonView (F9e, Core/CityView.cs) has no committed journey, optional stop, car or appearance identity";
+
+    /// <summary>The named presentation signatures and reads that still reach mutable state, each with its reason; listed in
+    /// docs/checks/f9g.md. A fragment is matched against one code line of its file and must still occur there.</summary>
+    internal static readonly (string File, string Code, string Why)[] PresentationExceptions =
+    {
+        ("PhysicalPopulation.cs", "public CitizenState Citizen = null!;", "Binding: a body follows the entity's journey and optional stop; " + NoJourneyView),
+        ("PhysicalPopulation.cs", "private static CitizenState Entity(IPersonView person) => (CitizenState)person;", "the one view-to-entity step, for the members the view lacks; " + NoJourneyView),
+        ("PhysicalPopulation.cs", "(CitizenState Citizen, Route? Journey, string? ArrivedAt)", "fade restriction compares the entity and its journey by reference"),
+        ("PhysicalPopulation.cs", "private readonly Dictionary<string, Place> places;", "DwellSpots and CitySimulator.QueueAtOpening take Place"),
+        ("PhysicalPopulation.cs", "places = simulation.State.Places.ToDictionary(", "the Place table above, built once at construction"),
+        ("PhysicalPopulation.cs", "private FoodCommerceState? vendorFood;", "vendor meal rows (ResidentMeal) are not on IFoodView"),
+        ("PhysicalPopulation.cs", "ambient = new AmbientPedestrians(dependency, simulation.State.SourceIdentities);", "the source identity pool is not on the view"),
+        ("PhysicalPopulation.Following.cs", "private double LogicalCarMinutes(CitizenState citizen, Route route)", "reads the journey; CitySimulator.SampleJourney takes the entity"),
+        ("PhysicalPopulation.Following.cs", "contact.Settle(citizen.Identity.Id, simulation.HoldForPlayer(", "F2e player hold, a simulator write; PlayerContact.Settle takes the city"),
+        ("PhysicalPopulation.Queues.cs", "private void OnOptionalDeparture(string id, CitizenState citizen, double minute)", "the simulator's ActivityObserved event signature"),
+        ("PhysicalPopulation.Queues.cs", "private bool OptionalVisible(CitizenState citizen)", "reads the optional stop; " + NoJourneyView),
+        ("PhysicalPopulation.Queues.cs", "private bool TryBodyPlace(string id, out Place place)", "DwellSpots take Place"),
+        ("PhysicalPopulation.Queues.cs", "var row = simulation.State.Vendors.FindPlace(id);", "the vendor stand is not on IVendorRowView"),
+        ("PhysicalPopulation.Queues.cs", "var food = simulation.State.Food;", "vendor meal rows are not on IFoodView"),
+        ("PhysicalPopulation.Queues.cs", "private bool VendorWaiting(IPersonView citizen, out VendorRow row, out VendorVehicle vehicle)", "stand times and position; DwellSpots.TryVendorQueue takes VendorRow"),
+        ("PhysicalPopulation.Queues.cs", "row = simulation.State.Vendors.FindPlace(citizen.PlaceId)!;", "the vendor stand is not on IVendorRowView"),
+        ("PhysicalPopulation.Selection.cs", "private bool FadeRestricted(CitizenState citizen)", "compares the entity and its journey by reference"),
+        ("PhysicalPopulation.Selection.cs", "public SelectionCandidate(CitizenState citizen,", "the bind step follows the candidate's journey (Binding.Citizen)"),
+        ("PhysicalPopulation.Selection.cs", "public CitizenState Citizen { get; }", "the bind step follows the candidate's journey (Binding.Citizen)"),
+        ("PhysicalPopulation.Selection.cs", "private bool Outdoor(CitizenState c)", "reads the optional stop; CitySimulator.OptionalStopStatus takes it"),
+        ("PhysicalPopulation.Selection.cs", "(Place Place, List<Dwell> Dwells)", "DwellSpots take Place"),
+        ("PhysicalPopulation.Selection.cs", "private Dwell? QueueDwell(CitizenState citizen, Place place, double now)", "CitySimulator.QueueAtOpening takes the entity and the place"),
+        ("PhysicalPopulation.Selection.cs", "private bool TryLine(Place place, out DoorQueue line)", "DwellSpots take Place"),
+        ("PhysicalVehicles.cs", "public bool TryAcquire(CitizenState citizen, PhysicalRoadSample sample, out PhysicalVehicleBody body)", "reads the saved car (CarState), which has no view"),
     };
 
     /// <summary>The F9e observer files: no simulator <c>.State</c> read and no cast back to an entity.</summary>
@@ -68,7 +109,7 @@ public sealed class OwnershipBoundaryTests
     {
         ("VendorDiagnostics.cs", "r", "VendorRow"), // market.Coordinator.Table.Rows.Select(r => ...)
         ("StreetFoodVendorMarket.cs", "row", "VendorRow"), // Coordinator.Table.Find, table.FindPlace, table.Rows
-        ("PhysicalPopulation.cs", "row", "VendorRow"), // simulation.State.Vendors.FindPlace(id)
+        ("PhysicalPopulation.Queues.cs", "row", "VendorRow"), // simulation.State.Vendors.FindPlace(id)
         ("ResearchReportText.cs", "open", "ResearchOrder"), // open[i], open = ledger.Open
         ("ResearchReportText.cs", "order", "ResearchOrder"), // ResearchOrder parameters and ledger.Open/Kept/Closed items
         ("PersistentCityMod.cs", "stored", "SaveReadResult"), // stored = session.InitialReadResult
@@ -263,6 +304,15 @@ public sealed class OwnershipBoundaryTests
         return string.Join(".", parts);
     }
 
+    /// <summary>An entity type in type position: not a member access (<c>p.Value.Place</c>) and not part of a longer name
+    /// (<c>VisitorRoutineList</c>, <c>FindPlace</c>).</summary>
+    private static readonly Regex EntityName = new(@"(?<![\w.])(?:" + string.Join("|", EntityTypes) + @")(?!\w)", RegexOptions.Compiled);
+
+    private static string[] CodeLines(string source) => Code(source).Split('\n');
+
+    private static bool Named(string file, string codeLine)
+        => PresentationExceptions.Any(e => e.File == file && codeLine.Contains(e.Code, StringComparison.Ordinal));
+
     /// <summary>Every rule broken by the given Runtime files, one line per access.</summary>
     internal static List<string> Violations(IReadOnlyDictionary<string, string> files)
     {
@@ -276,7 +326,23 @@ public sealed class OwnershipBoundaryTests
                 if (!OtherStateOwners.ContainsKey(a.Type)) violations.Add(where + ": receiver type " + a.Type + " is not a known .State owner");
                 continue;
             }
-            if (!AllowedFiles.ContainsKey(a.File)) violations.Add(where + ": reads CitySimulator.State outside the allowed files; observers read .View");
+            if (PresentationFiles.Contains(a.File))
+            {
+                if (!Named(a.File, CodeLines(files[a.File])[a.Line - 1])) violations.Add(where + ": reads CitySimulator.State outside the named presentation exceptions; presentation reads .View");
+            }
+            else if (!AllowedFiles.ContainsKey(a.File)) violations.Add(where + ": reads CitySimulator.State outside the allowed files; observers read .View");
+        }
+        // F9g: an entity type named in presentation code (signature, field, local type, cast) needs a named exception.
+        foreach (var (file, text) in files)
+        {
+            if (!PresentationFiles.Contains(file)) continue;
+            var lines = CodeLines(text);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var entity = EntityName.Match(lines[i]);
+                if (entity.Success && !Named(file, lines[i]))
+                    violations.Add(file + ":" + (i + 1) + " '" + lines[i].Trim() + "': names entity type " + entity.Value + " outside the named presentation exceptions");
+            }
         }
         foreach (var (file, text) in files)
         {
@@ -309,6 +375,110 @@ public sealed class OwnershipBoundaryTests
         // The simulator reads found are the receivers the plan names, under every handle name.
         Assert.Contains(accesses, a => a.Type == "CitySimulator" && a.Receiver == "city" && a.File == "StreetFoodVendorMarket.cs");
         Assert.Contains(accesses, a => a.Type == "CitySimulator" && a.Receiver == "simulation" && a.File == "PersistentCityMod.cs");
+    }
+
+    [Fact]
+    public void PresentationReadsThroughTheViewWithOnlyNamedExceptions()
+    {
+        var files = RuntimeSources();
+        foreach (var file in PresentationFiles) Assert.True(files.ContainsKey(file), file + " is listed but missing");
+        // No file allowance is left for presentation, so the named lines are the only exceptions.
+        foreach (var file in PresentationFiles) Assert.False(AllowedFiles.ContainsKey(file), file + " has a file allowance");
+        // Every named exception still occurs, so the list cannot go stale silently.
+        foreach (var (file, code, why) in PresentationExceptions)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(why), file + ": " + code + " has no reason");
+            Assert.True(CodeLines(files[file]).Any(line => line.Contains(code, StringComparison.Ordinal)), file + ": named exception no longer occurs: " + code);
+        }
+        // The logical minute, the rosters and the person count are read through the view.
+        string population = string.Concat(PresentationFiles.Where(f => f.StartsWith("PhysicalPopulation", StringComparison.Ordinal)).Select(f => Code(files[f])));
+        foreach (var read in new[] { "simulation.View.Minute", "simulation.View.ResidentList", "simulation.View.VisitorRoutineList", "view.VisitorCount" })
+            Assert.Contains(read, population);
+        Assert.DoesNotContain("State.Minute", population);
+        Assert.DoesNotContain("State.Citizens", population);
+        Assert.DoesNotContain("PersonTable.", population);
+        // Every simulator .State read left in presentation is on a named line.
+        var reads = Scan(files).Where(a => a.Type == "CitySimulator" && PresentationFiles.Contains(a.File)).ToList();
+        foreach (var a in reads) output.WriteLine("named presentation read: " + a.File + ":" + a.Line + " " + a.LineText);
+        Assert.Equal(6, reads.Count);
+    }
+
+    [Fact]
+    public void APlantedEntityReadInAPresentationFixtureIsCaught()
+    {
+        var files = RuntimeSources();
+        Assert.Empty(Violations(files));
+        string selection = files["PhysicalPopulation.Selection.cs"];
+        int anchor = selection.LastIndexOf('}'); anchor = selection.LastIndexOf('}', anchor - 1);
+        string Caught(string member)
+        {
+            var planted = new Dictionary<string, string>(files, StringComparer.Ordinal)
+                { ["PhysicalPopulation.Selection.cs"] = selection.Insert(anchor, "\n        " + member + "\n    ") };
+            return Assert.Single(Violations(planted));
+        }
+        // An entity-typed read helper, field, local or cast in a presentation file.
+        Assert.Contains("names entity type CitizenState", Caught("private double Planted(CitizenState c) => c.DepartureMinute;"));
+        Assert.Contains("names entity type CitizenState", Caught("private readonly List<CitizenState> planted = new List<CitizenState>();"));
+        Assert.Contains("names entity type CitizenState", Caught("private double Planted(IPersonView p) => ((CitizenState)p).DepartureMinute;"));
+        Assert.Contains("names entity type CitizenState", Caught("private double Planted(IPersonView p) => (p as CitizenState)!.DepartureMinute;"));
+        Assert.Contains("names entity type VendorRow", Caught("private bool Planted(VendorRow row) => row.Suspended;"));
+        Assert.Contains("names entity type Place", Caught("private Place Planted(string id) => places[id];"));
+        Assert.Contains("names entity type CityState", Caught("private CityState Planted() => null!;"));
+        // A simulator state read in a presentation file, under any handle name.
+        Assert.Contains("presentation reads .View", Caught("private double Planted() => simulation.State.Minute;"));
+        Assert.Contains("presentation reads .View", Caught("private double Planted() { var current = simulation; return current.State.Minute; }"));
+        // The other partial files and the vehicle file are policed too.
+        foreach (var file in new[] { "PhysicalPopulation.cs", "PhysicalPopulation.Following.cs", "PhysicalPopulation.Queues.cs", "PhysicalVehicles.cs" })
+        {
+            string text = files[file];
+            int end = text.LastIndexOf('}'); end = text.LastIndexOf('}', end - 1);
+            var planted = new Dictionary<string, string>(files, StringComparer.Ordinal)
+                { [file] = text.Insert(end, "\n        private int Planted(CitizenState c) => c.JobChanges;\n    ") };
+            Assert.Contains("names entity type CitizenState", Assert.Single(Violations(planted)));
+        }
+        // A named fragment covers only its own file.
+        var moved = new Dictionary<string, string>(files, StringComparer.Ordinal)
+            { ["PhysicalPopulation.Selection.cs"] = selection.Insert(anchor, "\n        private bool OptionalVisible(CitizenState citizen, int planted) => false;\n    ") };
+        Assert.Contains("names entity type CitizenState", Assert.Single(Violations(moved)));
+        // The view, comments and strings are not entity reads.
+        var quiet = new Dictionary<string, string>(files, StringComparer.Ordinal)
+            { ["PhysicalPopulation.Selection.cs"] = selection.Insert(anchor,
+                "\n        private double Planted(IPersonView p) => p.DepartureMinute + simulation.View.Minute; // CitizenState\n        private string Words() => \"Place CitizenState\";\n    ") };
+        Assert.Empty(Violations(quiet));
+    }
+
+    /// <summary>F9g: the candidate queries return read-only person views. The one entity-typed public result on the
+    /// candidate query types is the named exception <see cref="ActiveJourneyIndex.BodyCandidates"/>, which the F2
+    /// movement-equivalence driver (tools/movement-equivalence/PresentationDriver.cs, owned by F2g) follows as entities.</summary>
+    [Fact]
+    public void CandidateQueriesReturnViewTypes()
+    {
+        var query = typeof(PresentationGrid).GetMethod(nameof(PresentationGrid.Query))!;
+        Assert.Equal(typeof(IReadOnlyList<IPersonView>), query.ReturnType);
+        Assert.Equal(typeof(List<IPersonView>), query.GetParameters()[2].ParameterType);
+        Assert.Equal(typeof(bool), typeof(ActiveJourneyIndex).GetMethod(nameof(ActiveJourneyIndex.Contains))!.ReturnType);
+        Assert.Equal(typeof(IPersonView), Assert.Single(typeof(ActiveJourneyIndex).GetMethod(nameof(ActiveJourneyIndex.Contains))!.GetParameters()).ParameterType);
+        static bool Entity(Type t) => typeof(IPersonView).IsAssignableFrom(t) && !t.IsInterface
+            || t.IsGenericType && t.GetGenericArguments().Any(Entity) || t.IsArray && Entity(t.GetElementType()!);
+        var entityResults = new[] { typeof(ActiveJourneyIndex), typeof(PresentationGrid) }
+            .SelectMany(t => t.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Select(m => (t, m, type: m is PropertyInfo p ? p.PropertyType : m is MethodInfo mi && !mi.IsSpecialName ? mi.ReturnType : null)))
+            .Where(x => x.type != null && Entity(x.type)).Select(x => x.t.Name + "." + x.m.Name).ToArray();
+        Assert.Equal(new[] { "ActiveJourneyIndex.BodyCandidates" }, entityResults);
+        // The query hands out the filed entities themselves, seen through the view: no copy, no wrapper.
+        var people = new List<CitizenState>
+        {
+            new() { Identity = new CitizenIdentity { Id = "w" }, Phase = CitizenPhase.WaitingForOpening, PlaceId = "shop" },
+            new() { Identity = new CitizenIdentity { Id = "pv:1" }, Phase = CitizenPhase.WaitingForOpening, PlaceId = "shop" },
+            new() { Identity = new CitizenIdentity { Id = "home" }, Phase = CitizenPhase.AtPlace, PlaceId = "shop" },
+        };
+        var index = new ActiveJourneyIndex(id => id == "shop" ? new Position(10, 0, 10) : (Position?)null);
+        index.Rebuild(people);
+        var near = index.Grid.Query(new Position(10, 0, 10), 0, new List<IPersonView>());
+        Assert.Equal(new[] { "pv:1", "w" }, near.Select(p => p.Id).OrderBy(id => id, StringComparer.Ordinal));
+        Assert.All(near, p => Assert.Contains(people, c => ReferenceEquals(c, p)));
+        Assert.All(near, p => Assert.True(index.Contains(p)));
+        Assert.False(index.Contains(people[2]));
     }
 
     [Fact]

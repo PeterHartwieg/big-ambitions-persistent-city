@@ -21,13 +21,13 @@ namespace PersistentCity.Runtime
             var citizen = binding.Citizen;
             // A new journey (no later opening, so the simulator sent them on) is not this arrival.
             if (citizen.Phase == CitizenPhase.Travelling)
-                return ReferenceEquals(citizen.Journey, binding.AwaitJourney) && simulation.State.Minute <= binding.AwaitMinute + 0.5;
+                return ReferenceEquals(citizen.Journey, binding.AwaitJourney) && simulation.View.Minute <= binding.AwaitMinute + 0.5;
             // Another door used this frame's sampling budget: wait a frame rather than lose the body.
             if (citizen.Phase == CitizenPhase.WaitingForOpening && spots.SampledThisFrame
                 && places.TryGetValue(citizen.PlaceId, out var place) && spots.Unsampled(place)
-                && simulation.State.Minute <= binding.AwaitMinute + 0.5) return true;
+                && simulation.View.Minute <= binding.AwaitMinute + 0.5) return true;
             if (VendorWaiting(citizen, out var vendor, out _) && spots.SampledThisFrame
-                && spots.Unsampled(simulation.FindPlace(vendor.PlaceId)) && simulation.State.Minute <= binding.AwaitMinute + 0.5) return true;
+                && spots.Unsampled(simulation.FindPlace(vendor.PlaceId)) && simulation.View.Minute <= binding.AwaitMinute + 0.5) return true;
             binding.AwaitingArrival = false;
             return TryJoinVendorQueue(binding) || TryJoinOptional(binding) || TryJoinQueue(binding);
         }
@@ -37,8 +37,8 @@ namespace PersistentCity.Runtime
         {
             var person = binding.Person!; var citizen = binding.Citizen;
             if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)) return false;
-            var dwell = QueueDwell(citizen, place, simulation.State.Minute);
-            if (!dwell.HasValue || !dwell.Value.ActiveAt(simulation.State.Minute) || GaveUp(dwell.Value) || !TryLine(place, out var line)) return false;
+            var dwell = QueueDwell(citizen, place, simulation.View.Minute);
+            if (!dwell.HasValue || !dwell.Value.ActiveAt(simulation.View.Minute) || GaveUp(dwell.Value) || !TryLine(place, out var line)) return false;
             var reserved = Standing(line).Concat(queuers.Where(q => q.Key != citizen.Identity.Id && q.Value.Line.Key == line.Key
                 && !bindings.ContainsKey(q.Key)).Select(q => new KeyValuePair<string, int>(q.Key, q.Value.Slot)));
             var slots = DwellPlanner.AssignQueueSlots(reserved, new[] { dwell.Value }, line.Spots.Count);
@@ -56,7 +56,7 @@ namespace PersistentCity.Runtime
         private bool ObserveQueue(Binding binding)
         {
             var person = binding.Person!; var dwell = binding.Queue!.Value; var line = binding.Line!;
-            var citizen = binding.Citizen;
+            IPersonView citizen = binding.Citizen;
             if (!person.Valid) return false;
             if (!person.Agent.isStopped) binding.StepWalked += Time.unscaledDeltaTime;
             if (binding.Step == QueueStep.Entering)
@@ -66,7 +66,7 @@ namespace PersistentCity.Runtime
                 person.Tick(); return true;
             }
             // One minute of grace: a budgeted catch-up can process the opening event a frame late.
-            if (citizen.Phase == CitizenPhase.WaitingForOpening && citizen.PlaceId == dwell.SpotId && simulation.State.Minute < dwell.EndMinute + 1)
+            if (citizen.Phase == CitizenPhase.WaitingForOpening && citizen.PlaceId == dwell.SpotId && simulation.View.Minute < dwell.EndMinute + 1)
             {
                 if (binding.Step == QueueStep.Approaching)
                 {
@@ -127,7 +127,7 @@ namespace PersistentCity.Runtime
         }
 
         private bool OptionalVisible(CitizenState citizen) => citizen.Phase == CitizenPhase.AtPlace
-            && citizen.OptionalStop != null && citizen.OptionalStop.ActiveAt(simulation.State.Minute);
+            && citizen.OptionalStop != null && citizen.OptionalStop.ActiveAt(simulation.View.Minute);
 
         private bool TryJoinOptional(Binding binding)
         {
@@ -209,24 +209,24 @@ namespace PersistentCity.Runtime
             vendorFood = food; vendorMealCount = food.Residents.Count;
         }
 
-        private void TrackVendorWaiter(CitizenState citizen)
+        private void TrackVendorWaiter(IPersonView citizen)
         {
             if (citizen.Phase == CitizenPhase.AtPlace && citizen.Activity == Activity.Shop
                 && VendorNames.IsVendorPlace(citizen.PlaceId))
-                vendorWaiters[citizen.Identity.Id] = citizen;
-            else { vendorWaiters.Remove(citizen.Identity.Id); vendorGaveUp.Remove(citizen.Identity.Id); }
+                vendorWaiters[citizen.Id] = citizen;
+            else { vendorWaiters.Remove(citizen.Id); vendorGaveUp.Remove(citizen.Id); }
         }
 
-        private bool VendorWaiting(CitizenState citizen, out VendorRow row, out VendorVehicle vehicle)
+        private bool VendorWaiting(IPersonView citizen, out VendorRow row, out VendorVehicle vehicle)
         {
             row = null!; vehicle = null!;
             var market = owner?.PhysicalVendorMarket;
             if (market == null || citizen.Phase != CitizenPhase.AtPlace || citizen.Activity != Activity.Shop
-                || !vendorMeals.TryGetValue(citizen.Identity.Id, out var meal) || meal.PlaceId != citizen.PlaceId
+                || !vendorMeals.TryGetValue(citizen.Id, out var meal) || meal.PlaceId != citizen.PlaceId
                 || (meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving)) return false;
             row = simulation.State.Vendors.FindPlace(citizen.PlaceId)!;
-            if (row?.Stand == null || !row.Stand.Published || simulation.State.Minute >= row.Stand.ClosesAt
-                || vendorGaveUp.TryGetValue(citizen.Identity.Id, out long failedOpening) && failedOpening == row.Stand.OpeningId
+            if (row?.Stand == null || !row.Stand.Published || simulation.View.Minute >= row.Stand.ClosesAt
+                || vendorGaveUp.TryGetValue(citizen.Id, out long failedOpening) && failedOpening == row.Stand.OpeningId
                 || !market.CanServe(row.BusinessId) || meal.BusinessId != row.BusinessId) return false;
             vehicle = market.Coordinator.Image?.Find(row.VehicleId)!;
             return vehicle != null && vehicle.OpeningId == row.Stand.OpeningId
@@ -242,18 +242,18 @@ namespace PersistentCity.Runtime
                 if (!ahead.HasValue || !bound.Person!.SetPathTarget(bound.Line!.Spots[ahead.Value], NativeTravelPace.WalkingMetresPerSecond)) continue;
                 bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
             }
-            foreach (var citizen in vendorWaiters.Values.OrderBy(c => vendorMeals.TryGetValue(c.Identity.Id, out var m) ? m.ServiceAt : double.MaxValue)
-                .ThenBy(c => c.Identity.Id, StringComparer.Ordinal))
+            foreach (var citizen in vendorWaiters.Values.OrderBy(c => vendorMeals.TryGetValue(c.Id, out var m) ? m.ServiceAt : double.MaxValue)
+                .ThenBy(c => c.Id, StringComparer.Ordinal))
             {
-                if (ambient.IsReserved(citizen.Identity.Id) || !VendorWaiting(citizen, out var row, out var vehicle) || Position.Distance(row.Stand!.Position, focus) > radius
+                if (ambient.IsReserved(citizen.Id) || !VendorWaiting(citizen, out var row, out var vehicle) || Position.Distance(row.Stand!.Position, focus) > radius
                     || !spots.TryVendorQueue(row, vehicle, out var line) || line == null) continue;
                 var occupied = new HashSet<int>(Standing(line).Select(p => p.Value));
                 foreach (var planned in queuers.Values) if (planned.Line.Key == line.Key) occupied.Add(planned.Slot);
                 int slot = 0;
-                if (bindings.TryGetValue(citizen.Identity.Id, out var binding) && binding.VendorOpening == vehicle.OpeningId
+                if (bindings.TryGetValue(citizen.Id, out var binding) && binding.VendorOpening == vehicle.OpeningId
                     && binding.Line == line && binding.Step != QueueStep.Entering) slot = binding.Slot;
                 else { while (occupied.Contains(slot) && slot < line.Spots.Count) slot++; }
-                if (slot < line.Spots.Count) queuers[citizen.Identity.Id] = new QueuePlanEntry { Line = line, Slot = slot, VendorOpening = vehicle.OpeningId };
+                if (slot < line.Spots.Count) queuers[citizen.Id] = new QueuePlanEntry { Line = line, Slot = slot, VendorOpening = vehicle.OpeningId };
             }
         }
 
@@ -275,10 +275,10 @@ namespace PersistentCity.Runtime
 
         private bool AwaitVendorDeparture(Binding binding)
         {
-            var citizen = binding.Citizen;
+            IPersonView citizen = binding.Citizen;
             if (binding.Journey != null || citizen.Phase != CitizenPhase.AtPlace || citizen.PlaceId != binding.Line!.Key
-                || !Position.Finite(binding.VendorDepartureUntil) || simulation.State.Minute > binding.VendorDepartureUntil
-                || !vendorMeals.TryGetValue(citizen.Identity.Id, out var meal) || meal.PlaceId != citizen.PlaceId) return false;
+                || !Position.Finite(binding.VendorDepartureUntil) || simulation.View.Minute > binding.VendorDepartureUntil
+                || !vendorMeals.TryGetValue(citizen.Id, out var meal) || meal.PlaceId != citizen.PlaceId) return false;
             return meal.Status == MealStatus.Paid || meal.Status == MealStatus.Missed
                 || meal.Status == MealStatus.Declined || meal.Status == MealStatus.Uncertain;
         }

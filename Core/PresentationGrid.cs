@@ -110,9 +110,10 @@ namespace PersistentCity.Core
         /// <summary>
         /// Fill <paramref name="output"/> with every filed member registered in a cell that meets the square of
         /// half-width <paramref name="radius"/> around <paramref name="focus"/>, plus every unplaced member, each once.
-        /// Order is unspecified. Allocation-free once the output has capacity.
+        /// Order is unspecified. Allocation-free once the output has capacity. F9g (plan f9-city-acceptance.md, Decision 8):
+        /// members are returned as read-only <see cref="IPersonView"/>s, the entities seen through interface covariance.
         /// </summary>
-        public IReadOnlyList<CitizenState> Query(Position focus, double radius, List<CitizenState> output)
+        public IReadOnlyList<IPersonView> Query(Position focus, double radius, List<IPersonView> output)
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
             output.Clear();
@@ -131,12 +132,12 @@ namespace PersistentCity.Core
             return output;
         }
 
-        private void QueryAll(int stamp, List<CitizenState> output)
+        private void QueryAll(int stamp, List<IPersonView> output)
         {
             foreach (var list in cells.Values) Collect(list, stamp, output);
         }
 
-        private static void Collect(List<Slot> list, int stamp, List<CitizenState> output)
+        private static void Collect(List<Slot> list, int stamp, List<IPersonView> output)
         {
             for (int i = 0; i < list.Count; i++)
             {

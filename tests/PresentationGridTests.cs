@@ -89,7 +89,7 @@ public sealed class PresentationGridTests
         Assert.True(grid.Matches(index.BodyCandidates, true));
         Assert.Equal(index.BodyCandidates.Count, grid.Count);
         Assert.All(index.BodyCandidates, c => Assert.True(grid.Contains(c)));
-        var output = new List<CitizenState>();
+        var output = new List<IPersonView>();
         var points = new List<Position>();
         for (int i = 0; i < foci; i++) points.Add(new Position(rng.NextDouble() * 1600 - 800, rng.NextDouble() * 3, rng.NextDouble() * 1600 - 800));
         // Exactly on a cell edge and an ulp either side of it.
@@ -98,7 +98,7 @@ public sealed class PresentationGridTests
         foreach (var focus in points)
         foreach (double radius in Radii)
         {
-            var near = grid.Query(focus, radius, output).ToList();
+            var near = grid.Query(focus, radius, output).Cast<CitizenState>().ToList();
             Assert.Equal(near.Count, near.Distinct().Count());
             Assert.All(near, c => Assert.True(index.Contains(c) && index.BodyCandidates.Contains(c)));
             if (near.Count < index.BodyCandidates.Count) pruned++;
@@ -166,7 +166,7 @@ public sealed class PresentationGridTests
     }
 
     private static bool Found(CitySimulator sim, CitizenState c, Position focus, double radius)
-        => sim.ActiveJourneys.Grid.Query(focus, radius, new List<CitizenState>()).Contains(c);
+        => sim.ActiveJourneys.Grid.Query(focus, radius, new List<IPersonView>()).Contains(c);
 
     [Fact]
     public void FilingHappensOnlyOnPhaseOrJourneyChange()
@@ -179,7 +179,7 @@ public sealed class PresentationGridTests
         for (int i = 1; i <= 40; i++)
         {
             sim.AdvanceFrameSlice(1440 + i * 0.25);
-            _ = grid.Query(sim.PositionOf(sim.State.Citizens[0]), 120, new List<CitizenState>());
+            _ = grid.Query(sim.PositionOf(sim.State.Citizens[0]), 120, new List<IPersonView>());
             Assert.True(sim.ActiveJourneyIndexMatchesState());
         }
         Assert.Equal(filed, grid.Filings);
@@ -250,7 +250,7 @@ public sealed class PresentationGridTests
         }
         index.Rebuild(people);
         Assert.True(index.MatchesScan(people)); Assert.True(index.Grid.Matches(index.BodyCandidates, true));
-        var output = new List<CitizenState>();
+        var output = new List<IPersonView>();
         foreach (var c in people)
             for (int k = 0; k < 20; k++)
             {
@@ -283,16 +283,16 @@ public sealed class PresentationGridTests
         Assert.True(index.MatchesScan(people));
         // F5i: the waiting visitor is a body candidate too, so it is unplaced like the resident.
         Assert.Equal(4, index.Grid.Unplaced);
-        var near = index.Grid.Query(new Position(5000, 0, 5000), 1, new List<CitizenState>());
-        Assert.Equal(new[] { "h", "pv:1", "t", "w" }, near.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal));
+        var near = index.Grid.Query(new Position(5000, 0, 5000), 1, new List<IPersonView>());
+        Assert.Equal(new[] { "h", "pv:1", "t", "w" }, near.Select(c => c.Id).OrderBy(id => id, StringComparer.Ordinal));
         // With a place table the waiting person is filed at the shop's cell; unknown places stay unplaced.
         var placed = new ActiveJourneyIndex(id => id == "shop" ? new Position(10, 0, 10) : (Position?)null);
         placed.Rebuild(people);
         Assert.True(placed.MatchesScan(people));
         Assert.Equal(2, placed.Grid.Unplaced);
-        Assert.DoesNotContain(waiting, placed.Grid.Query(new Position(5000, 0, 5000), 1, new List<CitizenState>()));
-        Assert.Contains(waiting, placed.Grid.Query(new Position(10, 0, 10), 0, new List<CitizenState>()));
-        Assert.Contains(visitor, placed.Grid.Query(new Position(10, 0, 10), 0, new List<CitizenState>()));
+        Assert.DoesNotContain(waiting, placed.Grid.Query(new Position(5000, 0, 5000), 1, new List<IPersonView>()));
+        Assert.Contains(waiting, placed.Grid.Query(new Position(10, 0, 10), 0, new List<IPersonView>()));
+        Assert.Contains(visitor, placed.Grid.Query(new Position(10, 0, 10), 0, new List<IPersonView>()));
     }
 
     // Derived only: querying the grid never changes saved state, identity or money; the writer schema is unchanged.
@@ -302,7 +302,7 @@ public sealed class PresentationGridTests
         Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
         var plain = Spread(160); var probed = Spread(160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
-        var output = new List<CitizenState>();
+        var output = new List<IPersonView>();
         int queries = 0;
         probed.ActivityObserved += (_, c, _) =>
         {
@@ -337,7 +337,7 @@ public sealed class PresentationGridTests
     public void RuntimeReadsTheGridWithTheFullScanFallback()
     {
         string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => Source(Path.Combine("Runtime", "PhysicalPopulation" + part + ".cs"))));
-        const string read = "var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);";
+        const string read = "var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);";
         Assert.Equal(2, population.Split(read).Length - 1);
         Assert.DoesNotContain("ActiveJourneys.BodyCandidates", population);
         string selection = population[population.IndexOf("// Candidate selection.", StringComparison.Ordinal)..population.IndexOf("candidates.Sort(SelectionCandidate.ByPriority);", StringComparison.Ordinal)];
