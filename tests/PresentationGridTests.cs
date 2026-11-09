@@ -281,9 +281,10 @@ public sealed class PresentationGridTests
         var index = new ActiveJourneyIndex();
         index.Rebuild(people);
         Assert.True(index.MatchesScan(people));
-        Assert.Equal(3, index.Grid.Unplaced);
+        // F5i: the waiting visitor is a body candidate too, so it is unplaced like the resident.
+        Assert.Equal(4, index.Grid.Unplaced);
         var near = index.Grid.Query(new Position(5000, 0, 5000), 1, new List<CitizenState>());
-        Assert.Equal(new[] { "h", "t", "w" }, near.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal));
+        Assert.Equal(new[] { "h", "pv:1", "t", "w" }, near.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal));
         // With a place table the waiting person is filed at the shop's cell; unknown places stay unplaced.
         var placed = new ActiveJourneyIndex(id => id == "shop" ? new Position(10, 0, 10) : (Position?)null);
         placed.Rebuild(people);
@@ -291,7 +292,7 @@ public sealed class PresentationGridTests
         Assert.Equal(2, placed.Grid.Unplaced);
         Assert.DoesNotContain(waiting, placed.Grid.Query(new Position(5000, 0, 5000), 1, new List<CitizenState>()));
         Assert.Contains(waiting, placed.Grid.Query(new Position(10, 0, 10), 0, new List<CitizenState>()));
-        Assert.DoesNotContain(visitor, placed.Grid.Query(new Position(10, 0, 10), 0, new List<CitizenState>()));
+        Assert.Contains(visitor, placed.Grid.Query(new Position(10, 0, 10), 0, new List<CitizenState>()));
     }
 
     // Derived only: querying the grid never changes saved state, identity or money; the writer schema is unchanged.
@@ -319,7 +320,7 @@ public sealed class PresentationGridTests
         var methods = typeof(PresentationGrid).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Where(m => !m.IsSpecialName).Select(m => m.Name).Distinct().OrderBy(n => n, StringComparer.Ordinal);
         Assert.Equal(new[] { "Contains", "Matches", "Query" }, methods);
-        Assert.False(ActiveJourneyIndex.VisitorsReceiveBodies);
+        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies); // F5i: visitors are filed in the grid too
     }
 
     private static string Source(string relative)

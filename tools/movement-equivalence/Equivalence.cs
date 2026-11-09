@@ -17,17 +17,18 @@ public sealed class Comparison
 
 public static class Equivalence
 {
-    public static readonly string[] Projections = { "save", "sales", "journeys", "parked", "wallets", "fifo" };
+    public static readonly string[] Projections = { "save", "sales", "journeys", "parked", "wallets", "fifo", "visitors" };
     /// <summary>Outcome metrics reported as arm minus reference.</summary>
     public static readonly string[] Outcomes = {
         "journeys.walk.meanMinutes", "journeys.walk.p95Minutes", "journeys.car.meanMinutes", "journeys.car.p95Minutes",
         "journeys.arrivals", "visits.shopArrivals", "visits.admittedAtShop", "visits.workArrivals", "routines.missedActivities",
-        "meals.bought", "meals.ownSales", "meals.skipped", "revenue.ownUnits", "wallets.balanceUnits", "cars.parkedAway" };
+        "meals.bought", "meals.ownSales", "meals.skipped", "revenue.ownUnits", "wallets.balanceUnits", "cars.parkedAway",
+        "visitors.arrivals", "visitors.purchases", "visitors.ownSales", "visitors.walletUnits", "visitors.foodSpentUnits" };
 
     private static string Pick(Boundary b, string projection) => projection switch
     {
         "save" => b.SaveSha256, "sales" => b.SalesSha256, "journeys" => b.JourneysSha256,
-        "parked" => b.ParkedSha256, "wallets" => b.WalletsSha256, _ => b.FifoSha256
+        "parked" => b.ParkedSha256, "wallets" => b.WalletsSha256, "visitors" => b.VisitorsSha256, _ => b.FifoSha256
     };
 
     public static Comparison Compare(MovementResult arm, MovementResult reference)

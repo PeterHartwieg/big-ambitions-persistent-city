@@ -147,7 +147,7 @@ namespace PersistentCity.Runtime
             this.spots = spots;
             this.faultAcquirePercent = Math.Max(0, Math.Min(100, faultAcquirePercent));
             owner = parent.GetComponent<PopulationRuntime>();
-            foreach (var citizen in simulation.State.Citizens) TrackVendorWaiter(citizen);
+            foreach (var citizen in PersonTable.Schedules(simulation.State)) TrackVendorWaiter(citizen);
             this.simulation = simulation; this.routes = routes; this.log = log;
             RefreshVendorMeals();
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
@@ -284,8 +284,9 @@ namespace PersistentCity.Runtime
             // Candidate selection. tools/physical-selection-regression extracts the text from this line
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
-            // F2f: the active-journey index members filed in the grid cells within the radius (visitors withheld
-            // until F5i), or every citizen after a shadow mismatch. Filters and order below are the same for both sources.
+            // F2f: the active-journey index members filed in the grid cells within the radius (F5i: residents and
+            // visitors), or every resident after a shadow mismatch (visitors get no body in that fallback, by design: they
+            // receive bodies through the index only). Filters and order below are the same for both sources.
             var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
@@ -293,7 +294,6 @@ namespace PersistentCity.Runtime
                 // Both pools are full: observations and queue movement above still ran; no
                 // candidate can acquire a body until a later update frees a slot.
                 if (people >= pedestrianLimit && cars >= vehicleLimit) break;
-                if (journeyIndexFallback && !ActiveJourneyIndex.ReceivesBody(c)) continue;
                 if (!(c.NextEventMinute > simulation.State.Minute) || bindings.ContainsKey(c.Identity.Id) || ambient.IsReserved(c.Identity.Id)) continue;
                 bool tried = attempted.TryGetValue(c.Identity.Id, out float lastAttempt);
                 if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
@@ -380,9 +380,10 @@ namespace PersistentCity.Runtime
                 if (queuer) queued++;
             }
             candidates.Clear();
-            if (attempted.Count > simulation.State.Citizens.Count + 128)
+            // F5i: visitors are attempted too, so their retry times are kept like residents'.
+            if (attempted.Count > PersonTable.PersonCount(simulation.State) + 128)
             {
-                var ids = new HashSet<string>(simulation.State.Citizens.Select(c => c.Identity.Id), StringComparer.Ordinal);
+                var ids = new HashSet<string>(PersonTable.Schedules(simulation.State).Select(c => c.Identity.Id), StringComparer.Ordinal);
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
         }
@@ -416,7 +417,7 @@ namespace PersistentCity.Runtime
         private bool StatefulCandidatesIndexed()
         {
             var index = simulation.ActiveJourneys;
-            foreach (var c in simulation.State.Citizens)
+            foreach (var c in PersonTable.Schedules(simulation.State))
                 if (!index.Contains(c) && (c.Phase == CitizenPhase.Travelling && c.Journey != null
                     || c.Phase == CitizenPhase.WaitingForOpening || Outdoor(c))) return false;
             return true;
@@ -471,7 +472,6 @@ namespace PersistentCity.Runtime
             for (int index = 0; index < roster.Count; index++)
             {
                 var citizen = roster[index];
-                if (journeyIndexFallback && !ActiveJourneyIndex.ReceivesBody(citizen)) continue;
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
                 var dwell = QueueDwell(citizen, place, now);
@@ -750,7 +750,7 @@ namespace PersistentCity.Runtime
         private void TrackVendorWaiter(CitizenState citizen)
         {
             if (citizen.Phase == CitizenPhase.AtPlace && citizen.Activity == Activity.Shop
-                && VendorNames.IsVendorPlace(citizen.PlaceId) && ActiveJourneyIndex.ReceivesBody(citizen))
+                && VendorNames.IsVendorPlace(citizen.PlaceId))
                 vendorWaiters[citizen.Identity.Id] = citizen;
             else { vendorWaiters.Remove(citizen.Identity.Id); vendorGaveUp.Remove(citizen.Identity.Id); }
         }
@@ -1245,8 +1245,10 @@ namespace PersistentCity.Runtime
             foreach (var binding in bindings.Values)
             {
                 var body = binding.Person;
+                // F5i: visitor bodies are street presence only. CitySimulator.Inspect has no visitor view (plan F5 Q5), so a
+                // pick would open the resident popup with "left the city".
                 if (body == null || binding.Car != null || !body.Valid || body.IdentityId != binding.Citizen.Identity.Id
-                    || ambient.IsReserved(body.IdentityId)
+                    || binding.Citizen.IsVisitor || ambient.IsReserved(body.IdentityId)
                     || !Project(camera, body, out float footX, out float footY, out float headX, out float headY, out float depth)) continue;
                 if (ResidentPickAccumulator.Hit(mouseX, mouseY, footX, footY, headX, headY, PickHalfWidthPixels, out float score))
                     best.Consider(body.IdentityId, body.Generation, score, depth);
@@ -1287,6 +1289,9 @@ namespace PersistentCity.Runtime
         private void ObservePlayerContact(Binding binding, in PlayerPose player)
         {
             var citizen = binding.Citizen; var route = binding.Journey;
+            // F5i: Core refuses holds for visitors (PlayerHoldRefusal.Visitor), so a blocked visitor body is not reported;
+            // it lags and is corrected like any other body.
+            if (citizen.IsVisitor) return;
             if (route == null || binding.Tail || !float.IsNaN(binding.FadeOutSince) || citizen.Phase != CitizenPhase.Travelling
                 || !ReferenceEquals(citizen.Journey, route)) return;
             bool car = binding.Car != null;
