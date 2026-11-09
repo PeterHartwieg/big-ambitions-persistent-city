@@ -90,6 +90,7 @@ namespace PersistentCity.Persistence
                         wire.PopulationTarget = live.PopulationTarget; wire.InitialImportedResidents = live.InitialImportedResidents;
                         wire.NextVisitorSequence = live.NextVisitorSequence; wire.IdentityPolicyVersion = live.IdentityPolicyVersion;
                         wire.Portals = Values(live.Portals)!;
+                        wire.PlayerHoldSequence = live.PlayerHoldSequence;
                         return;
                     case SnapshotSection.Places: wire.Places = List(live.Places, Place)!; return;
                     case SnapshotSection.Residents:
@@ -159,6 +160,7 @@ namespace PersistentCity.Persistence
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
                 copy.DepartureMinute = c.DepartureMinute; copy.NextEventMinute = c.NextEventMinute; copy.ActivityUntilMinute = c.ActivityUntilMinute;
                 copy.CompletedJourneys = c.CompletedJourneys; copy.MissedActivities = c.MissedActivities;
+                copy.PlayerHoldMinutes = c.PlayerHoldMinutes;
                 copy.RecentVisits = List(c.RecentVisits, VisitCopy)!;
                 copy.Traits = Traits(c.Traits);
                 // Derived from the immutable identity and the seed; DailyRoutine rebuilds it when either differs.

@@ -158,7 +158,7 @@ namespace PersistentCity.Persistence
         {
             if (schema < 25) return PopulationSchema24.CountRecordsForSchema(state, source, schema);
             // F7d: a compact payload charges its tables on top of the body's streaming count.
-            if (schema == CityState.CompactSchema && source.StartsWith(CompactPrefix, StringComparison.Ordinal))
+            if (schema >= CityState.CompactSchema && source.StartsWith(CompactPrefix, StringComparison.Ordinal))
             {
                 int tables = CompactTableEntries(source);
                 var body = CountRecordsForSchema(state, ExpandCompact(source), schema);

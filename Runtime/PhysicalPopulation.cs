@@ -104,6 +104,8 @@ namespace PersistentCity.Runtime
         private const int EntryAttemptFrames = 30;
         // One uncached door is sampled per frame, shared by the queue plan and arriving walkers.
         private readonly IModLogger log;
+        // F2e contact detection memory (presentation only, never saved).
+        private readonly PlayerContact contact = new PlayerContact();
         private readonly int pedestrianLimit, vehicleLimit;
         private readonly double radius;
         private float nextSelection;
@@ -246,6 +248,9 @@ namespace PersistentCity.Runtime
             int pedestrianLimit = NativeInteriorCityView.Pedestrians(this.pedestrianLimit);
             int vehicleLimit = NativeInteriorCityView.Vehicles(this.vehicleLimit);
             bool interior = NativeInteriorCityView.State.Active;
+            // F2e: the player's pose once per frame; inside a building view nobody is blocked by the player.
+            var playerPose = default(PlayerPose);
+            bool player = !interior && PlayerContact.TryReadPlayer(out playerPose);
             var snapshot = bindingSnapshot ?? new List<Binding>(bindings.Count);
             bindingSnapshot = null;
             try
@@ -258,7 +263,8 @@ namespace PersistentCity.Runtime
                     if (!Observe(binding)) { Release(binding); continue; }
                     Position position = binding.Person?.Position ?? binding.Car!.Position;
                     if (Position.Distance(position, focus) > releaseRadius) { Release(binding); continue; }
-                    if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) Release(binding);
+                    if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) { Release(binding); continue; }
+                    if (player) ObservePlayerContact(binding, playerPose);
                 }
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
@@ -1228,6 +1234,26 @@ namespace PersistentCity.Runtime
             var kind = CarFollow.Classify(stopped, red, lag, held, green);
             Telemetry.RecordPhase(kind, binding.Phase, followDelta);
             binding.Phase = kind;
+        }
+
+        /// <summary>
+        /// F2e (plan Decision 4): the visible world's only write into Core. A following walker or car that the player blocks
+        /// is reported to the simulator as a bounded, retroactive player hold, which Core applies at once; every applied hold
+        /// is one Player.log stream line. Detection reads only the player's own pose (PlayerContact).
+        /// </summary>
+        private void ObservePlayerContact(Binding binding, in PlayerPose player)
+        {
+            var citizen = binding.Citizen; var route = binding.Journey;
+            if (route == null || binding.Tail || !float.IsNaN(binding.FadeOutSince) || citizen.Phase != CitizenPhase.Travelling
+                || !ReferenceEquals(citizen.Journey, route)) return;
+            bool car = binding.Car != null;
+            Position at = binding.Person?.Position ?? binding.Car!.Position;
+            double minute = simulation.State.Minute;
+            var own = WalkerFollow.Sample(route, Math.Min(route.Minutes, binding.BodyMinutes));
+            double report = contact.Observe(citizen.Identity.Id, route, car, minute - citizen.DepartureMinute, binding.BodyMinutes,
+                at, own.From, own.To, player, minute, Time.frameCount);
+            if (report > 0)
+                contact.Settle(citizen.Identity.Id, simulation.HoldForPlayer(citizen.Identity.Id, report, car ? PlayerHoldCause.PlayerVehicle : PlayerHoldCause.PlayerFoot));
         }
 
         // Inspector picking: read-only, allocation-free projection of active own walkers. Cars,
