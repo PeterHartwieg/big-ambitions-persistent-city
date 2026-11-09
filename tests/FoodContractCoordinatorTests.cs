@@ -1498,7 +1498,7 @@ public sealed class FoodContractCoordinatorTests
                 line = $"rebuild shops={count}: units {units.Count}, unit p95 {units[(int)(units.Count * 0.95)]:0.0000} ms, max {units[^1]:0.0000} ms, frames {frames.Count}, frame p95 {frames[(int)(frames.Count * 0.95)]:0.0000} ms, frame max {frames[^1]:0.0000} ms, max units/frame {frameUnits.Max()}, units >= 30 ms {units.Count(u => u >= 30)}";
                 Assert.All(shops, s => Assert.Equal(world.Hour, world.Coordinator.Image(s.Key)!.BuiltHour));
                 // No unit at or above the 30 ms spike line.
-                timing.Under("rebuild unit max", units[^1], 30);
+                timing.MaxUnder("rebuild unit max", units[^1], 30);
             });
             rows.Add(line);
         }
@@ -1525,7 +1525,7 @@ public sealed class FoodContractCoordinatorTests
                 }
                 samples.Sort();
                 line = $"commit gate acquisitions={count}: p95 {samples[(int)(samples.Count * 0.95)]:0.0000} ms, max {samples[^1]:0.0000} ms";
-                timing.Under("commit gate max", samples[^1], 30);
+                timing.MaxUnder("commit gate max", samples[^1], 30);
             });
             rows.Add(line);
         }

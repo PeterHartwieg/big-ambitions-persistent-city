@@ -137,6 +137,37 @@ public sealed class TimingBudgetTests
     }
 
     [Fact]
+    public void StallInOneSampleDoesNotHideACpuSpikeInAnother()
+    {
+        // Review round 4: one sample does about 48 ms of CPU work, another stalls 65 ms. The check-wide factor
+        // (about 2.2) brought the 48 ms max under 30 ms; a max is now never judged below its costliest sample's CPU.
+        using var enforced = TimingBudget.Enforce();
+        long spike = SpinFor(48);
+        var error = Assert.Throws<XunitException>(() => TimingBudget.Run(t =>
+        {
+            var a = t.Start(); Spin(spike); double first = t.Stop(a, "unit max");
+            var b = t.Start(); Thread.Sleep(65); double second = t.Stop(b, "unit max");
+            t.MaxUnder("unit max", Math.Max(first, second), 30);
+        }, attempts: 2));
+        Assert.Contains("unit max:", error.Message);
+    }
+
+    [Fact]
+    public void StalledSampleAloneStillPassesAMaxCheck()
+    {
+        // The other side: a sample that is long only because the thread waited is load, not a spike.
+        if (ThreadCpu.MinimumMs > 1) return; // Windows: this little CPU time is below what its tick clock can judge
+        using var enforced = TimingBudget.Enforce();
+        long work = SpinFor(1);
+        Assert.Equal(1, TimingBudget.Run(t =>
+        {
+            var a = t.Start(); Spin(work); double first = t.Stop(a, "unit max");
+            var b = t.Start(); Thread.Sleep(65); Spin(work); double second = t.Stop(b, "unit max");
+            t.MaxUnder("unit max", Math.Max(first, second), 30);
+        }, attempts: 1));
+    }
+
+    [Fact]
     public void TimedWindowsDoNotAllocate()
     {
         using var enforced = TimingBudget.Enforce();

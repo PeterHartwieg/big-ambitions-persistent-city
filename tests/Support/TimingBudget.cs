@@ -28,7 +28,8 @@ namespace PersistentCity.Tests;
 ///
 /// A check's factor is one average over its own samples. It discounts load that is spread over the samples, which is
 /// what moves a p95, and a single stalled sample among thousands barely moves it, so a regression in the others still
-/// shows. For the same reason a max check against a spike line is helped mainly by the retries.
+/// shows. For the same reason a max check against a spike line is helped mainly by the retries. A max check uses
+/// <see cref="TimingChecks.MaxUnder"/>, which never judges it below its costliest sample's CPU time.
 ///
 /// Use it for every Stopwatch value compared against a fixed budget. Inside the measurement, compare with
 /// <see cref="TimingChecks.Under"/> instead of <c>Assert.True</c>. Deterministic values (allocation bytes, counts,
@@ -83,11 +84,14 @@ internal static class TimingBudget
             var checks = new TimingChecks();
             measure(checks);
             double highest = 1;
-            foreach (var (label, value, budget) in checks.Entries)
+            foreach (var (label, value, budget, isMax) in checks.Entries)
             {
-                double factor = checks.TryTimed(label, out double wallMs, out double cpuMs) ? loadFactor(wallMs, cpuMs) : 1;
+                double factor = checks.TryTimed(label, out double wallMs, out double cpuMs, out double largestSampleCpuMs) ? loadFactor(wallMs, cpuMs) : 1;
                 highest = Math.Max(highest, factor);
                 double adjusted = value / factor;
+                // A maximum is never judged below the CPU time its costliest sample used: a stall in one sample must
+                // not discount a real spike in another.
+                if (isMax) adjusted = Math.Max(adjusted, largestSampleCpuMs);
                 if (best.TryGetValue(label, out var known))
                 {
                     if (known.Budget != budget) throw new InvalidOperationException($"Timing check '{label}' changed its budget between attempts.");
@@ -136,12 +140,12 @@ internal static class TimingBudget
 /// (strictly), in the same unit as the budget; milliseconds unless the label says otherwise.</summary>
 internal sealed class TimingChecks
 {
-    private readonly List<(string Label, double Value, double Budget)> entries = new();
-    internal IReadOnlyList<(string Label, double Value, double Budget)> Entries => entries;
+    private readonly List<(string Label, double Value, double Budget, bool IsMax)> entries = new();
+    internal IReadOnlyList<(string Label, double Value, double Budget, bool IsMax)> Entries => entries;
     // Kept windows per check, in fixed arrays so recording a sample never allocates inside a zero-allocation loop.
     private const int MaximumSeries = 16;
     private readonly string[] seriesLabels = new string[MaximumSeries];
-    private readonly double[] seriesWallMs = new double[MaximumSeries], seriesCpuMs = new double[MaximumSeries];
+    private readonly double[] seriesWallMs = new double[MaximumSeries], seriesCpuMs = new double[MaximumSeries], seriesLargestCpuMs = new double[MaximumSeries];
     private int series;
 
     /// <summary>Opens a timed window. The thread clock is read before the timestamp, so its cost stays outside.</summary>
@@ -180,25 +184,38 @@ internal sealed class TimingChecks
         }
         seriesWallMs[i] += sample.Ms;
         seriesCpuMs[i] += sample.CpuMs;
+        // Capped by the sample's own wall time: Windows charges whole ticks, which can exceed a short sample.
+        seriesLargestCpuMs[i] = Math.Max(seriesLargestCpuMs[i], Math.Min(sample.CpuMs, sample.Ms));
         return sample.Ms;
     }
 
-    /// <summary>The kept wall and CPU time of <paramref name="check"/>, if any window was kept for it.</summary>
-    internal bool TryTimed(string check, out double wallMs, out double cpuMs)
+    /// <summary>The kept wall and CPU time of <paramref name="check"/>, and the CPU time of its costliest sample, if
+    /// any window was kept for it.</summary>
+    internal bool TryTimed(string check, out double wallMs, out double cpuMs, out double largestSampleCpuMs)
     {
         for (int i = 0; i < series; i++)
-            if (string.Equals(seriesLabels[i], check, StringComparison.Ordinal)) { wallMs = seriesWallMs[i]; cpuMs = seriesCpuMs[i]; return true; }
-        wallMs = cpuMs = 0;
+            if (string.Equals(seriesLabels[i], check, StringComparison.Ordinal))
+            {
+                wallMs = seriesWallMs[i]; cpuMs = seriesCpuMs[i]; largestSampleCpuMs = double.IsNaN(seriesLargestCpuMs[i]) ? 0 : seriesLargestCpuMs[i];
+                return true;
+            }
+        wallMs = cpuMs = largestSampleCpuMs = 0;
         return false;
     }
 
     /// <summary>Records that <paramref name="value"/> should be below <paramref name="budget"/>. Labels must be
     /// unique within one attempt and stable across attempts.</summary>
-    public void Under(string label, double value, double budget)
+    public void Under(string label, double value, double budget) => Add(label, value, budget, false);
+
+    /// <summary>Like <see cref="Under"/> for a maximum over the check's kept samples: the value is also never judged
+    /// below the CPU time of the costliest kept sample, so a stall in one sample cannot hide a spike in another.</summary>
+    public void MaxUnder(string label, double value, double budget) => Add(label, value, budget, true);
+
+    private void Add(string label, double value, double budget, bool isMax)
     {
         if (double.IsNaN(value)) throw new XunitException($"Timing check '{label}' measured NaN.");
         if (entries.Any(e => e.Label == label)) throw new InvalidOperationException($"Timing check '{label}' recorded twice in one attempt.");
-        entries.Add((label, value, budget));
+        entries.Add((label, value, budget, isMax));
     }
 }
 
