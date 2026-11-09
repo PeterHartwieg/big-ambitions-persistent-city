@@ -90,6 +90,14 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
+    /// <summary>F2e: the frozen writer-34 bytes (F7d's compact wire without the schema-35 hold fields); the state is restored.</summary>
+    public static string Write34(CityState state)
+    {
+        int schema = state.Schema;
+        try { state.Schema = CityState.CompactSchema; return SaveCodec.WriteForSchema(state, CityState.CompactSchema); }
+        finally { state.Schema = schema; }
+    }
+
     public static string WriteAttendance(CityState state)
     {
         int schema = state.Schema;

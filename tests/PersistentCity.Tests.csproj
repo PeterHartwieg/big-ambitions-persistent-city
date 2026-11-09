@@ -15,6 +15,7 @@
     <Compile Include="../Runtime/OrdinaryOwnershipIndex.cs" Link="OrdinaryOwnershipIndex.cs" />
     <Compile Include="../Runtime/DwellSpots.cs" Link="DwellSpots.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.cs" Link="PhysicalPopulation.cs" />
+    <Compile Include="../Runtime/PlayerContact.cs" Link="PlayerContact.cs" />
     <Compile Include="../Runtime/FoodMarkets.cs" Link="FoodMarkets.cs" />
     <Compile Include="../Runtime/StreetFoodVendorMarket.cs" Link="StreetFoodVendorMarket.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
@@ -40,6 +41,7 @@
     <Compile Include="../tools/movement-equivalence/MovementArms.cs" Link="MovementEquivalence/MovementArms.cs" />
     <Compile Include="../tools/movement-equivalence/Equivalence.cs" Link="MovementEquivalence/Equivalence.cs" />
     <Compile Include="../tools/movement-equivalence/SelfChecks.cs" Link="MovementEquivalence/SelfChecks.cs" />
+    <Compile Include="../tools/movement-equivalence/HoldReplay.cs" Link="MovementEquivalence/HoldReplay.cs" />
     <Compile Include="../tools/save-cost/RepresentativeFixture.cs" Link="RepresentativeFixture.cs" />
     <Compile Include="../tools/compact-format/WireTree.cs" Link="CompactFormat/WireTree.cs" />
     <Compile Include="../tools/compact-format/ColumnarCodec.cs" Link="CompactFormat/ColumnarCodec.cs" />

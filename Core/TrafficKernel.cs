@@ -221,6 +221,112 @@ namespace PersistentCity.Core
             return vehicle.NominalMinutes;
         }
 
+        /// <summary>
+        /// F2e player hold (plan Decision 4): the vehicle was blocked by the player for the last <paramref name="minutes"/>,
+        /// so its analytical motion and readiness are rebased to where it was before that interval, at <see cref="Clock"/>.
+        /// All bounds are in the held leg's motion coordinate u (that of MotionStartFraction): the new u is
+        /// min(u_now, max(u_motion, u_entry, u_floor, u_follower)), so the car never moves forward, never leaves the link it
+        /// entered, never goes below its NominalMinutes floor and never lands inside its follower's storage spacing (the
+        /// follower's sampled position is unchanged). ReadyAt becomes max(old, Clock + (1 - u) * FreeFlowMinutes). The charge
+        /// is the change of the vehicle's own earliest discharge (or curb exit); headway or a signal can absorb part of the
+        /// input. <paramref name="maximumCharge"/> bounds the charge (a journey's remaining allowance): a hold that would miss a
+        /// signal window by more is shortened until it fits. A hold that changes neither motion nor discharge is refused and
+        /// changes nothing. Applied once, here; the
+        /// kernel keeps no hold state afterwards, and Reconsider reschedules the link.
+        /// </summary>
+        public TrafficHoldResult HoldVehicle(string vehicleId, double minutes, double maximumCharge = double.PositiveInfinity)
+        {
+            if (!Finite(minutes) || minutes <= 0) throw new ArgumentOutOfRangeException(nameof(minutes));
+            if (double.IsNaN(maximumCharge) || maximumCharge <= 0) throw new ArgumentOutOfRangeException(nameof(maximumCharge));
+            if (vehicleId == null || !vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle)
+                || vehicle.Completed || vehicle.RouteIndex < 0 || vehicle.PhysicalControl) return default;
+            TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
+            Link link = links[leg.LinkId];
+            LinkedListNode<TrafficVehicleState>? node = link.Queue.Find(vehicle);
+            if (node == null) return default;
+            double free = leg.FreeFlowMinutes;
+            double now = Math.Min(1, vehicle.MotionStartFraction + Math.Max(0, Clock - vehicle.MotionStartedAt) / free);
+            double motion = Math.Min(1, vehicle.MotionStartFraction + Math.Max(0, Clock - minutes - vehicle.MotionStartedAt) / free);
+            double floor = (vehicle.NominalMinutes - leg.StartNominalMinutes) / (leg.EndNominalMinutes - leg.StartNominalMinutes);
+            double spatial = leg.EndLinkFraction - leg.StartLinkFraction;
+            double follower = double.NaN, spacing = 0;
+            if (node.Next != null)
+            {
+                follower = SpatialPosition(link, node.Next);
+                spacing = (follower + 1.0 / link.Definition.Capacity - leg.StartLinkFraction) / spatial;
+            }
+            double u = Math.Min(now, Math.Max(Math.Max(motion, 0), Math.Max(floor, spacing)));
+            double start = vehicle.MotionStartFraction, at = vehicle.MotionStartedAt, ready = vehicle.ReadyAt;
+            double before = DischargeAt(link, node);
+            void Set(double value)
+            {
+                // Without a motion change the motion anchor stays as it is; only readiness can move.
+                if (value < now) { vehicle.MotionStartFraction = value; vehicle.MotionStartedAt = Clock; }
+                else { vehicle.MotionStartFraction = start; vehicle.MotionStartedAt = at; }
+                vehicle.ReadyAt = Math.Max(ready, Clock + (1 - value) * free);
+            }
+            Set(u);
+            // Converting the follower's spacing into u can round one ulp behind it; step forward until its position holds.
+            for (int step = 0; node.Next != null && u < now && SpatialPosition(link, node.Next) < follower; step++)
+            {
+                u = step < 64 ? Math.Min(now, NextDouble(u)) : now;
+                Set(u);
+            }
+            double Charge()
+            {
+                double after = DischargeAt(link, node);
+                return double.IsPositiveInfinity(before) || double.IsPositiveInfinity(after) ? 0 : Math.Max(0, after - before);
+            }
+            double charge = Charge();
+            // A small hold can miss a signal window and delay the discharge by a whole cycle. The charge only falls as u
+            // rises, so take the largest hold (smallest u, toward u_now) whose charge fits the caller's bound.
+            if (charge > maximumCharge)
+            {
+                double low = u, high = now;
+                for (int step = 0; step < 128; step++)
+                {
+                    double middle = low + (high - low) / 2;
+                    if (middle <= low || middle >= high) break;
+                    Set(middle);
+                    if (Charge() > maximumCharge) low = middle; else high = middle;
+                }
+                u = high;
+                Set(u);
+                charge = Charge();
+            }
+            if (!(u < now) && !(charge > 0) || charge > maximumCharge)
+            {
+                vehicle.MotionStartFraction = start; vehicle.MotionStartedAt = at; vehicle.ReadyAt = ready;
+                return default;
+            }
+            Reconsider(link);
+            return new TrafficHoldResult(true, charge, vehicle.MotionStartFraction, vehicle.MotionStartedAt, vehicle.ReadyAt);
+        }
+
+        // The vehicle's own earliest discharge: its curb exit, or its crossing/completion at the far end.
+        private double DischargeAt(Link link, LinkedListNode<TrafficVehicleState> node)
+            => IsCurbExit(node.Value) ? CurbExitAt(link, node) : EligibleAt(link, node.Value);
+
+        // Spatial link fraction of a queued vehicle, with the same front-to-back rule Snapshot uses.
+        private double SpatialPosition(Link link, LinkedListNode<TrafficVehicleState> target)
+        {
+            double previous = 0;
+            int rank = 0;
+            for (var queued = link.Queue.First; queued != null; queued = queued.Next, rank++)
+            {
+                TrafficVehicleState occupant = queued.Value;
+                TrafficRouteLeg leg = occupant.Route[occupant.RouteIndex];
+                double floor = (occupant.NominalMinutes - leg.StartNominalMinutes) / (leg.EndNominalMinutes - leg.StartNominalMinutes);
+                double motion = Math.Min(1, occupant.MotionStartFraction + Math.Max(0, Clock - occupant.MotionStartedAt) / leg.FreeFlowMinutes);
+                double spatial = leg.EndLinkFraction - leg.StartLinkFraction;
+                double limit = rank == 0 ? 1 : Math.Max(0, Math.Min(1, (previous - 1.0 / link.Definition.Capacity - leg.StartLinkFraction) / spatial));
+                double allowed = Math.Max(floor, Math.Min(motion, limit));
+                previous = leg.StartLinkFraction + (occupant.PhysicalControl ? floor : allowed) * spatial;
+                if (ReferenceEquals(queued, target)) return previous;
+            }
+            throw new InvalidOperationException("The vehicle is not queued on its link.");
+        }
+
         /// <summary>F2d phase count: whether a link's kernel signal is green at Clock (true without a signal). Read-only.</summary>
         public bool IsSignalGreen(int linkId) => (FindLink(linkId).Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
 
@@ -1021,6 +1127,7 @@ namespace PersistentCity.Core
             return counter++;
         }
         private static double PreviousDouble(double value) => BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(value) - 1);
+        private static double NextDouble(double value) => value == 0 ? double.Epsilon : BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(value) + 1);
         private static double Ulp(double value)
         {
             double next = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(value) + 1);

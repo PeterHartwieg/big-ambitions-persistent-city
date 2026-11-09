@@ -40,11 +40,15 @@ internal static class ReaderCorpus
 
     public static FrozenReader ReaderFor(int schema) => Readers.Single(r => r.OwnMin <= schema && schema <= r.OwnMax);
 
-    /// <summary>F7d: the compact writer 34 is the first corpus entry outside the migration chain (no migration before
+    /// <summary>F7d: the compact writer is the first corpus entry outside the migration chain (no migration before
     /// release). Its reader reads only its own schema and refuses every chain schema as an older development city, so
-    /// it is not a row of <see cref="Readers"/>, which tile the chain. Its folder is <c>schema-34</c>.</summary>
-    public static readonly FrozenReader Compact = new("SaveCodec (compact)", CityState.CompactSchema, CityState.CompactSchema, SaveCodec.Read,
+    /// it is not a row of <see cref="Readers"/>, which tile the chain. Its folder is <c>schema-35</c> since F2e.</summary>
+    public static readonly FrozenReader Compact = new("SaveCodec (compact)", CityState.CurrentSchema, CityState.CurrentSchema, SaveCodec.Read,
         new[] { "CompactWire34.cs", "SaveCodec.cs" });
+
+    /// <summary>F2e: writer 35 took the compact wire. The <c>schema-34</c> folder stays as F7d wrote it: the frozen writer-34
+    /// shape still rebuilds those bytes, and the product refuses them as an older development city.</summary>
+    public const int RefusedCompact = CityState.CompactSchema;
 
     public static string Root => Path.Combine(AppContext.BaseDirectory, Folder);
 

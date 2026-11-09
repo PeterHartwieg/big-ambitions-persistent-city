@@ -1001,13 +1001,13 @@ public sealed class F5gPopulationFillTests
     public void DayVisitorsRoundTripInWriter33AndMalformedDayVisitorsAreRefusedAndKept()
     {
         // F7d (writer 34) landed before this slice merged: the visitor shape is writer 33's, carried in the compact wire.
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
         var (state, market) = City(12, 1);
         var city = Start(state, market, Catalogue(12, Base, Since(2)));
         Advance(city, 2 * 1440 + 600);
         Assert.Contains(state.Visitors, v => v.Stay.Pattern == VisitorPattern.DayVisit);
         string payload = SaveCodec.Write(state);
-        Assert.StartsWith("{\"Schema\":" + CityState.CompactSchema + ",", payload);
+        Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema + ",", payload);
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));

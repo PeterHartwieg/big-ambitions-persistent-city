@@ -1,7 +1,7 @@
 // F2a movement-equivalence harness (city audit F2 #89, docs/plans/f2-movement.md section 4).
 // Usage: dotnet run --project tools/movement-equivalence -c Release -- [--residents 957] [--days 2]
 //        [--arms <substring,...>] [--out <file.json>] [--dump <directory>] [--no-self-checks]
-// Runs the self-checks, then every arm and its bodies-off reference, prints one line per arm and
+// Runs the self-checks and the F2e E2 replay checks, then every arm and its bodies-off reference, prints one line per arm and
 // writes the full JSON (schema persistentcity-f2a-movement-1). Exit code 1 if a self-check fails.
 // Since F2d (cars follow the traffic kernel) every body arm is expected to equal its bodies-off run; a DIFFERS line
 // is a regression. Before F2d the mixed-city arms were the recorded divergence (red).
@@ -41,6 +41,18 @@ if (selfChecks)
     }
 }
 
+// F2e E2: a player-contact run with checkpoints, its bodies-off replays and the segment refusals.
+var e2 = new List<object>();
+if (selfChecks)
+{
+    foreach (var (check, pass, detail) in HoldReplay.Check(residents, Math.Min(days, 1)))
+    {
+        Console.WriteLine((pass ? "PASS " : "FAIL ") + check + (detail.Length > 0 ? " (" + detail + ")" : ""));
+        e2.Add(new { check, pass, detail });
+        failed |= !pass;
+    }
+}
+
 var arms = MovementArms.All(residents, days);
 var wanted = arms.Where(a => filters.Length == 0 || filters.Any(f => a.Name.Contains(f, StringComparison.Ordinal))).ToList();
 // References run first so each comparison has its bodies-off run.
@@ -72,7 +84,7 @@ if (output != null)
     var json = new
     {
         schema = MovementRun.Schema, residents, days, representationFactor = MovementFixture.RepresentationFactor,
-        gameMinutesPerRealSecond = MovementRun.GameMinutesPerRealSecond, selfChecks = checks,
+        gameMinutesPerRealSecond = MovementRun.GameMinutesPerRealSecond, selfChecks = checks, e2,
         arms = arms.Where(a => results.ContainsKey(a.Name)).Select(a => new
         {
             arm = a.Name, family = a.Family, reference = a.Reference, result = results[a.Name],

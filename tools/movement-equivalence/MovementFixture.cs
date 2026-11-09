@@ -37,6 +37,14 @@ public sealed class MovementMarket : IFoodMarket, IFoodSaleEvidence
         return new FoodSale(true, "Native double confirmed");
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
+    /// <summary>F2e checkpoint: the native checkout's own state, so a replay resumes against the same receipts.</summary>
+    public MovementMarket Copy()
+    {
+        var copy = new MovementMarket { Clock = Clock, RevenueUnits = RevenueUnits, Refusals = Refusals };
+        copy.Sales.AddRange(Sales);
+        copy.paid.UnionWith(paid);
+        return copy;
+    }
 }
 
 public sealed class HarnessViolation : Exception { public HarnessViolation(string message) : base(message) { } }

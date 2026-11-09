@@ -302,6 +302,10 @@ namespace PersistentCity.Core
         public int CompletedJourneys { get; set; }
         public int MissedActivities { get; set; }
         public List<VisitRecord> RecentVisits { get; set; } = new List<VisitRecord>();
+        /// <summary>F2e (schema 35): game minutes of player hold already charged to the current journey, at most
+        /// <see cref="PlayerHolds.MaximumMinutesPerJourney"/>. Zero unless travelling; cleared when the journey ends or is
+        /// replaced, so reloading during a blockage cannot reset the allowance.</summary>
+        public double PlayerHoldMinutes { get; set; }
         /// <summary>Lifestyle traits, generated once from the city seed and this stable ID (schema 17).
         /// Required for every resident, even without a food scope; immutable once generated.</summary>
         public ResidentTraits? Traits { get; set; }
@@ -337,7 +341,10 @@ namespace PersistentCity.Core
         /// <summary>F7d: the next writer after F6g's change-journal schema. Same entity shape; the save string is the compact
         /// columnar wire (candidate C), not JSON of this graph.</summary>
         public const int CompactSchema = ChangeJournalSchema + 1;
-        public const int CurrentSchema = CompactSchema;
+        /// <summary>F2e: the next writer after F7d's compact schema, in the same compact wire. It adds the per-journey
+        /// <see cref="CitizenState.PlayerHoldMinutes"/> and the city-wide <see cref="PlayerHoldSequence"/>.</summary>
+        public const int PlayerHoldSchema = CompactSchema + 1;
+        public const int CurrentSchema = PlayerHoldSchema;
         public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
@@ -387,6 +394,9 @@ namespace PersistentCity.Core
         /// <summary>E6c: the Street Food vendor rows, ordinal by vehicle id. Their places are rebuilt from this table
         /// on load and never stored in <see cref="Places"/>. A fresh city starts with an empty table.</summary>
         public VendorTable Vendors { get; set; } = new VendorTable();
+        /// <summary>F2e (schema 35): sequence number of the last applied player hold; the next hold takes this plus one.
+        /// A replay segment starts and ends at the sequences saved in its two checkpoints.</summary>
+        public long PlayerHoldSequence { get; set; }
     }
 
 }

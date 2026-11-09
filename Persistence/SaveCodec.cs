@@ -102,7 +102,7 @@ namespace PersistentCity.Persistence
             string json;
             int bytes;
             // F7d: writer 34 stores the compact columnar form of the body; every frozen JSON writer stores the body itself.
-            if (schema == CityState.CompactSchema)
+            if (schema >= CityState.CompactSchema)
             {
                 json = EncodeCompact(state, SettingsForSchema(WireContext.FromState(state),schema), records + StreamingOnlyRecords(state), cost);
                 bytes = System.Text.Encoding.UTF8.GetByteCount(json);
@@ -621,11 +621,12 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema31Contracts = new StateContractResolver(EconomicLedgerSchema);
         private static readonly IContractResolver Schema32Contracts = new StateContractResolver(CityState.AttendanceSchema);
         private static readonly IContractResolver Schema33Contracts = new StateContractResolver(CityState.ChangeJournalSchema);
+        private static readonly IContractResolver Schema34Contracts = new StateContractResolver(CityState.CompactSchema);
         private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : schema == CityState.CompactSchema ? Schema34Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
@@ -707,7 +708,8 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24 || schema==25 || schema==PersonSchema || schema==IndependentSchema || schema==WorkplaceCapacitySchema || schema==ResearchSchema || schema==VendorSchema || schema==EconomicLedgerSchema || schema==CityState.AttendanceSchema || schema==CityState.ChangeJournalSchema || schema==CityState.CompactSchema || schema==CityState.PlayerHoldSchema), "Unsupported state schema.");
+            Require(state.PlayerHoldSequence >= 0 && state.PlayerHoldSequence < long.MaxValue, "Invalid player hold sequence.");
             if(schema>=23) Require(schema >= 25 ? state.MenuPolicy == FoodNameIdentity.Wire || state.MenuPolicy == FoodNameIdentity.DynamicWire
                 : state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
@@ -795,6 +797,9 @@ namespace PersistentCity.Persistence
                 OptionalReference(places, citizen.LeisureId, PlaceKind.Leisure);
                 ValidateOptionalStop(citizen, state, places, citizens);
                 ValidateSchedule(citizen, state, places, ref embeddedRecords);
+                // F2e: the consumed allowance belongs to the current journey only.
+                Bounded(citizen.PlayerHoldMinutes, 0, PlayerHolds.MaximumMinutesPerJourney, "Player hold minutes");
+                Require(citizen.PlayerHoldMinutes == 0 || citizen.Phase == CitizenPhase.Travelling, "Player hold minutes without a journey.");
                 Require(citizen.RecentVisits != null && citizen.RecentVisits.Count <= MaxRecentVisits, "Invalid recent visit count.");
                 embeddedRecords += citizen.RecentVisits!.Count;
                 double lastVisit = 0;
@@ -1570,6 +1575,10 @@ namespace PersistentCity.Persistence
         private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new SaveValidationException(message); }
         [DoesNotReturn] private static void Fail(string message) => throw new SaveValidationException(message);
 
+        /// <summary>F2e: the two schema-35 fields; every older writer and frozen reader omits them.</summary>
+        internal static bool PlayerHoldProperty(Type type, string? name)
+            => type == typeof(CitizenState) && name == "PlayerHoldMinutes" || type == typeof(CityState) && name == "PlayerHoldSequence";
+
         private sealed class StateContractResolver : DefaultContractResolver
         {
             private readonly int schema;
@@ -1583,6 +1592,7 @@ namespace PersistentCity.Persistence
                     && !(schema < VendorSchema && VendorProperty30(type, property.PropertyName))
                     && !(schema < CityState.ChangeJournalSchema && type == typeof(FoodShopDay) && property.PropertyName == "StockoutObserved")
                     && !(schema < EconomicLedgerSchema && EconomicProperty(type, property.PropertyName))
+                    && !(schema < CityState.PlayerHoldSchema && PlayerHoldProperty(type, property.PropertyName))
                     // Schema 26 derives these from the person table: the resident tuple P and one roster record per person.
                     && !(schema >= PersonSchema && (type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"
                         || type == typeof(FoodCommerceState) && property.PropertyName == "RepresentationFactor"))

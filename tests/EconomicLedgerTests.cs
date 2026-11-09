@@ -87,7 +87,7 @@ public sealed class EconomicLedgerTests
     public void NextFreeWriterAndFreshZeroShape()
     {
         Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
         var state = Fresh();
         Assert.Empty(state.Economy.Outside); Assert.Empty(state.Economy.Shops);
         Assert.All(PersonTable.Schedules(state), p => Assert.Equal(default, p.Accrual));

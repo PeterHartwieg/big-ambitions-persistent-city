@@ -8,6 +8,7 @@
     <Compile Include="MovementFixture.cs" /><Compile Include="PresentationDriver.cs" />
     <Compile Include="MovementRun.cs" /><Compile Include="MovementArms.cs" />
     <Compile Include="Equivalence.cs" /><Compile Include="SelfChecks.cs" />
+    <Compile Include="HoldReplay.cs" />
     <Compile Include="Program.cs" />
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />

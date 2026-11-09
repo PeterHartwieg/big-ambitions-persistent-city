@@ -14,7 +14,9 @@ namespace PersistentCity.Persistence
         public const int EconomicLedgerSchema = CityState.EconomicLedgerSchema;
         internal static bool EconomicProperty(Type type, string? name) => type == typeof(CityState) && name == "Economy"
             || (type == typeof(CitizenState) || type == typeof(VisitorRoutine)) && name == "Accrual"
-            || type == typeof(FoodShopDay) && (name == "PeriodCauses" || name == "StockoutObserved") || type == typeof(ResidentBudget) && name == "Ledger";
+            || type == typeof(FoodShopDay) && (name == "PeriodCauses" || name == "StockoutObserved") || type == typeof(ResidentBudget) && name == "Ledger"
+            // F2e's two schema-35 fields, so every frozen pre-31 codec omits them as well (the live resolver gates them at 35).
+            || PlayerHoldProperty(type, name);
 
         // Canonical fixed-width uppercase base36 integers. Money is exact signed-64-range nonnegative units,
         // never a price float or a rounded decimal. Fixed widths include leading zeros and reject alternate spellings.

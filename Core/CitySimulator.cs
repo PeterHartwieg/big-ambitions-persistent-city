@@ -626,6 +626,7 @@ namespace PersistentCity.Core
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
             CompletedJourneys = live.CompletedJourneys, MissedActivities = live.MissedActivities,
+            PlayerHoldMinutes = live.PlayerHoldMinutes,
             RecentVisits = new List<VisitRecord>(live.RecentVisits),
             // Immutable once generated, so the copy shares it; events never change traits.
             Traits = live.Traits,
@@ -678,6 +679,8 @@ namespace PersistentCity.Core
             live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
             live.EmploymentStartDay = working.EmploymentStartDay; live.Accrual = working.Accrual;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
+            // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
+            live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
             live.DestinationActivity = working.DestinationActivity; live.Journey = working.Journey; live.DepartureMinute = working.DepartureMinute;
             live.NextEventMinute = working.NextEventMinute; live.ActivityUntilMinute = working.ActivityUntilMinute;
             live.CompletedJourneys = working.CompletedJourneys; live.MissedActivities = working.MissedActivities;
