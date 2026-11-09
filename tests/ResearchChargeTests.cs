@@ -796,7 +796,7 @@ public sealed class ResearchChargeTests
             }
             Array.Sort(samples);
             output.WriteLine($"orders={orders} queue=1000 p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/boundary={bytes / runs}");
-            Assert.True(samples[runs * 95 / 100] < 5, "p95 under the 5 ms gate");
+            PerfGate.Under(samples[runs * 95 / 100], 5, "p95");
         }
     }
 
@@ -853,7 +853,7 @@ public sealed class ResearchChargeTests
             long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / runs;
             Array.Sort(samples);
             output.WriteLine($"foreign-patch check: p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/call={bytes}");
-            Assert.True(samples[runs * 95 / 100] < 1);
+            PerfGate.Under(samples[runs * 95 / 100], 1, "p95");
         }
         finally
         {

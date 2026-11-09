@@ -541,6 +541,6 @@ public sealed class ResearchLedgerTests
         output.WriteLine(Line("TryGet (paid, worst-case position)", grant, grantBytes));
         output.WriteLine(Line("TryOrder (7 open, 16 kept, 16 closed)", order, orderBytes));
         Array.Sort(grant); Array.Sort(order);
-        Assert.True(grant[samples * 95 / 100] < 0.5); Assert.True(order[samples * 95 / 100] < 0.5);
+        PerfGate.Under(grant[samples * 95 / 100], 0.5, "grant p95"); PerfGate.Under(order[samples * 95 / 100], 0.5, "order p95");
     }
 }

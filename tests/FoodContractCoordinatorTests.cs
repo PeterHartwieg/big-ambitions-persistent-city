@@ -1442,7 +1442,7 @@ public sealed class FoodContractCoordinatorTests
             Assert.Equal(0, failures);
             Array.Sort(samples);
             rows.Add($"recheck offers={offers} holders={holders} decor={decor} dependencies={image.Definitions.Count}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call");
-            Assert.True(samples[1899] < 1.0);
+            PerfGate.Under(samples[1899], 1.0, "recheck p95");
             Assert.Equal(0, bytes);
         }
         // Boundary rebuild of 1/64/1,024 owned shops under the 0.5 ms frame budget (target unit p95 <= 0.05 ms).
@@ -1470,7 +1470,7 @@ public sealed class FoodContractCoordinatorTests
             units.Sort(); frames.Sort();
             rows.Add($"rebuild shops={count}: units {units.Count}, unit p95 {units[(int)(units.Count * 0.95)]:0.0000} ms, max {units[^1]:0.0000} ms, frames {frames.Count}, frame p95 {frames[(int)(frames.Count * 0.95)]:0.0000} ms, frame max {frames[^1]:0.0000} ms, max units/frame {frameUnits.Max()}, units >= 30 ms {units.Count(u => u >= 30)}");
             Assert.All(shops, s => Assert.Equal(world.Hour, world.Coordinator.Image(s.Key)!.BuiltHour));
-            Assert.Equal(0, units.Count(u => u >= 30));
+            PerfGate.Under(units[^1], 30, "rebuild unit max");
         }
         // Commit-gate boundary-frame cost at 1/16 acquisitions, including the distinct-definition comparison and price rows.
         foreach (int count in new[] { 1, 16 })
@@ -1491,7 +1491,7 @@ public sealed class FoodContractCoordinatorTests
             }
             samples.Sort();
             rows.Add($"commit gate acquisitions={count}: p95 {samples[(int)(samples.Count * 0.95)]:0.0000} ms, max {samples[^1]:0.0000} ms");
-            Assert.True(samples[^1] < 30);
+            PerfGate.Under(samples[^1], 30, "commit gate max");
         }
         // Retained image bytes per shop.
         foreach (int holders in new[] { 3, 16, 128 })

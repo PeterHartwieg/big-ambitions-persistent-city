@@ -18,7 +18,7 @@ Read this file, your plan row and the sections your task lists. Then read the co
 ## Rules
 
 - Write plainly: "implemented" or "verified by rig". One qualification per claim; link evidence instead of restating caveats. Status words: planned, implemented, partial, stopped, verified by rig.
-- Perf gate: mod-work p95 < 5 ms; flag every mod-work spike >= 30 ms; whole-frame timing is reported separately. Take cheap, safe wins and log them with before/after numbers in `docs/perf/<slice>.md`. Every slice has a perf file.
+- Perf gate: mod-work p95 < 5 ms; flag every mod-work spike >= 30 ms; whole-frame timing is reported separately. Take cheap, safe wins and log them with before/after numbers in `docs/perf/<slice>.md`. Every slice has a perf file. In unit tests, wall-clock limits go through `PerfGate.Under` (checked only with `PC_PERF_ASSERTS=1`), never a plain `Assert`.
 - Local tests while working and in fix rounds: build, `python tools/test-focused.py` (the classes in test files you changed; no dotnet lock) and the slice's own new checks. Do not run the full suite: the harness runs it once before merge, and only that run takes the dotnet lock. The `tools/*-regression` suites are not run before release.
 - Schema pins assert the constant your slice relies on (`CityState.PlayerHoldSchema`, say), never `CityState.CurrentSchema`, unless your slice introduces the writer.
 - In-game checks are batched for the next rig run and do not gate merge. List them in your checks file under "In-game checks for the next batched rig", each numbered with setup, steps and expected result.
