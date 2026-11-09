@@ -151,9 +151,13 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Research console detail command not removed: " + error.Message); }
         }
 
-        /// <summary>The attached city's saved ledger, or null.</summary>
+        /// <summary>The attached city's saved ledger, or null. F9e named exception: the research window and
+        /// ResearchReportText take the ledger itself; status counts read <see cref="ResearchViewNow"/>.</summary>
         private ResearchLedger? ResearchLedgerNow => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
             ? null : simulation.State.Research;
+        /// <summary>The attached city's research through its read-only view, or null.</summary>
+        private IResearchView? ResearchViewNow => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
+            ? null : simulation.View.Research;
 
         private string ResearchBusinessName(string place) => foodMarket?.NameOf(place) ?? place;
 
@@ -189,7 +193,7 @@ namespace PersistentCity.Runtime
         private string ResearchStatusText()
         {
             var activation = settings.MarketResearch.Activation;
-            var ledger = ResearchLedgerNow;
+            var ledger = ResearchViewNow;
             var boundary = ResearchBilling.LastBoundary;
             var text = new StringBuilder(512);
             text.Append("available=").Append(activation.Available ? "true" : "false");

@@ -44,7 +44,7 @@ namespace PersistentCity.Core
         public double ResumeEvent { get; set; }
         public bool Returning { get; set; }
     }
-    public sealed class FoodScope
+    public sealed class FoodScope : IFoodScopeView
     {
         public FoodAlternativeKind AlternativeKind { get; set; }
         public string PlaceId { get; set; } = "";
@@ -63,6 +63,14 @@ namespace PersistentCity.Core
             if (channel != FoodScopeChannel.Shop && channel != FoodScopeChannel.Vehicle) throw new ArgumentOutOfRangeException(nameof(channel));
             Channel = channel;
         }
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IFoodScopeView.PlaceId => PlaceId;
+        string IFoodScopeView.BusinessId => BusinessId;
+        string IFoodScopeView.ProductId => ProductId;
+        IReadOnlyList<string> IFoodScopeView.AdditionalProductIds => AdditionalProductIds;
+        FoodScopeChannel IFoodScopeView.Channel => Channel;
+        FoodAlternativeKind IFoodScopeView.AlternativeKind => AlternativeKind;
+        double IFoodScopeView.NextServiceAt => NextServiceAt;
     }
     /// <summary>Shop scopes are served by the native shop market, Vehicle scopes by the Street Food vehicle market.</summary>
     public enum FoodScopeChannel { Shop = 0, Vehicle = 1 }

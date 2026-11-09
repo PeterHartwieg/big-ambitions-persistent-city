@@ -65,6 +65,7 @@ namespace PersistentCity.Runtime
             long start = Stopwatch.GetTimestamp();
             try
             {
+                // F9e named exception: the save codec counts records of the state it wrote.
                 var counts = SaveCodec.CountRecords(simulation.State, payload);
                 cost.Counts(counts.Streaming, counts.Semantic, (Stopwatch.GetTimestamp() - start) * MillisecondsPerTimestamp);
             }

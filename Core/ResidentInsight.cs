@@ -116,6 +116,20 @@ namespace PersistentCity.Core
             Func<string, string?>? shopName = null, Func<FoodScope, bool>? currentOwnShop = null)
         {
             if (city == null) throw new ArgumentNullException(nameof(city));
+            return Capture(new CityView(city), person, meal, findPlace, productName, formatAddress, memorySettings, memoryReference, shopName, currentOwnShop, MemoryFood(city));
+        }
+
+        /// <summary>The food state memory words read: the city's, while its population capabilities are active, else null.</summary>
+        internal static FoodCommerceState? MemoryFood(CityState city) => city.Capabilities.Active ? city.Food : null;
+
+        /// <summary>F9e: the inspector reads the city through its view. <paramref name="memoryFood"/> is the food state for
+        /// memory words (<see cref="MemoryFood"/>); null shows none.</summary>
+        internal static ResidentInsight Capture(ICityView city, CitizenState person, ResidentMeal? meal,
+            Func<string, Place?> findPlace, Func<string, string>? productName, Func<string, int, string>? formatAddress,
+            FoodMemorySettings? memorySettings, Func<int, BusinessReference?>? memoryReference,
+            Func<string, string?>? shopName, Func<FoodScope, bool>? currentOwnShop, FoodCommerceState? memoryFood)
+        {
+            if (city == null) throw new ArgumentNullException(nameof(city));
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (findPlace == null) throw new ArgumentNullException(nameof(findPlace));
             productName ??= DefaultProductName;
@@ -145,10 +159,10 @@ namespace PersistentCity.Core
             insight.PersonWords = DescribePerson(person, insight.HouseholdSize, day);
             insight.Personality = DescribePersonality(person, meal, productName);
             var mealToday = meal != null && meal.HostSlot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
-            if (mealToday != null && city.Food != null && city.Capabilities.Active)
-                insight.MemoryWords = ResidentMemoryWords.Capture(city.Food, mealToday, person.Traits, (int)(now / 1440),
+            if (mealToday != null && memoryFood != null)
+                insight.MemoryWords = ResidentMemoryWords.Capture(memoryFood, mealToday, person.Traits, (int)(now / 1440),
                     memorySettings ?? new FoodMemorySettings(),
-                    memoryReference ?? (slot => city.Food.BusinessReferences.Find(r => r.Slot == slot)),
+                    memoryReference ?? (slot => memoryFood.BusinessReferences.Find(r => r.Slot == slot)),
                     id => shopName?.Invoke(id) ?? label(id), currentOwnShop);
             if (mealToday?.Budget != null) insight.BudgetWords = ResidentBudgetWords.Capture(mealToday.Budget);
             insight.Story = TellStory(person, insight, Doing(person, mealToday, label, productName, now));
@@ -230,11 +244,12 @@ namespace PersistentCity.Core
         }
 
         // Members share the saved home (HouseholdId h:<HomeId>), so the household is counted, never stored.
-        private static int CountHousehold(CityState city, CitizenState person)
+        private static int CountHousehold(ICityView city, CitizenState person)
         {
             if (person.HomeId.Length == 0) return 0;
             int members = 0;
-            foreach (var other in city.Citizens) if (other.HomeId == person.HomeId) members++;
+            var residents = city.Residents;
+            for (int i = 0; i < residents.Count; i++) if (residents[i].HomeId == person.HomeId) members++;
             return members;
         }
 
@@ -356,7 +371,7 @@ namespace PersistentCity.Core
         private static string ActivityName(Activity activity) => activity == Activity.Work ? "work" : activity == Activity.Study ? "class"
             : activity == Activity.Shop ? "shopping" : activity == Activity.Leisure ? "their free time" : "home";
 
-        private static IReadOnlyList<ResidentMealInsight> TodaysMeals(CityState city, ResidentMeal? meal, Func<string, string> label,
+        private static IReadOnlyList<ResidentMealInsight> TodaysMeals(ICityView city, ResidentMeal? meal, Func<string, string> label,
             Func<string, string> productName, double now, out string note)
         {
             var meals = new ResidentMealInsight[3];

@@ -23,8 +23,8 @@ namespace PersistentCity.Runtime
         public void ResetInspectorTiming() => inspector.ResetTiming();
         private static string LocalizedName(string id) => string.IsNullOrWhiteSpace(id) ? "Unspecified"
             : LocalizorManager.Localize(id, (object?)null).ToString();
-        public object EconomyOverview => simulation == null || simulation.State.Food == null
-            ? new { active = false } : FoodEconomyInsight.Capture(simulation.State);
+        public object EconomyOverview => simulation == null || simulation.View.Food == null
+            ? new { active = false } : CityViewReports.EconomyOverview(simulation.View);
         public object NativeEconomyAccounts => foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
         /// <summary>Rig diagnostic (F6c): incremental panel totals against a full rescan, request/rebuild
         /// counts and each managed shop's week projection. Built only when requested.</summary>
@@ -32,15 +32,15 @@ namespace PersistentCity.Runtime
         {
             get
             {
-                var money = simulation?.FoodMoney; var food = simulation?.State.Food;
-                if (money == null || food == null) return new { active = false };
+                var money = simulation?.FoodMoney; var city = simulation?.View; var food = city?.Food;
+                if (money == null || city == null || food == null) return new { active = false };
                 long requests = money.Requests, rebuilds = money.Rebuilds;
-                var current = money.Snapshot(); var rescan = FoodMoneyCounters.Rescan(food);
-                int day = (int)(simulation!.State.Minute / 1440); var index = FoodFeedback.IndexHistory(food.History);
-                int recordingSince = FoodFeedback.RecordingSince(food); int v2RecordingSince = FoodFeedbackV2.RecordingSince(food);
+                var current = money.Snapshot(); var rescan = CityViewReports.RescanFoodMoney(city);
+                int day = (int)(city.Minute / 1440); var index = CityViewReports.IndexFoodHistory(city);
+                int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
                 return new { active = true, day, panelBuilds = economyRefresh.Builds, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
                     counters = current.ToString(), rescan = rescan.ToString(), moneyText = current.Text(), rivalLabel = FoodFeedback.RivalEstimateLabel,
-                    shops = food.Shops.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
+                    shops = food.Scopes.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
                         index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text(),
                         feedbackV2 = FeedbackV2Text(index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var v2Rows) ? v2Rows : new List<FoodShopDay>(),
                             foodMarket?.JournalFor(s.BusinessId), day, v2RecordingSince),
@@ -107,12 +107,13 @@ namespace PersistentCity.Runtime
             if (GUILayout.Button("Close · Ctrl+F8", GUILayout.Width(140))) showEconomy = false;
             GUILayout.EndHorizontal();
             economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
-            if (simulation!.State.Food == null)
+            var food = simulation!.View.Food;
+            if (food == null)
             {
                 GUILayout.Label("Preparing resident food demand. Eligible player businesses are managed automatically once the city is ready.", economyLabel);
                 GUILayout.EndArea(); return;
             }
-            int pages = Math.Max(1, (simulation.State.Food.Shops.Count + FoodFeedbackV2.ShopsPerPage - 1) / FoodFeedbackV2.ShopsPerPage);
+            int pages = Math.Max(1, (food.Scopes.Count + FoodFeedbackV2.ShopsPerPage - 1) / FoodFeedbackV2.ShopsPerPage);
             economyShopPage = Math.Min(economyShopPage, pages - 1);
             if (pages > 1)
             {
@@ -130,13 +131,13 @@ namespace PersistentCity.Runtime
         }
         private string BuildEconomyText()
         {
-            var city = simulation!.State; var food = city.Food!;
+            var city = simulation!.View; var food = city.Food!;
             var text = new StringBuilder(); int day = (int)(city.Minute / 1440);
             // F6c: incremental totals instead of consumer scans; one pass each over history, places and accounts.
             var counters = simulation.FoodMoney;
             if (counters == null) return "Preparing resident food demand. The food market is not attached yet.";
             var money = counters.Snapshot();
-            text.AppendLine(PopulationWords.Headline(day, city.Citizens.Count, city.Visitors.Count, food.Residents.Count));
+            text.AppendLine(PopulationWords.Headline(day, city.Residents.Count, city.VisitorCount, food.ConsumerCount));
             text.AppendLine("Accounting lag " + NativeCityClock.LagMinutes.ToString("F3", CultureInfo.InvariantCulture)
                 + " game minutes; calendar holds " + NativeCityClock.HeldOrdinaryTicks + " ordinary / " + NativeCityClock.HeldEconomySkipTicks
                 + " skip ticks. Configured calendar factor " + NativeCityClock.Factor.ToString("F3", CultureInfo.InvariantCulture) + ".");
@@ -144,23 +145,25 @@ namespace PersistentCity.Runtime
                 + NativeCityClock.WithheldMinutes.ToString("F3", CultureInfo.InvariantCulture) + ". Holds and boundary caps extend wall time; they are not repaid by speeding up.");
             if (NativeCityClock.PacingAffected) text.AppendLine(AccountingStatusText());
             if (food.MealRhythmVersion != 0) text.AppendLine("Breakfast, lunch and dinner follow each resident's waking hours and preferences. All meals share one wallet; eating at home remains an option.");
-            text.AppendLine(PopulationWords.Lines(city.Visitors.Count, city.Portals.Count));
+            text.AppendLine(PopulationWords.Lines(city.VisitorCount, city.PortalCount));
             text.AppendLine("Workplaces and travel patterns shape nearby demand.");
             int uncertain = money.Uncertain;
             if (uncertain > 0) text.AppendLine(uncertain + " purchases await confirmation. Their funds remain held; other consumers continue normally.");
             int blockedReturns = money.BlockedReturns;
             if (blockedReturns > 0) text.AppendLine(blockedReturns + " consumers are waiting for a safe return route. They cannot start another meal trip.");
-            if (food.Shops.Count == 0) text.AppendLine("No supported player food businesses are currently managed. Unsupported menus retain the game's customer demand.");
+            var scopes = food.Scopes;
+            if (scopes.Count == 0) text.AppendLine("No supported player food businesses are currently managed. Unsupported menus retain the game's customer demand.");
             if (foodMarket != null)
                 foreach (string explanation in foodMarket.UnmanagedShopStatuses()) text.AppendLine(explanation);
             text.Append(FoodFeedback.RivalEstimateLabel).Append(" · ").AppendLine(simulation.FreeRivalOutflow()?.Text() ?? "Rival food outflow: unknown (history not recorded).");
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
             var regulars = simulation.ProjectRegulars(ObservedOwnShop);
-            var history = FoodFeedback.IndexHistory(food.History); int recordingSince = FoodFeedback.RecordingSince(food); int v2RecordingSince = FoodFeedbackV2.RecordingSince(food);
-            var shopPlaces = new Dictionary<string, Place?>(food.Shops.Count, StringComparer.Ordinal);
-            foreach (var scope in food.Shops) shopPlaces[scope.PlaceId] = null;
-            foreach (var p in city.Places) if (shopPlaces.TryGetValue(p.Id, out var found) && found == null) shopPlaces[p.Id] = p;
+            var history = CityViewReports.IndexFoodHistory(city); int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
+            var shopPlaces = new Dictionary<string, IPlaceView?>(scopes.Count, StringComparer.Ordinal);
+            for (int i = 0; i < scopes.Count; i++) shopPlaces[scopes[i].PlaceId] = null;
+            var places = city.Places;
+            for (int i = 0; i < places.Count; i++) { var p = places[i]; if (shopPlaces.TryGetValue(p.Id, out var found) && found == null) shopPlaces[p.Id] = p; }
             var accountsByPlace = new Dictionary<string, List<NativeFoodAccount>>(StringComparer.Ordinal);
             foreach (var a in nativeAccounts)
             {
@@ -169,9 +172,9 @@ namespace PersistentCity.Runtime
             }
             var noRows = new List<FoodShopDay>();
             int firstShop = economyShopPage * FoodFeedbackV2.ShopsPerPage;
-            for (int shopIndex = firstShop; shopIndex < Math.Min(food.Shops.Count, firstShop + FoodFeedbackV2.ShopsPerPage); shopIndex++)
+            for (int shopIndex = firstShop; shopIndex < Math.Min(scopes.Count, firstShop + FoodFeedbackV2.ShopsPerPage); shopIndex++)
             {
-                var scope = food.Shops[shopIndex];
+                var scope = scopes[shopIndex];
                 string? regularText = regulars?.OwnShopText(scope.BusinessId);
                 var place = shopPlaces[scope.PlaceId] ?? throw new InvalidOperationException("Managed shop place is missing.");
                 var rows = history.TryGetValue(FoodFeedback.Key(scope.PlaceId, scope.BusinessId), out var shopRows) ? shopRows : noRows;
@@ -209,7 +212,7 @@ namespace PersistentCity.Runtime
                 text.AppendLine();
             }
             if (money.Budgets > 0) text.Append(money.Text());
-            FoodFeedbackV2.AppendCity(text, money, city.Economy, day);
+            CityViewReports.AppendCityEconomy(text, money, city, day);
             text.AppendLine();
             text.AppendLine("Offer counts describe evaluated choices, not unique people or all district demand. Native operating results exclude initial investment, loans and personal taxes. Consumer income is modeled outside income/support; native business accounts remain authoritative.");
             return text.ToString();
