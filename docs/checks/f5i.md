@@ -53,7 +53,7 @@ F2 harness at the declared size, 957 residents + 957 visitors over two days (`do
 
 In every arm, bodies-off included, visitors made 5,788 arrivals, 41 purchases and 7,301,444,403,200 food-spending units. Visitors buy rarely in this fixture: most visitor meals end as "chose household food" under the unchanged food model. The equality covers each one.
 
-Commands: `python tools/build.py --game-managed …`, `dotnet test tests/PersistentCity.Tests.csproj` (results in the PR description). Performance: [docs/perf/f5i.md](../perf/f5i.md).
+Commands, 9 November 2026: `python tools/build.py --game-managed …` succeeded (DLL SHA-256 `c8c68f82…`). `dotnet test tests/PersistentCity.Tests.csproj` passed 4,297 of 4,297, with 0 failed and 0 skipped. Performance: [docs/perf/f5i.md](../perf/f5i.md).
 
 Offline success is not native proof. The harness does not run Unity, NavMesh, native bodies or RLO.
 
