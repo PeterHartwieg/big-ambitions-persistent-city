@@ -34,12 +34,16 @@ public sealed class VendorDynamicProductTests
         public StreetFoodVendorMarket Market;
         public Dictionary<string, string> Receipts = new(StringComparer.Ordinal);
         public IFoodProductPolicy? Policy;
+        /// <summary>True while the policy is still being prepared: the getter returns null (no published loaded-name image).</summary>
+        public bool Preparing;
         public int PolicyReads;
+        private readonly int menuLimit;
         public long Now = VehicleMarketTests.Morning;
         private readonly WeightedFoodChoiceTests.Planner planner;
-        public Fixture(IFoodProductPolicy? policy, params string[] items)
+        public Fixture(IFoodProductPolicy? policy, params string[] items) : this(policy, 8, items) { }
+        public Fixture(IFoodProductPolicy? policy, int menuLimit, params string[] items)
         {
-            Policy = policy;
+            Policy = policy; this.menuLimit = menuLimit;
             (City, _, planner) = WeightedFoodChoiceTests.Ready(5, 2);
             StreetFoodHooks.Add("v00", x: 100, items: items.Length == 0 ? Eight : items);
             Market = Create(true); Run(Now);
@@ -47,7 +51,8 @@ public sealed class VendorDynamicProductTests
             StreetFoodHooks.Open("v00", 300); Run(Now + 1);
         }
         private StreetFoodVendorMarket Create(bool present) => new(City, present ? Api : null, "Street Food vendor API missing.",
-            new VendorNavMeshSampler(), Receipts, () => Now, () => true, Policy == null ? null : () => { PolicyReads++; return Policy; });
+            new VendorNavMeshSampler(), Receipts, () => Now, () => true,
+            Policy == null ? null : () => { PolicyReads++; return Preparing ? null : Policy; }, menuLimit);
         public void Run(long minute)
         {
             Now = StreetFoodHooks.Now = minute; StreetFoodHooks.Expire();
@@ -251,14 +256,23 @@ public sealed class VendorDynamicProductTests
                 var run = new CityRun(seed, items);
                 bool decided = false, decidedNow = false;
                 run.City.FoodDecisionObserved += _ => decidedNow = true;
+                int captured = 0;
                 for (int i = 0; i < 2 * 1440 && !Resolved(run); i++)
                 {
                     decidedNow = false;
-                    long t = System.Diagnostics.Stopwatch.GetTimestamp(); run.Step(); double ms = Ms(t);
+                    // The step pauses once at the held context (to count its offers) and finishes that minute after it;
+                    // both parts are one native minute's work.
+                    long t = System.Diagnostics.Stopwatch.GetTimestamp();
+                    run.Step(() => captured == 0 && Held(run));
+                    if (captured == 0 && Held(run)) { captured = run.HeldOffers.Count(); run.Step(); }
+                    double ms = Ms(t);
                     if (seed >= 0) steps.Add(ms);
                     if (!decided && decidedNow) { decided = true; if (seed >= 0) decisions.Add(ms); }
                 }
                 Assert.True(decided);
+                // The whole vehicle menu entered the decision and the meal was sold.
+                Assert.Equal(items.Length, captured);
+                Assert.Equal(MealStatus.Paid, run.Meal.Status);
                 Assert.Equal(0, run.City.HistoricalClockMisses);
             }
             Report(label + ", every step", steps, 0, 1);
@@ -267,6 +281,61 @@ public sealed class VendorDynamicProductTests
         }
         foreach (var line in lines) Console.WriteLine("E6F " + line);
         System.IO.File.WriteAllLines(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "e6f-measure.txt"), lines);
+    }
+
+    [Theory]
+    [InlineData(4, 5, false)] [InlineData(4, 4, true)] [InlineData(8, 8, true)] [InlineData(1, 2, false)]
+    public void AVehicleWiderThanTheResidentChoiceMenuStaysWithStreetFood(int menuLimit, int items, bool admitted)
+    {
+        var f = new Fixture(Policy(), menuLimit, Eight.Take(items).ToArray());
+        if (admitted)
+        {
+            Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
+            Assert.Equal(items, Assert.Single(f.Market.Read(f.Now)).Offers.Count);
+            return;
+        }
+        Assert.Null(f.City.State.Vendors.Find("v00"));
+        Assert.Equal("menu has more than " + menuLimit + " items for resident choice", f.Refusal);
+        Assert.Empty(StreetFoodHooks.Wishes); Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
+    }
+
+    [Fact]
+    public void ACatalogueStillBeingPreparedAfterReloadKeepsSavedOwnershipAndServesCommittedResidents()
+    {
+        var f = new Fixture(Policy());
+        var row = f.Row; string business = row.BusinessId;
+        Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
+        var committed = f.Meal(ChoppedCheese); committed.Status = MealStatus.Travelling;
+        f.City.State.Food!.Residents.Add(committed);
+        // Reload while the loaded-name image is not published yet (bounded catalogue warm-up).
+        f.Preparing = true;
+        f.Reload(true);
+        for (int i = 0; i < 10; i++)
+        {
+            f.Run(f.Now + 1);
+            Assert.True(f.Row.Authority.Desired); Assert.Equal("", f.Row.Reason);
+            Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
+            Assert.True(f.Market.CanServe(business));
+        }
+        // The committed resident's held decision is served as saved.
+        var meal = f.City.State.Food!.Residents.Single(m => m.ResidentId == committed.ResidentId);
+        meal.Status = MealStatus.Serving;
+        Assert.True(f.Market.Buy(meal, f.Now).Paid);
+        // The image publishes with unchanged names: nothing changes.
+        f.Preparing = false;
+        f.Run(f.Now + 1); f.Run(f.Now + VendorCoordinator.WaitingRecheckMinutes);
+        Assert.True(f.Row.Authority.Desired); Assert.True(f.Market.CanServe(business));
+        Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
+        // A catalogue rebuild mid-session keeps the last ready policy meanwhile.
+        f.Preparing = true;
+        for (int i = 1; i < StreetFoodVendorMarket.PolicyPreparationMinutes; i++)
+        { f.Run(f.Now + 1); Assert.True(f.Market.CanServe(business)); }
+        // A catalogue that never becomes ready fails closed: the dynamic vehicle is handed back after drain.
+        meal.Status = MealStatus.Paid;
+        for (int i = 0; i < 2 + VendorCoordinator.WaitingRecheckMinutes; i++) f.Run(f.Now + 1);
+        Assert.False(f.Market.CanServe(business));
+        Assert.Equal("menu item not executable: " + Dumplings, f.Row.Reason);
+        Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
     }
 
     // ---- Taste ----
@@ -333,8 +402,11 @@ public sealed class VendorDynamicProductTests
         private readonly WeightedFoodChoiceTests.Planner planner;
         private long revision = 1;
         public long Clock;
-        public CityRun(int seed, params string[] items)
+        private readonly int menuLimit;
+        public CityRun(int seed, params string[] items) : this(seed, 8, items) { }
+        public CityRun(int seed, int menuLimit, params string[] items)
         {
+            this.menuLimit = menuLimit;
             var (ready, _, readyPlanner) = WeightedFoodChoiceTests.Ready(seed, 1);
             planner = readyPlanner; City = new CitySimulator(ready.State, planner);
             Image = new LoadedNameImage(revision, Eight, FoodEligibilityRefusal.None);
@@ -349,8 +421,9 @@ public sealed class VendorDynamicProductTests
             // PersistentCityMod.ComposeFoodMarkets: the composite and the vehicle market read the same policy source.
             source = new FoodProductPolicySource(() => Image, () => Config, _ => FoodProductMetadataSnapshot.Empty);
             Vendor = new StreetFoodVendorMarket(City, present ? Api : null, "Street Food vendor API missing.", new VendorNavMeshSampler(),
-                Receipts, () => Clock, () => true, () => source.Current);
-            City.AttachFoodMarket(new FoodMarkets(City.State.Food!, new ClosedShops(), Vendor, id => City.FindPlace(id).Position, source));
+                Receipts, () => Clock, () => true, () => source.Current, menuLimit);
+            City.AttachFoodMarket(new FoodMarkets(City.State.Food!, new ClosedShops(), Vendor, id => City.FindPlace(id).Position, source),
+                new FoodChoiceSettings { FoodMenuMaximumOffersPerShop = menuLimit });
         }
         public VendorRow Row => City.State.Vendors.Find("v00")!;
         public ResidentMeal Meal => City.State.Food!.Residents.Single();
@@ -493,6 +566,20 @@ public sealed class VendorDynamicProductTests
         run.RunUntil(() => run.Vendor.CanServe(run.Row.BusinessId), 2 * 1440);
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
         run.RunUntil(() => run.Api.SellCalls > sells, 3 * 1440);
+        Assert.Equal(0, run.City.HistoricalClockMisses);
+    }
+
+    [Fact]
+    public void AnOwnedEightItemVehicleEntersDecisionsWithItsWholeMenuAndSells()
+    {
+        var run = new CityRun(3, 8, Eight);
+        run.RunUntil(() => Held(run));
+        Assert.Equal(Eight, run.HeldOffers.Select(o => o.ProductId));
+        Assert.All(run.HeldOffers.Where(o => !FoodProducts.Known(o.ProductId)), o => Assert.Equal(2, o.Metadata!.Revision));
+        run.RunUntil(() => Resolved(run));
+        Assert.Equal(MealStatus.Paid, run.Meal.Status);
+        Assert.Equal(1, run.Api.SellCalls); Assert.Contains(run.Meal.ProductId, Eight);
+        Assert.Equal(FoodReceiptStatus.Paid, FoodSaleReceipts.ReadStatus(run.Receipts, run.Meal));
         Assert.Equal(0, run.City.HistoricalClockMisses);
     }
 }

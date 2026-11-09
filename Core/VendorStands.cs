@@ -45,11 +45,13 @@ namespace PersistentCity.Core
         public static bool OriginalThree(string item) => FoodProducts.KnownLegacy(item);
 
         /// <summary>Null when PC may own this vehicle's openings, otherwise why the whole vehicle stays with Street Food.
-        /// Units of zero are sold out, not a refusal.</summary>
-        public static string? MenuRefusal(VendorVehicle vehicle, Func<string, bool> executable)
+        /// Units of zero are sold out, not a refusal. <paramref name="maximumItems"/> is the resident choice menu width:
+        /// a wider vehicle could never be chosen, so PC must not take it from Street Food (E6f).</summary>
+        public static string? MenuRefusal(VendorVehicle vehicle, Func<string, bool> executable, int maximumItems = VendorVehicle.MaximumItems)
         {
             if (vehicle.MenuOverflow) return "menu has more than 8 items";
             if (vehicle.ItemCount == 0) return "menu is empty";
+            if (vehicle.ItemCount > maximumItems) return "menu has more than " + maximumItems + " items for resident choice";
             for (int i = 0; i < vehicle.ItemCount; i++)
             {
                 string item = vehicle.Items[i];
@@ -213,6 +215,7 @@ namespace PersistentCity.Core
         private readonly IVendorPlaces places;
         private readonly IVendorStandSampler sampler;
         private readonly Func<string, bool> executable;
+        private readonly int maximumItems;
         private readonly VendorLease lease = new VendorLease();
         private readonly VendorReferences references = new VendorReferences();
         private readonly List<KeyValuePair<string, string>> refusals = new List<KeyValuePair<string, string>>();
@@ -220,12 +223,13 @@ namespace PersistentCity.Core
         private long waitingSlot = -1;
 
         public VendorCoordinator(VendorTable table, IVendorApi? api, string unavailableReason, IVendorPlaces places, IVendorStandSampler sampler,
-            Func<string, bool>? executable = null)
+            Func<string, bool>? executable = null, int maximumItems = VendorVehicle.MaximumItems)
         {
             this.table = table ?? throw new ArgumentNullException(nameof(table));
             this.places = places ?? throw new ArgumentNullException(nameof(places));
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             this.executable = executable ?? VendorRules.OriginalThree;
+            this.maximumItems = maximumItems;
             this.api = api;
             if (api != null) reader = new VendorImageReader(api);
             Reason = api == null ? (string.IsNullOrEmpty(unavailableReason) ? "Street Food vendor API missing." : unavailableReason) : "";
@@ -256,7 +260,7 @@ namespace PersistentCity.Core
         {
             if (api == null || stopped) return false;
             if (reader!.Pending) { if (reader.Continue()) applyPending = true; return true; }
-            if (!applyPending) return false;
+            if (!applyPending || Deferred) return false;
             applyPending = false;
             Apply(minute);
             return true;
@@ -276,7 +280,7 @@ namespace PersistentCity.Core
                 var a = row.Authority; var stand = row.Stand; var v = image.Find(row.VehicleId);
                 return a.Desired && !a.Suspended && a.OpeningId >= 0 && v != null && v.OwnedByPersistentCity && v.OpeningId == a.OpeningId
                     && v.Kind == row.Kind && stand != null && stand.OpeningId == a.OpeningId && stand.Published && row.DeferredStand == null
-                    && v.MealsPerHour > 0 && VendorRules.MenuRefusal(v, executable) == null && VendorRules.OpeningRefusal(v) == null;
+                    && v.MealsPerHour > 0 && VendorRules.MenuRefusal(v, executable, maximumItems) == null && VendorRules.OpeningRefusal(v) == null;
             }
             return false;
         }
@@ -305,6 +309,11 @@ namespace PersistentCity.Core
         /// again at the next unit, so a vehicle whose menu turned non-executable is handed back after drain and a vehicle
         /// whose menu turned executable is admitted, without waiting for a new Street Food revision.</summary>
         public void Revalidate() { if (api != null && !stopped) applyPending = true; }
+
+        /// <summary>While true, a finished image is copied but not applied: no request, acquisition, release or stand
+        /// change. The vehicle market sets it while the product policy is still being prepared (E6f), so an unfinished
+        /// catalogue never counts as a refusal. Lease renewal and snapshot reads continue.</summary>
+        public bool Deferred { get; set; }
 
         /// <summary>At a save-consistent event boundary: removes retired rows nothing names, or keeps them as tombstones
         /// when memory names their place. <paramref name="pendingReceipt"/> reports a pending or uncertain receipt.</summary>
@@ -360,7 +369,7 @@ namespace PersistentCity.Core
             {
                 var v = image[i];
                 var row = table.Find(v.VehicleId);
-                string? refusal = VendorRules.MenuRefusal(v, executable);
+                string? refusal = VendorRules.MenuRefusal(v, executable, maximumItems);
                 if (row == null || row.State != VendorRowState.Live)
                 {
                     string? admission = refusal ?? table.AdmissionRefusal(row);
