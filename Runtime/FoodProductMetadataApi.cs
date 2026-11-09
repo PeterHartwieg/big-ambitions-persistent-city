@@ -16,6 +16,8 @@ namespace PersistentCity.Runtime
         // E5b supplies its already copied loaded-name image at a new uncaptured context, never a native scan.
         internal static FoodProductMetadataResolver Publish(FoodProductMetadataResolver config, FoodProductMetadataLoadedNames? catalogue)
             => config.WithApi(Registry.Publish(catalogue));
+        // E5b4: the API image alone, so the market's policy source rebuilds only when the registry publishes a new one.
+        internal static FoodProductMetadataSnapshot PublishSnapshot(FoodProductMetadataLoadedNames? catalogue) => Registry.Publish(catalogue);
     }
     public sealed partial class PopulationRuntime
     {

@@ -90,7 +90,7 @@ namespace PersistentCity.Persistence
                 else if (name == "MenuPolicy")
                 {
                     Require(reader.TokenType == JsonToken.String && ((string)reader.Value! == FoodMenuPolicy.Wire
-                        || (string)reader.Value! == FoodNameIdentity.Wire), "Unsupported menu product policy.");
+                        || (string)reader.Value! == FoodNameIdentity.Wire || (string)reader.Value! == FoodNameIdentity.DynamicWire), "Unsupported menu product policy.");
                     menuPolicy = (string)reader.Value!;
                 }
                 else reader.Skip();
@@ -98,7 +98,7 @@ namespace PersistentCity.Persistence
                 {
                     Require(schema >= 18, "Unknown capability header in a legacy population schema.");
                     Require(schema >= 23 || menuPolicy == null, "Menu policy in an old schema.");
-                    Require(schema < 23 || menuPolicy == (schema >= 25 ? FoodNameIdentity.Wire : FoodMenuPolicy.Wire), "Unsupported menu product policy.");
+                    Require(schema < 23 || menuPolicy == CityState.ExecutableMenuPolicy(schema.Value), "Unsupported menu product policy.");
                     return; // Full population startup still validates all fields, duplicates and trailing content.
                 }
             }

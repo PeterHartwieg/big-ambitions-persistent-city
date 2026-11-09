@@ -317,7 +317,7 @@ public sealed class PopulationCensusTests
         Assert.Equal(SaveCodec.MaxCitizens, HousingPolicy.MaximumResidents);
         Assert.Equal(PopulationCensusPolicy.MaximumPersons, HousingPolicy.MaximumResidents + PopulationCensusPolicy.MaximumVisitors);
         Assert.Equal(PopulationCensusPolicy.MaximumPersons, SaveCodec.MaxCitizens * 3);
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
         Assert.Equal(3, Enum.GetValues(typeof(MealKind)).Length - 1); // breakfast, lunch, dinner
         Assert.False(PopulationCensusPolicy.VisitorsDrive);
         Assert.True(PopulationCensusPolicy.ExcludePlayerOwnedWorkplaces);

@@ -10,8 +10,9 @@ namespace PersistentCity.Persistence
     public static partial class SaveCodec
     {
         internal static void RequireExecutablePolicy(CityState state)
-            => Require(state.Schema < 25 || state.MenuPolicy == FoodNameIdentity.Wire,
-                "Dynamic held-product execution is not implemented; preserve the payload.");
+            // E5b4: DynamicWire executes only at the held-policy writer; 25 to 35 executed the original-name policy only.
+            => Require(state.Schema < 25 || state.MenuPolicy == CityState.ExecutableMenuPolicy(state.Schema),
+                "Unsupported held-product policy for this writer; preserve the payload.");
         private static void MigrateNames25(CityState state)
         {
             Require(state.Schema == 24, "Name migration requires exact schema 24.");
@@ -115,7 +116,10 @@ namespace PersistentCity.Persistence
                     {
                         ValidateMetadata25(offer.Metadata);
                         Require(offer.Metadata!.Revision != 2 || state.MenuPolicy == FoodNameIdentity.DynamicWire,
-                            "Dynamic held-product inputs require their non-executable capability header.");
+                            "Dynamic held-product inputs require their capability header.");
+                        // E5b4: the executing writer captures revision 2 only for a policy-admitted Food name.
+                        Require(state.Schema < CityState.HeldPolicySchema || offer.Metadata.Revision != 2
+                            || offer.Metadata.MealClass == FoodMealClass.Food && !FoodProducts.Known(offer.ProductId), "Held dynamic offer is not an admitted Food name.");
                         if (offer.Metadata!.Revision == 1 || FoodProducts.KnownLegacy(offer.ProductId))
                         {
                             var old = LegacyMetadata25(state, meal, offer.ProductId);

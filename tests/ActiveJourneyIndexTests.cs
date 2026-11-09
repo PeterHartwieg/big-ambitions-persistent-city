@@ -271,7 +271,7 @@ public sealed class ActiveJourneyIndexTests
     [Fact]
     public void IndexHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
         var plain = Mixed(new Walking(), 160); var probed = Mixed(new Walking(), 160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         probed.ActivityObserved += (_, _, _) => { _ = probed.ActiveJourneyIndexMatchesState(); _ = probed.ActiveJourneys.BodyCandidates.Count; };

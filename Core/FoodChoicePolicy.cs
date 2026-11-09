@@ -9,9 +9,11 @@ namespace PersistentCity.Core
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
             double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1, bool campaignActive = false,
-            Money? ticket = null)
-        { Ticket=ticket ?? price; CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
+            Money? ticket = null, FoodProductMetadata? metadata = null)
+        { Metadata=metadata; Ticket=ticket ?? price; CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
+        /// <summary>E5b4: the held revision-2 inputs of a dynamic product; null for the original products' legacy inputs.</summary>
+        public FoodProductMetadata? Metadata { get; }
         /// <summary>F6j: main plus the extras this resident would add at this shop; equals Price without extras.</summary>
         public Money Ticket { get; }
         public bool CampaignActive { get; }
@@ -113,7 +115,7 @@ namespace PersistentCity.Core
             => WeightCore(o,t,s,OfferTaste(o,t),MealRhythm.ProductPenalty(o.Kind,o.ProductId),
                 o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);
 
-        // Pure E5c seam only. Live callers retain the historical overload until schema-25 capture/E5b.
+        // E5c seam; since E5b4 Select uses it for every offer that carries held revision-2 metadata.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,
             FoodProductMetadata metadata, double weatherTravelMultiplier=1)
             => WeightCore(o,t,s,FoodProducts.KnownLegacy(o.ProductId) ? Taste(t,o.ProductId) : metadata.TasteBand,
@@ -164,7 +166,8 @@ namespace PersistentCity.Core
             {
                 var o=offers[i];
                 if(o.AlternativeWeight<=0 || o.Price<=Money.Zero || o.Price>allowance) continue;
-                double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings,weatherTravelMultiplier)*o.AlternativeWeight);
+                double weight=o.Metadata.HasValue ? Weight(o,traits,allowance,settings,o.Metadata.Value,weatherTravelMultiplier) : Weight(o,traits,allowance,settings,weatherTravelMultiplier);
+                double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),weight*o.AlternativeWeight);
                 // The reserved empty household IDs precede real IDs in an exact tie.
                 int tie=selected<0 ? 1 : StringComparer.Ordinal.Compare(o.BusinessId,offers[selected].BusinessId);
                 if(tie==0) tie=StringComparer.Ordinal.Compare(o.ProductId,offers[selected].ProductId);
