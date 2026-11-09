@@ -52,7 +52,7 @@ Each target records its declaring type, method, parameter list (CLR short names;
 
 ## Offline checks
 
-Local: build (`tools/build.py`) and `dotnet test tests/PersistentCity.Tests.csproj` (result below). New cases:
+Local, at `59d170e` plus this docs change (no code change since): build (`tools/build.py`) succeeded, DLL SHA-256 `7ee70a36971dcbbdbf998af42fe14bb9b1e30dd09c35cb0f8a131c9125fe6b8e`; `dotnet test tests/PersistentCity.Tests.csproj`: **4,304 passed, 0 failed, 0 skipped** (4 m 34 s). New cases:
 
 1. **Transitions** (`Transitions`): each D1 transition applied once; repeated detection, `Fail` from `NotChecked` or `Absent`, and `Absent` on a native contract rejected with no state or revision change; reasonless `Off` and `NotChecked` outcomes throw.
 2. **Off is sticky until the declared re-check** (`OffIsStickyUntilTheDeclaredRecheck`): research billing stays `Off` through `Detect`, a second `Fail` and a companion-revision re-check, and returns to `Active` only at city load; Street Food leaves `Absent` only at its companion revision.
