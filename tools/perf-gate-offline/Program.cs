@@ -12,7 +12,7 @@ namespace PersistentCity.PerfGateOffline;
 
 // F4e offline pre-gate (docs/plans/f4-perf-gate.md, F4e row). Usage:
 //   dotnet run --project tools/perf-gate-offline -c Release -- [--out <directory>] [--seed N] [--only <window prefix>]
-// Writes export-offline.json (F4a's perf-gate-export/v1, source=offline) and F4a's analyzer report beside it.
+// Writes offline.export.json (F4a's perf-gate-export/v1, source=offline), offline.report.json and offline.report.md through F4a's analyzer.
 //   dotnet run --project tools/perf-gate-offline -c Release -- --self-test
 static class Program
 {
