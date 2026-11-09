@@ -396,7 +396,7 @@ public sealed class PlayerHoldTests
     {
         Arm = "contact/test", Residents = 96, Days = 1, PlayerContact = true,
         Bodies = new DriverSettings { Pedestrians = 48, Vehicles = 24, Lag = LagModel.Native },
-        Checkpoints = new[] { MovementFixture.StartMinute + 1, MovementFixture.StartMinute + 8 * 60, MovementFixture.StartMinute + 11 * 60 },
+        Checkpoints = new[] { MovementFixture.StartMinute + 1, MovementFixture.StartMinute + 8 * 60, MovementFixture.StartMinute + 9 * 60, MovementFixture.StartMinute + 11 * 60 },
     }));
 
     [Fact]
@@ -417,6 +417,15 @@ public sealed class PlayerHoldTests
         var bare = HoldReplay.Replay(live.Checkpoints[0], end, Array.Empty<PlayerHoldRecord>(), withoutHolds: true);
         Assert.Equal("", bare.Failure);
         Assert.NotEqual(end.Payload, bare.Payload);
+        // Not only through the saved hold counters: inside the contact window the journeys themselves differ (review
+        // Opus-r2-1). By 11:00 every held journey has ended, so only the counters still show the holds there.
+        var mid = live.Checkpoints.Single(c => c.Minute == MovementFixture.StartMinute + 9 * 60);
+        var midBare = HoldReplay.Replay(live.Checkpoints[0], mid, Array.Empty<PlayerHoldRecord>(), withoutHolds: true);
+        Assert.Equal("", midBare.Failure);
+        static string Journeys(string payload) => string.Join("\n", SaveCodec.Read(payload).State!.Citizens.Select(c =>
+            c.Identity.Id + ":" + c.Phase + ":" + c.PlaceId + ":" + c.DepartureMinute.ToString("R", CultureInfo.InvariantCulture)
+            + ":" + c.NextEventMinute.ToString("R", CultureInfo.InvariantCulture) + ":" + c.CompletedJourneys));
+        Assert.NotEqual(Journeys(mid.Payload), Journeys(midBare.Payload));
         // A segment that starts and ends at one checkpoint is that checkpoint.
         Assert.True(HoldReplay.Replay(end, end, Array.Empty<PlayerHoldRecord>()).Equal);
     }
