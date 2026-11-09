@@ -20,11 +20,21 @@ public sealed class HookInventorySourceTests
     /// <summary>Non-Harmony <c>.Patch(</c> calls: the router calling its <see cref="IFoodContractPatcher"/>.</summary>
     private static readonly Dictionary<string, int> RouterPatchCalls = new(StringComparer.Ordinal) { ["Runtime/FoodContractHooks.cs"] = 1 };
 
+    /// <summary>Harmony <c>.Patch(</c> sites whose target is a helper or table parameter, not a literal member. Their targets
+    /// are checked through the helper calls (<c>Patch(typeof(T), "M", ...)</c>) or the food-contract table instead.</summary>
+    private static readonly Dictionary<string, int> IndirectPatchSites = new(StringComparer.Ordinal)
+    {
+        ["Runtime/NativeFoodOwnership.cs"] = 1, ["Runtime/PhysicalTrafficHooks.cs"] = 1, ["Runtime/LoadedCatalogueLifecycleMembers.cs"] = 1,
+    };
+
     private static readonly Regex NewHarmony = new(@"new\s+Harmony\(\s*(?:""(?<literal>[^""]*)""|(?<name>[A-Za-z_]\w*))\s*\)");
     private static readonly Regex PatchCall = new(@"\.Patch\w*\(");
     private static readonly Regex HelperTarget = new(@"(?<![\w.])Patch\(\s*typeof\((?<type>[\w.]+)\)\s*,\s*""(?<method>\w+)""");
     private static readonly Regex TableRow = new(@"new\s+FoodContractHook\(\s*\d+\s*,\s*""\w+""\s*,\s*""(?<type>\w+)""\s*,\s*""(?<method>\w+)""\s*,"
         + @"\s*(?:true|false)\s*,\s*FoodContractHookKind\.\w+(?<parameters>(?:\s*,\s*""[^""]*"")*)\s*\)");
+    private static readonly Regex MemberLookup = new(@"(?:typeof\((?<type>[\w.]+)\)\s*\.\s*GetMethod\(\s*|AccessTools\.Method\(\s*(?:typeof\((?<type>[\w.]+)\)|\w+)\s*,\s*)"
+        + @"(?:""(?<method>\w+)""|nameof\((?<named>[\w.]+)\))");
+    private static readonly Regex AttributePatching = new(@"\[\s*(?:HarmonyLib\.)?HarmonyPatch\b|\bPatchAll\s*\(|\bCreateAndPatchAll\s*\(|\bPatchCategory\s*\(|\bCreateClassProcessor\s*\(");
     private static readonly Regex Quoted = new(@"""([^""]*)""");
     private static readonly Regex FullLineComment = new(@"^\s*//.*$", RegexOptions.Multiline);
 
@@ -55,6 +65,7 @@ public sealed class HookInventorySourceTests
         foreach (var (file, raw) in files.OrderBy(f => f.Key, StringComparer.Ordinal))
         {
             string source = FullLineComment.Replace(raw, "");
+            if (AttributePatching.IsMatch(source)) findings.Add(file + ": attribute or bulk Harmony patching, which the inventory does not track");
             foreach (Match match in NewHarmony.Matches(source))
             {
                 string? owner = match.Groups["literal"].Success ? match.Groups["literal"].Value : Constant(source, match.Groups["name"].Value);
@@ -77,6 +88,19 @@ public sealed class HookInventorySourceTests
                     if (!targets.Any(t => t.Type == type && t.Method == method))
                         findings.Add(file + ": undeclared target " + type + "." + method + " for " + fileOwner.Id);
                 }
+                // Each direct site's first argument, resolved through its local or field assignment, must be a declared target.
+                int indirect = 0;
+                foreach (Match call in PatchCall.Matches(source))
+                {
+                    var target = DirectTarget(source, call.Index + call.Length);
+                    if (target == null) { indirect++; continue; }
+                    var (type, method) = target.Value;
+                    if (!targets.Any(t => t.Method == method && (type == null || t.Type == type)))
+                        findings.Add(file + ": undeclared target " + (type ?? "?") + "." + method + " for " + fileOwner.Id);
+                }
+                IndirectPatchSites.TryGetValue(file, out int allowed);
+                if (indirect != allowed)
+                    findings.Add(file + ": " + indirect + " .Patch( sites with an unresolved target, expected " + allowed);
             }
             else if (!RouterPatchCalls.TryGetValue(file, out int router) || router != calls)
                 findings.Add(file + ": " + calls + " .Patch( call sites in a file with no declared Harmony owner");
@@ -102,6 +126,33 @@ public sealed class HookInventorySourceTests
                     findings.Add(owner.File + ": declared target " + target.Signature + " not found for " + owner.Id);
         }
         return findings;
+    }
+
+    /// <summary>The (type, method) a <c>.Patch(</c> call patches: its first argument, or the expression last assigned to
+    /// that name before the call (else the first after it), counting only assignments that look a member up. Type is null when the source looks the type up at
+    /// run time (Driven Rides). Null when the target is a helper or table parameter.</summary>
+    private static (string? Type, string Method)? DirectTarget(string source, int start)
+    {
+        int depth = 0, end = start;
+        for (; end < source.Length; end++)
+        {
+            char c = source[end];
+            if (c == '(' || c == '[' || c == '{') depth++;
+            else if (c == ')' || c == ']' || c == '}') { if (depth == 0) break; depth--; }
+            else if (c == ',' && depth == 0) break;
+        }
+        string argument = source.Substring(start, end - start).Trim().TrimEnd('!');
+        var lookup = MemberLookup.Match(argument);
+        if (!lookup.Success && Regex.IsMatch(argument, @"^[A-Za-z_]\w*$"))
+        {
+            var assignments = Regex.Matches(source, @"(?<![\w.])" + Regex.Escape(argument) + @"\s*=(?![=>])\s*(?<expr>[^;]*);").Cast<Match>()
+                .Where(a => MemberLookup.IsMatch(a.Groups["expr"].Value)).ToList();
+            var chosen = assignments.LastOrDefault(a => a.Index < start) ?? assignments.FirstOrDefault();
+            if (chosen != null) lookup = MemberLookup.Match(chosen.Groups["expr"].Value);
+        }
+        if (!lookup.Success) return null;
+        string method = lookup.Groups["method"].Success ? lookup.Groups["method"].Value : lookup.Groups["named"].Value.Split('.').Last();
+        return (lookup.Groups["type"].Success ? lookup.Groups["type"].Value.Split('.').Last() : null, method);
     }
 
     private static string? Constant(string source, string name)
@@ -158,6 +209,16 @@ public sealed class HookInventorySourceTests
             "installing.Patch(tick, postfix: new HarmonyMethod(typeof(NativeCityClock), nameof(TickPrefix)));\n                Factor = factor; save = currentSave;")));
         Assert.Equal(new[] { "Runtime/NativeCityClock.cs: 4 .Patch( call sites, inventory declares 3 for " + NativeHookInventory.CityClock }, direct);
 
+        // An existing direct site redirected to an undeclared target: same call count, every declared token still present.
+        var redirected = Check(With("Runtime/NativeCityClock.cs", s => s.Replace("installing.Patch(tick, prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(AccountingPrefix))",
+            "installing.Patch(AccessTools.Method(typeof(GameManager), \"InjectedTarget\"), prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(AccountingPrefix))")));
+        Assert.Equal(new[] { "Runtime/NativeCityClock.cs: undeclared target GameManager.InjectedTarget for " + NativeHookInventory.CityClock }, redirected);
+
+        // The same through a variable: the field assignment is resolved.
+        var variable = Check(With("Runtime/StationaryCrowds.cs", s => s.Replace("AccessTools.Method(typeof(StationaryAiSpawner), \"Spawn\"",
+            "AccessTools.Method(typeof(StationaryAiSpawner), \"InjectedSpawn\"")));
+        Assert.Contains("Runtime/StationaryCrowds.cs: undeclared target StationaryAiSpawner.InjectedSpawn for " + NativeHookInventory.StationaryCrowds, variable);
+
         // A new row in the table-driven food-contract owner.
         var table = Check(With("Runtime/FoodContractHooks.cs", s => s.Replace("FoodContractHookKind.Unattributed),",
             "FoodContractHookKind.Unattributed), new FoodContractHook(23, \"W1\", \"ItemHelper\", \"InjectedTarget\", true, FoodContractHookKind.Quantity, \"Int32\"),")));
@@ -168,11 +229,21 @@ public sealed class HookInventorySourceTests
     public void ARemovedOrMovedDeclarationTurnsTheCheckRed()
     {
         var gone = Check(With("Runtime/NativeCityClock.cs", s => s.Replace("\"CapTick\"", "\"CapTickRenamed\"")));
-        Assert.Equal(new[] { "Runtime/NativeCityClock.cs: declared target Ride.CapTick(Single&) not found for " + NativeHookInventory.CityClock }, gone);
+        Assert.Equal(new[] { "Runtime/NativeCityClock.cs: undeclared target ?.CapTickRenamed for " + NativeHookInventory.CityClock,
+            "Runtime/NativeCityClock.cs: declared target Ride.CapTick(Single&) not found for " + NativeHookInventory.CityClock }, gone);
 
         var moved = Check(With("Runtime/StationaryCrowds.cs", s => s.Replace(NativeHookInventory.StationaryCrowds, "hart.persistentcity.renamed.v1")));
         Assert.Contains("Runtime/StationaryCrowds.cs: undeclared Harmony owner hart.persistentcity.renamed.v1", moved);
         Assert.Contains("Runtime/StationaryCrowds.cs: declared Harmony owner " + NativeHookInventory.StationaryCrowds + " not found", moved);
+    }
+
+    [Fact]
+    public void AttributeOrBulkPatchingTurnsTheCheckRed()
+    {
+        var findings = Check(With("Runtime/InjectedAttributePatch.cs", _ =>
+            "[HarmonyLib.HarmonyPatch(typeof(GameManager), \"RunMainGameTick\")] internal static class Injected { }\n"
+            + "internal static class Installer { internal static void Run() => HarmonyLib.Harmony.CreateAndPatchAll(typeof(Injected)); }"));
+        Assert.Equal(new[] { "Runtime/InjectedAttributePatch.cs: attribute or bulk Harmony patching, which the inventory does not track" }, findings);
     }
 
     /// <summary>The table parser reads the same rows the compiled table holds, so the table arm checks the real list.</summary>
