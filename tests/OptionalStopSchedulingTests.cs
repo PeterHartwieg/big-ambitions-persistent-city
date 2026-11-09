@@ -332,7 +332,7 @@ public sealed class OptionalStopSchedulingTests
             j => j["Citizens"]![0]!["OptionalStop"]!["ResumeEventMinute"] = 1600,
             j => j["Citizens"]![0]!["OptionalStop"]!["Members"] = new JArray("anonymous") })
         { var wire = SaveWire.Parse(source); damage(wire); Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status); }
-        var future = SaveWire.Parse(source); future["Schema"] = CityState.CurrentSchema + 1; Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(future.ToString()).Status);
+        var other = SaveWire.Parse(source); other["Schema"] = CityState.CurrentSchema + 1; Assert.Equal(SaveReadStatus.DevelopmentSchema, DevelopmentChain.Read(other.ToString()).Status);
     }
     [Theory]
     [InlineData(DwellKind.Break)] [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)]

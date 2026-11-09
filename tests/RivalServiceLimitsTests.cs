@@ -54,7 +54,8 @@ public sealed class RivalServiceLimitsTests
         // Existing-stop customers: already inside the rival on an ordinary shop stop for the whole day.
         foreach (var person in state.Citizens.Take(atRival)) { person.PlaceId = "s0"; person.Activity = Activity.Shop; person.Phase = CitizenPhase.AtPlace; }
         state.Food = new FoodCommerceState { RepresentationFactor = representation, ChoiceStartsDay = 1 };
-        DevelopmentChain.RepresentedSchema(state, representation);
+        // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
+        if (representation > 1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var market = new RivalOutflowTests.Market();
         market.Rivals.Add(Rival, new FoodScope { AlternativeKind = FoodAlternativeKind.Rival, BusinessId = Rival, PlaceId = "s0", ProductId = FoodProducts.Croissant });
         market.Observations.Add(Rival, RivalOutflowTests.Observation(Rival, "s0"));
@@ -211,7 +212,7 @@ public sealed class RivalServiceLimitsTests
     public void FullLanesRefuseBeforeAnyDebitAndRecordQueueMemory()
     {
         var settings = Tight(lanes: 1, service: 30);
-        var (city, market, _) = Crowd(24, settings, representation: 2); city.State.Capabilities.Active = true;
+        var (city, market, _) = Crowd(48, settings); city.State.Capabilities.Active = true;
         Run(city, 2880, 5, 4);
         long lane = Counter(city, "RivalLaneRefusals"), settled = Counter(city, "RivalSettlements");
         Assert.True(lane > 0); Assert.True(settled > 0);

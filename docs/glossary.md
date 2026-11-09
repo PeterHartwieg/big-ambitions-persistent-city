@@ -24,7 +24,7 @@ Terms used in plans, checks and code. Each entry names where the term is defined
 
 ## Saves
 
-- **Writer N / schema N.** The save format version the code writes: `CityState.CurrentSchema` in [Core/Model.cs](../Core/Model.cs), now 25, in the `persistentcity:state_v1` key ([Persistence/SaveCodec.cs](../Persistence/SaveCodec.cs)). "Writer 25 unchanged" means a slice changed no saved bytes. Reading reports Missing, Loaded, Invalid or Future (`SaveReadStatus`).
+- **Writer N / schema N.** Historical: development builds numbered the save format 2 to 36, one bump per format change. Since 9 November 2026 the schema `CityState.CurrentSchema` in [Core/Model.cs](../Core/Model.cs) is held at 1 until release and never bumped; the format changes in place ([decision](decisions/2026-11-09-schema-one.md)). Reading reports Missing, Loaded, Invalid or DevelopmentSchema (`SaveReadStatus`).
 - **Epoch.** Two meanings. The *accounting epoch* is one native game minute; every simulation event must finish before native time closes it ([Core/AccountingClock.cs](../Core/AccountingClock.cs), [audit F1 plan](plans/f1-accounting-boundary.md)). The *save epoch* is one save described by the side key `persistentcity:save-epoch_v1`: sequence, schema, minute and each payload's length, or a `failed:N` marker ([Persistence/SaveEpoch.cs](../Persistence/SaveEpoch.cs)).
 
 ## Testing and process

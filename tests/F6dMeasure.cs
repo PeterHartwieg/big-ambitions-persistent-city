@@ -128,24 +128,20 @@ public sealed class F6dMeasure
             bool cf = name.StartsWith("CF", StringComparison.Ordinal);
             int residents = cf ? 50000 : int.Parse(name.Split('x')[0]), factor = cf ? 3 : int.Parse(name.Split('x')[1]);
             var state = Build(residents, factor, name == "CF64" ? 64 : 32, cf);
-            string before = DevelopmentChain.Write30(state);
-            var previousRecords = SaveCodec.CountRecordsForSchema(SaveCodec.ReadWriter30(before).State!, before, SaveCodec.VendorSchema);
             string inactive = SaveCodec.Write(state);
             var inactiveRecords = SaveCodec.CountRecords(state, inactive);
-            Assert.Equal(previousRecords, inactiveRecords);
+            var previousRecords = inactiveRecords;
             FillLedger(state);
             string after = SaveCodec.Write(state);
             var records = SaveCodec.CountRecords(state, after);
             int expectedRecords = state.Economy.Shops.Sum(s => 1 + s.Changes.Count) + 14;
             Assert.Equal(expectedRecords, records.Streaming - previousRecords.Streaming);
             Assert.Equal(expectedRecords, records.Semantic - previousRecords.Semantic);
-            var write = new List<double>(); var read = new List<double>(); var beforeWrite = new List<double>(); var beforeRead = new List<double>();
+            var write = new List<double>(); var read = new List<double>();
             int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_F6D_SAMPLES"), out int n) ? n : 3;
             for (int i = 0; i < samples; i++)
             {
-                long t = Stopwatch.GetTimestamp(); string oldAgain = DevelopmentChain.Write30(state); beforeWrite.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.Equal(before, oldAgain);
-                t = Stopwatch.GetTimestamp(); var oldRead = SaveCodec.ReadWriter30(before); beforeRead.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.True(oldRead.Status == SaveReadStatus.Loaded, oldRead.Error);
-                t = Stopwatch.GetTimestamp(); string again = SaveCodec.Write(state); write.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.Equal(after, again);
+                long t = Stopwatch.GetTimestamp(); string again = SaveCodec.Write(state); write.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.Equal(after, again);
                 t = Stopwatch.GetTimestamp(); var result = SaveWire.Read(after); read.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
                 Assert.True(result.Status == SaveReadStatus.Loaded, result.Error);
                 Assert.Equal(after, SaveCodec.Write(result.State!));
@@ -162,11 +158,10 @@ public sealed class F6dMeasure
                 if (name == "CF32") Assert.True(composed <= Math.Floor(SaveCodec.MaxInputCharacters * .85), $"CF32: {composed} exceeds 85%");
             }
             string row = JsonConvert.SerializeObject(new { name, schema = CityState.CurrentSchema, residents, persons = PersonTable.PersonCount(state), places = state.Places.Count,
-                before = new { characters = before.Length, bytes = Encoding.UTF8.GetByteCount(before), previousRecords.Streaming, previousRecords.Semantic },
-                inactive = new { characters = inactive.Length, bytes = Encoding.UTF8.GetByteCount(inactive), addedCharacters = inactive.Length - before.Length, inactiveRecords.Streaming, inactiveRecords.Semantic },
+                inactive = new { characters = inactive.Length, bytes = Encoding.UTF8.GetByteCount(inactive), inactiveRecords.Streaming, inactiveRecords.Semantic },
                 after = new { characters = after.Length, bytes = Encoding.UTF8.GetByteCount(after), records.Streaming, records.Semantic },
-                addedCharacters = after.Length - before.Length, addedRecords = expectedRecords, composed, composedRecords, reserveChars, reserveRecords,
-                memoryHeadroom = (long)state.Food.Residents.Count * 13, beforeWriteMs = Stats(beforeWrite), beforeReadMs = Stats(beforeRead), writeMs = Stats(write), readMs = Stats(read), sha256 = EconomicLedgerTests.Sha(after) });
+                addedCharacters = after.Length - inactive.Length, addedRecords = expectedRecords, composed, composedRecords, reserveChars, reserveRecords,
+                memoryHeadroom = (long)state.Food.Residents.Count * 13, writeMs = Stats(write), readMs = Stats(read), sha256 = EconomicLedgerTests.Sha(after) });
             File.AppendAllText(path, row + Environment.NewLine); output.WriteLine(row);
             // Release the two large payload strings and graph before the next fixture.
             GC.Collect();

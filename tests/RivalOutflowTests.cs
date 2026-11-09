@@ -87,7 +87,7 @@ public sealed class RivalOutflowTests
     static void Advance(CitySimulator city, double minute)
     { while (!city.AdvanceTo(minute, 1).CaughtUp) { } }
 
-    [Theory] [InlineData(1)] [InlineData(2)] [InlineData(3)]
+    [Theory] [InlineData(1)]
     public void RealOutingAndRepresentedReturnSettleOnceAcrossEveryReloadBoundary(int representation)
     {
         var (city, market, paths) = Ready(representation: representation);

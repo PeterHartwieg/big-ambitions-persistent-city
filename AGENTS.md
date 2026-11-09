@@ -5,7 +5,7 @@ A Big Ambitions mod that keeps a persistent city of residents, journeys and traf
 ## Map
 
 - `Core/`: pure simulation, netstandard2.1, no Unity. `CitySimulator`, `DailyRoutine`, `TrafficKernel`, `FoodCommerce`, `HouseholdFinance`, `PersonIdentity`.
-- `Persistence/`: save codecs and stores. `SaveCodec` (writer `CityState.CurrentSchema` in `Core/Model.cs`), `SaveEpoch`, `FoodSaleReceipts`.
+- `Persistence/`: save codecs and stores. `SaveCodec` (one writer; `CityState.CurrentSchema` in `Core/Model.cs` is held at 1), `SaveEpoch`, `FoodSaleReceipts`.
 - `Runtime/`: Unity and game calls. `PersistentCityMod`, the `PopulationRuntime` partials, `PhysicalPopulation`, `NativeFoodMarket`.
 - `Compatibility/`: the only RLO access. `RloBridge`, `RloIdentityAdapter`.
 - `tests/`: xUnit, `PersistentCity.Tests.csproj`. `tools/`: build, harnesses, `docs-links`.
@@ -20,20 +20,19 @@ Read this file, your plan row and the sections your task lists. Then read the co
 - Write plainly: "implemented" or "verified by rig". One qualification per claim; link evidence instead of restating caveats. Status words: planned, implemented, partial, stopped, verified by rig.
 - Perf gate: mod-work p95 < 5 ms; flag every mod-work spike >= 30 ms; whole-frame timing is reported separately. Take cheap, safe wins and log them with before/after numbers in `docs/perf/<slice>.md`. Every slice has a perf file. In unit tests, wall-clock limits go through `PerfGate.Under` (checked only with `PC_PERF_ASSERTS=1`), never a plain `Assert`.
 - Local tests while working and in fix rounds: build, `python tools/test-focused.py` (the classes in test files you changed; no dotnet lock) and the slice's own new checks. Do not run the full suite: the harness runs it once before merge, and only that run takes the dotnet lock. The `tools/*-regression` suites are not run before release.
-- Schema pins assert the constant your slice relies on (`CityState.PlayerHoldSchema`, say), never `CityState.CurrentSchema`, unless your slice introduces the writer.
 - In-game checks are batched for the next rig run and do not gate merge. List them in your checks file under "In-game checks for the next batched rig", each numbered with setup, steps and expected result.
-- No save migration before release. A new schema refuses older development cities with a distinct "start a new city" status. A change that would need a switch-over day bumps the schema instead. Keep save-epoch safety, strict refusal and the pinned current-writer golden hash.
+- The save schema is held at 1 until release. Never bump it, add a per-feature schema constant, or plan a writer number; change the format in place. This overrides older plan text. A test enforces it. [decision](docs/decisions/2026-11-09-schema-one.md)
 - Slices edit no shared docs. Write only `docs/checks/<slice>.md` and `docs/perf/<slice>.md`. The coordinator updates README and CHECKS after merge. Plans are frozen; later owner decisions go in `docs/decisions/`.
 - Use "Refs #N", not "Fixes #N".
 - Do not change RLO or publish anything upstream. Do not ask about release or Workshop.
 - Implementers do not use the game, the rig, ModsLocal or the bridge.
 
-Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.md); [agent speed, 9 Nov 2026](docs/decisions/2026-11-09-agent-speed.md) (tests, pins, reading).
+Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.md); [agent speed, 9 Nov 2026](docs/decisions/2026-11-09-agent-speed.md) (tests, reading); [schema held at 1, 9 Nov 2026](docs/decisions/2026-11-09-schema-one.md).
 
 ## Safety rules
 
 - Core is pure C# on netstandard2.1. Unity and game calls stay in Runtime. RLO access stays behind Compatibility: validate its contract, refuse to start on incompatible data, never silently make replacement identities.
-- Own state uses a versioned `persistentcity` namespace. Reject unreadable or future schemas without overwriting them.
+- Own state uses a versioned `persistentcity` namespace. Reject unreadable data and any schema number other than 1 without overwriting it.
 - Reuse stable IDs and persist assignments. No identity change on pool reuse, reload, camera movement or a different update cadence.
 - No game DLLs, decompiled code, raw save files or credentials in Git. Reference local assemblies in place.
 - Tests check invariants and interrupted journeys, not repeated formulas. Report offline checks separately from game evidence.

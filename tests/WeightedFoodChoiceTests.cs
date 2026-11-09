@@ -49,10 +49,11 @@ public sealed class WeightedFoodChoiceTests
         var person=state.Citizens.Single(); person.NextEventMinute=person.ActivityUntilMinute=2870;
         person.Preferences.WalkingToleranceMetres=5;
         state.Food=new FoodCommerceState {MealRhythmVersion=threeMeals?MealRhythm.PolicyVersion:0,RepresentationFactor=representation,ChoiceStartsDay=active?1:2, Shops=places.Skip(1).Select((p,i)=>new FoodScope {PlaceId=p.Id,BusinessId="b"+i,ProductId=FoodProducts.Croissant}).ToList()};
-        DevelopmentChain.RepresentedSchema(state,representation);
         var market=new Market {Shops=state.Food.Shops.Select(s=>new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,MealsPerHour=60,
             Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
             Offers=new(){new FoodOffer {ProductId=FoodProducts.Croissant,Price=Money.FromCents(100),Units=100}}}).ToArray()};
+        // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
+        if(representation>1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var planner=new Planner(); var city=new CitySimulator(state,planner);city.AttachFoodMarket(market);
         state.Food.ChoiceStartsDay=active?1:2;
         return (city,market,planner);
@@ -75,12 +76,6 @@ public sealed class WeightedFoodChoiceTests
 
     private static CitySimulator Reload(CitySimulator city,Market market,Planner planner)
     {
-        if(city.State.Schema==DevelopmentChain.Represented)
-        {
-            // The frozen writer-26 represented city: the product session refuses it, the frozen chain round-trips it.
-            var frozen=DevelopmentChain.Read(DevelopmentChain.Write(city.State));Assert.True(frozen.Status==SaveReadStatus.Loaded,frozen.Error);
-            var again=new CitySimulator(frozen.State!,planner);again.AttachFoodMarket(market);return again;
-        }
         var data=new Dictionary<string,string>();
         var session=SaveSession.Open(data,city.State.PopulationKey);
         var write=session.WriteTo(data,city.State);Assert.True(write.Success,write.Error);
@@ -210,19 +205,6 @@ public sealed class WeightedFoodChoiceTests
             else {bought++;Assert.Equal(MealStatus.Travelling,m.Status);}
         }
         Assert.True(household>0);Assert.True(bought>0);
-    }
-
-    [Fact]
-    public void RepresentedPathUsesIndependentTraitsAndSamePolicyAndReloads()
-    {
-        var (city,market,planner)=Ready(23,12,representation:3);
-        var traces=new List<FoodDecisionTrace>();city.FoodDecisionObserved+=traces.Add;
-        double until=city.State.Food!.Residents.Max(m=>m.DesiredAt)+10;
-        while(!city.AdvanceTo(until,1).CaughtUp) {}
-        Assert.Equal(3,traces.Count);Assert.All(traces,t=>Assert.NotNull(t.Decision));
-        Assert.All(traces,t=>Assert.InRange(t.RouteCalls,0,16));Assert.Equal(3,market.Orders.Count);
-        string saved=DevelopmentChain.Write(city.State);city=Reload(city,market,planner);Assert.Equal(saved,DevelopmentChain.Write(city.State));
-        while(!city.AdvanceTo(until+10,1).CaughtUp) {}Assert.Equal(3,market.Orders.Count);
     }
 
     [Fact]

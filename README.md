@@ -16,13 +16,14 @@ Details and limitations: [docs/behaviour.md](docs/behaviour.md). Terms: [docs/gl
 | Folder | Role |
 | --- | --- |
 | `Core/` | Pure C# simulation (netstandard2.1): population, routines, traffic, food demand, money |
-| `Persistence/` | Save codecs and stores; the writer schema is `CityState.CurrentSchema` |
+| `Persistence/` | Save codecs and stores; the schema `CityState.CurrentSchema` is held at 1 |
 | `Runtime/` | Unity and game integration, Harmony hooks, physical bodies, native food market |
 | `Compatibility/` | The only access to RLO |
 | `tests/` | xUnit tests (`PersistentCity.Tests.csproj`) |
 | `tools/` | Build script, harnesses and measurement tools |
 
-Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`). Cities from an older development schema are refused with a "start a new city" status, not migrated; future or invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
+Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`), which is held at 1 until release. Cities from an older development schema are refused with a "start a new city" status, not migrated; future or invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
+Superseded for schema numbers on 9 November 2026: the schema is held at 1 and never bumped before release ([decision](docs/decisions/2026-11-09-schema-one.md)).
 
 ## Build and test
 

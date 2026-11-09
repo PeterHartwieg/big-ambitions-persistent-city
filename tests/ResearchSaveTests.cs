@@ -125,22 +125,6 @@ public sealed class ResearchSaveTests
     private static JArray Closed(JArray research) => (JArray)research[4];
     private static JArray Cells(JToken order) => (JArray)((JArray)order[13]!)[6]!;
 
-    // ---- Schema ----
-
-    [Fact]
-    public void ResearchTakesTheNextFreeWriterAndOlderWritersOmitTheSection()
-    {
-        Assert.Equal(SaveCodec.WorkplaceCapacitySchema + 1, SaveCodec.ResearchSchema);
-        // E6c: writer 29 is now the frozen C5c writer; the vendor writer keeps the research section.
-        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
-        Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
-        var city = City(AllStates());
-        Assert.Contains("\"Research\":[", SaveWire.Text(city));
-        Assert.Contains("\"Research\":[", DevelopmentChain.Write29(city));
-        Assert.DoesNotContain("Research", DevelopmentChain.Write28(city));
-        Assert.DoesNotContain("Research", DevelopmentChain.Write27(city));
-    }
-
     [Fact]
     public void AFreshCityHasAnEmptyLedger()
     {
@@ -360,62 +344,38 @@ public sealed class ResearchSaveTests
 
     // ---- Older development cities ----
 
-    /// <summary>A writer-28 city (the frozen F5e writer, without the section) is refused with the "start a new city"
-    /// status through codec, store, session and the early probe, and every key is kept. The frozen reader still decodes
-    /// it, so the refusal is the schema, not damage. Adding a research section does not make it readable.</summary>
+    /// <summary>A city with another schema number is refused with the "start a new city" status through codec, store,
+    /// session and the early probe, and every key is kept.</summary>
     [Fact]
     public void AnOlderDevelopmentCityIsRefusedWithTheStartANewCityStatusAndKept()
     {
         var city = City(AllStates());
-        string payload = DevelopmentChain.Write28(city);
-        Assert.Contains("\"Schema\":" + SaveCodec.WorkplaceCapacitySchema + ",", payload);
-        var read = SaveWire.Read(payload);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Equal(SaveCodec.WorkplaceCapacitySchema, read.SourceSchema);
-        Assert.Contains("start a new city", read.Error);
-        RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
-        Assert.Equal(SaveCodec.WorkplaceCapacitySchema, SaveCodec.DevelopmentSchemaOf(payload));
-        DevelopmentChain.RequireRefusedCapabilities(payload);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter28(payload).Status);
-        // A current payload relabelled as the older schema is still a development city, never read as current.
-        string relabelled = SaveWire.Text(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + SaveCodec.WorkplaceCapacitySchema + ",");
-        RefusedAndPreserved(relabelled, SaveReadStatus.DevelopmentSchema, "start a new city");
-        // The frozen writer-28 reader refuses the section it never had.
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.ReadWriter28(relabelled).Status);
-        // A future label is refused as future and kept.
-        RefusedAndPreserved(SaveWire.Text(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + (CityState.CurrentSchema + 1) + ","), SaveReadStatus.Future);
-    }
-
-    private static string WriterFolder => Path.Combine(AppContext.BaseDirectory, "Writer" + SaveCodec.ResearchSchema.ToString(CultureInfo.InvariantCulture));
-
-    /// <summary>Reader-corpus entry: frozen writer-28 bytes written once and never regenerated. The current reader
-    /// refuses them as an older development city and keeps them byte for byte.</summary>
-    [Fact]
-    public void TheFrozenWriter28CorpusPayloadIsRefusedAndKept()
-    {
-        var manifest = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
-        var entry = (JObject)manifest["refusedOlder"]!;
-        string payload = File.ReadAllText(Path.Combine(WriterFolder, (string)entry["file"]!));
-        Assert.Equal((string)entry["sha256"]!, Sha(payload));
-        Assert.Equal((int)entry["schema"]!, SaveCodec.DevelopmentSchemaOf(payload));
-        RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter28(payload).Status);
+        // Older development builds wrote 2 to 36; the research section does not make any of them readable.
+        foreach (int older in new[] { 28, 36, 37 })
+        {
+            string payload = SaveWire.Text(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + older + ",");
+            var read = SaveWire.Read(payload);
+            Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Equal(older, read.SourceSchema);
+            Assert.Contains("start a new city", read.Error);
+            RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
+            Assert.Equal(older, SaveCodec.DevelopmentSchemaOf(payload));
+            DevelopmentChain.RequireRefusedCapabilities(payload);
+        }
     }
 
     // ---- Golden writer ----
 
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
-        ("current-schema-minimal", () => City()),
         ("research-all-states", () => City(AllStates())),
         ("research-at-bounds", () => City(AtBounds())),
         ("banded-visitors-factor2-30h-research", BandedCity),
     };
 
-    /// <summary>F5e's banded visitor city after 30 hours (its writer-28 golden fixture), holding every research state.</summary>
+    /// <summary>F5e's banded visitor city after 30 hours, holding every research state.</summary>
     private static CityState BandedCity()
     {
-        var (state, market) = Schema28Tests.Fresh();
-        state.Schema = SaveCodec.ResearchSchema;
+        var (state, market) = WorkplaceCapacityTests.Fresh();
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         city.AttachFoodMarket(market);
         double target = state.Minute + 30 * 60;
@@ -424,32 +384,25 @@ public sealed class ResearchSaveTests
         return city.State;
     }
 
-    /// <summary>The research writer's bytes. A shape change without a schema bump fails here; a bump adds a new pin file.
-    /// E6c: writer 29 is now the frozen C5c writer (before the vendor table). F6i repins only the simulated
-    /// banded fixture for anchored food choice; static research pins and frozen-reader round trips stay intact.</summary>
-    [Fact]
-    public void GoldenResearchWriterBytesArePinned()
+    /// <summary>The writer's golden for each research fixture, re-pinned once by X3 at the held schema 1. A deliberate
+    /// format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
+    [Theory]
+    [InlineData("research-all-states", "a9e01641ed91c38b1fb0bbf8b6386f217061bf52a9d695b0e151d197d2bec2da", 8288)]
+    [InlineData("research-at-bounds", "70bb329242e0e4fe8b3c0e892e273ebad0e93934e2d7f8d1c77fd293a9fe6fe7", 25721)]
+    [InlineData("banded-visitors-factor2-30h-research", "0d3d1fcf35748e4ab37faf83fd4fc236c5385364b91d70ec25a27ba5bfffb640", 92091)]
+    public void GoldenResearchWriterBytesArePinned(string name, string sha256, int characters)
     {
-        var pins = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
-        Assert.Equal(SaveCodec.ResearchSchema, (int)pins["writer"]!);
-        var actual = new List<string>(); var expected = new List<string>();
-        foreach (var (name, build) in GoldenFixtures())
-        {
-            string payload = DevelopmentChain.Write29(build());
-            Assert.Contains("\"Schema\":" + SaveCodec.ResearchSchema + ",", payload);
-            actual.Add(name + " " + Sha(payload) + " " + payload.Length);
-            var pin = pins["fixtures"]![name];
-            expected.Add(name + " " + (string?)pin?["sha256"] + " " + (int?)pin?["characters"]);
-            var read = SaveCodec.ReadWriter29(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, SaveCodec.WriteForSchema(read.State!, SaveCodec.ResearchSchema));
-        }
-        Assert.True(expected.SequenceEqual(actual), string.Join("; ", actual));
+        string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string actual = Sha(payload) + " " + payload.Length;
+        Assert.True(sha256 + " " + characters == actual, "golden " + name + ": " + actual);
     }
 
     [Fact]
     public void GoldenFixturesAreDeterministic()
     {
-        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(DevelopmentChain.Write29(build()), DevelopmentChain.Write29(build()));
+        foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
     }
 
     /// <summary>The codec's cell table is C4's: every tier's engine report has exactly that layout and length.</summary>

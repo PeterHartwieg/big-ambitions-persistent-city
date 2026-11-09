@@ -1,16 +1,16 @@
-# Persistent City save format: writer 26
+# Persistent City save format
 
-This page describes the population payload written by the current build (schema 26, F5c-lite, #92). Older schemas are not described here: a build that writes 26 refuses them (see *Refusals*).
+This page describes the population payload. The save schema is held at 1 until release ([decision](decisions/2026-11-09-schema-one.md)): the format changes in place and the number stays 1. The field tables below were written for the F5c-lite person shape (#92); later slices extended the format without a new number. Payloads with any other schema number are refused (see *Refusals*).
 
 ## Keys
 
-The payload is one JSON string in the native save's `modData` under `persistentcity:state_v1` (`SaveCodec.StateKey`). The same `modData` also carries the save-epoch marker `persistentcity:save-epoch_v1` (F7b; its `schema=` line reads `26`), the food authority manifest `persistentcity:food-authority-v1`, food sale receipts and, after a failure, `persistentcity:accounting-stop_v1`. The format of those keys does not change in writer 26.
+The payload is one JSON string in the native save's `modData` under `persistentcity:state_v1` (`SaveCodec.StateKey`). The same `modData` also carries the save-epoch marker `persistentcity:save-epoch_v1` (F7b; its `schema=` line reads `1`), the food authority manifest `persistentcity:food-authority-v1`, food sale receipts and, after a failure, `persistentcity:accounting-stop_v1`. The person shape did not change the format of those keys.
 
 ## Shape
 
 The root is one JSON object. `Schema`, `Capabilities` and `MenuPolicy` come first so the native authority bootstrap can stop before the population graph; the remaining fields are in ordinal name order. Every field is required, unknown and duplicate fields are refused, numbers and money are canonical, and strings are exact.
 
-Writer 26 adds the person shape to the writer-25 fields:
+The person shape adds these root fields:
 
 | Field | Meaning |
 | --- | --- |
@@ -70,9 +70,8 @@ The other limits are unchanged from writer 25. Nothing is truncated: a payload o
 `SaveCodec.Read` returns:
 
 - `Missing`: no payload.
-- `Loaded`: a valid schema-26 city.
-- `Future`: a newer schema.
-- `DevelopmentSchema`: schemas 1–25, written by older development builds. Message: "This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged." There is no migration.
+- `Loaded`: a valid schema-1 city.
+- `DevelopmentSchema`: any other schema number (older development builds wrote 2–36). Message: "This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged." There is no migration.
 - `Invalid`: anything else that is malformed, over a bound or inconsistent.
 
 Every status except `Missing` and `Loaded` keeps the stored payload and every other `modData` key. The store and session refuse to replace it. For a `DevelopmentSchema` city, Runtime takes no food authority and writes no key. A shop whose saved manifest owned the loaded hour stays protected until that hour ends, then gets native customers again (`FoodAuthorityStandDown`).

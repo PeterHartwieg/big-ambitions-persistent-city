@@ -58,9 +58,9 @@ public static class RepresentativeFixture
 
     /// <summary>Replay bounded slices until caught up; slicing never depends on wall-clock time,
     /// and the saved bytes do not depend on <paramref name="eventsPerSlice"/>.</summary>
-    public static Replay Build(int residents, int seed = Seed, double target = TargetMinute, int eventsPerSlice = 1, int? schema = null)
+    public static Replay Build(int residents, int seed = Seed, double target = TargetMinute, int eventsPerSlice = 1)
     {
-        var state = EconomyScenario.Create(residents, seed); state.Food = EconomyScenario.Food(); state.Schema = schema ?? state.Schema;
+        var state = EconomyScenario.Create(residents, seed); state.Food = EconomyScenario.Food();
         // F5d: two subway portals, so the factor-2 roster creates one visitor per resident on its own routine.
         PortalPlaces.Add(state, Portals);
         var routes = new Routes(); var market = new Market();

@@ -18,7 +18,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city,_)=S17_Full(); string source=DevelopmentChain.Write(city.State);
         Assert.Contains("\"MenuPolicy\":",source);
-        DevelopmentChain.ProbeCapabilities(source);
+        SaveCodec.RequireExecutableCapabilities(source);
         var loaded=DevelopmentChain.Read(source); Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
         Assert.Equal(source,DevelopmentChain.Write(loaded.State!));
         foreach(var value in new[]{JValue.CreateNull(),new JValue("2|unknown"),new JValue(1)})

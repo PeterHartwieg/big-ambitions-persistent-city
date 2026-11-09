@@ -244,25 +244,19 @@ public sealed class FoodBudgetBatchTests
     [InlineData(1914)] [InlineData(10000)] [InlineData(100000)]
     public void SupportedAndStressSizesBoundEveryPostingCallAndKeepTheClockHeld(int consumers)
     {
-        // A represented roster (slot 1 on its host's day) is the frozen writer-26 shape.
-        var state = new CityState { Seed = 7, Minute = 1440, Schema = DevelopmentChain.Represented, Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
-        state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = consumers / 2 });
-        for (int i = 0; i < consumers / 2; i++)
+        // One own roster record per resident.
+        var state = new CityState { Seed = 7, Minute = 1440, Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
+        state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = consumers });
+        for (int i = 0; i < consumers; i++)
         {
             var citizen = new CitizenState { Identity = new CitizenIdentity { Id = "r" + i, Age = 22, Persona = Persona.Student },
                 HomeId = "home", PlaceId = "home", NextEventMinute = 1e8, ActivityUntilMinute = 1e8 };
             state.Citizens.Add(citizen);
-            for (int slot = 0; slot < 2; slot++)
-            {
-                string id = FoodRepresentation.ConsumerId(citizen.Identity.Id, slot);
-                // Schema 26: each record is its own person's; slot 1 is a represented visitor on its host's day.
-                var meal = new ResidentMeal { ResidentId = id, AnchorId = id, Slot = 0,
-                    DueAt = 1e8, Budget = HouseholdFinance.Create(citizen, 7, 1440, null, id) };
-                meal.AssignHost(citizen.Identity.Id, slot); state.Food.Residents.Add(meal);
-                if (slot > 0) PersonTable.AddRepresentedVisitor(state, id);
-            }
+            string id = citizen.Identity.Id;
+            var meal = new ResidentMeal { ResidentId = id, AnchorId = id, Slot = 0,
+                DueAt = 1e8, Budget = HouseholdFinance.Create(citizen, 7, 1440, null, id) };
+            meal.AssignHost(id, 0); state.Food.Residents.Add(meal);
         }
-        PersonTable.OrderVisitors(state);
         var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new TracingMarket());
         var food = Food(city); int calls = 0;
         do

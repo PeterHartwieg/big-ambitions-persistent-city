@@ -54,7 +54,7 @@ public sealed class F6eMeasure
         }
         Report("shift settlement", times, allocated); Assert.Equal(0, allocated);
         foreach (int count in new[] { 100000, 10000, 1914 })
-            foreach (bool attendance in new[] { false, true }) Posting(count, attendance);
+            Posting(count);
         // Fresh F5 per-person cities, including factor-2 visitors, in the unchanged F6d/F7c shape.
         foreach (int count in new[] { 957, 5000, 50000 })
         {
@@ -75,9 +75,9 @@ public sealed class F6eMeasure
             Report($"fresh {count}x2 read", read, -1);
         }
     }
-    private void Posting(int count, bool attendance)
+    private void Posting(int count)
     {
-        var state = new CityState { Minute = 1440, Seed = 7, Schema = attendance ? CityState.CurrentSchema : CityState.EconomicLedgerSchema,
+        var state = new CityState { Minute = 1440, Seed = 7,
             Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
         state.Places.Add(new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = count });
         for (int i = 0; i < count; i++)
@@ -104,7 +104,7 @@ public sealed class F6eMeasure
                 if (day > 50) { samples.Add(elapsed); allocation += used; }
             }
         }
-        Report($"posting {count} attendance={attendance}", samples.ToArray(), allocation);
+        Report($"posting {count}", samples.ToArray(), allocation);
         Assert.Equal(0, allocation);
     }
 }

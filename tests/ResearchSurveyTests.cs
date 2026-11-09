@@ -84,7 +84,9 @@ public sealed class ResearchSurveyTests
     {
         var state = EconomyScenario.Create(residents, seed);
         if (unemployedEvery > 0) for (int i = 0; i < state.Citizens.Count; i += unemployedEvery) state.Citizens[i].DayPlaceId = "";
-        state.Food = EconomyScenario.Food(); DevelopmentChain.RepresentedSchema(state, state.Food.RepresentationFactor);
+        state.Food = EconomyScenario.Food();
+        // The scenario's second consumer per resident is a visitor person; visitors arrive through a portal.
+        PortalPlaces.Add(state, VisitorRoutineTests.Stations);
         var run = new Run();
         if (routes != null) run.Routes = routes;
         run.City = new CitySimulator(state, run.Routes);
@@ -285,7 +287,7 @@ public sealed class ResearchSurveyTests
                 var request = planner.Seen[planner.Seen.Count - 1];
                 // A probe is a detached resident with a cloned identity; event working copies share the live one.
                 if (request.Citizen != null && !run.City.State.Citizens.Any(c => ReferenceEquals(c.Identity, request.Citizen.Identity))
-                    && run.City.State.Citizens.Single(c => c.Identity.Id == request.Citizen.Identity.Id).DayPlaceId.Length == 0
+                    && run.City.State.Citizens.SingleOrDefault(c => c.Identity.Id == request.Citizen.Identity.Id) is { } probed && probed.DayPlaceId.Length == 0
                     && run.City.State.Minute >= Noon)
                     return (run, request.Citizen.Identity.Id);
                 run.City.ContinuePlanning(0);
@@ -355,8 +357,8 @@ public sealed class ResearchSurveyTests
         var roster = run.City.State.Food.Residents;
         var anchor = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Commuter);
         anchor.Traits = null;
-        // Schema 26: a represented consumer's record is its own (Slot 0); its host slot marks it represented.
-        roster.First(m => m.HostSlot > 0 && m.HostId != anchor.Identity.Id).RepresentedTraits = null;
+        // A visitor person's record carries its own traits.
+        roster.First(m => run.City.State.Visitors.Any(v => v.Id == m.ResidentId)).RepresentedTraits = null;
         var lost = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Foodie && c.DayPlaceId.Length > 0);
         lost.DayPlaceId = "demolished-workplace";
         run.City.AttachResearch(new ResearchLedger());
@@ -371,11 +373,11 @@ public sealed class ResearchSurveyTests
         Assert.Equal(consumers, Cell(order, MarketResearchMetric.HouseholdFood, MarketResearchBand.Unknown));
         Assert.Equal(0, Cell(order, MarketResearchMetric.HouseholdFood, MarketResearchBand.Funded));
         Assert.Equal(consumers, Cell(order, MarketResearchMetric.DiscretionaryBudget, MarketResearchBand.Unknown));
-        // The anchor's own slot and one represented slot.
+        // The resident without traits and the visitor without traits.
         Assert.Equal(2, Cell(order, MarketResearchMetric.TraitsUnknown, MarketResearchBand.Unknown));
         Assert.Null(Cell(order, MarketResearchMetric.CroissantTaste, MarketResearchBand.Neutral));
-        // Both consumers of the resident whose workplace is gone.
-        Assert.Equal(2, Cell(order, MarketResearchMetric.UsualLocationUnknown));
+        // The resident whose workplace is gone (visitors are their own persons, not its consumers).
+        Assert.Equal(1, Cell(order, MarketResearchMetric.UsualLocationUnknown));
 
         var known = Start(); Catch(known.City, Noon);
         known.City.AttachResearch(new ResearchLedger());

@@ -51,50 +51,35 @@ public sealed class AttendanceWageTests
         var loaded = new CitySimulator(read.State!, routes); loaded.AttachFoodMarket(new Market()); return loaded;
     }
 
-    [Fact]
-    public void NextFreeWriterRefusesInactiveLedgerCityWithoutOverwritingAnything()
-    {
-        Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.AttendanceSchema);
-        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
-        var state = Fresh().State;
-        string old = DevelopmentChain.WriteLedger(state);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadLedgerWriter(old).Status);
-        EconomicLedgerTests.Refused(old, SaveReadStatus.DevelopmentSchema);
-        Assert.Contains("start a new city", SaveWire.Read(old).Error);
-        Assert.DoesNotContain("WageStartsDay", SaveCodec.Write(state));
-    }
+    /// <summary>The golden of <see cref="Fresh"/>(42) after 1,440 + 1,100 minutes, also pinned with the ordinary policy attached.</summary>
+    internal const string Pin42 = "f33eb94a3f6e2c328803b448025a55d11115a2183da5b9906c5ca14ab0fe8003";
 
     [Theory]
-    [InlineData(42, "23d2928c71a4a954255154702a93deca1e63b53249fd9332813a1c7ee762082e")]
-    [InlineData(9217, "740633f8901ec37c6bd08f8e509fc9dbe7d9d3b39f32b2de886eb038839fdea9")]
+    [InlineData(42, Pin42)]
+    [InlineData(9217, "cd05c575f4d070fa770fe7485d844759f123a031720b81024f0cf1feb2052d69")]
     public void FreshWriterGoldenAndSnapshotArePinned(int seed, string pin)
     {
         var city = Fresh(seed); Advance(city, 1440 + 1100);
         string payload = SaveCodec.Write(city.State);
         Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(city.State)));
         output.WriteLine($"golden {seed}: {EconomicLedgerTests.Sha(payload)} {payload.Length}");
-        Assert.Equal(pin, EconomicLedgerTests.Sha(DevelopmentChain.WriteAttendance(city.State)));
+        Assert.True(pin == EconomicLedgerTests.Sha(payload), "golden " + seed + ": " + EconomicLedgerTests.Sha(payload));
         Reload(city, new Routes());
     }
 
     [Fact]
-    public void FullAttendanceWeeklyTraceMatchesTheOldSevenDailyCreditsWithinOneExactUnit()
+    public void FullAttendanceWeekEarnsSevenBaseDailyIncomesWithinOneExactUnit()
     {
         var city = Fresh(); var p = city.State.Citizens[0]; var b = Budget(city);
         long expected = 7 * Money.FromCents(b.BaseIncomeCents).Units;
-        var predecessor = Fresh(); predecessor.State.Schema = CityState.EconomicLedgerSchema;
-        predecessor = predecessor.RebuildRoutes(new Routes());
         for (int day = 1; day <= 7; day++)
         {
             Advance(city, (day + 1) * 1440 - .001);
-            Advance(predecessor, (day + 1) * 1440 - .001);
-            long oldDaily = Budget(predecessor).IncomeReceived.Units;
             Assert.Equal(Money.Zero, b.IncomeReceived);
             Assert.True(HouseholdFinance.CashConserved(b));
-            output.WriteLine($"day {day}: old daily cumulative={oldDaily}; shift income={b.Ledger.EmploymentIncome.Units}; attended={p.Accrual.AttendedMinutes}");
+            output.WriteLine($"day {day}: shift income={b.Ledger.EmploymentIncome.Units}; attended={p.Accrual.AttendedMinutes}");
         }
-        Assert.Equal(expected, Budget(predecessor).IncomeReceived.Units);
-        Assert.InRange(Math.Abs(Budget(predecessor).IncomeReceived.Units - b.Ledger.EmploymentIncome.Units), 0, 1);
+        Assert.InRange(Math.Abs(expected - b.Ledger.EmploymentIncome.Units), 0, 1);
         Assert.Equal(0, p.Accrual.MissMask);
     }
 

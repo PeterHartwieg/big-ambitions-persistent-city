@@ -14,9 +14,9 @@ public sealed class CurrentSchemaOnlyTests
         new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2 } },
         "current-development", "0.41.1", 42, 0);
 
-    /// <summary>Every schema from 1 to the newest older writer: X1 removed the pre-26 reader chain, and this keeps each one
-    /// a DevelopmentSchema refusal.</summary>
-    public static IEnumerable<object[]> OldDevelopmentSchemas() => Enumerable.Range(1, SaveCodec.LatestDevelopmentSchema).Select(s => new object[] { s });
+    /// <summary>The schema is held at 1 until release: older development builds wrote 2 to 36, and every other number is
+    /// a DevelopmentSchema refusal (no migration).</summary>
+    public static IEnumerable<object[]> OldDevelopmentSchemas() => new[] { 0, 2, 12, 25, 26, 35, 36, 37 }.Select(s => new object[] { s });
 
     [Theory]
     [MemberData(nameof(OldDevelopmentSchemas))]

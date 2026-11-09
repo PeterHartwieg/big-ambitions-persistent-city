@@ -295,11 +295,10 @@ public sealed class PresentationGridTests
         Assert.Contains(visitor, placed.Grid.Query(new Position(10, 0, 10), 0, new List<CitizenState>()));
     }
 
-    // Derived only: querying the grid never changes saved state, identity or money; the writer schema is unchanged.
+    // Derived only: querying the grid never changes saved state, identity or money.
     [Fact]
     public void GridHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
         var plain = Spread(160); var probed = Spread(160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         var output = new List<CitizenState>();
