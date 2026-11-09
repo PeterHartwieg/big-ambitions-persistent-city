@@ -1,0 +1,78 @@
+Status: implemented (offline); not verified by rig
+
+# F4c: presentation trace and stall attribution, 9 November 2026
+
+Refs [#91](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/91). Branch `codex/pc-f4c-present-attribution` from `origin/codex/persistent-city` at `c8c6a3a` (F4a #178, writer **36** after E5b4 #180). Scope: the F4c row of [the F4 plan](../plans/f4-perf-gate.md#4-slice-breakdown), with Decisions 6 and 7 as its spec. [Perf](../perf/f4c.md).
+
+F4c adds tools and tests only. No Core, Persistence or Runtime file changes. Writer 36 and the pinned current-writer golden hash are untouched. No schema change and no migration. All results below are offline; none is game evidence.
+
+## What is implemented
+
+All in `tools/perf-gate/`:
+
+- **`present.py`** (Decision 6): reads a PresentMon-class CSV with 1.x or 2.x column names. Time comes from `CPUStartQPC`/`TimeInQPC` (needs the QPC frequency) or `TimeInSeconds`/`CPUStartTime`. Each present gets: displayed or not (`Dropped`, else `MsUntilDisplayed`/`DisplayedTime`, else `MsBetweenDisplayChange`), the interval between displayed frames (`MsBetweenDisplayChange`, else the gap since the previous displayed present), GPU busy (`MsGPUBusy`/`msGPUActive`), CPU busy (`MsCPUBusy`) and CPU wait (`MsCPUWait`). A missing column gives `None`, reported as `unknown`. Optional filters: process ID, application. A frame is called `gpu`-bound when GPU busy is ≥ 80 % of its presented interval, otherwise `cpu`-bound. Without GPU busy it is `unknown`.
+- **QPC join** (`present.estimate_offset`, `present.join`): the probe's frame rows carry the frame-start QPC and the whole-frame interval (F4b's `qpc`, `whole_frame_ms` and `status.stopwatch_frequency`). Candidate clock offsets pair the longest probe frames with present-to-present gaps of similar length. Only intervals ≥ 2 × the median frame count as anchors. A candidate must place at least 3 of those long gaps, and at least half of them, on frames of similar length. The offset is then refined in quarter-frame steps (±3 frames) on the first 10,000 frames by the agreement of joined gaps with frame intervals. A one-frame misalignment still joins almost every frame, so the join count alone cannot decide the offset. A QPC trace without enough long anchors uses 0 as the hint and is still refined. A seconds trace without anchors is refused. Each frame then takes the present nearest its end, within half a frame, at most one each way. A present missing from the trace leaves its frame unjoined. A dropped present stays joined, has no presented interval, and the next displayed interval spans the gap.
+- **`attribute.py`** (Decision 7, P1–P4 inputs): `python tools/perf-gate/attribute.py <export.json> [--trace <csv>] [--trace-for <window>=<csv>]... [--qpc-frequency N] [--process-id P] [--player-log <Player.log>]... --export-out <enriched.json> --json-out <attribution.json> --md-out <attribution.md>`. It writes a copy of the export and leaves the input unchanged. Each joined window gets:
+  - `presented_ms`: displayed intervals closing on clean frames (not warm-up, not diagnostic), the series F4a's P1, P2 and P4 read;
+  - `stall_classes`: the classes of each presented interval ≥ 50 ms, keyed by its index, which F4a's P3 reads;
+  - `whole_frame_stall_classes`: classes of each clean probe frame with whole-frame ≥ 50 ms, keyed by frame number;
+  - `presentation`: offset and its source, clock, joined / clean frames, trace coverage, intervals, GPU busy and CPU wait `reported` or `unknown`, bound counts, and `established` (trace covers the window and ≥ 99 % of clean frames joined, G3);
+  - `receipts.presentation_trace`: filled `pass`/`fail` from `established` when the rig left it empty. A rig `pass` becomes `fail` when the join is not established. A rig `fail` is never raised to `pass`.
+
+  The attribution report lists every stall with its classes and evidence, every unattributed stall as open evidence (window, kind, frame, interval, game minute, condition), the M2 frames with their advancement fields, and RLO lines that matched no unique frame.
+- **RLO frame-diagnostic lines**: the parser reads RLO's `Session: a frame of N ms; ...; where it went: <phase> N ms, ...; the processor: ...; the collector: ...; the game: ...` line, in the format of the 9 November excerpt in PR #170's `wholeframe-traces.json`. Phase names were checked read-only against the installed RLO DLL's strings. A line comes from `rlo_lines` in an export window (string or `{line, frame | first_frame, last_frame}`) or from `--player-log`. The line has no frame number, so it attaches to a frame given explicitly or to the one clean frame whose whole-frame time is within max(1.5 ms, 2 %) of `N`, inside the optional range. A line matching two frames attaches to neither.
+- **F4a hook** (`analyze.py`, 3 lines in `stalls_of`): the analyzer's stall table reads `whole_frame_stall_classes` for whole-frame stalls instead of always printing `unclassified (F4c)`. P1–P4 needed no analyzer change, because F4a already reads `presented_ms` and `stall_classes`.
+- **`fixtures/present/`**: `synthetic_trace.py` (probe frames plus a PresentMon 1.x/2.x CSV with offset, missing and dropped presents, stalls, union and GPU/CPU fields, and the 7-hour timing session), `presentmon2-sample.csv`, `presentmon1-sample.csv`, `rlo-frame-lines.txt` (the 9 November excerpt, a LateUpdate/UpdateCanvasRectTransform frame, a loading/saving/scene frame with a collection, a present-wait frame, and a line that is not a frame diagnostic).
+
+### Classifier rules
+
+Excess = interval − baseline. The baseline is the matched reference window's p50 (presented p50 for presented stalls, clean whole-frame p50 for whole-frame stalls), paired by condition, script, arm and repetition as F4a pairs them. Without a reference series the baseline is the window's own p50, labelled as such. `need` = 50 % of the excess. A presented interval covers every probe frame since the previous displayed present.
+
+| Class | Fires when |
+| --- | --- |
+| `pc-union` | PC union mod-work summed over the covered frames ≥ `need` and > 0. Evidence: union ms, frame, largest component and component times, plus advancement fields (below). |
+| `gc` | Probe GC count > 0 in a covered frame. RLO's collector text is not used. With no probe GC field the stall records `gc: unknown`. |
+| `save-load-scene` | Probe `saves` > 0, `scene` or `loading`; or the attached RLO line says `saving` or names a scene loaded or unloaded. |
+| `native-frame` | An attached RLO line names a phase (not `the rest`, `outside the engine's steps`, `waiting for the last frame to be shown` or `PresentAfterDraw`) whose time minus the PC union is ≥ `need`; or the trace's CPU busy minus the union is ≥ `need`. |
+| `gpu-present` | Trace GPU busy ≥ `need`, or trace CPU wait (present queueing) ≥ `need`. |
+| `reference-rate` | The matched reference has stalls within a size factor of 1.5 at ≥ half the candidate's rate per 5 minutes in that size band. |
+| `unattributed` | None of the above. |
+
+Whole-frame or presented time minus the PC union is never PC's (`not_pc_ms` in each record), and PC union time is subtracted before any phase or CPU-busy time counts as native. Reference windows get the same classifier. Their union is 0, so they never carry `pc-union`, and they have no `reference-rate`.
+
+**Advancement fields (fix-128).** For each frame in a stall or in the M2 list: when the `AdvancePopulation` sub-scope is bound and the frame has no advancement time, the frame gets **no** advancement fields. Otherwise it gets the advancement time (component, or F4b's per-call record), the per-call GC delta and optional-stop ms (or `unknown`), and the summary's slowest-unit fields. Those fields come from the summary only for the one clean frame of the window whose advancement time is within 0.1 ms of the observation's maximum. Candidates are all clean frames of the window, not only spikes, so a maximum two frames could match attaches nowhere. Every other advancement frame shows `unknown`.
+
+## Known limits
+
+- F4b's probe export (`qpc`, `components_ms`, `status.stopwatch_frequency`, `saves`, `scene`, `loading`) and the RIG-PRESENT CSV are read as documented at this base. Neither has been produced natively yet.
+- RLO lines carry no frame number or QPC time. Duration matching attaches a line only when exactly one frame matches.
+- `native-frame` from the trace uses PresentMon's `MsCPUBusy` (app-side wall time up to Present), not per-thread CPU time.
+- Diagnostic and warm-up frames are excluded from `presented_ms` and from stalls, as F4a excludes them from frame statistics.
+- S4's stall-time alignment with lag samples is not part of this row and is unchanged.
+
+## Offline checks
+
+`python -m unittest discover -s tools/perf-gate -p test_*.py`: 75 tests (43 F4a, 32 F4c), OK. Each plan test and where it is (`test_attribution.py`):
+
+| Plan test | Test |
+| --- | --- |
+| QPC join tolerates clock offset and dropped presents | `JoinTests.test_join_tolerates_clock_offset` (+37 ms and −412.3 ms on a QPC trace, a seconds-from-origin 1.x trace; every frame joins its own present), `test_join_tolerates_missing_and_dropped_presents` (7 missing presents leave exactly those frames unjoined; 4 dropped presents stay joined, and the next displayed interval spans frames 1030–1032), `test_window_block_reports_join_fraction_and_unknown_gpu` (2 % missing fails the 99 % rule), `test_unrelated_trace_without_hint_is_not_joined`, `EndToEndTests.test_poor_join_fails_the_presentation_receipt` |
+| Each stall class fires only on its evidence | `ClassifierTests.test_each_class_fires_only_on_its_evidence` (one evidence at a time on a stall with none gives exactly that one class), plus per-class boundaries: `test_pc_union_needs_half_of_the_excess_over_the_reference_p50` (42.0 fires, 41.9 does not), `test_gc_needs_a_probe_count_rise`, `test_save_load_scene_from_probe_flags_or_rlo`, `test_present_wait_and_unnamed_phases_are_not_native_frame`, `test_reference_rate_needs_same_size_at_similar_rate`, `test_several_classes_can_apply` |
+| A frame with no evidence is `unattributed` | `ClassifierTests.test_a_frame_with_no_evidence_is_unattributed`, `EndToEndTests.test_severe_unattributed_stall_leaves_p3_open_evidence` (listed under unattributed with its frame) |
+| Whole minus union is never assigned to `pc-union` | `ClassifierTests.test_whole_minus_union_is_never_pc_union` (300 ms frame, 20 ms union: `unattributed`, `not_pc_ms` 280; a 131 ms scripts' Update with 120 ms union is `pc-union`, not native; with 10 ms union, native 121 ms) |
+| Observation-level fix-128 fields never copied to a second spike | `Fix128Tests.test_fields_are_never_copied_to_a_second_spike` (M2 list, whole-frame and presented stalls), `test_ambiguous_maximum_attaches_nowhere` |
+| A non-advancement spike has no advancement fields | `Fix128Tests.test_a_non_advancement_spike_has_no_advancement_fields` (bound scope), `test_unbound_advancement_is_unknown_not_absent` |
+
+Also: PresentMon 2.x and 1.x parsing, the QPC frequency requirement and the process filter (`TraceParsingTests`); the 9 November RLO excerpt and unique-duration attachment (`RloLineTests`); the end-to-end path into `analyze.py` with P1/P2 equal to the nearest rank of the joined series, P3 failing on a ≥ 250 ms `pc-union` stall, a P4 pair with a value, and whole-frame and presented classes in the analyzer's stall table (`EndToEndTests.test_enriched_export_feeds_p1_to_p4`); F4b-shaped rows with `components_ms`; an unchanged input export; the CLI; a 10-minute session in seconds.
+
+Build: `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"`. Unit tests: `dotnet test tests/PersistentCity.Tests.csproj`. Results are in the PR description; the golden-hash test for writer 36 is unchanged.
+
+## In-game checks
+
+For the next batched rig. All run on the agent rig in the plan's named disposable FT cities, never in Peter's ordinary save. Autosave is recorded, turned off before every window and after every reload, and restored at cleanup. "Locked-PC" checks need the locked rig session. "Input-only" checks run the tools over outputs the batch already collected. None is left to Peter, a playtest or a by-hand check.
+
+1. **G3 — Presentation trace alignment.** Locked-PC. Setup: FT-F4-Declared at 07:00, F4b probe armed with no business. Steps: start the RIG-PRESENT trace bound to the game process, run a 5-minute S-path window with the probe measuring, stop both, export the probe pages and the CSV, run `attribute.py` with `--trace` and the probe's `stopwatch_frequency`, then `analyze.py` on the enriched export. Expected: `presentation.established` true, ≥ 99 % of clean probe frames joined, `trace_covers_window` true, offset source `estimated` or `hint, refined` with |offset| under one frame for a QPC trace; GPU busy `reported`, or `unknown` with every bound field `unknown`; P1/P2 computed from `presented_ms`. **rig-automated (pending capability: RIG-PRESENT, RIG-PERF-UNION).**
+2. **G3 control — dropped presents.** Locked-PC. Setup: as check 1, frame cap removed so some presents are not displayed. Steps: same window and tools. Expected: frames whose present was dropped stay joined; the presented interval after them spans their frames; `presented_ms` count equals displayed presents closing on clean frames. **rig-automated (pending capability: RIG-PRESENT, RIG-PERF-UNION, RIG-FOREGROUND for the cap).**
+3. **G11 — Stall attribution over the batch.** Input-only. Setup: the probe exports, presentation CSVs and Player.log files of G4–G9 and G14. Steps: run `attribute.py` per export with each window's trace and `--player-log`, then `analyze.py` on the enriched exports. Expected: every presented and whole-frame interval ≥ 50 ms has at least one class; every `unattributed` stall is listed with frame, game minute and condition; no severe stall shows `unclassified (F4c)`; no stall's `not_pc_ms` is counted under `pc-union`; RLO lines that did not match a unique frame are listed under `rlo_unmatched`, not attached. **rig-automated (existing capability: Player.log collection in `rig flow run`; pending capability: RIG-PRESENT, RIG-PERF-UNION).**
+4. **G11 — #128 M2 attribution.** Input-only. Setup: G4's W-morning and W-evening candidate exports with F4b per-call records and the summary lines with observation frame ranges. Steps: run `attribute.py`. Expected: each M2 frame lists component times; advancement frames carry the per-call GC delta and optional-stop ms; the slowest-unit fields appear only on the frame matching each observation's maximum, others show `unknown`; non-advancement M2 frames have no advancement fields. **rig-automated (existing capability: Player.log collection in `rig flow run`; pending capability: RIG-PERF-UNION).**
+5. **G4 — P4 inputs from matched traces.** Input-only. Setup: one ABAB W-evening S-path pair of candidate and dependency-only reference exports with their traces. Steps: `attribute.py` with `--trace-for` per window, then `analyze.py`. Expected: both windows `established`; the candidate's stall baselines name the reference window; P4 has a value for the matched pair; a candidate stall with same-size reference stalls at a similar rate carries `reference-rate`. **rig-automated (existing capability: RIG-MODSET reference arm; pending capability: RIG-PRESENT, RIG-PERF-UNION).**
