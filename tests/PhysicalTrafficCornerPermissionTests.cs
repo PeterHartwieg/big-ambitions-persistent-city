@@ -20,8 +20,9 @@ public sealed class PhysicalTrafficCornerPermissionTests
         Position a = from ?? new Position(0, 0, 0), b = to ?? new Position(10, 0, 0);
         var legs = new List<RouteLeg>();
         if (prefix > 0) legs.Add(new RouteLeg { From = a, To = a, Mode = TravelMode.Walk, Minutes = prefix });
-        legs.Add(new RouteLeg { From = a, To = b, Mode = mode, Minutes = minutes });
-        legs.Add(new RouteLeg { From = b, To = new Position(b.X, b.Y, b.Z + 10), Mode = TravelMode.Car, Minutes = 10 });
+        // Native road legs (F2d: a car body drives only those).
+        legs.Add(new RouteLeg { From = a, To = b, Mode = mode, Minutes = minutes, ServiceId = mode == TravelMode.Car ? "native:road:v1:t:0:1" : "" });
+        legs.Add(new RouteLeg { From = b, To = new Position(b.X, b.Y, b.Z + 10), Mode = TravelMode.Car, Minutes = 10, ServiceId = "native:road:v1:t:1:2" });
         var route = new Route { Legs = legs };
         var citizen = new CitizenState { Identity = new CitizenIdentity { Id = "corner-permission" }, Phase = CitizenPhase.Travelling,
             Journey = route, PlaceId = "a", DestinationId = "b", NextEventMinute = route.Minutes };

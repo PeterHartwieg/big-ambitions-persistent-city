@@ -202,6 +202,28 @@ namespace PersistentCity.Core
             return traffic != null && traffic.TryGetVehicle(citizenId, out permission);
         }
 
+        /// <summary>F2d phase count: whether the kernel signal of the road section that holds route minute
+        /// <paramref name="routeMinutes"/> of this person's committed journey is green now. A point at a section's end
+        /// belongs to that section (a car waits there to cross). False when the point maps to no section. Read-only; it
+        /// compares the kernel's current phase at a visible car's own junction, never a past crossing.</summary>
+        public bool TryGetTrafficSignalGreen(CitizenState citizen, double routeMinutes, out bool green)
+        {
+            green = false;
+            if (citizen == null) throw new ArgumentNullException(nameof(citizen));
+            if (traffic == null || trafficNetwork == null || citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null
+                || !Position.Finite(routeMinutes)) return false;
+            double tolerance = JourneyClockTolerance(State.Minute, citizen.Journey.Minutes);
+            if (!trafficNetwork.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, routeMinutes), mappingSpans)) return false;
+            foreach (var span in mappingSpans)
+                if (routeMinutes <= span.EndNominalMinutes + tolerance)
+                {
+                    if (routeMinutes + tolerance < span.StartNominalMinutes) return false;
+                    green = traffic.IsSignalGreen(span.LinkId);
+                    return true;
+                }
+            return false;
+        }
+
         // Food retries run at a logical event time, independently of snapshot publication.
         // A travelling resident's published NextEventMinute may describe the previous frame.
         // AdvanceCore has already advanced traffic to State.Minute before stepping food.

@@ -102,10 +102,17 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
         if (car != null && citizen!.Preferences.OwnsCar && Position.Distance(from.Position, car.ParkedPosition) < 20
             && (Math.Abs(end.X - start.X) + Math.Abs(end.Z - start.Z)) * Spacing >= MinimumCarMetres)
         {
+            // The Runtime car shape (MultimodalRoutes/RoadRoutes): walk to the car, a preparation pause, a kerb connector
+            // onto the road, the road sections, a kerb connector off it, a parking pause, then the walk from the parked car.
             var parked = Nearest(car.ParkedPosition);
             Walk(route, from.Position, car.ParkedPosition);
+            Pause(route, car.ParkedPosition, TransportComposition.CarPreparationMinutes);
+            Connector(route, car.ParkedPosition, Node(parked.X, parked.Z));
             Streets(route, parked, end, TravelMode.Car);
-            Walk(route, Node(end.X, end.Z), to.Position);
+            var curb = Kerb(Node(end.X, end.Z), to.Position);
+            Connector(route, Node(end.X, end.Z), curb);
+            Pause(route, curb, TransportComposition.CarParkingMinutes);
+            Walk(route, curb, to.Position);
             CarRoutes++;
             return route;
         }
@@ -129,6 +136,21 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
             else Walk(route, Node(x, z), Node(nx, nz));
             x = nx; z = nz;
         }
+    }
+
+    // A car-mode leg without a road service ID, at walking pace, as RoadRoutes.Connector makes it.
+    private static void Connector(Route route, Position from, Position to)
+    {
+        double metres = Position.Distance(from, to);
+        if (metres > 1e-6) route.Legs.Add(new RouteLeg { From = from, To = to, Mode = TravelMode.Car, Minutes = metres / WalkMetresPerMinute });
+    }
+    private static void Pause(Route route, Position at, double minutes)
+        => route.Legs.Add(new RouteLeg { From = at, To = at, Mode = TravelMode.Car, Minutes = minutes });
+    // The kerb beside the last road node, up to 6 m toward the destination.
+    private static Position Kerb(Position road, Position destination)
+    {
+        double metres = Position.Distance(road, destination);
+        return metres <= 1e-6 ? road : Position.Lerp(road, destination, Math.Min(1, 6 / metres));
     }
 
     private static void Walk(Route route, Position from, Position to)

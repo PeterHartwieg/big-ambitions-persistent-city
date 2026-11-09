@@ -35,16 +35,26 @@ public sealed class PhysicalCarFollowTests
         public bool IsTrafficLinkClosed(int id) => false;
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null;
     }
-    private static Route Journey()
+    private static Position Curb => new(Node(Sections).X + 6, 0, 0);
+    /// <summary>Road sections then the walk; with <paramref name="real"/> the Runtime shape (MultimodalRoutes,
+    /// RoadRoutes): a preparation pause, the road sections, a kerb connector off the road, a parking pause, the walk.</summary>
+    private static Route Journey(bool real = false)
     {
         var route = new Route { Legs = new() };
+        if (real) route.Legs.Add(new RouteLeg { From = Node(0), To = Node(0), Minutes = TransportComposition.CarPreparationMinutes, Mode = TravelMode.Car });
         for (int i = 0; i < Sections; i++)
             route.Legs.Add(new RouteLeg { From = Node(i), To = Node(i + 1), Minutes = 1.2, Mode = TravelMode.Car,
                 ServiceId = "native:road:v1:" + Native + ":" + i + ":" + (i + 1) });
-        route.Legs.Add(new RouteLeg { From = Node(Sections), To = Work, Minutes = 5, Mode = TravelMode.Walk });
+        if (real)
+        {
+            route.Legs.Add(new RouteLeg { From = Node(Sections), To = Curb, Minutes = 6 / 80.0, Mode = TravelMode.Car });
+            route.Legs.Add(new RouteLeg { From = Curb, To = Curb, Minutes = TransportComposition.CarParkingMinutes, Mode = TravelMode.Car });
+            route.Legs.Add(new RouteLeg { From = Curb, To = Work, Minutes = 5, Mode = TravelMode.Walk });
+        }
+        else route.Legs.Add(new RouteLeg { From = Node(Sections), To = Work, Minutes = 5, Mode = TravelMode.Walk });
         return route;
     }
-    private static CityState Build(int cars)
+    private static CityState Build(int cars, bool real = false)
     {
         var ids = Enumerable.Range(0, cars).Select(i => new CitizenIdentity { Id = "c" + i, Name = "C" + i, Age = 30, AppearanceSeed = i + 1 }).ToList();
         var state = Population.Create(ids, new[] {
@@ -55,7 +65,7 @@ public sealed class PhysicalCarFollowTests
             c.HomeId = c.PlaceId = "home"; c.DayPlaceId = c.DestinationId = "work"; c.MealOuting = null;
             c.Phase = CitizenPhase.Travelling; c.DestinationActivity = Activity.Work; c.Preferences.OwnsCar = true;
             c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = Node(0) };
-            c.Journey = Journey(); c.DepartureMinute = Now; c.NextEventMinute = Now + c.Journey.Minutes; c.ActivityUntilMinute = Now + 600;
+            c.Journey = Journey(real); c.DepartureMinute = Now; c.NextEventMinute = Now + c.Journey.Minutes; c.ActivityUntilMinute = Now + 600;
         }
         return state;
     }
@@ -71,13 +81,13 @@ public sealed class PhysicalCarFollowTests
         internal double Minute;
         internal PhysicalVehicles Cars => PhysicalVehicles.Last!;
         internal PhysicalPedestrians Walkers => PhysicalPedestrians.Last!;
-        internal Fixture(int cars = 1, TrafficSignalSchedule? signal = null)
+        internal Fixture(int cars = 1, TrafficSignalSchedule? signal = null, bool real = false)
         {
             StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrianBody.Unreachable = null;
             PhysicalPedestrians.VisiblePoint = null; MultimodalRoutes.CarSamples = true;
             NativeTravelPace.Focus = Node(6); Time.Next(3);
-            City = new CitySimulator(Build(cars), new Roads(signal));
-            Plain = new CitySimulator(Build(cars), new Roads(signal));
+            City = new CitySimulator(Build(cars, real), new Roads(signal));
+            Plain = new CitySimulator(Build(cars, real), new Roads(signal));
             Minute = Now + 0.01; City.AdvanceTo(Minute); Plain.AdvanceTo(Minute);
             Bodies = new(new Transform { Component = new PopulationRuntime() }, City, new MultimodalRoutes(), typeof(Fixture).Assembly,
                 new VendorBodyTests.Log(), 8, 4, 120, new DwellSpots());
@@ -272,6 +282,86 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
+    /// <summary>The real car route shape: the kernel completes the vehicle at the end of the road sections while the
+    /// person is still on the kerb connector and the parking pause (car-mode legs a native car does not drive). The car,
+    /// slightly behind or at the kernel, follows to the end of the road and hands over there: no correction, no car left
+    /// standing in the lane, and no car re-acquired while the person parks; a walker appears once the person walks.</summary>
+    [Theory]
+    [InlineData(true, 1.2)] [InlineData(false, 1.2)] [InlineData(true, 0.75)] [InlineData(false, 0.75)]
+    public void RealCarRouteHandsOverAtTheRoadEndWithoutACorrection(bool onScreen, double pace)
+    {
+        using var f = new Fixture(real: true);
+        f.Until(() => f.Car("c0") != null, 1200);
+        var body = f.Car("c0")!;
+        body.OnScreen = onScreen; body.Pace = pace;
+        f.Until(() => f.Car("c0") == null, 6000);
+        Assert.Equal(Node(Sections).X, body.Position.X, 6);
+        Assert.Equal(f.Handoffs + 1, f.T.CarHandoffs);
+        Assert.Empty(f.Corrections());
+        // While the person is on the connector and the parking pause no car (or walker) is given back.
+        f.Until(() => f.City.SampleJourney(f.Person("c0")).Mode == TravelMode.Walk, 6000);
+        Assert.Null(f.Car("c0"));
+        f.Until(() => f.Walkers.Active.ContainsKey("c0"), 30);
+        Assert.Empty(f.Corrections());
+        f.AssertSameAsBodiesOff();
+    }
+
+    /// <summary>Q3 after arrival: a visible car fades after its person has logically arrived and stands on an optional
+    /// stop at the destination. The restriction belongs to the arrival place: no walker appears there while it is in
+    /// view, and one does once it is not.</summary>
+    [Fact]
+    public void ACarFadingAfterArrivalKeepsTheArrivalPlaceRestriction()
+    {
+        using var f = new Fixture();
+        f.Until(() => f.Car("c0") != null, 600);
+        var body = f.Car("c0")!;
+        body.OnScreen = true; body.CanFade = true; body.Pace = 0;
+        f.Until(() => f.Person("c0").Phase != CitizenPhase.Travelling, 4000);
+        Assert.Same(body, f.Car("c0"));
+        foreach (var city in new[] { f.City, f.Plain })
+        {
+            var person = city.State.Citizens[0];
+            person.OptionalStop = new OptionalStopState { Kind = DwellKind.Break, PlaceId = "work", SpotId = "solo:c0", TargetId = "front:c0",
+                Position = new Position(Work.X + 4, 0, 0), Facing = new Position(Work.X + 4, 0, 1), ReturnPosition = Work,
+                StartMinute = f.Minute, EndMinute = f.Minute + 8, VisitMinute = f.Minute, ResumeEventMinute = person.NextEventMinute };
+            Assert.True(person.NextEventMinute >= f.Minute + 8 && person.ActivityUntilMinute >= f.Minute + 8);
+        }
+        f.City.ActiveJourneys.File(f.Person("c0"));
+        PhysicalPedestrians.VisiblePoint = _ => true;
+        body.Pace = 1.5;
+        f.Until(() => f.Car("c0") == null, 2000);
+        var fade = Assert.Single(f.Corrections());
+        Assert.Equal(WalkerCorrectionKind.Fade, fade.Kind); Assert.True(fade.Car); Assert.True(fade.OnScreen);
+        for (int i = 0; i < 120; i++) f.Frame();
+        Assert.False(f.HasBody("c0"));
+        PhysicalPedestrians.VisiblePoint = null;
+        f.Until(() => f.Walkers.Active.ContainsKey("c0"), 30);
+        f.AssertSameAsBodiesOff();
+    }
+
+    /// <summary>Decision 6: a lagging car stopped at its native red while the kernel signal of its own section is also red
+    /// now is no mismatch, even though the kernel car crossed that junction earlier during a green.</summary>
+    [Fact]
+    public void ALaggingCarAtARedThatIsAlsoRedInTheKernelIsNoPhaseMismatch()
+    {
+        // Green at the third section's end from 2043 to 2045 in every 12-minute cycle.
+        var signal = new TrafficSignalSchedule { CycleMinutes = 12, GreenStartMinutes = 3, GreenDurationMinutes = 2 };
+        using var f = new Fixture(signal: signal);
+        f.Until(() => f.Car("c0") != null, 600);
+        var body = f.Car("c0")!;
+        body.OnScreen = true; body.CanFade = false;
+        // It stops short of that junction; the kernel car crosses it during the green.
+        f.Until(() => body.Position.X >= Node(2).X + 2, 2000);
+        body.Pace = 0;
+        f.Until(() => f.LogicalX("c0") > Node(3).X + 1 && f.Minute > 2045.2, 4000);
+        Assert.False(f.City.TryGetTrafficSignalGreen(f.Person("c0"), WalkerFollow.Sample(f.Person("c0").Journey!, 2.9).ElapsedMinutes, out bool green) && green);
+        body.NativeRed = true;
+        for (int i = 0; i < 60; i++) f.Frame();
+        Assert.Equal(f.Stopped, f.T.NativeStopAtKernelGreen);
+        Assert.Equal(f.Held, f.T.KernelHeldAtNativeGreen);
+        f.AssertSameAsBodiesOff();
+    }
+
     /// <summary>Decision 6, measured: a standing visible car held by the kernel at its red while Gley's target light is
     /// green counts one KernelHeldAtNativeGreen episode, with seconds. The signal phase is not changed.</summary>
     [Fact]
@@ -301,10 +391,10 @@ public sealed class PhysicalCarFollowTests
         using var f = new Fixture();
         f.Until(() => f.Car("c0") != null, 600);
         var body = f.Car("c0")!;
-        body.OnScreen = true; body.NativeRed = true;
+        body.OnScreen = true;
         for (int i = 0; i < 30; i++) f.Frame();
         // Gley holds it at its stop line: it stands while the kernel moves on past that junction.
-        body.Pace = 0;
+        body.Pace = 0; body.NativeRed = true;
         double kernelAt = f.LogicalX("c0");
         for (int i = 0; i < 240; i++) f.Frame();
         Assert.True(f.LogicalX("c0") > kernelAt + 20);

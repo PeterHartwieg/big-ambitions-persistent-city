@@ -25,7 +25,7 @@ The movement harness (957 residents, one simulated day plus the 03:00 sample, up
 | lag/slow-head-car | before | 5.022 | 1,292.0 |
 | lag/slow-head-car | after | 0.226 | 1,286.5 |
 
-In the full two-day harness run every body arm processes exactly the bodies-off kernel events (68,881) and reconsiderations. That includes 30 and 120 fps, so background traffic events no longer depend on frame-rate observations.
+In the full two-day harness run every body arm processes exactly the bodies-off kernel events (68,596 with the review's real car route shape) and reconsiderations. That includes 30 and 120 fps, so background traffic events no longer depend on frame-rate observations.
 
 ## `PhysicalPopulation.Update` at 24 cars
 
@@ -43,21 +43,22 @@ Result: p50 down about 0.006 ms and p95 down 0.005 to 0.03 ms, well under the 5 
 
 ## Car lag and corrections in the harness
 
-Full run (`dotnet run --project tools/movement-equivalence -c Release`, 957 residents, two days, seed 0). The double has no camera, so every correction is an off-screen release and re-acquisition at the logical pose. Native lag model: cars drive at nominal pace; in `lag/slow-head-car` every fourth car body drives at 0.5x.
+Full run (`dotnet run --project tools/movement-equivalence -c Release`, 957 residents, two days, seed 0). The double has no camera, so every correction is an off-screen release and re-acquisition at the logical pose. Car routes have the Runtime shape since review round 1 (preparation pause, road sections, kerb connector, parking pause). Native lag model: cars drive at nominal pace; in `lag/slow-head-car` every fourth car body drives at 0.5x.
 
 | Arm | E1 | Car frames | Lag p50 | Lag p95 | Lag max | Catch-up frames (> 5 m) | Corrections (> 30 m) | Car handoffs |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| focus/stationary | equal | 2,615,794 | 0.15 m | 0.50 m | 6.32 m | 20,088 | 0 | 1,294 |
-| focus/sweep | equal | 2,254,291 | 0.05 m | 0.50 m | 6.32 m | 8,822 | 0 | 692 |
-| caps/256-64 | equal | 6,323,373 | 0.15 m | 0.50 m | 6.32 m | 35,217 | 0 | 2,610 |
-| lag/ideal | equal | 2,617,903 | 0.15 m | 0.50 m | 6.32 m | 19,918 | 0 | 1,304 |
-| lag/slow-head-car | equal | 2,616,913 | 0.15 m | 4.50 m | 32.08 m | 115,684 | 215 | 1,265 |
-| failures/50pct | equal | 2,581,093 | 0.15 m | 0.50 m | 6.32 m | 13,572 | 0 | 1,132 |
-| cadence/30fps | equal | 1,308,912 | 0.15 m | 0.80 m | 6.48 m | 11,432 | 0 | 1,289 |
-| cadence/120fps | equal | 5,226,752 | 0.15 m | 0.30 m | 6.23 m | 39,058 | 0 | 1,295 |
-| transitions/reload-mid-journey | equal | 2,616,047 | 0.15 m | 0.50 m | 6.32 m | 20,029 | 0 | 1,302 |
+| focus/stationary | equal | 2,633,690 | 0.15 m | 0.50 m | 6.32 m | 20,210 | 0 | 2,199 |
+| focus/sweep | equal | 2,230,637 | 0.05 m | 0.50 m | 6.32 m | 9,402 | 0 | 977 |
+| caps/1-1 | equal | 120,092 | 0.20 m | 2.20 m | 6.20 m | 1,778 | 0 | 339 |
+| caps/256-64 | equal | 6,246,672 | 0.15 m | 0.50 m | 6.32 m | 34,994 | 0 | 5,159 |
+| lag/ideal | equal | 2,633,866 | 0.15 m | 0.50 m | 6.32 m | 20,189 | 0 | 2,181 |
+| lag/slow-head-car | equal | 2,632,905 | 0.15 m | 5.00 m | 30.08 m | 131,713 | 221 | 2,125 |
+| failures/50pct | equal | 2,596,111 | 0.15 m | 0.50 m | 6.32 m | 15,197 | 0 | 1,423 |
+| cadence/30fps | equal | 1,318,401 | 0.15 m | 0.80 m | 6.48 m | 11,377 | 0 | 2,155 |
+| cadence/120fps | equal | 5,262,483 | 0.15 m | 0.30 m | 6.20 m | 40,369 | 0 | 2,195 |
+| transitions/reload-mid-journey | equal | 2,629,329 | 0.15 m | 0.50 m | 6.32 m | 19,933 | 0 | 2,183 |
 
-Against the E3 car target (p95 ≤ 8 m): met in every arm, 4.50 m with slow head cars. The 6.3 m maximum in the nominal arms is about one storage spacing (6 m on the harness's 12 m, capacity-2 links). A queued car's kernel coordinate jumps by up to that much when the car ahead leaves its link, and a body at nominal pace then needs a few seconds to catch up. The slow-head arm's 215 corrections are its 0.5x cars crossing 30 m; each is released and re-acquired at the logical pose.
+Against the E3 car target (p95 ≤ 8 m): met in every arm, 5.00 m with slow head cars. The 6.3 m maximum in the nominal arms is about one storage spacing (6 m on the harness's 12 m, capacity-2 links). A queued car's kernel coordinate jumps by up to that much when the car ahead leaves its link, and a body at nominal pace then needs a few seconds to catch up. The slow-head arm's 221 corrections are its 0.5x cars crossing 30 m; each is released and re-acquired at the logical pose.
 
 ## Phase mismatch
 

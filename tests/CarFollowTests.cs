@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PersistentCity.Core;
 using Xunit;
@@ -7,40 +8,57 @@ namespace PersistentCity.Tests;
 // F2d: the pure car-follow arithmetic and the car part of the F2c movement telemetry.
 public sealed class CarFollowTests
 {
-    // Walk 2 min to the car, three car legs of 1 min (the middle one a zero-distance wait), walk 3 min from the parked car.
+    // The Runtime car shape: walk 2 min to the car, a 1 min preparation pause, two road legs of 1 min, a 0.5 min kerb
+    // connector off the road, a 2 min parking pause, then a 3 min walk from the parked car.
     private static Route Route() => new Route { Legs = new() {
         new RouteLeg { From = new Position(0, 0, 0), To = new Position(10, 0, 0), Minutes = 2, Mode = TravelMode.Walk },
+        new RouteLeg { From = new Position(10, 0, 0), To = new Position(10, 0, 0), Minutes = 1, Mode = TravelMode.Car },
         new RouteLeg { From = new Position(10, 0, 0), To = new Position(20, 0, 0), Minutes = 1, Mode = TravelMode.Car, ServiceId = "native:road:v1:t:0:1" },
-        new RouteLeg { From = new Position(20, 0, 0), To = new Position(20, 0, 0), Minutes = 1, Mode = TravelMode.Car },
         new RouteLeg { From = new Position(20, 0, 0), To = new Position(30, 0, 0), Minutes = 1, Mode = TravelMode.Car, ServiceId = "native:road:v1:t:1:2" },
-        new RouteLeg { From = new Position(30, 0, 0), To = new Position(40, 0, 0), Minutes = 3, Mode = TravelMode.Walk } } };
+        new RouteLeg { From = new Position(30, 0, 0), To = new Position(34, 0, 0), Minutes = 0.5, Mode = TravelMode.Car },
+        new RouteLeg { From = new Position(34, 0, 0), To = new Position(34, 0, 0), Minutes = 2, Mode = TravelMode.Car },
+        new RouteLeg { From = new Position(34, 0, 0), To = new Position(40, 0, 0), Minutes = 3, Mode = TravelMode.Walk } } };
 
     [Fact]
-    public void CarLegsEndIsTheParkingPointOfTheRunOfCarLegs()
+    public void CarLegsEndIsTheEndOfTheNativeRoadLegs()
     {
         var route = Route();
         Assert.Equal(1, CarFollow.CarLegsEnd(route, 1));
-        Assert.Equal(5, CarFollow.CarLegsEnd(route, 2));
-        Assert.Equal(5, CarFollow.CarLegsEnd(route, 3.5));
+        Assert.Equal(2.5, CarFollow.CarLegsEnd(route, 2.5));
+        Assert.Equal(5, CarFollow.CarLegsEnd(route, 3));
+        Assert.Equal(5, CarFollow.CarLegsEnd(route, 4.5));
         Assert.Equal(5, CarFollow.CarLegsEnd(route, 5));
         Assert.Equal(6, CarFollow.CarLegsEnd(route, 6));
-        // The cap is the logical coordinate, but never past the parking point.
-        Assert.Equal(3.25, CarFollow.Cap(route, 2.5, 3.25));
-        Assert.Equal(5, CarFollow.Cap(route, 2.5, 7));
-        Assert.Equal(0, CarFollow.Cap(route, 2.5, double.NaN));
+        // The cap is the logical coordinate, but never past the road's end.
+        Assert.Equal(4.25, CarFollow.Cap(route, 3.5, 4.25));
+        Assert.Equal(5, CarFollow.Cap(route, 3.5, 7));
+        Assert.Equal(0, CarFollow.Cap(route, 3.5, double.NaN));
+        Assert.True(CarFollow.IsRoad(route.Legs[2])); Assert.False(CarFollow.IsRoad(route.Legs[4])); Assert.False(CarFollow.IsRoad(route.Legs[5]));
     }
 
     [Fact]
-    public void AdvanceWaitsOutAZeroDistanceCarLegWithTheCapAndStopsAtTheParkingPoint()
+    public void TheTrailingConnectorAndParkingPauseAreStillTheCarsRun()
     {
         var route = Route();
-        // Gley reported the first road corner: the car crosses it, waits out the zero-distance leg up to the cap.
-        Assert.Equal(3.5, CarFollow.Advance(route, 2.5, 3.5, new Position(20, 0, 0), 1), 12);
-        // With the cap past the wait, it projects on the last car leg, and never onto the walk after parking.
-        Assert.Equal(4.5, CarFollow.Advance(route, 3.5, CarFollow.Cap(route, 3.5, 6), new Position(25, 0, 0), -1), 12);
-        Assert.Equal(5, CarFollow.Advance(route, 4.5, CarFollow.Cap(route, 4.5, 8), new Position(30, 0, 0), 3), 12);
+        Assert.True(CarFollow.SameCarRun(route, 4, 4.5));
+        Assert.True(CarFollow.SameCarRun(route, 4, 5.2));
+        Assert.True(CarFollow.SameCarRun(route, 4, 7));
+        Assert.False(CarFollow.SameCarRun(route, 4, 8));
+        Assert.False(CarFollow.SameCarRun(route, 4, double.NaN));
+    }
+
+    [Fact]
+    public void AdvanceStopsAtTheRoadEndAndNeverOntoTheConnector()
+    {
+        var route = Route();
+        // Gley reported the first road corner: the car crosses it and projects on the second road leg.
+        Assert.Equal(4.5, CarFollow.Advance(route, 3.5, 6, new Position(25, 0, 0), 2), 12);
+        // At the road's end with Gley's evidence: the parking point, never onto the connector, whatever the cap.
+        Assert.Equal(5, CarFollow.Advance(route, 4.5, 7, new Position(30, 0, 0), 3), 12);
+        Assert.Equal(5, CarFollow.Advance(route, 5, 7, new Position(34, 0, 0), 4), 12);
+        Assert.False(CarFollow.IsRoad(WalkerFollow.Sample(route, 5)));
         // A body pushed off its leg keeps its progress.
-        Assert.Equal(2.5, CarFollow.Advance(route, 2.5, 3, new Position(15, 0, 9), -1));
+        Assert.Equal(3.5, CarFollow.Advance(route, 3.5, 4, new Position(15, 0, 9), -1));
     }
 
     [Fact]
@@ -58,6 +76,8 @@ public sealed class CarFollowTests
     {
         Assert.Equal(CarPhaseMismatch.KernelHeldAtNativeGreen, CarFollow.Classify(true, false, 0.2, true, false));
         Assert.Equal(CarPhaseMismatch.NativeStopAtKernelGreen, CarFollow.Classify(true, true, 12, false, true));
+        // Both red now at the car's junction: no mismatch, whatever the kernel did there earlier.
+        Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(true, true, 25, false, false));
         // Moving, unknown native light, still catching up, or both agreeing: nothing.
         Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(false, false, 0.2, true, false));
         Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(true, null, 0.2, true, true));
@@ -111,5 +131,32 @@ public sealed class CarFollowTests
         Assert.Contains("car_thresholds=catch_up_m:5;correct_m:30;hurry_s:10;fade_out_s:1;stopped_mps:0.5", status);
         // The walker lines keep their F2c order and names.
         Assert.StartsWith("followers=2\nlag_samples=1\n", status);
+    }
+
+    /// <summary>F2d (E1): a car body's model and paint are derived from the stable car ID, the same values the native
+    /// adapter used to write on first acquisition, and nothing is written, so a seen car saves like an unseen one.</summary>
+    [Fact]
+    public void CarAppearanceIsDerivedWithoutWritingTheSavedCar()
+    {
+        var models = new[] { "Coupe", "Hatch", "Sedan", "Van" };
+        int traversals = 0;
+        IReadOnlyList<string> Catalogue() { traversals++; return models; }
+        var fresh = new CarState { Id = "resident-17:car" };
+        Assert.True(CarAppearance.TryModel(fresh, Catalogue, out string model));
+        uint hash = 2166136261; foreach (char c in fresh.Id) hash = unchecked((hash ^ c) * 16777619);
+        Assert.Equal(models[hash % (uint)models.Length], model);
+        uint paintHash = 2166136261; foreach (char c in fresh.Id + ":paint") paintHash = unchecked((paintHash ^ c) * 16777619);
+        Assert.Equal(1 + (int)(paintHash % 2147483646u), CarAppearance.Paint(fresh));
+        // Nothing written, and the same answer every time.
+        Assert.Equal("", fresh.ModelId); Assert.Equal(0, fresh.PaintSeed);
+        Assert.True(CarAppearance.TryModel(fresh, Catalogue, out string again)); Assert.Equal(model, again);
+        // An empty catalogue refuses the body (a failed acquisition), still writing nothing.
+        Assert.False(CarAppearance.TryModel(fresh, () => Array.Empty<string>(), out _));
+        Assert.Equal("", fresh.ModelId); Assert.Equal(0, fresh.PaintSeed);
+        // A saved assignment (an older city) is kept and needs no catalogue traversal.
+        traversals = 0;
+        var saved = new CarState { Id = "resident-17:car", ModelId = "Truck", PaintSeed = 42 };
+        Assert.True(CarAppearance.TryModel(saved, Catalogue, out string kept));
+        Assert.Equal("Truck", kept); Assert.Equal(42, CarAppearance.Paint(saved)); Assert.Equal(0, traversals);
     }
 }

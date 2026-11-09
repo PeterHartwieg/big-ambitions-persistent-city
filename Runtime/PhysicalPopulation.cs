@@ -1148,11 +1148,14 @@ namespace PersistentCity.Runtime
                 binding.LagFrame = Time.frameCount; Telemetry.RecordCarLag(lag);
                 if (lag > CarFollow.CatchUpMetres) Telemetry.CarCatchUpFrames++;
             }
-            // The car reached its parking point (or the end of its car legs): a walker takes over at the logical pose.
-            if (after.AtEnd || after.Mode != TravelMode.Car)
+            // The car reached its parking point (the end of its native road legs; the kerb connector and the parking pause
+            // after it are not driven by a native car): a walker takes over at the logical pose.
+            if (after.AtEnd || !CarFollow.IsRoad(after))
             { binding.Handoff = true; Telemetry.Handoffs++; Telemetry.CarHandoffs++; return false; }
-            ObservePhase(binding, admitted, permission, logical, after, lag);
-            if (!CarFollow.NeedsCorrection(lag, admitted && logical.Mode == TravelMode.Car))
+            ObservePhase(binding, following, admitted, permission, lag);
+            // A logical pose past the kernel's sections but still in this car's run (the trailing connector or the parking
+            // pause) is the car's own journey: the car follows on to its parking point without a correction.
+            if (!CarFollow.NeedsCorrection(lag, following && CarFollow.SameCarRun(route, binding.BodyMinutes, logical.ElapsedMinutes)))
             { binding.HurrySince = float.NaN; binding.Fading = false; return true; }
             return CorrectCar(binding, logical, after, lag);
         }
@@ -1171,7 +1174,13 @@ namespace PersistentCity.Runtime
             if (!body.OnScreen)
             {
                 binding.Handoff = true;
-                if (logical.Mode != TravelMode.Car && lag <= CarFollow.CorrectionMetres) { Telemetry.Handoffs++; Telemetry.CarHandoffs++; return false; }
+                if (logical.Mode != TravelMode.Car && lag <= CarFollow.CorrectionMetres)
+                {
+                    Telemetry.Handoffs++; Telemetry.CarHandoffs++;
+                    // A walker some way ahead of the hidden car appears only where the player cannot see it appear.
+                    if (lag > CarFollow.CatchUpMetres) fadedUntilHidden[id] = (citizen, binding.Journey, null);
+                    return false;
+                }
                 Telemetry.Record(Time.frameCount, id, WalkerCorrectionKind.LagRelease, body.Position, logical.Position, false, car: true);
                 fadedUntilHidden[id] = (citizen, binding.Journey, null);
                 return false;
@@ -1194,23 +1203,29 @@ namespace PersistentCity.Runtime
             if (alpha > 0) { body.SetFade(alpha); return true; }
             body.SetFade(0);
             Telemetry.Record(Time.frameCount, binding.Citizen.Identity.Id, WalkerCorrectionKind.Fade, binding.FadeFrom, after, binding.FadeOnScreen, car: true);
-            fadedUntilHidden[binding.Citizen.Identity.Id] = (binding.Citizen, binding.Journey, null);
+            // A person whose journey ended (arrived) while the car still drove keeps the restriction at the place it
+            // arrived at, as an arrival-tail walker fade does, so a door queue or an optional stop there gets no body in view.
+            var citizen = binding.Citizen;
+            bool arrived = !(citizen.Phase == CitizenPhase.Travelling && ReferenceEquals(citizen.Journey, binding.Journey))
+                && (citizen.Phase == CitizenPhase.AtPlace || citizen.Phase == CitizenPhase.WaitingForOpening);
+            fadedUntilHidden[citizen.Identity.Id] = (citizen, binding.Journey, arrived ? citizen.PlaceId : null);
             return false;
         }
 
         /// <summary>Decision 6: count a standing visible car held by the kernel at a native green, or stopped by the
-        /// native light at a kernel green. Measured from Gley's target waypoint and the kernel snapshot; it changes no
-        /// signal phase and writes nothing logical.</summary>
-        private void ObservePhase(Binding binding, bool admitted, TrafficVehicleSnapshot permission, PhysicalJourneySample logical,
-            PhysicalJourneySample own, double lag)
+        /// native light at a kernel green. Both compare the native and kernel phases now, at the same junction: the
+        /// kernel vehicle's own red at its link end, or the kernel signal of the section the car itself is in. Measured
+        /// from Gley's target waypoint and the kernel; it changes no signal phase and writes nothing logical.</summary>
+        private void ObservePhase(Binding binding, bool following, bool admitted, TrafficVehicleSnapshot permission, double lag)
         {
             var body = binding.Car!;
-            double ownEnd = own.ElapsedMinutes + own.RemainingLegMinutes;
+            bool stopped = body.Speed < CarFollow.StoppedMetresPerSecond;
+            bool? red = stopped ? vehicles.NativeRed(body) : null;
             bool held = admitted && !permission.SignalGreen && !permission.CanCrossBoundary
                 && permission.NominalMinutes >= permission.LinkEndNominalMinutes - 1e-9;
-            bool passed = logical.ElapsedMinutes > ownEnd + 1e-9
-                || admitted && permission.CanCrossBoundary && logical.ElapsedMinutes >= ownEnd - 1e-9;
-            var kind = CarFollow.Classify(body.Speed < CarFollow.StoppedMetresPerSecond, vehicles.NativeRed(body), lag, held, passed);
+            bool green = red == true && following
+                && simulation.TryGetTrafficSignalGreen(binding.Citizen, binding.BodyMinutes, out bool atBody) && atBody;
+            var kind = CarFollow.Classify(stopped, red, lag, held, green);
             Telemetry.RecordPhase(kind, binding.Phase, followDelta);
             binding.Phase = kind;
         }

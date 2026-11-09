@@ -338,8 +338,10 @@ public sealed class PresentationDriver
             binding.LagFrame = frame; Walking.RecordCarLag(lag);
             if (lag > CarFollow.CatchUpMetres) Walking.CarCatchUpFrames++;
         }
-        if (after.AtEnd || after.Mode != TravelMode.Car) { binding.Handoff = true; Walking.Handoffs++; Walking.CarHandoffs++; return false; }
-        if (!CarFollow.NeedsCorrection(lag, admitted && logical.Mode == TravelMode.Car)) return true;
+        // Runtime: the parking point is the end of the native road legs; the kerb connector and the parking pause after it
+        // are still the car's run, so a logical pose there is followed without a correction.
+        if (after.AtEnd || !CarFollow.IsRoad(after)) { binding.Handoff = true; Walking.Handoffs++; Walking.CarHandoffs++; return false; }
+        if (!CarFollow.NeedsCorrection(lag, CarFollow.SameCarRun(route, binding.BodyMinutes, logical.ElapsedMinutes))) return true;
         binding.Handoff = true;
         if (logical.Mode != TravelMode.Car && lag <= CarFollow.CorrectionMetres) { Walking.Handoffs++; Walking.CarHandoffs++; return false; }
         Walking.Record(frame, c.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, logical.Position, false, car: true);

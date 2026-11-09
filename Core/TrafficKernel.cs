@@ -221,6 +221,9 @@ namespace PersistentCity.Core
             return vehicle.NominalMinutes;
         }
 
+        /// <summary>F2d phase count: whether a link's kernel signal is green at Clock (true without a signal). Read-only.</summary>
+        public bool IsSignalGreen(int linkId) => (FindLink(linkId).Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
+
         public void SetLinkClosed(int linkId, bool closed)
         {
             Link link = FindLink(linkId);

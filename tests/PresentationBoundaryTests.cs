@@ -281,7 +281,7 @@ public sealed class PresentationBoundaryTests
     // traffic lease group, so every member is read-only. F2e adds HoldForPlayer.
     private static readonly string[] ReadOnlyMembers = {
         "State", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
-        "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission",
+        "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen",
     };
     // The removed lease surface (F2c, F2d). None of it may come back on CitySimulator or in Runtime.
     private static readonly string[] RemovedLeaseMembers = {
@@ -333,7 +333,7 @@ public sealed class PresentationBoundaryTests
         Assert.Empty(Region("private bool ObserveWalker(", "private bool ObserveCar(").Except(ReadOnlyMembers));
         var car = Region("private bool CarCommand(", "private bool Observe(Binding binding)");
         car.UnionWith(Region("private bool ObserveCar(", "// Inspector picking"));
-        Assert.Equal(new[] { "SampleJourney", "TryGetTrafficPermission" }, car);
+        Assert.Equal(new[] { "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen" }, car);
         // The lease type and its API are gone, and nothing in Runtime reaches the kernel's internal physical control.
         var simulatorMembers = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
             .Select(m => m.Name).ToHashSet();
@@ -343,6 +343,8 @@ public sealed class PresentationBoundaryTests
         {
             string text = File.ReadAllText(file);
             Assert.DoesNotMatch(new Regex(@"\b(SetPhysicalControl|ReportPhysicalProgress|PhysicalJourneyLease)\b"), text);
+            // F2d: a car body's model and paint are derived (CarAppearance), never written into the saved car.
+            Assert.DoesNotMatch(new Regex(@"\.\s*(ModelId|PaintSeed)\s*(=[^=>]|\?\?=)"), text);
         }
         // The Runtime rain check is gone from the body paths; logical rain stays in Core.
         Assert.DoesNotContain("RainHelper", File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs")));
