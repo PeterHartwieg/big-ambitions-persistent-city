@@ -148,6 +148,6 @@ public sealed class FoodHolderReconciliationTests
         Assert.Equal(0, allocated);
         Array.Sort(samples);
         output.WriteLine($"reconciliation 128 holders: p50 {samples[500]:0.0000} ms, p95 {samples[949]:0.0000} ms, max {samples[^1]:0.0000} ms, 0 B/call");
-        Assert.True(samples[949] < 1.0);
+        PerfGate.Under(samples[949], 1.0, "p95");
     }
 }

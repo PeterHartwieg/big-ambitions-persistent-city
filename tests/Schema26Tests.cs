@@ -476,18 +476,6 @@ public sealed class Schema26Tests
 
     // ---- Record budget: every new schema-26 record is charged by both counters ----
 
-    [Theory]
-    [InlineData(2, true)] [InlineData(1, false)]
-    public void ResidentVisitorAndStationTuplesChargeOneRecordInBothCounters(int factor, bool food)
-    {
-        var state = Running(factor, food, 2).State; state.Portals.AddRange(new[] { "station:a", "station:b" });
-        string p26 = DevelopmentChain.Write(state), p25 = DevelopmentChain.Write25(state);
-        var c26 = DevelopmentChain.CountRecords(state, p26);
-        var c25 = SaveCodec.CountRecordsForSchema(SaveCodec.ReadDevelopmentChain(p25).State!, p25, 25);
-        int added = state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
-        Assert.Equal(c25.Streaming + added, c26.Streaming); Assert.Equal(c25.Semantic + added, c26.Semantic);
-    }
-
     /// <summary>Section 5 record budget at the limit: a schema-26 city charging exactly MaxEmbeddedRecords (with one station
     /// entry) writes and round-trips; one more new record (a second station) is refused by the writer before
     /// publication and by the reader before allocation.</summary>

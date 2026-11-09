@@ -141,7 +141,7 @@ public sealed class VisitorBodyTests
     [Fact]
     public void SelectionOrderIsStillByPriorityWithoutAKindFilter()
     {
-        string population = Source(Path.Combine("Runtime", "PhysicalPopulation.cs"));
+        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => Source(Path.Combine("Runtime", "PhysicalPopulation" + part + ".cs"))));
         string selection = population[population.IndexOf("// Candidate selection.", StringComparison.Ordinal)..population.IndexOf("PhysicalRoadSample road = default;", StringComparison.Ordinal)];
         Assert.Single(selection.Split("candidates.Sort(SelectionCandidate.ByPriority);").Skip(1));
         foreach (var kind in new[] { "ReceivesBody", "IsVisitor", "KindOf", "PersonKind" })

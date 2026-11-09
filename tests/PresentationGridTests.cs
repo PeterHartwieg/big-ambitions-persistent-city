@@ -336,7 +336,7 @@ public sealed class PresentationGridTests
     [Fact]
     public void RuntimeReadsTheGridWithTheFullScanFallback()
     {
-        string population = Source(Path.Combine("Runtime", "PhysicalPopulation.cs"));
+        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => Source(Path.Combine("Runtime", "PhysicalPopulation" + part + ".cs"))));
         const string read = "var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);";
         Assert.Equal(2, population.Split(read).Length - 1);
         Assert.DoesNotContain("ActiveJourneys.BodyCandidates", population);

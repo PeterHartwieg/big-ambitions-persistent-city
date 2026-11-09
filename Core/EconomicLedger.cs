@@ -121,10 +121,13 @@ namespace PersistentCity.Core
         public List<ShopChange> Changes { get; set; } = new List<ShopChange>();
     }
 
-    public sealed class EconomicLedger
+    public sealed class EconomicLedger : IEconomicLedgerView
     {
         public const int Days = 14, MaximumShops = 1024, ChangesPerShop = 8;
         public List<OutsideSpendingDay> Outside { get; set; } = new List<OutsideSpendingDay>();
         public List<ShopObservation> Shops { get; set; } = new List<ShopObservation>();
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        int IEconomicLedgerView.OutsideDays => Outside.Count;
+        int IEconomicLedgerView.ObservedShops => Shops.Count;
     }
 }

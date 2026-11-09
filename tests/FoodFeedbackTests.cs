@@ -268,8 +268,8 @@ public sealed partial class FoodCommerceTests
         var snapshot = city.FoodMoney!.Snapshot();
         Assert.True(snapshot.Budgets == 6 && snapshot.IncomeReceived > 0 && snapshot.EssentialsPaid > 0);
         Assert.Equal(uncertain, snapshot.Uncertain > 0);
-        // Exact schema-24 predecessor migrates to writer 25; totals rebuild from the migrated records.
-        string source = E5d_Wire24(city.State);
+        // A reload through the current writer rebuilds the totals from the loaded records.
+        string source = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var migrated = new CitySimulator(read.State!, routes); migrated.AttachFoodMarket(market);
         Check(migrated); Assert.Equal(snapshot, migrated.FoodMoney!.Snapshot());

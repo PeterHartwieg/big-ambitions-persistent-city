@@ -12,14 +12,11 @@ using PersistentCity.Persistence;
 /// <summary>
 /// A fixed three-day food city (two consumers per resident, three meals, household finances, three shops,
 /// checkout refusals, lost acknowledgements and a mid-run save/reload). Uses only API that exists before
-/// and after schema 17, so the same source compiles against both trees. The economy digest excludes only
-/// the fields schema 17 added; equal digests mean the same purchases, money and meal state.
+/// and after schema 17, so the same source compiles against both trees. X1 removed the schema-17 save
+/// digests with the legacy writer they projected through; the order log and money totals remain.
 /// </summary>
 public static class EconomyScenario
 {
-    public static readonly string[] Schema17Fields =
-        { "Traits", "RepresentedTraits", "Today", "Decision", "LastContextKey", "ContextAttempts", "ChoicePolicyVersion", "ChoiceStartsDay" };
-
     private sealed class Walking : IRoutePlanner
     {
         public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => new Route
@@ -103,7 +100,7 @@ public static class EconomyScenario
         }
     };
 
-    /// <summary>Run the fixed scenario and return the order log and economy digests.</summary>
+    /// <summary>Run the fixed scenario and return the order log and money totals.</summary>
     /// <summary><paramref name="frozen"/> lets a caller run the same scenario on a frozen writer: it adjusts the fresh
     /// state (for example its schema) and supplies that writer's write/read pair for the mid-run reload.</summary>
     public static object Run(int residents = 60, int seed = 23, bool legacyChoice = false,
@@ -131,7 +128,7 @@ public static class EconomyScenario
                 city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
             }
         }
-        string final = write(city.State);
+        write(city.State); // the final state must still save
         var meals = city.State.Food!.Residents;
         return new
         {
@@ -140,30 +137,7 @@ public static class EconomyScenario
             purchases = meals.Sum(m => m.Purchases),
             spentUnits = meals.Sum(m => m.Spent.Units),
             uncertain = meals.Count(m => m.Status == MealStatus.Uncertain),
-            economyDigest = Digest(WithoutSchema17(final, readBack)),
-            reloadDigest = Digest(WithoutSchema17(reloaded!, readBack)),
         };
-    }
-
-    public static string WithoutSchema17(string payload, Func<string, SaveReadResult>? read = null)
-    {
-        if (typeof(CityState).GetProperty("Capabilities") != null && (int)JObject.Parse(payload)["Schema"]! >= 18)
-        {
-            var state = (read ?? SaveCodec.Read)(payload).State!;
-            state.Schema = 17;
-            // Schema 17 stored a represented consumer under its host and slot (schema 26: own record + scheduling host).
-            if (state.Food != null && state.Citizens.Count > 0)
-            {
-                foreach (var meal in state.Food.Residents) { meal.AnchorId = meal.HostId; meal.Slot = meal.HostSlot; }
-                state.Food.RepresentationFactor = state.Food.Residents.Count / state.Citizens.Count;
-            }
-            payload = (string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.LegacyPopulationCodec")!
-                .GetMethod("Write")!.Invoke(null, new object[] {state})!;
-        }
-        var token = JObject.Parse(payload);
-        token.Remove("Schema");
-        foreach (var property in token.Descendants().OfType<JProperty>().Where(p => Schema17Fields.Contains(p.Name)).ToList()) property.Remove();
-        return token.ToString(Formatting.None);
     }
 
     public static string Digest(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));

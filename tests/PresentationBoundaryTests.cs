@@ -329,7 +329,7 @@ public sealed class PresentationBoundaryTests
         Assert.Equal(1, holdCalls);
         // F2c: the walker follow, its corrections and both tails read only. F2d: so do the car command, the car follow,
         // its corrections, fade and phase count.
-        string population = File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs"));
+        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs"))));
         SortedSet<string> Region(string start, string end)
         {
             int from = population.IndexOf(start, StringComparison.Ordinal), to = population.IndexOf(end, from + 1, StringComparison.Ordinal);
@@ -354,6 +354,6 @@ public sealed class PresentationBoundaryTests
             Assert.DoesNotMatch(new Regex(@"\.\s*(ModelId|PaintSeed)\s*(=[^=>]|\?\?=)"), text);
         }
         // The Runtime rain check is gone from the body paths; logical rain stays in Core.
-        Assert.DoesNotContain("RainHelper", File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs")));
+        Assert.DoesNotContain("RainHelper", string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs")))));
     }
 }

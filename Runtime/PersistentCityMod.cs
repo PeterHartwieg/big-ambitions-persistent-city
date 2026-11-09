@@ -767,7 +767,7 @@ namespace PersistentCity.Runtime
                 if (cost != null)
                 {
                     cost.End(capture.Error == null, capture.Error ?? "");
-                    if (capture.Error == null) CountSavedRecords(cost);
+                    if (capture.Error == null) CountSavedRecords(cost, payload => SaveCodec.CountRecords(simulation!.State, payload));
                 }
             }
         }
