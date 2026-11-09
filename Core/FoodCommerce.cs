@@ -565,28 +565,48 @@ namespace PersistentCity.Core
                 }
             }
         }
-        /// <summary>E5b5 Q2: the seller refused before any receipt because a price changed. Re-read the live menu and buy the
-        /// same product, main only, at its new price if it is still in stock and affordable. The refused attempt's hold is
-        /// released first; when the new terms do not fit, it is restored and the refusal stands. Called at most once per
-        /// checkout, so a price that keeps moving ends as an ordinary refusal.</summary>
+        /// <summary>E5b5 Q2: the seller refused before any receipt because a menu price changed (the selected product's or
+        /// another one's). The resident decides again at the counter from the shop's live menu: the selected product if it
+        /// is still stocked and affordable at its live price, otherwise the stocked, affordable scoped product it likes best
+        /// (taste band, then lower price, then ordinal name; no random draw). Main only. The refused attempt's hold is
+        /// released first; when nothing fits, it is restored and the refusal stands. Called at most once per checkout, so
+        /// a price that keeps moving ends as an ordinary refusal.</summary>
         private bool CounterRedecision(ResidentMeal meal, double now, ref Money mainPrice)
         {
             var business = ReadBusiness(meal.BusinessId, now);
-            var offer = business == null || business.Id != meal.BusinessId || business.PlaceId != meal.PlaceId ? null
-                : business.Offers.FirstOrDefault(o => o.ProductId == meal.ProductId);
-            if (offer == null || !(offer.Units > 0) || offer.Price == mainPrice) return false;
-            Money held = meal.Price;
+            var scope = state.Shops.FirstOrDefault(s => s.PlaceId == meal.PlaceId && s.BusinessId == meal.BusinessId);
+            var person = Owner(meal);
+            if (business == null || business.Id != meal.BusinessId || business.PlaceId != meal.PlaceId || scope == null || person == null)
+                return false;
+            Money held = meal.Price; string chosen = meal.ProductId;
             if (meal.Budget != null) HouseholdFinance.RefusePurchase(meal.Budget); else meal.DayAllowanceUsed -= held;
             var limit = CurrentAllowance(meal);
-            meal.Price = offer.Price;
-            if (offer.Price <= limit && CanSettle(meal) && (meal.Budget == null || HouseholdFinance.HoldPurchase(meal.Budget, meal.Price)))
+            var policy = ProductPolicy();
+            var candidates = new List<(FoodOffer Offer, int Taste)>(business.Offers.Count);
+            foreach (var offer in business.Offers)
             {
+                // This meal's own reservation was released when it became uncertain; others' units stay held.
+                reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int reserved);
+                if (!(offer.Units - reserved > 0) || offer.Price > limit || !scope.ContainsProduct(offer.ProductId)
+                    || !policy.Executable(offer.ProductId)) continue;
+                int taste = offer.ProductId == chosen ? int.MaxValue
+                    : FoodProducts.Known(offer.ProductId) ? ExtraTaste(meal, person, offer.ProductId)
+                    : policy.TasteBand(offer.ProductId, Traits(meal, person), city.State.Seed, meal.ResidentId);
+                candidates.Add((offer, taste));
+            }
+            candidates.Sort((a, b) => a.Taste != b.Taste ? b.Taste.CompareTo(a.Taste)
+                : a.Offer.Price != b.Offer.Price ? a.Offer.Price.CompareTo(b.Offer.Price)
+                : StringComparer.Ordinal.Compare(a.Offer.ProductId, b.Offer.ProductId));
+            foreach (var (offer, _) in candidates)
+            {
+                meal.Price = offer.Price; meal.ProductId = offer.ProductId;
+                if (!CanSettle(meal) || meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price)) continue;
                 if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                 meal.Allowance = Money.Max(meal.Allowance, limit);
                 mainPrice = meal.Price;
                 return true;
             }
-            meal.Price = held;
+            meal.Price = held; meal.ProductId = chosen;
             if (meal.Budget != null) { if (!HouseholdFinance.HoldPurchase(meal.Budget, held)) throw new InvalidOperationException("Restoring a released hold failed."); }
             else meal.DayAllowanceUsed += held;
             return false;

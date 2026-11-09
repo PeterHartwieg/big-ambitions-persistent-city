@@ -335,6 +335,9 @@ public sealed class DynamicAcquisitionTests
         public readonly WeightedFoodChoiceTests.Market Inner;
         public PriceOnlyMarket(WeightedFoodChoiceTests.Market inner) { Inner = inner; }
         public bool KeepChanging;
+        /// <summary>The first checkout is refused as price-only although the selected price is unchanged (another menu
+        /// price changed during native setup).</summary>
+        public bool OtherPriceChanged;
         public int Attempts, PriceOnly;
         public double EarliestMinute => 0;
         public IReadOnlyList<FoodBusiness> Read(double at) => Inner.Read(at);
@@ -343,7 +346,7 @@ public sealed class DynamicAcquisitionTests
             Attempts++;
             var offer = Inner.Shops.Single(b => b.Id == m.BusinessId).Offers.Single(o => o.ProductId == m.ProductId);
             if (KeepChanging && Attempts > 1) offer.Price += Money.FromCents(1); // moved again during the second checkout
-            if (offer.Price != m.Price)
+            if (offer.Price != m.Price || OtherPriceChanged && Attempts == 1)
             {
                 PriceOnly++;
                 return new FoodSale(false, "Approved price changed", priceChanged: true);
@@ -395,6 +398,45 @@ public sealed class DynamicAcquisitionTests
             if (m.Budget != null) Assert.Equal(Money.Zero, m.Budget.HeldPurchase);
             Assert.Equal(keepChanging ? 2 : 1, market.Attempts);
         }
+    }
+
+    [Theory]
+    [InlineData("other-price", false)] // another product's price changed: the selected product at its unchanged price
+    [InlineData("other-price", true)]
+    [InlineData("unaffordable", false)] // the selected product became unaffordable: the affordable alternative
+    [InlineData("unaffordable", true)]
+    [InlineData("sold-out", false)]     // the selected product's price changed and it sold out: the alternative
+    public void ACounterReDecisionConsidersTheWholeLiveMenu(string change, bool budget)
+    {
+        var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
+        var market = new PriceOnlyMarket(inner) { OtherPriceChanged = change == "other-price" };
+        var city = new CitySimulator(prepared.State, planner); city.AttachFoodMarket(market, LegacyFoodChoice.Settings());
+        if (budget) city.EnableHouseholdFinances();
+        var m = city.State.Food!.Residents[0]; double at = m.DesiredAt;
+        for (int i = 0; i < 400 && m.Decision?.Result != FoodDecisionResult.Selected; i++) city.AdvanceTo(at, 1);
+        Assert.Equal(FoodDecisionResult.Selected, m.Decision!.Result);
+        string selected = m.Decision.BusinessId, intent = m.IntentId, product = m.Decision.ProductId!;
+        Money original = inner.Shops.Single(b => b.Id == selected).Offers.Single(o => o.ProductId == product).Price;
+        // The shop also sells a burger (scoped and stocked). Its price change is the "other" price change.
+        var shop = inner.Shops.Single(b => b.Id == selected);
+        shop.Offers.Add(new FoodOffer { ProductId = Burger, Price = Money.FromCents(90), Units = 100 });
+        city.State.Food.Shops.Single(s => s.BusinessId == selected).AdditionalProductIds.Add(Burger);
+        var chosenOffer = shop.Offers.Single(o => o.ProductId == product);
+        if (change == "unaffordable") chosenOffer.Price = Money.FromCents(1000000);
+        if (change == "sold-out") { chosenOffer.Price = Money.FromCents(150); chosenOffer.Units = 0; }
+        while (!city.AdvanceTo(at + 20, 1).CaughtUp) { }
+        m = city.State.Food!.Residents[0];
+        Assert.Equal(MealStatus.Paid, m.Status);
+        Assert.Equal(selected, m.BusinessId); Assert.Equal(intent, m.IntentId);
+        Assert.Equal(1, m.ContextAttempts);
+        Assert.Equal(new[] { intent }, inner.Orders);
+        Assert.Equal(2, market.Attempts); // one refused attempt, one re-decided purchase
+        Assert.Equal(1, market.PriceOnly);
+        Money expected = change == "other-price" ? original : Money.FromCents(90);
+        Assert.Equal(change == "other-price" ? product : Burger, m.ProductId);
+        Assert.Equal(expected, m.Price); Assert.Equal(expected, m.Spent);
+        if (m.Budget == null) Assert.Equal(expected, m.DayAllowanceUsed);
+        else Assert.Equal(Money.Zero, m.Budget.HeldPurchase);
     }
 
     [Theory]
