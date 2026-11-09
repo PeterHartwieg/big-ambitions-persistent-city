@@ -156,7 +156,7 @@ namespace PersistentCity.Persistence
 
         internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
         {
-            if (schema < 25) return PopulationSchema24.CountRecordsForSchema(state, source, schema);
+            if (schema < 25) throw new ArgumentOutOfRangeException(nameof(schema), "Record counts start at writer 25.");
             // F7d: a compact payload charges its tables on top of the body's streaming count.
             if (schema >= CityState.CompactSchema && source.StartsWith(CompactPrefix, StringComparison.Ordinal))
             {

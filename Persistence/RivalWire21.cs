@@ -3,8 +3,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // Isolated schema-20 -> 21 step. The frozen E1 reader first upgrades older
-    // payloads through 20 and preserves captured weather without resampling.
+    // Schema-21 rival outcome and validation rules, still part of the current contract.
     internal static class RivalWire21
     {
         internal static bool AddedProperty(Type type, string name)
@@ -16,16 +15,6 @@ namespace PersistentCity.Persistence
             || type == typeof(FoodDecisionShop) && (name == "AlternativeKind" || name == "RivalTerms"
                 || name == "RivalServiceMinutes" || name == "AlternativeWeight");
 
-        internal static SaveReadResult Migrate(string source)
-        {
-            var old = PopulationSchema20.Read(source);
-            if (old.Status != SaveReadStatus.Loaded) return old;
-            var state = old.State!;
-            state.Schema = 21;
-            if (state.Food != null) state.Food.RivalStartsDay = (int)(state.Minute / 1440) + 1;
-            SaveCodec.ValidateForActivation(state,21);
-            return new SaveReadResult(SaveReadStatus.Loaded, state, "", old.SourceSchema);
-        }
         private static void Require(bool condition, string reason)
         { if (!condition) throw new SaveValidationException(reason); }
 

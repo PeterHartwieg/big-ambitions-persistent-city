@@ -13,7 +13,7 @@ Peter decided these rules on 9 November 2026 after measuring the harness runs fr
 
   `test-focused.py` finds the changed `tests/**/*.cs` files since the merge base with `origin/codex/persistent-city` (uncommitted and untracked files included) and runs their classes through `dotnet test --filter` (`FullyQualifiedName~.Class.`, or `~Class.` in the few files without a namespace). It does not take the dotnet lock. You can also run your own `--filter` without the lock.
 - **The full suite runs once**, on the approved head before merge. The harness does this with `test_scope: final`, and only that run takes the dotnet lock (`wait-other-dotnet.ps1`). Implementers and fixers do not run the full suite, except for a broad refactor that the task names as one.
-- **Wall-clock budgets in tests** go through `TimingBudget` (tests/Support/TimingBudget.cs), never a bare `Assert.True(elapsed < budget)`: it discounts a busy machine by the test thread's CPU time and retries up to five times, so load from parallel slices does not fail them. Counters and byte sizes stay exact asserts ([X3](../checks/x3.md)).
+- **Wall-clock budgets in tests** go through `TimingBudget` (tests/Support/TimingBudget.cs) or `PerfGate.Under`, never a bare `Assert.True(elapsed < budget)`. Both are judged only with `PC_PERF_ASSERTS=1` (see "Wall-clock limits in unit tests" below). When judged, `TimingBudget` discounts a busy machine by the test thread's CPU time and retries up to five times. Counters and byte sizes stay exact asserts ([X3](../checks/x3.md)).
 - A red full run goes to the local-test fixer, which is how the harness handles any red local test.
 
 Harness `task.yaml` block for a slice (replace the worktree path):
@@ -35,6 +35,10 @@ Do not use `{changed_tests}`: the harness only recognises Python and JavaScript 
 ## Schema pins name their own constant
 
 A slice that changes no wire asserts the constant of the schema it relies on (`CityState.PlayerHoldSchema`, for example), not `CityState.CurrentSchema`. Only the slice that introduces a writer pins that writer's golden hash. On 9 November, F5i's `Assert.Equal(35, CityState.CurrentSchema)` turned the integration head red once E5b4 took writer 36. That test was removed, and the same kind of assertion in F5h, F6h and F6k was removed before it could break at writer 37; `HeldPolicyExecutionTests` pins writer 36.
+
+## Wall-clock limits in unit tests
+
+Timed limits (p95 under 1 ms, no unit at or above 30 ms) failed whenever parallel slices loaded the machine, which sent green work to a fixer. Unit tests route them through `PerfGate.Under(ms, limit, label)` (`tests/PerfGate.cs`), which checks the limit only when `PC_PERF_ASSERTS=1`. The timed code, its correctness and allocation assertions always run. Perf evidence for a slice still goes in `docs/perf/<slice>.md`, measured on a quiet machine.
 
 ## Reading
 

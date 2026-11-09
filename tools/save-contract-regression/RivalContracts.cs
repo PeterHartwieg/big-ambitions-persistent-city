@@ -7,15 +7,12 @@ using PersistentCity.Persistence;
 
 static partial class Program
 {
-    // Keep archived-source capacity comparisons usable; never relabel a schema-21
-    // tuple as an older source. The actual frozen reader/writer owns its shape.
+    // Never relabel a schema-21 tuple as an older source. X1 removed the frozen schema-20 writer from the
+    // current tree; before schema 21 the current writer is that source, after it run against an archived tree.
     private static string PreRivalWire(CityState state)
     {
-        var predecessor=typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.PopulationSchema20");
-        if(predecessor==null) return SaveCodec.Write(state);
-        int schema=state.Schema;
-        try {state.Schema=20;return (string)predecessor.GetMethod("Write")!.Invoke(null,new object[]{state})!;}
-        finally {state.Schema=schema;}
+        if(typeof(FoodCommerceState).GetProperty("RivalStartsDay")==null) return SaveCodec.Write(state);
+        throw new NotSupportedException("X1 removed the frozen schema-20 writer; run this comparison against an archived source tree.");
     }
     private static int RivalChars(CityState state)
     {

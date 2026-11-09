@@ -33,7 +33,10 @@ namespace PersistentCity.Tests;
 /// Use it for every Stopwatch value compared against a fixed budget. Inside the measurement, compare with
 /// <see cref="TimingChecks.Under"/> instead of <c>Assert.True</c>. Deterministic values (allocation bytes, counts,
 /// sizes, outcomes) keep their exact <c>Assert</c>: an assertion that throws inside the measurement fails at once
-/// and is never retried. The measurement must build its own state, since it may run more than once.</summary>
+/// and is never retried. The measurement must build its own state, since it may run more than once.
+///
+/// Budgets are judged only when <see cref="PerfGate.Enabled"/> (<c>PC_PERF_ASSERTS=1</c>, #186). Otherwise the
+/// measurement runs once with all its deterministic asserts and no budget is checked.</summary>
 internal static class TimingBudget
 {
     /// <summary>At most this many runs of one measurement. A regression has to miss its budget on all of them.</summary>
@@ -46,12 +49,28 @@ internal static class TimingBudget
     /// <summary>Load factor of the most recent attempt on any thread, for the perf notes.</summary>
     public static double LastLoadFactor { get; private set; } = 1;
 
+    /// <summary>True when budgets are judged: <c>PC_PERF_ASSERTS=1</c>, or inside <see cref="Enforce"/>.</summary>
+    public static bool Enforced => PerfGate.Enabled || enforcedDepth > 0;
+    [ThreadStatic] private static int enforcedDepth;
+
+    /// <summary>Judges budgets on this thread until disposed, whatever <c>PC_PERF_ASSERTS</c> says; for
+    /// TimingBudgetTests, which test the judging itself.</summary>
+    internal static IDisposable Enforce() { enforcedDepth++; return new EnforceScope(); }
+    private sealed class EnforceScope : IDisposable { public void Dispose() => enforcedDepth--; }
+
     /// <summary>Runs <paramref name="measure"/> until its timing checks all pass, at most <see cref="Attempts"/>
-    /// times, and returns the number of runs. Fails if some budget is missed by its best value.</summary>
-    public static int Run(Action<TimingChecks> measure, int attempts = Attempts) => Run(measure, attempts, LoadFactor);
+    /// times, and returns the number of runs. Fails if some budget is missed by its best value. When budgets are not
+    /// <see cref="Enforced"/>, runs it once and judges nothing.</summary>
+    public static int Run(Action<TimingChecks> measure, int attempts = Attempts)
+    {
+        if (Enforced) return Run(measure, attempts, LoadFactor);
+        ThreadCpu.Milliseconds(); // the windows still read the clock; see the warm-up below
+        measure(new TimingChecks());
+        return 1;
+    }
 
     /// <summary><see cref="Run(Action{TimingChecks}, int)"/> with the load factor taken from
-    /// <paramref name="loadFactor"/>(timed wall ms, timed thread CPU ms); TimingBudgetTests fixes it.</summary>
+    /// <paramref name="loadFactor"/>(timed wall ms, timed thread CPU ms), always judged; TimingBudgetTests fixes it.</summary>
     internal static int Run(Action<TimingChecks> measure, int attempts, Func<double, double, double> loadFactor)
     {
         if (attempts < 1) throw new ArgumentOutOfRangeException(nameof(attempts));

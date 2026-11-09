@@ -29,6 +29,21 @@ public sealed class TimingBudgetTests
         }, attempts, (_, _) => factor);
 
     [Fact]
+    public void BudgetsAreJudgedOnlyWhenRequested()
+    {
+        // #186: wall-clock budgets count only with PC_PERF_ASSERTS=1. Without it the measurement runs once, its exact
+        // asserts still apply, and a missed budget passes.
+        if (PerfGate.Enabled) return;
+        int runs = 0;
+        Assert.Equal(1, TimingBudget.Run(t => { runs++; t.Under("value", 9, 2); }));
+        Assert.Equal(1, runs);
+        Assert.Throws<EqualException>(() => TimingBudget.Run(t => Assert.Equal(0, 1)));
+        using (TimingBudget.Enforce())
+            Assert.Throws<XunitException>(() => TimingBudget.Run(t => t.Under("value", 9, 2), attempts: 2));
+        Assert.False(TimingBudget.Enforced);
+    }
+
+    [Fact]
     public void QuietPassTakesOneRun()
     {
         int runs = 0;
@@ -88,6 +103,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void DelayOutsideTheTimedWindowDoesNotLoosenTheBudget()
     {
+        using var enforced = TimingBudget.Enforce();
         // Review round 1: a 100 ms pause in setup, then about 20 ms of timed CPU work against 5 ms. Setup is not
         // timed, so the factor stays near 1 and the work misses on every attempt.
         long work = SpinFor(20);
@@ -104,6 +120,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void LoadInOneCheckOrAWarmUpDoesNotDiscountAnother()
     {
+        using var enforced = TimingBudget.Enforce();
         // Review round 2: a 100 ms pause inside another check's window and inside a warm-up window, then about 20 ms
         // of timed CPU work against 5 ms. Only the work's own window sets its factor, so it misses on every attempt.
         long work = SpinFor(20);
@@ -122,6 +139,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void TimedWindowsDoNotAllocate()
     {
+        using var enforced = TimingBudget.Enforce();
         // Converted tests keep exact zero-allocation asserts around their timed loops.
         TimingBudget.Run(t =>
         {
@@ -140,6 +158,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void WaitInsideTheTimedWindowIsDiscounted()
     {
+        using var enforced = TimingBudget.Enforce();
         // The other side: wall time the thread spent off the CPU inside the window is load, not work.
         if (ThreadCpu.MinimumMs > 1) return; // Windows: 2 ms of CPU is below what its tick clock can judge
         long work = SpinFor(2);
@@ -180,6 +199,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void GuardedWorkloadsPassBesideAFullCpuLoad()
     {
+        using var enforced = TimingBudget.Enforce();
         int before = TimingBudget.Retries;
         var watch = Stopwatch.StartNew();
         using (new CpuLoad())
@@ -197,6 +217,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void TenfoldSlowdownStillFails()
     {
+        using var enforced = TimingBudget.Enforce();
         // The budget is three times the fastest quiet run; the slowed workload does ten times the work.
         long iterations = SpinFor(1.0);
         double quiet = Enumerable.Range(0, 5).Min(_ => Time(() => Spin(iterations)));
