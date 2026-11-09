@@ -574,8 +574,8 @@ public sealed class ResidentInsightTests
         double pickMicroseconds = watch.Elapsed.TotalMilliseconds * 1000 / picks;
         output.WriteLine("ResidentInsight.Capture+Text: " + captureMicroseconds.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " us; 48-walker pick scoring: " + pickMicroseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " us");
         // Generous offline ceilings against the 0.20 ms event-frame sub-budget; native cost is measured on the rig.
-        Assert.True(captureMicroseconds < 200, "capture " + captureMicroseconds + " us");
-        Assert.True(pickMicroseconds < 50, "pick " + pickMicroseconds + " us");
+        PerfGate.Under(captureMicroseconds / 1000.0, 0.2, "capture");
+        PerfGate.Under(pickMicroseconds / 1000.0, 0.05, "pick");
     }
 
     private sealed class Walking : IRoutePlanner
