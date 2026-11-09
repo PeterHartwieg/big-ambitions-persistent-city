@@ -109,6 +109,7 @@ internal sealed class ContractWorld
     /// <summary>Runtime's warming mode after a load: E5b1 rules until every shop has an image; acquisitions deferred.</summary>
     public bool Warming;
     public int MenuLimit = FoodMenuPolicy.LiveMaximumOffers;
+    public int CatalogueWaits;
     public int Recopies, FullRebuilds, Discards, Publishes, GateRuns, RecoveryUnits, MaxRecoveriesInFrame, Reconciliations;
     public FoodReconciliationRefusal LastReconciliation;
     /// <summary>Runs between the passes's start stamp and its publish (a write during a multi-frame pass).</summary>
@@ -161,14 +162,58 @@ internal sealed class ContractWorld
     {
         if (!s.Rented || !s.Established || s.ForRent || s.Menu.Count < 1 || s.Menu.Count > FoodMenuPolicy.LiveMaximumOffers) return false;
         if (s.Menu.Any(p => !FoodProducts.Known(p)) || s.Menu.Distinct().Count() != s.Menu.Count) return false;
-        return Types.TryGetValue(s.BusinessTypeName, out var t) && t.simulator == typeof(FullService) && !t.hasEntranceFee && t.tags.Contains(NeedsBags);
+        return Types.TryGetValue(s.BusinessTypeName, out var t) && t.simulator == typeof(FullService) && !t.hasEntranceFee && CachedBags(t);
+    }
+    // Runtime's authoredBagPolicies: read once per type, re-cached only by a business-type re-copy or RefreshBagPolicy.
+    public readonly Dictionary<BusinessType, bool> BagPolicies = new Dictionary<BusinessType, bool>();
+    private bool CachedBags(BusinessType t)
+    {
+        if (!BagPolicies.TryGetValue(t, out bool bags)) BagPolicies[t] = bags = t.tags.Contains(NeedsBags);
+        return bags;
+    }
+    private void RefreshBagPolicy(Shop s)
+    {
+        if (Types.TryGetValue(s.BusinessTypeName, out var t) && BagPolicies.TryGetValue(t, out bool cached) && cached != t.tags.Contains(NeedsBags))
+            BagPolicies[t] = t.tags.Contains(NeedsBags);
     }
     public bool SupportedMenu(Shop s) => !Refused.ContainsKey(s.Key) && SupportedBusiness(s) && ContractAdmits(s);
+    // Runtime ContractCandidate: the original-three shape without the cached bag policy.
+    public bool Candidate(Shop s) => s.Rented && s.Established && !s.ForRent && s.Menu.Count >= 1
+        && s.Menu.Count <= FoodMenuPolicy.LiveMaximumOffers && s.Menu.All(FoodProducts.Known);
+    private bool Interest(Shop s) => s.Row.Managed || s.Row.Desired || Candidate(s);
+    private void RefuseStructural(Shop s)
+    {
+        Coordinator.Invalidate(s.Key);
+        if (!Interest(s)) return;
+        if (!Refused.ContainsKey(s.Key)) Refused[s.Key] = Hour;
+        Coordinator.Refuse(s.Key, Hour);
+    }
     public bool ContractAdmits(Shop s)
     {
         if (!Active) return true;
         var image = Coordinator.Serving(s.Key);
-        return image != null && Coordinator.Admit(s.Key, image.Stamp is ShopContractStamp st && s.Stamp().Matches(st));
+        if (image == null) return false;
+        if (!(image.Stamp is ShopContractStamp st) || !s.Stamp().Matches(st)) { RefuseStructural(s); return false; }
+        var catalogue = Catalogue.Catalogue;
+        if (catalogue != null && Coordinator.VerifiedCatalogue(s.Key) != catalogue.Revision)
+        {
+            if (!FoodContractRecheck.CatalogueCurrent(image, catalogue)) { RefuseStructural(s); return false; }
+            Coordinator.Rebase(s.Key, catalogue.Revision);
+        }
+        return true;
+    }
+    /// <summary>Replaces the registration at a shop's place (a new business lifetime): Runtime IndexContractKey.</summary>
+    public Shop ReplaceRegistration(Shop old)
+    {
+        var s = new Shop { Key = old.Key, Menu = new List<string>(old.Menu), Prices = old.Prices.Select(p => new Price { itemName = p.itemName, price = p.price }).ToList() };
+        foreach (var h in old.Holders.Values)
+            s.Holders.Add(new Holder { id = h.id, itemName = h.itemName, cargoInstances = h.cargoInstances.Select(c => new Cargo { itemName = c.itemName, amount = c.amount }).ToList() });
+        s.Row = old.Row;
+        s.Row.Observe(s.Signature, false, Hour, reset: true); // FoodAuthority's replacement rule (generation + 1)
+        Shops[Shops.IndexOf(old)] = s;
+        Refused.Remove(old.Key); // refusedContracts is keyed by the old registration object
+        Coordinator.Remove(old.Key);
+        return s;
     }
 
     // Existing discovery visit: the reader's stamp check, then Observe with SupportedMenu.
@@ -228,29 +273,27 @@ internal sealed class ContractWorld
     {
         if (!Warming || rebuilds.Count > 0 || Shops.Any(s => Coordinator.Image(s.Key) == null)) return;
         Warming = false; Active = true;
-        foreach (var s in Shops) if (Coordinator.Image(s.Key) is { Passed: false } && (s.Row.Managed || s.Row.Desired)) Refuse(s);
+        foreach (var s in Shops) if (Coordinator.Image(s.Key) is { Passed: false } && Interest(s)) Refuse(s);
     }
     public void Drain(int units = 64) { for (int i = 0; i < 10000 && (rebuilds.Count > 0 || Coordinator.PendingPreparations > 0 || Coordinator.PendingRecoveries > 0); i++) Frame(units); }
 
     private void PrepareUnit(Shop s)
     {
         var image = Coordinator.Image(s.Key);
-        if (image != null)
+        var live = new Live(this, s); var changed = new List<FoodDefinitionDependency>();
+        if (image != null && image.Passed)
         {
-            var live = new Live(this, s); var changed = new List<FoodDefinitionDependency>();
-            if (image.Passed)
-            {
-                var refusal = FoodContractRecheck.Definitions(image, live, PreparationEpoch, changed);
-                if (refusal == FoodContractRecheckRefusal.None) refusal = FoodContractRecheck.BusinessType(image, live);
-                if (refusal != FoodContractRecheckRefusal.None) { Recopy(changed, refusal); if (Active) Refuse(s); }
-            }
-            var stale = new List<object>();
-            if (FoodContractRecheck.StaleCopies(image.Definitions, Catalogue.Catalogue!, live, PreparationEpoch, stale) > 0)
-            {
-                var copies = stale.Select(o => new LoadedStockDefinition(((Item)o).Facts())).ToArray();
-                if (Catalogue.Replace(copies)) Recopies += copies.Length; else { FullRebuilds++; RebuildCatalogue(); }
-                foreach (var other in Shops) Requeue(other);
-            }
+            var refusal = FoodContractRecheck.Definitions(image, live, PreparationEpoch, changed);
+            if (refusal == FoodContractRecheckRefusal.None) refusal = FoodContractRecheck.BusinessType(image, live);
+            if (refusal != FoodContractRecheckRefusal.None) { Recopy(changed, refusal); if (Active) Refuse(s); }
+        }
+        RefreshBagPolicy(s);
+        var stale = new List<object>();
+        if (Catalogue.Catalogue != null && FoodContractRecheck.StaleCopies(Coordinator.Watched(s.Key), Catalogue.Catalogue, live, PreparationEpoch, stale) > 0)
+        {
+            var copies = stale.Select(o => new LoadedStockDefinition(((Item)o).Facts())).ToArray();
+            if (Catalogue.Replace(copies)) Recopies += copies.Length; else { FullRebuilds++; RebuildCatalogue(); }
+            foreach (var other in Shops) Requeue(other);
         }
         Requeue(s);
     }
@@ -258,6 +301,7 @@ internal sealed class ContractWorld
     // The E5a reader pass followed by OnContractPublished.
     private void Pass(Shop s)
     {
+        if (!Shops.Contains(s)) return; // a replaced registration: Runtime drops its pass (registrations[key] differs)
         var start = s.Stamp();
         var catalogue = Catalogue.Catalogue!;
         var type = Types.TryGetValue(s.BusinessTypeName, out var t) ? t : null;
@@ -265,17 +309,20 @@ internal sealed class ContractWorld
             && !type.hasEntranceFee && type.tags.Contains(NeedsBags);
         var builder = new LoadedStockMenuBuilder(catalogue, Hour, business, s.Menu,
             s.Prices.Select(p => new StockPriceFields(p.itemName, p.price)).ToArray(), MenuLimit, s.Holders.Count, true);
+        var passNames = new List<string>(s.Menu);
         foreach (var h in s.Holders.Values)
         {
             var cargo = h.cargoInstances.Select(c => new StockCargoFields(c.itemName, c.amount, c.nested?.Count ?? -1)).ToArray();
+            foreach (var c in h.cargoInstances) if (!passNames.Contains(c.itemName)) passNames.Add(c.itemName);
+            if (!passNames.Contains(h.itemName)) passNames.Add(h.itemName);
             builder.AddHolder(h.id, h.id, h.itemName, true, cargo);
         }
         var eligibility = builder.Finish();
         s.ReaderStamp = start;
         DuringPass?.Invoke(s);
-        Publish(s, eligibility, start);
+        Publish(s, eligibility, start, passNames);
     }
-    private void Publish(Shop s, FoodEligibilityImage eligibility, ShopContractStamp start)
+    private void Publish(Shop s, FoodEligibilityImage eligibility, ShopContractStamp start, List<string> passNames)
     {
         if (!s.Stamp().Matches(start)) { Discards++; return; }
         var catalogue = Catalogue.Catalogue;
@@ -296,27 +343,28 @@ internal sealed class ContractWorld
             var names = new List<string>();
             foreach (var o in eligibility.Offers) if (!names.Contains(o.ProductId)) names.Add(o.ProductId);
             foreach (var h in eligibility.Holders) { if (!names.Contains(h.DefinitionId)) names.Add(h.DefinitionId); if (!names.Contains(h.ResourceId)) names.Add(h.ResourceId); }
-            definitions = new FoodDefinitionDependency[names.Count];
+            int participating = names.Count;
+            foreach (var n in passNames) if (!names.Contains(n)) names.Add(n);
+            var list = new List<FoodDefinitionDependency>();
             var stale = new List<FoodDefinitionDependency>();
             for (int i = 0; i < names.Count; i++)
             {
-                if (!Items.TryGetValue(names[i], out var item) || !catalogue.TryGet(names[i], out var copy)) { Discards++; Requeue(s); return; }
-                definitions[i] = new FoodDefinitionDependency(names[i], item, copy);
-                if (!copy.Matches(item.Facts())) stale.Add(definitions[i]);
+                if (!Items.TryGetValue(names[i], out var item) || !catalogue.TryGet(names[i], out var copy))
+                { if (i >= participating) continue; Discards++; Requeue(s); return; }
+                var d = new FoodDefinitionDependency(names[i], item, copy);
+                list.Add(d);
+                if (!copy.Matches(item.Facts())) stale.Add(d);
             }
             if (stale.Count > 0) { Discards++; Recopy(stale, FoodContractRecheckRefusal.DefinitionContent); return; }
-            if (live.ReadBusinessType(out var facts)) business = new FoodBusinessTypeCopy(facts);
+            definitions = list.ToArray();
             admission = Admission(s, eligibility, eligibility.CatalogueRevision == Catalogue.Revision);
         }
-        if (!eligibility.StockContractMatched)
-        {
-            var names = s.Menu.Concat(Coordinator.Image(s.Key)?.Definitions.Select(d => d.Name) ?? Enumerable.Empty<string>()).Distinct().ToList();
-            definitions = names.Where(n => Items.ContainsKey(n) && catalogue.TryGet(n, out _))
-                .Select(n => { catalogue.TryGet(n, out var copy); return new FoodDefinitionDependency(n, Items[n], copy); }).ToArray();
-        }
+        else definitions = passNames.Where(n => Items.ContainsKey(n) && catalogue.TryGet(n, out _))
+            .Select(n => { catalogue.TryGet(n, out var copy); return new FoodDefinitionDependency(n, Items[n], copy); }).ToArray();
+        if (live.ReadBusinessType(out var facts)) business = new FoodBusinessTypeCopy(facts);
         var image = new FoodContractImage(s.Key, Hour, eligibility, holders, definitions, business, admission, start);
         Coordinator.Publish(image); Publishes++;
-        if (!image.Passed && Active && (s.Row.Managed || s.Row.Desired)) Refuse(s);
+        if (!image.Passed && Active && Interest(s)) Refuse(s);
     }
     public CompleteFoodMenuRefusal Admission(Shop s, FoodEligibilityImage eligibility, bool current)
     {
@@ -333,7 +381,7 @@ internal sealed class ContractWorld
             foreach (var s in Shops) Requeue(s);
         }
         else if (refusal == FoodContractRecheckRefusal.DefinitionReference) { FullRebuilds++; RebuildCatalogue(); }
-        else if (refusal == FoodContractRecheckRefusal.BusinessType) foreach (var s in Shops) Requeue(s);
+        else if (refusal == FoodContractRecheckRefusal.BusinessType) { BagPolicies.Clear(); foreach (var s in Shops) Requeue(s); }
     }
 
     // Decision 3 at a capture (checkout=false) or after native setup at checkout.
@@ -342,6 +390,7 @@ internal sealed class ContractWorld
         if (!Active) return true;
         var image = Coordinator.Serving(s.Key);
         if (image == null) return false;
+        if (Catalogue.Catalogue == null) { CatalogueWaits++; return false; } // the sale waits; no refusal
         if (checkout) CaptureEpoch.Begin();
         var live = new Live(this, s); var changed = new List<FoodDefinitionDependency>();
         var refusal = FoodContractRecheck.Structure(image, live, CaptureEpoch, changed);
@@ -380,7 +429,9 @@ internal sealed class ContractWorld
         if (Orders.Contains(intent)) return intent;
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!s.Row.CanServe || !Recheck(s, true)) return null;
-        if (!Supply(s, out var units) || units[product] <= 0) return null;
+        int reconciled = Reconciliations;
+        if (!Supply(s, out var units)) { if (Reconciliations != reconciled) Refuse(s); return null; }
+        if (units[product] <= 0) return null;
         // After native setup (E5b1 CompletePricesMatch, then Decision 3 again).
         foreach (var p in s.Menu)
         {
@@ -475,13 +526,13 @@ internal sealed class ContractWorld
         GateRuns++;
         var s = Find(row.PlaceId);
         if (!(image.Stamp is ShopContractStamp st) || !s.Stamp().Matches(st))
-        { Coordinator.Invalidate(s.Key); s.Row.Observe(s.Signature, false, Hour); return false; }
+        { RefuseStructural(s); s.Row.Observe(s.Signature, false, Hour); return false; }
         var live = new Live(this, s); var changed = new List<FoodDefinitionDependency>();
         var refusal = FoodContractRecheck.Structure(image, live, BoundaryEpoch, changed);
         var current = new Money[8];
         var prices = refusal == FoodContractRecheckRefusal.None ? FoodContractRecheck.Prices(image, live, current) : FoodPriceVerdict.Same;
         var admission = refusal == FoodContractRecheckRefusal.None && prices != FoodPriceVerdict.Refused
-            ? Admission(s, image.Eligibility, image.CatalogueRevision == Catalogue.Revision) : CompleteFoodMenuRefusal.None;
+            ? Admission(s, image.Eligibility, Coordinator.VerifiedCatalogue(s.Key) == Catalogue.Revision) : CompleteFoodMenuRefusal.None;
         if (refusal == FoodContractRecheckRefusal.None && prices != FoodPriceVerdict.Refused && admission == CompleteFoodMenuRefusal.None
             && SupportedBusiness(s) && !Refused.ContainsKey(s.Key))
         {
@@ -587,6 +638,156 @@ public sealed class FoodContractCoordinatorTests
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
     }
 
+    [Fact]
+    public void AStructuralChangeWithAPassingSameHourRebuildStaysRefusedUntilSafeRecovery()
+    {
+        var (world, shop) = Owned();
+        long hour = world.Hour;
+        shop.Menu = new List<string>(shop.Menu); // W8: a valid replacement, same products
+        world.VisitAll();
+        Assert.False(shop.Row.Desired);
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        world.Drain(); world.VisitAll(); // the same-hour rebuild passes
+        Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
+        Assert.Equal(FoodContractPhase.Refused, world.Coordinator.Phase(shop.Key));
+        Assert.False(shop.Row.Desired); // never back to service in the hour it changed
+        Assert.True(shop.Row.Managed);
+        Assert.Equal(hour, world.Hour);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
+        world.Drain(); world.VisitAll();
+        Assert.False(world.Refused.ContainsKey(shop.Key)); // recovered after an advancing hour and the completed hand-back
+        Assert.True(shop.Row.Desired);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+    }
+
+    [Fact]
+    public void ANonparticipatingFurnitureDefinitionIsWatchedAndItsInPlaceEditIsCaught()
+    {
+        var world = new ContractWorld();
+        const string Oven = "ba:itemname_oven";
+        world.Add(new ContractWorld.Item { itemName = Oven, workstation = true, itemsToProduce = new[] { ContractWorld.Croissant } });
+        world.RebuildCatalogue();
+        var shop = world.AddShop("address:main:1:shop", Burger);
+        shop.Holders.Add(new ContractWorld.Holder { id = "oven", itemName = Oven, cargoInstances = new List<ContractWorld.Cargo>() });
+        world.Own(shop); // the oven produces nothing on the menu, so it does not participate
+        Assert.Contains(world.Coordinator.Serving(shop.Key)!.Definitions, d => d.Name == Oven);
+        world.Items[Oven].itemsToProduce![0] = Burger; // in place: it would now produce the advertised burger
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
+        Assert.True(world.Recopies > 0);
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        Assert.False(shop.Row.Desired);
+        Assert.Equal(FoodEligibilityRefusal.Workstation, world.Coordinator.Image(shop.Key)!.Eligibility.Refusal);
+    }
+
+    [Fact]
+    public void ADefinitionBrokenWithAStructuralChangeIsStillWatchedForItsRepair()
+    {
+        var (world, shop) = Owned();
+        shop.Menu = new List<string>(shop.Menu);              // stamp: the image is dropped
+        world.Items[ContractWorld.ShelfItem].consumes = false; // and the shelf definition breaks in place
+        world.VisitAll(); world.Drain(); world.VisitAll();
+        var failed = world.Coordinator.Image(shop.Key)!;
+        Assert.Equal(FoodEligibilityRefusal.Resources, failed.Eligibility.Refusal);
+        Assert.Contains(world.Coordinator.Watched(shop.Key), d => d.Name == ContractWorld.ShelfItem);
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); // hand-back
+        Assert.False(shop.Row.Managed);
+        world.Items[ContractWorld.ShelfItem].consumes = true; // repaired in place: no stamp, no hint
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
+        Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.True(shop.Row.Desired);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+    }
+
+    [Fact]
+    public void ACatalogueInvalidationReachesServiceAtOnceWhileRebuildsAreBacklogged()
+    {
+        var world = new ContractWorld();
+        var shops = Enumerable.Range(0, 8).Select(i => world.AddShop("address:main:" + i + ":shop", Burger, HotDog)).ToArray();
+        world.Own(shops);
+        world.BeginHour(world.Hour + 1); // a preparation backlog
+        world.Catalogue.MarkDirty();      // a W11 hint
+        Assert.All(shops, s => Assert.Null(world.Select(s))); // no capture on an unverifiable catalogue
+        Assert.True(world.CatalogueWaits >= 8);
+        Assert.Empty(world.Refused);
+        Assert.All(shops, s => Assert.True(s.Row.CanServe)); // ownership waits, it is not withdrawn
+        world.RebuildCatalogue(); // new copy objects with the same content
+        world.VisitAll();
+        Assert.All(shops, s => Assert.Equal(world.Catalogue.Revision, world.Coordinator.VerifiedCatalogue(s.Key)));
+        Assert.All(shops, s => Assert.NotNull(world.Select(s)));
+        // A rebuild whose content differs for a dependency withdraws through the refusal path.
+        world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase![2] = "ba:itemname_other";
+        world.RebuildCatalogue(); world.VisitAll();
+        Assert.All(shops, s => { Assert.True(world.Refused.ContainsKey(s.Key)); Assert.False(s.Row.Desired); });
+    }
+
+    [Fact]
+    public void ARecopyOfAnUnrelatedDefinitionKeepsImagesCurrentAndAcquisitionsReady()
+    {
+        var world = new ContractWorld();
+        var shop = world.AddShop("address:main:1:shop", Burger);
+        world.VisitAll(); world.Drain(); world.VisitAll();
+        long built = world.Coordinator.Image(shop.Key)!.CatalogueRevision;
+        world.Items[ContractWorld.Croissant].cargoCapacity = 9;
+        Assert.True(world.Catalogue.Replace(new[] { new LoadedStockDefinition(world.Items[ContractWorld.Croissant].Facts()) }));
+        world.VisitAll();
+        Assert.True(world.Catalogue.Revision > built);
+        Assert.Equal(world.Catalogue.Revision, world.Coordinator.VerifiedCatalogue(shop.Key));
+        Assert.True(shop.Row.Desired);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+    }
+
+    [Fact]
+    public void AReplacedRefusedRegistrationStartsANewLifetimeAndAcquiresSafely()
+    {
+        var (world, shop) = Owned();
+        var capture = world.Select(shop)!;
+        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].itemName = HotDog;
+        Assert.Null(world.Checkout(capture, Burger, "x"));
+        Assert.True(world.Coordinator.RefusedHour(shop.Key) >= 0);
+        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].itemName = Burger; // the new business is laid out correctly
+        var replaced = world.ReplaceRegistration(shop);
+        Assert.Equal(-1, world.Coordinator.RefusedHour(replaced.Key));
+        world.VisitAll(); world.Drain(); world.VisitAll();
+        Assert.True(world.Coordinator.Image(replaced.Key)!.Passed);
+        Assert.True(replaced.Row.Desired);
+        Assert.False(replaced.Row.CanServe); // suspended until a drained boundary
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == replaced.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+        Assert.True(replaced.Row.CanServe);
+        // Runtime: replacement resets the coordinator entry under the place key.
+        string runtime = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "FoodContractDiagnostics.cs"));
+        Assert.Contains("{ contractKeys.Remove(previous); contracts.Remove(place); contractWarming.Remove(place); }", runtime);
+    }
+
+    [Fact]
+    public void ACheckoutReconciliationMismatchWithdrawsTheWholeShop()
+    {
+        var (world, shop) = Owned();
+        var capture = world.Select(shop)!;
+        world.OmittedByNative.Add(shop.Key + ":shelf:" + Burger);
+        Assert.Null(world.Checkout(capture, Burger, "x"));
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        Assert.False(shop.Row.Desired);
+        string market = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "NativeFoodMarket.cs"));
+        Assert.Contains("if (FoodSupplyReader.Reconciliations != reconciled) return RefuseCheckoutContract(reg);", market);
+    }
+
+    [Fact]
+    public void ACaptureOutsideABatchStartsItsOwnDefinitionEpoch()
+    {
+        string runtime = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "FoodContractDiagnostics.cs"));
+        Assert.Contains("if (checkout || !captureBatch) contractEpoch.Begin();", runtime);
+        // Without a new epoch an in-place edit after the last comparison is answered from the cache.
+        var (world, shop) = Owned();
+        var image = world.Coordinator.Serving(shop.Key)!;
+        var epoch = new FoodDefinitionEpoch(); epoch.Begin();
+        Assert.Equal(FoodContractRecheckRefusal.None, FoodContractRecheck.Definitions(image, new ContractWorld.Live(world, shop), epoch));
+        world.Items[ContractWorld.ShelfItem].consumes = false;
+        Assert.Equal(FoodContractRecheckRefusal.None, FoodContractRecheck.Definitions(image, new ContractWorld.Live(world, shop), epoch));
+        epoch.Begin();
+        Assert.Equal(FoodContractRecheckRefusal.DefinitionContent, FoodContractRecheck.Definitions(image, new ContractWorld.Live(world, shop), epoch));
+    }
+
     [Theory]
     [InlineData("closed")]
     [InlineData("for-rent")]
@@ -667,7 +868,8 @@ public sealed class FoodContractCoordinatorTests
         world.DuringPass = null;
         Assert.False(world.SupportedMenu(shop));
         Assert.Null(world.Coordinator.Serving(shop.Key));
-        Assert.Equal(FoodContractPhase.Dirty, world.Coordinator.Phase(shop.Key));
+        // A structural change is a recorded refusal (Decision 7), not only a dropped image.
+        Assert.Equal(FoodContractPhase.Refused, world.Coordinator.Phase(shop.Key));
     }
 
     public static IEnumerable<object[]> DefinitionEdits() => new[] { "showcase-element", "produce-element", "counter-tags", "business-tags", "cargo-whitelist" }

@@ -165,7 +165,18 @@ namespace PersistentCity.Runtime
         /// <summary>E5b3: the sealed catalogue of the current revision, or null while it is dirty or rebuilding.</summary>
         internal LoadedStockCatalogue? Catalogue => catalogueDirty ? null : catalogue;
         /// <summary>E5b3 coordinator: called once per finished shop pass with the pass's registration, image and start stamp.</summary>
-        internal Action<string, BuildingRegistration, FoodEligibilityImage, ShopContractStamp>? ShopPublished;
+        internal Action<string, BuildingRegistration, FoodEligibilityImage, ShopContractStamp, IReadOnlyList<string>>? ShopPublished;
+        /// <summary>Most distinct definition names one pass records for E5b3 Decision 3a.</summary>
+        internal const int MaximumPassDefinitions = 512;
+        // Every definition name the current pass read: menu products, furniture and cargo, participating or not,
+        // including the one that refused. Cleared with the pass.
+        private readonly List<string> passDefinitions = new List<string>();
+        private readonly HashSet<string> passDefinitionSet = new HashSet<string>(StringComparer.Ordinal);
+        private void PassDefinition(string? name)
+        {
+            if (string.IsNullOrEmpty(name) || passDefinitions.Count == MaximumPassDefinitions || !passDefinitionSet.Add(name!)) return;
+            passDefinitions.Add(name!);
+        }
         public long DefinitionRecopies { get; private set; }
         public long FullRecopies { get; private set; }
         /// <summary>E5b3 Decision 3a: re-copies the named live definitions into a new catalogue revision and
@@ -345,6 +356,9 @@ namespace PersistentCity.Runtime
         private void StartShop(Shop shop)
         {
             ShopPasses++;
+            passDefinitions.Clear(); passDefinitionSet.Clear();
+            var products = shop.Registration.cachedAvailableProducts;
+            if (products != null && products.Count <= LoadedStockLimits.Rows) for (int i = 0; i < products.Count; i++) PassDefinition(products[i]);
             var r = shop.Registration;
             shop.Start = stampsReady ? Stamp(r) : default;
             try
@@ -388,6 +402,7 @@ namespace PersistentCity.Runtime
                     HoldersRead++;
                     var pair = furnitureCursor.Current; var instance = pair.Value;
                     if (instance == null) { menu.Fail(FoodEligibilityRefusal.FurnitureIdentity); PublishShop(); return; }
+                    PassDefinition(instance.itemName);
                     var cargo = instance.cargoInstances;
                     if (cargo != null && cargo.Count > LoadedStockLimits.Rows)
                     { menu.Fail(FoodEligibilityRefusal.CargoBounds); PublishShop(); return; }
@@ -398,6 +413,7 @@ namespace PersistentCity.Runtime
                         if (c == null) { menu.Fail(FoodEligibilityRefusal.CargoShape); break; }
                         if (!cargoIdentities.Add(c)) { menu.Fail(FoodEligibilityRefusal.SharedCargo); break; }
                         cargoBuffer[j] = new StockCargoFields(c.itemName, c.amount, c.nestedCargoInstances?.Count ?? -1);
+                        PassDefinition(c.itemName);
                     }
                     menu.AddHolder(pair.Key, instance.id, instance.itemName, cargo != null,
                         new ReadOnlySpan<StockCargoFields>(cargoBuffer, 0, count));
@@ -414,7 +430,7 @@ namespace PersistentCity.Runtime
             scanning!.Image = result; scanning.PublishedCatalogue = catalogueRevision; scanning.Stamp = scanning.Start;
             var shop = scanning; var stamp = scanning.Start;
             CancelShop(false);
-            ShopPublished?.Invoke(shop.Key, shop.Registration, result, stamp);
+            ShopPublished?.Invoke(shop.Key, shop.Registration, result, stamp, passDefinitions);
         }
         private void CancelShop(bool requeue = true)
         {

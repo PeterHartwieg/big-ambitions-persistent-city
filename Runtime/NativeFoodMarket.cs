@@ -468,7 +468,13 @@ namespace PersistentCity.Runtime
             if (observed.TryGetValue(meal.PlaceId, out var seen) && ReferenceEquals(seen.Registration, reg)
                 && seen.Products.SequenceEqual(products, StringComparer.Ordinal) && seen.Supply.Values.All(s => s.AtMinute == now))
             { before = seen.Supply; CheckoutSupplyReuses++; }
-            else before = FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg));
+            else
+            {
+                long reconciled = FoodSupplyReader.Reconciliations;
+                before = FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg));
+                // Decision 5: a reconciliation mismatch in this read withdraws the whole business, before any receipt.
+                if (FoodSupplyReader.Reconciliations != reconciled) return RefuseCheckoutContract(reg);
+            }
             if (before.Values.Any(s => !s.Units.HasValue)) return new FoodSale(false, "Menu supply contract changed");
             var refusal = SellLine(meal, minute, reg, business!, scope, meal.ProductId, mainPrice, before,
                 () => FoodSaleReceipts.Begin(data, meal, ticket?.Extras), out before);

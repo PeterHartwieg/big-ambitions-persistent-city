@@ -123,6 +123,12 @@ namespace PersistentCity.Core
                 && TagCount == live.TagCount && TagHash == live.TagHash && CargoCapacity == live.CargoCapacity
                 && CargoWhitelistCount == live.CargoWhitelistCount && CargoWhitelistHash == live.CargoWhitelistHash
                 && LoadedStockRows.Same(Whitelist, live.Whitelist) && LoadedStockRows.Same(Outputs, live.Outputs);
+        /// <summary>Same copied facts as <paramref name="other"/>, field by field (a full catalogue rebuild makes new
+        /// copy objects; an unchanged definition still compares equal).</summary>
+        public bool SameContent(LoadedStockDefinition other)
+            => other != null && Matches(new LoadedStockFacts(other.Name, other.Retail, other.Service, other.Showcase, other.Workstation,
+                other.MetadataVerified, other.Ungated, other.Bag, other.Counter, other.Consumes, other.Whitelist, other.Outputs,
+                other.TagCount, other.TagHash, other.CargoCapacity, other.CargoWhitelistCount, other.CargoWhitelistHash));
         public int TagCount { get; }
         public ulong TagHash { get; }
         public int CargoCapacity { get; }

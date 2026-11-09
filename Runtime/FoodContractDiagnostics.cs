@@ -60,6 +60,7 @@ namespace PersistentCity.Runtime
         private const int ContractUnitsPerFrame = 64, PreparationsPerFrame = 64;
         // Counters for pc food contract status/boundary and the perf record.
         private long contractRechecks, contractRecheckRefusals, contractGateRuns, contractGateRefusals, contractRecoveryUnits;
+        private long contractCatalogueWaits;
         private long contractDiscards, contractRecopyEvents, contractBusinessRecopies, contractFrames, contractFramesOverBudget;
         private double contractRecheckMax, contractGateMax, contractFrameMax, contractBoundaryCommitMs, contractBoundaryCommitMax;
         private string? contractLastRefusal;
@@ -223,28 +224,29 @@ namespace PersistentCity.Runtime
             long started = Stopwatch.GetTimestamp();
             if (!registrations.TryGetValue(key, out var reg)) { RecordUnit(Elapsed(started)); return; }
             var image = contracts.Image(key);
-            if (image != null)
+            contractLive.Bind(reg); contractChanged.Clear();
+            if (image != null && image.Passed)
             {
-                contractLive.Bind(reg); contractChanged.Clear();
-                if (image.Passed)
+                var refusal = FoodContractRecheck.Definitions(image, contractLive, preparationEpoch, contractChanged);
+                if (refusal == FoodContractRecheckRefusal.None) refusal = FoodContractRecheck.BusinessType(image, contractLive);
+                if (refusal != FoodContractRecheckRefusal.None)
                 {
-                    var refusal = FoodContractRecheck.Definitions(image, contractLive, preparationEpoch, contractChanged);
-                    if (refusal == FoodContractRecheckRefusal.None) refusal = FoodContractRecheck.BusinessType(image, contractLive);
-                    if (refusal != FoodContractRecheckRefusal.None)
-                    {
-                        Recopy(reg, refusal);
-                        if (contractMode == ContractMode.Active) RefuseContractImage(reg, "preparation: " + refusal);
-                    }
+                    Recopy(reg, refusal);
+                    if (contractMode == ContractMode.Active) RefuseContractImage(reg, "preparation: " + refusal);
                 }
-                // The catalogue's current copies, for passing and failed images alike (an in-place repair after hand-back).
-                var catalogue = reader.Catalogue;
-                contractStale.Clear();
-                if (catalogue != null && FoodContractRecheck.StaleCopies(image.Definitions, catalogue, contractLive, preparationEpoch, contractStale) > 0)
-                {
-                    contractRecopy.Clear();
-                    foreach (var live in contractStale) if (live is Item item) contractRecopy.Add(item);
-                    contractRecopyEvents++; reader.RecopyDefinitions(contractRecopy.ToArray());
-                }
+            }
+            // A failed or invalidated image compares nothing above, so refresh the business type's bag policy from
+            // the live type here too: a tag removed and restored in place must not leave a false cached policy.
+            RefreshBagPolicy(reg);
+            // The catalogue's current copies of every definition this shop's passes ever read, kept across
+            // invalidation and failed images: an in-place repair after hand-back reaches the next image.
+            var catalogue = reader.Catalogue;
+            contractStale.Clear();
+            if (catalogue != null && FoodContractRecheck.StaleCopies(contracts.Watched(key), catalogue, contractLive, preparationEpoch, contractStale) > 0)
+            {
+                contractRecopy.Clear();
+                foreach (var live in contractStale) if (live is Item item) contractRecopy.Add(item);
+                contractRecopyEvents++; reader.RecopyDefinitions(contractRecopy.ToArray());
             }
             reader.MarkShopDirty(key, reg, menuLimit);
             RecordUnit(Elapsed(started));
@@ -252,7 +254,8 @@ namespace PersistentCity.Runtime
 
         // Decision 4 step 3. Runs inside the reader unit that finished the pass. Never partial: the image is built
         // whole and swapped in one call, or discarded.
-        private void OnContractPublished(string key, BuildingRegistration reg, FoodEligibilityImage eligibility, ShopContractStamp stamp)
+        private void OnContractPublished(string key, BuildingRegistration reg, FoodEligibilityImage eligibility, ShopContractStamp stamp,
+            IReadOnlyList<string> passDefinitions)
         {
             var reader = contractReader;
             if (reader == null || contractMode == ContractMode.Fallback) return;
@@ -277,46 +280,78 @@ namespace PersistentCity.Runtime
             var admission = CompleteFoodMenuRefusal.None;
             if (eligibility.StockContractMatched)
             {
+                // Participating definitions first: each must resolve, or the pass is discarded.
                 contractNamesBuffer.Clear();
                 foreach (var offer in eligibility.Offers) AddName(offer.ProductId);
                 foreach (var h in eligibility.Holders) { AddName(h.DefinitionId); AddName(h.ResourceId); }
-                definitions = new FoodDefinitionDependency[contractNamesBuffer.Count];
+                int participating = contractNamesBuffer.Count;
+                // Then every other definition the pass read (nonparticipating furniture and cargo), so an in-place
+                // edit that would make one participate is seen by the rechecks and by preparation.
+                foreach (var name in passDefinitions) AddName(name);
+                var list = new List<FoodDefinitionDependency>(contractNamesBuffer.Count);
                 contractRecopy.Clear();
-                for (int i = 0; i < definitions.Length; i++)
+                for (int i = 0; i < contractNamesBuffer.Count; i++)
                 {
                     string name = contractNamesBuffer[i];
                     var item = ItemsGetter.GetByName(name, true);
-                    if (item == null || !catalogue.TryGet(name, out var copy)) { contractDiscards++; reader.MarkShopDirty(key, reg, menuLimit); return; }
+                    if (item == null || !catalogue.TryGet(name, out var copy))
+                    {
+                        if (i >= participating) continue;
+                        contractDiscards++; reader.MarkShopDirty(key, reg, menuLimit); return;
+                    }
                     if (!copy.Matches(LoadedCatalogueEligibilityReader.Facts(item))) contractRecopy.Add(item);
-                    definitions[i] = new FoodDefinitionDependency(name, item, copy);
+                    list.Add(new FoodDefinitionDependency(name, item, copy));
                 }
                 // In-place definition edit during the pass: re-copy and rebuild against the fresh facts.
                 if (contractRecopy.Count > 0) { contractDiscards++; contractRecopyEvents++; reader.RecopyDefinitions(contractRecopy.ToArray()); return; }
-                if (contractLive.ReadBusinessType(out var type)) business = new FoodBusinessTypeCopy(type);
+                definitions = list.ToArray();
                 admission = Admission(key, reg, eligibility, eligibility.CatalogueRevision == reader.CatalogueRevision);
             }
-            // A failed image keeps the dependencies it can name, so preparation still sees an in-place repair.
-            if (!eligibility.StockContractMatched) definitions = FailedDependencies(key, reg, catalogue);
+            // A failed image keeps every definition its pass read, including the one that refused; the coordinator
+            // also keeps the earlier images' dependencies, so preparation still sees an in-place repair.
+            else definitions = Dependencies(passDefinitions, catalogue);
+            if (contractLive.ReadBusinessType(out var type)) business = new FoodBusinessTypeCopy(type);
             var image = new FoodContractImage(key, hour, eligibility, holders, definitions, business, admission, stamp);
             contracts.Publish(image); contractWarming.Remove(key);
             if (!image.Passed && contractMode == ContractMode.Active) WithdrawFailedImage(reg);
         }
         private void AddName(string name) { if (!contractNamesBuffer.Contains(name)) contractNamesBuffer.Add(name); }
-        // Menu products plus every dependency of the last image that named any. Bounded by the menu and that image.
-        private FoodDefinitionDependency[] FailedDependencies(string key, BuildingRegistration reg, LoadedStockCatalogue catalogue)
+        // Every resolvable definition a pass read. Bounded by the reader's 512 names per pass.
+        private static FoodDefinitionDependency[] Dependencies(IReadOnlyList<string> names, LoadedStockCatalogue catalogue)
         {
-            contractNamesBuffer.Clear();
-            var menu = reg.cachedAvailableProducts;
-            if (menu != null && menu.Count <= LoadedStockLimits.Offers) foreach (var name in menu) if (name != null) AddName(name);
-            var previous = contracts.Image(key);
-            if (previous != null) foreach (var d in previous.Definitions) AddName(d.Name);
-            var result = new List<FoodDefinitionDependency>(contractNamesBuffer.Count);
-            foreach (var name in contractNamesBuffer)
+            var result = new List<FoodDefinitionDependency>(names.Count);
+            foreach (var name in names)
             {
                 var item = ItemsGetter.GetByName(name, true);
                 if (item != null && catalogue.TryGet(name, out var copy)) result.Add(new FoodDefinitionDependency(name, item, copy));
             }
             return result.ToArray();
+        }
+        // E5b1's original-three food-shop shape, without the cached bag policy: the shops whose contract failures
+        // are recorded for hourly recovery, whether or not they were owned or wanted when they failed.
+        private bool ContractCandidate(BuildingRegistration r)
+        {
+            var menu = r.cachedAvailableProducts;
+            if (!r.RentedByPlayer || !r.HasEstablishedBusiness || r.AvailableForRent || menu == null || menu.Count < 1
+                || menu.Count > FoodMenuPolicy.LiveMaximumOffers) return false;
+            for (int i = 0; i < menu.Count; i++) if (!FoodProducts.Known(menu[i])) return false;
+            return true;
+        }
+        private bool ContractInterest(string key, BuildingRegistration r)
+        {
+            var row = NativeFoodOwnership.Row(key);
+            return row != null && (row.Managed || row.Desired) || ContractCandidate(r);
+        }
+        // The live authored bag tag against the cached policy; a difference re-caches it (Decision 3a re-copy).
+        private void RefreshBagPolicy(BuildingRegistration reg)
+        {
+            var type = BusinessTypeHelper.GetData(reg.businessTypeName);
+            if (type == null || !authoredBagPolicies.TryGetValue(type, out var cached)) return;
+            var tags = LoadedCatalogueEligibilityReader.RawTags(type);
+            bool live = tags != null && tags.Count <= LoadedStockLimits.Rows;
+            if (live) { bool bags = false; foreach (var tag in tags!) { if (string.IsNullOrWhiteSpace(tag)) { live = false; break; } bags |= tag == "ba:businesstag_customersneedpaperbags"; } live &= bags; }
+            if (live == cached.Bags) return;
+            authoredBagPolicies.Remove(type); CacheBagPolicy(reg); contractBusinessRecopies++;
         }
 
         // Decision 8. nativeContract is true only because Decisions 2, 3 and 3a just passed for this image; Decision 5
@@ -327,11 +362,19 @@ namespace PersistentCity.Runtime
             CompleteFoodMenu.HistoryProducts(state.History, key, business, SaveGameManager.Current.Day, contractHistory);
             return CompleteFoodMenu.Check(eligibility, FoodProductMetadataResolver.Empty, currentRevision, true, contractHistory, contractNames.Names);
         }
+        // A failed image of an owned, wanted or candidate food shop is a recorded refusal, so the shop is prepared
+        // every hour and an in-place repair (no stamp, no hint) reaches recovery.
         private void WithdrawFailedImage(BuildingRegistration reg)
         {
-            var authority = NativeFoodOwnership.Find(reg);
-            if (authority == null || !authority.Managed && !authority.Desired) return;
+            if (!contractKeys.TryGetValue(reg, out var key) || !ContractInterest(key, reg)) return;
             RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
+        }
+        // Decision 2 and Decision 7: a structural change is a recorded refusal, never a same-hour return to service.
+        private void RefuseStructural(string key, BuildingRegistration reg, string reason)
+        {
+            contracts.Invalidate(key);
+            if (!ContractInterest(key, reg)) return;
+            contractLastRefusal = reason; RefuseContract(reg);
         }
         private void RefuseContractImage(BuildingRegistration reg, string reason)
         {
@@ -366,13 +409,27 @@ namespace PersistentCity.Runtime
                 return false;
             var image = contracts.Serving(key);
             if (image == null) return false;
-            return contracts.Admit(key, image.Stamp is ShopContractStamp stamp && LoadedCatalogueEligibilityReader.CurrentStamp(r).Matches(stamp));
+            if (!(image.Stamp is ShopContractStamp stamp) || !LoadedCatalogueEligibilityReader.CurrentStamp(r).Matches(stamp))
+            { RefuseStructural(key, r, "stamp"); return false; }
+            // Decision 1: a catalogue revision change reaches service at once. The image stays admitted only if every
+            // dependency is unchanged in the current catalogue; while the catalogue rebuilds, no capture or sale runs
+            // (ContractRecheck) and acquisitions are not ready.
+            var catalogue = contractReader?.Catalogue;
+            if (catalogue != null && contracts.VerifiedCatalogue(key) != catalogue.Revision)
+            {
+                if (!FoodContractRecheck.CatalogueCurrent(image, catalogue)) { RefuseStructural(key, r, "catalogue"); return false; }
+                contracts.Rebase(key, catalogue.Revision);
+            }
+            return true;
         }
         private FoodContractImage? ContractImage(BuildingRegistration r)
             => contractMode == ContractMode.Active && contractKeys.TryGetValue(r, out var key) ? contracts.Serving(key) : null;
         private void IndexContractKey(string place, BuildingRegistration reg, BuildingRegistration? previous)
         {
-            if (previous != null && !ReferenceEquals(previous, reg)) contractKeys.Remove(previous);
+            // A replaced registration is a new business lifetime: its image, watched definitions and place-level
+            // refusal belong to the old one. The authority's generation and drain rules handle ownership.
+            if (previous != null && !ReferenceEquals(previous, reg))
+            { contractKeys.Remove(previous); contracts.Remove(place); contractWarming.Remove(place); }
             contractKeys[reg] = place;
         }
 
@@ -382,7 +439,10 @@ namespace PersistentCity.Runtime
             if (contractMode != ContractMode.Active) return true;
             var image = ContractImage(reg);
             if (image == null) return false;
-            if (checkout) contractEpoch.Begin();
+            // A rebuilding catalogue cannot vouch for any copy: this sale waits, without a contract refusal.
+            if (contractReader?.Catalogue == null) { contractCatalogueWaits++; return false; }
+            // A capture outside a batch (a failure read) gets its own epoch, never a previous batch's verdicts.
+            if (checkout || !captureBatch) contractEpoch.Begin();
             long started = Stopwatch.GetTimestamp();
             contractRechecks++;
             contractLive.Bind(reg); contractChanged.Clear();
@@ -441,14 +501,14 @@ namespace PersistentCity.Runtime
                 // A stamp change between drain and commit blocks the transfer (Decision 2 withdraws the desire).
                 if (!(image.Stamp is ShopContractStamp stamp) || !LoadedCatalogueEligibilityReader.CurrentStamp(reg).Matches(stamp))
                 {
-                    contracts.Invalidate(row.PlaceId); NativeFoodOwnership.Observe(reg, false);
-                    contractGateRefusals++; contractLastRefusal = "commit: stamp"; return false;
+                    RefuseStructural(row.PlaceId, reg, "commit: stamp"); NativeFoodOwnership.Observe(reg, false);
+                    contractGateRefusals++; return false;
                 }
                 contractLive.Bind(reg); contractChanged.Clear();
                 var refusal = FoodContractRecheck.Structure(image, contractLive, boundaryEpoch, contractChanged);
                 var prices = refusal == FoodContractRecheckRefusal.None ? FoodContractRecheck.Prices(image, contractLive, contractPrices) : FoodPriceVerdict.Same;
                 var admission = refusal == FoodContractRecheckRefusal.None && prices != FoodPriceVerdict.Refused
-                    ? Admission(row.PlaceId, reg, image.Eligibility, image.CatalogueRevision == contractReader?.CatalogueRevision)
+                    ? Admission(row.PlaceId, reg, image.Eligibility, contracts.VerifiedCatalogue(row.PlaceId) == contractReader?.CatalogueRevision)
                     : CompleteFoodMenuRefusal.None;
                 if (refusal == FoodContractRecheckRefusal.None && prices != FoodPriceVerdict.Refused && admission == CompleteFoodMenuRefusal.None
                     && SupportedBusiness(reg) && !refusedContracts.TryGetValue(reg, out _))
@@ -537,7 +597,7 @@ namespace PersistentCity.Runtime
                             mode = contractMode.ToString(), images = contracts.Count, warming = contractWarming.Count,
                             preparing = contracts.PendingPreparations, recovering = contracts.PendingRecoveries,
                             contracts.Publishes, contracts.Invalidations, contracts.Refusals, contracts.Recoveries, contracts.Deferrals, contracts.Commits,
-                            discards = contractDiscards, recopyEvents = contractRecopyEvents, businessRecopies = contractBusinessRecopies,
+                            discards = contractDiscards, catalogueWaits = contractCatalogueWaits, recopyEvents = contractRecopyEvents, businessRecopies = contractBusinessRecopies,
                             rechecks = contractRechecks, recheckRefusals = contractRecheckRefusals, recheckMaxMs = Math.Round(contractRecheckMax, 4),
                             gateRuns = contractGateRuns, gateRefusals = contractGateRefusals, gateMaxMs = Math.Round(contractGateMax, 4),
                             boundaryCommitMaxMs = Math.Round(contractBoundaryCommitMax, 4), recoveryUnits = contractRecoveryUnits,

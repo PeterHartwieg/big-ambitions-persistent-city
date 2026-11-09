@@ -79,6 +79,47 @@ public sealed class FoodContractRecoveryTests
     }
 
     [Fact]
+    public void AnInitiallyFailedShopRecoversAfterAnInPlacePriceRepair()
+    {
+        var world = new ContractWorld();
+        var shop = world.AddShop("address:main:1:shop", Burger);
+        shop.PriceOf(Burger).price = 0;
+        world.VisitAll(); world.Drain(); world.VisitAll();
+        Assert.Equal(FoodEligibilityRefusal.Price, world.Coordinator.Image(shop.Key)!.Eligibility.Refusal);
+        Assert.False(shop.Row.Desired);
+        Assert.True(world.Refused.ContainsKey(shop.Key)); // recorded although it was never owned or wanted
+        shop.PriceOf(Burger).price = 5; // in place: no stamp, no hint
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
+        Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.True(shop.Row.Desired);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+    }
+
+    [Fact]
+    public void ARestoredBagTagRefreshesTheCachedPolicyAndTheShopReacquires()
+    {
+        var world = new ContractWorld();
+        var shop = world.AddShop("address:main:1:shop", Burger);
+        world.Own(shop);
+        var tags = world.Types[ContractWorld.ShopType].tags;
+        tags.Remove(ContractWorld.NeedsBags); // in place
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
+        Assert.True(world.Refused.ContainsKey(shop.Key));
+        Assert.False(world.SupportedBusiness(shop)); // the cached policy is now false
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); // hand-back completes
+        Assert.False(shop.Row.Managed);
+        tags.Add(ContractWorld.NeedsBags); // restored in place
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
+        Assert.True(world.SupportedBusiness(shop));
+        Assert.False(world.Refused.ContainsKey(shop.Key));
+        Assert.True(shop.Row.Desired);
+        Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
+        string runtime = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "FoodContractDiagnostics.cs"));
+        Assert.Contains("RefreshBagPolicy(reg);", runtime);
+    }
+
+    [Fact]
     public void RecoveryWaitsForTheCompletedHandoff()
     {
         var world = new ContractWorld();

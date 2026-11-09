@@ -289,6 +289,23 @@ namespace PersistentCity.Core
             return found;
         }
 
+        /// <summary>Whether an image built under an older catalogue revision still describes <paramref name="catalogue"/>:
+        /// every dependency's current copy is the image's copy, or has the same content. False when the catalogue is
+        /// not ready. A re-copy of an unrelated definition therefore leaves the image current.</summary>
+        public static bool CatalogueCurrent(FoodContractImage image, LoadedStockCatalogue? catalogue)
+        {
+            if (catalogue == null || !catalogue.Ready) return false;
+            if (catalogue.Revision == image.CatalogueRevision) return true;
+            var definitions = image.Definitions;
+            for (int i = 0; i < definitions.Count; i++)
+            {
+                var d = definitions[i];
+                if (!catalogue.TryGet(d.Name, out var copy)) return false;
+                if (!ReferenceEquals(copy, d.Copy) && !copy.SameContent(d.Copy)) return false;
+            }
+            return true;
+        }
+
         public static FoodContractRecheckRefusal BusinessType(FoodContractImage image, IFoodContractLive live)
             => image.Business == null || !live.ReadBusinessType(out var type) || !image.Business.Matches(type)
                 ? FoodContractRecheckRefusal.BusinessType : FoodContractRecheckRefusal.None;
@@ -384,7 +401,13 @@ namespace PersistentCity.Core
             internal long RefusedHour = -1, LastRecoveryHour = -1;
             internal FoodContractReadiness LastReadiness = FoodContractReadiness.NoImage;
             internal long LastBoundary = -1;
+            // The catalogue revision the held image was last shown to describe (Rebase), and every definition any
+            // image of this lifetime depended on. Both survive invalidation and failed publication.
+            internal long VerifiedCatalogue = -1;
+            internal FoodDefinitionDependency[] Watched = Array.Empty<FoodDefinitionDependency>();
         }
+        /// <summary>Most watched dependencies one shop keeps for preparation re-copy.</summary>
+        public const int MaximumWatched = 512;
         private readonly Dictionary<string, Entry> entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
         private readonly Queue<Entry> prepare = new Queue<Entry>();
         private readonly Queue<Entry> recovery = new Queue<Entry>();
@@ -477,11 +500,35 @@ namespace PersistentCity.Core
             if (image == null) throw new ArgumentNullException(nameof(image));
             var e = Track(image.Key);
             if (e == null) return FoodContractPhase.Clean;
-            e.Image = image; e.Invalidated = false; e.Preparing = false; Publishes++;
+            e.Image = image; e.Invalidated = false; e.Preparing = false; e.VerifiedCatalogue = image.CatalogueRevision; Publishes++;
+            e.Watched = image.Passed ? Copy(image.Definitions) : Union(image.Definitions, e.Watched);
             if (e.RefusedHour >= 0 && image.Passed && image.BuiltHour > e.RefusedHour && !e.RecoveryQueued)
             { e.RecoveryQueued = true; recovery.Enqueue(e); }
             return Phase(image.Key);
         }
+        private static FoodDefinitionDependency[] Copy(IReadOnlyList<FoodDefinitionDependency> source)
+        {
+            var result = new FoodDefinitionDependency[Math.Min(source.Count, MaximumWatched)];
+            for (int i = 0; i < result.Length; i++) result[i] = source[i];
+            return result;
+        }
+        private static FoodDefinitionDependency[] Union(IReadOnlyList<FoodDefinitionDependency> next, FoodDefinitionDependency[] previous)
+        {
+            var result = new List<FoodDefinitionDependency>(Math.Min(next.Count + previous.Length, MaximumWatched));
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            for (int i = 0; i < next.Count && result.Count < MaximumWatched; i++) if (names.Add(next[i].Name)) result.Add(next[i]);
+            for (int i = 0; i < previous.Length && result.Count < MaximumWatched; i++) if (names.Add(previous[i].Name)) result.Add(previous[i]);
+            return result.ToArray();
+        }
+        /// <summary>Every definition this shop's images depended on, kept across invalidation and failed images (Decision 3a).</summary>
+        public IReadOnlyList<FoodDefinitionDependency> Watched(string key)
+            => entries.TryGetValue(key, out var e) ? e.Watched : Array.Empty<FoodDefinitionDependency>();
+        public long VerifiedCatalogue(string key) => entries.TryGetValue(key, out var e) && e.Image != null ? e.VerifiedCatalogue : -1;
+        /// <summary>Records that the held image still describes catalogue <paramref name="revision"/>
+        /// (<see cref="FoodContractRecheck.CatalogueCurrent"/> passed).</summary>
+        public void Rebase(string key, long revision)
+        { if (entries.TryGetValue(key, out var e) && e.Image != null && revision > e.VerifiedCatalogue) e.VerifiedCatalogue = revision; }
+
         /// <summary>Q2 price record: swaps only if <paramref name="current"/> is still the held image.</summary>
         public bool Replace(FoodContractImage current, FoodContractImage next)
         {
@@ -553,7 +600,7 @@ namespace PersistentCity.Core
                 : e.Image == null || e.Invalidated ? FoodContractReadiness.NoImage
                 : !e.Image.Passed ? FoodContractReadiness.Failed
                 : e.Image.BuiltHour < boundaryHour - 1 || e.Image.BuiltHour < requestedHour ? FoodContractReadiness.Stale
-                : e.Image.CatalogueRevision != catalogueRevision ? FoodContractReadiness.Catalogue
+                : e.VerifiedCatalogue != catalogueRevision ? FoodContractReadiness.Catalogue
                 : FoodContractReadiness.Ready;
         }
         /// <summary>At most 16 commit gates per boundary; the rest are deferred to the next one.</summary>
