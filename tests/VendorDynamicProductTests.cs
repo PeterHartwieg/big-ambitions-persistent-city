@@ -249,12 +249,14 @@ public sealed class VendorDynamicProductTests
             {
                 StreetFoodHooks.Reset();
                 var run = new CityRun(seed, items);
-                bool decided = false;
+                bool decided = false, decidedNow = false;
+                run.City.FoodDecisionObserved += _ => decidedNow = true;
                 for (int i = 0; i < 2 * 1440 && !Resolved(run); i++)
                 {
+                    decidedNow = false;
                     long t = System.Diagnostics.Stopwatch.GetTimestamp(); run.Step(); double ms = Ms(t);
                     if (seed >= 0) steps.Add(ms);
-                    if (!decided && Held(run)) { decided = true; if (seed >= 0) decisions.Add(ms); }
+                    if (!decided && decidedNow) { decided = true; if (seed >= 0) decisions.Add(ms); }
                 }
                 Assert.True(decided);
                 Assert.Equal(0, run.City.HistoricalClockMisses);
@@ -353,19 +355,28 @@ public sealed class VendorDynamicProductTests
         public VendorRow Row => City.State.Vendors.Find("v00")!;
         public ResidentMeal Meal => City.State.Food!.Residents.Single();
         /// <summary>One native minute: Street Food's crew opens the vehicle at 01:00 for 22 hours each day.</summary>
-        public void Step()
+        /// <remarks>Advances one event at a time and stops inside the minute as soon as <paramref name="stop"/> holds (a held
+        /// decision context lives only between two events). The next step finishes that same minute, so no event runs
+        /// behind the native clock.</remarks>
+        public void Step(Func<bool>? stop = null)
         {
-            Clock++;
-            StreetFoodHooks.Now = Clock; StreetFoodHooks.Expire();
-            var v = StreetFoodHooks.Find("v00");
-            if (Clock % 1440 == 60 && !v.Open) StreetFoodHooks.Open("v00", 22 * 60);
-            if (Clock % 1440 == 23 * 60 && v.Open) StreetFoodHooks.Close("v00");
+            if (!partial)
+            {
+                Clock++;
+                StreetFoodHooks.Now = Clock; StreetFoodHooks.Expire();
+                var v = StreetFoodHooks.Find("v00");
+                if (Clock % 1440 == 60 && !v.Open) StreetFoodHooks.Open("v00", 22 * 60);
+                if (Clock % 1440 == 23 * 60 && v.Open) StreetFoodHooks.Close("v00");
+            }
+            partial = false;
             while (Vendor.Prepare(Clock)) { }
-            while (!City.AdvanceTo(Clock + 1023.0 / 1024, 4096).CaughtUp) { }
+            while (!City.AdvanceTo(Clock + 1023.0 / 1024, 1).CaughtUp)
+                if (stop?.Invoke() == true) { partial = true; return; }
         }
+        private bool partial;
         public void RunUntil(Func<bool> done, int limit = 3 * 1440)
         {
-            for (int i = 0; i < limit && !done(); i++) Step();
+            for (int i = 0; i < limit && !done(); i++) Step(done);
             Assert.True(done());
         }
         public void RunFor(int minutes) { for (int i = 0; i < minutes; i++) Step(); }
@@ -385,7 +396,8 @@ public sealed class VendorDynamicProductTests
         }
     }
 
-    private static bool Held(CityRun run) => run.Meal.Decision?.Shops.Count > 0 && run.Meal.Status == MealStatus.Travelling;
+    /// <summary>A captured, not yet finished decision context (E5b4's held tuples), before the resident departs.</summary>
+    private static bool Held(CityRun run) => run.Meal.Decision?.Shops.Count > 0;
     private static bool Resolved(CityRun run) => run.Meal.Status == MealStatus.Paid || run.Meal.Status == MealStatus.Missed || run.Meal.Status == MealStatus.Declined;
 
     [Theory]
@@ -398,7 +410,7 @@ public sealed class VendorDynamicProductTests
         string held = control.Tuples;
         Assert.Equal(new[] { Dumplings, ChoppedCheese }, control.HeldOffers.Select(o => o.ProductId));
         Assert.All(control.HeldOffers, o => Assert.Equal(2, o.Metadata!.Revision));
-        Assert.Equal(control.Row.BusinessId, control.Meal.BusinessId);
+        Assert.All(control.Meal.Decision!.Shops, shop => Assert.Equal(control.Row.BusinessId, shop.BusinessId));
         control.RunUntil(() => Resolved(control));
         Assert.Equal(MealStatus.Paid, control.Meal.Status);
         control.RunFor(60);
