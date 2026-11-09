@@ -400,8 +400,9 @@ def run_steps(ctx, stage, steps, record):
     codes = []
     child = waited = 0.0
     with open(log_path, "wb") as log:
-        for argv in steps:
-            if stage.get("dotnet"):
+        for number, argv in enumerate(steps):
+            # One probe per stage: our own steps run back to back, so a later step needs no second probe.
+            if stage.get("dotnet") and number == 0:
                 waited += wait_for_dotnet(ctx.no_wait)
             command = ctx.expand(argv, stage["id"])
             log.write(("$ " + " ".join(argv) + "\n").encode())
@@ -728,6 +729,21 @@ def source_identity(result):
     return {"commit": source.get("commit"), "dirty": source.get("dirty"), "diffSha256": source.get("diffSha256")}
 
 
+def artifact_hash(result):
+    return ((result.get("provenance") or {}).get("artifact") or {}).get("persistentCityDllSha256")
+
+
+def identity_problem(result, rig):
+    """Why rig evidence does not belong to this run's source and artifact, or None when it does."""
+    identity, rig_identity = source_identity(result), source_identity(rig)
+    if identity["commit"] is None or rig_identity != identity:
+        return f"rig source {rig_identity} is not the offline run's source {identity}"
+    ours, theirs = artifact_hash(result), artifact_hash(rig)
+    if ours and theirs and ours != theirs:
+        return f"rig PersistentCity.dll {theirs} is not the offline run's {ours}"
+    return None
+
+
 def package_evidence(stage, src_base, out, prefix):
     """Copy a stage's evidence into the merged run directory and rebase its paths. Returns the problems found."""
     problems, entries = [], []
@@ -758,8 +774,8 @@ def demote(stage, problems):
 def merge(args):
     """summarize: merge rig stage records and F4's performance record into a run result.
 
-    Rig records count only when their provenance names the same source (commit, dirty flag and diff hash);
-    otherwise they stay incomplete. Every evidence file is copied under the merged run directory."""
+    Rig records count only when their provenance names the same source (commit, dirty flag and diff hash) and,
+    when both record one, the same PersistentCity.dll hash; otherwise they are incomplete whatever their verdict. Every evidence file is copied under the merged run directory."""
     source = Path(args.result).resolve()
     result = json.loads(source.read_text(encoding="utf-8"))
     if result.get("schema") != SCHEMA:
@@ -768,25 +784,30 @@ def merge(args):
     out.mkdir(parents=True, exist_ok=True)
     for stage in result["stages"]:
         demote(stage, package_evidence(stage, source.parent, out, ""))
-    identity = source_identity(result)
     imported = result.setdefault("importedEvidence", [])
-    for index, rig_file in enumerate(args.rig or []):
+    for rig_file in args.rig or []:
         rig_path = Path(rig_file).resolve()
         rig = json.loads(rig_path.read_text(encoding="utf-8"))
         if rig.get("schema") != SCHEMA:
             raise SystemExit(f"{rig_path.name} is not {SCHEMA}")
-        rig_identity = source_identity(rig)
-        same = identity["commit"] is not None and rig_identity == identity
+        mismatch = identity_problem(result, rig)
+        # Prefixes are numbered after every earlier import, also from earlier summarize runs, so no copy is overwritten.
+        used = {entry.get("prefix") for entry in imported}
+        index = len(imported)
+        while f"rig/{index}-{rig_path.stem}" in used or (out / f"rig/{index}-{rig_path.stem}").exists():
+            index += 1
         prefix = f"rig/{index}-{rig_path.stem}"
         imported.append({"file": rig_path.name, "sha256": sha256_file(rig_path), "prefix": prefix,
-                         "provenance": rig.get("provenance"), "sameSource": same})
+                         "provenance": rig.get("provenance"), "sameSource": mismatch is None, "stages": []})
         for stage in rig.get("stages", []):
             if stage.get("class") != "native" or stage.get("verdict") not in VERDICTS:
                 continue
             stage = dict(stage, rig=True, required=True, importedFrom=prefix)
+            imported[-1]["stages"].append({"id": stage["id"], "verdict": stage["verdict"], "reason": stage.get("reason", "")})
             problems = package_evidence(stage, rig_path.parent, out, prefix)
-            if not same:
-                problems.insert(0, f"rig source {rig_identity} is not the offline run's source {identity}")
+            if mismatch:
+                # Foreign evidence neither passes nor fails this run; its own verdict stays in importedEvidence.
+                stage["verdict"], stage["reason"] = "incomplete", "; ".join([mismatch] + problems)
             demote(stage, problems)
             result["stages"] = [s for s in result["stages"] if s["id"] != stage["id"]] + [stage]
     if args.performance:

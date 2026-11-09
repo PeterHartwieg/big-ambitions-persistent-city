@@ -215,13 +215,13 @@ class Verdicts(unittest.TestCase):
                                       "--out", str(merged_out), "--lock", str(f.lock)]))
 
 
-def rig_file(directory, provenance, verdict="pass", evidence=b"rig log"):
+def rig_file(directory, provenance, verdict="pass", evidence=b"rig log", check="rig-check-1"):
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "logs").mkdir(exist_ok=True)
     (directory / "logs/check-1.log").write_bytes(evidence)
     path = directory / "rig.json"
     path.write_text(json.dumps({"schema": run.SCHEMA, "provenance": provenance, "stages": [
-        {"id": "rig-check-1", "class": "native", "verdict": verdict,
+        {"id": check, "class": "native", "verdict": verdict,
          "evidence": [{"path": "logs/check-1.log", "sha256": hashlib.sha256(evidence).hexdigest(), "bytes": len(evidence), "retained": False}]}]}))
     return path
 
@@ -276,6 +276,57 @@ class Summarize(unittest.TestCase):
         stage = next(s for s in merged["stages"] if s["id"] == "rig-check-1")
         self.assertEqual("incomplete", stage["verdict"])
         self.assertIn("does not match its hash", stage["reason"])
+
+    def test_rig_evidence_for_a_different_dll_is_not_accepted(self):
+        f, result = self.offline()
+        ours = copy.deepcopy(result["provenance"])
+        ours["artifact"]["persistentCityDllSha256"] = "a" * 64
+        (f.out / "acceptance.json").write_text(json.dumps(dict(result, provenance=ours)))
+        theirs = copy.deepcopy(ours)
+        theirs["artifact"]["persistentCityDllSha256"] = "b" * 64
+        _, merged, _ = self.summarize(f, "--rig", str(rig_file(f.dir / "rig", theirs)))
+        stage = next(s for s in merged["stages"] if s["id"] == "rig-check-1")
+        self.assertEqual("incomplete", stage["verdict"])
+        self.assertIn("PersistentCity.dll", stage["reason"])
+        self.assertFalse(merged["importedEvidence"][0]["sameSource"])
+        self.assertEqual("incomplete", merged["summary"]["verdict"])
+        _, merged, _ = self.summarize(f, "--rig", str(rig_file(f.dir / "rig2", ours)))
+        self.assertEqual("pass", merged["summary"]["verdict"])
+        unrecorded = copy.deepcopy(ours)
+        unrecorded["artifact"]["persistentCityDllSha256"] = None  # only one side recorded a hash: no conflict
+        _, merged, _ = self.summarize(f, "--rig", str(rig_file(f.dir / "rig3", unrecorded)))
+        self.assertEqual("pass", merged["summary"]["verdict"])
+
+    def test_failed_rig_record_from_another_source_does_not_fail_this_run(self):
+        f, result = self.offline()
+        other = copy.deepcopy(result["provenance"])
+        other["source"]["commit"] = "0" * 40
+        code, merged, _ = self.summarize(f, "--rig", str(rig_file(f.dir / "rig", other, verdict="fail")))
+        stage = next(s for s in merged["stages"] if s["id"] == "rig-check-1")
+        self.assertEqual("incomplete", stage["verdict"])
+        self.assertEqual([], merged["summary"]["failed"])
+        self.assertEqual("incomplete", merged["summary"]["verdict"])
+        self.assertEqual([{"id": "rig-check-1", "verdict": "fail", "reason": ""}], merged["importedEvidence"][0]["stages"])
+        self.assertEqual(0, code)
+
+    def test_successive_merges_never_overwrite_earlier_evidence(self):
+        f, result = self.offline()
+        out = f.dir / "merged"
+        run.main(["summarize", "--result", str(f.out / "acceptance.json"), "--out", str(out), "--lock", str(f.lock),
+                  "--rig", str(rig_file(f.dir / "a", result["provenance"], evidence=b"first check", check="rig-check-1"))])
+        code = run.main(["summarize", "--result", str(out / "acceptance.json"), "--lock", str(f.lock),
+                         "--rig", str(rig_file(f.dir / "b", result["provenance"], evidence=b"second check", check="rig-check-2"))])
+        merged = json.loads((out / "acceptance.json").read_text())
+        self.assertEqual(0, code)
+        self.assertEqual("pass", merged["summary"]["verdict"])
+        prefixes = [e["prefix"] for e in merged["importedEvidence"]]
+        self.assertEqual(len(prefixes), len(set(prefixes)))
+        entries = [e for s in merged["stages"] for e in s["evidence"]]
+        rig_paths = [e["path"] for e in entries if e["path"].startswith("rig/")]
+        self.assertEqual(2, len(set(rig_paths)))
+        for entry in entries:
+            data = (out / entry["path"]).read_bytes()
+            self.assertEqual(entry["sha256"], hashlib.sha256(data).hexdigest(), entry["path"])
 
     def test_partial_full_profile_with_passing_rig_stays_incomplete(self):
         f = Fixture(self)
