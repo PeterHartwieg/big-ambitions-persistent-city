@@ -185,17 +185,11 @@ namespace PersistentCity.Core
             citizen.NextEventMinute = at + Math.Max(0, citizen.Journey.Minutes - progress);
             trafficCitizens.Remove(id);
             traffic.RemoveCompleted(id);
-            if (physicalJourneys.TryGetValue(id, out var lease))
-            {
-                lease.Progress = Math.Max(lease.Progress, progress);
-                RebasePhysicalJourney(lease);
-            }
-            else
-            {
-                var item = citizenEvents[id];
-                item.Minute = citizen.NextEventMinute;
-                if (!due.Add(item)) throw new InvalidOperationException("Traffic completion duplicated a resident event.");
-            }
+            // F2c: a lease covers the traffic leg only. The walk after parking follows the logical clock.
+            physicalJourneys.Remove(id);
+            var item = citizenEvents[id];
+            item.Minute = citizen.NextEventMinute;
+            if (!due.Add(item)) throw new InvalidOperationException("Traffic completion duplicated a resident event.");
         }
 
         private double JourneyProgress(CitizenState citizen)

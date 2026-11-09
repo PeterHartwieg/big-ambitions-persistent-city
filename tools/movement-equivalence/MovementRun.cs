@@ -30,6 +30,8 @@ public sealed class MovementOptions
     public bool ReloadMidJourney;
     /// <summary>A hidden-travel window: bodies are released and native time runs at 10x.</summary>
     public bool HiddenTravel;
+    /// <summary>F2c: nobody owns a car, so every journey walks. Walker follow makes these arms equal bodies-off.</summary>
+    public bool WalkingOnly;
     public Fault Fault;
     /// <summary>Optional directory for the arm's journey records and ordered sales (one text file), for diffing arms.</summary>
     public string? DumpDirectory;
@@ -175,7 +177,7 @@ public static class MovementRun
         var timer = System.Diagnostics.Stopwatch.StartNew();
         var planner = new GridPlanner();
         var market = new MovementMarket();
-        var state = MovementFixture.Build(options.Seed, options.Residents);
+        var state = MovementFixture.Build(options.Seed, options.Residents, carOwners: !options.WalkingOnly);
         var city = MovementFixture.Attach(state, market, planner, fresh: true);
         var ledger = new JourneyLedger();
         city.ActivityObserved += ledger.Observe;
@@ -267,7 +269,7 @@ public static class MovementRun
             }
             if (options.ReloadMidJourney && !reloaded && native >= start + 7 * 60 + 30 && city.IsCaughtUpTo(target)
                 && (driver == null ? city.State.Citizens.Count(c => c.Phase == CitizenPhase.Travelling) >= 3 && (city.Traffic?.VehicleCount ?? 0) >= 1
-                    : driver.Walkers >= 1 && driver.Cars >= 1))
+                    : driver.Walkers >= 1 && (driver.Cars >= 1 || options.WalkingOnly)))
             {
                 reloaded = true;
                 result.BodiesAtReload = driver?.Count ?? 0;
@@ -360,7 +362,7 @@ public static class MovementRun
         m["bodies.failedAcquisitions"] = drivers.Sum(d => d.FailedAcquisitions);
         m["bodies.blockedSamples"] = drivers.Sum(d => d.BlockedSamples);
         m["bodies.trafficOvershoots"] = drivers.Sum(d => d.TrafficOvershoots);
-        m["bodies.arrivalHolds"] = drivers.Sum(d => d.ArrivalHolds);
+        m["bodies.arrivalTails"] = drivers.Sum(d => d.ArrivalTails);
         m["bodies.leaseObservations"] = drivers.Sum(d => d.LeaseObservations);
         m["bodies.walkerFrames"] = drivers.Sum(d => d.WalkerFrames);
         m["bodies.carFrames"] = drivers.Sum(d => d.CarFrames);
@@ -368,5 +370,13 @@ public static class MovementRun
         m["bodies.maxCars"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.MaxCars);
         m["bodies.hiddenTravelFrames"] = drivers.Sum(d => d.HiddenFrames);
         m["bodies.hiddenTravelReleases"] = drivers.Sum(d => d.HiddenReleases);
+        // F2c walker follow (E3 lag; the double has no camera, so every correction is an off-screen move).
+        m["walkers.lagSamples"] = drivers.Sum(d => d.Walking.LagSamples);
+        m["walkers.lagP50Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.LagQuantile(.5));
+        m["walkers.lagP95Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.LagQuantile(.95));
+        m["walkers.lagMaxMetres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.MaximumLagMetres);
+        m["walkers.moves"] = drivers.Sum(d => d.Walking.Moves);
+        m["walkers.lagReleases"] = drivers.Sum(d => d.Walking.LagReleases);
+        m["walkers.handoffs"] = drivers.Sum(d => d.Walking.Handoffs);
     }
 }

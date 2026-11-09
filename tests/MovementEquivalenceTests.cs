@@ -79,11 +79,12 @@ public sealed class MovementEquivalenceTests
     }
 
     [Fact]
-    public void DriverDoubleUsesTheLeaseApiForWalkersAndCars()
+    public void DriverDoubleLeasesCarsAndFollowsWalkers()
     {
         var m = BodiesRun.Value.Metrics;
         Assert.True(m["bodies.walkerFrames"] > 0 && m["bodies.carFrames"] > 0);
         Assert.True(m["bodies.leaseObservations"] > 0);
+        Assert.True(m["walkers.lagSamples"] > 0);
         Assert.True(m["bodies.maxWalkers"] <= 48 && m["bodies.maxCars"] <= 24);
         var failures = MovementRun.Run(Small(o => o.Bodies.AcquisitionFailurePercent = 50));
         Assert.True(failures.Metrics["bodies.failedAcquisitions"] > 0);
@@ -111,8 +112,41 @@ public sealed class MovementEquivalenceTests
         Assert.Equal(run.Boundaries.Sum(b => b.SkippedMeals), run.Metrics["meals.skipped"]);
     }
 
-    /// <summary>Today's recorded divergence (expected red). F2c turns walker arms and F2d all arms equal;
-    /// those slices flip this assertion to equality.</summary>
+    /// <summary>F2c: in a walking-only city every body arm equals bodies-off at the same cadence (E1): bodies follow
+    /// the logical pose and write nothing. Covers focus paths, caps, native lag, acquisition failures, a slower
+    /// cadence, a mid-journey reload with walkers bound and hidden travel.</summary>
+    [Fact]
+    public void WalkerArmsEqualBodiesOffInWalkingOnlyCities()
+    {
+        MovementOptions Walking(Action<MovementOptions>? change = null) => Small(o => { o.WalkingOnly = true; change?.Invoke(o); });
+        var plain = MovementRun.Run(Walking(o => o.Driver = false));
+        Assert.False(plain.Metrics.TryGetValue("journeys.car.count", out double cars) && cars > 0);
+        void Equal(MovementResult arm, MovementResult reference, string name)
+        {
+            var comparison = Equivalence.Compare(arm, reference);
+            Assert.True(comparison.Identical, name + ": " + string.Join(" ", comparison.Equal.Where(e => !e.Value).Select(e => e.Key)));
+        }
+        var stationary = MovementRun.Run(Walking());
+        Assert.True(stationary.Metrics["bodies.walkerFrames"] > 0 && stationary.Metrics["walkers.lagSamples"] > 0);
+        Assert.Equal(0, stationary.Metrics["bodies.leaseObservations"]);
+        Equal(stationary, plain, "stationary");
+        Equal(MovementRun.Run(Walking(o => o.Focus = FocusPath.Sweep)), plain, "sweep");
+        Equal(MovementRun.Run(Walking(o => { o.Bodies.Pedestrians = 256; o.Bodies.Vehicles = 64; })), plain, "caps 256");
+        Equal(MovementRun.Run(Walking(o => o.Bodies.Lag = LagModel.Ideal)), plain, "ideal lag");
+        var failures = MovementRun.Run(Walking(o => o.Bodies.AcquisitionFailurePercent = 50));
+        Assert.True(failures.Metrics["bodies.failedAcquisitions"] > 0);
+        Equal(failures, plain, "50 % acquisition failures");
+        var reload = MovementRun.Run(Walking(o => o.ReloadMidJourney = true));
+        Assert.True(reload.BodiesAtReload > 0);
+        Equal(reload, plain, "reload with walkers bound");
+        Equal(MovementRun.Run(Walking(o => o.HiddenTravel = true)), MovementRun.Run(Walking(o => { o.Driver = false; o.HiddenTravel = true; })), "hidden travel");
+        Equal(MovementRun.Run(Walking(o => o.FramesPerSecond = 30)), MovementRun.Run(Walking(o => { o.Driver = false; o.FramesPerSecond = 30; })), "30 fps");
+        // Native lag makes walkers fall behind; beyond 8 m they are moved (the double has no camera, so off screen).
+        Assert.True(stationary.Metrics["walkers.moves"] > 0);
+    }
+
+    /// <summary>Recorded divergence of the mixed city, whose cars still hold traffic leases until F2d (expected red).
+    /// F2d flips this assertion to equality.</summary>
     [Fact]
     public void TodayBodyArmsDivergeFromBodiesOff()
     {

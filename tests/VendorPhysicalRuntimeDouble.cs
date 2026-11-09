@@ -31,8 +31,8 @@ namespace UnityEngine
     public static class Time
     {
         public static int frameCount;
-        public static float unscaledTime, unscaledDeltaTime = 0.1f;
-        public static void Next(float seconds = 0.3f) { frameCount++; unscaledTime += seconds; unscaledDeltaTime = seconds; }
+        public static float unscaledTime, unscaledDeltaTime = 0.1f, deltaTime = 0.1f;
+        public static void Next(float seconds = 0.3f) { frameCount++; unscaledTime += seconds; unscaledDeltaTime = deltaTime = seconds; }
     }
     public sealed class Transform
     {
@@ -191,8 +191,27 @@ namespace PersistentCity.Runtime
         internal static Func<Position, bool>? Unreachable;
         internal bool SetPathTarget(Position p, double _)
         { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isStopped = false; return true; }
-        internal bool SetTarget(Position p, double speed) => SetPathTarget(p, speed);
+        internal bool SetTarget(Position p, double speed) { SetTargets++; return SetPathTarget(p, speed); }
+        // F2c: a pose is projected onto the walkable surface through the NavMesh.Sample hook; SetTarget counts its calls.
+        internal int SetTargets;
+        internal bool TryProjectPose(Position p, out Position projected)
+        {
+            projected = p;
+            if (!UnityEngine.AI.NavMesh.SamplePosition(Vector(p), out var hit, 0.5f, default(UnityEngine.AI.NavMeshQueryFilter))) return false;
+            projected = Point(hit.position); return true;
+        }
         internal void Stop(bool value) { Agent.isStopped = value; }
+        // F2c follower hooks: the commanded pace, an off-screen move, and the test-controlled on-screen flag.
+        internal double Speed;
+        internal int Warps;
+        internal bool OnScreen;
+        internal void Pace(double v) { Speed = v > 0 ? v : 0; Agent.isStopped = !(v > 0); }
+        internal float Alpha = 1;
+        // F2c: whether this body's materials can show a fade; tests decide (the production check is WalkerFollow.MaterialCanFade).
+        internal bool CanFade = true;
+        internal readonly List<float> Fades = new();
+        internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
+        internal bool Warp(Position p) { Character.transform.position = Vector(p); Agent.hasPath = false; Agent.isStopped = true; Warps++; return true; }
         internal void Face(Position p) { Facing = p; }
         internal void Tick() { }
         internal static Vector3 Vector(Position p) => new((float)p.X, (float)p.Y, (float)p.Z);
@@ -209,6 +228,9 @@ namespace PersistentCity.Runtime
         private int actors;
         private long generation;
         internal PhysicalPedestrians(Transform _, int maximum) { this.maximum = maximum; Last = this; }
+        // F2c: whether a point is in the camera's view; tests decide. Unset means out of view.
+        internal static Func<Position, bool>? VisiblePoint;
+        internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
         {
             body = null;

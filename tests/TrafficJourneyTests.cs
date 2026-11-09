@@ -55,22 +55,14 @@ public sealed class TrafficJourneyTests
     }
 
     [Fact]
-    public void DepartureHoldPrecedesTrafficAdmissionAndRebasesSaveUntilReleased()
+    public void DepartureIsNeverHeldForABodyAndTrafficAdmitsOnTheLogicalClock()
     {
+        // F2c removed TryHoldPhysicalDeparture: a body returning from a stop no longer holds the new journey.
         var engine = Engine(1); var citizen = engine.State.Citizens[0];
         Assert.False(engine.TryAcquirePhysicalJourney(citizen.Identity.Id, out _));
-        Assert.True(engine.TryHoldPhysicalDeparture(citizen.Identity.Id, out var hold));
+        Assert.DoesNotContain(typeof(CitySimulator).GetMethods(), m => m.Name == "TryHoldPhysicalDeparture");
         engine.AdvanceTo(1500);
-        Assert.Equal(0, engine.SampleJourney(citizen).ElapsedMinutes);
-        Assert.Equal(0, engine.Traffic!.VehicleCount);
-        Assert.Equal(1500, citizen.DepartureMinute);
-        var saved = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal("", saved.Error);
-        Assert.Equal(1500, saved.State!.Citizens[0].DepartureMinute);
-        Assert.Equal(2880, citizen.ActivityUntilMinute);
-        Assert.True(engine.ReleasePhysicalJourney(hold!));
-        engine.AdvanceTo(1500);
-        Assert.True(engine.Traffic.VehicleCount > 0);
-        Assert.False(engine.TryHoldPhysicalDeparture(citizen.Identity.Id, out _));
+        Assert.Equal(1, citizen.CompletedJourneys);
     }
 
     [Fact]
@@ -235,5 +227,18 @@ public sealed class TrafficJourneyTests
         var restored=new CitySimulator(read.State!,new Planner()); engine.ReleasePhysicalJourney(lease!);
         engine.AdvanceTo(1500); restored.AdvanceTo(1500);
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
+    }
+
+    [Fact]
+    public void ObservingAndReleasingATrafficLegLeaseNeverRefilesTheRoute()
+    {
+        // The presentation grid property that walk leases used to cover (PresentationGridTests); traffic legs keep a lease until F2d.
+        var engine=Engine(4); engine.AdvanceTo(1440);
+        var grid=engine.ActiveJourneys.Grid; long filed=grid.Filings;
+        Assert.True(engine.TryAcquirePhysicalJourney(engine.State.Citizens[0].Identity.Id,out var lease));
+        engine.AdvanceTo(1440.5); Assert.True(engine.ObservePhysicalJourney(lease!,0.3));
+        Assert.True(engine.ReleasePhysicalJourney(lease!));
+        Assert.Equal(filed,grid.Filings);
+        Assert.True(engine.ActiveJourneyIndexMatchesState());
     }
 }

@@ -207,10 +207,11 @@ public sealed class VendorBodyTests
         var body = Assert.Single(f.Pool.Active).Value;
         Assert.Equal(f.Person.Identity.Id, body.IdentityId);
         body.Character.transform.position = PhysicalPedestrianBody.Vector(f.Row.Stand!.Position);
-        f.Tick(); // observed corner returns the journey lease; event not processed yet
+        f.Tick(); // F2c: the body is ahead of the logical pose; it stands, and the journey runs on the logical clock
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
-        while (!f.City.AdvanceTo(f.City.State.Minute, 1).CaughtUp) { } // ordinary budgeted arrival
+        Assert.Equal(CitizenPhase.Travelling, f.Person.Phase); Assert.True(body.Agent.isStopped);
+        double arrives = f.Person.NextEventMinute;
+        while (!f.City.AdvanceTo(arrives, 1).CaughtUp) { } // ordinary budgeted arrival at its logical minute
         Assert.Equal(CitizenPhase.AtPlace, f.Person.Phase);
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
@@ -219,25 +220,31 @@ public sealed class VendorBodyTests
     }
 
     [Fact]
-    public void DepartureHoldsMeasuredJourneyUntilBodyWalksBackToStand()
+    public void DepartureTailWalksBackToStandWhileTheJourneyRunsOnTheLogicalClock()
     {
         using var f = new Fixture(travelling: true, stayMinutes: 2); f.Tick();
         var body = Assert.Single(f.Pool.Active).Value;
         body.Character.transform.position = PhysicalPedestrianBody.Vector(f.Row.Stand!.Position);
-        f.Tick(); while (!f.City.AdvanceTo(f.City.State.Minute, 1).CaughtUp) { } f.Tick(); f.ReachTargets();
+        f.Tick(); double arrives = f.Person.NextEventMinute; while (!f.City.AdvanceTo(arrives, 1).CaughtUp) { } f.Tick(); f.ReachTargets();
         Assert.True(body.Agent.isStopped);
         double leaves = f.Person.NextEventMinute;
         while (!f.City.AdvanceTo(leaves).CaughtUp) { }
         Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
         f.Tick();
         Assert.Equal(f.Row.Stand.Position, body.Target);
-        while (!f.City.AdvanceTo(leaves + 1).CaughtUp) { }
-        Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
+        // F2c: nothing holds the journey; it has left the stand on the logical clock while the body walks back.
+        var journey = f.Person.Journey;
+        while (!f.City.AdvanceTo(leaves + 0.25).CaughtUp) { }
+        Assert.Same(journey, f.Person.Journey); Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
+        Assert.NotEqual(f.Row.Stand.Position, f.City.PositionOf(f.Person));
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         f.ReachTargets(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        Assert.Equal(f.City.State.Places.Single(p => p.Id == f.Person.HomeId).Position, body.Target);
-        Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
+        // It follows: once the person moves on, its destination is the logical pose (never past it).
+        while (!f.City.AdvanceTo(leaves + 0.27).CaughtUp) { }
+        f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-4);
     }
 
     [Theory]
@@ -248,7 +255,7 @@ public sealed class VendorBodyTests
         using var f = new Fixture(travelling: true, stayMinutes: 2); f.Tick();
         var body = Assert.Single(f.Pool.Active).Value;
         body.Character.transform.position = PhysicalPedestrianBody.Vector(f.Row.Stand!.Position);
-        f.Tick(); while (!f.City.AdvanceTo(f.City.State.Minute, 1).CaughtUp) { } f.Tick(); f.ReachTargets();
+        f.Tick(); double arrives = f.Person.NextEventMinute; while (!f.City.AdvanceTo(arrives, 1).CaughtUp) { } f.Tick(); f.ReachTargets();
         f.Meal.Status = status; f.Tick();
         Assert.Equal(f.Row.Stand.Position, body.Target);
         f.ReachTargets();
@@ -266,9 +273,14 @@ public sealed class VendorBodyTests
         Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
         f.Tick(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        Assert.Equal(f.City.State.Places.Single(p => p.Id == f.Person.HomeId).Position, body.Target);
-        Assert.False(body.Agent.isStopped);
         Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
+        // F2c: at the logical pose the body waits for the person to move, then walks with them toward that pose.
+        Assert.True(body.Agent.isStopped);
+        while (!f.City.AdvanceTo(leaves + 0.02).CaughtUp) { }
+        f.Tick();
+        Assert.Same(body, Assert.Single(f.Pool.Active).Value);
+        Assert.False(body.Agent.isStopped);
+        Assert.True(Position.Distance(f.City.PositionOf(f.Person), body.Target) < 1e-4);
         Assert.Equal(acquisitions, f.Pool.Acquisitions.Count);
     }
 

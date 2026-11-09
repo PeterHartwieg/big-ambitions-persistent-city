@@ -141,7 +141,7 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
 /// <summary>The F1/F6a supported shape (957 residents, representation factor 2, the current food model
 /// attached unchanged, minute-stamped native clock) placed on the signalled grid: 120 homes, ten workplaces,
 /// four leisure places and one own food shop at the centre. Every second resident owns a car parked at the
-/// home's street corner.</summary>
+/// home's street corner, unless the city is walking-only (F2c: E1 holds there before F2d).</summary>
 public static class MovementFixture
 {
     public const int Residents = 957;
@@ -155,7 +155,7 @@ public static class MovementFixture
     public static Position ShopPosition => Door(12, 12);
     public static Position Door(int x, int z) { var n = GridPlanner.Node(x, z); return new Position(n.X + DoorOffset.X, n.Y, n.Z + DoorOffset.Z); }
 
-    public static CityState Build(int seed, int residents)
+    public static CityState Build(int seed, int residents, bool carOwners = true)
     {
         uint draw = (uint)(seed * 2654435761u + 12345u);
         int Pick(int n) { draw = draw * 1664525u + 1013904223u; return (int)((draw >> 8) % (uint)n); }
@@ -177,7 +177,7 @@ public static class MovementFixture
         for (int i = 0; i < state.Citizens.Count; i++)
         {
             var person = state.Citizens[i];
-            if (i % 2 != 0) continue;
+            if (!carOwners || i % 2 != 0) continue;
             var home = state.Places.First(p => p.Id == person.HomeId);
             var corner = GridPlanner.Nearest(home.Position);
             person.Preferences.OwnsCar = true;

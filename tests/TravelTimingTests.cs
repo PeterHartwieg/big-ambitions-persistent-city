@@ -229,8 +229,9 @@ public sealed class TravelTimingTests
         var state = City(); var c = state.Citizens[0]; state.Minute = clock;
         c.DepartureMinute = clock; c.Journey!.Legs[0].Minutes = duration; c.NextEventMinute = clock + duration;
         var engine = new CitySimulator(state, new Planner());
-        Assert.True(engine.TryAcquirePhysicalJourney(c.Identity.Id, out var lease));
-        Assert.True(engine.ObservePhysicalJourney(lease!, duration));
+        // F2c: walk legs are not leased. Set the completed state a completion leaves: departure = clock - duration.
+        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
+        c.DepartureMinute = clock - duration; c.NextEventMinute = clock;
         Assert.True(Math.Abs(c.NextEventMinute - (c.DepartureMinute + c.Journey.Minutes)) > 1e-7);
         state.TravelTimingVersion = timingVersion; state.TravelClockRate = 1;
         Assert.True(TravelTiming.Apply(state, 2, 2));

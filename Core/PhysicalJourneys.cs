@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace PersistentCity.Core
 {
@@ -56,17 +57,10 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, PhysicalJourneyLease> physicalJourneys = new Dictionary<string, PhysicalJourneyLease>(StringComparer.Ordinal);
         private long physicalGeneration;
 
-        /// <summary>Acquire after advancing the city. Its committed route progress freezes until observed or released.</summary>
+        /// <summary>Acquire after advancing the city, for a journey on a traffic leg only (F2c: walk, wait and transit
+        /// legs are never leased; their bodies follow the logical pose). Traffic progress then follows the body's
+        /// reports until observed or released (F2d removes this).</summary>
         public bool TryAcquirePhysicalJourney(string citizenId, out PhysicalJourneyLease? lease)
-            => AcquirePhysicalJourney(citizenId, false, out lease);
-
-        /// <summary>Called synchronously when a new route commits while its body is still returning
-        /// from an optional stop. Hold at the origin before even a traffic-first route can enqueue.
-        /// Reuses the ordinary lease's clock rebasing, save snapshot and release semantics.</summary>
-        public bool TryHoldPhysicalDeparture(string citizenId, out PhysicalJourneyLease? lease)
-            => AcquirePhysicalJourney(citizenId, true, out lease);
-
-        private bool AcquirePhysicalJourney(string citizenId, bool departureHold, out PhysicalJourneyLease? lease)
         {
             lease = null;
             if (citizenId == null) throw new ArgumentNullException(nameof(citizenId));
@@ -75,16 +69,14 @@ namespace PersistentCity.Core
             // Visitors receive no body or lease before F5i (plan B5): their journeys stay purely logical.
             if (!ActiveJourneyIndex.ReceivesBody(c)) return false;
             if (c.Phase != CitizenPhase.Travelling || c.Journey == null || c.Identity.Id != citizenId || !CurrentCitizenSlot(item, c)) return false;
+            if (!trafficCitizens.ContainsKey(citizenId)) return false;
             double progress = JourneyProgress(c);
-            if (departureHold && (progress != 0 || c.DepartureMinute != State.Minute || trafficCitizens.ContainsKey(citizenId))) return false;
             if (progress < 0 || progress >= c.Journey.Minutes) return false;
-            if (traffic != null && traffic.TryGetVehicle(citizenId, out var trafficPosition) && !trafficPosition.LinkId.HasValue) return false;
-            if (!departureHold && !trafficCitizens.ContainsKey(citizenId) && NextTrafficBoundary(c, progress) <= progress) return false;
+            if (!traffic!.TryGetVehicle(citizenId, out var trafficPosition) || !trafficPosition.LinkId.HasValue) return false;
             ValidateRoute(c.Journey, places[c.PlaceId].Position, places[c.DestinationId].Position);
             ValidateCarRoute(c.Journey, c);
             lease = new PhysicalJourneyLease(this, checked(++physicalGeneration), c) { Progress = progress };
-            if (trafficCitizens.ContainsKey(citizenId)) traffic!.SetPhysicalControl(citizenId, true);
-            else if (!due.Remove(item)) throw new InvalidOperationException("Journey event is not queued.");
+            traffic.SetPhysicalControl(citizenId, true);
             physicalJourneys.Add(citizenId, lease);
             return true;
         }
@@ -131,26 +123,16 @@ namespace PersistentCity.Core
             if (!ValidPhysicalLease(lease)) return false;
             if (routeElapsedMinutes < lease.Progress || routeElapsedMinutes > lease.Route.Minutes || routeElapsedMinutes > State.Minute)
                 throw new ArgumentOutOfRangeException(nameof(routeElapsedMinutes), "Progress must be monotonic and inside the route and city clock.");
-            if (!trafficCitizens.ContainsKey(lease.CitizenId))
-            {
-                double boundary = NextTrafficBoundary(lease.Citizen, lease.Progress);
-                if (routeElapsedMinutes >= boundary)
-                {
-                    lease.Progress = boundary;
-                    RebasePhysicalJourney(lease);
-                    if (!TryStartTraffic(lease.Citizen)) throw new InvalidOperationException("Physical access lost its traffic handoff.");
-                    return routeElapsedMinutes - boundary <= 1e-7;
-                }
-            }
-            if (trafficCitizens.ContainsKey(lease.CitizenId))
-            {
-                double accepted = traffic!.ReportPhysicalProgress(lease.CitizenId, routeElapsedMinutes);
-                // The adapter must constrain commanded movement before this boundary. Refuse a
-                // material physical overshoot instead of crediting movement through a queue.
-                if (routeElapsedMinutes - accepted > 1e-7)
-                { lease.Progress = accepted; RebasePhysicalJourney(lease); return false; }
-                routeElapsedMinutes = accepted;
-            }
+            // Leases exist only on traffic legs, and traffic completion ends them (TrafficCompleted).
+            if (!trafficCitizens.ContainsKey(lease.CitizenId)) return false;
+            double accepted = traffic!.ReportPhysicalProgress(lease.CitizenId, routeElapsedMinutes);
+            // The report can complete the traffic leg, which ends the lease and resumes the logical walk.
+            if (!ValidPhysicalLease(lease)) return false;
+            // The adapter must constrain commanded movement before this boundary. Refuse a
+            // material physical overshoot instead of crediting movement through a queue.
+            if (routeElapsedMinutes - accepted > 1e-7)
+            { lease.Progress = accepted; RebasePhysicalJourney(lease); return false; }
+            routeElapsedMinutes = accepted;
             lease.Progress = routeElapsedMinutes;
             RebasePhysicalJourney(lease);
             // Arrival runs through the ordinary due queue (including its budget and opening checks).
@@ -273,6 +255,262 @@ namespace PersistentCity.Core
         {
             foreach (var lease in physicalJourneys.Values) RebasePhysicalJourney(lease);
         }
+    }
+
+    /// <summary>
+    /// F2c walker follower (docs/plans/f2-movement.md Decision 2). Pure presentation arithmetic: a walker body tracks its own
+    /// progress along the committed route, never ahead of the logical pose, and Runtime turns the lag into a pace or a
+    /// correction. Nothing here writes simulator state. The thresholds are technical starting values, reported by
+    /// pc movement status and tuned from F2c measurements.
+    /// </summary>
+    public static class WalkerFollow
+    {
+        /// <summary>Lag up to which the body walks at native pace.</summary>
+        public const double CatchUpMetres = 1.5;
+        /// <summary>Lag above which the body is corrected (moved off screen, or hurried and faded on screen).</summary>
+        public const double CorrectionMetres = 8;
+        /// <summary>Fastest catch-up pace, as a multiple of native walking pace.</summary>
+        public const double MaximumPaceFactor = 1.5;
+        /// <summary>Catch-up pace reaches its maximum at this lag.</summary>
+        public const double FullPaceMetres = 3;
+        /// <summary>At or below this lag the body is at the logical pose and stops, so it is never ahead of it.</summary>
+        public const double StopMetres = 0.05;
+        /// <summary>Q3: an on-screen body hurries this long before it fades at the next corner or doorway.</summary>
+        public const double HurrySeconds = 10;
+        /// <summary>A walker on the logical pose's leg is re-aimed at that pose once it has moved this far.</summary>
+        public const double RetargetMetres = 0.5;
+        /// <summary>After the logical arrival, a visible walker keeps walking to the door this long.</summary>
+        public const double ArrivalTailSeconds = 10;
+        /// <summary>Q3 fade: a corrected on-screen body stands and fades out over this long before it is released.</summary>
+        public const double FadeOutSeconds = 1;
+        private const int MaximumCorners = 16;
+
+        /// <summary>Pace multiple for a lag: 0 at the logical pose, 1 up to <see cref="CatchUpMetres"/>, rising
+        /// linearly to <see cref="MaximumPaceFactor"/> at <see cref="FullPaceMetres"/>.</summary>
+        public static double PaceFactor(double lagMetres)
+        {
+            if (!Position.Finite(lagMetres) || lagMetres <= StopMetres) return 0;
+            if (lagMetres <= CatchUpMetres) return 1;
+            double rise = (lagMetres - CatchUpMetres) / (FullPaceMetres - CatchUpMetres);
+            return Math.Min(MaximumPaceFactor, 1 + (MaximumPaceFactor - 1) * rise);
+        }
+
+        /// <summary>Unity BlendMode.SrcAlpha and BlendMode.OneMinusSrcAlpha, the alpha blend Unity's built-in and
+        /// URP shaders configure for their Fade/Transparent surface through the _SrcBlend/_DstBlend properties.</summary>
+        public const int SourceAlphaBlend = 5, OneMinusSourceAlphaBlend = 10;
+
+        /// <summary>Whether a material shows the fade: it has the colour property the fade scales, renders in a
+        /// transparent queue (above 2500), declares alpha blending (_SrcBlend SrcAlpha, _DstBlend OneMinusSrcAlpha), and
+        /// its shader configuration outputs the colour's alpha (<paramref name="alphaSurface"/>: a URP transparent
+        /// surface, or the built-in Standard alpha-blend mode). Queue and blend values alone do not establish that the
+        /// fragment alpha follows the colour (URP's opaque surface forces it to 1), so any other configuration counts as
+        /// opaque and the body is kept until it is out of view instead.</summary>
+        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty, float? sourceBlend, float? destinationBlend, bool alphaSurface)
+            => alphaSurface && hasColourProperty && renderQueue > 2500
+            && sourceBlend.HasValue && (int)sourceBlend.Value == SourceAlphaBlend
+            && destinationBlend.HasValue && (int)destinationBlend.Value == OneMinusSourceAlphaBlend;
+
+        /// <summary>A NavMesh projection of a pose may shift it along the leg (kerbs, ramps). It is usable only if it is
+        /// not ahead of the pose along the leg <paramref name="from"/>→<paramref name="to"/> (horizontal), so the
+        /// destination stays behind the logical progress.</summary>
+        public static bool NotAheadOnLeg(Position from, Position to, Position pose, Position projected)
+        {
+            double dx = to.X - from.X, dz = to.Z - from.Z, square = dx * dx + dz * dz;
+            if (!projected.IsFinite || !Position.Finite(square)) return false;
+            if (square <= 1e-12) return true;
+            double alongPose = ((pose.X - from.X) * dx + (pose.Z - from.Z) * dz) / square;
+            double alongProjected = ((projected.X - from.X) * dx + (projected.Z - from.Z) * dz) / square;
+            return alongProjected <= alongPose + 1e-9;
+        }
+
+        /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
+        /// <paramref name="deltaSeconds"/>, so the body is never commanded past the logical pose, even while the
+        /// logical clock stands still. 0 at or below <see cref="StopMetres"/>.</summary>
+        public static double CommandSpeed(double paceMetresPerSecond, double lagMetres, double deltaSeconds)
+        {
+            if (!(paceMetresPerSecond > 0) || !Position.Finite(lagMetres) || lagMetres <= StopMetres) return 0;
+            double frame = Position.Finite(deltaSeconds) && deltaSeconds > 1e-3 ? deltaSeconds : 1e-3;
+            return Math.Min(paceMetresPerSecond, lagMetres / frame);
+        }
+
+        /// <summary>True when the follow must be corrected: too far behind, or the logical leg is not a walk
+        /// (the person is already in the car, bus or subway).</summary>
+        public static bool NeedsCorrection(double lagMetres, TravelMode logicalMode)
+            => logicalMode != TravelMode.Walk || !(lagMetres <= CorrectionMetres);
+
+        /// <summary>Committed geometry at a route progress, without the simulator's clock or traffic state.</summary>
+        public static PhysicalJourneySample Sample(Route route, double routeElapsedMinutes)
+        {
+            if (route == null) throw new ArgumentNullException(nameof(route));
+            double total = route.Minutes;
+            double elapsed = Position.Finite(routeElapsedMinutes) ? Math.Max(0, Math.Min(total, routeElapsedMinutes)) : 0;
+            return CitySimulator.SampleRoute(route, elapsed, null);
+        }
+
+        /// <summary>Along-route metres from <paramref name="fromMinutes"/> to <paramref name="toMinutes"/>; 0 if not ahead.</summary>
+        public static double RouteMetres(Route route, double fromMinutes, double toMinutes)
+        {
+            if (route == null) throw new ArgumentNullException(nameof(route));
+            if (!(toMinutes > fromMinutes)) return 0;
+            double offset = 0, metres = 0;
+            foreach (var leg in route.Legs)
+            {
+                double start = offset, end = offset + leg.Minutes;
+                offset = end;
+                if (end <= fromMinutes || leg.Minutes <= 0) continue;
+                if (start >= toMinutes) break;
+                double share = (Math.Min(end, toMinutes) - Math.Max(start, fromMinutes)) / leg.Minutes;
+                metres += share * Position.Distance(leg.From, leg.To);
+            }
+            return metres;
+        }
+
+        /// <summary>
+        /// The body's route progress after this frame. It starts from the body's previous progress, projects the body
+        /// onto that walk leg with <see cref="PhysicalProgress.TryProject"/> (passing reached corners, up to 16), waits
+        /// out a zero-distance leg with the logical clock, stops at the start of a non-walk leg, and is capped at the
+        /// logical progress. A body pushed off the leg keeps its previous progress.
+        /// </summary>
+        public static double Advance(Route route, double bodyMinutes, double logicalMinutes, Position actual)
+        {
+            if (route == null) throw new ArgumentNullException(nameof(route));
+            double total = route.Minutes;
+            double logical = Position.Finite(logicalMinutes) ? Math.Max(0, Math.Min(total, logicalMinutes)) : 0;
+            double progress = Position.Finite(bodyMinutes) ? Math.Max(0, Math.Min(logical, bodyMinutes)) : 0;
+            for (int corner = 0; corner < MaximumCorners; corner++)
+            {
+                var sample = Sample(route, progress);
+                if (sample.AtEnd || sample.Mode != TravelMode.Walk) break;
+                double legEnd = Math.Min(total, sample.ElapsedMinutes + sample.RemainingLegMinutes);
+                double next;
+                if (sample.Stationary) next = Math.Min(logical, legEnd);
+                else if (!PhysicalProgress.TryProject(sample, actual, false, out next)) break;
+                next = Math.Min(next, logical);
+                if (!(next > progress)) break;
+                progress = next;
+                if (progress < legEnd) break;
+            }
+            return progress;
+        }
+    }
+
+    public enum WalkerCorrectionKind
+    {
+        /// <summary>An off-screen body moved to the logical pose.</summary>
+        Move,
+        /// <summary>Q3: an on-screen body that hurried for the bound faded out at a corner; it reappears at the logical pose once that is out of view.</summary>
+        Fade,
+        /// <summary>An off-screen body released because of lag: the person is no longer walking, or the arrival tail ended short of the door.</summary>
+        LagRelease,
+    }
+
+    public readonly struct WalkerCorrection
+    {
+        public WalkerCorrection(long sequence, long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen)
+        { Sequence = sequence; Frame = frame; PersonId = personId; Kind = kind; Before = before; After = after; OnScreen = onScreen; }
+        public long Sequence { get; }
+        public long Frame { get; }
+        public string PersonId { get; }
+        public WalkerCorrectionKind Kind { get; }
+        /// <summary>Body pose when corrected.</summary>
+        public Position Before { get; }
+        /// <summary>Body pose afterwards: the logical pose it was moved to, or where a released body reappears.</summary>
+        public Position After { get; }
+        /// <summary>Inside the camera frustum with a visible renderer at that frame.</summary>
+        public bool OnScreen { get; }
+    }
+
+    /// <summary>
+    /// F2c walker movement telemetry, held in Runtime memory and never saved: the bounded correction ring (last 512, with
+    /// sequence numbers and gap detection), counters and a lag histogram for pc movement status.
+    /// </summary>
+    public sealed class WalkerMovementTelemetry
+    {
+        public const int Capacity = 512;
+        // 0.05 m bins up to 64 m; larger lags share the last bin, and the exact maximum is kept separately.
+        private const double BinMetres = 0.05;
+        private const int Bins = 1281;
+        private readonly WalkerCorrection[] ring = new WalkerCorrection[Capacity];
+        private readonly long[] histogram = new long[Bins];
+        private long nextSequence = 1;
+
+        public long Corrections { get; private set; }
+        public long Moves { get; private set; }
+        public long OnScreenMoves { get; private set; }
+        public long Fades { get; private set; }
+        public long LagReleases { get; private set; }
+        /// <summary>Mode boundaries where a walker reached the car, bus or subway and a body of the new kind is re-acquired.</summary>
+        public long Handoffs { get; set; }
+        /// <summary>Walker path calculations: every SetTarget a follower issues (one NavMesh CalculatePath each, the
+        /// projected and the raw attempt counted separately). Their rate scales with game speed.</summary>
+        public long PathRequests { get; set; }
+        /// <summary>Acquisitions refused by the test-profile key MovementFaultAcquirePercent.</summary>
+        public long FaultedAcquisitions { get; set; }
+        public long LagSamples { get; private set; }
+        public double MaximumLagMetres { get; private set; }
+        /// <summary>Sequence of the latest correction; 0 before the first.</summary>
+        public long LastSequence => nextSequence - 1;
+        /// <summary>Oldest sequence still in the ring (1 while nothing was evicted).</summary>
+        public long OldestSequence => Math.Max(1, nextSequence - Capacity);
+
+        public long Record(long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen)
+        {
+            if (personId == null) throw new ArgumentNullException(nameof(personId));
+            long sequence = nextSequence++;
+            ring[(int)((sequence - 1) % Capacity)] = new WalkerCorrection(sequence, frame, personId, kind, before, after, onScreen);
+            Corrections++;
+            if (kind == WalkerCorrectionKind.Move) { Moves++; if (onScreen) OnScreenMoves++; }
+            else if (kind == WalkerCorrectionKind.Fade) Fades++;
+            else LagReleases++;
+            return sequence;
+        }
+
+        /// <summary>Entries with a sequence after <paramref name="sequence"/>, oldest first. <paramref name="gap"/> is true
+        /// when some of those entries were already evicted from the ring.</summary>
+        public void Since(long sequence, List<WalkerCorrection> into, out bool gap)
+        {
+            if (into == null) throw new ArgumentNullException(nameof(into));
+            gap = sequence + 1 < OldestSequence;
+            for (long s = Math.Max(Math.Max(1, sequence + 1), OldestSequence); s <= LastSequence; s++)
+                into.Add(ring[(int)((s - 1) % Capacity)]);
+        }
+
+        public void RecordLag(double metres)
+        {
+            if (!Position.Finite(metres) || metres < 0) return;
+            LagSamples++;
+            if (metres > MaximumLagMetres) MaximumLagMetres = metres;
+            histogram[Math.Min(Bins - 1, (int)(metres / BinMetres))]++;
+        }
+
+        /// <summary>Upper edge of the histogram bin holding the quantile (at most the exact maximum); 0 without samples.</summary>
+        public double LagQuantile(double quantile)
+        {
+            if (LagSamples == 0) return 0;
+            long rank = Math.Max(1, (long)Math.Ceiling(Math.Max(0, Math.Min(1, quantile)) * LagSamples));
+            long seen = 0;
+            for (int bin = 0; bin < Bins; bin++)
+            {
+                seen += histogram[bin];
+                if (seen >= rank) return bin == Bins - 1 ? MaximumLagMetres : Math.Min(MaximumLagMetres, (bin + 1) * BinMetres);
+            }
+            return MaximumLagMetres;
+        }
+
+        public string Status(int followers) => string.Format(CultureInfo.InvariantCulture,
+            "followers={0}\nlag_samples={1}\nlag_p50_m={2:F2}\nlag_p95_m={3:F2}\nlag_max_m={4:F2}\ncorrections={5}\nmoves={6}\n"
+            + "on_screen_moves={7}\nfades={8}\nlag_releases={9}\nhandoffs={10}\nfaulted_acquisitions={11}\nlast_sequence={12}\n"
+            + "path_requests={20}\n"
+            + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};arrival_tail_s:{17};fade_out_s:{18};retarget_m:{19}",
+            followers, LagSamples, LagQuantile(0.5), LagQuantile(0.95), MaximumLagMetres, Corrections, Moves, OnScreenMoves, Fades,
+            LagReleases, Handoffs, FaultedAcquisitions, LastSequence, WalkerFollow.CatchUpMetres, WalkerFollow.CorrectionMetres,
+            WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.ArrivalTailSeconds,
+            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres, PathRequests);
+
+        public static string Format(WalkerCorrection c) => string.Format(CultureInfo.InvariantCulture,
+            "seq={0} frame={1} person={2} kind={3} on_screen={4} before={5:R},{6:R},{7:R} after={8:R},{9:R},{10:R}",
+            c.Sequence, c.Frame, c.PersonId, c.Kind, c.OnScreen ? "true" : "false",
+            c.Before.X, c.Before.Y, c.Before.Z, c.After.X, c.After.Y, c.After.Z);
     }
 
     /// <summary>

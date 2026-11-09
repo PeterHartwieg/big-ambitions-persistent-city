@@ -128,6 +128,7 @@ namespace PersistentCity.Runtime
             if (body == null || !active.TryGetValue(body.IdentityId, out var current) || !ReferenceEquals(current, body)) return;
             active.Remove(body.IdentityId);
             ThirdPersonCharacter character = body.Character;
+            body.SetFade(1); // a pooled actor never keeps an F2c fade
             body.Invalidate();
             if (character == null) return;
             var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
@@ -157,6 +158,10 @@ namespace PersistentCity.Runtime
                 UnityEngine.Object.Destroy(character.gameObject);
             }
         }
+
+        /// <summary>Whether a standing person at this point could be in the main camera's view (frustum only;
+        /// unknown counts as visible). F2c defers a faded person's reappearance while this is true.</summary>
+        public bool Visible(Position at) => ScreenVisibility.ContainsPoint(at);
 
         public void Dispose()
         {
@@ -226,6 +231,121 @@ namespace PersistentCity.Runtime
             stopped = false; Tick(); return true;
         }
         public void Stop(bool stop) { stopped = stop; Tick(); }
+        /// <summary>F2c follow pace along the current path; zero or less stands the body still.</summary>
+        public void Pace(double metresPerScaledSecond)
+        {
+            if (!Valid) return;
+            if (!(metresPerScaledSecond > 0) || metresPerScaledSecond > 12) { stopped = true; Tick(); return; }
+            Agent.speed = (float)metresPerScaledSecond;
+            stopped = false; Tick();
+        }
+        /// <summary>F2c Q3 fade: whether every renderer of this body can show a base-colour alpha (a transparent-queue
+        /// material with a colour property, <see cref="WalkerFollow.MaterialCanFade"/>). Opaque characters cannot fade;
+        /// their correction waits until they are out of view.</summary>
+        /// Read once per body (a new body is made for every acquisition).
+        public bool CanFade => canFade ??= ProbeFade();
+        private bool? canFade;
+        private bool ProbeFade()
+        {
+            if (Character == null) return false;
+            Character.GetComponentsInChildren(true, probe);
+            bool any = false;
+            foreach (var renderer in probe)
+            {
+                if (renderer == null) continue;
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    if (material == null) { probe.Clear(); return false; }
+                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
+                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
+                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
+                    // Only shader configurations whose fragment alpha follows the colour: URP with a transparent surface
+                    // (_Surface 1 and its keyword), or the built-in Standard alpha-blend mode keyword.
+                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
+                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
+                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
+                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) { probe.Clear(); return false; }
+                    any = true;
+                }
+            }
+            probe.Clear();
+            return any;
+        }
+        private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend"), DstBlendId = Shader.PropertyToID("_DstBlend"),
+            SurfaceId = Shader.PropertyToID("_Surface");
+        /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour, starting from the colour the renderer
+        /// shows now (its property block's, else its material's). 1 restores the renderers.</summary>
+        public void SetFade(float alpha)
+        {
+            if (Character == null) return;
+            alpha = Mathf.Clamp01(alpha);
+            if (alpha >= 1)
+            {
+                foreach (var renderer in faded) if (renderer != null) renderer.SetPropertyBlock(null);
+                faded.Clear(); originals.Clear(); return;
+            }
+            block ??= new MaterialPropertyBlock();
+            if (faded.Count == 0)
+            {
+                Character.GetComponentsInChildren(true, faded);
+                foreach (var renderer in faded)
+                {
+                    var material = renderer != null ? renderer.sharedMaterial : null;
+                    int id = material != null && material.HasProperty(BaseColorId) ? BaseColorId : ColorId;
+                    Color colour = material != null && material.HasProperty(id) ? material.GetColor(id) : Color.white;
+                    if (renderer != null)
+                    {
+                        renderer.GetPropertyBlock(block);
+                        if (block.HasColor(id)) colour = block.GetColor(id);
+                    }
+                    originals.Add((id, colour));
+                }
+            }
+            for (int i = 0; i < faded.Count; i++)
+            {
+                var renderer = faded[i];
+                if (renderer == null) continue;
+                var (id, colour) = originals[i];
+                colour.a *= alpha;
+                renderer.GetPropertyBlock(block);
+                block.SetColor(id, colour);
+                renderer.SetPropertyBlock(block);
+            }
+        }
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"), ColorId = Shader.PropertyToID("_Color");
+        private readonly List<Renderer> faded = new List<Renderer>(), probe = new List<Renderer>();
+        private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
+        private MaterialPropertyBlock? block;
+        /// <summary>F2c follow: the nearest walkable point to a logical pose between corners (within 0.5 m), so a leg
+        /// over a kerb or a crowned road does not fail the endpoint check of SetTarget. No path is calculated here.</summary>
+        public bool TryProjectPose(Position pose, out Position projected)
+        {
+            projected = pose;
+            if (!Valid || !Fits(pose) || !NavMesh.SamplePosition(Vector(pose), out NavMeshHit hit, 0.5f, WalkingRoutes.DryFilter)) return false;
+            projected = Point(hit.position);
+            return projected.IsFinite;
+        }
+        /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
+        public bool Warp(Position target)
+        {
+            if (!Valid || !Fits(target)) return false;
+            if (!NavMesh.SamplePosition(Vector(target), out NavMeshHit hit, 0.5f, WalkingRoutes.DryFilter)) return false;
+            if (!Agent.Warp(hit.position) || !Agent.isOnNavMesh) return false;
+            Agent.ResetPath(); stopped = true; Tick();
+            return Valid;
+        }
+        /// <summary>Inside the main camera's frustum with an enabled, visible renderer this frame. Unknown visibility
+        /// (no camera, no renderer) counts as on screen, so a correction never moves a body that might be seen.</summary>
+        public bool OnScreen
+        {
+            get
+            {
+                if (!Valid) return false;
+                Renderer? renderer = Character.appearanceSetter != null ? Character.appearanceSetter.lastMergedMeshRenderer : null;
+                if (renderer == null) renderer = Character.GetComponentInChildren<Renderer>();
+                return ScreenVisibility.Contains(renderer);
+            }
+        }
         /// <summary>Turn a standing body toward a point, level with the ground.</summary>
         public void Face(Position target)
         {
@@ -278,6 +398,33 @@ namespace PersistentCity.Runtime
         internal static Position Point(Vector3 p) => new Position(p.x, p.y, p.z);
         private static float DistanceToSegment(Vector3 p, Vector3 a, Vector3 b)
         { Vector3 d = b-a; float t = d.sqrMagnitude > 0 ? Mathf.Clamp01(Vector3.Dot(p-a,d)/d.sqrMagnitude) : 0; return Vector3.Distance(p,a+d*t); }
+    }
+
+    /// <summary>The main camera's frustum planes, computed at most once per frame for F2c on-screen checks.</summary>
+    internal static class ScreenVisibility
+    {
+        private static readonly Plane[] planes = new Plane[6];
+        private static int frame = -1;
+        private static Camera? camera;
+        internal static bool Contains(Renderer? renderer)
+        {
+            if (frame != Time.frameCount)
+            {
+                frame = Time.frameCount;
+                camera = Camera.main;
+                if (camera != null) GeometryUtility.CalculateFrustumPlanes(camera, planes);
+            }
+            if (camera == null || renderer == null) return true;
+            return renderer.enabled && renderer.isVisible && GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+        }
+        /// <summary>A standing person's volume at this point is inside the frustum (no camera counts as visible).</summary>
+        internal static bool ContainsPoint(Position at)
+        {
+            Contains(null);
+            if (camera == null || !PhysicalPedestrianBody.Fits(at)) return true;
+            var centre = PhysicalPedestrianBody.Vector(at) + Vector3.up * 0.9f;
+            return GeometryUtility.TestPlanesAABB(planes, new Bounds(centre, new Vector3(0.8f, 1.8f, 0.8f)));
+        }
     }
 
     internal sealed class PhysicalPedestrianCrosswalk : MonoBehaviour

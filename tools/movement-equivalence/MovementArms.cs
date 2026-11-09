@@ -17,6 +17,7 @@ public sealed class Arm
 public static class MovementArms
 {
     public const string Plain = "bodies-off/plain-60";
+    public const string WalkingPlain = "walking/plain-60";
     public static readonly (int Walkers, int Cars)[] Caps = { (0, 0), (1, 1), (24, 12), (48, 24), (256, 64) };
     public static readonly int[] FailurePercents = { 0, 10, 50 };
     public static readonly int[] Cadences = { 30, 60, 120 };
@@ -52,6 +53,22 @@ public static class MovementArms
             Add("cadence", fps + "fps", () => { var o = Default(""); o.FramesPerSecond = fps; return o; }, "bodies-off/plain-" + fps);
         Add("transitions", "reload-mid-journey", () => { var o = Default(""); o.ReloadMidJourney = true; return o; });
         Add("transitions", "hidden-travel", () => { var o = Default(""); o.HiddenTravel = true; return o; }, "bodies-off/plain-hidden-travel");
+        // F2c: a walking-only city (nobody owns a car). Walker follow makes every arm equal its bodies-off run (E1).
+        foreach (int fps in new[] { 60, 30 })
+            Add("walking", "plain-" + fps, () => new MovementOptions { Driver = false, WalkingOnly = true, FramesPerSecond = fps }, "");
+        Add("walking", "plain-hidden-travel", () => new MovementOptions { Driver = false, WalkingOnly = true, HiddenTravel = true }, "");
+        void Walking(string name, Action<MovementOptions> change, string reference = WalkingPlain)
+            => Add("walking", name, () => { var o = Default(""); o.WalkingOnly = true; change(o); return o; }, reference);
+        Walking("stationary", o => { });
+        Walking("sweep", o => o.Focus = FocusPath.Sweep);
+        Walking("away-return", o => o.Focus = FocusPath.AwayReturn);
+        Walking("caps-1", o => { o.Bodies.Pedestrians = 1; o.Bodies.Vehicles = 1; });
+        Walking("caps-256", o => { o.Bodies.Pedestrians = 256; o.Bodies.Vehicles = 64; });
+        Walking("lag-ideal", o => o.Bodies.Lag = LagModel.Ideal);
+        Walking("failures-50pct", o => o.Bodies.AcquisitionFailurePercent = 50);
+        Walking("cadence-30fps", o => o.FramesPerSecond = 30, "walking/plain-30");
+        Walking("reload-mid-journey", o => o.ReloadMidJourney = true);
+        Walking("hidden-travel", o => o.HiddenTravel = true, "walking/plain-hidden-travel");
         return arms;
     }
 }

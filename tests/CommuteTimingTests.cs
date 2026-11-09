@@ -79,8 +79,11 @@ public sealed class CommuteTimingTests
     {
         var state = City(); var c = state.Citizens[0]; var shift = DailyRoutine.WorkOnDay(c, state.Seed, state.Minute)!.Value;
         var engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(shift.StartsAt - 120);
-        Assert.True(engine.TryAcquirePhysicalJourney(c.Identity.Id, out var lease));
-        engine.AdvanceTo(state.Minute + 1); Assert.True(engine.ObservePhysicalJourney(lease!, 120)); engine.AdvanceTo(state.Minute);
+        // F2c: a body cannot bring an arrival forward. An early arrival is a completed journey at this minute.
+        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
+        engine.AdvanceTo(state.Minute + 1);
+        c.DepartureMinute = state.Minute - c.Journey!.Minutes; c.NextEventMinute = state.Minute;
+        engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(state.Minute);
         Assert.Equal("work", c.PlaceId); Assert.Equal(CitizenPhase.WaitingForOpening, c.Phase);
         Assert.Equal(shift.StartsAt, c.NextEventMinute); Assert.Empty(c.RecentVisits);
         var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
