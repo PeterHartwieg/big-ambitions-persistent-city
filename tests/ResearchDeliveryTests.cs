@@ -543,7 +543,7 @@ public sealed class ResearchDeliveryTests
         long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
         Array.Sort(samples);
         output.WriteLine($"{label}: p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/call={bytes / runs}");
-        Assert.True(samples[runs * 95 / 100] < 5, label + " p95 under the 5 ms gate");
+        PerfGate.Under(samples[runs * 95 / 100], 5, label + " p95");
     }
 
     // ---- helpers ----

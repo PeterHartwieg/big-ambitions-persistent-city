@@ -35,6 +35,10 @@ Do not use `{changed_tests}`: the harness only recognises Python and JavaScript 
 
 A slice that changes no wire asserts the constant of the schema it relies on (`CityState.PlayerHoldSchema`, for example), not `CityState.CurrentSchema`. Only the slice that introduces a writer pins that writer's golden hash. On 9 November, F5i's `Assert.Equal(35, CityState.CurrentSchema)` turned the integration head red once E5b4 took writer 36. That test was removed, and the same kind of assertion in F5h, F6h and F6k was removed before it could break at writer 37; `HeldPolicyExecutionTests` pins writer 36.
 
+## Wall-clock limits in unit tests
+
+Timed limits (p95 under 1 ms, no unit at or above 30 ms) failed whenever parallel slices loaded the machine, which sent green work to a fixer. Unit tests route them through `PerfGate.Under(ms, limit, label)` (`tests/PerfGate.cs`), which checks the limit only when `PC_PERF_ASSERTS=1`. The timed code, its correctness and allocation assertions always run. Perf evidence for a slice still goes in `docs/perf/<slice>.md`, measured on a quiet machine.
+
 ## Reading
 
 - Task prompts name plan sections by heading, not whole plan files. Plans run to 50–90 KB.
