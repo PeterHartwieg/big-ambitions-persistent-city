@@ -36,7 +36,7 @@ def fragments(vehicle, population, journey):
     }
 baseline_path = here / 'baseline.json'
 baseline = json.loads(baseline_path.read_text())
-current = fragments(*[(root / p).read_text() for p in ['Runtime/PhysicalVehicles.cs', 'Runtime/PhysicalPopulation.cs', 'Core/PhysicalJourneys.cs']])
+current = fragments(*[''.join((root / p).read_text() for p in ps) for ps in [['Runtime/PhysicalVehicles.cs'], [f'Runtime/PhysicalPopulation{part}.cs' for part in ('', '.Following', '.Queues', '.Selection')], ['Core/PhysicalJourneys.cs']]])
 before_f0 = dict(current)
 full_pool_check = '''                // Both pools are full: observations and queue movement above still ran; no
                 // candidate can acquire a body until a later update frees a slot.
