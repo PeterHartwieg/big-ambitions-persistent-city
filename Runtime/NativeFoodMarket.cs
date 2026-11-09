@@ -500,7 +500,7 @@ namespace PersistentCity.Runtime
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
-            if (offer != null && offer.Price != mainPrice) return new FoodSale(false, "Approved price changed");
+            if (offer != null && offer.Price != mainPrice) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, "Approved price changed", priceChanged: true); }
             var reg = registrations[meal.PlaceId];
             if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service", ShopExperience.Closed);
             // A zero sellable-unit count can also mean no staffed counter. Name stockout only
@@ -587,8 +587,7 @@ namespace PersistentCity.Runtime
                     RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
                     return new FoodSale(false, "Approved price is outside the supported range");
                 }
-                if (livePrice != price)
-                    return new FoodSale(false, "Approved price changed during native setup");
+                if (livePrice != price) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }
                 // Setup/open checks may invoke native callbacks. Check the whole approved menu
                 // again, not only the chosen price, before creating a receipt or native order.
                 // A catalogue that started rebuilding during setup cannot vouch for the image: this sale waits.
@@ -602,8 +601,8 @@ namespace PersistentCity.Runtime
                     return RefuseCheckoutContract(reg);
                 }
                 // E5b5 Q2 default: another valid price is a price-only change. Ownership is kept and this sale is refused
-                // before any receipt; the resident's next decision captures the new price. Never a sale on changed terms.
-                if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal); }
+                // before any receipt and Core lets the resident decide again at the counter. Never a sale on changed terms.
+                if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }
                 beginReceipt?.Invoke();
                 buyerShop = reg; buying = true;
                 Process.Invoke(simulator, new object[] { customer });

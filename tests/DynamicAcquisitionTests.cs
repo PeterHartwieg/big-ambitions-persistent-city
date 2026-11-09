@@ -67,7 +67,9 @@ public sealed class DynamicAcquisitionTests
         Assert.Contains("shops.ProductPolicySource = policy;", host);
         Assert.DoesNotContain("FoodProducts.Known", coordinator);
         // Q2: a price-only change at checkout is refused without RefuseCheckoutContract.
-        Assert.Contains("if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal); }", market);
+        Assert.Contains("if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }", market);
+        Assert.Contains("if (livePrice != price) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }", market);
+        Assert.Contains("return new FoodSale(false, \"Approved price changed\", priceChanged: true); }", market);
     }
 
     [Theory]
@@ -325,6 +327,74 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(Money.FromNative(4.5f), later.Prices[Burger]);
         Assert.Equal(Money.FromNative(4.5f), world.Coordinator.Serving(shop.Key)!.Prices[0]);
         Assert.True(shop.Row.Desired);
+    }
+
+    /// <summary>A seller that refuses a stale price as Q2 price-only (the Runtime checkout's flag) and otherwise sells.</summary>
+    private sealed class PriceOnlyMarket : IFoodMarket
+    {
+        public readonly WeightedFoodChoiceTests.Market Inner;
+        public PriceOnlyMarket(WeightedFoodChoiceTests.Market inner) { Inner = inner; }
+        public bool KeepChanging;
+        public int Attempts, PriceOnly;
+        public double EarliestMinute => 0;
+        public IReadOnlyList<FoodBusiness> Read(double at) => Inner.Read(at);
+        public FoodSale Buy(ResidentMeal m, double at)
+        {
+            Attempts++;
+            var offer = Inner.Shops.Single(b => b.Id == m.BusinessId).Offers.Single(o => o.ProductId == m.ProductId);
+            if (KeepChanging && Attempts > 1) offer.Price += Money.FromCents(1); // moved again during the second checkout
+            if (offer.Price != m.Price)
+            {
+                PriceOnly++;
+                return new FoodSale(false, "Approved price changed", priceChanged: true);
+            }
+            return Inner.Buy(m, at);
+        }
+    }
+
+    [Theory]
+    [InlineData(150, false, true)]     // affordable new price: the same resident buys on the new terms
+    [InlineData(1000000, false, false)] // beyond the allowance: an ordinary refusal, no second attempt
+    [InlineData(150, true, false)]     // the price moves again: one re-decision only, then the refusal stands
+    [InlineData(150, false, true, true)]      // household budget: the hold is released and taken at the new price
+    [InlineData(1000000, false, false, true)]
+    [InlineData(150, true, false, true)]
+    public void APriceOnlyRefusalLetsTheSameResidentDecideAgainAtTheCounter(int cents, bool keepChanging, bool paid, bool budget = false)
+    {
+        var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
+        var market = new PriceOnlyMarket(inner) { KeepChanging = keepChanging };
+        var city = new CitySimulator(prepared.State, planner); city.AttachFoodMarket(market, LegacyFoodChoice.Settings());
+        if (budget) city.EnableHouseholdFinances();
+        var m = city.State.Food!.Residents[0]; double at = m.DesiredAt;
+        for (int i = 0; i < 400 && m.Decision?.Result != FoodDecisionResult.Selected; i++) city.AdvanceTo(at, 1);
+        Assert.Equal(FoodDecisionResult.Selected, m.Decision!.Result);
+        Assert.NotEqual(MealStatus.Paid, m.Status);
+        string selected = m.Decision.BusinessId, intent = m.IntentId;
+        inner.Shops.Single(b => b.Id == selected).Offers[0].Price = Money.FromCents(cents);
+        while (!city.AdvanceTo(at + 20, 1).CaughtUp) { }
+        m = city.State.Food!.Residents[0];
+        Assert.Equal(selected, m.BusinessId); Assert.Equal(intent, m.IntentId);
+        Assert.Equal(1, m.ContextAttempts); // no new decision context: the re-decision is at the counter
+        Assert.Equal(keepChanging ? 2 : 1, market.PriceOnly);
+        if (paid)
+        {
+            Assert.Equal(MealStatus.Paid, m.Status);
+            Assert.Equal(new[] { intent }, inner.Orders);
+            Assert.Equal(Money.FromCents(cents), m.Price);
+            Assert.Equal(Money.FromCents(cents), m.Spent);
+            if (m.Budget == null) Assert.Equal(Money.FromCents(cents), m.DayAllowanceUsed);
+            else Assert.Equal(Money.Zero, m.Budget.HeldPurchase);
+            Assert.Equal(budget, m.Budget != null);
+            Assert.Equal(2, market.Attempts);
+        }
+        else
+        {
+            Assert.Equal(MealStatus.Missed, m.Status);
+            Assert.Empty(inner.Orders);
+            Assert.Equal(Money.Zero, m.DayAllowanceUsed); Assert.Equal(Money.Zero, m.Spent);
+            if (m.Budget != null) Assert.Equal(Money.Zero, m.Budget.HeldPurchase);
+            Assert.Equal(keepChanging ? 2 : 1, market.Attempts);
+        }
     }
 
     [Theory]

@@ -159,8 +159,12 @@ namespace PersistentCity.Core
     }
     public readonly struct FoodSale
     {
-        public FoodSale(bool paid, string reason, ShopExperience? failure = null, IReadOnlyList<FoodTicketLine>? soldExtras = null)
-        { Paid = paid; Reason = reason; Failure = failure; this.soldExtras = soldExtras; }
+        public FoodSale(bool paid, string reason, ShopExperience? failure = null, IReadOnlyList<FoodTicketLine>? soldExtras = null,
+            bool priceChanged = false)
+        { Paid = paid; Reason = reason; Failure = failure; this.soldExtras = soldExtras; PriceChanged = priceChanged && !paid; }
+        /// <summary>E5b5 Q2: a definite refusal before any receipt or native order because a menu price changed to another
+        /// valid price. The seller kept ownership; the resident may decide again at the counter.</summary>
+        public bool PriceChanged { get; }
         private readonly IReadOnlyList<FoodTicketLine>? soldExtras;
         /// <summary>F6j: the ticket's extras the seller actually sold, in ticket order. Empty for a main-only sale.</summary>
         public IReadOnlyList<FoodTicketLine> SoldExtras => soldExtras ?? Array.Empty<FoodTicketLine>();
@@ -535,6 +539,9 @@ namespace PersistentCity.Core
                     try
                     {
                         var result = ticket != null ? ((IFoodTicketMarket)market).BuyTicket(meal, ticket, now) : market.Buy(meal, now);
+                        // E5b5 Q2: after a price-only refusal the resident decides once more at the counter, on the live price.
+                        if (!result.Paid && result.PriceChanged && result.SoldExtras.Count == 0 && CounterRedecision(meal, now, ref mainPrice))
+                        { ticket = null; result = market.Buy(meal, now); }
                         var sold = SoldExtras(ticket, result);
                         Money held = meal.Price, paid = mainPrice;
                         foreach (var line in sold) paid += line.Price;
@@ -557,6 +564,32 @@ namespace PersistentCity.Core
                     catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
                 }
             }
+        }
+        /// <summary>E5b5 Q2: the seller refused before any receipt because a price changed. Re-read the live menu and buy the
+        /// same product, main only, at its new price if it is still in stock and affordable. The refused attempt's hold is
+        /// released first; when the new terms do not fit, it is restored and the refusal stands. Called at most once per
+        /// checkout, so a price that keeps moving ends as an ordinary refusal.</summary>
+        private bool CounterRedecision(ResidentMeal meal, double now, ref Money mainPrice)
+        {
+            var business = ReadBusiness(meal.BusinessId, now);
+            var offer = business == null || business.Id != meal.BusinessId || business.PlaceId != meal.PlaceId ? null
+                : business.Offers.FirstOrDefault(o => o.ProductId == meal.ProductId);
+            if (offer == null || !(offer.Units > 0) || offer.Price == mainPrice) return false;
+            Money held = meal.Price;
+            if (meal.Budget != null) HouseholdFinance.RefusePurchase(meal.Budget); else meal.DayAllowanceUsed -= held;
+            var limit = CurrentAllowance(meal);
+            meal.Price = offer.Price;
+            if (offer.Price <= limit && CanSettle(meal) && (meal.Budget == null || HouseholdFinance.HoldPurchase(meal.Budget, meal.Price)))
+            {
+                if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
+                meal.Allowance = Money.Max(meal.Allowance, limit);
+                mainPrice = meal.Price;
+                return true;
+            }
+            meal.Price = held;
+            if (meal.Budget != null) { if (!HouseholdFinance.HoldPurchase(meal.Budget, held)) throw new InvalidOperationException("Restoring a released hold failed."); }
+            else meal.DayAllowanceUsed += held;
+            return false;
         }
         private void ConfirmPurchase(ResidentMeal meal, string reason, IReadOnlyList<FoodTicketLine>? extras = null)
         {
