@@ -498,7 +498,8 @@ class Lock(unittest.TestCase):
         with self.assertRaises(run.LockHeld):
             run.wait_for_dotnet(no_wait=True, probe=lambda: ["testhost.exe 1234"])
         calls = iter([["testhost.exe 1"], []])
-        run.wait_for_dotnet(no_wait=False, poll=0, probe=lambda: next(calls))
+        self.assertGreaterEqual(run.wait_for_dotnet(no_wait=False, poll=0, probe=lambda: next(calls)), 0.0)
+        self.assertEqual(0.0, run.wait_for_dotnet(no_wait=True, probe=lambda: []))
 
 
 if __name__ == "__main__":

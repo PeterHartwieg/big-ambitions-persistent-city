@@ -47,10 +47,10 @@ def pid_alive(pid):
         return False
     if os.name == "nt":
         import ctypes
-        kernel = ctypes.windll.kernel32
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
         handle = kernel.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
         if not handle:
-            return False
+            return ctypes.get_last_error() == 5  # access denied: the process exists
         code = ctypes.c_ulong()
         try:
             return bool(kernel.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == 259  # STILL_ACTIVE
@@ -127,6 +127,8 @@ def other_test_processes():
 
 
 def wait_for_dotnet(no_wait, poll=5.0, probe=other_test_processes):
+    """Blocks while other test processes run; returns the seconds spent waiting (not runner cost)."""
+    started = time.perf_counter()
     hook = os.environ.get("PC_DOTNET_WAIT")
     if hook:
         subprocess.run(hook, shell=True, check=False)
@@ -134,7 +136,7 @@ def wait_for_dotnet(no_wait, poll=5.0, probe=other_test_processes):
     while True:
         busy = probe()
         if not busy:
-            return
+            return time.perf_counter() - started if announced or hook else 0.0
         if no_wait:
             raise LockHeld("other test processes are running: " + ", ".join(busy))
         if not announced:
@@ -318,11 +320,11 @@ def run_steps(ctx, stage, steps, record):
     env = dict(os.environ, MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false", DOTNET_CLI_TELEMETRY_OPTOUT="1",
                DOTNET_NOLOGO="1")
     codes = []
-    child = 0.0
+    child = waited = 0.0
     with open(log_path, "ab") as log:
         for argv in steps:
             if stage.get("dotnet"):
-                wait_for_dotnet(ctx.no_wait)
+                waited += wait_for_dotnet(ctx.no_wait)
             command = ctx.expand(argv, stage["id"])
             log.write(("$ " + " ".join(argv) + "\n").encode())
             log.flush()
@@ -337,6 +339,7 @@ def run_steps(ctx, stage, steps, record):
             if code != 0 and stage["rule"] != "economy":
                 break
     record["metrics"]["childSeconds"] = round(child, 3)
+    record["metrics"]["waitSeconds"] = round(waited, 3)
     record["evidence"].append(log_path)
     return codes, log_path
 
@@ -494,7 +497,8 @@ def run_stage(ctx, stage):
             record["verdict"], record["reason"] = "fail", f"runner error: {type(error).__name__}: {error}"
     record["seconds"] = round(time.perf_counter() - started, 3)
     if "childSeconds" in record["metrics"]:
-        record["metrics"]["runnerOverheadSeconds"] = round(record["seconds"] - record["metrics"]["childSeconds"], 3)
+        record["metrics"]["runnerOverheadSeconds"] = round(
+            record["seconds"] - record["metrics"]["childSeconds"] - record["metrics"]["waitSeconds"], 3)
     record["evidence"] = [evidence_entry(ctx.out, p) for p in record["evidence"] if Path(p).is_file()]
     return record
 

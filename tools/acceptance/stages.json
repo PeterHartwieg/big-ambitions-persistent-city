@@ -20,7 +20,7 @@
                ["{python}", "tools/economy-interventions/acceptance.py", "{out}/f6h", "--output", "{out}/f6h/acceptance.json"]],
      "acceptance": "f6h/acceptance.json"},
     {"id": "saves", "class": "semantic", "rule": "trx", "dotnet": true,
-     "filter": "FullyQualifiedName~F7dCompactWriterTests|FullyQualifiedName~ReaderCorpusTests|FullyQualifiedName~SaveEpochTests|Name~CurrentWriterGolden"},
+     "filter": "FullyQualifiedName~F7dCompactWriterTests|FullyQualifiedName~ReaderCorpusTests|FullyQualifiedName~SaveEpochTests|FullyQualifiedName~CurrentWriterGolden"},
     {"id": "movement", "class": "semantic", "rule": "movement", "dotnet": true,
      "steps": [["{dotnet}", "run", "--project", "tools/movement-equivalence", "-c", "Release", "--", "--out", "{out}/movement.json"]],
      "output": "movement.json", "expectations": "tools/acceptance/expectations/movement.json"},
