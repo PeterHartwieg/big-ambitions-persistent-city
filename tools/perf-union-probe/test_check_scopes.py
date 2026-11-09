@@ -154,6 +154,52 @@ class CheckScopesTests(unittest.TestCase):
                 problems = src.problems()
                 self.assertTrue(any(needle in p for p in problems), problems)
 
+    def test_fails_when_the_dynamic_target_is_not_the_table_binding(self):
+        # Sol-r2-2: the food-contract postfixes take their targets from the table only through Bind(hook, ...).
+        cases = [
+            ('harmony.Patch(method, postfix:', 'harmony.Patch(AccessTools.Method(typeof(GameManager), "RunMainGameTick"), postfix:'),
+            ('var method = Bind(hook, out var failure);', 'var method = Bind(hook, out var failure); var other = method;\n                method = other;'),
+            ('return null;\n            }\n            public void UnpatchAll()',
+             'harmony.Patch(method, postfix: new HarmonyMethod(postfix) { priority = Priority.Last });\n                return null;\n            }\n            public void UnpatchAll()'),
+        ]
+        for old, new in cases:
+            with self.subTest(new=new[:50]), SourceCopy() as src:
+                src.edit('Runtime/LoadedCatalogueLifecycleMembers.cs', old, new)
+                problems = src.problems()
+                self.assertTrue(any('does not register exactly the table binding' in p for p in problems), problems)
+
+    def test_fails_on_a_second_registration_inside_a_helper(self):
+        # Sol-r2-2: a helper whose body registers twice would be recorded once per call site.
+        with SourceCopy() as src:
+            src.edit('Runtime/NativeFoodOwnership.cs',
+                     'private static void Patch(Type type, string method, string prefix) => patches.Patch(AccessTools.Method(type, method),',
+                     'private static void Patch(Type type, string method, string prefix) { patches.Patch(AccessTools.Method(type, method), '
+                     'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First }); patches.Patch(AccessTools.Method(type, method),')
+            src.edit('Runtime/NativeFoodOwnership.cs', 'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First });\n',
+                     'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First }); }\n')
+            problems = src.problems()
+        self.assertTrue(any('unsupported helper Patch shape' in p for p in problems), problems)
+
+    def test_fails_on_a_looked_up_and_cloned_transpiler_call(self):
+        # Sol-r2-3: Array.Find over GetMethods, then a cloned instruction carrying the helper as its operand.
+        with SourceCopy() as src:
+            src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
+                     'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n'
+                     '            var other = Array.Find(typeof(PhysicalTrafficHooks).GetMethods(BindingFlags.Static | BindingFlags.NonPublic), m => m.Name == "SelectOther");')
+            src.edit('Runtime/PhysicalTrafficHooks.cs', 'yield return instruction;\n            }\n        }\n        private static int SelectIdle',
+                     'yield return instruction;\n                if (instruction.operand == replacement) { var extra = instruction.Clone(); extra.operand = other; yield return extra; }\n'
+                     '            }\n        }\n        private static int SelectIdle')
+            problems = src.problems()
+        self.assertTrue(any('GetMethods' in p for p in problems), problems)
+        self.assertTrue(any('Clone' in p for p in problems), problems)
+        self.assertTrue(any("emitted operand 'other'" in p for p in problems), problems)
+
+    def test_fails_on_an_emitted_operand_that_is_not_a_reference(self):
+        with SourceCopy() as src:
+            src.edit('Runtime/PhysicalTrafficHooks.cs', 'instruction.operand = replacement; }', 'instruction.operand = Pick(); }')
+            problems = src.problems()
+        self.assertTrue(any("emitted operand 'Pick()'" in p for p in problems), problems)
+
     def test_fails_on_extra_helper_patch_call(self):
         with SourceCopy() as src:
             src.edit('Runtime/NativeFoodOwnership.cs', 'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',

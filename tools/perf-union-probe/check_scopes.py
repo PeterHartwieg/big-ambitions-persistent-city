@@ -347,7 +347,9 @@ def contract_table(files):
 # Method references inside an inventoried transpiler. AccessTools.Method/DeclaredMethod and typeof(T).GetMethod are parsed;
 # the other forms (delegates, CodeInstruction.Call, function pointers, other AccessTools method lookups) fail closed.
 TRANSPILER_REFERENCES = re.compile(r'AccessTools\s*\.\s*(\w+)\s*\(|\.\s*GetMethod\s*\(|\bSymbolExtensions\b|\bCodeInstruction\s*\.\s*Call\w*'
-                                   r'|\bEmitDelegate\b|\bTranspilers\s*\.\s*\w+|\bCreateDelegate\b|\bOpCodes\s*\.\s*Ldv?i?r?t?ftn\b|\bnew\s+CodeInstruction\s*\(')
+                                   r'|\bEmitDelegate\b|\bTranspilers\s*\.\s*\w+|\bCreateDelegate\b|\bOpCodes\s*\.\s*Ldv?i?r?t?ftn\b|\bnew\s+CodeInstruction\s*\('
+                                   # Reflection lookups other than one named method, and cloned instructions (Sol-r2-3).
+                                   r'|\.\s*GetMethods\b|\bGetMembers?\b|\bGetRuntimeMethods?\b|\bGetMethodFromHandle\b|\bDeclaredMethods\b|\.\s*Clone\s*\(')
 NON_METHOD_ACCESS = {'Field', 'DeclaredField', 'FieldRefAccess', 'StaticFieldRefAccess', 'TypeByName', 'Inner'}
 
 
@@ -403,6 +405,13 @@ def scan(root):
                             if re.fullmatch(r'\w+', template) and template not in names:
                                 local = assignments(f, template, body + calls[-1].start())
                                 template = local[-1][1] if len(local) == 1 else ''
+                        # Only the one-registration shape is supported: a second Patch call or HarmonyMethod in the template
+                        # would register more than each call site records, so it fails closed (Sol-r2-2).
+                        registrations = len(re.findall(r'\bPatch\s*\(', f.code[body:end]))
+                        methods = len(re.findall(r'\bHarmonyMethod\s*\(', f.code[body:end]))
+                        if registrations != 1 or methods != 1:
+                            line = f.code.count('\n', 0, pos) + 1
+                            problems.append(f'{f.rel}:{line}: unsupported helper Patch shape ({registrations} Patch calls, {methods} HarmonyMethod uses; exactly one each)')
                         helpers[pos] = (names, kind.group(1), short(t.group(1)), names.index(inner[1]), template)
             for m in re.finditer(r'\bPatch\s*\(', f.code):
                 if any(m.start() == pos for name, pos, *_ in f.methods if name == 'Patch'):
@@ -457,6 +466,15 @@ def scan(root):
                             cls = next((c for c in f.classes if c[0] == dyn.group(1)), None)
                             if cls is None:
                                 problems.append(f'{f.rel}:{line}: dynamic patch class {dyn.group(1)} not declared in this file')
+                                continue
+                            # The table supplies each HookN's target only if this call registers exactly what the table binds:
+                            # one Patch call in the host, whose target is a local assigned once from Bind(<host parameter>, ...).
+                            host_params = [p.split()[-1] for p in split_args(host[4], generics=True)]
+                            binding = assignments(f, raw_first.strip(), m.start()) if re.fullmatch(r'\w+', raw_first.strip()) else []
+                            bound = (len(binding) == 1 and len(host_params) == 1
+                                     and re.fullmatch(r'Bind\s*\(\s*' + re.escape(host_params[0]) + r'\s*,[^;]*\)', binding[0][1]))
+                            if not bound or len(re.findall(r'\bPatch\s*\(', f.code[host[2]:host[3]])) != 1:
+                                problems.append(f'{f.rel}:{line}: dynamic Patch call does not register exactly the table binding (target {raw_first.strip()[:60]!r})')
                                 continue
                             ids = [mm.group(1) for mm in re.finditer(r'\bstatic\s+void\s+(' + dyn.group(2) + r'\d+)\s*\(', f.code[cls[1]:cls[2]])]
                             if not ids:
@@ -518,12 +536,13 @@ def scan(root):
             problems.append(f'{f.rel}: transpiler {cls}.{name} definition not found exactly once')
             continue
         start, end = defs[0][2], defs[0][3]
+        references = set()  # locals holding a recognised method reference: the only values an emitted operand may take
         for m in TRANSPILER_REFERENCES.finditer(f.code, start, end):
             line = f.code.count('\n', 0, m.start()) + 1
             access = m.group(1)
             if access in NON_METHOD_ACCESS:
                 continue
-            if not (access in ('Method', 'DeclaredMethod') or (access is None and 'GetMethod' in m.group(0))):
+            if not (access in ('Method', 'DeclaredMethod') or (access is None and re.fullmatch(r'\.\s*GetMethod\s*\(', m.group(0)))):
                 problems.append(f'{f.rel}:{line}: unrecognised method reference in transpiler {cls}.{name} ({m.group(0).strip()})')
                 continue
             paren = m.end() - 1
@@ -533,8 +552,17 @@ def scan(root):
                 problems.append(f'{f.rel}:{line}: unresolved method reference in transpiler {cls}.{name}')
                 continue
             typ, method_name = resolved.split('.')
+            statement = max(f.code.rfind(';', start, m.start()), f.code.rfind('{', start, m.start())) + 1
+            holder = re.search(r'(\w+)\s*=\s*$', f.code[statement:m.start()])
+            if holder:
+                references.add(holder.group(1))
             if typ in pc_classes:
                 found['helpers'].append((name, typ, method_name, f.rel))
+        # Every operand the transpiler writes must be one of those locals; any other value is an unreviewed emitted call.
+        for m in re.finditer(r'\.\s*operand\s*=(?!=)\s*([^;]+);', f.code[start:end]):
+            if m.group(1).strip() not in references:
+                line = f.code.count('\n', 0, start + m.start()) + 1
+                problems.append(f'{f.rel}:{line}: emitted operand {m.group(1).strip()[:40]!r} in transpiler {cls}.{name} is not a recognised method reference')
     return files, found, problems
 
 

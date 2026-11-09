@@ -22,7 +22,7 @@ import check_scopes  # noqa: E402
 HARMONY_SHA256 = '7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c'  # Lib.Harmony 2.4.2, as tools/build.py
 REFERENCES = ['mscorlib', 'System', 'System.Core', 'netstandard', 'BigAmbitions', 'BigAmbitions.ModAPI',
               'HGExtensions', 'HGPlugins', 'UnityEngine.CoreModule', 'Newtonsoft.Json']
-SOURCES = ['Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
+SOURCES = ['HarmonyScan.cs', 'Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
 ARTIFACT = 'PerfUnionProbe.dll'
 
 

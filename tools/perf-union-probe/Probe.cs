@@ -362,22 +362,8 @@ namespace PerfUnionProbe
         {
             if (coverage == null) return;
             var observed = new List<ObservedPatch>();
-            foreach (var target in Harmony.GetAllPatchedMethods().ToArray())
-            {
-                var info = Harmony.GetPatchInfo(target);
-                if (info == null) continue;
-                // Every patch list Harmony exposes; a list other than the four kinds (IL manipulators) is never expected.
-                foreach (var property in typeof(Patches).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                {
-                    if (!(property.GetValue(info) is IEnumerable<Patch> list)) continue;
-                    string kind = property.Name == "Prefixes" ? "Prefix" : property.Name == "Postfixes" ? "Postfix"
-                        : property.Name == "Finalizers" ? "Finalizer" : property.Name == "Transpilers" ? "Transpiler" : property.Name;
-                    foreach (var patch in list)
-                        observed.Add(new ObservedPatch { Owner = patch.owner, Kind = kind, Type = patch.PatchMethod?.DeclaringType?.FullName,
-                            Method = patch.PatchMethod?.Name, Target = target.DeclaringType?.Name + "." + target.Name,
-                            PcAssembly = pc != null && patch.PatchMethod?.DeclaringType?.Assembly == pc });
-                }
-            }
+            // HarmonyScan reads every patch-list field of Patches (cached once), including the inner lists.
+            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
             coverage.Observe(observed);
         }
 

@@ -42,6 +42,7 @@ internal static class Program
         Inventory(expectHash);
         CoverageLifecycle();
         Capacity();
+        HarmonyAdapter();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
@@ -298,6 +299,75 @@ internal static class Program
         Check(r.TryWrite(out int slot) && slot == 0 && r.Written == 5, "drained slots are reused");
     }
 
+    private const string PinnedHarmonySha256 = "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c";
+    private static void PatchBody() { }
+    private static readonly MethodInfo PatchMethod = typeof(Program).GetMethod(nameof(PatchBody), BindingFlags.NonPublic | BindingFlags.Static);
+    private static HarmonyLib.Patch NewPatch(string owner) => new HarmonyLib.Patch(PatchMethod, 0, owner, 400, Array.Empty<string>(), Array.Empty<string>(), false);
+    private static HarmonyLib.Patches NewPatches(params HarmonyLib.Patch[][] lists) => new HarmonyLib.Patches(lists[0], lists[1], lists[2], lists[3], lists[4], lists[5]);
+
+    /// <summary>Sol-r2-1: HarmonyScan against the pinned Lib.Harmony 2.4.2, whose patch lists are fields, not properties.</summary>
+    private static void HarmonyAdapter()
+    {
+        string path = typeof(HarmonyLib.Patches).Assembly.Location;
+        using (var sha = System.Security.Cryptography.SHA256.Create())
+            Check(string.Concat(sha.ComputeHash(System.IO.File.ReadAllBytes(path)).Select(b => b.ToString("x2"))) == PinnedHarmonySha256, "logic-check loads the pinned 0Harmony.dll");
+        var names = HarmonyScan.PatchLists.Select(f => f.Name).ToArray();
+        Check(new[] { "Prefixes", "Postfixes", "Transpilers", "Finalizers", "InnerPrefixes", "InnerPostfixes" }.All(names.Contains) && names.Length == 6,
+            "HarmonyScan reads all six patch-list fields (" + string.Join(",", names) + ")");
+        Check(typeof(HarmonyLib.Patches).GetProperties(BindingFlags.Public | BindingFlags.Instance).All(p => !typeof(IEnumerable<HarmonyLib.Patch>).IsAssignableFrom(p.PropertyType)),
+            "no patch list is a property, so a property-only reader would see nothing");
+        var lists = Enumerable.Range(0, 6).Select(i => new[] { NewPatch("owner" + i) }).ToArray();
+        var info = NewPatches(lists);
+        var observed = new List<ObservedPatch>();
+        HarmonyScan.Observe(PatchMethod, info, typeof(Program).Assembly, observed);
+        Check(observed.Count == 6 && observed.All(o => o.PcAssembly && o.Method == nameof(PatchBody) && o.Target == "Program.PatchBody"), "every patch in every list is observed");
+        bool kindsMatch = HarmonyScan.PatchLists.All(field =>
+            ((IEnumerable<HarmonyLib.Patch>)field.GetValue(info)).All(p => observed.Any(o => o.Owner == p.owner && o.Kind == HarmonyScan.Kind(field.Name))));
+        Check(kindsMatch && observed.Count(o => o.Kind == "Prefix") == 1 && observed.Count(o => o.Kind == "InnerPrefixes") == 1, "each observation carries its list's kind");
+        // End to end: a PC-assembly patch in an inner list fails coverage; a foreign one in the same list is ignored.
+        var tracker = new CoverageTracker(ScopeInventory.Patches, _ => true, "f4b.perf-union-probe");
+        var inner = new List<ObservedPatch>();
+        HarmonyScan.Observe(PatchMethod, NewPatches(new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0],
+            new[] { NewPatch("someone.else") }, new HarmonyLib.Patch[0]), typeof(Program).Assembly, inner);
+        tracker.Observe(inner);
+        Check(!tracker.Complete && tracker.UnexpectedAtLastScan == 1, "a PC patch in InnerPrefixes read through HarmonyScan makes coverage incomplete");
+        var foreign = new CoverageTracker(ScopeInventory.Patches, _ => true, "f4b.perf-union-probe");
+        var other = new List<ObservedPatch>();
+        HarmonyScan.Observe(PatchMethod, NewPatches(new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0],
+            new[] { NewPatch("someone.else") }, new HarmonyLib.Patch[0]), typeof(string).Assembly, other);
+        foreign.Observe(other);
+        Check(foreign.Complete, "a foreign owner outside the PC assembly is ignored");
+    }
+
+    /// <summary>Opus-r2-2: one rescan over synthetic patch infos, uncached field reflection (before) versus HarmonyScan (after).</summary>
+    private static void ScanPerf(int infos)
+    {
+        var all = Enumerable.Range(0, infos).Select(i => NewPatches(new[] { NewPatch("a" + i), NewPatch("b" + i), NewPatch("c" + i) },
+            new[] { NewPatch("d" + i) }, new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0])).ToArray();
+        var pc = typeof(Program).Assembly;
+        double Run(bool cached)
+        {
+            var observed = new List<ObservedPatch>();
+            long start = Stopwatch.GetTimestamp();
+            foreach (var info in all)
+            {
+                if (cached) { HarmonyScan.Observe(PatchMethod, info, pc, observed); continue; }
+                foreach (var field in typeof(HarmonyLib.Patches).GetFields(BindingFlags.Public | BindingFlags.Instance))
+                    if (field.GetValue(info) is IEnumerable<HarmonyLib.Patch> list)
+                        foreach (var p in list)
+                            observed.Add(new ObservedPatch { Owner = p.owner, Kind = HarmonyScan.Kind(field.Name), Type = p.PatchMethod?.DeclaringType?.FullName,
+                                Method = p.PatchMethod?.Name, Target = PatchMethod.DeclaringType?.Name + "." + PatchMethod.Name, PcAssembly = p.PatchMethod?.DeclaringType?.Assembly == pc });
+            }
+            var tracker = new CoverageTracker(ScopeInventory.Patches, _ => true, "f4b.perf-union-probe");
+            tracker.Observe(observed);
+            return (Stopwatch.GetTimestamp() - start) * 1e6 / Stopwatch.Frequency;
+        }
+        for (int i = 0; i < 20; i++) { Run(false); Run(true); }
+        var before = Enumerable.Range(0, 51).Select(_ => Run(false)).ToArray();
+        var after = Enumerable.Range(0, 51).Select(_ => Run(true)).ToArray();
+        Console.WriteLine($"perf rescan infos={infos} patches={infos * 4} uncached_fields_us median={Median(before):F1} max={before.Max():F1} cached_HarmonyScan_us median={Median(after):F1} max={after.Max():F1}");
+    }
+
     // ---- Offline overhead on a stub loop (docs/perf/f4b.md) ----
 
     private struct State { public long Start; public int Frame, Index; public bool Timed; }
@@ -405,6 +475,7 @@ internal static class Program
             double probeNs = scopes * scopeNs + observerNs;
             Console.WriteLine($"perf frame scopes={scopes} probe_cost_us={probeNs / 1000:F2} observerMs_share={observerNs / probeNs:P1}");
         }
+        ScanPerf(100); ScanPerf(300);
         Console.WriteLine("perf qualification: .NET " + Environment.Version + " stub loop; Harmony dispatch, Unity icalls (Time.frameCount) and Mono JIT are not represented; G2 measures the native share.");
     }
 }
