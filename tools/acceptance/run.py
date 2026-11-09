@@ -66,43 +66,69 @@ def pid_alive(pid):
 
 
 class RunnerLock:
-    """Machine-wide lock in the OS temp directory: created exclusively, holds the PID and checkout,
-    and is cleared when its PID is gone (section 3.9)."""
+    """Machine-wide lock in the OS temp directory (section 3.9). Exclusivity is an OS lock on one byte of the
+    lock file, which the kernel drops when the holder exits, so a crashed runner leaves no live lock. The file
+    holds the PID and checkout for messages only; unreadable or empty metadata never decides ownership."""
+
+    OFFSET = 4096  # the locked byte lies past the metadata, so other runners can still read who holds it
 
     def __init__(self, path=None, checkout=ROOT):
         self.path = Path(path or os.environ.get("PC_ACCEPTANCE_LOCK") or Path(tempfile.gettempdir()) / LOCK_NAME)
         self.checkout = str(checkout)
         self.cleared_stale = None
+        self.fd = None
+
+    def _lock(self):
+        fd = os.open(self.path, os.O_RDWR | os.O_CREAT, 0o644)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                os.lseek(fd, self.OFFSET, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(fd)
+            holder = self._holder()
+            raise LockHeld(f"another acceptance runner holds {self.path.name} (pid {holder.get('pid', 'unknown')})")
+        self.fd = fd
+
+    def _write(self):
+        previous = self._holder()
+        if previous.get("pid") not in (None, os.getpid()):
+            self.cleared_stale = previous  # its owner is gone: we hold the OS lock
+        os.lseek(self.fd, 0, os.SEEK_SET)
+        os.write(self.fd, json.dumps({"pid": os.getpid(), "checkout": self.checkout}).encode().ljust(512))
 
     def acquire(self):
-        for _ in range(2):
-            try:
-                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            except FileExistsError:
-                holder = self._holder()
-                if holder is not None and pid_alive(holder.get("pid", -1)):
-                    raise LockHeld(f"another acceptance runner holds {self.path.name} (pid {holder['pid']})")
-                self.cleared_stale = holder
-                try:
-                    self.path.unlink()
-                except FileNotFoundError:
-                    pass
-                continue
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                json.dump({"pid": os.getpid(), "checkout": self.checkout}, handle)
-            return self
-        raise LockHeld(f"could not create {self.path.name}")
+        self._lock()
+        self._write()
+        return self
 
     def _holder(self):
         try:
-            return json.loads(self.path.read_text(encoding="utf-8"))
+            fd = os.open(self.path, os.O_RDONLY | getattr(os, "O_BINARY", 0))
+            try:
+                raw = os.read(fd, 512)  # unbuffered: a buffered read would touch the locked byte on Windows
+            finally:
+                os.close(fd)
+            return json.loads(raw.decode("utf-8").strip() or "{}")
         except (OSError, ValueError):
             return {}
 
     def release(self):
-        holder = self._holder()
-        if holder and holder.get("pid") == os.getpid():
-            self.path.unlink()
+        if self.fd is None:
+            return
+        # The file stays: unlinking it would let a third runner lock a new file while a second holds the old one.
+        os.lseek(self.fd, 0, os.SEEK_SET)
+        os.write(self.fd, b" " * 512)
+        if os.name == "nt":
+            import msvcrt
+            os.lseek(self.fd, self.OFFSET, os.SEEK_SET)
+            msvcrt.locking(self.fd, msvcrt.LK_UNLCK, 1)
+        os.close(self.fd)  # also drops the POSIX flock
+        self.fd = None
 
     def __enter__(self):
         return self.acquire()
@@ -111,17 +137,41 @@ class RunnerLock:
         self.release()
 
 
+TEST_PROBE = ("powershell", "-NoProfile", "-NonInteractive", "-Command",
+              "Get-CimInstance Win32_Process -Filter \"Name='dotnet.exe' or Name like 'testhost%'\" | "
+              "ForEach-Object { [string]$_.ProcessId + [char]9 + $_.Name + [char]9 + $_.CommandLine }")
+
+
+def busy_test_processes(rows, own=None):
+    """Rows of (pid, name, command line). A testhost, or a dotnet host running `test`/vstest at any phase
+    (restore, build or run), is a test run."""
+    own = os.getpid() if own is None else own
+    busy = []
+    for pid, name, command in rows:
+        if str(pid) == str(own):
+            continue
+        words = re.findall(r'"[^"]*"|\S+', command or "")
+        args = [w.strip('"').lower() for w in words[1:]]
+        lowered = (name or "").lower()
+        if lowered.startswith("testhost") or "test" in args or any("vstest" in a or "testhost" in a for a in args):
+            busy.append(f"{name} {pid}")
+    return busy
+
+
 def other_test_processes():
-    """Running testhost / `dotnet test` processes on this machine (tasklist on Windows, ps elsewhere)."""
+    """Running testhost / `dotnet test` processes on this machine (CIM on Windows, ps elsewhere)."""
     try:
         if os.name == "nt":
-            text = subprocess.run(["tasklist", "/FO", "CSV", "/NH"], capture_output=True, text=True, check=False).stdout
-            return [line.split(",")[0].strip('"') + " " + line.split(",")[1].strip('"')
-                    for line in text.splitlines() if line.lower().startswith('"testhost')]
-        text = subprocess.run(["ps", "-A", "-o", "pid=,args="], capture_output=True, text=True, check=False).stdout
-        own = str(os.getpid())
-        return [line.strip() for line in text.splitlines()
-                if ("testhost" in line or "dotnet test" in line) and line.split()[0] != own]
+            text = subprocess.run(TEST_PROBE, capture_output=True, text=True, check=False).stdout
+            rows = [line.split("	", 2) for line in text.splitlines() if line.count("	") >= 2]
+        else:
+            text = subprocess.run(["ps", "-A", "-o", "pid=,comm=,args="], capture_output=True, text=True, check=False).stdout
+            rows = []
+            for line in text.splitlines():
+                parts = line.split(None, 2)
+                if len(parts) == 3 and ("dotnet" in parts[1] or "testhost" in parts[1]):
+                    rows.append(parts)
+        return busy_test_processes(rows)
     except OSError:
         return []
 
@@ -289,6 +339,15 @@ class Context:
         self.settings = settings
         self.unit_trx = None
         self.artifact = None
+        self.tests_built = None  # None: no test build in this run; True/False: its outcome
+
+    def env(self):
+        env = dict(os.environ, MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false", DOTNET_CLI_TELEMETRY_OPTOUT="1",
+                   DOTNET_NOLOGO="1")
+        if self.dotnet and Path(self.dotnet).parent != Path("."):
+            # The selected SDK host comes first on PATH, so tools/build.py's own discovery finds the same SDK.
+            env["PATH"] = str(Path(self.dotnet).resolve().parent) + os.pathsep + env.get("PATH", "")
+        return env
 
     def expand(self, argv, stage_id):
         values = {"{python}": sys.executable, "{dotnet}": self.dotnet or "dotnet", "{out}": str(self.out),
@@ -305,23 +364,42 @@ class Context:
         return expanded
 
 
-def stage_steps(stage):
+def stage_steps(stage, built=None):
+    """A filter stage reuses this run's test build (--no-build) when there was one, else builds itself."""
     if "filter" in stage and not stage.get("steps"):
         trx = f"trx/{stage['id']}/{stage['id']}.trx"
-        return [["{dotnet}", "test", "tests/PersistentCity.Tests.csproj", "--no-build", "--filter", stage["filter"],
-                 "--logger", f"trx;LogFileName={stage['id']}.trx", "--results-directory", "{out}/trx/" + stage["id"]]], trx
+        return [["{dotnet}", "test", "tests/PersistentCity.Tests.csproj"] + (["--no-build"] if built else [])
+                + ["--filter", stage["filter"], "--logger", f"trx;LogFileName={stage['id']}.trx",
+                   "--results-directory", "{out}/trx/" + stage["id"]]], trx
     return stage.get("steps", []), stage.get("trx")
+
+
+def stage_outputs(stage):
+    """Files and directories under {out} a stage writes; removed before it runs so nothing stale is read."""
+    _, trx = stage_steps(stage)
+    owned = [stage.get("acceptance"), stage.get("output"), trx and str(Path(trx).parent), "logs/" + stage["id"] + ".log"]
+    return [o for o in owned + stage.get("owns", []) if o]
+
+
+def clean_outputs(out, stage):
+    for relative in stage_outputs(stage):
+        path = (out / relative).resolve()
+        if path == out or out not in path.parents:
+            raise ValueError(f"stage {stage['id']} output {relative} is outside the run directory")
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.exists():
+            path.unlink()
 
 
 def run_steps(ctx, stage, steps, record):
     """Run each step in the foreground with output to logs/<id>.log; returns the exit codes."""
     log_path = ctx.out / "logs" / (stage["id"] + ".log")
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    env = dict(os.environ, MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false", DOTNET_CLI_TELEMETRY_OPTOUT="1",
-               DOTNET_NOLOGO="1")
+    env = ctx.env()
     codes = []
     child = waited = 0.0
-    with open(log_path, "ab") as log:
+    with open(log_path, "wb") as log:
         for argv in steps:
             if stage.get("dotnet"):
                 waited += wait_for_dotnet(ctx.no_wait)
@@ -351,22 +429,31 @@ def rule_trx(ctx, stage, record):
         record["reusedFrom"] = "unit"
         record["argv"] = ["(reused unit TRX)", "--filter", stage["filter"]]
         return trx_verdict(record, results, 0, "")
-    steps, trx = stage_steps(stage)
+    steps, trx = stage_steps(stage, ctx.tests_built)
     record["argv"] = steps[0] if len(steps) == 1 else steps
+    if "filter" in stage and ctx.tests_built is False:
+        return "fail", "the test build of this run failed; not run against older binaries"
     codes, log_path = run_steps(ctx, stage, steps, record)
     code = codes[-1] if codes else 0
     record["exit"] = code
     trx_path = ctx.out / trx
+    log = log_path.read_text(encoding="utf-8", errors="replace")
+    if stage.get("buildsTests"):
+        ctx.tests_built = trx_path.is_file()
     if not trx_path.is_file():
-        log = log_path.read_text(encoding="utf-8", errors="replace")
-        if code == 0 or "No test matches the given testcase filter" in log:
-            return "not-run", "filter matched no tests" if "filter" in stage else "no TRX written"
+        if NO_MATCH in log:
+            return "not-run", "filter matched no tests"
+        if code == 0:
+            return "not-run", "no TRX written"
         return "fail", f"exit {code} and no TRX written (build or host failure; see logs/{stage['id']}.log)"
     record["evidence"].append(trx_path)
     results = parse_trx(trx_path)
     if stage["id"] == "unit":
         ctx.unit_trx = trx_path
-    return trx_verdict(record, results, code, log_path.read_text(encoding="utf-8", errors="replace"))
+    return trx_verdict(record, results, code, log)
+
+
+NO_MATCH = "No test matches the given testcase filter"
 
 
 def trx_verdict(record, results, code, log):
@@ -375,6 +462,8 @@ def trx_verdict(record, results, code, log):
     if counts["failed"]:
         return "fail", f"{counts['failed']} failed"
     if counts["passed"] == 0:
+        if code != 0 and NO_MATCH not in log:
+            return "fail", f"exit {code} with no test result (test host crash or abort)"
         return "not-run", "filter matched no tests"
     if code != 0:
         return "fail", f"exit {code} with {counts['passed']} passed"
@@ -386,7 +475,10 @@ def rule_exit_zero(ctx, stage, record):
     record["argv"] = steps[0] if len(steps) == 1 else steps
     codes, _ = run_steps(ctx, stage, steps, record)
     record["exit"] = codes[-1] if codes else 0
-    return ("pass", "exit 0") if all(c == 0 for c in codes) else ("fail", f"exit {record['exit']}")
+    ok = all(c == 0 for c in codes)
+    if stage.get("buildsTests"):
+        ctx.tests_built = ok
+    return ("pass", "exit 0") if ok else ("fail", f"exit {record['exit']}")
 
 
 def rule_build(ctx, stage, record):
@@ -486,6 +578,8 @@ def run_stage(ctx, stage):
     if stage.get("rig"):
         record["rig"] = True
     started = time.perf_counter()
+    if stage["rule"] != "provenance":
+        clean_outputs(ctx.out, stage)
     if stage["rule"] == "provenance":
         record["verdict"], record["reason"] = "pass", "recorded in provenance"
     else:
@@ -557,10 +651,19 @@ def summarize_result(result):
     native = [s for s in stages if s["class"] == "native"]
     if not any(s.get("rig") for s in native):
         required.append({"id": "rig", "class": "native", "verdict": "not-run", "reason": "rig results not merged"})
+    # Native rows routed from the economy stage stay incomplete until a native record that names the same row
+    # (`measures`) reports; an unrelated rig pass never clears them (Decision 2).
+    pending = []
+    for row in [r for s in stages for r in s.get("routed", []) if r.get("class") == "native"]:
+        measured = [s for s in native if s.get("measures") == row["row"]]
+        verdict = class_verdict(measured) if measured else row.get("verdict", "incomplete")
+        pending.append(dict(row, verdict=verdict, measuredBy=[s["id"] for s in measured]))
+        if verdict != "pass":
+            required.append({"id": row["row"], "class": "native", "verdict": verdict,
+                             "reason": "awaiting " + row.get("proof", "a native measurement")})
     classes = result.setdefault("classes", {})
     classes["semantic"] = {"verdict": class_verdict([s for s in required if s["class"] == "semantic"])}
-    classes["native"] = {"verdict": class_verdict([s for s in required if s["class"] == "native"]),
-                         "pending": [r for s in stages for r in s.get("routed", []) if r.get("class") == "native"]}
+    classes["native"] = {"verdict": class_verdict([s for s in required if s["class"] == "native"]), "pending": pending}
     classes.setdefault("performance", {"verdict": "not-supplied", "reference": None})
     classes["gameplay"] = {"verdict": "not-assessed"}
     failed = [s["id"] for s in required if s["verdict"] == "fail"]
@@ -581,7 +684,7 @@ def write_result(out, result, sanitize):
 
 
 def run_profile(args, catalogue):
-    names = catalogue["profiles"][args.profile]
+    names = profile = catalogue["profiles"][args.profile]
     if args.only:
         wanted = args.only.split(",")
         unknown = [n for n in wanted if n not in names]
@@ -599,7 +702,13 @@ def run_profile(args, catalogue):
     prov = provenance(catalogue, dotnet, names, args.price_weight)
     ctx = Context(out, dotnet, managed, args.price_weight, args.no_wait, prov["settings"]["compiledDefaults"])
     records = []
-    for name in names:
+    for name in profile:
+        if name not in names:
+            stage = by_id[name]
+            records.append({"id": name, "class": stage["class"], "required": stage.get("required", stage["class"] in FUNCTIONAL),
+                            "argv": [], "exit": None, "seconds": 0.0, "verdict": "not-run", "reason": "omitted by --only",
+                            "metrics": {}, "digests": {}, "evidence": []})
+            continue
         print(f"[{name}] ...", flush=True)
         record = run_stage(ctx, by_id[name])
         records.append(record)
@@ -614,22 +723,71 @@ def run_profile(args, catalogue):
     return write_result(out, result, Sanitizer(out, managed))
 
 
+def source_identity(result):
+    source = (result.get("provenance") or {}).get("source") or {}
+    return {"commit": source.get("commit"), "dirty": source.get("dirty"), "diffSha256": source.get("diffSha256")}
+
+
+def package_evidence(stage, src_base, out, prefix):
+    """Copy a stage's evidence into the merged run directory and rebase its paths. Returns the problems found."""
+    problems, entries = [], []
+    src_base = src_base.resolve()
+    for entry in stage.get("evidence", []):
+        src = (src_base / entry["path"]).resolve()
+        target = (Path(prefix) / entry["path"]).as_posix() if prefix else entry["path"]
+        dst = (out / target).resolve()
+        if src_base not in src.parents or out not in dst.parents:
+            problems.append(f"evidence {entry['path']} escapes its run directory")
+            continue
+        if not src.is_file() or sha256_file(src) != entry.get("sha256"):
+            problems.append(f"evidence {entry['path']} is missing or does not match its hash")
+            continue
+        if src != dst:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+        entries.append(dict(entry, path=target))
+    stage["evidence"] = entries
+    return problems
+
+
+def demote(stage, problems):
+    if problems and stage["verdict"] in ("pass", "expected-red"):
+        stage["verdict"], stage["reason"] = "incomplete", "; ".join(problems)
+
+
 def merge(args):
-    """summarize: merge rig stage records and F4's performance record into a run result."""
+    """summarize: merge rig stage records and F4's performance record into a run result.
+
+    Rig records count only when their provenance names the same source (commit, dirty flag and diff hash);
+    otherwise they stay incomplete. Every evidence file is copied under the merged run directory."""
     source = Path(args.result).resolve()
     result = json.loads(source.read_text(encoding="utf-8"))
     if result.get("schema") != SCHEMA:
         raise SystemExit(f"{source.name} is not {SCHEMA}")
     out = Path(args.out).resolve() if args.out else source.parent
     out.mkdir(parents=True, exist_ok=True)
-    for rig_file in args.rig or []:
-        rig = json.loads(Path(rig_file).read_text(encoding="utf-8"))
+    for stage in result["stages"]:
+        demote(stage, package_evidence(stage, source.parent, out, ""))
+    identity = source_identity(result)
+    imported = result.setdefault("importedEvidence", [])
+    for index, rig_file in enumerate(args.rig or []):
+        rig_path = Path(rig_file).resolve()
+        rig = json.loads(rig_path.read_text(encoding="utf-8"))
         if rig.get("schema") != SCHEMA:
-            raise SystemExit(f"{Path(rig_file).name} is not {SCHEMA}")
+            raise SystemExit(f"{rig_path.name} is not {SCHEMA}")
+        rig_identity = source_identity(rig)
+        same = identity["commit"] is not None and rig_identity == identity
+        prefix = f"rig/{index}-{rig_path.stem}"
+        imported.append({"file": rig_path.name, "sha256": sha256_file(rig_path), "prefix": prefix,
+                         "provenance": rig.get("provenance"), "sameSource": same})
         for stage in rig.get("stages", []):
             if stage.get("class") != "native" or stage.get("verdict") not in VERDICTS:
                 continue
-            stage = dict(stage, rig=True, required=True)
+            stage = dict(stage, rig=True, required=True, importedFrom=prefix)
+            problems = package_evidence(stage, rig_path.parent, out, prefix)
+            if not same:
+                problems.insert(0, f"rig source {rig_identity} is not the offline run's source {identity}")
+            demote(stage, problems)
             result["stages"] = [s for s in result["stages"] if s["id"] != stage["id"]] + [stage]
     if args.performance:
         record = json.loads(Path(args.performance).read_text(encoding="utf-8"))
@@ -650,7 +808,7 @@ def main(argv=None):
     parser.add_argument("--game-managed", help="game Managed directory; without it the build stage is not-run")
     parser.add_argument("--price-weight", type=float, help="declared FoodChoicePriceWeight override (a deviation; never a pass)")
     parser.add_argument("--no-wait", action="store_true", help="refuse instead of waiting for other test processes")
-    parser.add_argument("--only", help="comma-separated subset of the profile's stages (a partial run; unlisted stages are absent)")
+    parser.add_argument("--only", help="comma-separated subset of the profile's stages (a partial run; the others are recorded not-run)")
     parser.add_argument("--strict", action="store_true", help="exit 3 when the verdict is incomplete")
     parser.add_argument("--lock", help="lock file (default <temp>/" + LOCK_NAME + ")")
     parser.add_argument("--result", help="summarize: the run's acceptance.json")

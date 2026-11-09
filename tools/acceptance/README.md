@@ -12,12 +12,12 @@ python tools/acceptance/run.py summarize --result build/acceptance/<runId>/accep
 
 | Input | Default | Used by |
 | --- | --- | --- |
-| `--dotnet PATH` | `dotnet` on `PATH`; on Windows then `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` (as `tools/build.py`) | every .NET stage, `host.dotnetSdk` |
+| `--dotnet PATH` | `dotnet` on `PATH`; on Windows then `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` (as `tools/build.py`) | every .NET stage and `host.dotnetSdk`. An explicit host's directory is put first on `PATH` for every stage, so `tools/build.py`'s own discovery uses the same SDK. |
 | `--game-managed DIR` | none | `build` only. Without it `build` is `not-run`, so the summary is `incomplete`, never `fail`. The path is recorded as `<supplied>`. |
 | `--out DIR` | `build/acceptance/<runId>/` (ignored by Git) | all raw evidence and `acceptance.json` |
 | `--price-weight W` | none | passed to the economy harness as `--price-weight W`; recorded as a declared deviation; the `economy` stage can then never pass |
-| `--only a,b` | whole profile | runs a subset of the profile's stages, in profile order; the result lists them in `onlyStages` |
-| `--no-wait` | wait | refuse instead of waiting when another `testhost` is running |
+| `--only a,b` | whole profile | runs a subset of the profile's stages, in profile order; the result lists them in `onlyStages`, and every other stage of the profile is recorded `not-run` ("omitted by --only"), so a partial run is never a `pass` |
+| `--no-wait` | wait | refuse instead of waiting when another test run is active |
 | `--strict` | off | exit 3 when the summary is `incomplete` |
 | `--lock FILE`, env `PC_ACCEPTANCE_LOCK` | `<OS temp>/persistentcity-acceptance.lock` | machine-wide runner lock |
 | env `PC_DOTNET_WAIT` | unset | optional shell command run before each .NET step (for example Peter's PC wait script). The runner works without it. |
@@ -31,9 +31,9 @@ No other machine-specific script, path or user name is needed or recorded.
 
 | Profile | Stages |
 | --- | --- |
-| `quick` | `provenance`, `test-build` (one `dotnet build`, so the filtered stages share one build), `population`, `economy-fast`, `saves`, `city-s` |
+| `quick` | `provenance`, `test-build` (one required `dotnet build`, so the filtered stages share one build), `population`, `economy-fast`, `saves`, `city-s` |
 | `full` | `provenance`, `build`, `unit`, `population`, `economy`, `saves`, `movement`, `city-s`, `city-m` |
-| `summarize` | merges rig results (class `native`) and F4's performance record into an existing result |
+| `summarize` | merges rig results (class `native`) and F4's performance record into an existing result (see *Summarize*) |
 
 | Stage | Wraps | Verdict |
 | --- | --- | --- |
@@ -46,13 +46,13 @@ No other machine-specific script, path or user name is needed or recorded.
 | `movement` | `tools/movement-equivalence --out {out}/movement.json` | see below |
 | `city-s`, `city-m` | `FullyQualifiedName~F9IntegratedCityTests&Category=city-s` / `city-m` | zero failed. F9c adds these tests with `[Trait("Category", "city-s")]` / `"city-m"`. Until then the filter matches nothing and the stage is `not-run`. |
 
-A TRX stage with no executed test is `not-run`. A stage with no TRX and a non-zero exit is `fail` (build or host failure). In `full`, the filter stages whose filter is a plain `FullyQualifiedName~` alternation are evaluated on the `unit` TRX instead of running again (`reusedFrom: "unit"`); trait filters run on their own.
+Before a stage runs, the runner deletes the outputs it owns under `{out}` (its log, TRX directory, harness JSON, `f6h/`), so a rerun into the same directory never reads a stale report. A filter stage runs with `--no-build` only after this run's test build (`test-build` or `unit`) succeeded; if that build failed, the filter stages fail without running older binaries, and without a test build in the run they build themselves. A TRX stage with no executed test is `not-run` when the exit is 0 or the log says no test matched the filter; a non-zero exit with no result (a crashed test host) is `fail`. A stage with no TRX and a non-zero exit is `fail` (build or host failure). In `full`, the filter stages whose filter is a plain `FullyQualifiedName~` alternation are evaluated on the `unit` TRX instead of running again (`reusedFrom: "unit"`); trait filters run on their own.
 
 **Economy adapter** (`economy_stage.py`). `acceptance.py` (F6) is unchanged and its exit code is ignored, because it exits 1 on every complete sweep.
 
 - `fail`: the harness exits non-zero; `acceptance.py` writes no JSON (its accounting `assert`s abort it); `completeInterventionMatrix` is false; any `failedCriteria` entry other than the household-threshold one; or the recorded `defaults.priceWeight` differs from the compiled default (read from `Core/FoodChoiceSettings.cs`, 1.2) without a declared override.
 - `incomplete`: a household-threshold miss alone (deviation "household thresholds measured at weight 1"); an `unmeasuredCriteria` entry the adapter does not know; a declared `--price-weight`.
-- Known `unmeasuredCriteria` entries are routed, never failed: native wholesale costs and staffed throughput to the `native` class (`classes.native.pending`), the perf/stress item to `performance` (F4), F1 cadence and F2 body-cap items to the `population`/`city-*` and `movement` stages, and the Pareto item to `superseded` ([price-weight decision](../../docs/decisions/2026-11-08-price-weight.md)).
+- Known `unmeasuredCriteria` entries are routed, never failed: native wholesale costs and staffed throughput to the `native` class as rows `native-wholesale-costs` and `native-staffed-throughput` (`classes.native.pending`). Each row is a required native result that stays `incomplete` until a native stage record with `"measures": "<row>"` reports; an unrelated rig pass does not clear it. Then the perf/stress item to `performance` (F4), F1 cadence and F2 body-cap items to the `population`/`city-*` and `movement` stages, and the Pareto item to `superseded` ([price-weight decision](../../docs/decisions/2026-11-08-price-weight.md)).
 
 **Movement expectations** (`expectations/movement.json`). Seeded from `tools/movement-equivalence/baseline.json`: every arm whose comparison was not identical. The harness's self-checks must pass. A listed arm may differ (`expected-red`); any other arm must equal its reference or the stage fails. A listed arm that now equals its reference is reported in `summary.notes`, not failed. F9f empties the list.
 
@@ -70,6 +70,12 @@ nativeEvidence: F9d
 summary: verdict, required[], failed[], incomplete[], deviations[], notes[]
 ```
 
+## Summarize
+
+`summarize --result <acceptance.json> --rig <file>... [--performance <file>] [--out DIR]` reads rig results in the same schema. Their stages of class `native` count only when the rig file's `provenance.source` has the same commit, dirty flag and diff hash as the offline run; otherwise they are kept as `incomplete` with the reason. Each rig file's name, SHA-256, provenance and `sameSource` flag are kept in `importedEvidence`. Every evidence file, the run's own and each rig file's (paths relative to the rig file), is checked against its hash and copied under the merged directory (`rig/<n>-<name>/` for rig files); a missing or changed file makes its stage `incomplete`.
+
+## Verdict
+
 The summary covers the `semantic` and `native` classes only: `fail` if a required stage failed, else `incomplete` if one is `not-run` or `incomplete`, else `pass`. `expected-red` counts as passing. Until rig results are merged with `summarize`, a placeholder `rig` entry is `not-run`, so an offline run is at best `incomplete`. Performance and gameplay are reported beside the verdict and never change it. A `pass` is not a release or readiness claim.
 
 The game block of `provenance` (fingerprint set and per-assembly hashes) is F9b. Fixture save hashes are `null` until F9c supplies them. Every string in the result is cleaned of the checkout, output, home and game paths and the user name; evidence paths are relative to `{out}`.
@@ -78,7 +84,7 @@ To cite a run, record its `runId`, `summary.verdict` and the SHA-256 the runner 
 
 ## Lock and other test processes
 
-The runner creates `<temp>/persistentcity-acceptance.lock` exclusively and writes its PID and checkout into it. A second runner exits 4 while that PID is alive; a lock whose PID is gone is cleared. Before each .NET step the runner waits while any `testhost` process runs (`tasklist` on Windows, `ps` elsewhere); time spent waiting is `waitSeconds`, not runner cost. Child processes get `MSBUILDDISABLENODEREUSE=1` and `UseSharedCompilation=false`, so no build server stays behind.
+The runner takes an OS lock (`msvcrt.locking` on Windows, `flock` elsewhere) on one byte of `<temp>/persistentcity-acceptance.lock` and then writes its PID and checkout into the file for messages. A second runner exits 4 while the lock is held, even before the PID is written. The kernel drops the lock when its holder exits, so a crashed runner's file is taken over (and reported as cleared); the PID in the file never decides ownership. The file is not deleted on release. Before each .NET step, including `tools/build.py`, the runner waits while another test run is active: a `testhost`, or a `dotnet` host whose arguments include `test` or vstest, in restore, build or run (CIM on Windows, `ps` elsewhere). MSBuild nodes and other `dotnet` commands do not count; time spent waiting is `waitSeconds`, not runner cost. Child processes get `MSBUILDDISABLENODEREUSE=1` and `UseSharedCompilation=false`, so no build server stays behind.
 
 Exit codes: 0 pass or incomplete, 1 fail, 2 usage, 3 incomplete with `--strict`, 4 lock held or (`--no-wait`) other tests running.
 

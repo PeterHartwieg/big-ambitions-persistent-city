@@ -6,12 +6,12 @@ Refs #96. Task `pc-f9a-acceptance-runner`, base `codex/persistent-city` at `b8fe
 
 All new, all under `tools/acceptance/`:
 
-- `run.py`: the portable runner (Decision 1). Profiles `quick`, `full` and `summarize`. Stages run in the foreground, one at a time, under a machine-wide lock in the OS temp directory that refuses a second runner and clears a stale one, and wait while another `testhost` runs (section 3.9). It parses TRX files, records provenance without the game block (Decision 6), and writes `{out}/acceptance.json` in schema `persistentcity-acceptance-1` with one summary verdict over the semantic and native classes (Decision 5). `--only` runs a subset of a profile.
+- `run.py`: the portable runner (Decision 1). Profiles `quick`, `full` and `summarize`. Stages run in the foreground, one at a time, under a machine-wide lock in the OS temp directory that refuses a second runner and clears a stale one, and wait while another test run (`testhost` or a `dotnet test` host in any phase) is active (section 3.9). It parses TRX files, records provenance without the game block (Decision 6), and writes `{out}/acceptance.json` in schema `persistentcity-acceptance-1` with one summary verdict over the semantic and native classes (Decision 5). `--only` runs a subset of a profile and records the other stages `not-run`.
 - `stages.json`: the stage catalogue (Decision 2) with placeholders and no machine path. The `city-s`/`city-m` rows point at `F9IntegratedCityTests` with trait `Category=city-s`/`city-m` (F9c). Until F9c lands they report `not-run` and the summary is `incomplete`; the runner does not fail.
 - `economy_stage.py`: the economy adapter on `acceptance.py`'s JSON (Decision 2). F6's `acceptance.py` is unchanged.
 - `expectations/movement.json`: seeded from `tools/movement-equivalence/baseline.json`, listing the 16 arms that differed there.
 - `README.md`: inputs, profiles, stage rules, result shape, lock and exit codes.
-- `test_run.py`: 35 `unittest` cases with fake stage commands.
+- `test_run.py`: 49 `unittest` cases with fake stage commands.
 
 Not in this slice: game-assembly fingerprints and `build.py --provenance` (F9b), the city fixture and its tests (F9c), the native-evidence ledger and `rig-manifest` (F9d). The runner calls no `tools/*-regression` suite and leaves `run-d3a-checks.py` as it was.
 
@@ -29,7 +29,7 @@ Not in this slice: game-assembly fingerprints and `build.py --provenance` (F9b),
 | Recovery failure in `failedCriteria` fails | `Economy.test_recovery_failure_fails` |
 | Household-threshold-only miss is `incomplete` | `Economy.test_household_threshold_only_miss_is_incomplete` |
 | Unknown unmeasured entry is `incomplete` | `Economy.test_unknown_unmeasured_entry_is_incomplete` |
-| Lock refuses a second runner and clears a stale one | `Lock.test_lock_refuses_a_second_runner`, `test_lock_clears_a_stale_one`, `test_other_test_processes_are_waited_for_or_refused` |
+| Lock refuses a second runner and clears a stale one | `Lock.test_lock_refuses_a_second_runner` (a real holder process), `test_lock_is_exclusive_while_its_metadata_is_still_empty`, `test_lock_clears_a_stale_one` (the holder exits without releasing), `test_other_test_processes_are_waited_for_or_refused`, `test_probe_sees_dotnet_test_in_every_phase_but_not_builds`, `test_every_catalogue_stage_that_runs_dotnet_is_guarded` |
 | Evidence hashes match the files | `ResultHygiene.test_evidence_hashes_match_the_files` |
 
 Also covered: TRX counts and failed names, a filter that matches nothing reports `not-run` with exit 0 (exit 3 with `--strict`), filter stages reusing the `unit` TRX, a crashing stage becomes `fail`, `--only`, and the catalogue's profiles matching the plan.
@@ -46,6 +46,23 @@ Also covered: TRX counts and failed names, a filter that matches nothing reports
   - `economy` (integrated F6h matrix): not run in this session. It does not fit the 10-minute foreground limit. The adapter is covered by the recorded-sample and fake-command tests above. F9h runs it.
   - Fixing the `saves` filter came out of these runs: vstest's `Name~CurrentWriterGolden` selected none of the three current-writer golden facts (182 tests), so the stage now uses `FullyQualifiedName~CurrentWriterGolden` (188 tests, the same set the `unit` TRX reuse selects).
 - `git diff --check` and `tools/docs-links/check.py` pass. No game, rig, ModsLocal, bridge or `tools/*-regression` suite was used.
+
+## Review round 1
+
+| Finding | Change | Test |
+| --- | --- | --- |
+| Sol-r1-1 stale `f6h/acceptance.json` hides a new assertion | Each stage deletes the outputs it owns under `{out}` (log, TRX directory, harness JSON, `f6h/`) before it runs. | `Economy.test_a_stale_passing_report_cannot_hide_a_new_assertion` |
+| Sol-r1-2 failed `test-build` left out of the verdict | `test-build` is a required semantic stage. A filter stage uses `--no-build` only after this run's test build succeeded; after a failed build it fails without running. | `Stages.test_failed_test_build_fails_and_dependent_filters_do_not_run_old_binaries`, `test_filters_use_no_build_only_after_a_successful_test_build` |
+| Sol-r1-3 routed native rows did not keep the summary incomplete | Each routed native row is a required native result until a native record with `"measures": "<row>"` reports. | `Economy.test_routed_native_rows_clear_only_through_a_matching_measurement`, `test_runner_ignores_acceptance_exit_and_applies_the_adapter` |
+| Sol-r1-4 rig evidence from another source | Rig stages count only when commit, dirty flag and diff hash match the offline run; otherwise `incomplete`. Each rig file's provenance is kept in `importedEvidence`. | `Summarize.test_rig_evidence_from_another_source_is_not_accepted` |
+| Sol-r1-5 merged evidence paths did not resolve | `summarize` verifies each evidence hash and copies the files under the merged directory (`rig/<n>-<name>/` for rig files); a missing or changed file demotes its stage. | `Summarize.test_merged_evidence_resolves_and_matches_in_the_new_directory`, `test_missing_or_altered_evidence_demotes_the_stage` |
+| Sol-r1-6 lock race while the PID was unwritten | OS byte-range lock (`msvcrt.locking` / `flock`), released by the kernel when the holder exits; file metadata never decides ownership. | `Lock.test_lock_is_exclusive_while_its_metadata_is_still_empty`, `test_lock_refuses_a_second_runner`, `test_lock_clears_a_stale_one` |
+| Sol-r1-7 probe missed `dotnet test` before its testhost; `build` unguarded | Windows probe reads command lines through CIM: a testhost, or a dotnet host with a `test`/vstest argument, is busy. `build` has `"dotnet": true`. | `Lock.test_probe_sees_dotnet_test_in_every_phase_but_not_builds`, `test_probe_runs_on_this_machine`, `test_every_catalogue_stage_that_runs_dotnet_is_guarded` |
+| Sol-r1-8 `--only` result could pass | Omitted profile stages are recorded `not-run` ("omitted by --only"). | `Summarize.test_partial_full_profile_with_passing_rig_stays_incomplete`, `Stages.test_only_runs_the_named_stages_and_records_the_subset` |
+| Astra-r1-7 `--dotnet` not used by `build.py` | An explicit host's directory goes first on every stage's `PATH`; `host.dotnetSdk` is read from that host. | `Stages.test_explicit_sdk_is_first_on_path_for_build_and_recorded` |
+| Opus-r1-3 crashed test host reported `not-run` | No result with a non-zero exit is `fail` unless the log says no test matched. | `Stages.test_test_host_crash_with_an_empty_trx_fails` |
+
+FIXRESULTS
 
 ## In-game checks for the next batched rig
 
