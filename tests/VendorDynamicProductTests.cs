@@ -54,11 +54,13 @@ public sealed class VendorDynamicProductTests
             while (Market.Prepare(minute)) { }
         }
         public VendorRow Row => City.State.Vendors.Find("v00")!;
-        public ResidentMeal Meal(string product, int resident = 0)
+        public string Refusal => Market.Coordinator.Refusals.Single(r => r.Key == "v00").Value;
+        public ResidentMeal Meal(string product, int resident = 0, string? business = null)
         {
             var v = StreetFoodHooks.Find("v00"); int i = Array.IndexOf(v.Items, product);
+            var row = City.State.Vendors.Find("v00");
             return new ResidentMeal { ResidentId = "customer" + resident, AnchorId = "customer" + resident, Day = (int)(Now / 1440),
-                Kind = MealKind.Lunch, PlaceId = Row.PlaceId, BusinessId = Row.BusinessId, ProductId = product,
+                Kind = MealKind.Lunch, PlaceId = row?.PlaceId ?? "vendor:none", BusinessId = business ?? row!.BusinessId, ProductId = product,
                 Price = Money.FromCents(v.Prices[i]), Allowance = Money.FromCents(1000), ServiceMinutes = 2, Status = MealStatus.Serving };
         }
         public void Reload(bool present)
@@ -81,7 +83,8 @@ public sealed class VendorDynamicProductTests
     {
         // Without a policy (and so before E6f) the same vehicle is refused whole and stays with Street Food.
         var before = new Fixture(null);
-        Assert.Equal("menu item not executable: " + Dumplings, before.Row.Reason);
+        Assert.Null(before.City.State.Vendors.Find("v00"));
+        Assert.Equal("menu item not executable: " + Dumplings, before.Refusal);
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner); Assert.Empty(before.Market.Read(before.Now));
 
         StreetFoodHooks.Reset();
@@ -113,9 +116,12 @@ public sealed class VendorDynamicProductTests
     public void ANameMissingFromTheLoadedImageOrNonCanonicalRefusesTheWholeVehicle()
     {
         var f = new Fixture(Policy(null, Eight.Where(n => n != Bagel).ToArray()));
-        Assert.Equal("menu item not executable: " + Bagel, f.Row.Reason);
+        Assert.Null(f.City.State.Vendors.Find("v00"));
+        Assert.Equal("menu item not executable: " + Bagel, f.Refusal);
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner); Assert.Empty(f.Market.Read(f.Now));
-        Assert.Contains(f.Market.Coordinator.Refusals, r => r.Key == "v00" && r.Value == "menu item not executable: " + Bagel);
+        StreetFoodHooks.Reset();
+        var bad = new Fixture(Policy(), Dumplings, "bad|name");
+        Assert.Equal("menu item is not a canonical name: bad|name", bad.Refusal);
     }
 
     [Theory]
@@ -124,12 +130,14 @@ public sealed class VendorDynamicProductTests
     {
         var drink = Config((ChoppedCheese, new FoodProductMetadataOverride(excluded, 2, 900, 100, 450)));
         var f = new Fixture(Policy(drink));
-        Assert.Equal("menu item not executable: " + ChoppedCheese, f.Row.Reason);
-        Assert.False(f.Row.Authority.Desired); Assert.False(f.Row.Authority.Requested);
-        Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
-        Assert.Empty(f.Market.Read(f.Now)); Assert.False(f.Market.CanServe(f.Row.BusinessId));
-        // Checkout is refused before any API sale or receipt.
-        var meal = f.Meal(Dumplings);
+        // No row is admitted: the vehicle never gets a business, a request or a vendor place.
+        Assert.Null(f.City.State.Vendors.Find("v00"));
+        Assert.Equal("menu item not executable: " + ChoppedCheese, f.Refusal);
+        Assert.Empty(StreetFoodHooks.Wishes); Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
+        Assert.Empty(f.Market.Read(f.Now));
+        Assert.DoesNotContain(f.City.State.Food!.Shops, s => s.Channel == FoodScopeChannel.Vehicle);
+        // Checkout of a meal naming the vehicle's generation-1 business is refused before any API sale or receipt.
+        var meal = f.Meal(Dumplings, business: VendorNames.BusinessId("v00", 1));
         Assert.False(f.Market.Buy(meal, f.Now).Paid);
         Assert.Equal(0, f.Api.SellCalls); Assert.Equal(FoodReceiptStatus.Missing, FoodSaleReceipts.ReadStatus(f.Receipts, meal));
     }
@@ -158,7 +166,8 @@ public sealed class VendorDynamicProductTests
         f.Policy = Policy();
         f.Run(f.Now + 1);
         Assert.True(f.Row.Authority.Desired); Assert.True(f.Row.Authority.Requested);
-        StreetFoodHooks.Close("v00"); f.Run(f.Now + 61);
+        StreetFoodHooks.Close("v00");
+        for (int i = 0; i < 5; i++) f.Run(f.Now + 15); // lease renewals keep the request alive
         StreetFoodHooks.Open("v00", 300); f.Run(f.Now + 1);
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
         Assert.True(f.Market.CanServe(f.Row.BusinessId));
@@ -179,14 +188,20 @@ public sealed class VendorDynamicProductTests
     }
 
     [Fact]
-    public void SteadyAdmissionOfAnEightItemDynamicMenuAllocatesNothing()
+    public void SteadyAdmissionOfAnEightItemDynamicMenuAllocatesNothingBeyondTheOriginalThreePath()
     {
-        var f = new Fixture(Policy());
-        string business = f.Row.BusinessId;
-        for (int i = 0; i < 100; i++) Assert.True(f.Market.CanServe(business));
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10000; i++) _ = f.Market.CanServe(business);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        // CanServe's existing scope lookup allocates; the policy and its eight per-item checks add 0 B to it.
+        long Bytes(Fixture f)
+        {
+            string business = f.Row.BusinessId;
+            for (int i = 0; i < 100; i++) Assert.True(f.Market.CanServe(business));
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 10000; i++) _ = f.Market.CanServe(business);
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+        long original = Bytes(new Fixture(null, FoodProducts.HotDog, FoodProducts.Burger));
+        StreetFoodHooks.Reset();
+        Assert.Equal(original, Bytes(new Fixture(Policy())));
     }
 
     /// <summary>docs/perf/e6f.md. Measurement only: runs when PC_E6F_MEASURE is set, e.g.
@@ -318,7 +333,8 @@ public sealed class VendorDynamicProductTests
         public long Clock;
         public CityRun(int seed, params string[] items)
         {
-            (City, _, planner) = WeightedFoodChoiceTests.Ready(seed, 1);
+            var (ready, _, readyPlanner) = WeightedFoodChoiceTests.Ready(seed, 1);
+            planner = readyPlanner; City = new CitySimulator(ready.State, planner);
             Image = new LoadedNameImage(revision, Eight, FoodEligibilityRefusal.None);
             Clock = (long)City.State.Minute;
             StreetFoodHooks.Now = Clock;
@@ -419,7 +435,7 @@ public sealed class VendorDynamicProductTests
         Assert.Equal(held, run.Tuples);
         run.RunUntil(() => Resolved(run));
         Assert.Equal(MealStatus.Missed, run.Meal.Status);
-        Assert.Equal(0, run.Api.SellCalls); Assert.Empty(run.Receipts.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)));
+        Assert.Equal(0, run.Api.SellCalls); Assert.DoesNotContain(run.Receipts, p => FoodSaleReceipts.IsReceiptKey(p.Key));
         run.RunFor(2 * VendorCoordinator.WaitingRecheckMinutes);
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
         Assert.Equal("menu item not executable: " + ChoppedCheese, run.Row.Reason);
