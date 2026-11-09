@@ -64,7 +64,6 @@ namespace PersistentCity.Persistence
 
         internal static string WriteForSchema(CityState state,int schema,SaveCostRecorder? cost)
         {
-            if (schema < 25) return PopulationSchema24.WriteForSchema(state, schema);
             return EncodeForSchema(CaptureForSchema(state, schema, cost), schema, cost);
         }
 
@@ -123,7 +122,7 @@ namespace PersistentCity.Persistence
 
         internal static void ValidateForActivation(CityState state,int schema)
         {
-            if (schema < 25) { PopulationSchema24.ValidateForActivation(state, schema); return; }
+            if (schema < 25) throw new ArgumentOutOfRangeException(nameof(schema), "Activation validation starts at writer 25.");
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
             InitializeOutflow24(state, schema);
@@ -188,30 +187,6 @@ namespace PersistentCity.Persistence
                     return new SaveReadResult(SaveReadStatus.DevelopmentSchema, null, DevelopmentSchemaMessage + " (schema " + schema.ToString(CultureInfo.InvariantCulture) + ")", schema);
                 Require(schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload.");
                 return ReadCompact(source);
-            }
-            catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
-            { return Invalid("Invalid state: " + exception.Message); }
-        }
-
-        /// <summary>The pre-26 development chain (13-24 via the frozen readers, then exact 25). Unreachable from
-        /// <see cref="Read"/>; kept only so the frozen codecs and their tests compile until their removal slice.</summary>
-        internal static SaveReadResult ReadDevelopmentChain(string source)
-        {
-            if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
-            try
-            {
-                int schema = ReadSchema(source);
-                if (schema > 25) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
-                if (schema <= 24)
-                {
-                    var old = PopulationSchema24.Read(source);
-                    if (old.Status != SaveReadStatus.Loaded) return old;
-                    MigrateNames25(old.State!);
-                    ValidateForActivation(old.State!, 25);
-                    return new SaveReadResult(SaveReadStatus.Loaded, old.State, "", old.SourceSchema);
-                }
-                Require(schema == 25, "Not a development schema.");
-                return ReadExact(source, schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
             { return Invalid("Invalid state: " + exception.Message); }

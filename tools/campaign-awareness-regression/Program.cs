@@ -137,8 +137,9 @@ foreach(int count in new[]{1,1024})
     var city=EconomyScenario.Create(1,79);city.Food=EconomyScenario.Food();new CitySimulator(city,new FixturePlanner()).AttachFoodMarket(new FixtureMarket());
     // Build a genuine schema-20 source; current D2 tuples cannot be relabelled as 20.
     city.Schema=20;
-    string baseline=(string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.PopulationSchema20")!
-        .GetMethod("Write")!.Invoke(null,new object[]{city})!;
+    // X1 removed the frozen schema-20 writer from the current tree; this comparison runs only against an archived source.
+    string baseline=SchemaTwentyBaselineRemoved();
+    static string SchemaTwentyBaselineRemoved()=>throw new NotSupportedException("X1 removed the frozen schema-20 writer; run this comparison against an archived source tree.");
     city.Schema=CityState.CurrentSchema;
     // Shared reference table is separately charged; masks occupy their reserved campaign allocation.
     var previous=SaveCodec.Read(baseline);

@@ -20,28 +20,6 @@ public sealed partial class FoodCommerceTests
         Assert.Same(payload, data[SaveStore.StateKey]); Assert.Equal("unchanged", data["foreign"]);
     }
 
-    [Theory]
-    [InlineData(13)] [InlineData(14)] [InlineData(15)] [InlineData(16)] [InlineData(17)]
-    public void B0_AllSourceContractsPreserveEveryFactAndInitializeNoExperience(int schema)
-    {
-        var (city, full) = S17_Full();
-        var person = city.State.Citizens[0];
-        person.RecentVisits.Add(new VisitRecord { AtMinute = BitConverter.Int64BitsToDouble(0x3ff0000000000001), PlaceId = person.HomeId, Activity = Activity.Home });
-        person.RecentVisits.Add(new VisitRecord { AtMinute = 123.123456789, PlaceId = "shop", Activity = Activity.Shop });
-        string source = schema == 17 ? LegacyWire.Write(city.State) : S17_Old(LegacyWire.Write(city.State), schema);
-        var original = LegacyPopulationCodec.Read(source); Assert.True(original.Status == SaveReadStatus.Loaded, original.Error);
-        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema);
-        Assert.Equal(LegacyWire.Write(original.State!), LegacyWire.Write(read.State));
-        Assert.All(read.State.Food!.Residents, m => { Assert.Empty(m.Memory.Entries); Assert.Null(m.Memory.Watermark); });
-        Assert.Empty(read.State.Food.BusinessReferences); Assert.False(read.State.Capabilities.Active);
-        string next = DevelopmentChain.Write(read.State);
-        Assert.Equal(DevelopmentChain.ChainOutput, DevelopmentChain.Read(next).SourceSchema);
-        Assert.Equal(next, DevelopmentChain.Write(DevelopmentChain.Read(next).State!));
-        for (int i = 0; i < 2; i++) Assert.Equal(BitConverter.DoubleToInt64Bits(person.RecentVisits[i].AtMinute), BitConverter.DoubleToInt64Bits(read.State.Citizens[0].RecentVisits[i].AtMinute));
-        if (schema == 17) Assert.NotNull(read.State.Food.Residents.Single(m => m.Decision != null).Decision);
-    }
-
     [Fact]
     public void B0_VisitReferencesIgnoreRootAndPlaceOrderAndPreserveLongEscapedIdsAndNegativeZero()
     {
@@ -89,7 +67,7 @@ public sealed partial class FoodCommerceTests
     }
 
     [Theory]
-    [InlineData("tuple-octal")] [InlineData("tuple-hex")] [InlineData("schema-hex")]
+    [InlineData("tuple-octal")] [InlineData("tuple-hex")]
     [InlineData("revision-octal")] [InlineData("memory-escaped")] [InlineData("visit-escaped")]
     public void B0_NoncanonicalRawTokensRefuseBeforeTypedMaterialization(string damage)
     {
@@ -100,7 +78,6 @@ public sealed partial class FoodCommerceTests
         {
             case "tuple-octal": broken = source.Replace("\"Residents\":[[3,", "\"Residents\":[[03,"); break; // roster tuple v3
             case "tuple-hex": broken = source.Replace("\"Residents\":[[3,", "\"Residents\":[[0x3,"); break;
-            case "schema-hex": broken = source.Replace("\"Schema\":" + city.State.Schema + ",", "\"Schema\":0x18,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
             case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
@@ -197,35 +174,6 @@ public sealed partial class FoodCommerceTests
         city.State.Capabilities.Revision = 2;
         Assert.Throws<InvalidOperationException>(() => new CitySimulator(city.State, new Walking()));
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
-    }
-
-    [Theory]
-    [InlineData(13)] [InlineData(14)] [InlineData(15)] [InlineData(16)] [InlineData(17)]
-    public void B0_LegacySchemaCannotSmuggleAnInactiveOrActiveCapabilityHeader(int schema)
-    {
-        var (city, source) = S17_Full();
-        var old = SaveWire.Parse(S17_Old(source, schema));
-        foreach (bool active in new[] { false, true })
-        {
-            old["Capabilities"] = new JObject { ["Code"] = "B", ["Revision"] = 1, ["Active"] = active };
-            string wire = old.ToString(Formatting.None);
-            Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(wire));
-            B0_Preserve(wire, city.State);
-        }
-    }
-
-    [Fact]
-    public void B0_FrozenReaderRefuses18AndBothContractsKeepFourCapturedOffers()
-    {
-        var (city, legacy) = S17_Full();
-        Assert.Equal(SaveReadStatus.Future, LegacyPopulationCodec.Read(DevelopmentChain.Write(city.State)).Status);
-        var chosen = city.State.Food!.Residents.Single(m => m.Decision != null).Decision!.Shops[0];
-        while (chosen.Offers.Count < 5) chosen.Offers.Add(new FoodDecisionOffer { ProductId = "extra:" + chosen.Offers.Count });
-        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
-        var old = SaveWire.Parse(legacy); var shop = old["Food"]!["Residents"]!.First(m => m["Decision"]!.Type != JTokenType.Null)!["Decision"]!["Shops"]![0]!;
-        var offers = (JArray)shop["Offers"]!;
-        while (offers.Count < 5) offers.Add(offers[0]!.DeepClone());
-        B0_Preserve(old.ToString(Formatting.None), S17_Full().city.State);
     }
 
     [Fact]

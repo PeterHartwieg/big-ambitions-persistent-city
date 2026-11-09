@@ -6,11 +6,9 @@ using System.Text;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
-#if NAME_SCHEMA24
+// X1 removed the frozen schema-24 codec from the current tree. Its 24 -> 25 comparison runs only against an archived
+// source tree; here the baseline alias is the live codec, as in an archived schema-24 build (NAME_SCHEMA24).
 using NameBaselineCodec = PersistentCity.Persistence.SaveCodec;
-#else
-using NameBaselineCodec = PersistentCity.Persistence.PopulationSchema24;
-#endif
 
 static class NameIdentityProgram
 {

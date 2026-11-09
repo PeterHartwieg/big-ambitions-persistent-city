@@ -5,12 +5,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5c-lite: <see cref="SaveCodec.Read"/> refuses schemas 1-25 as DevelopmentSchema and no product path
-/// reaches the older codecs. Tests of those frozen codecs call the preserved chain explicitly until the slice that
-/// removes them. For schema-26 payloads and states both members are exactly SaveCodec.Read/Write.</summary>
+/// <summary>F5c-lite: <see cref="SaveCodec.Read"/> refuses every older development schema as DevelopmentSchema. X1 removed
+/// the pre-26 reader chain, so a payload up to schema 25 reads exactly as the product reads it; the frozen exact
+/// readers from 26 on remain for their own tests.</summary>
 internal static class DevelopmentChain
 {
-    /// <summary>The frozen pre-26 chain migrates every schema up to 25 to exactly writer 25.</summary>
+    /// <summary>The frozen writer 25 (the last JSON writer before the person table). Its payloads are refused.</summary>
     public const int ChainOutput = 25;
     /// <summary>F5d: the frozen writer-26 shape (represented consumers on their host's excursion schedule). Schema 27
     /// has no represented consumer, so tests of that path build their city in this schema.</summary>
@@ -31,7 +31,7 @@ internal static class DevelopmentChain
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.WorkplaceCapacitySchema ? SaveCodec.ReadWriter28(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.VendorSchema ? SaveCodec.ReadWriter30(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.ResearchSchema ? SaveCodec.ReadWriter29(source)
-        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveWire.Read(source);
+        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.Read(source) : SaveWire.Read(source);
 
     /// <summary>F5e: the frozen writer-27 shape (F5d's, seated under the fixed BusinessAllocation of 16). Writer 28 has
     /// the same shape and differs only in the capacity rule its cities were seated under.</summary>
@@ -146,20 +146,6 @@ internal static class DevelopmentChain
 
     /// <summary>Roster tuple slot of the held decision: tuple v3 (schema 26) omits AnchorId and Slot.</summary>
     public static int DecisionSlot(Newtonsoft.Json.Linq.JToken root) => (int)root["Schema"]! >= SaveCodec.PersonSchema ? 8 : 9;
-
-    /// <summary>The product session refuses an older development payload with DevelopmentSchema and keeps every
-    /// key byte-identical; the frozen chain still decodes it for the old-codec tests.</summary>
-    public static SaveReadResult RefusedThenRead(IDictionary<string, string> data, string populationKey)
-    {
-        var before = new Dictionary<string, string>(data);
-        var refused = SaveSession.Open(data, populationKey).InitialReadResult;
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, refused.Status); Assert.Null(refused.State);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveStore.ReadFrom(data, populationKey).Status);
-        Assert.Equal(before, data);
-        var read = SaveCodec.ReadDevelopmentChain(data[SaveStore.StateKey]);
-        if (read.Status == SaveReadStatus.Loaded) Assert.Equal(populationKey, read.State!.PopulationKey);
-        return read;
-    }
 
     /// <summary>F5d: the product reader refuses a frozen writer-26 payload as an older development city before its shape.</summary>
     public static SaveReadStatus ProductStatus(string payload, SaveReadStatus frozen)

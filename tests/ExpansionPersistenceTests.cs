@@ -213,8 +213,9 @@ public sealed class ExpansionPersistenceTests
         {
             string oversized = new string(' ', 4 * 1024 * 1024) + payload;
             var result = DevelopmentChain.Read(oversized);
-            Assert.Equal(SaveReadStatus.Invalid, result.Status);
-            Assert.Contains("Unsupported experimental state schema", result.Error);
+            // X1: the product reader's own refusal (the removed chain reported Invalid for schemas below 13).
+            Assert.Equal(SaveReadStatus.DevelopmentSchema, result.Status);
+            Assert.Contains("start a new city", result.Error);
         }
     }
 
