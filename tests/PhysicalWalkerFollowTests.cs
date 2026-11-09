@@ -105,7 +105,6 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         Assert.True(f.Bound);
         Assert.Equal(Home, f.Body.Position);
-        Assert.False(f.City.TryAcquirePhysicalJourney("w", out _));
         // 25 minutes in: the logical pose is at 90 m; the body is held 10 m behind it, on screen.
         f.Advance(Now + 25);
         f.Body.OnScreen = true; f.Place(new Position(80, 0, 0));

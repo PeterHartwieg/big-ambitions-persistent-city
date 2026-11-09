@@ -182,7 +182,6 @@ public sealed class PresentationGridTests
             _ = grid.Query(sim.PositionOf(sim.State.Citizens[0]), 120, new List<CitizenState>());
             Assert.True(sim.ActiveJourneyIndexMatchesState());
         }
-        Assert.False(sim.TryAcquirePhysicalJourney("c0", out _));
         Assert.Equal(filed, grid.Filings);
         Assert.True(sim.ActiveJourneyIndexMatchesState());
         // Arrival leaves the index and the grid.

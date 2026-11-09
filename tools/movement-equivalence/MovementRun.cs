@@ -199,6 +199,7 @@ public static class MovementRun
         Require(city.BeginAccountingObservations(native), "initial epoch not published");
         double nextFifo = start + FifoSampleMinutes;
         bool reloaded = false, faultInjected = false, hiddenChecked = false;
+        long priorReconsiders = 0, priorTrafficEvents = 0;
         double frameSeconds = 1.0 / options.FramesPerSecond;
         while (boundaries.Count > 0)
         {
@@ -239,8 +240,7 @@ public static class MovementRun
             }
             if (hidden && driver != null)
             {
-                // Runtime BeforeAdvance: hidden travel observes and releases bodies before AdvancePopulation,
-                // so no hidden slice runs with a frozen walker or a physically controlled car.
+                // Runtime BeforeAdvance: hidden travel observes and releases bodies before AdvancePopulation.
                 driver.SuspendBeforeHiddenAdvance();
                 Require(driver.Count == 0, "hidden travel advanced with bodies bound");
                 if (!hiddenChecked && city.Traffic != null)
@@ -252,7 +252,12 @@ public static class MovementRun
             else hiddenChecked = false;
             driver?.MoveBodies(frameSeconds, frameSeconds * GameMinutesPerRealSecond);
             target = Math.Max(city.State.Minute, AccountingClock.Target(native));
-            for (int unit = 0; unit < EventUnitsPerFrame; unit++)
+            // Since F2d no body adds kernel work, so a frame's events always drain and no frame starts behind. The
+            // skipped-event fault first starves one frame inside the current minute epoch, so the next frame starts
+            // with due work, and then skips it.
+            bool starve = options.Fault == Fault.SkippedEvent && !faultInjected && native >= start + 8 * 60
+                && Math.Floor(city.State.Minute) == Math.Floor(native);
+            for (int unit = 0; unit < (starve ? 0 : EventUnitsPerFrame); unit++)
             {
                 var advanced = city.AdvanceFrameSlice(target, 1);
                 result.Events += advanced.Events;
@@ -260,6 +265,8 @@ public static class MovementRun
             }
             city.SynchronizeSnapshot();
             driver?.Update(Focus(options.Focus, native), hidden);
+            // F2d: no traffic leg is ever under physical control, whatever the bodies do.
+            Require(city.Traffic == null || !city.Traffic.HasPhysicalControl, "a traffic vehicle is under physical control");
 
             if (options.Fault == Fault.DuplicateArrival && !faultInjected && ledger.Arrivals > 0 && native >= start + 8 * 60)
             {
@@ -279,6 +286,7 @@ public static class MovementRun
                 Require(read.Status == SaveReadStatus.Loaded, "mid-journey reload refused: " + read.Error);
                 Require(SaveCodec.Write(read.State!) == json, "mid-journey save round trip changed bytes");
                 city.ActivityObserved -= ledger.Observe;
+                priorReconsiders += city.Traffic?.Reconsiders ?? 0; priorTrafficEvents += city.Traffic?.ProcessedEvents ?? 0;
                 city = MovementFixture.Attach(read.State!, market, planner, fresh: false);
                 city.ActivityObserved += ledger.Observe;
                 ledger.Rebind(city.State);
@@ -298,6 +306,10 @@ public static class MovementRun
                 ledger.Records + "--sales--\n" + string.Join("\n", market.Sales) + "\n");
         result.FifoSha256 = fifo.Sha; result.FifoSamples = fifo.Samples; result.QueuedFifoSamples = fifo.Queued;
         Summarize(result, city, market, ledger, drivers);
+        // F2d perf: kernel work over the whole run (every kernel, across a reload).
+        result.Metrics["traffic.reconsiders"] = priorReconsiders + (city.Traffic?.Reconsiders ?? 0);
+        result.Metrics["traffic.events"] = priorTrafficEvents + (city.Traffic?.ProcessedEvents ?? 0);
+        result.Metrics["run.frames"] = result.Frames;
         result.Seconds = timer.Elapsed.TotalSeconds;
         result.AllocatedBytes = GC.GetTotalAllocatedBytes(true) - allocated;
         return result;
@@ -360,10 +372,7 @@ public static class MovementRun
         m["bodies.acquired"] = drivers.Sum(d => d.Acquired);
         m["bodies.released"] = drivers.Sum(d => d.Released);
         m["bodies.failedAcquisitions"] = drivers.Sum(d => d.FailedAcquisitions);
-        m["bodies.blockedSamples"] = drivers.Sum(d => d.BlockedSamples);
-        m["bodies.trafficOvershoots"] = drivers.Sum(d => d.TrafficOvershoots);
         m["bodies.arrivalTails"] = drivers.Sum(d => d.ArrivalTails);
-        m["bodies.leaseObservations"] = drivers.Sum(d => d.LeaseObservations);
         m["bodies.walkerFrames"] = drivers.Sum(d => d.WalkerFrames);
         m["bodies.carFrames"] = drivers.Sum(d => d.CarFrames);
         m["bodies.maxWalkers"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.MaxWalkers);
@@ -377,6 +386,14 @@ public static class MovementRun
         m["walkers.lagMaxMetres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.MaximumLagMetres);
         m["walkers.moves"] = drivers.Sum(d => d.Walking.Moves);
         m["walkers.lagReleases"] = drivers.Sum(d => d.Walking.LagReleases);
-        m["walkers.handoffs"] = drivers.Sum(d => d.Walking.Handoffs);
+        m["walkers.handoffs"] = drivers.Sum(d => d.Walking.Handoffs - d.Walking.CarHandoffs);
+        // F2d car follow (E3 car lag; every correction is an off-screen release and re-acquisition here).
+        m["cars.lagSamples"] = drivers.Sum(d => d.Walking.CarLagSamples);
+        m["cars.lagP50Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.CarLagQuantile(.5));
+        m["cars.lagP95Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.CarLagQuantile(.95));
+        m["cars.lagMaxMetres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.CarMaximumLagMetres);
+        m["cars.catchUpFrames"] = drivers.Sum(d => d.Walking.CarCatchUpFrames);
+        m["cars.corrections"] = drivers.Sum(d => d.Walking.CarCorrections);
+        m["cars.handoffs"] = drivers.Sum(d => d.Walking.CarHandoffs);
     }
 }

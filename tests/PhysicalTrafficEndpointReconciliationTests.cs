@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -6,6 +7,9 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
+// F2d: the actual mapped road whose kernel section end lies a few ulps away from the committed corner (the "negative
+// endpoint"). Before F2d a leased body had to reconcile that gap before the kernel would cross; now the kernel crosses
+// on its own clock and a following car only reads its coordinate.
 public sealed class PhysicalTrafficEndpointReconciliationTests
 {
     private const string Native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -25,10 +29,10 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
         public readonly Planner Planner = new Planner();
         public readonly CitySimulator Simulation;
         public readonly CitizenState Citizen;
-        public readonly PhysicalJourneyLease Lease;
         public readonly Route Road;
         public readonly TrafficRouteLeg[] Mapped;
         public Position Corner => new Position(X[2],0,0);
+        public double MiddleOfSecondLeg => Road.Legs[0].Minutes + Road.Legs[1].Minutes / 2;
 
         public Fixture()
         {
@@ -52,155 +56,92 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
             Citizen.Car = new CarState { Id = "proof:car", ParkedPosition = Road.Legs[0].From };
             Citizen.Journey = Road; Citizen.NextEventMinute = 100 + Road.Minutes;
             Simulation = new CitySimulator(state, Planner); Simulation.AdvanceTo(100);
-            Assert.True(Simulation.TryAcquirePhysicalJourney(Citizen.Identity.Id, out var lease)); Lease = lease!;
-            Simulation.AdvanceTo(110);
-        }
-
-        public PhysicalJourneySample PrepareMiddleLeg()
-        {
-            Assert.True(Simulation.TrySamplePhysicalJourney(Lease, out var first));
-            Assert.True(PhysicalProgress.TryProject(first, Road.Legs[0].To, true, out double firstEnd));
-            Assert.True(Simulation.ObservePhysicalJourney(Lease, firstEnd));
-            Assert.True(Simulation.TrySamplePhysicalJourney(Lease, out var middle));
-            Assert.True(PhysicalProgress.TryProject(middle, Position.Lerp(Road.Legs[1].From, Road.Legs[1].To, .5), false, out double measured));
-            Assert.True(Simulation.ObservePhysicalJourney(Lease, measured));
-            Assert.True(Simulation.TrySamplePhysicalJourney(Lease, out middle));
-            Assert.Equal(1, middle.LegIndex);
-            Assert.Equal(1.220302734375, middle.ElapsedMinutes);
-            return middle;
-        }
-
-        public PhysicalJourneySample SeedLegacyUnderreportedBoundary()
-        {
-            var previous = PrepareMiddleLeg();
-            Assert.True(PhysicalProgress.TryProject(previous, Corner, true, out double endpoint));
-            Assert.Equal(1.6009497070312497, endpoint); Assert.True(endpoint < Mapped[0].EndNominalMinutes);
-            Assert.True(Simulation.ObservePhysicalJourney(Lease, endpoint));
-            Assert.True(Simulation.TrySamplePhysicalJourney(Lease, out var next));
-            Assert.Equal(2, next.LegIndex); Assert.Equal(0, next.LegFraction); Assert.Equal(endpoint, next.ElapsedMinutes);
-            return next;
         }
     }
 
     [Fact]
-    public void ActualMappedNegativeEndpointReconcilesOnlyToItsAlreadyAllowedEndBeforeTransfer()
+    public void KernelCrossesTheActualMappedEndpointAndCompletesExactlyOnceWithoutABody()
     {
-        var f = new Fixture(); var sample = f.PrepareMiddleLeg();
-        var permission = f.Simulation.Traffic!.GetPermission(f.Citizen.Identity.Id);
-        Assert.Equal(1.60094970703125, permission.MaximumNominalMinutes);
-        Assert.True(PhysicalProgress.TryProject(sample, f.Corner, true, out double projected));
-        Assert.True(projected < permission.MaximumNominalMinutes);
-        Assert.True(PhysicalTrafficCornerPermission.TryReconcileEndpoint(sample, true, projected, permission.MaximumNominalMinutes, out double accepted));
-        Assert.Equal(permission.MaximumNominalMinutes, accepted);
-        Assert.False(PhysicalTrafficCornerPermission.TryReconcileEndpoint(sample, false, projected, permission.MaximumNominalMinutes, out _));
-        Assert.True(f.Simulation.ObservePhysicalJourney(f.Lease, accepted));
-        Assert.Equal(permission.LinkId, f.Simulation.Traffic.GetPermission(f.Citizen.Identity.Id).LinkId); // Reporting alone never transfers ownership.
-        f.Simulation.AdvanceTo(f.Simulation.State.Minute);
-        Assert.Equal(f.Mapped[1].LinkId, f.Simulation.Traffic.GetPermission(f.Citizen.Identity.Id).LinkId);
-        Assert.Equal(accepted, f.Lease.ObservedMinutes);
-
-        int completions = 0;
-        f.Simulation.Traffic.VehicleCompleted += (id, _) => { Assert.Equal(f.Citizen.Identity.Id, id); completions++; };
-        f.Simulation.AdvanceTo(111);
-        Assert.True(f.Simulation.IsPhysicalJourneyValid(f.Lease));
-        Assert.True(f.Simulation.TrySamplePhysicalJourney(f.Lease, out var finalSample));
-        Assert.Equal(2, finalSample.LegIndex);
-        var terminalPermission = f.Simulation.Traffic.GetPermission(f.Citizen.Identity.Id);
-        Assert.True(terminalPermission.PhysicalControl); Assert.False(terminalPermission.IsCompleted);
-        Assert.Equal(f.Road.Minutes, terminalPermission.MaximumNominalMinutes);
-        Assert.True(PhysicalProgress.TryProject(finalSample, f.Road.Legs[2].To, true, out double terminalProjected));
-        Assert.True(PhysicalTrafficCornerPermission.TryReconcileEndpoint(finalSample, true, terminalProjected,
-            terminalPermission.MaximumNominalMinutes, out double terminalAccepted));
-        Assert.Equal(f.Road.Minutes, terminalAccepted);
-        Assert.True(f.Simulation.ObservePhysicalJourney(f.Lease, terminalAccepted));
-        Assert.Equal(terminalAccepted, f.Lease.ObservedMinutes);
-        Assert.True(f.Simulation.Traffic.GetPermission(f.Citizen.Identity.Id).PhysicalControl);
-        Assert.Equal(0, completions); Assert.Equal(0, f.Citizen.CompletedJourneys); // The report does not process a terminal event.
-        f.Simulation.AdvanceTo(111);
+        var f = new Fixture(); string id = f.Citizen.Identity.Id;
+        int completions = 0; var links = new List<int?>();
+        f.Simulation.Traffic!.VehicleCompleted += (vehicle, _) => { Assert.Equal(id, vehicle); completions++; };
+        for (double minute = 100; minute <= 104; minute += 0.01)
+        {
+            f.Simulation.AdvanceTo(minute);
+            Assert.False(f.Simulation.Traffic.HasPhysicalControl);
+            if (f.Simulation.TryGetTrafficPermission(id, out var permission) && (links.Count == 0 || links[^1] != permission.LinkId)) links.Add(permission.LinkId);
+        }
+        Assert.Equal(new int?[] { f.Mapped[0].LinkId, f.Mapped[1].LinkId }, links);
         Assert.Equal(1, completions); Assert.Equal(1, f.Citizen.CompletedJourneys);
         Assert.Equal(f.Road.Legs[2].To, f.Citizen.Car!.ParkedPosition);
         Assert.Equal(0, f.Simulation.Traffic.VehicleCount);
         Assert.All(f.Simulation.Traffic.Capture().Links, link => Assert.Empty(link.Vehicles));
-        Assert.False(f.Simulation.IsPhysicalJourneyValid(f.Lease));
-        Assert.False(f.Simulation.ObservePhysicalJourney(f.Lease, terminalAccepted));
         f.Simulation.AdvanceTo(112); f.Simulation.AdvanceTo(113);
         Assert.Equal(1, completions); Assert.Equal(1, f.Citizen.CompletedJourneys);
     }
 
     [Fact]
-    public void UnchangedCollinearLegacyBoundaryCanRecoverWithoutANewNativeReceipt()
+    public void FollowerAtTheActualMappedCornerReadsTheKernelAndNeverPassesIt()
     {
-        var f = new Fixture(); var next = f.SeedLegacyUnderreportedBoundary();
-        for (int frame = 0; frame < 100; frame++)
-        {
-            f.Simulation.AdvanceTo(111 + frame);
-            Assert.True(PhysicalProgress.TryProject(next, f.Corner, false, out double unchanged));
-            Assert.True(f.Simulation.ObservePhysicalJourney(f.Lease, unchanged));
-            Assert.True(f.Simulation.TrySamplePhysicalJourney(f.Lease, out next));
-            var stalled = f.Simulation.Traffic!.GetPermission(f.Citizen.Identity.Id);
-            Assert.Equal(f.Mapped[0].LinkId, stalled.LinkId); Assert.True(stalled.CanCrossBoundary);
-            Assert.True(stalled.NominalMinutes < stalled.MaximumNominalMinutes);
-            Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(next, f.Corner, stalled.MaximumNominalMinutes));
-        }
-        double maximum = f.Simulation.Traffic!.GetPermission(f.Citizen.Identity.Id).MaximumNominalMinutes;
-        Assert.True(PhysicalTrafficCornerPermission.TryReconcileNormalizedBoundary(next, f.Lease.ObservedMinutes,
-            next.ElapsedMinutes, maximum, out double accepted));
-        Assert.Equal(maximum, accepted);
-        Assert.True(f.Simulation.ObservePhysicalJourney(f.Lease, accepted)); f.Simulation.AdvanceTo(f.Simulation.State.Minute);
-        Assert.Equal(f.Mapped[1].LinkId, f.Simulation.Traffic.GetPermission(f.Citizen.Identity.Id).LinkId);
+        var f = new Fixture(); string id = f.Citizen.Identity.Id;
+        // The closed next section, not a body, holds the kernel vehicle at the end of its first section.
+        f.Simulation.Traffic!.SetLinkClosed(f.Mapped[1].LinkId, true);
+        f.Simulation.AdvanceTo(110);
+        var permission = f.Simulation.Traffic.GetPermission(id);
+        Assert.Equal(f.Mapped[0].LinkId, permission.LinkId); Assert.False(permission.CanCrossBoundary);
+        Assert.Equal(1.60094970703125, permission.MaximumNominalMinutes);
+        Assert.Equal(permission.MaximumNominalMinutes, permission.LinkEndNominalMinutes);
+        var middle = WalkerFollow.Sample(f.Road, f.MiddleOfSecondLeg);
+        Assert.Equal(1, middle.LegIndex);
+        // The committed corner lies an ulp before the kernel's section end; Gley may take the car to it.
+        Assert.True(PhysicalProgress.TryProject(middle, f.Corner, true, out double corner));
+        Assert.True(corner < permission.MaximumNominalMinutes);
+        double cap = CarFollow.Cap(f.Road, f.MiddleOfSecondLeg, permission.MaximumNominalMinutes);
+        Assert.Equal(permission.MaximumNominalMinutes, cap);
+        Assert.True(PhysicalTrafficCornerPermission.CanReachEndpoint(middle, cap));
+        // Standing on the corner without Gley's receipt credits the approach only.
+        double approach = CarFollow.Advance(f.Road, f.MiddleOfSecondLeg, cap, f.Corner, -1);
+        Assert.Equal(1, WalkerFollow.Sample(f.Road, approach).LegIndex); Assert.True(approach < corner);
+        // With it the car's own progress crosses onto the last leg, never beyond the kernel's coordinate, and the
+        // command there allows no further advance while the kernel is held.
+        double crossed = CarFollow.Advance(f.Road, f.MiddleOfSecondLeg, cap, f.Corner, 1);
+        var last = WalkerFollow.Sample(f.Road, crossed);
+        Assert.Equal(2, last.LegIndex); Assert.True(crossed <= cap);
+        Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(last, f.Corner, cap));
+        Assert.False(f.Simulation.Traffic.HasPhysicalControl);
+        // Reopening lets the kernel finish on its own clock.
+        f.Simulation.Traffic.SetLinkClosed(f.Mapped[1].LinkId, false);
+        f.Simulation.AdvanceTo(112);
+        Assert.Equal(1, f.Citizen.CompletedJourneys);
     }
 
+    /// <summary>An older development city saved with the vehicle under physical control at the under-reported
+    /// boundary (the state the removed lease left) loads, is released to background travel at its saved coordinate,
+    /// crosses and completes exactly once. The live writer then never emits physical control.</summary>
     [Fact]
-    public void CopiedSavedUnderreportedBoundaryReacquiresAndRecoversItsOwnSectionOnly()
+    public void OlderSavedPhysicalVehicleAtTheUnderreportedBoundaryLoadsReleasesAndCompletes()
     {
-        var f = new Fixture(); f.SeedLegacyUnderreportedBoundary();
-        var read = SaveWire.Read(SaveCodec.Write(f.Simulation.State));
+        var f = new Fixture(); string id = f.Citizen.Identity.Id;
+        f.Simulation.Traffic!.SetLinkClosed(f.Mapped[1].LinkId, true);
+        var older = SaveWire.Read(SaveCodec.Write(f.Simulation.State)).State!;
+        double endpoint = LegacyTrafficLease.Report(f.Simulation, id, 110, 1.6009497070312497, release: false);
+        Assert.Equal(1.6009497070312497, endpoint); Assert.True(endpoint < f.Mapped[0].EndNominalMinutes);
+        // Detached copy of what an older build wrote: the kernel snapshot with physical control, at the city clock.
+        var kernel = f.Simulation.Traffic.Capture();
+        Assert.True(kernel.Vehicles.Single().PhysicalControl);
+        older.Minute = kernel.Clock; older.Traffic = kernel;
+        var person = older.Citizens.Single(c => c.Identity.Id == id);
+        person.DepartureMinute = older.Minute - endpoint; person.NextEventMinute = person.DepartureMinute + person.Journey!.Minutes;
+        var read = SaveWire.Read(DevelopmentChain.Write(older));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var copied = new CitySimulator(read.State!, new Planner());
-        Assert.True(copied.TryAcquirePhysicalJourney(f.Citizen.Identity.Id, out var lease));
-        copied.AdvanceTo(copied.State.Minute + 1);
-        Assert.True(copied.TrySamplePhysicalJourney(lease!, out var sample));
-        var before = copied.Traffic!.GetPermission(f.Citizen.Identity.Id);
-        Assert.Equal(f.Mapped[0].LinkId, before.LinkId);
-        Assert.True(PhysicalTrafficCornerPermission.TryReconcileNormalizedBoundary(sample, lease!.ObservedMinutes,
-            sample.ElapsedMinutes, before.MaximumNominalMinutes, out double accepted));
-        Assert.Equal(before.MaximumNominalMinutes, accepted);
-        Assert.True(copied.ObservePhysicalJourney(lease, accepted)); copied.AdvanceTo(copied.State.Minute);
-        Assert.Equal(f.Mapped[1].LinkId, copied.Traffic.GetPermission(f.Citizen.Identity.Id).LinkId);
-        Assert.Equal(f.Mapped[0].LinkId, f.Simulation.Traffic!.GetPermission(f.Citizen.Identity.Id).LinkId); // Original copied world was not changed.
-    }
-
-    [Fact]
-    public void ExactReconciledEndpointDoesNotBypassFullReceivingStorageOrRestoreOwnership()
-    {
-        var f = new Fixture(); var sample = f.PrepareMiddleLeg();
-        var kernel = new TrafficKernel(f.Planner.TrafficNetwork!.Links);
-        kernel.Enqueue("blocker", new[] { new TrafficRouteLeg { LinkId = f.Mapped[1].LinkId, StartNominalMinutes = 0,
-            EndNominalMinutes = f.Road.Legs[2].Minutes, FreeFlowMinutes = f.Road.Legs[2].Minutes } });
-        kernel.Enqueue("head", f.Mapped); kernel.AdvanceTo(0, 100);
-        kernel.SetPhysicalControl("head", true); kernel.SetPhysicalControl("blocker", true); kernel.AdvanceTo(100, 100);
-        Assert.False(kernel.GetPermission("head").CanCrossBoundary);
-        Assert.True(PhysicalProgress.TryProject(sample, f.Corner, true, out double projected));
-        Assert.True(PhysicalTrafficCornerPermission.TryReconcileEndpoint(sample, true, projected,
-            kernel.GetPermission("head").MaximumNominalMinutes, out double accepted));
-        Assert.Equal(accepted, kernel.ReportPhysicalProgress("head", accepted)); kernel.AdvanceTo(200, 100);
-        var copy = TrafficKernel.Restore(kernel.Capture(), false); copy.AdvanceTo(300, 100);
-        Assert.Equal(f.Mapped[0].LinkId, copy.GetPermission("head").LinkId);
-        Assert.Equal(accepted, copy.GetPermission("head").NominalMinutes);
-        Assert.Equal(f.Mapped[1].LinkId, copy.GetPermission("blocker").LinkId);
-        Assert.All(copy.Capture().Links, link => Assert.Single(link.Vehicles));
-    }
-
-    [Fact]
-    public void ReconciliationCannotGrowAnUnmeasuredMovementBudget()
-    {
-        var f = new Fixture(); var next = f.SeedLegacyUnderreportedBoundary(); double observed = f.Lease.ObservedMinutes;
-        Assert.False(PhysicalTrafficCornerPermission.TryReconcileNormalizedBoundary(next, observed, next.ElapsedMinutes + 1e-6, observed + 1e-6, out _));
-        Assert.False(PhysicalTrafficCornerPermission.TryReconcileNormalizedBoundary(next, observed, next.ElapsedMinutes, observed + 1e-6, out _));
-        Assert.False(PhysicalTrafficCornerPermission.TryReconcileNormalizedBoundary(next, observed, next.ElapsedMinutes, Math.BitDecrement(observed), out _));
-        var previous = f.Simulation.SampleJourney(f.Citizen, 1.220302734375);
-        double endpoint = previous.ElapsedMinutes + previous.RemainingLegMinutes;
-        Assert.False(PhysicalTrafficCornerPermission.TryReconcileEndpoint(previous, true, endpoint - 1e-10, endpoint, out _));
-        Assert.False(PhysicalTrafficCornerPermission.TryReconcileEndpoint(previous, true, endpoint, endpoint + 1e-8, out _));
+        Assert.True(read.State!.Traffic!.Vehicles.Single().PhysicalControl);
+        var loaded = new CitySimulator(read.State, new Planner());
+        Assert.False(loaded.Traffic!.HasPhysicalControl);
+        Assert.Equal(endpoint, loaded.Traffic.GetPermission(id).NominalMinutes);
+        Assert.DoesNotContain("\"PhysicalControl\":true", SaveCodec.Write(loaded.State));
+        loaded.Traffic.SetLinkClosed(f.Mapped[1].LinkId, false);
+        loaded.AdvanceTo(113);
+        Assert.Equal(1, loaded.State.Citizens.Single(c => c.Identity.Id == id).CompletedJourneys);
+        Assert.False(loaded.Traffic.HasPhysicalControl);
     }
 }

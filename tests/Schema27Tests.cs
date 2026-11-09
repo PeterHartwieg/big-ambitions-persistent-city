@@ -522,7 +522,7 @@ public sealed class Schema27Tests
                 Assert.True(routine.Journey == null || routine.Journey.Legs.All(l => l.Mode != TravelMode.Car));
                 Assert.DoesNotContain(routine, city.ActiveJourneys.BodyCandidates);
                 if (routine.Phase == CitizenPhase.Travelling)
-                { Assert.False(city.TryAcquirePhysicalJourney(routine.Identity.Id, out _)); leaseTried = true; }
+                { Assert.False(ActiveJourneyIndex.ReceivesBody(routine)); leaseTried = true; }
             }
             Assert.True(city.ActiveJourneyIndexMatchesState());
         }

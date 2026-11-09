@@ -180,8 +180,7 @@ public sealed class ActiveJourneyIndexTests
         var sim = Travellers("c0", "c1", "c2");
         AssertIndexed(sim); Assert.Equal(3, sim.ActiveJourneys.Count);
         var c = sim.State.Citizens[0];
-        // F2c: a walk leg is never leased, so no body can freeze it.
-        Assert.False(sim.TryAcquirePhysicalJourney(c.Identity.Id, out _));
+        // No body can freeze a journey (F2c walkers, F2d cars): nothing is leased.
         sim.AdvanceTo(1446); AssertIndexed(sim);
         Assert.Equal(new[] { "c0", "c1", "c2" }, Members(sim));
         var loaded = Reload(sim, new Walking()); AssertIndexed(loaded); Assert.Equal(Members(sim), Members(loaded));

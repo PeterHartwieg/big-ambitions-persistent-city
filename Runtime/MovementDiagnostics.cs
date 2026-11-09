@@ -7,8 +7,8 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>F2c read-only movement console lines: `pc movement status` and `pc movement corrections since &lt;seq&gt;`.
-    /// They read Runtime telemetry only (PhysicalPopulation.Telemetry) and write nothing.</summary>
+    /// <summary>F2c read-only movement console lines: `pc movement status` and `pc movement corrections since &lt;seq&gt;`,
+    /// for walkers and (F2d) cars. They read Runtime telemetry only (PhysicalPopulation.Telemetry) and write nothing.</summary>
     public sealed partial class PopulationRuntime
     {
         private readonly List<WalkerCorrection> movementCorrections = new List<WalkerCorrection>();
@@ -18,7 +18,7 @@ namespace PersistentCity.Runtime
             var telemetry = PhysicalPopulation.Telemetry;
             if (action == "status" && detail.Length == 0)
             {
-                Debug.Log("[Persistent City] movement status (read-only)\n" + telemetry.Status(physical?.Followers ?? 0));
+                Debug.Log("[Persistent City] movement status (read-only)\n" + telemetry.Status(physical?.Followers ?? 0, physical?.CarFollowers ?? 0));
                 return;
             }
             if (action == "corrections" && detail == "since"

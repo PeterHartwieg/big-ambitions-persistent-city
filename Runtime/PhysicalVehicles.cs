@@ -108,6 +108,117 @@ namespace PersistentCity.Runtime
         public bool Valid => OwnershipLossReason.Length == 0;
         public Position Position => Valid ? PhysicalVehicles.Point(FrontMarker.position) : LastTargetOrigin;
         public bool RouteFinished { get; internal set; }
+        /// <summary>F2d: horizontal speed of the owned native body in metres per second; 0 when not owned.</summary>
+        public double Speed
+        {
+            get
+            {
+                if (!Valid) return 0;
+                var velocity = NativeRigidbody.velocity;
+                double speed = Math.Sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+                return PersistentCity.Core.Position.Finite(speed) ? speed : 0;
+            }
+        }
+        /// <summary>F2d Q3: a renderer of the car is in the main camera's view this frame. Unknown visibility (no camera,
+        /// no renderer) counts as on screen, so a correction never removes a car that might be seen.</summary>
+        public bool OnScreen
+        {
+            get
+            {
+                if (!Valid) return false;
+                if (renderers == null) { renderers = new List<Renderer>(); Vehicle.GetComponentsInChildren(true, renderers); }
+                bool any = false;
+                foreach (var renderer in renderers)
+                {
+                    if (renderer == null) continue;
+                    any = true;
+                    if (ScreenVisibility.Contains(renderer)) return true;
+                }
+                return !any && ScreenVisibility.Contains(null);
+            }
+        }
+        private List<Renderer>? renderers;
+        /// <summary>F2d Q3 fade: whether every renderer of this car can show a base-colour alpha
+        /// (<see cref="WalkerFollow.MaterialCanFade"/>, the walker rule). Opaque cars are not faded; their correction
+        /// waits until they are out of view. Read once per body (a new body is made for every acquisition).</summary>
+        public bool CanFade => canFade ??= ProbeFade();
+        private bool? canFade;
+        private bool ProbeFade()
+        {
+            if (!Valid) return false;
+            var probe = new List<Renderer>();
+            Vehicle.GetComponentsInChildren(true, probe);
+            bool any = false;
+            foreach (var renderer in probe)
+            {
+                if (renderer == null) continue;
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    if (material == null) return false;
+                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
+                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
+                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
+                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
+                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
+                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
+                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) return false;
+                    any = true;
+                }
+            }
+            return any;
+        }
+        /// <summary>F2d Q3 fade: scale the alpha of every renderer's base colour, starting from the colour it shows now
+        /// (its property block's, else its material's). 1 puts each renderer's starting colour back into its property
+        /// block, so the native paint set at acquisition is kept.</summary>
+        public void SetFade(float alpha)
+        {
+            alpha = Mathf.Clamp01(alpha);
+            if (alpha >= 1)
+            {
+                for (int i = 0; i < faded.Count; i++)
+                {
+                    var renderer = faded[i];
+                    if (renderer == null) continue;
+                    renderer.GetPropertyBlock(block);
+                    block!.SetColor(originals[i].Id, originals[i].Colour);
+                    renderer.SetPropertyBlock(block);
+                }
+                faded.Clear(); originals.Clear(); return;
+            }
+            if (!Valid) return;
+            block ??= new MaterialPropertyBlock();
+            if (faded.Count == 0)
+            {
+                Vehicle.GetComponentsInChildren(true, faded);
+                foreach (var renderer in faded)
+                {
+                    var material = renderer != null ? renderer.sharedMaterial : null;
+                    int id = material != null && material.HasProperty(BaseColorId) ? BaseColorId : ColorId;
+                    Color colour = material != null && material.HasProperty(id) ? material.GetColor(id) : Color.white;
+                    if (renderer != null)
+                    {
+                        renderer.GetPropertyBlock(block);
+                        if (block.HasColor(id)) colour = block.GetColor(id);
+                    }
+                    originals.Add((id, colour));
+                }
+            }
+            for (int i = 0; i < faded.Count; i++)
+            {
+                var renderer = faded[i];
+                if (renderer == null) continue;
+                var (id, colour) = originals[i];
+                colour.a *= alpha;
+                renderer.GetPropertyBlock(block);
+                block.SetColor(id, colour);
+                renderer.SetPropertyBlock(block);
+            }
+        }
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"), ColorId = Shader.PropertyToID("_Color"),
+            SrcBlendId = Shader.PropertyToID("_SrcBlend"), DstBlendId = Shader.PropertyToID("_DstBlend"), SurfaceId = Shader.PropertyToID("_Surface");
+        private readonly List<Renderer> faded = new List<Renderer>();
+        private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
+        private MaterialPropertyBlock? block;
     }
 
     /// <summary>Disposable native pool leases; no VehicleInstance or native save ownership is created.</summary>
@@ -227,8 +338,6 @@ namespace PersistentCity.Runtime
                 && vehicle.GetComponentInChildren<VehicleController>(true) == null
                 && VehicleScriptOwnership.NativeOnly(vehicle);
         }
-        private static uint Hash(string id)
-        { uint value = 2166136261; foreach (char c in id) value = (value ^ c) * 16777619; return value; }
 
         public bool TryAcquire(CitizenState citizen, PhysicalRoadSample sample, out PhysicalVehicleBody body)
         {
@@ -257,24 +366,14 @@ namespace PersistentCity.Runtime
             if (fraction < -0.001f || fraction > 1.001f || (offset - segment * fraction).sqrMagnitude > 0.25f) return false;
             LastAdmissionStage = "model catalogue";
             var all = Manager.GetVehicleList();
-            bool hasOrdinaryModel = false;
-            if (string.IsNullOrEmpty(citizen.Car.ModelId))
-            {
-                var models = all.Where(Ordinary).Select(v => v.prefab.name).Distinct().OrderBy(n => n, StringComparer.Ordinal).ToArray();
-                if (models.Length == 0) return false;
-                citizen.Car.ModelId = models[Hash(citizen.Car.Id) % (uint)models.Length];
-                hasOrdinaryModel = true;
-            }
-            if (citizen.Car.PaintSeed == 0)
-            {
-                // Preserve initialization even on a later failed admission, but not when the
-                // ordinary catalogue is empty. Warm saved cars need no catalogue traversal.
-                if (!hasOrdinaryModel && !all.Any(Ordinary)) return false;
-                citizen.Car.PaintSeed = 1 + (int)(Hash(citizen.Car.Id + ":paint") % 2147483646u);
-            }
+            // F2d: derived from the stable car ID (or a saved assignment) and never written back, so acquiring a body,
+            // or failing to, leaves the saved car unchanged (E1). Warm saved cars need no catalogue traversal.
+            if (!CarAppearance.TryModel(citizen.Car, () => all.Where(Ordinary).Select(v => v.prefab.name).Distinct()
+                .OrderBy(n => n, StringComparer.Ordinal).ToArray(), out string modelId)) return false;
+            int paintSeed = CarAppearance.Paint(citizen.Car);
             LastAdmissionStage = "inactive model slot";
             var slot = all.FirstOrDefault(v => v != null && v.vehicleType == VehicleTypes.Car && v.prefab != null
-                && v.prefab.name == citizen.Car.ModelId && !v.gameObject.activeInHierarchy && Ordinary(v));
+                && v.prefab.name == modelId && !v.gameObject.activeInHierarchy && Ordinary(v));
             if (slot == null || bodies.ContainsKey(slot.GetIndex())) return false; // Never invoke LoadVehicle's active-name fallback.
             // LoadVehicle chooses the first inactive exact-prefab slot, including protected slots.
             // Reject that ordering conflict rather than activate a service body and roll it back later.
@@ -342,7 +441,7 @@ namespace PersistentCity.Runtime
                 var colors = InstanceBehavior<GlobalReferences>.Instance.vehicleColors;
                 var palette = colors.Where(c => c != null).OrderBy(c => c.name, StringComparer.Ordinal).ToArray();
                 if (palette.Length > 0)
-                    foreach (var features in loaded.GetComponentsInChildren<CarFeatures>(true)) features.SetColor(palette[(uint)citizen.Car.PaintSeed % (uint)palette.Length]);
+                    foreach (var features in loaded.GetComponentsInChildren<CarFeatures>(true)) features.SetColor(palette[(uint)paintSeed % (uint)palette.Length]);
                 TargetNative(loaded, first!);
                 // VehicleActivated already defaults to Forward; resetting it here clears native stop/give-way actions.
                 if (!body.Valid) throw new InvalidOperationException("Native vehicle ownership changed during activation.");
@@ -369,9 +468,19 @@ namespace PersistentCity.Runtime
                     && (!ReferenceEquals(slot, loaded) || !RandomAmbient(loaded) || loaded.presetPath != null));
             }
         }
+        /// <summary>F2d Decision 6: whether Gley's target waypoint of an owned car is a stop point now (its light is red);
+        /// null when unknown. Read-only; no signal phase is changed.</summary>
+        internal bool? NativeRed(PhysicalVehicleBody body)
+        {
+            if (!Active || !NativeReady || body == null || !body.Valid) return null;
+            var target = TrafficManager.Instance.GetTargetWaypoint(body.NativeIndex);
+            return target == null ? (bool?)null : target.stop;
+        }
         public void Release(PhysicalVehicleBody body)
         {
             if (body == null || body.Released) return;
+            // A faded car goes back to the native pool with its starting colours (F2d Q3 fade).
+            if (body.Valid) body.SetFade(1);
             // Decide ownership from a fresh component search: never despawn a body claimed this epoch.
             PhysicalVehicleBody.AdvanceOwnershipEpoch();
             string loss = body.OwnershipLossReason;

@@ -127,7 +127,6 @@ public sealed class SaveSnapshotInterruptedStateTests
         // F2c: a walking journey with a visible body is not leased; the capture is its logical state.
         var person = state.Citizens.First(c => c.Journey != null && c.Phase == CitizenPhase.Travelling
             && c.Journey.Legs.All(l => l.Mode == TravelMode.Walk));
-        Assert.False(city.TryAcquirePhysicalJourney(person.Identity.Id, out _));
         string atCapture = SaveCodec.Write(state);
         var snapshot = SaveCodec.Capture(state);
         double departure = person.DepartureMinute;

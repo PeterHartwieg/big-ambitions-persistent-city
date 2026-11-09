@@ -64,17 +64,16 @@ public sealed class TrafficAdversarialTests
     }
 
     [Fact]
-    public void PhysicalAccessWalkCannotBypassClosedCarSection()
+    public void AccessWalkCannotBypassClosedCarSection()
     {
         var planner=new Planner();planner.Closed.Add(0);
         var city=City(1,planner);city.AdvanceTo(1440);
         var citizen=city.State.Citizens[0];
-        // F2c: the access walk is not leased; it reaches the car on the logical clock and waits at the closed section.
-        Assert.False(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out _));
+        // The access walk reaches the car on the logical clock and waits at the closed section; no body can move it on.
         city.AdvanceTo(1450);
         Assert.True(city.TryGetTrafficPermission(citizen.Identity.Id,out var permission));
         Assert.Null(permission.LinkId);
-        Assert.False(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out _));
+        Assert.False(city.Traffic!.HasPhysicalControl);
         Assert.Equal(0,citizen.CompletedJourneys);
         Assert.Equal(0,city.CarPositionOf(citizen)!.Value.X);
     }
@@ -145,21 +144,14 @@ public sealed class TrafficAdversarialTests
         Assert.Equal(SaveCodec.Write(city.State),SaveCodec.Write(restored.State));
     }
 
+    // F2d: no vehicle is ever physically controlled, so the former leased variants have no counterpart.
     [Theory]
-    [InlineData(1,0)]
-    [InlineData(6,0)]
-    [InlineData(1,2)]
-    [InlineData(6,2)]
-    public void NativeFrameSlicesPublishSameBudgetedCityAsPerEventSnapshots(int speed,int physical)
+    [InlineData(1)]
+    [InlineData(6)]
+    public void NativeFrameSlicesPublishSameBudgetedCityAsPerEventSnapshots(int speed)
     {
         var oldCity=City(31,new Planner(),0,3);var batchedCity=City(31,new Planner(),0,3);
         oldCity.AdvanceTo(1440);batchedCity.AdvanceTo(1440);
-        for(int i=0;i<physical;i++)
-        {
-            var oldCitizen=oldCity.State.Citizens[i];
-            Assert.True(oldCity.TryAcquirePhysicalJourney(oldCitizen.Identity.Id,out _));
-            Assert.True(batchedCity.TryAcquirePhysicalJourney(oldCitizen.Identity.Id,out _));
-        }
         for(int frame=1;frame<=60;frame++)
         {
             double target=1440+frame*.05*speed;int oldEvents=0,newEvents=0;bool oldCaught=false,newCaught=false;
@@ -182,20 +174,20 @@ public sealed class TrafficAdversarialTests
     }
 
     [Fact]
-    public void LeaseEndsAtLastRoadTransferAndEgressWalksOnTheLogicalClockWithoutSecondAdmission()
+    public void TrafficCompletionStartsTheEgressWalkOnTheLogicalClockWithoutSecondAdmission()
     {
         var city=City(1,new Planner(),0,3);city.AdvanceTo(1440);
         var citizen=city.State.Citizens[0];
-        Assert.True(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out var lease));
-        city.AdvanceTo(1442);Assert.True(city.ObservePhysicalJourney(lease!,1.2));city.AdvanceTo(1442);
-        city.AdvanceTo(1444);city.ObservePhysicalJourney(lease!,2.4);city.AdvanceTo(1444);
-        // F2c: traffic completion ends the lease; the egress walk is never leased and is not frozen.
-        Assert.False(city.TryGetTrafficPermission(citizen.Identity.Id,out _));
-        Assert.False(city.IsPhysicalJourneyValid(lease!));Assert.Equal(0,citizen.CompletedJourneys);
-        Assert.False(city.TryAcquirePhysicalJourney(citizen.Identity.Id,out _));
+        double completed=double.NaN;city.Traffic!.VehicleCompleted+=(_,at)=>completed=at;
+        city.AdvanceTo(1444);
+        // The kernel completed the traffic leg on its own clock; the egress walk is not frozen and not admitted again.
+        Assert.False(double.IsNaN(completed));
+        Assert.False(city.TryGetTrafficPermission(citizen.Identity.Id,out _));Assert.Equal(0,citizen.CompletedJourneys);
         Assert.Equal(TravelMode.Walk,city.SampleJourney(citizen).Mode);
-        city.AdvanceTo(1450);
-        Assert.Equal(1,citizen.CompletedJourneys);
-        Assert.False(city.ReleasePhysicalJourney(lease!));city.AdvanceTo(1500);Assert.Equal(1,citizen.CompletedJourneys);
+        double arrival=citizen.NextEventMinute;Assert.True(arrival>1444);
+        city.AdvanceTo(Math.BitDecrement(arrival));Assert.Equal(0,citizen.CompletedJourneys);
+        city.AdvanceTo(arrival);Assert.Equal(1,citizen.CompletedJourneys);
+        city.AdvanceTo(1500);Assert.Equal(1,citizen.CompletedJourneys);
+        Assert.Equal(0,city.Traffic.VehicleCount);
     }
 }

@@ -32,7 +32,7 @@ public sealed partial class PhysicalJourneyTests
         return new CitySimulator(state, new Planner());
     }
 
-    // F2c: only a journey on a traffic leg is leased. These guards use a one-section road (TrafficJourneyTests' shape).
+    // F2d: nothing is leased. Traffic legs use a two-section road (TrafficJourneyTests' shape).
     private const string Native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     private sealed class Roads : IRoutePlanner, ITrafficRoutePlanner
     {
@@ -65,20 +65,12 @@ public sealed partial class PhysicalJourneyTests
         return engine;
     }
 
-    private static PhysicalJourneyLease Acquire(CitySimulator engine, int index = 0)
-    {
-        Assert.True(engine.TryAcquirePhysicalJourney(engine.State.Citizens[index].Identity.Id, out var lease));
-        return Assert.IsType<PhysicalJourneyLease>(lease);
-    }
-
     [Fact]
-    public void WalkLegsAreNeverLeasedAndArriveOnTheLogicalClock()
+    public void WalkLegsArriveOnTheLogicalClock()
     {
         var engine = Engine(); var c = engine.State.Citizens[0];
-        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out var lease)); Assert.Null(lease);
         engine.AdvanceTo(1446);
         Assert.Equal(60, engine.PositionOf(c).X);
-        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
         engine.AdvanceTo(2000);
         Assert.Equal(1, c.CompletedJourneys); Assert.Single(c.RecentVisits);
         Assert.Equal(1452, c.RecentVisits[0].AtMinute);
@@ -87,56 +79,26 @@ public sealed partial class PhysicalJourneyTests
     }
 
     [Fact]
-    public void TrafficLegLeaseEndsAtTrafficCompletionSoTheWalkAfterParkingIsNotFrozen()
+    public void TrafficLegsRunOnTheKernelClockAndTheWalkAfterParkingIsNotFrozen()
     {
         var engine = Driving(); var c = engine.State.Citizens[0];
-        var lease = Acquire(engine);
-        Assert.True(engine.Traffic!.Capture().Vehicles.Single().PhysicalControl);
-        // Report the whole section; the kernel completes the vehicle at its own pace and the lease ends with it.
-        for (double minute = 1441; minute < 1470 && engine.IsPhysicalJourneyValid(lease); minute += 1)
+        var plain = Driving();
+        double completed = double.NaN;
+        engine.Traffic!.VehicleCompleted += (id, at) => completed = at;
+        // Nobody reports progress: the kernel completes the vehicle at its own pace, never under physical control.
+        for (double minute = 1441; minute < 1470 && double.IsNaN(completed); minute += 1)
         {
-            engine.AdvanceTo(minute);
-            if (engine.IsPhysicalJourneyValid(lease)) engine.ObservePhysicalJourney(lease, 2.4);
+            engine.AdvanceTo(minute); plain.AdvanceTo(minute);
+            Assert.False(engine.Traffic.HasPhysicalControl);
         }
-        Assert.False(engine.IsPhysicalJourneyValid(lease));
+        Assert.False(double.IsNaN(completed));
         Assert.Equal(CitizenPhase.Travelling, c.Phase);
         Assert.Equal(TravelMode.Walk, engine.SampleJourney(c).Mode);
-        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
         // The walk runs on the logical clock: arrival exactly its leg minutes after the traffic completion.
-        double walking = c.NextEventMinute;
-        engine.AdvanceTo(walking + 1);
+        Assert.Equal(completed + 9.6, c.NextEventMinute, 9);
+        engine.AdvanceTo(c.NextEventMinute + 1); plain.AdvanceTo(engine.State.Minute);
         Assert.Equal(1, c.CompletedJourneys);
-    }
-
-    [Fact]
-    public void ReleasedAndForeignHandlesCannotControlReacquiredJourney()
-    {
-        var engine = Driving(); var old = Acquire(engine);
-        Assert.False(engine.TryAcquirePhysicalJourney(old.CitizenId, out _));
-        engine.ReleasePhysicalJourney(old); var current = Acquire(engine);
-        Assert.True(current.Generation > old.Generation);
-        Assert.False(engine.ObservePhysicalJourney(old, 0)); Assert.False(engine.ReleasePhysicalJourney(old));
-        Assert.False(Driving().ObservePhysicalJourney(current, 0));
-        var c = engine.State.Citizens[0]; c.Identity = new CitizenIdentity { Id = current.CitizenId };
-        Assert.False(engine.IsPhysicalJourneyValid(current)); Assert.False(engine.ObservePhysicalJourney(current, 0));
-    }
-
-    [Fact]
-    public void RemovedCitizenInvalidatesLease()
-    {
-        var engine = Driving(); var lease = Acquire(engine); engine.State.Citizens.Clear();
-        Assert.False(engine.TrySamplePhysicalJourney(lease, out _)); Assert.False(engine.ReleasePhysicalJourney(lease));
-        Assert.Throws<InvalidOperationException>(() => engine.AdvanceTo(1500));
-    }
-
-    [Theory]
-    [InlineData(-1)] [InlineData(double.NaN)] [InlineData(double.PositiveInfinity)] [InlineData(13)]
-    public void InvalidObservationCannotChangeProgress(double progress)
-    {
-        var engine = Driving(); var lease = Acquire(engine);
-        Assert.True(engine.TrySamplePhysicalJourney(lease, out var before));
-        Assert.Throws<ArgumentOutOfRangeException>(() => engine.ObservePhysicalJourney(lease, progress));
-        Assert.True(engine.TrySamplePhysicalJourney(lease, out var sample)); Assert.Equal(before.ElapsedMinutes, sample.ElapsedMinutes);
+        Assert.Equal(SaveCodec.Write(plain.State), SaveCodec.Write(engine.State));
     }
 
     [Theory]
@@ -155,7 +117,6 @@ public sealed partial class PhysicalJourneyTests
         };
         var sample = engine.SampleJourney(c, 2); Assert.True(sample.Stationary); Assert.Equal(mode, sample.NextMode);
         Assert.Equal(2, sample.RemainingLegMinutes); Assert.Equal(0, sample.Direction.X);
-        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
         sample = engine.SampleJourney(c, 4); Assert.Equal(2, sample.LegIndex); Assert.Equal(mode, sample.Mode);
         Assert.Equal(0, sample.LegFraction); Assert.Equal(1, sample.Direction.X);
         engine.AdvanceTo(1447);
@@ -224,7 +185,7 @@ public sealed partial class PhysicalJourneyTests
     }
 
     [Fact]
-    public void CompletedLeaseAtLargeFractionalClockCanSampleAndRetimeBeforeQueuedArrival()
+    public void CompletedJourneyAtLargeFractionalClockCanSampleAndRetimeBeforeQueuedArrival()
     {
         var random = new Random(3417);
         for (int example = 0; example < 128; example++)
@@ -237,7 +198,6 @@ public sealed partial class PhysicalJourneyTests
                     To = new Position(120.0 * (leg+1) / count,0,0), Minutes = .01 + random.NextDouble() * 70, Mode = TravelMode.Walk });
             c.DepartureMinute = state.Minute; c.NextEventMinute = state.Minute + c.Journey.Minutes;
             engine = new CitySimulator(state, new Planner());
-            Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
             // The completed state a traffic completion (or, before F2c, a walk lease) leaves: departure = clock - duration.
             double total = c.Journey.Minutes;
             c.DepartureMinute = state.Minute - total; c.NextEventMinute = state.Minute;
@@ -252,27 +212,4 @@ public sealed partial class PhysicalJourneyTests
             Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 3));
         }
     }
-
-    [Theory]
-    [InlineData(false)] [InlineData(true)]
-    public void ConstantTimeSlotGuardRejectsSameCountReplacementOrReordering(bool replace)
-    {
-        var engine = Driving(2); var lease = Acquire(engine); string id = lease.CitizenId;
-        if (replace) engine.State.Citizens[0] = new CitizenState { Identity = new CitizenIdentity { Id = id } };
-        else (engine.State.Citizens[0], engine.State.Citizens[1]) = (engine.State.Citizens[1], engine.State.Citizens[0]);
-        Assert.Equal(2, engine.State.Citizens.Count);
-        Assert.False(engine.IsPhysicalJourneyValid(lease)); Assert.False(engine.TrySamplePhysicalJourney(lease, out _));
-        Assert.False(engine.ObservePhysicalJourney(lease, 0)); Assert.False(engine.ReleasePhysicalJourney(lease));
-        Assert.False(engine.TryAcquirePhysicalJourney(id, out _));
-        Assert.Throws<InvalidOperationException>(() => engine.AdvanceTo(1500));
-    }
-
-    [Fact]
-    public void ConstantTimeSlotGuardAlsoRejectsAcquisitionAfterUnleasedReorder()
-    {
-        var engine = Driving(2); string id = engine.State.Citizens[0].Identity.Id;
-        (engine.State.Citizens[0], engine.State.Citizens[1]) = (engine.State.Citizens[1], engine.State.Citizens[0]);
-        Assert.False(engine.TryAcquirePhysicalJourney(id, out _));
-    }
-
 }

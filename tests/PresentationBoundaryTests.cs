@@ -14,8 +14,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2b (docs/plans/f2-movement.md Decision 3): bodies never write logical state, except the lease API
-// that F2c/F2d remove. Runtime cases use the production PhysicalPopulation with native scene doubles.
+// F2b (docs/plans/f2-movement.md Decision 3): bodies never write logical state. F2c removed the walker leases and F2d
+// the traffic leases, so no write remains. Runtime cases use the production PhysicalPopulation with native scene doubles.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PresentationBoundaryTests
 {
@@ -277,15 +277,16 @@ public sealed class PresentationBoundaryTests
     }
 
     // Every CitySimulator member that Runtime/Physical*.cs may reach through `simulation.`. Adding a member
-    // needs a reviewed change here. F2c removed TryHoldPhysicalDeparture and every walker lease call; the lease
-    // group remains for traffic legs until F2d empties it. F2e adds HoldForPlayer.
+    // needs a reviewed change here. F2c removed TryHoldPhysicalDeparture and every walker lease call; F2d removed the
+    // traffic lease group, so every member is read-only. F2e adds HoldForPlayer.
     private static readonly string[] ReadOnlyMembers = {
         "State", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
-        "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission",
+        "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen",
     };
-    private static readonly string[] LeaseMembers = {
+    // The removed lease surface (F2c, F2d). None of it may come back on CitySimulator or in Runtime.
+    private static readonly string[] RemovedLeaseMembers = {
         "TryAcquirePhysicalJourney", "ObservePhysicalJourney", "ReleasePhysicalJourney", "IsPhysicalJourneyValid",
-        "TrySamplePhysicalJourney",
+        "TrySamplePhysicalJourney", "TryHoldPhysicalDeparture",
     };
     // Core's own logical rules (rain, closing, phase, availability, partners), run before a save exactly as
     // PersistentCityMod runs them every frame. The answer does not depend on any body.
@@ -311,7 +312,7 @@ public sealed class PresentationBoundaryTests
             // Nothing is assigned through the simulator's state from presentation code.
             Assert.DoesNotMatch(new Regex(@"\bsimulation\s*\.\s*State\b[\w\.\[\]""]*\s*(=[^=>]|\+=|-=|\+\+|--)"), text);
         }
-        var allowed = new SortedSet<string>(ReadOnlyMembers.Concat(LeaseMembers).Concat(LogicalRefreshMembers), StringComparer.Ordinal);
+        var allowed = new SortedSet<string>(ReadOnlyMembers.Concat(LogicalRefreshMembers), StringComparer.Ordinal);
         Assert.Empty(used.Except(allowed));
         // The list stays exact: a member no longer used must be removed from it in the same change.
         Assert.Empty(allowed.Except(used));
@@ -319,14 +320,32 @@ public sealed class PresentationBoundaryTests
         // Every allowed member exists on CitySimulator.
         var members = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Select(m => m.Name).ToHashSet();
         Assert.All(allowed, name => Assert.Contains(name, members));
-        // F2c: the walker follow, its corrections and both tails read only; the lease API is reached only from the car paths.
+        // F2c: the walker follow, its corrections and both tails read only. F2d: so do the car command, the car follow,
+        // its corrections, fade and phase count.
         string population = File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs"));
-        int from = population.IndexOf("private bool ObserveWalker(", StringComparison.Ordinal), to = population.IndexOf("private bool ObserveCar(", StringComparison.Ordinal);
-        Assert.True(from > 0 && to > from);
-        var walker = new SortedSet<string>(Regex.Matches(population.Substring(from, to - from), @"\bsimulation\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)")
-            .Select(m => m.Groups[1].Value), StringComparer.Ordinal);
-        Assert.Empty(walker.Except(ReadOnlyMembers));
-        Assert.DoesNotContain("TryHoldPhysicalDeparture", typeof(CitySimulator).GetMembers().Select(m => m.Name));
+        SortedSet<string> Region(string start, string end)
+        {
+            int from = population.IndexOf(start, StringComparison.Ordinal), to = population.IndexOf(end, from + 1, StringComparison.Ordinal);
+            Assert.True(from > 0 && to > from, start);
+            return new SortedSet<string>(Regex.Matches(population.Substring(from, to - from), @"\bsimulation\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)")
+                .Select(m => m.Groups[1].Value), StringComparer.Ordinal);
+        }
+        Assert.Empty(Region("private bool ObserveWalker(", "private bool ObserveCar(").Except(ReadOnlyMembers));
+        var car = Region("private bool CarCommand(", "private bool Observe(Binding binding)");
+        car.UnionWith(Region("private bool ObserveCar(", "// Inspector picking"));
+        Assert.Equal(new[] { "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen" }, car);
+        // The lease type and its API are gone, and nothing in Runtime reaches the kernel's internal physical control.
+        var simulatorMembers = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+            .Select(m => m.Name).ToHashSet();
+        Assert.All(RemovedLeaseMembers, name => Assert.DoesNotContain(name, simulatorMembers));
+        Assert.Null(typeof(CitySimulator).Assembly.GetType("PersistentCity.Core.PhysicalJourneyLease"));
+        foreach (var file in Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs"))
+        {
+            string text = File.ReadAllText(file);
+            Assert.DoesNotMatch(new Regex(@"\b(SetPhysicalControl|ReportPhysicalProgress|PhysicalJourneyLease)\b"), text);
+            // F2d: a car body's model and paint are derived (CarAppearance), never written into the saved car.
+            Assert.DoesNotMatch(new Regex(@"\.\s*(ModelId|PaintSeed)\s*(=[^=>]|\?\?=)"), text);
+        }
         // The Runtime rain check is gone from the body paths; logical rain stays in Core.
         Assert.DoesNotContain("RainHelper", File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs")));
     }

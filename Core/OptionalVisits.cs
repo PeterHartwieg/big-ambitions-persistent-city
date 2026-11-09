@@ -16,7 +16,7 @@ namespace PersistentCity.Core
                 || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen) || InProgress(item)) return false;
             var person = item.Citizen; double now = State.Minute;
             if (person.Phase != CitizenPhase.AtPlace || person.MealOuting != null || person.Activity == Activity.Shop
-                || physicalJourneys.ContainsKey(citizenId) || trafficCitizens.ContainsKey(citizenId)
+                || trafficCitizens.ContainsKey(citizenId)
                 || latestReturnMinute > Math.Min(person.NextEventMinute, person.ActivityUntilMinute)) return false;
             if (!Position.Finite(returnMinutes) || returnMinutes <= 0 || !Position.Finite(stayMinutes) || stayMinutes <= 0
                 || stayMinutes > 120 || !Position.Finite(latestReturnMinute)) throw new ArgumentException("Invalid meal outing.");
@@ -124,7 +124,7 @@ namespace PersistentCity.Core
             var person = item.Citizen;
             double now = State.Minute;
             if (person.Phase != CitizenPhase.AtPlace || person.Activity != Activity.Home || person.PlaceId != person.HomeId
-                || physicalJourneys.ContainsKey(citizenId) || trafficCitizens.ContainsKey(citizenId)
+                || trafficCitizens.ContainsKey(citizenId)
                 || latestReturnMinute > Math.Min(person.NextEventMinute, person.ActivityUntilMinute)) return false;
             ValidateRoute(outward, places[person.HomeId].Position, shop.Position);
             if (outward.Legs.Any(l => l.Mode != TravelMode.Walk)) return false;

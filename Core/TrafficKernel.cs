@@ -49,6 +49,16 @@ namespace PersistentCity.Core
         public int VehicleCount => vehicles.Count;
         public int PendingEventCount => events.Count;
         public int LinkCount => links.Count;
+        /// <summary>Diagnostic counters for this kernel instance (F2d perf): link reconsiderations and processed link
+        /// events since construction or restore. Never saved; a forecast projection keeps its own.</summary>
+        public long Reconsiders { get; private set; }
+        public long ProcessedEvents { get; private set; }
+        /// <summary>F2d check: whether any vehicle is under physical control (only an older development city's saved
+        /// vehicle before Restore releases it). Scans the vehicles; for tests and harness checks, not per-frame mod work.</summary>
+        public bool HasPhysicalControl
+        {
+            get { foreach (var vehicle in vehicles.Values) if (vehicle.PhysicalControl) return true; return false; }
+        }
         public event Action<string, double>? VehicleCompleted;
         /// <summary>Stable detached closure-refresh set: demand/occupancy plus blocked heads' immediate receivers.</summary>
         public IEnumerable<int> RelevantLinkIds
@@ -138,6 +148,7 @@ namespace PersistentCity.Core
                 Clock = item.At;
                 Process(link);
                 processed++;
+                ProcessedEvents++;
             }
             bool reached = events.Count == 0 || events.Min!.At > targetMinute;
             if (reached) Clock = targetMinute;
@@ -172,7 +183,9 @@ namespace PersistentCity.Core
 
         private static bool SameDuration(double a, double b) => Math.Abs(a - b) <= 1e-9 * Math.Max(1, Math.Max(Math.Abs(a), Math.Abs(b)));
 
-        /// <summary>Acquisition/release preserves identity, demand order and occupied link. Call at the simulation cursor.</summary>
+        /// <summary>Acquisition/release preserves identity, demand order and occupied link. Call at the simulation cursor.
+        /// Kernel internal since F2d: the simulator never sets physical control, and Restore uses the release to resume an
+        /// older development city's saved physical vehicle in the background.</summary>
         public void SetPhysicalControl(string vehicleId, bool physicalControl)
         {
             TrafficVehicleState vehicle = FindVehicle(vehicleId);
@@ -194,6 +207,7 @@ namespace PersistentCity.Core
         /// <summary>
         /// Reports cannot grant queue priority or completion. The accepted coordinate is monotone and
         /// capped by permission; the native adapter must brake before MaximumNominalMinutes itself.
+        /// Kernel internal since F2d: no body reports progress, so the kernel never waits for one.
         /// </summary>
         public double ReportPhysicalProgress(string vehicleId, double nominalMinutes)
         {
@@ -206,6 +220,9 @@ namespace PersistentCity.Core
             if (vehicle.RouteIndex >= 0) Reconsider(links[vehicle.Route[vehicle.RouteIndex].LinkId]);
             return vehicle.NominalMinutes;
         }
+
+        /// <summary>F2d phase count: whether a link's kernel signal is green at Clock (true without a signal). Read-only.</summary>
+        public bool IsSignalGreen(int linkId) => (FindLink(linkId).Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
 
         public void SetLinkClosed(int linkId, bool closed)
         {
@@ -496,6 +513,7 @@ namespace PersistentCity.Core
 
         private void Reconsider(Link link)
         {
+            Reconsiders++;
             UpdateActivity(link);
             if (link.Queue.First != null)
             {
@@ -632,8 +650,8 @@ namespace PersistentCity.Core
                 rank++;
             }
             double progress = vehicle.PhysicalControl ? vehicle.NominalMinutes : maximum;
-            bool cross = rank == 0 && Math.Max(vehicle.ReadyAt, link.State.NextDischargeAt) <= Clock
-                && (link.Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
+            bool green = (link.Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
+            bool cross = rank == 0 && Math.Max(vehicle.ReadyAt, link.State.NextDischargeAt) <= Clock && green;
             if (cross && vehicle.RouteIndex + 1 < vehicle.Route.Count)
             {
                 Link destination = links[vehicle.Route[vehicle.RouteIndex + 1].LinkId];
@@ -641,7 +659,7 @@ namespace PersistentCity.Core
             }
             if (IsCurbExit(vehicle)) cross = CurbExitAt(link, queueNode!) <= Clock;
             return new TrafficVehicleSnapshot(vehicle.VehicleId, vehicle.RouteIndex, leg.LinkId, progress,
-                maximum, cross, vehicle.PhysicalControl, false, null);
+                maximum, cross, vehicle.PhysicalControl, false, null, green, leg.EndNominalMinutes);
         }
 
         public TrafficKernelState Capture()
@@ -667,7 +685,9 @@ namespace PersistentCity.Core
             return state;
         }
 
-        /// <summary>Restores a detached snapshot. By default, saved physical leases resume background travel from actual progress; false preserves exact leases for in-memory continuation.</summary>
+        /// <summary>Restores a detached snapshot. By default, a saved physically controlled vehicle (an older development
+        /// city; F2d never sets it) resumes background travel from its actual progress; false preserves it exactly, for
+        /// validation and clock retiming.</summary>
         public static TrafficKernel Restore(TrafficKernelState state, bool releasePhysicalControl = true)
             => Restore(state, releasePhysicalControl, false);
 

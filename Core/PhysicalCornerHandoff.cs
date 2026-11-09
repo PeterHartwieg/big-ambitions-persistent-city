@@ -3,15 +3,16 @@ using System;
 namespace PersistentCity.Core
 {
     /// <summary>
-    /// A native corner receipt consumes one measured marker. Its existing projection onto the
-    /// following leg is not a second movement. Hold that pose until traffic admits it, without
-    /// accepting any additional forward motion beyond the original receipt.
+    /// F2d: presentation only. When Gley reports a visible car past a road corner, its measured marker projects onto
+    /// the next leg. Until the kernel's coordinate reaches that projection, the command holds the car's pose and yaw,
+    /// so it does not swing into the new road ahead of the city. It never credits progress; the kernel decides
+    /// crossings on its own clock.
     /// </summary>
     public sealed class PhysicalCornerHandoff
     {
         private int leg = -1;
-        private Position from, to, marker;
-        private double along, nominal;
+        private Position from, to;
+        private double nominal;
 
         public void Begin(PhysicalJourneySample previous, PhysicalJourneySample next, Position reachedMarker)
         {
@@ -24,34 +25,17 @@ namespace PersistentCity.Core
             double start = next.ElapsedMinutes - next.LegFraction * next.LegMinutes;
             double pending = start + Math.Max(0, Math.Min(1, measured / length)) * next.LegMinutes;
             if (pending <= next.ElapsedMinutes) return;
-            leg = next.LegIndex; from = next.From; to = next.To; marker = reachedMarker;
-            along = measured; nominal = pending;
+            leg = next.LegIndex; from = next.From; to = next.To; nominal = pending;
         }
 
+        /// <summary>True while the car is on the handed-over leg and the cap (the kernel's coordinate) is still short of
+        /// the marker's projection. Clears itself otherwise.</summary>
         public bool MustHold(PhysicalJourneySample sample, double maximum)
         {
             if (leg != sample.LegIndex || !from.Equals(sample.From) || !to.Equals(sample.To)
                 || !Position.Finite(maximum) || maximum >= nominal)
             { leg = -1; return false; }
             return leg >= 0;
-        }
-
-        public bool TryHold(PhysicalJourneySample sample, Position actual, double maximum, out double accepted)
-            => TryHold(sample, actual, maximum, sample.ElapsedMinutes, out accepted);
-
-        public bool TryHold(PhysicalJourneySample sample, Position actual, double maximum, double observedMinutes, out double accepted)
-        {
-            accepted = observedMinutes;
-            if (!MustHold(sample, maximum) || !Position.Finite(observedMinutes) || observedMinutes < 0
-                || maximum < observedMinutes || (maximum < sample.ElapsedMinutes
-                    && !PhysicalTrafficCornerPermission.IsNormalizedBoundary(sample, observedMinutes))
-                || !TryAlong(sample, actual, out double measured, out _)
-                || !PhysicalTrafficPrecision.TryGetHorizontalAllowance(marker, actual, out double tolerance)
-                || measured > along + tolerance) return false;
-            // PhysicalProgress already checks the current leg's height/cross-track geometry.
-            // Credit at most the traffic kernel's current permission, never the unadmitted pose.
-            accepted = maximum;
-            return true;
         }
 
         private static bool TryAlong(PhysicalJourneySample sample, Position actual, out double measured, out double length)

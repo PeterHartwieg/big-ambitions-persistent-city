@@ -3,7 +3,8 @@
 //        [--arms <substring,...>] [--out <file.json>] [--dump <directory>] [--no-self-checks]
 // Runs the self-checks, then every arm and its bodies-off reference, prints one line per arm and
 // writes the full JSON (schema persistentcity-f2a-movement-1). Exit code 1 if a self-check fails.
-// Divergence of body arms from bodies-off is today's expected result (red), not a failure.
+// Since F2d (cars follow the traffic kernel) every body arm is expected to equal its bodies-off run; a DIFFERS line
+// is a regression. Before F2d the mixed-city arms were the recorded divergence (red).
 using System;
 using System.Collections.Generic;
 using System.Globalization;

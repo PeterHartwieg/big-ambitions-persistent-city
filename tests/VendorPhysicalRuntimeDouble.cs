@@ -135,15 +135,24 @@ namespace PersistentCity.Runtime
     }
     internal sealed class MultimodalRoutes
     {
+        // F2d: car tests opt in to a road sample at the journey pose; every other test keeps cars without bodies.
+        internal static bool CarSamples;
         internal bool ReadyForPopulation => true;
         internal object ResolveWaypoint(int _) => new();
         internal bool TryPhysicalRoadSample(CitizenState c, PhysicalJourneySample s, out PhysicalRoadSample sample)
-        { sample = default; return false; }
+        { sample = new PhysicalRoadSample { Position = s.Position }; return CarSamples; }
     }
-    internal struct PhysicalRoadSample { }
+    internal struct PhysicalRoadSample { internal Position Position; }
+    // Native car pool double (F2d). A body moves only when a test drives it: Drive applies the production CommandLimit
+    // the way the native fixed step does, at a native speed the test chooses, and raises Gley's reached marker at a
+    // corner the test names.
     internal sealed class PhysicalVehicles : IDisposable
     {
-        internal PhysicalVehicles(Func<int, object> _, int __) { }
+        internal static PhysicalVehicles? Last;
+        private readonly int maximum;
+        internal readonly Dictionary<string, PhysicalVehicleBody> Active = new();
+        internal int Acquisitions;
+        internal PhysicalVehicles(Func<int, object> _, int maximum) { this.maximum = maximum; Last = this; }
         internal Action? SuspendForNativeFastForward;
         internal Func<PhysicalVehicleBody, PhysicalTrafficCommandLimit>? CommandLimit;
         internal Func<PhysicalVehicleBody, int, bool>? NativeTargetPermission;
@@ -155,21 +164,68 @@ namespace PersistentCity.Runtime
         internal bool Activate() => true;
         internal void AssertHealthy() { }
         internal void Update() { }
-        internal bool TryAcquire(CitizenState c, PhysicalRoadSample s, out PhysicalVehicleBody? body) { body = null; return false; }
-        internal void Release(PhysicalVehicleBody _) { }
-        public void Dispose() { }
+        internal bool TryAcquire(CitizenState c, PhysicalRoadSample s, out PhysicalVehicleBody? body)
+        {
+            body = null;
+            if (Active.ContainsKey(c.Identity.Id) || Active.Count >= maximum) return false;
+            body = new PhysicalVehicleBody(c.Identity.Id, s.Position); Active.Add(c.Identity.Id, body); Acquisitions++;
+            return true;
+        }
+        internal void Release(PhysicalVehicleBody body)
+        {
+            if (!Active.TryGetValue(body.CitizenId, out var current) || !ReferenceEquals(current, body)) return;
+            if (body.Valid) body.SetFade(1);
+            Active.Remove(body.CitizenId); body.Valid = false;
+        }
+        /// <summary>One native fixed step for every car: move along the commanded direction by at most the command's
+        /// advance (nothing while held), at <paramref name="speed"/> metres per second; a car standing on a corner
+        /// <paramref name="corner"/> returns raises Gley's reached marker for it.</summary>
+        internal static float LastStepSeconds = 1 / 60f;
+        internal bool? NativeRed(PhysicalVehicleBody body) => body.NativeRed;
+        internal void Drive(float seconds, double speed, Func<PhysicalVehicleBody, Position?>? corner = null)
+        {
+            LastStepSeconds = seconds;
+            foreach (var body in new List<PhysicalVehicleBody>(Active.Values))
+            {
+                if (!body.Valid || CommandLimit == null) continue;
+                var limit = CommandLimit(body);
+                double step = limit.HoldPosition ? 0 : Math.Min(limit.MaximumAdvance, speed * body.Pace * seconds);
+                var d = limit.Direction;
+                body.Moved = step;
+                body.Position = new Position(body.Position.X + d.X * step, body.Position.Y + d.Y * step, body.Position.Z + d.Z * step);
+                var at = corner?.Invoke(body);
+                if (at.HasValue && Position.Distance(body.Position, at.Value) <= 1e-6) body.Reach(at.Value);
+            }
+        }
+        public void Dispose() { foreach (var body in Active.Values) body.Valid = false; Active.Clear(); }
     }
     internal sealed class PhysicalVehicleBody
     {
-        internal Position Position => default;
-        internal string CitizenId => "";
-        internal bool Valid => true;
-        internal bool TryPeekReached(Position p, out Position marker) { marker = default; return false; }
-        internal bool ConsumeReached(Position p) => false;
-    }
-    internal readonly struct PhysicalTrafficCommandLimit
-    {
-        internal PhysicalTrafficCommandLimit(Position _, double __, bool ___) { }
+        internal PhysicalVehicleBody(string citizenId, Position at) { CitizenId = citizenId; Position = at; }
+        internal Position Position;
+        internal string CitizenId { get; }
+        internal bool Valid = true;
+        // Native speed multiple a test can lower (a slow car), and the advance of the last Drive step.
+        internal double Pace = 1, Moved;
+        private readonly Queue<Position> reached = new();
+        internal void Reach(Position corner) { if (reached.Count == 0 || Position.Distance(reached.Peek(), corner) > .01) reached.Enqueue(corner); }
+        internal bool TryPeekReached(Position p, out Position marker)
+        {
+            marker = default;
+            if (!Valid || reached.Count == 0 || Position.Distance(reached.Peek(), p) > .01) return false;
+            marker = reached.Peek(); return true;
+        }
+        internal bool ConsumeReached(Position p) { if (!TryPeekReached(p, out _)) return false; reached.Dequeue(); return true; }
+        // F2d follower hooks: native speed (from the last Drive step), the test-controlled on-screen flag,
+        // whether the car's materials can fade, and the fade itself.
+        internal double Speed => Moved / Math.Max(1e-6, PhysicalVehicles.LastStepSeconds);
+        internal bool OnScreen;
+        internal bool CanFade;
+        internal float Alpha = 1;
+        internal readonly List<float> Fades = new();
+        internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
+        // Gley's target waypoint light for this car: true red, false green, null unknown.
+        internal bool? NativeRed;
     }
     internal sealed class Actor
     {

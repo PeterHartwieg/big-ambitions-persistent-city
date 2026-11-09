@@ -100,7 +100,7 @@ namespace PersistentCity.Core
             // set while CompleteEvent rewrites its sort key, duplicating the resident and breaking the order.
             due.Clear();
             foreach (var item in citizenEvents.Values)
-                if (!InProgress(item) && !trafficCitizens.ContainsKey(item.Citizen.Identity.Id) && !physicalJourneys.ContainsKey(item.Citizen.Identity.Id))
+                if (!InProgress(item) && !trafficCitizens.ContainsKey(item.Citizen.Identity.Id))
                 { item.Minute = ScheduledMinute(item.Citizen); due.Add(item); }
         }
 
@@ -146,7 +146,6 @@ namespace PersistentCity.Core
                 foreach (var leg in mapped) traffic.SetLinkClosed(leg.LinkId, planner.IsTrafficLinkClosed(leg.LinkId));
             traffic.Enqueue(citizen.Identity.Id, mapped);
             trafficCitizens.Add(citizen.Identity.Id, citizen);
-            if (physicalJourneys.ContainsKey(citizen.Identity.Id)) traffic.SetPhysicalControl(citizen.Identity.Id, true);
             return true;
         }
 
@@ -185,8 +184,6 @@ namespace PersistentCity.Core
             citizen.NextEventMinute = at + Math.Max(0, citizen.Journey.Minutes - progress);
             trafficCitizens.Remove(id);
             traffic.RemoveCompleted(id);
-            // F2c: a lease covers the traffic leg only. The walk after parking follows the logical clock.
-            physicalJourneys.Remove(id);
             var item = citizenEvents[id];
             item.Minute = citizen.NextEventMinute;
             if (!due.Add(item)) throw new InvalidOperationException("Traffic completion duplicated a resident event.");
@@ -195,7 +192,6 @@ namespace PersistentCity.Core
         private double JourneyProgress(CitizenState citizen)
         {
             if (traffic != null && traffic.TryGetVehicle(citizen.Identity.Id, out var vehicle)) return vehicle.NominalMinutes;
-            if (physicalJourneys.TryGetValue(citizen.Identity.Id, out var lease)) return lease.Progress;
             double elapsed = State.Minute - citizen.DepartureMinute;
             return citizen.Journey == null ? elapsed : NormalizeJourneyElapsed(elapsed, citizen.Journey.Minutes, State.Minute);
         }
@@ -204,6 +200,28 @@ namespace PersistentCity.Core
         {
             permission = default;
             return traffic != null && traffic.TryGetVehicle(citizenId, out permission);
+        }
+
+        /// <summary>F2d phase count: whether the kernel signal of the road section that holds route minute
+        /// <paramref name="routeMinutes"/> of this person's committed journey is green now. A point at a section's end
+        /// belongs to that section (a car waits there to cross). False when the point maps to no section. Read-only; it
+        /// compares the kernel's current phase at a visible car's own junction, never a past crossing.</summary>
+        public bool TryGetTrafficSignalGreen(CitizenState citizen, double routeMinutes, out bool green)
+        {
+            green = false;
+            if (citizen == null) throw new ArgumentNullException(nameof(citizen));
+            if (traffic == null || trafficNetwork == null || citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null
+                || !Position.Finite(routeMinutes)) return false;
+            double tolerance = JourneyClockTolerance(State.Minute, citizen.Journey.Minutes);
+            if (!trafficNetwork.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, routeMinutes), mappingSpans)) return false;
+            foreach (var span in mappingSpans)
+                if (routeMinutes <= span.EndNominalMinutes + tolerance)
+                {
+                    if (routeMinutes + tolerance < span.StartNominalMinutes) return false;
+                    green = traffic.IsSignalGreen(span.LinkId);
+                    return true;
+                }
+            return false;
         }
 
         // Food retries run at a logical event time, independently of snapshot publication.
@@ -231,14 +249,16 @@ namespace PersistentCity.Core
         private void CaptureTraffic()
         {
             SynchronizeSnapshot();
-            State.Traffic = traffic?.Capture();
+            var captured = traffic?.Capture();
+            // F2d: no traffic leg is ever under physical control. Restore releases a saved one, and nothing sets it again,
+            // so the writer never emits PhysicalControl = true. The field stays on the wire for older development cities.
+            if (captured != null)
+                foreach (var vehicle in captured.Vehicles)
+                    if (vehicle.PhysicalControl) throw new InvalidOperationException("A traffic vehicle is under physical control; F2d bodies follow the kernel.");
+            State.Traffic = captured;
         }
 
         /// <summary>Publish progress after a batch of budgeted native-frame slices. Saving also calls this.</summary>
-        public void SynchronizeSnapshot()
-        {
-            SynchronizePhysicalJourneys();
-            SynchronizeTrafficJourneys();
-        }
+        public void SynchronizeSnapshot() => SynchronizeTrafficJourneys();
     }
 }

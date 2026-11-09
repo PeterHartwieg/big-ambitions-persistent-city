@@ -79,12 +79,12 @@ public sealed class MovementEquivalenceTests
     }
 
     [Fact]
-    public void DriverDoubleLeasesCarsAndFollowsWalkers()
+    public void DriverDoubleFollowsCarsAndWalkers()
     {
         var m = BodiesRun.Value.Metrics;
         Assert.True(m["bodies.walkerFrames"] > 0 && m["bodies.carFrames"] > 0);
-        Assert.True(m["bodies.leaseObservations"] > 0);
-        Assert.True(m["walkers.lagSamples"] > 0);
+        Assert.True(m["walkers.lagSamples"] > 0 && m["cars.lagSamples"] > 0);
+        Assert.True(m["cars.handoffs"] > 0, "a car reaching its parking point hands over to a walker");
         Assert.True(m["bodies.maxWalkers"] <= 48 && m["bodies.maxCars"] <= 24);
         var failures = MovementRun.Run(Small(o => o.Bodies.AcquisitionFailurePercent = 50));
         Assert.True(failures.Metrics["bodies.failedAcquisitions"] > 0);
@@ -128,7 +128,7 @@ public sealed class MovementEquivalenceTests
         }
         var stationary = MovementRun.Run(Walking());
         Assert.True(stationary.Metrics["bodies.walkerFrames"] > 0 && stationary.Metrics["walkers.lagSamples"] > 0);
-        Assert.Equal(0, stationary.Metrics["bodies.leaseObservations"]);
+        Assert.Equal(0, stationary.Metrics["cars.lagSamples"]);
         Equal(stationary, plain, "stationary");
         Equal(MovementRun.Run(Walking(o => o.Focus = FocusPath.Sweep)), plain, "sweep");
         Equal(MovementRun.Run(Walking(o => { o.Bodies.Pedestrians = 256; o.Bodies.Vehicles = 64; })), plain, "caps 256");
@@ -145,14 +145,41 @@ public sealed class MovementEquivalenceTests
         Assert.True(stationary.Metrics["walkers.moves"] > 0);
     }
 
-    /// <summary>Recorded divergence of the mixed city, whose cars still hold traffic leases until F2d (expected red).
-    /// F2d flips this assertion to equality.</summary>
+    /// <summary>F2d: cars follow the traffic kernel, so in the mixed city (walkers and cars on the capacity-2 signalled
+    /// grid) every body arm equals bodies-off at the same cadence (E1): focus paths, caps, native lag including slow
+    /// visible head cars, acquisition failures, cadence, a mid-journey reload with bodies bound and hidden travel.
+    /// Equality covers save bytes, sales, journeys, parked cars, wallets and per-link FIFO order. Before F2d this was
+    /// the recorded divergence (red).</summary>
     [Fact]
-    public void TodayBodyArmsDivergeFromBodiesOff()
+    public void MixedCityBodyArmsEqualBodiesOff()
     {
-        var comparison = Equivalence.Compare(BodiesRun.Value, PlainRun.Value);
-        Assert.False(comparison.Identical);
-        Assert.False(comparison.Equal["save"]);
+        void Equal(MovementResult arm, MovementResult reference, string name)
+        {
+            var comparison = Equivalence.Compare(arm, reference);
+            Assert.True(comparison.Identical, name + ": " + string.Join(" ", comparison.Equal.Where(e => !e.Value).Select(e => e.Key)));
+        }
+        var stationary = BodiesRun.Value;
+        Assert.True(stationary.Metrics["bodies.carFrames"] > 0 && stationary.Metrics["cars.lagSamples"] > 0);
+        Assert.True(PlainRun.Value.QueuedFifoSamples > 0);
+        Equal(stationary, PlainRun.Value, "stationary");
+        Equal(MovementRun.Run(Small(o => o.Focus = FocusPath.Sweep)), PlainRun.Value, "sweep");
+        Equal(MovementRun.Run(Small(o => o.Focus = FocusPath.AwayReturn)), PlainRun.Value, "away/return");
+        Equal(MovementRun.Run(Small(o => { o.Bodies.Pedestrians = 1; o.Bodies.Vehicles = 1; })), PlainRun.Value, "caps 1/1");
+        Equal(MovementRun.Run(Small(o => { o.Bodies.Pedestrians = 256; o.Bodies.Vehicles = 64; })), PlainRun.Value, "caps 256/64");
+        Equal(MovementRun.Run(Small(o => o.Bodies.Lag = LagModel.Ideal)), PlainRun.Value, "ideal lag");
+        var slow = MovementRun.Run(Small(o => o.Bodies.Lag = LagModel.SlowHeadCar));
+        Assert.True(slow.Metrics["cars.corrections"] > 0 || slow.Metrics["cars.catchUpFrames"] > 0, "slow head cars fall behind the kernel");
+        Equal(slow, PlainRun.Value, "slow visible head cars");
+        var failures = MovementRun.Run(Small(o => o.Bodies.AcquisitionFailurePercent = 50));
+        Assert.True(failures.Metrics["bodies.failedAcquisitions"] > 0);
+        Equal(failures, PlainRun.Value, "50 % acquisition failures");
+        Equal(MovementRun.Run(Small(o => o.Bodies.AcquisitionFailurePercent = 10)), PlainRun.Value, "10 % acquisition failures");
+        var reload = MovementRun.Run(Small(o => o.ReloadMidJourney = true));
+        Assert.True(reload.BodiesAtReload > 0);
+        Equal(reload, PlainRun.Value, "reload with bodies bound");
+        Equal(MovementRun.Run(Small(o => o.HiddenTravel = true)), MovementRun.Run(Plain(o => o.HiddenTravel = true)), "hidden travel");
+        foreach (int fps in new[] { 30, 120 })
+            Equal(MovementRun.Run(Small(o => o.FramesPerSecond = fps)), MovementRun.Run(Plain(o => o.FramesPerSecond = fps)), fps + " fps");
     }
 
     [Fact]

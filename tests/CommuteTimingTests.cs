@@ -80,7 +80,6 @@ public sealed class CommuteTimingTests
         var state = City(); var c = state.Citizens[0]; var shift = DailyRoutine.WorkOnDay(c, state.Seed, state.Minute)!.Value;
         var engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(shift.StartsAt - 120);
         // F2c: a body cannot bring an arrival forward. An early arrival is a completed journey at this minute.
-        Assert.False(engine.TryAcquirePhysicalJourney(c.Identity.Id, out _));
         engine.AdvanceTo(state.Minute + 1);
         c.DepartureMinute = state.Minute - c.Journey!.Minutes; c.NextEventMinute = state.Minute;
         engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(state.Minute);

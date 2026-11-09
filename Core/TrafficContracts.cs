@@ -80,11 +80,12 @@ namespace PersistentCity.Core
     public readonly struct TrafficVehicleSnapshot
     {
         internal TrafficVehicleSnapshot(string vehicleId, int routeIndex, int? linkId, double progress,
-            double maximum, bool canCross, bool physical, bool completed, double? completedAt)
+            double maximum, bool canCross, bool physical, bool completed, double? completedAt,
+            bool signalGreen = true, double linkEndNominalMinutes = double.NaN)
         {
             VehicleId = vehicleId; RouteIndex = routeIndex; LinkId = linkId; NominalMinutes = progress;
             MaximumNominalMinutes = maximum; CanCrossBoundary = canCross; PhysicalControl = physical;
-            IsCompleted = completed; CompletedAt = completedAt;
+            IsCompleted = completed; CompletedAt = completedAt; SignalGreen = signalGreen; LinkEndNominalMinutes = linkEndNominalMinutes;
         }
         public string VehicleId { get; }
         /// <summary>-1 while waiting outside finite link storage.</summary>
@@ -97,6 +98,11 @@ namespace PersistentCity.Core
         public bool PhysicalControl { get; }
         public bool IsCompleted { get; }
         public double? CompletedAt { get; }
+        /// <summary>F2d: the occupied link's kernel signal is green now (true without a signal or a link). Read-only,
+        /// for the visible car's phase-mismatch count; never a native signal change.</summary>
+        public bool SignalGreen { get; }
+        /// <summary>F2d: route minutes at the far end of the occupied link's leg; NaN without a link.</summary>
+        public double LinkEndNominalMinutes { get; }
     }
 
     public readonly struct TrafficLinkForecast

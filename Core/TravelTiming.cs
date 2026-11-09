@@ -4,7 +4,8 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Retimes persisted travel before constructing a simulator, after releasing all physical leases.</summary>
+    /// <summary>Retimes persisted travel before constructing a simulator. A saved physically controlled vehicle (older
+    /// development cities only) keeps its exact progress here; constructing the simulator releases it.</summary>
     public static class TravelTiming
     {
         private const double MaxMinute = 1000000000;
@@ -55,7 +56,7 @@ namespace PersistentCity.Core
         /// migrate their remaining geometry to native pace. Version one rescales only remaining movement
         /// when the clock rate changes; stationary waits retain game minutes. Completed time and
         /// the departure anchor remain untouched.
-        /// The caller must release leases and call PrepareForSave first, then reconstruct its simulator
+        /// The caller must call PrepareForSave first (bodies hold no logical state since F2d), then reconstruct its simulator
         /// after a true result. Invalid conversion does not mutate the supplied snapshot or its owner.
         /// A 512-leg route inside native car movement cannot add the provenance-preserving split and
         /// is rejected atomically, including before traffic admission. Other occupied partial movement
