@@ -197,14 +197,41 @@ class InvalidationTests(unittest.TestCase):
         w = synthetic.window('c')
         rows = [dict(frame=i, modWorkMs=0.5, wholeFrameMs=16.0, observerMs=0.01, diagnostic=i == 0) for i in range(50)]
         del w['frames']
-        w['probe'] = dict(status=dict(timing_coverage_complete=True, cross_frame_scopes=0), frames=rows)
+        status = dict(timing_coverage_complete=True, event_dropped=0, frame_dropped=0, timed_exceptions=0, cross_frame_scopes=0,
+                      off_main_callbacks=0, error='', measuring=False)
+        w['probe'] = dict(status=dict(status), frames=rows)
         entry = win(run(w), 'c')
-        self.assertTrue(entry['valid'])
+        self.assertTrue(entry['valid'], entry['invalid_reasons'])
         self.assertEqual((entry['frames'], entry['clean_frames'], entry['diagnostic_frames']), (50, 49, 1))
+        self.assertEqual(entry['gc_collections'], 'unknown')  # the E5b frame shape has no GC count
         w['probe']['status']['cross_frame_scopes'] = 1
         self.assertIn('receipt failed: probe_flags', win(run(w), 'c')['invalid_reasons'])
-        w['probe']['status'] = dict(timing_coverage_complete=False)
+        w['probe']['status'] = dict(status, timing_coverage_complete=False)
         self.assertIn('receipt failed: probe_coverage', win(run(w), 'c')['invalid_reasons'])
+
+    def test_missing_probe_status_fields_fail_closed(self):
+        w = synthetic.window('c')
+        del w['frames']
+        w['probe'] = dict(status=dict(timing_coverage_complete=True),
+                          frames=[dict(frame=i, modWorkMs=0.5, wholeFrameMs=16.0) for i in range(10)])
+        entry = win(run(w), 'c')
+        self.assertFalse(entry['valid'])
+        self.assertIn('receipt failed: probe_flags', entry['invalid_reasons'])
+        for field in analyze.PROBE_STATUS_FIELDS:
+            self.assertIn(f'probe flag: status_field_missing:{field}', entry['invalid_reasons'])
+
+    def test_absent_gc_is_unknown_not_zero(self):
+        mod = [0.5] * 100
+        mod[3] = 31.0
+        measured = synthetic.window('m', mod=mod)
+        r = run(measured)
+        self.assertEqual((r['spikes'][0]['gc'], win(r, 'm')['gc_collections']), (0, 0))
+        absent = synthetic.window('a', mod=mod)
+        del absent['frames'][3]['gc']
+        r = run(absent)
+        self.assertEqual(r['spikes'][0]['gc'], 'unknown')
+        self.assertEqual((win(r, 'a')['gc_collections'], win(r, 'a')['gc_unknown_frames']), ('unknown', 1))
+        self.assertIn('| unknown |', report.render_markdown(r))
 
 
 class SourceTests(unittest.TestCase):
@@ -266,6 +293,20 @@ class PairingTests(unittest.TestCase):
                 self.assertIsNone(pair['reference'])
                 self.assertEqual(pair['verdict'], 'not established')
 
+    def test_valid_rerun_replaces_invalid_reference(self):
+        cand = synthetic.window('c', presented=[12.0] * 100)
+        r1 = synthetic.window('r1', build='reference', presented=[11.0] * 100)
+        r1['receipts']['focused'] = 'fail'
+        r2 = synthetic.window('r2', build='reference', presented=[11.0] * 100)
+        pair = run(cand, r1, r2)['pairs'][0]
+        self.assertEqual((pair['reference'], pair['verdict']), ('r2', 'pass'))
+
+    def test_two_valid_windows_with_one_label_are_refused(self):
+        with self.assertRaisesRegex(analyze.Refused, 'two valid reference windows'):
+            run(synthetic.window('c'), synthetic.window('r1', build='reference'), synthetic.window('r2', build='reference'))
+        with self.assertRaisesRegex(analyze.Refused, 'two valid candidate windows'):
+            run(synthetic.window('c1'), synthetic.window('c2'))
+
     def test_invalid_reference_gives_no_delta(self):
         cand = synthetic.window('c', presented=[12.0] * 100)
         ref = synthetic.window('r', build='reference', presented=[11.0] * 100)
@@ -303,6 +344,30 @@ class RowTests(unittest.TestCase):
         w['native_speed'] = 6
         self.assertEqual(win(run(w), 'c')['rows']['S3']['verdict'], 'n/a')
 
+    def s4(self, holds, lags, **overrides):
+        w = synthetic.window('c', **overrides)
+        w['accounting'] = dict(clock_misses=0, lag_samples=lags, holds=holds)
+        return win(run(w), 'c')['rows']['S4']
+
+    def test_s4_needs_evidence_of_recovery(self):
+        # A hold still open at window end with lag 0.8: unresolved, never pass.
+        ongoing = self.s4([dict(start_s=295.0, end_s=300.0, ongoing=True)], [[0, 0.0], [300.0, 0.8]])
+        self.assertEqual(ongoing['verdict'], 'not established')
+        # Samples prove lag stayed above 0.1 more than 5 s after a closed hold: fail.
+        late = self.s4([dict(start_s=8.0, end_s=9.0)], [[0, 0.0], [10.0, 0.5], [15.0, 0.4], [20.0, 0.3]])
+        self.assertEqual(late['verdict'], 'fail')
+        # Recovered, but only 8 s after the hold: fail.
+        slow = self.s4([dict(start_s=8.0, end_s=9.0)], [[0, 0.0], [17.0, 0.05]])
+        self.assertEqual((slow['verdict'], slow['value']), ('fail', 8.0))
+        # No sample after the hold ends inside the window: unresolved.
+        unsampled = self.s4([dict(start_s=8.0, end_s=9.0)], [[0, 0.0], [12.0, 0.4]])
+        self.assertEqual(unsampled['verdict'], 'not established')
+        # Stalls without holds need stall-time alignment (F4c): not established, never pass.
+        stalled = self.s4([], [[0, 0.0], [300.0, 0.0]], presented=[10.0] * 99 + [60.0])
+        self.assertEqual(stalled['verdict'], 'not established')
+        self.assertIn('stall-time alignment', stalled['reason'])
+        self.assertEqual(self.s4([], [[0, 0.0], [300.0, 0.0]])['verdict'], 'pass')
+
     def test_p3_stalls(self):
         presented = [10.0] * 97 + [60.0, 60.0, 60.0]
         self.assertEqual(win(run(synthetic.window('c', presented=presented)), 'c')['rows']['P3']['verdict'], 'fail')
@@ -315,27 +380,65 @@ class RowTests(unittest.TestCase):
 
     def test_stress_arm_is_recorded_but_not_in_overall(self):
         primary = synthetic.window('p')
-        stress = synthetic.window('s', arm='stress', mod=[8.0] * 100, repetition=2)
+        stress_mod = [8.0] * 100
+        stress_mod[5] = 40.0
+        stress = synthetic.window('s', arm='stress', mod=stress_mod, repetition=2)
+        alone = run(synthetic.window('p'))
         r = run(primary, stress)
-        self.assertEqual(r['rows']['M1']['verdict'], 'pass')
+        self.assertEqual(r['rows'], alone['rows'])  # adding stress windows leaves primary results unchanged
+        self.assertEqual(r['rows']['M2']['count'], 0)
         self.assertEqual(r['secondary_arm_rows']['M1']['verdict'], 'fail')
-        self.assertEqual(set(r['secondary_arm_rows']), {'M1', 'S1', 'S2'})
+        self.assertEqual(r['secondary_arm_rows']['M2']['count'], 1)
+        self.assertEqual(set(r['secondary_arm_rows']), {'M1', 'M2', 'S1', 'S2'})
 
-    def test_overall_needs_every_row(self):
-        cand = synthetic.window('c', presented=[11.5] * 100)
+    MEASUREMENTS = dict(
+        S5=dict(hours=[dict(real_s=120, unheld_real_s=100)], days=[dict(real_s=110, unheld_real_s=100)], s1_s2_hold=True),
+        L1=dict(samples_s=[40.0]), L2=dict(samples_ms=[31.0, 20.0]), L3=dict(samples_s=[12.0]),
+        L4=dict(real_s=30.0, reference_real_s=20.0, s1_s2_hold=True), R1=dict(heap_mb_per_day=[1000, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.58]))
+
+    def complete(self, density=None):
+        cand = synthetic.window('c', presented=[11.5] * 100, density=density or dict(median_pedestrians=40, median_cars=14))
         ref = synthetic.window('r', build='reference', presented=[11.0] * 100)
         e = synthetic.export([cand, ref])
-        r = analyze.analyze([e], CONTRACT)
-        self.assertEqual(r['overall'], 'not established')  # S5, L1-L4, R1 have no records
-        e['measurements'] = dict(
-            S5=dict(hours=[dict(real_s=120, unheld_real_s=100)], days=[dict(real_s=110, unheld_real_s=100)], s1_s2_hold=True),
-            L1=dict(samples_s=[40.0]), L2=dict(samples_ms=[31.0, 20.0]), L3=dict(samples_s=[12.0]),
-            L4=dict(real_s=30.0, reference_real_s=20.0, s1_s2_hold=True), R1=dict(heap_mb_per_day=[1000, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.58]))
+        e['measurements'] = copy.deepcopy(self.MEASUREMENTS)
+        return e
+
+    def test_overall_needs_every_row(self):
+        e = self.complete()
+        del e['measurements']
+        self.assertEqual(analyze.analyze([e], CONTRACT)['overall'], 'not established')  # S5, L1-L4, R1 have no records
+        e = self.complete()
         r = analyze.analyze([e], CONTRACT)
         self.assertEqual(r['overall'], 'pass', {k: v['verdict'] for k, v in r['rows'].items()})
         self.assertEqual(r['rows']['L2']['flagged'], [31.0])
         e['measurements']['L2'] = dict(samples_ms=[51.0])
         self.assertEqual(analyze.analyze([e], CONTRACT)['overall'], 'fail')
+
+    def test_dense_street_coverage_gates_overall(self):
+        for density in (dict(median_pedestrians=5, median_cars=0), dict(median_pedestrians=40, median_cars=11),
+                        dict(median_pedestrians=35, median_cars=20)):
+            with self.subTest(**density):
+                r = analyze.analyze([self.complete(density)], CONTRACT)
+                self.assertTrue(win(r, 'c')['valid'])  # not dense stays valid for its other rows
+                self.assertEqual(r['rows']['M1']['verdict'], 'pass')
+                self.assertEqual(r['rows']['dense_street']['verdict'], 'not established')
+                self.assertEqual(r['overall'], 'not established')
+        e = self.complete()
+        del e['windows'][0]['density']
+        self.assertEqual(analyze.analyze([e], CONTRACT)['overall'], 'not established')
+
+    def test_r1_needs_all_three_soak_days(self):
+        e = self.complete()
+        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020], m1_p95_per_day=[0.5, 0.55])
+        r = analyze.analyze([e], CONTRACT)
+        self.assertEqual((r['rows']['R1']['verdict'], r['overall']), ('not established', 'not established'))
+        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020, 1100], m1_p95_per_day=[0.5, 0.55, 0.58])  # day 3 heap +7.8 %
+        self.assertEqual(analyze.analyze([e], CONTRACT)['rows']['R1']['verdict'], 'fail')
+        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.65])  # day 3 M1 drift 30 %
+        self.assertEqual(analyze.analyze([e], CONTRACT)['rows']['R1']['verdict'], 'fail')
+        e['measurements']['R1'] = dict(heap_mb_per_day=[0, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.58])
+        with self.assertRaisesRegex(analyze.Refused, 'R1 heap'):
+            analyze.analyze([e], CONTRACT)
 
 
 class SummaryLineTests(unittest.TestCase):
@@ -400,6 +503,23 @@ class SummaryLineTests(unittest.TestCase):
         self.assertEqual(spikes[20]['component'], 'PhysicalPopulation.Update')
         self.assertEqual(r['rows']['M2']['verdict'], 'flag')
         self.assertIn('route-planning', report.render_markdown(r))
+
+    def test_per_call_record_stands_in_for_an_unbound_component(self):
+        mod = [0.5] * 100
+        mod[10] = 43.0
+        w = synthetic.window('c', mod=mod, summary_lines=[SUMMARY_FIXTURE[0]])
+        for f in w['frames']:
+            f['components'] = {}  # AdvancePopulation component-unbound
+        w['advance_calls'] = [dict(frame=10, duration_ms=42.49, gc_delta=1, optional_stop_ms=0.0)]
+        spike = run(w)['spikes'][0]
+        self.assertEqual((spike['advance_ms'], spike['advance_source']), (42.49, 'per-call record'))
+        self.assertEqual(spike['advancement_unit']['unit_kind'], 'route-planning')
+        # Without either evidence the spike is outside advancement, and its component stays unknown.
+        w['advance_calls'] = []
+        spike = run(w)['spikes'][0]
+        self.assertIsNone(spike['advance_ms'])
+        self.assertIsNone(spike['advancement_unit'])
+        self.assertEqual(spike['component'], 'unknown')
 
 
 class ReportTests(unittest.TestCase):

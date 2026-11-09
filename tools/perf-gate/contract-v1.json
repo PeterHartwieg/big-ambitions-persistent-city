@@ -28,7 +28,8 @@
   "density": {
     "min_median_pedestrians": 36,
     "min_median_cars": 12,
-    "rule": "A window below either value is reported as not dense; the threshold is never lowered to pass."
+    "scripts": ["S-path"],
+    "rule": "A window below either value is reported as not dense; the threshold is never lowered to pass. Not-dense windows stay valid for their other rows. The dense-traffic part of I4 (report row dense_street) is established only by a valid primary candidate window on these scripts that reaches both values; until then the overall verdict is not established."
   },
   "attribution": {
     "summary_maximum_match_tolerance_ms": 0.1,
@@ -66,6 +67,6 @@
     {"id": "L2", "measure": "Reload main-thread activation (CompleteInitialization)", "kind": "measurement", "comparator": "<=", "threshold": 50.0, "flag_ms": 30.0, "unit": "ms"},
     {"id": "L3", "measure": "Calendar held after load (Preparing Persistent City)", "kind": "measurement", "comparator": "<=", "threshold": 30.0, "unit": "real s"},
     {"id": "L4", "measure": "Time-machine skip of 120 game minutes", "kind": "measurement", "ratio_max": 2.0, "unit": "x dependency-only reference"},
-    {"id": "R1", "measure": "Soak, 3 game days at speed 3", "kind": "measurement", "heap_growth_per_day_max": 0.05, "m1_drift_max": 0.20, "unit": "fraction"}
+    {"id": "R1", "measure": "Soak, 3 game days at speed 3", "kind": "measurement", "soak_game_days": 3, "heap_growth_per_day_max": 0.05, "m1_drift_max": 0.20, "unit": "fraction"}
   ]
 }

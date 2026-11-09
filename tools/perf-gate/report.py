@@ -23,7 +23,7 @@ def render_markdown(report):
     lines += ['', '## Row verdicts (primary arm)', '', '| Row | Verdict | Reason |', '| --- | --- | --- |']
     for rid, row in report['rows'].items():
         lines.append(f"| {rid} | {row['verdict']} | {row.get('reason', '')} |")
-    if report['secondary_arm_rows']:
+    if any(w['arm'] != 'primary' for w in report['windows']):
         lines += ['', '## Stress and report-only arms (M1, M2, S1, S2 judged; recorded, not in the overall verdict)', '',
                   '| Row | Verdict | Reason |', '| --- | --- | --- |']
         for rid, row in report['secondary_arm_rows'].items():
@@ -56,17 +56,18 @@ def render_markdown(report):
         lines.append(f"| {g['condition']} | {g['script']} | {g['build']} | {g['arm']} | {len(g['windows'])} | "
                      f"{_ms(g['mod_work']['p95_ms'])} / {_ms(g['mod_work']['p99_ms'])} | {_ms(p.get('p95_ms'))} / {_ms(p.get('p99_ms'))} |")
     lines += ['', '## M2 spikes (mod-work >= 30 ms)', '',
-              '| Window | Valid | Frame | Mod-work ms | Whole-frame ms | Component | GC | Advance ms | Probe call GC / optional-stop ms | Slowest unit (source) |',
-              '| --- | --- | ---: | ---: | ---: | --- | ---: | --- | --- | --- |']
+              '| Window | Arm | Valid | Frame | Mod-work ms | Whole-frame ms | Component | GC | Advance ms (source) | Probe call GC / optional-stop ms | Slowest unit (source) |',
+              '| --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- | --- | --- |']
     for s in report['spikes']:
         call = s['advance_call'] or {}
         unit = s['advancement_unit']
         unit_text = 'n/a (outside advancement)' if unit is None else (
             f"{unit['unit_kind']} {unit['unit_ms']} ms, optional-stop {unit['optional_stop_ms']} ms, GC {unit['gc_count']} ({unit['source']})")
-        lines.append(f"| {s['window']} | {'yes' if s['window_valid'] else 'no'} | {s['frame']} | {_ms(s['mod_work_ms'])} | {_ms(s['whole_frame_ms'])} | "
-                     f"{s['component']} | {s['gc']} | {_ms(s['advance_ms'])} | {call.get('gc_delta', '-')} / {call.get('optional_stop_ms', '-')} | {unit_text} |")
+        advance = '-' if s['advance_ms'] is None else f"{_ms(s['advance_ms'])} ({s['advance_source']})"
+        lines.append(f"| {s['window']} | {s['arm']} | {'yes' if s['window_valid'] else 'no'} | {s['frame']} | {_ms(s['mod_work_ms'])} | {_ms(s['whole_frame_ms'])} | "
+                     f"{s['component']} | {s['gc']} | {advance} | {call.get('gc_delta', '-')} / {call.get('optional_stop_ms', '-')} | {unit_text} |")
     if not report['spikes']:
-        lines.append('| none | | | | | | | | | |')
+        lines.append('| none | | | | | | | | | | |')
     lines += ['', '## Stalls (>= 50 ms)', '', '| Window | Kind | Frame or index | Interval ms | Classes |', '| --- | --- | --- | ---: | --- |']
     for s in report['stalls']:
         lines.append(f"| {s['window']} | {s['kind']} | {s.get('frame', s.get('index'))} | {_ms(s['interval_ms'])} | {', '.join(s['classes'])} |")

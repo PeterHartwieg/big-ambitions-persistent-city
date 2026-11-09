@@ -22,6 +22,8 @@ PASS, FAIL, NOT_ESTABLISHED, NA, FLAG = 'pass', 'fail', 'not established', 'n/a'
 NATIVE_BASELINE = '60 FPS not established on this machine (native baseline)'
 ADVANCE_COMPONENT = 'AdvancePopulation'
 PROBE_FLAG_FIELDS = ['event_dropped', 'frame_dropped', 'timed_exceptions', 'cross_frame_scopes', 'off_main_callbacks']
+PROBE_STATUS_FIELDS = PROBE_FLAG_FIELDS + ['error', 'measuring']
+UNKNOWN = summary_lines.UNKNOWN
 
 
 class Refused(Exception):
@@ -130,7 +132,7 @@ def _frames(rows):
     mod, whole, observer, gc = CAMEL if 'modWorkMs' in rows[0] else SNAKE
     try:
         return [dict(frame=r.get('frame'), mod_work_ms=r[mod], whole_frame_ms=r[whole], observer_ms=r.get(observer, 0.0),
-                     gc=r.get(gc, 0), diagnostic=bool(r.get('diagnostic')), warmup=bool(r.get('warmup')),
+                     gc=r.get(gc), diagnostic=bool(r.get('diagnostic')), warmup=bool(r.get('warmup')),
                      components=r.get('components') or {}) for r in rows]
     except KeyError as missing:
         raise Refused(f'frame row without {missing}') from None
@@ -144,7 +146,8 @@ def ingest_probe(window):
         rows = window.get('frames') or []
         return _frames(rows), receipts, []
     status = probe.get('status') or {}
-    flags = [f for f in PROBE_FLAG_FIELDS if status.get(f)]
+    flags = [f'status_field_missing:{f}' for f in PROBE_STATUS_FIELDS if f not in status]
+    flags += [f for f in PROBE_FLAG_FIELDS if status.get(f)]
     if status.get('error'):
         flags.append('probe_error')
     if status.get('measuring'):
@@ -205,7 +208,7 @@ def validity(window, receipts, flags, clean, contract):
     return reasons
 
 
-def window_rows(window, mod, presented, contract):
+def window_rows(window, clean, mod, presented, contract):
     rows = contract['_rows']
     out = {}
     candidate = window['build'] == 'candidate'
@@ -225,7 +228,9 @@ def window_rows(window, mod, presented, contract):
         out[rid] = result(PASS if compare(value, row['comparator'], row['threshold']) else FAIL, value)
     out['P3'] = p3(window, contract) if candidate else result(NA, reason='reference stalls feed reference-rate (F4c)')
     accounting = window.get('accounting')
-    for rid, fn in (('S1', s1), ('S2', s2), ('S3', s3), ('S4', s4)):
+    stall_ms = rows['P3']['stall_ms']
+    stalls = sum(1 for v in window.get('presented_ms') or [] if v >= stall_ms) + sum(1 for f in clean if f['whole_frame_ms'] >= stall_ms)
+    for rid, fn in (('S1', s1), ('S2', s2), ('S3', s3), ('S4', lambda w, a, r: s4(w, a, r, stalls))):
         if not candidate:
             out[rid] = result(NA, reason='reference build has no PC calendar')
         elif accounting is None:
@@ -286,20 +291,33 @@ def s3(window, accounting, row):
     return result(PASS if ok else FAIL, value)
 
 
-def s4(window, accounting, row):
+def s4(window, accounting, row, stalls):
+    """Recovery to <= 0.1 game minute within 5 real s after each hold; fail only when samples prove it took longer."""
     holds = accounting.get('holds')
     samples = sorted(accounting.get('lag_samples') or [])
     if holds is None or not samples:
         return result(NOT_ESTABLISHED, reason='needs hold records and lag samples')
-    worst = 0.0
+    limit, within = row['recovered_lag_minutes'], row['within_real_s']
+    worst, open_ = 0.0, []
     for hold in holds:
         if hold.get('ongoing'):
+            open_.append(f"hold from {hold['start_s']} s still open at window end")
             continue
-        recovered = next((t for t, lag in samples if t >= hold['end_s'] and lag <= row['recovered_lag_minutes']), None)
-        if recovered is None:
-            return result(NOT_ESTABLISHED, worst, f"no lag sample recovered after hold ending {hold['end_s']} s")
-        worst = max(worst, recovered - hold['end_s'])
-    return result(PASS if worst <= row['within_real_s'] else FAIL, worst)
+        end = hold['end_s']
+        recovered = next((t for t, lag in samples if t >= end and lag <= limit), None)
+        if recovered is not None:
+            worst = max(worst, recovered - end)
+        elif any(t > end + within for t, _ in samples):
+            return result(FAIL, None, f'lag still above {limit} game minute {within} s after the hold ending at {end} s')
+        else:
+            open_.append(f'no lag sample within {within} s after the hold ending at {end} s')
+    if worst > within:
+        return result(FAIL, worst, f'recovery took {worst} s')
+    if stalls:
+        open_.append(f'{stalls} stalls need stall-time alignment with lag samples (F4c)')
+    if open_:
+        return result(NOT_ESTABLISHED, worst, '; '.join(open_))
+    return result(PASS, worst)
 
 
 def density(window, contract):
@@ -319,10 +337,16 @@ def spikes_of(window, clean, contract, valid):
         if f['mod_work_ms'] < threshold:
             continue
         components = f['components']
-        spikes.append(dict(window=window['id'], window_valid=valid, condition=window.get('condition'), script=window.get('script'),
-                           frame=f['frame'], mod_work_ms=f['mod_work_ms'], whole_frame_ms=f['whole_frame_ms'], gc=f['gc'],
-                           components=components, component=max(components, key=components.get) if components else 'unknown',
-                           advance_ms=components.get(ADVANCE_COMPONENT), advance_call=calls.get(f['frame'])))
+        call = calls.get(f['frame'])
+        # Advancement evidence: the component sub-scope, else the probe's per-call record (component-unbound).
+        advance_ms, advance_source = components.get(ADVANCE_COMPONENT), 'component'
+        if advance_ms is None and call is not None:
+            advance_ms, advance_source = call.get('duration_ms'), 'per-call record'
+        spikes.append(dict(window=window['id'], window_valid=valid, arm=window.get('arm', 'primary'), condition=window.get('condition'),
+                           script=window.get('script'), frame=f['frame'], mod_work_ms=f['mod_work_ms'], whole_frame_ms=f['whole_frame_ms'],
+                           gc=UNKNOWN if f['gc'] is None else f['gc'],
+                           components=components, component=max(components, key=components.get) if components else UNKNOWN,
+                           advance_ms=advance_ms, advance_source=advance_source if advance_ms is not None else None, advance_call=call))
     summary_lines.attach_fix128(spikes, observations_of(window), contract['attribution']['summary_maximum_match_tolerance_ms'])
     return spikes
 
@@ -355,8 +379,9 @@ def analyze_window(window, contract):
                  reference_pace_ratio=window.get('reference_pace_ratio'), clean_real_seconds=window.get('clean_real_seconds'),
                  valid=valid, invalid_reasons=reasons, receipts=receipts, frames=len(frames), clean_frames=len(clean),
                  diagnostic_frames=len(frames) - len(clean), mod_work=mod, whole_frame=whole, presented=presented,
-                 gc_collections=sum(f['gc'] for f in clean), density=density(window, contract),
-                 bodies=window.get('bodies'), rows=window_rows(window, mod, presented, contract) if clean else {},
+                 gc_collections=UNKNOWN if any(f['gc'] is None for f in clean) else sum(f['gc'] for f in clean),
+                 gc_unknown_frames=sum(1 for f in clean if f['gc'] is None), density=density(window, contract),
+                 bodies=window.get('bodies'), rows=window_rows(window, clean, mod, presented, contract) if clean else {},
                  summaries=[o['summary'] for o in observations_of(window)])
     return entry, clean, spikes_of(window, clean, contract, valid), stalls_of(window, clean, contract)
 
@@ -380,10 +405,15 @@ def matched(candidate, reference, contract):
 def pair_windows(entries, contract):
     """P4 per candidate: the reference with the same condition, script, arm and repetition, if it matches."""
     row = contract['_rows']['P4']
-    references = {}
+    references, valid_keys = {}, set()
     for e in entries:
-        if e['build'] == 'reference':
-            references.setdefault((e['condition'], e['script'], e['arm'], e['repetition']), e)
+        key = (e['condition'], e['script'], e['arm'], e['repetition'])
+        if e['valid']:
+            if (e['build'],) + key in valid_keys:
+                raise Refused(f"two valid {e['build']} windows share condition, script, arm and repetition {key}")
+            valid_keys.add((e['build'],) + key)
+        if e['build'] == 'reference' and (key not in references or (e['valid'] and not references[key]['valid'])):
+            references[key] = e  # a valid rerun replaces an invalid reference with the same label
     pairs = []
     for c in entries:
         if c['build'] != 'candidate':
@@ -468,12 +498,15 @@ def measurement_rows(measurements, contract):
         ok = ratio <= rows['L4']['ratio_max'] and l4.get('s1_s2_hold') is True
         out['L4'] = result(PASS if ok else FAIL, dict(ratio=ratio, s1_s2_hold=l4.get('s1_s2_hold')))
     r1 = m.get('R1')
-    if not r1 or len(r1.get('heap_mb_per_day') or []) < 2 or len(r1.get('m1_p95_per_day') or []) < 2:
-        out['R1'] = result(NOT_ESTABLISHED, reason='needs heap and M1 per game day (G14)')
+    days = rows['R1']['soak_game_days']
+    if not r1 or len(r1.get('heap_mb_per_day') or []) < days or len(r1.get('m1_p95_per_day') or []) < days:
+        out['R1'] = result(NOT_ESTABLISHED, reason=f'needs heap and M1 for each of {days} game days (G14)')
     else:
-        heap = r1['heap_mb_per_day']
+        heap = r1['heap_mb_per_day'][:days]
+        if any(not math.isfinite(h) or h <= 0 for h in heap):
+            raise Refused('R1 heap samples must be positive and finite')
         growth = max((b - a) / a for a, b in zip(heap, heap[1:]))
-        m1 = r1['m1_p95_per_day']
+        m1 = r1['m1_p95_per_day'][:days]
         drift = abs(m1[-1] - m1[0]) / m1[0] if m1[0] > 0 else math.inf
         ok = growth <= rows['R1']['heap_growth_per_day_max'] and drift <= rows['R1']['m1_drift_max']
         out['R1'] = result(PASS if ok else FAIL, dict(heap_growth_per_day=growth, m1_drift=drift))
@@ -502,6 +535,23 @@ def aggregate(entries, contract, arm_filter):
         else:
             verdicts[rid] = dict(verdict=PASS, reason=f'passes in {len(results)} valid windows')
     return verdicts
+
+
+def m2(spikes, arm_filter):
+    count = sum(1 for s in spikes if s['window_valid'] and arm_filter(s['arm']))
+    return dict(verdict=FLAG, count=count, reason=f'{count} flagged frames in valid windows')
+
+
+def dense_street(entries, contract):
+    """I4's dense-traffic part: only a valid primary candidate window on a dense script that met both thresholds establishes it."""
+    scripts = contract['density']['scripts']
+    windows = [e for e in entries if e['valid'] and e['build'] == 'candidate' and e['arm'] == 'primary' and e['script'] in scripts]
+    dense = [e['id'] for e in windows if e['density']['dense'] is True]
+    if dense:
+        return dict(verdict=PASS, reason='dense in ' + ', '.join(dense))
+    detail = ', '.join(f"{e['id']}: dense={e['density']['dense']}" for e in windows)
+    return dict(verdict=NOT_ESTABLISHED, reason=f"no valid {'/'.join(scripts)} candidate window reached the density thresholds"
+                + (f' ({detail})' if detail else ''))
 
 
 def overall(row_verdicts):
@@ -544,15 +594,17 @@ def analyze(exports, contract):
             stalls += window_stalls
     pairs = pair_windows(entries, contract)
     primary = aggregate(entries, contract, lambda arm: arm == 'primary')
-    primary['M2'] = dict(verdict=FLAG, reason=f"{sum(1 for s in spikes if s['window_valid'])} flagged frames in valid windows")
+    primary['M2'] = m2(spikes, lambda arm: arm == 'primary')
+    primary['dense_street'] = dense_street(entries, contract)
     primary.update(measurement_rows(measurements, contract))
     secondary_ids = set(contract['windows']['secondary_arm_rows'])
     secondary = {rid: v for rid, v in aggregate(entries, contract, lambda arm: arm != 'primary').items() if rid in secondary_ids}
+    secondary['M2'] = m2(spikes, lambda arm: arm != 'primary')
     verdict = overall(primary)
     baseline = any(v.get('native_baseline') for v in primary.values())
     return dict(format=REPORT_FORMAT, contract=contract['contract'], contract_sha256=contract['_sha256'], source=source,
                 header=header, overall=verdict, sixty_fps=NATIVE_BASELINE if baseline else None,
-                rows={rid: primary[rid] for rid in contract['_rows'] if rid in primary},
+                rows={rid: primary[rid] for rid in list(contract['_rows']) + ['dense_street'] if rid in primary},
                 secondary_arm_rows=secondary, windows=entries, pairs=pairs,
                 pooled=pooled(entries, clean_by_id, presented_by_id), spikes=spikes, stalls=stalls,
                 limits=['Mod-work is the probe union and includes nested probe cost; observerMs measures only part of it.',
