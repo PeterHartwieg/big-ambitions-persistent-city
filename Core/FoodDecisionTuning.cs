@@ -9,6 +9,8 @@ namespace PersistentCity.Core
     public sealed class FoodDecisionTuning
     {
         public const int WireLength = 193;
+        /// <summary>The implicit offers limit of a revision-1 wire, frozen at its historical value.</summary>
+        public const int RevisionOneOffers = 4;
         internal FoodChoiceSettings Settings { get; }
         private FoodDecisionTuning(FoodChoiceSettings settings) { Settings = settings; }
         public static FoodDecisionTuning Capture(FoodChoiceSettings live)
@@ -18,7 +20,9 @@ namespace PersistentCity.Core
         }
         public string ToWire()
         {
-            bool extended=Settings.FoodMenuMaximumOffersPerShop!=4 || Settings.FoodMenuNewTasteWeight!=1 || Settings.FoodMenuHealthWeight!=0;
+            // Revision 1 omits the menu fields and always means the E4 values 4/1/0. E5b5's eight-offer default (Q1) is
+            // written explicitly as revision 2, so every held image keeps its exact meaning.
+            bool extended=Settings.FoodMenuMaximumOffersPerShop!=RevisionOneOffers || Settings.FoodMenuNewTasteWeight!=1 || Settings.FoodMenuHealthWeight!=0;
             var text = new StringBuilder(extended ? 241 : WireLength); text.Append(extended ? '2' : '1');
             void Add(double value) => text.Append(BitConverter.DoubleToInt64Bits(value).ToString("X16", CultureInfo.InvariantCulture));
             Add(Settings.FoodChoiceTemperature);
@@ -56,6 +60,7 @@ namespace PersistentCity.Core
                 FoodChoiceHouseholdWeight = Read(),
                 FoodShortlistTemperature = Read() };
             if(wire![0]=='2') { settings.FoodMenuMaximumOffersPerShop=(int)Read(); settings.FoodMenuNewTasteWeight=Read(); settings.FoodMenuHealthWeight=Read(); }
+            else settings.FoodMenuMaximumOffersPerShop=RevisionOneOffers; // the settings default moved to 8 in E5b5
             tuning = new FoodDecisionTuning(settings); return true;
         }
         /// <summary>Allocation-free streaming shape precheck; no image is created until the full graph passes.</summary>

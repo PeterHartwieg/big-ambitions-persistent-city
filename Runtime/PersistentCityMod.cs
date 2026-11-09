@@ -146,6 +146,7 @@ namespace PersistentCity.Runtime
             // E5b4: one product policy for shops and vehicles, from config, the API publication and E5b2's loaded-name image.
             var policy = new FoodProductPolicySource(() => shops.LoadedNames, () => settings.FoodProductOverrides.Resolver, FoodProductMetadataApi.PublishSnapshot,
                 message => log?.Warn("Food product policy fell back to the original three: " + message));
+            shops.ProductPolicySource = policy; // E5b5: shop admission classes products with the same policy
             return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position, policy);
         }
         public void EnableHouseholdFinances()
