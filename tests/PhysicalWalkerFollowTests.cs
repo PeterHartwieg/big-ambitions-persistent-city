@@ -143,8 +143,15 @@ public sealed class PhysicalWalkerFollowTests
         using var f = new Fixture();
         long onScreenMoves = PhysicalPopulation.Telemetry.OnScreenMoves;
         f.Tick();
-        // The arrival is processed while the body is still at home, 30 m before the midpoint corner.
+        // The arrival is processed while the body is still at home, 30 m before the midpoint corner. The person then
+        // stands outside the door on an optional stop, so selection would give it a body there.
         f.Advance(Now + 30);
+        foreach (var city in new[] { f.City, f.Plain })
+            city.State.Citizens[0].OptionalStop = new OptionalStopState { Kind = DwellKind.Break, PlaceId = "work", SpotId = "solo:w",
+                TargetId = "front:w", Position = new Position(104, 0, 0), Facing = new Position(104, 0, 1), ReturnPosition = Work,
+                StartMinute = Now + 30, EndMinute = Now + 38, VisitMinute = Now + 30, ResumeEventMinute = Now + 300 };
+        // Set directly, not by an event, so it is filed into the selection index by hand.
+        f.City.ActiveJourneys.File(f.W);
         f.Body.OnScreen = true;
         f.Tick();
         Assert.True(f.Bound);
@@ -164,6 +171,15 @@ public sealed class PhysicalWalkerFollowTests
         Assert.Equal(WalkerCorrectionKind.Fade, fade.Kind); Assert.True(fade.OnScreen);
         Assert.Equal(new Position(70, 0, 0), fade.Before); Assert.Equal(Work, fade.After);
         Assert.Equal(onScreenMoves, PhysicalPopulation.Telemetry.OnScreenMoves);
+        f.AssertSameAsBodiesOff();
+        // Arrived, it does not reappear at its optional stop while that is in view...
+        PhysicalPedestrians.VisiblePoint = _ => true;
+        f.Run(2.1f); f.Run(2.1f);
+        Assert.False(f.Bound);
+        // ...and reappears there once it is out of view.
+        PhysicalPedestrians.VisiblePoint = null;
+        f.Run(0.3f);
+        Assert.True(f.Bound);
         f.AssertSameAsBodiesOff();
     }
 
@@ -223,7 +239,7 @@ public sealed class PhysicalWalkerFollowTests
         // It does not reappear while its logical pose is in view, however many other restrictions are held...
         var restrictions = typeof(PhysicalPopulation).GetField("fadedUntilHidden", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(f.Bodies)!;
         var add = restrictions.GetType().GetMethod("Add")!;
-        for (int i = 0; i < 600; i++) add.Invoke(restrictions, new object[] { "other" + i, (f.W, f.W.Journey) });
+        for (int i = 0; i < 600; i++) add.Invoke(restrictions, new object[] { "other" + i, (f.W, f.W.Journey, (string?)null) });
         PhysicalPedestrians.VisiblePoint = _ => true;
         f.Run(2.1f); f.Run(2.1f);
         Assert.False(f.Bound);

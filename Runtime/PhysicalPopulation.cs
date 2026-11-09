@@ -120,9 +120,11 @@ namespace PersistentCity.Runtime
         private double followMinute = double.NaN;
         // Q3: persons whose body faded reappear only once their logical pose is out of view. The restriction belongs
         // to the journey that was followed: it ends when the body reappears out of view, or when that journey ends,
-        // is replaced or leaves the active-journey index.
-        private readonly Dictionary<string, (CitizenState Citizen, Route? Journey)> fadedUntilHidden
-            = new Dictionary<string, (CitizenState Citizen, Route? Journey)>(StringComparer.Ordinal);
+        // is replaced or leaves the active-journey index. A body faded on its arrival tail has arrived: its restriction
+        // belongs to the place it arrived at (ArrivedAt) and lasts while the person is there, so a door queue or an
+        // optional stop does not bring the body back in view.
+        private readonly Dictionary<string, (CitizenState Citizen, Route? Journey, string? ArrivedAt)> fadedUntilHidden
+            = new Dictionary<string, (CitizenState Citizen, Route? Journey, string? ArrivedAt)>(StringComparer.Ordinal);
         // Running counts of registered bindings with a walker, a car and a queue stand. Only Bind,
         // Unbind and TryJoinQueue change registration or a registered binding's queue.
         private int personBindings, carBindings, queueBindings;
@@ -380,11 +382,14 @@ namespace PersistentCity.Runtime
             }
         }
 
-        // Whether a faded person's restriction still applies: the same journey is still under way.
+        // Whether a faded person's restriction still applies: the same journey is still under way, or, after an
+        // arrival-tail fade, the person is still at the place it arrived at.
         private bool FadeRestricted(CitizenState citizen)
             => fadedUntilHidden.TryGetValue(citizen.Identity.Id, out var faded) && ReferenceEquals(faded.Citizen, citizen)
-            && citizen.Phase == CitizenPhase.Travelling && ReferenceEquals(citizen.Journey, faded.Journey)
-            && simulation.ActiveJourneys.Contains(citizen);
+            && (faded.ArrivedAt != null
+                ? (citizen.Phase == CitizenPhase.AtPlace || citizen.Phase == CitizenPhase.WaitingForOpening) && citizen.PlaceId == faded.ArrivedAt
+                : citizen.Phase == CitizenPhase.Travelling && ReferenceEquals(citizen.Journey, faded.Journey)
+                    && simulation.ActiveJourneys.Contains(citizen));
 
         private readonly List<string> staleFades = new List<string>();
         private void PruneFadeRestrictions()
@@ -1001,7 +1006,7 @@ namespace PersistentCity.Runtime
             if (alpha > 0) { body.SetFade(alpha); return true; }
             body.SetFade(0);
             Telemetry.Record(Time.frameCount, binding.Citizen.Identity.Id, WalkerCorrectionKind.Fade, binding.FadeFrom, after, binding.FadeOnScreen);
-            fadedUntilHidden[binding.Citizen.Identity.Id] = (binding.Citizen, binding.Journey);
+            fadedUntilHidden[binding.Citizen.Identity.Id] = (binding.Citizen, binding.Journey, binding.Tail ? binding.Citizen.PlaceId : null);
             return false;
         }
 
