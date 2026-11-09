@@ -91,7 +91,7 @@ public sealed class VehicleMarketTests
         {
             // A native save carries the receipt dictionary alongside the population bytes.
             string payload = SaveCodec.Write(City.State);
-            var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             Assert.Equal(payload, SaveCodec.Write(read.State!));
             Receipts = JsonConvert.DeserializeObject<Dictionary<string, string>>(JsonConvert.SerializeObject(Receipts))!;
             City = new CitySimulator(read.State!, Planner);
@@ -368,7 +368,7 @@ public sealed class VehicleMarketTests
         var composite = new FoodMarkets(f.City.State.Food, shop, f.Market, id => f.City.FindPlace(id).Position);
         Assert.Equal(present ? 3 : 2, composite.Read(f.Now).Count);
         string payload = SaveCodec.Write(f.City.State);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status);
         f.Reload(present);
         Assert.Equal(present, f.Market.CanServe(f.Meal().BusinessId));
         Assert.Single(f.City.State.Vendors.Rows);

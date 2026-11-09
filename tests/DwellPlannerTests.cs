@@ -282,7 +282,7 @@ public sealed class DwellPlannerTests
         Assert.NotEqual((Dwell?)dry, wet);
         Assert.Equal(dry, DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true, dry));
         string saved = SaveCodec.Write(state);
-        var loaded = SaveCodec.Read(saved).State!;
+        var loaded = SaveWire.Read(saved).State!;
         var sim = new CitySimulator(loaded, new NoRoutes()); sim.AttachOptionalStops(new NoOptionalGeometry { Raining = true }, rate);
         Assert.Equal(saved, SaveCodec.Write(loaded));
         Assert.Equal(wet, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, true));
@@ -329,7 +329,7 @@ public sealed class DwellPlannerTests
             Assert.NotNull(original);
             Assert.InRange(opening - original!.Value.StartMinute, 2, raining ? 5 : 10);
             string saved = SaveCodec.Write(state);
-            var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             var loaded = new CitySimulator(read.State!, new NoRoutes()); loaded.AttachOptionalStops(env, rate);
             var restored = DwellPlanner.QueueAtOpening(loaded.State.Citizens.Single(), shop, state.Seed, state.Minute, raining);
             Assert.Equal(original, restored); Assert.Equal(saved, SaveCodec.Write(loaded.State));
@@ -345,7 +345,7 @@ public sealed class DwellPlannerTests
                 {
                     // Replay the identical waiting state under the other rates, comparing
                     // both the queue commitment and the admitted save image.
-                    var other = SaveCodec.Read(saved); Assert.True(other.Status == SaveReadStatus.Loaded, other.Error);
+                    var other = SaveWire.Read(saved); Assert.True(other.Status == SaveReadStatus.Loaded, other.Error);
                     var otherSim = new CitySimulator(other.State!, new NoRoutes()); otherSim.AttachOptionalStops(env, otherRate);
                     Assert.Equal(original, DwellPlanner.QueueAtOpening(other.State!.Citizens.Single(), shop, state.Seed, opening - 1, raining));
                     otherSim.AdvanceTo(opening);
@@ -355,7 +355,7 @@ public sealed class DwellPlannerTests
                     {
                         // Dry admission also draws an optional-stop chance. That banked
                         // choice may differ by rate; every other persisted fact must agree.
-                        var baseline = JObject.Parse(admitted); var variant = JObject.Parse(otherAdmitted);
+                        var baseline = SaveWire.Parse(admitted); var variant = SaveWire.Parse(otherAdmitted);
                         ((JObject)baseline["Citizens"]![0]!).Remove("OptionalStopChoice");
                         ((JObject)variant["Citizens"]![0]!).Remove("OptionalStopChoice");
                         Assert.True(JToken.DeepEquals(baseline, variant), "Queue admission changed across optional-stop rates.");

@@ -39,7 +39,7 @@ public sealed class OptionalDestinationTests
     }
     private static CitySimulator Reload(CitySimulator sim, Routes routes)
     {
-        var loaded = SaveCodec.Read(SaveCodec.Write(sim.State));
+        var loaded = SaveWire.Read(SaveCodec.Write(sim.State));
         Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
         return new CitySimulator(loaded.State!, routes);
     }

@@ -15,7 +15,7 @@ namespace PersistentCity.Core
                 internal ResidentMeal Meal = null!;
                 internal CitizenState Person = null!;
                 internal double Minute, WageAt = double.PositiveInfinity;
-                internal int Ordinal, Index;
+                internal int Index;
                 internal WorkWindow Window;
                 internal string Workplace = "";
             }
@@ -44,7 +44,7 @@ namespace PersistentCity.Core
                 items.Sort((a, b) => StringComparer.Ordinal.Compare(a.Meal.ResidentId, b.Meal.ResidentId));
                 for (int i = 0; i < items.Count; i++)
                 {
-                    var e = items[i]; e.Ordinal = i; e.Index = i;
+                    var e = items[i]; e.Index = i;
                     Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
                 }
                 for (int i = items.Count / 2 - 1; i >= 0; i--) Repair(i);
@@ -57,10 +57,27 @@ namespace PersistentCity.Core
                 e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window);
                 if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
             }
+            // Ties break by ordinal ResidentId, the order Build sorts by (before F5g: that rank as an int). F5g compares the IDs
+            // themselves so a person enrolled later (Insert) takes its rank without renumbering every entry.
             private static int Compare(Entry a, Entry b)
             {
                 int time = a.Minute.CompareTo(b.Minute);
-                return time == 0 ? a.Ordinal.CompareTo(b.Ordinal) : time;
+                return time == 0 ? string.CompareOrdinal(a.Meal.ResidentId, b.Meal.ResidentId) : time;
+            }
+            /// <summary>F5g: adds the wallet of a person created after the queue was built, in its ordinary heap position.</summary>
+            internal void Insert(ResidentMeal meal)
+            {
+                Add(meal);
+                var e = items[items.Count - 1];
+                Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
+                int at = items.Count - 1;
+                while (at > 0)
+                {
+                    int parent = (at - 1) / 2;
+                    if (Compare(items[parent], e) <= 0) break;
+                    items[at] = items[parent]; items[at].Index = at; at = parent;
+                }
+                items[at] = e; e.Index = at;
             }
             public void PostMinimum()
             {
@@ -111,6 +128,17 @@ namespace PersistentCity.Core
         }
         private readonly BudgetQueue budgetDue;
         private double NextBudgetMinute => budgetDue.Minute;
+        /// <summary>F5g: enrols a person created at a day boundary exactly once: its own meal record (meal rhythm from the
+        /// current day) and, with finances on, its wallet from <see cref="HouseholdFinance.Create"/> with its portal
+        /// district's mix. An existing record is refused, never re-seeded.</summary>
+        internal void EnrolCreated(CitizenState person)
+        {
+            if (records.ContainsKey(person.Identity.Id)) throw new InvalidOperationException("A created person already has a meal record: " + person.Identity.Id + ".");
+            var meal = Enrol(person);
+            rivalLoad.Observe(meal, RivalServiceCalibration.Period(city.State.Minute));
+            due.Add(meal);
+            if (meal.Budget != null) budgetDue.Insert(meal);
+        }
         internal void RestoreVisitorWalletModes() => budgetDue.RestoreVisitorWalletModes();
         internal bool TracksEmployment(CitizenState person) => EmploymentWages.Eligible(person) && budgetDue.Contains(person.Identity.Id);
         internal bool PostingDueAt(double minute) => NextBudgetMinute == minute;

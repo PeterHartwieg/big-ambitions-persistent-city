@@ -291,7 +291,7 @@ public sealed class MultimodalTests
         Assert.Equal(9, citizen.Journey.EstimatedMinutes);
         string wire = SaveCodec.Write(state);
         Assert.DoesNotContain("EstimatedMinutes", wire);
-        var read = SaveCodec.Read(wire);
+        var read = SaveWire.Read(wire);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(tag, read.State!.Citizens[0].Journey!.Legs[0].ServiceId);
         Assert.Equal(citizen.Journey.PositionAt(2).X, read.State.Citizens[0].Journey!.PositionAt(2).X);

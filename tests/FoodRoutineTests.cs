@@ -69,7 +69,7 @@ public sealed class FoodRoutineTests
     [Fact]
     public void ObservationDoesNotChangePopulationAndRecordsActualPlaces()
     {
-        var city = City(); var plain = SaveCodec.Read(SaveCodec.Write(city)).State!;
+        var city = City(); var plain = SaveWire.Read(SaveCodec.Write(city)).State!;
         var capture = Capture(city);
         var simulator = new CitySimulator(plain, new Walking()); simulator.AdvanceTo(8 * 1440);
         Assert.Equal(SaveCodec.Write(plain), SaveCodec.Write(city));
@@ -229,7 +229,7 @@ public sealed class FoodRoutineTests
     {
         var state = FoodDemand.Create("legacy", "Legacy fixture", 1, 1, new[] { new FoodConsumer { Id = "p", Name = "P", OriginPlaceId = "home" } },
             new[] { new FoodBusiness { Id = "b", Name = "B", PlaceId = "shop" } }, Array.Empty<FoodTravelQuote>());
-        var json = JObject.Parse(FoodShadowCodec.Write(state)); FoodQualityDemandTests.LegacyMoney(json); FoodQualityDemandTests.RemoveV3Fields(json); json["Schema"] = 1; json.Remove("Mode");
+        var json = SaveWire.Parse(FoodShadowCodec.Write(state)); FoodQualityDemandTests.LegacyMoney(json); FoodQualityDemandTests.RemoveV3Fields(json); json["Schema"] = 1; json.Remove("Mode");
         foreach (JObject b in json["Businesses"]!) foreach (string k in new[] { "MealsPerHour", "ServiceEvidence", "NextServiceMinute" }) b.Remove(k);
         foreach (JObject i in json["Intents"]!) foreach (string k in new[] { "OriginPlaceId", "OriginActivity", "ContextEvidence", "DesiredAt", "EatingMinutes", "MaximumQueueMinutes", "TimeCostMultiplier", "ReturnTravelMinutes", "ServiceEndsAt", "ReturnBy" }) i.Remove(k);
         var migrated = FoodShadowCodec.Read(json.ToString(), "legacy");

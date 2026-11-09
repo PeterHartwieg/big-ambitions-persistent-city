@@ -54,17 +54,18 @@ public sealed class EconomicLedgerTests
     internal static void AssertRoundTrip(CityState state)
     {
         string payload = SaveCodec.Write(state);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         var records = SaveCodec.CountRecords(state, payload);
         Assert.True(records.Streaming <= SaveCodec.MaxEmbeddedRecords && records.Semantic <= SaveCodec.MaxEmbeddedRecords);
     }
     internal static void Refused(string payload, SaveReadStatus status = SaveReadStatus.Invalid)
     {
+        payload = SaveWire.Payload(payload);
         var replacement = CurrentSchemaOnlyTests.City();
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["other"] = "kept" };
         var before = new Dictionary<string, string>(data);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == status, read.Error); Assert.Null(read.State);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == status, read.Error); Assert.Null(read.State);
         Assert.Equal(status, SaveStore.ReadFrom(data, replacement.PopulationKey).Status);
         Assert.False(SaveStore.WriteTo(data, replacement).Success);
         Assert.False(SaveSession.Open(data, replacement.PopulationKey).WriteTo(data, replacement).Success);
@@ -86,7 +87,7 @@ public sealed class EconomicLedgerTests
     public void NextFreeWriterAndFreshZeroShape()
     {
         Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal(CityState.AttendanceSchema + 1, CityState.CurrentSchema);
+        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var state = Fresh();
         Assert.Empty(state.Economy.Outside); Assert.Empty(state.Economy.Shops);
         Assert.All(PersonTable.Schedules(state), p => Assert.Equal(default, p.Accrual));
@@ -97,7 +98,7 @@ public sealed class EconomicLedgerTests
         // Every new fixed tuple adds zero embedded records.
         string predecessor = DevelopmentChain.Write30(state);
         var old = SaveCodec.CountRecordsForSchema(SaveCodec.ReadWriter30(predecessor).State!, predecessor, SaveCodec.VendorSchema);
-        Assert.Equal(old, SaveCodec.CountRecords(state, payload));
+        Assert.Equal(old, SaveCodec.CountRecords(state, SaveWire.Body(payload)));
     }
     [Theory]
     [InlineData(5150, "06b494d2627e0d6675d8c437e1c0dff72e176ab3ae7aaa54a0f152052aace308", 172016)]
@@ -126,7 +127,7 @@ public sealed class EconomicLedgerTests
         AssertRoundTrip(state);
         state.Food!.Shops[0].AdditionalProductIds.Add("amod:itemname_new");
         string payload = SaveCodec.Write(state);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(j.ProductId, read.State!.Economy.Shops[0].Changes[0].ProductId);
     }
     [Fact]
@@ -141,7 +142,7 @@ public sealed class EconomicLedgerTests
         settings.StringEscapeHandling = StringEscapeHandling.EscapeHtml;
         string payload = JsonConvert.SerializeObject(state, Formatting.None, settings);
         Assert.Contains("a<>&a", payload);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(expected, SaveCodec.Write(read.State!));
     }
 
@@ -150,9 +151,9 @@ public sealed class EconomicLedgerTests
     {
         var state = Fresh(); string old = DevelopmentChain.Write30(state);
         Refused(old, SaveReadStatus.DevelopmentSchema);
-        Assert.Contains("start a new city", SaveCodec.Read(old).Error);
+        Assert.Contains("start a new city", SaveWire.Read(old).Error);
         Assert.Equal(old, DevelopmentChain.Write30(SaveCodec.ReadWriter30(old).State!));
-        var wire = JObject.Parse(SaveCodec.Write(state)); wire["Schema"] = CityState.CurrentSchema + 1;
+        var wire = SaveWire.Parse(SaveCodec.Write(state)); wire["Schema"] = CityState.CurrentSchema + 1;
         Refused(wire.ToString(Formatting.None), SaveReadStatus.Future);
     }
     [Theory]
@@ -164,7 +165,7 @@ public sealed class EconomicLedgerTests
     [InlineData("wide-leading-zero")] [InlineData("wide-exponent")] [InlineData("wide-overflow")] [InlineData("wide-negative")]
     public void StrictReaderRefusalsPreserveOriginals(string fault)
     {
-        var state = Fresh(); Populate(state); var root = JObject.Parse(SaveCodec.Write(state));
+        var state = Fresh(); Populate(state); var root = SaveWire.Parse(SaveCodec.Write(state));
         var economy = root["Economy"]!; var shops = (JArray)economy["Shops"]!;
         string? raw = null;
         switch (fault)
@@ -264,7 +265,7 @@ public sealed class EconomicLedgerTests
             state.Economy.Shops.Add(new ShopObservation { BusinessRef = i });
         }
         AssertRoundTrip(state);
-        var root = JObject.Parse(SaveCodec.Write(state));
+        var root = SaveWire.Parse(SaveCodec.Write(state));
         ((JArray)root["Economy"]!["Shops"]!).Add(root["Economy"]!["Shops"]![0]!.DeepClone());
         Refused(root.ToString(Formatting.None));
         state.Economy.Shops.Add(state.Economy.Shops[0]); WriteRefused(state);
@@ -281,7 +282,7 @@ public sealed class EconomicLedgerTests
         b.Balance = Money.Zero;
         b.Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(long.MaxValue), Discretionary = Money.FromUnits(long.MaxValue) };
         AssertRoundTrip(state);
-        var root = JObject.Parse(SaveCodec.Write(state));
+        var root = SaveWire.Parse(SaveCodec.Write(state));
         // One unit beyond the signed-64 range is representable by the base36 width but always refused.
         const string overflow = "1Y2P0IJ32E8E8";
         root["Food"]!["Residents"]![0]![2]![20] = overflow + new string('0', 19);

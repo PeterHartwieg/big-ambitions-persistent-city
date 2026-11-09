@@ -143,7 +143,7 @@ public sealed class F5cLiteMeasure
 
     private static IEnumerable<int> SaveCodecVisitorWire(string payload)
     {
-        var root = Newtonsoft.Json.Linq.JObject.Parse(payload);
+        var root = SaveWire.Parse(payload);
         foreach (var visitor in root["Visitors"]!) yield return JsonConvert.SerializeObject((string)visitor!).Length + 1;
     }
 }

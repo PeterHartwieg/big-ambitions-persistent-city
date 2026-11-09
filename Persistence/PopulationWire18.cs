@@ -25,6 +25,7 @@ namespace PersistentCity.Persistence
         public static void RequireExecutableCapabilities(string source)
         {
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
+            if (source!.StartsWith(CompactPrefix, StringComparison.Ordinal)) { RequireCompactCapabilities(source); return; }
             using var reader = Reader(source);
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
             int? schema = null;
@@ -156,6 +157,13 @@ namespace PersistentCity.Persistence
         internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
         {
             if (schema < 25) return PopulationSchema24.CountRecordsForSchema(state, source, schema);
+            // F7d: a compact payload charges its tables on top of the body's streaming count.
+            if (schema == CityState.CompactSchema && source.StartsWith(CompactPrefix, StringComparison.Ordinal))
+            {
+                int tables = CompactTableEntries(source);
+                var body = CountRecordsForSchema(state, ExpandCompact(source), schema);
+                return (body.Streaming + tables, body.Semantic + tables);
+            }
             int semantic = Validate(state,schema), streaming = 0;
             var tokenText = new TokenText(source);
             var context = WireContext.FromSource(source, tokenText);

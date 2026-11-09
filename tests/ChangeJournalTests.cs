@@ -28,7 +28,7 @@ public sealed class ChangeJournalTests
         while (!city.AdvanceTo(2000, 128).CaughtUp) { }
         return state;
     }
-    static CityState Fixture(int seed = 5150)
+    internal static CityState Fixture(int seed = 5150)
     {
         var state = Fresh(seed);
         var journal = new FoodChangeJournal(state.Food!, state.Economy);
@@ -47,22 +47,24 @@ public sealed class ChangeJournalTests
     [InlineData(9217, "df8c95a30d401b72b580794efe27da15eb15d941ea20e05afe5ae36aa68b4404")]
     public void CurrentWriterGoldenSnapshotAndReload(int seed, string pin)
     {
+        // F7d: writer 33 is now the frozen predecessor JSON writer; its pins and reader are unchanged.
         Assert.Equal(CityState.AttendanceSchema + 1, CityState.ChangeJournalSchema);
-        Assert.Equal(CityState.ChangeJournalSchema, CityState.CurrentSchema);
-        var state = Fixture(seed); string payload = SaveCodec.Write(state);
+        Assert.Equal(CityState.ChangeJournalSchema + 1, CityState.CurrentSchema);
+        var state = Fixture(seed); string payload = DevelopmentChain.Write33(state);
         output.WriteLine($"F6g golden {seed}: {EconomicLedgerTests.Sha(payload)} chars={payload.Length}");
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        var read = SaveCodec.ReadWriter33(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, DevelopmentChain.Write33(read.State!));
         var resumed = new FoodChangeJournal(read.State!.Food!, read.State.Economy); var scope = read.State.Food!.Shops[0];
         resumed.ObserveSupply(scope.BusinessId, scope.PlaceId, 2000, Offers(275, 0), 1, 1);
         resumed.ObserveHours(scope.BusinessId, scope.PlaceId, 2000, Hours(1200));
-        Assert.Equal(payload, SaveCodec.Write(read.State));
-        var snapshot = SaveCodec.Capture(state);
+        Assert.Equal(payload, DevelopmentChain.Write33(read.State));
+        state.Schema = CityState.ChangeJournalSchema;
+        var snapshot = SaveCodec.CaptureForSchema(state, CityState.ChangeJournalSchema, null);
         var audit = GraphAudit.Compare(state, snapshot.Wire);
         Assert.Empty(audit.Differences); Assert.All(audit.Shared, shared => Assert.True(GraphAudit.Immutable(shared)));
         state.Economy.Shops[0].Supply[0] = Offers(999)[0]; state.Economy.Shops[0].Hours[0] = 1;
         state.Food!.History[0].PeriodCauses.Counts[0]++; state.Economy.Shops[0].Changes.Clear();
-        Assert.Equal(payload, SaveCodec.Encode(snapshot));
+        Assert.Equal(payload, SaveCodec.EncodeForSchema(snapshot, CityState.ChangeJournalSchema, null));
         Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
     }
     [Fact]
@@ -70,7 +72,7 @@ public sealed class ChangeJournalTests
     {
         string older = DevelopmentChain.WriteAttendance(AttendanceWageTests.Fresh().State);
         EconomicLedgerTests.Refused(older, SaveReadStatus.DevelopmentSchema);
-        Assert.Contains("start a new city", SaveCodec.Read(older).Error);
+        Assert.Contains("start a new city", SaveWire.Read(older).Error);
         Assert.DoesNotContain("WageStartsDay", SaveCodec.Write(Fixture()));
     }
     [Fact]
@@ -87,7 +89,7 @@ public sealed class ChangeJournalTests
         journal.ObserveSupply(a.BusinessId, a.PlaceId, 1811, Offers(275, 0), 1, 1);
         Assert.Empty(state.Economy.Shops[1].Changes);
         state.Minute = 2000; string saved = SaveCodec.Write(state);
-        state = SaveCodec.Read(saved).State!; food = state.Food!; journal = new FoodChangeJournal(food, state.Economy);
+        state = SaveWire.Read(saved).State!; food = state.Food!; journal = new FoodChangeJournal(food, state.Economy);
         string before = state.Economy.Shops[0].Fingerprint;
         journal.ObserveSupply(a.BusinessId, a.PlaceId, 1900, Offers(275, 0), 1, 1);
         Assert.Equal(3, state.Economy.Shops[0].Changes.Count); Assert.Equal(before, state.Economy.Shops[0].Fingerprint);
@@ -95,7 +97,7 @@ public sealed class ChangeJournalTests
         Assert.All(state.Economy.Shops[0].Changes, c => Assert.Equal(1811, c.ObservedMinute));
         Assert.All(state.Economy.Shops[1].Changes, c => Assert.Equal(1900, c.ObservedMinute));
         Assert.Equal(new[] { ShopChangeKind.StaffedCounters, ShopChangeKind.Price, ShopChangeKind.Stock }, state.Economy.Shops[0].Changes.Select(c => c.Kind));
-        Assert.Equal(saved, SaveCodec.Write(SaveCodec.Read(saved).State!));
+        Assert.Equal(saved, SaveCodec.Write(SaveWire.Read(saved).State!));
     }
     [Fact]
     public void ReorderingEquivalentHoursDoesNotLookLikeAnEdit()
@@ -119,7 +121,7 @@ public sealed class ChangeJournalTests
         var weekly = Enumerable.Range(0, 7).Select(day => new OpeningWindow { Day = day, FromMinute = 360, ToMinute = 1320 }).ToList();
         journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1800, Offers(), 1, 2);
         journal.ObserveHours(scope.BusinessId, scope.PlaceId, 1800, weekly);
-        JArray Image() => (JArray)JObject.Parse(SaveCodec.Write(state))["Economy"]!["Shops"]![0]!;
+        JArray Image() => (JArray)SaveWire.Parse(SaveCodec.Write(state))["Economy"]!["Shops"]![0]!;
         var image = Image(); Assert.Equal(56, ((string)image[4]!).Length);
         // State, supply, hours plus their three separators; excludes the already-frozen header/journal.
         int Extension(JArray row) => row.Skip(2).Sum(cell => cell.ToString(Newtonsoft.Json.Formatting.None).Length) + 3;
@@ -133,7 +135,7 @@ public sealed class ChangeJournalTests
         string sparse = (string)image[4]!;
         // Swap the first two windows: the sparse reader must still enforce canonical ordering.
         image[4] = sparse[..14] + sparse[20..26] + sparse[14..20] + sparse[26..];
-        var root = JObject.Parse(SaveCodec.Write(state)); root["Economy"]!["Shops"]![0] = image;
+        var root = SaveWire.Parse(SaveCodec.Write(state)); root["Economy"]!["Shops"]![0] = image;
         EconomicLedgerTests.Refused(root.ToString(Newtonsoft.Json.Formatting.None));
         output.WriteLine("exact image: weekly/one offer=109 chars/shop, 111616/1024 shops; max hours/eight offers=626, 641024/1024 shops; plan hash budget=32, 32768/1024 shops");
     }
@@ -208,7 +210,7 @@ public sealed class ChangeJournalTests
     [InlineData("hours-width")] [InlineData("supply-order")] [InlineData("staff-overflow")] [InlineData("hours-gap")] [InlineData("hours-counted-absent")]
     public void ImageFaultsAreRefusedAndKept(string fault)
     {
-        var root = JObject.Parse(SaveCodec.Write(Fixture())); var shop = (JArray)root["Economy"]!["Shops"]![0]!;
+        var root = SaveWire.Parse(SaveCodec.Write(Fixture())); var shop = (JArray)root["Economy"]!["Shops"]![0]!;
         switch (fault)
         {
             case "missing-image": shop.RemoveAt(2); break;
@@ -358,11 +360,11 @@ public sealed class ChangeJournalTests
         Measure("cache image creation", () => cacheSlots[0] = new DecisionSupplyImage<ShopObservedOffer[]>(cacheOffers));
         var city = AttendanceWageTests.Fresh(); AttendanceWageTests.Advance(city, 1440); var state = city.State; string payload = SaveCodec.Write(state);
         Measure("save write fresh", () => SaveCodec.Write(state), 50);
-        Measure("save read fresh", () => { Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status); }, 50);
+        Measure("save read fresh", () => { Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status); }, 50);
         var observed = Fixture(); string populated = SaveCodec.Write(observed);
         output.WriteLine($"save observed fixture: residents={observed.Citizens.Count} visitors={observed.Visitors.Count} chars={populated.Length} predecessorChars={DevelopmentChain.WriteAttendance(observed).Length} records={SaveCodec.CountRecords(observed, populated)}");
         Measure("save write observed fixture", () => SaveCodec.Write(observed), 20);
-        Measure("save read observed fixture", () => Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(populated).Status), 20);
+        Measure("save read observed fixture", () => Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(populated).Status), 20);
         long requests = city.FoodMoney!.Requests; long bytes = GC.GetAllocatedBytesForCurrentThread();
         var gate = new FoodPanelRefresh(); Func<string> build = () => city.FoodMoney.Snapshot().Text();
         bytes = GC.GetAllocatedBytesForCurrentThread();
@@ -413,7 +415,7 @@ public sealed partial class FoodCommerceTests
         var text = new StringBuilder(); FoodFeedbackV2.AppendPeriods(text, rows, 20, 1);
         Assert.Contains("Lunch: 7 evaluated offers found no staffed counter (last week 7) · change +0", text.ToString());
         Assert.Contains("Lunch: 14 evaluated offers found service/queue (last week 14)", text.ToString());
-        string saved = SaveCodec.Write(city.State); var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        string saved = SaveCodec.Write(city.State); var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var restoredText = new StringBuilder(); FoodFeedbackV2.AppendPeriods(restoredText, read.State!.Food!.History, 20, 1);
         Assert.Equal(text.ToString(), restoredText.ToString()); Assert.Equal(saved, SaveCodec.Write(read.State));
         text.Clear(); FoodFeedbackV2.AppendCity(text, city.FoodMoney!.Snapshot(), city.State.Economy, 20);

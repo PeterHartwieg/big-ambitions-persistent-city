@@ -133,7 +133,7 @@ public sealed class TrafficAdversarialTests
         Assert.Equal(commuters,city.Traffic!.VehicleCount);
         Assert.Equal(0,city.Traffic.PendingEventCount);
         Conserved(city.Traffic,commuters);
-        var result=SaveCodec.Read(SaveCodec.Write(city.State));Assert.True(result.Status==SaveReadStatus.Loaded,result.Error);
+        var result=SaveWire.Read(SaveCodec.Write(city.State));Assert.True(result.Status==SaveReadStatus.Loaded,result.Error);
         var newPlanner=new Planner();newPlanner.Closed.Add(1);var restored=new CitySimulator(result.State!,newPlanner);
         planner.Closed.Clear();newPlanner.Closed.Clear();city.RefreshTrafficClosures();restored.RefreshTrafficClosures();
         int turns=0;

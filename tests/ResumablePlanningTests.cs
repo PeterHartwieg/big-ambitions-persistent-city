@@ -288,7 +288,7 @@ public sealed class ResumablePlanningTests
                     if (pendingSeen % 7 == 0)
                     {
                         string saved = SaveCodec.Write(city.State);
-                        var read = SaveCodec.Read(saved);
+                        var read = SaveWire.Read(saved);
                         Assert.Equal(SaveReadStatus.Loaded, read.Status);
                         Assert.Equal(saved, SaveCodec.Write(read.State!));
                         // The old simulator is dropped with its job; the reload runs the event again from the start.
@@ -395,7 +395,7 @@ public sealed class ResumablePlanningTests
                     {
                         Assert.Equal("planner failure", error.Message); thrown = true;
                         Assert.False(city.PlanningPending);
-                        var read = SaveCodec.Read(SaveCodec.Write(city.State));
+                        var read = SaveWire.Read(SaveCodec.Write(city.State));
                         Assert.Equal(SaveReadStatus.Loaded, read.Status);
                         var request = planner.Seen[planner.Seen.Count - 1];
                         var live = city.State.Citizens.Single(c => c.Identity.Id == request.Citizen!.Identity.Id);
@@ -418,7 +418,7 @@ public sealed class ResumablePlanningTests
         try { inline.AdvanceTo(Target(3)); }
         catch (InvalidOperationException) { syncThrown = true; }
         Assert.True(syncThrown);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(inline.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(inline.State)).Status);
         inline.AdvanceTo(Target(3));
         Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(inline.State));
     }
@@ -504,7 +504,7 @@ public sealed class ResumablePlanningTests
                     Assert.Equal(residentBefore, JsonConvert.SerializeObject(live));
                     Assert.False(city.IsCaughtUpTo(city.State.Minute));
                     string saved = SaveCodec.Write(city.State);
-                    var read = SaveCodec.Read(saved);
+                    var read = SaveWire.Read(saved);
                     Assert.Equal(SaveReadStatus.Loaded, read.Status);
                     Assert.Equal(saved, SaveCodec.Write(read.State!));
                     // The next slice replays the event from its first yield: the first probe is asked again.
@@ -591,7 +591,7 @@ public sealed class ResumablePlanningTests
             Assert.Equal(0, city.InlineAfterRestarts);
         }
         Assert.Equal(120, city.EventRestarts);
-        var restored = new CitySimulator(SaveCodec.Read(held).State!, new DeferredPlanner { ContinuesFor = _ => 3 });
+        var restored = new CitySimulator(SaveWire.Read(held).State!, new DeferredPlanner { ContinuesFor = _ => 3 });
         RunFrames(restored, Target(2)); reference.AdvanceTo(Target(2));
         Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(restored.State));
     }

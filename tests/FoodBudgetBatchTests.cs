@@ -112,7 +112,7 @@ public sealed class FoodBudgetBatchTests
 
     private static void Reload(Run run)
     {
-        var read = SaveCodec.Read(SaveCodec.Write(run.City.State)); Assert.Equal("", read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(run.City.State)); Assert.Equal("", read.Error);
         run.City = new CitySimulator(read.State!, run.Routes);
         run.City.AttachFoodMarket(run.Market);
         Attach(run);
@@ -201,7 +201,7 @@ public sealed class FoodBudgetBatchTests
         Assert.Equal(FoodCommerce.MaximumBudgetPostingsPerUnit, food.BudgetPostingsPerEvent);
         Assert.Throws<ArgumentOutOfRangeException>(() => food.BudgetPostingsPerEvent = int.MaxValue);
         var state = run.City.State;
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal("", read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal("", read.Error);
         var shifted = read.State!;
         shifted.Food!.Residents[1].Budget!.NextPostingMinute = Midnight + .25;
         shifted.Food.Residents[1].Budget!.LastPostedDay = 1;

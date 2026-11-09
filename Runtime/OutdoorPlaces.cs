@@ -94,7 +94,7 @@ namespace PersistentCity.Runtime
                     // future building/boat parent invalidates that public-walking context.
                     if (source.Pier && (parentBuilding != null || trigger.GetComponentInParent<CasinoBoatManager>() != null)) { inaccessible++; continue; }
                     if (parentBuilding != null && !GamePlaces.BuildingAccessible(parentBuilding)) { inaccessible++; continue; }
-                    if (trigger.GetComponentsInParent<ToggleObjectDLC>(true).Any(t => t.showWhenOwned != t.dlc.DlcIsOwned())) { inaccessible++; continue; }
+                    if (DlcHidden(trigger.transform)) { inaccessible++; continue; }
                     var colliders = trigger.GetComponentsInChildren<Collider>(false).Where(Usable)
                         .OrderBy(c => SceneKey(c.transform), StringComparer.Ordinal).ToArray();
                     if (colliders.Length == 0 || colliders.Length > MaximumColliders) { inaccessible++; continue; }
@@ -238,6 +238,10 @@ namespace PersistentCity.Runtime
             }
             return length <= 1500;
         }
+
+        /// <summary>A game reason, not player distance: the object sits under a DLC toggle whose DLC state hides it.</summary>
+        internal static bool DlcHidden(Transform transform)
+            => transform.GetComponentsInParent<ToggleObjectDLC>(true).Any(t => t.showWhenOwned != t.dlc.DlcIsOwned());
 
         internal static bool StaticSceneKey(Transform transform, out string key)
         {

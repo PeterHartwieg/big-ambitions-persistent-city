@@ -82,7 +82,7 @@ public sealed class OptionalVisitTests
         var sim = Ready(); var c = sim.State.Citizens.Single();
         Assert.True(sim.TryBeginOptionalShopVisit(c.Identity.Id, "shop", Out(sim), 10, 15, 1500));
         sim.AdvanceTo(1445);
-        var resumed = new CitySimulator(SaveCodec.Read(SaveCodec.Write(sim.State)).State!, new Walking());
+        var resumed = new CitySimulator(SaveWire.Read(SaveCodec.Write(sim.State)).State!, new Walking());
         sim.AdvanceTo(1475);
         while (!resumed.AdvanceTo(1475, 1).CaughtUp) { }
         Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(resumed.State));

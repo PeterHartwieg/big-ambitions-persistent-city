@@ -214,7 +214,7 @@ public sealed partial class PhysicalJourneyTests
             Assert.True(WalkerFollow.Advance(c.Journey!, 0, observed, sample.Position) <= observed);
             Assert.True(PhysicalProgress.TryProject(sample, sample.Position, false, out double projected));
             Assert.True(projected >= observed);
-            var loaded = SaveCodec.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
+            var loaded = SaveWire.Read(SaveCodec.Write(engine.State)); Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
             engine = new CitySimulator(loaded.State!, new Planner()); c = engine.State.Citizens[0];
             Assert.True(engine.SampleJourney(c).ElapsedMinutes >= observed, "A reload must never lower the logical progress.");
         }

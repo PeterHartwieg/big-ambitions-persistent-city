@@ -21,7 +21,7 @@ public sealed class D2CompositionTests
         foreach(string damage in new[]{"tuple","account","foreign","campaign","menu"})
         {
             if(damage=="campaign" && schema>=22 || damage=="menu" && schema==23) continue;
-            var root=JObject.Parse(source);
+            var root=SaveWire.Parse(source);
             var food=(JObject)root["Food"]!;
             if(damage=="tuple") {var row=(JArray)food["Residents"]![0]!;row[0]=1;row.RemoveAt(36);row[3]=JValue.CreateNull();food.Remove("RivalStartsDay");}
             if(damage=="account") food.Remove("RivalStartsDay");

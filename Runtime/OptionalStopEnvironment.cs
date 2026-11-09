@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
-using System.Reflection;
 using Entities;
 using Buildings;
 using BigAmbitions.DayNightCycle;
@@ -14,7 +13,10 @@ using UnityEngine.SceneManagement;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Read-only spot discovery. No stationary crowd spawn, native sale or extra outing.</summary>
+    /// <summary>Read-only spot discovery. No stationary crowd spawn, native sale or extra outing.
+    /// F2h: answers do not depend on where the player stands. Frontages, park volumes and performer sites
+    /// count once seen active (<see cref="StaticSceneMemory"/>); audience stops use the spawner's static
+    /// performer area, not a live performer.</summary>
     internal sealed class OptionalStopEnvironment : IOptionalStopEnvironment
     {
         private readonly DwellSpots doors;
@@ -22,10 +24,15 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, CityBuildingController?> buildings = new Dictionary<string, CityBuildingController?>(StringComparer.Ordinal);
         private readonly Dictionary<string, OptionalStopSpot> validatedSpots = new Dictionary<string, OptionalStopSpot>(StringComparer.Ordinal);
         private readonly Dictionary<string, OptionalStopSpot[]> cached = new Dictionary<string, OptionalStopSpot[]>(StringComparer.Ordinal);
-        private readonly Dictionary<string, StationaryAiSpawner> performerZones = new Dictionary<string, StationaryAiSpawner>(StringComparer.Ordinal);
         private readonly Dictionary<string, Transform> targets = new Dictionary<string, Transform>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places;
-        private static readonly FieldInfo? Performer = typeof(StationaryAiSpawner).GetField("_streetPerformer", BindingFlags.Instance | BindingFlags.NonPublic);
+        private readonly StaticSceneMemory frontageActivity = new StaticSceneMemory();
+        private readonly StaticSceneMemory parkActivity = new StaticSceneMemory();
+        private readonly PerformerSites performers = new PerformerSites();
+        // F2h cache size: validated frontages and park volumes, catalogued performer sites and places with a site list.
+        public int ValidatedSceneObjects => frontageActivity.Count + parkActivity.Count;
+        public int PerformerSiteCount => performers.Count;
+        public int PerformerSitePlaces => performers.CachedPlaces;
         public OptionalStopEnvironment(IEnumerable<Place> places, DwellSpots doors)
         {
             this.places = places.ToDictionary(p => p.Id, StringComparer.Ordinal); this.doors = doors;
@@ -95,10 +102,12 @@ namespace PersistentCity.Runtime
                 places[place.Id] = place;
                 buildings[place.Id] = found = ResolveFrontage(place);
             }
-            return found != null && found.gameObject.activeInHierarchy && GamePlaces.BuildingAccessible(found)
+            // Access, business and closure are game reasons, read every time. Activity counts once (F2h).
+            return found != null && GamePlaces.BuildingAccessible(found)
                 && found.buildingRegistration != null && found.buildingRegistration.HasEstablishedBusiness
                 && !found.buildingRegistration.temporarilyClosed
-                && (kind != DwellKind.ChatOutsideVenue || found.buildingRegistration.businessTypeName == "ba:businesstype_nightclub");
+                && (kind != DwellKind.ChatOutsideVenue || found.buildingRegistration.businessTypeName == "ba:businesstype_nightclub")
+                && frontageActivity.Admit(place.Id, found.gameObject.activeInHierarchy, false);
         }
         private void InvalidateFrontage(Place place, DwellKind kind)
         {
@@ -156,6 +165,7 @@ namespace PersistentCity.Runtime
                 if (buildings.TryGetValue(place.Id, out var previous) && !ReferenceEquals(previous, owner))
                 {
                     doors.Invalidate(place);
+                    frontageActivity.Forget(place.Id);
                     InvalidateFrontage(place, DwellKind.Break);
                     InvalidateFrontage(place, DwellKind.WindowShopping);
                     InvalidateFrontage(place, DwellKind.ChatOutsideVenue);
@@ -239,8 +249,9 @@ namespace PersistentCity.Runtime
                 foreach (var trigger in ParkTriggers())
                 {
                     if (trigger == null) { destroyed = true; continue; }
-                    if (!trigger.gameObject.activeInHierarchy
-                        || !OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id) continue;
+                    if (!OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id
+                        || !parkActivity.Admit(place.Id, trigger.gameObject.activeInHierarchy, false)) continue;
+                    // Collider bounds of an inactive volume are empty: no spots now, nothing cached, retried later.
                     var result = new List<OptionalStopSpot>();
                     foreach (var collider in trigger.GetComponentsInChildren<Collider>(false))
                     {
@@ -272,40 +283,67 @@ namespace PersistentCity.Runtime
         private readonly List<int> parkTriggerScenes = new List<int>();
         private LocationHappinessTrigger[] ParkTriggers()
         {
-            int count = SceneManager.sceneCount;
-            bool same = parkTriggers != null && parkTriggerScenes.Count == count * 2;
-            for (int i = 0; same && i < count; i++)
-            {
-                var scene = SceneManager.GetSceneAt(i);
-                same = parkTriggerScenes[2 * i] == scene.handle && parkTriggerScenes[2 * i + 1] == (scene.isLoaded ? 1 : 0);
-            }
-            if (same) return parkTriggers!;
-            parkTriggerScenes.Clear();
-            for (int i = 0; i < count; i++)
-            {
-                var scene = SceneManager.GetSceneAt(i);
-                parkTriggerScenes.Add(scene.handle); parkTriggerScenes.Add(scene.isLoaded ? 1 : 0);
-            }
+            bool same = SameScenes(parkTriggerScenes);
+            if (same && parkTriggers != null) return parkTriggers;
             ParkTriggerScans++;
             return parkTriggers = UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true);
         }
+        // Compares the loaded scene set with the recorded one, then records the current set.
+        private static bool SameScenes(List<int> recorded)
+        {
+            int count = SceneManager.sceneCount;
+            bool same = recorded.Count == count * 2;
+            for (int i = 0; same && i < count; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                same = recorded[2 * i] == scene.handle && recorded[2 * i + 1] == (scene.isLoaded ? 1 : 0);
+            }
+            if (same) return true;
+            recorded.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                recorded.Add(scene.handle); recorded.Add(scene.isLoaded ? 1 : 0);
+            }
+            return false;
+        }
+        // F2h: the native performer spawns only while its spawner is in the 60 m culling band around the player,
+        // by chance and at a random point in the spawner's area. Catalogue the authored areas instead, inactive
+        // spawners included whatever their activity at the scan (CityMapHider deactivates city objects while the
+        // player is indoors or the map is open), and rescan only when the scene set changes. Spawner settings
+        // and DLC visibility are the game reasons that exclude a site.
+        private readonly List<int> performerScenes = new List<int>();
+        private bool performersRead;
+        public long PerformerScans { get; private set; }
+        private void EnsurePerformers()
+        {
+            if (SameScenes(performerScenes) && performersRead) return;
+            performersRead = true; PerformerScans++;
+            var readings = new List<PerformerSiteReading>();
+            foreach (var zone in UnityEngine.Object.FindObjectsOfType<StationaryAiSpawner>(true))
+            {
+                try
+                {
+                    if (zone == null || !OutdoorPlaces.StaticSceneKey(zone.transform, out string key)) continue;
+                    var area = zone.streetPerformerBoundsPositionGiver;
+                    bool excluded = !zone.canSpawnStreetPerformers || area == null || zone.streetPerformerSpawnChance <= 0
+                        || zone.disabled || OutdoorPlaces.DlcHidden(zone.transform);
+                    // The native spawn point is uniform in the area's horizontal bounds, so its centre is the
+                    // expected performer position.
+                    var center = area == null ? zone.transform.position
+                        : area.transform.position + area.transform.rotation * new Vector3(area.bounds.center.x, 0, area.bounds.center.z);
+                    readings.Add(new PerformerSiteReading(key, excluded,
+                        PhysicalPedestrianBody.Point(center), zone, area == null ? (object)zone : area));
+                }
+                catch (Exception) { }
+            }
+            performers.Replace(readings);
+        }
         private IReadOnlyList<OptionalStopSpot> Audience(Place place)
         {
-            var image = new List<AudienceTarget>();
-            if (Performer == null) return Array.Empty<OptionalStopSpot>();
-            foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
-            {
-                if (zone == null || !(Performer.GetValue(zone) is StreetPerformer performer) || performer == null
-                    || !performer.gameObject.activeInHierarchy) continue;
-                var center = performer.transform.position;
-                // Only pedestrians passing this entrance; no destination/trip is generated for a show.
-                if (Position.Distance(place.Position, PhysicalPedestrianBody.Point(center)) > 8
-                    || !OutdoorPlaces.StaticSceneKey(zone.transform, out string key)) continue;
-                string target = "performer:" + key;
-                targets[target] = performer.transform; performerZones[target] = zone;
-                image.Add(new AudienceTarget(zone, performer, target, PhysicalPedestrianBody.Point(center)));
-            }
-            return audiences.Get(place, image, SampleAudience);
+            EnsurePerformers();
+            // Only pedestrians passing this entrance; no destination/trip is generated for a show.
+            return audiences.Get(place, performers.Near(place), SampleAudience);
         }
         private static IReadOnlyList<OptionalStopSpot> SampleAudience(Place place, IReadOnlyList<AudienceTarget> image)
         {
@@ -340,17 +378,16 @@ namespace PersistentCity.Runtime
             if (stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting && !NativeDoorPresent(place, stop.Kind)) return OptionalStopAvailability.Unavailable;
             var geometryStatus = GeometryStatus(place, stop);
             if (geometryStatus != OptionalStopAvailability.Ready) return geometryStatus;
-            // Rebind saved native identities once. A missing performer/volume ends the saved stop;
-            // a later reappearance cannot restart it.
-            if (stop.Kind == DwellKind.Audience && !targets.ContainsKey(stop.TargetId)) Audience(place);
+            // Rebind saved native identities once. A destroyed volume or a site gone from the scene ends the saved
+            // stop; a later reappearance cannot restart it. A deactivation does not end it (F2h).
+            if (stop.Kind == DwellKind.Audience)
+            {
+                EnsurePerformers();
+                if (!performers.Available(stop.TargetId, stop.Facing)) return OptionalStopAvailability.Unavailable;
+            }
             if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId)) ParkEdge(place, place.Id + ":" + stop.Kind);
-            if ((stop.Kind == DwellKind.Audience || stop.Kind == DwellKind.Resting)
-                && (!targets.TryGetValue(stop.TargetId, out var target) || target == null || !target.gameObject.activeInHierarchy)) return OptionalStopAvailability.Unavailable;
-            if (stop.Kind == DwellKind.Audience
-                && (!performerZones.TryGetValue(stop.TargetId, out var zone) || zone == null
-                    || !(Performer?.GetValue(zone) is StreetPerformer live) || live == null
-                    || live.transform != targets[stop.TargetId]
-                    || Position.Distance(stop.Facing, PhysicalPedestrianBody.Point(live.transform.position)) > 0.5)) return OptionalStopAvailability.Unavailable;
+            if (stop.Kind == DwellKind.Resting && (!targets.TryGetValue(stop.TargetId, out var target) || target == null
+                || !parkActivity.Admit(stop.TargetId, target.gameObject.activeInHierarchy, false))) return OptionalStopAvailability.Unavailable;
             return NavMesh.SamplePosition(PhysicalPedestrianBody.Vector(stop.Position), out var hit, 0.15f, WalkingRoutes.DryFilter)
                 && Position.Distance(PhysicalPedestrianBody.Point(hit.position), stop.Position) < 0.15
                 ? OptionalStopAvailability.Ready : OptionalStopAvailability.Unavailable;

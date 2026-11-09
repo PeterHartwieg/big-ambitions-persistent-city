@@ -41,9 +41,11 @@ public sealed class F6iPriceAnchorTests
             if (FoodChoicePolicy.Select(new[] { markup }, traits, Cap, Draw(seed), settings, true).Index == 0) own1++;
         }
         output.WriteLine($"native cents {cents}, sensitivity {sensitivity}: weight {w0:R} -> {w1:R}, own/home {own0}/{4096-own0} -> {own1}/{4096-own1}");
-        Assert.InRange(w0, .4, 2.5); // Comparable to the funded-home weight of 1 at ordinary prices.
-        Assert.True(w1 > settings.FoodChoiceWeightFloor * 5);
-        Assert.InRange(w1 / w0, .25, .5);
+        // Comparable to the funded-home weight of 1 at ordinary prices. F6k weight 1.2: band 4 spans .35 ($16.69) to 2.97 ($9.24).
+        Assert.InRange(w0, .33, 3);
+        Assert.True(w1 > settings.FoodChoiceWeightFloor * 3); // F6k weight 1.2: band 4 at $16.69 keeps .082 (was .124)
+        // F6k: weight 1.2 puts the most sensitive band at (2/3)^3.6 = .23 (was .30 at weight 1).
+        Assert.InRange(w1 / w0, .2, .5);
         Assert.True(own1 < own0 * .8);
         // The proportional markup penalty is identical at every native price level.
         Assert.Equal(Weight(1875, Cap, traits) / Weight(1250, Cap, traits), w1 / w0, 12);
@@ -62,7 +64,8 @@ public sealed class F6iPriceAnchorTests
         double reference = Weight(1250, Cap, traits), markup = Weight(1875, Cap, traits);
         output.WriteLine($"sensitivity {sensitivity}: reference {reference:R}, markup {markup:R}, ratio {markup / reference:R}");
         Assert.Equal(1, reference, 12);
-        Assert.InRange(markup / reference, .25, .68);
+        // F6k weight 1.2: from (2/3)^3.6 = .23 at band 4 to (2/3)^1.2 = .61 at band 0.
+        Assert.InRange(markup / reference, .2, .68);
         // Savings cannot dilute the soft price signal, including a tight but affordable wallet.
         Assert.Equal(markup, Weight(1875, Money.FromCents(1875), traits));
         Assert.Equal(reference, Weight(1250, Money.FromCents(1875), traits));
@@ -109,12 +112,14 @@ public sealed class F6iPriceAnchorTests
     public void EqualOffersRankByPriceAndTasteDistancePriceHaveComparableStrength()
     {
         var settings = new FoodChoiceSettings();
-        Assert.InRange(Weight(1250, Cap) / Weight(1875, Cap), 2.1, 2.4);
+        // F6k weight 1.2: a neutral resident's +50% ratio is 1.5^2.4 = 2.65 (was 1.5^2 = 2.25).
+        Assert.InRange(Weight(1250, Cap) / Weight(1875, Cap), 2.5, 2.8);
         int cheaper = 0;
         var offers = new[] { Offer(1250, "cheap"), Offer(1875, "dear") };
         for (int seed = 0; seed < 4096; seed++)
             if (FoodChoicePolicy.Select(offers, Neutral, Cap, Draw(seed), settings, false).Index == 0) cheaper++;
-        Assert.InRange(cheaper, 2700, 3000);
+        output.WriteLine($"cheaper {cheaper}");
+        Assert.InRange(cheaper, 2800, 3050); // F6k weight 1.2: 2925 (was inside 2700-3000 at weight 1)
         double baseline = Weight(1250, Cap);
         double disliked = Weight(1250, Cap, new ResidentTraits { Bands = "2022222222" });
         double distant = FoodChoicePolicy.Weight(Offer(1250, travel: 10), Neutral, Cap, settings);
@@ -166,7 +171,8 @@ public sealed class F6iPriceAnchorTests
         Assert.Equal(Weight(1250, Cap, settings: settings), Weight(1875, Cap, settings: settings));
         Assert.Equal(-1, FoodChoicePolicy.Select(new[] { Offer(1875) }, Neutral, Money.FromCents(1250), Draw(0), settings, false).Index);
         settings.FoodChoicePriceWeight = 3;
-        Assert.True(Weight(1875, Cap, settings: settings) < Weight(1875, Cap) * .2);
+        var unit = new FoodChoiceSettings { FoodChoicePriceWeight = 1 };
+        Assert.True(Weight(1875, Cap, settings: settings) < Weight(1875, Cap, settings: unit) * .2);
     }
 
     [Theory]

@@ -154,7 +154,7 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
     public void CopiedSavedUnderreportedBoundaryReacquiresAndRecoversItsOwnSectionOnly()
     {
         var f = new Fixture(); f.SeedLegacyUnderreportedBoundary();
-        var read = SaveCodec.Read(SaveCodec.Write(f.Simulation.State));
+        var read = SaveWire.Read(SaveCodec.Write(f.Simulation.State));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var copied = new CitySimulator(read.State!, new Planner());
         Assert.True(copied.TryAcquirePhysicalJourney(f.Citizen.Identity.Id, out var lease));

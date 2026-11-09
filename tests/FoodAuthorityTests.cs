@@ -98,7 +98,7 @@ namespace PersistentCity.Tests
                 Assert.ThrowsAny<Exception>(() => FoodAuthorityStore.Read(data[FoodAuthorityStore.Key]));
                 Assert.Equal(input, data[FoodAuthorityStore.Key]);
             }
-            var parsed = JObject.Parse(valid); ((JArray)parsed["shops"]!).Add(((JArray)parsed["shops"]!)[0].DeepClone());
+            var parsed = SaveWire.Parse(valid); ((JArray)parsed["shops"]!).Add(((JArray)parsed["shops"]!)[0].DeepClone());
             Assert.Throws<InvalidDataException>(() => FoodAuthorityStore.Read(parsed.ToString()));
         }
         [Fact] public void RegistryHasNoEightShopAuthorityCeiling()

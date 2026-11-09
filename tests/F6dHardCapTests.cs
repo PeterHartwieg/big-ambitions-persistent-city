@@ -57,7 +57,7 @@ public sealed class F6dHardCapTests
         Assert.Equal(0, remaining);
         string atRecords = SaveCodec.Write(state); counts = SaveCodec.CountRecords(state, atRecords);
         Assert.Equal(SaveCodec.MaxEmbeddedRecords, Math.Max(counts.Streaming, counts.Semantic));
-        var read = SaveCodec.Read(atRecords); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(atRecords); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(atRecords, SaveCodec.Write(read.State!)); read = null!;
         var (person, last) = routes[^1];
         var extra = new RouteLeg { From = last.Legs[^1].To, To = last.Legs[^1].To, Minutes = 1, Mode = TravelMode.Walk };
@@ -84,7 +84,7 @@ public sealed class F6dHardCapTests
         string atCharacters = SaveCodec.Write(state);
         Assert.Equal(SaveCodec.MaxInputCharacters, atCharacters.Length);
         Assert.Equal(SaveCodec.MaxInputCharacters, System.Text.Encoding.UTF8.GetByteCount(atCharacters));
-        read = SaveCodec.Read(atCharacters); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        read = SaveWire.Read(atCharacters); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(atCharacters, SaveCodec.Write(read.State!)); read = null!;
         var growName = state.Citizens.First(p => p.Identity.Id.StartsWith("pc:", StringComparison.Ordinal) && p.Identity.Name.Length < 512);
         growName.Identity.Name += "x";

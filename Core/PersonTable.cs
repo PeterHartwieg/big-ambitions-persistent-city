@@ -63,6 +63,28 @@ namespace PersistentCity.Core
                     throw new InvalidOperationException("Visitor person already exists: " + city.Visitors[i].Id);
         }
 
+        /// <summary>F5g: merges newly created visitors into the aligned ordinal <see cref="CityState.Visitors"/> and
+        /// <see cref="CityState.VisitorRoutines"/> lists in one backward pass: O(existing + added) moves, no sort and no copy of
+        /// the existing entries (the lists may grow their backing arrays). <c>pv:&lt;n&gt;</c> IDs interleave ordinally with older ones (pv:101 sorts between
+        /// pv:1009 and pv:1010), so appending alone would break the saved order. Refuses a duplicate person.</summary>
+        internal static void InsertVisitors(CityState city, List<(VisitorPerson Visitor, VisitorRoutine Routine)> added)
+        {
+            if (city.Visitors.Count != city.VisitorRoutines.Count) throw new InvalidOperationException("Every visitor has exactly one routine.");
+            if (added.Count == 0) return;
+            added.Sort((a, b) => string.CompareOrdinal(a.Visitor.Id, b.Visitor.Id));
+            int existing = city.Visitors.Count;
+            for (int n = 0; n < added.Count; n++) { city.Visitors.Add(null!); city.VisitorRoutines.Add(null!); }
+            int i = existing - 1, j = added.Count - 1, k = existing + added.Count - 1;
+            while (j >= 0)
+            {
+                int order = i < 0 ? -1 : string.CompareOrdinal(city.Visitors[i].Id, added[j].Visitor.Id);
+                if (order == 0) throw new InvalidOperationException("Visitor person already exists: " + added[j].Visitor.Id);
+                if (order > 0) { city.Visitors[k] = city.Visitors[i]; city.VisitorRoutines[k] = city.VisitorRoutines[i]; i--; }
+                else { city.Visitors[k] = added[j].Visitor; city.VisitorRoutines[k] = added[j].Routine; j--; }
+                k--;
+            }
+        }
+
         /// <summary>The resident's Employment, formalizing DayPlaceId: Study for students, Work otherwise, none when
         /// unassigned or retired.</summary>
         public static Employment? ResidentEmployment(CitizenState resident)

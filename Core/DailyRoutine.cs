@@ -100,12 +100,14 @@ namespace PersistentCity.Core
                 if (futureWork.HasValue && futureWork.Value.StartsAt > minute && futureWork.Value.StartsAt < next)
                     next = futureWork.Value.StartsAt;
                 bool weekend = Weekend(currentDay);
-                // A commuter visitor's stays recur on weekdays only; at weekends it stays off-map at its portal.
-                if (weekend && person.IsVisitor) continue;
+                // A commuter visitor's stays recur on weekdays only; at weekends it stays off-map at its portal. F5g: a
+                // day-visitor pool member stays only on its seeded visit days and spends them at its shop and leisure venue.
+                bool dayVisit = person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit;
+                if (person.IsVisitor && (dayVisit ? !VisitorSchedules.VisitsOn(keys, currentDay, weekend) : weekend)) continue;
                 double shopFrom = midnight + (late ? 1230 : weekend ? 660 : 1050) + shift;
                 double shopUntil = Math.Min(MaxMinute, shopFrom + 45);
                 if (person.ShopId.Length > 0 && shopUntil > minute && shopUntil > shopFrom && shopFrom < next
-                    && (person.Identity.Persona == Persona.Foodie
+                    && (dayVisit || person.Identity.Persona == Persona.Foodie
                     || RoutineKeys.Draw(keys.ShopDay, currentDay) % 3 != 0))
                 {
                     double until = quiet.OptionalEndsAt(shopFrom, shopUntil);
@@ -116,7 +118,7 @@ namespace PersistentCity.Core
                 double leisureFrom = midnight + (late ? 1320 : weekend ? 840 : 1140) + shift;
                 double leisureUntil = Math.Min(MaxMinute, leisureFrom + (weekend ? 120 : 75));
                 if (person.LeisureId.Length > 0 && leisureUntil > minute && leisureUntil > leisureFrom && leisureFrom < next
-                    && (weekend || person.Identity.Persona == Persona.Sporty || late
+                    && (dayVisit || weekend || person.Identity.Persona == Persona.Sporty || late
                     || RoutineKeys.Draw(keys.LeisureDay, currentDay) % 2 == 0))
                 {
                     double until = quiet.OptionalEndsAt(leisureFrom, leisureUntil);
@@ -128,6 +130,9 @@ namespace PersistentCity.Core
                 // Avoid recomputing a week's hashes/windows at every ordinary event.
                 if (currentDay >= day && next <= midnight + 1440) break;
             }
+            // F5g: a pool member can draw no visit day inside this window. Wake it at the first unchecked midnight to look
+            // further ahead instead of ending its Home span at the clock limit, which would leave it dormant for good.
+            if (next == MaxMinute && person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) next = Math.Min(MaxMinute, (day + 9) * 1440.0);
             return new RoutineSlot(person.HomeId, Activity.Home, next);
         }
 
@@ -330,8 +335,8 @@ namespace PersistentCity.Core
         internal readonly int Seed;
         internal readonly int HourShift, QuietPersonal;
         internal readonly uint CommutePreparation, CommuteMargin, EmploymentTime;
-        // Hash states after Id + ":shop:", ":leisure:", ":quiet-day:" and ":leisure-day:".
-        internal readonly uint ShopDay, LeisureDay, QuietDay, LeisureChoiceDay;
+        // Hash states after Id + ":shop:", ":leisure:", ":quiet-day:", ":leisure-day:" and (F5g) ":visit:".
+        internal readonly uint ShopDay, LeisureDay, QuietDay, LeisureChoiceDay, VisitDay;
 
         private RoutineKeys(string id, int seed)
         {
@@ -346,6 +351,7 @@ namespace PersistentCity.Core
             LeisureDay = StableRandom.Append(person, ":leisure:");
             QuietDay = StableRandom.Append(person, ":quiet-day:");
             LeisureChoiceDay = StableRandom.Append(person, ":leisure-day:");
+            VisitDay = StableRandom.Append(person, ":visit:");
         }
 
         private static uint Final(uint state, string suffix) => StableRandom.Finish(StableRandom.Append(state, suffix));

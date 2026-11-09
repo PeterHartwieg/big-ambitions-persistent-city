@@ -75,7 +75,7 @@ public sealed class Schema27Tests
     private static CitySimulator Reload(CitySimulator city, Market market, IRoutePlanner? routes = null)
     {
         string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         return Start(read.State!, market, routes);
@@ -88,7 +88,7 @@ public sealed class Schema27Tests
 
     private static void RefusedAndPreserved(string payload, CityState replacement, SaveReadStatus expected, string? error = null)
     {
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == expected, read.Status + ": " + read.Error); Assert.Null(read.State);
         if (error != null) Assert.Contains(error, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "kept", [FoodAuthorityStore.Key] = "manifest" };
@@ -127,7 +127,7 @@ public sealed class Schema27Tests
     public void GoldenWriter27BytesArePinned()
     {
         Assert.Equal(27, SaveCodec.IndependentSchema);
-        var pins = JObject.Parse(File.ReadAllText(GoldenPath));
+        var pins = SaveWire.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(27, (int)pins["writer"]!);
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
@@ -177,14 +177,14 @@ public sealed class Schema27Tests
         Assert.Equal(PersonTable.PersonCount(state), state.Food!.Residents.Count);
         Assert.All(state.Food.Residents, m => { Assert.Equal(m.ResidentId, m.HostId); Assert.Equal(0, m.HostSlot); Assert.Null(m.Excursion); });
         Assert.Empty(state.Food.RoutineStops);
-        string payload = SaveCodec.Write(state);
+        string payload = SaveWire.Text(state);
         Assert.Contains("\"Schema\":" + CityState.CurrentSchema + ",", payload);
         Assert.Contains("\"VisitorRoutines\":", payload);
         Assert.DoesNotContain("consumer:", payload);
         Assert.DoesNotContain("RepresentationFactor", payload);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.Equal(payload, SaveWire.Text(read.State!));
         // The reloaded city keeps running on the same routines.
         var again = Start(read.State!, new Market { Shops = ((Market)MarketOf(factor)).Shops });
         Advance(again, again.State.Minute + 180);
@@ -367,7 +367,7 @@ public sealed class Schema27Tests
             reloaded.AdvanceTo(end, 5);
             if (VisitorMeals(reloaded.State).Any(m => m.TargetKind == FoodAlternativeKind.Rival && m.Status != MealStatus.Pending) && reloads < 300)
             {
-                var read = SaveCodec.Read(SaveCodec.Write(reloaded.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+                var read = SaveWire.Read(SaveCodec.Write(reloaded.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
                 reloaded = new CitySimulator(read.State!, new FreshCityTraceTests.Walk());
                 reloaded.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings()); reloads++;
             }
@@ -427,7 +427,7 @@ public sealed class Schema27Tests
         int index = state.VisitorRoutines.FindIndex(r => r.Phase == CitizenPhase.Travelling && r.Journey != null);
         string bad = Root(payload, r => r["VisitorRoutines"]![index]!["J"]!["Legs"]![0]!["Mode"] = (int)TravelMode.Car);
         Assert.NotEqual(payload, bad);
-        var read = SaveCodec.Read(bad);
+        var read = SaveWire.Read(bad);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.Contains("car leg", read.Error);
         RefusedAndPreserved(bad, Running(2, 1).State, SaveReadStatus.Invalid, "car leg");
         // The writer refuses the same in-memory state before publication.
@@ -728,7 +728,7 @@ public sealed class Schema27Tests
             var meal = state.Food.Residents.Single(m => m.ResidentId == person.Identity.Id);
             Assert.NotNull(meal.Budget); Assert.True(HouseholdFinance.CashConserved(meal.Budget!));
         }
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Advance(rebuilt, state.Minute + 120);
     }
 
@@ -742,7 +742,7 @@ public sealed class Schema27Tests
         Advance(simulator, state.Minute + 300);
         string payload = DevelopmentChain.Write(state);
         Assert.Contains("\"Schema\":26,", payload);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Equal(26, read.SourceSchema);
         Assert.Contains("start a new city", read.Error);
         RefusedAndPreserved(payload, Running(2, 1).State, SaveReadStatus.DevelopmentSchema, "start a new city");
@@ -759,7 +759,7 @@ public sealed class Schema27Tests
 
     private static string Root(string payload, Action<JObject> change)
     {
-        var root = JObject.Parse(payload); change(root); return root.ToString(Formatting.None);
+        var root = SaveWire.Parse(payload); change(root); return root.ToString(Formatting.None);
     }
 
     private static string Tuple(string payload, int index, Func<string[], string> change)
@@ -771,13 +771,13 @@ public sealed class Schema27Tests
         // 08:00 on day 2: early workers are on their way, everyone else is still off-map at a portal.
         var state = Running(2, 26).State;
         string payload = SaveCodec.Write(state);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status);
         var replacement = Running(2, 1).State;
         int checks = 0;
         void Invalid(string bad, string? error = null)
         {
             checks++;
-            var read = SaveCodec.Read(bad);
+            var read = SaveWire.Read(bad);
             Assert.True(read.Status == SaveReadStatus.Invalid, "check " + checks + ": " + read.Status + " " + read.Error);
             RefusedAndPreserved(bad, replacement, SaveReadStatus.Invalid, error);
         }

@@ -47,7 +47,7 @@ public sealed class FoodAwarenessReviewTests
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;
         city.InspectFoodAwareness("r");var meal=city.State.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);
-        var json=JObject.Parse(DevelopmentChain.Write(city.State));json["Food"]!["Residents"]![0]![8]!["Awareness"]=null;
+        var json=SaveWire.Parse(DevelopmentChain.Write(city.State));json["Food"]!["Residents"]![0]![8]!["Awareness"]=null;
         string source=json.ToString(Formatting.None);
         Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(source).Status);
         meal.Decision!.Awareness=null;Assert.Throws<SaveValidationException>(()=>DevelopmentChain.Write(city.State));

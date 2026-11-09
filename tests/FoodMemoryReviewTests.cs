@@ -255,6 +255,6 @@ public sealed partial class FoodMemoryTests
         if (breakAlreadyTooShort) Assert.Empty(meal.Memory.Entries);
         else Assert.Equal(ShopExperience.Stockout, Assert.Single(meal.Memory.Entries).Outcome);
         Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(city.State)).Status);
     }
 }

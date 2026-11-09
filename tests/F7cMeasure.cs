@@ -59,7 +59,7 @@ public sealed class F7cMeasure
             foreach (SaveCostPhase phase in Enum.GetValues(typeof(SaveCostPhase))) phases[phase.ToString()].Add(cost.Milliseconds(phase));
             totals.Add(cost.TotalMilliseconds); allocated.Add(used);
         }
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         if (read.Status != SaveReadStatus.Loaded || SaveCodec.Write(read.State!) != payload) throw new InvalidOperationException("Read-back differs on " + fixture);
         read = null!;
         int routes = PersonTable.Schedules(state).Count(c => c.Journey != null);
@@ -102,7 +102,7 @@ public sealed class F7cMeasure
     {
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         long baseline = GC.GetTotalMemory(true);
-        var kept = SaveCodec.Read(payload);
+        var kept = SaveWire.Read(payload);
         long bytes = GC.GetTotalMemory(true) - baseline;
         GC.KeepAlive(kept);
         return bytes;

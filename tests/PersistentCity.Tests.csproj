@@ -20,6 +20,7 @@
     <Compile Include="../Runtime/InteriorGuardSettings.cs" Link="InteriorGuardSettings.cs" />
     <Compile Include="../Runtime/InteriorViewState.cs" Link="InteriorViewState.cs" />
     <Compile Include="../Runtime/AudienceGeometryCache.cs" Link="AudienceGeometryCache.cs" />
+    <Compile Include="../Runtime/StaticSceneMemory.cs" Link="StaticSceneMemory.cs" />
     <Compile Include="../Runtime/NativeCampaignReader.cs" Link="NativeCampaignReader.cs" />
     <Compile Include="../Runtime/ResearchAgencyMenu.cs" Link="ResearchAgencyMenu.cs" />
     <Compile Include="../Runtime/ResearchReportText.cs" Link="ResearchReportText.cs" />

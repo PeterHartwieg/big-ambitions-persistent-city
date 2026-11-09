@@ -20,6 +20,10 @@ namespace PersistentCity.Core
         // Plan Q4 default: about 15% of the resident count visit per day.
         public const int LeisureVisitorSharePercent = 15;
         public const int DayVisitProbabilityPercent = 25;
+        // F5g: the day-visit draw is weighted toward the three-day weekend. Four weekdays at 13.75% and three weekend
+        // days at 40% average exactly DayVisitProbabilityPercent over a week (asserted by a test).
+        public const int DayVisitWeekdayBasisPoints = 1375;
+        public const int DayVisitWeekendBasisPoints = 4000;
         public const int VisitorCapacityPerResident = 2;
         public const int MaximumVisitors = 100000;
         public const int MaximumPersons = 150000;
@@ -49,6 +53,41 @@ namespace PersistentCity.Core
 
         // Integer round-half-up of value * percent / 100 for nonnegative inputs.
         internal static long RoundPercent(long value, int percent) => (value * percent + 50) / 100;
+    }
+
+    /// <summary>The census's visitor targets (plan section 3 *World capacity interpretation*, item 6), shared by the
+    /// read-only census and F5g's fill so both use one formula. Targets are clamped, never data: commuters first, then
+    /// the day-visitor pool in the capacity that remains. Without a portal both targets are zero.</summary>
+    public readonly struct VisitorTargets
+    {
+        private VisitorTargets(bool portals, long capacity, long commuterDemand, long perDay, long poolDemand, long commuters, long pool)
+        {
+            HasPortals = portals; VisitorCapacity = capacity; CommuterDemand = commuterDemand; DayVisitorsPerDay = perDay; PoolDemand = poolDemand;
+            CommuterTarget = commuters; PoolTarget = pool;
+        }
+        /// <summary><c>min(2 × Residents, 100,000)</c> persisted visitors, commuters and the whole pool together.</summary>
+        public long VisitorCapacity { get; }
+        public long CommuterDemand { get; }
+        public long DayVisitorsPerDay { get; }
+        public long PoolDemand { get; }
+        public long CommuterTarget { get; }
+        public long PoolTarget { get; }
+        public bool HasPortals { get; }
+        /// <summary>A clamp applies only where a target exists; without a portal nothing is clamped.</summary>
+        public bool CommuterClamped => HasPortals && CommuterTarget < CommuterDemand;
+        public bool PoolClamped => HasPortals && PoolTarget < PoolDemand;
+
+        public static VisitorTargets Compute(long workplaceCapacity, long eligibleResidentWorkers, long residents, int stations)
+        {
+            long capacity = Math.Min(PopulationCensusPolicy.VisitorCapacityPerResident * residents, PopulationCensusPolicy.MaximumVisitors);
+            long commuterDemand = Math.Max(0, PopulationCensusPolicy.RoundPercent(workplaceCapacity, PopulationCensusPolicy.WorkFillPercent) - eligibleResidentWorkers);
+            long perDay = PopulationCensusPolicy.RoundPercent(residents, PopulationCensusPolicy.LeisureVisitorSharePercent);
+            long poolDemand = (perDay * 100 + PopulationCensusPolicy.DayVisitProbabilityPercent - 1) / PopulationCensusPolicy.DayVisitProbabilityPercent;
+            // No discovered portal means no visitors, never an invented entry point.
+            if (stations <= 0) return new VisitorTargets(false, capacity, commuterDemand, perDay, poolDemand, 0, 0);
+            long commuters = Math.Min(commuterDemand, capacity);
+            return new VisitorTargets(true, capacity, commuterDemand, perDay, poolDemand, commuters, Math.Min(poolDemand, capacity - commuters));
+        }
     }
 
     /// <summary>Runtime's read-only load-time facts about one established business.</summary>
@@ -283,21 +322,19 @@ namespace PersistentCity.Core
                 foreach (var id in input.StationIds) if (!string.IsNullOrEmpty(id)) stations.Add(id);
                 census.Stations = stations.Count;
             }
-            census.VisitorCapacity = Math.Min((long)PopulationCensusPolicy.VisitorCapacityPerResident * census.Residents, PopulationCensusPolicy.MaximumVisitors);
-            long eligibleWorkers = census.ResidentWorkers - census.ResidentWorkersAtPlayerOwned;
-            census.CommuterDemand = Math.Max(0, PopulationCensusPolicy.RoundPercent(census.WorkplaceCapacity, PopulationCensusPolicy.WorkFillPercent) - eligibleWorkers);
-            census.DayVisitorsPerDay = PopulationCensusPolicy.RoundPercent(census.Residents, PopulationCensusPolicy.LeisureVisitorSharePercent);
-            census.DayVisitorPoolDemand = (census.DayVisitorsPerDay * 100 + PopulationCensusPolicy.DayVisitProbabilityPercent - 1) / PopulationCensusPolicy.DayVisitProbabilityPercent;
-            // No discovered portal means no visitors, never an invented entry point.
+            var targets = VisitorTargets.Compute(census.WorkplaceCapacity, census.ResidentWorkers - census.ResidentWorkersAtPlayerOwned,
+                census.Residents, census.Stations);
+            census.VisitorCapacity = targets.VisitorCapacity;
+            census.CommuterDemand = targets.CommuterDemand;
+            census.DayVisitorsPerDay = targets.DayVisitorsPerDay;
+            census.DayVisitorPoolDemand = targets.PoolDemand;
+            census.CommuterTarget = targets.CommuterTarget;
+            census.CommuterClamped = targets.CommuterClamped;
+            census.DayVisitorPoolTarget = targets.PoolTarget;
+            census.PoolClamped = targets.PoolClamped;
             if (census.Stations > 0)
-            {
-                census.CommuterTarget = Math.Min(census.CommuterDemand, census.VisitorCapacity);
-                census.CommuterClamped = census.CommuterTarget < census.CommuterDemand;
-                census.DayVisitorPoolTarget = Math.Min(census.DayVisitorPoolDemand, census.VisitorCapacity - census.CommuterTarget);
-                census.PoolClamped = census.DayVisitorPoolTarget < census.DayVisitorPoolDemand;
                 census.DayVisitorsPresent = Math.Min(census.DayVisitorsPerDay,
                     PopulationCensusPolicy.RoundPercent(census.DayVisitorPoolTarget, PopulationCensusPolicy.DayVisitProbabilityPercent));
-            }
             census.PersistedPersons = census.Residents + census.CommuterTarget + census.DayVisitorPoolTarget;
             if (census.PersistedPersons > PopulationCensusPolicy.MaximumPersons)
                 return census.Refuse("persons " + census.PersistedPersons + " exceed " + PopulationCensusPolicy.MaximumPersons);

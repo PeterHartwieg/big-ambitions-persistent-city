@@ -402,7 +402,7 @@ public sealed class F6jMealExtrasTests
         double withSide = FoodChoicePolicy.Weight(O(1250, 1850), traits, Money.FromCents(100000), settings);
         Assert.True(withSide < alone);
         int band = traits.Band(ResidentTrait.PriceSensitivity);
-        double expected = Math.Pow(1250.0 / 1850, 2 * (.5 + .25 * band));
+        double expected = Math.Pow(1250.0 / 1850, 2 * settings.FoodChoicePriceWeight * (.5 + .25 * band));
         Assert.Equal(expected, withSide / alone, 9);
         // A whole-menu +50% keeps the ticket/main ratio: only the F6i main factor moves.
         double marked = FoodChoicePolicy.Weight(O(1875, 2775), traits, Money.FromCents(100000), settings);

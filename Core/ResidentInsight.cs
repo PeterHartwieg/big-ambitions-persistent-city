@@ -242,7 +242,7 @@ namespace PersistentCity.Core
         {
             var text = new StringBuilder(64).Append("Resident");
             if (household == 1) text.Append("; lives alone");
-            else if (household > 1) text.Append("; household of ").Append(household.ToString(CultureInfo.InvariantCulture));
+            else if (household > 1) text.Append("; household of ").Append(household.ToString(CultureInfo.InvariantCulture)).Append(" sharing one home");
             var employment = PersonTable.ResidentEmployment(person);
             if (employment != null && day != null)
                 text.Append(employment.Kind == EmploymentKind.Study ? "; studying since day " : "; employed since day ")

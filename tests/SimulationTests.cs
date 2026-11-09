@@ -54,7 +54,7 @@ public sealed class SimulationTests
         Assert.Equal(3, result.Events);
         Assert.True(engine.State.Minute < 2880);
         Assert.All(engine.State.Citizens, c => Assert.True(c.NextEventMinute >= engine.State.Minute));
-        var loaded = SaveCodec.Read(SaveCodec.Write(engine.State));
+        var loaded = SaveWire.Read(SaveCodec.Write(engine.State));
         Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
     }
 
@@ -122,7 +122,7 @@ public sealed class SimulationTests
         var engine = new CitySimulator(city, new WalkPlanner());
         engine.AdvanceTo(10080);
         Assert.All(city.Citizens, c => { Assert.Equal("h", c.PlaceId); Assert.Equal("", c.DayPlaceId); Assert.Equal(0, c.CompletedJourneys); });
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(city)).Status);
     }
 
     [Fact]

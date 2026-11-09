@@ -23,14 +23,15 @@ internal static class DevelopmentChain
         return state;
     }
 
-    public static SaveReadResult Read(string? source) => source == null ? SaveCodec.Read(source)
+    public static SaveReadResult Read(string? source) => source == null ? SaveWire.Read(source)
+        : SaveCodec.DevelopmentSchemaOf(source) == CityState.ChangeJournalSchema ? SaveCodec.ReadWriter33(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.EconomicLedgerSchema ? SaveCodec.ReadLedgerWriter(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.PersonSchema ? SaveCodec.ReadWriter26(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.IndependentSchema ? SaveCodec.ReadWriter27(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.WorkplaceCapacitySchema ? SaveCodec.ReadWriter28(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.VendorSchema ? SaveCodec.ReadWriter30(source)
         : SaveCodec.DevelopmentSchemaOf(source) == SaveCodec.ResearchSchema ? SaveCodec.ReadWriter29(source)
-        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveCodec.Read(source);
+        : SaveCodec.DevelopmentSchemaOf(source) != null ? SaveCodec.ReadDevelopmentChain(source) : SaveWire.Read(source);
 
     /// <summary>F5e: the frozen writer-27 shape (F5d's, seated under the fixed BusinessAllocation of 16). Writer 28 has
     /// the same shape and differs only in the capacity rule its cities were seated under.</summary>
@@ -80,6 +81,15 @@ internal static class DevelopmentChain
         finally { state.Schema = schema; }
     }
 
+    /// <summary>F7d: the frozen writer-33 JSON body (F6g's shape, the predecessor of the compact wire) of a current
+    /// state; the state is restored.</summary>
+    public static string Write33(CityState state)
+    {
+        int schema = state.Schema;
+        try { state.Schema = CityState.ChangeJournalSchema; return SaveCodec.WriteForSchema(state, CityState.ChangeJournalSchema); }
+        finally { state.Schema = schema; }
+    }
+
     public static string WriteAttendance(CityState state)
     {
         int schema = state.Schema;
@@ -88,7 +98,7 @@ internal static class DevelopmentChain
     }
 
     public static string Write(CityState state) => state.Schema == ChainOutput || state.Schema == Represented || state.Schema == Independent27 || state.Schema == Workplace28 || state.Schema == Research29 || state.Schema == SaveCodec.VendorSchema || state.Schema == SaveCodec.EconomicLedgerSchema
-        ? SaveCodec.WriteForSchema(state, state.Schema) : SaveCodec.Write(state);
+        ? SaveCodec.WriteForSchema(state, state.Schema) : SaveWire.Text(state); // F7d: the compact payload's body
 
     /// <summary>The activation save contract for the state's own schema (the current writer or a frozen one).</summary>
     public static void ValidateForActivation(CityState state)

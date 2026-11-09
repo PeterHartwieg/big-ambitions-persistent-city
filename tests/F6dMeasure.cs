@@ -146,7 +146,7 @@ public sealed class F6dMeasure
                 long t = Stopwatch.GetTimestamp(); string oldAgain = DevelopmentChain.Write30(state); beforeWrite.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.Equal(before, oldAgain);
                 t = Stopwatch.GetTimestamp(); var oldRead = SaveCodec.ReadWriter30(before); beforeRead.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.True(oldRead.Status == SaveReadStatus.Loaded, oldRead.Error);
                 t = Stopwatch.GetTimestamp(); string again = SaveCodec.Write(state); write.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds); Assert.Equal(after, again);
-                t = Stopwatch.GetTimestamp(); var result = SaveCodec.Read(after); read.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
+                t = Stopwatch.GetTimestamp(); var result = SaveWire.Read(after); read.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);
                 Assert.True(result.Status == SaveReadStatus.Loaded, result.Error);
                 Assert.Equal(after, SaveCodec.Write(result.State!));
             }

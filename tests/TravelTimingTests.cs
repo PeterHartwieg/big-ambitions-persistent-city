@@ -50,7 +50,7 @@ public sealed class TravelTimingTests
         Assert.Equal(1443 + 90.0 / 2, c.NextEventMinute);
         Assert.Equal(2, c.Journey!.Legs.Count); Assert.All(c.Journey.Legs, l => Assert.Equal("road:whole-edge", l.ServiceId));
         Assert.Equal(1, state.TravelTimingVersion); Assert.Equal(1, state.TravelClockRate);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public sealed class TravelTimingTests
         Assert.Equal("native:road:fragment1:timing-native:0:1", c.Journey.Legs[0].ServiceId);
         Assert.Equal("native:road:fragment1:timing-native:0:1", c.Journey.Legs[1].ServiceId);
         Assert.Equal("native:road:v1:timing-native:1:2", c.Journey.Legs[2].ServiceId);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Theory]
@@ -90,7 +90,7 @@ public sealed class TravelTimingTests
         Assert.Equal(before.X, Position(state).X); Assert.Equal(2, c.Journey.Legs.Count);
         Assert.All(c.Journey.Legs, leg => Assert.Equal("subway:line-1", leg.ServiceId));
         Assert.True(TransportComposition.Valid(c.Journey, state.Places[0].Position, state.Places[1].Position, c.Preferences));
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(before.X, Position(read.State!).X);
         Assert.All(read.State!.Citizens[0].Journey!.Legs, leg => Assert.Equal("subway:line-1", leg.ServiceId));
     }
@@ -118,7 +118,7 @@ public sealed class TravelTimingTests
         var before = Position(state); TravelTiming.Apply(state, 0.5, 1000);
         Assert.Equal(1, c.DepartureMinute); Assert.Equal(before.X, Position(state).X);
         Assert.True(c.NextEventMinute > 100000);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public sealed class TravelTimingTests
         Assert.Equal(1, c.Journey.Legs[0].Minutes); Assert.Equal("edge:0", c.Journey.Legs[0].ServiceId);
         Assert.Equal(120.0 / 512, c.Journey.Legs[1].Minutes);
         Assert.Equal(120, c.Journey.Legs[511].To.X);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public sealed class TravelTimingTests
         var state = City(); state.TravelTimingVersion = 1; state.TravelClockRate = 2;
         var before = Position(state); TravelTiming.Apply(state, 2, 0.5);
         Assert.Equal(before.X, Position(state).X); Assert.Equal(1443 + 9 * 0.25, state.Citizens[0].NextEventMinute);
-        string saved = SaveCodec.Write(state); var read = SaveCodec.Read(saved); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        string saved = SaveCodec.Write(state); var read = SaveWire.Read(saved); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.False(TravelTiming.Apply(read.State!, 2, 0.5)); Assert.Equal(saved, SaveCodec.Write(read.State!));
     }
 
@@ -201,7 +201,7 @@ public sealed class TravelTimingTests
         Assert.Equal(3, c.Journey.Legs[1].Minutes); Assert.Equal(3, c.Journey.Legs[2].Minutes);
         Assert.Equal(1445 + 3 + (timingVersion == 0 ? 100 : 8), c.NextEventMinute);
         Assert.Equal(20, Position(state).X);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Theory]
@@ -236,7 +236,7 @@ public sealed class TravelTimingTests
         state.TravelTimingVersion = timingVersion; state.TravelClockRate = 1;
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Equal(clock, c.NextEventMinute); Assert.True(engine.SampleJourney(c).AtEnd);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         // Merely near the clock is not an explicit completed arrival and cannot use this exception.
         c.NextEventMinute = clock + .00001;
         Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 3));
@@ -263,7 +263,7 @@ public sealed class TravelTimingTests
         Assert.Equal(4, citizen.Journey.Legs.Count);
         Assert.All(citizen.Journey.Legs.Take(3), leg => Assert.Equal("native:road:fragment1:timing-native:0:1", leg.ServiceId));
         Assert.Equal("native:road:v1:timing-native:1:2", citizen.Journey.Legs[3].ServiceId);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
     [Theory]

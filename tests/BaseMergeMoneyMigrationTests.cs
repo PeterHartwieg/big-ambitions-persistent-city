@@ -46,7 +46,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, current) = R8_Paid(native);
         Assert.Contains("\"Schema\":17,", current);
-        string old = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: true), 13).ToString(Formatting.None);
+        string old = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(current), wholeCents: true), 13).ToString(Formatting.None);
         var price = city.State.Food!.Residents.Single().Price;
         Assert.Contains("\"PriceCents\":" + price.Units / Money.UnitsPerCent + ",", old);
         var read = DevelopmentChain.Read(old);
@@ -60,7 +60,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, current) = R8_Paid(native);
         Assert.Contains("\"Price\":" + city.State.Food!.Residents.Single().Price.Units + ",", current);
-        var read = DevelopmentChain.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 14).ToString(Formatting.None));
+        var read = DevelopmentChain.Read(LegacyMoneyWire.AsSchema(SaveWire.Parse(current), 14).ToString(Formatting.None));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(14, read.SourceSchema);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
@@ -124,7 +124,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
         string current = LegacyWire.Write(city.State);
-        var wire = JObject.Parse(current);
+        var wire = SaveWire.Parse(current);
         if (field.EndsWith("Cents", StringComparison.Ordinal)) LegacyMoneyWire.ToLegacy(wire, wholeCents: false);
         string encoded = LegacyMoneyWire.AsSchema(wire, schema).ToString(Formatting.None);
         var control = DevelopmentChain.Read(encoded);

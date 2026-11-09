@@ -60,7 +60,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, _) = Ready(threeMeals: true); city.EnableHouseholdFinances(); market.ThrowAfterSale = uncertain;
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + after);
-        var payload = JObject.Parse(DevelopmentChain.Write(city.State)); payload["Schema"] = 11; RemoveMenuFields(payload);
+        var payload = SaveWire.Parse(DevelopmentChain.Write(city.State)); payload["Schema"] = 11; RemoveMenuFields(payload);
         string source = payload.ToString(); var orders = market.Orders.ToArray();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
@@ -73,7 +73,7 @@ public sealed partial class FoodCommerceTests
     [InlineData("duplicate")] [InlineData("too-many")] [InlineData("null")] [InlineData("missing")]
     public void MalformedMenusAreRejected(string error)
     {
-        var (city, _, _) = Ready(); var payload = JObject.Parse(DevelopmentChain.Write(city.State));
+        var (city, _, _) = Ready(); var payload = SaveWire.Parse(DevelopmentChain.Write(city.State));
         var shop = (JObject)payload["Food"]!["Shops"]![0]!;
         if (error == "duplicate") shop["AdditionalProductIds"] = new JArray(FoodProducts.Croissant);
         if (error == "too-many") shop["AdditionalProductIds"] = new JArray("a", "b", "c", "d", "e", "f", "g", "h");
@@ -86,7 +86,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(threeMeals: true); Advance(city, 2860);
         var row = city.State.Food!.History.Single(); Assert.Equal(3, row.ProductSales.Single().Purchases);
-        var payload = JObject.Parse(DevelopmentChain.Write(city.State));
+        var payload = SaveWire.Parse(DevelopmentChain.Write(city.State));
         payload["Food"]!["History"]![0]!["ProductSales"]![0]![2] = 1;
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }

@@ -302,7 +302,7 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
         // The amount twelve-digit conversion stored for 10.2528f: not a whole number of 2^-28 cents.
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(LegacyWire.Write(city.State)), wholeCents: false), 14);
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(LegacyWire.Write(city.State)), wholeCents: false), 14);
         token["Food"]!["Residents"]![0]!["PriceCents"] = 1025.279998779297m;
         string legacy = token.ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779297", legacy);
@@ -323,7 +323,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(MealStatus.Uncertain, city.State.Food.Residents.Single().Status);
         string current = LegacyWire.Write(city.State);
         // What the decimal-cents writer produced for this state: the same amounts as decimal cents.
-        string legacy = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false), 14).ToString(Newtonsoft.Json.Formatting.None);
+        string legacy = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(current), wholeCents: false), 14).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779296875", legacy);
         Assert.Contains("\"BalanceCents\":", legacy); Assert.DoesNotContain("\"Balance\":", legacy);
         var read = DevelopmentChain.Read(legacy);
@@ -344,7 +344,7 @@ public sealed partial class FoodCommerceTests
     public void MigrationStillRejectsLegacyLedgerOverflowAndPreservesThePayload()
     {
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
-        var token = JObject.Parse(Schema13(city.State));
+        var token = SaveWire.Parse(Schema13(city.State));
         var b = token["Food"]!["Residents"]![0]!["Budget"]!;
         // Whole cents above the unit's range (about $343.6 million per amount) cannot convert exactly.
         b["OpeningBalanceCents"] = long.MaxValue; b["BalanceCents"] = long.MaxValue;
@@ -356,7 +356,7 @@ public sealed partial class FoodCommerceTests
 
     private static string Schema13(CityState state)
     {
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(LegacyWire.Write(state)), wholeCents: true), 13);
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(LegacyWire.Write(state)), wholeCents: true), 13);
         return token.ToString();
     }
 
@@ -376,7 +376,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(orders, market.Orders.Count);
         // No migration publication: the stored schema-13 payload is never replaced.
         Assert.False(SaveStore.WriteTo(data, loaded.State).Success); Assert.Equal(old, data[SaveStore.StateKey]);
-        var damaged = JObject.Parse(old); damaged["Food"]!["Residents"]![0]!["PriceCents"] = 1.1;
+        var damaged = SaveWire.Parse(old); damaged["Food"]!["Residents"]![0]!["PriceCents"] = 1.1;
         data[SaveStore.StateKey] = damaged.ToString(); string bad = data[SaveStore.StateKey];
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(bad).Status);
         Assert.False(SaveStore.WriteTo(data, loaded.State).Success); Assert.Equal(bad, data[SaveStore.StateKey]);

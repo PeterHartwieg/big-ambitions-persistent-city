@@ -109,7 +109,7 @@ public sealed class Schema28Tests
     private static CitySimulator Reload(CitySimulator city, Schema27Tests.Market market)
     {
         string payload = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         return Start(read.State!, market);
@@ -141,7 +141,7 @@ public sealed class Schema28Tests
 
     private static void RefusedAndPreserved(string payload, CityState replacement, SaveReadStatus expected, string? error = null)
     {
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.True(read.Status == expected, read.Status + ": " + read.Error); Assert.Null(read.State);
         if (error != null) Assert.Contains(error, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "kept", [FoodAuthorityStore.Key] = "manifest" };
@@ -168,7 +168,7 @@ public sealed class Schema28Tests
     public void GoldenWriter28BytesArePinned()
     {
         Assert.Equal(28, PersonTable.WorkplaceCapacitySchema); Assert.Equal(28, SaveCodec.WorkplaceCapacitySchema);
-        var pins = JObject.Parse(File.ReadAllText(GoldenPath));
+        var pins = SaveWire.Parse(File.ReadAllText(GoldenPath));
         Assert.Equal(28, (int)pins["writer"]!);
         var actual = new List<string>(); var expected = new List<string>();
         foreach (var (name, build) in GoldenFixtures())
@@ -214,7 +214,7 @@ public sealed class Schema28Tests
         Assert.True(Seated(old).TryGetValue(smallest.Id, out int held) && held > band, "the fixed allocation seats more than the band");
         string payload = DevelopmentChain.Write27(old);
         Assert.Contains("\"Schema\":27,", payload);
-        var read = SaveCodec.Read(payload);
+        var read = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Equal(27, read.SourceSchema);
         Assert.Contains("start a new city", read.Error);
         var replacement = Fresh().State;
@@ -223,10 +223,10 @@ public sealed class Schema28Tests
         DevelopmentChain.RequireRefusedCapabilities(payload);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter27(payload).Status);
         // Writer 26 and 25 stay refused the same way.
-        RefusedAndPreserved(JObject.Parse(payload).Also(r => r["Schema"] = 26).ToString(Formatting.None), replacement,
+        RefusedAndPreserved(SaveWire.Parse(payload).Also(r => r["Schema"] = 26).ToString(Formatting.None), replacement,
             SaveReadStatus.DevelopmentSchema, "start a new city");
         // A future label is refused as future and kept.
-        RefusedAndPreserved(JObject.Parse(SaveCodec.Write(replacement)).Also(r => r["Schema"] = CityState.CurrentSchema + 1).ToString(Formatting.None), replacement,
+        RefusedAndPreserved(SaveWire.Parse(SaveCodec.Write(replacement)).Also(r => r["Schema"] = CityState.CurrentSchema + 1).ToString(Formatting.None), replacement,
             SaveReadStatus.Future);
     }
 
@@ -361,7 +361,7 @@ public sealed class Schema28Tests
         // A payload that seats one more person than a place's capacity is refused and kept.
         var saved = Fresh().State;
         var full = Seated(saved).First(kv => kv.Value > 0);
-        var root = JObject.Parse(SaveCodec.Write(saved));
+        var root = SaveWire.Parse(SaveCodec.Write(saved));
         foreach (var place in (JArray)root["Places"]!)
             if ((string)place["Id"]! == full.Key) place["Capacity"] = full.Value - 1;
         RefusedAndPreserved(root.ToString(Formatting.None), Fresh().State, SaveReadStatus.Invalid, "exceeds capacity");
@@ -485,7 +485,7 @@ public sealed class Schema28Tests
         var replacement = Fresh().State;
         var resident = city.State.Citizens.First(c => c.DayPlaceId.Length != 0 && c.Identity.Persona != Persona.Student);
         int index = city.State.Citizens.IndexOf(resident);
-        string Edit(Action<JObject> change) { var r = JObject.Parse(payload); change(r); return r.ToString(Formatting.None); }
+        string Edit(Action<JObject> change) { var r = SaveWire.Parse(payload); change(r); return r.ToString(Formatting.None); }
         RefusedAndPreserved(Edit(r => r["Citizens"]![index]!["DayPlaceId"] = "address:gone:1:work"), replacement, SaveReadStatus.Invalid);
         RefusedAndPreserved(Edit(r => r["Citizens"]![index]!["DayPlaceId"] = "shop:0"), replacement, SaveReadStatus.Invalid);
         // The workplace removed from the catalogue (its index shifts every later place): refused, never re-seated.

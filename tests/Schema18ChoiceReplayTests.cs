@@ -26,7 +26,7 @@ public sealed class Schema18ChoiceReplayTests
     // D3a starts recording on migration; compare every older field separately from that new coverage marker.
     private static string PreOutflow(CityState state)
     {
-        var root = JObject.Parse(DevelopmentChain.Write25(state)); // both arms at the frozen writer, without person fields
+        var root = SaveWire.Parse(DevelopmentChain.Write25(state)); // both arms at the frozen writer, without person fields
         ((JObject)root["Food"]!).Remove("Outflow");
         root.Remove("NamePolicyStartsDay"); // independently checked next-day schema-25 boundary
         return root.ToString(Formatting.None);

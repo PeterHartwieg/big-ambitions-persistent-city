@@ -59,6 +59,16 @@ namespace PersistentCity.Core
         /// <summary>Measurement only: queued person events and queued meal events.</summary>
         internal int QueuedPersonEvents => due.Count;
         internal int QueuedMealEvents => food?.QueuedMeals ?? 0;
+        /// <summary>Measurement only (F5h): queued person events and meal events due at or before <paramref name="minute"/>,
+        /// that is, due work not yet run. Walks the ordered queues from their minimum and stops at the first later entry.
+        /// An event waiting for its route has left the queue but has not run, so it counts too (review Sol-r2-1).</summary>
+        internal int DuePersonEventsAtOrBefore(double minute)
+        {
+            int count = pending != null && pending.Item.Minute <= minute && !due.Contains(pending.Item) ? 1 : 0;
+            foreach (var entry in due) { if (entry.Minute > minute) break; count++; }
+            return count;
+        }
+        internal int DueMealEventsAtOrBefore(double minute) => food?.DueMealsAtOrBefore(minute) ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
@@ -172,6 +182,10 @@ namespace PersistentCity.Core
             replacement.ordinaryLoadedHour = ordinaryLoadedHour; replacement.ordinaryObservedHour = ordinaryObservedHour;
             replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
+            // F5g: the latched boundary plan carries over; its seat counter is rebuilt against the replacement's occupancy.
+            // F5g: the latched plan carries over; its seat counter is rebuilt against the replacement's occupancy.
+            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan;
+            if (fillPlan != null) fillPlan.Factory = null;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
             // A running survey is transient; the replacement starts it again from zero.
@@ -283,6 +297,8 @@ namespace PersistentCity.Core
             if (!AccountingClock.Compatible(State.Minute, nativeMinute) || !IsAccountingEpochDrained(nativeMinute)) return false;
             double epoch = Math.Floor(nativeMinute);
             if (traffic != null && traffic.Clock < epoch) traffic.BeginObservationEpoch(epoch);
+            // F5g: the clock moves onto a midnight epoch as before (review Sol-r3-1); that boundary's fill then runs at the
+            // epoch minute before its ordinary events, so physical and traffic observations stay in the new epoch.
             if (State.Minute < epoch)
             {
                 // This boundary was implicit in the predecessor clock. Publish its calendar
@@ -323,7 +339,9 @@ namespace PersistentCity.Core
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
             && (State.Food == null || (food != null ? food.NextMinute > targetMinute : inspectSavedFood && SavedFoodAfter(targetMinute)))
-            && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute);
+            && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute)
+            // Last: it latches a boundary's fill plan only after every other event through the target has drained.
+            && !FillHolds(targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
         {
@@ -355,8 +373,25 @@ namespace PersistentCity.Core
                 double activation = State.Capabilities.Active ? double.PositiveInfinity : (Math.Floor(State.Minute / 1440) + 1) * 1440;
                 double next = Math.Min(activation, Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute)));
                 // A survey runs once everything through its SurveyAtMinute has drained, before the next event.
-                if (research != null && research.ReadyBefore(next, targetMinute))
+                // F5g: an unreached day boundary, or fill work left on the boundary the clock stands on, counts as the next work,
+                // so a survey never runs ahead of that boundary's fill.
+                // F5g: fill work at the boundary the clock stands on, or an unreached boundary, counts as the next work.
+                if (research != null && research.ReadyBefore(!FillActive ? next : FillUnitDue() ? State.Minute : Math.Min(next, NextDayBoundary), targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
+                // F5g: a bounded fill unit at the boundary minute, before the boundary's ordinary events.
+                if (FillUnitDue()) { RunFillUnit(); count++; continue; }
+                // F5g: once every event before a day boundary inside the target has run, stop the clock on the boundary,
+                // with the first midnight's capability activation (review Sol-r2-1), so its fill runs before its events.
+                if (FillActive && NextDayBoundary <= next && NextDayBoundary <= targetMinute)
+                {
+                    double boundary = NextDayBoundary;
+                    // Publish the traffic epoch with the city's (review Sol-r4-2): every earlier traffic event has run, and
+                    // events due exactly at midnight stay queued for after the fill, so the two clocks always agree.
+                    if (traffic != null && traffic.Clock < boundary) traffic.BeginObservationEpoch(boundary);
+                    State.Minute = boundary;
+                    if (!State.Capabilities.Active) { State.Capabilities.Active = true; count++; }
+                    continue;
+                }
                 if (next > targetMinute) break;
                 State.Minute = next;
                 if (next == activation) { State.Capabilities.Active = true; count++; continue; }

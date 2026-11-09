@@ -55,7 +55,7 @@ public sealed class OrdinaryExchangeTests
         Assert.True(HouseholdFinance.CashConserved(b));
         var row = Assert.Single(city.State.Economy.Outside); Assert.Equal(b.Ledger.Discretionary.Units, row.RetailUnits);
         Assert.Equal(BigInteger.One, row.RetailVisits);
-        string payload = SaveCodec.Write(city.State); var read = SaveCodec.Read(payload);
+        string payload = SaveCodec.Write(city.State); var read = SaveWire.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var saved = read.State!.Food!.Residents[0].Budget!;
         Assert.False(OrdinaryExchanges.TryPay(saved, read.State.Economy, OrdinaryVisitClass.Retail, Money.FromCents(500), 1501.9));
@@ -74,7 +74,7 @@ public sealed class OrdinaryExchangeTests
         if (mode == "stale") owner.Hour--;
         if (mode == "reload")
         {
-            var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = SaveWire.Read(SaveCodec.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             city = new CitySimulator(read.State!, new AttendanceWageTests.Routes()); city.AttachFoodMarket(new AttendanceWageTests.Market());
             var index = new OrdinaryOwnershipIndex(city.State.Places, city.State.Minute, _ => new OrdinaryVisitTerms(0, false, OrdinaryVisitClass.Retail));
             city.AttachOrdinaryExchanges(index); b = Budget(city);
@@ -203,7 +203,7 @@ public sealed class OrdinaryExchangeTests
         Assert.Equal(saved, SaveCodec.Write(city.State)); Drain(city, start + 1);
         Assert.Equal(Money.FromCents(500), Budget(city).Ledger.Discretionary);
         Assert.Equal(BigInteger.One, Assert.Single(city.State.Economy.Outside).RetailVisits);
-        var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new AttendanceWageTests.Routes()); loaded.AttachFoodMarket(new AttendanceWageTests.Market()); loaded.AttachOrdinaryExchanges(owner);
         Drain(loaded, start + 1); Assert.Equal(Money.FromCents(500), Budget(loaded).Ledger.Discretionary);
     }
@@ -261,7 +261,7 @@ public sealed class OrdinaryExchangeTests
         var ids = state.Visitors.Select(v => v.Id).ToHashSet();
         foreach (var meal in state.Food!.Residents.Where(m => ids.Contains(m.ResidentId)))
         { Assert.Equal(Money.Zero, meal.Budget!.EssentialsPaid); Assert.Equal(Money.Zero, meal.Budget.IncomeReceived); }
-        var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(SaveCodec.Write(state)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         city = new CitySimulator(read.State!, new FreshCityTraceTests.Walk()); city.AttachFoodMarket(market);
         city.AttachOrdinaryExchanges(new OrdinaryOwnershipIndex(Array.Empty<Place>(), read.State!.Minute, _ => default));
         Drain(city, 4320);
@@ -307,7 +307,7 @@ public sealed class OrdinaryExchangeTests
         var before = city.FoodMoney!.Snapshot();
         Assert.Equal(0, before.WithoutHomeBasket);
         string payload = SaveCodec.Write(state);
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var restored = Attach(read.State!);
         Assert.Equal(state.Minute, restored.State.Minute);
         Assert.Equal(before, restored.FoodMoney!.Snapshot());

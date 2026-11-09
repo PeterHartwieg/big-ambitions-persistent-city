@@ -121,7 +121,7 @@ public sealed class A5IntegratedAcceptanceTests
                 candidate.AttachWeather(new Weather { Value = captured ? WeatherSample.Unknown : weather },
                     new WeatherSettings { Enabled = !captured, RainTravelWeightMultiplier = captured ? 2 : 1.3 });
                 candidate.FoodDecisionObserved += t => actualDecision = JsonConvert.SerializeObject(t.Decision);
-                Assert.Equal(saved, DevelopmentChain.Write(candidate.State)); reloaded = true;
+                Assert.Equal(SaveWire.Body(saved), DevelopmentChain.Write(candidate.State)); reloaded = true;
             }
             string before = DevelopmentChain.Write(candidate.State); int routes = paths.Out + paths.Back, buys = market.Attempts;
             var insight = candidate.Inspect("r")!; _ = insight.Text();
@@ -169,7 +169,7 @@ public sealed partial class FoodCommerceTests
         string source = sourceSchema == 16 ? S17_Old(legacy17, 16) : sourceSchema == 17 ? legacy17 : WeatherTests.As19(DevelopmentChain.Write(city.State));
         if (sourceSchema == 18)
         {
-            var root = Newtonsoft.Json.Linq.JObject.Parse(source); root["Schema"] = 18;
+            var root = SaveWire.Parse(source); root["Schema"] = 18;
             ((Newtonsoft.Json.Linq.JObject)root["Food"]!).Remove("AwarenessStartsDay");
             source = root.ToString(Formatting.None);
         }

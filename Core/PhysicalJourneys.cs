@@ -90,9 +90,27 @@ namespace PersistentCity.Core
             && citizenEvents.TryGetValue(lease.CitizenId, out var item) && ReferenceEquals(item.Citizen, lease.Citizen)
             && CurrentCitizenSlot(item, lease.Citizen);
 
-        private bool CurrentCitizenSlot(Due item, CitizenState citizen) => item.ListIndex >= 0
-            ? item.ListIndex < State.Citizens.Count && ReferenceEquals(State.Citizens[item.ListIndex], citizen)
-            : ~item.ListIndex < State.VisitorRoutines.Count && ReferenceEquals(State.VisitorRoutines[~item.ListIndex], citizen);
+        // F5g: a visitor's slot is found by its ID in the ordinal visitor list, not by the queued index, because fill units
+        // merge new visitors into that list and shift later positions. Before F5g both gave the same answer.
+        private bool CurrentCitizenSlot(Due item, CitizenState citizen)
+        {
+            if (item.ListIndex >= 0) return item.ListIndex < State.Citizens.Count && ReferenceEquals(State.Citizens[item.ListIndex], citizen);
+            int index = VisitorSlot(citizen.Identity.Id);
+            return index >= 0 && ReferenceEquals(State.VisitorRoutines[index], citizen);
+        }
+
+        private int VisitorSlot(string id)
+        {
+            int low = 0, high = State.Visitors.Count - 1;
+            while (low <= high)
+            {
+                int mid = low + (high - low) / 2;
+                int order = string.CompareOrdinal(State.Visitors[mid].Id, id);
+                if (order == 0) return mid < State.VisitorRoutines.Count ? mid : -1;
+                if (order < 0) low = mid + 1; else high = mid - 1;
+            }
+            return -1;
+        }
 
         /// <summary>
         /// Report measured progress along the persisted legs, expressed in their nominal route minutes.
