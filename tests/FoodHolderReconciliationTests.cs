@@ -144,7 +144,7 @@ public sealed class FoodHolderReconciliationTests
             {
                 var t = timing.Start();
                 if (FoodHolderReconciliation.Check(image, native, menu, amount) != FoodReconciliationRefusal.None) failures++;
-                samples[i] = timing.Stop(t);
+                samples[i] = timing.Stop(t, "reconciliation p95");
             }
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert.Equal(0, failures);

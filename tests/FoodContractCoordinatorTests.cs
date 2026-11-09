@@ -1456,7 +1456,7 @@ public sealed class FoodContractCoordinatorTests
                     epoch.Begin();
                     if (FoodContractRecheck.Structure(image, live, epoch) != FoodContractRecheckRefusal.None
                         | FoodContractRecheck.Prices(image, live) == FoodPriceVerdict.Refused) failures++;
-                    samples[i] = timing.Stop(t);
+                    samples[i] = timing.Stop(t, "recheck p95");
                 }
                 long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / samples.Length;
                 Assert.Equal(0, failures);
@@ -1487,9 +1487,10 @@ public sealed class FoodContractCoordinatorTests
                     {
                         var t = timing.Start();
                         bool stepped = world.Step();
-                        last = timing.Stop(t);
+                        var sample = timing.End(t);
+                        last = sample.Ms;
                         if (!stepped) break;
-                        n++; units.Add(last);
+                        n++; units.Add(timing.Keep("rebuild unit max", sample));
                     }
                     frames.Add((Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency); frameUnits.Add(n);
                 }
@@ -1519,8 +1520,8 @@ public sealed class FoodContractCoordinatorTests
                         Assert.Equal(FoodContractBoundary.Outcome.Acquired, FoodContractBoundary.Commit(s.Row, world.Coordinator, world.Hour, false, true, world.Catalogue.Revision,
                             (row, image) => FoodContractRecheck.Structure(image, new ContractWorld.Live(world, s), world.BoundaryEpoch) == FoodContractRecheckRefusal.None
                                 && FoodContractRecheck.Prices(image, new ContractWorld.Live(world, s)) != FoodPriceVerdict.Refused));
-                    double elapsed = timing.Stop(t);
-                    if (run >= 10) samples.Add(elapsed);
+                    var sample = timing.End(t);
+                    if (run >= 10) samples.Add(timing.Keep("commit gate max", sample));
                 }
                 samples.Sort();
                 line = $"commit gate acquisitions={count}: p95 {samples[(int)(samples.Count * 0.95)]:0.0000} ms, max {samples[^1]:0.0000} ms";

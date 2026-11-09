@@ -12,9 +12,10 @@ namespace PersistentCity.Tests;
 /// <summary>The shared rule for wall-clock budgets in tests (X3). A busy machine stretches wall-clock time by
 /// keeping the test thread waiting for a core; a code regression makes the thread itself do more work. So:
 /// <list type="number">
-/// <item>Timed code runs between <see cref="TimingChecks.Start"/> and <see cref="TimingChecks.Stop"/>. Over those
-/// windows only, each attempt measures its load factor: wall-clock time over the test thread's own CPU time, never
-/// below 1. Setup, warm-up, sorting and reporting between the windows do not count. A quiet machine gives about 1.
+/// <item>Timed code runs between <see cref="TimingChecks.Start"/> and <see cref="TimingChecks.Stop"/>, and each
+/// kept window is recorded under the check its sample feeds. Over that check's windows only, each attempt measures
+/// the check's load factor: wall-clock time over the test thread's own CPU time, never below 1. Setup, warm-up,
+/// discarded samples, other checks' windows, sorting and reporting do not count. A quiet machine gives about 1.
 /// A value counts as within budget when <c>value &lt; budget × load factor</c>.</item>
 /// <item>A missed budget re-runs the whole measurement, at most <see cref="Attempts"/> times, and each check is judged
 /// on its best attempt (lowest value ÷ load factor), because load comes and goes.</item>
@@ -22,11 +23,12 @@ namespace PersistentCity.Tests;
 /// A quiet run passes on the first attempt with factor about 1, so it catches exactly what the bare assertion caught.
 /// A code regression costs CPU time as well as wall time, so the factor does not hide it. Timed code must run on the
 /// calling thread and must not sleep or wait on I/O, or the factor overstates the load. A measurement that marks no
-/// window (its times come from code that cannot see <see cref="TimingChecks"/>) gets factor 1: retries only.
+/// window for a check (its times come from code that cannot see <see cref="TimingChecks"/>) gets factor 1: retries
+/// only.
 ///
-/// The factor is one average over the attempt's windows. It discounts load that is spread over the samples, which is
-/// what moves a p95. A single long preemption inside one sample barely moves it, so a max check against a spike line
-/// is helped mainly by the retries.
+/// A check's factor is one average over its own samples. It discounts load that is spread over the samples, which is
+/// what moves a p95, and a single stalled sample among thousands barely moves it, so a regression in the others still
+/// shows. For the same reason a max check against a spike line is helped mainly by the retries.
 ///
 /// Use it for every Stopwatch value compared against a fixed budget. Inside the measurement, compare with
 /// <see cref="TimingChecks.Under"/> instead of <c>Assert.True</c>. Deterministic values (allocation bytes, counts,
@@ -53,16 +55,19 @@ internal static class TimingBudget
     internal static int Run(Action<TimingChecks> measure, int attempts, Func<double, double, double> loadFactor)
     {
         if (attempts < 1) throw new ArgumentOutOfRangeException(nameof(attempts));
+        // The first thread-clock call in a process allocates; make it here, not inside a zero-allocation loop.
+        ThreadCpu.Milliseconds();
         // Per check: the attempt with the lowest load-adjusted value.
         var best = new Dictionary<string, (double Adjusted, double Value, double Factor, double Budget)>();
         for (int attempt = 1; ; attempt++)
         {
             var checks = new TimingChecks();
             measure(checks);
-            double factor = checks.Windows == 0 ? 1 : loadFactor(checks.TimedWallMs, checks.TimedCpuMs);
-            LastLoadFactor = factor;
+            double highest = 1;
             foreach (var (label, value, budget) in checks.Entries)
             {
+                double factor = checks.TryTimed(label, out double wallMs, out double cpuMs) ? loadFactor(wallMs, cpuMs) : 1;
+                highest = Math.Max(highest, factor);
                 double adjusted = value / factor;
                 if (best.TryGetValue(label, out var known))
                 {
@@ -71,13 +76,14 @@ internal static class TimingBudget
                 }
                 else best[label] = (adjusted, value, factor, budget);
             }
+            LastLoadFactor = highest;
             var missed = best.Where(b => !(b.Value.Adjusted < b.Value.Budget)).ToList();
             if (missed.Count == 0) return attempt;
             if (attempt >= attempts)
                 throw new XunitException("Wall-clock budget missed on all " + attempt + " attempts (best attempt per check): " + string.Join("; ", missed.Select(m =>
                     string.Format(CultureInfo.InvariantCulture, "{0}: {1:0.####} ms at load factor {2:0.00}, budget {3:0.####} ms", m.Key, m.Value.Value, m.Value.Factor, m.Value.Budget))));
             Interlocked.Increment(ref retries);
-            Log(attempt, factor, missed.Select(m => m.Key));
+            Log(attempt, missed.Select(m => (m.Key, m.Value.Factor)));
             // Give a briefly busy machine a moment before measuring again.
             Thread.Sleep(20 * attempt);
         }
@@ -86,13 +92,13 @@ internal static class TimingBudget
     private static readonly object LogLock = new();
 
     // With PC_TIMING_LOG set to a file path, every retry appends one line, for the perf notes.
-    private static void Log(int attempt, double factor, IEnumerable<string> missed)
+    private static void Log(int attempt, IEnumerable<(string Label, double Factor)> missed)
     {
         string? path = Environment.GetEnvironmentVariable("PC_TIMING_LOG");
         if (string.IsNullOrEmpty(path)) return;
         lock (LogLock)
-            System.IO.File.AppendAllText(path, string.Format(CultureInfo.InvariantCulture, "retry after attempt {0}, load factor {1:0.00}: {2}{3}",
-                attempt, factor, string.Join(", ", missed), Environment.NewLine));
+            System.IO.File.AppendAllText(path, string.Format(CultureInfo.InvariantCulture, "retry after attempt {0}: {1}{2}", attempt,
+                string.Join(", ", missed.Select(m => string.Format(CultureInfo.InvariantCulture, "{0} (best at load factor {1:0.00})", m.Label, m.Factor))), Environment.NewLine));
     }
 
     /// <summary>Timed wall-clock time over timed thread CPU time, at least 1. With no thread clock, or less timed CPU
@@ -104,7 +110,7 @@ internal static class TimingBudget
     /// <summary>One timed piece of work against one budget: shorthand for a measurement with a single window and
     /// a single check.</summary>
     public static int Under(string label, double budgetMs, Action work, int attempts = Attempts)
-        => Run(t => { var w = t.Start(); work(); t.Under(label, t.Stop(w), budgetMs); }, attempts);
+        => Run(t => { var w = t.Start(); work(); t.Under(label, t.Stop(w, label), budgetMs); }, attempts);
 }
 
 /// <summary>The timed windows and wall-clock checks of one measurement attempt. Values must stay below their budget
@@ -113,9 +119,11 @@ internal sealed class TimingChecks
 {
     private readonly List<(string Label, double Value, double Budget)> entries = new();
     internal IReadOnlyList<(string Label, double Value, double Budget)> Entries => entries;
-    internal int Windows { get; private set; }
-    internal double TimedWallMs { get; private set; }
-    internal double TimedCpuMs { get; private set; }
+    // Kept windows per check, in fixed arrays so recording a sample never allocates inside a zero-allocation loop.
+    private const int MaximumSeries = 16;
+    private readonly string[] seriesLabels = new string[MaximumSeries];
+    private readonly double[] seriesWallMs = new double[MaximumSeries], seriesCpuMs = new double[MaximumSeries];
+    private int series;
 
     /// <summary>Opens a timed window. The thread clock is read before the timestamp, so its cost stays outside.</summary>
     public TimingWindow Start()
@@ -124,16 +132,45 @@ internal sealed class TimingChecks
         return new TimingWindow(Stopwatch.GetTimestamp(), cpu);
     }
 
-    /// <summary>Closes a window and returns its wall-clock milliseconds; the window's wall and CPU time go into
-    /// this attempt's load factor.</summary>
-    public double Stop(TimingWindow window)
+    /// <summary>Closes a window and returns its wall-clock milliseconds. With <paramref name="check"/> the window is
+    /// a kept sample of that check and goes into its load factor; without, it counts for nothing (warm-up, discarded
+    /// samples). Pass a label built once outside the loop: the same string as the check's <see cref="Under"/>.</summary>
+    public double Stop(TimingWindow window, string? check = null)
+    {
+        var sample = End(window);
+        return check == null ? sample.Ms : Keep(check, sample);
+    }
+
+    /// <summary>Closes a window without deciding yet whether it is kept; see <see cref="Keep"/>.</summary>
+    public TimedSample End(TimingWindow window)
     {
         double wall = (Stopwatch.GetTimestamp() - window.Timestamp) * 1000.0 / Stopwatch.Frequency;
-        double cpu = ThreadCpu.Milliseconds();
-        Windows++;
-        TimedWallMs += wall;
-        TimedCpuMs += cpu - window.CpuMs;
-        return wall;
+        return new TimedSample(wall, ThreadCpu.Milliseconds() - window.CpuMs);
+    }
+
+    /// <summary>Records <paramref name="sample"/> as a kept sample of <paramref name="check"/> and returns its
+    /// wall-clock milliseconds.</summary>
+    public double Keep(string check, TimedSample sample)
+    {
+        int i = 0;
+        while (i < series && !string.Equals(seriesLabels[i], check, StringComparison.Ordinal)) i++;
+        if (i == series)
+        {
+            if (series == MaximumSeries) throw new InvalidOperationException($"More than {MaximumSeries} timed checks in one attempt.");
+            seriesLabels[series++] = check;
+        }
+        seriesWallMs[i] += sample.Ms;
+        seriesCpuMs[i] += sample.CpuMs;
+        return sample.Ms;
+    }
+
+    /// <summary>The kept wall and CPU time of <paramref name="check"/>, if any window was kept for it.</summary>
+    internal bool TryTimed(string check, out double wallMs, out double cpuMs)
+    {
+        for (int i = 0; i < series; i++)
+            if (string.Equals(seriesLabels[i], check, StringComparison.Ordinal)) { wallMs = seriesWallMs[i]; cpuMs = seriesCpuMs[i]; return true; }
+        wallMs = cpuMs = 0;
+        return false;
     }
 
     /// <summary>Records that <paramref name="value"/> should be below <paramref name="budget"/>. Labels must be
@@ -148,6 +185,9 @@ internal sealed class TimingChecks
 
 /// <summary>An open timed window: its start timestamp and the thread's CPU milliseconds at that moment.</summary>
 internal readonly record struct TimingWindow(long Timestamp, double CpuMs);
+
+/// <summary>A closed window: its wall-clock and thread CPU milliseconds.</summary>
+internal readonly record struct TimedSample(double Ms, double CpuMs);
 
 /// <summary>CPU time the calling thread has run, in milliseconds; NaN where the platform clock is unavailable.</summary>
 internal static class ThreadCpu

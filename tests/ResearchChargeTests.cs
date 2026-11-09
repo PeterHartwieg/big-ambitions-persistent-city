@@ -791,10 +791,10 @@ public sealed class ResearchChargeTests
                     var start = timing.Start();
                     long allocated = GC.GetAllocatedBytesForCurrentThread();
                     if (session.HasWork) session.Boundary();
-                    double elapsed = timing.Stop(start);
+                    var sample = timing.End(start);
                     if (run < 20) continue;
                     bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
-                    samples[run - 20] = elapsed;
+                    samples[run - 20] = timing.Keep("postfix p95 (5 ms gate)", sample);
                     Assert.Equal(orders, port.Charges);
                     Assert.Equal(orders, ledger.Kept.Count);
                 }
@@ -857,7 +857,7 @@ public sealed class ResearchChargeTests
                 {
                     var start = timing.Start();
                     Check();
-                    samples[i] = timing.Stop(start);
+                    samples[i] = timing.Stop(start, "foreign-patch check p95");
                 }
                 long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / runs;
                 Array.Sort(samples);

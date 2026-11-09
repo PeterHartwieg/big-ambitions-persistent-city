@@ -533,7 +533,7 @@ public sealed class ResearchDeliveryTests
     private void Measure(string label, int runs, Action call)
     {
         for (int i = 0; i < 200; i++) call();
-        string line = "";
+        string line = "", check = label + " p95 (5 ms gate)";
         TimingBudget.Run(timing =>
         {
             var samples = new double[runs];
@@ -542,12 +542,12 @@ public sealed class ResearchDeliveryTests
             {
                 var start = timing.Start();
                 call();
-                samples[i] = timing.Stop(start);
+                samples[i] = timing.Stop(start, check);
             }
             long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
             Array.Sort(samples);
             line = $"{label}: p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/call={bytes / runs}";
-            timing.Under(label + " p95 (5 ms gate)", samples[runs * 95 / 100], 5);
+            timing.Under(check, samples[runs * 95 / 100], 5);
         });
         output.WriteLine(line);
     }

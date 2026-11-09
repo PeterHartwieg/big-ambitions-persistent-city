@@ -528,13 +528,13 @@ public sealed class ResearchLedgerTests
                 before = GC.GetAllocatedBytesForCurrentThread();
                 var window = timing.Start();
                 ledger.TryGet(lastPaid, out _);
-                grant[i] = timing.Stop(window);
+                grant[i] = timing.Stop(window, "TryGet p95");
                 grantBytes += GC.GetAllocatedBytesForCurrentThread() - before;
 
                 before = GC.GetAllocatedBytesForCurrentThread();
                 window = timing.Start();
                 var refusal = ledger.TryOrder("basic-local", "perf-biz", "agency-1", false, 500, Minute, out var placed);
-                order[i] = timing.Stop(window);
+                order[i] = timing.Stop(window, "TryOrder p95");
                 orderBytes += GC.GetAllocatedBytesForCurrentThread() - before;
                 Assert.Equal(ResearchOrderRefusal.None, refusal);
                 Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(placed!.Id, ReportFor(placed)));

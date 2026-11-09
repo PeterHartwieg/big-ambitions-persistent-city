@@ -27,7 +27,7 @@ public sealed class E6dVehicleMarketMeasure
     }
     private void Measure(string name, Action action, int count = 300)
     {
-        var times = new List<double>(count); long bytes = 0;
+        var times = new List<double>(count); long bytes = 0; string check = name + " offline p95";
         // The fixture is shared, so a retry repeats the action on the state the previous attempt left.
         TimingBudget.Run(timing =>
         {
@@ -37,11 +37,11 @@ public sealed class E6dVehicleMarketMeasure
             {
                 long allocation = GC.GetAllocatedBytesForCurrentThread(); var start = timing.Start();
                 action();
-                double elapsed = timing.Stop(start); bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
+                double elapsed = timing.Stop(start, check); bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
                 times.Add(elapsed);
             }
             times.Sort();
-            timing.Under(name + " offline p95", times[(int)Math.Ceiling(count * .95) - 1], 5);
+            timing.Under(check, times[(int)Math.Ceiling(count * .95) - 1], 5);
         });
         Report(name, times, bytes);
     }
@@ -89,8 +89,8 @@ public sealed class E6dVehicleMarketMeasure
                     while (lunch.Market.Prepare(lunch.Now)) { } // full copy/apply cost included in this conservative offline group
                     lunchMarkets.ReadLocal(origin, lunch.Now, 1000, 8);
                     for (int i = group * 8; i < group * 8 + 8; i++) Assert.True(lunchMarkets.Buy(meals[i], lunch.Now).Paid);
-                    double elapsed = timing.Stop(unit);
-                    if (round >= 20) { units.Add(elapsed); unitBytes += GC.GetAllocatedBytesForCurrentThread() - b; }
+                    var sample = timing.End(unit);
+                    if (round >= 20) { units.Add(timing.Keep("combined market work p95", sample)); unitBytes += GC.GetAllocatedBytesForCurrentThread() - b; }
                 }
                 double total = Ms(start);
                 if (round >= 20) { windows.Add(total); allBytes += GC.GetAllocatedBytesForCurrentThread() - allocation; }

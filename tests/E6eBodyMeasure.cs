@@ -25,7 +25,7 @@ public sealed class E6eBodyMeasure
     }
     private void Measure(string label, Action action, int count = 1000)
     {
-        var times = new List<double>(count); long bytes = 0;
+        var times = new List<double>(count); long bytes = 0; string check = label + " offline p95";
         // The fixture is shared, so a retry repeats the action on the state the previous attempt left.
         TimingBudget.Run(timing =>
         {
@@ -35,11 +35,11 @@ public sealed class E6eBodyMeasure
             {
                 long allocation = GC.GetAllocatedBytesForCurrentThread(); var start = timing.Start();
                 action();
-                times.Add(timing.Stop(start));
+                times.Add(timing.Stop(start, check));
                 bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
             }
             times.Sort();
-            timing.Under(label + " offline p95", times[(int)Math.Ceiling(count * .95) - 1], 5);
+            timing.Under(check, times[(int)Math.Ceiling(count * .95) - 1], 5);
         });
         Report(string.Format(CultureInfo.InvariantCulture,
             "{0}: n={1}, p50={2:F6} ms, p95={3:F6} ms, max={4:F6} ms, bytes/op={5:F1}, spikes>=30ms={6}",

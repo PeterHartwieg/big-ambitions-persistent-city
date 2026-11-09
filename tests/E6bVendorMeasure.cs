@@ -51,7 +51,7 @@ public sealed class E6bVendorMeasure
             for (int i = 0; i < 2000; i++) pollRig.Vendors.Poll(minute); // warm-up past tiered JIT
             polls = new List<double>(1000);
             long bytes = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) { var t = timing.Start(); for (int j = 0; j < 100; j++) pollRig.Vendors.Poll(minute); polls.Add(timing.Stop(t) / 100); }
+            for (int i = 0; i < 1000; i++) { var t = timing.Start(); for (int j = 0; j < 100; j++) pollRig.Vendors.Poll(minute); polls.Add(timing.Stop(t, "revision poll p95") / 100); }
             pollBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
             Assert.Equal(0, pollBytes);
             timing.Under("revision poll p95", Stats(polls).p95, 0.05);
@@ -74,10 +74,10 @@ public sealed class E6bVendorMeasure
                     StreetFoodHooks.Revision++;
                     long before = GC.GetAllocatedBytesForCurrentThread(); var t = timing.Start();
                     reader.Poll();
-                    double first = timing.Stop(t);
-                    double total = first;
-                    while (reader.Pending) { var u = timing.Start(); reader.Continue(); double ms = timing.Stop(u); total += ms; if (sample >= 20) units.Add(ms); }
-                    if (sample >= 20) { whole.Add(total); units.Add(first); allocated += GC.GetAllocatedBytesForCurrentThread() - before; }
+                    var first = timing.End(t);
+                    double total = first.Ms;
+                    while (reader.Pending) { var u = timing.Start(); reader.Continue(); var unit = timing.End(u); total += unit.Ms; if (sample >= 20) units.Add(timing.Keep("image copy per unit p95", unit)); }
+                    if (sample >= 20) { whole.Add(total); units.Add(timing.Keep("image copy per unit p95", first)); allocated += GC.GetAllocatedBytesForCurrentThread() - before; }
                     Assert.True(reader.Image.Ready, reader.Image.Reason);
                     Assert.Equal(count, reader.Image.Count);
                 }
@@ -103,9 +103,9 @@ public sealed class E6bVendorMeasure
                 foreach (var v in StreetFoodHooks.Vehicles) { StreetFoodHooks.Close(v.Id); StreetFoodHooks.Open(v.Id, 40, x: v.X + 7); }
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 rig.Vendors.Poll(now);
-                var calls = new List<double>();
-                while (true) { var t = timing.Start(); bool more = rig.Vendors.Continue(now); double ms = timing.Stop(t); if (!more) break; calls.Add(ms); }
-                if (round >= 5) { applies.Add(calls[^1]); applyBytes += GC.GetAllocatedBytesForCurrentThread() - before; }
+                var calls = new List<TimedSample>();
+                while (true) { var t = timing.Start(); bool more = rig.Vendors.Continue(now); var call = timing.End(t); if (!more) break; calls.Add(call); }
+                if (round >= 5) { applies.Add(timing.Keep("apply unit p95", calls[^1])); applyBytes += GC.GetAllocatedBytesForCurrentThread() - before; }
                 Assert.All(rig.Table.Rows, r => Assert.True(rig.Vendors.CanServe(r.BusinessId, now), r.Reason));
             }
             timing.Under("apply unit p95", Stats(applies).p95, 5);
@@ -131,7 +131,7 @@ public sealed class E6bVendorMeasure
         TimingBudget.Run(timing =>
         {
             scans = new List<double>();
-            for (int i = 0; i < 220; i++) { var t = timing.Start(); rig.City.CollectVendorReferences(references); double ms = timing.Stop(t); if (i >= 20) scans.Add(ms); }
+            for (int i = 0; i < 220; i++) { var t = timing.Start(); rig.City.CollectVendorReferences(references); var scan = timing.End(t); if (i >= 20) scans.Add(timing.Keep("CollectVendorReferences p95", scan)); }
             timing.Under("CollectVendorReferences p95", Stats(scans).p95, 5);
         });
         Report("CollectVendorReferences, 20,000 meals", scans, -1, scans.Count);
@@ -160,7 +160,7 @@ public sealed class E6bVendorMeasure
                     var builder = FoodAwarenessCatalogue.BeginBuild(city.State.Food!.Shops, city.FindPosition);
                     double total = 0; unitCount = 0;
                     using (builder)
-                        while (true) { var t = timing.Start(); bool done = builder.Continue(); double ms = timing.Stop(t); total += ms; unitCount++; if (sample >= 10) units.Add(ms); if (done) break; }
+                        while (true) { var t = timing.Start(); bool done = builder.Continue(); var unit = timing.End(t); total += unit.Ms; unitCount++; if (sample >= 10) units.Add(timing.Keep("awareness rebuild per unit p95", unit)); if (done) break; }
                     if (sample >= 10) whole.Add(total);
                     city.InspectFoodAwareness("r"); // publish the simulator's own image again
                 }
