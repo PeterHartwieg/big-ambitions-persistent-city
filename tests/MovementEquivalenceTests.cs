@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 using PersistentCity.MovementEquivalence;
 using Xunit;
 
@@ -201,5 +204,104 @@ public sealed class MovementEquivalenceTests
         Assert.Contains(options, o => o.Driver && o.ReloadMidJourney);
         Assert.Contains(options, o => o.Driver && o.HiddenTravel);
         Assert.All(options, o => Assert.Equal(Residents, o.Residents));
+        // F2g: with visitor bodies on, the same factor levels as the resident arms.
+        var visitors = options.Where(o => o.Driver && o.Visitors).ToList();
+        Assert.Equal(new[] { FocusPath.None, FocusPath.Stationary, FocusPath.Sweep, FocusPath.AwayReturn }, visitors.Select(o => o.Focus).Distinct().OrderBy(f => f));
+        Assert.Equal(MovementArms.Caps, visitors.Select(o => (o.Bodies.Pedestrians, o.Bodies.Vehicles)).Distinct().OrderBy(c => c.Pedestrians));
+        Assert.Equal(new[] { 0, 10, 50 }, visitors.Select(o => o.Bodies.AcquisitionFailurePercent).Distinct().OrderBy(p => p));
+        Assert.Equal(new[] { 30, 60, 120 }, visitors.Select(o => o.FramesPerSecond).Distinct().OrderBy(f => f));
+        Assert.Equal(3, visitors.Select(o => o.Bodies.Lag).Distinct().Count());
+        Assert.Contains(visitors, o => o.ReloadMidJourney);
+        Assert.Contains(visitors, o => o.HiddenTravel);
+        // F2g: combined arms vary focus, caps, failures and cadence together with a reload or hidden travel.
+        var combined = arms.Where(a => a.Family == "combined").Select(a => a.Options()).ToList();
+        Assert.Contains(combined, o => o.ReloadMidJourney && o.FramesPerSecond != 60 && o.Bodies.AcquisitionFailurePercent > 0);
+        Assert.Contains(combined, o => o.HiddenTravel && o.Bodies.Lag == LagModel.SlowHeadCar);
+        Assert.Contains(combined, o => o.Visitors && o.ReloadMidJourney);
+        Assert.Contains(combined, o => o.Visitors && o.HiddenTravel);
+    }
+
+    /// <summary>F2g: arms that change several factors at once (focus path, caps, acquisition failures, cadence, slow head
+    /// cars, a mid-journey reload or hidden travel) still equal bodies-off (E1). The 30 and 120 fps bodies-off runs equal
+    /// the 60 fps run, so the equality also holds across cadences.</summary>
+    [Fact]
+    public void CombinedArmsEqualBodiesOff()
+    {
+        void Equal(MovementResult arm, MovementResult reference, string name)
+        {
+            var comparison = Equivalence.Compare(arm, reference);
+            Assert.True(comparison.Identical, name + ": " + string.Join(" ", comparison.Equal.Where(e => !e.Value).Select(e => e.Key)));
+        }
+        foreach (int fps in new[] { 30, 120 })
+            Equal(MovementRun.Run(Plain(o => o.FramesPerSecond = fps)), PlainRun.Value, "bodies-off " + fps + " fps");
+        var sweep = MovementRun.Run(Small(o => { o.Focus = FocusPath.Sweep; o.Bodies.Pedestrians = 256; o.Bodies.Vehicles = 64;
+            o.Bodies.AcquisitionFailurePercent = 10; o.FramesPerSecond = 120; }));
+        Assert.True(sweep.Metrics["bodies.failedAcquisitions"] > 0);
+        Equal(sweep, PlainRun.Value, "sweep 256/64 10 % 120 fps");
+        var reload = MovementRun.Run(Small(o => { o.Focus = FocusPath.AwayReturn; o.Bodies.Pedestrians = 1; o.Bodies.Vehicles = 1;
+            o.Bodies.AcquisitionFailurePercent = 50; o.FramesPerSecond = 30; o.ReloadMidJourney = true; }));
+        Assert.Equal(1, reload.Reloads);
+        Assert.True(reload.BodiesAtReload > 0);
+        Equal(reload, PlainRun.Value, "away/return 1/1 50 % 30 fps reload");
+        var hidden = MovementRun.Run(Small(o => { o.Bodies.Pedestrians = 24; o.Bodies.Vehicles = 12; o.Bodies.AcquisitionFailurePercent = 50;
+            o.Bodies.Lag = LagModel.SlowHeadCar; o.HiddenTravel = true; }));
+        Assert.True(hidden.Metrics["bodies.hiddenTravelFrames"] > 0);
+        Equal(hidden, PlainRun.Value, "stationary 24/12 50 % slow head cars hidden travel");
+    }
+
+    /// <summary>F2g: a reload arm that never reloads fails loudly instead of passing E1 untested.</summary>
+    [Fact]
+    public void ReloadArmThatNeverReloadsFailsLoudly()
+    {
+        var error = Assert.Throws<HarnessViolation>(() => MovementRun.Run(Small(o => { o.Focus = FocusPath.None; o.ReloadMidJourney = true; })));
+        Assert.Contains("reload never happened", error.Message);
+    }
+
+    /// <summary>F2g: the E2 arm with visitor bodies on. Holds refuse visitors, so the stream holds residents only. Replay
+    /// from each checkpoint still equals the contact run, and a gap, duplicate, reordering or wrong start/end is refused.</summary>
+    [Fact]
+    public void E2ReplayIsGreenWithVisitorBodies()
+    {
+        var rows = HoldReplay.Check(Residents, 1, visitors: true);
+        Assert.All(rows, r => Assert.True(r.Pass, r.Check + ": " + r.Detail));
+        Assert.Contains(rows, r => r.Check == "e2 visitors visitor bodies bound and only residents held");
+        Assert.Equal(3, rows.Count(r => r.Check.StartsWith("e2 visitors replay from", StringComparison.Ordinal)));
+        Assert.Equal(5, rows.Count(r => r.Check.StartsWith("e2 visitors replay refuses", StringComparison.Ordinal)));
+    }
+
+    private static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;
+
+    /// <summary>F2g: the recorded 957-resident, two-day baseline is the green result. Every self-check and E2 row passes
+    /// (the visitor E2 arm included), every arm of the catalogue was run, and every compared arm equals its bodies-off
+    /// reference on all projections. docs/checks/f2g.md maps each acceptance row A1-A10 to these checks.</summary>
+    [Fact]
+    public void RecordedBaselineIsTheGreenMatrix()
+    {
+        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "tools", "movement-equivalence", "baseline.json")));
+        var root = json.RootElement;
+        Assert.Equal(MovementRun.Schema, root.GetProperty("schema").GetString());
+        Assert.Equal(MovementFixture.Residents, root.GetProperty("residents").GetInt32());
+        Assert.Equal(MovementRun.Days, root.GetProperty("days").GetInt32());
+        var selfChecks = root.GetProperty("selfChecks").EnumerateArray().ToList();
+        var e2 = root.GetProperty("e2").EnumerateArray().ToList();
+        Assert.Equal(9, selfChecks.Count);
+        Assert.All(selfChecks.Concat(e2), c => Assert.True(c.GetProperty("pass").GetBoolean(), c.GetProperty("check").GetString()));
+        foreach (string prefix in new[] { "e2 replay", "e2 visitors replay" })
+        {
+            Assert.Equal(3, e2.Count(c => c.GetProperty("check").GetString()!.StartsWith(prefix + " from", StringComparison.Ordinal)));
+            foreach (string refusal in new[] { "gap", "duplicate", "reordering", "wrong start", "wrong end" })
+                Assert.Contains(e2, c => c.GetProperty("check").GetString() == prefix + " refuses a " + refusal);
+        }
+        var recorded = root.GetProperty("arms").EnumerateArray().ToDictionary(a => a.GetProperty("arm").GetString()!, StringComparer.Ordinal);
+        var catalogue = MovementArms.All(MovementFixture.Residents, MovementRun.Days);
+        Assert.Equal(catalogue.Select(a => a.Name).OrderBy(n => n, StringComparer.Ordinal), recorded.Keys.OrderBy(n => n, StringComparer.Ordinal));
+        foreach (var arm in catalogue.Where(a => a.Reference.Length > 0))
+        {
+            var comparison = recorded[arm.Name].GetProperty("comparison");
+            Assert.Equal(arm.Reference, comparison.GetProperty("Reference").GetString());
+            Assert.True(comparison.GetProperty("Identical").GetBoolean(), arm.Name + " differs from " + arm.Reference);
+            Assert.Equal(Equivalence.Projections.OrderBy(p => p, StringComparer.Ordinal),
+                comparison.GetProperty("Equal").EnumerateObject().Select(p => p.Name).OrderBy(p => p, StringComparer.Ordinal));
+        }
     }
 }

@@ -342,6 +342,8 @@ public static class MovementRun
             }
         }
         Require(options.Fault == Fault.None || faultInjected, "fault was never injected");
+        // F2g: a reload arm that never reloaded would pass E1 without testing the reload.
+        Require(!options.ReloadMidJourney || reloaded, "mid-journey reload never happened");
         if (reloaded && driver != null) result.VisitorsReacquiredAfterReload = result.VisitorBodiesAtReload.Count(driver.AcquiredVisitors.Contains);
         Require(city.HistoricalClockMisses == 0, "unreported workload-caused lost demand");
         result.FinalSaveSha256 = result.Boundaries[result.Boundaries.Count - 1].SaveSha256;

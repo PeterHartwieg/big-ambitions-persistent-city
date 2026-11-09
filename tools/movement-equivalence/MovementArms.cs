@@ -87,6 +87,33 @@ public static class MovementArms
         Visitors("cadence-30fps", o => o.FramesPerSecond = 30, "visitors/plain-30");
         Visitors("reload-mid-journey", o => o.ReloadMidJourney = true);
         Visitors("hidden-travel", o => o.HiddenTravel = true, "visitors/plain-hidden-travel");
+        // F2g: the rest of the plan matrix with visitor bodies on (focus none, caps 0/0 and 24/12, 10 % failures, slow
+        // head cars, 120 fps), so every factor of the F2a row is also run with visitors eligible for bodies.
+        Add("visitors", "plain-120", () => new MovementOptions { Driver = false, Visitors = true, FramesPerSecond = 120 }, "");
+        Visitors("focus-none", o => o.Focus = FocusPath.None);
+        Visitors("caps-0", o => { o.Bodies.Pedestrians = 0; o.Bodies.Vehicles = 0; });
+        Visitors("caps-24", o => { o.Bodies.Pedestrians = 24; o.Bodies.Vehicles = 12; });
+        Visitors("failures-10pct", o => o.Bodies.AcquisitionFailurePercent = 10);
+        Visitors("lag-slow-head-car", o => o.Bodies.Lag = LagModel.SlowHeadCar);
+        Visitors("cadence-120fps", o => o.FramesPerSecond = 120, "visitors/plain-120");
+        // F2g: arms that vary several factors at once (focus path x caps x failures x cadence x reload or hidden travel),
+        // each against bodies-off at its own cadence and transition.
+        void Combined(string name, bool visitors, FocusPath focus, int walkers, int cars, int failures, int fps, LagModel lag,
+            bool reload, bool hidden, string reference)
+            => Add("combined", name, () =>
+            {
+                var o = Default(""); o.Visitors = visitors; o.Focus = focus; o.Bodies.Pedestrians = walkers; o.Bodies.Vehicles = cars;
+                o.Bodies.AcquisitionFailurePercent = failures; o.FramesPerSecond = fps; o.Bodies.Lag = lag;
+                o.ReloadMidJourney = reload; o.HiddenTravel = hidden; return o;
+            }, reference);
+        Combined("sweep-256-10pct-120fps", false, FocusPath.Sweep, 256, 64, 10, 120, LagModel.Native, false, false, "bodies-off/plain-120");
+        Combined("away-return-1-50pct-30fps-reload", false, FocusPath.AwayReturn, 1, 1, 50, 30, LagModel.Native, true, false, "bodies-off/plain-30");
+        Combined("stationary-24-50pct-slow-head-hidden", false, FocusPath.Stationary, 24, 12, 50, 60, LagModel.SlowHeadCar, false, true,
+            "bodies-off/plain-hidden-travel");
+        Combined("visitors-sweep-256-50pct-30fps-reload", true, FocusPath.Sweep, 256, 64, 50, 30, LagModel.Native, true, false, "visitors/plain-30");
+        Combined("visitors-away-return-24-10pct-slow-head-hidden", true, FocusPath.AwayReturn, 24, 12, 10, 60, LagModel.SlowHeadCar, false, true,
+            "visitors/plain-hidden-travel");
+        Combined("visitors-stationary-1-10pct-120fps", true, FocusPath.Stationary, 1, 1, 10, 120, LagModel.Native, false, false, "visitors/plain-120");
         return arms;
     }
 }
