@@ -630,6 +630,7 @@ public sealed class ResumablePlanningTests
         PlaceId = "place-" + n, DestinationId = "destination-" + n, DestinationActivity = (Activity)((n + 2) % 5),
         Journey = new Route { Legs = { new RouteLeg { From = new(n, 0, 0), To = new(n + 1, 0, 0), Minutes = n, Mode = TravelMode.Walk, ServiceId = "s" + n } } },
         DepartureMinute = 60 * n, NextEventMinute = 70 * n, ActivityUntilMinute = 80 * n, CompletedJourneys = 4 * n, MissedActivities = 5 * n,
+        PlayerHoldMinutes = 0.1 * n,
         RecentVisits = { new VisitRecord { AtMinute = n, PlaceId = "visit-" + n, Activity = (Activity)(n % 5) } },
         Traits = ResidentTraits.Generate(n, "traits-" + n)
     };
@@ -660,7 +661,9 @@ public sealed class ResumablePlanningTests
         Assert.NotSame(live.OptionalStop!.Members, working.OptionalStop!.Members);
         var car = live.Car; var preparation = live.CommutePreparation; var outing = live.MealOuting; var preferences = live.Preferences; var visits = live.RecentVisits;
         CitySimulator.CommitEvent(live, Filled(2, identity));
-        Assert.Equal(JsonConvert.SerializeObject(Filled(2, identity)), JsonConvert.SerializeObject(live));
+        // F2e: the player-hold allowance belongs to one journey; a replaced journey (or arrival) clears it.
+        var replaced = Filled(2, identity); replaced.PlayerHoldMinutes = 0;
+        Assert.Equal(JsonConvert.SerializeObject(replaced), JsonConvert.SerializeObject(live));
         // Objects that survive the event keep their identity; a cleared one is dropped.
         Assert.Same(car, live.Car); Assert.Same(preparation, live.CommutePreparation); Assert.Same(outing, live.MealOuting);
         Assert.Same(preferences, live.Preferences); Assert.Same(visits, live.RecentVisits);
@@ -668,7 +671,13 @@ public sealed class ResumablePlanningTests
         CitySimulator.CommitEvent(live, cleared);
         Assert.Null(live.Car); Assert.Null(live.MealOuting);
         CitySimulator.CommitEvent(live, Filled(4, identity));
-        Assert.Equal(JsonConvert.SerializeObject(Filled(4, identity)), JsonConvert.SerializeObject(live));
+        var arrived = Filled(4, identity); arrived.PlayerHoldMinutes = 0;
+        Assert.Equal(JsonConvert.SerializeObject(arrived), JsonConvert.SerializeObject(live));
+        // The same journey, still travelling: the working copy's consumed minutes are kept.
+        var travelling = Filled(1, identity);
+        var held = CitySimulator.CloneForEvent(travelling); held.PlayerHoldMinutes = 0.75;
+        CitySimulator.CommitEvent(travelling, held);
+        Assert.Equal(0.75, travelling.PlayerHoldMinutes);
     }
 
     [Fact]

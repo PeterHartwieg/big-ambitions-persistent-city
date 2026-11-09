@@ -221,7 +221,7 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     {
         var (plain, reloaded) = runs.SevenDays;
         Assert.Equal(CityState.CurrentSchema, reloaded.State.Schema);
-        Assert.StartsWith("{\"Schema\":" + CityState.CompactSchema + ",", reloaded.Final);
+        Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema + ",", reloaded.Final);
         // Seven boundaries (2,880 … 11,520), each reloaded exactly once on its minute. At the first two the slice that lands
         // on the boundary has already run fill units, so that one reload falls between fill units.
         Assert.Equal(7, reloaded.Boundaries.Count);
@@ -325,15 +325,16 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         Assert.True(pendingSlices > 0, "no event waited for its route");
     }
 
-    /// <summary>F5h changes no wire: writer 34 and both of its pinned golden hashes are as F7d left them.</summary>
+    /// <summary>F5h changes no wire: writer 34 and both of its pinned golden hashes are as F7d left them. Since F2e took writer
+    /// 35, the writer-34 bytes are the frozen shape (DevelopmentChain.Write34); F2e pins its own golden.</summary>
     [Theory]
     [InlineData(5150, "a3b70408cd5c5f0a23d9e41344d1530283232449f2b9ade5dd37755c92da4a70", 73192)]
     [InlineData(9217, "cb39d7938dfbe874054cf53afb46b660883686adc93d82654e43e7243e317c01", 72830)]
     public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
     {
-        Assert.Equal(34, CityState.CurrentSchema);
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
-        string payload = SaveCodec.Write(ChangeJournalTests.Fixture(seed));
+        Assert.Equal(34, CityState.CompactSchema);
+        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
+        string payload = DevelopmentChain.Write34(ChangeJournalTests.Fixture(seed));
         Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
         Assert.Equal(characters, payload.Length);
     }

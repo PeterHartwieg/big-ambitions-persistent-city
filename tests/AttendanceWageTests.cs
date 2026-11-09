@@ -55,7 +55,7 @@ public sealed class AttendanceWageTests
     public void NextFreeWriterRefusesInactiveLedgerCityWithoutOverwritingAnything()
     {
         Assert.Equal(CityState.EconomicLedgerSchema + 1, CityState.AttendanceSchema);
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
         var state = Fresh().State;
         string old = DevelopmentChain.WriteLedger(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadLedgerWriter(old).Status);

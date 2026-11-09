@@ -348,6 +348,15 @@ public sealed class PresentationDriver
         return false;
     }
 
+    /// <summary>F2e player double: the bodies following their journey this frame, in ordinal person order.</summary>
+    public void Followed(List<(CitizenState Citizen, bool Car)> into)
+    {
+        foreach (var b in bindings.Values)
+            if (b.Journey != null && !b.Tail && b.Citizen.Phase == CitizenPhase.Travelling && ReferenceEquals(b.Citizen.Journey, b.Journey))
+                into.Add((b.Citizen, b.Body.Car));
+        into.Sort((x, y) => StringComparer.Ordinal.Compare(x.Citizen.Identity.Id, y.Citizen.Identity.Id));
+    }
+
     /// <summary>Runtime ObserveForSave: observe every body and release those whose follow ended.</summary>
     public void BeforeSave()
     {

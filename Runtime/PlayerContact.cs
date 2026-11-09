@@ -46,7 +46,7 @@ namespace PersistentCity.Runtime
             public double Logical, Body, Minute, Blocked;
             public double LastReport = double.NegativeInfinity;
             public long Frame;
-            public bool Ended;
+            public bool Ended, Spent;
         }
         private readonly Dictionary<string, Track> tracks = new Dictionary<string, Track>(StringComparer.Ordinal);
 
@@ -97,7 +97,7 @@ namespace PersistentCity.Runtime
             if (contact && blocked && minute > track.Minute) { track.Blocked += minute - track.Minute; Contacts++; }
             track.Logical = logical; track.Body = body; track.Minute = minute;
             track.Ended = !contact;
-            if (track.Blocked <= 0) { if (track.Ended) tracks.Remove(id); return 0; }
+            if (track.Blocked <= 0 || track.Spent) { if (track.Ended) tracks.Remove(id); return 0; }
             if (!track.Ended && track.Blocked < ReportMinutes) return 0;
             double report = Math.Min(track.Blocked, Math.Min(PlayerHolds.MaximumReportMinutes, minute - track.LastReport));
             if (!(report > 0)) return 0;
@@ -112,6 +112,8 @@ namespace PersistentCity.Runtime
             if (!tracks.TryGetValue(id, out var track)) return;
             if (result.Refusal == PlayerHoldRefusal.NotDrained) return;
             if (result.Applied) { Applied++; Publish(result.Record); } else Refused++;
+            // The journey's allowance is used up: no further report for it (the walker steps around, the car waits).
+            track.Spent |= result.Refusal == PlayerHoldRefusal.AllowanceSpent;
             track.Blocked = 0; track.LastReport = track.Minute;
             if (track.Ended) tracks.Remove(id);
         }

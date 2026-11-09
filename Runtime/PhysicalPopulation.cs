@@ -1236,26 +1236,6 @@ namespace PersistentCity.Runtime
             binding.Phase = kind;
         }
 
-        /// <summary>
-        /// F2e (plan Decision 4): the visible world's only write into Core. A following walker or car that the player blocks
-        /// is reported to the simulator as a bounded, retroactive player hold, which Core applies at once; every applied hold
-        /// is one Player.log stream line. Detection reads only the player's own pose (PlayerContact).
-        /// </summary>
-        private void ObservePlayerContact(Binding binding, in PlayerPose player)
-        {
-            var citizen = binding.Citizen; var route = binding.Journey;
-            if (route == null || binding.Tail || !float.IsNaN(binding.FadeOutSince) || citizen.Phase != CitizenPhase.Travelling
-                || !ReferenceEquals(citizen.Journey, route)) return;
-            bool car = binding.Car != null;
-            Position at = binding.Person?.Position ?? binding.Car!.Position;
-            double minute = simulation.State.Minute;
-            var own = WalkerFollow.Sample(route, Math.Min(route.Minutes, binding.BodyMinutes));
-            double report = contact.Observe(citizen.Identity.Id, route, car, minute - citizen.DepartureMinute, binding.BodyMinutes,
-                at, own.From, own.To, player, minute, Time.frameCount);
-            if (report > 0)
-                contact.Settle(citizen.Identity.Id, simulation.HoldForPlayer(citizen.Identity.Id, report, car ? PlayerHoldCause.PlayerVehicle : PlayerHoldCause.PlayerFoot));
-        }
-
         // Inspector picking: read-only, allocation-free projection of active own walkers. Cars,
         // ambient/RLO-reserved actors and released or reused bodies are never candidates.
         private const float PickHalfWidthPixels = 8f;
@@ -1297,6 +1277,26 @@ namespace PersistentCity.Runtime
             // IMGUI coordinates grow downwards.
             footX = foot.x; footY = Screen.height - foot.y; headX = head.x; headY = Screen.height - head.y; depth = foot.z;
             return true;
+        }
+
+        /// <summary>
+        /// F2e (plan Decision 4): the visible world's only write into Core. A following walker or car that the player blocks
+        /// is reported to the simulator as a bounded, retroactive player hold, which Core applies at once; every applied hold
+        /// is one Player.log stream line. Detection reads only the player's own pose (PlayerContact).
+        /// </summary>
+        private void ObservePlayerContact(Binding binding, in PlayerPose player)
+        {
+            var citizen = binding.Citizen; var route = binding.Journey;
+            if (route == null || binding.Tail || !float.IsNaN(binding.FadeOutSince) || citizen.Phase != CitizenPhase.Travelling
+                || !ReferenceEquals(citizen.Journey, route)) return;
+            bool car = binding.Car != null;
+            Position at = binding.Person?.Position ?? binding.Car!.Position;
+            double minute = simulation.State.Minute;
+            var own = WalkerFollow.Sample(route, Math.Min(route.Minutes, binding.BodyMinutes));
+            double report = contact.Observe(citizen.Identity.Id, route, car, minute - citizen.DepartureMinute, binding.BodyMinutes,
+                at, own.From, own.To, player, minute, Time.frameCount);
+            if (report > 0)
+                contact.Settle(citizen.Identity.Id, simulation.HoldForPlayer(citizen.Identity.Id, report, car ? PlayerHoldCause.PlayerVehicle : PlayerHoldCause.PlayerFoot));
         }
 
         public void ObserveForSave()

@@ -35,6 +35,10 @@ public sealed class MovementOptions
     public Fault Fault;
     /// <summary>Optional directory for the arm's journey records and ordered sales (one text file), for diffing arms.</summary>
     public string? DumpDirectory;
+    /// <summary>F2e E2 arm: a scripted player blocks some followed bodies and reports holds (PlayerDouble).</summary>
+    public bool PlayerContact;
+    /// <summary>F2e: integral minutes at which to keep a replay checkpoint (save, native clock, checkout, hold sequence).</summary>
+    public double[] Checkpoints = Array.Empty<double>();
 }
 
 public sealed class Boundary
@@ -56,6 +60,10 @@ public sealed class MovementResult
     public int Reloads, InFlightAtReload, BodiesAtReload;
     public double Seconds, SimulatedDays;
     public long AllocatedBytes;
+    /// <summary>F2e: the complete hold stream of the run (parsed back from its Player.log lines) and its checkpoints.</summary>
+    public List<PlayerHoldRecord> Holds = new();
+    public List<HoldCheckpoint> Checkpoints = new();
+    public PlayerDouble? Player;
 }
 
 /// <summary>Deterministic frame-driven run. Each frame: native clock step under the F1 accounting fence,
@@ -188,6 +196,9 @@ public static class MovementRun
         if (driver != null) drivers.Add(driver);
         var fifo = new FifoDigest();
         var result = new MovementResult { Arm = options.Arm, SimulatedDays = options.Days };
+        var player = options.PlayerContact ? new PlayerDouble() : null;
+        result.Player = player;
+        var checkpoints = new Queue<double>(options.Checkpoints.OrderBy(m => m));
         int initialCompleted = state.Citizens.Sum(c => c.CompletedJourneys);
 
         double start = MovementFixture.StartMinute;
@@ -229,6 +240,14 @@ public static class MovementRun
                 fifo.Sample(city, nextFifo);
                 nextFifo += FifoSampleMinutes;
             }
+            while (checkpoints.Count > 0 && native >= checkpoints.Peek() && previous < checkpoints.Peek())
+            {
+                double at = checkpoints.Dequeue();
+                Require(city.State.Minute == at, "checkpoint is not at its drained epoch minute");
+                driver?.BeforeSave();
+                result.Checkpoints.Add(new HoldCheckpoint(at, SaveCodec.Write(city.State), market.Copy(), hour, minute,
+                    city.State.PlayerHoldSequence, options.FramesPerSecond));
+            }
             if (native >= boundaries.Peek() && previous < boundaries.Peek())
             {
                 double at = boundaries.Dequeue();
@@ -265,6 +284,7 @@ public static class MovementRun
             }
             city.SynchronizeSnapshot();
             driver?.Update(Focus(options.Focus, native), hidden);
+            if (player != null && driver != null && !hidden) player.Update(city, driver, result.Holds);
             // F2d: no traffic leg is ever under physical control, whatever the bodies do.
             Require(city.Traffic == null || !city.Traffic.HasPhysicalControl, "a traffic vehicle is under physical control");
 

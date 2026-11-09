@@ -16,7 +16,7 @@ namespace PersistentCity.Tests;
 /// </summary>
 internal static class SaveWire
 {
-    private static readonly string BodySchema = CityState.CompactSchema.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private static readonly string BodySchema = CityState.CurrentSchema.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     public static string Body(string payload)
     {

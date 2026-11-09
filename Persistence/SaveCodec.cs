@@ -621,11 +621,12 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema31Contracts = new StateContractResolver(EconomicLedgerSchema);
         private static readonly IContractResolver Schema32Contracts = new StateContractResolver(CityState.AttendanceSchema);
         private static readonly IContractResolver Schema33Contracts = new StateContractResolver(CityState.ChangeJournalSchema);
+        private static readonly IContractResolver Schema34Contracts = new StateContractResolver(CityState.CompactSchema);
         private static readonly IContractResolver Schema30Contracts = new StateContractResolver(VendorSchema);
         private static readonly IContractResolver Schema29Contracts = new StateContractResolver(ResearchSchema);
         private static IContractResolver ContractsFor(int schema) => schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts
             : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : schema==24 || schema==25 ? Schema25Contracts : schema==26 ? Schema26Contracts
-            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : StateContracts;
+            : schema==IndependentSchema || schema==WorkplaceCapacitySchema ? Schema28Contracts : schema==ResearchSchema ? Schema29Contracts : schema == VendorSchema ? Schema30Contracts : schema == EconomicLedgerSchema ? Schema31Contracts : schema == CityState.AttendanceSchema ? Schema32Contracts : schema == CityState.ChangeJournalSchema ? Schema33Contracts : schema == CityState.CompactSchema ? Schema34Contracts : StateContracts;
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {

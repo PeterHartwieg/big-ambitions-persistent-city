@@ -122,14 +122,14 @@ namespace PersistentCity.Persistence
             CompactTree.Measure(tree, out long characters, out long bytes);
             Require(characters <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
-            return EncodeCompact(tree, (int)characters, records, null);
+            return EncodeCompact(tree, (int)characters, records, null, snapshot.Schema);
         }
 
-        private static string EncodeCompact(object? tree, int bodyCharacters, int records, CompactStats? stats)
+        private static string EncodeCompact(object? tree, int bodyCharacters, int records, CompactStats? stats, int schema = CityState.CurrentSchema)
         {
             Require(tree is CompactObject, "Compact root is not an object.");
             stats ??= new CompactStats();
-            string payload = new CompactEncoder(stats).Run(tree, bodyCharacters / 3 + 64);
+            string payload = new CompactEncoder(stats, schema: schema).Run(tree, bodyCharacters / 3 + 64);
             Require(stats.Values <= CompactValueBudget(payload.Length), "Compact state exceeds its decoded value bound.");
             Require((long)records + stats.TableEntries <= MaxEmbeddedRecords, "Too many embedded records with the compact tables charged.");
             Require(payload.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
@@ -859,17 +859,11 @@ namespace PersistentCity.Persistence
             // decoded city is unchanged. The save path always shares.
             private readonly bool shareRoutes;
 
-            public CompactEncoder(CompactStats stats, bool shareRoutes = true) { this.stats = stats; this.shareRoutes = shareRoutes; }
+            // F2e: the writer's schema in the envelope (35 for the current writer, 34 for the frozen F7d shape in tests).
+            private readonly int schema;
 
-            private static string EnvelopeSchema(object? root)
-            {
-                if (root is CompactObject o)
-                {
-                    int at = Array.IndexOf(o.Keys, "Schema");
-                    if (at >= 0 && o.Values[at] is CompactNumber n) return n.Text;
-                }
-                return CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture);
-            }
+            public CompactEncoder(CompactStats stats, bool shareRoutes = true, int schema = CityState.CurrentSchema)
+            { this.stats = stats; this.shareRoutes = shareRoutes; this.schema = schema; }
 
             public string Run(object? root, int capacity)
             {
@@ -893,8 +887,7 @@ namespace PersistentCity.Persistence
                 stats.CollectTicks += collected - started;
 
                 output = new StringBuilder(capacity);
-                // F2e: the envelope repeats the body's own Schema (35 for the current writer, 34 for the frozen F7d shape).
-                output.Append("{\"Schema\":").Append(EnvelopeSchema(root));
+                output.Append("{\"Schema\":"); AppendInt(output, schema);
                 output.Append(",\"f\":"); CompactTree.WriteString(output, CompactFormat);
                 output.Append(",\"v\":"); AppendInt(output, CompactFormatVersion);
                 output.Append(",\"k\":[");
@@ -1299,7 +1292,10 @@ namespace PersistentCity.Persistence
             /// <summary>Schema, format, version and the key, shape and string tables (envelope slots 0 to 5).</summary>
             public void Header(object?[] header)
             {
-                Require(header[0] is CompactNumber schema && schema.Text == CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture), "Unsupported compact state schema.");
+                // F2e: the compact wire is the same at 34 (F7d) and 35 (current); Read reaches this decoder only for the current
+                // writer's prefix, and the body reader then requires the current schema, so a writer-34 city is still refused.
+                Require(header[0] is CompactNumber schema && (schema.Text == CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture)
+                    || schema.Text == CityState.CompactSchema.ToString(CultureInfo.InvariantCulture)), "Unsupported compact state schema.");
                 Require(header[1] is string format && format == CompactFormat, "Unknown compact format.");
                 Require(Int(header[2]) == CompactFormatVersion, "Unsupported compact format version.");
                 var keyTable = Table(header[3]);

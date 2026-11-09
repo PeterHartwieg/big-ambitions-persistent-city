@@ -134,6 +134,6 @@ public sealed class SaveCostDiagnosticsTests
         var read = SaveWire.Read(payload);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
+        Assert.Equal(CityState.PlayerHoldSchema, CityState.CurrentSchema);
     }
 }
