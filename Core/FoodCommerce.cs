@@ -67,7 +67,7 @@ namespace PersistentCity.Core
         string IFoodScopeView.PlaceId => PlaceId;
         string IFoodScopeView.BusinessId => BusinessId;
         string IFoodScopeView.ProductId => ProductId;
-        IReadOnlyList<string> IFoodScopeView.AdditionalProductIds => AdditionalProductIds;
+        IReadOnlyList<string> IFoodScopeView.ExtraProductIds => AdditionalProductIds;
         FoodScopeChannel IFoodScopeView.Channel => Channel;
         FoodAlternativeKind IFoodScopeView.AlternativeKind => AlternativeKind;
         double IFoodScopeView.NextServiceAt => NextServiceAt;

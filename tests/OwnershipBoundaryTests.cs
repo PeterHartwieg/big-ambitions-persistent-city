@@ -350,8 +350,8 @@ public sealed class OwnershipBoundaryTests
         Assert.Contains("is not a declared or known .State owner", Caught("var m = Pick().State;"));
         Assert.Contains("is not a known .State owner", Caught("Read(null!); } private void Read(Unknown thing) { var m = thing.State;"));
         // A view cast back to an entity is refused in an observer file.
-        Assert.Contains("casts to", Caught("var p = (CitizenState)simulation!.View.Residents[0];"));
-        Assert.Contains("casts to", Caught("var p = simulation!.View.Residents as List<CitizenState>;"));
+        Assert.Contains("casts to", Caught("var p = (CitizenState)simulation!.View.ResidentList[0];"));
+        Assert.Contains("casts to", Caught("var p = simulation!.View.ResidentList as List<CitizenState>;"));
         // Text that only mentions the property is not a read.
         var quiet = new Dictionary<string, string>(files, StringComparer.Ordinal)
             { ["PopulationCensusDiagnostics.cs"] = Plant("var m = \"simulation.State\"; // current.State\n /* simulation.State */") };
@@ -419,6 +419,17 @@ public sealed class OwnershipBoundaryTests
             var map = entity.GetInterfaceMap(view);
             Assert.All(map.TargetMethods, m => Assert.True(m.IsPrivate && m.Name.Contains(view.Name, StringComparison.Ordinal), entity.Name + "." + m.Name));
         }
+        // No view collection shares a name with a public collection anywhere else in Core or Persistence: the compact reader
+        // takes each saved field's bound as the largest over every property of that name (CompactWire34.BuildFieldLimits),
+        // so a shared name would loosen a saved bound. The specialized bounds stay as F7d pinned them.
+        var viewCollections = seen.SelectMany(t => t.GetProperties()).Where(p => p.PropertyType != typeof(string)
+            && typeof(System.Collections.IEnumerable).IsAssignableFrom(p.PropertyType)).Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
+        Assert.Contains("ExtraProductIds", viewCollections);
+        foreach (var type in typeof(CityState).Assembly.GetTypes().Concat(typeof(SaveCodec).Assembly.GetTypes()).Where(t => !seen.Any(v => v.IsAssignableFrom(t))))
+            foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                Assert.False(viewCollections.Contains(p.Name), type.Name + "." + p.Name + " shares its name with a view collection");
+        Assert.Equal(FoodMenuPolicy.MaximumOffers - 1, SaveCodec.CompactCollectionLimit("AdditionalProductIds"));
+        Assert.Equal(SaveCodec.MaxPortals, SaveCodec.CompactCollectionLimit("Portals"));
         // The city view implementation is not public, so an observer cannot name it to reach the state.
         Assert.False(typeof(CitySimulator).Assembly.GetType("PersistentCity.Core.CityView")!.IsPublic);
     }
@@ -464,12 +475,12 @@ public sealed class OwnershipBoundaryTests
     {
         var city = sim.View; var food = city.Food!; var text = new StringBuilder();
         int day = (int)(city.Minute / 1440);
-        text.AppendLine(PopulationWords.Headline(day, city.Residents.Count, city.VisitorCount, food.ConsumerCount));
-        text.AppendLine(food.MealRhythmVersion + "|" + PopulationWords.Lines(city.VisitorCount, city.PortalCount) + "|" + food.Scopes.Count);
+        text.AppendLine(PopulationWords.Headline(day, city.ResidentList.Count, city.VisitorCount, food.ConsumerCount));
+        text.AppendLine(food.MealRhythmVersion + "|" + PopulationWords.Lines(city.VisitorCount, city.PortalCount) + "|" + food.ScopeList.Count);
         var history = CityViewReports.IndexFoodHistory(city); int since = CityViewReports.FoodRecordingSince(city), since2 = CityViewReports.FoodRecordingSinceV2(city);
-        foreach (var scope in food.Scopes)
+        foreach (var scope in food.ScopeList)
         {
-            var place = city.Places.FirstOrDefault(p => p.Id == scope.PlaceId);
+            var place = city.PlaceList.FirstOrDefault(p => p.Id == scope.PlaceId);
             text.AppendLine(scope.PlaceId + "|" + scope.BusinessId + "|" + place?.Name);
             var rows = history.TryGetValue(FoodFeedback.Key(scope.PlaceId, scope.BusinessId), out var r) ? r : new();
             text.AppendLine(FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day, since).Text());
@@ -481,17 +492,17 @@ public sealed class OwnershipBoundaryTests
         text.AppendLine(JsonConvert.SerializeObject(CityViewReports.EconomyOverview(city)));
         text.AppendLine("minute " + city.Minute.ToString("R"));
         var research = city.Research;
-        text.AppendLine(research.Open.Count + "|" + research.Kept.Count + "|" + research.Closed.Count + "|" + research.NextSequence);
+        text.AppendLine(research.OpenOrders.Count + "|" + research.KeptOrders.Count + "|" + research.ClosedOrders.Count + "|" + research.NextSequence);
         // The orders command still hands the ledger to ResearchReportText (a named sink); its order ids are the view's.
         var ids = ResearchReportText.Orders(sim.State.Research).Select(o => o.Id).ToList();
-        Assert.Equal(ids.OrderBy(i => i, StringComparer.Ordinal), research.Open.Concat(research.Kept).Concat(research.Closed).Select(o => o.Id).OrderBy(i => i, StringComparer.Ordinal));
+        Assert.Equal(ids.OrderBy(i => i, StringComparer.Ordinal), research.OpenOrders.Concat(research.KeptOrders).Concat(research.ClosedOrders).Select(o => o.Id).OrderBy(i => i, StringComparer.Ordinal));
         foreach (var order in ResearchReportText.Orders(sim.State.Research)) text.AppendLine(ResearchReportText.Line(order, order.BusinessAddress));
-        foreach (var r in city.VendorRows) text.AppendLine(r.VehicleId + "|" + r.BusinessId + "|" + r.PlaceId + "|" + r.State + "|" + r.Reason);
+        foreach (var r in city.VendorRowList) text.AppendLine(r.VehicleId + "|" + r.BusinessId + "|" + r.PlaceId + "|" + r.State + "|" + r.Reason);
         foreach (var c in CityViewReports.CaptureCensusResidents(city)) text.Append(c.HomeId).Append(c.DayPlaceId).Append(c.Persona).Append(',');
         text.AppendLine();
-        foreach (var id in city.Residents.Select(c => c.Id).Concat(sim.State.Visitors.Select(v => v.Id)))
+        foreach (var id in city.ResidentList.Select(c => c.Id).Concat(sim.State.Visitors.Select(v => v.Id)))
             text.AppendLine(CityViewReports.DescribePerson(city, id, sim.FoodAnchorReads));
-        foreach (var c in city.Residents) Inspected(text, sim, c.Id);
+        foreach (var c in city.ResidentList) Inspected(text, sim, c.Id);
         return text.ToString();
     }
 
@@ -529,13 +540,13 @@ public sealed class OwnershipBoundaryTests
             output.WriteLine(name + " outputs sha256 " + CityOracles.Sha(after) + ", " + after.Length + " characters");
             Assert.Equal(before, after);
             // Non-trivial city: the reads cover residents, places, shops and (in F9c) research and vendor rows.
-            Assert.True(city.View.Residents.Count > 100);
-            Assert.NotEmpty(city.View.Food!.Scopes);
-            if (name == "f9c") { Assert.NotEmpty(city.View.Research.Kept); Assert.NotEmpty(city.View.VendorRows); }
+            Assert.True(city.View.ResidentList.Count > 100);
+            Assert.NotEmpty(city.View.Food!.ScopeList);
+            if (name == "f9c") { Assert.NotEmpty(city.View.Research.KeptOrders); Assert.NotEmpty(city.View.VendorRowList); }
             // Every view member reads the live entity: compare each with the state field it names.
             var s = city.State; var v = city.View;
-            Assert.Same(s.Citizens, v.Residents); Assert.Same(s.Places, v.Places); Assert.Same(s.Food!.Shops, v.Food!.Scopes);
-            Assert.Same(s.VisitorRoutines, v.VisitorRoutines); Assert.Same(s.Vendors.Rows, v.VendorRows); Assert.Same(s.Economy, v.Economy);
+            Assert.Same(s.Citizens, v.ResidentList); Assert.Same(s.Places, v.PlaceList); Assert.Same(s.Food!.Shops, v.Food!.ScopeList);
+            Assert.Same(s.VisitorRoutines, v.VisitorRoutineList); Assert.Same(s.Vendors.Rows, v.VendorRowList); Assert.Same(s.Economy, v.Economy);
             for (int i = 0; i < s.Citizens.Count; i++)
             {
                 var c = s.Citizens[i]; IPersonView p = c;
@@ -559,7 +570,7 @@ public sealed class OwnershipBoundaryTests
                 IFoodScopeView f = scope;
                 Assert.Equal((scope.PlaceId, scope.BusinessId, scope.ProductId, scope.Channel, scope.AlternativeKind, scope.NextServiceAt),
                     (f.PlaceId, f.BusinessId, f.ProductId, f.Channel, f.AlternativeKind, f.NextServiceAt));
-                Assert.Equal(scope.AdditionalProductIds, f.AdditionalProductIds);
+                Assert.Equal(scope.AdditionalProductIds, f.ExtraProductIds);
             }
             foreach (var order in s.Research.Open.Concat(s.Research.Kept).Concat(s.Research.Closed))
             {
@@ -597,12 +608,12 @@ public sealed class OwnershipBoundaryTests
         Assert.Equal(1440, view.Minute);
         // A replaced list and a changed value are seen at once: the view is the state, not a copy.
         state.Places = new List<Place> { new() { Id = "other", Name = "Other" } };
-        Assert.Equal("other", Assert.Single(view.Places).Id);
+        Assert.Equal("other", Assert.Single(view.PlaceList).Id);
         state.Minute = 2000;
         Assert.Equal(2000, view.Minute);
         state.Food = new FoodCommerceState();
         Assert.NotNull(view.Food);
-        Assert.Empty(view.Food!.Scopes);
+        Assert.Empty(view.Food!.ScopeList);
         // A view from elsewhere cannot reach the reports.
         Assert.Throws<ArgumentException>(() => CityViewReports.DescribePerson(new ForeignView(), "a", 0));
     }
@@ -610,15 +621,15 @@ public sealed class OwnershipBoundaryTests
     private sealed class ForeignView : ICityView
     {
         public double Minute => 0;
-        public IReadOnlyList<IPersonView> Residents => Array.Empty<IPersonView>();
-        public IReadOnlyList<IPersonView> VisitorRoutines => Array.Empty<IPersonView>();
+        public IReadOnlyList<IPersonView> ResidentList => Array.Empty<IPersonView>();
+        public IReadOnlyList<IPersonView> VisitorRoutineList => Array.Empty<IPersonView>();
         public int VisitorCount => 0;
         public int PortalCount => 0;
-        public IReadOnlyList<IPlaceView> Places => Array.Empty<IPlaceView>();
+        public IReadOnlyList<IPlaceView> PlaceList => Array.Empty<IPlaceView>();
         public IFoodView? Food => null;
         public IEconomicLedgerView Economy => new EconomicLedger();
         public IResearchView Research => throw new NotSupportedException();
-        public IReadOnlyList<IVendorRowView> VendorRows => Array.Empty<IVendorRowView>();
+        public IReadOnlyList<IVendorRowView> VendorRowList => Array.Empty<IVendorRowView>();
         public IVendorRowView? FindVendor(string vehicleId) => null;
     }
 
@@ -627,12 +638,12 @@ public sealed class OwnershipBoundaryTests
     /// <summary>The panel's view reads in BuildEconomyText and DrawEconomy, as index loops (no boxed enumerator).</summary>
     private static long PanelReads(ICityView city)
     {
-        long sum = (long)city.Minute / 1440 + city.Residents.Count + city.VisitorCount + city.PortalCount;
+        long sum = (long)city.Minute / 1440 + city.ResidentList.Count + city.VisitorCount + city.PortalCount;
         var food = city.Food!;
         sum += food.ConsumerCount + food.MealRhythmVersion;
-        var scopes = food.Scopes;
+        var scopes = food.ScopeList;
         for (int i = 0; i < scopes.Count; i++) sum += scopes[i].PlaceId.Length + scopes[i].BusinessId.Length;
-        var places = city.Places;
+        var places = city.PlaceList;
         for (int i = 0; i < places.Count; i++) sum += places[i].Id.Length + places[i].Name.Length;
         return sum;
     }
@@ -648,8 +659,8 @@ public sealed class OwnershipBoundaryTests
         const int refreshes = 1000;
         for (int i = 0; i < refreshes; i++) total += PanelReads(city.View);
         long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
-        output.WriteLine("panel view reads: " + bytes + " bytes over " + refreshes + " refreshes of " + city.View.Places.Count + " places, "
-            + city.View.Food!.Scopes.Count + " shops");
+        output.WriteLine("panel view reads: " + bytes + " bytes over " + refreshes + " refreshes of " + city.View.PlaceList.Count + " places, "
+            + city.View.Food!.ScopeList.Count + " shops");
         Assert.Equal(expected * refreshes, total);
         Assert.Equal(0, bytes);
     }

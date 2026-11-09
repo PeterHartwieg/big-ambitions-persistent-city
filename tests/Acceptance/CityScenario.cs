@@ -170,13 +170,13 @@ internal sealed class CityScenario
         {
             case CityReload.BetweenFillUnits: return city.PopulationFillPending && city.PopulationFillUnits > 0;
             case CityReload.UncertainReceipt: return s.Food!.Residents.Any(m => m.Status == MealStatus.Uncertain);
-            case CityReload.ResearchPendingBilling: return view.Research.Open.Any(o => o.State == ResearchOrderState.Surveyed);
+            case CityReload.ResearchPendingBilling: return view.Research.OpenOrders.Any(o => o.State == ResearchOrderState.Surveyed);
             case CityReload.VendorLeaseOpen:
                 var row = view.FindVendor(CityFixture.Vehicle);
                 var vehicle = StreetFoodHooks.Vehicles.Find(v => v.Id == CityFixture.Vehicle);
                 return row != null && row.AuthorityDesired && vehicle != null && vehicle.Open && vehicle.Owner == VendorNames.Owner;
             case CityReload.HeldMealDecision: return s.Food!.Residents.Any(m => m.Decision != null);
-            case CityReload.MidJourney: return view.Residents.Any(c => c.Phase == CitizenPhase.Travelling);
+            case CityReload.MidJourney: return view.ResidentList.Any(c => c.Phase == CitizenPhase.Travelling);
             default: return false;
         }
     }
@@ -280,7 +280,7 @@ internal sealed class CityScenario
         CityOracles.Schedule(schedule, published, epoch, context);
         if (epoch % 1440 == 360)
             foreach (var fact in run.Research.Values.Where(f => f.BilledAt >= 0 && f.BilledAt == epoch - 360))
-                fact.ReadableNextMorning = city.View.Research.Kept.Any(o => o.ProductCode == fact.Product && o.HasReport);
+                fact.ReadableNextMorning = city.View.Research.KeptOrders.Any(o => o.ProductCode == fact.Product && o.HasReport);
     }
 
     private void Publish(long epoch)
@@ -336,7 +336,7 @@ internal sealed class CityScenario
             if (tally.Attempts > 0) run.Ledger.Add("b|" + epoch + "|" + tally.Attempts + "|" + tally.Paid + "|" + tally.Declined);
         }
         var research = city.View.Research;
-        foreach (var order in research.Open.Concat(research.Kept).Concat(research.Closed))
+        foreach (var order in research.OpenOrders.Concat(research.KeptOrders).Concat(research.ClosedOrders))
         {
             if (researchStates.TryGetValue(order.Id, out var was) && was == order.State) continue;
             researchStates[order.Id] = order.State;

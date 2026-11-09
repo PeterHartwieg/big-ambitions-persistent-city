@@ -37,22 +37,22 @@ internal static class CityOracles
     public static string Checkpoint(CitySimulator city, Identity seen, long epoch, string context)
     {
         var view = city.View; var s = city.State;
-        var persons = new List<string>(view.Residents.Count + view.VisitorCount);
-        foreach (var c in view.Residents) { seen.Record("person", c.Id, "resident|" + c.Name + "|" + c.HomeId, context); persons.Add(c.Id); }
+        var persons = new List<string>(view.ResidentList.Count + view.VisitorCount);
+        foreach (var c in view.ResidentList) { seen.Record("person", c.Id, "resident|" + c.Name + "|" + c.HomeId, context); persons.Add(c.Id); }
         foreach (var v in s.Visitors) { seen.Record("person", v.Id, "visitor|" + v.Stay.Pattern, context); persons.Add(v.Id); }
         if (persons.Count != persons.Distinct(StringComparer.Ordinal).Count()) throw new CityViolation(context + ": duplicate person ID");
-        var households = view.Residents.GroupBy(c => c.HomeId, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
+        var households = view.ResidentList.GroupBy(c => c.HomeId, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
         foreach (var h in households)
             seen.Record("household", h.Key, string.Join(",", h.Select(c => c.Id).OrderBy(i => i, StringComparer.Ordinal)), context);
-        foreach (var p in view.Places) seen.Record("place", p.Id, p.Kind + "|" + p.Name, context);
-        foreach (var r in view.VendorRows) seen.Record("vendor", r.BusinessId, r.VehicleId + "|" + r.PlaceId, context);
-        var research = view.Research.Open.Concat(view.Research.Kept).Concat(view.Research.Closed).ToList();
+        foreach (var p in view.PlaceList) seen.Record("place", p.Id, p.Kind + "|" + p.Name, context);
+        foreach (var r in view.VendorRowList) seen.Record("vendor", r.BusinessId, r.VehicleId + "|" + r.PlaceId, context);
+        var research = view.Research.OpenOrders.Concat(view.Research.KeptOrders).Concat(view.Research.ClosedOrders).ToList();
         foreach (var o in research) seen.Record("research", o.Id, o.ProductCode + "|" + o.BusinessAddress + "|" + M(o.OrderMinute), context);
         var text = new StringBuilder();
         foreach (var id in persons.OrderBy(i => i, StringComparer.Ordinal)) text.Append(id).Append(',');
         text.Append('|'); foreach (var h in households) text.Append(h.Key).Append(',');
-        text.Append('|'); foreach (var p in view.Places.Select(p => p.Id).OrderBy(i => i, StringComparer.Ordinal)) text.Append(p).Append(',');
-        text.Append('|'); foreach (var r in view.VendorRows.Select(r => r.BusinessId + "=" + r.State).OrderBy(i => i, StringComparer.Ordinal)) text.Append(r).Append(',');
+        text.Append('|'); foreach (var p in view.PlaceList.Select(p => p.Id).OrderBy(i => i, StringComparer.Ordinal)) text.Append(p).Append(',');
+        text.Append('|'); foreach (var r in view.VendorRowList.Select(r => r.BusinessId + "=" + r.State).OrderBy(i => i, StringComparer.Ordinal)) text.Append(r).Append(',');
         text.Append('|'); foreach (var o in research.Select(o => o.Id + "=" + o.State).OrderBy(i => i, StringComparer.Ordinal)) text.Append(o).Append(',');
         BigInteger income = 0, essentials = 0, home = 0, prepared = 0, discretionary = 0;
         foreach (var b in s.Food!.Residents.Select(m => m.Budget).Where(b => b != null))
@@ -60,7 +60,7 @@ internal static class CityOracles
             income += b!.IncomeReceived.Units + b.Ledger.EmploymentIncome.Units; essentials += b.EssentialsPaid.Units; home += b.HomeFoodPaid.Units;
             prepared += b.PreparedFoodSpent.Units; discretionary += b.Ledger.Discretionary.Units;
         }
-        return "h|" + epoch.ToString(CultureInfo.InvariantCulture) + "|" + persons.Count + "|" + households.Count + "|" + view.Places.Count + "|" + view.VendorRows.Count
+        return "h|" + epoch.ToString(CultureInfo.InvariantCulture) + "|" + persons.Count + "|" + households.Count + "|" + view.PlaceList.Count + "|" + view.VendorRowList.Count
             + "|" + research.Count + "|" + Sha(text.ToString()) + "|" + income + "|" + essentials + "|" + home + "|" + prepared + "|" + discretionary;
     }
 
@@ -110,7 +110,7 @@ internal static class CityOracles
             total += record.Amount;
         }
         foreach (var (tag, count) in charged) if (count != 1) throw new CityViolation(context + ": research order " + tag + " charged " + count + " times");
-        foreach (var order in ledger.Kept) if (!charged.ContainsKey(order.Id)) throw new CityViolation(context + ": paid research order " + order.Id + " without a charge");
+        foreach (var order in ledger.KeptOrders) if (!charged.ContainsKey(order.Id)) throw new CityViolation(context + ": paid research order " + order.Id + " without a charge");
         if (port.Money != CityResearchPort.OpeningMoney + total) throw new CityViolation(context + ": native money moved by more than the research charges");
     }
 

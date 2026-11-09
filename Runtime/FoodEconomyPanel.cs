@@ -40,7 +40,7 @@ namespace PersistentCity.Runtime
                 int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
                 return new { active = true, day, panelBuilds = economyRefresh.Builds, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
                     counters = current.ToString(), rescan = rescan.ToString(), moneyText = current.Text(), rivalLabel = FoodFeedback.RivalEstimateLabel,
-                    shops = food.Scopes.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
+                    shops = food.ScopeList.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
                         index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text(),
                         feedbackV2 = FeedbackV2Text(index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var v2Rows) ? v2Rows : new List<FoodShopDay>(),
                             foodMarket?.JournalFor(s.BusinessId), day, v2RecordingSince),
@@ -113,7 +113,7 @@ namespace PersistentCity.Runtime
                 GUILayout.Label("Preparing resident food demand. Eligible player businesses are managed automatically once the city is ready.", economyLabel);
                 GUILayout.EndArea(); return;
             }
-            int pages = Math.Max(1, (food.Scopes.Count + FoodFeedbackV2.ShopsPerPage - 1) / FoodFeedbackV2.ShopsPerPage);
+            int pages = Math.Max(1, (food.ScopeList.Count + FoodFeedbackV2.ShopsPerPage - 1) / FoodFeedbackV2.ShopsPerPage);
             economyShopPage = Math.Min(economyShopPage, pages - 1);
             if (pages > 1)
             {
@@ -137,7 +137,7 @@ namespace PersistentCity.Runtime
             var counters = simulation.FoodMoney;
             if (counters == null) return "Preparing resident food demand. The food market is not attached yet.";
             var money = counters.Snapshot();
-            text.AppendLine(PopulationWords.Headline(day, city.Residents.Count, city.VisitorCount, food.ConsumerCount));
+            text.AppendLine(PopulationWords.Headline(day, city.ResidentList.Count, city.VisitorCount, food.ConsumerCount));
             text.AppendLine("Accounting lag " + NativeCityClock.LagMinutes.ToString("F3", CultureInfo.InvariantCulture)
                 + " game minutes; calendar holds " + NativeCityClock.HeldOrdinaryTicks + " ordinary / " + NativeCityClock.HeldEconomySkipTicks
                 + " skip ticks. Configured calendar factor " + NativeCityClock.Factor.ToString("F3", CultureInfo.InvariantCulture) + ".");
@@ -151,7 +151,7 @@ namespace PersistentCity.Runtime
             if (uncertain > 0) text.AppendLine(uncertain + " purchases await confirmation. Their funds remain held; other consumers continue normally.");
             int blockedReturns = money.BlockedReturns;
             if (blockedReturns > 0) text.AppendLine(blockedReturns + " consumers are waiting for a safe return route. They cannot start another meal trip.");
-            var scopes = food.Scopes;
+            var scopes = food.ScopeList;
             if (scopes.Count == 0) text.AppendLine("No supported player food businesses are currently managed. Unsupported menus retain the game's customer demand.");
             if (foodMarket != null)
                 foreach (string explanation in foodMarket.UnmanagedShopStatuses()) text.AppendLine(explanation);
@@ -162,7 +162,7 @@ namespace PersistentCity.Runtime
             var history = CityViewReports.IndexFoodHistory(city); int recordingSince = CityViewReports.FoodRecordingSince(city); int v2RecordingSince = CityViewReports.FoodRecordingSinceV2(city);
             var shopPlaces = new Dictionary<string, IPlaceView?>(scopes.Count, StringComparer.Ordinal);
             for (int i = 0; i < scopes.Count; i++) shopPlaces[scopes[i].PlaceId] = null;
-            var places = city.Places;
+            var places = city.PlaceList;
             for (int i = 0; i < places.Count; i++) { var p = places[i]; if (shopPlaces.TryGetValue(p.Id, out var found) && found == null) shopPlaces[p.Id] = p; }
             var accountsByPlace = new Dictionary<string, List<NativeFoodAccount>>(StringComparer.Ordinal);
             foreach (var a in nativeAccounts)

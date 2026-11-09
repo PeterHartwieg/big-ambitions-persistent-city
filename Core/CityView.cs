@@ -9,26 +9,27 @@ namespace PersistentCity.Core
     /// the live state, not a copy: every read sees the simulator's current values, and no member can change them. Lists are
     /// the simulator's own lists seen through interface covariance, so a read allocates nothing. Every member returns a view
     /// type or an immutable value; tests/OwnershipBoundaryTests.cs checks that by reflection. Writes keep going through the
-    /// simulator's own methods.</summary>
+    /// simulator's own methods. Collection members are named apart from every saved field (ResidentList, not Residents):
+    /// the compact reader derives each field's bound by property name over all Core types, interfaces included.</summary>
     public interface ICityView
     {
         /// <summary>The logical city minute (drained events), not the native clock.</summary>
         double Minute { get; }
         /// <summary>The residents, in the simulator's order.</summary>
-        IReadOnlyList<IPersonView> Residents { get; }
+        IReadOnlyList<IPersonView> ResidentList { get; }
         /// <summary>Schema 27 visitor routines, one per visitor in visitor order.</summary>
-        IReadOnlyList<IPersonView> VisitorRoutines { get; }
+        IReadOnlyList<IPersonView> VisitorRoutineList { get; }
         /// <summary>The saved visitor persons, including any without a routine yet.</summary>
         int VisitorCount { get; }
         int PortalCount { get; }
         /// <summary>Saved places; vendor places are rebuilt from the vendor rows and not listed here.</summary>
-        IReadOnlyList<IPlaceView> Places { get; }
+        IReadOnlyList<IPlaceView> PlaceList { get; }
         /// <summary>Null until the city owns a food scope.</summary>
         IFoodView? Food { get; }
         IEconomicLedgerView Economy { get; }
         IResearchView Research { get; }
         /// <summary>The Street Food vendor rows, ordinal by vehicle id.</summary>
-        IReadOnlyList<IVendorRowView> VendorRows { get; }
+        IReadOnlyList<IVendorRowView> VendorRowList { get; }
         IVendorRowView? FindVendor(string vehicleId);
     }
 
@@ -80,7 +81,7 @@ namespace PersistentCity.Core
     /// <summary>The city's food scopes and the counts the panel shows.</summary>
     public interface IFoodView
     {
-        IReadOnlyList<IFoodScopeView> Scopes { get; }
+        IReadOnlyList<IFoodScopeView> ScopeList { get; }
         /// <summary>Persons with a meal record (one per consumer).</summary>
         int ConsumerCount { get; }
         int MealRhythmVersion { get; }
@@ -92,7 +93,7 @@ namespace PersistentCity.Core
         string PlaceId { get; }
         string BusinessId { get; }
         string ProductId { get; }
-        IReadOnlyList<string> AdditionalProductIds { get; }
+        IReadOnlyList<string> ExtraProductIds { get; }
         FoodScopeChannel Channel { get; }
         FoodAlternativeKind AlternativeKind { get; }
         double NextServiceAt { get; }
@@ -108,9 +109,9 @@ namespace PersistentCity.Core
 
     public interface IResearchView
     {
-        IReadOnlyList<IResearchOrderView> Open { get; }
-        IReadOnlyList<IResearchOrderView> Kept { get; }
-        IReadOnlyList<IResearchOrderView> Closed { get; }
+        IReadOnlyList<IResearchOrderView> OpenOrders { get; }
+        IReadOnlyList<IResearchOrderView> KeptOrders { get; }
+        IReadOnlyList<IResearchOrderView> ClosedOrders { get; }
         long NextSequence { get; }
         IResearchOrderView? Find(string? orderId);
     }
@@ -168,15 +169,15 @@ namespace PersistentCity.Core
         }
         internal CityState State { get; }
         public double Minute => State.Minute;
-        public IReadOnlyList<IPersonView> Residents => State.Citizens;
-        public IReadOnlyList<IPersonView> VisitorRoutines => State.VisitorRoutines;
+        public IReadOnlyList<IPersonView> ResidentList => State.Citizens;
+        public IReadOnlyList<IPersonView> VisitorRoutineList => State.VisitorRoutines;
         public int VisitorCount => State.Visitors.Count;
         public int PortalCount => State.Portals.Count;
-        public IReadOnlyList<IPlaceView> Places => State.Places;
+        public IReadOnlyList<IPlaceView> PlaceList => State.Places;
         public IFoodView? Food => State.Food == null ? null : food;
         public IEconomicLedgerView Economy => State.Economy;
         public IResearchView Research => research;
-        public IReadOnlyList<IVendorRowView> VendorRows => State.Vendors.Rows;
+        public IReadOnlyList<IVendorRowView> VendorRowList => State.Vendors.Rows;
         public IVendorRowView? FindVendor(string vehicleId) => State.Vendors.Find(vehicleId);
 
         private sealed class FoodView : IFoodView
@@ -184,7 +185,7 @@ namespace PersistentCity.Core
             private readonly CityState state;
             public FoodView(CityState state) { this.state = state; }
             private FoodCommerceState Food => state.Food ?? throw new InvalidOperationException("The city has no food scope.");
-            public IReadOnlyList<IFoodScopeView> Scopes => Food.Shops;
+            public IReadOnlyList<IFoodScopeView> ScopeList => Food.Shops;
             public int ConsumerCount => Food.Residents.Count;
             public int MealRhythmVersion => Food.MealRhythmVersion;
             public int ChoiceStartsDay => Food.ChoiceStartsDay;
@@ -194,9 +195,9 @@ namespace PersistentCity.Core
         {
             private readonly CityState state;
             public ResearchView(CityState state) { this.state = state; }
-            public IReadOnlyList<IResearchOrderView> Open => state.Research.Open;
-            public IReadOnlyList<IResearchOrderView> Kept => state.Research.Kept;
-            public IReadOnlyList<IResearchOrderView> Closed => state.Research.Closed;
+            public IReadOnlyList<IResearchOrderView> OpenOrders => state.Research.Open;
+            public IReadOnlyList<IResearchOrderView> KeptOrders => state.Research.Kept;
+            public IReadOnlyList<IResearchOrderView> ClosedOrders => state.Research.Closed;
             public long NextSequence => state.Research.NextSequence;
             public IResearchOrderView? Find(string? orderId) => state.Research.Find(orderId);
         }

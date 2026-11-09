@@ -248,7 +248,7 @@ namespace PersistentCity.Core
         {
             if (person.HomeId.Length == 0) return 0;
             int members = 0;
-            var residents = city.Residents;
+            var residents = city.ResidentList;
             for (int i = 0; i < residents.Count; i++) if (residents[i].HomeId == person.HomeId) members++;
             return members;
         }
