@@ -17,6 +17,7 @@ import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PROJECT = "tests/PersistentCity.Tests.csproj"
+NAMESPACE = re.compile(r"^\s*namespace\s+[\w.]+", re.M)
 CLASS = re.compile(r"^\s*(?:(?:public|internal|private|protected|sealed|static|abstract|partial)\s+)*class\s+(\w+)", re.M)
 
 
@@ -32,12 +33,16 @@ def changed_test_files(base):
                   if n.startswith("tests/") and n.endswith(".cs") and os.path.isfile(os.path.join(ROOT, n)))
 
 
-def test_classes(files):
-    classes = set()
+def filter_terms(files):
+    """One filter term per declared class. Namespaced classes match `.Class.`; a few test files use the
+    global namespace, where the full name starts with `Class.`, so those match `Class.` anywhere."""
+    terms = set()
     for name in files:
         with open(os.path.join(ROOT, name), encoding="utf-8-sig") as handle:
-            classes.update(CLASS.findall(handle.read()))
-    return sorted(classes)
+            text = handle.read()
+        dot = "." if NAMESPACE.search(text) else ""
+        terms.update(f"FullyQualifiedName~{dot}{c}." for c in CLASS.findall(text))
+    return sorted(terms)
 
 
 def dotnet():
@@ -52,12 +57,12 @@ def main():
     args = parser.parse_args()
 
     files = changed_test_files(args.base)
-    classes = test_classes(files)
-    if not classes:
+    terms = filter_terms(files)
+    if not terms:
         print("test-focused: no changed test classes; nothing to run (the full suite runs once before merge)")
         return 0
-    expression = "|".join(f"FullyQualifiedName~.{c}." for c in classes)
-    print(f"test-focused: {len(classes)} classes from {len(files)} changed test files")
+    expression = "|".join(terms)
+    print(f"test-focused: {len(terms)} classes from {len(files)} changed test files")
     if args.list:
         print(expression)
         return 0

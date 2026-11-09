@@ -186,7 +186,6 @@ public sealed class VisitorBodyTests
     private static readonly (string, string, double, double, double) ResidentPin = (
         "a7f8be191f08c52ec7d20c46c1dada69b45e5b30c85ef0940ca2b2bb3853f53c", "4941d18ef26284d373d686db2819d4799febcdeb8e6a078c57d1b8d05d7dff4c", 850, 1438800, 174675);
 
-    /// <summary>Bodies are not saved: writer 35 and its pinned golden hash (F2e) are unchanged.</summary>
     private static string Between(string text, string start, string end)
     {
         int from = text.IndexOf(start, StringComparison.Ordinal);

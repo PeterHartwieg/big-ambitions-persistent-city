@@ -11,7 +11,7 @@ Peter decided these rules on 9 November 2026 after measuring the harness runs fr
   python tools/test-focused.py
   ```
 
-  `test-focused.py` finds the changed `tests/**/*.cs` files since the merge base with `origin/codex/persistent-city` (uncommitted and untracked files included) and runs their classes through `dotnet test --filter`. It does not take the dotnet lock. You can also run your own `--filter` without the lock.
+  `test-focused.py` finds the changed `tests/**/*.cs` files since the merge base with `origin/codex/persistent-city` (uncommitted and untracked files included) and runs their classes through `dotnet test --filter` (`FullyQualifiedName~.Class.`, or `~Class.` in the few files without a namespace). It does not take the dotnet lock. You can also run your own `--filter` without the lock.
 - **The full suite runs once**, on the approved head before merge. The harness does this with `test_scope: final`, and only that run takes the dotnet lock (`wait-other-dotnet.ps1`). Implementers and fixers do not run the full suite, except for a broad refactor that the task names as one.
 - A red full run goes to the local-test fixer, which is how the harness handles any red local test.
 
@@ -33,7 +33,7 @@ Do not use `{changed_tests}`: the harness only recognises Python and JavaScript 
 
 ## Schema pins name their own constant
 
-A slice that changes no wire asserts the constant of the schema it relies on (`CityState.PlayerHoldSchema`, for example), not `CityState.CurrentSchema`. Only the slice that introduces a writer pins that writer's golden hash. On 9 November, F5i's `Assert.Equal(35, CityState.CurrentSchema)` turned the integration head red once E5b4 took writer 36. The test was removed; `HeldPolicyExecutionTests` pins writer 36.
+A slice that changes no wire asserts the constant of the schema it relies on (`CityState.PlayerHoldSchema`, for example), not `CityState.CurrentSchema`. Only the slice that introduces a writer pins that writer's golden hash. On 9 November, F5i's `Assert.Equal(35, CityState.CurrentSchema)` turned the integration head red once E5b4 took writer 36. That test was removed, and the same kind of assertion in F5h, F6h and F6k was removed before it could break at writer 37; `HeldPolicyExecutionTests` pins writer 36.
 
 ## Reading
 
