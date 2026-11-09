@@ -604,6 +604,9 @@ namespace PersistentCity.Core
                 if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                 meal.Allowance = Money.Max(meal.Allowance, limit);
                 mainPrice = meal.Price;
+                // The unconfirmed outcome must name the product and terms now held, before native code runs again:
+                // if the second checkout throws, it is what the save keeps (factors of the purchase are retained).
+                RecordOutcome(meal, city.State.Minute, true);
                 return true;
             }
             meal.Price = held; meal.ProductId = chosen;

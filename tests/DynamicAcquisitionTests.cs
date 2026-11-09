@@ -440,6 +440,48 @@ public sealed class DynamicAcquisitionTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AReplacementCheckoutThatThrowsSavesTheUncertainPurchaseAndNeverReplays(bool budget)
+    {
+        var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
+        var market = new PriceOnlyMarket(inner);
+        var city = new CitySimulator(prepared.State, planner); city.AttachFoodMarket(market, LegacyFoodChoice.Settings());
+        if (budget) city.EnableHouseholdFinances();
+        var m = city.State.Food!.Residents[0]; double at = m.DesiredAt;
+        for (int i = 0; i < 400 && m.Decision?.Result != FoodDecisionResult.Selected; i++) city.AdvanceTo(at, 1);
+        string selected = m.Decision!.BusinessId, intent = m.IntentId, product = m.Decision.ProductId!;
+        var shop = inner.Shops.Single(b => b.Id == selected);
+        shop.Offers.Add(new FoodOffer { ProductId = Burger, Price = Money.FromCents(90), Units = 100 });
+        city.State.Food.Shops.Single(s => s.BusinessId == selected).AdditionalProductIds.Add(Burger);
+        shop.Offers.Single(o => o.ProductId == product).Price = Money.FromCents(1000000); // unaffordable: the burger replaces it
+        inner.ThrowAfterSale = true; // the replacement order is placed, then its acknowledgement is lost
+        while (!city.AdvanceTo(at + 20, 1).CaughtUp) { }
+        m = city.State.Food!.Residents[0];
+        Assert.Equal(MealStatus.Uncertain, m.Status);
+        Assert.Equal(Burger, m.ProductId); Assert.Equal(Money.FromCents(90), m.Price);
+        var outcome = m.Today!.Find(m.Kind)!;
+        Assert.Equal(MealOutcomeStatus.Unconfirmed, outcome.Status);
+        Assert.Equal(Burger, outcome.ProductId);
+        Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(2, market.Attempts);
+        Money used = m.DayAllowanceUsed, heldFunds = m.Budget?.HeldPurchase ?? Money.Zero;
+        Assert.Equal(budget ? Money.Zero : Money.FromCents(90), used);
+        Assert.Equal(budget ? Money.FromCents(90) : Money.Zero, heldFunds);
+
+        string saved = DevelopmentChain.Write(city.State); // refused before the fix: the outcome named the original product
+        var read = DevelopmentChain.Read(saved);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var resumed = new CitySimulator(read.State!, planner); resumed.AttachFoodMarket(market, LegacyFoodChoice.Settings());
+        while (!resumed.AdvanceTo(at + 1500, 128).CaughtUp) { }
+        var after = resumed.State.Food!.Residents[0];
+        Assert.Equal(MealStatus.Uncertain, after.Status); Assert.Equal(intent, after.IntentId);
+        Assert.Equal(Burger, after.ProductId); Assert.Equal(Money.FromCents(90), after.Price);
+        Assert.Equal(used, after.DayAllowanceUsed);
+        Assert.Equal(heldFunds, after.Budget?.HeldPurchase ?? Money.Zero);
+        Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(2, market.Attempts); // never replayed
+    }
+
+    [Theory]
     [InlineData("invalid-price")]
     [InlineData("menu")]
     [InlineData("holder")]
