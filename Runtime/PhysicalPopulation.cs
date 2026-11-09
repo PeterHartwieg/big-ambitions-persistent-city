@@ -1291,6 +1291,8 @@ namespace PersistentCity.Runtime
                 || !ReferenceEquals(citizen.Journey, route)) return;
             bool car = binding.Car != null;
             Position at = binding.Person?.Position ?? binding.Car!.Position;
+            // Out of reach and no open track: nothing to observe (the common case, one distance test per body).
+            if (!PlayerContact.InReach(at, player, car) && !contact.Tracking(citizen.Identity.Id)) return;
             double minute = simulation.State.Minute;
             var own = WalkerFollow.Sample(route, Math.Min(route.Minutes, binding.BodyMinutes));
             double report = contact.Observe(citizen.Identity.Id, route, car, minute - citizen.DepartureMinute, binding.BodyMinutes,

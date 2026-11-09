@@ -40,6 +40,8 @@ public sealed class PlayerDouble
     public long Reports, WalkHolds, CarHolds, Absorbed, ChargedMinutesTimes1000;
     public readonly SortedDictionary<string, long> Refusals = new(StringComparer.Ordinal);
     public readonly List<string> Lines = new();
+    /// <summary>F2e perf: HoldForPlayer wall time per applied hold, in milliseconds (walk and car).</summary>
+    public readonly List<double> WalkMilliseconds = new(), CarMilliseconds = new();
 
     private static bool Blocks(string id)
     {
@@ -66,7 +68,9 @@ public sealed class PlayerDouble
             double report = Math.Min(track.Blocked, Math.Min(PlayerHolds.MaximumReportMinutes, minute - track.LastReport));
             if (!(report > 0)) continue;
             Reports++;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
             var result = city.HoldForPlayer(id, report, car ? PlayerHoldCause.PlayerVehicle : PlayerHoldCause.PlayerFoot);
+            double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
             if (result.Refusal == PlayerHoldRefusal.NotDrained) continue;
             track.Blocked = 0; track.LastReport = minute;
             track.Spent |= result.Refusal == PlayerHoldRefusal.AllowanceSpent;
@@ -79,7 +83,7 @@ public sealed class PlayerDouble
             Lines.Add(line);
             if (!PlayerHolds.TryParse(line, out var parsed)) throw new HarnessViolation("unreadable hold line " + line);
             stream.Add(parsed);
-            if (result.Record.Vehicle) CarHolds++; else WalkHolds++;
+            if (result.Record.Vehicle) { CarHolds++; CarMilliseconds.Add(elapsed); } else { WalkHolds++; WalkMilliseconds.Add(elapsed); }
             if (result.Record.Charge < result.Record.Input) Absorbed++;
             ChargedMinutesTimes1000 += (long)Math.Round(result.Record.Charge * 1000);
         }
@@ -184,8 +188,20 @@ public static class HoldReplay
             Checkpoints = new[] { start + 1, start + 8 * 60, start + 9 * 60, start + 12 * 60 } };
         var live = MovementRun.Run(options);
         var player = live.Player!;
+        static string Quantiles(List<double> ms)
+        {
+            if (ms.Count == 0) return "none";
+            var sorted = ms.OrderBy(v => v).ToList();
+            double Q(double p) => sorted[(int)Math.Round((sorted.Count - 1) * p)];
+            return "p50 " + Q(.5).ToString("F4", System.Globalization.CultureInfo.InvariantCulture) + " ms, p95 " + Q(.95).ToString("F4", System.Globalization.CultureInfo.InvariantCulture)
+                + " ms, max " + sorted[^1].ToString("F4", System.Globalization.CultureInfo.InvariantCulture) + " ms";
+        }
+        double contactHours = (PlayerDouble.ContactTo - PlayerDouble.ContactFrom) / 60 * days;
         rows.Add(("e2 contact arm applied walk and car holds", player.WalkHolds > 0 && player.CarHolds > 0,
-            "walk " + player.WalkHolds + ", car " + player.CarHolds + ", absorbed " + player.Absorbed + ", refused " + string.Join(",", player.Refusals.Select(r => r.Key + "=" + r.Value))));
+            "walk " + player.WalkHolds + ", car " + player.CarHolds + ", absorbed " + player.Absorbed + ", reports " + player.Reports
+            + ", refused " + string.Join(",", player.Refusals.Select(r => r.Key + "=" + r.Value))
+            + ", holds per contact hour " + ((player.WalkHolds + player.CarHolds) / contactHours).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
+            + "; walk hold " + Quantiles(player.WalkMilliseconds) + "; car hold " + Quantiles(player.CarMilliseconds)));
         var end = live.Checkpoints[live.Checkpoints.Count - 1];
         foreach (var from in live.Checkpoints.Take(live.Checkpoints.Count - 1))
         {

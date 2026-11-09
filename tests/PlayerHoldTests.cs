@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using PersistentCity.Core;
@@ -9,6 +11,7 @@ using PersistentCity.Runtime;
 using UnityEngine;
 using UnityEngine.AI;
 using Xunit;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
@@ -652,5 +655,144 @@ public sealed class PlayerHoldTests
         Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(state)));
         string actual = EconomicLedgerTests.Sha(payload) + " " + payload.Length;
         Assert.True(pin + " " + characters == actual, actual);
+    }
+}
+
+// Opt-in offline measurements for docs/perf/f2e.md: set PC_F2E_MEASURE to an output file. The production PhysicalPopulation
+// on the native doubles with 48 walkers, without a player (the contact pass is skipped, as before F2e), with the player
+// far from every body, and with the player standing inside the crowd; then the contact rule alone per body.
+[Collection(StreetFoodHooks.Collection)]
+public sealed class PlayerHoldPerfTests
+{
+    private sealed class Walk : IRoutePlanner
+    {
+        public Route Plan(Place a, Place b, double at, TravelPreferences p) => Legs(a.Position, b.Position);
+    }
+    private static Route Legs(Position a, Position b)
+    {
+        var route = new Route { Legs = new() };
+        for (int i = 0; i < 6; i++)
+        {
+            var from = Position.Lerp(a, b, i / 6.0); var to = Position.Lerp(a, b, (i + 1) / 6.0);
+            route.Legs.Add(new RouteLeg { From = from, To = to, Mode = TravelMode.Walk, Minutes = Position.Distance(from, to) / 2 });
+        }
+        return route;
+    }
+
+    private static string Update(string label, Func<PhysicalPedestrians, Position?> player)
+    {
+        StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); GameManager.Driving = false;
+        const double now = 1440 + 600;
+        var ids = Enumerable.Range(0, 48).Select(i => new CitizenIdentity { Id = "w" + i.ToString("D2"), Name = "W" + i, Age = 30, AppearanceSeed = i + 1 }).ToList();
+        var places = new List<Place> { new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 64, Position = new Position(100, 0, 0) } };
+        for (int i = 0; i < 48; i++)
+            places.Add(new Place { Id = "home" + i, Name = "Home", Kind = PlaceKind.Home, Capacity = 1,
+                Position = new Position(100 + 90 * Math.Cos(i * 0.13), 0, 90 * Math.Sin(i * 0.13)) });
+        var state = Population.Create(ids, places, "f2e-perf", "0.40.4", 3, now);
+        for (int i = 0; i < 48; i++)
+        {
+            var c = state.Citizens[i];
+            c.HomeId = c.PlaceId = "home" + i; c.DayPlaceId = "work"; c.MealOuting = null;
+            c.Phase = CitizenPhase.Travelling; c.DestinationId = "work"; c.DestinationActivity = Activity.Work;
+            c.Journey = Legs(places[i + 1].Position, places[0].Position);
+            c.DepartureMinute = now; c.NextEventMinute = now + c.Journey.Minutes; c.ActivityUntilMinute = now + 600;
+        }
+        var city = new CitySimulator(state, new Walk());
+        NativeTravelPace.Focus = new Position(100, 0, 0); Time.Next(3);
+        var game = new GameManager { playerController = new PlayerControllerDouble(), selectedVehicle = new VehicleController() };
+        try
+        {
+            using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+                typeof(PlayerHoldPerfTests).Assembly, new VendorBodyTests.Log(), 64, 8, 120, new DwellSpots());
+            var pool = PhysicalPedestrians.Last!;
+            void Move(float seconds)
+            {
+                foreach (var body in pool.Active.Values)
+                {
+                    if (body.Agent.isStopped) continue;
+                    double pace = NativeTravelPace.WalkingMetresPerSecond * (body.IdentityId.GetHashCode() % 3 == 0 ? 0.85 : 1);
+                    var at = body.Position; double d = Position.Distance(at, body.Target), step = pace * seconds;
+                    body.Character.transform.position = PhysicalPedestrianBody.Vector(d <= step ? body.Target : Position.Lerp(at, body.Target, step / d));
+                }
+            }
+            double minute = now;
+            const float frame = 1 / 60f;
+            void Frame()
+            {
+                Move(frame); minute += frame / 3.0; city.AdvanceTo(minute); Time.Next(frame);
+                var at = player(pool);
+                InstanceBehavior<GameManager>.Instance = at.HasValue ? game : null;
+                if (at.HasValue) game.playerController!.transform.position = PhysicalPedestrianBody.Vector(at.Value);
+            }
+            for (int i = 0; i < 120; i++) { Frame(); bodies.Update(); }
+            int count = 2400;
+            var times = new List<double>(count); int bound = 0;
+            long holds = city.State.PlayerHoldSequence;
+            for (int i = 0; i < count; i++)
+            {
+                Frame();
+                long start = Stopwatch.GetTimestamp();
+                bodies.Update();
+                times.Add((Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency);
+                bound = Math.Max(bound, pool.Active.Count);
+            }
+            times.Sort();
+            return string.Format(CultureInfo.InvariantCulture,
+                "Update, 48 walkers, {0}: bound max={1}, n={2}, p50={3:F4} ms, p95={4:F4} ms, max={5:F4} ms, spikes>=30ms={6}, holds={7}",
+                label, bound, count, times[count / 2], times[(int)Math.Ceiling(count * .95) - 1], times[^1], times.Count(t => t >= 30),
+                city.State.PlayerHoldSequence - holds);
+        }
+        finally { InstanceBehavior<GameManager>.Instance = null; }
+    }
+
+    [Fact]
+    public void MeasureContactDetectionAndHoldCost()
+    {
+        string? path = System.Environment.GetEnvironmentVariable("PC_F2E_MEASURE");
+        if (path == null) return;
+        var lines = new List<string>();
+        for (int run = 0; run < 2; run++)
+        {
+            lines.Add(Update("no player (contact pass skipped, as before F2e)", _ => null));
+            lines.Add(Update("player 1 km away", _ => new Position(1100, 0, 0)));
+            // The player stands 0.5 m ahead of the first walker on its own leg every frame: the worst case, a held body.
+            lines.Add(Update("player 0.5 m ahead of one walker", pool =>
+            {
+                if (!pool.Active.TryGetValue("w00", out var w)) return new Position(100, 0, 0);
+                var d = new Position(100 - w.Position.X, 0, 0 - w.Position.Z); double n = Math.Sqrt(d.X * d.X + d.Z * d.Z);
+                return n < 1e-6 ? w.Position : new Position(w.Position.X + d.X / n * 0.5, 0, w.Position.Z + d.Z / n * 0.5);
+            }));
+        }
+        // The contact rule alone: one leg sample and Observe per body, 72 bodies (48 walkers and 24 cars), 20,000 frames.
+        var route = Legs(new Position(0, 0, 0), new Position(120, 0, 0));
+        var contact = new PlayerContact();
+        var far = new PlayerPose(new Position(1000, 0, 0), false); var near = new PlayerPose(new Position(30.5, 0, 0), false);
+        foreach (var (label, pose) in new[] { ("far", far), ("in contact", near) })
+        {
+            const int frames = 20000, body = 72;
+            var ids = Enumerable.Range(0, body).Select(b => "b" + b.ToString(CultureInfo.InvariantCulture)).ToArray();
+            long start = Stopwatch.GetTimestamp();
+            for (int f = 0; f < frames; f++)
+                for (int b = 0; b < body; b++)
+                {
+                    var own = WalkerFollow.Sample(route, 15);
+                    contact.Observe(ids[b], route, b >= 48, 15 + f * 0.0001, 15, new Position(30, 0, 0), own.From, own.To, pose, 1000 + f * 0.0001, f);
+                }
+            double ns = (Stopwatch.GetTimestamp() - start) * 1e9 / Stopwatch.Frequency / (frames * (double)body);
+            lines.Add(string.Format(CultureInfo.InvariantCulture, "Contact rule per body ({0}): {1:F1} ns; per frame at 72 bodies: {2:F4} ms", label, ns, ns * 72 / 1e6));
+        }
+        // The pre-check PhysicalPopulation runs first (a body out of reach with no open track stops there).
+        {
+            const int frames = 20000, body = 72;
+            var ids = Enumerable.Range(0, body).Select(b => "far" + b.ToString(CultureInfo.InvariantCulture)).ToArray();
+            int reached = 0;
+            long start = Stopwatch.GetTimestamp();
+            for (int f = 0; f < frames; f++)
+                for (int b = 0; b < body; b++)
+                    if (PlayerContact.InReach(new Position(30 + (f & 1) * 0.01, 0, 0), far, b >= 48) || contact.Tracking(ids[b])) reached++;
+            double ns = (Stopwatch.GetTimestamp() - start) * 1e9 / Stopwatch.Frequency / (frames * (double)body);
+            lines.Add(string.Format(CultureInfo.InvariantCulture, "Pre-check per body (far): {0:F1} ns; per frame at 72 bodies: {1:F4} ms (reached {2})", ns, ns * 72 / 1e6, reached));
+        }
+        File.AppendAllText(path, string.Join(System.Environment.NewLine, lines) + System.Environment.NewLine);
     }
 }

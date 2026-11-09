@@ -126,6 +126,15 @@ namespace PersistentCity.Runtime
             stale.Clear();
         }
         internal int Tracked => tracks.Count;
+        internal bool Tracking(string id) => tracks.ContainsKey(id);
+
+        /// <summary>Cheap pre-check: can the player be in contact with a body here at all (right kind, within reach)?</summary>
+        internal static bool InReach(Position at, in PlayerPose player, bool car)
+        {
+            if (!player.Valid || player.Driving != car) return false;
+            double dx = player.Position.X - at.X, dz = player.Position.Z - at.Z, reach = car ? Math.Sqrt(CarMetres * CarMetres + CarLaneMetres * CarLaneMetres) : WalkerMetres;
+            return dx * dx + dz * dz <= reach * reach;
+        }
 
         /// <summary>The Player.log hold stream line and the ring entry of an applied hold.</summary>
         internal static void Publish(PlayerHoldRecord record, bool replay = false)
