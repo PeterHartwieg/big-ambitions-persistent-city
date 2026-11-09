@@ -239,7 +239,7 @@ internal sealed class WindowResult
     public long Frames, Units, CitizenEvents, PlanningSlices, HeldFrames, Gc0, Gc1, Gc2;
     public long HistoricalClockMisses, Orders, JournalObservations;
     public List<double> CoreMs = new(), DriverMs = new(), ModWorkMs = new();
-    public List<(long Frame, double Minute, double Ms, double CoreMs, double DriverMs, string Component, int Gc)> Spikes = new();
+    public List<(long Frame, double Minute, double Ms, double CoreMs, double DriverMs, string Component, int Gc, int Gc0, int Gc1, int Gc2)> Spikes = new();
     public double UnitMax; public string UnitMaxKind = ""; public double UnitMaxMinute;
     public List<(double Minute, double Lag, bool Held)> Lag = new();
     public List<HourRow> Hours = new();
@@ -252,6 +252,8 @@ internal sealed class WindowResult
     public double MaxPathsInFrame;
     public string StateHash = "", UninterruptedHash = "";
     public double ToolSeconds;
+    /// <summary>Game minutes of body movement supplied to the driver, in all frames and in held frames.</summary>
+    public double BodyMoveMinutes, HeldBodyMoveMinutes;
     public List<double> FrameMinute = new();
 }
 
@@ -305,11 +307,18 @@ internal static class WindowRunner
             double lag = target - city.State.Minute;
 
             // F2a: native bodies move in real time, before the simulation advances, also on frames that hold native time.
+            // Bodies are commanded at Runtime's fixed real-time walking speed (the F2a runner's conversion), independent of the
+            // calendar pace and of a held tick.
+            int g0 = GC.CollectionCount(0), g1 = GC.CollectionCount(1), g2 = GC.CollectionCount(2);
             long frameStarted = Stopwatch.GetTimestamp();
-            driver?.MoveBodies(1.0 / spec.Fps, allowed);
+            var (moveSeconds, moveMinutes) = BodyMovement(spec.Fps);
+            if (driver != null)
+            {
+                driver.MoveBodies(moveSeconds, moveMinutes);
+                r.BodyMoveMinutes += moveMinutes; if (held) r.HeldBodyMoveMinutes += moveMinutes;
+            }
             double driverMs = Ms(frameStarted, Stopwatch.GetTimestamp());
 
-            int g0 = GC.CollectionCount(0), g1 = GC.CollectionCount(1), g2 = GC.CollectionCount(2);
             var budget = new PopulationFrameBudget(1.0 / spec.Fps, skip);
             long started = Stopwatch.GetTimestamp();
             double Elapsed() => Ms(started, Stopwatch.GetTimestamp());
@@ -362,10 +371,11 @@ internal static class WindowRunner
             if (focusPath.Count > 1) focusMetres += 1.4 / spec.Fps;
             driverMs += Ms(presented, Stopwatch.GetTimestamp());
 
-            int gc = GC.CollectionCount(2) != g2 ? 2 : GC.CollectionCount(1) != g1 ? 1 : GC.CollectionCount(0) != g0 ? 0 : -1;
+            int d0 = GC.CollectionCount(0) - g0, d1 = GC.CollectionCount(1) - g1, d2 = GC.CollectionCount(2) - g2;
+            int gc = d2 > 0 ? 2 : d1 > 0 ? 1 : d0 > 0 ? 0 : -1;
             double modWork = coreMs + driverMs;
             r.CoreMs.Add(coreMs); r.DriverMs.Add(driverMs); r.ModWorkMs.Add(modWork); r.FrameMinute.Add(native);
-            if (modWork >= 30) r.Spikes.Add((r.Frames, city.State.Minute, modWork, coreMs, driverMs, coreMs >= driverMs ? component : "presentation-driver", gc));
+            if (modWork >= 30) r.Spikes.Add((r.Frames, city.State.Minute, modWork, coreMs, driverMs, coreMs >= driverMs ? component : "presentation-driver", gc, d0, d1, d2));
 
             // S rows: holds (consecutive held frames), recovery to lag <= 0.1 after a hold, lag and pace per game hour.
             if (held)
@@ -416,6 +426,10 @@ internal static class WindowRunner
         r.ToolSeconds = wall.Elapsed.TotalSeconds;
         return r;
     }
+
+    /// <summary>One frame's body movement: its real seconds and the F2a runner's fixed real-time game minutes
+    /// (GridPlanner.ClockRate, 2 m/s walkers), whatever the calendar pace or a held tick.</summary>
+    public static (double Seconds, double GameMinutes) BodyMovement(int fps) => (1.0 / fps, 1.0 / fps * GridPlanner.ClockRate);
 
     private static double Median(List<int> values)
     {

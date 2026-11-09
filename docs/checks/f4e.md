@@ -12,7 +12,7 @@ Refs [#91](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues
 - **Windows.** Decision 3's W-morning, W-lunch, W-evening, W-midnight and W-idle at the declared pace (factor 1/3, speed 1) at 30, 60 and 120 FPS with S-stationary; W-evening with S-path; W-accounting pooled from the lunch and evening rollovers; G9's fastest-traveller sequence (factor 1, speeds 1, 2, 3 with bodies, speed 6 with bodies released, a 120-minute time-machine skip) and a whole day at speed 3.
 - **Frame loop.** Runtime's `PopulationFrameBudget` shape behind `AccountingClock.Limit`, F5h's admitted planner (16 native paths per frame), and the F2a presentation driver at 48 pedestrians / 24 vehicles.
 - **Report.** `perf-gate-report/v1`, `source=offline`, contract `perf-gate/v1`: every Decision 8 header field (native-only ones as `n/a (offline)`), Decision 3 receipts per window, the per-window table (M1–M4, P1–P3, reference, P4, S1–S5, density, bodies, GC), a verdict with reason for every row M1–R1, the M2 spike list and the stall table. The overall verdict is always `not established`. F4a's `contract-v1.json` is not merged at this base; the report is validated against the plan's field list (`Report.Validate`), and validation against F4a's schema lands when F4a merges. No file under `tools/perf-gate/` is created or edited.
-- **Offline expectations** (details in the perf file): M1–M4 pass with the largest offline mod-work p95 at 0.024 ms and no frame at or above 30 ms; S1, S2, S4 and S5 pass; **S3 is expected to fail on held share**: 1.3–1.6 % at W-evening at the declared pace (30/60 FPS) and 12 % in the speed-3 hour at factor 1, every hold following a frame that ended on the 16 citizen events (or the 16-path admission) of the frame budget. The longest hold is 0.167 s.
+- **Offline expectations** (details in the perf file): M1–M4 pass over every window at speeds 1–3 with bodies and the pooled W-accounting frames, with the largest offline mod-work p95 at 0.063 ms (G9a speed 3) and no frame at or above 30 ms; S1, S2, S4 and S5 pass; **S3 is expected to fail on held share**: 1.3–1.6 % at W-evening at the declared pace (30/60 FPS) and 12 % in the speed-3 hour at factor 1, every hold following a frame that ended on the 16 citizen events (or the 16-path admission) of the frame budget. The longest hold is 0.167 s.
 
 ### Technical choices
 
@@ -21,14 +21,16 @@ Refs [#91](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues
 - **The first window is discarded** (JIT), and garbage is collected before each window and the GC count is taken after it.
 - Native speeds 2, 3 and 6 are assumed to be 2×, 3× and 6× speed 1; rig check 4 below measures them.
 - No Core, Persistence or Runtime file changes; no change to the main test project or solution.
+- **M rows** cover every window at native speeds 1–3 with bodies (declared windows and G9's speed 1–3 hours and day) and the pooled W-accounting frames; speed 6 and the skip are reported per window only. Each M2 spike keeps its gen-0/1/2 collection counts across the driver and Core parts of the frame.
+- **Body movement** uses the F2a runner's fixed real-time conversion (`GridPlanner.ClockRate`, 2 m/s walkers), not the calendar delta, so holds and the clock factor do not change how far bodies move.
 
 ## Offline checks
 
 | Check | Result |
 | --- | --- |
 | `python tools/build.py --game-managed "…\Big Ambitions_Data\Managed"` | passed |
-| `dotnet test tests/PersistentCity.Tests.csproj` | see the PR description for the counts of this head |
-| `dotnet run --project tools/perf-gate-offline -c Release -- --self-test` | passed, 15 checks |
+| `dotnet test tests/PersistentCity.Tests.csproj` | round 1 head: 4,287 passed, 1 failed of 4,288: the timing assertion `FoodContractCoordinatorTests.RecheckBoundaryRebuildAndCommitGateCosts` failed under other sessions' load and passed when rerun alone; this branch changes no file under `Core/`, `Persistence/`, `Runtime/` or `tests/`. Review run at `b81488d`: 4,288 passed, 0 failed. |
+| `dotnet run --project tools/perf-gate-offline -c Release -- --self-test` | passed, 21 checks |
 | `dotnet run --project tools/perf-gate-offline -c Release -- --out build/perf-gate-offline/report-offline.json` | passed: 23 windows, every window's sliced state equal to its uninterrupted advance, report valid |
 
 Self-test, the F4e row's three tests:
@@ -36,6 +38,8 @@ Self-test, the F4e row's three tests:
 1. **Same seed gives identical state hashes.** Two fixtures built from nothing with seed 2026 are byte-identical (`f769b3a3…`), their 18:30 checkpoints are identical, and the same 18:30–19:05 window at 60 FPS with bodies ends with the same state hash on each. Seed 2027 builds a different fixture.
 2. **Sliced runs equal an uninterrupted advance** (as the fix-128 replay): 30, 60 and 120 FPS with bodies, speed 6 with bodies released, a time-machine skip, and a window starting on the 19:00 rollover each end in the uninterrupted advance's state (saved city plus native orders), and 30/60/120 FPS end in the same state. The full run repeats this for all 23 windows.
 3. **The report has every documented field and `source=offline`.** The built report validates; removing any of the 15 header, 7 machine, 23 window, 5 receipt or 18 verdict fields, `source=native`, an overall `pass` or an empty commit is refused (71 of 71).
+4. **Bodies move at Runtime's fixed real-time walking speed** (review Astra-r1-1): the driver gets the same body movement per frame on held frames and at factor 1/3 speed 1 and factor 1 speed 3.
+5. **Verdicts cover every applicable window** (review Sol-r1-1, Opus-r1-2): with synthetic windows, a slow fastest-traveller speed-3 window or slow W-accounting frames fail M1, and a run with no speed 1–3 window gives M1, M3, M4, S3, S4 and S5 `not established`. `--only` with no matching window is refused.
 
 **Schema.** None. Writer 35 is unchanged; nothing under `Persistence/` or the saved model changes, so the pinned current-writer golden hash is untouched (`CurrentWriterGoldenHashIsUnchanged` in the unit tests). No migration.
 
@@ -54,6 +58,8 @@ Each check maps to a G check of the plan's section 7: 1 to G4, 2 to G4's W-eveni
 ## Follow-up when F4a merges
 
 Offline, not a rig check: validate this report with F4a's analyzer against `contract-v1.json` with `source=offline`, and confirm the analyzer refuses to mix it with native windows in one verdict.
+
+Known drift risk: `tools/perf-gate-offline/PerfGateOffline.csproj` copies the linked Compile items of `tests/PersistentCity.Tests.csproj`. A file newly linked there breaks this tool's build until the same line is added here; no CI builds the tool, so run `dotnet build tools/perf-gate-offline -c Release` when the test project's links change.
 
 ## Not covered offline
 

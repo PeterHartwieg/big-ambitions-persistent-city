@@ -82,6 +82,36 @@ internal static class SelfTest
         Refuses("empty commit", r => r["header"]!["sourceCommit"] = "");
         Check(refused == mutations, refused + " of " + mutations + " mutated reports refused");
 
+        // 4. Bodies move at the fixed real-time walking speed: also on held frames, and the same per frame at factor 1/3 and 1.
+        var (_, perFrame) = WindowRunner.BodyMovement(60);
+        Check(first.HeldFrames > 0 && Math.Abs(first.HeldBodyMoveMinutes - first.HeldFrames * perFrame) < 1e-9,
+            "bodies keep moving on " + first.HeldFrames + " held frames");
+        var fastBodies = Window(ca[from], 60, Presentation.Bodies, to, Pace.At(Pace.FastestFactor, 3));
+        Check(Math.Abs(first.BodyMoveMinutes / first.Frames - perFrame) < 1e-12 && Math.Abs(fastBodies.BodyMoveMinutes / fastBodies.Frames - perFrame) < 1e-12,
+            "body movement per frame is the same at factor 1/3 speed 1 and factor 1 speed 3");
+
+        // 5. Verdicts cover every applicable window and are not established without one (synthetic windows).
+        WindowResult Synthetic(string condition, string arm, int speed, Presentation presentation, double ms)
+        {
+            var w = new WindowResult { Spec = new WindowSpec(condition, "S-stationary", arm, 0, 60, 60, Pace.At(Pace.FastestFactor, Math.Max(1, speed)), presentation, 1, speed),
+                Frames = 100, StateHash = "x" };
+            for (int i = 0; i < 100; i++) { w.ModWorkMs.Add(ms); w.CoreMs.Add(ms); w.DriverMs.Add(0); w.FrameMinute.Add(i * .6); }
+            return w;
+        }
+        string Verdict(Report.Inputs i, string row) => (string)Report.Build(i)["verdicts"]!.First(v => (string?)v["row"] == row)!["verdict"]!;
+        var okDeclared = Synthetic("synthetic-declared", "declared", 1, Presentation.Bodies, .1);
+        var slowFastest = Synthetic("synthetic-speed3", "fastest-traveller", 3, Presentation.Bodies, 8);
+        Check(Verdict(new Report.Inputs { Aged = a, Windows = { okDeclared, slowFastest } }, "M1") == "fail", "a slow fastest-traveller speed-3 window fails M1");
+        var accounting = new Report.Inputs { Aged = a, Windows = { okDeclared } };
+        var slowAccounting = Synthetic("synthetic-lunch", "declared", 1, Presentation.Bodies, .1);
+        for (int i = 0; i < 100; i++) slowAccounting.ModWorkMs[i] = 8;
+        for (int i = 0; i < 100; i++) accounting.Accounting.Add((slowAccounting, i));
+        Check(Verdict(accounting, "M1") == "fail", "slow W-accounting frames fail M1");
+        Check(Verdict(new Report.Inputs { Aged = a, Windows = { okDeclared } }, "M1") == "pass", "a fast declared window alone passes M1");
+        var hiddenOnly = new Report.Inputs { Aged = a, Windows = { Synthetic("synthetic-speed6", "fastest-traveller", 6, Presentation.Hidden, .1) } };
+        Check(new[] { "M1", "M3", "M4", "S3", "S4", "S5" }.All(row => Verdict(hiddenOnly, row) == Report.NotEstablished),
+            "with no speed 1-3 window, M1, M3, M4, S3, S4 and S5 are not established");
+
         Console.Error.WriteLine(failures == 0 ? "self-test passed" : failures + " self-test checks failed");
         return failures == 0 ? 0 : 1;
     }

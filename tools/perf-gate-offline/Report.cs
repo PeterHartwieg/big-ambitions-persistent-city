@@ -89,6 +89,7 @@ internal static class Report
             ["window"] = w.Spec.Id, ["frame"] = s.Frame, ["gameMinute"] = R(s.Minute, 3), ["clock"] = Fixture.Clock(Math.Floor(s.Minute)),
             ["modWorkMs"] = R(s.Ms), ["coreMs"] = R(s.CoreMs), ["driverMs"] = R(s.DriverMs), ["component"] = s.Component,
             ["gcGeneration"] = s.Gc < 0 ? "none" : s.Gc.ToString(CultureInfo.InvariantCulture),
+            ["gcCollections"] = new JObject { ["gen0"] = s.Gc0, ["gen1"] = s.Gc1, ["gen2"] = s.Gc2 },
         })));
         report["stalls"] = new JObject { ["rows"] = new JArray(), ["status"] = NotEstablished, ["reason"] = "No presented or whole-frame intervals offline (Decision 7 needs the rig trace)." };
         report["toolCost"] = new JObject
@@ -262,47 +263,60 @@ internal static class Report
         };
     }
 
+    /// <summary>Verdict rows over every applicable window. M rows: every window at native speeds 1-3 with bodies (declared
+    /// windows, G9's speed 1-3 hours and day) and the pooled W-accounting frames; speed 6 and the skip are recorded per
+    /// window only, as G9 asks M rows in the speed 1-3 segments. A row with no applicable window is not established.</summary>
     private static JArray VerdictRows(Inputs inputs)
     {
-        var declared = inputs.Windows.Where(w => w.Spec.Arm == "declared").ToList();
         var paced = inputs.Windows.Where(w => Normal(w.Spec) && w.Spec.NativeSpeed <= 3).ToList();
         var fastest = inputs.Windows.Where(w => w.Spec.Arm.StartsWith("fastest", StringComparison.Ordinal)).ToList();
         JObject Row(string row, string verdict, string reason, object? worst = null) => new JObject
         { ["row"] = row, ["verdict"] = verdict, ["reason"] = reason, ["worst"] = worst == null ? null : JToken.FromObject(worst), ["scope"] = "offline expectation" };
-        double Worst(IEnumerable<WindowResult> ws, Func<double[], double> f) => ws.Select(w => f(w.ModWorkMs.OrderBy(v => v).ToArray())).DefaultIfEmpty(0).Max();
-        double m1 = Worst(declared, s => Percentile(s, .95)), m3 = Worst(declared, s => Percentile(s, .99)), m4 = Worst(declared, s => s.Average());
-        int flags = inputs.Windows.Sum(w => w.Spikes.Count);
-        long misses = inputs.Windows.Sum(w => w.HistoricalClockMisses);
-        double lag = inputs.Windows.Max(w => w.MaxLag);
-        double heldShare = paced.Select(w => w.HeldFrames / (double)Math.Max(1, w.Frames)).DefaultIfEmpty(0).Max();
-        double longestHold = paced.Select(w => w.LongestHoldSeconds).DefaultIfEmpty(0).Max();
-        double recovery = paced.Select(w => w.LongestRecoverySeconds).DefaultIfEmpty(0).Max();
-        var paceWindows = fastest.Where(w => w.Spec.Presentation != Presentation.TimeMachine).ToList();
-        double hourRatio = paceWindows.SelectMany(w => w.Hours.Where(h => h.GameMinutes >= 30).Select(h => HourRatio(h, w.Spec))).DefaultIfEmpty(0).Max();
-        var day = fastest.FirstOrDefault(w => w.Spec.To - w.Spec.From >= 1440);
-        double dayRatio = day == null ? double.NaN : day.Frames / (double)day.Spec.Fps / ((day.Spec.To - day.Spec.From) / day.Spec.GameMinutesPerRealSecond);
         string Pass(bool ok) => ok ? "pass" : "fail";
+        const string None = "no applicable window in this run";
+        var mSets = paced.Select(w => (Id: w.Spec.Id, Sorted: w.ModWorkMs.OrderBy(v => v).ToArray())).ToList();
+        if (inputs.Accounting.Count > 0)
+            mSets.Add(("W-accounting (pooled)", inputs.Accounting.Select(f => f.From.ModWorkMs[f.Index]).OrderBy(v => v).ToArray()));
+        mSets = mSets.Where(m => m.Sorted.Length > 0).ToList();
+        JObject MRow(string row, Func<double[], double> measure, Func<double, bool> ok, string what)
+        {
+            if (mSets.Count == 0) return Row(row, NotEstablished, None);
+            var worst = mSets.Select(m => (m.Id, Value: measure(m.Sorted))).OrderByDescending(m => m.Value).First();
+            return Row(row, Pass(mSets.All(m => ok(measure(m.Sorted)))), what + " in every window at speeds 1-3 with bodies and in W-accounting",
+                new { window = worst.Id, ms = R(worst.Value) });
+        }
+        int flags = inputs.Windows.Sum(w => w.Spikes.Count);
+        const string pacedReason = "speeds 1-3 with bodies";
+        var paceWindows = fastest.Where(w => w.Spec.Presentation != Presentation.TimeMachine).ToList();
+        var hourRatios = paceWindows.SelectMany(w => w.Hours.Where(h => h.GameMinutes >= 30).Select(h => HourRatio(h, w.Spec))).ToList();
+        var day = fastest.FirstOrDefault(w => w.Spec.To - w.Spec.From >= 1440);
         return new JArray
         {
-            Row("M1", Pass(m1 < 5), "declared windows, offline mod-work proxy p95 < 5 ms", R(m1)),
-            Row("M2", "pass", flags + " frames >= 30 ms flagged (a flag, not a fail by itself); listed under spikes", flags),
-            Row("M3", Pass(m3 <= 10), "declared windows, offline proxy p99 <= 10 ms", R(m3)),
-            Row("M4", Pass(m4 <= 1.5), "declared windows, offline proxy mean <= 1.5 ms", R(m4)),
+            MRow("M1", s => Percentile(s, .95), v => v < 5, "offline mod-work proxy p95 < 5 ms"),
+            inputs.Windows.Count == 0 ? Row("M2", NotEstablished, None)
+                : Row("M2", "pass", flags + " frames >= 30 ms flagged (a flag, not a fail by itself); listed under spikes", flags),
+            MRow("M3", s => Percentile(s, .99), v => v <= 10, "offline proxy p99 <= 10 ms"),
+            MRow("M4", s => s.Average(), v => v <= 1.5, "offline proxy mean <= 1.5 ms"),
             Row("P1", NotEstablished, NoPresent), Row("P2", NotEstablished, NoPresent), Row("P3", NotEstablished, NoPresent),
             Row("P4", NotEstablished, "no matched dependency-only reference offline"),
-            Row("S1", Pass(misses == 0), "historicalClockMisses over every window and arm", misses),
-            Row("S2", Pass(lag <= AccountingClock.MaximumLagMinutes), "largest lag sample in game minutes", R(lag, 6)),
-            Row("S3", Pass(heldShare <= .01 && longestHold <= 3), "speeds 1-3 with bodies: held share <= 1 % and longest hold <= 3 s",
-                new { heldShare = R(heldShare, 5), longestHoldSeconds = R(longestHold, 3) }),
-            Row("S4", Pass(recovery <= 5), "longest recovery to lag <= 0.1 after a hold, real seconds", R(recovery, 3)),
-            day == null ? Row("S5", NotEstablished, "no fastest-traveller day window in this run")
-                : Row("S5", Pass(hourRatio <= 2 && dayRatio <= 1.25), "fastest traveller: per game hour <= 2.0x, per day <= 1.25x the unheld clock",
-                    new { maxHourRatio = R(hourRatio, 4), dayRatio = R(dayRatio, 4) }),
+            inputs.Windows.Count == 0 ? Row("S1", NotEstablished, None)
+                : Row("S1", Pass(inputs.Windows.All(w => w.HistoricalClockMisses == 0)), "historicalClockMisses over every window and arm", inputs.Windows.Sum(w => w.HistoricalClockMisses)),
+            inputs.Windows.Count == 0 ? Row("S2", NotEstablished, None)
+                : Row("S2", Pass(inputs.Windows.All(w => w.MaxLag <= AccountingClock.MaximumLagMinutes)), "largest lag sample in game minutes", R(inputs.Windows.Max(w => w.MaxLag), 6)),
+            paced.Count == 0 ? Row("S3", NotEstablished, None + " (" + pacedReason + ")")
+                : Row("S3", Pass(paced.All(w => w.HeldFrames <= .01 * w.Frames && w.LongestHoldSeconds <= 3)), pacedReason + ": held share <= 1 % and longest hold <= 3 s",
+                    new { heldShare = R(paced.Max(w => w.HeldFrames / (double)Math.Max(1, w.Frames)), 5), longestHoldSeconds = R(paced.Max(w => w.LongestHoldSeconds), 3) }),
+            paced.Count == 0 ? Row("S4", NotEstablished, None + " (" + pacedReason + ")")
+                : Row("S4", Pass(paced.All(w => w.LongestRecoverySeconds <= 5)), "longest recovery to lag <= 0.1 after a hold, real seconds", R(paced.Max(w => w.LongestRecoverySeconds), 3)),
+            day == null || hourRatios.Count == 0 ? Row("S5", NotEstablished, "no fastest-traveller day window in this run")
+                : Row("S5", Pass(hourRatios.All(r => r <= 2) && DayRatio(day) <= 1.25), "fastest traveller: per game hour <= 2.0x, per day <= 1.25x the unheld clock",
+                    new { maxHourRatio = R(hourRatios.Max(), 4), dayRatio = R(DayRatio(day), 4) }),
             Row("L1", NotEstablished, "cold start is native"), Row("L2", NotEstablished, "reload activation is measured on the rig (F7a diagnostics)"),
             Row("L3", NotEstablished, "post-load hold is native"), Row("L4", NotEstablished, "needs the dependency-only skip reference"),
             Row("R1", NotEstablished, "soak is a rig run (G14)"),
         };
     }
+    private static double DayRatio(WindowResult day) => day.Frames / (double)day.Spec.Fps / ((day.Spec.To - day.Spec.From) / day.Spec.GameMinutesPerRealSecond);
 
     /// <summary>Checks a report against the plan's documented fields. Returns every problem; empty means valid.</summary>
     public static List<string> Validate(JObject report)

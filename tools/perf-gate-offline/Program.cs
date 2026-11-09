@@ -30,6 +30,7 @@ static class Program
         var shape = Fixture.Shape();
         var aged = Fixture.Aged(shape, seed);
         var specs = Matrix().Where(w => only == null || w.Id.StartsWith(only, StringComparison.Ordinal)).ToList();
+        if (specs.Count == 0) { Console.Error.WriteLine("no window matches --only " + only); return 2; }
         var checkpoints = Fixture.Checkpoints(aged, shape.Catalogue, specs.Select(w => w.From));
         double fixtureSeconds = total.Elapsed.TotalSeconds;
         Console.Error.WriteLine($"fixture and {checkpoints.Count} checkpoints in {fixtureSeconds:F1} s");
