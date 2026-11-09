@@ -15,7 +15,7 @@ A rig-only diagnostic DLL that measures the complete Persistent City mod-work un
 | `check_scopes.py` | Fails when Runtime source and `ScopeInventory.cs` differ in either direction. |
 | `build_probe.py` | Builds `PerfUnionProbe.dll` with pinned references and writes `build-manifest.json`. |
 | `test_check_scopes.py` | Python tests for the three tools above. |
-| `logic-check/` | Console project compiling `ProbeLogic.cs` and `ScopeInventory.cs`: rule checks and the stub-loop overhead. |
+| `logic-check/` | Console project compiling `ProbeLogic.cs`, `ScopeInventory.cs` and `HarmonyScan.cs` against the pinned `0Harmony.dll` that `tools/build.py` places (SHA-256 checked at run time): rule, coverage-lifecycle and capacity checks, the Harmony adapter check on real `Patches` objects, the stub-loop overhead and the rescan cost. Run `tools/build.py` first. |
 
 ## Build and checks
 

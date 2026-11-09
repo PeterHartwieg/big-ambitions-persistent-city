@@ -335,6 +335,19 @@ def substitute(text, names, values):
     return text
 
 
+def is_bind_call(rhs, parameter):
+    """True only when rhs is exactly one Bind(<parameter>, ...) call: balanced, with nothing before or after it (Sol-r3-1)."""
+    rhs = rhs.strip()
+    m = re.match(r'Bind\s*\(', rhs)
+    if not m:
+        return False
+    close = match_close(rhs, m.end() - 1)
+    if close < 0 or rhs[close:].strip():
+        return False
+    args = split_args(rhs[m.end():close - 1])
+    return len(args) >= 1 and args[0] == parameter
+
+
 def contract_table(files):
     """FoodContractHookTable rows: id -> 'Type.Method', the targets of the dynamic HookN postfixes."""
     table = {}
@@ -471,8 +484,7 @@ def scan(root):
                             # one Patch call in the host, whose target is a local assigned once from Bind(<host parameter>, ...).
                             host_params = [p.split()[-1] for p in split_args(host[4], generics=True)]
                             binding = assignments(f, raw_first.strip(), m.start()) if re.fullmatch(r'\w+', raw_first.strip()) else []
-                            bound = (len(binding) == 1 and len(host_params) == 1
-                                     and re.fullmatch(r'Bind\s*\(\s*' + re.escape(host_params[0]) + r'\s*,[^;]*\)', binding[0][1]))
+                            bound = len(binding) == 1 and len(host_params) == 1 and is_bind_call(binding[0][1], host_params[0])
                             if not bound or len(re.findall(r'\bPatch\s*\(', f.code[host[2]:host[3]])) != 1:
                                 problems.append(f'{f.rel}:{line}: dynamic Patch call does not register exactly the table binding (target {raw_first.strip()[:60]!r})')
                                 continue
@@ -553,9 +565,17 @@ def scan(root):
                 continue
             typ, method_name = resolved.split('.')
             statement = max(f.code.rfind(';', start, m.start()), f.code.rfind('{', start, m.start())) + 1
-            holder = re.search(r'(\w+)\s*=\s*$', f.code[statement:m.start()])
+            holder = re.search(r'(\bvar\s+)?(\w+)\s*=\s*$', f.code[statement:m.start()])
             if holder:
-                references.add(holder.group(1))
+                # A reference is trusted only as a local declared here and never written again in the transpiler (Sol-r3-2):
+                # a later assignment, ref or out could swap the emitted helper for one outside the inventory.
+                local = holder.group(2)
+                writes = len(re.findall(r'(?<![\w.])' + re.escape(local) + r'\s*(?:=(?![=>])|\+\+|--)|\b(?:ref|out)\s+' + re.escape(local) + r'\b',
+                                        f.code[start:end]))
+                if not holder.group(1) or writes != 1:
+                    problems.append(f'{f.rel}:{line}: method reference {local!r} in transpiler {cls}.{name} is not a local assigned exactly once')
+                else:
+                    references.add(local)
             if typ in pc_classes:
                 found['helpers'].append((name, typ, method_name, f.rel))
         # Every operand the transpiler writes must be one of those locals; any other value is an unreviewed emitted call.

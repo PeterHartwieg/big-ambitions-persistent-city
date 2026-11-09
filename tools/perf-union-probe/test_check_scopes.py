@@ -168,6 +168,24 @@ class CheckScopesTests(unittest.TestCase):
                 problems = src.problems()
                 self.assertTrue(any('does not register exactly the table binding' in p for p in problems), problems)
 
+    def test_fails_on_a_conditional_dynamic_target(self):
+        # Sol-r3-1: the initializer must be exactly one Bind(hook, ...) call, with nothing after it.
+        with SourceCopy() as src:
+            src.edit('Runtime/LoadedCatalogueLifecycleMembers.cs', 'var method = Bind(hook, out var failure);',
+                     'var method = Bind(hook, out var failure) == null ? null : AccessTools.Method(typeof(GameManager), "RunMainGameTick");')
+            problems = src.problems()
+        self.assertTrue(any('does not register exactly the table binding' in p for p in problems), problems)
+
+    def test_fails_on_a_reassigned_transpiler_reference(self):
+        # Sol-r3-2: a recognised reference local reassigned after its lookup could emit an unlisted helper.
+        cases = ['replacement = ResolveOther();', 'Swap(ref replacement);', 'Resolve(out replacement);']
+        for snippet in cases:
+            with self.subTest(snippet=snippet), SourceCopy() as src:
+                src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
+                         'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n            ' + snippet)
+                problems = src.problems()
+                self.assertTrue(any("method reference 'replacement'" in p and 'assigned exactly once' in p for p in problems), problems)
+
     def test_fails_on_a_second_registration_inside_a_helper(self):
         # Sol-r2-2: a helper whose body registers twice would be recorded once per call site.
         with SourceCopy() as src:
