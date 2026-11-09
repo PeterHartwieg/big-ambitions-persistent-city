@@ -170,7 +170,7 @@ public sealed class VendorBodyTests
         Assert.Equal(Math.Min(8, cap), f.Pool.Active.Count);
         Assert.DoesNotContain("body00", f.Pool.Active.Keys);
         Assert.Equal(f.Pool.Active.Count, f.Pool.Active.Values.Select(b => b.Target).Distinct().Count());
-        Assert.False(ActiveJourneyIndex.VisitorsReceiveBodies);
+        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies); // F5i
     }
 
     [Fact]

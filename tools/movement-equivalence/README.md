@@ -11,3 +11,5 @@ It runs the self-checks (exit code 1 if one fails), then each selected arm and i
 `baseline.json` is the 957-resident, two-day output recorded in [docs/checks/f2a.md](../../docs/checks/f2a.md). The unit tests in `tests/MovementEquivalenceTests.cs` link these sources (all but `Program.cs`).
 
 F2e adds the E2 rows to the self-check section (`HoldReplay.Check`): a player-contact run (`MovementOptions.PlayerContact`) with replay checkpoints (`MovementOptions.Checkpoints`), bodies-off replays of its parsed Player.log hold stream from each checkpoint, and the segment refusals. See [docs/checks/f2e.md](../../docs/checks/f2e.md).
+
+F5i adds the `visitors` family: the same city plus K−1 walking visitors per resident from three portals near the shop (`MovementOptions.Visitors`, `RepresentationFactor`), with bodies-off references `visitors/plain-60`, `plain-30` and `plain-hidden-travel`. Visitors receive bodies through the active-journey index, and each visitor arm must equal its bodies-off run on every projection, including the `visitors` projection (visitor journeys, sales and wallets). See [docs/checks/f5i.md](../../docs/checks/f5i.md).

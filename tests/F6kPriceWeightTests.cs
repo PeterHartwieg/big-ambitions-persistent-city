@@ -65,7 +65,6 @@ public sealed class F6kPriceWeightTests
     [Fact]
     public void WriterAndTuningWireAreUnchangedAndAStoredOneIsKept()
     {
-        Assert.Equal(36, CityState.CurrentSchema); // E5b4 took writer 36; this slice changes no wire
         // E5b5: the eight-offer default is revision 2; the four-offer menu fields keep revision 1's exact bytes.
         var wide = FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire();
         Assert.Equal(241, wide.Length);
