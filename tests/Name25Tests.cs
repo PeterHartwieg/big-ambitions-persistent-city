@@ -12,7 +12,7 @@ namespace PersistentCity.Tests;
 public sealed partial class FoodCommerceTests
 {
     static JObject E5d_Offer(JObject root) => (JObject)root["Food"]!["Residents"]!
-        .Select(m => m[DevelopmentChain.DecisionSlot(root)]).First(d => d?.Type == JTokenType.Object)!["Shops"]![0]!["Offers"]![0]!;
+        .Select(m => m[8]).First(d => d?.Type == JTokenType.Object)!["Shops"]![0]!["Offers"]![0]!;
     static void E5d_Refused(string source, CityState replacement)
     {
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(source).Status);
@@ -118,49 +118,26 @@ public sealed partial class FoodCommerceTests
         var decision = city.State.Food!.Residents.Single(m => m.Decision != null).Decision!;
         var offer = decision.Shops[0].Offers[0]; offer.ProductId = "foodtrucks:itemname_choppedcheese";
         decision.ProductId = offer.ProductId;
-        offer.Metadata = new FoodOfferMetadata(2, FoodMealClass.Unknown, 2, 900, 100, 450);
+        offer.Metadata = new FoodOfferMetadata(2, FoodMealClass.Food, 2, 900, 100, 450);
         city.State.MenuPolicy = FoodNameIdentity.DynamicWire;
         string wire = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(wire, DevelopmentChain.Write(read.State!));
         Assert.All(typeof(FoodOfferMetadata).GetProperties(), p => Assert.Null(p.SetMethod));
         Assert.Equal(900, read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!.Shops[0].Offers[0].Metadata!.BreakfastFitCents);
-        Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(wire));
-        Assert.Throws<SaveValidationException>(() => DevelopmentChain.ValidateForActivation(read.State));
-        Assert.Throws<InvalidOperationException>(() => new CitySimulator(read.State, new Walking()));
-        var data = new Dictionary<string, string> { [SaveCodec.StateKey] = wire };
-        Assert.Equal(DevelopmentChain.ProductStatus(wire, SaveReadStatus.Invalid), SaveStore.ReadFrom(data, city.State.PopulationKey).Status);
-        Assert.False(SaveStore.WriteTo(data, S17_Full().city.State).Success);
-        Assert.False(SaveSession.Open(data, city.State.PopulationKey).WriteTo(data, S17_Full().city.State).Success);
-        Assert.Same(wire, data[SaveCodec.StateKey]);
-        var empty = new Dictionary<string, string>();
-        Assert.False(SaveStore.WriteTo(empty, read.State).Success);
-        Assert.False(SaveSession.Open(empty, city.State.PopulationKey).WriteTo(empty, read.State).Success);
-        Assert.Empty(empty);
+        // E5b4: the writer executes DynamicWire, so the held revision-2 tuple loads and activates.
+        SaveCodec.RequireExecutableCapabilities(wire);
+        DevelopmentChain.ValidateForActivation(read.State);
+        _ = new CitySimulator(read.State, new Walking());
         read.State.MenuPolicy = FoodNameIdentity.Wire;
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(read.State));
     }
 
+    // The raw-JSON whitespace budgets of the frozen JSON writers are gone: the compact wire carries no whitespace.
     [Fact]
-    public void E5d_EscapedNamesAreLosslessAndBothTableAndMetadataByteBudgetsArePrechecked()
+    public void E5d_DuplicateAndNoncanonicalImagesAreRefused()
     {
         var (city, _) = S17_Full(); string source = DevelopmentChain.Write(city.State);
-        string paddedTable = source.Replace("\"ProductNames\":[", "\"ProductNames\":[" + new string(' ', FoodNameIdentity.MaximumTableWire));
-        E5d_Refused(paddedTable, city.State);
-        Assert.Contains("character/UTF-8 budget", DevelopmentChain.Read(paddedTable).Error);
-        var unicodeRoot = SaveWire.Parse(source);
-        unicodeRoot["ProductNames"] = new JArray(Enumerable.Range(0, 256).Select(i => new string('\ue001', 253) + i.ToString("D3")));
-        string unicodeTable = unicodeRoot.ToString(Formatting.None).Replace("\"ProductNames\":[", "\"ProductNames\":[" + new string(' ', 330000));
-        Assert.True(unicodeTable.Length < FoodNameIdentity.MaximumTableWire);
-        E5d_Refused(unicodeTable, city.State);
-        Assert.Contains("character/UTF-8 budget", DevelopmentChain.Read(unicodeTable).Error);
-        var root = SaveWire.Parse(source);
-        var offer = E5d_Offer(root); offer["Metadata"] = new JArray(2,1,2,900,100,450);
-        string tuple = offer["Metadata"]!.ToString(Formatting.None);
-        string paddedTuple = root.ToString(Formatting.None).Replace("\"Metadata\":" + tuple,
-            "\"Metadata\":[" + new string(' ', FoodNameIdentity.MaximumHeldWire) + tuple.Substring(1));
-        E5d_Refused(paddedTuple, city.State);
-        Assert.Contains("metadata character/UTF-8", DevelopmentChain.Read(paddedTuple).Error);
         string duplicate = source.Replace("\"ProductNames\":", "\"ProductNames\":[],\"ProductNames\":");
         E5d_Refused(duplicate, city.State);
         string duplicateMetadata = source.Replace("\"Metadata\":", "\"Metadata\":[1,1,2,0,0,0],\"Metadata\":");
@@ -177,7 +154,7 @@ public sealed partial class FoodCommerceTests
         var first = decision.Shops[0];
         first.Offers.Clear();
         for (int i = 0; i < 8; i++) first.Offers.Add(new FoodDecisionOffer { ProductId = "product:" + i,
-            Price = Money.FromCents(100), Units = 1, Metadata = new FoodOfferMetadata(2, FoodMealClass.Unknown, 2, 900, 100, 450) });
+            Price = Money.FromCents(100), Units = 1, Metadata = new FoodOfferMetadata(2, FoodMealClass.Food, 2, 900, 100, 450) });
         decision.ProductId = first.Offers[0].ProductId;
         for (int i = 1; i < 8; i++) decision.Shops.Add(new FoodDecisionShop { BusinessId = "held:" + i,
             PlaceId = first.PlaceId, MealsPerHour = first.MealsPerHour, NextServiceAt = first.NextServiceAt,
@@ -197,35 +174,5 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("Oversized held metadata image", DevelopmentChain.Read(bad).Error);
         E5d_Refused(bad, city.State);
         Assert.DoesNotContain("product:", string.Join(",", FoodProducts.Ids)); // no live definition was registered
-    }
-
-    [Theory]
-    [InlineData("ProductNames", false)] [InlineData("ProductNames", true)]
-    [InlineData("Metadata", false)] [InlineData("Metadata", true)]
-    public void E5d_RawImageBudgetsIncludeEscapedFieldNamesAndWhitespaceBeforeTheValue(string field, bool escaped)
-    {
-        var (city, _) = S17_Full(); string source = DevelopmentChain.Write(city.State);
-        string key = "\"" + field + "\":";
-        int cap = field == "ProductNames" ? FoodNameIdentity.MaximumTableWire : FoodNameIdentity.MaximumHeldWire;
-        var root = SaveWire.Parse(source);
-        int used = field == "ProductNames" ? root[field]!.ToString(Formatting.None).Length + 16
-            : 2 + root["Food"]!["Residents"]!.Select(m => m[8]).OfType<JObject>()
-                .SelectMany(d => d["Shops"]!).SelectMany(s => s["Offers"]!)
-                .Sum(o => o["Metadata"]!.ToString(Formatting.None).Length + 12);
-        if (escaped)
-        {
-            string raw = "\"" + string.Concat(field.Select(c => "\\u" + ((int)c).ToString("x4"))) + "\":";
-            // Only one field changes spelling; the decoded DTO key remains identical.
-            int first = source.IndexOf(key, StringComparison.Ordinal);
-            source = source.Remove(first, key.Length).Insert(first, raw);
-            used += raw.Length - key.Length; key = raw;
-        }
-        int at = source.IndexOf(key, StringComparison.Ordinal) + key.Length;
-        string exact = source.Insert(at, new string(' ', cap - used));
-        var read = DevelopmentChain.Read(exact); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(DevelopmentChain.Write(city.State), DevelopmentChain.Write(read.State!));
-        string bad = exact.Insert(at, " ");
-        E5d_Refused(bad, city.State);
-        Assert.Contains("character/UTF-8", DevelopmentChain.Read(bad).Error);
     }
 }

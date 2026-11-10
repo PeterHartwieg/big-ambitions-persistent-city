@@ -27,8 +27,8 @@ public sealed class SaveWireTests
         string respelled = root.ToString(Formatting.None).Replace("\"Capabilities\":", "\"Capabilit\\u0069es\":");
         Assert.Same(respelled, SaveWire.Payload(respelled));
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(respelled).Status);
-        // Older-schema JSON passes through unchanged.
-        string older = DevelopmentChain.Write33(state);
+        // JSON with another schema number passes through unchanged.
+        string older = SaveWire.Text(state).Replace("{\"Schema\":" + CityState.CurrentSchema + ",", "{\"Schema\":36,");
         Assert.Same(older, SaveWire.Payload(older));
     }
 }

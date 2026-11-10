@@ -85,7 +85,7 @@ static partial class Program
             Check(remaining == 0, "History-row/scope growth was not charged to existing-state allowance.");
         }
         string before = NameBaselineCodec.Write(state);
-        var beforeCounts = NameBaselineCodec.CountRecordsForSchema(state, before, 24);
+        var beforeCounts = NameBaselineCodec.CountRecords(state, before);
         object baseline = Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
             () => NameBaselineCodec.ValidateForActivation(state), () => NameBaselineCodec.RequireExecutableCapabilities(before));
         long baselineRetained = Retained25(() => NameBaselineCodec.Read(before));
@@ -108,7 +108,7 @@ static partial class Program
         string after = SaveCodec.Write(state);
         var afterCounts = SaveCodec.CountRecords(state, after);
         Check(state.ProductNames.Count == 256, "Expected complete 256-name table.");
-        Check(NameBaselineCodec.Read(after).Status == SaveReadStatus.Future, "Old executable accepted 25.");
+        Check(NameBaselineCodec.Read(after).Status == SaveReadStatus.DevelopmentSchema, "Old executable accepted 25.");
         var candidate = Measure25(samples, () => SaveCodec.Write(state), () => SaveCodec.Read(after),
             () => SaveCodec.ValidateForActivation(state), () => SaveCodec.RequireExecutableCapabilities(after));
         long candidateRetained = Retained25(() => SaveCodec.Read(after));

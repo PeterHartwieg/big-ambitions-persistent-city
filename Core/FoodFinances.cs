@@ -32,7 +32,7 @@ namespace PersistentCity.Core
                 var e = new Entry { Meal = meal, Person = food.Owner(meal)! };
                 meal.Budget!.VisitorEndowment = food.city.VisitorEndowments && e.Person.IsVisitor;
                 items.Add(e);
-                if (food.city.State.Schema >= CityState.AttendanceSchema) byPerson.Add(meal.ResidentId, e);
+                byPerson.Add(meal.ResidentId, e);
             }
             internal void RestoreVisitorWalletModes()
             {
@@ -52,7 +52,7 @@ namespace PersistentCity.Core
             private void Schedule(Entry e)
             {
                 e.Workplace = e.Person.DayPlaceId; e.WageAt = double.PositiveInfinity;
-                if (food.city.State.Schema < CityState.AttendanceSchema || !EmploymentWages.Eligible(e.Person)) return;
+                if (!EmploymentWages.Eligible(e.Person)) return;
                 double now = food.city.State.Minute;
                 e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window);
                 if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
@@ -89,9 +89,7 @@ namespace PersistentCity.Core
                     else EmploymentWages.Settle(e.Person, budget, e.Window, e.WageAt);
                     Schedule(e);
                 }
-                else if (food.city.State.Schema >= CityState.AttendanceSchema)
-                    HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments);
-                else HouseholdFinance.PostDevelopmentDay(budget, food.city.State.Minute, e.Person);
+                else HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments);
                 e.Minute = Math.Min(budget.NextPostingMinute, e.WageAt);
                 Repair(0);
             }

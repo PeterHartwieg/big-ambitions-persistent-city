@@ -1,0 +1,14 @@
+{
+  "format": "perf-gate-script/v1",
+  "name": "S-stationary",
+  "plan": "Decision 3: the player stands at a kerb point by an owned shop, off walking lines (F2 plan check 1 placement)",
+  "builds": ["candidate", "reference"],
+  "setup": [
+    {"op": "ft.teleport", "args": {"anchor": "owned-shop-1.kerb"}},
+    {"op": "view.camera", "args": {"mode": "follow-player", "look_at": "owned-shop-1.door"}}
+  ],
+  "loop": [
+    {"op": "wait.real", "args": {"seconds": 10, "note": "player stands still; no input"}}
+  ],
+  "samplers": []
+}

@@ -9,13 +9,13 @@ using PersistentCity.Core;
 namespace PersistentCity.Persistence
 {
     /// <summary>
-    /// F7d compact wire (writer 34): candidate C of the F7d compact-format decision, columnar compact JSON with a per-save
+    /// F7d compact wire: candidate C of the F7d compact-format decision, columnar compact JSON with a per-save
     /// shared route table and chained road-tag ranges. The save string is one JSON object
-    /// <c>{"Schema":34,"f":"pcc-c","v":1,"k":[keys],"h":[shapes],"s":[strings],"n":routes,"r":routeColumn,"t":rootColumn}</c>.
+    /// <c>{"Schema":1,"f":"pcc-c","v":1,"k":[keys],"h":[shapes],"s":[strings],"n":routes,"r":routeColumn,"t":rootColumn}</c>.
     /// The leading Schema field is the only addition to the prototype grammar: every reader scans the top-level Schema
-    /// first, so an older build reports this payload as Future and preserves it.
+    /// first, so a payload with another schema number is refused and preserved.
     ///
-    /// The encoded tree is the writer-33 body shape of the same snapshot, with Schema 34: the compact writer changes the
+    /// The encoded tree is the JSON body shape of the same snapshot: the compact writer changes the
     /// encoding, not the entity semantics. The reader decodes the columns strictly, writes the body back out and then runs
     /// the full strict body reader (shape, caps, semantic validation), so a compact city is accepted exactly when its body
     /// would be. Strings decoded through the string table are one instance each, and the materialized city interns every
@@ -39,9 +39,11 @@ namespace PersistentCity.Persistence
     public static partial class SaveCodec
     {
         public const string CompactFormat = "pcc-c";
+        /// <summary>Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature
+        /// schema constants; change the format in place.</summary>
         public const int CompactFormatVersion = 1;
-        /// <summary>Open containers in the compact string; equal to the body reader's JSON depth, so an older reader can
-        /// still scan the top-level Schema and report Future.</summary>
+        /// <summary>Open containers in the compact string; equal to the body reader's JSON depth, so any reader can
+        /// still scan the top-level Schema.</summary>
         public const int MaxCompactNesting = 48;
         /// <summary>Decoded column slots (one per value a column holds, nullable and mixed columns charged again for
         /// their inner column). The writer refuses above it and the reader refuses before allocating past it.</summary>
@@ -79,7 +81,7 @@ namespace PersistentCity.Persistence
                     {
                         var item = ItemType(property.PropertyType);
                         if (item == null) continue;
-                        int limit = SpecializedCollectionLimit(type, property.Name) ?? CollectionLimit(item, CityState.CurrentSchema);
+                        int limit = SpecializedCollectionLimit(type, property.Name) ?? CollectionLimit(item);
                         limits[property.Name] = limits.TryGetValue(property.Name, out int known) ? Math.Max(known, limit) : limit;
                     }
             }
@@ -122,14 +124,14 @@ namespace PersistentCity.Persistence
             CompactTree.Measure(tree, out long characters, out long bytes);
             Require(characters <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
-            return EncodeCompact(tree, (int)characters, records, null, snapshot.Schema);
+            return EncodeCompact(tree, (int)characters, records, null);
         }
 
-        private static string EncodeCompact(object? tree, int bodyCharacters, int records, CompactStats? stats, int schema = CityState.CurrentSchema)
+        private static string EncodeCompact(object? tree, int bodyCharacters, int records, CompactStats? stats)
         {
             Require(tree is CompactObject, "Compact root is not an object.");
             stats ??= new CompactStats();
-            string payload = new CompactEncoder(stats, schema: schema).Run(tree, bodyCharacters / 3 + 64);
+            string payload = new CompactEncoder(stats).Run(tree, bodyCharacters / 3 + 64);
             Require(stats.Values <= CompactValueBudget(payload.Length), "Compact state exceeds its decoded value bound.");
             Require((long)records + stats.TableEntries <= MaxEmbeddedRecords, "Too many embedded records with the compact tables charged.");
             Require(payload.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
@@ -145,10 +147,10 @@ namespace PersistentCity.Persistence
             Require(Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
             var decoded = new CompactDecoder(source.Length).Run(source);
             string body = CompactTree.Write(decoded.Root, (int)Math.Min(MaxInputCharacters, 1024L + source.Length * 4L), MaxInputCharacters);
-            return ReadExact(body, CityState.CurrentSchema, decoded.TableEntries, intern: true);
+            return ReadExact(body, decoded.TableEntries, intern: true);
         }
 
-        /// <summary>The body a compact payload carries (the writer-33 shape with Schema 34). Tests and diagnostics only;
+        /// <summary>The JSON body a compact payload carries. Tests and diagnostics only;
         /// never a save string.</summary>
         internal static string ExpandCompact(string payload)
         {
@@ -164,8 +166,8 @@ namespace PersistentCity.Persistence
 
         internal static int CompactTableEntries(string payload) => new CompactDecoder(payload.Length).Run(payload).TableEntries;
 
-        /// <summary>The exact start of every current-writer string (F2e: schema 35, the same compact wire); a match skips the
-        /// generic top-level schema scan. A writer-34 string does not match and is refused as an older development city.</summary>
+        /// <summary>The exact start of every current-writer string; a match skips the generic top-level schema scan. A string
+        /// with another schema number does not match and is refused as an older development city.</summary>
         internal static readonly string CompactPrefix = "{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",\"f\":";
 
         /// <summary>The early authority check for a compact payload: only the envelope, the tables and the root's first
@@ -206,7 +208,7 @@ namespace PersistentCity.Persistence
                     && int.TryParse(revision.Text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out revisionValue);
                 Require(valid, "Invalid population capabilities.");
                 ValidateCapabilities(new PopulationCapabilities { Active = (bool)capabilities!.Values[0]!, Code = (string)capabilities.Values[1]!, Revision = revisionValue });
-                Require(values[2] is string policy && policy == CityState.ExecutableMenuPolicy(CityState.CurrentSchema), "Unsupported menu product policy.");
+                Require(values[2] is string policy && policy == FoodNameIdentity.DynamicWire, "Unsupported menu product policy.");
                 return; // Full population startup still decodes every column and the whole body.
             }
         }
@@ -859,11 +861,8 @@ namespace PersistentCity.Persistence
             // decoded city is unchanged. The save path always shares.
             private readonly bool shareRoutes;
 
-            // F2e: the writer's schema in the envelope (35 for the current writer, 34 for the frozen F7d shape in tests).
-            private readonly int schema;
-
-            public CompactEncoder(CompactStats stats, bool shareRoutes = true, int schema = CityState.CurrentSchema)
-            { this.stats = stats; this.shareRoutes = shareRoutes; this.schema = schema; }
+            public CompactEncoder(CompactStats stats, bool shareRoutes = true)
+            { this.stats = stats; this.shareRoutes = shareRoutes; }
 
             public string Run(object? root, int capacity)
             {
@@ -887,7 +886,7 @@ namespace PersistentCity.Persistence
                 stats.CollectTicks += collected - started;
 
                 output = new StringBuilder(capacity);
-                output.Append("{\"Schema\":"); AppendInt(output, schema);
+                output.Append("{\"Schema\":"); AppendInt(output, CityState.CurrentSchema);
                 output.Append(",\"f\":"); CompactTree.WriteString(output, CompactFormat);
                 output.Append(",\"v\":"); AppendInt(output, CompactFormatVersion);
                 output.Append(",\"k\":[");
@@ -1292,12 +1291,7 @@ namespace PersistentCity.Persistence
             /// <summary>Schema, format, version and the key, shape and string tables (envelope slots 0 to 5).</summary>
             public void Header(object?[] header)
             {
-                // F2e: the compact wire is the same at 34 (F7d) and 35 (current); Read reaches this decoder only for the current
-                // writer's prefix, and the body reader then requires the current schema, so a writer-34 city is still refused.
-                // E5b4: 36 is the same compact wire again, so the frozen 34 and 35 shapes still decode for their tests.
-                Require(header[0] is CompactNumber schema && (schema.Text == CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture)
-                    || schema.Text == CityState.PlayerHoldSchema.ToString(CultureInfo.InvariantCulture)
-                    || schema.Text == CityState.CompactSchema.ToString(CultureInfo.InvariantCulture)), "Unsupported compact state schema.");
+                Require(header[0] is CompactNumber schema && schema.Text == CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture), "Unsupported compact state schema.");
                 Require(header[1] is string format && format == CompactFormat, "Unknown compact format.");
                 Require(Int(header[2]) == CompactFormatVersion, "Unsupported compact format version.");
                 var keyTable = Table(header[3]);

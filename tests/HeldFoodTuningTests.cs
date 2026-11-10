@@ -43,7 +43,8 @@ public sealed class HeldFoodTuningTests
         resident.Traits = new ResidentTraits { Bands = "4022222222" };
         state.Food = new FoodCommerceState { RepresentationFactor = representation, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "generation:1",
             ProductId = FoodProducts.Croissant, AdditionalProductIds = new() { FoodProducts.Burger } } } };
-        DevelopmentChain.RepresentedSchema(state, representation);
+        // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
+        if (representation > 1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var paths = new Paths(); var market = new Market(); var city = new CitySimulator(state, paths);
         var settings = new FoodChoiceSettings { FoodChoiceTasteWeight = 0 }; city.AttachFoodMarket(market, settings);
         state.Food.ChoiceStartsDay = 1;
@@ -109,27 +110,6 @@ public sealed class HeldFoodTuningTests
         var next = fresh.State.Food!.Residents.Single().Decision!;
         Assert.Equal(key, next.ContextKey); Assert.NotEqual(image, next.Tuning!.ToWire());
         Assert.Equal(1, fresh.State.Food.Residents.Single().Day);
-    }
-
-    [Fact]
-    public void ActualNextConsumerContextCapturesEditedValuesAtTheSameMinute()
-    {
-        var (original, paths, market, settings) = Ready(2);
-        var meals = original.State.Food!.Residents; Assert.Equal(2, meals.Count);
-        double at = meals.Max(m => m.DesiredAt);
-        foreach (var meal in meals) meal.DesiredAt = meal.DueAt = at;
-        // Rebuild the scheduler after synthetic fixture retiming.
-        var city = new CitySimulator(original.State, paths); city.AttachFoodMarket(market, settings);
-        var decisions = new List<FoodDecisionState>(); city.FoodDecisionObserved += trace => decisions.Add(trace.Decision!);
-        city.AdvanceFrameSlice(at, 1);
-        var held = meals.Single(m => m.Decision != null).Decision!;
-        string captured = held.Tuning!.ToWire(); settings.FoodChoiceTasteWeight = 3;
-        while (!city.AdvanceFrameSlice(at, 1).CaughtUp) { }
-        Assert.Equal(2, decisions.Count); Assert.Same(held, decisions[0]);
-        Assert.Equal(captured, decisions[0].Tuning!.ToWire());
-        Assert.Equal(FoodDecisionTuning.Capture(settings).ToWire(), decisions[1].Tuning!.ToWire());
-        Assert.NotEqual(captured, decisions[1].Tuning!.ToWire()); Assert.Equal(0, market.Orders);
-        Assert.Equal(4, paths.Calls); Assert.All(meals, m => Assert.Equal(1, m.Day));
     }
 
     [Fact]

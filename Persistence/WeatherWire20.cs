@@ -6,17 +6,6 @@ namespace PersistentCity.Persistence
 {
     public static partial class SaveCodec
     {
-        // Schema 18 first acquires C2a's schema-19 awareness activation. E1 then adds
-        // neutral weather and defers new decisions without touching held commitments.
-        private static void MigrateWeather19To20(CityState state)
-        {
-            Require(state.Schema == 19, "Weather migration requires exact schema 19.");
-            state.WeatherStartsDay=(int)(state.Minute/1440)+1;
-            state.Schema=20;
-        }
-        private static bool WeatherProperty(Type type,string? name) => type==typeof(CityState) && name=="WeatherStartsDay"
-            || type==typeof(CitizenState) && name=="W"
-            || type==typeof(FoodDecisionState) && (name=="Weather" || name=="WeatherTravelMultiplier");
         internal static void CheckMemory20(string wire)
         {
             Require(wire.Length>=10 && wire.Length<=50 && wire[wire.Length-2]=='|' && wire[wire.Length-1]>='0' && wire[wire.Length-1]<='2',"Invalid schema-20 consumer weather.");

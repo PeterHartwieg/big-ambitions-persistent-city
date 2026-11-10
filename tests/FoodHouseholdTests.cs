@@ -181,29 +181,10 @@ public sealed class FoodHouseholdTests
     }
 
     [Fact]
-    public void StrictV3MigrationKeepsOldBuyingPowerAndDoesNotAddOutsideOptions()
-    {
-        var s = Scenario(Capture(1), 500); foreach (var i in s.Intents) { i.OutsideOption = FoodOutsideOption.None; i.OutsideOptionScoreCents = null; }
-        var old = SaveWire.Parse(FoodShadowCodec.Write(s)); FoodQualityDemandTests.LegacyMoney(old); RemoveV4Fields(old); old["Schema"] = 3;
-        var migrated = FoodShadowCodec.Read(old.ToString(), s.CityKey);
-        Assert.Equal(s.Consumers[0].DailyAllowance, migrated.Consumers[0].DailyAllowance);
-        Assert.All(migrated.Intents, i => Assert.Equal(FoodOutsideOption.None, i.OutsideOption)); Finish(migrated); Finish(s);
-        Assert.Equal(s.Intents.Select(i => (i.Status, i.Spent, i.BusinessId)), migrated.Intents.Select(i => (i.Status, i.Spent, i.BusinessId)));
-        old["Intents"]![0]!["OutsideOption"] = 1;
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(old.ToString(), s.CityKey));
-    }
-
-    [Fact]
     public void InvalidDistrictMixAndTeleportingHomeAlternativeAreRefused()
     {
         var c = Capture(); c.HomeDistrictMixes.Add(Mix(70, 22, 9)); Assert.Throws<ArgumentException>(() => FoodRoutinePlanning.Build(c, 1, 3));
         var s = Scenario(Capture(1)); s.Intents[0].OriginActivity = Activity.Work;
         Assert.Throws<ArgumentException>(() => FoodShadowCodec.Write(s));
-    }
-
-    internal static void RemoveV4Fields(JObject document)
-    {
-        var names = new[] { "HomeDistrictId", "BudgetEvidence", "OutsideOption", "OutsideOptionScoreCents", "OutsideOptionEvidence" };
-        foreach (var p in document.Descendants().OfType<JProperty>().Where(p => names.Contains(p.Name)).ToArray()) p.Remove();
     }
 }

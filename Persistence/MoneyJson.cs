@@ -66,20 +66,4 @@ namespace PersistentCity.Persistence
             => long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long units)
                 && units.ToString(CultureInfo.InvariantCulture) == text;
     }
-
-    /// <summary>Fields that held decimal cents before money became whole units. Their names were
-    /// retired with the unit change, so a payload's field names identify its money unit.</summary>
-    internal static class LegacyMoneyFields
-    {
-        public static readonly IReadOnlyDictionary<string, string> Names = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["OpeningBalanceCents"] = "OpeningBalance", ["BalanceCents"] = "Balance", ["IncomeReceivedCents"] = "IncomeReceived",
-            ["EssentialsPaidCents"] = "EssentialsPaid", ["HomeFoodPaidCents"] = "HomeFoodPaid", ["PreparedFoodSpentCents"] = "PreparedFoodSpent",
-            ["HeldPurchaseCents"] = "HeldPurchase", ["ArrearsCents"] = "Arrears", ["DayAllowanceUsedCents"] = "DayAllowanceUsed",
-            ["AllowanceCents"] = "Allowance", ["DailyAllowanceCents"] = "DailyAllowance", ["PriceCents"] = "Price",
-            ["SpentCents"] = "Spent", ["RevenueCents"] = "Revenue",
-        };
-        /// <summary>Earlier decimal money had at most System.Decimal's 28 fractional digits.</summary>
-        public const int MaximumFractionDigits = 28;
-    }
 }

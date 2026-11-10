@@ -24,6 +24,8 @@ namespace PersistentCity.Runtime
     {
         private sealed class Binding
         {
+            // F9g named exception: a bound body follows the entity's committed journey and optional stop, which the
+            // read-only person view does not carry, and passes it to the simulator's journey samplers.
             public CitizenState Citizen = null!;
             // F2c walker and F2d car follow: the committed journey this body follows, and the body's own progress along it
             // (route minutes, never ahead of the logical pose). Presentation only; never saved.
@@ -94,7 +96,7 @@ namespace PersistentCity.Runtime
         private readonly DwellSpots spots;
         private readonly PopulationRuntime? owner;
         private readonly Dictionary<string, long> vendorGaveUp = new Dictionary<string, long>(StringComparer.Ordinal);
-        private readonly Dictionary<string, CitizenState> vendorWaiters = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
+        private readonly Dictionary<string, IPersonView> vendorWaiters = new Dictionary<string, IPersonView>(StringComparer.Ordinal);
         private FoodCommerceState? vendorFood;
         private int vendorMealCount;
         private readonly Dictionary<string, ResidentMeal> vendorMeals = new Dictionary<string, ResidentMeal>(StringComparer.Ordinal);
@@ -148,7 +150,10 @@ namespace PersistentCity.Runtime
             this.spots = spots;
             this.faultAcquirePercent = Math.Max(0, Math.Min(100, faultAcquirePercent));
             owner = parent.GetComponent<PopulationRuntime>();
-            foreach (var citizen in PersonTable.Schedules(simulation.State)) TrackVendorWaiter(citizen);
+            // F9g: residents, then visitor routines (PersonTable.Schedules' order), read through the view.
+            var view = simulation.View;
+            for (int i = 0; i < view.ResidentList.Count; i++) TrackVendorWaiter(view.ResidentList[i]);
+            for (int i = 0; i < view.VisitorRoutineList.Count; i++) TrackVendorWaiter(view.VisitorRoutineList[i]);
             this.simulation = simulation; this.routes = routes; this.log = log;
             RefreshVendorMeals();
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
@@ -165,9 +170,9 @@ namespace PersistentCity.Runtime
                 if (!ambient.Ready) throw new InvalidOperationException("Pedestrian hooks: " + ambient.LastError);
                 // Test real native prefab/appearance/NavMesh acquisition before suppressing ordinary spawning.
                 bool tested = false;
-                foreach (var citizen in simulation.State.Citizens.Take(64))
+                foreach (var resident in view.ResidentList.Take(64))
                 {
-                    if (!pedestrians.TryAcquire(citizen.Identity, places[citizen.HomeId].Position, out var body)) continue;
+                    if (!pedestrians.TryAcquire(Entity(resident).Identity, places[resident.HomeId].Position, out var body)) continue;
                     pedestrians.Release(body!); tested = true; break;
                 }
                 if (!tested) throw new InvalidOperationException("No native pedestrian body passed appearance/NavMesh preflight.");
@@ -194,6 +199,11 @@ namespace PersistentCity.Runtime
             simulation.RefreshOptionalStops();
             foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding)) Release(binding);
         }
+        /// <summary>F9g named exception, the one step from a read-only person view back to its entity: following needs the
+        /// committed journey, the optional stop, the car and the appearance identity, which <see cref="IPersonView"/> does not
+        /// carry (F9e's Core/CityView.cs), and the simulator's samplers take the entity. An identity cast: no lookup, no
+        /// allocation. tests/OwnershipBoundaryTests.cs refuses any other entity cast in the presentation files.</summary>
+        private static CitizenState Entity(IPersonView person) => (CitizenState)person;
         private bool Bound(Binding binding) => bindings.TryGetValue(binding.Citizen.Identity.Id, out var registered) && ReferenceEquals(registered, binding);
         private void Bind(Binding binding)
         {

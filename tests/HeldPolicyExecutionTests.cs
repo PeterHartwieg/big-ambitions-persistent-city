@@ -104,18 +104,15 @@ public sealed class HeldPolicyExecutionTests
 
     private static ResidentTraits Traits(CitySimulator city) => city.State.Citizens.Single().Traits!;
 
-    // ---- Schema 36 ----
+    // ---- Writer ----
 
     [Fact]
-    public void FreshCityAtTheNewWriterIsDynamicWireAndSavesAndReloadsByteIdentical()
+    public void FreshCityIsDynamicWireAndSavesAndReloadsByteIdentical()
     {
-        Assert.Equal(CityState.PlayerHoldSchema + 1, CityState.HeldPolicySchema);
-        Assert.Equal(36, CityState.CurrentSchema);
-        Assert.Equal(CityState.PlayerHoldSchema, SaveCodec.LatestDevelopmentSchema);
         var state = CurrentSchemaOnlyTests.City();
         Assert.Equal(FoodNameIdentity.DynamicWire, state.MenuPolicy);
         string payload = SaveCodec.Write(state);
-        Assert.StartsWith("{\"Schema\":36,\"f\":\"pcc-c\",", payload);
+        Assert.StartsWith(SaveCodec.CompactPrefix + "\"pcc-c\",", payload);
         Assert.Contains(FoodNameIdentity.DynamicWire, payload);
         SaveCodec.RequireExecutableCapabilities(payload);
         var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -131,54 +128,20 @@ public sealed class HeldPolicyExecutionTests
         Assert.Equal(before, saved); Assert.Equal(before, SaveCodec.Write(again.State));
     }
 
-    /// <summary>The new writer's golden: ChangeJournalTests.Fixture at writer 36 (the writer-35 hash stays pinned as the frozen shape).</summary>
-    [Theory]
-    [InlineData(5150, "12447cdf8cff62a2926452fb51550054bbcf681d89d6c310738988878d7226e5", 73332)]
-    [InlineData(9217, "590df8dcc45df126fe97385fedcc5fcbe8ced21be6d57747246e9e8f1e3fc89e", 72970)]
-    public void TheHeldPolicyWriterGoldenIsPinned(int seed, string pin, int characters)
-    {
-        var state = ChangeJournalTests.Fixture(seed);
-        string payload = SaveCodec.Write(state);
-        Assert.StartsWith("{\"Schema\":36,\"f\":\"pcc-c\",\"v\":1,\"k\":[", payload);
-        // Only the schema and the policy differ from the frozen writer-35 bytes of the same city.
-        Assert.Equal(ReaderCorpus.Relabel(SaveCodec.ExpandCompact(DevelopmentChain.Write35(state)), 35, 36).Replace(FoodNameIdentity.Wire, FoodNameIdentity.DynamicWire),
-            SaveCodec.ExpandCompact(payload));
-        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(state)));
-        string actual = EconomicLedgerTests.Sha(payload) + " " + payload.Length;
-        output.WriteLine("E5b4 golden " + seed + ": " + actual);
-        Assert.True(pin + " " + characters == actual, actual);
-    }
-
     [Fact]
-    public void OlderWritersAreRefusedWithTheNewCityStatusAndTheirPayloadIsKept()
-    {
-        var state = ChangeJournalTests.Fixture(5150);
-        foreach (var older in new[] { DevelopmentChain.Write35(state), DevelopmentChain.Write34(state), DevelopmentChain.Write33(state) })
-        {
-            var read = SaveCodec.Read(older);
-            Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
-            Assert.Contains("start a new city", read.Error);
-            EconomicLedgerTests.Refused(older, SaveReadStatus.DevelopmentSchema);
-        }
-        // A writer-35 city that held DynamicWire (readable there, never executable) is refused the same way.
-        string held2 = DevelopmentChain.Write35(state).Replace(FoodNameIdentity.Wire, FoodNameIdentity.DynamicWire);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveCodec.Read(held2).Status);
-        EconomicLedgerTests.Refused(held2, SaveReadStatus.DevelopmentSchema);
-    }
-
-    [Fact]
-    public void AFutureWriterIsRefusedAndKept()
+    public void AnotherSchemaNumberIsRefusedAndKept()
     {
         string current = SaveCodec.Write(ChangeJournalTests.Fixture(5150));
-        string future = current.Replace("{\"Schema\":36,", "{\"Schema\":37,");
-        Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future).Status);
-        EconomicLedgerTests.Refused(future, SaveReadStatus.Future);
+        foreach (int other in new[] { 2, 36, 37 })
+        {
+            string payload = current.Replace(SaveCodec.CompactPrefix, "{\"Schema\":" + other + ",\"f\":");
+            Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveCodec.Read(payload).Status);
+            EconomicLedgerTests.Refused(payload, SaveReadStatus.DevelopmentSchema);
+        }
     }
 
     [Fact]
-    public void DynamicWireExecutesOnlyAtTheNewWriterAndTheNewWriterExecutesNothingElse()
+    public void TheWriterExecutesDynamicWireAndNothingElse()
     {
         var state = CurrentSchemaOnlyTests.City();
         SaveCodec.RequireExecutablePolicy(state);
@@ -189,15 +152,6 @@ public sealed class HeldPolicyExecutionTests
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
         string body = SaveWire.Text(CurrentSchemaOnlyTests.City()).Replace(FoodNameIdentity.DynamicWire, FoodNameIdentity.Wire);
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(body));
-        foreach (int older in new[] { 25, CityState.CompactSchema, CityState.PlayerHoldSchema })
-        {
-            var frozen = CurrentSchemaOnlyTests.City(); frozen.Schema = older;
-            Assert.Equal(FoodNameIdentity.Wire, frozen.MenuPolicy); // an unset policy follows the writer
-            SaveCodec.RequireExecutablePolicy(frozen);
-            frozen.MenuPolicy = FoodNameIdentity.DynamicWire;
-            Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutablePolicy(frozen));
-            Assert.Throws<InvalidOperationException>(() => new CitySimulator(frozen, new WeightedFoodChoiceTests.Planner()));
-        }
     }
 
     // ---- Held revision-2 execution ----
@@ -318,17 +272,6 @@ public sealed class HeldPolicyExecutionTests
             Assert.Equal(mb.Orders, ma.Orders);
             Assert.True(ma.PolicyReads > 0);
         }
-    }
-
-    [Fact]
-    public void AnOlderWritersCityNeverReadsTheMarketPolicy()
-    {
-        var (city, market, planner) = Ready(5, Policy(), new[] { Dumplings }, new[] { FoodProducts.Burger });
-        city.State.Schema = CityState.PlayerHoldSchema; // its unset policy now reads as writer 35's original-name policy
-        var older = new CitySimulator(city.State, planner); older.AttachFoodMarket(market);
-        ToCapture(older);
-        Assert.Equal(0, market.PolicyReads);
-        Assert.Equal(new[] { FoodProducts.Burger }, HeldOffers(older).Select(o => o.ProductId).ToArray());
     }
 
     [Fact]

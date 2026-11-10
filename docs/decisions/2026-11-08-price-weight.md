@@ -1,6 +1,6 @@
 # Food-choice price weight 1.2, 8 November 2026
 
-Peter decided this on 8 November 2026 (about 18:24 Europe/Berlin), after the [F6h rerun on the F6j base](../checks/f6h.md#acceptance-rerun-after-f6j-8-november-2026): "Let's raise the weight slightly for price sensitivity, but let's do finetuning closer to release." Refs #93.
+Peter decided this on 8 November 2026 (about 18:24 Europe/Berlin), after the [F6h rerun on the F6j base](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6h.md#acceptance-rerun-after-f6j-8-november-2026): "Let's raise the weight slightly for price sensitivity, but let's do finetuning closer to release." Refs #93.
 
 ## Decision
 
@@ -20,7 +20,7 @@ The price exponent is `2 × weight × sensitivity`. A +50% offer keeps this shar
 
 The discount ceiling of 4 is still inactive at the recorded native prices: band 4 at $9.24 reaches 2.97. A band-4 +50% offer at $16.69 keeps weight 0.082, above the 0.02 floor.
 
-No native measurement exists at 1.2. Going by the [#160 numbers](../perf/f6k.md), it should fall between weight 1 (−27% meals, +11% revenue for +50%) and 1.5. This is an expectation, not a measured result.
+No native measurement exists at 1.2. Going by the [#160 numbers](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/perf/f6k.md), it should fall between weight 1 (−27% meals, +11% revenue for +50%) and 1.5. This is an expectation, not a measured result.
 
 ## F6h acceptance
 

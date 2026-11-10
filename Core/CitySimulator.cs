@@ -157,7 +157,7 @@ namespace PersistentCity.Core
         }
         private void MissRoutine(CitizenState person, RoutineSlot slot, double now, string reason)
         {
-            if (State.Schema >= CityState.AttendanceSchema && slot.Activity == Activity.Work)
+            if (slot.Activity == Activity.Work)
             {
                 var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1));
                 if (w.HasValue && person.Accrual.Day == (int)(w.Value.StartsAt / 1440)
@@ -206,8 +206,7 @@ namespace PersistentCity.Core
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
             state.Capabilities.RequireExecutable();
-            if (state.Schema > CityState.CurrentSchema || state.Schema >= 23
-                && state.MenuPolicy != CityState.ExecutableMenuPolicy(state.Schema))
+            if (state.Schema != CityState.CurrentSchema || state.MenuPolicy != FoodNameIdentity.DynamicWire)
                 throw new InvalidOperationException("Unsupported menu product policy; preserve the payload.");
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)
@@ -227,10 +226,9 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
             }
-            // Schema 27: visitor routines share the queue. Their slot is the complement of their list index.
-            if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0 && state.Schema >= PersonTable.IndependentSchema)
+            // Visitor routines share the queue. Their slot is the complement of their list index.
+            if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0)
             {
-                if (state.Schema < PersonTable.IndependentSchema) throw new InvalidOperationException("Visitor routines need schema 27.");
                 VisitorSchedules.LinkAll(state);
                 for (int visitorIndex = 0; visitorIndex < state.VisitorRoutines.Count; visitorIndex++)
                 {
@@ -254,7 +252,6 @@ namespace PersistentCity.Core
         internal void ScheduleVisitors()
         {
             if (pending != null && pending.Item.ListIndex < 0) throw new InvalidOperationException("A visitor event is in flight.");
-            if (State.Schema < PersonTable.IndependentSchema) throw new InvalidOperationException("Visitor routines need schema 27.");
             foreach (var visitor in State.VisitorRoutines)
                 if (citizenEvents.TryGetValue(visitor.Identity.Id, out var old)) { due.Remove(old); citizenEvents.Remove(visitor.Identity.Id); }
             VisitorSchedules.LinkAll(State);
@@ -324,7 +321,7 @@ namespace PersistentCity.Core
         {
             foreach (var meal in State.Food!.Residents)
             {
-                if (State.Schema >= CityState.AttendanceSchema && meal.Budget != null)
+                if (meal.Budget != null)
                 {
                     var person = FindCitizen(meal.HostId);
                     if (person != null && EmploymentWages.NextPosting(person, State.Seed, State.Minute, out _) <= target) return false;
@@ -407,7 +404,7 @@ namespace PersistentCity.Core
                     // atomic publication; reload restarts this transient build at the same event.
                     food.ContinueAwarenessPreparation();count++;foodContinuationCount++;continue;
                 }
-                bool postingFirst = State.Schema >= CityState.AttendanceSchema && food?.PostingDueAt(next) == true
+                bool postingFirst = food?.PostingDueAt(next) == true
                     && foodMinute <= citizenMinute && foodMinute <= trafficMinute;
                 if (food?.HasPendingDecision == true || postingFirst || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
@@ -874,7 +871,7 @@ namespace PersistentCity.Core
                     earlyCommute = true;
                 }
             }
-            if (State.Schema >= CityState.AttendanceSchema && slot.Activity == Activity.Work)
+            if (slot.Activity == Activity.Work)
             {
                 var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1));
                 if (work.HasValue && now >= work.Value.StartsAt && person.Accrual.Day == (int)(work.Value.StartsAt / 1440)

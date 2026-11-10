@@ -1,0 +1,13 @@
+Application,ProcessID,SwapChainAddress,Runtime,SyncInterval,PresentFlags,AllowsTearing,PresentMode,Dropped,TimeInSeconds,msInPresentAPI,msBetweenPresents,msBetweenDisplayChange,msUntilRenderComplete,msUntilDisplayed
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.0161114,0.2,NA,0.0,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.0326343,0.2,16.5229,16.5229,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.0493445,0.2,16.7102,16.7102,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.0655817,0.2,16.2372,16.2372,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.0818393,0.2,16.2576,16.2576,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,1,1.0991482,0.2,17.3090,0.0,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.1162202,0.2,17.0720,34.3809,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.1329889,0.2,16.7687,16.7687,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.1499612,0.2,16.9723,16.9723,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.1666307,0.2,16.6695,16.6695,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.2864953,0.2,119.8646,119.8646,3.0,5.0
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,0,1.3035776,0.2,17.0823,17.0823,3.0,5.0

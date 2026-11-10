@@ -30,7 +30,7 @@ public sealed class RivalMemoryTests
     [InlineData(1, true)] [InlineData(7, true)] [InlineData(128, true)]
     public void ModeledServiceReplaysAcrossEveryContinuationAndReturn(int budget, bool reload)
     {
-        var (city, market, paths) = RivalOutflowTests.Ready(representation: 3, finances: true);
+        var (city, market, paths) = RivalOutflowTests.Ready(finances: true);
         city.State.Capabilities.Active = true;
         double at = city.State.Food!.Residents.Max(m => m.DesiredAt);
         city.InspectFoodAwareness("r");
@@ -108,15 +108,15 @@ public sealed class RivalMemoryTests
     [Fact]
     public void EventBudgetsAndReloadProduceIdenticalFullCityNotJustCounts()
     {
-        var (a, ma, pa) = RivalOutflowTests.Ready(representation: 3);
-        var (b, mb, pb) = RivalOutflowTests.Ready(representation: 3);
+        var (a, ma, pa) = RivalOutflowTests.Ready();
+        var (b, mb, pb) = RivalOutflowTests.Ready();
         a.State.Capabilities.Active = b.State.Capabilities.Active = true;
         double at = a.State.Food!.Residents.Max(m => m.DesiredAt) + 30;
         Advance(a, at, 128);
         b.InspectFoodAwareness("r");
         while (!b.AdvanceTo(at, 1).CaughtUp) b = Reload(b, mb, pb);
         Assert.True(a.State.Food!.Outflow!.Reconciles(a.State.Food));
-        Assert.Equal(3, a.FreeRivalOutflow()!.Count);
+        Assert.Equal(1, a.FreeRivalOutflow()!.Count);
         Assert.All(a.State.Food.Residents, m => Assert.Equal(1, Assert.Single(m.Memory.Entries).Served));
         Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back);

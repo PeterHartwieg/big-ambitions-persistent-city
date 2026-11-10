@@ -82,13 +82,9 @@ namespace PersistentCity.Core
         }
 
         public static void PostDay(ResidentBudget budget, double minute, CitizenState? person = null, bool visitorEndowment = false)
-            => PostDayCore(budget, minute, person, false, visitorEndowment);
+            => PostDayCore(budget, minute, person, visitorEndowment);
 
-        // Frozen development simulations only; the product reader refuses these cities.
-        internal static void PostDevelopmentDay(ResidentBudget budget, double minute, CitizenState person)
-            => PostDayCore(budget, minute, person, true);
-
-        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool dailyEmployment, bool visitorEndowment = false)
+        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool visitorEndowment = false)
         {
             int day = checked((int)(minute / 1440));
             if (minute != budget.NextPostingMinute || day <= budget.LastPostedDay)
@@ -110,7 +106,7 @@ namespace PersistentCity.Core
             // existing daily income until an employment outcome replaces it; city jobs earn only shifts.
             bool carriedOutsideEmployment = person?.Visitor != null
                 && person.VisitorCarried == ResidentIncomeSource.ExternalEmployment && !EmploymentWages.Eligible(person);
-            var income = source == ResidentIncomeSource.ExternalEmployment && !dailyEmployment && !carriedOutsideEmployment
+            var income = source == ResidentIncomeSource.ExternalEmployment && !carriedOutsideEmployment
                 ? Money.Zero : Money.FromCents(dailyIncome);
             var balance = budget.Balance + income;
             var received = budget.IncomeReceived + income;

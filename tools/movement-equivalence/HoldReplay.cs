@@ -182,11 +182,15 @@ public static class HoldReplay
 
     /// <summary>The E2 arm: one contact run with checkpoints, then replays from each checkpoint to the last, plus the
     /// refusal cases. Returns (check, pass, detail) rows like <see cref="SelfChecks.Run"/>.</summary>
-    public static List<(string Check, bool Pass, string Detail)> Check(int residents, int days = 1)
+    /// <param name="visitors">F2g: the same arm with visitor bodies on (F5i). Holds refuse visitors, so the stream holds
+    /// residents only, and the replay must still equal the contact run with the visitors' journeys and sales.</param>
+    public static List<(string Check, bool Pass, string Detail)> Check(int residents, int days = 1, bool visitors = false)
     {
         var rows = new List<(string, bool, string)>();
+        string e2 = visitors ? "e2 visitors" : "e2";
         double start = MovementFixture.StartMinute;
-        var options = new MovementOptions { Arm = "contact/e2", Residents = residents, Days = days, PlayerContact = true,
+        var options = new MovementOptions { Arm = visitors ? "contact/e2-visitors" : "contact/e2", Residents = residents, Days = days,
+            PlayerContact = true, Visitors = visitors,
             Bodies = new DriverSettings { Pedestrians = 48, Vehicles = 24, Lag = LagModel.Native },
             Checkpoints = new[] { start + 1, start + 8 * 60, start + 9 * 60, start + 12 * 60 } };
         var live = MovementRun.Run(options);
@@ -200,16 +204,22 @@ public static class HoldReplay
                 + " ms, max " + sorted[^1].ToString("F4", System.Globalization.CultureInfo.InvariantCulture) + " ms";
         }
         double contactHours = (PlayerDouble.ContactTo - PlayerDouble.ContactFrom) / 60 * days;
-        rows.Add(("e2 contact arm applied walk and car holds", player.WalkHolds > 0 && player.CarHolds > 0,
+        rows.Add((e2 + " contact arm applied walk and car holds", player.WalkHolds > 0 && player.CarHolds > 0,
             "walk " + player.WalkHolds + ", car " + player.CarHolds + ", absorbed " + player.Absorbed + ", reports " + player.Reports
             + ", refused " + string.Join(",", player.Refusals.Select(r => r.Key + "=" + r.Value))
             + ", holds per contact hour " + ((player.WalkHolds + player.CarHolds) / contactHours).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
             + "; walk hold " + Quantiles(player.WalkMilliseconds) + "; car hold " + Quantiles(player.CarMilliseconds)));
+        if (visitors)
+        {
+            rows.Add((e2 + " visitor bodies bound and only residents held", live.Metrics["bodies.visitorAcquired"] > 0
+                && live.Holds.Count > 0 && live.Holds.All(h => !h.PersonId.StartsWith(PersonIds.VisitorPrefix, StringComparison.Ordinal)),
+                "visitor bodies " + live.Metrics["bodies.visitorAcquired"] + ", holds " + live.Holds.Count));
+        }
         var end = live.Checkpoints[live.Checkpoints.Count - 1];
         foreach (var from in live.Checkpoints.Take(live.Checkpoints.Count - 1))
         {
             var outcome = Replay(from, end, Segment(live.Holds, from, end));
-            rows.Add(("e2 replay from " + from.Minute + " equals the contact run at " + end.Minute, outcome.Equal,
+            rows.Add((e2 + " replay from " + from.Minute + " equals the contact run at " + end.Minute, outcome.Equal,
                 "holds " + outcome.Applied + (outcome.Failure.Length > 0 ? ", " + outcome.Failure : "")));
         }
         var segment = Segment(live.Holds, live.Checkpoints[0], end).ToList();
@@ -221,15 +231,15 @@ public static class HoldReplay
         long s0 = live.Checkpoints[0].Sequence, s1 = end.Sequence;
         if (segment.Count >= 3)
         {
-            rows.Add(("e2 replay refuses a gap", Refused(segment.Where((_, i) => i != segment.Count / 2).ToList(), s0, s1), ""));
+            rows.Add((e2 + " replay refuses a gap", Refused(segment.Where((_, i) => i != segment.Count / 2).ToList(), s0, s1), ""));
             var duplicate = new List<PlayerHoldRecord>(segment); duplicate.Insert(1, segment[1]);
-            rows.Add(("e2 replay refuses a duplicate", Refused(duplicate, s0, s1), ""));
+            rows.Add((e2 + " replay refuses a duplicate", Refused(duplicate, s0, s1), ""));
             var swapped = new List<PlayerHoldRecord>(segment); (swapped[1], swapped[2]) = (swapped[2], swapped[1]);
-            rows.Add(("e2 replay refuses a reordering", Refused(swapped, s0, s1), ""));
-            rows.Add(("e2 replay refuses a wrong start", Refused(segment, s0 + 1, s1), ""));
-            rows.Add(("e2 replay refuses a wrong end", Refused(segment, s0, s1 + 1), ""));
+            rows.Add((e2 + " replay refuses a reordering", Refused(swapped, s0, s1), ""));
+            rows.Add((e2 + " replay refuses a wrong start", Refused(segment, s0 + 1, s1), ""));
+            rows.Add((e2 + " replay refuses a wrong end", Refused(segment, s0, s1 + 1), ""));
         }
-        else rows.Add(("e2 segment long enough for refusal cases", false, "holds " + segment.Count));
+        else rows.Add((e2 + " segment long enough for refusal cases", false, "holds " + segment.Count));
         return rows;
     }
 }

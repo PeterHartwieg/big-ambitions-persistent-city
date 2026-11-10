@@ -280,7 +280,7 @@ public sealed class PresentationBoundaryTests
     // needs a reviewed change here. F2c removed TryHoldPhysicalDeparture and every walker lease call; F2d removed the
     // traffic lease group, so every member is read-only. F2e adds HoldForPlayer.
     private static readonly string[] ReadOnlyMembers = {
-        "State", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
+        "State", "View", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
         "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen",
     };
     // The removed lease surface (F2c, F2d). None of it may come back on CitySimulator or in Runtime.
