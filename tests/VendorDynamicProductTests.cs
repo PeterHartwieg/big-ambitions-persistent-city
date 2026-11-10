@@ -305,8 +305,11 @@ public sealed class VendorDynamicProductTests
         var f = new Fixture(Policy());
         var row = f.Row; string business = row.BusinessId;
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
-        var committed = f.Meal(ChoppedCheese); committed.Status = MealStatus.Travelling;
-        f.City.State.Food!.Residents.Add(committed);
+        // The saved roster holds one record per resident, so the committed decision is the resident's own record.
+        var committed = f.City.State.Food!.Residents.Single(); var decision = f.Meal(ChoppedCheese);
+        committed.PlaceId = decision.PlaceId; committed.BusinessId = decision.BusinessId; committed.ProductId = decision.ProductId;
+        committed.Price = decision.Price; committed.Allowance = decision.Allowance; committed.ServiceMinutes = decision.ServiceMinutes;
+        committed.Status = MealStatus.Travelling;
         // Reload while the loaded-name image is not published yet (bounded catalogue warm-up).
         f.Preparing = true;
         f.Reload(true);
