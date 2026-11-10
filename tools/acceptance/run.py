@@ -28,6 +28,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import economy_stage  # noqa: E402
+import rig_manifest  # noqa: E402
 
 ROOT = HERE.parents[1]
 SCHEMA = "persistentcity-acceptance-1"
@@ -662,7 +663,14 @@ def summarize_result(result):
     stages = result["stages"]
     required = [s for s in stages if s.get("required") and s["class"] in FUNCTIONAL]
     native = [s for s in stages if s["class"] == "native"]
-    if not any(s.get("rig") for s in native):
+    checks = (result.get("nativeEvidence") or {}).get("requiredChecks")
+    if checks is not None:
+        # F9d (Decision 7): with the ledger, native needs the rig check of every row that is not fresh at this head. A
+        # missing check is not-run; a merged failed check is a required native stage and fails the class.
+        for check in checks:
+            if not any(s.get("rig") and rig_manifest.matches_check(s, check) for s in native):
+                required.append({"id": check, "class": "native", "verdict": "not-run", "reason": "rig check not merged"})
+    elif not any(s.get("rig") for s in native):
         required.append({"id": "rig", "class": "native", "verdict": "not-run", "reason": "rig results not merged"})
     # F9b (Decision 4): assemblies outside every declared fingerprint set leave native incomplete, never failed.
     game = (result.get("provenance") or {}).get("game") or {}
@@ -692,7 +700,29 @@ def summarize_result(result):
     result["summary"] = {"verdict": verdict, "required": [s["id"] for s in required], "failed": failed,
                          "incomplete": incomplete, "deviations": deviations,
                          "notes": [n for s in stages for n in s.get("notes", [])]}
+    evidence = result.get("nativeEvidence") or {}
+    if "batchDue" in evidence:
+        # A scheduling signal printed next to the verdict; it never changes it (merge rule v2).
+        result["summary"].update(nativeBatchDue=evidence["batchDue"], staleNativeRows=evidence["stale"],
+                                 unprovenNativeRows=evidence["unproven"])
+        if evidence["batchDue"]:
+            result["summary"]["notes"].append("native batch due: " + "; ".join(evidence["batchDueReasons"]))
     return result
+
+
+def native_evidence(catalogue, prov):
+    """The Decision 7 ledger at this source (F9d), or why it was not assessed. Never part of the verdict."""
+    path = catalogue.get("nativeAssumptions")
+    if not path:
+        return {"status": "not-configured"}
+    game = prov.get("game") or {}
+    try:
+        ledger = rig_manifest.load(ROOT / path)
+        state = rig_manifest.assess(ledger, ROOT, "HEAD", game.get("set") if game.get("supplied") else None,
+                                    rig_manifest.declared_set())
+    except (OSError, ValueError) as error:
+        return {"status": "not-assessed", "reason": str(error)}
+    return dict(state, status="assessed", ledger=path, ledgerSha256=sha256_file(ROOT / path))
 
 
 def write_result(out, result, sanitize):
@@ -739,7 +769,7 @@ def run_profile(args, catalogue):
     result = {"schema": SCHEMA, "runId": run_id, "profile": args.profile, "onlyStages": names if args.only else None,
               "startedUtc": started.isoformat(timespec="seconds"), "finishedUtc": finished.isoformat(timespec="seconds"),
               "provenance": prov, "stages": records, "classes": {},
-              "nativeEvidence": {"status": "not-implemented", "owner": "F9d"}}
+              "nativeEvidence": native_evidence(catalogue, prov)}
     summarize_result(result)
     return write_result(out, result, Sanitizer(out, managed))
 
@@ -791,7 +821,34 @@ def demote(stage, problems):
         stage["verdict"], stage["reason"] = "incomplete", "; ".join(problems)
 
 
-def merge(args):
+def update_ledger(args, catalogue, result, out):
+    """F9d: record this head for every ledger row whose rig check passed in the merged result (rig check 10). The updated
+    ledger goes to {out}/native-assumptions.json, and with --update-ledger into the catalogue's ledger file."""
+    evidence = result.get("nativeEvidence") or {}
+    path = catalogue.get("nativeAssumptions")
+    if evidence.get("status") != "assessed" or not path:
+        return
+    commit = (result["provenance"].get("source") or {}).get("commit")
+    fingerprint = (result["provenance"].get("game") or {}).get("set")
+    rig_sets = {((i.get("provenance") or {}).get("game") or {}).get("set") for i in result.get("importedEvidence", [])
+                if i.get("sameSource")}
+    rig_sets.discard(None)
+    if rig_sets - {fingerprint}:
+        evidence["updatedRows"] = []
+        evidence["updateRefused"] = f"rig game set {sorted(rig_sets)} is not the build's {fingerprint}"
+        return
+    passed = [s for s in result["stages"] if s.get("rig") and s["verdict"] == "pass"]
+    ledger, rows = rig_manifest.update(rig_manifest.load(ROOT / path), passed, commit, fingerprint, result.get("mergedFrom"))
+    text = json.dumps(ledger, indent=2) + "\n"
+    (out / "native-assumptions.json").write_text(text, encoding="utf-8")
+    if args.update_ledger and rows:
+        (ROOT / path).write_text(text, encoding="utf-8")
+    evidence["updatedRows"] = rows
+    if not fingerprint or fingerprint == "unknown":
+        evidence["updateRefused"] = "no declared game fingerprint for this run"
+
+
+def merge(args, catalogue=None):
     """summarize: merge rig stage records and F4's performance record into a run result.
 
     Rig records count only when their provenance names the same source (commit, dirty flag and diff hash) and,
@@ -836,13 +893,14 @@ def merge(args):
                                                            "reference": record.get("reference")}
     result["mergedFrom"] = result.get("runId")
     result["profile"] = "summarize"
+    update_ledger(args, catalogue or {}, result, out)
     summarize_result(result)
     return write_result(out, result, Sanitizer(out))
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("profile", choices=["quick", "full", "summarize"])
+    parser.add_argument("profile", choices=["quick", "full", "summarize", "rig-manifest"])
     parser.add_argument("--out", help="result directory (default build/acceptance/<runId>)")
     parser.add_argument("--catalogue", default=str(HERE / "stages.json"))
     parser.add_argument("--dotnet", help=".NET SDK host (default: PATH, then %%LOCALAPPDATA%%/Microsoft/dotnet on Windows)")
@@ -855,15 +913,23 @@ def main(argv=None):
     parser.add_argument("--result", help="summarize: the run's acceptance.json")
     parser.add_argument("--rig", action="append", help="summarize: rig results in the same schema (class native)")
     parser.add_argument("--performance", help="summarize: F4 performance record")
+    parser.add_argument("--update-ledger", action="store_true",
+                        help="summarize: also write the head of every passed rig check into the native-assumptions ledger")
     args = parser.parse_args(argv)
     if args.profile == "summarize" and not args.result:
         parser.error("summarize needs --result")
     catalogue = json.loads(Path(args.catalogue).read_text(encoding="utf-8"))
+    if args.profile == "rig-manifest":
+        # Decision 1: seconds, no .NET and no lock. --result takes the fingerprint set from that run's build.
+        game = json.loads(Path(args.result).read_text(encoding="utf-8"))["provenance"].get("game") or {} if args.result else {}
+        extra = ["--fingerprint", game["set"]] if game.get("supplied") and game.get("set") else []
+        return rig_manifest.main(["--ledger", str(ROOT / catalogue["nativeAssumptions"]),
+                                  "--out", args.out or str(ROOT / "build/acceptance/rig-manifest"), *extra])
     try:
         with RunnerLock(args.lock) as lock:
             if lock.cleared_stale is not None:
                 print("cleared a stale acceptance lock", flush=True)
-            path, result = merge(args) if args.profile == "summarize" else run_profile(args, catalogue)
+            path, result = merge(args, catalogue) if args.profile == "summarize" else run_profile(args, catalogue)
     except LockHeld as error:
         print("refused:", error, file=sys.stderr)
         return 4

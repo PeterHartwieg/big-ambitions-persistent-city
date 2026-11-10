@@ -1,5 +1,6 @@
 {
   "schema": "persistentcity-acceptance-stages-1",
+  "nativeAssumptions": "tools/acceptance/native-assumptions.json",
   "profiles": {
     "quick": ["provenance", "test-build", "population", "economy-fast", "saves", "city-s"],
     "full": ["provenance", "build", "unit", "population", "economy", "saves", "movement", "city-s", "city-m"]
