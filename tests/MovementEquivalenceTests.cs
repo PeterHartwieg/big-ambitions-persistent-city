@@ -249,6 +249,60 @@ public sealed class MovementEquivalenceTests
         Equal(hidden, PlainRun.Value, "stationary 24/12 50 % slow head cars hidden travel");
     }
 
+    /// <summary>F2g: the pairwise arms cover every valid pair of factor levels of the full plan product (residents or
+    /// visitors x focus path x caps x failures x cadence x lag x none/reload/hidden/reload+hidden), read back from the arm
+    /// options, and the only excluded pairs are reloads that cannot bind a body.</summary>
+    [Fact]
+    public void PairwiseArmsCoverEveryPairOfTheFullProduct()
+    {
+        var arms = MovementArms.All(Residents, 1);
+        var pairwise = arms.Where(a => a.Family == "pairwise").ToList();
+        var covered = pairwise.Select(a => a.Options()).Select(o => new MovementArms.Factors(o.Visitors, o.Focus,
+                (o.Bodies.Pedestrians, o.Bodies.Vehicles), o.Bodies.AcquisitionFailurePercent, o.FramesPerSecond, o.Bodies.Lag,
+                o.ReloadMidJourney, o.HiddenTravel))
+            .SelectMany(t => { var l = t.Levels; return Enumerable.Range(0, l.Length).SelectMany(a => Enumerable.Range(a + 1, l.Length - a - 1)
+                .Select(b => (a, l[a], b, l[b]))); })
+            .ToHashSet();
+        Assert.All(covered, p => Assert.True(p.Item2 >= 0 && p.Item4 >= 0, "level outside the plan factors"));
+        var valid = MovementArms.ValidPairs();
+        Assert.Empty(valid.Except(covered));
+        // Factor 1 is the focus path (0 = none), 2 the caps (0 = 0/0), 6 the transition (1 = reload, 3 = reload+hidden).
+        var all = new System.Collections.Generic.HashSet<(int, int, int, int)>();
+        for (int a = 0; a < MovementArms.FactorSizes.Length; a++)
+            for (int b = a + 1; b < MovementArms.FactorSizes.Length; b++)
+                for (int la = 0; la < MovementArms.FactorSizes[a]; la++)
+                    for (int lb = 0; lb < MovementArms.FactorSizes[b]; lb++)
+                        all.Add((a, la, b, lb));
+        Assert.Equal(new[] { (1, 0, 6, 1), (1, 0, 6, 3), (2, 0, 6, 1), (2, 0, 6, 3) }, all.Except(valid).OrderBy(p => p));
+        Assert.Contains(pairwise, a => a.Options() is { ReloadMidJourney: true, HiddenTravel: true, Visitors: true });
+        Assert.Contains(pairwise, a => a.Options() is { ReloadMidJourney: true, HiddenTravel: true, Visitors: false });
+        foreach (var arm in pairwise)
+        {
+            var o = arm.Options();
+            Assert.Equal(MovementArms.PlainReference(o.Visitors, o.FramesPerSecond, o.HiddenTravel), arm.Reference);
+        }
+    }
+
+    /// <summary>F2g: every pairwise arm equals its bodies-off reference (E1) on the small fixture; the 957-resident
+    /// result is asserted by <see cref="RecordedBaselineIsTheGreenMatrix"/>.</summary>
+    [Fact]
+    public void PairwiseArmsEqualBodiesOff()
+    {
+        var arms = MovementArms.All(Residents, 1).ToDictionary(a => a.Name, StringComparer.Ordinal);
+        var references = new System.Collections.Generic.Dictionary<string, MovementResult>(StringComparer.Ordinal);
+        foreach (var arm in arms.Values.Where(a => a.Family == "pairwise"))
+        {
+            if (!references.TryGetValue(arm.Reference, out var reference))
+                references[arm.Reference] = reference = MovementRun.Run(arms[arm.Reference].Options());
+            var options = arm.Options();
+            var result = MovementRun.Run(options);
+            if (options.ReloadMidJourney) Assert.True(result.Reloads == 1 && result.BodiesAtReload > 0, arm.Name + " reloads with bodies bound");
+            if (options.HiddenTravel) Assert.True(result.Metrics["bodies.hiddenTravelFrames"] > 0, arm.Name + " travels hidden");
+            var comparison = Equivalence.Compare(result, reference);
+            Assert.True(comparison.Identical, arm.Name + ": " + string.Join(" ", comparison.Equal.Where(e => !e.Value).Select(e => e.Key)));
+        }
+    }
+
     /// <summary>F2g: a reload arm that never reloads fails loudly instead of passing E1 untested.</summary>
     [Fact]
     public void ReloadArmThatNeverReloadsFailsLoudly()

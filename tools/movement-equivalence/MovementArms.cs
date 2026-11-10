@@ -114,6 +114,93 @@ public static class MovementArms
         Combined("visitors-away-return-24-10pct-slow-head-hidden", true, FocusPath.AwayReturn, 24, 12, 10, 60, LagModel.SlowHeadCar, false, true,
             "visitors/plain-hidden-travel");
         Combined("visitors-stationary-1-10pct-120fps", true, FocusPath.Stationary, 1, 1, 10, 120, LagModel.Native, false, false, "visitors/plain-120");
+        // F2g: a pairwise covering set over the whole factor product (residents or visitors, focus path, caps, failures,
+        // cadence, lag model and transition none/reload/hidden/reload+hidden). Every valid pair of factor levels runs in at
+        // least one arm, against bodies-off with the same city, cadence and hidden travel.
+        foreach (int fps in Cadences.Where(f => f != 60))
+        {
+            Add("bodies-off", "plain-hidden-" + fps, () => new MovementOptions { Driver = false, HiddenTravel = true, FramesPerSecond = fps }, "");
+            Add("visitors", "plain-hidden-" + fps, () => new MovementOptions { Driver = false, Visitors = true, HiddenTravel = true, FramesPerSecond = fps }, "");
+        }
+        foreach (var t in Pairwise())
+            Add("pairwise", t.Name, () =>
+            {
+                var o = Default(""); o.Visitors = t.Visitors; o.Focus = t.Focus; o.Bodies.Pedestrians = t.Caps.Walkers; o.Bodies.Vehicles = t.Caps.Cars;
+                o.Bodies.AcquisitionFailurePercent = t.Failures; o.FramesPerSecond = t.Fps; o.Bodies.Lag = t.Lag;
+                o.ReloadMidJourney = t.Reload; o.HiddenTravel = t.Hidden; return o;
+            }, PlainReference(t.Visitors, t.Fps, t.Hidden));
         return arms;
+    }
+
+    /// <summary>The bodies-off run a pairwise arm must equal: same city (residents or visitors), cadence and hidden travel.
+    /// A reload needs no own reference: bodies-off reload is byte-identical (self-check, <c>bodies-off/plain-reload</c>).</summary>
+    public static string PlainReference(bool visitors, int fps, bool hidden)
+        => (visitors ? "visitors/plain-" : "bodies-off/plain-") + (hidden ? fps == 60 ? "hidden-travel" : "hidden-" + fps : fps.ToString());
+
+    public static readonly FocusPath[] FocusPaths = { FocusPath.None, FocusPath.Stationary, FocusPath.Sweep, FocusPath.AwayReturn };
+    public static readonly LagModel[] Lags = { LagModel.Ideal, LagModel.Native, LagModel.SlowHeadCar };
+    /// <summary>Transitions: none, mid-journey reload, hidden travel, both.</summary>
+    public static readonly (bool Reload, bool Hidden)[] Transitions = { (false, false), (true, false), (false, true), (true, true) };
+
+    public sealed record Factors(bool Visitors, FocusPath Focus, (int Walkers, int Cars) Caps, int Failures, int Fps, LagModel Lag,
+        bool Reload, bool Hidden)
+    {
+        public int[] Levels => new[] { Visitors ? 1 : 0, Array.IndexOf(FocusPaths, Focus), Array.IndexOf(MovementArms.Caps, Caps),
+            Array.IndexOf(FailurePercents, Failures), Array.IndexOf(Cadences, Fps), Array.IndexOf(Lags, Lag),
+            Array.IndexOf(Transitions, (Reload, Hidden)) };
+        public string Name => (Visitors ? "visitors-" : "") + Focus switch { FocusPath.None => "none", FocusPath.Sweep => "sweep",
+            FocusPath.AwayReturn => "away-return", _ => "stationary" } + "-" + Caps.Walkers + "-" + Caps.Cars + "-" + Failures + "pct-"
+            + Fps + "fps-" + Lag switch { LagModel.Ideal => "ideal", LagModel.SlowHeadCar => "slow-head", _ => "native" }
+            + (Reload ? "-reload" : "") + (Hidden ? "-hidden" : "");
+    }
+
+    public static readonly int[] FactorSizes = { 2, 4, 5, 3, 3, 3, 4 };
+
+    /// <summary>A reload needs a bound walker and car (and a visitor body in a visitor city) to test a reload with bodies
+    /// bound; without bodies (focus none, caps 0/0) it is the bodies-off reload, and caps 1/1 cannot bind a walker and a
+    /// visitor at once. Those pairs are not valid.</summary>
+    public static bool Valid(Factors t) => !t.Reload || (t.Focus != FocusPath.None && t.Caps.Walkers > 0 && !(t.Visitors && t.Caps.Walkers < 2));
+
+    public static IEnumerable<Factors> Product()
+    {
+        foreach (bool visitors in new[] { false, true })
+        foreach (var focus in FocusPaths)
+        foreach (var caps in Caps)
+        foreach (int failures in FailurePercents)
+        foreach (int fps in Cadences)
+        foreach (var lag in Lags)
+        foreach (var (reload, hidden) in Transitions)
+            yield return new Factors(visitors, focus, caps, failures, fps, lag, reload, hidden);
+    }
+
+    private static IEnumerable<(int A, int La, int B, int Lb)> Pairs(int[] levels)
+    {
+        for (int a = 0; a < levels.Length; a++)
+            for (int b = a + 1; b < levels.Length; b++)
+                yield return (a, levels[a], b, levels[b]);
+    }
+
+    /// <summary>Every pair of factor levels that some valid tuple of the full product holds.</summary>
+    public static HashSet<(int, int, int, int)> ValidPairs() => Product().Where(Valid).SelectMany(t => Pairs(t.Levels)).ToHashSet();
+
+    /// <summary>Deterministic greedy covering array: repeatedly take the first valid tuple of the product that covers the most
+    /// still uncovered pairs, until every valid pair is covered.</summary>
+    public static List<Factors> Pairwise()
+    {
+        var candidates = Product().Where(Valid).Select(t => (Factors: t, Pairs: Pairs(t.Levels).ToArray())).ToList();
+        var uncovered = candidates.SelectMany(c => c.Pairs).ToHashSet();
+        var chosen = new List<Factors>();
+        while (uncovered.Count > 0)
+        {
+            var best = candidates[0]; int bestCount = -1;
+            foreach (var c in candidates)
+            {
+                int count = c.Pairs.Count(uncovered.Contains);
+                if (count > bestCount) { best = c; bestCount = count; }
+            }
+            chosen.Add(best.Factors);
+            uncovered.ExceptWith(best.Pairs);
+        }
+        return chosen;
     }
 }
