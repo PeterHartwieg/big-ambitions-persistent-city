@@ -20,7 +20,8 @@ public sealed class ExpansionPersistenceTests
 
     private static JObject Legacy(CityState city)
     {
-        var root=SaveWire.Parse(DevelopmentChain.Write(city)); root["Schema"]=1;
+        // An early development shape, labelled with a number older builds wrote (the schema is held at 1 until release).
+        var root=SaveWire.Parse(DevelopmentChain.Write(city)); root["Schema"]=2;
         Keep(root,"Schema RloVersion PopulationKey Seed Minute Places Citizens");
         foreach(var token in root["Citizens"]!.Cast<JObject>())
             Keep(token,"Identity HomeId DayPlaceId ShopId LeisureId Preferences Phase Activity PlaceId DestinationId DestinationActivity Journey DepartureMinute NextEventMinute ActivityUntilMinute CompletedJourneys MissedActivities RecentVisits");

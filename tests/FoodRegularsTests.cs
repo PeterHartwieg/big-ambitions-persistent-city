@@ -163,7 +163,7 @@ public sealed partial class FoodMemoryTests
         city = Reload(city, market, paths);
         string before = DevelopmentChain.Write(city.State);
         var dump = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId)!);
-        Assert.True((bool)dump["Regular"]!); Assert.True((bool)dump["Represented"]!); Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
+        Assert.True((bool)dump["Regular"]!); Assert.False((bool)dump["Represented"]!); // visitors are persons, not represented consumers Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
         Assert.Equal(1, (int)dump["OwnShopRegulars"]![0]!["Regulars"]!);
         var refused = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, _ => false)!);
         Assert.False((bool)refused["Regular"]!);
