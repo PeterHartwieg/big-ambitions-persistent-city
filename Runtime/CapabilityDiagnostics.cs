@@ -14,11 +14,17 @@ namespace PersistentCity.Runtime
     {
         private readonly CapabilityReport capabilityReport = new CapabilityReport();
         private RloReadResult? lastRloRead;
+        /// <summary>F8d: the running city is inside a transient RLO window (set by the periodic check).</summary>
+        private bool rloTransient;
 
         private void CapabilityCommand(string action, string detail)
         {
             if (action == "status" && detail.Length == 0)
-            { Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(ReadCapabilityInputs()), Application.version)); return; }
+            {
+                var inputs = ReadCapabilityInputs();
+                Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(inputs), Application.version, CapabilitySnapshot.Context(inputs)));
+                return;
+            }
             if (action == "show" && NativeCapabilities.TryParse(detail, out var id))
             { Debug.Log("[Persistent City] capability show (read-only)\n" + capabilityReport.Show(CapabilitySnapshot.Build(ReadCapabilityInputs()), id)); return; }
             Debug.LogWarning("[Persistent City] Unknown command. Use: pc capability status | pc capability show <id> ("
@@ -50,7 +56,7 @@ namespace PersistentCity.Runtime
                 ClockCityActive = NativeCityClock.Active, ClockFactor = NativeCityClock.Factor,
                 DrivenRidesLoaded = AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetType("DrivenRides.Ride", false) != null),
                 DrivenRidesCoordinated = NativeCityClock.CoordinatesDrivenRides,
-                RloReason = rloRead == null ? DonorReadReason.NotRead : DonorReason(rloRead), RloMessage = rloRead?.Message ?? "",
+                RloReason = rloRead == null ? DonorReadReason.NotRead : DonorReason(rloRead), RloMessage = rloRead?.Message ?? "", RloTransient = rloTransient,
                 ResearchDialogInstalled = ResearchAgencyDialog.Installed, ResearchDialogStatus = ResearchAgencyDialog.Status,
                 ResearchBillingInstalled = ResearchBilling.Installed, ResearchBillingStatus = ResearchBilling.Status,
                 ResearchMessagesPassed = ResearchMessages.ContractPassed, ResearchMessagesStatus = ResearchMessages.Status,
@@ -65,13 +71,26 @@ namespace PersistentCity.Runtime
             };
         }
 
-        private static DonorReadReason DonorReason(RloReadResult read) => read.Status switch
+        private static DonorReadReason DonorReason(RloReadResult read) => read.Reason;
+
+        /// <summary>F8d (D7): the activation Player.log line, once per load. Builds the same on-request snapshot.</summary>
+        private string CapabilityActivationLine()
         {
-            RloReadStatus.Ready => DonorReadReason.Ready,
-            RloReadStatus.MissingDependency => DonorReadReason.Missing,
-            RloReadStatus.Incompatible => DonorReadReason.Incompatible,
-            _ => DonorReadReason.NotReady,
-        };
+            var registry = CapabilitySnapshot.Build(ReadCapabilityInputs());
+            var text = new System.Text.StringBuilder("Persistent City capabilities not active at activation (game ").Append(Application.version).Append("): ");
+            int listed = 0;
+            foreach (var definition in NativeCapabilities.All)
+            {
+                var state = registry.State(definition.Id);
+                if (state == CapabilityState.Active) continue;
+                if (listed++ > 0) text.Append("; ");
+                text.Append(definition.Name).Append(' ').Append(CapabilityReport.StateWord(state));
+                var reason = registry.Reason(definition.Id);
+                if (reason != null) text.Append(": ").Append(reason.Replace('\n', ' '));
+            }
+            if (listed == 0) text.Append("none");
+            return text.Append(". Details: pc capability status.").ToString();
+        }
 
         private static bool PatchedBy(string owner, string type, string method)
         {

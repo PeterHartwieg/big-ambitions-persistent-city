@@ -255,7 +255,7 @@ public sealed class CapabilityReportTests
         output.WriteLine(line);
         string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
         if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
-        Assert.Contains("rlo.donor required off: Flare is off", status);
+        Assert.Contains("rlo.donor required off: transient (Off): Flare is off", status);
         PerfGate.Under(times[Samples * 95 / 100], 5, "F8b command p95");
     }
 }

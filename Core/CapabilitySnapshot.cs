@@ -9,6 +9,25 @@ namespace PersistentCity.Core
     /// <summary>The last RLO donor read, by reason class. NotReady is an unclassified not-ready answer; it stops as today.</summary>
     public enum DonorReadReason : byte { NotRead, Ready, Missing, Off, NotYet, Refreshing, Shared, Failed, Incompatible, NotReady }
 
+    /// <summary>F8d (D6 option B): what a running city does with one periodic or save-time donor read.</summary>
+    public enum DonorContinuity : byte { Match, Different, Transient, Unsupported }
+
+    public static class DonorReads
+    {
+        /// <summary>Off, NotYet and Refreshing say nothing about the saved catalogue, so a running city continues on it.</summary>
+        public static bool Transient(DonorReadReason reason)
+            => reason == DonorReadReason.Off || reason == DonorReadReason.NotYet || reason == DonorReadReason.Refreshing;
+
+        /// <summary>The class of a read that is not Ready. Shared, Failed, Incompatible, Missing and any unclassified
+        /// not-ready answer stop, as before F8d. A Ready read is Match or Different by the identity comparison.</summary>
+        public static DonorContinuity Continuity(DonorReadReason reason)
+            => reason == DonorReadReason.Ready ? throw new ArgumentException("A Ready read is classed by matching the population.", nameof(reason))
+                : Transient(reason) ? DonorContinuity.Transient : DonorContinuity.Unsupported;
+
+        /// <summary>A running city may continue (and save) after this read.</summary>
+        public static bool Continues(DonorContinuity continuity) => continuity == DonorContinuity.Match || continuity == DonorContinuity.Transient;
+    }
+
     /// <summary>Plain copies of the existing Runtime status members (CapabilityDiagnostics fills them on request).</summary>
     public sealed class CapabilityInputs
     {
@@ -49,6 +68,8 @@ namespace PersistentCity.Core
 
         public DonorReadReason RloReason { get; set; }
         public string RloMessage { get; set; } = "";
+        /// <summary>F8d: the running city is inside a transient RLO window.</summary>
+        public bool RloTransient { get; set; }
 
         public bool ResearchDialogInstalled { get; set; }
         public string ResearchDialogStatus { get; set; } = "";
@@ -118,6 +139,7 @@ namespace PersistentCity.Core
             else if (input.CityFailed) Off(r, CapabilityId.ClockDrivenRides, stopped);
 
             DetectDonor(r, input);
+            DetectRloReads(r, input);
 
             Research(r, CapabilityId.ResearchDialog, input.ResearchDialogInstalled, input.ResearchDialogStatus);
             Research(r, CapabilityId.ResearchBilling, input.ResearchBillingInstalled, input.ResearchBillingStatus);
@@ -155,9 +177,53 @@ namespace PersistentCity.Core
                 case DonorReadReason.NotRead: return;
                 case DonorReadReason.Ready: r.Detect(CapabilityId.RloDonor, CapabilityState.Active); return;
                 case DonorReadReason.Missing: r.Detect(CapabilityId.RloDonor, CapabilityState.Absent, message); return;
-                default: Off(r, CapabilityId.RloDonor, message); return;
+                default:
+                    if (!DonorReads.Transient(input.RloReason)) { Off(r, CapabilityId.RloDonor, message); return; }
+                    Off(r, CapabilityId.RloDonor, "transient (" + input.RloReason + "): " + message + (input.CityActive
+                        ? " The city continues and saves on its saved donor catalogue."
+                        : " Persistent City waits for RLO before it starts."));
+                    return;
             }
         }
+
+        /// <summary>F8d: reservations and road speeds read the same CityApi status family as the donor read; their state
+        /// follows the last donor answer (no extra RLO read). Off is a complete answer for both.</summary>
+        private static void DetectRloReads(CapabilityRegistry r, CapabilityInputs input)
+        {
+            var reason = input.RloReason;
+            if (reason == DonorReadReason.NotRead) return;
+            if (reason == DonorReadReason.Missing)
+            {
+                r.Detect(CapabilityId.RloReservations, CapabilityState.Absent, "RLO is not loaded");
+                r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Absent, "RLO is not loaded; road speeds are native");
+                return;
+            }
+            if (reason == DonorReadReason.Ready || reason == DonorReadReason.Off)
+            {
+                // Off: RLO reserves nobody and slows no lane, so bodies continue and roads keep their native limits.
+                r.Detect(CapabilityId.RloReservations, CapabilityState.Active);
+                r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Active);
+                return;
+            }
+            if (DonorReads.Transient(reason))
+            {
+                Off(r, CapabilityId.RloReservations, "RLO " + reason + ": everyone is reserved, so visible bodies pause until RLO answers");
+                Off(r, CapabilityId.RloRoadSpeeds, "RLO " + reason + ": " + RoadSpeedRefusalEffect);
+                return;
+            }
+            Off(r, CapabilityId.RloReservations, "RLO " + reason + ": the reservation guard stops and reserves everyone");
+            Off(r, CapabilityId.RloRoadSpeeds, "RLO " + reason + ": " + RoadSpeedRefusalEffect);
+        }
+
+        /// <summary>F8d record (docs/checks/f8bg.md, F8d): a refused road-speed capture throws from NativeRoadSpeeds.Refresh
+        /// inside RoadRoutes.Prepare, which UpdateCity calls each frame, so the runtime stops with the payload retained.</summary>
+        public const string RoadSpeedRefusalEffect = "road-speed capture is refused; road preparation throws and the runtime stops (payload retained)";
+
+        /// <summary>The report header: "city running" while a city runs (the start status is then moot), "start waiting"
+        /// while a transient RLO answer holds the start; otherwise null (the registry's own start status).</summary>
+        public static string? Context(CapabilityInputs input)
+            => input.CityActive ? "city running"
+                : DonorReads.Transient(input.RloReason) && !input.CityFailed ? "start waiting (rlo.donor transient)" : null;
 
         private static void Research(CapabilityRegistry r, CapabilityId id, bool installed, string status)
         {

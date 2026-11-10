@@ -288,29 +288,37 @@ namespace PersistentCity.Core
         private readonly StringBuilder text = new StringBuilder(2048);
         private CapabilityRegistry? cachedRegistry;
         private long cachedRevision = -1;
-        private string? cachedContext, cachedStatus;
+        private string? cachedContext, cachedHeader, cachedStatus;
 
         /// <summary><c>pc capability status</c>: one header line and one line per capability. Reused while neither the
         /// registry revision nor the context changes.</summary>
-        public string Status(CapabilityRegistry registry, string gameVersion)
+        public string Status(CapabilityRegistry registry, string gameVersion) => Status(registry, gameVersion, null);
+
+        /// <summary>F8d: <paramref name="header"/>, when given, replaces the start status in the first line (a running city,
+        /// or a start held by a transient RLO answer).</summary>
+        public string Status(CapabilityRegistry registry, string gameVersion, string? header)
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
             gameVersion ??= "";
             if (cachedStatus != null && ReferenceEquals(registry, cachedRegistry) && registry.Revision == cachedRevision
-                && string.Equals(gameVersion, cachedContext, StringComparison.Ordinal))
+                && string.Equals(gameVersion, cachedContext, StringComparison.Ordinal) && string.Equals(header, cachedHeader, StringComparison.Ordinal))
                 return cachedStatus;
             text.Clear();
-            var start = registry.Start();
-            text.Append("Persistent City capabilities (game ").Append(OneLine(gameVersion)).Append("): start ")
-                .Append(StartWord(start.Status));
-            if (start.Capability.HasValue) text.Append(" (").Append(NativeCapabilities.Get(start.Capability.Value).Name).Append(')');
+            text.Append("Persistent City capabilities (game ").Append(OneLine(gameVersion)).Append("): ");
+            if (header != null) text.Append(OneLine(header));
+            else
+            {
+                var start = registry.Start();
+                text.Append("start ").Append(StartWord(start.Status));
+                if (start.Capability.HasValue) text.Append(" (").Append(NativeCapabilities.Get(start.Capability.Value).Name).Append(')');
+            }
             text.Append('\n');
             foreach (var definition in NativeCapabilities.All)
             {
                 Line(registry, definition);
                 text.Append('\n');
             }
-            cachedRegistry = registry; cachedRevision = registry.Revision; cachedContext = gameVersion;
+            cachedRegistry = registry; cachedRevision = registry.Revision; cachedContext = gameVersion; cachedHeader = header;
             return cachedStatus = text.ToString();
         }
 
