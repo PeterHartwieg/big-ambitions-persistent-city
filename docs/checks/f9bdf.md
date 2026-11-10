@@ -52,7 +52,15 @@ Refs [#96](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues
 
 ## Offline validation
 
-Filled in below after the final runs.
+At this branch's head (after the merge with `f5e2e0f`), on the PC:
+
+- Required build: passed, DLL SHA-256 `f72508261b3ce3c5b83400610ab60ad5d5cb8ef56b4683e4a1bfd7c11616e85e`. No product file differs from the base (`git diff origin/codex/persistent-city -- Core Runtime Persistence Compatibility config` is empty), so this is the base's DLL; before the merge it was `a7509204…67b1cd` with and without `--provenance`.
+- `dotnet test tests/PersistentCity.Tests.csproj` (required command, foreground): **4,003 passed**, 0 failed, 0 skipped, 7 min 30 s. The current-writer golden pins pass unchanged. Before the base merge the same run failed two `NativeCapabilityTests.CurrentWriterGoldenHashIsUnchanged` cases (they pinned writer 35 against X3's schema 1 at `f3a5210`); the base fixed that test in F9g #190, and this branch does not touch it.
+- `python -m unittest discover -s tools/acceptance -p test_*.py`: **86 passed** (F9a's `test_run.py` 54 with the reworked movement tests, F9b's `test_build_fingerprints.py` 12 including three real builds against the installed game, F9d's `test_native_ledger.py` 20), 62 s.
+- `dotnet test … --filter FullyQualifiedName~F9IntegratedCity`: 45 passed (F9c's 27 and F9f's 18: eight arms per size and two facts), 45–47 s with no other test run on the machine.
+- Real runner run `quick --only provenance,test-build,city-s`: `city-s` **pass, 27 passed** (F9c's 17 `Size=city-s` facts and F9f's 10). With F9a's `Category=` filter it matched nothing. `nativeEvidence` assessed at fingerprint `steam-1331550-build-25482473`, batch due, nine required rig checks; summary `incomplete` (omitted stages and the rig checks). `acceptance.json` SHA-256 `42d8f8cd86f39548de3604ba98bb7b14d94e954298174343c02ca066523f888c`.
+- `python tools/acceptance/rig_manifest.py`: the order above, 0.14 s.
+- `git diff --check` and `tools/docs-links/check.py` pass. No game, rig, ModsLocal or bridge was used; the installed game's DLLs were only read and hashed.
 
 ## In-game checks for the next batched rig
 
