@@ -109,3 +109,7 @@ Fixture for all: a disposable FT city on the owned rig with Persistent City, RLO
 10. **Performance** (plan check 11; F8b, F8d, F8e; locked-PC). Steps: in a clean RIG-PERF-UNION window at default caps, run `pc capability status` once per game minute for 30 game minutes; record the activation scan line (`hook conflicts at activation ... scan <ms>`) from the load log. Expected: mod-work p95 < 5 ms; every mod-work sample >= 30 ms listed with its component; whole-frame metrics reported separately; activation scan time recorded. **Existing:** RIG-PERF-UNION `perf_window`, FT `console`.
 
 Plan check 10 (foreign prefix on checkout) belongs to F8h and is not listed. Rig capability requests (PeterHartwieg/big-ambitions-agent-rig): RIG-FAULT (checks 5-7), RIG-PCSAVE (2, 6-8), RIG-RLOTOGGLE (8).
+
+## Rig check 1 ? 10 November 2026
+
+Verified by rig at `b3e5a910`: city running, all five required capabilities active; twelve optional active and two off with reasons. [Small F8h input](f8h-check1-modpack-owners.json) records all 49 targets, foreign owner classes, activation excerpts and the full isolated DLL set. [Batched report](rig-2026-11-10-results.md).
