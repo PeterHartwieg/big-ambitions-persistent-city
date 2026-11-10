@@ -54,7 +54,7 @@ public sealed class WeightedFoodChoiceTests
             Offers=new(){new FoodOffer {ProductId=FoodProducts.Croissant,Price=Money.FromCents(100),Units=100}}}).ToArray()};
         // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
         if(representation>1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
-        var planner=new Planner(); var city=new CitySimulator(state,planner);city.AttachFoodMarket(market);
+        var planner=new Planner(); var city=new CitySimulator(state,planner);city.AttachFoodMarket(market,LegacyFoodChoice.Settings());
         state.Food.ChoiceStartsDay=active?1:2;
         return (city,market,planner);
     }

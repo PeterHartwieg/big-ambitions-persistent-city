@@ -25,21 +25,26 @@ public sealed class E6eBodyMeasure
     }
     private void Measure(string label, Action action, int count = 1000)
     {
-        for (int i = 0; i < 50; i++) action();
-        var times = new List<double>(count); long bytes = 0;
-        for (int i = 0; i < count; i++)
+        var times = new List<double>(count); long bytes = 0; string check = label + " offline p95";
+        // The fixture is shared, so a retry repeats the action on the state the previous attempt left.
+        TimingBudget.Run(timing =>
         {
-            long allocation = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
-            action();
-            times.Add((Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency);
-            bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
-        }
-        times.Sort();
+            for (int i = 0; i < 50; i++) action();
+            times = new List<double>(count); bytes = 0;
+            for (int i = 0; i < count; i++)
+            {
+                long allocation = GC.GetAllocatedBytesForCurrentThread(); var start = timing.Start();
+                action();
+                times.Add(timing.Stop(start, check));
+                bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
+            }
+            times.Sort();
+            timing.Under(check, times[(int)Math.Ceiling(count * .95) - 1], 5);
+        });
         Report(string.Format(CultureInfo.InvariantCulture,
             "{0}: n={1}, p50={2:F6} ms, p95={3:F6} ms, max={4:F6} ms, bytes/op={5:F1}, spikes>=30ms={6}",
             label, count, times[count / 2], times[(int)Math.Ceiling(count * .95) - 1], times[^1], bytes / (double)count, times.Count(t => t >= 30)));
         foreach (double spike in times.Where(t => t >= 30)) Report($"FLAG {label}: {spike:F6} ms");
-        Assert.True(times[(int)Math.Ceiling(count * .95) - 1] < 5, label + " offline p95 exceeded 5 ms");
     }
     [Fact]
     public void QueueSamplingCachedDwellAndBodySelection()

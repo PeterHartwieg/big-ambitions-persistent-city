@@ -238,7 +238,7 @@ public sealed class FoodCampaignAwarenessTests
         source.Publish(Snapshot(observationHour,ids.Select(id=>Business(id,Campaign())).ToArray()),state.Food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
         // Production uses the same universal rule; replay retains the captured active modifier.
         source=Source(state.Food);
-        var city=new CitySimulator(state,planner);city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));city.AttachFoodMarket(market,campaign:source);city.InspectFoodAwareness("r");
+        var city=new CitySimulator(state,planner);city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));city.AttachFoodMarket(market,LegacyFoodChoice.Settings(),campaign:source);city.InspectFoodAwareness("r");
         var meal=state.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);var decision=meal.Decision!;
         Assert.Equal(WeatherSample.Rain,decision.Weather);Assert.Equal(1.3,decision.WeatherTravelMultiplier);
         Assert.InRange(decision.Awareness!.Union.Count,1,32);Assert.InRange(decision.Shops.Count,0,8);
