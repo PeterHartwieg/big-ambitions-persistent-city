@@ -33,4 +33,15 @@ The first version found each stall's game minute by scanning every frame of its 
 
 All tests passed before and after. A test checks that the input export is left unchanged.
 
-The unit suite runs a 10-minute session (`EndToEndTests.test_ten_minute_join_runs_in_seconds`); all 75 perf-gate tests take about 6 s.
+## After review round 1
+
+The fixture now writes upstream PresentMon 2.x columns (`CPUStartQPC`, `FrameTime`, `DisplayLatency`, `DisplayedTime` and the rest), 227.4 MB for the same 7-hour session. One run, same machine:
+
+| Step | Time |
+| --- | ---: |
+| CSV parse (`present.read_trace`, two passes: rows, then frame closes and displayed intervals) | 10.25 s |
+| Whole `attribute()` | 15.66 s |
+
+Result: offset −37.100 ms (2.x rows close at the next frame's CPU start, 0.1 ms after the probe frame starts), 99.90 % of clean frames joined, established, 6,307 stalls (3,157 presented). The first version of the fix took the window's own p50 once per stall, a sort of the whole window each time. A 0.5-hour profile showed 6.7 s of 8.5 s in that sort. Taking it once per window brought the 7-hour run from over 10 minutes (stopped) to the 15.66 s above. Reference selection now runs F4a's `analyze_window` once per window, which is not visible in this one-window run.
+
+The unit suite runs a 10-minute session (`EndToEndTests.test_ten_minute_join_runs_in_seconds`; its time limit is checked only with `PC_PERF_ASSERTS=1`); all 89 perf-gate tests take about 12 s.

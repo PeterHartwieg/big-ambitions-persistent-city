@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -79,9 +80,54 @@ class TraceParsingTests(unittest.TestCase):
         self.assertEqual(present.bound_of(p, 16.7), 'cpu')
         self.assertEqual(present.bound_of(present.Present(0.0, gpu_busy_ms=15.0), 16.7), 'gpu')
 
+    def test_presentmon_2_display_stall_survives_ingestion(self):
+        # The sample is upstream 2.x output (CPUStartQPC, FrameTime, DisplayedTime); frame 6 took 100 ms.
+        trace = present.read_trace(PRESENT_DIR / 'presentmon2-sample.csv', FREQ)
+        self.assertEqual((trace.schema, trace.display_source), ('2.x', 'DisplayedTime'))
+        intervals = [present.displayed_interval(trace, p) for p in range(len(trace.presents))]
+        self.assertIsNone(intervals[0])
+        self.assertAlmostEqual(intervals[6], 100.0, delta=1.0)
+        self.assertTrue(all(abs(v - 16.667) < 1.5 for i, v in enumerate(intervals) if i not in (0, 6)), intervals)
+
+    def test_presentmon_2_displayed_time_is_the_interval_after_its_frame(self):
+        # CPU starts every 16 ms but frame 1 stayed on screen 100 ms: the interval ending at frame 2's display is 100 ms.
+        header = ['Application', 'ProcessID', 'CPUStartTime', 'FrameTime', 'CPUBusy', 'CPUWait', 'GPUBusy', 'DisplayedTime']
+        body = [['g', '1', str(16.0 * i), '16.0', '10.0', '6.0', '5.0', '100.0' if i == 1 else '16.0'] for i in range(5)]
+        trace = present.parse_rows([header] + body)
+        self.assertEqual(trace.clock, 'trace-start')
+        self.assertEqual([p.t_ms for p in trace.presents], [16.0, 32.0, 48.0, 64.0, 80.0])  # ms, closing at CPUStart + FrameTime
+        self.assertEqual([present.displayed_interval(trace, p) for p in range(5)], [None, 16.0, 100.0, 16.0, 16.0])
+        self.assertEqual((trace.presents[2].cpu_busy_ms, trace.presents[2].cpu_wait_ms, trace.presents[2].gpu_busy_ms), (10.0, 6.0, 5.0))
+        # DisplayedTime NA: not shown, and the next shown frame's interval runs from the last shown frame.
+        body[2][-1] = 'NA'
+        trace = present.parse_rows([header] + body)
+        self.assertFalse(trace.presents[2].displayed)
+        self.assertIsNone(present.displayed_interval(trace, 2))
+        self.assertEqual(present.displayed_interval(trace, 3), 100.0)
+
+    def test_trace_without_display_timing_gives_no_presented_series(self):
+        header = ['Application', 'ProcessID', 'CPUStartTime', 'FrameTime', 'CPUBusy']
+        trace = present.parse_rows([header] + [['g', '1', str(16.0 * i), '16.0', '10.0'] for i in range(5)])
+        self.assertIsNone(trace.display_source)
+        self.assertTrue(all(present.displayed_interval(trace, p) is None for p in range(5)))
+
+    def test_cpu_start_rows_own_their_frame_evidence(self):
+        # Varying frame lengths and a distinct GPU busy per frame: frame i must join row i, not row i + 1.
+        stalls = {i: 20.0 + (i * 7) % 40 for i in range(0, 300, 3)}
+        gpu = {i: 1.0 + i * 0.01 for i in range(300)}
+        rows, presents = st.session(300, stalls=stalls, gpu_busy=gpu)
+        trace = trace_of(st.trace_rows(presents))
+        probe = attribute.frame_rows(dict(frames=rows, qpc_frequency=FREQ))
+        frames = present.Frames([f['qpc_ms'] for f in probe], [f['whole'] for f in probe])
+        offset, _, _ = present.estimate_offset(frames, trace, hint_ms=0.0)
+        joined = present.join(frames, trace, offset)
+        self.assertEqual(joined, list(range(300)))
+        for i in range(300):
+            self.assertAlmostEqual(trace.presents[joined[i]].gpu_busy_ms, gpu[i], places=3)
+
     def test_presentmon_1_without_gpu_columns_is_unknown(self):
         trace = present.read_trace(PRESENT_DIR / 'presentmon1-sample.csv')
-        self.assertEqual(trace.clock, 'seconds')
+        self.assertEqual(trace.clock, 'trace-start')
         self.assertFalse(trace.has('gpu_busy'))
         self.assertTrue(all(present.bound_of(p, 16.7) == present.UNKNOWN for p in trace.presents))
         self.assertFalse(trace.presents[5].displayed)  # Dropped=1
@@ -151,15 +197,39 @@ class JoinTests(unittest.TestCase):
     def test_window_block_reports_join_fraction_and_unknown_gpu(self):
         missing = set(range(0, 600, 50))  # 12 of 600 = 2 %
         rows, presents, trace, probe = joined_session(missing=missing, version=2, stalls=self.STALLS)
-        _, block = attribute.join_window(probe, trace, 0.0, 'hint')
+        _, block, _ = attribute.join_window(probe, trace, 0.0, 'hint')
         self.assertEqual(block['joined'], 588)
         self.assertFalse(block['established'], 'G3 needs >= 99 % of probe frames joined')
         _, presents_ok = st.session(600, stalls=self.STALLS)
         trace_ok = trace_of(st.trace_rows(presents_ok, 2, gpu=False))
-        _, block = attribute.join_window(probe, trace_ok, 0.0, 'hint')
+        _, block, _ = attribute.join_window(probe, trace_ok, 0.0, 'hint')
         self.assertTrue(block['established'])
-        self.assertEqual((block['gpu_busy'], block['cpu_wait']), ('unknown', 'unknown'))
+        self.assertEqual((block['gpu_busy'], block['cpu_wait']), ('unknown', 'reported'))  # --no_track_gpu keeps CPUBusy/CPUWait
         self.assertEqual(block['bound']['unknown'], block['presented_intervals'])
+
+    def test_flat_cadence_keeps_the_supplied_offset(self):
+        # 18,000 frames of exactly 16 ms on the same QPC clock: every whole-frame shift agrees equally well.
+        starts = [5000.0 + 16.0 * i for i in range(18000)]
+        frames = present.Frames(starts, [16.0] * 18000)
+        trace = present.Trace([present.Present(s + 16.0) for s in starts], 'qpc', {}, display_source='DisplayedTime')
+        offset, _, _ = present.estimate_offset(frames, trace, hint_ms=0.0)
+        self.assertAlmostEqual(offset, 0.0, delta=0.5)
+        self.assertEqual(present.join(frames, trace, offset), list(range(18000)))
+
+    def test_flat_prefix_keeps_the_anchored_offset(self):
+        # Three distinctive long frames after frame 10,000 fix the offset; the flat prefix must not move it.
+        wholes = [16.0] * 18000
+        for i in (10500, 12000, 15000):
+            wholes[i] = 120.0 + i / 1000.0
+        starts, t = [], 5000.0
+        for w in wholes:
+            starts.append(t)
+            t += w
+        frames = present.Frames(starts, wholes)
+        trace = present.Trace([present.Present(s + w + 30.0) for s, w in zip(starts, wholes)], 'qpc', {}, display_source='DisplayedTime')
+        offset, source, _ = present.estimate_offset(frames, trace, hint_ms=0.0)
+        self.assertEqual(source, 'estimated')
+        self.assertAlmostEqual(offset, -30.0, delta=0.5)
 
     def test_unrelated_trace_without_hint_is_not_joined(self):
         _, _, _, probe = joined_session(stalls=self.STALLS)
@@ -276,13 +346,27 @@ class RloLineTests(unittest.TestCase):
 
     def test_line_attaches_only_to_a_unique_frame_of_matching_duration(self):
         frames = {'w': [frame(1, whole=16.0), frame(2, whole=236.4), frame(3, whole=140.2), frame(4, whole=139.6)]}
-        attached, unmatched = attribute.attach_rlo([dict(line=RLO_LINES[1]), dict(line=RLO_LINES[0])], frames)
+        attached, unmatched = attribute.attach_rlo([dict(line=RLO_LINES[1], window='w'), dict(line=RLO_LINES[0], window='w')], frames)
         self.assertEqual(list(attached), [('w', 2)])
         self.assertEqual(unmatched[0]['candidates'], 2)  # 140 ms matches frames 3 and 4: attached to neither
         attached, _ = attribute.attach_rlo([dict(line=RLO_LINES[0], first_frame=4, last_frame=4)], frames)
         self.assertEqual(list(attached), [('w', 4)])
         attached, _ = attribute.attach_rlo([dict(line=RLO_LINES[0], window='w', frame=3)], frames)
         self.assertEqual(list(attached), [('w', 3)])
+
+    def test_unscoped_player_log_line_is_context_only(self):
+        # A bare Player.log line may describe a frame outside every window: it never attaches, even to a unique match.
+        frames = {'w': [frame(1, whole=16.0), frame(2, whole=236.4)]}
+        attached, unmatched = attribute.attach_rlo([dict(line=RLO_LINES[1])], frames)
+        self.assertEqual(attached, {})
+        self.assertEqual(unmatched[0]['reason'], 'no window or frame range: context only')
+
+    def test_diagnostic_frames_are_rival_candidates(self):
+        warm = dict(frame(3, whole=236.0), clean=False)
+        frames = {'w': [frame(1, whole=16.0), frame(2, whole=236.4), warm]}
+        attached, unmatched = attribute.attach_rlo([dict(line=RLO_LINES[1], window='w')], frames)
+        self.assertEqual(attached, {})
+        self.assertEqual(unmatched[0]['candidates'], 2)
 
 
 class Fix128Tests(unittest.TestCase):
@@ -409,6 +493,73 @@ class EndToEndTests(unittest.TestCase):
         enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace_of(st.trace_rows(st.session(100)[1]))})
         self.assertFalse(report['presentation']['c']['established'])
         self.assertEqual(enriched['windows'][0]['presented_ms'], w['presented_ms'])  # untouched
+        # The supplied trace could not be joined: the receipt fails, so the existing series cannot pass P1.
+        self.assertEqual(enriched['windows'][0]['receipts']['presentation_trace'], 'fail')
+        result = analyze.analyze([enriched], CONTRACT)['windows'][0]
+        self.assertFalse(result['valid'])
+        self.assertIn('receipt failed: presentation_trace', result['invalid_reasons'])
+
+    def test_offset_failure_fails_the_presentation_receipt(self):
+        crow, _ = st.session(18000)
+        w = window_with('c', crow)
+        _, other = st.session(600, seed=99)
+        trace = present.parse_rows(st.trace_rows(other, 1, seconds_origin_ms=0.0))  # unrelated, no shared clock
+        enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace})
+        self.assertFalse(report['presentation']['c']['established'])
+        self.assertIn('clock offset not established', report['presentation']['c']['reason'])
+        self.assertEqual(enriched['windows'][0]['receipts']['presentation_trace'], 'fail')
+        self.assertFalse(analyze.analyze([enriched], CONTRACT)['windows'][0]['valid'])
+
+    def test_unmatched_reference_gives_no_reference_rate_or_p50(self):
+        for change in (dict(checkpoint_minute=1200), dict(game_span_minutes=180.0), dict(reference_pace_ratio=3.0),
+                       dict(clean_real_seconds=100.0), dict(aborted=True)):
+            with self.subTest(change):
+                export, traces = self.pair({100: 300.0, 5000: 60.0}, {7000: 62.0}, cand_mod={100: 280.0})
+                export['windows'][1].update(change)
+                _, report = attribute.attribute(export, traces)
+                sixty = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 6000)
+                self.assertNotIn('reference-rate', sixty['classes'])
+                self.assertIsNone(sixty['baseline_ms'])
+                self.assertTrue(sixty['baseline_source'].startswith('none'))
+                # A union of more than half the whole interval is pc-union against any p50.
+                big = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 1100)
+                self.assertIn('pc-union', big['classes'])
+
+    def test_union_that_needs_the_reference_p50_is_unresolved_without_one(self):
+        # 300 ms frame, 145 ms union: 50 % of 300 - 16.7 but not 50 % of 300.
+        export, traces = self.pair({100: 300.0}, {}, cand_mod={100: 145.0})
+        export['windows'][1]['checkpoint_minute'] = 1200
+        _, report = attribute.attribute(export, traces)
+        s = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 1100)
+        self.assertEqual(s['classes'], ['unattributed'])
+        self.assertTrue(s['pc_union'].startswith('unresolved'))
+        export, traces = self.pair({100: 300.0}, {}, cand_mod={100: 145.0})
+        _, report = attribute.attribute(export, traces)
+        s = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 1100)
+        self.assertIn('pc-union', s['classes'])  # against the matched reference p50
+
+    def test_whole_frame_stall_uses_the_joined_present(self):
+        rows, presents = st.session(600, stalls={100: 300.0}, gpu_busy={100: 280.0})
+        w = window_with('c', rows)
+        _, report = attribute.attribute(synthetic.export([w]), {'*': trace_of(st.trace_rows(presents))})
+        whole = next(s for s in report['stalls'] if s['kind'] == 'whole-frame' and s['frame'] == 1100)
+        shown = next(s for s in report['stalls'] if s['kind'] == 'presented' and 1100 in s['frame_numbers'])
+        self.assertIn('gpu-present', shown['classes'])
+        self.assertEqual(whole['classes'], shown['classes'])
+        self.assertEqual((whole['gpu_busy_ms'], whole['bound']), (280.0, 'gpu'))
+
+    def test_interval_spanning_a_diagnostic_frame_is_left_out(self):
+        for flag, version in (('diagnostic', 1), ('warmup', 1), ('diagnostic', 2), ('warmup', 2)):
+            with self.subTest(flag=flag, version=version):
+                rows, presents = st.session(600, stalls={100: 300.0, 200: 120.0, 333: 260.0, 470: 90.0, 555: 75.0}, mod={100: 280.0})
+                rows[100][flag] = True
+                w = window_with('c', rows)
+                trace = trace_of(st.trace_rows(presents, version, dropped={100}, seconds_origin_ms=0.0))  # its present was not shown
+                enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace})
+                self.assertTrue(report['presentation']['c']['established'])
+                self.assertFalse(any(s['kind'] == 'presented' and 1100 in s['frame_numbers'] for s in report['stalls']))
+                self.assertFalse(any(v > 290.0 for v in enriched['windows'][0]['presented_ms']))
+                self.assertEqual(len(enriched['windows'][0]['presented_ms']), 600 - 1 - 2)  # first, dropped 100 and the one spanning it
 
     def test_f4b_probe_rows_with_component_arrays(self):
         rows, presents = st.session(600, stalls={100: 140.0}, mod={100: 120.0})
@@ -423,6 +574,25 @@ class EndToEndTests(unittest.TestCase):
         self.assertTrue(report['presentation']['c']['established'])
         m2 = report['m2'][0]
         self.assertEqual((m2['frame'], m2['component']), (1100, 'AdvancePopulation'))
+
+    def test_zero_filled_advancement_is_not_an_advancement_call(self):
+        # F4b arrays hold 0 for a bound scope that did not run; a spike only in PhysicalPopulation.Update has no advancement fields.
+        rows, presents = st.session(600, stalls={100: 90.0}, mod={100: 70.0})
+        for r in rows:
+            r.pop('components')
+            r['components_ms'] = [0.0, 0.0]
+        rows[100]['components_ms'] = [0.0, 70.0]
+        w = synthetic.window('c')
+        del w['frames']
+        w['probe'] = dict(status=dict(stopwatch_frequency=FREQ, scopes=dict(components=['AdvancePopulation', 'PhysicalPopulation.Update'],
+                                                                             component_unbound=[])), frames=rows)
+        _, report = attribute.attribute(synthetic.export([w]), {'*': trace_of(st.trace_rows(presents))})
+        spike = next(s for s in report['m2'] if s['frame'] == 1100)
+        self.assertEqual(spike['component'], 'PhysicalPopulation.Update')
+        self.assertNotIn('advancement', spike)
+        for s in report['stalls']:
+            if 1100 in s['frame_numbers']:
+                self.assertNotIn('advancement', s)
 
     def test_cli_writes_export_report_and_markdown(self):
         export, traces = self.pair({100: 300.0}, {})
@@ -449,7 +619,8 @@ class EndToEndTests(unittest.TestCase):
         trace = trace_of(st.trace_rows(presents, offset_ms=37.0, missing=missing, dropped=dropped))
         start = time.perf_counter()
         _, report = attribute.attribute(synthetic.export([w]), {'*': trace})
-        self.assertLess(time.perf_counter() - start, 10.0)
+        if os.environ.get('PC_PERF_ASSERTS') == '1':  # wall-clock limits only on request (AGENTS.md)
+            self.assertLess(time.perf_counter() - start, 10.0)
         self.assertTrue(report['presentation']['c']['established'])
 
 

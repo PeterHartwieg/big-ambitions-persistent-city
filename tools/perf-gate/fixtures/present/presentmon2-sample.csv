@@ -1,13 +1,13 @@
-Application,ProcessID,SwapChainAddress,PresentRuntime,SyncInterval,PresentFlags,AllowsTearing,PresentMode,CPUStartQPC,MsBetweenPresents,MsBetweenDisplayChange,MsInPresentAPI,MsUntilDisplayed,MsCPUBusy,MsCPUWait,MsGPUBusy,MsGPUWait
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50161114,NA,NA,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50326343,16.5229,16.5229,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50493445,16.7102,16.7102,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50655817,16.2372,16.2372,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50818393,16.2576,16.2576,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50991482,17.3090,17.3090,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,51162202,17.0720,17.0720,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,51329889,16.7687,16.7687,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,51499612,16.9723,16.9723,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,51666307,16.6695,16.6695,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52864953,119.8646,119.8646,0.2,5.0,10.0000,0.4000,6.5000,1.0
-Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,53035776,17.0823,17.0823,0.2,5.0,10.0000,0.4000,6.5000,1.0
+Application,ProcessID,SwapChainAddress,PresentRuntime,SyncInterval,PresentFlags,AllowsTearing,PresentMode,CPUStartQPC,FrameTime,CPUBusy,CPUWait,GPULatency,GPUTime,GPUBusy,GPUWait,DisplayLatency,DisplayedTime,AnimationError,ClickToPhotonLatency,AllInputToPhotonLatency
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50001044,16.3607,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.9721,16.7308,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50164651,16.8129,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.3422,16.1216,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50332780,16.0986,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.6509,16.3904,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50493766,16.2963,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.9427,17.1045,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50656729,17.0866,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.7509,16.2935,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50827595,16.2584,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.9579,99.9607,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50990179,100.0017,10.0000,0.4000,1.0,6.5000,6.5000,1.0,104.6602,16.1278,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,51990196,16.0711,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.7862,16.4834,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52150907,16.4973,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.1985,16.6370,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52315880,16.6545,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.3382,16.8272,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52482425,16.8763,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.5108,17.1362,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52651188,17.1207,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.7707,17.1207,0.0,NA,NA

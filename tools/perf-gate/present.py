@@ -1,8 +1,14 @@
 """F4c presentation trace ingestion and QPC join (F4 plan, Decision 6).
 
-Reads a PresentMon-class CSV (1.x or 2.x column names) into presents with a time in milliseconds,
-whether the present was displayed, the interval between displayed frames, and GPU busy, CPU busy and
-CPU wait where the trace reports them. A field the trace lacks is None and is reported `unknown`.
+Reads a PresentMon CSV into presents. The two schemas differ and are normalised separately:
+- 1.x (TimeInSeconds or QPCTime, msBetweenDisplayChange, Dropped): the row time is the present, and
+  msBetweenDisplayChange is the displayed interval ending at this row.
+- 2.x (CPUStartQPC, CPUStartQPCTime or CPUStartTime in ms; FrameTime, CPUBusy, CPUWait, GPUBusy,
+  DisplayLatency, DisplayedTime): the row time is the start of the frame's CPU work, the frame closes at
+  CPUStart + FrameTime, and DisplayedTime is how long the frame stayed on screen, so the interval ending
+  at a frame's display is the previous displayed frame's DisplayedTime.
+Each present's time is the time that closes its frame. A field the trace lacks is None and is reported
+`unknown`; a trace without display timing yields no displayed intervals.
 
 The join maps each probe frame to at most one present. Probe frames carry the Stopwatch (QPC) time
 of their start and their whole-frame interval. The trace may use the same QPC clock, seconds from
@@ -29,16 +35,24 @@ MIN_ANCHOR_HITS = 3
 # Refinement tries offsets this many median frames either side, on the first frames of the series.
 REFINE_SHIFTS = 3
 REFINE_SAMPLE = 10000
+# A shift replaces the supplied offset only when its mean interval disagreement is this much lower.
+REFINE_MARGIN_MS, REFINE_MARGIN_FRACTION = 0.05, 0.2
 
-QPC_COLUMNS = ('cpustartqpc', 'timeinqpc', 'qpc')
-SECONDS_COLUMNS = ('timeinseconds', 'cpustarttime')
+QPC_COLUMNS = ('cpustartqpc', 'timeinqpc', 'qpctime', 'qpc')  # QPC ticks
+QPC_MS_COLUMNS = ('cpustartqpctime',)  # QPC converted to ms (PresentMon 2.x --qpc_time_ms)
+SECONDS_COLUMNS = ('timeinseconds',)  # PresentMon 1.x: seconds since recording start
+TRACE_MS_COLUMNS = ('cpustarttime',)  # PresentMon 2.x default: ms since recording start
+FRAME_START_COLUMNS = ('cpustartqpc', 'cpustartqpctime', 'cpustarttime', 'cpustartdatetime')
 DISPLAY_COLUMNS = ('msbetweendisplaychange',)
 PRESENTS_COLUMNS = ('msbetweenpresents',)
-GPU_BUSY_COLUMNS = ('msgpubusy', 'msgpuactive')
-CPU_BUSY_COLUMNS = ('mscpubusy',)
-CPU_WAIT_COLUMNS = ('mscpuwait',)
+FRAME_TIME_COLUMNS = ('frametime',)
+GPU_BUSY_COLUMNS = ('gpubusy', 'msgpubusy', 'msgpuactive')
+CPU_BUSY_COLUMNS = ('cpubusy', 'mscpubusy')
+CPU_WAIT_COLUMNS = ('cpuwait', 'mscpuwait')
 DROPPED_COLUMNS = ('dropped',)
-DISPLAYED_COLUMNS = ('msuntildisplayed', 'displayedtime')
+DISPLAYED_COLUMNS = ('msuntildisplayed',)
+DISPLAYED_TIME_COLUMNS = ('displayedtime',)
+DISPLAY_LATENCY_COLUMNS = ('displaylatency',)
 NOT_A_NUMBER = ('', 'na', 'n/a', 'nan', '-')
 
 
@@ -47,18 +61,23 @@ class TraceError(Exception):
 
 
 class Present:
-    __slots__ = ('t_ms', 'displayed', 'display_ms', 'between_ms', 'gpu_busy_ms', 'cpu_busy_ms', 'cpu_wait_ms')
+    """One trace row. t_ms is the time that closes its frame: the present for PresentMon 1.x, the start of the
+    next frame's CPU work (CPUStart + FrameTime) for 2.x, whose rows start at CPUStart. display_ms is the
+    displayed interval that ends when this frame is shown, None if it was not shown or the trace lacks it."""
+    __slots__ = ('t_ms', 'displayed', 'display_ms', 'between_ms', 'gpu_busy_ms', 'cpu_busy_ms', 'cpu_wait_ms', 'start_ms')
 
-    def __init__(self, t_ms, displayed=True, display_ms=None, between_ms=None, gpu_busy_ms=None, cpu_busy_ms=None, cpu_wait_ms=None):
+    def __init__(self, t_ms, displayed=True, display_ms=None, between_ms=None, gpu_busy_ms=None, cpu_busy_ms=None, cpu_wait_ms=None, start_ms=None):
         self.t_ms, self.displayed, self.display_ms, self.between_ms = t_ms, displayed, display_ms, between_ms
-        self.gpu_busy_ms, self.cpu_busy_ms, self.cpu_wait_ms = gpu_busy_ms, cpu_busy_ms, cpu_wait_ms
+        self.gpu_busy_ms, self.cpu_busy_ms, self.cpu_wait_ms, self.start_ms = gpu_busy_ms, cpu_busy_ms, cpu_wait_ms, start_ms
 
 
 class Trace:
-    def __init__(self, presents, clock, columns):
+    def __init__(self, presents, clock, columns, schema='1.x', display_source=None):
         self.presents = presents
-        self.clock = clock  # 'qpc' or 'seconds'
+        self.clock = clock  # 'qpc' or 'trace-start'
         self.columns = columns  # which optional columns the trace had
+        self.schema = schema  # '1.x' (present times) or '2.x' (frame-start times)
+        self.display_source = display_source  # column the displayed intervals come from, None if the trace has none
         self.times = [p.t_ms for p in presents]
 
     def has(self, field):
@@ -79,9 +98,30 @@ def _num(text):
 
 
 def read_trace(path, qpc_frequency=None, process_id=None, application=None):
-    """Parse a presentation CSV. QPC time columns need qpc_frequency (ticks per second)."""
+    """Parse a presentation CSV. QPC tick columns need qpc_frequency (ticks per second)."""
     with open(path, newline='', encoding='utf-8-sig') as handle:
         return parse_rows(csv.reader(handle), qpc_frequency, process_id, application)
+
+
+def _clock(index, qpc_frequency):
+    """(clock, time column, ms per unit). All PresentMon 2.x time values are milliseconds; QPC columns are ticks."""
+    if 'cpustartdatetime' in index and _pick(index, QPC_COLUMNS + QPC_MS_COLUMNS + TRACE_MS_COLUMNS) is None:
+        raise TraceError('trace has CPUStartDateTime only; record with --qpc_time or --qpc_time_ms')
+    col = _pick(index, QPC_COLUMNS)
+    if col is not None:
+        if not qpc_frequency:
+            raise TraceError('trace has QPC times but no QPC frequency')
+        return 'qpc', col, 1000.0 / qpc_frequency
+    col = _pick(index, QPC_MS_COLUMNS)
+    if col is not None:
+        return 'qpc', col, 1.0
+    col = _pick(index, TRACE_MS_COLUMNS)
+    if col is not None:
+        return 'trace-start', col, 1.0
+    col = _pick(index, SECONDS_COLUMNS)
+    if col is not None:
+        return 'trace-start', col, 1000.0
+    raise TraceError('trace has no time column (' + ', '.join(QPC_COLUMNS + QPC_MS_COLUMNS + TRACE_MS_COLUMNS + SECONDS_COLUMNS) + ')')
 
 
 def parse_rows(rows, qpc_frequency=None, process_id=None, application=None):
@@ -91,22 +131,19 @@ def parse_rows(rows, qpc_frequency=None, process_id=None, application=None):
     except StopIteration:
         raise TraceError('empty trace') from None
     index = {name.strip().lower(): i for i, name in enumerate(header)}
-    qpc_col, sec_col = _pick(index, QPC_COLUMNS), _pick(index, SECONDS_COLUMNS)
-    if qpc_col is not None:
-        if not qpc_frequency:
-            raise TraceError('trace has QPC times but no QPC frequency')
-        clock, time_col, scale = 'qpc', qpc_col, 1000.0 / qpc_frequency
-    elif sec_col is not None:
-        clock, time_col, scale = 'seconds', sec_col, 1000.0
-    else:
-        raise TraceError('trace has no time column (' + ', '.join(QPC_COLUMNS + SECONDS_COLUMNS) + ')')
+    clock, time_col, scale = _clock(index, qpc_frequency)
+    schema = '2.x' if any(n in index for n in FRAME_START_COLUMNS) else '1.x'
     columns = dict(display=_pick(index, DISPLAY_COLUMNS), between=_pick(index, PRESENTS_COLUMNS), gpu_busy=_pick(index, GPU_BUSY_COLUMNS),
                    cpu_busy=_pick(index, CPU_BUSY_COLUMNS), cpu_wait=_pick(index, CPU_WAIT_COLUMNS), dropped=_pick(index, DROPPED_COLUMNS),
-                   displayed=_pick(index, DISPLAYED_COLUMNS))
+                   displayed=_pick(index, DISPLAYED_COLUMNS), frame_time=_pick(index, FRAME_TIME_COLUMNS),
+                   displayed_time=_pick(index, DISPLAYED_TIME_COLUMNS), display_latency=_pick(index, DISPLAY_LATENCY_COLUMNS))
     pid_col, app_col = index.get('processid'), index.get('application')
-    display, between, gpu, cpu_busy, cpu_wait, dropped, displayed = (columns[k] for k in (
-        'display', 'between', 'gpu_busy', 'cpu_busy', 'cpu_wait', 'dropped', 'displayed'))
-    presents = []
+
+    def value(row, key):
+        col = columns[key]
+        return _num(row[col]) if col is not None and col < len(row) else None
+
+    raw = []
     for row in rows:
         if not row:
             continue
@@ -115,26 +152,88 @@ def parse_rows(rows, qpc_frequency=None, process_id=None, application=None):
         if application is not None and app_col is not None and row[app_col].strip().lower() != application.lower():
             continue
         t = _num(row[time_col])
-        if t is None:
-            continue
-        display_ms = _num(row[display]) if display is not None else None
-        if dropped is not None:
-            shown = _num(row[dropped]) in (None, 0.0)
-        elif displayed is not None:
-            shown = _num(row[displayed]) is not None
-        elif display is not None:
+        if t is not None:
+            raw.append((t * scale, row))
+    raw.sort(key=lambda item: item[0])
+    if schema == '2.x':
+        presents, source = _frame_start_presents(raw, columns, value)
+    else:
+        presents, source = _present_time_presents(raw, columns, value)
+    presents.sort(key=lambda p: p.t_ms)
+    columns['display'] = source
+    return Trace(presents, clock, columns, schema, source)
+
+
+def _present_time_presents(raw, columns, value):
+    """PresentMon 1.x: the row time is the present; msBetweenDisplayChange ends at this row's display."""
+    presents = []
+    for t, row in raw:
+        display_ms = value(row, 'display')
+        if columns['dropped'] is not None:
+            shown = value(row, 'dropped') in (None, 0.0)
+        elif columns['displayed'] is not None:
+            shown = value(row, 'displayed') is not None
+        elif columns['display'] is not None:
             shown = display_ms is not None
         else:
             shown = True
         if display_ms is not None and display_ms <= 0:
             display_ms = None  # PresentMon 1.x writes 0 for the first displayed frame
-        presents.append(Present(t * scale, shown, display_ms if shown else None,
-                                _num(row[between]) if between is not None else None,
-                                _num(row[gpu]) if gpu is not None else None,
-                                _num(row[cpu_busy]) if cpu_busy is not None else None,
-                                _num(row[cpu_wait]) if cpu_wait is not None else None))
-    presents.sort(key=lambda p: p.t_ms)
-    return Trace(presents, clock, columns)
+        presents.append(Present(t, shown, display_ms if shown else None, value(row, 'between'), value(row, 'gpu_busy'),
+                                value(row, 'cpu_busy'), value(row, 'cpu_wait')))
+    return presents, 'msBetweenDisplayChange' if columns['display'] is not None else None
+
+
+def _frame_start_presents(raw, columns, value):
+    """PresentMon 2.x: the row time is the start of the frame's CPU work and the frame lasts FrameTime, until the
+    next frame starts. DisplayedTime is how long this frame stayed on screen, so the interval that ends at a
+    frame's display is the previous displayed frame's DisplayedTime; DisplayLatency gives each display time."""
+    has_shown = columns['displayed_time'] is not None or columns['display_latency'] is not None
+    rows = []
+    for k, (start, row) in enumerate(raw):
+        frame_time = value(row, 'frame_time')
+        close = start + frame_time if frame_time is not None else (raw[k + 1][0] if k + 1 < len(raw) else None)
+        if close is None:
+            continue
+        shown_for, latency = value(row, 'displayed_time'), value(row, 'display_latency')
+        if columns['displayed_time'] is not None:
+            shown = shown_for is not None
+        elif columns['display_latency'] is not None:
+            shown = latency is not None
+        else:
+            shown = True
+        rows.append((start, close, shown, shown_for, None if latency is None else start + latency, row))
+    presents, previous = [], None
+    for start, close, shown, shown_for, display_at, row in rows:
+        display_ms = None
+        if shown and previous is not None:
+            _, p_shown_for, p_display_at = previous
+            by_latency = display_at - p_display_at if display_at is not None and p_display_at is not None else None
+            if p_shown_for is not None and (by_latency is None or abs(p_shown_for - by_latency) <= max(2.0, 0.1 * by_latency)):
+                display_ms = p_shown_for
+            elif by_latency is not None:
+                display_ms = by_latency  # a row between the two displays is missing from the trace
+        if display_ms is not None and display_ms <= 0:
+            display_ms = None
+        presents.append(Present(close, shown, display_ms, value(row, 'between'), value(row, 'gpu_busy'), value(row, 'cpu_busy'),
+                                value(row, 'cpu_wait'), start))
+        if shown:
+            previous = (start, shown_for, display_at)
+    if columns['displayed_time'] is not None:
+        source = 'DisplayedTime'
+    elif columns['display_latency'] is not None:
+        source = 'DisplayLatency'
+    elif columns['display'] is not None:
+        source = 'MsBetweenDisplayChange'
+    else:
+        source = None
+    if not has_shown and columns['display'] is not None:
+        # Older 2.x layouts: MsBetweenDisplayChange ends at this row's display, as in 1.x.
+        for p, (_, _, _, _, _, row) in zip(presents, rows):
+            d = value(row, 'display')
+            p.displayed = d is not None
+            p.display_ms = d if d is not None and d > 0 else None
+    return presents, source
 
 
 # ---------------------------------------------------------------- frames
@@ -223,14 +322,16 @@ def refine_offset(frames, trace, offset_ms, shifts=REFINE_SHIFTS, sample=REFINE_
     step = statistics.median(head.wholes)
     times = trace.times
     best = None
-    for k in range(-4 * shifts, 4 * shifts + 1):  # quarter-frame steps, so one lands near the true phase
+    # Quarter-frame steps, so one lands near the true phase. The supplied offset is tried first and kept unless
+    # a shift agrees clearly better: on a flat cadence every whole-frame shift scores the same.
+    for k in sorted(range(-4 * shifts, 4 * shifts + 1), key=abs):
         d = offset_ms + k * step / 4.0
         joined = join(head, trace, d)
         diffs = [min(abs(head.wholes[f] - (times[p] - times[p - 1])), 50.0) for f, p in enumerate(joined) if p and joined[f - 1] == p - 1]
         if len(diffs) < n // 2:
             continue
         score = math.fsum(diffs) / len(diffs)
-        if best is None or score < best[0]:
+        if best is None or score < best[0] - max(REFINE_MARGIN_MS, REFINE_MARGIN_FRACTION * best[0]):
             best = (score, d, joined)
     if best is None:
         return offset_ms
@@ -278,18 +379,11 @@ def bound_of(present, interval_ms):
 
 
 def displayed_interval(trace, p):
-    """Interval in ms between displayed frames that closes at present p, or None if p was not shown."""
+    """Displayed interval in ms that ends when present p is shown, or None if p was not shown or the trace has no
+    display timing. Present or CPU-start gaps are never substituted for it."""
     present = trace.presents[p]
-    if not present.displayed:
-        return None
-    if present.display_ms is not None:
-        return present.display_ms
-    # No display-change column: fall back to the gap since the previous displayed present.
-    q = p - 1
-    while q >= 0 and not trace.presents[q].displayed:
-        q -= 1
-    return None if q < 0 else present.t_ms - trace.presents[q].t_ms
+    return present.display_ms if present.displayed else None
 
 
 def interval_source(trace):
-    return 'display-change' if trace.has('display') else 'between-displayed-presents'
+    return trace.display_source or UNKNOWN
