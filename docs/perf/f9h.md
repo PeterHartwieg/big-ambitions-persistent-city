@@ -25,6 +25,25 @@ The `wait` column includes the `PC_DOTNET_WAIT` script's own start-up (about 0.5
 
 **Load from other runs.** At the start no `dotnet` or `testhost` process was running and CPU load was 15%. Before `movement` another session's test run on this PC (`dotnet` ×2 and `testhost`) was active; the runner waited 135 s for it, then ran. That run may have shared the CPU with later stages after its test host exited; the stage times are a single run on a shared machine, not a benchmark.
 
+## Same-head re-record at `b3e5a910`
+
+Run `20261110T201123Z-b3e5a910`, 10 Nov 2026 20:11–20:34 UTC, same PC and SDK. Tool cost only; F8b-g's mod changes are not timed here (no frame was timed).
+
+| Stage | Wall | Child process | Waiting | Runner overhead | First record (wall) |
+| --- | --- | --- | --- | --- | --- |
+| provenance | 0.0 s | – | – | – | 0.0 s |
+| build | 4.9 s | 4.3 s | 0.5 s | 0.01 s | 5.9 s |
+| unit (4,128 tests, Debug) | 391.8 s | 391.2 s | 0.5 s | 0.06 s | 436.3 s |
+| population (from `unit` TRX) | 0.1 s | – | – | – | 0.1 s |
+| economy | 446.2 s | 445.7 s | 0.5 s | 0.01 s | 475.9 s |
+| saves (from `unit` TRX) | 0.1 s | – | – | – | 0.1 s |
+| movement | 467.8 s | 467.2 s | 0.6 s | 0.01 s | 617.7 s |
+| city-s | 10.0 s | 8.7 s | 1.2 s | 0.01 s | 8.9 s |
+| city-m | 43.8 s | 43.2 s | 0.6 s | 0.01 s | 41.4 s |
+| **Total** | **22 min 45 s** (1,364.5 s stage sum) | 1,360.2 s | 4.0 s | 0.11 s | 26 min 27 s |
+
+**Load from other runs.** The wait script found no other test run before any stage (about 0.5 s per stage is the script's start-up). Other agent sessions were active on the PC, so the times are a single run on a shared machine, not a benchmark. The 150 s drop in `movement` is mostly the first record's 135 s wait; the rest of the differences are within run-to-run noise.
+
 ## Evidence writer
 
 `python tools/acceptance/evidence.py record` and `compare` on this run: under 1 s each (Python start, two JSON reads, three small writes). `rig-manifest`: under 1 s.

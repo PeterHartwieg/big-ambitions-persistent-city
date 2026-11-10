@@ -1,6 +1,6 @@
 {
   "schema": "persistentcity-rig-manifest-1",
-  "head": "d23bb9256860833175568bb3481c8817bf07d716",
+  "head": "b3e5a9101fe065662c0baf3aedab01caa123773e",
   "fingerprint": "steam-1331550-build-25482473",
   "batchDue": true,
   "batchDueReasons": [
@@ -12,6 +12,7 @@
     "agency-billing has debt >= 3",
     "streetfood-bridge has debt >= 3",
     "world-census has debt >= 3",
+    "rlo-donor-contract has debt >= 3",
     "physical-bodies has debt >= 3",
     "price-weight-response has debt >= 3",
     "native-staffed-throughput has debt >= 3"
@@ -46,7 +47,7 @@
         "native-save-contract"
       ],
       "status": "unproven",
-      "debt": 28,
+      "debt": 29,
       "due": true
     },
     {
@@ -67,7 +68,7 @@
         "buylive-sale-authority"
       ],
       "status": "unproven",
-      "debt": 19,
+      "debt": 20,
       "due": true
     },
     {
@@ -108,7 +109,7 @@
         "world-census"
       ],
       "status": "unproven",
-      "debt": 5,
+      "debt": 6,
       "due": true
     },
     {
@@ -128,7 +129,7 @@
         "native-road-network"
       ],
       "status": "unproven",
-      "debt": 5,
+      "debt": 6,
       "due": true
     },
     {
@@ -149,7 +150,7 @@
         "native-staffed-throughput"
       ],
       "status": "unproven",
-      "debt": 5,
+      "debt": 6,
       "due": true
     },
     {
@@ -169,6 +170,24 @@
         "hourly-settlement",
         "native-clock-and-skip",
         "native-shop-inputs"
+      ],
+      "status": "unproven",
+      "debt": 4,
+      "due": true
+    },
+    {
+      "id": "f9-3",
+      "title": "Active capabilities",
+      "mode": "locked-PC",
+      "existing": [
+        "FT console"
+      ],
+      "pending": [
+        "F8 capability report",
+        "RIG-ACCEPT"
+      ],
+      "rows": [
+        "rlo-donor-contract"
       ],
       "status": "unproven",
       "debt": 3,
@@ -192,24 +211,6 @@
       ],
       "status": "unproven",
       "debt": 3,
-      "due": true
-    },
-    {
-      "id": "f9-3",
-      "title": "Active capabilities",
-      "mode": "locked-PC",
-      "existing": [
-        "FT console"
-      ],
-      "pending": [
-        "F8 capability report",
-        "RIG-ACCEPT"
-      ],
-      "rows": [
-        "rlo-donor-contract"
-      ],
-      "status": "unproven",
-      "debt": 2,
       "due": true
     },
     {
@@ -237,7 +238,7 @@
   ],
   "ledger": {
     "schema": "persistentcity-native-assumptions-1",
-    "head": "d23bb9256860833175568bb3481c8817bf07d716",
+    "head": "b3e5a9101fe065662c0baf3aedab01caa123773e",
     "fingerprint": "steam-1331550-build-25482473",
     "debtThreshold": 3,
     "fingerprintChanged": false,
@@ -251,6 +252,7 @@
       "agency-billing has debt >= 3",
       "streetfood-bridge has debt >= 3",
       "world-census has debt >= 3",
+      "rlo-donor-contract has debt >= 3",
       "physical-bodies has debt >= 3",
       "price-weight-response has debt >= 3",
       "native-staffed-throughput has debt >= 3"
@@ -290,17 +292,18 @@
       {
         "id": "save-epoch",
         "status": "unproven",
-        "debt": 19,
+        "debt": 20,
         "since": "bde746a",
         "rigCheck": "f9-4",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": null,
         "reasons": [
-          "19 commits touched its paths since bde746a",
+          "20 commits touched its paths since bde746a",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "bf343e3c8c16",
           "17dccf8bbd2c",
           "a1aa36ffbb00",
@@ -325,17 +328,18 @@
       {
         "id": "native-save-contract",
         "status": "unproven",
-        "debt": 28,
+        "debt": 29,
         "since": "dc59049",
         "rigCheck": "f9-8",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": null,
         "reasons": [
-          "28 commits touched its paths since dc59049",
+          "29 commits touched its paths since dc59049",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "bf343e3c8c16",
           "17dccf8bbd2c",
           "a1aa36ffbb00",
@@ -369,17 +373,18 @@
       {
         "id": "buylive-sale-authority",
         "status": "unproven",
-        "debt": 8,
+        "debt": 9,
         "since": "d6b534a",
         "rigCheck": "f9-4",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": "food.checkout.shop",
         "reasons": [
-          "8 commits touched its paths since d6b534a",
+          "9 commits touched its paths since d6b534a",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "bf343e3c8c16",
           "a1aa36ffbb00",
           "874df5d4862e",
@@ -426,17 +431,18 @@
       {
         "id": "native-shop-inputs",
         "status": "unproven",
-        "debt": 3,
+        "debt": 4,
         "since": "e9995e5",
         "rigCheck": "f9-5",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": "food.checkout.shop",
         "reasons": [
-          "3 commits touched its paths since e9995e5",
+          "4 commits touched its paths since e9995e5",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "874df5d4862e",
           "3c5ce3b4e591",
           "7a79f2a5fbdd"
@@ -445,17 +451,18 @@
       {
         "id": "agency-billing",
         "status": "unproven",
-        "debt": 3,
+        "debt": 4,
         "since": "30a9de7",
         "rigCheck": "f9-7",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": "research.billing",
         "reasons": [
-          "3 commits touched its paths since 30a9de7",
+          "4 commits touched its paths since 30a9de7",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "eb9e82f6bb66",
           "6e428c9154e4",
           "b8724f2c3277"
@@ -518,17 +525,18 @@
       {
         "id": "world-census",
         "status": "unproven",
-        "debt": 5,
+        "debt": 6,
         "since": "c64e3e2",
         "rigCheck": "f9-2",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": null,
         "reasons": [
-          "5 commits touched its paths since c64e3e2",
+          "6 commits touched its paths since c64e3e2",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "eb9e82f6bb66",
           "21aea400fb5e",
           "84fa16f07e63",
@@ -539,17 +547,18 @@
       {
         "id": "rlo-donor-contract",
         "status": "unproven",
-        "debt": 2,
+        "debt": 3,
         "since": "d1abbb8",
         "rigCheck": "f9-3",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": "rlo.donor",
         "reasons": [
-          "2 commits touched its paths since d1abbb8",
+          "3 commits touched its paths since d1abbb8",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "7357f78ca13e",
           "63248e411c6f"
         ]
@@ -557,17 +566,18 @@
       {
         "id": "physical-bodies",
         "status": "unproven",
-        "debt": 5,
+        "debt": 6,
         "since": "c42240f",
         "rigCheck": "f9-6",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": "physical.pedestrians",
         "reasons": [
-          "5 commits touched its paths since c42240f",
+          "6 commits touched its paths since c42240f",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "9004a997ba24",
           "dad85b802dff",
           "baa775db4929",
@@ -578,16 +588,19 @@
       {
         "id": "native-road-network",
         "status": "unproven",
-        "debt": 0,
+        "debt": 1,
         "since": "ece4878",
         "rigCheck": "f9-6",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": "rlo.roadspeeds",
         "reasons": [
+          "1 commits touched its paths since ece4878",
           "no rig evidence yet"
         ],
-        "touchedBy": []
+        "touchedBy": [
+          "297f32eaa5c4"
+        ]
       },
       {
         "id": "price-weight-response",
@@ -611,17 +624,18 @@
       {
         "id": "native-staffed-throughput",
         "status": "unproven",
-        "debt": 5,
+        "debt": 6,
         "since": "4375cd0",
         "rigCheck": "f6b-2",
         "currentEvidence": false,
         "pendingCapability": null,
         "capability": null,
         "reasons": [
-          "5 commits touched its paths since 4375cd0",
+          "6 commits touched its paths since 4375cd0",
           "no rig evidence yet"
         ],
         "touchedBy": [
+          "297f32eaa5c4",
           "a1aa36ffbb00",
           "874df5d4862e",
           "ae2001e973ea",
