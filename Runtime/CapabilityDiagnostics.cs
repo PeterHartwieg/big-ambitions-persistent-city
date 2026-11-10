@@ -25,9 +25,16 @@ namespace PersistentCity.Runtime
                 Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(inputs), Application.version, CapabilitySnapshot.Context(inputs)));
                 return;
             }
+            // F8e: foreign Harmony owners on every Persistent City target, classed by patch kind (report only).
+            if (action == "hooks" && detail.Length == 0)
+            {
+                try { Debug.Log("[Persistent City] capability hooks (read-only)\n" + HookConflicts.Scan().Text()); }
+                catch (Exception error) { Debug.LogWarning("[Persistent City] hook conflict report unavailable: " + error.Message); }
+                return;
+            }
             if (action == "show" && NativeCapabilities.TryParse(detail, out var id))
             { Debug.Log("[Persistent City] capability show (read-only)\n" + capabilityReport.Show(CapabilitySnapshot.Build(ReadCapabilityInputs()), id)); return; }
-            Debug.LogWarning("[Persistent City] Unknown command. Use: pc capability status | pc capability show <id> ("
+            Debug.LogWarning("[Persistent City] Unknown command. Use: pc capability status | pc capability hooks | pc capability show <id> ("
                 + string.Join(", ", NativeCapabilities.All.Select(d => d.Name)) + ")");
         }
 
@@ -72,6 +79,13 @@ namespace PersistentCity.Runtime
         }
 
         private static DonorReadReason DonorReason(RloReadResult read) => read.Reason;
+
+        /// <summary>F8e: the once-per-load conflict line. A failed scan is reported and changes nothing.</summary>
+        private static string HookConflictActivationLine()
+        {
+            try { return HookConflicts.Scan().ActivationLine(); }
+            catch (Exception error) { return "Persistent City hook conflict scan unavailable (report only): " + error.Message; }
+        }
 
         /// <summary>F8d (D7): the activation Player.log line, once per load. Builds the same on-request snapshot.</summary>
         private string CapabilityActivationLine()

@@ -740,6 +740,7 @@ namespace PersistentCity.Runtime
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
             log?.Info(CapabilityActivationLine()); // F8d (D7): one line naming every capability that is not active
+            log?.Info(HookConflictActivationLine()); // F8e: foreign owners on Persistent City targets, once per load
             ResetAdvanceDiagnostics();
             if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
             { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }

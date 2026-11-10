@@ -149,11 +149,18 @@ public sealed class CapabilityReportTests
         "Recheck(", "StartObservation(", "NativeCityClock.Start(", "ReadRlo(", "rlo.Read(", "ChangeMoney", "SetActive(", "Destroy(",
     };
 
+    /// <summary>The diagnostics files: F8b's report (later F8e/F8f branches) and F8e's Harmony metadata scan.</summary>
+    internal static readonly string[] DiagnosticFiles = { "Runtime/CapabilityDiagnostics.cs", "Runtime/HookConflicts.cs" };
+
     [Fact]
     public void DiagnosticsFileCallsNoMutatingMember()
     {
+        foreach (string file in DiagnosticFiles)
+        {
+            string text = StripComments(File.ReadAllText(Path.Combine(Root(), file)));
+            foreach (string member in Mutating) Assert.False(text.Contains(member, StringComparison.Ordinal), file + " calls " + member);
+        }
         string source = StripComments(File.ReadAllText(Path.Combine(Root(), "Runtime", "CapabilityDiagnostics.cs")));
-        foreach (string member in Mutating) Assert.False(source.Contains(member, StringComparison.Ordinal), "CapabilityDiagnostics.cs calls " + member);
         // Red with one injected mutating call.
         Assert.Contains(Mutating, m => (source + " NativeFoodOwnership.Observe(reg, false);").Contains(m, StringComparison.Ordinal));
     }
@@ -170,6 +177,11 @@ public sealed class CapabilityReportTests
             "if (!BeginAccountingObservations()) return;\n                CapabilityCommand(\"status\", \"\");\n                foodMarket?.RefreshDiscovery();");
         Assert.NotEqual(RuntimeSources()["Runtime/PersistentCityMod.cs"], injected["Runtime/PersistentCityMod.cs"]);
         Assert.Contains(DiagnosticCallers(injected), v => v.Contains("UpdateCity", StringComparison.Ordinal));
+        // The same through the qualified F8e scan.
+        injected = RuntimeSources();
+        injected["Runtime/PersistentCityMod.cs"] = injected["Runtime/PersistentCityMod.cs"].Replace(
+            "foodMarket?.RefreshDiscovery();", "foodMarket?.RefreshDiscovery(); _ = HookConflicts.Scan();");
+        Assert.Contains(DiagnosticCallers(injected), v => v.Contains("Scan from UpdateCity", StringComparison.Ordinal));
     }
 
     /// <summary>The only callers allowed outside the file: the console router and the once-per-load activation tail.</summary>
@@ -184,13 +196,18 @@ public sealed class CapabilityReportTests
     internal static List<string> DiagnosticCallers(Dictionary<string, string> sources)
     {
         string own = StripComments(sources["Runtime/CapabilityDiagnostics.cs"]);
+        // Every member of the PopulationRuntime partial (private ones are visible to the other partials), and the
+        // non-private members of HookConflicts, which other files can only reach as HookConflicts.Name(.
         var names = MethodDeclaration.Matches(own).Select(m => m.Groups["name"].Value)
+            .Concat(MethodDeclaration.Matches(StripComments(sources["Runtime/HookConflicts.cs"])).Where(m => !m.Value.TrimStart().StartsWith("private", StringComparison.Ordinal))
+                .Select(m => m.Groups["name"].Value))
             .Distinct().ToArray();
         Assert.Contains("CapabilityCommand", names);
+        Assert.Contains("Scan", names);
         var violations = new List<string>();
         foreach (var pair in sources)
         {
-            if (pair.Key == "Runtime/CapabilityDiagnostics.cs") continue;
+            if (DiagnosticFiles.Contains(pair.Key)) continue;
             var lines = StripComments(pair.Value).Split('\n');
             string enclosing = "";
             for (int i = 0; i < lines.Length; i++)
@@ -198,7 +215,7 @@ public sealed class CapabilityReportTests
                 var declared = MethodDeclaration.Match(lines[i]);
                 if (declared.Success) enclosing = declared.Groups["name"].Value;
                 foreach (string name in names)
-                    if (Regex.IsMatch(lines[i], @"(?<![\w.])" + name + @"\s*\(") && !(declared.Success && declared.Groups["name"].Value == name)
+                    if (Regex.IsMatch(lines[i], @"(?:(?<![\w.])|(?<=\bHookConflicts\.))" + name + @"\s*\(") && !(declared.Success && declared.Groups["name"].Value == name)
                         && !AllowedCallers.Contains(enclosing))
                         violations.Add(pair.Key + ":" + (i + 1) + " " + name + " from " + enclosing);
             }

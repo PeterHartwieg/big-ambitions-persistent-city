@@ -6,6 +6,7 @@
     <ProjectReference Include="$(SourceRoot)/Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="$(SourceRoot)/Persistence/PersistentCity.Persistence.csproj" />
     <Compile Include="$(SourceRoot)/Runtime/NativeFoodContract.cs" Link="NativeFoodContract.cs" />
+    <Compile Include="$(SourceRoot)/Runtime/HookConflicts.cs" Link="HookConflicts.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
   </ItemGroup>
