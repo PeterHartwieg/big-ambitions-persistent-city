@@ -20,7 +20,7 @@ public sealed class F6dHardCapTests
     {
         var flags = BindingFlags.NonPublic | BindingFlags.Static;
         var context = typeof(SaveCodec).GetNestedType("WireContext", BindingFlags.NonPublic)!.GetMethod("FromState")!.Invoke(null, new object[] { state });
-        var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("SettingsForSchema", flags)!.Invoke(null, new object[] { context!, CityState.CurrentSchema })!;
+        var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", flags)!.Invoke(null, new object[] { context! })!;
         return JsonConvert.SerializeObject(state, Formatting.None, settings);
     }
     private static void WriteKept(CityState state, string prior)

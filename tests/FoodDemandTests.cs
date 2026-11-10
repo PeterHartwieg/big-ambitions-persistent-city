@@ -191,7 +191,7 @@ public sealed class FoodDemandTests
     public void CodecRefusesFutureForeignUnknownAndDuplicateDocuments()
     {
         string source = FoodShadowCodec.Write(Scenario());
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"Schema\": 5", "\"Schema\": 6"), "test-city"));
+        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"Schema\": 1", "\"Schema\": 2"), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source, "another-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Insert(1, "\"NewField\":1,"), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Insert(1, "\"Schema\":1,"), "test-city"));

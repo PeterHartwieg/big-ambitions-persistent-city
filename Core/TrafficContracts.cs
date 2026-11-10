@@ -120,7 +120,10 @@ namespace PersistentCity.Core
     // Explicit DTOs include the interrupted event cursor. Persist through the caller's versioned namespace.
     public sealed class TrafficKernelState
     {
-        public int Schema { get; set; } = 2;
+        /// <summary>Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature
+        /// schema constants; change the format in place.</summary>
+        public const int CurrentSchema = 1;
+        public int Schema { get; set; } = CurrentSchema;
         public double Clock { get; set; }
         public double RequestedTime { get; set; }
         public long NextEventOrder { get; set; }

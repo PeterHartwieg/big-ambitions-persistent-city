@@ -10,8 +10,8 @@ namespace PersistentCity.Persistence
     public static partial class SaveCodec
     {
         internal static void RequireExecutablePolicy(CityState state)
-            // E5b4: DynamicWire executes only at the held-policy writer; 25 to 35 executed the original-name policy only.
-            => Require(state.Schema < 25 || state.MenuPolicy == CityState.ExecutableMenuPolicy(state.Schema),
+            // E5b4: the writer executes DynamicWire only.
+            => Require(state.MenuPolicy == FoodNameIdentity.DynamicWire,
                 "Unsupported held-product policy for this writer; preserve the payload.");
         // Complete coherent saves rebuild every wire-local reference together. The in-memory graph
         // contains names only; catalogue removal/order is deliberately not an input to this method.
@@ -53,11 +53,11 @@ namespace PersistentCity.Persistence
                     if (row?.ProductSales != null) foreach (var cell in row.ProductSales)
                         if (cell != null) Add(cell.ProductId, Opaque25(cell));
             }
-            if (state.Schema >= EconomicLedgerSchema && state.Economy?.Shops != null)
+            if (state.Economy?.Shops != null)
                 foreach (var shop in state.Economy.Shops)
                     if (shop?.Changes != null) foreach (var change in shop.Changes)
                         if (change.Kind == ShopChangeKind.Price || change.Kind == ShopChangeKind.Stock) Add(change.ProductId);
-            if (state.Schema >= CityState.ChangeJournalSchema && state.Economy?.Shops != null)
+            if (state.Economy?.Shops != null)
                 foreach (var shop in state.Economy.Shops) if (shop?.Supply != null)
                     foreach (var offer in shop.Supply) Add(offer.ProductId);
             return names.ToList();
@@ -104,7 +104,7 @@ namespace PersistentCity.Persistence
                         Require(offer.Metadata!.Revision != 2 || state.MenuPolicy == FoodNameIdentity.DynamicWire,
                             "Dynamic held-product inputs require their capability header.");
                         // E5b4: the executing writer captures revision 2 only for a policy-admitted Food name.
-                        Require(state.Schema < CityState.HeldPolicySchema || offer.Metadata.Revision != 2
+                        Require(offer.Metadata.Revision != 2
                             || offer.Metadata.MealClass == FoodMealClass.Food && !FoodProducts.Known(offer.ProductId), "Held dynamic offer is not an admitted Food name.");
                         if (offer.Metadata!.Revision == 1 || FoodProducts.KnownLegacy(offer.ProductId))
                         {

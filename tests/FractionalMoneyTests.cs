@@ -181,27 +181,9 @@ public sealed class FractionalMoneyTests
 
     [Theory]
     [InlineData("paid", FoodReceiptStatus.Paid)] [InlineData("pending", FoodReceiptStatus.Pending)]
-    public void LegacyReceiptsKeepTheirExactOldAmountAndBlockDuplicateCheckout(string status, FoodReceiptStatus expected)
-    {
-        var meal = new ResidentMeal { ResidentId = "old", Day = 5, Kind = MealKind.Lunch,
-            BusinessId = "shop", ProductId = FoodProducts.Croissant, Price = Money.FromCents(1025) };
-        string key = FoodSaleReceipts.LegacyPrefix + meal.IntentId;
-        string value = status + "|1025|shop|" + Uri.EscapeDataString(meal.ProductId);
-        var data = new Dictionary<string,string> { [key] = value };
-        Assert.Equal(expected, FoodSaleReceipts.ReadStatus(data, meal));
-        Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Begin(data, meal));
-        FoodSaleReceipts.Prune(data, 100, new[] { meal.IntentId });
-        Assert.Equal(value, data[key]);
-        meal.Price = Money.FromNative(10.2528f);
-        Assert.Equal(FoodReceiptStatus.Conflict, FoodSaleReceipts.ReadStatus(data, meal));
-        Assert.Equal(value, data[key]);
-    }
-
-    [Theory]
-    [InlineData("paid", FoodReceiptStatus.Paid)] [InlineData("pending", FoodReceiptStatus.Pending)]
     public void ExactDecimalReceiptsKeepTheirIdentityAfterTheUnitChange(string status, FoodReceiptStatus expected)
     {
-        // A v2 marker written by the decimal-cents implementation for the exact rig croissant price.
+        // A marker in exact decimal cents for the rig croissant price.
         var meal = new ResidentMeal { ResidentId = "old", Day = 5, Kind = MealKind.Lunch,
             BusinessId = "shop", ProductId = FoodProducts.Croissant, Price = Money.FromNative(10.2528f) };
         string key = FoodSaleReceipts.Prefix + meal.IntentId;
@@ -212,17 +194,6 @@ public sealed class FractionalMoneyTests
         Assert.Equal(value, data[key]);
         meal.Price += Money.FromUnits(1);
         Assert.Equal(FoodReceiptStatus.Conflict, FoodSaleReceipts.ReadStatus(data, meal));
-    }
-
-    [Fact]
-    public void AmbiguousReceiptVersionsNeverAuthorizeARepeat()
-    {
-        var meal = new ResidentMeal { ResidentId = "old", Price = Money.FromCents(100), BusinessId = "shop", ProductId = "product" };
-        var data = new Dictionary<string,string>();
-        FoodSaleReceipts.Begin(data, meal); FoodSaleReceipts.Confirm(data, meal);
-        data[FoodSaleReceipts.LegacyPrefix + meal.IntentId] = data.Values.Single();
-        Assert.Equal(FoodReceiptStatus.Conflict, FoodSaleReceipts.ReadStatus(data, meal));
-        FoodSaleReceipts.Prune(data, 10000); Assert.Equal(2, data.Count);
     }
 
     [Fact]

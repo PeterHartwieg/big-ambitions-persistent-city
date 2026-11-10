@@ -97,7 +97,7 @@ namespace PersistentCity.Core
             => slot.PlaceId == person.PlaceId && slot.Activity != Activity.Home
                 && (person.Phase == CitizenPhase.WaitingForOpening && person.DestinationId == slot.PlaceId
                     && person.DestinationActivity == slot.Activity
-                    || State.Schema >= CityState.AttendanceSchema && person.Activity != slot.Activity);
+                    || person.Activity != slot.Activity);
         private Money OrdinaryPrice(string placeId, Activity activity, double minute, out OrdinaryVisitClass kind)
         {
             kind = OrdinaryVisitClass.ActivityOnly;

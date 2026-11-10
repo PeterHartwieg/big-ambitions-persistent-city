@@ -33,7 +33,7 @@ internal static class F7cFixtures
         public RepresentativeFixture.Routes Routes { get; }
     }
 
-    public static Built Build(string name, int? schema = null)
+    public static Built Build(string name)
     {
         string size = name.Substring(name.IndexOf('-') + 1);
         int residents = name == "encoding-max" ? 957 : int.Parse(size.Split('x')[0]);
@@ -41,10 +41,10 @@ internal static class F7cFixtures
         Built built;
         if (name.StartsWith("representative-", StringComparison.Ordinal))
         {
-            var replay = RepresentativeFixture.Build(residents, schema: schema);
+            var replay = RepresentativeFixture.Build(residents);
             built = new Built(replay.City, replay.RoutePlanner);
         }
-        else built = Fresh(residents, factor, name.StartsWith("rush-", StringComparison.Ordinal) ? RushMinute : RepresentativeFixture.TargetMinute, schema);
+        else built = Fresh(residents, factor, name.StartsWith("rush-", StringComparison.Ordinal) ? RushMinute : RepresentativeFixture.TargetMinute);
         if (name.StartsWith("saturated-", StringComparison.Ordinal)) SaturateVisits(built.State);
         if (name == "encoding-max") EscapingNames(built.State);
         return built;
@@ -53,10 +53,10 @@ internal static class F7cFixtures
     /// <summary>08:20 the morning after the representative save.</summary>
     public const double RushMinute = RepresentativeFixture.TargetMinute + 7 * 60 + 50;
 
-    private static Built Fresh(int residents, int factor, double target, int? schema)
+    private static Built Fresh(int residents, int factor, double target)
     {
         var state = EconomyScenario.Create(residents, RepresentativeFixture.Seed); state.Food = EconomyScenario.Food();
-        state.Food.RepresentationFactor = factor; state.Schema = schema ?? state.Schema;
+        state.Food.RepresentationFactor = factor;
         PortalPlaces.Add(state, RepresentativeFixture.Portals);
         var routes = new RepresentativeFixture.Routes();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(new RepresentativeFixture.Market()); city.EnableHouseholdFinances();

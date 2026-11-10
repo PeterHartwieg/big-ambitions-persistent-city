@@ -11,13 +11,6 @@ namespace PersistentCity.Persistence
 {
     public static partial class SaveCodec
     {
-        public const int EconomicLedgerSchema = CityState.EconomicLedgerSchema;
-        internal static bool EconomicProperty(Type type, string? name) => type == typeof(CityState) && name == "Economy"
-            || (type == typeof(CitizenState) || type == typeof(VisitorRoutine)) && name == "Accrual"
-            || type == typeof(FoodShopDay) && (name == "PeriodCauses" || name == "StockoutObserved") || type == typeof(ResidentBudget) && name == "Ledger"
-            // F2e's two schema-35 fields, so every frozen pre-31 codec omits them as well (the live resolver gates them at 35).
-            || PlayerHoldProperty(type, name);
-
         // Canonical fixed-width uppercase base36 integers. Money is exact signed-64-range nonnegative units,
         // never a price float or a rounded decimal. Fixed widths include leading zeros and reject alternate spellings.
         private const string Digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -117,7 +110,7 @@ namespace PersistentCity.Persistence
             public override object ReadJson(JsonReader reader, Type type, object? value, JsonSerializer serializer) => ParseEconomic(type, (string)reader.Value!, context);
         }
 
-        private static ShopObservation ReadObservation(JsonReader reader, TokenText? text, ref int records, int schema)
+        private static ShopObservation ReadObservation(JsonReader reader, TokenText? text, ref int records)
         {
             Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.String, "Expected observed-shop header.");
             string header = (string)reader.Value!;
@@ -132,44 +125,41 @@ namespace PersistentCity.Persistence
                 shop.Changes.Add((ShopChange)ParseEconomic(typeof(ShopChange), (string)reader.Value!)); Charge(ref records);
             }
             Require(reader.TokenType == JsonToken.EndArray, "Invalid journal.");
-            if (schema >= CityState.ChangeJournalSchema)
+            Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing observation state.");
+            string state = (string)reader.Value!;
+            Require(state.Length == 20 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, state)), "Invalid observation state.");
+            shop.Evicted = Cell(state, 0, 13); shop.StaffedCounters = checked((int)(Cell(state, 13, 7) - 1));
+            Require(shop.StaffedCounters >= -1, "Invalid staffed counters.");
+            Require(reader.Read() && reader.TokenType == JsonToken.StartArray, "Missing supply image.");
+            var supply = new List<ShopObservedOffer>();
+            while (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
-                Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing observation state.");
-                string state = (string)reader.Value!;
-                Require(state.Length == 20 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, state)), "Invalid observation state.");
-                shop.Evicted = Cell(state, 0, 13); shop.StaffedCounters = checked((int)(Cell(state, 13, 7) - 1));
-                Require(shop.StaffedCounters >= -1, "Invalid staffed counters.");
-                Require(reader.Read() && reader.TokenType == JsonToken.StartArray, "Missing supply image.");
-                var supply = new List<ShopObservedOffer>();
-                while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+                Require(reader.TokenType == JsonToken.String && supply.Count < 8, "Invalid supply image.");
+                string cell = (string)reader.Value!;
+                Require(cell.Length == 22 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, cell)), "Invalid supply cell.");
+                supply.Add(new ShopObservedOffer { ProductId = Cell(cell, 0, 2).ToString(CultureInfo.InvariantCulture), PriceUnits = Cell(cell, 2, 13), Stock = checked((int)(Cell(cell, 15, 7) - 1)) });
+            }
+            shop.Supply = supply.ToArray();
+            Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing hours image.");
+            string hours = (string)reader.Value!;
+            Require((hours.Length == 0 || hours.Length >= 14 && hours.Length <= 14 + 64 * 6)
+                && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, hours)), "Invalid hours image.");
+            if (hours.Length != 0)
+            {
+                shop.Hours = new int[FoodChangeJournal.HoursEdges]; Array.Fill(shop.Hours, 1441);
+                int at = 14, windows = 0;
+                for (int day = 0; day < 7; day++)
                 {
-                    Require(reader.TokenType == JsonToken.String && supply.Count < 8, "Invalid supply image.");
-                    string cell = (string)reader.Value!;
-                    Require(cell.Length == 22 && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, cell)), "Invalid supply cell.");
-                    supply.Add(new ShopObservedOffer { ProductId = Cell(cell, 0, 2).ToString(CultureInfo.InvariantCulture), PriceUnits = Cell(cell, 2, 13), Stock = checked((int)(Cell(cell, 15, 7) - 1)) });
-                }
-                shop.Supply = supply.ToArray();
-                Require(reader.Read() && reader.TokenType == JsonToken.String, "Missing hours image.");
-                string hours = (string)reader.Value!;
-                Require((hours.Length == 0 || hours.Length >= 14 && hours.Length <= 14 + 64 * 6)
-                    && (text == null || text.LiteralAsciiString((IJsonLineInfo)reader, hours)), "Invalid hours image.");
-                if (hours.Length != 0)
-                {
-                    shop.Hours = new int[FoodChangeJournal.HoursEdges]; Array.Fill(shop.Hours, 1441);
-                    int at = 14, windows = 0;
-                    for (int day = 0; day < 7; day++)
+                    int count = (int)Cell(hours, day * 2, 2); windows += count;
+                    Require(count <= 64 && windows <= 64, "Observed hours exceed their bound.");
+                    for (int slot = 0; slot < count; slot++)
                     {
-                        int count = (int)Cell(hours, day * 2, 2); windows += count;
-                        Require(count <= 64 && windows <= 64, "Observed hours exceed their bound.");
-                        for (int slot = 0; slot < count; slot++)
-                        {
-                            int edge = day * 128 + slot * 2;
-                            shop.Hours[edge] = (int)Cell(hours, at, 3); shop.Hours[edge + 1] = (int)Cell(hours, at + 3, 3); at += 6;
-                            Require(shop.Hours[edge] < shop.Hours[edge + 1] && shop.Hours[edge + 1] <= 1440, "Invalid present hours window.");
-                        }
+                        int edge = day * 128 + slot * 2;
+                        shop.Hours[edge] = (int)Cell(hours, at, 3); shop.Hours[edge + 1] = (int)Cell(hours, at + 3, 3); at += 6;
+                        Require(shop.Hours[edge] < shop.Hours[edge + 1] && shop.Hours[edge + 1] <= 1440, "Invalid present hours window.");
                     }
-                    Require(at == hours.Length, "Noncanonical sparse hours width.");
                 }
+                Require(at == hours.Length, "Noncanonical sparse hours width.");
             }
             Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid observed-shop width.");
             return shop;
@@ -193,8 +183,7 @@ namespace PersistentCity.Persistence
         private sealed class ObservationConverter : JsonConverter<ShopObservation>
         {
             private readonly WireContext context;
-            private readonly int schema;
-            public ObservationConverter(WireContext context, int schema) { this.context = context; this.schema = schema; }
+            public ObservationConverter(WireContext context) { this.context = context; }
             public override void WriteJson(JsonWriter writer, ShopObservation? shop, JsonSerializer serializer)
             {
                 writer.WriteStartArray();
@@ -205,20 +194,17 @@ namespace PersistentCity.Persistence
                 finally { writer.StringEscapeHandling = escaping; }
                 writer.WriteStartArray(); foreach (var change in shop.Changes) writer.WriteValue(EconomicText(change, context));
                 writer.WriteEndArray();
-                if (schema >= CityState.ChangeJournalSchema)
-                {
-                    writer.WriteValue(Cell(shop.Evicted, 13) + Cell((long)shop.StaffedCounters + 1, 7));
-                    writer.WriteStartArray();
-                    foreach (var o in shop.Supply) writer.WriteValue(Cell(context.ProductIndex[o.ProductId] - 1, 2) + Cell(o.PriceUnits, 13) + Cell((long)o.Stock + 1, 7));
-                    writer.WriteEndArray(); writer.WriteValue(ObservedHoursText(shop.Hours));
-                }
+                writer.WriteValue(Cell(shop.Evicted, 13) + Cell((long)shop.StaffedCounters + 1, 7));
+                writer.WriteStartArray();
+                foreach (var o in shop.Supply) writer.WriteValue(Cell(context.ProductIndex[o.ProductId] - 1, 2) + Cell(o.PriceUnits, 13) + Cell((long)o.Stock + 1, 7));
+                writer.WriteEndArray(); writer.WriteValue(ObservedHoursText(shop.Hours));
                 writer.WriteEndArray();
             }
             public override ShopObservation ReadJson(JsonReader reader, Type type, ShopObservation? value, bool hasValue, JsonSerializer serializer)
             {
                 // Decode with the name table rather than the streaming placeholders.
                 int ignored = 0;
-                var shop = ReadObservation(reader, null, ref ignored, schema);
+                var shop = ReadObservation(reader, null, ref ignored);
                 for (int i = 0; i < shop.Changes.Count; i++)
                 {
                     var change = shop.Changes[i];
@@ -356,16 +342,5 @@ namespace PersistentCity.Persistence
             Shops = e.Shops?.Select(s => s == null ? null! : new ShopObservation { BusinessRef = s.BusinessRef, Fingerprint = s.Fingerprint, Evicted = s.Evicted, StaffedCounters = s.StaffedCounters, Supply = s.Supply == null ? null! : (ShopObservedOffer[])s.Supply.Clone(), Hours = s.Hours == null ? null! : (int[])s.Hours.Clone(), Changes = s.Changes == null ? null! : new List<ShopChange>(s.Changes) }).ToList()!,
         };
 
-        // Frozen predecessor used only by offline checks. The public reader always refuses it, preserving its payload.
-        internal static SaveReadResult ReadLedgerWriter(string source)
-        {
-            try { Require(ReadSchema(source) == EconomicLedgerSchema, "Not the inactive ledger schema."); return ReadExact(source, EconomicLedgerSchema); }
-            catch (Exception e) when (e is JsonException || e is SaveValidationException || e is OverflowException || e is FormatException || e is ArgumentException) { return Invalid(e.Message); }
-        }
-        internal static SaveReadResult ReadWriter30(string source)
-        {
-            try { Require(ReadSchema(source) == VendorSchema, "Not the predecessor vendor schema."); return ReadExact(source, VendorSchema); }
-            catch (Exception e) when (e is JsonException || e is SaveValidationException || e is OverflowException || e is FormatException || e is ArgumentException) { return Invalid(e.Message); }
-        }
     }
 }

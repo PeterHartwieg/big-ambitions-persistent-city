@@ -63,7 +63,7 @@ namespace PersistentCity.Core
                 person.PlaceId = outing.OriginId; person.Activity = outing.OriginActivity; person.Phase = CitizenPhase.AtPlace;
                 person.Journey = null; person.DestinationId = ""; person.DepartureMinute = 0; person.CompletedJourneys++;
                 person.ActivityUntilMinute = outing.ResumeUntil; person.MealOuting = null;
-                if (State.Schema >= CityState.AttendanceSchema && person.Activity == Activity.Work && now < person.ActivityUntilMinute)
+                if (person.Activity == Activity.Work && now < person.ActivityUntilMinute)
                     VisitorSchedules.RecordArrival(person, now, person.PlaceId, Activity.Work);
                 // A late return lets the regular routine decide what to do next.
                 if (now >= outing.ResumeEvent) return MealOutingStep.Ordinary;

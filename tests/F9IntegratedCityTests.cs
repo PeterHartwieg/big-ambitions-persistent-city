@@ -278,20 +278,16 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
     // ---- Saves ----
 
     [Fact, Trait("Size", "city-s")]
-    public void TheScenarioCityWrittenAsTheOlderWriterIsRefusedWithStartANewCityAndKept()
+    public void TheScenarioCityWithAnotherSchemaNumberIsRefusedWithStartANewCityAndKept()
     {
         var reference = runs.Run("city-s", "reference");
-        int older = CityState.CurrentSchema - 1;
-        Assert.Equal(SaveCodec.LatestDevelopmentSchema, older);
         string prefix = "{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",";
         Assert.StartsWith(prefix, reference.Final);
-        var payloads = new List<string> { "{\"Schema\":" + older.ToString(CultureInfo.InvariantCulture) + "," + reference.Final.Substring(prefix.Length) };
-        // The frozen writer of that schema, where the development chain has one, writes the same city as an older build did.
-        var frozen = typeof(DevelopmentChain).GetMethod("Write" + older.ToString(CultureInfo.InvariantCulture), BindingFlags.Public | BindingFlags.Static);
-        if (frozen != null) payloads.Add((string)frozen.Invoke(null, new object[] { SaveCodec.Read(reference.Final).State! })!);
+        // Older development builds wrote 2 to 36; the held schema refuses every other number the same way.
+        var payloads = new[] { 36, 2 }.Select(older => "{\"Schema\":" + older.ToString(CultureInfo.InvariantCulture) + "," + reference.Final.Substring(prefix.Length)).ToList();
         foreach (var payload in payloads)
         {
-            Assert.Equal(older, SaveCodec.DevelopmentSchemaOf(payload));
+            Assert.NotNull(SaveCodec.DevelopmentSchemaOf(payload));
             var read = SaveCodec.Read(payload);
             Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
             Assert.Null(read.State);
@@ -303,27 +299,6 @@ public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.
         var current = SaveCodec.Read(reference.Final);
         Assert.True(current.Status == SaveReadStatus.Loaded, current.Error);
         Assert.Equal(reference.Final, SaveCodec.Write(current.State!));
-        output.WriteLine("refused payloads: " + payloads.Count + (frozen == null ? " (header only; no frozen writer " + older + ")" : ""));
-    }
-
-    /// <summary>F9c changes no wire: the writer-35 golden pins (F2e, PlayerHoldTests) are unchanged on this branch. Once a later
-    /// writer merges, writer 35 is frozen as DevelopmentChain.Write35 and the same pins apply to it.</summary>
-    [Theory]
-    [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
-    [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        Assert.Equal(35, CityState.PlayerHoldSchema);
-        var state = ChangeJournalTests.Fixture(seed);
-        string payload;
-        int writer = CityState.CurrentSchema;
-        if (writer == CityState.PlayerHoldSchema) payload = SaveCodec.Write(state);
-        else
-        {
-            var frozen = typeof(DevelopmentChain).GetMethod("Write35", BindingFlags.Public | BindingFlags.Static);
-            Assert.True(frozen != null, "a later writer merged without freezing writer 35 in DevelopmentChain");
-            payload = (string)frozen!.Invoke(null, new object[] { state })!;
-        }
-        Assert.Equal(pin + " " + characters, EconomicLedgerTests.Sha(payload) + " " + payload.Length);
+        output.WriteLine("refused payloads: " + payloads.Count);
     }
 }

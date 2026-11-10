@@ -11,19 +11,13 @@ namespace PersistentCity.Persistence
 {
     // F5d (city audit F5 #92): writer 27, independent schedules. Every visitor carries its own routine: the writer-26
     // visitor tuple (portal, presence, Employment, carried income, LastArrival) plus one routine object in
-    // VisitorRoutines, aligned by index. There is no migration: schema 26 and older are refused unchanged.
+    // VisitorRoutines, aligned by index.
     public static partial class SaveCodec
     {
-        public const int IndependentSchema = PersonTable.IndependentSchema;
-        /// <summary>F5e: writer 28 keeps this shape; the bump marks cities seated under the workplace area bands.</summary>
-        public const int WorkplaceCapacitySchema = PersonTable.WorkplaceCapacitySchema;
         public const int MaxRoutineTuple = 512;
 
         private const int RoutineFields27 = 16;
         private const string NoPlace27 = "---";
-
-        /// <summary>Properties that exist only from schema 27; writer 26 and every frozen reader omit them.</summary>
-        internal static bool PersonProperty27(Type type, string? name) => type == typeof(CityState) && name == "VisitorRoutines";
 
         // ---- Visitor routine object: {"J": journey or null, "T": "<routine tuple>"} ----
         // Identity, traits and travel preferences are derived from (seed, PersonId); the home is the stay's portal;
@@ -54,7 +48,7 @@ namespace PersistentCity.Persistence
             }
         }
 
-        private static IList<JsonProperty> RoutineProperties27(IList<JsonProperty> inherited, int schema)
+        private static IList<JsonProperty> RoutineProperties27(IList<JsonProperty> inherited)
         {
             var journey = inherited.Single(p => p.PropertyName == "Journey");
             journey.PropertyName = "J";
@@ -63,7 +57,7 @@ namespace PersistentCity.Persistence
                 PropertyName = "T", UnderlyingName = "T", PropertyType = typeof(RoutineTuple27), DeclaringType = typeof(VisitorRoutine),
                 ValueProvider = new RoutineTupleProvider(), Readable = true, Writable = true, Required = Required.Always
             } };
-            if (schema >= EconomicLedgerSchema) result.Add(inherited.Single(p => p.PropertyName == "Accrual"));
+            result.Add(inherited.Single(p => p.PropertyName == "Accrual"));
             return result;
         }
 

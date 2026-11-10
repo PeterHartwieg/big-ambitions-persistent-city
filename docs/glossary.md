@@ -18,13 +18,13 @@ Terms used in plans, checks and code. Each entry names where the term is defined
 
 - **Scope.** One shop and product set the mod serves: `FoodScope` in [Core/FoodCommerce.cs](../Core/FoodCommerce.cs) (place, products, business ID, next service time).
 - **Owned food scope.** A scope for a player business the mod currently owns. Ownership is a `FoodAuthority` lifetime with `FromHour`/`UntilHour` that changes only at native accounting hours ([Core/FoodAuthority.cs](../Core/FoodAuthority.cs)). Without an owned scope, the population has no economic effect.
-- **Receipt.** A native-save marker that makes one purchase idempotent: `persistentcity:food-sale-v2:<intent>` with status Missing, Pending, Paid or Conflict ([Persistence/FoodSaleReceipts.cs](../Persistence/FoodSaleReceipts.cs)). Missing never proves a purchase failed.
+- **Receipt.** A native-save marker that makes one purchase idempotent: `persistentcity:food-sale-v1:<intent>` with status Missing, Pending, Paid or Conflict ([Persistence/FoodSaleReceipts.cs](../Persistence/FoodSaleReceipts.cs)). Missing never proves a purchase failed.
 - **Held image / held inputs.** Values captured when a food decision starts and saved with it, so a reload or a settings change finishes the same decision: the A3 tuning image (`FoodDecisionTuning`, [Core/FoodDecisionTuning.cs](../Core/FoodDecisionTuning.cs)), the awareness image (`HeldImage` in [Core/FoodAwareness.cs](../Core/FoodAwareness.cs)) and E5d's held product names. New decisions use current values.
 - **Watermark.** The last memory experience applied for a consumer (day, meal, context, stage): `ExperienceWatermark` in [Core/ShopMemory.cs](../Core/ShopMemory.cs). It stops one visit from being recorded twice across reloads.
 
 ## Saves
 
-- **Writer N / schema N.** The save format version the code writes: `CityState.CurrentSchema` in [Core/Model.cs](../Core/Model.cs), now 25, in the `persistentcity:state_v1` key ([Persistence/SaveCodec.cs](../Persistence/SaveCodec.cs)). "Writer 25 unchanged" means a slice changed no saved bytes. Reading reports Missing, Loaded, Invalid or Future (`SaveReadStatus`).
+- **Writer N / schema N.** Historical: development builds numbered the save format 2 to 36, one bump per format change. Since 9 November 2026 the schema `CityState.CurrentSchema` in [Core/Model.cs](../Core/Model.cs) is held at 1 until release and never bumped; the format changes in place ([decision](decisions/2026-11-09-schema-one.md)). Reading reports Missing, Loaded, Invalid or DevelopmentSchema (`SaveReadStatus`).
 - **Epoch.** Two meanings. The *accounting epoch* is one native game minute; every simulation event must finish before native time closes it ([Core/AccountingClock.cs](../Core/AccountingClock.cs), [audit F1 plan](plans/f1-accounting-boundary.md)). The *save epoch* is one save described by the side key `persistentcity:save-epoch_v1`: sequence, schema, minute and each payload's length, or a `failed:N` marker ([Persistence/SaveEpoch.cs](../Persistence/SaveEpoch.cs)).
 
 ## Testing and process

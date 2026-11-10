@@ -34,6 +34,8 @@ Do not use `{changed_tests}`: the harness only recognises Python and JavaScript 
 
 ## Schema pins name their own constant
 
+Superseded the same day by [save schema held at 1](2026-11-09-schema-one.md): there are no per-feature schema constants or writer numbers to pin.
+
 A slice that changes no wire asserts the constant of the schema it relies on (`CityState.PlayerHoldSchema`, for example), not `CityState.CurrentSchema`. Only the slice that introduces a writer pins that writer's golden hash. On 9 November, F5i's `Assert.Equal(35, CityState.CurrentSchema)` turned the integration head red once E5b4 took writer 36. That test was removed, and the same kind of assertion in F5h, F6h and F6k was removed before it could break at writer 37; `HeldPolicyExecutionTests` pins writer 36.
 
 ## Wall-clock limits in unit tests

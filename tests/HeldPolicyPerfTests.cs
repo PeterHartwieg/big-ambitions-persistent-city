@@ -110,23 +110,15 @@ public sealed class HeldPolicyPerfTests
         string metadataText = string.Join(",", decision.Shops.SelectMany(s => s.Offers).Select(o => Newtonsoft.Json.JsonConvert.SerializeObject(o.Metadata)));
         report.AppendLine($"held metadata, 64 revision-2 tuples at the widest fits: {Encoding.UTF8.GetByteCount(metadataText)} B as JSON objects; validator budget 2 + 64 x 36 = {2 + 64 * 36} B; bound {FoodNameIdentity.MaximumHeldWire} B");
 
-        // Fresh-city save bytes and read/write latency: writer 36 against the frozen writer 35 on the same city.
+        // Fresh-city save bytes and read/write latency.
         foreach (int seed in new[] { 5150, 9217 })
         {
             var state = ChangeJournalTests.Fixture(seed);
-            string w36 = SaveCodec.Write(state), w35 = DevelopmentChain.Write35(state);
-            var write36 = Time(() => SaveCodec.Write(state), 60);
-            var write35 = Time(() => DevelopmentChain.Write35(state), 60);
-            var read36 = Time(() => SaveCodec.Read(w36), 60);
-            string relabelled = Relabel35(w35);
-            var read35 = Time(() => SaveCodec.Read(relabelled), 60);
-            report.AppendLine($"seed {seed}: bytes 36 {Encoding.UTF8.GetByteCount(w36)} / 35 {Encoding.UTF8.GetByteCount(w35)}; write p50 36 {write36.P50 / 1000:F2} ms / 35 {write35.P50 / 1000:F2} ms; read p50 36 {read36.P50 / 1000:F2} ms / 35 (relabelled to load) {read35.P50 / 1000:F2} ms");
+            string payload = SaveCodec.Write(state);
+            var write = Time(() => SaveCodec.Write(state), 60);
+            var read = Time(() => SaveCodec.Read(payload), 60);
+            report.AppendLine($"seed {seed}: bytes {Encoding.UTF8.GetByteCount(payload)}; write p50 {write.P50 / 1000:F2} ms; read p50 {read.P50 / 1000:F2} ms");
         }
         File.WriteAllText(path, report.ToString());
     }
-
-    // The product refuses writer 35, so its read latency is measured on the same bytes with only the schema and the
-    // policy relabelled to writer 36's: the decode work is the one writer 35 had.
-    private static string Relabel35(string w35)
-        => SaveCodec.CompactFromBody(ReaderCorpus.Relabel(SaveCodec.ExpandCompact(w35), 35, 36).Replace(FoodNameIdentity.Wire, FoodNameIdentity.DynamicWire));
 }

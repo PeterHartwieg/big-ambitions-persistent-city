@@ -1,0 +1,45 @@
+{
+  "schema": "persistentcity-acceptance-stages-1",
+  "profiles": {
+    "quick": ["provenance", "test-build", "population", "economy-fast", "saves", "city-s"],
+    "full": ["provenance", "build", "unit", "population", "economy", "saves", "movement", "city-s", "city-m"]
+  },
+  "stages": [
+    {"id": "provenance", "class": "provenance", "rule": "provenance", "required": false, "steps": []},
+    {"id": "build", "class": "native", "rule": "build", "needsManaged": true, "dotnet": true,
+     "steps": [["{python}", "tools/build.py", "--game-managed", "{managed}"]]},
+    {"id": "test-build", "class": "semantic", "rule": "exit-zero", "dotnet": true, "buildsTests": true,
+     "steps": [["{dotnet}", "build", "tests/PersistentCity.Tests.csproj", "-nologo", "-v", "quiet"]]},
+    {"id": "unit", "class": "semantic", "rule": "trx", "dotnet": true, "buildsTests": true,
+     "steps": [["{dotnet}", "test", "tests/PersistentCity.Tests.csproj", "--logger", "trx;LogFileName=unit.trx", "--results-directory", "{out}/trx/unit"]],
+     "trx": "trx/unit/unit.trx"},
+    {"id": "population", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F5hIntegratedAcceptanceTests"},
+    {"id": "economy-fast", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F6hIntegratedTests|FullyQualifiedName~F6kPriceWeightTests"},
+    {"id": "economy", "class": "semantic", "rule": "economy", "dotnet": true,
+     "steps": [["{dotnet}", "run", "--project", "tools/economy-interventions", "-c", "Release", "--", "{out}/f6h", "--integrated", "{priceWeightArgs}"],
+               ["{python}", "tools/economy-interventions/acceptance.py", "{out}/f6h", "--output", "{out}/f6h/acceptance.json"]],
+     "acceptance": "f6h/acceptance.json", "owns": ["f6h"]},
+    {"id": "saves", "class": "semantic", "rule": "trx", "dotnet": true,
+     "filter": "FullyQualifiedName~F7dCompactWriterTests|FullyQualifiedName~ReaderCorpusTests|FullyQualifiedName~SaveEpochTests|FullyQualifiedName~CurrentWriterGolden"},
+    {"id": "movement", "class": "semantic", "rule": "movement", "dotnet": true,
+     "steps": [["{dotnet}", "run", "--project", "tools/movement-equivalence", "-c", "Release", "--", "--out", "{out}/movement.json"]],
+     "output": "movement.json", "expectations": "tools/acceptance/expectations/movement.json"},
+    {"id": "city-s", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F9IntegratedCityTests&Category=city-s", "fixture": "city-s"},
+    {"id": "city-m", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F9IntegratedCityTests&Category=city-m", "fixture": "city-m"}
+  ],
+  "fixtures": [
+    {"id": "f5h-reference", "size": 957, "seed": 2026, "source": "tests/F5hIntegratedAcceptanceTests.cs", "saveSha256": null},
+    {"id": "city-s", "size": 128, "seed": 2026, "source": "tests/Acceptance/CityFixture.cs (F9c)", "saveSha256": null},
+    {"id": "city-m", "size": 957, "seed": 2026, "source": "tests/Acceptance/CityFixture.cs (F9c)", "saveSha256": null}
+  ],
+  "settings": [
+    {"name": "FoodChoicePriceWeight", "file": "Core/FoodChoiceSettings.cs", "pattern": "FoodChoicePriceWeight\\s*\\{\\s*get;\\s*set;\\s*\\}\\s*=\\s*([0-9.]+)", "type": "number"},
+    {"name": "FoodChoiceHouseholdWeight", "file": "Core/FoodChoiceSettings.cs", "pattern": "FoodChoiceHouseholdWeight\\s*\\{\\s*get;\\s*set;\\s*\\}\\s*=\\s*([0-9.]+)", "type": "number"},
+    {"name": "AdvanceToEventBudget", "file": "Core/CitySimulator.cs", "pattern": "AdvanceResult AdvanceTo\\(double targetMinute, int eventBudget = ([0-9]+)\\)", "type": "number"},
+    {"name": "AdvanceFrameSliceEventBudget", "file": "Core/CitySimulator.cs", "pattern": "AdvanceResult AdvanceFrameSlice\\(double targetMinute, int eventBudget = ([0-9]+)\\)", "type": "number"}
+  ],
+  "capabilities": [
+    {"name": "PopulationCapabilities.Code", "file": "Core/ShopMemory.cs", "pattern": "public string Code \\{ get; set; \\} = \"([A-Za-z0-9]+)\"", "type": "text"},
+    {"name": "PopulationCapabilities.Revision", "file": "Core/ShopMemory.cs", "pattern": "public int Revision \\{ get; set; \\} = ([0-9]+)", "type": "number"}
+  ]
+}

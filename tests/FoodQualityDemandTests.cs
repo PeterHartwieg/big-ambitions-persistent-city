@@ -28,8 +28,6 @@ public sealed class FoodQualityDemandTests
     private static FoodShadowState Finish(FoodShadowState state)
     { var engine = new FoodDemand(state); while (!engine.AdvanceTo(state.EndsAt, 1)) { } return state; }
 
-    internal static void LegacyMoney(JObject token) => LegacyMoneyWire.ToLegacy(token, wholeCents: true);
-
     [Fact]
     public void BetterCustomerServiceCanJustifyAPremiumForResidentsWhoValueIt()
     {
@@ -107,21 +105,6 @@ public sealed class FoodQualityDemandTests
     }
 
     [Fact]
-    public void StrictSchemaTwoMigrationKeepsOldChoicesAndAddsNoInventedSignals()
-    {
-        var state = Scenario(0, 0); new FoodDemand(state).AdvanceTo(2165);
-        var old = SaveWire.Parse(FoodShadowCodec.Write(state)); LegacyMoney(old); RemoveV3Fields(old); old["Schema"] = 2;
-        var migrated = FoodShadowCodec.Read(old.ToString(), "city");
-        Assert.Equal(FoodShadowState.CurrentSchema, migrated.Schema); Assert.Null(migrated.Businesses[0].CustomerServicePercent);
-        Assert.Equal(0, migrated.Consumers[0].ServiceQualityValueCents);
-        Finish(migrated); Finish(state);
-        Assert.Equal(state.Intents[0].BusinessId, migrated.Intents[0].BusinessId);
-        Assert.Equal(state.Intents[0].Spent, migrated.Intents[0].Spent);
-        old["Consumers"]![0]!["ServiceQualityValueCents"] = 100;
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(old.ToString(), "city"));
-    }
-
-    [Fact]
     public void InvalidSignalsAndMissingDistrictIdentityAreRefused()
     {
         var state = Scenario(); state.Businesses[0].CustomerServicePercent = 101;
@@ -130,13 +113,5 @@ public sealed class FoodQualityDemandTests
         Assert.Throws<ArgumentException>(() => FoodShadowCodec.Write(state));
         state = Scenario(); state.Businesses[0].DistrictId = "";
         Assert.Throws<ArgumentException>(() => FoodShadowCodec.Write(state));
-    }
-
-    internal static void RemoveV3Fields(JObject document)
-    {
-        FoodHouseholdTests.RemoveV4Fields(document);
-        var names = new[] { "DistrictId", "CustomerServicePercent", "CustomerServiceEvidence", "DistrictDemandPercent", "DistrictDemandEvidence",
-            "ServiceQualityValueCents", "DistrictAppealValueCents", "ServiceQualityAdjustmentCents", "DistrictAppealAdjustmentCents" };
-        foreach (var p in document.Descendants().OfType<JProperty>().Where(p => names.Contains(p.Name)).ToArray()) p.Remove();
     }
 }

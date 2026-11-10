@@ -330,9 +330,8 @@ namespace PersistentCity.Core
             string id = FoodRepresentation.ConsumerId(person.Identity.Id, slot);
             if (records.TryGetValue(id, out var existing)) return existing;
             var resident = Resident(person);
-            // Schema 26: the record is the person's own; the host only schedules today's represented excursion.
-            bool own = city.State.Schema >= PersonTable.OwnRosterSchema;
-            var meal = new ResidentMeal { ResidentId = id, AnchorId = own ? id : person.Identity.Id, Slot = own ? 0 : slot };
+            // The record is the person's own; the host only schedules today's represented excursion.
+            var meal = new ResidentMeal { ResidentId = id, AnchorId = id, Slot = 0 };
             meal.AssignHost(person.Identity.Id, slot);
             // Schema 27: a visitor is its own person with its own routine; its tastes are drawn by its own ID.
             if (person.IsVisitor) meal.RepresentedTraits = person.Traits;

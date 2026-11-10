@@ -32,7 +32,7 @@ public sealed partial class FoodCommerceTests
     private sealed class Market : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
-        public int Units = 100, Capacity = 15, OpenFromMinute;
+        public int Units = 100, Capacity = 15;
         public Money Price = Money.FromCents(100);
         public string BusinessId = "b";
         public string UnavailableReason = "";
@@ -52,7 +52,7 @@ public sealed partial class FoodCommerceTests
         {
             Reads++;
             var businesses = new[] { new FoodBusiness { Id = BusinessId, PlaceId = "shop", Name = "Bakery", ServiceUnavailableReason = UnavailableReason,
-            MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = OpenFromMinute, ToMinute = 1440 }).ToList(),
+            MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
             Offers = Products.Select(p => new FoodOffer { ProductId = p, Price = Price, Units = Units }).ToList() } };
             Journal?.ObserveSupply(BusinessId, "shop", (int)minute,
                 new[] { new ShopObservedOffer { ProductId = FoodProducts.Croissant, PriceUnits = Price.Units, Stock = Units } }, 1, Capacity > 0 ? 1 : 0, !Closed);
@@ -66,8 +66,8 @@ public sealed partial class FoodCommerceTests
             return new(true, "Native fake confirmed");
         }
     }
-    /// <summary><paramref name="independent"/> builds a writer-27 city whose K-1 visitors per resident run their own
-    /// routines from a portal; otherwise a factor above one is the frozen writer-26 represented-consumer city.</summary>
+    /// <summary>A factor above one (or <paramref name="independent"/>) gives the city a portal, so K-1 visitors per resident are
+    /// created as persons with their own routines (the only model since F5d; represented consumers are gone).</summary>
     private static (CitySimulator city, Market market, Walking routes) Ready(int count = 1, bool atWork = false, bool threeMeals = false, int representation = 1, bool independent = false)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {
@@ -83,8 +83,7 @@ public sealed partial class FoodCommerceTests
             c.NextEventMinute = c.ActivityUntilMinute = 2870;
         }
         state.Food = new FoodCommerceState { RepresentationFactor = representation, MealRhythmVersion = threeMeals ? MealRhythm.PolicyVersion : 0, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
-        if (independent) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
-        else DevelopmentChain.RepresentedSchema(state, representation);
+        if (independent || representation > 1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var market = new Market(); var routes = new Walking(); var city = new CitySimulator(state, routes); city.AttachFoodMarket(market);
         return (city, market, routes);
     }
