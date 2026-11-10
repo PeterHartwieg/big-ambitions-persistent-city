@@ -373,7 +373,6 @@ void CheckoutOff()
     GameManager.RunMainGameTick(0);
     Check(NativeFoodOwnership.Find(reg)!.Managed, "checkout-off: no hand-back inside the owned hour");
     // Receipts: paid stays paid, uncertain stays uncertain; nothing is begun or re-sold.
-    var paidMeal = new ResidentMeal { ResidentId = "paid", Day = 1, Kind = MealKind.Lunch, BusinessId = "business", ProductId = "product", Price = Money.FromCents(1025) };
     Check(SaveGameManager.Current.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key).SequenceEqual(receiptsBefore), "checkout-off: receipt evidence unchanged");
     // The next drained boundary hands the shop back through production AfterNativeTick and persists it.
     GameManager.RunMainGameTick(60);
@@ -385,7 +384,6 @@ void CheckoutOff()
     GameManager.RunMainGameTick(60); GameManager.RunMainGameTick(60);
     Check(!NativeFoodOwnership.Find(reg)!.Managed, "checkout-off: no reacquisition");
     Check(SaveGameManager.Current.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key).SequenceEqual(receiptsBefore), "checkout-off: receipt evidence unchanged after the hand-back");
-    _ = paidMeal;
     NativeFoodOwnership.Detach(market);
     Console.WriteLine("PASS checkout-off through production NativeFoodOwnership: owned hour protected across a reload, withdrawal persisted, receipts unchanged, drained-boundary hand-back persisted, no reacquisition");
 }

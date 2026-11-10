@@ -211,6 +211,93 @@ namespace PersistentCity.Tests
             Assert.Contains("Runtime/NativeFoodOwnership.cs", File.ReadAllText(Path.Combine(root, "tools", "food-ownership-regression", "FoodOwnershipRegression.csproj")));
         }
 
+        private sealed class WalkRoutes : IRoutePlanner
+        {
+            public Route Plan(Place from, Place to, double at, TravelPreferences preferences) => new()
+            { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Minutes = 5, Mode = TravelMode.Walk } } };
+        }
+
+        /// <summary>The market surface NativeFoodMarket gives Core, reduced to what checkout-off changes: receipt evidence
+        /// read from the native save's receipt keys with FoodSaleReceipts (as IsConfirmedPaid does), and Read/Buy gated by
+        /// the same FoodCheckoutMode (a shop that SupportedMenu refuses is not read, and CanServe refuses its checkout).</summary>
+        private sealed class CheckoutOffMarket : IFoodMarket, IFoodSaleEvidence
+        {
+            public FoodCheckoutMode Checkout = new FoodCheckoutMode(null);
+            public readonly Dictionary<string, string> Receipts = new(StringComparer.Ordinal);
+            public int LoseFromDay = int.MaxValue, Buys;
+            public double EarliestMinute => 0;
+            public bool IsConfirmedPaid(ResidentMeal meal) => FoodSaleReceipts.ReadStatus(Receipts, meal) == FoodReceiptStatus.Paid;
+            public IReadOnlyList<FoodBusiness> Read(double minute) => !Checkout.Eligible ? Array.Empty<FoodBusiness>() : new[] { new FoodBusiness {
+                Id = "b", PlaceId = "shop", Name = "Bakery", MealsPerHour = 60,
+                Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
+                Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(450), Units = 1000 } } } };
+            public FoodSale Buy(ResidentMeal meal, double minute)
+            {
+                Buys++;
+                if (!Checkout.Serves) return new FoodSale(false, "Business is no longer owned by Persistent City");
+                FoodSaleReceipts.Begin(Receipts, meal);
+                // Day LoseFromDay: half the outcomes are lost before the receipt is confirmed (stays pending, uncertain),
+                // half after it (paid evidence; the acknowledgement was lost). Both leave the meal uncertain in Core.
+                bool late = meal.ResidentId.GetHashCode(StringComparison.Ordinal) % 2 == 0;
+                if (meal.Day >= LoseFromDay && !late) throw new InvalidOperationException("outcome lost before the receipt was confirmed");
+                FoodSaleReceipts.Confirm(Receipts, meal);
+                if (meal.Day >= LoseFromDay) throw new InvalidOperationException("receipt confirmed; acknowledgement lost");
+                return new FoodSale(true, "native order confirmed");
+            }
+        }
+
+        /// <summary>Sol-r3-2: reload a valid owned food scope with paid and uncertain receipts and resident obligations, in
+        /// checkout-off mode. Core's production reconciliation settles the paid receipt without a checkout, keeps the uncertain
+        /// one uncertain with its held funds, books no new sale and leaves the receipt evidence unchanged.</summary>
+        [Fact]
+        public void CheckoutOffReloadSettlesPaidReceiptsAndKeepsUncertainOnesHeld()
+        {
+            var state = Population.Create(Enumerable.Range(0, 60).Select(n => new CitizenIdentity { Id = "r" + n, Name = "Resident " + n, Persona = Persona.Foodie, Age = 30 }).ToArray(),
+                new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 60 }, new Place { Id = "shop", Name = "Bakery", Kind = PlaceKind.Shop, Position = new(2, 0, 0) } },
+                "checkout-off", "0.40.4", 7, 1440);
+            foreach (var c in state.Citizens) { c.Phase = CitizenPhase.AtPlace; c.PlaceId = "home"; c.Activity = Activity.Home; c.NextEventMinute = c.ActivityUntilMinute = 2870; }
+            state.Food = new FoodCommerceState { Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
+            var market = new CheckoutOffMarket { LoseFromDay = 2 };
+            var city = new CitySimulator(state, new WalkRoutes()); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
+            foreach (var meal in city.State.Food!.Residents) meal.Budget!.HomeFoodFundedDay = -1;
+            while (!city.AdvanceTo(3 * 1440 - 1, 128).CaughtUp) { }
+            var uncertain = city.State.Food.Residents.Where(m => m.Status == MealStatus.Uncertain).ToArray();
+            var paidEvidence = uncertain.Where(m => market.IsConfirmedPaid(m)).Select(m => m.ResidentId).ToHashSet();
+            var pendingEvidence = uncertain.Where(m => FoodSaleReceipts.ReadStatus(market.Receipts, m) == FoodReceiptStatus.Pending).Select(m => m.ResidentId).ToHashSet();
+            Assert.NotEmpty(paidEvidence); Assert.NotEmpty(pendingEvidence);
+            Assert.All(uncertain, m => Assert.True(m.Budget!.HeldPurchase > Money.Zero, "uncertain meals hold their funds before the reload"));
+
+            // Reload with checkout off; the receipt keys are native save data and survive the population reload.
+            var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+            var receipts = market.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray();
+            var off = new CheckoutOffMarket { Checkout = new FoodCheckoutMode("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed") };
+            foreach (var pair in receipts) off.Receipts.Add(pair.Key, pair.Value);
+            city = new CitySimulator(read.State!, new WalkRoutes()); city.AttachFoodMarket(off);
+            while (!city.AdvanceTo(4 * 1440 - 1, 128).CaughtUp) { }
+
+            var residents = city.State.Food!.Residents;
+            var settled = residents.Where(m => paidEvidence.Contains(m.ResidentId)).ToArray();
+            var held = residents.Where(m => pendingEvidence.Contains(m.ResidentId)).ToArray();
+            Assert.Equal(paidEvidence.Count, settled.Length); Assert.Equal(pendingEvidence.Count, held.Length);
+            foreach (var m in settled)
+            {
+                Assert.NotEqual(MealStatus.Uncertain, m.Status); // settled from the paid receipt, without a checkout
+                Assert.Equal(Money.Zero, m.Budget!.HeldPurchase);
+                Assert.True(HouseholdFinance.CashConserved(m.Budget));
+            }
+            foreach (var m in held)
+            {
+                Assert.Equal(MealStatus.Uncertain, m.Status);           // never re-sold, never settled
+                Assert.True(m.Budget!.HeldPurchase > Money.Zero);      // its funds stay held
+                Assert.True(HouseholdFinance.CashConserved(m.Budget));
+            }
+            Assert.Equal(0, off.Buys);                                  // no checkout while the contract is off
+            Assert.Equal(receipts, off.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray()); // evidence unchanged
+            Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
+            // The double's evidence read is production's: NativeFoodMarket.IsConfirmedPaid reads the same receipt status.
+            Assert.Contains("&& FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;", Source("Runtime/NativeFoodMarket.cs"));
+        }
+
         /// <summary>A shop not yet owned: checkout-off requests no ownership, so no boundary ever acquires it.</summary>
         [Fact]
         public void CheckoutOffRequestsNoNewOwnership()
