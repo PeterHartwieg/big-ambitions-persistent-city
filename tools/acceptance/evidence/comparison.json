@@ -1,0 +1,1254 @@
+{
+  "schema": "persistentcity-acceptance-comparison-1",
+  "verdict": "pending",
+  "reason": "one machine recorded; the others are pending or not run",
+  "firstDifference": null,
+  "commits": [
+    "d23bb9256860833175568bb3481c8817bf07d716"
+  ],
+  "machines": [
+    {
+      "key": "windows-x64",
+      "label": "PC (Windows x64)",
+      "status": "recorded",
+      "runId": "20261110T131314Z-d23bb925",
+      "commit": "d23bb9256860833175568bb3481c8817bf07d716",
+      "verdict": "incomplete",
+      "semantic": {
+        "verdict": "pass"
+      }
+    },
+    {
+      "key": "macos-arm64",
+      "label": "Mac (macOS arm64)",
+      "status": "pending",
+      "reason": "pending F9h-mac, at the head where F9h merged"
+    },
+    {
+      "key": "linux-x64",
+      "label": "Linux box",
+      "status": "not-run",
+      "reason": "not run: the Linux box does not build or test (team rule)"
+    }
+  ],
+  "digests": [
+    {
+      "name": "economy/acceptance.json",
+      "values": {
+        "windows-x64": "9397589dab8f9e0d3f307ec06ecb93c408defd1e4ec40378ff0a5bd9aeec8b8d"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-door-closed-2-days-seed0.json",
+      "values": {
+        "windows-x64": "a1393aa5980d520307f35bae58a8da6df0327daf0a487ae6e2b60b24252121a2"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-door-closed-2-days-seed1.json",
+      "values": {
+        "windows-x64": "048c95f284645614704bf8f95e9cb219d85df3ce81044700e14f3f298ff1d8a6"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-door-closed-2-days-seed2.json",
+      "values": {
+        "windows-x64": "0127e7239b6561a8b6757ef71a8314dd8b9c4078e6c2ddeaeea2635a686e1eb0"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-door-closed-2-days-seed3.json",
+      "values": {
+        "windows-x64": "66a8eeeb23e44da8762a15d1730f1c77ed1460a7b58f10ae7baa8cf665953c50"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-door-closed-2-days-seed4.json",
+      "values": {
+        "windows-x64": "267be880393b3dd929dd694168a124e891b86016c68f5d98758b9a2baaf16c0f"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-route-time-plus-50-seed0.json",
+      "values": {
+        "windows-x64": "b19d37bb1e1602ec00b680fead9d49cb72e42634cf4887e44e57390568041ea4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-route-time-plus-50-seed1.json",
+      "values": {
+        "windows-x64": "88df0711c42eb8ac8faa9def4149b12da7c3f800ce66d4bc54c098e3cf54fb16"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-route-time-plus-50-seed2.json",
+      "values": {
+        "windows-x64": "537f26fcedf90ebc345c6a38f883108cc06d0df684b3ec23d901682e18fd55c6"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-route-time-plus-50-seed3.json",
+      "values": {
+        "windows-x64": "800ca39dad26a907473d87a06956c3d66137af90f382ff68337e15f183e18250"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-route-time-plus-50-seed4.json",
+      "values": {
+        "windows-x64": "01ea8152d267b9c794cb97c9ee1e987d1b4918992df6a7e374aa39c6368299fc"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-second-site-2x-seed0.json",
+      "values": {
+        "windows-x64": "f9274b3c4c0b954b4430154c27721124da758b484060c307dae8d759c73a66d9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-second-site-2x-seed1.json",
+      "values": {
+        "windows-x64": "518ded2256805df1acc20a1a6d64a5900cba3854131b289a5f30746764dd7996"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-second-site-2x-seed2.json",
+      "values": {
+        "windows-x64": "9321d45f3141138065df4be9d1599ab693adab844e313df77e342fae0688cf50"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-second-site-2x-seed3.json",
+      "values": {
+        "windows-x64": "46db738b0c37cf1ebda6710d3a3447007cde8fe85c6a43e9efe32ef2d58c5f75"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/access-second-site-2x-seed4.json",
+      "values": {
+        "windows-x64": "6f4edd24bfb277419d2d2d3a3e2b3d7830d84803492ea0e1641e48efd016b002"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/control-control-seed0.json",
+      "values": {
+        "windows-x64": "b6ba23f2ada73b90e9800101dcf00e11af84b31d1ad3b2ca152a7f7eac8c38e6"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/control-control-seed1.json",
+      "values": {
+        "windows-x64": "5959cd0026d0c607920fdbe6037dc9cc68dc8d34b21cec282304a6e1e70c2eae"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/control-control-seed2.json",
+      "values": {
+        "windows-x64": "11ebf9d38658e8d95cdd04d2ac33195fe50845c289218aa7c5aab86792f4040d"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/control-control-seed3.json",
+      "values": {
+        "windows-x64": "b52e20fe8ad8f6badcfdbcfc2a8021c6d6186f0f6db8f9b0976babf9ddd32dde"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/control-control-seed4.json",
+      "values": {
+        "windows-x64": "96fdab7d5b94176ca0e58a7a15c4f7eef3cfb01b5de0a3f14c6a6fe997b08c6f"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-worker-routes-blocked-5pct-seed0.json",
+      "values": {
+        "windows-x64": "5616874ade6e1eeae8dcac485e5104e89b4a29f341832a7aefe72ad4cee4c5ca"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-worker-routes-blocked-5pct-seed1.json",
+      "values": {
+        "windows-x64": "5efeaf28f6ebb38336c411fd8f1e930299067a88130f9257df6d1e92eb8da85b"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-worker-routes-blocked-5pct-seed2.json",
+      "values": {
+        "windows-x64": "f572b3cdeaa33dfb4dbeb79d36e954edcaab00c2a54f9f342d70c39c58ce60e5"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-worker-routes-blocked-5pct-seed3.json",
+      "values": {
+        "windows-x64": "b0d5c0203d758493224f62a11a01bcd862d7475a661ddb0f1dde2bfb8c8a8e6d"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-worker-routes-blocked-5pct-seed4.json",
+      "values": {
+        "windows-x64": "4eedc6523667941ad707016432b26f663c7f81e59cc0860a20429d44952fb1e5"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-workplaces-closed-10pct-seed0.json",
+      "values": {
+        "windows-x64": "17cc4814b84b633ed9dbfad76b8a8ca66b2da05051e8cb3f000fdb1ec674d12d"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-workplaces-closed-10pct-seed1.json",
+      "values": {
+        "windows-x64": "f9035dc75fa0d857373350f7de37105af4f5ccb27a1fbb624693c8bf8ce94f62"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-workplaces-closed-10pct-seed2.json",
+      "values": {
+        "windows-x64": "aba492541e702cdbfe6393cc1cf765ca9b196aa9e268fb702d3d66d7b75b9e10"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-workplaces-closed-10pct-seed3.json",
+      "values": {
+        "windows-x64": "429be7daa214b172f9e59d26783c5d96b5d0eccac536fb9bd2ed83fe94c3ede9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/employment-workplaces-closed-10pct-seed4.json",
+      "values": {
+        "windows-x64": "c6e3869ff7d1c046567d020d442a8805f345c0d60f1897bdfea064b9d5c19912"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-breakfast-removed-seed0.json",
+      "values": {
+        "windows-x64": "d9630958d99955719e854309f5472ff774c6a2fb47d2fc0fe1f1fb2c54970402"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-breakfast-removed-seed1.json",
+      "values": {
+        "windows-x64": "e17a88c0191d8a339f02f30aa82c1992cb74c69c2809be87e57c552755bc7f65"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-breakfast-removed-seed2.json",
+      "values": {
+        "windows-x64": "13cdbdafa3751aadaa192bc0e783ee639e98534ad831f6492054add9431a1e8a"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-breakfast-removed-seed3.json",
+      "values": {
+        "windows-x64": "3cd379f5cc0cde2c0c7174580c14ebc259476838551696e262aed4b7dc92e940"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-breakfast-removed-seed4.json",
+      "values": {
+        "windows-x64": "c1812e972b2488c80efbcd5072d9d4d97af473f38d541c534c2d9f8197cc507a"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-close-2h-earlier-seed0.json",
+      "values": {
+        "windows-x64": "29a5e4b6e30ce9fb80248ea225cd404fca55f3a23d82f94f1383fae9e39e3287"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-close-2h-earlier-seed1.json",
+      "values": {
+        "windows-x64": "a495539202c9a5581dcaa162358700db0e9441482fccfaee146e02e636ae85ce"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-close-2h-earlier-seed2.json",
+      "values": {
+        "windows-x64": "49a46f32a500abf2f370ea6701525ab9bf8e5e228d3131131d7a57def02e6326"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-close-2h-earlier-seed3.json",
+      "values": {
+        "windows-x64": "24f289b6ed70a015df38eb08484492f8cba9ca309ef9e5656237d27124981045"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/hours-close-2h-earlier-seed4.json",
+      "values": {
+        "windows-x64": "4b412912868907cecb4c4e35d8d8ccccfa3f775517aed539e6a4a9d8badcb047"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-menu-plus-50-seed0.json",
+      "values": {
+        "windows-x64": "2310b7389ad76f3cfd0127e0c7e8bb513b5732cd6cc4b15696193b33cf3190d6"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-menu-plus-50-seed1.json",
+      "values": {
+        "windows-x64": "dca91707014aba78ad39cee882b1a9604f7f13f7bbf36ecf1841ed68a222ea9e"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-menu-plus-50-seed2.json",
+      "values": {
+        "windows-x64": "54aa76e34b47a0ec005df7b1c1ae64d7ca09b5583f1ed98ed40bf5ddbb1adca4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-menu-plus-50-seed3.json",
+      "values": {
+        "windows-x64": "287c07176effe689c42519d3a159d8286d27a1b9c1d3a0839701c916916415b0"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-menu-plus-50-seed4.json",
+      "values": {
+        "windows-x64": "1cefd66b4301f785ca163168bcd7a98afdb850603a9afcfe45a5c6ce4269b5b8"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-minus-25-seed0.json",
+      "values": {
+        "windows-x64": "6297ad23563ca8958cbb16c46bae05f0a022e0a895d1d6bb419b499437ffd742"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-minus-25-seed1.json",
+      "values": {
+        "windows-x64": "64eed8a02fff113481b86be4b7374b9d6c06525aa5f734a59fd73f05e9e3e6cc"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-minus-25-seed2.json",
+      "values": {
+        "windows-x64": "d979c7619284c2f5ddb9c3d34fd767a0b9937ec0cfd8d5f6b334ec9068742237"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-minus-25-seed3.json",
+      "values": {
+        "windows-x64": "8ca03d1a215575052eda9a51e2a41a41854e58fa92a9e039e85d2b3c30d22bbc"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-minus-25-seed4.json",
+      "values": {
+        "windows-x64": "7d0113830f06831aa681cfed0b00a2b5084b660ce145c1f68f2de91fb1fc635d"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-plus-25-seed0.json",
+      "values": {
+        "windows-x64": "7a35f1bb0d967ccf4d7feb59e3c069675a5b57c5f09a12f7775f4987d7e16a56"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-plus-25-seed1.json",
+      "values": {
+        "windows-x64": "c45126371c82da37517958d15ca5251234044b1a40118616e47888e2d7606e21"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-plus-25-seed2.json",
+      "values": {
+        "windows-x64": "a327f6040bcd746d64fa71df173d4e675c598da20ea1c51e4a42a6a1b60a2289"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-plus-25-seed3.json",
+      "values": {
+        "windows-x64": "132db2b458dfa8a45e223e1eb2dd0cfbeb52b1c66cf07661fd88e172fc0e36b0"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/price-product-plus-25-seed4.json",
+      "values": {
+        "windows-x64": "9ddd6caf38d6bb31289a576eca1ace1f62cb550a345bdb5c46bdcae2c580fc22"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-lanes-halved-seed0.json",
+      "values": {
+        "windows-x64": "f2fa037a55c9761cbfb6370dbf9f45e09c3f3058b23b2e6da8c0d89582e89715"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-lanes-halved-seed1.json",
+      "values": {
+        "windows-x64": "aa7869d7ac849c197b97b076b4d03a70ad8ba251d40d65bb9cacfa4348bff5fd"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-lanes-halved-seed2.json",
+      "values": {
+        "windows-x64": "1c75d5db7e302541a5de07f6ce8d0f705cdbf3929b53863d11165a31a39e9583"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-lanes-halved-seed3.json",
+      "values": {
+        "windows-x64": "ccd44c373f8440b6cabd2cffa85501d7a40c011ae2627048b750dc10295bbece"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-lanes-halved-seed4.json",
+      "values": {
+        "windows-x64": "1632abedb25d44af7a706ed80d2390d0dbc551f22e5fdbc58088f6dd7623b30c"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-price-minus-25-seed0.json",
+      "values": {
+        "windows-x64": "c77a3e04232e51ae6ba389d4537f158221e31246a2573e1b39021b82a5df99fd"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-price-minus-25-seed1.json",
+      "values": {
+        "windows-x64": "77ba2c1f4a947fabdeeac7466698e5e1351d22c5b561bb978b8f948fabd85ea5"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-price-minus-25-seed2.json",
+      "values": {
+        "windows-x64": "7773cebba94767fff98f9fe24baab8ec4322756f8ca474bf07e1fd75ca9a314a"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-price-minus-25-seed3.json",
+      "values": {
+        "windows-x64": "c15231662e4891aa71e75457a4bedb407deb8b36296c398a41a95c66505c1aed"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/rival-price-minus-25-seed4.json",
+      "values": {
+        "windows-x64": "48b2846c4b9951a8d652a5f73bb17f34f31466c3e67b51915d7d96ffa2d94fd4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-product-3-lunches-seed0.json",
+      "values": {
+        "windows-x64": "4d8737053b9c3e77aada4d54e355dcda00f8c232813ffbc7fd06e2b41c87df97"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-product-3-lunches-seed1.json",
+      "values": {
+        "windows-x64": "b548e6da2f9b089b3aa566ddd85fb2cfa163badc711527383ccde83f948391e7"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-product-3-lunches-seed2.json",
+      "values": {
+        "windows-x64": "1c9b578725f7910a0618d0257dccd4bb675ebfd08673ad1574970ea16222954d"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-product-3-lunches-seed3.json",
+      "values": {
+        "windows-x64": "4059bc4ee02efe31df4a9c54a219653f646bd7125ac6bd4b378977aaa282e54f"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-product-3-lunches-seed4.json",
+      "values": {
+        "windows-x64": "33581e5c6af36d4fdf3102f2866c1f4e46d1f728eb7c338767acc0373d317fc7"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-whole-shop-day-seed0.json",
+      "values": {
+        "windows-x64": "5d5e615034735f134d77a41db5fcc1210500c8053dc65997a40bb7a4c441b433"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-whole-shop-day-seed1.json",
+      "values": {
+        "windows-x64": "e0735f74daaa15fb15c83d6910d553e3631d1ad3c0ede1f9b6c52441e5b18bab"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-whole-shop-day-seed2.json",
+      "values": {
+        "windows-x64": "575f01fdaccf633f0c0064a7711144e08db2405d7f2a35a4e7784b3e55843eae"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-whole-shop-day-seed3.json",
+      "values": {
+        "windows-x64": "46f295fe1b64a27d6e193a797df1563eca10c1a9ed28247f907e7874934874f9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/shortage-whole-shop-day-seed4.json",
+      "values": {
+        "windows-x64": "70dccc8b67e29469c0dacdda8cb0aa6065cb8cfce384799647d36d40600b95a6"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-lunch-counters-halved-seed0.json",
+      "values": {
+        "windows-x64": "befc33890da0651570c75c73b07fbb87e79bae9a71aa6ac4810cbdeac0105a26"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-lunch-counters-halved-seed1.json",
+      "values": {
+        "windows-x64": "b79f032707a6aeed237e511a948a28c4c5d3a29147e395770f0a7d00c36b4c43"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-lunch-counters-halved-seed2.json",
+      "values": {
+        "windows-x64": "72db505a5555b1515c45a55988d204709dcb3492c6c27a5a3a0333baa8ec1d5b"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-lunch-counters-halved-seed3.json",
+      "values": {
+        "windows-x64": "9c8f8b4cc06fe3b57b91175ae427e87f9d018f81cac87b1e3ab7cd03f19f9c19"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-lunch-counters-halved-seed4.json",
+      "values": {
+        "windows-x64": "667dba4623a8af392ba08cc0fbb5c097c92d3bdccf6808f2a08b3873457cf829"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-zero-staff-day-seed0.json",
+      "values": {
+        "windows-x64": "a7d2501fd23280f53e8a29a081f73ef559416264aa469029453ceb36758697f9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-zero-staff-day-seed1.json",
+      "values": {
+        "windows-x64": "517182a116bdc3be8d6d52859f513810b84b5225c9bec199b883453f6a62c6f6"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-zero-staff-day-seed2.json",
+      "values": {
+        "windows-x64": "4d92646c4ad28072f840886a634a94f05e447290705b8c4f87389c2afd0b280b"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-zero-staff-day-seed3.json",
+      "values": {
+        "windows-x64": "9e6f0b122fa055fe1ff2a62cd13cc93e42da25c29f20a3d41cdaedd6020343c2"
+      },
+      "status": "single"
+    },
+    {
+      "name": "economy/f6h/staffing-zero-staff-day-seed4.json",
+      "values": {
+        "windows-x64": "942e0260795c97353c1e92487860ee178715eeed83af5a920954e9d0bdaff094"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/focus-none",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-120",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-30",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-60",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-hidden-120",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-hidden-30",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-hidden-travel",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/bodies-off/plain-reload",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/cadence/120fps",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/cadence/30fps",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/caps/0-0",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/caps/1-1",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/caps/24-12",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/caps/256-64",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/combined/away-return-1-50pct-30fps-reload",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/combined/stationary-24-50pct-slow-head-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/combined/sweep-256-10pct-120fps",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/combined/visitors-away-return-24-10pct-slow-head-hidden",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/combined/visitors-stationary-1-10pct-120fps",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/combined/visitors-sweep-256-50pct-30fps-reload",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/failures/10pct",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/failures/50pct",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/focus/away-return",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/focus/stationary",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/focus/sweep",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/lag/ideal",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/lag/slow-head-car",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/away-return-0-0-0pct-30fps-slow-head-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/away-return-0-0-50pct-30fps-native",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/away-return-1-1-50pct-30fps-slow-head-reload",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/away-return-24-12-0pct-30fps-ideal",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/away-return-256-64-10pct-120fps-ideal-reload-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/none-0-0-0pct-30fps-ideal",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/none-1-1-0pct-120fps-ideal-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/none-24-12-10pct-60fps-slow-head",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/none-48-24-0pct-30fps-ideal",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/none-48-24-50pct-60fps-ideal-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/stationary-0-0-0pct-120fps-native-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/stationary-1-1-10pct-60fps-native-reload",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/stationary-24-12-0pct-30fps-native-reload-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/stationary-256-64-0pct-60fps-slow-head",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/stationary-48-24-50pct-30fps-native-reload-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/sweep-1-1-0pct-30fps-ideal-reload-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/sweep-24-12-50pct-120fps-slow-head-hidden",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/sweep-256-64-50pct-30fps-ideal-reload",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/sweep-48-24-10pct-120fps-ideal-reload",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/visitors-away-return-48-24-0pct-60fps-slow-head-reload-hidden",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/visitors-none-256-64-10pct-30fps-native-hidden",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/visitors-stationary-1-1-50pct-120fps-ideal",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/visitors-sweep-0-0-10pct-60fps-native",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/pairwise/visitors-sweep-24-12-0pct-30fps-ideal-reload",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/transitions/hidden-travel",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/transitions/reload-mid-journey",
+      "values": {
+        "windows-x64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/away-return",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/cadence-120fps",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/cadence-30fps",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/caps-0",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/caps-1",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/caps-24",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/caps-256",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/failures-10pct",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/failures-50pct",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/focus-none",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/hidden-travel",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/lag-ideal",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/lag-slow-head-car",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/plain-120",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/plain-30",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/plain-60",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/plain-hidden-120",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/plain-hidden-30",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/plain-hidden-travel",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/reload-mid-journey",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/stationary",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/visitors/sweep",
+      "values": {
+        "windows-x64": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/away-return",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/cadence-30fps",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/caps-1",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/caps-256",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/failures-50pct",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/hidden-travel",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/lag-ideal",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/plain-30",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/plain-60",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/plain-hidden-travel",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/reload-mid-journey",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/stationary",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    },
+    {
+      "name": "movement/walking/sweep",
+      "values": {
+        "windows-x64": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005"
+      },
+      "status": "single"
+    }
+  ]
+}

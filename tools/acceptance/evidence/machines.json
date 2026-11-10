@@ -1,0 +1,8 @@
+{
+  "schema": "persistentcity-acceptance-machines-1",
+  "machines": [
+    {"key": "windows-x64", "label": "PC (Windows x64)", "status": "pending", "reason": "F9h PC run not recorded"},
+    {"key": "macos-arm64", "label": "Mac (macOS arm64)", "status": "pending", "reason": "pending F9h-mac, at the head where F9h merged"},
+    {"key": "linux-x64", "label": "Linux box", "status": "not-run", "reason": "not run: the Linux box does not build or test (team rule)"}
+  ]
+}
