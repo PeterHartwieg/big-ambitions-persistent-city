@@ -120,8 +120,7 @@ namespace PersistentCity.Runtime
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
-            checkout = new FoodCheckoutMode(NativeFoodContract.Checkout.Refusal);
-            process = CheckoutRefusal == null ? NativeFoodContract.CheckoutMember<MethodInfo>(NativeFoodContractSpec.ProcessCustomer) : null;
+            checkout = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out process);
             if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
             contractEconomy = economy;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
@@ -148,9 +147,9 @@ namespace PersistentCity.Runtime
             {
                 NativeFoodOwnership.Attach(this);
                 journalReady = true;
-                if (checkout.InstallsPricePrefix)
+                NativeFoodContract.InstallPricePrefix(checkout, () =>
                     patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
-                        prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
+                        prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First }));
                 StartContractShadow(); // E5b2 hint hooks and stamps; shadow only, never throws.
             }
             catch { Dispose(); throw; }

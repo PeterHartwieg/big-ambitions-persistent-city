@@ -383,9 +383,11 @@ namespace PersistentCity.Tests
         {
             string market = Source("Runtime/NativeFoodMarket.cs");
             string ctor = Body(market, "public NativeFoodMarket(FoodCommerceState state");
-            int decided = ctor.IndexOf("checkout = new FoodCheckoutMode(NativeFoodContract.Checkout.Refusal);", StringComparison.Ordinal);
+            int decided = ctor.IndexOf("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out process);", StringComparison.Ordinal);
             Assert.True(decided > 0 && decided < ctor.IndexOf("RefreshKnownOwnership();", StringComparison.Ordinal));
-            Assert.Contains("if (checkout.InstallsPricePrefix)\n                    patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", ctor);
+            // tools/capability-contracts executes StartCheckout and InstallPricePrefix with the pinned Harmony (arm CheckoutStartup).
+            Assert.Contains("NativeFoodContract.InstallPricePrefix(checkout, () =>\n                    patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", ctor);
+            Assert.Contains("CheckoutStartup();", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "tools", "capability-contracts", "Program.cs")));
             Assert.Contains("if (!checkout.Eligible || refusedContracts.TryGetValue(r, out _)) return false;", Body(market, "private bool SupportedMenu(BuildingRegistration r)"));
             Assert.Contains("|| !checkout.Serves) return false;", Body(market, "public bool CanServe(string businessId)"));
             Assert.StartsWith("{\n            if (checkout.ScopeReason is string off) return off;", Body(market, "public string ScopeStatus(string placeId)"));

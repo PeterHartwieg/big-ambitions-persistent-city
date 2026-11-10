@@ -34,6 +34,7 @@ internal static partial class Program
         CheckoutFaultLeavesAuthorityVerified();
         ResearchFaultReportsTheNamedMember();
         ChangedCheckoutMemberRedOnBaseGreenAfter();
+        CheckoutStartup();
         ContractCheckTime();
         HookConflictArms();
         Console.WriteLine(checks + " capability-contract checks passed (synthetic native surfaces and Harmony 2.4.2, not game execution).");
@@ -173,6 +174,42 @@ internal static partial class Program
         Check(refusal != null && FoodSaleReceipts.ReadStatus(data, meal) == FoodReceiptStatus.Missing && Changed.RetailBusinessSimulator.Calls == 0,
             "after: refused at construction, no receipt, no native call (green)");
         Console.WriteLine("changed ProcessCustomer: base leaves receipt Pending (uncertain); F8c refuses before any receipt: " + refusal);
+    }
+
+    public static bool PricePrefix() => true;
+
+    /// <summary>Sol-r6-1: the checkout startup NativeFoodMarket's constructor runs (NativeFoodContract.StartCheckout and
+    /// InstallPricePrefix), executed with the pinned Harmony 2.4.2 on the stubbed CitizenData.IsPriceAcceptable. Verified:
+    /// the food-routines price prefix is installed and ProcessCustomer is resolved. Refused (the checkout fault point):
+    /// startup does not throw, installs no prefix, serves nothing, resolves no ProcessCustomer and observes every shop
+    /// ineligible; a later verified load installs the prefix again.</summary>
+    private static void CheckoutStartup()
+    {
+        var harmony = new Harmony(NativeHookInventory.FoodRoutines);
+        var target = typeof(AI.Citizens.CitizenData).GetMethod("IsPriceAcceptable", new[] { typeof(string), typeof(float) })!;
+        bool Install(FoodCheckoutMode mode) => NativeFoodContract.InstallPricePrefix(mode, () =>
+            harmony.Patch(target, prefix: new HarmonyMethod(typeof(Program), nameof(PricePrefix)) { priority = Priority.First }));
+        try
+        {
+            var verified = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out var process);
+            Check(verified.Serves && process != null && process.Name == "ProcessCustomer", "verified startup resolves ProcessCustomer");
+            Check(Install(verified) && Harmony.HasAnyPatches(NativeHookInventory.FoodRoutines), "verified startup installs the price prefix");
+            harmony.UnpatchAll(NativeHookInventory.FoodRoutines);
+
+            Environment.SetEnvironmentVariable("PC_FAULT_POINT", "checkout:ProcessCustomer:signature");
+            var specs = NativeFoodContractSpec.Checkout(NativeFoodContract.Types); FaultPoints.Apply(specs, "checkout");
+            Environment.SetEnvironmentVariable("PC_FAULT_POINT", null);
+            FoodCheckoutMode off = null!; MethodInfo? none = null; bool threw = false;
+            try { off = NativeFoodContract.StartCheckout(NativeFoodContract.Verify(specs), out none); } catch { threw = true; }
+            Check(!threw && off.Refusal != null, "checkout-off startup does not throw");
+            Check(!Install(off) && !Harmony.HasAnyPatches(NativeHookInventory.FoodRoutines), "checkout-off installs no price prefix");
+            Check(!off.Serves && none == null && !off.Observe(true) && off.ScopeReason!.StartsWith("Excluded: food checkout contract off: ", StringComparison.Ordinal),
+                "checkout-off serves nothing, resolves no ProcessCustomer and observes every shop ineligible");
+            var again = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out _);
+            Check(Install(again) && Harmony.HasAnyPatches(NativeHookInventory.FoodRoutines), "a later verified load installs the prefix again");
+        }
+        finally { harmony.UnpatchAll(NativeHookInventory.FoodRoutines); }
+        Console.WriteLine("checkout startup: verified installs the price prefix; checkout-off starts without throwing, installs no prefix, serves nothing");
     }
 
     private static void ContractCheckTime()

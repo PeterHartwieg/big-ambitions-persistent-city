@@ -74,6 +74,24 @@ namespace PersistentCity.Runtime
             throw new InvalidOperationException("food.authority contract does not name BusinessSimulator." + name + ".");
         }
 
+        /// <summary>F8c checkout startup, shared by the NativeFoodMarket constructor and tools/capability-contracts: the mode a
+        /// checkout result gives (a refusal never throws; it is checkout-off) and the ProcessCustomer method checkout may
+        /// invoke (null while off).</summary>
+        internal static FoodCheckoutMode StartCheckout(Result checkout, out MethodInfo? process)
+        {
+            var mode = new FoodCheckoutMode(checkout.Refusal);
+            process = mode.Serves ? checkout.Members[NativeFoodContractSpec.ProcessCustomer] as MethodInfo : null;
+            return mode;
+        }
+
+        /// <summary>Installs the resident price prefix only while checkout is on. Returns whether it ran.</summary>
+        internal static bool InstallPricePrefix(FoodCheckoutMode mode, Action install)
+        {
+            if (!mode.InstallsPricePrefix) return false;
+            install();
+            return true;
+        }
+
         /// <summary>A checkout member that passed its own check, or null (each supply member stands alone, so a changed
         /// ProcessCustomer does not hide which supply fields still resolve).</summary>
         internal static T? CheckoutMember<T>(int index) where T : MemberInfo => Checkout.Members[index] as T;
