@@ -290,6 +290,14 @@ public sealed class NativeCapabilityTests
                 times[i] = (Stopwatch.GetTimestamp() - t0) * tick;
             }
             long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            // Steady state: a one-time runtime allocation in the window (tier-up under a busy suite) does not repeat, a
+            // per-call allocation does. Re-measure once, untimed, before reporting bytes.
+            if (bytes != 0)
+            {
+                before = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < Samples; i++) body();
+                bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            }
             var sorted = times.OrderBy(x => x).ToArray();
             double P(double q) => sorted[Math.Min(sorted.Length - 1, (int)Math.Ceiling(q * sorted.Length) - 1)];
             rows.Add(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:0.000} | {2:0.000} | {3:0.000} | {4} | {5} |", arm,
