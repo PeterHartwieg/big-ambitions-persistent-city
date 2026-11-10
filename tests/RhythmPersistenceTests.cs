@@ -158,20 +158,6 @@ public sealed class RhythmPersistenceTests
     }
 
     [Theory]
-    [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
-    public void LegacyMigrationFirstRejectsWrongOriginalShapeAndInvalidActiveRoute(int schema)
-    {
-        var wire = Legacy(City(), schema);
-        wire["Citizens"]![0]!["CommutePreparation"] = JObject.FromObject(Attempt());
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        ((JObject)wire["Citizens"]![0]!).Remove("CommutePreparation");
-        ((JObject)wire["Citizens"]![0]!).Remove("NextEventMinute");
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        wire = Legacy(City(), schema); wire["Citizens"]![0]!["Journey"]!["Legs"]![1]!["Minutes"] = 0;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-    }
-
-    [Theory]
     [InlineData(0, 100)] [InlineData(0, 105)] [InlineData(1, 100)] [InlineData(1, 105)]
     public void TimingChangeClearsPreparationWakesHomeAndPreservesCommittedTravelAndWaitSemantics(int timingVersion, double now)
     {

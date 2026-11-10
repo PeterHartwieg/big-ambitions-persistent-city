@@ -6,7 +6,7 @@ from pathlib import Path
 
 def generate(root: Path, between):
     travel = (root / 'Runtime/NativeTravelPace.cs').read_text()
-    population = (root / 'Runtime/PhysicalPopulation.cs').read_text()
+    population = ''.join((root / f'Runtime/PhysicalPopulation{part}.cs').read_text() for part in ('', '.Following', '.Queues', '.Selection'))
     pedestrians = (root / 'Runtime/PhysicalPedestrians.cs').read_text()
     vehicles = (root / 'Runtime/PhysicalVehicles.cs').read_text()
     mod = (root / 'Runtime/PersistentCityMod.cs').read_text()

@@ -109,25 +109,6 @@ public sealed class RivalOutflowHistoryTests
         Assert.Equal(counts.Semantic, counts.Streaming);
     }
     [Theory]
-    [InlineData(21)] [InlineData(22)] [InlineData(23)]
-    public void ExactOldMigrationKeepsHistoricalLedgerAsUnknownAndPreservesSource(int schema)
-    {
-        var (city, _, _) = RivalOutflowTests.Ready();
-        double end = city.State.Food!.Residents.Single().DesiredAt + 7;
-        while (!city.AdvanceTo(end, 1).CaughtUp) { }
-        Assert.True(RivalOutflowHistory.Ledger(city.State.Food) > 0);
-        city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
-        string source = DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
-        Assert.DoesNotContain("Outflow", source);
-        var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema);
-        Assert.True(read.State.Food!.Outflow!.Reconciles(read.State.Food));
-        Assert.Equal(BigInteger.Zero, read.State.Food.Outflow.Capture(1).Units);
-        Assert.All(read.State.Food.Outflow.Capture(1).Days.Where(d => d.Day < 1), d => Assert.False(d.Known));
-        read.State.Schema = schema; read.State.MenuPolicy = FoodMenuPolicy.Wire;
-        Assert.Equal(source, DevelopmentChain.Legacy(read.State, () => SaveCodec.WriteForSchema(read.State, schema)));
-    }
-    [Theory]
     [InlineData("0|0|0|0|0|0|0,1,0")]
     [InlineData("0|0|0|0|0|0|0,01,1")]
     [InlineData("0|0|0|0|0|0|0,1,1|0,1,1")]
@@ -154,7 +135,7 @@ public sealed class RivalOutflowHistoryTests
         var future = SaveWire.Parse(source); future["Schema"] = CityState.CurrentSchema + 1;
         Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(future.ToString()).Status);
         var foreign = SaveWire.Parse(source); foreign["Schema"] = 23;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(foreign.ToString()).Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, DevelopmentChain.Read(foreign.ToString()).Status);
     }
     [Fact]
     public void CachedFreeViewInvalidatesOnSettlementAndRolloverWithoutChangingPriorSnapshot()

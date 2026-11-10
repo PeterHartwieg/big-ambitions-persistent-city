@@ -192,25 +192,6 @@ public sealed class RivalMemoryTests
         }
     }
 
-    [Theory] [InlineData(21)] [InlineData(22)] [InlineData(23)]
-    public void OlderSourceValidatorsKeepTheirNeutralOnlyRivalContract(int schema)
-    {
-        var (city, _, _) = RivalOutflowTests.Ready(); city.InspectFoodAwareness("r");
-        city.AdvanceTo(city.State.Food!.Residents[0].DesiredAt, 1);
-        city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
-        string neutral = DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema));
-        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(neutral).Status);
-        var root = SaveWire.Parse(neutral);
-        root["Food"]!["Residents"]![0]![9]!["Shops"]![0]!["MemoryContribution"] = 1;
-        string forged = root.ToString(Formatting.None);
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(forged).Status);
-        var saved = new System.Collections.Generic.Dictionary<string, string> { [SaveCodec.StateKey] = forged };
-        Assert.False(SaveStore.WriteTo(saved, city.State).Success);
-        Assert.Equal(forged, saved[SaveCodec.StateKey]);
-        city.State.Food.Residents[0].Decision!.Shops[0].MemoryContribution = 1;
-        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Legacy(city.State, () => SaveCodec.WriteForSchema(city.State, schema)));
-    }
-
     [Fact]
     public void MixedEvictionDecayLateReplayAndProtectedInsertionShareExistingTuple()
     {

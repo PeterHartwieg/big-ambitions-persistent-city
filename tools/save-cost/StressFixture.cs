@@ -61,12 +61,9 @@ static partial class Program
                 own[i].Identity.Name = value.Substring(0, value.Length - take);
             }
         }
-        string before = PopulationSchema24.Write(state);
-        var migrated = SaveCodec.Read(before);
-        if (migrated.Status != SaveReadStatus.Loaded) throw new InvalidOperationException("E5d stress migration refused: " + migrated.Error);
-        var upgraded = migrated.State!;
-        upgraded.Schema = 25; upgraded.MenuPolicy = FoodNameIdentity.Wire;
-        return upgraded;
+        // The fixture was a schema-24 city migrated to 25. SaveCodec.Read refuses schema 24 since F5c-lite, and X1
+        // removed the frozen schema-24 writer, so only the encoding-max fixture still builds on the current tree.
+        throw new NotSupportedException("E5d stress fixture " + name + " needs the schema-24 writer X1 removed; run it against an archived source tree.");
     }
 
     /// <summary>

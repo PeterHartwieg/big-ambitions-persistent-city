@@ -14,10 +14,10 @@ namespace PersistentCity.Runtime
         /// <summary>On-demand rig projection; normal tick paths construct no diagnostic objects/strings.</summary>
         public object AccountingDiagnostics => new {
             policy = "minute-epoch-drain-v1", configuredCalendarFactor = NativeCityClock.Factor,
-            nativeMinute = SaveGameManager.Current == null ? 0 : Now(), logicalMinute = simulation?.State.Minute,
+            nativeMinute = SaveGameManager.Current == null ? 0 : Now(), logicalMinute = simulation?.View.Minute,
             caughtUpToTarget = simulation != null && SaveGameManager.Current != null && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
             lagMinutes = simulation == null || SaveGameManager.Current == null ? 0
-                : System.Math.Max(0, AccountingClock.Target(Now()) - simulation.State.Minute),
+                : System.Math.Max(0, AccountingClock.Target(Now()) - simulation.View.Minute),
             maxLagMinutes = NativeCityClock.MaximumLagMinutes,
             supportedMaxLagMinutes = AccountingClock.MaximumLagMinutes,
             heldOrdinaryTicks = NativeCityClock.HeldOrdinaryTicks, heldSkipTicks = NativeCityClock.HeldEconomySkipTicks,

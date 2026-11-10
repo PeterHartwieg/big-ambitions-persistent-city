@@ -39,62 +39,77 @@ public sealed class E6bVendorMeasure
     {
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PC_E6B_MEASURE"))) return; // measurement only on request
         // Revision poll with an unchanged revision, 64 live rows.
-        for (int i = 0; i < 64; i++) StreetFoodHooks.Add("v" + i.ToString("D2"), x: i * 20);
-        var rig = new StreetFoodVendorTests.Rig();
-        rig.Run(2 * 1440 + 480);
-        Assert.Equal(64, rig.Table.Live);
-        long minute = 2 * 1440 + 481;
-        for (int i = 0; i < 2000; i++) rig.Vendors.Poll(minute); // warm-up past tiered JIT
-        var polls = new List<double>(1000);
-        long bytes = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 1000; i++) { long t = Stopwatch.GetTimestamp(); for (int j = 0; j < 100; j++) rig.Vendors.Poll(minute); polls.Add(Ms(t) / 100); }
-        long pollBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+        var polls = new List<double>(1000); long pollBytes = 0;
+        TimingBudget.Run(timing =>
+        {
+            StreetFoodHooks.Reset();
+            for (int i = 0; i < 64; i++) StreetFoodHooks.Add("v" + i.ToString("D2"), x: i * 20);
+            var pollRig = new StreetFoodVendorTests.Rig();
+            pollRig.Run(2 * 1440 + 480);
+            Assert.Equal(64, pollRig.Table.Live);
+            long minute = 2 * 1440 + 481;
+            for (int i = 0; i < 2000; i++) pollRig.Vendors.Poll(minute); // warm-up past tiered JIT
+            polls = new List<double>(1000);
+            long bytes = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 1000; i++) { var t = timing.Start(); for (int j = 0; j < 100; j++) pollRig.Vendors.Poll(minute); polls.Add(timing.Stop(t, "revision poll p95") / 100); }
+            pollBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+            Assert.Equal(0, pollBytes);
+            timing.Under("revision poll p95", Stats(polls).p95, 0.05);
+        });
         Report("revision poll, unchanged, 64 rows", polls, pollBytes, 100000);
-        Assert.Equal(0, pollBytes);
-        Assert.True(Stats(polls).p95 < 0.05);
 
         // Image copy on a changed revision: Poll (Street Food's Read) plus copy units of at most 16 vehicles.
         foreach (int count in new[] { 8, 64 })
         {
-            StreetFoodHooks.Reset();
-            for (int i = 0; i < count; i++) StreetFoodHooks.Add("v" + i.ToString("D2"), x: i * 20, items: new[] { FoodProducts.HotDog, FoodProducts.Burger, FoodProducts.Croissant });
-            var bridge = StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi));
-            var reader = new VendorImageReader(bridge);
             var whole = new List<double>(); var units = new List<double>(); long allocated = 0;
-            for (int sample = 0; sample < 320; sample++)
+            TimingBudget.Run(timing =>
             {
-                StreetFoodHooks.Revision++;
-                long before = GC.GetAllocatedBytesForCurrentThread(), t = Stopwatch.GetTimestamp();
-                reader.Poll();
-                double first = Ms(t);
-                double total = first;
-                while (reader.Pending) { long u = Stopwatch.GetTimestamp(); reader.Continue(); double ms = Ms(u); total += ms; if (sample >= 20) units.Add(ms); }
-                if (sample >= 20) { whole.Add(total); units.Add(first); allocated += GC.GetAllocatedBytesForCurrentThread() - before; }
-                Assert.True(reader.Image.Ready, reader.Image.Reason);
-                Assert.Equal(count, reader.Image.Count);
-            }
+                StreetFoodHooks.Reset();
+                for (int i = 0; i < count; i++) StreetFoodHooks.Add("v" + i.ToString("D2"), x: i * 20, items: new[] { FoodProducts.HotDog, FoodProducts.Burger, FoodProducts.Croissant });
+                var bridge = StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi));
+                var reader = new VendorImageReader(bridge);
+                whole = new List<double>(); units = new List<double>(); allocated = 0;
+                for (int sample = 0; sample < 320; sample++)
+                {
+                    StreetFoodHooks.Revision++;
+                    long before = GC.GetAllocatedBytesForCurrentThread(); var t = timing.Start();
+                    reader.Poll();
+                    var first = timing.End(t);
+                    double total = first.Ms;
+                    while (reader.Pending) { var u = timing.Start(); reader.Continue(); var unit = timing.End(u); total += unit.Ms; if (sample >= 20) units.Add(timing.Keep("image copy per unit p95", unit)); }
+                    if (sample >= 20) { whole.Add(total); units.Add(timing.Keep("image copy per unit p95", first)); allocated += GC.GetAllocatedBytesForCurrentThread() - before; }
+                    Assert.True(reader.Image.Ready, reader.Image.Reason);
+                    Assert.Equal(count, reader.Image.Count);
+                }
+                timing.Under("image copy per unit p95", Stats(units).p95, 5);
+            });
             Report($"image copy, {count} vehicles, whole copy", whole, allocated, 300);
             Report($"image copy, {count} vehicles, per unit (Read or 16 vehicles)", units, -1, units.Count);
-            Assert.True(Stats(units).p95 < 5);
         }
 
         // Stand publish: all 64 vehicles open at a new stand in one applied image (one unit), then one move.
-        StreetFoodHooks.Reset();
-        for (int i = 0; i < 64; i++) StreetFoodHooks.Add("v" + i.ToString("D2"), x: i * 20);
-        rig = new StreetFoodVendorTests.Rig();
-        long now = 2 * 1440 + 485; rig.Run(now);
+        StreetFoodVendorTests.Rig rig = null!;
         var applies = new List<double>(); var single = new List<double>(); long applyBytes = 0;
-        for (int round = 0; round < 60; round++)
+        TimingBudget.Run(timing =>
         {
-            rig.RunTo(now + 60, 15); now = rig.Now; // keeps the lease; every round opens in a later native hour
-            foreach (var v in StreetFoodHooks.Vehicles) { StreetFoodHooks.Close(v.Id); StreetFoodHooks.Open(v.Id, 40, x: v.X + 7); }
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            rig.Vendors.Poll(now);
-            var calls = new List<double>();
-            while (true) { long t = Stopwatch.GetTimestamp(); bool more = rig.Vendors.Continue(now); double ms = Ms(t); if (!more) break; calls.Add(ms); }
-            if (round >= 5) { applies.Add(calls[^1]); applyBytes += GC.GetAllocatedBytesForCurrentThread() - before; }
-            Assert.All(rig.Table.Rows, r => Assert.True(rig.Vendors.CanServe(r.BusinessId, now), r.Reason));
-        }
+            StreetFoodHooks.Reset();
+            for (int i = 0; i < 64; i++) StreetFoodHooks.Add("v" + i.ToString("D2"), x: i * 20);
+            rig = new StreetFoodVendorTests.Rig();
+            long now = 2 * 1440 + 485; rig.Run(now);
+            applies = new List<double>(); applyBytes = 0;
+            for (int round = 0; round < 60; round++)
+            {
+                rig.RunTo(now + 60, 15); now = rig.Now; // keeps the lease; every round opens in a later native hour
+                foreach (var v in StreetFoodHooks.Vehicles) { StreetFoodHooks.Close(v.Id); StreetFoodHooks.Open(v.Id, 40, x: v.X + 7); }
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                rig.Vendors.Poll(now);
+                var calls = new List<TimedSample>();
+                while (true) { var t = timing.Start(); bool more = rig.Vendors.Continue(now); var call = timing.End(t); if (!more) break; calls.Add(call); }
+                if (round >= 5) { applies.Add(timing.Keep("apply unit p95", calls[^1])); applyBytes += GC.GetAllocatedBytesForCurrentThread() - before; }
+                Assert.All(rig.Table.Rows, r => Assert.True(rig.Vendors.CanServe(r.BusinessId, now), r.Reason));
+            }
+            timing.Under("apply unit p95", Stats(applies).p95, 5);
+        });
         Report("apply unit, 64 vehicles all at a new stand (allocation: whole copy + apply)", applies, applyBytes, applies.Count);
         var row = rig.Table.Rows[0];
         for (int i = 0; i < 1020; i++)
@@ -105,7 +120,6 @@ public sealed class E6bVendorMeasure
             if (i >= 20) single.Add(Ms(t));
         }
         Report("PublishVendorPlace, one stand", single, -1, single.Count);
-        Assert.True(Stats(applies).p95 < 5);
 
         // Reference scan (stand-move and release guard), 20,000 meals of which 64 name vendor places.
         var food = rig.City.State.Food!;
@@ -113,9 +127,14 @@ public sealed class E6bVendorMeasure
             food.Residents.Add(new ResidentMeal { ResidentId = "m" + i, AnchorId = "m" + i, Status = i % 3 == 0 ? MealStatus.Travelling : MealStatus.Paid,
                 PlaceId = i < 64 ? rig.Table.Rows[i].PlaceId : "s0" });
         var references = new VendorReferences(); var scans = new List<double>();
-        for (int i = 0; i < 220; i++) { long t = Stopwatch.GetTimestamp(); rig.City.CollectVendorReferences(references); if (i >= 20) scans.Add(Ms(t)); }
+        // The scan only reads the city, so a retry repeats it on the same state.
+        TimingBudget.Run(timing =>
+        {
+            scans = new List<double>();
+            for (int i = 0; i < 220; i++) { var t = timing.Start(); rig.City.CollectVendorReferences(references); var scan = timing.End(t); if (i >= 20) scans.Add(timing.Keep("CollectVendorReferences p95", scan)); }
+            timing.Under("CollectVendorReferences p95", Stats(scans).p95, 5);
+        });
         Report("CollectVendorReferences, 20,000 meals", scans, -1, scans.Count);
-        Assert.True(Stats(scans).p95 < 5);
 
         // Awareness rebuild after one move and after 64 moves: both are one full staged rebuild of the catalogue.
         var (city, _, _) = WeightedFoodChoiceTests.Ready(3, shops: 1000);
@@ -130,20 +149,25 @@ public sealed class E6bVendorMeasure
         foreach (int moves in new[] { 1, 64 })
         {
             var whole = new List<double>(); var units = new List<double>(); int unitCount = 0;
-            for (int sample = 0; sample < 60; sample++)
+            // The 1,000-shop city is shared, so a retry keeps moving the same stands.
+            TimingBudget.Run(timing =>
             {
-                for (int m = 0; m < moves; m++) { var vendor = table.Rows[m]; vendor.Stand!.Position = new Position(vendor.Stand.Position.X + 1, 0, 5); city.PublishVendorPlace(vendor, null); }
-                Assert.False(city.FoodAwarenessCurrent);
-                var builder = FoodAwarenessCatalogue.BeginBuild(city.State.Food!.Shops, city.FindPosition);
-                double total = 0; unitCount = 0;
-                using (builder)
-                    while (true) { long t = Stopwatch.GetTimestamp(); bool done = builder.Continue(); double ms = Ms(t); total += ms; unitCount++; if (sample >= 10) units.Add(ms); if (done) break; }
-                if (sample >= 10) whole.Add(total);
-                city.InspectFoodAwareness("r"); // publish the simulator's own image again
-            }
+                whole = new List<double>(); units = new List<double>();
+                for (int sample = 0; sample < 60; sample++)
+                {
+                    for (int m = 0; m < moves; m++) { var moved = table.Rows[m]; moved.Stand!.Position = new Position(moved.Stand.Position.X + 1, 0, 5); city.PublishVendorPlace(moved, null); }
+                    Assert.False(city.FoodAwarenessCurrent);
+                    var builder = FoodAwarenessCatalogue.BeginBuild(city.State.Food!.Shops, city.FindPosition);
+                    double total = 0; unitCount = 0;
+                    using (builder)
+                        while (true) { var t = timing.Start(); bool done = builder.Continue(); var unit = timing.End(t); total += unit.Ms; unitCount++; if (sample >= 10) units.Add(timing.Keep("awareness rebuild per unit p95", unit)); if (done) break; }
+                    if (sample >= 10) whole.Add(total);
+                    city.InspectFoodAwareness("r"); // publish the simulator's own image again
+                }
+                timing.Under("awareness rebuild per unit p95", Stats(units).p95, 5);
+            });
             Report($"awareness rebuild after {moves} move(s), 1,064 scopes, {unitCount} units, whole", whole, -1, whole.Count);
             Report($"awareness rebuild after {moves} move(s), per unit", units, -1, units.Count);
-            Assert.True(Stats(units).p95 < 5);
         }
 
         // Lease renewal (once per 15 native minutes while vehicles are owned).

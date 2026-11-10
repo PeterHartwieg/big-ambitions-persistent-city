@@ -222,7 +222,9 @@ public sealed class OrdinaryExchangeTests
         string panel = File.ReadAllText(Path.Combine(root, "Runtime/FoodEconomyPanel.cs"));
         // F6g owns the panel projection; render its week comparison once, without the old 14-day total.
         Assert.DoesNotContain("simulation.FreeOutsideSpending().Text()", panel);
-        Assert.Equal(1, panel.Split("FoodFeedbackV2.AppendCity(").Length - 1);
+        // F9e: the panel reaches it through the city view's one adapter.
+        Assert.Equal(1, panel.Split("CityViewReports.AppendCityEconomy(").Length - 1);
+        Assert.Equal(1, File.ReadAllText(Path.Combine(root, "Core/CityView.cs")).Split("FoodFeedbackV2.AppendCity(").Length - 1);
     }
 
     [Fact]

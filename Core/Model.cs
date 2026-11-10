@@ -32,7 +32,7 @@ namespace PersistentCity.Core
         public int AppearanceSeed { get; set; }
     }
 
-    public sealed class Place
+    public sealed class Place : IPlaceView
     {
         public string Id { get; set; } = "";
         public string Name { get; set; } = "";
@@ -50,6 +50,19 @@ namespace PersistentCity.Core
         // Transient and never serialized: DailyRoutine's opening windows for recently queried days,
         // validated against an exact copy of the hours on every use.
         internal OpeningCache? OpeningCache;
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IPlaceView.Id => Id;
+        string IPlaceView.Name => Name;
+        string IPlaceView.District => District;
+        PlaceKind IPlaceView.Kind => Kind;
+        Position IPlaceView.Position => Position;
+        int IPlaceView.Capacity => Capacity;
+        int IPlaceView.OpenMinute => OpenMinute;
+        int IPlaceView.CloseMinute => CloseMinute;
+        double IPlaceView.AttractionWeight => AttractionWeight;
+        int IPlaceView.NativeTrafficIndex => NativeTrafficIndex;
+        string IPlaceView.EvidenceSource => EvidenceSource;
+        double IPlaceView.ResidentialAreaSquareMetres => ResidentialAreaSquareMetres;
     }
 
     public sealed class OpeningWindow
@@ -268,7 +281,7 @@ namespace PersistentCity.Core
         public double TravelMinutes { get; set; }
     }
 
-    public class CitizenState
+    public class CitizenState : IPersonView
     {
         public WeatherCommitment? W { get; set; }
         public CitizenIdentity Identity { get; set; } = new CitizenIdentity();
@@ -320,6 +333,32 @@ namespace PersistentCity.Core
         internal ResidentIncomeSource? VisitorCarried;
         /// <summary>True for a schema-27 visitor's routine (also on an event's working copy).</summary>
         public bool IsVisitor => Visitor != null;
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IPersonView.Id => Identity.Id;
+        string IPersonView.Name => Identity.Name;
+        string IPersonView.District => Identity.District;
+        int IPersonView.Age => Identity.Age;
+        bool IPersonView.Female => Identity.Female;
+        Persona IPersonView.Persona => Identity.Persona;
+        string IPersonView.HomeId => HomeId;
+        string IPersonView.DayPlaceId => DayPlaceId;
+        string IPersonView.ShopId => ShopId;
+        string IPersonView.LeisureId => LeisureId;
+        CitizenPhase IPersonView.Phase => Phase;
+        Activity IPersonView.Activity => Activity;
+        string IPersonView.PlaceId => PlaceId;
+        string IPersonView.DestinationId => DestinationId;
+        Activity IPersonView.DestinationActivity => DestinationActivity;
+        double IPersonView.DepartureMinute => DepartureMinute;
+        double IPersonView.NextEventMinute => NextEventMinute;
+        double IPersonView.ActivityUntilMinute => ActivityUntilMinute;
+        int IPersonView.CompletedJourneys => CompletedJourneys;
+        int IPersonView.MissedActivities => MissedActivities;
+        double IPersonView.JoinedMinute => JoinedMinute;
+        int IPersonView.EmploymentStartDay => EmploymentStartDay;
+        int IPersonView.JobChanges => JobChanges;
+        double IPersonView.PlayerHoldMinutes => PlayerHoldMinutes;
+        bool IPersonView.IsVisitor => IsVisitor;
     }
 
     public sealed class VisitRecord
