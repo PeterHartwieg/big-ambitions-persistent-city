@@ -34,6 +34,26 @@ namespace PersistentCity.Runtime
             return report;
         }
 
+        /// <summary>The metadata part of the capability report's inputs, shared by Runtime and the harness that times it:
+        /// one pass over the loaded assemblies (Street Food, Driven Rides), one over Harmony's patched methods (inspector
+        /// guards) and the two owner checks (food authority, food-routines price prefix). Reads metadata only.</summary>
+        internal static void ReadMetadata(CapabilityInputs into)
+        {
+            bool streetFood = false, drivenRides = false;
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                streetFood |= assembly.FullName?.StartsWith("FoodTrucks,", StringComparison.Ordinal) == true; // no AssemblyName per assembly
+                drivenRides = drivenRides || assembly.GetType("DrivenRides.Ride", false) != null;
+            }
+            var inspector = OwnedTargets(NativeHookInventory.InspectorInput);
+            into.StreetFoodLoaded = streetFood; into.DrivenRidesLoaded = drivenRides;
+            into.InspectorClickInstalled = inspector.Contains("MouseController.Run");
+            into.InspectorScrollInstalled = inspector.Contains("PedestrianCam.UpdateInput");
+            into.InspectorUiBlockInstalled = inspector.Contains("GraphicRaycaster.Raycast");
+            into.FoodAuthorityInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority);
+            into.FoodPricePrefixInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodRoutines);
+        }
+
         /// <summary>"Type.Method" of every method <paramref name="owner"/> has a patch on: one pass over Harmony's
         /// patched methods (the capability report reads the inspector guards from it). Metadata only.</summary>
         internal static HashSet<string> OwnedTargets(string owner)

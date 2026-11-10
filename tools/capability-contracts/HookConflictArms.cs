@@ -78,25 +78,22 @@ internal static partial class Program
             for (int i = 0; i < extra.Length; i++) harmonies[i % 2 == 0 ? "other.mod" : "rig.limiter"].Patch(extra[i], postfix: Post());
             int patchedMethods = Harmony.GetAllPatchedMethods().Count(m => Harmony.GetPatchInfo(m)?.Owners.Count > 0);
             var path = new double[500];
+            long pathBytes = 0;
             var reportText = new CapabilityReport();
             for (int i = -50; i < path.Length; i++)
             {
+                long a0 = GC.GetAllocatedBytesForCurrentThread();
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-                bool streetFood = false, drivenRides = false;
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    streetFood |= assembly.GetName().Name == "FoodTrucks";
-                    drivenRides = drivenRides || assembly.GetType("DrivenRides.Ride", false) != null;
-                }
-                var owned = HookConflicts.OwnedTargets(NativeHookInventory.InspectorInput);
-                var inputs = new CapabilityInputs { CityActive = true, StreetFoodLoaded = streetFood, DrivenRidesLoaded = drivenRides,
-                    InspectorClickInstalled = owned.Contains("MouseController.Run"), FoodAuthorityInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority) };
+                // The production sequence of ReadCapabilityInputs' metadata part (the shared HookConflicts.ReadMetadata),
+                // then the report the command prints. The remaining inputs are plain field and property reads.
+                var inputs = new CapabilityInputs { CityActive = true };
+                HookConflicts.ReadMetadata(inputs);
                 _ = reportText.Status(CapabilitySnapshot.Build(inputs), "x", CapabilitySnapshot.Context(inputs));
-                if (i >= 0) path[i] = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                if (i >= 0) { path[i] = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency; pathBytes += GC.GetAllocatedBytesForCurrentThread() - a0; }
             }
             Array.Sort(path);
-            Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "capability status input path: {0} patched methods, {1} assemblies: p50={2:0.0000} ms p95={3:0.0000} ms max={4:0.0000} ms",
-                patchedMethods, AppDomain.CurrentDomain.GetAssemblies().Length, path[path.Length / 2], path[path.Length * 95 / 100], path[^1]));
+            Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "pc capability status (shared metadata read + snapshot + report): {0} patched methods, {1} assemblies: p50={2:0.0000} ms p95={3:0.0000} ms max={4:0.0000} ms, {5} B per command",
+                patchedMethods, AppDomain.CurrentDomain.GetAssemblies().Length, path[path.Length / 2], path[path.Length * 95 / 100], path[^1], pathBytes / path.Length));
         }
         finally { foreach (var pair in harmonies) pair.Value.UnpatchAll(pair.Key); }
         Check(Harmony.GetAllPatchedMethods().All(m => Harmony.GetPatchInfo(m)?.Owners.Count is null or 0), "every stand-in patch removed");

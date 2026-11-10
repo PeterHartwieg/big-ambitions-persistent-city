@@ -83,26 +83,16 @@ namespace PersistentCity.Runtime
             var rloRead = lastRloRead;
             var guard = NativeInteriorGuard.Verdict;
             var planner = routes;
-            // One pass over the loaded assemblies and one over Harmony's patched methods (Astra-r1-6).
-            bool streetFood = false, drivenRides = false;
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                streetFood |= assembly.GetName().Name == "FoodTrucks";
-                drivenRides = drivenRides || assembly.GetType("DrivenRides.Ride", false) != null;
-            }
-            var inspectorTargets = HookConflicts.OwnedTargets(NativeHookInventory.InspectorInput);
             var inputs = new CapabilityInputs
             {
                 CityActive = city, CityFailed = failed, FailureStatus = failed ? status : "",
-                FoodAuthorityInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority),
                 FoodAuthorityRefusal = NativeFoodContract.AuthorityRefusal, FoodAuthorityError = NativeFoodOwnership.Error,
                 FoodMarketAttached = market != null, FoodCheckoutRefusal = market?.CheckoutRefusal,
-                FoodPricePrefixInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodRoutines),
                 FoodDynamicActive = market?.DynamicCapabilityActive == true,
                 FoodDynamicRefusal = market?.DynamicCapabilityRefusal ?? "",
                 ClockObserving = NativeTravelPace.ObservationActive, ClockObserveError = NativeTravelPace.LastError,
                 ClockCityActive = NativeCityClock.Active, ClockFactor = NativeCityClock.Factor,
-                DrivenRidesLoaded = drivenRides,
+
                 DrivenRidesCoordinated = NativeCityClock.CoordinatesDrivenRides,
                 RloReason = rloRead == null ? DonorReadReason.NotRead : DonorReason(rloRead), RloMessage = rloRead?.Message ?? "", RloTransient = rloTransient,
                 RloDiffers = rloDiffers, RoadSpeedsFromRlo = planner?.RoadSpeedsFromRlo == true, RoadSpeedWaiting = planner?.RoadSpeedWaiting,
@@ -113,13 +103,12 @@ namespace PersistentCity.Runtime
                 ResearchMessagesChecked = ResearchMessages.ContractPassed || ResearchMessages.Status != "Research messages are not checked.",
                 PhysicalEnabled = settings.PhysicalEnabled, PhysicalActive = physical != null, PhysicalFailed = physicalFailed,
                 InspectorFailed = inspectorFailed,
-                InspectorClickInstalled = inspectorTargets.Contains("MouseController.Run"),
-                InspectorScrollInstalled = inspectorTargets.Contains("PedestrianCam.UpdateInput"),
-                InspectorUiBlockInstalled = inspectorTargets.Contains("GraphicRaycaster.Raycast"),
                 InteriorConfigured = NativeInteriorCityView.Configured, InteriorRequested = settings.InteriorCityView == "on",
                 InteriorGuardAllowed = !guard.Detected, InteriorGuardReason = guard.Reason,
             };
-            inputs.ReadVendor(streetFood, vendors?.Coordinator);
+            // Assemblies, Harmony owners and both owner checks: the shared metadata read the harness times (Astra-r2-6).
+            HookConflicts.ReadMetadata(inputs);
+            inputs.ReadVendor(inputs.StreetFoodLoaded, vendors?.Coordinator);
             var reservations = RloPhysicalReservations.Last;
             inputs.ReservationsChecked = reservations != null; inputs.ReservationsReady = reservations?.Ready == true;
             inputs.ReservationsComplete = reservations?.Complete == true; inputs.ReservationsError = reservations?.Error ?? "";
