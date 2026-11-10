@@ -921,7 +921,7 @@ def main(argv=None):
     catalogue = json.loads(Path(args.catalogue).read_text(encoding="utf-8"))
     if args.profile == "rig-manifest":
         # Decision 1: seconds, no .NET and no lock. --result takes the fingerprint set from that run's build.
-        game = json.loads(Path(args.result).read_text(encoding="utf-8"))["provenance"].get("game") or {} if args.result else {}
+        game = (json.loads(Path(args.result).read_text(encoding="utf-8"))["provenance"].get("game") or {}) if args.result else {}
         extra = ["--fingerprint", game["set"]] if game.get("supplied") and game.get("set") else []
         return rig_manifest.main(["--ledger", str(ROOT / catalogue["nativeAssumptions"]),
                                   "--out", args.out or str(ROOT / "build/acceptance/rig-manifest"), *extra])

@@ -25,8 +25,8 @@
     {"id": "movement", "class": "semantic", "rule": "movement", "dotnet": true,
      "steps": [["{dotnet}", "run", "--project", "tools/movement-equivalence", "-c", "Release", "--", "--out", "{out}/movement.json"]],
      "output": "movement.json", "expectations": "tools/acceptance/expectations/movement.json"},
-    {"id": "city-s", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F9IntegratedCityTests&Category=city-s", "fixture": "city-s"},
-    {"id": "city-m", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F9IntegratedCityTests&Category=city-m", "fixture": "city-m"}
+    {"id": "city-s", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F9IntegratedCity&Size=city-s", "fixture": "city-s"},
+    {"id": "city-m", "class": "semantic", "rule": "trx", "dotnet": true, "filter": "FullyQualifiedName~F9IntegratedCity&Size=city-m", "fixture": "city-m"}
   ],
   "fixtures": [
     {"id": "f5h-reference", "size": 957, "seed": 2026, "source": "tests/F5hIntegratedAcceptanceTests.cs", "saveSha256": null},

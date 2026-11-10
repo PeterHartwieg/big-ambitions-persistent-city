@@ -1,0 +1,294 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PersistentCity.Core;
+using PersistentCity.MovementEquivalence;
+using PersistentCity.Tests.Acceptance;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace PersistentCity.Tests.Acceptance
+{
+    /// <summary>F9f (plan f9-city-acceptance.md, Decision 3 detail transitions and row F9f): presentation bodies in the
+    /// integrated city. The F2 harness's <see cref="PresentationDriver"/> (linked, not copied) follows travelling persons
+    /// as Runtime/PhysicalPopulation.cs does, with the Runtime frame order: hidden travel suspends before the advance,
+    /// native bodies move, the simulation advances, the snapshot is published, then the driver updates; every save
+    /// observes the bodies first and every load starts a new driver without bodies.</summary>
+    internal sealed record CityBodies(FocusPath Focus = FocusPath.Stationary, int Walkers = 48, int Cars = 24, int FailurePercent = 0,
+        LagModel Lag = LagModel.Native, bool Leak = false)
+    {
+        public const double RadiusMetres = 120, AwayMetres = 1000, SweepDwellMinutes = 10;
+        public const int SweepPoints = 6;
+        public const double AwayFrom = 9 * 60, AwayTo = 15 * 60;
+    }
+
+    internal sealed partial record CityArm
+    {
+        /// <summary>Bodies on this arm; null: the bodies-off F9c arm.</summary>
+        public CityBodies? Bodies { get; init; }
+        /// <summary>The bodies-off F9c arm with the same cadence, budget, skip and reloads.</summary>
+        public string BodiesOff { get; init; } = "";
+
+        /// <summary>The F9f arms: focus stationary at the first shop, a sweep across the homes, away 1 km and back, the
+        /// walker caps 1 and 256, half the acquisitions failing, the hidden skip with bodies released, and the reload arm
+        /// whose mid-journey reload waits for a bound follower. Each runs on a bodies-off F9c arm's cadence.</summary>
+        public static IEnumerable<CityArm> BodyArms()
+        {
+            CityArm On(string name, string off, CityBodies bodies) => Arms().Single(a => a.Name == off) with { Name = "bodies-" + name, Bodies = bodies, BodiesOff = off };
+            return new[]
+            {
+                On("stationary", "fps60", new CityBodies()),
+                On("sweep", "fps60", new CityBodies(FocusPath.Sweep)),
+                On("away-return", "fps60", new CityBodies(FocusPath.AwayReturn)),
+                On("caps-1", "fps60", new CityBodies(Walkers: 1, Cars: 1)),
+                On("caps-256", "fps60", new CityBodies(Walkers: 256, Cars: 64)),
+                On("failures-50pct", "fps60", new CityBodies(FailurePercent: 50)),
+                On("hidden-skip", "hidden-skip", new CityBodies()),
+                On("reload", "reload", new CityBodies()),
+            };
+        }
+    }
+
+    /// <summary>What the drivers of one body arm did, summed over every driver (a load starts a new one).</summary>
+    internal sealed class CityBodyStats
+    {
+        public long Acquired, Released, FailedAcquisitions, BodyFrames, WalkerFrames, CarFrames, HiddenFrames, HiddenReleases;
+        public long VisitorAcquired;
+        public int MaxWalkers, MaxCars, MaxVisitorBodies, Drivers;
+        /// <summary>The followers bound when the mid-journey reload saved, and those a later driver bound again.</summary>
+        public List<string> BoundAtReload = new();
+        public int ReboundAfterReload;
+        /// <summary>Away-return: frames with a body bound while the player is 1 km away (after the first away minute), and
+        /// after the return.</summary>
+        public long AwayFramesWithBodies, ReturnFramesWithBodies;
+        public double ReloadMinute = -1;
+    }
+
+    internal sealed partial class CityRun
+    {
+        public CityBodyStats? Bodies;
+    }
+
+    internal sealed partial class CityScenario
+    {
+        private PresentationDriver? driver;
+        private readonly List<PresentationDriver> drivers = new();
+        private readonly List<(CitizenState Citizen, bool Car)> followed = new();
+        private HashSet<string>? followedAfterReload;
+        private Position[]? sweep;
+        private bool leaked;
+
+        private PresentationDriver NewDriver()
+        {
+            var b = arm.Bodies!;
+            var created = new PresentationDriver(city, new DriverSettings { Pedestrians = b.Walkers, Vehicles = b.Cars, RadiusMetres = CityBodies.RadiusMetres,
+                AcquisitionFailurePercent = b.FailurePercent, Lag = b.Lag, Seed = CitySize.Seed });
+            drivers.Add(created);
+            return created;
+        }
+
+        /// <summary>The player's position: beside the first shop, a 10-minute dwell at six homes in turn, or 1 km away
+        /// from 09:00 to 15:00.</summary>
+        private Position Focus(double minute)
+        {
+            var shop = city.FindPlace(CityFixture.ShopPlace(0)).Position;
+            switch (arm.Bodies!.Focus)
+            {
+                case FocusPath.None: return new Position(double.NaN, 0, 0);
+                case FocusPath.Sweep:
+                    sweep ??= SweepPoints(city.State.Places);
+                    return sweep[(int)(Math.Floor(minute / CityBodies.SweepDwellMinutes) % sweep.Length)];
+                case FocusPath.AwayReturn:
+                    double day = minute % 1440;
+                    return day >= CityBodies.AwayFrom && day < CityBodies.AwayTo ? new Position(shop.X + CityBodies.AwayMetres, shop.Y, shop.Z) : shop;
+                default: return shop;
+            }
+        }
+
+        private static Position[] SweepPoints(IEnumerable<Place> places)
+        {
+            var homes = places.Where(p => p.Kind == PlaceKind.Home).OrderBy(p => p.Id, StringComparer.Ordinal).ToList();
+            return Enumerable.Range(0, CityBodies.SweepPoints).Select(i => homes[i * homes.Count / CityBodies.SweepPoints].Position).ToArray();
+        }
+
+        partial void BodiesBeforeAdvance(bool hidden, float gameMinutes)
+        {
+            if (arm.Bodies == null) return;
+            driver ??= NewDriver();
+            if (hidden)
+            {
+                // Runtime BeforeAdvance: hidden travel observes for save and releases every body before the advance.
+                driver.SuspendBeforeHiddenAdvance();
+                if (driver.Count != 0) throw new CityViolation(arm.Name + ": hidden skip advanced with bodies bound");
+            }
+            driver.MoveBodies(1.0 / arm.Fps, gameMinutes);
+        }
+
+        partial void BodiesAfterFrame(double nativeMinute, bool hidden)
+        {
+            if (arm.Bodies == null || driver == null) return;
+            driver.Update(Focus(nativeMinute), hidden);
+            if (hidden && driver.Count != 0) throw new CityViolation(arm.Name + ": a body is bound during the hidden skip");
+            if (driver.Walkers > arm.Bodies.Walkers || driver.Cars > arm.Bodies.Cars) throw new CityViolation(arm.Name + ": bodies over the caps");
+            if (arm.Bodies.Focus == FocusPath.AwayReturn && driver.Count > 0)
+            {
+                var stats = run.Bodies ??= new CityBodyStats();
+                double day = nativeMinute % 1440;
+                if (day >= CityBodies.AwayFrom + 1 && day < CityBodies.AwayTo) stats.AwayFramesWithBodies++;
+                else if (day >= CityBodies.AwayTo) stats.ReturnFramesWithBodies++;
+            }
+            if (followedAfterReload != null || arm.Bodies.Leak)
+            {
+                followed.Clear();
+                driver.Followed(followed);
+                if (followedAfterReload != null) foreach (var f in followed) followedAfterReload.Add(f.Citizen.Identity.Id);
+                if (arm.Bodies.Leak && !leaked && followed.Count > 0)
+                {
+                    // Fault: a body writes to the person it follows, as presentation must never do.
+                    followed[0].Citizen.CompletedJourneys++;
+                    leaked = true;
+                }
+            }
+        }
+
+        partial void BodiesBeforeSave()
+        {
+            // Runtime ObserveForSave.
+            driver?.BeforeSave();
+        }
+
+        partial void BodiesAfterLoad()
+        {
+            // Runtime disposes the physical population on load; the next frame starts a new driver without bodies.
+            if (arm.Bodies != null) driver = NewDriver();
+        }
+
+        partial void BodiesReadyToReload(CityReload state, ref bool ready)
+        {
+            if (arm.Bodies == null || state != CityReload.MidJourney) return;
+            // With followers bound: at least one walker follows its journey when the city saves. The F9c city plans
+            // walking routes only, so no car is bound here; the F2 harness arms cover cars.
+            followed.Clear();
+            driver?.Followed(followed);
+            ready = followed.Any(f => !f.Car && f.Citizen.Phase == CitizenPhase.Travelling);
+            if (!ready) return;
+            run.Bodies ??= new CityBodyStats();
+            run.Bodies.BoundAtReload = followed.Select(f => f.Citizen.Identity.Id).ToList();
+            run.Bodies.ReloadMinute = city.View.Minute;
+            followedAfterReload = new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        partial void BodiesFinish()
+        {
+            if (arm.Bodies == null) return;
+            var stats = run.Bodies ??= new CityBodyStats();
+            stats.Drivers = drivers.Count;
+            foreach (var d in drivers)
+            {
+                stats.Acquired += d.Acquired; stats.Released += d.Released; stats.FailedAcquisitions += d.FailedAcquisitions;
+                stats.BodyFrames += d.BodyFrames; stats.WalkerFrames += d.WalkerFrames; stats.CarFrames += d.CarFrames;
+                stats.HiddenFrames += d.HiddenFrames; stats.HiddenReleases += d.HiddenReleases; stats.VisitorAcquired += d.VisitorAcquired;
+                stats.MaxWalkers = Math.Max(stats.MaxWalkers, d.MaxWalkers); stats.MaxCars = Math.Max(stats.MaxCars, d.MaxCars);
+                stats.MaxVisitorBodies = Math.Max(stats.MaxVisitorBodies, d.MaxVisitorBodies);
+            }
+            if (followedAfterReload != null) stats.ReboundAfterReload = stats.BoundAtReload.Count(followedAfterReload.Contains);
+        }
+    }
+}
+
+namespace PersistentCity.Tests
+{
+    /// <summary>F9f: every body arm equals the bodies-off reference and its own bodies-off F9c arm on every F9c oracle (the
+    /// ordered ledger, the save at every drained day boundary, native orders, vendor sales and the final save), and the
+    /// bodies did what the arm asks. The class name keeps it inside the runner's <c>city-s</c>/<c>city-m</c> stages.</summary>
+    [Collection(StreetFoodHooks.Collection)]
+    public sealed class F9IntegratedCityMovementTests : IClassFixture<F9IntegratedCityTests.Runs>
+    {
+        private readonly F9IntegratedCityTests.Runs runs;
+        private readonly ITestOutputHelper output;
+        public F9IntegratedCityMovementTests(F9IntegratedCityTests.Runs runs, ITestOutputHelper output) { this.runs = runs; this.output = output; }
+
+        public static IEnumerable<object[]> BodyArmNames() => CityArm.BodyArms().Select(a => new object[] { a.Name });
+
+        [Theory, Trait("Size", "city-s"), MemberData(nameof(BodyArmNames))]
+        public void SmallBodyArmEqualsBodiesOff(string arm) => BodyArmEqualsBodiesOff("city-s", arm);
+
+        [Theory, Trait("Size", "city-m"), MemberData(nameof(BodyArmNames))]
+        public void MediumBodyArmEqualsBodiesOff(string arm) => BodyArmEqualsBodiesOff("city-m", arm);
+
+        private CityRun Run(string size, CityArm arm) => CityScenario.Run(runs.Checkpoint(size), arm);
+
+        private void BodyArmEqualsBodiesOff(string size, string name)
+        {
+            var spec = CityArm.BodyArms().Single(a => a.Name == name);
+            var reference = runs.Run(size, "reference");
+            var off = runs.Run(size, spec.BodiesOff);
+            var arm = Run(size, spec);
+            CityOracles.Equal(reference, arm);
+            CityOracles.Equal(off, arm);
+            Assert.Equal(0, arm.HistoricalClockMisses);
+            Assert.Equal(0, arm.HistoricalCheckouts);
+            Assert.InRange(arm.MaxLag, 0, AccountingClock.MaximumLagMinutes);
+            Assert.Equal(reference.Inputs.Count, arm.InputsPublished);
+            Assert.Equal(reference.Postings, arm.Postings);
+
+            var b = arm.Bodies!;
+            var bodies = spec.Bodies!;
+            Assert.True(b.Acquired > 0 && b.WalkerFrames > 0, $"{name}: no body was ever bound");
+            Assert.InRange(b.MaxWalkers, 1, bodies.Walkers);
+            Assert.Equal(0, b.CarFrames); // walk-only city (F9c planners); cars are the F2 harness's arms
+            switch (name)
+            {
+                case "bodies-caps-1": Assert.Equal(1, b.MaxWalkers); break;
+                case "bodies-failures-50pct": Assert.True(b.FailedAcquisitions > 0, "no acquisition failed"); break;
+                case "bodies-away-return":
+                    // 1 km away every body is released within the first minute; after the return bodies are bound again.
+                    Assert.Equal(0, b.AwayFramesWithBodies);
+                    Assert.True(b.ReturnFramesWithBodies > 0, "no body after the return");
+                    break;
+                case "bodies-hidden-skip":
+                    Assert.True(b.HiddenFrames > 0, "the skip never ran with bodies on");
+                    break;
+                case "bodies-reload":
+                    // Every F9c in-flight state was reached; the mid-journey one saved with followers bound and a new driver
+                    // after the load followed persons again.
+                    foreach (CityReload state in Enum.GetValues(typeof(CityReload))) Assert.Contains(arm.Reloads, r => r.State == state);
+                    Assert.NotEmpty(b.BoundAtReload);
+                    Assert.Equal(b.ReloadMinute, arm.Reloads.Single(r => r.State == CityReload.MidJourney).Minute);
+                    Assert.Equal(arm.Reloads.Count + 1, b.Drivers);
+                    break;
+            }
+            if (name != "bodies-failures-50pct") Assert.Equal(0, b.FailedAcquisitions);
+            // F5i flipped ActiveJourneyIndex.VisitorsReceiveBodies at this base: visitors are bound under the same caps.
+            Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
+            Assert.True(b.VisitorAcquired > 0, "no visitor received a body");
+            Assert.InRange(b.MaxVisitorBodies, 1, bodies.Walkers);
+            output.WriteLine($"{size} {name}: {arm.Seconds:F2} s tool time ({arm.ToolMsPerDay:F0} ms per simulated day); bodies-off {spec.BodiesOff} "
+                + $"{off.Seconds:F2} s; acquired {b.Acquired}, max walkers {b.MaxWalkers}, walker frames {b.WalkerFrames}, failed {b.FailedAcquisitions}, "
+                + $"hidden frames {b.HiddenFrames}, visitor bodies {b.VisitorAcquired} (max {b.MaxVisitorBodies}), drivers {b.Drivers}, "
+                + $"bound at reload {b.BoundAtReload.Count}, rebound {b.ReboundAfterReload}");
+        }
+
+        /// <summary>Visitors receive bodies at this base: F5i flipped the index flag. A visitor arriving through a portal is
+        /// bound under the same caps, and the body arm still equals bodies-off.</summary>
+        [Fact, Trait("Size", "city-s")]
+        public void VisitorsReceiveBodiesAtThisBase()
+        {
+            Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
+            var sweep = Run("city-s", CityArm.BodyArms().Single(a => a.Name == "bodies-sweep"));
+            Assert.NotEmpty(sweep.State.Visitors);
+            Assert.True(sweep.Bodies!.VisitorAcquired > 0, "no visitor received a body");
+            output.WriteLine($"visitors {sweep.State.Visitors.Count} at the end, visitor bodies acquired {sweep.Bodies!.VisitorAcquired}");
+        }
+
+        /// <summary>The oracles see a body that writes to its person: the arm no longer equals bodies-off.</summary>
+        [Fact, Trait("Size", "city-s")]
+        public void ABodyThatWritesToItsPersonFailsTheOracles()
+        {
+            var spec = CityArm.BodyArms().Single(a => a.Name == "bodies-stationary") with { Name = "bodies-leak", Bodies = new CityBodies(Leak: true) };
+            var reference = runs.Run("city-s", "reference");
+            var error = Assert.Throws<CityViolation>(() => CityOracles.Equal(reference, Run("city-s", spec)));
+            output.WriteLine(error.Message.Length > 300 ? error.Message[..300] : error.Message);
+        }
+    }
+}
