@@ -748,6 +748,7 @@ namespace PersistentCity.Runtime
         private RloReadResult ReadRlo(string context)
         {
             var result = rlo.Read(dependency);
+            lastRloRead = result; // F8b: the capability report reads the last answer; no extra read
             log?.Info("RLO single-pass read context=" + context + " status=" + result.Status
                 + " identities=" + result.Identities.Count + " elapsedMs="
                 + rlo.LastReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
