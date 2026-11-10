@@ -733,8 +733,10 @@ public sealed class ResearchChargeTests
         // C5e wires it from PersistentCityMod.cs only (the agency dialog reads Installed, C5f's pcresearch status reads Status).
         foreach (var file in Directory.GetFiles(Path.Combine(root, "Runtime"), "*.cs"))
             if (!file.EndsWith("ResearchBilling.cs", StringComparison.Ordinal) && !file.EndsWith("PersistentCityMod.cs", StringComparison.Ordinal)
-                && !file.EndsWith("ResearchAgencyDialog.cs", StringComparison.Ordinal) && !file.EndsWith("ResearchDiagnostics.cs", StringComparison.Ordinal))
+                && !file.EndsWith("ResearchAgencyDialog.cs", StringComparison.Ordinal) && !file.EndsWith("ResearchDiagnostics.cs", StringComparison.Ordinal)
+                && !file.EndsWith("CapabilityDiagnostics.cs", StringComparison.Ordinal)) // F8b reads Installed and Status for pc capability status
                 Assert.DoesNotContain("ResearchBilling.", File.ReadAllText(file));
+        Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "CapabilityDiagnostics.cs")));
         Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchAgencyDialog.cs")));
         Assert.DoesNotContain("ResearchBilling.Attach(", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchDiagnostics.cs")));
         Assert.Contains("ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit)",

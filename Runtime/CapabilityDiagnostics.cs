@@ -44,10 +44,10 @@ namespace PersistentCity.Runtime
         /// market's serving answer; Core picks the mechanism. Reads only.</summary>
         private void BusinessMechanismCommand(string place)
         {
-            var food = simulation?.State.Food;
+            var food = simulation?.View.Food; // the read-only view (OwnershipBoundaryTests)
             if (failed || food == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
             { Debug.LogWarning("[Persistent City] capability business unavailable: no active Persistent City food scope in this save."); return; }
-            var scope = food.Shops.FirstOrDefault(s => s.PlaceId == place) ?? food.Shops.FirstOrDefault(s => s.BusinessId == place);
+            var scope = food?.ScopeList.FirstOrDefault(s => s.PlaceId == place) ?? food?.ScopeList.FirstOrDefault(s => s.BusinessId == place);
             if (scope == null) { Debug.LogWarning("[Persistent City] No scoped food business at " + place + "."); return; }
             string status;
             if (scope.Channel == FoodScopeChannel.Vehicle)
@@ -58,7 +58,7 @@ namespace PersistentCity.Runtime
                     : row != null && row.Reason.Length > 0 ? row.Reason : vendors.Coordinator.Reason.Length > 0 ? vendors.Coordinator.Reason : "vehicle not serviceable now";
             }
             else status = foodMarket?.ScopeStatus(scope.PlaceId) ?? "food market not attached";
-            var verdict = TransactionMechanisms.ForBusiness(scope.Channel, scope.Products().ToArray(), status);
+            var verdict = TransactionMechanisms.ForBusiness(scope.Channel, new[] { scope.ProductId }.Concat(scope.ExtraProductIds).ToArray(), status);
             Debug.Log("[Persistent City] capability business (read-only)\n" + TransactionMechanisms.Describe(scope.PlaceId, scope.BusinessId, scope.Channel, verdict));
         }
 

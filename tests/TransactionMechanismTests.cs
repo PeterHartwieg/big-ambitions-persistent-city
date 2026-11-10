@@ -118,7 +118,7 @@ namespace PersistentCity.Tests
             string source = CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
             Assert.Contains("foodMarket?.ScopeStatus(scope.PlaceId)", source);
             Assert.Contains("vendors.CanServe(scope.BusinessId)", source);
-            Assert.Contains("TransactionMechanisms.ForBusiness(scope.Channel, scope.Products().ToArray(), status)", source);
+            Assert.Contains("TransactionMechanisms.ForBusiness(scope.Channel, new[] { scope.ProductId }.Concat(scope.ExtraProductIds).ToArray(), status)", source);
             Assert.Contains("if (area == \"capability\") { CapabilityCommand(action, detail); return; }",
                 File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "PopulationCensusDiagnostics.cs")));
             // No change to Supported: TransactionMechanisms is not referenced by the market.
