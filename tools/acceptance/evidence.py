@@ -14,12 +14,15 @@ Raw TRX, logs and harness output stay under the run's `{out}`.
 `compare` reads every machine's `summary.json` and writes `<evidence>/comparison.json`: per simulation digest, the value
 on each machine and `equal` or `platform-divergent`. Machines declared in `machines.json` without a record are `pending`
 or `not-run` with their reason. Build digests (the DLL and the supplied game assemblies) are machine inputs and are not
-compared. Python 3 standard library only.
+compared. Records from different commits are compared when no simulation input (SIMULATION_INPUTS) differs between
+the commits and the recorded settings are equal, so a Mac run at the head where the PC record merged compares with it;
+otherwise the verdict is `different-source`. Python 3 standard library only.
 """
 import argparse
 import hashlib
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,6 +36,10 @@ COMPARISON_SCHEMA = "persistentcity-acceptance-comparison-1"
 OS_NAMES = {"windows": "windows", "darwin": "macos", "linux": "linux"}
 ARCH_NAMES = {"amd64": "x64", "x86_64": "x64", "arm64": "arm64", "aarch64": "arm64"}
 NOT_COMPARED = {"build"}
+# Paths whose content decides the simulation digests. Two records from different commits are compared only when no file
+# under these paths differs between the commits and their settings match (a docs or evidence commit between them is fine).
+SIMULATION_INPUTS = ["Core", "Persistence", "Runtime", "Compatibility", "config", "tests", "tools/economy-interventions",
+                     "tools/movement-equivalence", "tools/acceptance/stages.json", "tools/acceptance/expectations"]
 
 
 def machine_key(host):
@@ -121,7 +128,30 @@ def simulation_digests(summary):
     return digests
 
 
-def compare(evidence=EVIDENCE):
+def changed_inputs(base, head, repo=ROOT):
+    """Simulation input files that differ between two commits, or None when git cannot compare them."""
+    done = subprocess.run(["git", "diff", "--name-only", base, head, "--", *SIMULATION_INPUTS], cwd=repo,
+                          capture_output=True, text=True, check=False)
+    return [line for line in done.stdout.splitlines() if line] if done.returncode == 0 else None
+
+
+def source_problem(summaries, recorded, repo):
+    """None when every recorded machine ran the same simulation inputs, else the reason they are not comparable."""
+    commits = sorted({summaries[k]["provenance"]["source"]["commit"] for k in recorded})
+    settings = {json.dumps(summaries[k]["provenance"].get("settings"), sort_keys=True) for k in recorded}
+    if len(settings) > 1:
+        return "recorded machines ran different settings; digests are not comparable"
+    for commit in commits[1:]:
+        changed = changed_inputs(commits[0], commit, repo)
+        if changed is None:
+            return f"git cannot compare {commits[0][:12]} and {commit[:12]}; digests are not comparable"
+        if changed:
+            return (f"simulation inputs differ between {commits[0][:12]} and {commit[:12]} "
+                    f"({len(changed)} files, first {changed[0]}); digests are not comparable")
+    return None
+
+
+def compare(evidence=EVIDENCE, repo=ROOT):
     evidence = Path(evidence)
     declared = json.loads((evidence / "machines.json").read_text(encoding="utf-8"))["machines"]
     summaries = {p.parent.name: json.loads(p.read_text(encoding="utf-8")) for p in sorted(evidence.glob("*/summary.json"))}
@@ -158,8 +188,9 @@ def compare(evidence=EVIDENCE):
             status = "platform-divergent"
             first = first or name
         rows.append({"name": name, "values": values, "status": status})
-    if len(commits) > 1:
-        verdict, reason = "different-source", "recorded machines ran different commits; digests are not comparable"
+    problem = source_problem(summaries, recorded, repo) if len(recorded) > 1 else None
+    if problem:
+        verdict, reason = "different-source", problem
     elif len(recorded) < 2:
         verdict, reason = "pending", "one machine recorded; the others are pending or not run"
     elif first:
@@ -169,7 +200,7 @@ def compare(evidence=EVIDENCE):
     else:
         verdict, reason = "cross-machine-deterministic", f"{len(rows)} digests equal on {', '.join(recorded)}"
     doc = {"schema": COMPARISON_SCHEMA, "verdict": verdict, "reason": reason, "firstDifference": first,
-           "commits": sorted(commits), "machines": machines, "digests": rows}
+           "commits": sorted(commits), "simulationInputs": SIMULATION_INPUTS, "machines": machines, "digests": rows}
     (evidence / "comparison.json").write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return doc
 

@@ -1,5 +1,6 @@
 """F9h evidence writer and cross-machine comparison (tools/acceptance/evidence.py). Synthetic results only."""
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -124,6 +125,50 @@ class Compare(unittest.TestCase):
             evidence.record(write_run(tmp, "Windows", "AMD64"), store)
             evidence.record(write_run(tmp, "Darwin", "arm64", commit="f" * 40, f6h_run="9" * 64), store)
             self.assertEqual(evidence.compare(store)["verdict"], "different-source")
+
+
+def git_repo(root):
+    """A repository with three commits: base, a docs-only commit and a Core commit. Returns their SHAs."""
+    repo = Path(root) / "repo"
+    (repo / "Core").mkdir(parents=True)
+    (repo / "docs").mkdir()
+    def git(*args):
+        return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=repo, check=True,
+                              capture_output=True, text=True).stdout.strip()
+    git("init", "-q")
+    shas = []
+    for path, text in (("Core/Sim.cs", "a"), ("docs/f9h.md", "record"), ("Core/Sim.cs", "b")):
+        (repo / path).write_text(text, encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", path)
+        shas.append(git("rev-parse", "HEAD"))
+    return repo, shas
+
+
+class CompareAcrossCommits(unittest.TestCase):
+    def store(self, tmp):
+        store = Path(tmp) / "evidence"
+        store.mkdir()
+        (store / "machines.json").write_text(json.dumps(MACHINES), encoding="utf-8")
+        return store
+
+    def test_a_later_head_with_only_docs_and_evidence_changes_is_compared(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, (base, docs, _) = git_repo(tmp)
+            store = self.store(tmp)
+            evidence.record(write_run(tmp, "Windows", "AMD64", commit=base), store)
+            evidence.record(write_run(tmp, "Darwin", "arm64", commit=docs), store)
+            self.assertEqual(evidence.compare(store, repo)["verdict"], "cross-machine-deterministic")
+
+    def test_a_simulation_input_change_between_the_commits_is_different_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, (base, _, core) = git_repo(tmp)
+            store = self.store(tmp)
+            evidence.record(write_run(tmp, "Windows", "AMD64", commit=base), store)
+            evidence.record(write_run(tmp, "Darwin", "arm64", commit=core), store)
+            doc = evidence.compare(store, repo)
+            self.assertEqual(doc["verdict"], "different-source")
+            self.assertIn("Core/Sim.cs", doc["reason"])
 
 
 if __name__ == "__main__":

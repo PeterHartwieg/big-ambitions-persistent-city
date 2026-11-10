@@ -6,6 +6,18 @@
   "commits": [
     "d23bb9256860833175568bb3481c8817bf07d716"
   ],
+  "simulationInputs": [
+    "Core",
+    "Persistence",
+    "Runtime",
+    "Compatibility",
+    "config",
+    "tests",
+    "tools/economy-interventions",
+    "tools/movement-equivalence",
+    "tools/acceptance/stages.json",
+    "tools/acceptance/expectations"
+  ],
   "machines": [
     {
       "key": "windows-x64",

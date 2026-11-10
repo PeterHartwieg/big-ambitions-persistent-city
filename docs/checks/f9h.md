@@ -77,7 +77,7 @@ Not adopted: `acceptance.py`, `FoodChoicePriceWeight` and `FoodChoiceHouseholdWe
 
 ## Native-evidence ledger and the rig manifest
 
-`rig-manifest` at this head (fingerprint `steam-1331550-build-25482473`), committed as [`tools/acceptance/evidence/rig-manifest.json`](../../tools/acceptance/evidence/rig-manifest.json): **native batch due** (11 rows at debt ≥ 3); 17 rows unproven, 0 stale, 0 fresh; one row unscheduled (`native-wholesale-costs`, needs RIG-WHOLESALE). Batch order:
+`rig-manifest` at this head (fingerprint `steam-1331550-build-25482473`), committed as [`tools/acceptance/evidence/rig-manifest.json`](../../tools/acceptance/evidence/rig-manifest.json): **native batch due** (11 rows at debt ≥ 3); 17 rows unproven, 0 stale, 0 fresh; one row unscheduled (`native-wholesale-costs`, needs RIG-WHOLESALE). Scheduling priority (the manifest's order: debt first, `f9-1` pinned first and `f9-10` last; the execution order is under *In-game checks*):
 
 | # | Check | Debt | Mode | Rows |
 | --- | --- | --- | --- | --- |
@@ -105,23 +105,23 @@ Evidence is kept per machine under `tools/acceptance/evidence/<os>-<arch>/`. `py
 | Mac (`macos-arm64`) | pending F9h-mac, at the head where F9h merges | – | – | – |
 | Linux box | not run: the Linux box does not build or test (team rule) | – | – | – |
 
-Comparison verdict: `pending` (one machine recorded). The F9h-mac run runs `full` on the Mac, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here.
+Comparison verdict: `pending` (one machine recorded). The F9h-mac run runs `full` on the Mac at the head where this PR merged, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here. The PC record stays at `d23bb925`: `compare` accepts records from different commits when `git diff` between them touches no simulation input (`Core`, `Persistence`, `Runtime`, `Compatibility`, `config`, `tests`, `tools/economy-interventions`, `tools/movement-equivalence`, the stage catalogue and the movement expectations) and the recorded settings are equal. This PR changes none of them, so the merged head compares with the PC record. If a simulation input changes before the Mac run, the verdict is `different-source`, and F9h-mac runs `full` on the PC again at the Mac's head and records it before comparing.
 
 ## Reference run under `tools/acceptance/evidence/`
 
 | File | Bytes | Content |
 | --- | --- | --- |
-| `machines.json` | 468 | declared machines and the reason for each one not recorded |
+| `machines.json` | 489 | declared machines and the reason for each one not recorded |
 | `windows-x64/summary.json` | 43,459 | provenance, classes, summary, ledger state, every stage's verdict, seconds, metrics and digests, the F6h run digests, `acceptanceSha256` |
 | `windows-x64/f6h-household-bands.json` | 1,896 | the 1.2 seed bands above |
 | `rig-manifest.json` | 16,645 | the batch manifest and ledger state at this head |
-| `comparison.json` | 39,588 | the digest comparison |
+| `comparison.json` | 39,864 | the digest comparison |
 
 No TRX, log, binary or harness dump; no absolute path, user name or machine name (checked with grep). Raw evidence stayed under `build/acceptance/20261110T131314Z-d23bb925/` and is not committed.
 
 ## Tooling added
 
-`tools/acceptance/evidence.py` (`record`, `compare`) and `tools/acceptance/test_evidence.py` (7 tests: per-machine layout, no path, bands equal F6's function on a synthetic run, PC-only is pending with the Mac pending and the Linux box not run by rule, equal digests are cross-machine deterministic, one difference is platform-divergent with its name, different commits are not compared). Nothing in `run.py`, `stages.json` or the economy adapter changed.
+`tools/acceptance/evidence.py` (`record`, `compare`) and `tools/acceptance/test_evidence.py` (9 tests: per-machine layout, no path, bands equal F6's function on a synthetic run, PC-only is pending with the Mac pending and the Linux box not run by rule, equal digests are cross-machine deterministic, one difference is platform-divergent with its name, commits that git cannot compare are not compared, a later head with only docs changes is compared, a simulation input change between the commits is `different-source`). Nothing in `run.py`, `stages.json` or the economy adapter changed.
 
 ## Offline validation
 
@@ -131,7 +131,7 @@ No TRX, log, binary or harness dump; no absolute path, user name or machine name
 
 ## In-game checks
 
-From the plan's [section 7](../plans/f9-city-acceptance.md#7-in-game-checks-for-the-next-batched-rig): the checks this record feeds, for the next combined native/perf batch. All run on the headless agent rig against the development head, in the disposable **FT-F9** city with one player food business, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup; functional steps that save run outside F4's timing windows. None is left to Peter, a playtest or a by-hand check. Setup of the batch: run the checks in the order of `tools/acceptance/evidence/rig-manifest.json` (table above), and use an offline `full` `acceptance.json` at the same head as the rig build (this record's run if the head is still `d23bb925`, otherwise a new `full` run at the batch head). Each result is a `persistentcity-acceptance-1` stage record of class `native` with the check ID (pending capability **RIG-ACCEPT**). **Locked-PC**: runs on the locked rig PC through FT console and rig commands. **Input-only**: also needs injected UI input.
+From the plan's [section 7](../plans/f9-city-acceptance.md#7-in-game-checks-for-the-next-batched-rig): the checks this record feeds, for the next combined native/perf batch. All run on the headless agent rig against the development head, in the disposable **FT-F9** city with one player food business, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup; functional steps that save run outside F4's timing windows. None is left to Peter, a playtest or a by-hand check. Setup of the batch: execution order is fixture prerequisites first, then the manifest's priority. Run `f9-1`, then `f9-2`, which creates and verifies the shared checkpoint `f9-city-ready` (with its copy for `f9-4` and `f9-9`); stop the checkpoint-dependent checks if `f9-2` fails. Then run the remaining checks in the manifest's priority from `tools/acceptance/evidence/rig-manifest.json` (table above): `f9-8` (its own older-schema city, no checkpoint), `f9-4`, `f9-7`, `f9-6`, `f6b-2`, `f9-5`, `f9-9`, `f9-3`, and `f9-10` last. Use an offline `full` `acceptance.json` at the same head as the rig build (this record's run if the head is still `d23bb925`, otherwise a new `full` run at the batch head). Each result is a `persistentcity-acceptance-1` stage record of class `native` with the check ID (pending capability **RIG-ACCEPT**). **Locked-PC**: runs on the locked rig PC through FT console and rig commands. **Input-only**: also needs injected UI input.
 
 1. **`f9-1` Build provenance at the rig head.** Locked-PC.
    - Setup: head build installed by RIG-MODSET.
