@@ -1,7 +1,7 @@
 {
   "schema": "persistentcity-acceptance-movement-expectations-1",
-  "seededFrom": "tools/movement-equivalence/baseline.json (F2a, docs/checks/f2a.md): every arm whose comparison was not identical",
-  "emptiedBy": "F9f (docs/checks/f9bdf.md): after F2d every F2a arm equals its bodies-off reference; F2g recorded the green baseline (docs/checks/f2g.md)",
+  "seededFrom": "tools/movement-equivalence/baseline.json (F2a, docs-history-2026-11-10:docs/checks/f2a.md): every arm whose comparison was not identical",
+  "emptiedBy": "F9f (docs/checks/f9bdf.md): after F2d every F2a arm equals its bodies-off reference; F2g recorded the green baseline (docs-history-2026-11-10:docs/checks/f2g.md)",
   "rule": "A listed arm may differ from its reference (expected-red). Any other arm must equal it. A listed arm that turns equal is reported, not failed. The list is empty: every arm must equal its reference, and every self-check and E2 row must pass.",
   "expectedRed": []
 }

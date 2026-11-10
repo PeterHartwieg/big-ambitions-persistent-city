@@ -389,7 +389,16 @@ class SeededLedger(unittest.TestCase):
         for r in self.ledger["rows"]:
             self.assertTrue(r["records"], r["id"])
             for record in r["records"]:
-                self.assertTrue((ROOT / record.split("#")[0]).is_file(), record)
+                path = record.split("#")[0]
+                if ":" in path:
+                    # A record moved to the docs-history tag on 10 Nov 2026 (docs/decisions/2026-11-10-lean-docs.md).
+                    tag, inner = path.split(":", 1)
+                    if subprocess.run(["git", "rev-parse", "--verify", "--quiet", "refs/tags/" + tag], cwd=ROOT,
+                                      capture_output=True).returncode != 0:
+                        continue  # a clone without the tag
+                    self.assertEqual(0, subprocess.run(["git", "cat-file", "-e", path], cwd=ROOT).returncode, record)
+                else:
+                    self.assertTrue((ROOT / path).is_file(), record)
             for pattern in r["paths"]:
                 regex = rm.glob_regex(pattern)
                 self.assertTrue(any(regex.match(f) for f in self.tracked), f"{r['id']}: {pattern} matches no tracked file")

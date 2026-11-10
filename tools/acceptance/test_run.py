@@ -499,7 +499,7 @@ class Stages(unittest.TestCase):
         self.assertIsNone(re.search(r"[A-Za-z]:\\\\|/Users/|LOCALAPPDATA|wait-other-dotnet", text))
 
 
-# The 16 arms F9a seeded as expected-red from the F2a baseline (docs/checks/f2a.md), used as synthetic red data now that
+# The 16 arms F9a seeded as expected-red from the F2a baseline (docs-history-2026-11-10:docs/checks/f2a.md), used as synthetic red data now that
 # F2g recorded the green matrix and F9f emptied the expectation list.
 F2A_RED = ["bodies-off/plain-30", "bodies-off/plain-120", "focus/stationary", "focus/sweep", "focus/away-return", "caps/1-1",
            "caps/24-12", "caps/256-64", "lag/ideal", "lag/slow-head-car", "failures/10pct", "failures/50pct", "cadence/30fps",
