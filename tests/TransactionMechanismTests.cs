@@ -76,7 +76,7 @@ namespace PersistentCity.Tests
             {
                 Assert.True(File.Exists(Path.Combine(CapabilityReportTests.Root(), m.EvidenceLink)), m.EvidenceLink);
                 Assert.NotEqual(MechanismProof.VerifiedByRig, m.Proof);
-                Assert.StartsWith("implemented; rig pending (docs/checks/", m.ProofText);
+                Assert.StartsWith("implemented; rig pending (tests/", m.ProofText);
             }
         }
 

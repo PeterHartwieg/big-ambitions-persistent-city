@@ -23,7 +23,8 @@ namespace PersistentCity.Core
         /// <summary>The native evidence the mechanism needs (D5 table).</summary>
         public string NativeEvidence { get; }
         public MechanismProof Proof { get; }
-        /// <summary>The checks file that records the evidence (repository-relative).</summary>
+        /// <summary>The offline evidence kept in the tree (repository-relative test file); the older checks files are in the
+        /// docs-history-2026-11-10 tag.</summary>
         public string EvidenceLink { get; }
         /// <summary>The rig result; required for <see cref="MechanismProof.VerifiedByRig"/>, null otherwise.</summary>
         public string? RigResultLink { get; }
@@ -74,16 +75,16 @@ namespace PersistentCity.Core
         {
             TransactionMechanism.Define(TransactionMechanismId.ShopFullServiceBag, "shop.fullservice-bag.v1",
                 "FullServiceBusinessSimulator, no entrance fee, paper-bag tag, historical products, one native order per line: direct stock and bag decrement, one completed order, receipt before effect, native daily settlement",
-                MechanismProof.Implemented, "docs/checks/a5-integrated-acceptance.md"),
+                MechanismProof.Implemented, "tests/A5IntegratedAcceptanceTests.cs"),
             TransactionMechanism.Define(TransactionMechanismId.VehicleStreetFoodApi, "vehicle.streetfood-api.v1",
                 "Street Food Sell through VendorApi contract 1: units before and after, cents, sequence; lease and hand-back",
-                MechanismProof.Implemented, "docs/checks/e6d.md"),
+                MechanismProof.Implemented, "tests/VehicleMarketTests.cs"),
             TransactionMechanism.Define(TransactionMechanismId.ShopDynamicCatalogue, "shop.dynamic-catalogue",
                 "Loaded-catalogue products (equipment, recipes, lifecycle): mutation notifications, holder reconciliation, held execution; on only while every E5b contract capability passed",
-                MechanismProof.Implemented, "docs/checks/e5b5.md"),
+                MechanismProof.Implemented, "tests/DynamicAcquisitionTests.cs"),
             TransactionMechanism.Define(TransactionMechanismId.ResearchAgencyBill, "research.agency-bill.v1",
                 "ChangeMoneySafe after MarketingHelper.RunDaily: one transaction per order, before the financial summary",
-                MechanismProof.Implemented, "docs/checks/c5d.md"),
+                MechanismProof.Implemented, "tests/ResearchChargeTests.cs"),
         });
 
         public static TransactionMechanism Get(TransactionMechanismId id) => All[(int)id];
