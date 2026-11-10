@@ -40,9 +40,9 @@ Sources: changed check files between `c2fc1b09` and `docs-history-2026-11-10`, p
 
 ## F8h check 1
 
-**Verified by rig (Mac): [f8h-check1-modpack-owners.json](f8h-check1-modpack-owners.json).** Header `city running`; four required capabilities and the present-dependent Driven Rides clock are active. Twelve optional capabilities are active; two are off with reasons: `vendor.streetfood` — Street Food vendor API missing; `interior.view` — default setting off.
+**Verified by rig (Mac): [f8h-check1-modpack-owners-mac.json](f8h-check1-modpack-owners-mac.json).** Header `city running`; four required capabilities and the present-dependent Driven Rides clock are active. Twelve optional capabilities are active; two are off with reasons: `vendor.streetfood` — Street Food vendor API missing; `interior.view` — default setting off.
 
-All 49/49 inventory targets are patched. Six targets have four foreign owners: `cityperformance.mod`, `drivenrides.mod`, `foodtrucks.mod`, `hardmodepatch`. The JSON includes each target's patch kind and class (`may-skip`, `observer`, `swallows`), the status report, activation excerpts, head/DLL/modpack hashes and fixture. The activation line precedes some optional initialization and says `not checked` for those capabilities; the settled report records them active or off with a reason. Activation conflict scan: 19.693 ms.
+All 49/49 inventory targets are patched. Six targets have four foreign owners: `cityperformance.mod`, `drivenrides.mod`, `foodtrucks.mod`, `hardmodepatch`. The JSON includes each target's patch kind and class (`may-skip`, `observer`, `swallows`), the status report, activation excerpts, head/DLL/modpack hashes and fixture. The activation line precedes some optional initialization and says `not checked` for those capabilities; the settled report records them active or off with a reason. Activation conflict scan: 19.693 ms (diagnostic, collected on the shared machine outside a measured window; not a perf-gate sample).
 
 R2 is a fresh native FT city created at this head, then loaded with the full enabled Mac modpack. No owned shop/cart was required by the authorized check-1 exception. This records owners only; F8h conflict refusal behaviour was not run. No PC producer evidence was copied.
 
