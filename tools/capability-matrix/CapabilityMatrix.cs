@@ -7,6 +7,7 @@ using System.Text;
 using PersistentCity.Core;
 using PersistentCity.EconomyInterventions;
 using PersistentCity.Persistence;
+using PersistentCity.Runtime;
 
 namespace PersistentCity.FailureMatrix;
 
@@ -116,40 +117,40 @@ public static class CapabilityMatrix
             return "checks=" + window.Checks + " transient=" + window.Transient + " saves=" + window.Saves.Count + " identity=" + window.Identity[..12];
         });
 
-        // research.dialog, research.billing, research.delivery off: research is not attached (AttachResearch skips it), so
-        // orders are kept unchanged and residents' cash, wallets and receipts equal the run with research on.
-        Add("research off vs on", "research.dialog, research.billing, research.delivery",
-            "orders are kept unchanged; resident cash, wallets, receipts and scopes equal research attached", () =>
+        // research.dialog, research.billing, research.delivery: each contract failing alone, through the production gate
+        // (ResearchEligibility.SessionEnabled, which PersistentCityMod.AttachResearch uses, and MarketResearchActivation).
+        // The control has all three and surveys the order; each failure keeps the order unchanged and moves no resident money.
+        Add("research contracts off one at a time", "research.dialog, research.billing, research.delivery",
+            "each failed contract names itself, leaves research unattached and the order unchanged; resident cash, wallets, receipts and scopes equal the control", () =>
         {
-            var on = Simulate(days, research: true, order: true);
-            var off = Simulate(days, research: false, order: true);
-            Require(on.OrderSurveyed && !off.OrderSurveyed && off.OpenOrders == 1, "on surveys the order; off keeps it open and unchanged");
-            Require(on.Economy == off.Economy, "cash, wallets and receipts equal: " + on.Economy + " / " + off.Economy);
-            Require(on.Scopes == off.Scopes && on.Conserved && off.Conserved && on.Duplicates + off.Duplicates == 0, "scopes equal; conserved; no duplicates");
-            return off.Economy;
+            var control = Simulate(days, research: ResearchEligibility.SessionEnabled(true, true, true), order: true);
+            Require(control.OrderSurveyed, "control: all contracts pass and the order is surveyed");
+            var detail = new List<string>();
+            foreach (var (name, dialog, billing, delivery) in new[] { ("dialog", false, true, true), ("billing", true, false, true), ("delivery", true, true, false) })
+            {
+                bool enabled = ResearchEligibility.SessionEnabled(dialog, billing, delivery);
+                var activation = new MarketResearchActivation(true, dialog, billing, delivery, enabled);
+                Require(!enabled && !activation.Available && activation.Refusal.StartsWith(name == "dialog" ? "agency dialog" : name, StringComparison.Ordinal), name + " names itself");
+                var off = Simulate(days, research: enabled, order: true);
+                Require(!off.OrderSurveyed && off.OpenOrders == 1, name + ": order kept unchanged");
+                Require(off.Economy == control.Economy && off.Scopes == control.Scopes && off.Conserved && off.Duplicates == 0, name + ": resident money equal to the control");
+                detail.Add(name + " off: " + activation.Refusal);
+            }
+            return string.Join("; ", detail) + "; " + control.Economy;
         });
 
-        // food.dynamic off: a scope carrying a non-historical product is refused, so it stays native-owned. It books no PC
-        // receipt, its scope bytes are unchanged and the other shop sells as before.
-        Add("food.dynamic off", "food.dynamic", "the refused dynamic scope books no PC receipt and keeps its bytes; the other shop sells; conserved", () =>
+        // food.dynamic: the second site sells a non-historical product. Whether it may be owned is the production menu
+        // predicate (FoodMenuPolicy.LiveMenu, which NativeFoodMarket applies with a policy only while dynamic acquisition
+        // is on). Control: dynamic on, the site sells. Off: the site is refused, books no PC receipt, keeps its scope bytes.
+        Add("food.dynamic off vs on", "food.dynamic", "on: the dynamic site sells; off: it books no PC receipt and keeps its bytes; the other shop sells; conserved", () =>
         {
-            var off = Simulate(days, dynamicRefused: true);
-            Require(off.FarOrders == 0 && off.OwnOrders > 0, "no PC sale at the refused scope; the historical shop sells");
-            Require(off.ScopesBefore == off.Scopes, "scope bytes unchanged");
-            Require(off.Conserved && off.Duplicates == 0, "conserved, no duplicates");
-            return "refused scope orders=0; own orders=" + off.OwnOrders;
-        });
-
-        // rlo.roadspeeds waiting (NotYet/Refreshing): route preparation holds, so the city does not advance for the window,
-        // saves in the window are the same bytes, and after the answer the city catches up conserving every wallet.
-        Add("rlo.roadspeeds waiting", "rlo.roadspeeds (NotYet, Refreshing)", "no stop; saves in the window are identical; conserved after catch-up; identities unchanged", () =>
-        {
-            var held = Simulate(days, holdFrom: 1440 + 11 * 60, holdTo: 1440 + 13 * 60);
-            Require(held.HeldSaves.Count >= 2 && held.HeldSaves.Distinct().Count() == 1, "every save in the window is the same bytes");
-            Require(held.Conserved && held.Duplicates == 0 && held.OwnOrders > 0, "conserved after catch-up; no duplicates; the city sold");
-            var control = Simulate(days);
-            Require(held.Identity == control.Identity && held.Economy == control.Economy, "identities unchanged; the held run ends as the control does");
-            return "held saves=" + held.HeldSaves.Count + "; own orders=" + held.OwnOrders + " (control " + control.OwnOrders + ")";
+            var on = Simulate(days, dynamicOn: true);
+            var off = Simulate(days, dynamicOn: false);
+            Require(on.FarOrders > 0, "control: with dynamic acquisition on the dynamic site sells (" + on.FarOrders + ")");
+            Require(off.FarOrders == 0 && off.OwnOrders > 0, "off: no PC sale at the refused site; the historical shop sells");
+            Require(off.ScopesBefore == off.Scopes, "off: scope bytes unchanged");
+            Require(off.Conserved && on.Conserved && off.Duplicates + on.Duplicates == 0, "conserved, no duplicates");
+            return "on: dynamic site orders=" + on.FarOrders + "; off: 0 (own orders=" + off.OwnOrders + ")";
         });
 
         return arms;
@@ -160,14 +161,16 @@ public static class CapabilityMatrix
     public static readonly IReadOnlyDictionary<CapabilityId, string> Coverage = new Dictionary<CapabilityId, string>
     {
         [CapabilityId.FoodCheckoutShop] = "food.checkout.shop off",
-        [CapabilityId.FoodDynamic] = "food.dynamic off",
+        [CapabilityId.FoodDynamic] = "food.dynamic off vs on",
         [CapabilityId.VendorStreetFood] = "CapabilityMatrixTests.StreetFoodAbsentThenReturned (vendor rig)",
         [CapabilityId.ClockDrivenRides] = "required refused (changed refuses; absent starts)",
         [CapabilityId.RloReservations] = "presentation off vs never present (bodies are the reservation guard's only consumer)",
-        [CapabilityId.RloRoadSpeeds] = "rlo.roadspeeds waiting",
-        [CapabilityId.ResearchDialog] = "research off vs on",
-        [CapabilityId.ResearchBilling] = "research off vs on",
-        [CapabilityId.ResearchDelivery] = "research off vs on",
+        // The road planner is Runtime: tools/road-speed-regression drives the real RoadRoutes and NativeRoadSpeeds through
+        // NotYet/Refreshing answers, a held plan, a lane change and a save in the window (TransientCaptureWaits).
+        [CapabilityId.RloRoadSpeeds] = "tools/road-speed-regression (TransientCaptureWaits)",
+        [CapabilityId.ResearchDialog] = "research contracts off one at a time",
+        [CapabilityId.ResearchBilling] = "research contracts off one at a time",
+        [CapabilityId.ResearchDelivery] = "research contracts off one at a time",
         [CapabilityId.PhysicalVehicles] = "presentation off vs never present",
         [CapabilityId.PhysicalPedestrians] = "presentation off vs never present",
         // Runtime-only surfaces with no Core input: the Core city cannot see them (source checks in CapabilityReportTests
@@ -184,21 +187,35 @@ public static class CapabilityMatrix
         public long OwnOrders, FarOrders, Duplicates;
         public bool Conserved = true, OrderSurveyed;
         public int OpenOrders;
-        public readonly List<string> HeldSaves = new();
     }
 
     private static string ScopeBytes(CityState state) => string.Join("|", state.Food!.Shops.Select(s =>
         s.PlaceId + "," + s.BusinessId + "," + s.ProductId + "," + string.Join("+", s.AdditionalProductIds) + "," + s.Channel));
 
     /// <summary>The economy fixture's epoch loop with one capability switched the way the Runtime switches it.</summary>
-    public static Outcome Simulate(int days, bool research = false, bool order = false, bool dynamicRefused = false, double holdFrom = -1, double holdTo = -1)
+    public const string DynamicProduct = "ba:itemname_dumplings";
+
+    /// <summary>The dynamic policy a passing E5b5 publication gives: the product is loaded and classed Food by a provider.</summary>
+    private static FoodProductPolicy DynamicPolicy()
+    {
+        var registry = new FoodProductMetadataRegistry(); registry.BindPublicationThread();
+        Require(registry.TryCreateProvider("f8g:matrix", out var provider, out _), "provider");
+        Require(provider.TryRegisterProductMetadata(DynamicProduct, new FoodProductMetadataInput { MealClass = MealClass.Food }, 1, out _), "metadata");
+        var loaded = new FoodProductMetadataLoadedNames(new[] { DynamicProduct }.Concat(FoodProducts.Ids));
+        return new FoodProductPolicy(FoodProductMetadataResolver.Empty.WithApi(registry.Publish(loaded)), loaded);
+    }
+
+    public static Outcome Simulate(int days, bool research = false, bool order = false, bool? dynamicOn = null)
     {
         var (state, market) = EconomyFixture.Build(Seed, Residents);
-        if (dynamicRefused)
+        if (dynamicOn is bool on)
         {
-            // The second site carries a non-historical product; dynamic acquisition is off, so the market refuses it.
-            state.Food!.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop).AdditionalProductIds.Add("ba:itemname_dumplings");
-            Require(!market.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop).SiteOpen, "refused scope is not served");
+            var scope = state.Food!.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop);
+            scope.AdditionalProductIds.Add(DynamicProduct);
+            // The production predicate: no policy unless dynamic acquisition is on (NativeFoodMarket.LiveMenu).
+            var refusal = FoodMenuPolicy.LiveMenu(scope.Products().ToList(), on ? DynamicPolicy() : null);
+            Require(on ? refusal == FoodLiveMenuRefusal.None : refusal == FoodLiveMenuRefusal.OriginalThreeGuard, "menu verdict " + refusal);
+            market.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop).SiteOpen = refusal == FoodLiveMenuRefusal.None;
         }
         var city = EconomyFixture.Attach(state, market, new EconomyRoutes(market), fresh: true);
         var outcome = new Outcome { ScopesBefore = ScopeBytes(state) };
@@ -213,10 +230,6 @@ public static class CapabilityMatrix
         long end = (long)start + days * 1440L;
         for (long epoch = (long)start + 1; epoch <= end; epoch++)
         {
-            // A waiting route preparation holds the population and, through the accounting hold, native time: frames pass
-            // at the held epoch with no advancement, and the player can save in each of them.
-            if (epoch == (long)holdFrom)
-                for (long frame = (long)holdFrom; frame < (long)holdTo; frame += 30) outcome.HeldSaves.Add(Sha(SaveCodec.Write(city.State)));
             double ending = AccountingClock.PreviousEpochTarget(epoch);
             int guard = 0;
             while (!city.AdvanceTo(ending, 10000).CaughtUp) Require(++guard < 100000, "nonterminating epoch");

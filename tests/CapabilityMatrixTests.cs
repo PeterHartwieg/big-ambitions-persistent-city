@@ -26,7 +26,7 @@ namespace PersistentCity.Tests
         {
             var arms = CapabilityMatrix.Run(1, output.WriteLine);
             Assert.Equal(new[] { "control", "presentation off vs never present", "food.checkout.shop off", "required refused", "rlo.donor transient window",
-                "research off vs on", "food.dynamic off", "rlo.roadspeeds waiting" }, arms.Select(a => a.Name));
+                "research contracts off one at a time", "food.dynamic off vs on" }, arms.Select(a => a.Name));
             Assert.All(arms, a => Assert.True(a.Passed, a.Name + ": " + a.Detail));
         }
 
@@ -43,8 +43,11 @@ namespace PersistentCity.Tests
             {
                 Assert.True(CapabilityMatrix.Coverage.TryGetValue(definition.Id, out var arm), definition.Name + " has no arm");
                 var test = Regex.Match(arm!, @"\b(?<check>\w+Tests\.\w+)\b");
-                Assert.True(test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal)),
-                    definition.Name + ": " + arm);
+                var tool = Regex.Match(arm!, @"^(?<dir>tools/[\w-]+) \((?<arm>\w+)\)$");
+                bool found = tool.Success
+                    ? File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), tool.Groups["dir"].Value, "Program.cs")).Contains(tool.Groups["arm"].Value + "();", StringComparison.Ordinal)
+                    : test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal));
+                Assert.True(found, definition.Name + ": " + arm);
             }
         }
 

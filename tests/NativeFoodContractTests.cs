@@ -199,6 +199,18 @@ namespace PersistentCity.Tests
             Assert.Equal(receipts, data.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key, StringComparer.Ordinal).ToArray());
         }
 
+        /// <summary>Sol-r2-4: the same transition runs through production NativeFoodOwnership (Observe, Persist, suppression,
+        /// reload in the owned hour, drained-boundary hand-back) in tools/food-ownership-regression, driven by FoodCheckoutMode.</summary>
+        [Fact]
+        public void TheProductionOwnershipArmExists()
+        {
+            string root = CapabilityReportTests.Root();
+            string program = File.ReadAllText(Path.Combine(root, "tools", "food-ownership-regression", "Program.cs"));
+            Assert.Contains("CheckoutOff(); // F8c review", program);
+            Assert.Contains("public void RefreshKnownOwnership() => NativeFoodOwnership.Observe(Reg, Checkout.Observe(Eligible));", program);
+            Assert.Contains("Runtime/NativeFoodOwnership.cs", File.ReadAllText(Path.Combine(root, "tools", "food-ownership-regression", "FoodOwnershipRegression.csproj")));
+        }
+
         /// <summary>A shop not yet owned: checkout-off requests no ownership, so no boundary ever acquires it.</summary>
         [Fact]
         public void CheckoutOffRequestsNoNewOwnership()

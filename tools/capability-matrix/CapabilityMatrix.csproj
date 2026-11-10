@@ -15,6 +15,7 @@
     <Compile Include="../economy-interventions/SelfChecks.cs" Link="SelfChecks.cs" />
     <Compile Include="../movement-equivalence/MovementFixture.cs" Link="MovementFixture.cs" />
     <Compile Include="../movement-equivalence/PresentationDriver.cs" Link="PresentationDriver.cs" />
+    <Compile Include="../../Runtime/ResearchAgencyMenu.cs" Link="ResearchAgencyMenu.cs" />
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
   </ItemGroup>
