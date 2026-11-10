@@ -65,7 +65,7 @@ Implemented. `tools/capability-matrix` (`dotnet run -c Release [days]`) over the
 | # | Passing check |
 | --- | --- |
 | A1 | `NativeCapabilityTests.DefinitionsFollowTheD2Table`, `CapabilityReportTests.ReportFromDoublesForEveryState`, `HookInventorySourceTests.ProductionSourcesMatchTheInventory` |
-| A2 | `docs/plans/f8-capability-boundaries.md` (D6 alternatives), `RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity` |
+| A2 | `RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity`, `RloContinuityTests.ReflectionFallbackClassesGoingPublicAsStopAndFlareOffAsTransient` |
 | A3 | `RloContinuityTests.CallSitesUseTheClassAndAddNoRead`, `RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity`, `RloContinuityTests.ReadyButDifferentStopsWithThePayloadKept` |
 | A4 | `TransactionMechanismTests.VerifiedByRigWithoutAResultLinkIsRefused`, `TransactionMechanismTests.EveryScopedBusinessHasOneMechanismOrOneUnsupportedReason` |
 | A5 | `HookInventorySourceTests.ProductionSourcesMatchTheInventory`, `HookConflictReportTests.RealHarmonyOnStandInMethodsIsClassed`, `tools/capability-contracts` |
@@ -80,9 +80,9 @@ Implemented. `tools/capability-matrix` (`dotnet run -c Release [days]`) over the
 | A14 | `CapabilityMatrixTests.EveryCoreArmPasses`, `HookConflictReportTests.ReportOnlyChangesNoCapability` |
 | A15 | `CapabilityReportTests.DiagnosticsFileCallsNoMutatingMember`, `CapabilityReportTests.DiagnosticsAreNotReachedFromUpdate` |
 | A16 | `CapabilityReportTests.ReportFromDoublesForEveryState`, `RloContinuityTests.EveryBridgeStatusMapsToItsReasonClass`, `NativeFoodContractTests.EachChangedAuthorityMemberGivesANamedStartRefusal` |
-| A17 | `docs/checks/f8bg.md` (in-game checks below), `NativeFoodContractTests.FaultPointsExistOnlyInTheTestBuild` |
+| A17 | `NativeFoodContractTests.FaultPointsExistOnlyInTheTestBuild`, `CapabilityMatrixTests.StreetFoodAbsentThenReturned`, `CapabilityMatrixTests.EveryCoreArmPasses`; in-game checks below |
 
-`CapabilityMatrixTests.EveryRequirementHasANamedPassingCheck` fails if a row is missing or names a check that does not exist.
+The same mapping is `CapabilityMatrixTests.Requirements`; `EveryRequirementHasANamedPassingCheck` fails if a requirement is missing or names a check that does not exist. It reads no docs file.
 
 ## Offline checks run
 

@@ -40,6 +40,9 @@ namespace PersistentCity.Runtime
         /// <summary>F8d diagnostics: the last non-transient refusal (it stopped the runtime as before); null otherwise.</summary>
         public string? LastRefusal { get; private set; }
         internal static IEqualityComparer<object> ReferenceComparer => References.Instance;
+
+        /// <summary>F8d preflight: capture once and report whether the answer is transient (then the caller waits).</summary>
+        public bool WaitsAfterRefresh() { Refresh(); return Waiting != null; }
         public void Refresh()
         {
             if (capture == null) return;
@@ -87,7 +90,9 @@ namespace PersistentCity.Runtime
                 }
                 if (attempt == 0 && capture != null) { Refresh(); if (Waiting != null) throw new RoadSpeedsWaitingException(Waiting); }
             }
-            throw new InvalidOperationException("Native road speed changed without a verified RLO slowdown/restoration.");
+            // A terminal mismatch: recorded like a refused capture, so the report shows rlo.roadspeeds off after the stop.
+            Verified = false; LastRefusal = "Native road speed changed without a verified RLO slowdown/restoration.";
+            throw new InvalidOperationException(LastRefusal);
         }
 
         private sealed class References : IEqualityComparer<object>

@@ -202,7 +202,9 @@ namespace PersistentCity.Runtime
             // A current replacement may still be importing nodes/building its network. Keep driving
             // its staged preparation until Ready; the pending old job restarts only after preflight.
             // F8d: while RLO's road speeds are transient (NotYet, Refreshing), preparation waits; the city keeps running and saving.
-            if (roadSpeeds.Waiting != null && roads != null) { roadSpeeds.Refresh(); if (roadSpeeds.Waiting != null) return false; }
+            // A held event skips RoadRoutes.Prepare (which refreshes), so it refreshes here: every frame that reports prepared
+            // has a fresh complete capture before closure refreshes, curb queries or searches can read lane timing.
+            if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
                 try { roads.Sweep(1, 1024); }

@@ -312,7 +312,7 @@ namespace PersistentCity.Tests
             Assert.True(prepare > 0);
             Assert.True(roads.IndexOf("if (speeds.Waiting != null) return false;", prepare, StringComparison.Ordinal) < roads.IndexOf("speeds.Canonical(", prepare, StringComparison.Ordinal));
             string routes = Read("MultimodalRoutes.cs");
-            int held = routes.IndexOf("if (roadSpeeds.Waiting != null && roads != null) { roadSpeeds.Refresh(); if (roadSpeeds.Waiting != null) return false; }", StringComparison.Ordinal);
+            int held = routes.IndexOf("if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;", StringComparison.Ordinal);
             Assert.True(held > 0 && held < routes.IndexOf("if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)", StringComparison.Ordinal));
             string mod = Read("PersistentCityMod.cs");
             // Not prepared: the frame waits and returns; it does not Fail. Saving never asks the planner.

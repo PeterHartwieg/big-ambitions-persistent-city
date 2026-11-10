@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Linq;
@@ -145,27 +146,47 @@ namespace PersistentCity.Tests
             finally { StreetFoodHooks.Reset(); }
         }
 
-        /// <summary>Every A1-A17 row of docs/checks/f8bg.md names checks that exist in this assembly (Class.Method) or in
-        /// the two tools; the suite running them green is the passing check.</summary>
+        /// <summary>The plan's A1-A17 requirements and the checks that pass them, kept in code so the check survives the
+        /// lean-docs cleanup of checks files and frozen plans (the human-readable table is in the PR description).</summary>
+        internal static readonly IReadOnlyDictionary<string, string[]> Requirements = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["A1"] = new[] { "NativeCapabilityTests.DefinitionsFollowTheD2Table", "CapabilityReportTests.ReportFromDoublesForEveryState", "HookInventorySourceTests.ProductionSourcesMatchTheInventory" },
+            ["A2"] = new[] { "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "RloContinuityTests.ReflectionFallbackClassesGoingPublicAsStopAndFlareOffAsTransient" },
+            ["A3"] = new[] { "RloContinuityTests.CallSitesUseTheClassAndAddNoRead", "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "RloContinuityTests.ReadyButDifferentStopsWithThePayloadKept" },
+            ["A4"] = new[] { "TransactionMechanismTests.VerifiedByRigWithoutAResultLinkIsRefused", "TransactionMechanismTests.EveryScopedBusinessHasOneMechanismOrOneUnsupportedReason" },
+            ["A5"] = new[] { "HookInventorySourceTests.ProductionSourcesMatchTheInventory", "HookConflictReportTests.RealHarmonyOnStandInMethodsIsClassed", "tools/capability-contracts" },
+            ["A6"] = new[] { "CapabilityMatrixTests.EveryCoreArmPasses", "NativeFoodContractTests.CheckoutOffWithdrawsAnOwnedShopAtTheNextBoundaryAndKeepsItsReceipts", "CapabilityReportTests.HealthyInputsReportEveryReadCapabilityActive" },
+            ["A7"] = new[] { "RloContinuityTests.CallSitesUseTheClassAndAddNoRead", "NativeFoodContractTests.CheckoutOffIsDecidedAtConstructionAndGuardsEveryEffect" },
+            ["A8"] = new[] { "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "CapabilityMatrixTests.EveryCoreArmPasses" },
+            ["A9"] = new[] { "NativeFoodContractTests.TheAuthorityContractIsCheckedBeforeAnyPatchOrSaveRead", "NativeFoodContractTests.CheckoutOffIsDecidedAtConstructionAndGuardsEveryEffect" },
+            ["A10"] = new[] { "TransactionMechanismTests.EveryScopedBusinessHasOneMechanismOrOneUnsupportedReason", "TransactionMechanismTests.TheBusinessCommandReadsTheExistingScopeStatusOnly" },
+            ["A11"] = new[] { "TransactionMechanismTests.MetadataRegistrationGrantsNoMechanism" },
+            ["A12"] = new[] { "HookInventorySourceTests.InventoryCountsAndCapabilityMapping", "HookConflictReportTests.ForeignOwnersAreJoinedToTheInventoryAndOurOwnersAreNot" },
+            ["A13"] = new[] { "CapabilityReportTests.HealthyInputsReportEveryReadCapabilityActive", "TransactionMechanismTests.VerifiedByRigWithoutAResultLinkIsRefused" },
+            ["A14"] = new[] { "CapabilityMatrixTests.EveryCoreArmPasses", "HookConflictReportTests.ReportOnlyChangesNoCapability" },
+            ["A15"] = new[] { "CapabilityReportTests.DiagnosticsFileCallsNoMutatingMember", "CapabilityReportTests.DiagnosticsAreNotReachedFromUpdate" },
+            ["A16"] = new[] { "CapabilityReportTests.ReportFromDoublesForEveryState", "RloContinuityTests.EveryBridgeStatusMapsToItsReasonClass", "NativeFoodContractTests.EachChangedAuthorityMemberGivesANamedStartRefusal" },
+            ["A17"] = new[] { "NativeFoodContractTests.FaultPointsExistOnlyInTheTestBuild", "CapabilityMatrixTests.StreetFoodAbsentThenReturned", "CapabilityMatrixTests.EveryCoreArmPasses" },
+        };
+
+        /// <summary>Every A1-A17 requirement names checks that exist in this assembly (Class.Method) or a tool in the tree; the
+        /// suite running them green is the passing check. No docs file is read.</summary>
         [Fact]
         public void EveryRequirementHasANamedPassingCheck()
         {
-            string doc = File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "docs", "checks", "f8bg.md"));
             var tests = typeof(CapabilityMatrixTests).Assembly.GetTypes()
                 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                     .Where(m => m.GetCustomAttributes().Any(a => a is FactAttribute)).Select(m => t.Name + "." + m.Name))
                 .ToHashSet(StringComparer.Ordinal);
-            for (int i = 1; i <= 17; i++)
+            Assert.Equal(Enumerable.Range(1, 17).Select(i => "A" + i), Requirements.Keys);
+            foreach (var (requirement, checks) in Requirements)
             {
-                var row = Regex.Match(doc, @"^\| A" + i + @" \|(?<cells>.*)$", RegexOptions.Multiline);
-                Assert.True(row.Success, "A" + i + " row missing");
-                var named = Regex.Matches(row.Groups["cells"].Value, @"`(?<check>[\w./-]+)`").Select(m => m.Groups["check"].Value).ToArray();
-                Assert.True(named.Length > 0, "A" + i + " names no check");
-                foreach (string check in named)
+                Assert.NotEmpty(checks);
+                foreach (string check in checks)
                 {
+                    Assert.False(check.StartsWith("docs/", StringComparison.Ordinal), requirement + " names a docs file: " + check);
                     if (check.StartsWith("tools/", StringComparison.Ordinal)) { Assert.True(Directory.Exists(Path.Combine(CapabilityReportTests.Root(), check)), check); continue; }
-                    if (check.StartsWith("docs/", StringComparison.Ordinal)) { Assert.True(File.Exists(Path.Combine(CapabilityReportTests.Root(), check)), check); continue; }
-                    Assert.True(tests.Contains(check), "A" + i + ": no test " + check);
+                    Assert.True(tests.Contains(check), requirement + ": no test " + check);
                 }
             }
         }
