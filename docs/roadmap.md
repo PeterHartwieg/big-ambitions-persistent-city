@@ -10,6 +10,7 @@ Peter, 10 November 2026, after the [9 November review](reviews/2026-11-09-city-r
 
 - Everyone on the street is a named person with a home and a job to inspect. The population grows by housing renters in homes the player cannot rent. Through-traffic cars are the one anonymous exception.
 - Work follows the workplace's opening hours. Evenings and weekends differ. People who share a home sometimes go out together, each paying from their own wallet.
+- Commuters and day visitors are the balance lever: more of them, or groups of them that lean toward particular shop types. They stay named people who arrive by subway.
 - Residents buy at every kind of player business through one generic sale path, with a fallback for modded shops. Non-food buying comes from recurring needs and from impulse.
 - Order: prove a sale and finish slices in flight, beside cleanup and save work. Then business types and wallets, day plans, needs and the purchase contract, one whole loop at today's population, and only then the larger population. The hands-on session stays last.
 
@@ -71,6 +72,7 @@ One joint plan, because a need coming due and a shared outing are both plan item
 | R4 one purchase contract | planned | Resident, spending ceiling and intention in; a confirmed result out. The ceiling is checked before the sale commits. Food rides the same checkout and adds only its product choice. Adapters per processing family where R0 shows the native path differs. |
 | J1 one whole loop | planned | At today's population: a resident earns, plans a non-food visit, travels, buys, pays and reloads correctly. Measured in game before the population grows. |
 | G1 residents in homes the player cannot rent | planned | Every one a named person with a home and a place to inspect. Size set from P1, P4 and J1 evidence. |
+| G8 visitor tuning table | planned | The fixed visitor constants become balance settings: how many commuters and day visitors come, by kind and weekday, and named visitor groups with a share and a leaning toward business types. A group changes who comes, never what a shop is paid. First tool for the revenue-scale question. Needs R1 and R3. |
 | G3 evenings, weekends, days off | planned | Nightlife and late shifts, weekends that differ, days off that vary by workplace and person. |
 | G4 households | planned | One optional shared outing with a clear cancelling rule. Wallets stay individual. |
 | R5 workplaces without customers | planned | Offices, factories and warehouses: residents staff them on the venue's hours. Contracts and production stay native. |

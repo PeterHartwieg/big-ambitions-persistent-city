@@ -1,6 +1,6 @@
 # City direction, 10 November 2026
 
-Peter's answers to eight design questions on 10 November 2026, asked after the [9 November review](../reviews/2026-11-09-city-review.md). The review found that the model and the density policy limit how real the city feels, and that the technology does not. These decisions set the direction for the remaining work. The [roadmap](../roadmap.md) carries the slices.
+Peter's answers to eight design questions on 10 November 2026, and a ninth decision later that day, asked after the [9 November review](../reviews/2026-11-09-city-review.md). The review found that the model and the density policy limit how real the city feels, and that the technology does not. These decisions set the direction for the remaining work. The [roadmap](../roadmap.md) carries the slices.
 
 ## Peter's decisions
 
@@ -12,6 +12,7 @@ Peter's answers to eight design questions on 10 November 2026, asked after the [
 6. **Wallets stay individual.** On a shared outing each person pays for themselves.
 7. **City work goes first.** Slices already in flight finish. Then cleanup, saves and the city work. Food slices not yet started wait for the new day model so they are built once.
 8. **The hands-on session stays last**, before the single release. Feature work does not pause for it.
+9. **Visitors are the balance lever.** Added later the same day. Peter: "We should have the visitor mechanic allow us to finetune balance a bit more (e.g. we can add just more, or some with specific preferences to increase a specific's shop types customers)". Commuters and day visitors stay named people who arrive by subway.
 
 ## What this changes in older decisions
 
@@ -34,7 +35,16 @@ The coordinator's proposals, revised on 10 November after an approach review by 
 
 - House people in residential buildings the player cannot rent. Those buildings expose no interior area, so the plan needs a second capacity rule, for example floor area from the building footprint and floor count. The rule that whole-property area never stands in for a rentable interior stays for rentable homes.
 - Size the population from consistency between homes, jobs, shops and trips, and from what the save and the frame can carry. The plan sets the number after the save rewrite and a Mono GC measurement on the rig.
-- Visitors and commuters stay as built.
+- Commuters and day visitors stay as built: named people with traits and a wallet who live outside the city and arrive through the subway stations. Day plans, needs and the purchase contract apply to them as to residents. Households do not, because a visitor has no home in the city.
+
+### Visitors as the balance lever
+
+- Today the visitor count follows fixed constants in `Core/PopulationCensus.cs`: at most two visitors per resident, a day-visitor pool of about 15 percent of residents, a 25 percent chance of a visit per day. Those become a tuning table in the mod's balance settings.
+- The table has two controls. How many visitors come, by kind and by day of the week. And visitor groups: a named group has a share of the visitors and its own leaning toward business types, for example a group that favours clothes shops or nightlife.
+- A group changes who comes, never what a shop is paid. Every visitor in a group is still one named person with one wallet who makes their own choices, so the inspector stays truthful and a shop still has to win the visit on price, distance and memory.
+- Groups lean toward business types from the loaded catalogue, so a modded shop type can be given customers the same way.
+- This is the first tool for the revenue-scale question below, ahead of any change to what one visit is worth.
+- The table is for balancing the mod. Whether the player ever sees or changes it is not decided.
 
 ### Days
 
@@ -75,7 +85,7 @@ Prerequisites shared with the day model, built before day plans: a business type
 
 ### Open question for Peter: revenue scale
 
-The game tunes rent, wages and prices to its own customer volume. The 9 November review estimates about three resident visits per shop per day in today's city. Nobody has measured the native volume, and a population of 8,000 to 15,000 may still fall short of it. If it does, either the player's revenue drops, or each resident's visit has to count for more than one customer in the books, or prices and spending per visit rise. The joint plan measures the gap in game and brings the options to Peter with numbers.
+The game tunes rent, wages and prices to its own customer volume. The 9 November review estimates about three resident visits per shop per day in today's city. Nobody has measured the native volume, and a population of 8,000 to 15,000 may still fall short of it. The first answer is decision 9: more visitors, and visitor groups that lean toward the shop types that fall short. If that is not enough, either the player's revenue drops, or each visit has to count for more than one customer in the books, or prices and spending per visit rise. The joint plan measures the gap in game, shows how far visitors close it, and brings what is left to Peter with numbers.
 
 ### Not yet proven
 
