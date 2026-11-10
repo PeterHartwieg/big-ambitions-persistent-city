@@ -238,7 +238,7 @@ namespace PersistentCity.Runtime
                 if (fromDoor) { Follow(binding, next!, 0); return true; }
                 if (next != null) return false;
                 binding.Tail = false; binding.Journey = null;
-                binding.AwaitingArrival = true; binding.AwaitMinute = simulation.State.Minute; binding.AwaitJourney = route;
+                binding.AwaitingArrival = true; binding.AwaitMinute = simulation.View.Minute; binding.AwaitJourney = route;
                 return ObserveArrival(binding);
             }
             bool expired = followClock - binding.TailSince >= WalkerFollow.ArrivalTailSeconds;
@@ -444,7 +444,7 @@ namespace PersistentCity.Runtime
             Position at = binding.Person?.Position ?? binding.Car!.Position;
             // Out of reach and no open track: nothing to observe (the common case, one distance test per body).
             if (!PlayerContact.InReach(at, player, car) && !contact.Tracking(citizen.Identity.Id)) return;
-            double minute = simulation.State.Minute;
+            double minute = simulation.View.Minute;
             var own = WalkerFollow.Sample(route, Math.Min(route.Minutes, binding.BodyMinutes));
             double report = contact.Observe(citizen.Identity.Id, route, car, minute - citizen.DepartureMinute, binding.BodyMinutes,
                 at, own.From, own.To, player, minute, Time.frameCount);

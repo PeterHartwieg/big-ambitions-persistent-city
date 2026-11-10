@@ -266,7 +266,7 @@ public sealed class VisitorBodyMeasure
                 var city = City(factor, active, out var travellers);
                 var focus = MovementFixture.ShopPosition; const double radius = 120;
                 var index = city.ActiveJourneys;
-                var nearby = new List<CitizenState>();
+                var nearby = new List<IPersonView>();
                 var candidates = new List<(CitizenState Citizen, double Distance, int Roster)>();
                 double minute = city.State.Minute;
                 // Runtime selection's roster and stateful filters (PhysicalPopulation.Update): grid cells near the focus,
@@ -278,7 +278,7 @@ public sealed class VisitorBodyMeasure
                     var roster = index.Grid.Query(focus, radius, nearby);
                     for (int i = 0; i < roster.Count; i++)
                     {
-                        var c = roster[i];
+                        var c = (CitizenState)roster[i];
                         if (!(c.NextEventMinute > minute) || !(c.Phase == CitizenPhase.Travelling && c.Journey != null)) continue;
                         double distance = Position.Distance(city.PositionOf(c), focus);
                         if (distance <= radius) candidates.Add((c, distance, candidates.Count));

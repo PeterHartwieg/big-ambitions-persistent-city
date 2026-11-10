@@ -58,9 +58,9 @@ namespace PersistentCity.Runtime
         public void Update()
         {
             if (!active || disposed) return;
-            followDelta = simulation.State.Minute > followMinute ? Time.unscaledDeltaTime : 0;
+            followDelta = simulation.View.Minute > followMinute ? Time.unscaledDeltaTime : 0;
             followClock += followDelta;
-            followMinute = simulation.State.Minute;
+            followMinute = simulation.View.Minute;
             RefreshVendorMeals();
             ambient.Update();
             if (!ambient.Active) throw new InvalidOperationException("Pedestrian ownership guard failed: " + ambient.LastError);
@@ -112,36 +112,38 @@ namespace PersistentCity.Runtime
             // F2f: the active-journey index members filed in the grid cells within the radius (F5i: residents and
             // visitors), or every resident after a shadow mismatch (visitors get no body in that fallback, by design: they
             // receive bodies through the index only). Filters and order below are the same for both sources.
-            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
+            // F9g: both sources are read-only person views; the journey, optional stop and pose come from the entity.
+            var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
                 var c = roster[index];
                 // Both pools are full: observations and queue movement above still ran; no
                 // candidate can acquire a body until a later update frees a slot.
                 if (people >= pedestrianLimit && cars >= vehicleLimit) break;
-                if (!(c.NextEventMinute > simulation.State.Minute) || bindings.ContainsKey(c.Identity.Id) || ambient.IsReserved(c.Identity.Id)) continue;
-                bool tried = attempted.TryGetValue(c.Identity.Id, out float lastAttempt);
+                if (!(c.NextEventMinute > simulation.View.Minute) || bindings.ContainsKey(c.Id) || ambient.IsReserved(c.Id)) continue;
+                bool tried = attempted.TryGetValue(c.Id, out float lastAttempt);
                 if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
                 // Stationary indoor residents cannot consume an attempt. Keep travelling
                 // residents here: PositionOf and SampleJourney have distinct boundary rules.
-                if (!((c.Phase == CitizenPhase.Travelling && c.Journey != null) || queuers.ContainsKey(c.Identity.Id) || Outdoor(c))) continue;
-                Position sampled = simulation.PositionOf(c);
+                var entity = Entity(c);
+                if (!((c.Phase == CitizenPhase.Travelling && entity.Journey != null) || queuers.ContainsKey(c.Id) || Outdoor(entity))) continue;
+                Position sampled = simulation.PositionOf(entity);
                 double distance = Position.Distance(sampled, focus);
                 if (!(distance <= radius)) continue;
-                candidates.Add(new SelectionCandidate(c, sampled, tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
+                candidates.Add(new SelectionCandidate(entity, sampled, tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
             }
             // Vendor stays are outdoor meal service, so they are not in the journey/opening index.
             // Maintain them from committed activity events rather than scanning the population per frame.
-            foreach (var citizen in vendorWaiters.Values)
+            foreach (var waiter in vendorWaiters.Values)
             {
-                if (journeyIndexFallback || simulation.ActiveJourneys.Contains(citizen)
-                    || people >= pedestrianLimit || !queuers.TryGetValue(citizen.Identity.Id, out var queue)
-                    || bindings.ContainsKey(citizen.Identity.Id) || ambient.IsReserved(citizen.Identity.Id)
-                    || !(citizen.NextEventMinute > simulation.State.Minute)) continue;
-                bool tried = attempted.TryGetValue(citizen.Identity.Id, out float lastAttempt);
+                if (journeyIndexFallback || simulation.ActiveJourneys.Contains(waiter)
+                    || people >= pedestrianLimit || !queuers.TryGetValue(waiter.Id, out var queue)
+                    || bindings.ContainsKey(waiter.Id) || ambient.IsReserved(waiter.Id)
+                    || !(waiter.NextEventMinute > simulation.View.Minute)) continue;
+                bool tried = attempted.TryGetValue(waiter.Id, out float lastAttempt);
                 if (tried && Time.unscaledTime - lastAttempt < 2) continue;
                 double distance = Position.Distance(queue.Line.Entrance, focus);
-                if (distance <= radius) candidates.Add(new SelectionCandidate(citizen, queue.Line.Entrance,
+                if (distance <= radius) candidates.Add(new SelectionCandidate(Entity(waiter), queue.Line.Entrance,
                     tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
             }
             candidates.Sort(SelectionCandidate.ByPriority);
@@ -206,9 +208,11 @@ namespace PersistentCity.Runtime
             }
             candidates.Clear();
             // F5i: visitors are attempted too, so their retry times are kept like residents'.
-            if (attempted.Count > PersonTable.PersonCount(simulation.State) + 128)
+            // PersonTable.PersonCount and Schedules through the view: residents plus saved visitors; resident and routine ids.
+            var view = simulation.View;
+            if (attempted.Count > view.ResidentList.Count + view.VisitorCount + 128)
             {
-                var ids = new HashSet<string>(PersonTable.Schedules(simulation.State).Select(c => c.Identity.Id), StringComparer.Ordinal);
+                var ids = new HashSet<string>(view.ResidentList.Concat(view.VisitorRoutineList).Select(c => c.Id), StringComparer.Ordinal);
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
         }
@@ -239,12 +243,19 @@ namespace PersistentCity.Runtime
         }
 
         // The index must hold every citizen this selection's stateful filters (journey, queue, outdoors) could admit.
+        // Residents, then visitor routines (PersonTable.Schedules' order), read through the view.
         private bool StatefulCandidatesIndexed()
+            => StatefulCandidatesIndexed(simulation.View.ResidentList) && StatefulCandidatesIndexed(simulation.View.VisitorRoutineList);
+
+        private bool StatefulCandidatesIndexed(IReadOnlyList<IPersonView> persons)
         {
             var index = simulation.ActiveJourneys;
-            foreach (var c in PersonTable.Schedules(simulation.State))
-                if (!index.Contains(c) && (c.Phase == CitizenPhase.Travelling && c.Journey != null
-                    || c.Phase == CitizenPhase.WaitingForOpening || Outdoor(c))) return false;
+            for (int i = 0; i < persons.Count; i++)
+            {
+                var c = persons[i];
+                if (!index.Contains(c) && (c.Phase == CitizenPhase.Travelling && Entity(c).Journey != null
+                    || c.Phase == CitizenPhase.WaitingForOpening || Outdoor(Entity(c)))) return false;
+            }
             return true;
         }
 
@@ -274,7 +285,7 @@ namespace PersistentCity.Runtime
         }
         private readonly List<SelectionCandidate> candidates = new List<SelectionCandidate>();
         // F2f grid query result, reused by PlanQueues and then the selection in the same update.
-        private readonly List<CitizenState> nearby = new List<CitizenState>();
+        private readonly List<IPersonView> nearby = new List<IPersonView>();
 
         // Waiting for a route or for an opening is indoors. Only a queue-at-opening dwell
         // (PlanQueues) puts a waiting citizen in the street, at a spot beside the door.
@@ -289,17 +300,17 @@ namespace PersistentCity.Runtime
         private void PlanQueues(Position focus, double radius)
         {
             queuers.Clear();
-            double now = simulation.State.Minute;
+            double now = simulation.View.Minute;
             var planned = new Dictionary<string, (Place Place, List<Dwell> Dwells)>(StringComparer.Ordinal);
             // Waiting citizens are indexed (F5f) and filed at their place cell (F2f). Line and slot order are sorted
             // below, not taken from this order.
-            var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
+            var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
                 var citizen = roster[index];
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
-                var dwell = QueueDwell(citizen, place, now);
+                var dwell = QueueDwell(Entity(citizen), place, now);
                 if (!dwell.HasValue || !dwell.Value.ActiveAt(now) || GaveUp(dwell.Value)) continue;
                 string key = DwellSpots.KeyOf(place);
                 if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, new List<Dwell>()));
@@ -339,7 +350,7 @@ namespace PersistentCity.Runtime
         private bool GaveUp(Dwell dwell)
         {
             if (!gaveUp.TryGetValue(dwell.CitizenId, out double until)) return false;
-            if (until == dwell.EndMinute && simulation.State.Minute < until) return true;
+            if (until == dwell.EndMinute && simulation.View.Minute < until) return true;
             gaveUp.Remove(dwell.CitizenId);
             return false;
         }
@@ -349,7 +360,7 @@ namespace PersistentCity.Runtime
             if (binding.Queue.HasValue) gaveUp[binding.Citizen.Identity.Id] = binding.Queue.Value.EndMinute;
             if (binding.VendorOpening > 0) vendorGaveUp[binding.Citizen.Identity.Id] = binding.VendorOpening;
             if (gaveUp.Count > 256)
-                foreach (var stale in gaveUp.Where(p => p.Value <= simulation.State.Minute).Select(p => p.Key).ToList()) gaveUp.Remove(stale);
+                foreach (var stale in gaveUp.Where(p => p.Value <= simulation.View.Minute).Select(p => p.Key).ToList()) gaveUp.Remove(stale);
         }
 
         private IEnumerable<KeyValuePair<string, int>> Standing(DoorQueue line)

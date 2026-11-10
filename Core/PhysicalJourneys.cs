@@ -484,13 +484,16 @@ namespace PersistentCity.Core
 
         public static bool ReceivesBody(CitizenState c) => VisitorsReceiveBodies || !c.IsVisitor && KindOf(c) != PersonKind.Visitor;
 
-        /// <summary>Indexed persons that may receive a body, in no particular order.</summary>
+        /// <summary>Indexed persons that may receive a body, in no particular order. F9g named exception: still entity-typed,
+        /// because the F2 movement-equivalence driver (tools/movement-equivalence/PresentationDriver.cs, owned by F2g) follows
+        /// each candidate's journey through it. Runtime presentation reads <see cref="Grid"/> instead.</summary>
         public IReadOnlyList<CitizenState> BodyCandidates => eligible;
         /// <summary>Every indexed person, visitors included.</summary>
         public int Count => eligible.Count + withheld.Count;
         /// <summary>Indexed visitors withheld from body selection (zero while VisitorsReceiveBodies).</summary>
         public int WithheldVisitors => withheld.Count;
-        public bool Contains(CitizenState c) => positions.ContainsKey(c);
+        /// <summary>F9g: takes the read-only view, so presentation can test a grid query result; only the entity is ever filed.</summary>
+        public bool Contains(IPersonView person) => person is CitizenState c && positions.ContainsKey(c);
         /// <summary>F2f spatial view of <see cref="BodyCandidates"/>: <see cref="PresentationGrid.Query"/> returns each body
         /// candidate filed near a focus once, a superset of those within the radius. Read-only outside Core.</summary>
         public PresentationGrid Grid => grid;
