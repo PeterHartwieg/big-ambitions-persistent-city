@@ -309,13 +309,16 @@ namespace PersistentCity.Runtime
             _ => refusal.ToString()
         };
         internal static bool IsBuying(BuildingRegistration reg) => active != null && active.buying && ReferenceEquals(active.buyerShop, reg);
-        public bool IsConfirmedPaid(ResidentMeal meal) => meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
-            && FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;
+        // F8c (review Sol-r5-1): the shared reader the unit tests execute; checkout-off does not change it.
+        public bool IsConfirmedPaid(ResidentMeal meal)
+        {
+            var current = SaveGameManager.Current;
+            return FoodReceiptEvidence.IsConfirmedPaid(ReferenceEquals(save, current), current?.modData, meal);
+        }
         public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
         {
-            total = Money.Zero; extras = Array.Empty<FoodTicketLine>();
-            return meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
-                && FoodSaleReceipts.TryReadPaidTicket(SaveGameManager.Current.modData, meal, out total, out extras);
+            var current = SaveGameManager.Current;
+            return FoodReceiptEvidence.TryConfirmedTicket(ReferenceEquals(save, current), current?.modData, meal, out total, out extras);
         }
         public bool CanServe(string businessId)
         {

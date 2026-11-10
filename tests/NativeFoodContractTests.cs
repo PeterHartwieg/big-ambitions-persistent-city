@@ -227,11 +227,11 @@ namespace PersistentCity.Tests
             public readonly Dictionary<string, string> Receipts = new(StringComparer.Ordinal);
             public int LoseFromDay = int.MaxValue, Buys;
             public double EarliestMinute => 0;
-            public bool IsConfirmedPaid(ResidentMeal meal) { PaidReads++; return FoodSaleReceipts.ReadStatus(Receipts, meal) == FoodReceiptStatus.Paid; }
-            // The reader Core uses when the market implements IFoodTicketEvidence, as NativeFoodMarket and FoodMarkets do;
-            // the same read NativeFoodMarket.TryConfirmedTicket makes.
+            // Both readers are production's shared PersistentCity.Runtime.FoodReceiptEvidence, which NativeFoodMarket calls.
+            public bool IsConfirmedPaid(ResidentMeal meal) { PaidReads++; return PersistentCity.Runtime.FoodReceiptEvidence.IsConfirmedPaid(true, Receipts, meal); }
+            // The reader Core uses when the market implements IFoodTicketEvidence, as NativeFoodMarket and FoodMarkets do.
             public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
-            { TicketReads++; return FoodSaleReceipts.TryReadPaidTicket(Receipts, meal, out total, out extras); }
+            { TicketReads++; return PersistentCity.Runtime.FoodReceiptEvidence.TryConfirmedTicket(true, Receipts, meal, out total, out extras); }
             public IReadOnlyList<FoodBusiness> Read(double minute) => !Checkout.Eligible ? Array.Empty<FoodBusiness>() : new[] { new FoodBusiness {
                 Id = "b", PlaceId = "shop", Name = "Bakery", MealsPerHour = 60,
                 Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
@@ -310,9 +310,17 @@ namespace PersistentCity.Tests
             Assert.Equal(0, off.Buys);                                  // no checkout while the contract is off
             Assert.Equal(receipts, off.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray()); // evidence unchanged
             Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
-            // The double's evidence read is production's: NativeFoodMarket.TryConfirmedTicket reads the same paid ticket, and
-            // FoodMarkets (the composite Core attaches) dispatches to it for a shop scope.
-            Assert.Contains("&& FoodSaleReceipts.TryReadPaidTicket(SaveGameManager.Current.modData, meal, out total, out extras);", Source("Runtime/NativeFoodMarket.cs"));
+            // The evidence executed above is production's: NativeFoodMarket's two readers delegate to FoodReceiptEvidence (and
+            // nothing else), and FoodMarkets (the composite Core attaches) dispatches to them for a shop scope.
+            string marketSource = Source("Runtime/NativeFoodMarket.cs");
+            Assert.Contains("return FoodReceiptEvidence.IsConfirmedPaid(ReferenceEquals(save, current), current?.modData, meal);", Body(marketSource, "public bool IsConfirmedPaid(ResidentMeal meal)"));
+            Assert.Contains("return FoodReceiptEvidence.TryConfirmedTicket(ReferenceEquals(save, current), current?.modData, meal, out total, out extras);",
+                Body(marketSource, "public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)"));
+            Assert.DoesNotContain("Checkout", Body(marketSource, "public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)"));
+            // Another save's receipts never count, and missing receipt data never counts.
+            var any = city.State.Food.Residents.First(m => paidEvidence.Contains(m.ResidentId));
+            Assert.False(PersistentCity.Runtime.FoodReceiptEvidence.TryConfirmedTicket(false, off.Receipts, any, out _, out _));
+            Assert.False(PersistentCity.Runtime.FoodReceiptEvidence.IsConfirmedPaid(true, null, any));
             Assert.Contains("if (Market(meal.BusinessId) is IFoodTicketEvidence tickets) return tickets.TryConfirmedTicket(meal, out total, out extras);", Source("Runtime/FoodMarkets.cs"));
             Assert.Contains("IFoodTicketEvidence", Source("Runtime/NativeFoodMarket.cs").Substring(0, Source("Runtime/NativeFoodMarket.cs").IndexOf("{", StringComparison.Ordinal) + 400));
         }
