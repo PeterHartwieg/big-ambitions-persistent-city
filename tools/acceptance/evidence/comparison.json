@@ -16,7 +16,9 @@
     "tools/economy-interventions",
     "tools/movement-equivalence",
     "tools/acceptance/stages.json",
-    "tools/acceptance/expectations"
+    "tools/acceptance/expectations",
+    "tools/acceptance/run.py",
+    "tools/acceptance/economy_stage.py"
   ],
   "machines": [
     {

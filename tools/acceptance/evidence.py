@@ -39,7 +39,8 @@ NOT_COMPARED = {"build"}
 # Paths whose content decides the simulation digests. Two records from different commits are compared only when no file
 # under these paths differs between the commits and their settings match (a docs or evidence commit between them is fine).
 SIMULATION_INPUTS = ["Core", "Persistence", "Runtime", "Compatibility", "config", "tests", "tools/economy-interventions",
-                     "tools/movement-equivalence", "tools/acceptance/stages.json", "tools/acceptance/expectations"]
+                     "tools/movement-equivalence", "tools/acceptance/stages.json", "tools/acceptance/expectations",
+                     "tools/acceptance/run.py", "tools/acceptance/economy_stage.py"]
 
 
 def machine_key(host):
@@ -141,6 +142,10 @@ def source_problem(summaries, recorded, repo):
     settings = {json.dumps(summaries[k]["provenance"].get("settings"), sort_keys=True) for k in recorded}
     if len(settings) > 1:
         return "recorded machines ran different settings; digests are not comparable"
+    sources = {(summaries[k]["provenance"]["source"].get("commit"), summaries[k]["provenance"]["source"].get("diffSha256"))
+               for k in recorded}
+    if any(summaries[k]["provenance"]["source"].get("dirty") for k in recorded) and len(sources) > 1:
+        return "a record was taken from a dirty tree and the others do not share its commit and diff; digests are not comparable"
     for commit in commits[1:]:
         changed = changed_inputs(commits[0], commit, repo)
         if changed is None:

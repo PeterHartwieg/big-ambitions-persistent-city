@@ -105,7 +105,7 @@ Evidence is kept per machine under `tools/acceptance/evidence/<os>-<arch>/`. `py
 | Mac (`macos-arm64`) | pending F9h-mac, at the head where F9h merges | – | – | – |
 | Linux box | not run: the Linux box does not build or test (team rule) | – | – | – |
 
-Comparison verdict: `pending` (one machine recorded). The F9h-mac run runs `full` on the Mac at the head where this PR merged, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here. The PC record stays at `d23bb925`: `compare` accepts records from different commits when `git diff` between them touches no simulation input (`Core`, `Persistence`, `Runtime`, `Compatibility`, `config`, `tests`, `tools/economy-interventions`, `tools/movement-equivalence`, the stage catalogue and the movement expectations) and the recorded settings are equal. This PR changes none of them, so the merged head compares with the PC record. If a simulation input changes before the Mac run, the verdict is `different-source`, and F9h-mac runs `full` on the PC again at the Mac's head and records it before comparing.
+Comparison verdict: `pending` (one machine recorded). The F9h-mac run runs `full` on the Mac at the head where this PR merged, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here. The PC record stays at `d23bb925`: `compare` accepts records from different commits when `git diff` between them touches no simulation input (`Core`, `Persistence`, `Runtime`, `Compatibility`, `config`, `tests`, `tools/economy-interventions`, `tools/movement-equivalence`, the stage catalogue, the movement expectations, `tools/acceptance/run.py` and `economy_stage.py`), the recorded settings are equal and no record comes from a dirty tree with another commit or diff. This PR changes none of them, so the merged head compares with the PC record. If a simulation input changes before the Mac run, the verdict is `different-source`, and F9h-mac runs `full` on the PC again at the Mac's head and records it before comparing.
 
 ## Reference run under `tools/acceptance/evidence/`
 
@@ -115,13 +115,13 @@ Comparison verdict: `pending` (one machine recorded). The F9h-mac run runs `full
 | `windows-x64/summary.json` | 43,459 | provenance, classes, summary, ledger state, every stage's verdict, seconds, metrics and digests, the F6h run digests, `acceptanceSha256` |
 | `windows-x64/f6h-household-bands.json` | 1,896 | the 1.2 seed bands above |
 | `rig-manifest.json` | 16,645 | the batch manifest and ledger state at this head |
-| `comparison.json` | 39,864 | the digest comparison |
+| `comparison.json` | 39,938 | the digest comparison |
 
 No TRX, log, binary or harness dump; no absolute path, user name or machine name (checked with grep). Raw evidence stayed under `build/acceptance/20261110T131314Z-d23bb925/` and is not committed.
 
 ## Tooling added
 
-`tools/acceptance/evidence.py` (`record`, `compare`) and `tools/acceptance/test_evidence.py` (9 tests: per-machine layout, no path, bands equal F6's function on a synthetic run, PC-only is pending with the Mac pending and the Linux box not run by rule, equal digests are cross-machine deterministic, one difference is platform-divergent with its name, commits that git cannot compare are not compared, a later head with only docs changes is compared, a simulation input change between the commits is `different-source`). Nothing in `run.py`, `stages.json` or the economy adapter changed.
+`tools/acceptance/evidence.py` (`record`, `compare`) and `tools/acceptance/test_evidence.py` (10 tests: per-machine layout, no path, bands equal F6's function on a synthetic run, PC-only is pending with the Mac pending and the Linux box not run by rule, equal digests are cross-machine deterministic, one difference is platform-divergent with its name, commits that git cannot compare are not compared, a later head with only docs changes is compared, a simulation input change between the commits or a dirty record is `different-source`). Nothing in `run.py`, `stages.json` or the economy adapter changed.
 
 ## Offline validation
 

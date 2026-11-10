@@ -170,6 +170,20 @@ class CompareAcrossCommits(unittest.TestCase):
             self.assertEqual(doc["verdict"], "different-source")
             self.assertIn("Core/Sim.cs", doc["reason"])
 
+    def test_a_dirty_record_is_not_compared_with_another_commit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, (base, docs, _) = git_repo(tmp)
+            store = self.store(tmp)
+            evidence.record(write_run(tmp, "Windows", "AMD64", commit=base), store)
+            mac = write_run(tmp, "Darwin", "arm64", commit=docs)
+            result = json.loads(mac.read_text(encoding="utf-8"))
+            result["provenance"]["source"].update(dirty=True, diffSha256="9" * 64)
+            mac.write_text(json.dumps(result), encoding="utf-8")
+            evidence.record(mac, store)
+            doc = evidence.compare(store, repo)
+            self.assertEqual(doc["verdict"], "different-source")
+            self.assertIn("dirty", doc["reason"])
+
 
 if __name__ == "__main__":
     unittest.main()
