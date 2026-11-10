@@ -2,7 +2,7 @@ Status: implemented (offline); not verified by rig
 
 # City acceptance F9g: presentation reads through the view, 9 November 2026
 
-Refs [#96](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/96). Branch `codex/pc-f9g-presentation-view` from `codex/persistent-city` at `649467b` (X1 #187; X2 #184 split `Runtime/PhysicalPopulation.cs` into four partial files; F9e #182 added the read-only views; current writer 36). Scope: the F9g row and [Decision 8, *Presentation*](../plans/f9-city-acceptance.md#decision-8-read-only-city-views-for-observers) of the F9 plan. No schema, save shape or `Persistence/` change. No product behaviour change.
+Refs [#96](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/96). Branch `codex/pc-f9g-presentation-view` from `codex/persistent-city` at `649467b` (X1 #187; X2 #184 split `Runtime/PhysicalPopulation.cs` into four partial files; F9e #182 added the read-only views). Synced on 10 November with `codex/persistent-city` at `f3a5210` (X3 #192 holds the save schema at 1; F2g #191; F9a #177); the base tip `5b56bda` (#195) adds docs only. Scope: the F9g row and [Decision 8, *Presentation*](../plans/f9-city-acceptance.md#decision-8-read-only-city-views-for-observers) of the F9 plan. No schema, save shape or `Persistence/` change. No product behaviour change.
 
 Re-read at this base: `Core/CityView.cs` (`IPersonView` and `ICityView` members), `Core/PhysicalJourneys.cs` (`ActiveJourneyIndex`), `Core/PresentationGrid.cs` (`Query`), the four `Runtime/PhysicalPopulation*.cs` partial files, `Runtime/PhysicalVehicles.cs` (`TryAcquire`), `tests/OwnershipBoundaryTests.cs`, and the F2 driver `tools/movement-equivalence/PresentationDriver.cs` (read only).
 
@@ -77,7 +77,7 @@ PC (20 logical cores), at this branch's head:
 
 - Build: `python tools/build.py --game-managed "…\Big Ambitions_Data\Managed"` passed (`DLL SHA256: 4c4482660dc9f22d8ec67c6d088782a81fc382258bc063a6ccfb7375f3fd67f2`).
 - Focused run, 10 November 2026: `dotnet test … --filter` over `MovementEquivalenceTests` (12), `OwnershipBoundaryTests` (13), `PresentationGridTests` (7), `PresentationBoundaryTests` (9) and `VisitorBodyTests` (6): 47 passed, 0 failed, 3 min 3 s.
-- Full suite, 10 November 2026: `dotnet test tests/PersistentCity.Tests.csproj`: 4,011 passed, 0 failed, 8 min 22 s. The `wait-other-dotnet.ps1` wait before it timed out at the tool's 10-minute limit while other sessions' dotnet runs were still active, so this run shared the machine.
+- Full suite, 10 November 2026, before the sync with `f3a5210` and the base repair below: `dotnet test tests/PersistentCity.Tests.csproj`: 4,011 passed, 0 failed, 8 min 22 s. The `wait-other-dotnet.ps1` wait before it timed out at the tool's 10-minute limit while other sessions' dotnet runs were still active, so this run shared the machine.
 - The first full run (local-test round 1) failed one test: `PresentationBoundaryTests.PhysicalRuntimeCallsOnlyTheReviewedSimulationMembers`, which keeps an exact list of the `CitySimulator` members presentation calls. The F9g reads add `View`. The list now names it; nothing else changed.
 
 | Required test (F9g row) | Fact |
@@ -87,7 +87,7 @@ PC (20 logical cores), at this branch's head:
 | Reflection test that `BodyCandidates` and `Query` return view types | `CandidateQueriesReturnViewTypes`: `Query` returns `IReadOnlyList<IPersonView>` and fills a `List<IPersonView>`; `ActiveJourneyIndex.Contains` takes `IPersonView`. The only entity-typed public result on `ActiveJourneyIndex` and `PresentationGrid` is the named `BodyCandidates`, so adding another one, or making `BodyCandidates` view-typed without removing the exception, fails. The query returns the filed entities themselves (reference-equal), with the expected set. |
 | Selected set and order unchanged on the F2f grid tests | `PresentationGridTests` (11 facts) and `VisitorBodyTests`, unchanged apart from the type change: the grid-against-full-scan comparisons (`Within`, `Waiting`, ordered by distance and ordinal id) run on `Query`'s results cast back to entities in the test. |
 | F2 movement-equivalence harness arms unchanged | `MovementEquivalenceTests` (12 tests: walker and mixed-city body arms equal bodies-off, the arm catalogue, mid-journey reload, injected faults) passed unchanged at this head in the focused and full runs above; `tools/movement-equivalence/` is not edited. |
-| Current-writer golden pins unchanged | `OwnershipBoundaryTests.CurrentWriterGoldenHashIsUnchanged` (writer 36, seeds 5150 and 9217) |
+| Current-writer golden pins unchanged | `NativeCapabilityTests.CurrentWriterGoldenHashIsUnchanged` and `ChangeJournalTests.CurrentWriterGoldenSnapshotAndReload` (schema held at 1, seeds 5150 and 9217) |
 
 Test files changed for the type change only (listed for the PR):
 
@@ -97,11 +97,22 @@ Test files changed for the type change only (listed for the PR):
 
 Not run: `tools/physical-selection-regression` (the `tools/*-regression` suites are not run before release). Its selection fragment changed (view reads, `Entity(c)`), so its extraction may need a stub update when it is next run.
 
+### Base repair after the sync
+
+After the merge of X3, `NativeCapabilityTests.CurrentWriterGoldenHashIsUnchanged` no longer compiled. The base version asserted `CurrentSchema == 35` and pinned writer-35 hashes. An earlier F9g commit (`1e13cd7`) had pointed it at `CityState.PlayerHoldSchema` and `DevelopmentChain.Write35`, and X3 removed both. Commit `707d479` deleted the theory. The fix round restored it: it now asserts `CityState.CurrentSchema == 1` with the message from `SchemaHeldAtOneTests`, writes with `SaveCodec.Write`, and pins the schema-1 goldens:
+
+| Seed | SHA-256 | Characters |
+| --- | --- | --- |
+| 5150 (reader corpus `schema-01/full.json`) | `ffa821dea8fe057959a91135db75342a3b69c2bdec8487af7485a35dd5d0889c` | 73,330 |
+| 9217 | `a9651c15e44c67fa8e05ac084b638ac1bfaf0c48805a8d1142a873c423a6422c` | 72,968 |
+
+The restored theory passes at this head and also on `codex/persistent-city` at `5b56bda` without the F9g diff, so F9g changes no save bytes. The post-sync full suite is the harness's pre-merge run; this branch records no full run after the sync.
+
 This is offline evidence only. No game, rig, ModsLocal or bridge was used.
 
 ## In-game checks
 
-In-game checks for the next batched rig. All run on the headless agent rig in the combined native/perf batch, in the disposable FT-F9 city from the F9 plan's section 7 at checkpoint `f9-city-ready`, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup. None is left to Peter, a playtest or a by-hand check. "Locked-PC" means console, bridge-read and file steps only; "input-only" means the step needs synthetic UI input. "Base build" means `codex/persistent-city` at `649467b` installed on a copy of the same checkpoint. Check 1 is the plan's check 6 at this head; checks 2 to 4 are F9g's own.
+In-game checks for the next batched rig. All run on the headless agent rig in the combined native/perf batch, in the disposable FT-F9 city from the F9 plan's section 7 at checkpoint `f9-city-ready`, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup. None is left to Peter, a playtest or a by-hand check. "Locked-PC" means console, bridge-read and file steps only; "input-only" means the step needs synthetic UI input. "Base build" means `codex/persistent-city` at `5b56bda` installed on a copy of the same checkpoint. Check 1 is the plan's check 6 at this head; checks 2 to 4 are F9g's own.
 
 1. **Detail transitions and in-flight reload** (plan check 6). Locked-PC.
    - Setup: `f9-city-ready` at 07:30.
