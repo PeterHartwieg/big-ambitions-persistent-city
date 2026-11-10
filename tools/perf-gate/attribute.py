@@ -293,10 +293,10 @@ def presented_series(frames, joined, trace):
         p = joined[i]
         if p is None:
             continue
+        if not trace.presents[p].displayed:
+            continue  # dropped: the next displayed interval spans this frame
         interval = present.displayed_interval(trace, p)
-        if interval is None:
-            continue
-        if all(f['clean'] for f in pending):
+        if interval is not None and all(f['clean'] for f in pending):
             series.append(dict(interval_ms=interval, present=trace.presents[p], frames=pending))
         pending = []
     return series
@@ -321,7 +321,9 @@ def join_window(frames, trace, offset, source):
                  not_displayed=sum(1 for p in shown if not trace.presents[p].displayed), trace_covers_window=covers,
                  presented_intervals=len(series), gpu_busy='reported' if trace.has('gpu_busy') else UNKNOWN,
                  cpu_wait='reported' if trace.has('cpu_wait') else UNKNOWN, bound=bounds)
-    block['established'] = bool(trace.display_source) and covers and block['joined_fraction'] >= present.JOIN_MIN_FRACTION
+    # Aligned: the join itself holds. Established also needs display timing for a presented series.
+    block['aligned'] = covers and block['joined_fraction'] >= present.JOIN_MIN_FRACTION
+    block['established'] = bool(trace.display_source) and block['aligned']
     if not trace.display_source:
         block['reason'] = 'trace has no display timing (DisplayedTime, DisplayLatency or msBetweenDisplayChange)'
     return series, block, joined
@@ -512,7 +514,7 @@ def attribute(export, traces=None, player_log_lines=(), contract=None):
         whole_reference = reference('whole')
         # The present each frame joined to, when its trace was joined: the same evidence the presented table uses.
         trace, joined = joined_by_window.get(wid, (None, None))
-        use_join = series is not None and joined is not None
+        use_join = joined is not None and presentation[wid].get('aligned', False)
         classes_whole = {}
         for k, f in enumerate(frames):
             if not f['clean'] or f['whole'] < stall_ms:

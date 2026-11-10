@@ -231,6 +231,28 @@ class JoinTests(unittest.TestCase):
         self.assertEqual(source, 'estimated')
         self.assertAlmostEqual(offset, -30.0, delta=0.5)
 
+    def test_near_flat_prefix_keeps_anchor_ownership(self):
+        # Alternating 15/17 ms frames with a +/-1 ms present phase over the first 10,000 frames favour another phase
+        # there; the three long frames after it still fix the offset, and each frame must join its own present.
+        n = 18000
+        wholes = [15.0 if i % 2 else 17.0 for i in range(n)]
+        for i in (10500, 12000, 15000):
+            wholes[i] = 120.0 + i / 1000.0
+        starts, t = [], 5000.0
+        for w in wholes:
+            starts.append(t)
+            t += w
+        ends = [s + w for s, w in zip(starts, wholes)]
+        times = [e + 30.0 + ((1.0 if i % 2 else -1.0) if i < 10000 else 0.0) for i, e in enumerate(ends)]
+        times.append(times[-1] + 16.0)  # recording runs one frame past the window
+        frames = present.Frames(starts, wholes)
+        trace = present.Trace([present.Present(x) for x in times], 'qpc', {}, display_source='DisplayedTime')
+        offset, source, _ = present.estimate_offset(frames, trace, hint_ms=0.0)
+        self.assertEqual(source, 'estimated')
+        self.assertAlmostEqual(offset, -30.0, delta=1.5)
+        joined = present.join(frames, trace, offset)
+        self.assertEqual(joined, list(range(n)))
+
     def test_unrelated_trace_without_hint_is_not_joined(self):
         _, _, _, probe = joined_session(stalls=self.STALLS)
         _, other = st.session(600, seed=99)
@@ -547,6 +569,34 @@ class EndToEndTests(unittest.TestCase):
         self.assertIn('gpu-present', shown['classes'])
         self.assertEqual(whole['classes'], shown['classes'])
         self.assertEqual((whole['gpu_busy_ms'], whole['bound']), (280.0, 'gpu'))
+
+    def test_initial_diagnostic_frame_does_not_hide_the_next_stall(self):
+        # The first shown present has no interval; it still closes its frame, so frame 1's 300 ms stall stays in.
+        for flag in ('diagnostic', 'warmup'):
+            with self.subTest(flag):
+                rows, presents = st.session(600, stalls={1: 300.0, 200: 120.0, 333: 260.0, 470: 90.0}, mod={1: 280.0})
+                rows[0][flag] = True
+                w = window_with('c', rows)
+                enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace_of(st.trace_rows(presents))})
+                self.assertTrue(report['presentation']['c']['established'])
+                stall = next(s for s in report['stalls'] if s['kind'] == 'presented' and s['frame_numbers'] == [1001])
+                self.assertIn('pc-union', stall['classes'])
+                self.assertEqual(len(enriched['windows'][0]['presented_ms']), 599)
+
+    def test_whole_frame_cpu_evidence_without_display_timing(self):
+        rows, presents = st.session(600, stalls={100: 300.0, 200: 120.0, 333: 260.0}, cpu_busy={100: 280.0})
+        header = [h for h in st.V2_HEADER if h not in ('DisplayLatency', 'DisplayedTime')]
+        full = st.trace_rows(presents)
+        keep = [full[0].index(h) for h in header]
+        trace = trace_of([[r[k] for k in keep] for r in full])
+        enriched, report = attribute.attribute(synthetic.export([window_with('c', rows)]), {'*': trace})
+        block = report['presentation']['c']
+        self.assertTrue(block['aligned'])
+        self.assertFalse(block['established'])
+        self.assertEqual(enriched['windows'][0]['receipts']['presentation_trace'], 'fail')
+        whole = next(s for s in report['stalls'] if s['kind'] == 'whole-frame' and s['frame'] == 1100)
+        self.assertIn('native-frame', whole['classes'])
+        self.assertFalse(any(s['kind'] == 'presented' for s in report['stalls']))
 
     def test_interval_spanning_a_diagnostic_frame_is_left_out(self):
         for flag, version in (('diagnostic', 1), ('warmup', 1), ('diagnostic', 2), ('warmup', 2)):

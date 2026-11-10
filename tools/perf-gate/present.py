@@ -293,6 +293,16 @@ def estimate_offset(frames, trace, hint_ms=None, anchors=12, scoring=64):
                 residuals.append(ends[best] - t)
         return hits, residuals
 
+    def _owned(indices, d, tol):
+        # Long present gaps whose closing present lands within tol of the end of a frame of similar length.
+        owned = 0
+        for i in indices:
+            t = times[i + 1] + d
+            j = bisect.bisect_left(ends, t)
+            k = min((k for k in (j - 1, j) if 0 <= k < len(ends)), key=lambda k: abs(ends[k] - t))
+            owned += abs(ends[k] - t) <= tol and _similar(wholes[k], gaps[i])
+        return owned
+
     best = None
     for f in frame_top:
         for i in present_top:
@@ -308,7 +318,13 @@ def estimate_offset(frames, trace, hint_ms=None, anchors=12, scoring=64):
             raise TraceError('no long intervals match between trace and probe frames; clock offset not established')
         return refine_offset(frames, trace, hint_ms), 'hint, refined', 0 if best is None else best[0][0]
     (hits, _), d, residuals = best
-    return refine_offset(frames, trace, d + statistics.median(residuals)), 'estimated', hits
+    anchored = d + statistics.median(residuals)
+    refined = refine_offset(frames, trace, anchored)
+    # Refinement scores only the first frames; it must not lose the long intervals the anchored offset placed.
+    tight = max(2.0, 0.5 * statistics.median(wholes))
+    if _owned(scorers, refined, tight) < _owned(scorers, anchored, tight):
+        return anchored, 'estimated', hits
+    return refined, 'estimated', hits
 
 
 def refine_offset(frames, trace, offset_ms, shifts=REFINE_SHIFTS, sample=REFINE_SAMPLE):
