@@ -111,7 +111,7 @@ Rig checks 1–11 below add the native side; they are batched and do not gate me
 - Harness re-run on 10 November 2026 after merging `b85731d`: exit 0, 9/9 self-checks, 19/19 E2 rows, 52/52 arms equal. The JSON differed from the committed `baseline.json` only in wall times, allocation counts and hold timings, 343 s wall time in total.
 - Harness with the pairwise family, 10 November 2026: exit 0, 9/9 self-checks, 19/19 E2 rows, 76/76 arms equal, 696 s wall time in total (other worktrees' dotnet jobs were running). This output is the committed `baseline.json`.
 - `python tools/build.py --game-managed "…\Big Ambitions_Data\Managed"`: succeeded.
-- `dotnet test tests/PersistentCity.Tests.csproj` (10 November 2026, after the merge): 4,074 passed, 0 failed, 0 skipped.
+- `dotnet test tests/PersistentCity.Tests.csproj` (10 November 2026, with the pairwise family): 4,076 passed, 0 failed, 0 skipped.
 - Current-writer golden: writer 36 unchanged (`HeldPolicyExecutionTests.TheHeldPolicyWriterGoldenIsPinned` passes; no Core/Persistence edit).
 
 Offline success is not native proof. The harness does not run Unity, NavMesh, native bodies, Gley or RLO.
