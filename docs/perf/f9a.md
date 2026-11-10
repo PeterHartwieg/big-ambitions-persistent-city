@@ -25,7 +25,7 @@ With `tasklist`, runner overhead was 0.31–0.38 s per .NET stage, almost all of
 | saves | 28.42 | 28.02 | 0 | 0.40 |
 | city-s | 1.64 | 1.25 | 0 | 0.39 |
 
-Overhead is now 0.38–0.41 s per .NET stage, about 0.05 s more than with `tasklist`; the probe alone took 0.42–0.99 s per call (median 0.45 s, five calls) under load from other worktrees' tests. `quick-r2` took 19 min 28 s of wall time, of which 18 min 15 s was waiting for other worktrees' tests; without the wait it is 73.5 s (`test-build` rebuilt the test project after the review commits: 11.9 s instead of about 2 s warm). Provenance (git status/diff, `dotnet --version`, source reads, config hash) is taken once before the first stage; quick's total wall time (58.2 s) minus its stage times (57.8 s) leaves about 0.4 s for it and the result write. Reusing the `unit` TRX for a filter stage in `full` took 0.1 s per stage (`population`, `saves`) instead of a second `dotnet test`.
+Overhead is now 0.38–0.41 s per .NET stage, about 0.05 s more than with `tasklist`. That overhead contains the probe, measured in `quick-r2`'s stages that did not wait, so the probe itself cost under 0.4 s there. A separate measurement, five back-to-back calls of `other_test_processes()` in a standalone Python loop on 9 Nov 2026 at about 19:05 local, while other worktrees' `dotnet test` runs were active, took 0.42–0.99 s per call (median 0.45 s); more processes to list and a loaded CPU make the CIM query slower. `quick-r2` took 19 min 28 s of wall time, of which 18 min 15 s was waiting for other worktrees' tests; without the wait it is 73.5 s (`test-build` rebuilt the test project after the review commits: 11.9 s instead of about 2 s warm). Provenance (git status/diff, `dotnet --version`, source reads, config hash) is taken once before the first stage; quick's total wall time (58.2 s) minus its stage times (57.8 s) leaves about 0.4 s for it and the result write. Reusing the `unit` TRX for a filter stage in `full` took 0.1 s per stage (`population`, `saves`) instead of a second `dotnet test`.
 
 ## Profile wall time
 
@@ -51,5 +51,5 @@ About 2 s (4%) faster. More usefully, every filtered stage now tests the same bu
 
 ## Not taken
 
-- The test-process probe (now the CIM query, 0.42–0.99 s per call) is the section 3.9 safety check and stays. It now runs once per stage rather than once per step (taken win; only `economy` has two steps, and its second is Python).
+- The test-process probe (now the CIM query: under 0.4 s per stage in `quick-r2`, 0.42–0.99 s per call in the separate loaded measurement) is the section 3.9 safety check and stays. It now runs once per stage rather than once per step (taken win; only `economy` has two steps, and its second is Python).
 - Running filter stages in parallel would break the one-`dotnet`-at-a-time rule.
