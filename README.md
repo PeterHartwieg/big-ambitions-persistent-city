@@ -68,10 +68,11 @@ Status words: planned, implemented, partial, stopped, verified by rig. Rig is "p
 | Audit F8a capability model | implemented | pending |
 | Audit F8b–F8g capability report and contracts | partial | pending |
 | Audit F9a, F9c, F9e acceptance runner, city fixture, read-only views | implemented | pending |
-| Audit F9b, F9d, F9f–F9h acceptance | planned | pending |
+| Audit F9f movement in the integrated city | planned | pending |
 | X1–X3 codec cleanup, file split, schema held at 1 | implemented | pending |
-| X4–X9 a tree agents can read | planned | pending |
+| X4–X7, X9 a tree agents can read | planned | pending |
 | Track P saves and spikes | planned | pending |
+| R0 prove a sale in game; J0 joint plan for days, needs and sales | planned | pending |
 | Track G the living city | planned | pending |
 | Track R sales at every business | planned | pending |
 

@@ -11,11 +11,18 @@ Peter, 10 November 2026, after the [9 November review](reviews/2026-11-09-city-r
 - Everyone on the street is a named person with a home and a job to inspect. The population grows by housing renters in homes the player cannot rent. Through-traffic cars are the one anonymous exception.
 - Work follows the workplace's opening hours. Evenings and weekends differ. People who share a home sometimes go out together, each paying from their own wallet.
 - Residents buy at every kind of player business through one generic sale path, with a fallback for modded shops. Non-food buying comes from recurring needs and from impulse.
-- Order: slices in flight finish, then cleanup, saves and spikes, the city, and sales for every business. The hands-on session stays last.
+- Order: prove a sale and finish slices in flight, beside cleanup and save work. Then business types and wallets, day plans, needs and the purchase contract, one whole loop at today's population, and only then the larger population. The hands-on session stays last.
 
 ## Remaining
 
-Order of work, top to bottom. Tracks X and P can run side by side. G and R start after P1.
+Order of work, top to bottom. "Prove a sale" starts now and runs beside tracks X and P. Within G and R the order is: R1 and R2, then G2, R3 and R4, then one whole loop at today's population (J1), then G1 and the rest. The order was revised on 10 November after an [approach review](decisions/2026-11-10-city-direction.md#approach-review-10-november-2026).
+
+### Prove a sale
+
+| Item | Status | Notes |
+| --- | --- | --- |
+| Rig serving fixture | planned | Rig repository. On 9 November the test shop refused service even without the mod, so no sales, receipt or accounting check can run. |
+| R0 native customer path | planned | Read the game assembly: where orders are generated, which processing each customer-facing business type uses, what the native customer counts already include. Then prove in game one food sale, one goods sale and one service sale by a resident, with a refusal and a reload. |
 
 ### In flight
 
@@ -23,12 +30,12 @@ Order of work, top to bottom. Tracks X and P can run side by side. G and R start
 | --- | --- | --- |
 | F8b to F8g capability report, verified food contracts, hook conflicts | partial | [PR #194](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/194) open. F8h is conditional on rig check 1. [F8 plan](plans/f8-capability-boundaries.md). |
 | F9g presentation reads through the view | partial | [PR #190](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/190) open. |
-| F9b, F9d, F9f, F9h acceptance | planned | Assembly fingerprints, native-evidence ledger, movement in the integrated city, first integrated record. [F9 plan](plans/f9-city-acceptance.md). |
+| F9f movement in the integrated city | planned | Body and follower arms in the F9c scenario. [F9 plan](plans/f9-city-acceptance.md). |
 | E6a Street Food vendor API | planned | Lives in the Street Food repository. Carts and trucks cannot sell until it exists. [E6 plan](plans/e6-carts-food-trucks.md). |
 
 ### Track X: a tree agents can read
 
-From [review section 4](reviews/2026-11-09-city-review.md#4-agent-readability). No behaviour change in any row.
+From [review section 4](reviews/2026-11-09-city-review.md#4-agent-readability). No behaviour change in any row. There is no repository-wide rename: a subsystem gets meaningful names and its own folder when its track replaces it, and slice-ID comments go when a file is touched for another reason.
 
 | Item | Status | Notes |
 | --- | --- | --- |
@@ -36,8 +43,7 @@ From [review section 4](reviews/2026-11-09-city-review.md#4-agent-readability). 
 | X5 history out of the working tree | planned | Move `docs/checks`, `docs/perf`, `docs/reviews`, `docs/archive`, plans of merged slices, `tools/*-regression` and their evidence JSON to a tag. Keep live reference, decisions and open plans. A PR description and one rolling rig checklist replace the per-slice checks and perf files; the delivery rules change with this row. |
 | X6 delete dead code | planned | E3 feasibility readers, street proxy, the traffic kernel's physical-control branches and saved field, legacy representation code with no caller. Track F's F0 experiment goes unless a plan still needs it. |
 | X7 code map | planned | One `docs/map.md`: tick path, save path, settings, the partial classes and their files, three how-to recipes. |
-| X8 names and folders by meaning | planned | Subfolders with matching namespaces. No slice IDs, schema numbers, V2, Legacy or Prototype in identifiers or file names. Comments state the rule. Remove tests that assert on source text first. |
-| X9 test kit | planned | One test city builder, one fake planner, one golden hash per fixture, measurements behind an environment flag. |
+| X9 test kit | planned | One test city builder, one fake planner, one golden hash per fixture, measurements behind an environment flag. Remove tests that assert on source text. |
 
 ### Track P: saves and spikes
 
@@ -45,46 +51,39 @@ From [review section 3](reviews/2026-11-09-city-review.md#3-performance). The po
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| P1 single-pass save | planned | One writer and one strict reader straight from the snapshot, encoded off the main thread or into a sidecar file. Target: under 40 ms p95 on the main thread at 3,000 persons, in game. The 9 November rig measured 374 to 986 ms. Replaces the compact columnar writer and F7e. |
+| P1 single-pass save | planned | One writer and one strict reader straight from the snapshot, inside the existing save callback. Measure capture, validation and encoding separately. Target: under 40 ms p95 on the main thread at 3,000 persons, in game. The 9 November rig measured 374 to 986 ms. Replaces the compact columnar writer and F7e. Encoding on a worker or into a sidecar file comes only with a mechanism that keeps wallets and native sales in one consistent save. |
 | P2 remove the known spikes | planned | Optional-stop scene reads on the event path (97 and 129 ms), the first frames after a speed change (110 to 430 ms), the 30-second RLO reflection read and path-cache clear. |
 | P3 walkers keep one path per leg | planned | Today each body recalculates a NavMesh path about every half metre. Needed before the walker cap can rise. |
 | P4 Mono GC measurement | planned | Rig capability: GC pauses against heap size at 3,000, 10,000 and 20,000 persons. Pool the per-event working copy if the numbers call for it. |
 | P5 per-frame scans | planned | Index active optional stops; sync car progress only for visible cars. |
 
-### Track G: the living city
+### Tracks G and R: the living city and sales at every business
 
-No plan yet. G0 writes it; the technical direction is in the [decision record](decisions/2026-11-10-city-direction.md#technical-direction).
+One joint plan, because a need coming due and a shared outing are both plan items and the wallet decides whether either happens. The technical direction is in the [decision record](decisions/2026-11-10-city-direction.md#technical-direction). Rows are in build order.
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| G0 plan | planned | Docs only. Capacity rule for homes without interior area, population size from P1 and P4 evidence, the day-plan model, household rules, through-traffic share. |
-| G1 residents in homes the player cannot rent | planned | Every one a named person with a home and a place to inspect. |
-| G2 day plans | planned | A seeded plan per person per day replaces the fixed template. Work windows come from the workplace's hours and a shift type. Meals become plan items. |
+| J0 joint plan | planned | Docs only, after R0's reading of the game assembly. The day-plan model and its executor, the purchase contract, the need model, household rules, the capacity rule for homes without interior area, through-traffic share. Measures the revenue-scale gap and brings the options to Peter. |
+| R1 business types and a live catalogue | planned | Every place carries its business type from the loaded catalogue, modded types included. New and closed businesses refresh. |
+| R2 wallet on the person | planned | Budget and wages move out of the food roster. Food becomes one spender among several. Household essentials are re-cut so a need is not paid for twice. |
+| G2 day plans | planned | A plan per person per day, generated once with seeded draws and saved. One executor replaces the separate scheduling state for commutes, meals, opening waits and optional stops. Work windows come from the workplace's hours and a shift type. |
+| R3 needs and impulse | planned | A small need model: a purchase satisfies a need for a while, can be deferred and is remembered. Categories from the catalogue, a neutral default for types nobody has described. Native customer counts calibrate and do not drive. |
+| R4 one purchase contract | planned | Resident, spending ceiling and intention in; a confirmed result out. The ceiling is checked before the sale commits. Food rides the same checkout and adds only its product choice. Adapters per processing family where R0 shows the native path differs. |
+| J1 one whole loop | planned | At today's population: a resident earns, plans a non-food visit, travels, buys, pays and reloads correctly. Measured in game before the population grows. |
+| G1 residents in homes the player cannot rent | planned | Every one a named person with a home and a place to inspect. Size set from P1, P4 and J1 evidence. |
 | G3 evenings, weekends, days off | planned | Nightlife and late shifts, weekends that differ, days off that vary by workplace and person. |
-| G4 households | planned | People who share a home go out, eat and shop together. Wallets stay individual. |
+| G4 households | planned | One optional shared outing with a clear cancelling rule. Wallets stay individual. |
+| R5 workplaces without customers | planned | Offices, factories and warehouses: residents staff them on the venue's hours. Contracts and production stay native. |
+| R6 feedback | planned | Inspector words and the business panel for non-food visits, purchases and refusals, with the cause of each. |
 | G5 through-traffic cars | planned | Anonymous cars that cross the map and hold road capacity. The inspector says they are passing through. |
 | G6 bodies | planned | Fade in on appearing and out at mode changes, appearance beyond the donor seed, more than the casual wardrobe, then a higher walker cap. |
 | G7 own cars | planned | The mod's own kinematic cars follow the kernel position and replace the borrowed native traffic cars and their IL hooks. Parked cars become objects. |
-
-### Track R: sales at every business
-
-No plan yet. R0 writes it and proves the path in game before R3 to R5 start.
-
-| Item | Status | Notes |
-| --- | --- | --- |
-| R0 plan and proof | planned | Confirm from the game assembly that one native customer path serves every customer-facing business type. Prove one non-food sale by a resident in game. Needs the rig's serving fixture. |
-| R1 business types and a live catalogue | planned | Every place carries its business type from the loaded catalogue, modded types included. New and closed businesses refresh. Shared with G2. |
-| R2 wallet on the person | planned | Budget and wages move out of the food roster. Food becomes one spender among several. |
-| R3 needs and impulse | planned | Need categories from the catalogue. Base rate from the game's own customer counts per type, which is also the fallback for types nobody has described. |
-| R4 generic sale path | planned | The resident picks the business, the game's customer processing picks what is sold, the resident pays the booked amount. Food businesses the detailed food path cannot support fall back to it. |
-| R5 workplaces without customers | planned | Offices, factories and warehouses: residents staff them on the venue's hours. Contracts and production stay native. |
-| R6 feedback | planned | Inspector words and the business panel for non-food visits, purchases and refusals. |
 
 ### Proof and release
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Rig serving fixture | planned | Rig repository. On 9 November the test shop refused service even without the mod, so no sales, receipt or accounting check can run. Blocks R0 and every food check. |
+| Recorded rig walk-through | planned | Once G2 lands: a recording of the same street at morning, midday and night. A stand-in for the owner's eyes until the hands-on session. |
 | Batched rig run | planned | Runs every merged slice's in-game checks against the development head. The [9 November intermediate run](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/170) ran 75 of 510. |
 | F4f gate run record | planned | After the combined batch. [F4 plan](plans/f4-perf-gate.md). |
 | Final performance gate | planned | Re-check the gate below on the final development head. Save latency is measured in its own requested run against P1's target. |
@@ -103,9 +102,10 @@ Merged, not verified by rig: E5b2 to E5b5 complete menus, E6b to E6f carts and f
 | Drinks and bundles | planned | Deferred by the E3 remaining batch and the E5 decisions. |
 | Physical fast-forward (6×) | planned | A 6× physical experiment drifted off roads and jammed. Fast-forward runs in the background. |
 | Reachability-aware assignment | planned | Destinations use straight-line weighting; see [behaviour](behaviour.md#known-limitations). Live venue refresh moved to R1. |
-| Indoor customers and staff shown as the residents they are | planned | A question for the G0 and R0 plans. The interior view experiments found no safe renderer. |
+| Indoor customers and staff shown as the residents they are | planned | A question for the joint plan (J0). The interior view experiments found no safe renderer. |
 | Shared household budgets, relationships beyond a shared home | planned | Peter, 10 November: wallets stay individual. |
 | Social and employee identity unification with RLO | planned | Native employees and RLO social profiles stay separate. |
+| F9b assembly fingerprints, F9d native-evidence ledger, F9h cross-machine acceptance record | planned | Guarding that changes nothing a player or an agent sees. Revisit before release. [F9 plan](plans/f9-city-acceptance.md). |
 
 ## Superseded
 
@@ -122,6 +122,8 @@ Merged, not verified by rig: E5b2 to E5b5 complete menus, E6b to E6f carts and f
 | Re-scope plan rows for no migration | The slices merged under the no-migration and schema-at-1 rules. |
 | "Food-first products" (31 October) | Track R: every player business (Peter, 10 November). |
 | The fixed daily template and the shared three-day weekend | G2 and G3. |
+| A repository-wide rename and folder pass (X8) | Each subsystem is renamed when its track replaces it (approach review, 10 November). |
+| Separate plans for the living city and for sales | One joint plan, J0 (approach review, 10 November). |
 | "Unsupported businesses stay native-owned" as the end state | R4's generic sale path, once proven in game. AGENTS.md keeps the rule until then. |
 | The 24 October scope in `implementation-plan.md` | This roadmap and the approved F5, F6 and F7 plans. Archived in [docs/archive](archive/implementation-plan.md). |
 
