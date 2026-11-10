@@ -397,7 +397,7 @@ namespace PersistentCity.Core
     }
 
     /// <summary>One patched native method for one owner. Parameters use CLR short names; null means the source resolves
-    /// the target by name only (F8c pins those).</summary>
+    /// the target by name only (none since F8c).</summary>
     public sealed class NativeHookTarget
     {
         internal NativeHookTarget(string owner, string type, string method, string[]? parameters, NativePatchKinds kinds, CapabilityId capability)
@@ -435,7 +435,7 @@ namespace PersistentCity.Core
 
         public static readonly IReadOnlyList<NativeHookOwner> Owners = Array.AsReadOnly(new[]
         {
-            new NativeHookOwner(FoodAuthority, "Runtime/NativeFoodOwnership.cs", 2),
+            new NativeHookOwner(FoodAuthority, "Runtime/NativeFoodOwnership.cs", 1),
             new NativeHookOwner(FoodRoutines, "Runtime/NativeFoodMarket.cs", 1),
             new NativeHookOwner(FoodContract, "Runtime/LoadedCatalogueLifecycleMembers.cs", 1, "Runtime/FoodContractHooks.cs"),
             new NativeHookOwner(CityClock, "Runtime/NativeCityClock.cs", 3),
@@ -458,12 +458,13 @@ namespace PersistentCity.Core
 
         public static readonly IReadOnlyList<NativeHookTarget> Targets = Array.AsReadOnly(new[]
         {
-            T(FoodAuthority, "GameManager", "RunMainGameTick", null, Post, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "RetailBusinessSimulator", "ProcessAllCustomersFromThisHour", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "RetailBusinessSimulator", "ProcessCustomer", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "CustomerEntriesHelper", "GetEntriesByAddress", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "CustomerEntriesHelper", "UpdateCustomerEntriesForPlayerBusiness", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "BuildingRegistration", "Reset", null, Pre, CapabilityId.FoodAuthority),
+            // F8c pinned these six (NativeFoodContractSpec.Authority); before F8c they were resolved by name only.
+            T(FoodAuthority, "GameManager", "RunMainGameTick", new[] { "Single" }, Post, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "RetailBusinessSimulator", "ProcessAllCustomersFromThisHour", None, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry" }, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "CustomerEntriesHelper", "GetEntriesByAddress", new[] { "Address" }, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "CustomerEntriesHelper", "UpdateCustomerEntriesForPlayerBusiness", new[] { "BuildingRegistration", "DayOfWeekOrdered" }, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "BuildingRegistration", "Reset", new[] { "Boolean" }, Pre, CapabilityId.FoodAuthority),
             T(FoodRoutines, "CitizenData", "IsPriceAcceptable", new[] { "String", "Single" }, Pre, CapabilityId.FoodCheckoutShop),
             // E5b2 Decision 1 table (Runtime/FoodContractHooks.cs), in table order.
             Hint("ItemsGetter", "OnItemsLoaded", "IList`1"),

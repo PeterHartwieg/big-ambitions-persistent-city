@@ -48,7 +48,12 @@ namespace PersistentCity.Runtime
             if (contractMode != ContractMode.Fallback) contracts.Refuse(PlaceId(registration), hour);
         }
         private readonly Harmony patches = new Harmony(PatchId);
-        private static readonly MethodInfo Process = AccessTools.Method(typeof(RetailBusinessSimulator), "ProcessCustomer");
+        // F8c (D3): the checkout contract is verified at construction. Refused, the market runs in checkout-off mode: no
+        // price prefix, CanServe false for every shop, and each owned shop is observed ineligible so the existing release
+        // path hands it back at the next drained accounting boundary. Paid and uncertain receipts are still confirmed.
+        private readonly MethodInfo? process;
+        /// <summary>food.checkout.shop refusal; null when the checkout contract is verified.</summary>
+        internal string? CheckoutRefusal { get; }
         private bool buying;
         private int receiptDay = -1;
         private float approvedPrice;
@@ -114,6 +119,8 @@ namespace PersistentCity.Runtime
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
+            CheckoutRefusal = NativeFoodContract.Checkout.Refusal;
+            process = CheckoutRefusal == null ? NativeFoodContract.CheckoutMember<MethodInfo>(NativeFoodContractSpec.ProcessCustomer) : null;
             if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
             contractEconomy = economy;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
@@ -140,8 +147,9 @@ namespace PersistentCity.Runtime
             {
                 NativeFoodOwnership.Attach(this);
                 journalReady = true;
-                patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
-                    prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
+                if (CheckoutRefusal == null)
+                    patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
+                        prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
                 StartContractShadow(); // E5b2 hint hooks and stamps; shadow only, never throws.
             }
             catch { Dispose(); throw; }
@@ -174,7 +182,7 @@ namespace PersistentCity.Runtime
         // E5b3: also the published contract image plus its stamp (Decision 2); E5b1 rules while the coordinator is not active.
         private bool SupportedMenu(BuildingRegistration r)
         {
-            if (refusedContracts.TryGetValue(r, out _)) return false;
+            if (CheckoutRefusal != null || refusedContracts.TryGetValue(r, out _)) return false;
             if (!SupportedBusiness(r)) { RefuseRemovedProduct(r); return false; }
             return r.cachedAvailableProducts.Count <= menuLimit && ContractAdmits(r);
         }
@@ -262,6 +270,7 @@ namespace PersistentCity.Runtime
         }
         public string ScopeStatus(string placeId)
         {
+            if (CheckoutRefusal != null) return NativeFoodContractSpec.CheckoutScopeReason(CheckoutRefusal);
             if (supplyExclusions.TryGetValue(placeId, out var excluded)) return excluded;
             string menu = MenuStatus(placeId);
             return menu.Length > 0 ? menu : supplyExclusions.TryGetValue(placeId, out var supply) ? supply : "";
@@ -309,7 +318,7 @@ namespace PersistentCity.Runtime
         }
         public bool CanServe(string businessId)
         {
-            if (!ReferenceEquals(save, SaveGameManager.Current)) return false;
+            if (!ReferenceEquals(save, SaveGameManager.Current) || CheckoutRefusal != null) return false;
             if(!scopesByBusiness.TryGetValue(businessId,out var scope) || !registrations.TryGetValue(scope.PlaceId,out var reg)) return false;
             var authority=NativeFoodOwnership.Find(reg);
             if(authority?.BusinessId!=businessId) return false;
@@ -627,9 +636,10 @@ namespace PersistentCity.Runtime
                 // E5b5 Q2 default: another valid price is a price-only change. Ownership is kept and this sale is refused
                 // before any receipt and Core lets the resident decide again at the counter. Never a sale on changed terms.
                 if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }
+                if (process == null) return RefuseCheckoutContract(reg); // never after a receipt
                 beginReceipt?.Invoke();
                 buyerShop = reg; buying = true;
-                Process.Invoke(simulator, new object[] { customer });
+                process.Invoke(simulator, new object[] { customer });
             }
             finally { buying = false; buyerShop = null; UnityEngine.Object.Destroy(simulator); }
             var entries = customer.order.entries.Where(e => e.paid && ItemsGetter.GetByName(e.itemName)?.HasTag(BigAmbitions.Tags.TagRef.Itemtag.isbag) != true).ToArray();

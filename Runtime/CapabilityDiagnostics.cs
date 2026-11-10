@@ -38,8 +38,8 @@ namespace PersistentCity.Runtime
             {
                 CityActive = city, CityFailed = failed, FailureStatus = failed ? status : "",
                 FoodAuthorityInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority),
-                FoodAuthorityError = NativeFoodOwnership.Error,
-                FoodMarketAttached = market != null,
+                FoodAuthorityRefusal = NativeFoodContract.AuthorityRefusal, FoodAuthorityError = NativeFoodOwnership.Error,
+                FoodMarketAttached = market != null, FoodCheckoutRefusal = market?.CheckoutRefusal,
                 FoodPricePrefixInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodRoutines),
                 FoodDynamicActive = market?.DynamicCapabilityActive == true,
                 FoodDynamicRefusal = market?.DynamicCapabilityRefusal ?? "",

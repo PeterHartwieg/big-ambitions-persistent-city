@@ -33,10 +33,11 @@ namespace PersistentCity.Runtime
     /// Menu stock is read in one setup. Bags are shared and rechecked at checkout, never multiplied by menu size.</summary>
     public static class FoodSupplyReader
     {
-        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
-        private static readonly FieldInfo Producers = typeof(RetailBusinessSimulator).GetField("availableProducers", Hidden)!;
-        private static readonly FieldInfo Counters = typeof(RetailBusinessSimulator).GetField("pointOfSales", Hidden)!;
-        private static readonly MethodInfo Capacity = typeof(RetailBusinessSimulator).GetMethod("GetMaxCustomerCapacityThisHour", Hidden)!;
+        // F8c: exact field and return types from the checkout contract, checked once; null when changed, which the existing
+        // supply-contract refusal below already turns into an unverified (whole-business refused) read.
+        private static readonly FieldInfo? Producers = NativeFoodContract.CheckoutMember<FieldInfo>(NativeFoodContractSpec.Producers);
+        private static readonly FieldInfo? Counters = NativeFoodContract.CheckoutMember<FieldInfo>(NativeFoodContractSpec.Counters);
+        private static readonly MethodInfo? Capacity = NativeFoodContract.CheckoutMember<MethodInfo>(NativeFoodContractSpec.Capacity);
         private static readonly double MillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
         /// <summary>Native simulator setups this reader has made, and their total time including stock inspection (diagnostic).</summary>
