@@ -25,4 +25,4 @@ This overrides every plan or decision that says "bump the schema", "takes the ne
 
 At release, schema 1 becomes the first real format, and normal bump-and-migrate starts from there.
 
-X3 implemented this rule: [checks](../checks/x3.md).
+X3 implemented this rule: [checks](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/x3.md).

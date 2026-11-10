@@ -18,4 +18,4 @@ The input must be an unstarted schema-1 `FoodShadowState` document with one inte
 
 Saved in-progress state can be resumed through `FoodShadowCodec.Read` and `new FoodDemand(state).AdvanceTo(...)`. The comparison CLI deliberately accepts only unstarted states so its baseline and interventions begin from the same point.
 
-Scope, native integration findings, validation and remaining work: [docs/food-demand.md](../../docs/food-demand.md).
+Scope, native integration findings, validation and remaining work: [docs/food-demand.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/food-demand.md).

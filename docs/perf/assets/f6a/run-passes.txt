@@ -1,7 +1,0 @@
-PASS determinism: 48 residents x 42 days byte-identical, mid-epoch reload (1 in flight) and input-boundary reload
-PASS inputs mutate only at drained, unobserved epoch boundaries; every native read is epoch-fenced
-PASS fault injections fail loudly: duplicated debit, unbalanced debit, duplicate native order
-PASS 957-resident mid-epoch reload (27 meals in flight): byte-identical metrics and final save
-PASS baseline summary: 17 arms x 5 seeds
-PASS unlimited rival curve recorded
-PASS harness cost recorded

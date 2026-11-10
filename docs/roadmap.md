@@ -1,6 +1,6 @@
 # Persistent City roadmap
 
-What is left before the single release, and the standing rules every slice follows. Done work is in [CHECKS.md](../CHECKS.md). Peter's product decisions of 30 October to 2 November (vision, probabilistic choice, traits, memory, marketing, rivals, release order) are in [docs/decisions/2026-10-30-roadmap-decisions.md](decisions/2026-10-30-roadmap-decisions.md); the 6 November delivery rules are in [2026-11-06-delivery-rules.md](decisions/2026-11-06-delivery-rules.md); the 10 November city direction is in [2026-11-10-city-direction.md](decisions/2026-11-10-city-direction.md).
+What is left before the single release, and the standing rules every slice follows. Peter's product decisions of 30 October to 2 November (vision, probabilistic choice, traits, memory, marketing, rivals, release order) are in [docs/decisions/2026-10-30-roadmap-decisions.md](decisions/2026-10-30-roadmap-decisions.md); the 6 November delivery rules are in [2026-11-06-delivery-rules.md](decisions/2026-11-06-delivery-rules.md); the 10 November city direction is in [2026-11-10-city-direction.md](decisions/2026-11-10-city-direction.md).
 
 Principles that still apply: bounded state, no extra route searches per decision, saved state replays identically after a reload, native accounting stays authoritative, nothing is written to rivals, every person on the street is a named resident or visitor. There is no interim release.
 
@@ -40,8 +40,8 @@ From [review section 4](reviews/2026-11-09-city-review.md#4-agent-readability). 
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| X4 entry docs match the code | planned | `docs/behaviour.md`, `docs/glossary.md`, `docs/save-format.md` and `CHECKS.md` describe the 6 November state: research inactive, visitors without bodies, measured body motion as authority, a JSON save wire, and an index that links 56 of 112 checks files. Generate the README and CHECKS status tables from the checks files. |
-| X5 history out of the working tree | planned | Move `docs/checks`, `docs/perf`, `docs/reviews`, `docs/archive`, plans of merged slices, `tools/*-regression` and their evidence JSON to a tag. Keep live reference, decisions and open plans. A PR description and one rolling rig checklist replace the per-slice checks and perf files; the delivery rules change with this row. |
+| X4 entry docs match the code | planned | `docs/behaviour.md`, `docs/glossary.md` and `docs/save-format.md` describe the 6 November state: research inactive, visitors without bodies, measured body motion as authority, a JSON save wire. Bring them up to the code. |
+| X5 tools history out of the tree | planned | The docs half is done ([lean docs](decisions/2026-11-10-lean-docs.md)). Left: `tools/*-regression` and their evidence JSON move to a tag; the tool folders the test project compiles move under `tests/`. |
 | X6 delete dead code | planned | E3 feasibility readers, street proxy, the traffic kernel's physical-control branches and saved field, legacy representation code with no caller. Track F's F0 experiment goes unless a plan still needs it. |
 | X7 code map | planned | One `docs/map.md`: tick path, save path, settings, the partial classes and their files, three how-to recipes. |
 | X9 test kit | planned | One test city builder, one fake planner, one golden hash per fixture, measurements behind an environment flag. Remove tests that assert on source text. |
@@ -92,15 +92,25 @@ One joint plan, because a need coming due and a shared outing are both plan item
 | Hands-on session | planned | Peter's playtest, last, including A5's pointer and input checks 1–3 and check 12's interactive extension (Peter, 10 November). |
 | Single release | planned | One Workshop release after all of the above. |
 
-### Done since the 6 November roadmap
+### Done
 
-Merged, not verified by rig: E5b2 to E5b5 complete menus, E6b to E6f carts and food trucks, C5a to C5f paid research, F2a to F2h movement, F4a to F4e perf gate tooling, F5c-lite to F5i population, F6d to F6k economy, F7c and F7d saves, F8a, F9a, F9c, F9e, X1 to X3. Evidence per slice is in `docs/checks/`.
+Merged, none verified by rig. Per-slice records are in the [history tag](https://github.com/PeterHartwieg/big-ambitions-persistent-city/tree/docs-history-2026-11-10/docs/checks).
+
+- A1 to A3, A5: inspector, traits, weighted choice. B0 to B2: memory, loyalty, regulars.
+- C1 to C2b: campaign reader and awareness. C4, C5a to C5f: market research, ordered and billed through the native agency.
+- D1 to D4: rival catalogue, choice, outflow, memory. E1, E2a to E2c: weather, street life, interior guard.
+- E4, E5a to E5e, E5b to E5b5: wider menus, loaded-catalogue products, complete menus. E6b to E6f: carts and food trucks.
+- Audit F1 and F3: accounting backpressure, bounded bulk work. F2a to F2h: bodies follow logical journeys. F4a to F4e: perf gate tooling.
+- F5a to F5i: census, identity, schedules, employment, visitors. F6a to F6k: ledger, attended wages, household resources, feedback, calibration.
+- F7a to F7d, F7f, F7p: save cost, epoch, snapshot split, compact writer. F8a, F9a, F9c, F9e: capability model, acceptance runner, city fixture, read-only views.
+- X1 to X3: old codecs deleted, file split, schema held at 1.
+- Stopped: E3 per-product feasibility, Track F shop view and street proxy. Track F's F0 interior experiment is merged and off by default.
 
 ## Deferred
 
 | Item | Status | Reason |
 | --- | --- | --- |
-| Track F interior view: F2 upper floors, F3 polish | planned | F1 shop-view drawing is NO-GO and F1b found no safe renderer. F0 stays a default-off experiment. [Track F plan](plans/track-f-interior-view.md). |
+| Track F interior view: F2 upper floors, F3 polish | planned | F1 shop-view drawing is NO-GO and F1b found no safe renderer. F0 stays a default-off experiment. [Track F plan](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/plans/track-f-interior-view.md). |
 | Drinks and bundles | planned | Deferred by the E3 remaining batch and the E5 decisions. |
 | Physical fast-forward (6×) | planned | A 6× physical experiment drifted off roads and jammed. Fast-forward runs in the background. |
 | Reachability-aware assignment | planned | Destinations use straight-line weighting; see [behaviour](behaviour.md#known-limitations). Live venue refresh moved to R1. |
@@ -113,7 +123,7 @@ Merged, not verified by rig: E5b2 to E5b5 complete menus, E6b to E6f carts and f
 
 | Item | Replaced by |
 | --- | --- |
-| E3 per-product implementation PRs | The [E5 dynamic loaded-catalogue plan](plans/e5-dynamic-products.md) (2 Nov). E3 records stay as regression evidence. |
+| E3 per-product implementation PRs | The [E5 dynamic loaded-catalogue plan](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/plans/e5-dynamic-products.md) (2 Nov). E3 records stay as regression evidence. |
 | F5c schema and migration | F5c-lite under the no-migration rule (6 Nov). |
 | Development-save migration and switch-over days | Schema bump plus refusal of older development cities (6 Nov). |
 | Native rig proof as a merge gate (for example audit F1, F0 final head) | The batched rig run (merge rule v2, 6 Nov). |
@@ -127,7 +137,7 @@ Merged, not verified by rig: E5b2 to E5b5 complete menus, E6b to E6f carts and f
 | A repository-wide rename and folder pass (X8) | Each subsystem is renamed when its track replaces it (approach review, 10 November). |
 | Separate plans for the living city and for sales | One joint plan, J0 (approach review, 10 November). |
 | "Unsupported businesses stay native-owned" as the end state | R4's generic sale path, once proven in game. AGENTS.md keeps the rule until then. |
-| The 24 October scope in `implementation-plan.md` | This roadmap and the approved F5, F6 and F7 plans. Archived in [docs/archive](archive/implementation-plan.md). |
+| The 24 October scope in `implementation-plan.md` | This roadmap and the approved F5, F6 and F7 plans. Archived in [docs/archive](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/archive/implementation-plan.md). |
 
 ## Performance gate
 
@@ -146,54 +156,4 @@ Peter, 30 October 2026. Applies to every step A–E slice re-measure and to the 
 
 ## Wording
 
-Use "implemented" (merged after review) and "verified by rig" (automated rig proof passed) as separate statuses. Status words: planned, implemented, partial, stopped, verified by rig. Plain sentences, one qualification per claim, and a link to the evidence instead of a restated caveat.
-
-## Perf wins log
-
-One line per slice. Before/after numbers and limits are in each file.
-
-- A2 — [perf/a2-schema17-traits.md](perf/a2-schema17-traits.md)
-- A3 — [perf/a3-weighted-choice.md](perf/a3-weighted-choice.md)
-- A5 — [perf/a5-integrated-acceptance.md](perf/a5-integrated-acceptance.md)
-- B0 — [perf/b0-schema18.md](perf/b0-schema18.md)
-- B0b — [perf/b0b-held-tuning.md](perf/b0b-held-tuning.md)
-- B1 — [perf/b1-memory-loyalty.md](perf/b1-memory-loyalty.md)
-- B2 — [perf/b2-regulars-inspector.md](perf/b2-regulars-inspector.md)
-- C1 — [perf/c1-campaign-reader.md](perf/c1-campaign-reader.md)
-- C2a — [perf/c2a-core-awareness.md](perf/c2a-core-awareness.md)
-- C2b — [perf/c2b-campaign-awareness.md](perf/c2b-campaign-awareness.md)
-- C4 — [perf/c4-market-research.md](perf/c4-market-research.md)
-- D1 — [perf/d1-rival-catalogue.md](perf/d1-rival-catalogue.md)
-- D2 — [perf/d2-rival-outflow.md](perf/d2-rival-outflow.md)
-- D3a — [perf/d3a-outflow-line.md](perf/d3a-outflow-line.md)
-- D4 — [perf/d4-rival-memory.md](perf/d4-rival-memory.md)
-- E1 — [perf/e1-rain.md](perf/e1-rain.md)
-- E2b — [perf/e2b-street-life.md](perf/e2b-street-life.md)
-- E2c — [perf/e2c-interior-guard.md](perf/e2c-interior-guard.md)
-- E3 cupcake — [perf/e3-cupcake.md](perf/e3-cupcake.md)
-- E3 donut — [perf/e3-donut.md](perf/e3-donut.md)
-- E3 pizza — [perf/e3-pizza.md](perf/e3-pizza.md)
-- E3 remaining batch — [perf/e3-remaining-batch.md](perf/e3-remaining-batch.md)
-- E3 salad — [perf/e3-salad.md](perf/e3-salad.md)
-- E4 — [perf/e4-wider-menu.md](perf/e4-wider-menu.md)
-- E5a — [perf/e5a-catalogue-eligibility.md](perf/e5a-catalogue-eligibility.md)
-- E5b — [perf/e5b-complete-menu.md](perf/e5b-complete-menu.md)
-- E5b2 — [perf/e5b2.md](perf/e5b2.md)
-- E5b4 — [perf/e5b4.md](perf/e5b4.md)
-- E5c — [perf/e5c-neutral-metadata.md](perf/e5c-neutral-metadata.md)
-- E5d — [perf/e5d-name-identity-save.md](perf/e5d-name-identity-save.md)
-- E5e — [perf/e5e-metadata-api.md](perf/e5e-metadata-api.md)
-- F0 (Track F) — [perf/f0-interior-view.md](perf/f0-interior-view.md)
-- F1 (audit) — [perf/f1-accounting-backlog.md](perf/f1-accounting-backlog.md)
-- F1b (Track F) — [perf/f1b-street-proxy.md](perf/f1b-street-proxy.md)
-- F3 (audit) — [perf/pc-f3-bounded-bulk-work.md](perf/pc-f3-bounded-bulk-work.md)
-- F5a — [perf/f5a.md](perf/f5a.md)
-- F5b — [perf/f5b-identity-core.md](perf/f5b-identity-core.md)
-- F5f — [perf/f5f.md](perf/f5f.md)
-- F6a — [perf/f6a-intervention-harness.md](perf/f6a-intervention-harness.md)
-- F6b — [perf/f6b.md](perf/f6b.md)
-- F6c — [perf/f6c.md](perf/f6c.md)
-- F7a — [perf/f7a.md](perf/f7a.md)
-- F7b — [perf/f7b.md](perf/f7b.md)
-- F7f — [perf/f7f.md](perf/f7f.md)
-- pc-docs-restructure — [perf/pc-docs-restructure.md](perf/pc-docs-restructure.md)
+Use "implemented" (merged after review) and "verified by rig" (automated rig proof passed) as separate statuses. Status words: planned, implemented, partial, stopped, verified by rig. Plain sentences, one qualification per claim, and a link to the evidence instead of a restated caveat. Evidence and perf numbers live in the PR description ([lean docs](decisions/2026-11-10-lean-docs.md)).

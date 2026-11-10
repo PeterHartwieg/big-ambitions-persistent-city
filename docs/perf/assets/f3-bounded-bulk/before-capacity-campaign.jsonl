@@ -1,1 +1,0 @@
-{"hourlyAdapterBusinesses": 64, "calls": 301, "p50Ms": 0.381, "p95Ms": 0.4956, "maxMs": 1.8171, "spikesAtLeast30Ms": 0, "medianAllocatedBytes": 141472, "maxAllocatedBytes": 158832, "evidence": "Production hourly adapter with native doubles, successive boundaries and eight-day history, construction excluded"}

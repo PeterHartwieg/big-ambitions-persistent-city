@@ -22,4 +22,4 @@ Interpret each layer separately:
 
 No changes to the production mod or economic authority are made by this tool.
 
-Completed Mac campaign and interpretation: [21 October native comparison](../../docs/reviews/2026-10-21-food-native-comparison.md).
+Completed Mac campaign and interpretation: [21 October native comparison](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-21-food-native-comparison.md).

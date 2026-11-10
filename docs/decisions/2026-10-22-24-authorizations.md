@@ -1,6 +1,6 @@
 # October 2026 authorizations and the October scope statement
 
-Moved verbatim from AGENTS.md on 6 November 2026. The scope plan it names is archived as [docs/archive/implementation-plan.md](../archive/implementation-plan.md); its review is [2026-10-24-scope-plan.md](../reviews/2026-10-24-scope-plan.md). The authorization bullets still bound what the mod may do with player food businesses; [AGENTS.md](../../AGENTS.md) carries the binding safety rules in short form. The line "Read README.md for scope and evidence" is superseded: current scope is [docs/roadmap.md](../roadmap.md) and the approved F5, F6 and F7 plans.
+Moved verbatim from AGENTS.md on 6 November 2026. The scope plan it names is archived as [docs/archive/implementation-plan.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/archive/implementation-plan.md); its review is [2026-10-24-scope-plan.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-24-scope-plan.md). The authorization bullets still bound what the mod may do with player food businesses; [AGENTS.md](../../AGENTS.md) carries the binding safety rules in short form. The line "Read README.md for scope and evidence" is superseded: current scope is [docs/roadmap.md](../roadmap.md) and the approved F5, F6 and F7 plans.
 
 ## Moved text
 

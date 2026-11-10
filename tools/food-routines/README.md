@@ -27,4 +27,4 @@ The runtime exposes explicit `ObserveFoodRoutines()` and `QuoteFoodRoutes(...)` 
 
 Customer service and district appeal: [choice-signal comparison](../food-choice-signals/README.md).
 
-Routine evidence: [routine-based food demand](../../docs/reviews/2026-10-22-food-routines.md).
+Routine evidence: [routine-based food demand](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-22-food-routines.md).

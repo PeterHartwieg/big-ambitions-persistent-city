@@ -17,7 +17,7 @@ Peter's answers to eight design questions on 10 November 2026, and a ninth decis
 ## What this changes in older decisions
 
 - [30 October to 2 November](2026-10-30-roadmap-decisions.md): "food-first products" becomes all player businesses. "No anonymous crowds" stays for people and gains the car exception. "Later: residents as employees, households" moves into the first release as shared outings.
-- [24 October scope](../archive/implementation-plan.md): "domestic simulation" stays out. Households share outings and nothing else.
+- [24 October scope](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/archive/implementation-plan.md): "domestic simulation" stays out. Households share outings and nothing else.
 - AGENTS.md keeps its current ownership rules ("unsupported businesses stay native-owned", "no economic effect unless the saved city owns a food scope") until the generic sale path below is proven in game. The plan for that track proposes the new wording.
 
 ## Technical direction

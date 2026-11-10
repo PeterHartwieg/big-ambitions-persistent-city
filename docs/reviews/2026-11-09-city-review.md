@@ -2,7 +2,7 @@
 
 Reviewed head: `649467b` on `codex/persistent-city`. X3 (schema held at 1) and ten other slices merged after the review; where a later merge changes a statement, a note says so. Peter's decisions on the findings are in [City direction, 10 November 2026](../decisions/2026-11-10-city-direction.md).
 
-How the review worked. Four independent reviewers each took one area: simulation model, runtime and presentation, core performance and saves, agent readability. The lead read the vision decisions, the [3 November audit](2026-11-03-city-vision-audit.md) and both rig result sets, then checked the reviewers' main claims against the code. Nothing was built and the game was not started. The 9 November rig numbers come from the unmerged [rig results PR](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/170), and the rig labels them provisional because the PC was shared.
+How the review worked. Four independent reviewers each took one area: simulation model, runtime and presentation, core performance and saves, agent readability. The lead read the vision decisions, the [3 November audit](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-11-03-city-vision-audit.md) and both rig result sets, then checked the reviewers' main claims against the code. Nothing was built and the game was not started. The 9 November rig numbers come from the unmerged [rig results PR](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/170), and the rig labels them provisional because the PC was shared.
 
 ## Short answer
 

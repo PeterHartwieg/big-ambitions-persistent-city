@@ -52,7 +52,7 @@ For the next native run, use the same helper in each arm, interleave candidate/c
 
 ## Local validation
 
-The 28 October helper adds per-frame event entry-branch/slice attribution, nested native-path/A-star timing, separate fixed-step/intersection mod-hook component columns, and a named managed-counter delta. See [measurement definitions and limits](../../docs/reviews/2026-10-28-event-attribution.md). `managedDeltaBytes` is signed live-heap change when `managedCounterKind` is `mono-used-heap-bytes`; it must not be reported as allocation. `eventSlicesDropped` or event cross-frame errors prevent complete attribution. Existing asynchronous allocation observations remain separate. The helper adds diagnostic allocation and must be compared with capture disabled before performance claims.
+The 28 October helper adds per-frame event entry-branch/slice attribution, nested native-path/A-star timing, separate fixed-step/intersection mod-hook component columns, and a named managed-counter delta. See [measurement definitions and limits](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-28-event-attribution.md). `managedDeltaBytes` is signed live-heap change when `managedCounterKind` is `mono-used-heap-bytes`; it must not be reported as allocation. `eventSlicesDropped` or event cross-frame errors prevent complete attribution. Existing asynchronous allocation observations remain separate. The helper adds diagnostic allocation and must be compared with capture disabled before performance claims.
 
 ```sh
 dotnet run --project tools/event-observation-regression -c Release
