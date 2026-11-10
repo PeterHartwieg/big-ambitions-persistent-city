@@ -363,6 +363,19 @@ TRANSPILER_REFERENCES = re.compile(r'AccessTools\s*\.\s*(\w+)\s*\(|\.\s*GetMetho
                                    r'|\bEmitDelegate\b|\bTranspilers\s*\.\s*\w+|\bCreateDelegate\b|\bOpCodes\s*\.\s*Ldv?i?r?t?ftn\b|\bnew\s+CodeInstruction\s*\('
                                    # Reflection lookups other than one named method, and cloned instructions (Sol-r2-3).
                                    r'|\.\s*GetMethods\b|\bGetMembers?\b|\bGetRuntimeMethods?\b|\bGetMethodFromHandle\b|\bDeclaredMethods\b|\.\s*Clone\s*\(')
+# Pinned transpiler bodies (SHA-256 of the raw body with whitespace collapsed). A transpiler decides which PC helpers run inside
+# native code, and its emitted calls cannot be fully proven by pattern matching, so any edit to an inventoried transpiler fails
+# until its emitted calls are reviewed, the helper rows in ScopeInventory.cs are updated and the new fingerprint is pinned here.
+PINNED_TRANSPILERS = {
+    'PhysicalTrafficHooks.SelectTranspiler': 'afd1fb7e0e9f4d8e102ea0e7ce21963b38fe96f8469cd389e5a8e9773ff6cc21',
+    'PhysicalTrafficHooks.BodyForceTranspiler': 'a74a7bc1689c0bbeafd2d722ce6edbc05fe6c60fae74c18dc8cf89410cc396e6',
+}
+
+
+def body_fingerprint(raw):
+    return hashlib.sha256(re.sub(r'\s+', ' ', raw).strip().encode('utf-8')).hexdigest()
+
+
 NON_METHOD_ACCESS = {'Field', 'DeclaredField', 'FieldRefAccess', 'StaticFieldRefAccess', 'TypeByName', 'Inner'}
 
 
@@ -548,6 +561,10 @@ def scan(root):
             problems.append(f'{f.rel}: transpiler {cls}.{name} definition not found exactly once')
             continue
         start, end = defs[0][2], defs[0][3]
+        fingerprint = body_fingerprint(f.raw[start:end])
+        if PINNED_TRANSPILERS.get(f'{cls}.{name}') != fingerprint:
+            problems.append(f'{f.rel}: transpiler {cls}.{name} body is not the pinned, reviewed shape (fingerprint {fingerprint}); '
+                            'review its emitted calls, update the helper rows and re-pin PINNED_TRANSPILERS')
         references = set()  # locals holding a recognised method reference: the only values an emitted operand may take
         for m in TRANSPILER_REFERENCES.finditer(f.code, start, end):
             line = f.code.count('\n', 0, m.start()) + 1
@@ -572,8 +589,14 @@ def scan(root):
                 local = holder.group(2)
                 writes = len(re.findall(r'(?<![\w.])' + re.escape(local) + r'\s*(?:=(?![=>])|\+\+|--)|\b(?:ref|out)\s+' + re.escape(local) + r'\b',
                                         f.code[start:end]))
-                if not holder.group(1) or writes != 1:
-                    problems.append(f'{f.rel}:{line}: method reference {local!r} in transpiler {cls}.{name} is not a local assigned exactly once')
+                # Deconstruction writes such as (a, local) = (...) (Sol-r4-1).
+                writes += len(re.findall(r'\((?:[^()]*,)?\s*(?:var\s+)?' + re.escape(local) + r'\s*(?:,[^()]*)?\)\s*=(?![=>])', f.code[start:end]))
+                # The whole initializer must be the lookup itself, optionally followed only by "?? throw ..." (Astra-r4-1).
+                close = match_close(f.code, paren)
+                tail = f.code[close:statement_end(f.code, close)].strip()
+                exact = not tail or re.match(r'\?\?\s*throw\b', tail)  # the holder pattern already ends right at the lookup
+                if not holder.group(1) or writes != 1 or not exact:
+                    problems.append(f'{f.rel}:{line}: method reference {local!r} in transpiler {cls}.{name} is not a local assigned exactly once from the lookup alone')
                 else:
                     references.add(local)
             if typ in pc_classes:

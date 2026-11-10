@@ -186,6 +186,34 @@ class CheckScopesTests(unittest.TestCase):
                 problems = src.problems()
                 self.assertTrue(any("method reference 'replacement'" in p and 'assigned exactly once' in p for p in problems), problems)
 
+    OUTSIDE_HELPERS = ('        private static int SelectOther(TrafficVehicles vehicles) => vehicles.GetIdleVehicleIndex();\n'
+                       '        private static System.Reflection.MethodInfo ResolveOther() => AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectOther));\n'
+                       '        private static int SelectIdle(TrafficVehicles vehicles)')
+
+    def assert_reference_bypass_fails(self, snippet, replace_initializer=False):
+        with SourceCopy() as src:
+            lookup = 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));'
+            src.edit('Runtime/PhysicalTrafficHooks.cs', lookup, snippet if replace_initializer else lookup + '\n            ' + snippet)
+            src.edit('Runtime/PhysicalTrafficHooks.cs', '        private static int SelectIdle(TrafficVehicles vehicles)', self.OUTSIDE_HELPERS)
+            problems = src.problems()
+        self.assertTrue(any("method reference 'replacement'" in p and 'from the lookup alone' in p for p in problems), problems)
+        self.assertTrue(any('SelectTranspiler body is not the pinned' in p for p in problems), problems)
+
+    def test_fails_on_a_deconstructed_transpiler_reference(self):
+        # Sol-r4-1: a tuple write to a trusted reference local.
+        self.assert_reference_bypass_fails('(original, replacement) = (original, ResolveOther());')
+
+    def test_fails_on_a_conditional_reference_initializer(self):
+        # Astra-r4-1: the initializer must be the lookup alone, not an expression around it.
+        self.assert_reference_bypass_fails('var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle)) != null ? ResolveOther() : null;',
+                                           replace_initializer=True)
+
+    def test_any_transpiler_body_edit_fails_until_re_pinned(self):
+        with SourceCopy() as src:
+            src.edit('Runtime/PhysicalTrafficHooks.cs', 'if (instruction.Calls(original)) { selectorCalls++;', 'if (instruction.Calls(original)) { selectorCalls += 1;')
+            problems = src.problems()
+        self.assertTrue(any('SelectTranspiler body is not the pinned' in p for p in problems), problems)
+
     def test_fails_on_a_second_registration_inside_a_helper(self):
         # Sol-r2-2: a helper whose body registers twice would be recorded once per call site.
         with SourceCopy() as src:
