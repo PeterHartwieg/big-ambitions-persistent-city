@@ -105,6 +105,34 @@ namespace PersistentCity.Tests
             Assert.Equal(new[] { typeof(FoodScopeChannel), typeof(IReadOnlyCollection<string>), typeof(string) }, parameters);
         }
 
+        /// <summary>Astra-r1-6: `pc capability business` cost on the 957x2 economy city, Core part (scope lookup through the
+        /// city view, mechanism mapping and text). The Runtime adds one ReadOnlyScopeStatus, a few dictionary reads.</summary>
+        [Fact]
+        public void BusinessCommandCostOnThe957x2City()
+        {
+            var (state, market) = PersistentCity.EconomyInterventions.EconomyFixture.Build(23, 957);
+            var city = PersistentCity.EconomyInterventions.EconomyFixture.Attach(state, market, new PersistentCity.EconomyInterventions.EconomyRoutes(market), fresh: true);
+            const int Samples = 5_000;
+            var times = new double[Samples];
+            double tick = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            string text = "";
+            for (int i = -500; i < Samples; i++)
+            {
+                long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+                var scope = city.View.Food!.ScopeList.FirstOrDefault(x => x.PlaceId == "shop-far") ?? throw new InvalidOperationException();
+                var verdict = TransactionMechanisms.ForBusiness(scope.Channel, new[] { scope.ProductId }.Concat(scope.ExtraProductIds).ToArray(), "");
+                text = TransactionMechanisms.Describe(scope.PlaceId, scope.BusinessId, scope.Channel, verdict);
+                if (i >= 0) times[i] = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * tick;
+            }
+            Array.Sort(times);
+            string line = string.Format(System.Globalization.CultureInfo.InvariantCulture, "F8f pc capability business (Core part, 957x2 city): p50={0:0.0000} ms p95={1:0.0000} ms max={2:0.0000} ms",
+                times[Samples / 2], times[Samples * 95 / 100], times[^1]);
+            string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+            if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
+            Assert.StartsWith("shop-far (shop, b-far): shop.fullservice-bag.v1", text);
+            PerfGate.Under(times[Samples * 95 / 100], 5, "F8f business command p95");
+        }
+
         [Fact]
         public void NoProductsIsOneUnsupportedReason()
         {

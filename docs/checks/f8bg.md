@@ -6,7 +6,7 @@ Refs [#95](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues
 
 ## F8b: `pc capability status | show`
 
-Implemented. `Core/CapabilitySnapshot.cs` builds a D1 registry from plain copies of the existing status members (`CapabilityInputs`); `Runtime/CapabilityDiagnostics.cs` (a `PopulationRuntime` partial) fills them on request and prints F8a's report. One routing branch in `RunCensusCommand`. `ReadRlo` keeps its last answer for the report (one line, no extra read). Inspector guards are read from Harmony patch owners (metadata only), because their state is private to `ResidentInspector.cs`, which F8 does not edit.
+Implemented. `Core/CapabilitySnapshot.cs` builds a D1 registry from plain copies of the existing status members (`CapabilityInputs`); `Runtime/CapabilityDiagnostics.cs` (a `PopulationRuntime` partial) fills them on request and prints F8a's report. One routing branch in `RunCensusCommand`. `ReadRlo` keeps its last answer for the report (one line, no extra read). Inspector guards are read from Harmony patch owners (metadata only, one pass), because their state is private to `ResidentInspector.cs`, which F8 does not edit. `vendor.streetfood` follows the bound API's snapshot status (`CapabilityInputs.ReadVendor`): Off, Refused or Failed is off with the snapshot's reason. `interior.view` names the setting, the guard or the missing speed accessor once a city runs. The commands and the activation line catch their own exceptions, so a diagnostic never stops the city.
 
 Checks: `CapabilityReportTests` (every state from doubles, header wording, source boundary: no mutating member, not reached from `Update`, red with one injected call each).
 
@@ -14,12 +14,12 @@ Checks: `CapabilityReportTests` (every state from doubles, header wording, sourc
 
 Implemented. `Core/NativeMemberContract.cs` checks exact shapes (parameter lists, return and field types, static-ness, inherited fields as AccessTools resolves them). `Runtime/NativeFoodContract.cs` binds the real types:
 
-- **food.authority** (required): the six H1 targets and `BusinessSimulator.buildingRegistration`/`currentHour`, checked in `NativeFoodOwnership.Install` before any patch. A refusal throws the named start refusal (`Persistent City did not start: food.authority is off: <member> ...`); no owner is installed and no saved key is read or written. The loader bootstrap logs the same refusal instead of failing the mod load. Targets are patched through the verified `MethodInfo`; the inventory now pins their parameter lists.
-- **food.checkout.shop** (optional): `IsPriceAcceptable(String, Single)`, `ProcessCustomer(CustomerEntry)` and the three `FoodSupplyReader` members, checked when the market is constructed. Refused, the market runs in checkout-off mode: no price prefix, `CanServe` false, `SupportedMenu` false (so every shop is observed ineligible), and `ScopeStatus` returns `Excluded: food checkout contract off: <member>`. A shop already owned keeps its loaded hour protected and is handed back at the next drained boundary through the existing release path. `SellLine` refuses before `beginReceipt` if the method is missing. `FoodSupplyReader` takes its members from the same contract.
+- **food.authority** (required): the six H1 targets and `BusinessSimulator.buildingRegistration`/`currentHour`, checked in `NativeFoodOwnership.Install` before any patch, through `NativeFoodContract.InstallChecked`, which the harness runs with the same refusal and rollback paths. A refusal throws the named start refusal (`Persistent City did not start: food.authority is off: <member> ...`); no owner is installed and no saved key is read or written. The loader bootstrap logs the same refusal instead of failing the mod load. Targets are patched through the verified `MethodInfo`; the inventory now pins their parameter lists.
+- **food.checkout.shop** (optional): `IsPriceAcceptable(String, Single)`, `ProcessCustomer(CustomerEntry)` and the three `FoodSupplyReader` members, checked when the market is constructed. Refused, the market runs in checkout-off mode (`Core` `FoodCheckoutMode`, which the market applies and the tests drive): no price prefix, `CanServe` false, `SupportedMenu` false (so every shop is observed ineligible), and `ScopeStatus` returns `Excluded: food checkout contract off: <member>`. A shop already owned keeps its loaded hour protected and is handed back at the next drained boundary through the existing release path. `SellLine` refuses before `beginReceipt` if the method is missing. `FoodSupplyReader` takes its members from the same contract.
 - **Fault points** (test build only): `python tools/build.py --game-managed ... --fault-points` defines `PC_FAULT_POINTS` and writes `build/PersistentCity-faultpoints`. `PC_FAULT_POINT=authority:<member>:name|signature`, `checkout:<member>:name|signature` or `research:<text>` (one `#if` block in `ResearchBillingContract.Check`). The release build has no fault code.
 - Every existing refusal stays.
 
-Checks: `NativeFoodContractTests`; stub harness `tools/capability-contracts` (`dotnet run -c Release`, 91 checks: exact targets patched by the pinned Harmony 2.4.2, 14 fault arms refused before any patch with saved keys unchanged, checkout fault leaves authority verified, research fault text, and the red-on-base arm: the base by-name lookup finds a changed `ProcessCustomer`, begins a receipt and leaves it Pending; F8c refuses before any receipt).
+Checks: `NativeFoodContractTests`; stub harness `tools/capability-contracts` (`dotnet run -c Release`, 92 checks: exact targets patched by the pinned Harmony 2.4.2, 14 fault arms refused before any patch with saved keys unchanged, checkout fault leaves authority verified, research fault text, and the red-on-base arm: the base by-name lookup finds a changed `ProcessCustomer`, begins a receipt and leaves it Pending; F8c refuses before any receipt).
 
 ## F8d: RLO reason classes
 
@@ -38,9 +38,9 @@ Implemented (D6 option B). `RloReadResult.Reason` is set at every construction s
 
 Startup still requires Ready and activation stays strict (`MatchesPopulation`). The save gate uses the same class, so a transient save writes the Ready bytes. No identity is created, renamed or regenerated. One activation Player.log line lists every capability that is not active.
 
-`rlo.reservations` and `rlo.roadspeeds` follow the last donor answer (no extra read): Ready and Off are active (Off reserves nobody and slows no lane); NotYet and Refreshing reserve everyone (bodies pause).
+**Road speeds in a transient window** (review Sol-r1-1). Before round 1, `ReadSlowedLanes` answering NotYet or Refreshing threw from `RoadRoutes.Prepare` and stopped the runtime through `UpdateCity`'s catch. Now Compatibility raises a distinct `RloRoadSpeedsNotReadyException`; `NativeRoadSpeeds.Refresh` keeps the last verified overrides and records `Waiting`; `RoadRoutes.Prepare` and `MultimodalRoutes.Prepare` return not prepared, so `UpdateCity` takes its existing waiting branch (the accounting hold keeps native time) and the city keeps running and saving. Nothing is read as "no slowdowns". Shared and Failed still throw and stop, as the donor read does.
 
-**Recorded downstream effect of a refused road-speed capture.** On the CityApi path, `ReadSlowedLanes` answering NotYet, Refreshing, Shared or Failed makes `RloRoadSpeedOverrides.Capture` throw. `NativeRoadSpeeds.Refresh` runs at the start of `RoadRoutes.Prepare` and of each road search; `MultimodalRoutes.Prepare` reaches it from `UpdateCity` every frame, so the throw reaches `UpdateCity`'s catch and the runtime stops with the payload retained. F8d's continuation therefore holds for Off (the Flare toggle, rig check 9); a NotYet or Refreshing window still stops the runtime through road preparation. Changing that is a route-preparation decision outside F8d and is left for the owner.
+`rlo.roadspeeds` reports the planner's own capture (waiting or complete); `rlo.reservations` reports from the physical population, which needs a ready guard (the guard's state is private to `AmbientPedestrians.cs`, which F8 does not edit). A Ready catalogue that differs from the saved one shows `rlo.donor` off.
 
 Checks: `RloContinuityTests` (red on the base code for the transient cases: there every non-Ready read failed `MatchesPopulation` and stopped the city).
 
@@ -52,13 +52,13 @@ Checks: `HookConflictReportTests` (including the pinned Harmony 2.4.2 on stand-i
 
 ## F8f: transaction mechanisms
 
-Implemented. `Core/TransactionMechanisms.cs`: `shop.fullservice-bag.v1`, `vehicle.streetfood-api.v1`, `shop.dynamic-catalogue` (E5b5 landed dynamic acquisition; its refusal text `E5b dynamic native acquisition off; original three only` maps to `shop.dynamic-catalogue off`), `research.agency-bill.v1`; each implemented with its checks link and rig pending. `pc capability business <place>` reads `NativeFoodMarket.ScopeStatus` (the read the feedback panel already makes) or the vendor market's serving answer. No change to `Supported`.
+Implemented. `Core/TransactionMechanisms.cs`: `shop.fullservice-bag.v1`, `vehicle.streetfood-api.v1`, `shop.dynamic-catalogue` (E5b5 landed dynamic acquisition; its refusal text `E5b dynamic native acquisition off; original three only` maps to `shop.dynamic-catalogue off`), `research.agency-bill.v1`; each implemented with its checks link and rig pending. `pc capability business <place>` reads `NativeFoodMarket.ReadOnlyScopeStatus`, which uses only state the market holds (no `SupportedMenu`, `ContractAdmits` or `NativeFoodOwnership.Find`, so it refuses no contract and changes no observation), or the vendor market's serving answer. No change to `Supported`.
 
 Checks: `TransactionMechanismTests`.
 
 ## F8g: failure matrix
 
-Implemented. `tools/capability-matrix` (`dotnet run -c Release [days]`) over the 957-resident economy fixture (factor 2); the same code runs in `CapabilityMatrixTests` for one day. Arms: control; presentation off (driver attached, zero bodies) against never present at the same frame cadence; `food.checkout.shop` off; each required capability refused; RLO transient window and a Shared stop; Street Food absent then returned (vendor rig, test only).
+Implemented. `tools/capability-matrix` (`dotnet run -c Release [days]`) over the 957-resident economy fixture (factor 2); the same code runs in `CapabilityMatrixTests` for one day. Arms: control; presentation off (driver attached, zero bodies) against never present at the same frame cadence; `food.checkout.shop` off; each required capability refused; RLO transient window and a Shared stop; research off against on; `food.dynamic` off (a refused dynamic scope); `rlo.roadspeeds` waiting (held preparation); Street Food absent then returned and a bound Street Food whose snapshot is Off, Refused or Failed (vendor rig, test only). `CapabilityMatrix.Coverage` names the arm for every optional capability; the inspector guards and the interior view have no Core input and are covered by the report tests and the rig.
 
 ## Requirements A1-A17
 
@@ -88,10 +88,10 @@ Implemented. `tools/capability-matrix` (`dotnet run -c Release [days]`) over the
 
 - `python tools/build.py --game-managed ...`: passed (release); `--fault-points`: passed.
 - `python tools/test-focused.py`: the changed test classes pass.
-- `tools/capability-contracts`: 91 checks passed. `tools/capability-matrix`: 5 of 5 Core arms passed.
+- `tools/capability-contracts`: 92 checks passed. `tools/capability-matrix`: 8 of 8 Core arms passed.
 - Current-writer golden hash unchanged: `CapabilityReportTests.CurrentWriterGoldenHashIsUnchanged` (writer `CityState.CurrentSchema`).
 
-Notes for review: `NativeCapabilityTests.CurrentWriterGoldenHashIsUnchanged` asserted writer 35 at a writer-36 base and failed there; it now pins frozen writer 35 as `F9IntegratedCityTests` does. `tools/food-supply-regression` already failed to build at the base (missing `EmployeeWorkstation`/`CargoInstance` stubs) and now also lacks `NativeFoodContract`; it is not run before release and is left as found.
+Notes for review: X3 (#192) owns the golden pins and holds the schema at 1. F8a's `NativeCapabilityTests.CurrentWriterGoldenHashIsUnchanged` asserted writer 35 and failed at the writer-36 base; it is removed. `CapabilityReportTests.CurrentWriterGoldenHashIsUnchanged` pins no hash: it checks the `CityState.CurrentSchema` envelope and that building and printing the reports leaves the payload unchanged. `tools/food-supply-regression` already failed to build at the base (missing `EmployeeWorkstation`/`CargoInstance` stubs) and now also lacks `NativeFoodContract`; it is not run before release and is left as found.
 
 ## In-game checks for the next batched rig
 

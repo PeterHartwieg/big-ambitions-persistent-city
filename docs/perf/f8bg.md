@@ -8,21 +8,24 @@ Standing gate: mod-work p95 < 5 ms; every mod-work sample >= 30 ms flagged; whol
 
 | Row | Measured | Number | Source |
 | --- | --- | --- | --- |
-| F8b | `pc capability status` (snapshot build plus report text) while the 957x2 economy city is alive | p50 0.002 ms, p95 0.005 ms, max 1.109 ms (one outlier in 5,000), 3,992 B per call | `CapabilityReportTests.CommandCostOnThe957x2City` |
+| F8b | Component: Core snapshot build plus report text from prebuilt inputs, 957x2 city alive | p50 0.003 ms, p95 0.006 ms, 3,992 B per call (one 16 ms outlier in 5,000, Debug, shared machine) | `CapabilityReportTests.CommandCostOnThe957x2City` |
+| F8b | Complete on-request input path (one pass over 40 loaded assemblies, one `PatchedTargets` pass over 44 patched methods from 5 owners, snapshot and report), Release | p50 0.40 ms, p95 0.51 ms, max 1.64 ms | `tools/capability-contracts` |
 | F8c | Contract check, both arms, 13 members, once per process (stand-in types) | p50 0.004 ms, p95 0.005 ms, 3,176 B per check; first-call outlier 10.8 ms in one Debug run | `NativeFoodContractTests.ContractCheckCost` |
 | F8c | Same check on the stubs (Release) | p50 0.0045 ms, p95 0.0078 ms, max 0.048 ms | `tools/capability-contracts` |
-| F8c | Checkout path | unchanged; see below | — |
+| F8c | Core part of one F6j checkout (ticket plan on an eight-item menu, receipt begin, confirm, read), base `17dccf8` vs head, 20,000 meals, three runs each | base p50 9.7-9.9 µs, p95 13.8-15.7 µs; head p50 9.9-10.5 µs, p95 15.2-18.4 µs (same Core code; the spread is run-to-run noise on a shared machine) | `.scratch` bench, method below |
 | F8d | Classification per 30 s read, Ready (the 400-identity comparison the base already made) | p50 0.036 ms, p95 0.055 ms | `RloContinuityTests.ClassificationCostPerRead` |
 | F8d | Classification per read, transient (no comparison) | p50 < 0.0001 ms | same |
 | F8d | Extra RLO reads | none: four `ReadRlo` call sites as before, one `rlo.Read`, 30 s cadence unchanged | `RloContinuityTests.CallSitesUseTheClassAndAddNoRead` |
 | F8e | Activation scan, warm (Release, stand-ins: 3 patched targets plus 1 foreign-only method, 49-method inventory join) | p50 0.094 ms, p95 0.116 ms, max 1.06 ms | `tools/capability-contracts` |
 | F8e | Activation scan, first call in the process (includes JIT) | 3.4-3.6 ms | same |
-| F8f | `pc capability business <place>` | on request only; one `ScopeStatus` read plus a constant-time mapping | — |
-| F8g | Matrix wall time, 5 Core arms, 2 simulated days per economy arm, 957 residents x2 | 7.0 s (Release tool); 1-day arms inside the unit suite, 6 s for the focused run | `tools/capability-matrix`, `CapabilityMatrixTests.EveryCoreArmPasses` |
+| F8f | `pc capability business <place>`, Core part (scope lookup through the city view, mechanism, text) on the 957x2 city | p50 0.0004 ms, p95 0.0008 ms; the Runtime adds one `ReadOnlyScopeStatus` (dictionary reads) | `TransactionMechanismTests.BusinessCommandCostOnThe957x2City` |
+| F8g | Matrix wall time, 8 Core arms, 2 simulated days per economy arm, 957 residents x2 | 7.6 s (Release tool); 1-day arms inside the unit suite | `tools/capability-matrix`, `CapabilityMatrixTests.EveryCoreArmPasses` |
 
 **F8e estimate check.** The plan estimated 27 x 0.011 ms = 0.3 ms from the C5d foreign-patch check. The warm scan on 4 patched methods is 0.094 ms, most of it the fixed join over the 52-row inventory; at the 30-odd patched methods of a full modpack it stays under the estimate's order. The first call in a process pays JIT (3.6 ms), once per load and below the 30 ms flag. Rig check 10 records the real activation line.
 
-**F8c checkout p95 before/after.** No Core file on the checkout path changed, so the F6j Core measurement ([F6j perf](f6j.md): `FoodMealExtras.Plan` 1.51 µs per call) is unchanged by construction; there is no offline arm that runs the native checkout. The Runtime change on the path is one reference check per sold line (`process == null`, before `beginReceipt`) and one `CheckoutRefusal != null` check in `CanServe`, `SupportedMenu` and `ScopeStatus`. Rig check 10 measures native checkout with the rest of mod-work.
+**F8c checkout p95 before/after.** The bench builds one console program against the base's and the head's `Core` and `Persistence` and times the Core part of an F6j checkout: `FoodMealExtras.Plan` on an eight-item menu, `FoodSaleReceipts.Begin`, `Confirm` and `AlreadyPaid`, 20,000 meals after 2,000 warm-up meals, three alternating runs. The numbers are in the table; no Core file on the path changed, and base and head overlap. The native checkout cannot run offline. The Runtime change on it is one reference check per sold line (`process == null`, before `beginReceipt`) and one `FoodCheckoutMode` property read in `CanServe`, `SupportedMenu` and `ScopeStatus`. Rig check 10 measures native checkout with the rest of mod-work.
+
+**F8b input path, cheap win.** Round 1 replaced three `Harmony.GetAllPatchedMethods` passes (one per inspector guard) and two assembly enumerations with one of each (`HookConflicts.PatchedTargets`, one loop over `GetAssemblies`). The complete path is 0.5 ms p95 with 44 patched methods and 40 assemblies; the game loads more assemblies, so rig check 10 records the real figure.
 
 **Cheap win taken (plan section 6).** `FoodSupplyReader`'s three members stay `static readonly`; they now come from the checkout contract, which is checked once per process, so the per-read cost does not change (before: three reflection lookups at type initialisation; after: the same three lookups inside the one contract check, plus their exact type checks).
 

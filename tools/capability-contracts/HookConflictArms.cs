@@ -71,8 +71,79 @@ internal static partial class Program
             Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "hook conflicts: {0} patched stand-in targets (+1 foreign-only): scan p50={1:0.0000} ms p95={2:0.0000} ms max={3:0.0000} ms",
                 patched, times[times.Length / 2], times[times.Length * 95 / 100], times[^1]));
             Console.WriteLine("hook conflicts: " + report.ActivationLine());
+
+            // Astra-r1-6: the Harmony and assembly part of ReadCapabilityInputs (one assembly pass, one PatchedTargets pass)
+            // plus the Core snapshot and report, with 40 more patched methods from four owners as a modpack would add.
+            var extra = typeof(ManyTargets).GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly).Where(m => m.Name.StartsWith("M", StringComparison.Ordinal)).ToArray();
+            for (int i = 0; i < extra.Length; i++) harmonies[i % 2 == 0 ? "other.mod" : "rig.limiter"].Patch(extra[i], postfix: Post());
+            int patchedMethods = Harmony.GetAllPatchedMethods().Count(m => Harmony.GetPatchInfo(m)?.Owners.Count > 0);
+            var path = new double[500];
+            var reportText = new CapabilityReport();
+            for (int i = -50; i < path.Length; i++)
+            {
+                long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+                bool streetFood = false, drivenRides = false;
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    streetFood |= assembly.GetName().Name == "FoodTrucks";
+                    drivenRides = drivenRides || assembly.GetType("DrivenRides.Ride", false) != null;
+                }
+                var owned = HookConflicts.PatchedTargets(NativeHookInventory.InspectorInput);
+                var inputs = new CapabilityInputs { CityActive = true, StreetFoodLoaded = streetFood, DrivenRidesLoaded = drivenRides,
+                    InspectorClickInstalled = owned.Contains("MouseController.Run"), FoodAuthorityInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority) };
+                _ = reportText.Status(CapabilitySnapshot.Build(inputs), "x", CapabilitySnapshot.Context(inputs));
+                if (i >= 0) path[i] = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            }
+            Array.Sort(path);
+            Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "capability status input path: {0} patched methods, {1} assemblies: p50={2:0.0000} ms p95={3:0.0000} ms max={4:0.0000} ms",
+                patchedMethods, AppDomain.CurrentDomain.GetAssemblies().Length, path[path.Length / 2], path[path.Length * 95 / 100], path[^1]));
         }
         finally { foreach (var pair in harmonies) pair.Value.UnpatchAll(pair.Key); }
         Check(Harmony.GetAllPatchedMethods().All(m => Harmony.GetPatchInfo(m)?.Owners.Count is null or 0), "every stand-in patch removed");
     }
+}
+
+/// <summary>Forty patchable stand-in methods for the input-path measurement.</summary>
+public static class ManyTargets
+{
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M00() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M01() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M02() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M03() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M04() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M05() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M06() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M07() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M08() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M09() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M10() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M11() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M12() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M13() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M14() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M15() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M16() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M17() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M18() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M19() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M20() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M21() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M22() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M23() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M24() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M25() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M26() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M27() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M28() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M29() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M30() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M31() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M32() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M33() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M34() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M35() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M36() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M37() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M38() { }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M39() { }
 }
