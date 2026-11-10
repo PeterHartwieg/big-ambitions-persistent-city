@@ -8,15 +8,15 @@ F4d changes no Core, Runtime or Persistence code, so in-game mod-work p95, ≥ 3
 
 ## Generation cost
 
-Apple M1 Pro, Python 3.15, one process, development machine shared with other sessions. The full flow is 3,937 steps, 46 game processes, 88 gate windows, 41 discarded prime windows and 14 measurement segments.
+Apple M1 Pro, Python 3.15, one process, development machine shared with other sessions. The full flow is 4,145 steps, 46 game processes, 88 gate windows, 41 discarded prime windows and 14 measurement segments. Figures after review round 1.
 
 | Step | Time |
 | --- | ---: |
-| `build_flow` in process, 20 runs | p50 15.1 ms, max 18.4 ms |
-| JSON serialisation (`indent=1`, sorted keys) | 8.2 ms |
-| CLI end to end (`make_gate_flow.py --out`), 5 runs | 0.07 s each |
+| `build_flow` in process, 20 runs | p50 16.5 ms, max 21.8 ms |
+| JSON serialisation (`indent=1`, sorted keys) | 9.5 ms |
+| CLI end to end (`make_gate_flow.py --out`), 3 runs | 0.07 s each |
 
-The output is 1.74 MB of JSON plus a 2.4 KB Markdown summary. The test module (28 tests, which build the flow about six times) runs in about 0.35 s.
+The output is 1.85 MB of JSON plus a 2.7 KB Markdown summary. The test module (40 tests) runs in about 0.55 s. Before round 1 the flow had 3,937 steps and built in p50 15.1 ms; the extra steps are the native-load waits, probe save counters and PC config applies.
 
 ## Cheap wins
 
@@ -26,7 +26,9 @@ None taken. Generation takes 70 ms, so there is nothing worth winning. I tried c
 
 These are estimates from fixed per-step allowances (launch 90 s, load 60 s, readiness 30 s, window real time at the declared pace), not measurements:
 
-- Full flow: about 18.5 real hours.
-- G4–G8 matrix plus the High-preset and 256/64 arms: 36 processes, 76 primary and 8 report-only windows, about 15.5 real hours.
+- Full flow: about 20.0 real hours (18.5 before round 1).
+- G4–G8 matrix plus the High-preset and 256/64 arms: 36 processes, 76 primary and 8 report-only windows, about 16.9 real hours (15.5 before).
 
-The plan's run budget says "about 50 windows" and "roughly 7 hours". The matrix it specifies has more windows than that: 5 windows × 2 scripts × 2 builds × 2 or 4 repetitions is 56, plus 8 S-sweep and 8 S-drive evening windows and 4 S-manage lunch windows, so 76 primary windows in total. Each window is also longer than the 300 s floor, because it runs 100 game minutes (330 real s at the declared pace). And every process needs a discarded prime window and a reload, because a build switch needs a new process. The batch coordinator can split the matrix across rig sessions between processes. Every process starts from a saved checkpoint, so a split keeps the results as long as each condition's processes keep their ABAB order.
+Round 1 made matched windows stop at a fixed 118-game-minute span (389 real s at the declared pace, up from 100 minutes and 330 s), so both builds cover the same game minutes even if the pace is 15 % faster than declared. That costs about 1.4 hours across the matrix.
+
+The plan's run budget says "about 50 windows" and "roughly 7 hours". The matrix it specifies has more windows than that: 5 windows × 2 scripts × 2 builds × 2 or 4 repetitions is 56, plus 8 S-sweep and 8 S-drive evening windows and 4 S-manage lunch windows, so 76 primary windows in total. Each window is also longer than the 300 s floor, because it runs 118 game minutes (389 real s at the declared pace). And every process needs a discarded prime window and a reload, because a build switch needs a new process. The batch coordinator can split the matrix across rig sessions between processes. Every process starts from a saved checkpoint, so a split keeps the results as long as each condition's processes keep their ABAB order.

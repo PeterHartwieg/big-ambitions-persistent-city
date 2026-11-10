@@ -21,8 +21,12 @@
     {"op": "ui.open_screen", "args": {"screen": "inventory", "hold_real_seconds": 10}},
     {"op": "ui.key", "args": {"keys": "Escape", "expect": "native screens closed"}},
     {"op": "ft.time", "args": {"speed": 3}},
-    {"op": "drive.route", "args": {"waypoints": ["owned-shop-1.kerb", "owned-shop-2.kerb"], "expect": "player at owned-shop-2 (FT state)"}},
-    {"op": "drive.route", "args": {"waypoints": ["owned-shop-2.kerb", "owned-shop-1.kerb"], "expect": "player at owned-shop-1 (FT state)"}},
+    {"op": "ft.teleport", "args": {"anchor": "dense-street.car-park"}},
+    {"op": "drive.enter", "args": {"vehicle": "owned car"}},
+    {"op": "drive.route", "args": {"waypoints": ["owned-shop-2.kerb"], "expect": "player at owned-shop-2 (FT state)"}},
+    {"op": "drive.route", "args": {"waypoints": ["dense-street.car-park"], "expect": "car back at the car park (FT state)"}},
+    {"op": "drive.exit", "args": {"park_at": "dense-street.car-park"}},
+    {"op": "ft.teleport", "args": {"anchor": "owned-shop-1.inside"}},
     {"op": "shop.edit_price", "args": {"shop": "owned-shop-1", "product": "first menu item", "change": "-0.50", "expect": "native price readback equals the original"}}
   ],
   "samplers": [

@@ -1,6 +1,7 @@
 """F4d offline checks: python -m unittest discover -s tools/perf-gate -p test_*.py"""
 import copy
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -15,8 +16,9 @@ import make_gate_flow as gen  # noqa: E402
 FIXTURES, SCRIPTS, CONTRACT, DIGEST = gen.load_inputs()
 
 # Written out by hand from the plan, not read from the generator, so the tests do not check the generator against itself.
-LOADS = {'process.launch', 'ft.load', 'fixture.produce', 'fixture.stress'}
-TIME_JUMPS = LOADS | {'ft.save', 'time_machine.skip'}
+LOADS = {'process.launch', 'ft.load', 'fixture.stress'}
+TIME_JUMPS = LOADS | {'ft.save', 'time_machine.skip', 'fixture.produce'}
+PROBE_LABEL = re.compile(r'^[A-Za-z0-9._-]{1,64}$')  # F4b StartMeasurement (Probe.cs)
 PLAN_PENDING = {  # docs/plans/f4-perf-gate.md section 7, the pending capabilities named per check
     'G1': {'RIG-FOREGROUND', 'RIG-PRIORITY'},
     'G2': {'RIG-PERF-UNION'},
@@ -93,28 +95,55 @@ class AutosaveTests(unittest.TestCase):
         self.assertGreater(index_of(restore[0]), index_of(last_stop))
         self.assertEqual(STEPS[index_of(restore[0]) + 1]['op'], 'autosave.verify_restored')
 
-    def test_save_sequence_read_around_every_window(self):
+    def test_save_receipts_around_every_window(self):
         for w in WINDOWS:
-            reads = [s for s in window_steps(w['id']) if s['op'] == 'save_epoch.read']
-            self.assertEqual(len(reads), 2, w['id'])
-            self.assertIn('unchanged', reads[1]['args']['expect'])
+            steps = window_steps(w['id'])
+            reads = [s for s in steps if s['op'] == 'save_epoch.read']
+            if w['build'] == 'candidate':
+                self.assertEqual(len(reads), 2, w['id'])
+                self.assertIn('unchanged', reads[1]['args']['expect'])
+            if any(s['op'] == 'probe.measure_start' for s in steps):
+                stop = next(index_of(s) for s in steps if s['op'] == 'probe.measure_stop')
+                counter = [s for s in steps if s['op'] == 'probe.status' and index_of(s) > stop]
+                self.assertTrue(counter and counter[0]['args']['expect']['saves_in_window'] == 0, w['id'])
+            else:
+                self.assertEqual(w['build'], 'candidate', 'a window without the probe needs the PC epoch')
+
+    def test_reference_save_receipts_need_no_persistent_city_projection(self):
+        reference = [w for w in WINDOWS if w['build'] == 'reference']
+        self.assertGreater(len(reference), 30)
+        for p in FLOW['processes']:
+            if p['build'] == 'reference':
+                ops = {s['op'] for s in STEPS if s['process'] == p['process']}
+                self.assertNotIn('save_epoch.read', ops)
+                self.assertNotIn('pc.readiness', ops)
 
 
 class WindowLengthTests(unittest.TestCase):
     def test_every_window_has_300_clean_seconds_after_warmup_by_construction(self):
         floor = CONTRACT['windows']['min_clean_real_seconds']
         warm = CONTRACT['windows']['warmup_real_seconds']
+        fast = FIXTURES['declared_pace']['real_seconds_per_game_minute'] * FIXTURES['fast_pace_fraction']
         gate = [w for w in WINDOWS if w['kind'] == 'window']
         self.assertGreater(len(gate), 80)
         for w in gate:
             steps = window_steps(w['id'])
             run = next(s for s in steps if s['op'] == 'script.run')
             terms = run['until']['all']
-            clean = [t['clean_real_seconds_at_least'] for t in terms if 'clean_real_seconds_at_least' in t]
-            self.assertEqual(len(clean), 1, w['id'])
-            self.assertGreaterEqual(clean[0], floor, w['id'])
             self.assertTrue(all(len(t) == 1 for t in terms), 'stop terms are all-of, so none can end the window early')
-            self.assertGreater(run['until']['abort_after_real_seconds'], clean[0])
+            if w['matched']:
+                # Matched pairs stop at the game span only; it covers the floor even at the fast pace bound,
+                # and a window that still ends short is reported short.
+                self.assertEqual([list(t) for t in terms], [['game_minutes_since_start_at_least']], w['id'])
+                self.assertGreaterEqual(terms[0]['game_minutes_since_start_at_least'] * fast, floor, w['id'])
+                self.assertGreaterEqual(run['until']['short_if_clean_real_seconds_below'], floor, w['id'])
+                planned = terms[0]['game_minutes_since_start_at_least'] * fast
+            else:
+                clean = [t['clean_real_seconds_at_least'] for t in terms if 'clean_real_seconds_at_least' in t]
+                self.assertEqual(len(clean), 1, w['id'])
+                self.assertGreaterEqual(clean[0], floor, w['id'])
+                planned = clean[0]
+            self.assertGreater(run['until']['abort_after_real_seconds'], planned)
             # Warm-up: the last load before the window, then readiness, then >= 60 s discarded, then the start.
             start = index_of(first_start(w['id']))
             last_load = max(index_of(s) for s in STEPS[:start] if s['op'] in LOADS)
@@ -138,10 +167,57 @@ class WindowLengthTests(unittest.TestCase):
         contract = copy.deepcopy(CONTRACT)
         contract['windows']['min_clean_real_seconds'] = 600
         flow = build(contract=contract)
+        fast = FIXTURES['declared_pace']['real_seconds_per_game_minute'] * FIXTURES['fast_pace_fraction']
         for s in flow['steps']:
             if s['op'] == 'script.run' and s['window'] and not s['window'].startswith(('p', 'G')):
-                floor = next(t['clean_real_seconds_at_least'] for t in s['until']['all'] if 'clean_real_seconds_at_least' in t)
-                self.assertGreaterEqual(floor, 600, s['window'])
+                until = s['until']
+                if 'short_if_clean_real_seconds_below' in until:
+                    self.assertEqual(until['short_if_clean_real_seconds_below'], 600)
+                    self.assertGreaterEqual(until['all'][0]['game_minutes_since_start_at_least'] * fast, 600)
+                else:
+                    floor = next(t['clean_real_seconds_at_least'] for t in until['all'] if 'clean_real_seconds_at_least' in t)
+                    self.assertGreaterEqual(floor, 600, s['window'])
+
+    def test_matched_pairs_stop_at_the_same_game_span(self):
+        spans = {}
+        for w in WINDOWS:
+            if w['kind'] == 'window' and w['matched']:
+                key = (w['labels']['condition'], w['script'], w['labels']['arm'], w['labels']['repetition'])
+                run = next(s for s in window_steps(w['id']) if s['op'] == 'script.run')
+                spans.setdefault(key, {})[w['build']] = run['until']['all'][0]['game_minutes_since_start_at_least']
+        self.assertGreater(len(spans), 30)
+        for key, by_build in spans.items():
+            self.assertEqual(set(by_build), {'reference', 'candidate'}, key)
+            self.assertEqual(by_build['reference'], by_build['candidate'], key)
+
+    def test_window_speed_is_set_before_warmup_and_gate(self):
+        for w in WINDOWS:
+            if w['kind'] == 'segment':
+                continue
+            steps = window_steps(w['id'])
+            start = index_of(first_start(w['id']))
+            last_load = max(index_of(s) for s in STEPS[:start] if s['op'] in LOADS)
+            warmup = next(index_of(s) for s in steps if s['op'] == 'wait.real' and s['args'].get('discard'))
+            speeds = [s for s in STEPS[last_load:warmup] if s['op'] == 'ft.time' and 'speed' in s['args']]
+            self.assertTrue(speeds, w['id'])
+            self.assertEqual(speeds[-1]['args']['speed'], w['labels']['native_speed'], w['id'])
+            gate = [s for s in steps if s['op'] == 'wait.until_game_minute']
+            if gate:
+                before = [s for s in STEPS[last_load:index_of(gate[0])] if s['op'] == 'ft.time']
+                self.assertEqual(before[-1]['args']['speed'], w['labels']['native_speed'])
+            between = [s for s in STEPS[warmup:start] if s['op'] == 'ft.time']
+            self.assertFalse(between, f"{w['id']}: speed changes after the warm-up")
+
+    def test_probe_arms_only_after_the_native_load_finished(self):
+        arms = [s for s in STEPS if s['op'] == 'probe.arm']
+        self.assertGreater(len(arms), 100)
+        for a in arms:
+            i = index_of(a)
+            last_load = max((j for j in range(i) if STEPS[j]['op'] in LOADS and STEPS[j]['process'] == a['process']))
+            if STEPS[last_load]['op'] == 'process.launch':
+                continue  # re-arm in the same scene (G2), no load in between
+            done = [j for j in range(last_load, i) if STEPS[j]['op'] == 'native.load_done']
+            self.assertTrue(done, f"probe.arm {a['id']} before the native load finished")
 
     def test_first_window_of_every_process_is_a_discarded_prime(self):
         by_process = {}
@@ -341,10 +417,29 @@ class HeaderTests(unittest.TestCase):
             if field == 'contract_version':
                 self.assertEqual(header[field]['value'], 'perf-gate/v1')
                 continue
+            if field == 'calendar_pace':
+                self.assertIn(header[field]['measured_by'], ids)
+                continue
             self.assertIn(header[field]['filled_by'], ids, field)
         self.assertEqual(ids[header['machine']['filled_by']]['args']['record'], CONTRACT['header']['machine_fields'])
         self.assertEqual(ids[header['logical_population']['filled_by']]['args']['command'], 'pc population manifest')
         self.assertEqual(header['calendar_pace']['declared']['real_seconds_per_game_minute'], 3.3)
+
+    def test_every_field_is_available_where_it_is_required(self):
+        header = FLOW['run_header']
+        require = next(s for s in STEPS if s['op'] == 'header.require')
+        self.assertEqual(set(require['args']['fields']),
+                         {f for f, spec in header.items() if spec['required_at'] == 'preflight'})
+        self.assertEqual({f for f, spec in header.items() if spec['required_at'] == 'export'}, {'observed_body_load'})
+        first_assembly = min(index_of(s) for s in STEPS if s['op'] == 'host.assemble_export')
+        for field, spec in header.items():
+            limit = index_of(require) if spec['required_at'] == 'preflight' else first_assembly
+            if spec['filled_by'] is None:
+                self.assertNotEqual(spec['value'], '${fill}', f'{field} has neither a value nor a filling step')
+            else:
+                self.assertLess(int(spec['filled_by']) - 1, limit, f'{field} is filled after it is required')
+        first_timed = min(index_of(s) for s in STEPS if s['op'] in ('trace.start', 'probe.measure_start'))
+        self.assertLess(index_of(require), first_timed)
 
     def test_movement_label(self):
         self.assertEqual(build(movement_state='movement=pre-F2d')['run_header']['movement_state']['value'],
@@ -352,6 +447,145 @@ class HeaderTests(unittest.TestCase):
         rule = next(s for s in STEPS if s['op'] == 'source.identity')['args']['rule']
         self.assertIn('movement=pre-F2d', rule)
         self.assertIn(gen.F2D_COMMIT, rule)
+
+
+class LifecycleTests(unittest.TestCase):
+    def test_producer_runs_stopped_and_unleased_with_its_supported_name(self):
+        produce = [s for s in STEPS if s['op'] == 'fixture.produce']
+        self.assertTrue(produce)
+        lease = next(s for s in STEPS if s['op'] == 'rig.lease' and s['args']['action'] == 'acquire')
+        first_launch = next(s for s in STEPS if s['op'] == 'process.launch')
+        for s in produce:
+            self.assertIsNone(s['process'])
+            self.assertLess(index_of(s), index_of(lease), 'the producer takes its own lease')
+            self.assertLess(index_of(s), index_of(first_launch), 'the producer refuses a running player')
+            self.assertEqual(s['requires'], dict(player_running=False, flow_lease_held=False))
+            self.assertTrue(s['args']['name'].startswith('FT E5b '))
+            self.assertEqual(s['args']['ready_save'], s['args']['name'] + ' Ready')
+            self.assertTrue(s['args']['evidence'].startswith('build/e5b/review-r3/rig_test/'))
+            loads = [x for x in STEPS if x['op'] == 'ft.load' and x['args']['save'] == s['args']['ready_save']]
+            self.assertTrue(loads and index_of(loads[0]) > index_of(lease))
+        releases = [s for s in STEPS if s['op'] == 'rig.lease' and s['args']['action'] == 'release']
+        self.assertEqual(index_of(releases[-1]), len(STEPS) - 1)
+
+    def test_preparation_moves_forward_in_game_time(self):
+        def minute(text):
+            day, hm = text.split()[1], text.split()[2]
+            return int(day) * 1440 + gen.minute_of(hm)
+        saved = {}
+        prep = [p['process'] for p in FLOW['processes'] if 'fixtures' in p['checks']]
+        self.assertEqual(len(prep), 2)
+        for p in prep:
+            clock = None
+            for s in (x for x in STEPS if x['process'] == p):
+                if s['op'] == 'ft.load':
+                    name = s['args']['save'].removeprefix('copy of ')
+                    clock = minute(saved[name]) if name in saved else None
+                elif s['op'] == 'ft.time' and 'advance_to' in s['args']:
+                    target = minute(s['args']['advance_to'])
+                    if clock is not None:
+                        self.assertGreater(target, clock, f"step {s['id']} moves the clock backwards")
+                    clock = target
+                elif s['op'] == 'ft.save':
+                    self.assertEqual(minute(s['args']['at']), clock, s['id'])
+                    saved[s['args']['save']] = s['args']['at']
+            surveys = [s for s in STEPS if s['process'] == p and s['op'] == 'fixture.anchors']
+            self.assertEqual(len(surveys), 1)
+            i = index_of(surveys[0])
+            self.assertTrue(STEPS[i - 3]['args']['save'].startswith('copy of '), 'survey runs on a disposable copy')
+
+    def test_every_script_anchor_is_recorded_for_its_fixture(self):
+        def anchors_of(fixture):
+            spec = FIXTURES['fixtures'][fixture]
+            return set((spec.get('survey') or FIXTURES['fixtures'][spec['base']]['survey'])['anchors'])
+
+        def used(step):
+            a = step.get('args', {})
+            out = [a[k] for k in ('anchor', 'look_at', 'park_at') if k in a]
+            return out + list(a.get('waypoints', []))
+        checked = 0
+        for w in WINDOWS:
+            if w['kind'] == 'segment':
+                continue
+            have = anchors_of(w['fixture'])
+            for s in window_steps(w['id']):
+                for nested in [s] + s.get('loop', []):
+                    for name in used(nested):
+                        self.assertIn(name, have, f"{w['id']} uses {name}")
+                        checked += 1
+        self.assertGreater(checked, 500)
+        for name in ('owned-shop-1.door', 'owned-shop-1.inside'):
+            self.assertIn(name, anchors_of('FT-F4-Declared'))
+
+    def test_probe_labels_are_accepted_by_f4b(self):
+        labels = [s['args']['window'] for s in STEPS if s['op'] == 'probe.measure_start']
+        self.assertGreater(len(labels), 100)
+        self.assertEqual(len(labels), len(set(labels)))
+        for label in labels:
+            self.assertRegex(label, PROBE_LABEL)
+        for w in WINDOWS:
+            if w['kind'] != 'segment':
+                self.assertRegex(w['labels']['probe_label'], PROBE_LABEL)
+        self.assertTrue(any('@' in w['labels']['condition'] for w in WINDOWS if w['kind'] == 'window'),
+                        'conditions keep their report names; only the probe label is mapped')
+
+    def test_every_candidate_applies_the_complete_declared_pc_config(self):
+        defaults = FIXTURES['pc_config_defaults']
+        record = [s for s in STEPS if s['op'] == 'pcconfig.record']
+        self.assertEqual(len(record), 1)
+        self.assertEqual(record[0]['checks'], ['G1'])
+        overrides = {'W-evening@caps-256-64': dict(MaximumPedestrians=256, MaximumVehicles=64)}
+        for p in FLOW['processes']:
+            steps = [s for s in STEPS if s['process'] == p['process']]
+            applied = [s for s in steps if s['op'] == 'pcconfig.apply']
+            if p['build'] == 'reference':
+                self.assertFalse(applied)
+                continue
+            self.assertEqual(len(applied), 1, p['process'])
+            launch = next(s for s in steps if s['op'] == 'process.launch')
+            self.assertLess(index_of(applied[0]), index_of(launch))
+            rows = applied[0]['args']['rows']
+            self.assertEqual(set(rows), set(defaults), 'every declared key, so a leftover profile value is overwritten')
+            readback = next(s for s in steps if s['op'] == 'ft.state' and s['args'].get('record') == 'pc_config keys in effect')
+            self.assertEqual(readback['args']['expect'], rows)
+            conditions = {w['labels']['condition'] for w in WINDOWS if w['process'] == p['process'] and 'labels' in w}
+            want = dict(defaults)
+            for c in conditions:
+                want.update(overrides.get(c, {}))
+            if p['fixture'] == 'FT-F4-FastestTraveller':
+                want['GameClockFactor'] = 1.0
+            self.assertEqual(rows, want, p['process'])
+        restore = [s for s in STEPS if s['op'] == 'pcconfig.restore']
+        self.assertEqual(len(restore), 1)
+        self.assertEqual(restore[0]['checks'], ['cleanup'])
+
+    def test_cleanup_runs_on_stop(self):
+        cleanup = [s for s in STEPS if s['checks'] == ['cleanup']]
+        ops = {s['op'] for s in cleanup}
+        for op in ('modset.restore', 'pcconfig.restore', 'settings.restore', 'autosave.restore',
+                   'autosave.verify_restored', 'fixture.remove_copies', 'rig.restore_files', 'rig.lease'):
+            self.assertIn(op, ops)
+        on_stop = [s for s in cleanup if s.get('on_stop')]
+        self.assertGreaterEqual(len(on_stop), 11)
+        self.assertEqual(STEPS[-len(on_stop):], on_stop, 'the on_stop steps are the tail of the flow')
+        self.assertFalse([s for s in STEPS if s.get('on_stop') and s['checks'] != ['cleanup']])
+        self.assertIn('on_stop', FLOW['rules']['on_stop'])
+
+    def test_scripts_drive_only_inside_the_car(self):
+        for name, script in SCRIPTS.items():
+            sequence = script.get('setup', []) + script.get('loop', []) + script.get('teardown', [])
+            seated = False
+            for step in sequence:
+                if step['op'] == 'drive.enter':
+                    seated = True
+                elif step['op'] == 'drive.exit':
+                    seated = False
+                elif step['op'] == 'drive.route':
+                    self.assertTrue(seated, f'{name}: drive.route outside the car')
+                elif step['op'] == 'ft.teleport':
+                    self.assertFalse(seated, f'{name}: teleport while driving')
+            if name == 'S-session':
+                self.assertFalse(seated, 'S-session leaves the car before the loop repeats')
 
 
 class CliTests(unittest.TestCase):

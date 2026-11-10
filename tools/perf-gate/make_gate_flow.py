@@ -56,7 +56,7 @@ OPS = {
     'sampler.stop': ['RIG-PRIORITY'],
     'process.launch': ['rig flow run'], 'process.stop': ['rig flow run'],
     'modset.apply': ['RIG-MODSET'], 'modset.restore': ['RIG-MODSET'],
-    'pcconfig.apply': ['RIG-PCCONFIG'], 'pcconfig.restore': ['RIG-PCCONFIG'],
+    'pcconfig.record': ['RIG-PCCONFIG'], 'pcconfig.apply': ['RIG-PCCONFIG'], 'pcconfig.restore': ['RIG-PCCONFIG'],
     'fixture.produce': ['produce_fixture.py'], 'fixture.shops': ['RIG-SHOPFIX'], 'fixture.stress': ['RIG-PCFIX'],
     'fixture.car': ['RIG-DRIVE'], 'fixture.anchors': ['FT state', 'RIG-VIEW screen_pos'],
     'fixture.copy': ['rig flow run'], 'fixture.hash': ['rig flow run'], 'fixture.remove_copies': ['rig flow run'],
@@ -77,16 +77,20 @@ OPS = {
     'ui.key': ['RIG-UI-SCRIPT'], 'ui.click': ['RIG-UI-SCRIPT'], 'ui.open_screen': ['RIG-UI-SCRIPT'],
     'shop.edit_price': ['RIG-SHOPEDIT'],
     'time_machine.skip': ['RIG-WEEKS time_machine'],
-    'window.receipts': ['rig flow run'], 'rig.restore_files': ['rig flow run'],
+    'window.receipts': ['rig flow run'], 'rig.restore_files': ['rig flow run'], 'rig.lease': ['rig flow run'],
+    'native.load_done': ['FT state'],
     'host.check_scopes': [], 'host.assemble_export': [], 'host.analyze': [], 'host.attribute': [],
 }
 
-LOAD_OPS = {'process.launch', 'ft.load', 'fixture.produce', 'fixture.stress'}
+PREP_AT = 'day 3 00:30'
+LOAD_OPS = {'process.launch', 'ft.load', 'fixture.stress'}
 START_OPS = {'trace.start', 'probe.measure_start'}
 SAVE_OPS = {'ft.save'}
 WINDOW_GROUP = 'gate-matrix'
 F2D_COMMIT = 'ece4878'  # F2d #169: cars follow the traffic kernel
 I1_FIELDS = ['logical_population', 'business_load', 'calendar_pace', 'observed_body_load']
+# Header fields observed only while measuring; required when each export is assembled, not at preflight.
+OBSERVED_FIELDS = ['observed_body_load']
 
 
 class FlowError(Exception):
@@ -143,8 +147,10 @@ class Flow:
         self.min_clean = w['min_clean_real_seconds']
         self.warmup = w['warmup_real_seconds']
         planned = self.min_clean * (1 + fixtures['window_margin_fraction'])
-        # Game span chosen so the declared unheld pace covers the planned real time; rounding guards float noise.
-        self.span = math.ceil(round(planned / pace['real_seconds_per_game_minute'], 6))
+        # Game span chosen so even a build at fast_pace_fraction of the declared real seconds per game minute covers
+        # the planned real time; rounding guards float noise.
+        self.fast_pace = pace['real_seconds_per_game_minute'] * fixtures['fast_pace_fraction']
+        self.span = math.ceil(round(planned / self.fast_pace, 6))
         self.planned = round(self.span * pace['real_seconds_per_game_minute'], 3)
         self.abort_after = round(self.planned * fixtures['abort_after_planned_fraction'], 3)
         self.lead = fixtures['checkpoint_lead_game_minutes']
@@ -174,19 +180,21 @@ class Flow:
         self.process = self.process_count
         self.window_in_process = 0
         self.armed = False
+        # Candidates always apply the complete declared config, so a profile left at other values cannot leak in.
+        rows = dict(self.fixtures['pc_config_defaults'], **(pc_config or {})) if build == 'candidate' else 'n/a'
         self.process_info[self.process] = dict(build=build, fixture=fixture, settings=settings,
-                                               pc_config=pc_config or {}, checks=list(checks))
+                                               pc_config=rows, checks=list(checks))
         mods = ('declared mod set with PersistentCity and the F4b probe' if build == 'candidate'
                 else 'declared mod set without PersistentCity, with the F4b probe and pinned 0Harmony.dll')
         self.add('modset.apply', checks, dict(set=mods), build)
-        if pc_config:
-            self.add('pcconfig.apply', checks, dict(rows=pc_config), build)
+        if build == 'candidate':
+            self.add('pcconfig.apply', checks, dict(rows=rows), build)
         self.add('process.launch', checks, dict(flags=['-agent-tests', '-rig-test'], profile='isolated Agent Tests'), build)
         self.add('autosave.verify_off', checks, dict(after='launch'), build)
         self.add('priority.high', checks, {}, build)
         self.add('settings.apply_readback', checks, dict(self.fixtures['declared_settings'][settings], focused=True), build)
         if build == 'candidate':
-            self.add('ft.state', checks, dict(record='pc_config keys in effect'), build)
+            self.add('ft.state', checks, dict(record='pc_config keys in effect', expect=rows), build)
 
     def end_process(self, checks):
         build = self.process_info[self.process]['build']
@@ -194,8 +202,6 @@ class Flow:
             self.add('probe.disarm', checks, {}, build)
             self.armed = False
         self.add('process.stop', checks, {}, build)
-        if self.process_info[self.process]['pc_config']:
-            self.add('pcconfig.restore', checks, dict(rows='declared defaults'), build)
         self.process = None
 
     def load(self, checks, fixture, minute, factor):
@@ -208,6 +214,8 @@ class Flow:
         self.add('fixture.copy', checks, copy, build)
         self.add('ft.load', checks, dict(save=f'copy of {source}'), build)
         self.add('autosave.verify_off', checks, dict(after='load'), build)
+        self.add('native.load_done', checks, dict(expect='native load finished (the probe refuses to arm during a load)'),
+                 build)
         mode = 'candidate' if build == 'candidate' else 'reference'
         arm = dict(mode=mode, expected_scope_hash='${probe_manifest.expected_scope_hash}')
         if mode == 'reference':
@@ -227,24 +235,37 @@ class Flow:
             self.add('native.readiness', checks, dict(expect='native load finished; pace shim reports active'), build)
 
     # -- measurement -------------------------------------------------------------------------------------------
+    @staticmethod
+    def probe_label(wid):
+        """F4b accepts letters, digits, '-', '_' and '.', at most 64 characters."""
+        label = wid.replace('@', '_')
+        if len(label) > 64:
+            raise FlowError(f'probe label too long: {label}')
+        return label
+
     def _open(self, checks, wid, build, trace=True, probe=True):
         """Receipts immediately before a window or segment starts, then its start steps."""
         self.add('autosave.verify_off', checks, dict(before='window'), build, wid)
-        self.add('save_epoch.read', checks, dict(record='SaveEpochDiagnostics.sequence at start'), build, wid)
+        if build == 'candidate':
+            # SaveEpochDiagnostics is a Persistent City projection; the reference uses the probe's save counter.
+            self.add('save_epoch.read', checks, dict(record='SaveEpochDiagnostics.sequence at start'), build, wid)
         self.add('sampler.read', checks, dict(expect='no task-owned or foreign dotnet build or test active'), build, wid)
         self.add('settings.readback', checks, dict(expect='High priority, focused, declared resolution, preset, cap, vsync'),
                  build, wid)
         if trace:
-            self.add('trace.start', checks, dict(window=wid), build, wid)
+            self.add('trace.start', checks, dict(window=self.probe_label(wid)), build, wid)
         if probe:
-            self.add('probe.measure_start', checks, dict(window=wid), build, wid)
+            self.add('probe.measure_start', checks, dict(window=self.probe_label(wid)), build, wid)
 
     def _close(self, checks, wid, build, trace=True, probe=True):
         if probe:
             self.add('probe.measure_stop', checks, {}, build, wid)
+            self.add('probe.status', checks, dict(expect=dict(saves_in_window=0, scene_events_in_window=0),
+                                                  note='native onSaveGame counter, reset at measure-start'), build, wid)
         if trace:
             self.add('trace.stop', checks, {}, build, wid)
-        self.add('save_epoch.read', checks, dict(expect='sequence unchanged since window start'), build, wid)
+        if build == 'candidate':
+            self.add('save_epoch.read', checks, dict(expect='sequence unchanged since window start'), build, wid)
         self.add('sampler.read', checks, dict(expect='no dotnet activity during the window'), build, wid)
         if probe:
             self.add('probe.page', checks, dict(sections=['frames', 'ticks', 'holds', 'calls', 'diagnostics', 'scopes']),
@@ -272,7 +293,8 @@ class Flow:
         return step
 
     def window(self, checks, condition, script, arm, repetition, fixture, start_minute, factor, group=WINDOW_GROUP,
-               min_clean=None, game_span=None, native_speed=1, prime=False, kind='window', gate_start=True):
+               min_clean=None, game_span=None, native_speed=1, prime=False, kind='window', gate_start=True,
+               matched=False):
         """One measured window. With prime=True this is the discarded first window of the process."""
         build = self.process_info[self.process]['build']
         first = self.window_in_process == 0
@@ -283,6 +305,8 @@ class Flow:
                f'{condition}.{script}.{arm}.{build}.r{repetition}')
         if any(w['id'] == wid for w in self.windows):
             raise FlowError(f'duplicate window id {wid}')
+        # The window's speed is set first, so warm-up and the start-minute gate run at the measured pace.
+        self.add('ft.time', checks, dict(speed=native_speed), build, wid, phase='setup')
         for s in self._script_steps(script, 'setup', build):
             self.add(s['op'], checks, s.get('args'), build, wid, phase='setup')
         self.ready(checks)
@@ -292,16 +316,20 @@ class Flow:
             self.add('wait.until_game_minute', checks,
                      dict(minute=start_minute, at=hhmm(start_minute), abort_if_past_by_minutes=1), build, wid,
                      phase='warmup')
-        self.add('ft.time', checks, dict(speed=native_speed), build, wid, phase='warmup')
         self._open(checks, wid, build)
         if prime:
             until = dict(all=[dict(real_seconds_at_least=self.fixtures['prime_window_real_seconds'])])
             clean_floor = None
         else:
             clean_floor = min_clean or self.min_clean
-            until = dict(all=[dict(clean_real_seconds_at_least=clean_floor)])
-            if game_span:
-                until['all'].append(dict(game_minutes_since_start_at_least=game_span))
+            if matched:
+                # Both builds of a matched pair stop at the same game minute (P4 needs spans within 1 minute).
+                until = dict(all=[dict(game_minutes_since_start_at_least=game_span)],
+                             short_if_clean_real_seconds_below=clean_floor)
+            else:
+                until = dict(all=[dict(clean_real_seconds_at_least=clean_floor)])
+                if game_span:
+                    until['all'].append(dict(game_minutes_since_start_at_least=game_span))
             planned = max(clean_floor, game_span * self.fixtures['declared_pace']['real_seconds_per_game_minute']
                           / native_speed if game_span else 0)
             until['abort_after_real_seconds'] = round(max(self.abort_after, planned * 2), 3)
@@ -314,7 +342,8 @@ class Flow:
         receipts = list(self.contract['receipts']['required'])
         na = self.contract['receipts']['reference_may_be_na'] if build == 'reference' else []
         self.add('window.receipts', checks, dict(required=receipts, may_be_na=na), build, wid)
-        labels = dict(id=wid, source='native', condition=condition, script=script, build=build,
+        labels = dict(id=wid, probe_label=self.probe_label(wid), source='native', condition=condition, script=script,
+                      build=build,
                       arm=arm if not prime else 'primary', repetition=repetition, native_speed=native_speed,
                       checkpoint_minute=start_minute, first_in_process=first,
                       game_span_minutes='${fill}', clean_real_seconds='${fill}', aborted='${fill}',
@@ -323,7 +352,8 @@ class Flow:
             labels['reference_pace_ratio'] = '${fill}'
         entry = dict(id=wid, kind='prime' if prime else kind, checks=list(checks), process=self.process, build=build,
                      fixture=fixture, script=script, export_group=group, prime=prime, first_in_process=first,
-                     min_clean_real_seconds=clean_floor, game_span_minutes=game_span, factor=factor, labels=labels)
+                     min_clean_real_seconds=clean_floor, game_span_minutes=game_span, factor=factor, matched=matched,
+                     labels=labels)
         self.windows.append(entry)
         return entry
 
@@ -363,7 +393,18 @@ def preflight(f, movement_state):
     f.add('autosave.verify_off', c, dict(after='disable'))
     f.add('settings.apply_readback', c, dict(f.fixtures['declared_settings']['primary'], target='isolated profile preferences',
                                              note='every launch sets and reads these back again with focus'))
+    f.add('pcconfig.record', c, dict(record='original PC config of the isolated profile, once'))
     f.add('sampler.start', c, dict(sampler='dotnet contamination sampler, whole batch'))
+
+
+def produce_fixtures(f):
+    """Producers that own their lifecycle run with no player running and no flow lease held."""
+    for name, spec in f.fixtures['fixtures'].items():
+        produce = spec.get('produce')
+        if produce:
+            f.add('fixture.produce', ['fixtures'], dict(produce, fixture=name), None, requires=dict(
+                player_running=False, flow_lease_held=False))
+    f.add('rig.lease', ['fixtures'], dict(action='acquire', note='after every producer has released its own lease'))
 
 
 def prepare_fixtures(f):
@@ -376,12 +417,34 @@ def prepare_fixtures(f):
             f.add(s['op'], c, s.get('args'), 'candidate', for_checks=s.get('for_checks'))
             if s['op'] in LOAD_OPS:
                 f.add('autosave.verify_off', c, dict(after=s['op']), 'candidate')
+        survey = spec.get('survey')
+        if survey:
+            # Survey on a disposable copy, then reload the preparation save so checkpoints go forward in time.
+            prep = f'{name}@prep'
+            f.add('ft.save', c, dict(save=prep, at=PREP_AT, outside_windows=True), 'candidate')
+            f.add('fixture.copy', c, dict(source=prep, disposable=True, never_save=True), 'candidate')
+            f.add('ft.load', c, dict(save=f'copy of {prep}'), 'candidate')
+            f.add('autosave.verify_off', c, dict(after='load'), 'candidate')
+            f.add('ft.time', c, dict(advance_to=survey['at'], speed=3), 'candidate')
+            f.add('fixture.anchors', c, dict(anchors=survey['anchors'], survey_game_minutes=survey['game_minutes'],
+                                             rule=survey['rule']), 'candidate')
+            f.add('ft.load', c, dict(save=prep), 'candidate')
+            f.add('autosave.verify_off', c, dict(after='load'), 'candidate')
         for minute in f.checkpoints(name):
-            f.add('ft.time', c, dict(advance_to=f'day 3 {hhmm(minute)}', speed=3), 'candidate')
-            f.add('ft.save', c, dict(save=f.checkpoint_name(name, minute), outside_windows=True), 'candidate')
+            at = f'day 3 {hhmm(minute)}'
+            f.add('ft.time', c, dict(advance_to=at, speed=3), 'candidate')
+            f.add('ft.save', c, dict(save=f.checkpoint_name(name, minute), at=at, outside_windows=True), 'candidate')
             f.add('fixture.hash', c, dict(save=f.checkpoint_name(name, minute), record='fixtures[].provenance_hash'),
                   'candidate')
         f.end_process(c)
+
+
+def warm(f, checks, speed=1):
+    """Warm-up after a reload outside window(): speed first, then readiness and 60 s discarded."""
+    build = f.process_info[f.process]['build']
+    f.add('ft.time', checks, dict(speed=speed), build)
+    f.ready(checks)
+    f.add('wait.real', checks, dict(seconds=f.warmup, discard=True), build)
 
 
 def g2_g3(f):
@@ -392,8 +455,7 @@ def g2_g3(f):
     f.load(c, 'FT-F4-Declared', start - f.lead, factor)
     f.window(c, 'G2', 'S-stationary', 'primary', 0, 'FT-F4-Declared', start, factor, group='g2-g3', prime=True)
     f.load(c, 'FT-F4-Declared', start - f.lead, factor)
-    f.ready(c)
-    f.add('wait.real', c, dict(seconds=f.warmup, discard=True), 'candidate')
+    warm(f, c)
     for i in (1, 2):
         f.segment(c, f'G2.armed.{i}', 'g2-g3', dict(real_seconds_at_least=120))
         f.add('probe.disarm', c, {}, 'candidate')
@@ -404,8 +466,7 @@ def g2_g3(f):
         f.armed = True
     c = ['G3']
     f.load(c, 'FT-F4-Declared', start - f.lead, factor)
-    f.ready(c)
-    f.add('wait.real', c, dict(seconds=f.warmup, discard=True), 'candidate')
+    warm(f, c)
     f.segment(c, 'G3.alignment', 'g2-g3', dict(clean_real_seconds_at_least=f.min_clean), script='S-path')
     f.end_process(c)
 
@@ -436,7 +497,8 @@ def abab(f, condition, window_name, scripts, arm, repetitions, fixture, factor, 
                 if build not in f.scripts[script]['builds']:
                     continue
                 f.load(checks_of(script), fixture, start - f.lead, factor)
-                f.window(checks_of(script), condition, script, arm, rep, fixture, start, factor, game_span=f.span)
+                f.window(checks_of(script), condition, script, arm, rep, fixture, start, factor, game_span=f.span,
+                         matched='reference' in builds)
             f.end_process(process_checks)
 
 
@@ -462,23 +524,20 @@ def g9(f):
     f.load(c, base, minute, cfg['GameClockFactor'])
     f.window(c, 'G9', 'S-stationary', 'primary', 0, fixture, minute, cfg['GameClockFactor'], group='g9', prime=True)
     f.load(c, base, minute, cfg['GameClockFactor'])
-    f.ready(c)
-    f.add('wait.real', c, dict(seconds=f.warmup, discard=True), 'candidate')
+    warm(f, c)
     for speed, minutes in ((1, 60), (2, 60), (3, 60), (6, 240)):
         f.segment(c, f'G9a.speed{speed}', 'g9', dict(game_minutes_since_start_at_least=minutes), native_speed=speed)
     f.segment(c, 'G9a.time-machine-120', 'g9', dict(game_minutes_since_start_at_least=120), trace=False,
               op_steps=[('time_machine.skip', dict(game_minutes=120))])
     f.load(c, base, minute, cfg['GameClockFactor'])
-    f.ready(c)
-    f.add('wait.real', c, dict(seconds=f.warmup, discard=True), 'candidate')
+    warm(f, c)
     f.segment(c, 'G9b.day-speed3', 'g9', dict(game_minutes_since_start_at_least=1440), native_speed=3)
     f.end_process(c)
     f.launch(c, 'reference', fixture)
     f.load(c, base, minute, cfg['GameClockFactor'])
     f.window(c, 'G9', 'S-stationary', 'primary', 0, fixture, minute, cfg['GameClockFactor'], group='g9', prime=True)
     f.load(c, base, minute, cfg['GameClockFactor'])
-    f.ready(c)
-    f.add('wait.real', c, dict(seconds=f.warmup, discard=True), 'reference')
+    warm(f, c)
     f.segment(c, 'G9c.reference-day-speed3', 'g9', dict(game_minutes_since_start_at_least=1440), native_speed=3)
     f.end_process(c)
 
@@ -552,7 +611,7 @@ def g11(f):
     f.add('log.collect', c, dict(collect=['Player.log', 'RLO frame-diagnostic lines', 'fix-128 summary lines']))
     groups = sorted({w['export_group'] for w in f.windows})
     for g in groups:
-        f.add('host.assemble_export', c, dict(group=g, format='perf-gate-export/v1',
+        f.add('host.assemble_export', c, dict(group=g, format='perf-gate-export/v1', require_header=OBSERVED_FIELDS,
                                               inputs=['run_header', 'window labels', 'probe pages', 'trace CSV',
                                                       'measurements (S5, L1-L4, R1)']))
         f.add('host.attribute', c, dict(group=g, command='F4c attribute.py over presented and whole-frame intervals >= 50 ms',
@@ -562,16 +621,19 @@ def g11(f):
 
 
 def cleanup(f):
+    """Cleanup runs at the end and also when the batch stops early (header.require, an abort or an error)."""
     c = ['cleanup']
-    f.add('sampler.stop', c)
-    f.add('modset.restore', c, dict(to='original mod DLL set'))
-    f.add('pcconfig.restore', c, dict(rows='original PC config'))
-    f.add('settings.restore', c, dict(to='original resolution, preset, vsync, cap'))
-    f.add('autosave.restore', c, dict(to='original setting recorded in G1'))
-    f.add('autosave.verify_restored', c)
-    f.add('fixture.remove_copies', c)
-    f.add('fixture.verify_inputs', c)
-    f.add('rig.restore_files', c, dict(restore='preexisting rig files and preferences'))
+    if f.process is not None:
+        f.end_process(c)
+    for op, args in (('process.stop', dict(note='no-op when no player is running')), ('sampler.stop', {}),
+                     ('modset.restore', dict(to='original mod DLL set')),
+                     ('pcconfig.restore', dict(rows='original PC config recorded in G1')),
+                     ('settings.restore', dict(to='original resolution, preset, vsync, cap')),
+                     ('autosave.restore', dict(to='original setting recorded in G1')), ('autosave.verify_restored', {}),
+                     ('fixture.remove_copies', {}), ('fixture.verify_inputs', {}),
+                     ('rig.restore_files', dict(restore='preexisting rig files and preferences')),
+                     ('rig.lease', dict(action='release'))):
+        f.add(op, c, args, on_stop=True)
 
 
 def run_header(f, movement_state):
@@ -590,13 +652,16 @@ def run_header(f, movement_state):
         'rig_capabilities': by_op('rig.identity'),
         'logical_population': by_op('ft.console', 'pc population manifest'),
         'business_load': by_op('fixture.shops'),
-        'calendar_pace': by_op('probe.page'),
+        'calendar_pace': None,
         'observed_body_load': by_op('script.run', 'S-path'),
     }
     header = {}
     for field in f.contract['header']['required'] + I1_FIELDS:
-        header[field] = dict(value='${fill}', filled_by=filled[field])
-    header['contract_version'] = dict(value=f.contract['contract'], filled_by=None)
+        header[field] = dict(value='${fill}', filled_by=filled[field],
+                             required_at='export' if field in OBSERVED_FIELDS else 'preflight')
+    header['contract_version'].update(value=f.contract['contract'])
+    header['calendar_pace'].update(value=f.fixtures['declared_pace'], measured_by=by_op('probe.page'),
+                                   note='declared pace at preflight; measured pace per window from probe clock reads')
     header['movement_state']['value'] = movement_state or '${fill}'
     header['machine']['fields'] = f.contract['header']['machine_fields']
     header['settings_read_back']['fields'] = f.contract['header']['settings_fields']
@@ -661,9 +726,11 @@ def estimate_real_seconds(f):
 def build_flow(fixtures, scripts, contract, inputs_sha256, movement_state=None):
     f = Flow(fixtures, scripts, contract)
     preflight(f, movement_state)
+    produce_fixtures(f)
     prepare_fixtures(f)
-    f.add('header.require', ['G1'], dict(fields=contract['header']['required'] + I1_FIELDS,
-                                         on_missing='stop the batch before timing'))
+    f.add('header.require', ['G1'], dict(fields=[x for x in contract['header']['required'] + I1_FIELDS
+                                                 if x not in OBSERVED_FIELDS],
+                                         on_missing='stop the batch before timing; run the on_stop steps'))
     g2_g3(f)
     matrix(f)
     g9(f)
@@ -688,6 +755,8 @@ def build_flow(fixtures, scripts, contract, inputs_sha256, movement_state=None):
                       window_abort_after_real_seconds=f.abort_after, checkpoint_lead_game_minutes=f.lead,
                       order='ABAB per condition: repetition r runs reference then candidate',
                       first_window_per_process='discarded prime window',
+                      matched_stop='matched windows stop at the game span only; a window below the clean floor is short',
+                      on_stop='if the batch stops early, run every step with on_stop true, in order',
                       autosave='recorded and disabled in G1; verified off after every launch and load and before every window; restored at cleanup',
                       saves='only in fixture preparation, outside windows; the reference arm never saves',
                       excluded=dict(G12='save-specific segment, requested separately (F7 plan section 7); never in this flow')),
