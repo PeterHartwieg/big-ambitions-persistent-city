@@ -173,8 +173,9 @@ namespace PersistentCity.Persistence
         private bool poisoned;
 
         /// <param name="initializing">Rule 5: bound when initialization starts. Until <see cref="CompleteInitialization"/>
-        /// every callback is refused with both markers; a detach before completion writes nothing, because the
-        /// loaded payload/marker pair still describes the city and no PC state was attached.</param>
+        /// an otherwise clean callback is deferred: it writes nothing, does not poison the epoch and does not stop
+        /// Persistent City (a new city's native creation save runs here). A detach before completion writes nothing
+        /// either, because the loaded payload/marker pair still describes the city and no PC state was attached.</param>
         public SaveEpochBinding(object instance, IDictionary<string, string> data, long lastSequence, bool initializing = false)
         {
             Initializing = initializing;
@@ -190,6 +191,7 @@ namespace PersistentCity.Persistence
         public bool Initializing { get; private set; }
         public int Published { get; private set; }
         public int Refused { get; private set; }
+        public int Deferred { get; private set; }
         public string LastRefusal { get; private set; } = "";
 
         public bool BoundTo(object? current) => !Detached && ReferenceEquals(current, instance);
@@ -197,17 +199,22 @@ namespace PersistentCity.Persistence
         /// <summary>
         /// Starts one callback. Null means the callback belongs to another save object and nothing may be written.
         /// A re-entrant or poisoned callback is returned already refused, with both failure markers written.
+        /// A clean callback while initializing is returned deferred: no sequence, no marker, no snapshot.
         /// </summary>
         public SaveEpochTicket? Begin(object? current, IDictionary<string, string>? currentData, bool unitOnStack)
         {
             if (!BoundTo(current)) return null;
-            var ticket = new SaveEpochTicket(this, ++Sequence);
             string? refusal = !ReferenceEquals(currentData, data) ? "The save object's mod data dictionary was replaced."
                 : unitOnStack ? "A Persistent City unit was executing when the native save started."
                 : Saving ? "A native save started inside another Persistent City save callback."
                 : poisoned ? "An earlier save epoch of this session failed."
-                : Initializing ? "Persistent City initialization has not completed."
                 : null;
+            if (refusal == null && Initializing)
+            {
+                Deferred++;
+                return new SaveEpochTicket(this, Sequence) { Deferral = "Persistent City initialization has not completed." };
+            }
+            var ticket = new SaveEpochTicket(this, ++Sequence);
             if (refusal != null)
             {
                 ticket.Refusal = refusal; ticket.Reentrant = unitOnStack || Saving;
@@ -302,11 +309,13 @@ namespace PersistentCity.Persistence
         public long Sequence { get; }
         /// <summary>Non-null when the callback was refused at entry (re-entrancy, replaced data or poisoned epoch).</summary>
         public string? Refusal { get; internal set; }
+        /// <summary>Non-null when the callback arrived while initializing: nothing was written and the session goes on.</summary>
+        public string? Deferral { get; internal set; }
         /// <summary>The refusal happened while a unit or another callback was on the stack.</summary>
         public bool Reentrant { get; internal set; }
     }
 
-    public enum SaveEpochResult { NotBound, Published, Refused, Reentrant }
+    public enum SaveEpochResult { NotBound, Published, Refused, Reentrant, Deferred }
 
     /// <summary>What the runtime observed and wrote inside one callback.</summary>
     public readonly struct SaveEpochCapture
@@ -334,6 +343,12 @@ namespace PersistentCity.Persistence
             {
                 ticket = binding?.Begin(current, currentData, unitOnStack);
                 if (ticket == null) return SaveEpochResult.NotBound;
+                if (ticket.Deferral != null)
+                {
+                    // Never opened: End and Fail below ignore it. The native save keeps whatever modData held.
+                    Report(report, "Persistent City skipped the save during initialization; no Persistent City state was written: " + ticket.Deferral);
+                    return SaveEpochResult.Deferred;
+                }
                 if (ticket.Refusal != null)
                 {
                     // Both markers are already written. If a unit or an outer callback is still on the
