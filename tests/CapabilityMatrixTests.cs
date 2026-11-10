@@ -25,9 +25,27 @@ namespace PersistentCity.Tests
         public void EveryCoreArmPasses()
         {
             var arms = CapabilityMatrix.Run(1, output.WriteLine);
-            Assert.Equal(new[] { "control", "presentation off vs never present", "food.checkout.shop off", "required refused", "rlo.donor transient window" },
-                arms.Select(a => a.Name));
+            Assert.Equal(new[] { "control", "presentation off vs never present", "food.checkout.shop off", "required refused", "rlo.donor transient window",
+                "research off vs on", "food.dynamic off", "rlo.roadspeeds waiting" }, arms.Select(a => a.Name));
             Assert.All(arms, a => Assert.True(a.Passed, a.Name + ": " + a.Detail));
+        }
+
+        /// <summary>Sol-r1-4: every optional or required-when-present capability names the arm that fails it; a matrix arm
+        /// named in the map exists, and an entry outside the matrix names an existing test.</summary>
+        [Fact]
+        public void EveryOptionalCapabilityHasAnArm()
+        {
+            var names = CapabilityMatrix.Run(1).Select(a => a.Name).ToHashSet(StringComparer.Ordinal);
+            var tests = typeof(CapabilityMatrixTests).Assembly.GetTypes()
+                .SelectMany(t => t.GetMethods().Where(m => m.GetCustomAttributes().Any(x => x is FactAttribute)).Select(m => t.Name + "." + m.Name))
+                .ToHashSet(StringComparer.Ordinal);
+            foreach (var definition in NativeCapabilities.All.Where(d => d.Requirement != CapabilityRequirement.Required))
+            {
+                Assert.True(CapabilityMatrix.Coverage.TryGetValue(definition.Id, out var arm), definition.Name + " has no arm");
+                var test = Regex.Match(arm!, @"\b(?<check>\w+Tests\.\w+)\b");
+                Assert.True(test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal)),
+                    definition.Name + ": " + arm);
+            }
         }
 
         private static long Day2At(int hour, int minute = 0) => 2 * 1440 + hour * 60 + minute;
