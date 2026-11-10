@@ -20,11 +20,12 @@ namespace PersistentCity.Tests;
 [Collection(StreetFoodHooks.Collection)]
 public sealed class F9IntegratedCityTests : IClassFixture<F9IntegratedCityTests.Runs>
 {
-    /// <summary>Every run, computed once per size and arm and shared by the facts.</summary>
+    /// <summary>Every run, computed once per size and arm and shared by the facts of both F9 city classes (static: the F9f
+    /// body tests compare with the same reference and bodies-off runs).</summary>
     public sealed class Runs
     {
-        private readonly Dictionary<string, CityCheckpoint> checkpoints = new(StringComparer.Ordinal);
-        private readonly Dictionary<(string, string), CityRun> runs = new();
+        private static readonly Dictionary<string, CityCheckpoint> checkpoints = new(StringComparer.Ordinal);
+        private static readonly Dictionary<(string, string), CityRun> runs = new();
         internal CityCheckpoint Checkpoint(string size)
         {
             lock (checkpoints)

@@ -20,7 +20,7 @@ public enum CityFault { None, DuplicateSale, SkippedInput, ResearchChargeWithout
 
 /// <summary>One arm of the scenario. The reference drains every native minute synchronously (no frame loop, synchronous
 /// planner); every other arm runs F1's frame loop with F5h's admitted planner at its cadence and budget.</summary>
-internal sealed record CityArm(string Name, bool Reference, int Fps = 60, int Budget = 16, double Milliseconds = 2, bool Skip = false,
+internal sealed partial record CityArm(string Name, bool Reference, int Fps = 60, int Budget = 16, double Milliseconds = 2, bool Skip = false,
     bool Reloads = false, CityFault Fault = CityFault.None, int Days = CityScenario.Days)
 {
     public static CityArm ReferenceArm => new("reference", true);
@@ -34,7 +34,7 @@ internal sealed record CityArm(string Name, bool Reference, int Fps = 60, int Bu
 
 /// <summary>What one arm produced: the ordered event ledger, the save at every drained day boundary, the native orders and
 /// vendor sales, and the facts the tests read.</summary>
-internal sealed class CityRun
+internal sealed partial class CityRun
 {
     public string Arm = "";
     public readonly List<string> Ledger = new();
@@ -71,7 +71,7 @@ internal sealed class ResearchFact
 /// drained, the scenario runs the checkpoint oracles (hourly), publishes the inputs stamped at that minute (F6a's
 /// <see cref="InputSchedule"/>), advances the Street Food stand-in, places research orders and, at native midnight, runs
 /// the agency bill. Reload arms save and reload into a new simulator at each <see cref="CityReload"/> state.</summary>
-internal sealed class CityScenario
+internal sealed partial class CityScenario
 {
     public const int Days = 3;
     private readonly CityCheckpoint checkpoint;
@@ -143,6 +143,7 @@ internal sealed class CityScenario
 
     private void Reload(CityReload reason)
     {
+        BodiesBeforeSave();
         native.Vendor!.CompleteForSave();
         // The miss counter belongs to the simulator being replaced: keep it for the whole run.
         missesBeforeReload += city.HistoricalClockMisses;
@@ -154,6 +155,7 @@ internal sealed class CityScenario
         // A native save carries the receipt dictionary next to the population bytes.
         native.Receipts = new Dictionary<string, string>(native.Receipts, StringComparer.Ordinal);
         Start(read.State!);
+        BodiesAfterLoad();
         while (native.Vendor!.Prepare((long)Math.Floor(clock))) { }
         // The fill-unit counter belongs to the simulator, so after the load the pending fill is the state that must survive.
         bool kept = reason == CityReload.BetweenFillUnits ? city.PopulationFillPending : reason == CityReload.DayBoundary || Holds(reason);
@@ -189,7 +191,12 @@ internal sealed class CityScenario
         if (city.View.Minute < CityFixture.StartMinute + 30) return;
         foreach (var state in new[] { CityReload.UncertainReceipt, CityReload.ResearchPendingBilling,
                      CityReload.VendorLeaseOpen, CityReload.HeldMealDecision, CityReload.MidJourney })
-            if (pendingReloads.Contains(state) && Holds(state)) { Reload(state); return; }
+        {
+            if (!pendingReloads.Contains(state) || !Holds(state)) continue;
+            bool ready = true;
+            BodiesReadyToReload(state, ref ready);
+            if (ready) { Reload(state); return; }
+        }
     }
 
     // ---- Native minute boundary ----
@@ -203,6 +210,7 @@ internal sealed class CityScenario
         if (epoch % 60 == 0) Checkpoint(epoch);
         if (epoch % 1440 == 0)
         {
+            BodiesBeforeSave();
             run.DaySaves.Add((epoch, SaveCodec.Write(city.State)));
             dayReloadDue = arm.Reloads;
         }
@@ -413,6 +421,7 @@ internal sealed class CityScenario
             int budget = skipping ? 128 : arm.Budget;
             double milliseconds = skipping ? 16 : arm.Milliseconds;
             double Elapsed() => (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+            BodiesBeforeAdvance(skipping, allowed);
             for (int unit = 0; unit < budget; unit++)
             {
                 if (city.PlanningPending)
@@ -429,6 +438,7 @@ internal sealed class CityScenario
                 if (advanced.CaughtUp || Elapsed() >= milliseconds) break;
             }
             city.SynchronizeSnapshot();
+            BodiesAfterFrame(nativeMinute, skipping);
             MaybeReload();
         }
     }
@@ -448,5 +458,15 @@ internal sealed class CityScenario
         CityOracles.Schedule(schedule, published, end + 1, arm.Name + " at the end");
         run.Final = SaveCodec.Write(city.State);
         run.State = city.State;
+        BodiesFinish();
     }
+
+    // ---- Presentation bodies (F9f, CityMovementArms.cs); no-ops for an arm without bodies ----
+
+    partial void BodiesBeforeAdvance(bool hidden, float gameMinutes);
+    partial void BodiesAfterFrame(double nativeMinute, bool hidden);
+    partial void BodiesBeforeSave();
+    partial void BodiesAfterLoad();
+    partial void BodiesReadyToReload(CityReload state, ref bool ready);
+    partial void BodiesFinish();
 }
