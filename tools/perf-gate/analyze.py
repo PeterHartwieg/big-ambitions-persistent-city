@@ -362,10 +362,12 @@ def stalls_of(window, clean, contract):
     for i, v in enumerate(window.get('presented_ms') or []):
         if v >= limit:
             out.append(dict(window=window['id'], kind='presented', index=i, interval_ms=v, classes=classes.get(str(i), ['unclassified (F4c)'])))
+    # F4c hook: attribute.py writes whole-frame classes keyed by probe frame number.
+    whole_classes = window.get('whole_frame_stall_classes') or {}
     for f in clean:
         if f['whole_frame_ms'] >= limit:
             out.append(dict(window=window['id'], kind='whole-frame', frame=f['frame'], interval_ms=f['whole_frame_ms'],
-                            mod_work_ms=f['mod_work_ms'], classes=['unclassified (F4c)']))
+                            mod_work_ms=f['mod_work_ms'], classes=whole_classes.get(str(f['frame']), ['unclassified (F4c)'])))
     return out
 
 
