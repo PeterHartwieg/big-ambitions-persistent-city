@@ -32,10 +32,34 @@ namespace PersistentCity.Runtime
                 catch (Exception error) { Debug.LogWarning("[Persistent City] hook conflict report unavailable: " + error.Message); }
                 return;
             }
+            // F8f: the transaction mechanism (or unsupported reason) of one scoped business, from the existing scope status.
+            if (action == "business" && detail.Length > 0) { BusinessMechanismCommand(detail); return; }
             if (action == "show" && NativeCapabilities.TryParse(detail, out var id))
             { Debug.Log("[Persistent City] capability show (read-only)\n" + capabilityReport.Show(CapabilitySnapshot.Build(ReadCapabilityInputs()), id)); return; }
-            Debug.LogWarning("[Persistent City] Unknown command. Use: pc capability status | pc capability hooks | pc capability show <id> ("
+            Debug.LogWarning("[Persistent City] Unknown command. Use: pc capability status | pc capability hooks | pc capability business <place> | pc capability show <id> ("
                 + string.Join(", ", NativeCapabilities.All.Select(d => d.Name)) + ")");
+        }
+
+        /// <summary>F8f: maps a place (or business ID) to its scope and reads NativeFoodMarket.ScopeStatus or the vendor
+        /// market's serving answer; Core picks the mechanism. Reads only.</summary>
+        private void BusinessMechanismCommand(string place)
+        {
+            var food = simulation?.State.Food;
+            if (failed || food == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
+            { Debug.LogWarning("[Persistent City] capability business unavailable: no active Persistent City food scope in this save."); return; }
+            var scope = food.Shops.FirstOrDefault(s => s.PlaceId == place) ?? food.Shops.FirstOrDefault(s => s.BusinessId == place);
+            if (scope == null) { Debug.LogWarning("[Persistent City] No scoped food business at " + place + "."); return; }
+            string status;
+            if (scope.Channel == FoodScopeChannel.Vehicle)
+            {
+                var vendors = vendorMarket;
+                var row = vendors?.Coordinator.Table.Rows.FirstOrDefault(r => r.BusinessId == scope.BusinessId);
+                status = vendors == null ? "vendor market not attached" : vendors.CanServe(scope.BusinessId) ? ""
+                    : row != null && row.Reason.Length > 0 ? row.Reason : vendors.Coordinator.Reason.Length > 0 ? vendors.Coordinator.Reason : "vehicle not serviceable now";
+            }
+            else status = foodMarket?.ScopeStatus(scope.PlaceId) ?? "food market not attached";
+            var verdict = TransactionMechanisms.ForBusiness(scope.Channel, scope.Products().ToArray(), status);
+            Debug.Log("[Persistent City] capability business (read-only)\n" + TransactionMechanisms.Describe(scope.PlaceId, scope.BusinessId, scope.Channel, verdict));
         }
 
         /// <summary>Plain copies of today's status members. Harmony owner queries read patch metadata only.</summary>
