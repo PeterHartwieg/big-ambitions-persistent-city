@@ -1,15 +1,15 @@
 {
   "schema": "persistentcity-acceptance-evidence-1",
   "machine": "windows-x64",
-  "runId": "20261110T131314Z-d23bb925",
+  "runId": "20261110T201123Z-b3e5a910",
   "profile": "full",
-  "startedUtc": "2026-11-10T13:13:14+00:00",
-  "finishedUtc": "2026-11-10T13:39:41+00:00",
-  "acceptanceSha256": "ce3e079173e3713e1e37dee895a0dd0285c6f66c73323fba3cdc9434155bbb77",
+  "startedUtc": "2026-11-10T20:11:23+00:00",
+  "finishedUtc": "2026-11-10T20:34:09+00:00",
+  "acceptanceSha256": "fc04d55943349e3389b1535471f1b3ebe8c71c34f2cb59cd399968bd2e36cde5",
   "provenance": {
     "source": {
-      "commit": "d23bb9256860833175568bb3481c8817bf07d716",
-      "branch": "codex/pc-f9h-first-acceptance-record",
+      "commit": "b3e5a9101fe065662c0baf3aedab01caa123773e",
+      "branch": "codex/pc-f9h-pc-record-at-merged-head-2",
       "dirty": false,
       "diffSha256": null,
       "untrackedFiles": 0
@@ -57,7 +57,7 @@
       }
     },
     "artifact": {
-      "persistentCityDllSha256": "f72508261b3ce3c5b83400610ab60ad5d5cb8ef56b4683e4a1bfd7c11616e85e"
+      "persistentCityDllSha256": "0f34e6e22e5157f7aed25b41fe8cb2af14727275cdea99fbf64a5bd5be476c2d"
     },
     "fixtures": [
       {
@@ -139,7 +139,7 @@
     ],
     "deviations": [],
     "notes": [
-      "native batch due: save-epoch has debt >= 3; native-save-contract has debt >= 3; buylive-sale-authority has debt >= 3; hourly-settlement has debt >= 3; native-shop-inputs has debt >= 3; agency-billing has debt >= 3; streetfood-bridge has debt >= 3; world-census has debt >= 3; physical-bodies has debt >= 3; price-weight-response has debt >= 3; native-staffed-throughput has debt >= 3"
+      "native batch due: save-epoch has debt >= 3; native-save-contract has debt >= 3; buylive-sale-authority has debt >= 3; hourly-settlement has debt >= 3; native-shop-inputs has debt >= 3; agency-billing has debt >= 3; streetfood-bridge has debt >= 3; world-census has debt >= 3; rlo-donor-contract has debt >= 3; physical-bodies has debt >= 3; price-weight-response has debt >= 3; native-staffed-throughput has debt >= 3"
     ],
     "nativeBatchDue": true,
     "staleNativeRows": [],
@@ -198,7 +198,7 @@
   },
   "nativeEvidence": {
     "status": "assessed",
-    "head": "d23bb9256860833175568bb3481c8817bf07d716",
+    "head": "b3e5a9101fe065662c0baf3aedab01caa123773e",
     "fingerprint": "steam-1331550-build-25482473",
     "batchDue": true,
     "batchDueReasons": [
@@ -210,6 +210,7 @@
       "agency-billing has debt >= 3",
       "streetfood-bridge has debt >= 3",
       "world-census has debt >= 3",
+      "rlo-donor-contract has debt >= 3",
       "physical-bodies has debt >= 3",
       "price-weight-response has debt >= 3",
       "native-staffed-throughput has debt >= 3"
@@ -265,17 +266,17 @@
       "class": "native",
       "required": true,
       "exit": 0,
-      "seconds": 5.925,
+      "seconds": 4.891,
       "verdict": "pass",
       "reason": "exit 0",
       "metrics": {
-        "childSeconds": 5.327,
-        "waitSeconds": 0.585,
+        "childSeconds": 4.335,
+        "waitSeconds": 0.542,
         "gameFingerprintSet": "steam-1331550-build-25482473",
-        "runnerOverheadSeconds": 0.013
+        "runnerOverheadSeconds": 0.014
       },
       "digests": {
-        "PersistentCity.dll": "f72508261b3ce3c5b83400610ab60ad5d5cb8ef56b4683e4a1bfd7c11616e85e",
+        "PersistentCity.dll": "0f34e6e22e5157f7aed25b41fe8cb2af14727275cdea99fbf64a5bd5be476c2d",
         "mscorlib.dll": "98c9b62133db5dd33b22bc6aab6f28e4f04f5b5be6559b28ba5c2738241434d0",
         "System.dll": "ace2dd6a7d534b581bf4a9d316e743d64508ca2135db73dbff0ddb9365fc454e",
         "System.Core.dll": "f1b33eb1ae8522edcf9ba4c2b85f532d4bab68bfa2a51527264bb61619bed4ea",
@@ -308,8 +309,8 @@
       "evidence": [
         {
           "path": "logs/build.log",
-          "sha256": "6df665ad5ea62a042533000984e6acc6c9e4b00ab5d77452e0947bc0bbb812ed",
-          "bytes": 444
+          "sha256": "665638bf97463ca2fe34f0312810bb7e87ba2d1269491c34cb1cf88cdb03902e",
+          "bytes": 447
         },
         {
           "path": "build.json",
@@ -323,30 +324,30 @@
       "class": "semantic",
       "required": true,
       "exit": 0,
-      "seconds": 436.252,
+      "seconds": 391.768,
       "verdict": "pass",
-      "reason": "4003 passed, 0 skipped",
+      "reason": "4128 passed, 0 skipped",
       "metrics": {
-        "childSeconds": 435.14,
-        "waitSeconds": 1.051,
-        "total": 4003,
-        "passed": 4003,
+        "childSeconds": 391.159,
+        "waitSeconds": 0.546,
+        "total": 4128,
+        "passed": 4128,
         "failed": 0,
         "skipped": 0,
         "failedTests": [],
-        "runnerOverheadSeconds": 0.061
+        "runnerOverheadSeconds": 0.063
       },
       "digests": {},
       "evidence": [
         {
           "path": "logs/unit.log",
-          "sha256": "5fbce02c5e8cdde8baaecc33b6dc53a61a919217b07aed907800825a03dbb2b2",
-          "bytes": 2260
+          "sha256": "e445a8eaa0f134e46fa0c06180e5b913cc7dd5cff8e46cacdf57a5236a51c77b",
+          "bytes": 2294
         },
         {
           "path": "trx/unit/unit.trx",
-          "sha256": "02551d49317a3a32ccc477d678efa22e53edfe904ef850c6e4723972df1e2a00",
-          "bytes": 6182204
+          "sha256": "25a540475d10843f54fc64d1b12c86fe68098900e312d21c24143f0e8a0e72ca",
+          "bytes": 6362520
         }
       ]
     },
@@ -355,7 +356,7 @@
       "class": "semantic",
       "required": true,
       "exit": null,
-      "seconds": 0.053,
+      "seconds": 0.052,
       "verdict": "pass",
       "reason": "8 passed, 0 skipped",
       "metrics": {
@@ -374,12 +375,12 @@
       "class": "semantic",
       "required": true,
       "exit": 0,
-      "seconds": 475.881,
+      "seconds": 446.19,
       "verdict": "pass",
       "reason": "functional criteria pass; unmeasured criteria routed",
       "metrics": {
-        "childSeconds": 474.766,
-        "waitSeconds": 1.099,
+        "childSeconds": 445.651,
+        "waitSeconds": 0.525,
         "runs": 85,
         "dailyConservationChecks": 6832980,
         "completeInterventionMatrix": true,
@@ -395,7 +396,7 @@
           "full section 6 perf and 100000-consumer stress"
         ],
         "recordedPriceWeight": 1.2,
-        "runnerOverheadSeconds": 0.016
+        "runnerOverheadSeconds": 0.014
       },
       "digests": {
         "acceptance.json": "9397589dab8f9e0d3f307ec06ecb93c408defd1e4ec40378ff0a5bd9aeec8b8d"
@@ -446,7 +447,7 @@
       "evidence": [
         {
           "path": "logs/economy.log",
-          "sha256": "66708b44847f8c0220d9289e35e406aba53a511fd97ebedc34e6573e23e30380",
+          "sha256": "546532bbb64614deeedec11bdc495b99112799c87e2ac0f36a2078cf2929df2a",
           "bytes": 9799
         },
         {
@@ -548,12 +549,12 @@
       "class": "semantic",
       "required": true,
       "exit": null,
-      "seconds": 0.054,
+      "seconds": 0.056,
       "verdict": "pass",
-      "reason": "82 passed, 0 skipped",
+      "reason": "84 passed, 0 skipped",
       "metrics": {
-        "total": 82,
-        "passed": 82,
+        "total": 84,
+        "passed": 84,
         "failed": 0,
         "skipped": 0,
         "failedTests": []
@@ -567,12 +568,12 @@
       "class": "semantic",
       "required": true,
       "exit": 0,
-      "seconds": 617.663,
+      "seconds": 467.752,
       "verdict": "pass",
       "reason": "76 arms equal their reference",
       "metrics": {
-        "childSeconds": 482.211,
-        "waitSeconds": 135.443,
+        "childSeconds": 467.185,
+        "waitSeconds": 0.553,
         "equalArms": [
           "bodies-off/plain-30",
           "bodies-off/plain-120",
@@ -656,7 +657,7 @@
         "listedNowGreen": [],
         "listedNotRun": [],
         "failedSelfChecks": [],
-        "runnerOverheadSeconds": 0.009
+        "runnerOverheadSeconds": 0.014
       },
       "digests": {
         "bodies-off/plain-30": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
@@ -752,13 +753,13 @@
       "evidence": [
         {
           "path": "logs/movement.log",
-          "sha256": "42162748cb96aef6ec2ef32167adc286093eab54e974658b89affe98a3f43afb",
+          "sha256": "330b8abc04136eec3b14d8b469ae05fa4a74db17e8401e8f32d0c8e3880e4e77",
           "bytes": 14204
         },
         {
           "path": "movement.json",
-          "sha256": "ac027717b584300ca8b7edc2914e6f994b1a7b4a07f0e1a80ff96a7f0808e83f",
-          "bytes": 640040
+          "sha256": "8c9d1f4c9016f24ebc8f582eb2a5243399828436dcc5aec7b7ff4467abe83230",
+          "bytes": 640027
         }
       ]
     },
@@ -767,12 +768,12 @@
       "class": "semantic",
       "required": true,
       "exit": 0,
-      "seconds": 8.873,
+      "seconds": 9.975,
       "verdict": "pass",
       "reason": "27 passed, 0 skipped",
       "metrics": {
-        "childSeconds": 8.358,
-        "waitSeconds": 0.508,
+        "childSeconds": 8.734,
+        "waitSeconds": 1.234,
         "total": 27,
         "passed": 27,
         "failed": 0,
@@ -784,13 +785,13 @@
       "evidence": [
         {
           "path": "logs/city-s.log",
-          "sha256": "68c55f4ef16691afdb2e7801b67f38d022217e9a15b15fb70ee92a19809c0f90",
-          "bytes": 769
+          "sha256": "613b2cc8485ec9260e95e7724023977d32632d25ea2d0fddb804e295f3bbabbb",
+          "bytes": 775
         },
         {
           "path": "trx/city-s/city-s.trx",
-          "sha256": "7000e8009671650803941272dca8ccc24f2008029b26a3fa28080404060cc3fe",
-          "bytes": 48348
+          "sha256": "b08a490eb07c51aa5c6c93e522a0affd79a0ada18bbd0632b6d21ee8786b2772",
+          "bytes": 48509
         }
       ]
     },
@@ -799,30 +800,30 @@
       "class": "semantic",
       "required": true,
       "exit": 0,
-      "seconds": 41.406,
+      "seconds": 43.787,
       "verdict": "pass",
       "reason": "18 passed, 0 skipped",
       "metrics": {
-        "childSeconds": 40.844,
-        "waitSeconds": 0.555,
+        "childSeconds": 43.155,
+        "waitSeconds": 0.626,
         "total": 18,
         "passed": 18,
         "failed": 0,
         "skipped": 0,
         "failedTests": [],
-        "runnerOverheadSeconds": 0.007
+        "runnerOverheadSeconds": 0.006
       },
       "digests": {},
       "evidence": [
         {
           "path": "logs/city-m.log",
-          "sha256": "8830ebb8673e6316b82a1a5549a83e3b542f84f151a027f227cc68d89377afbd",
-          "bytes": 770
+          "sha256": "f0f088ebc583914ab9e01d386b166895174f78565f7d0c372f5b15e1c8c1ebe2",
+          "bytes": 776
         },
         {
           "path": "trx/city-m/city-m.trx",
-          "sha256": "4858a5c1355155cc2d45805df8154be169852185be29f3344d82f12ef13981fd",
-          "bytes": 33023
+          "sha256": "25019ffbfecbca6660ada76a3d2d360595320481504334597dd19c3ce0af356b",
+          "bytes": 33131
         }
       ]
     }

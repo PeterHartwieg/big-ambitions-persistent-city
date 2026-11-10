@@ -4,7 +4,45 @@ Status: implemented (offline); not verified by rig
 
 Refs [#96](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/96). Task `pc-f9h-first-acceptance-record`, branch `codex/pc-f9h-first-acceptance-record` from `codex/persistent-city` at `d23bb925` (F9b+F9d+F9f #197 merged). Plan row [F9h](../plans/f9-city-acceptance.md#4-slice-breakdown), Decisions 2, 5, 6 and 7, section 3.10. Numbers: [performance](../perf/f9h.md). This is the PC record. The Mac record and the PC-vs-Mac digest comparison follow in a separate F9h-mac run at the head where this merges. No product, schema or save change. `tools/economy-interventions/acceptance.py` is not edited.
 
-## The run
+## Same-head re-record at `b3e5a910`, 10 November 2026
+
+Task `pc-f9h-pc-record-at-merged-head-2`. The first record below was taken at `d23bb925`, before F8b-g #194 (`297f32ea`) changed Core, Runtime, Compatibility and tests, so a Mac run at the merged F9h head (`b3e5a910`) would compare `different-source` with it. This run is the same-head comparison baseline: `full` again on the PC at `b3e5a910`, clean tree, `PC_DOTNET_WAIT` set, default price weight, in the foreground. The committed `windows-x64/` files, `comparison.json` and `rig-manifest.json` are from this run. The first record stays below as the original record. The earlier attempt `20261110T200733Z-b3e5a910` was incomplete and is not used.
+
+| Field | Value |
+| --- | --- |
+| runId | `20261110T201123Z-b3e5a910` (20:11:23–20:34:09 UTC) |
+| Source | `b3e5a9101fe065662c0baf3aedab01caa123773e`, clean (`dirty: false`, 0 untracked) |
+| Host | Windows AMD64, .NET SDK 10.0.402, Python 3.12.10 (unchanged) |
+| Game fingerprint set | `steam-1331550-build-25482473` (unchanged) |
+| `PersistentCity.dll` SHA-256 | `0f34e6e22e5157f7aed25b41fe8cb2af14727275cdea99fbf64a5bd5be476c2d` (changed: F8b-g edits the mod) |
+| Compiled defaults, config SHA-256 | unchanged (1.2 / 1, `2c14a2bc…d34691`); no declared override |
+| `acceptance.json` SHA-256 | `fc04d55943349e3389b1535471f1b3ebe8c71c34f2cb59cd399968bd2e36cde5` |
+| Exit | 0 (summary `incomplete`, the same 11 native items; failed `[]`, deviations `[]`) |
+
+| Stage | Verdict | Result | Wall (s) | First record |
+| --- | --- | --- | --- | --- |
+| provenance | pass | recorded | 0.0 | 0.0 |
+| build | pass | exit 0 | 4.9 | 5.9 |
+| unit | pass | 4,128 passed, 0 failed (was 4,003) | 391.8 | 436.3 |
+| population | pass | 8 passed | 0.1 | 0.1 |
+| economy | pass | 85 runs, complete matrix, `failedCriteria` empty | 446.2 | 475.9 |
+| saves | pass | 84 passed (was 82) | 0.1 | 0.1 |
+| movement | pass | 76 arms equal their reference | 467.8 | 617.7 |
+| city-s | pass | 27 passed | 10.0 | 8.9 |
+| city-m | pass | 18 passed | 43.8 | 41.4 |
+
+Changes against the first record:
+
+- Stage verdicts: none; every semantic stage passed again.
+- Digests: every simulation digest equals the first record's (the F6h `acceptance.json`, the 85 run files and the movement save hashes). Only the build digest `PersistentCity.dll` differs, which is a machine input and is not compared.
+- Household bands at 1.2: unchanged (0.0049, 6.1, 655.0; all five seeds inside the current thresholds). Not adopted.
+- Test counts: `unit` +125 and `saves` +2, from the tests added by F8b-g and F9h.
+- Native manifest: one more run at a head without native proof, so each due row's debt rose by one; `rlo-donor-contract` reached debt 3, so `f9-3` is now due and sorts before `f9-9`. Still 17 rows unproven, 0 fresh, `native-wholesale-costs` unscheduled. Native stays incomplete until the combined batch.
+- Wall time: 1,364.5 s against 1,586.5 s, mostly because this run waited only about 4 s in total for other test runs (see [performance](../perf/f9h.md)).
+
+The sections below describe the first record at `d23bb925` unless they say otherwise.
+
+## The run (first record, `d23bb925`)
 
 `python tools/acceptance/run.py full --game-managed <Steam Managed>`, in the foreground, at the base head with a clean tree. `PC_DOTNET_WAIT` was set to the PC's wait script. Default price weight (no `--price-weight`).
 
@@ -101,23 +139,23 @@ Evidence is kept per machine under `tools/acceptance/evidence/<os>-<arch>/`. `py
 
 | Machine | Status | runId | Semantic | Digests |
 | --- | --- | --- | --- | --- |
-| PC (`windows-x64`) | recorded | `20261110T131314Z-d23bb925` | pass | 174 recorded |
-| Mac (`macos-arm64`) | pending F9h-mac, at the head where F9h merges | – | – | – |
+| PC (`windows-x64`) | recorded at `b3e5a910` (committed); first record at `d23bb925` superseded as the comparison baseline | `20261110T201123Z-b3e5a910` | pass | 174 recorded, equal to the first record |
+| Mac (`macos-arm64`) | pending F9h-mac, at `b3e5a910` or a later head with no simulation-input change | – | – | – |
 | Linux box | not run: the Linux box does not build or test (team rule) | – | – | – |
 
-Comparison verdict: `pending` (one machine recorded). The F9h-mac run runs `full` on the Mac at the head where this PR merged, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here. The PC record stays at `d23bb925`: `compare` accepts records from different commits when `git diff` between them touches no simulation input (`Core`, `Persistence`, `Runtime`, `Compatibility`, `config`, `tests`, `tools/economy-interventions`, `tools/movement-equivalence`, the stage catalogue, the movement expectations, `tools/acceptance/run.py` and `economy_stage.py`), the recorded settings are equal and no record comes from a dirty tree with another commit or diff. This PR changes none of them, so the merged head compares with the PC record. If a simulation input changes before the Mac run, the verdict is `different-source`, and F9h-mac runs `full` on the PC again at the Mac's head and records it before comparing.
+Comparison verdict: `pending` (one machine recorded; recomputed with this run). The F9h-mac run runs `full` on the Mac at the head where this PR merged, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here. The PC comparison record stays at `b3e5a910`: `compare` accepts records from different commits when `git diff` between them touches no simulation input (`Core`, `Persistence`, `Runtime`, `Compatibility`, `config`, `tests`, `tools/economy-interventions`, `tools/movement-equivalence`, the stage catalogue, the movement expectations, `tools/acceptance/run.py` and `economy_stage.py`), the recorded settings are equal and no record comes from a dirty tree with another commit or diff. This PR changes none of them, so the merged head compares with the PC record. F8b-g did change simulation inputs between `d23bb925` and `b3e5a910`, which is why the same-head re-record above exists. If a simulation input changes before the Mac run, the verdict is `different-source`, and F9h-mac runs `full` on the PC again at the Mac's head and records it before comparing.
 
 ## Reference run under `tools/acceptance/evidence/`
 
 | File | Bytes | Content |
 | --- | --- | --- |
 | `machines.json` | 489 | declared machines and the reason for each one not recorded |
-| `windows-x64/summary.json` | 43,459 | provenance, classes, summary, ledger state, every stage's verdict, seconds, metrics and digests, the F6h run digests, `acceptanceSha256` |
+| `windows-x64/summary.json` | 43,537 (re-record) | provenance, classes, summary, ledger state, every stage's verdict, seconds, metrics and digests, the F6h run digests, `acceptanceSha256` |
 | `windows-x64/f6h-household-bands.json` | 1,896 | the 1.2 seed bands above |
-| `rig-manifest.json` | 16,645 | the batch manifest and ledger state at this head |
+| `rig-manifest.json` | 17,064 (re-record) | the batch manifest and ledger state at `b3e5a910` |
 | `comparison.json` | 39,938 | the digest comparison |
 
-No TRX, log, binary or harness dump; no absolute path, user name or machine name (checked with grep). Raw evidence stayed under `build/acceptance/20261110T131314Z-d23bb925/` and is not committed.
+No TRX, log, binary or harness dump; no absolute path, user name or machine name (checked with grep). Raw evidence stayed under `build/acceptance/20261110T131314Z-d23bb925/` and `build/acceptance/20261110T201123Z-b3e5a910/` and is not committed.
 
 ## Tooling added
 
@@ -131,12 +169,12 @@ No TRX, log, binary or harness dump; no absolute path, user name or machine name
 
 ## In-game checks
 
-From the plan's [section 7](../plans/f9-city-acceptance.md#7-in-game-checks-for-the-next-batched-rig): the checks this record feeds, for the next combined native/perf batch. All run on the headless agent rig against the development head, in the disposable **FT-F9** city with one player food business, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup; functional steps that save run outside F4's timing windows. None is left to Peter, a playtest or a by-hand check. Setup of the batch: execution order is fixture prerequisites first, then the manifest's priority. Run `f9-1`, then `f9-2`, which creates and verifies the shared checkpoint `f9-city-ready` (with its copy for `f9-4` and `f9-9`); stop the checkpoint-dependent checks if `f9-2` fails. Then run the remaining checks in the manifest's priority from `tools/acceptance/evidence/rig-manifest.json` (table above): `f9-8` (its own older-schema city, no checkpoint), `f9-4`, `f9-7`, `f9-6`, `f6b-2`, `f9-5`, `f9-9`, `f9-3`, and `f9-10` last. Use an offline `full` `acceptance.json` at the same head as the rig build (this record's run if the head is still `d23bb925`, otherwise a new `full` run at the batch head). Each result is a `persistentcity-acceptance-1` stage record of class `native` with the check ID (pending capability **RIG-ACCEPT**). **Locked-PC**: runs on the locked rig PC through FT console and rig commands. **Input-only**: also needs injected UI input.
+From the plan's [section 7](../plans/f9-city-acceptance.md#7-in-game-checks-for-the-next-batched-rig): the checks this record feeds, for the next combined native/perf batch. All run on the headless agent rig against the development head, in the disposable **FT-F9** city with one player food business, never in Peter's ordinary save. The rig records the autosave setting, turns autosave off in the isolated profile, checks it is off before each measured window (also after reload) and restores it at cleanup; functional steps that save run outside F4's timing windows. None is left to Peter, a playtest or a by-hand check. Setup of the batch: execution order is fixture prerequisites first, then the manifest's priority. Run `f9-1`, then `f9-2`, which creates and verifies the shared checkpoint `f9-city-ready` (with its copy for `f9-4` and `f9-9`); stop the checkpoint-dependent checks if `f9-2` fails. Then run the remaining checks in the manifest's priority from `tools/acceptance/evidence/rig-manifest.json` (table above): `f9-8` (its own older-schema city, no checkpoint), `f9-4`, `f9-7`, `f9-6`, `f6b-2`, `f9-5`, `f9-9`, `f9-3`, and `f9-10` last. Use an offline `full` `acceptance.json` at the same head as the rig build (the re-record's run if the head is still `b3e5a910`, otherwise a new `full` run at the batch head). Each result is a `persistentcity-acceptance-1` stage record of class `native` with the check ID (pending capability **RIG-ACCEPT**). **Locked-PC**: runs on the locked rig PC through FT console and rig commands. **Input-only**: also needs injected UI input.
 
 1. **`f9-1` Build provenance at the rig head.** Locked-PC.
    - Setup: head build installed by RIG-MODSET.
    - Steps: on the rig, `python tools/build.py --game-managed <rig Managed> --provenance <out>/build.json` (read-only hashing of the installed game's assemblies); hash the installed `PersistentCity.dll`.
-   - Expected: `set` is a declared set (`steam-1331550-build-25482473` unless the game updated); the DLL hash equals the offline `full` run's `provenance.artifact` at the same commit (`f72508…16e85e` at `d23bb925`). An `unknown` set leaves `native` incomplete and marks every ledger row stale.
+   - Expected: `set` is a declared set (`steam-1331550-build-25482473` unless the game updated); the DLL hash equals the offline `full` run's `provenance.artifact` at the same commit (`0f34e6…be476c2d` at `b3e5a910`; `f72508…16e85e` at `d23bb925`). An `unknown` set leaves `native` incomplete and marks every ledger row stale.
    - Rig automation: existing RIG-MODSET (hashed DLL set); pending RIG-ACCEPT.
 2. **`f9-9` Price response on the real shop at weight 1.2.** Locked-PC.
    - Setup: `f9-city-ready` (check `f9-2`) and a copy; read the loaded `FoodChoicePriceWeight` from the PC config readback.
