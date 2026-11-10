@@ -90,7 +90,7 @@ namespace PersistentCity.Runtime
                 streetFood |= assembly.GetName().Name == "FoodTrucks";
                 drivenRides = drivenRides || assembly.GetType("DrivenRides.Ride", false) != null;
             }
-            var inspectorTargets = HookConflicts.PatchedTargets(NativeHookInventory.InspectorInput);
+            var inspectorTargets = HookConflicts.OwnedTargets(NativeHookInventory.InspectorInput);
             var inputs = new CapabilityInputs
             {
                 CityActive = city, CityFailed = failed, FailureStatus = failed ? status : "",

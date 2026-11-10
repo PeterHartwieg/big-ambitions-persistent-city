@@ -36,7 +36,7 @@ namespace PersistentCity.Runtime
 
         /// <summary>"Type.Method" of every method <paramref name="owner"/> has a patch on: one pass over Harmony's
         /// patched methods (the capability report reads the inspector guards from it). Metadata only.</summary>
-        internal static HashSet<string> PatchedTargets(string owner)
+        internal static HashSet<string> OwnedTargets(string owner)
         {
             var targets = new HashSet<string>(StringComparer.Ordinal);
             foreach (var method in Harmony.GetAllPatchedMethods())

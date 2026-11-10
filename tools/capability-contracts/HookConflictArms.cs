@@ -72,7 +72,7 @@ internal static partial class Program
                 patched, times[times.Length / 2], times[times.Length * 95 / 100], times[^1]));
             Console.WriteLine("hook conflicts: " + report.ActivationLine());
 
-            // Astra-r1-6: the Harmony and assembly part of ReadCapabilityInputs (one assembly pass, one PatchedTargets pass)
+            // Astra-r1-6: the Harmony and assembly part of ReadCapabilityInputs (one assembly pass, one OwnedTargets pass)
             // plus the Core snapshot and report, with 40 more patched methods from four owners as a modpack would add.
             var extra = typeof(ManyTargets).GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly).Where(m => m.Name.StartsWith("M", StringComparison.Ordinal)).ToArray();
             for (int i = 0; i < extra.Length; i++) harmonies[i % 2 == 0 ? "other.mod" : "rig.limiter"].Patch(extra[i], postfix: Post());
@@ -88,7 +88,7 @@ internal static partial class Program
                     streetFood |= assembly.GetName().Name == "FoodTrucks";
                     drivenRides = drivenRides || assembly.GetType("DrivenRides.Ride", false) != null;
                 }
-                var owned = HookConflicts.PatchedTargets(NativeHookInventory.InspectorInput);
+                var owned = HookConflicts.OwnedTargets(NativeHookInventory.InspectorInput);
                 var inputs = new CapabilityInputs { CityActive = true, StreetFoodLoaded = streetFood, DrivenRidesLoaded = drivenRides,
                     InspectorClickInstalled = owned.Contains("MouseController.Run"), FoodAuthorityInstalled = Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority) };
                 _ = reportText.Status(CapabilitySnapshot.Build(inputs), "x", CapabilitySnapshot.Context(inputs));
