@@ -112,4 +112,4 @@ Plan check 10 (foreign prefix on checkout) belongs to F8h and is not listed. Rig
 
 ## Mac rig record — 10 November 2026
 
-[Check 1 Mac record](f8h-check1-modpack-owners.json): initial native new-game save stopped PC before initialization completed. Investigation continues; this is not F8h or a Windows compatibility result.
+[Check 1 Mac record](f8h-check1-modpack-owners.json): verified by rig, city running; required capabilities active, optional capabilities active or off with a reason. Full Mac modpack hook owners and classes are recorded. [Batch results](rig-2026-11-10-mac-results.md) retain the initial creation-save refusal and setup. This is F8h input, not F8h or Windows compatibility proof.
