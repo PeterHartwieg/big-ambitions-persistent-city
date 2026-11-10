@@ -2,7 +2,7 @@ Status: implemented (offline); not verified by rig
 
 # City audit F2g: integrated equivalence evidence, 9 November 2026
 
-Refs [#89](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/89). Branch `codex/pc-f2g-equivalence-evidence` from `codex/persistent-city` at `baa775d` (F5i #179 merged; current writer 36 from E5b4 #180). Scope: the F2g row of the [F2 plan](../plans/f2-movement.md#4-slice-breakdown): the final movement-equivalence run across every arm and the acceptance table with numbers. Docs and tool arms only. No Core, Runtime or Persistence change, no schema or save change.
+Refs [#89](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/89). Branch `codex/pc-f2g-equivalence-evidence` from `codex/persistent-city` at `baa775d` (F5i #179 merged; current writer 36 from E5b4 #180), then merged with `codex/persistent-city` at `b85731d` (E5b5 #181, X1–X3, F4e #176; writer still 36). Scope: the F2g row of the [F2 plan](../plans/f2-movement.md#4-slice-breakdown): the final movement-equivalence run across every arm and the acceptance table with numbers. Docs and tool arms only. No Core, Runtime or Persistence change, no schema or save change.
 
 ## What changed
 
@@ -102,8 +102,9 @@ Rig checks 1–11 below add the native side; they are batched and do not gate me
 ## Commands
 
 - Harness: as above, exit 0. 360 s wall time in total.
+- Harness re-run on 10 November 2026 after merging `b85731d`: exit 0, 9/9 self-checks, 19/19 E2 rows, 52/52 arms equal. The JSON differed from the committed `baseline.json` only in wall times, allocation counts and hold timings, so the 9 November baseline stays. 343 s wall time in total.
 - `python tools/build.py --game-managed "…\Big Ambitions_Data\Managed"`: succeeded.
-- `dotnet test tests/PersistentCity.Tests.csproj`: TEST_RESULT.
+- `dotnet test tests/PersistentCity.Tests.csproj` (10 November 2026, after the merge): 4,074 passed, 0 failed, 0 skipped.
 - Current-writer golden: writer 36 unchanged (`HeldPolicyExecutionTests.TheHeldPolicyWriterGoldenIsPinned` passes; no Core/Persistence edit).
 
 Offline success is not native proof. The harness does not run Unity, NavMesh, native bodies, Gley or RLO.
