@@ -280,11 +280,23 @@ class NativeClass(unittest.TestCase):
         self.assertNotIn("nativeBatchDue", result["summary"])
 
 
+def seed_ledger(source):
+    """The maintained ledger's rows and checks with every rig evidence field cleared: a deterministic ledger for the merge
+    tests, whatever evidence reviewed updates have committed."""
+    seeded = copy.deepcopy(source)
+    for r in seeded["rows"]:
+        r["lastRigHead"] = r["lastRigFingerprint"] = r["lastRigEvidence"] = None
+    return seeded
+
+
 class SummarizeWithLedger(unittest.TestCase):
-    """End to end on the real ledger at this head: offline run, rig file for every required check, summarize."""
+    """End to end on a synthetic ledger (the maintained rows without rig evidence) at this head: offline run, rig file for
+    every required check, summarize."""
 
     def offline(self):
         f = Fixture(self)
+        self.ledger_path = f.dir / "native-assumptions.json"
+        self.ledger_path.write_text(json.dumps(seed_ledger(rm.load())), encoding="utf-8")
         managed = f.dir / "Managed"
         managed.mkdir()
         current = rm.declared_set()
@@ -299,7 +311,7 @@ class SummarizeWithLedger(unittest.TestCase):
         return f, managed, current
 
     def run_offline(self, f, managed):
-        catalogue = {"schema": "persistentcity-acceptance-stages-1", "nativeAssumptions": "tools/acceptance/native-assumptions.json",
+        catalogue = {"schema": "persistentcity-acceptance-stages-1", "nativeAssumptions": str(self.ledger_path),
                      "profiles": {"quick": f.profile, "full": f.profile},
                      "stages": [{"id": "provenance", "class": "provenance", "rule": "provenance", "required": False, "steps": []}] + f.stages,
                      "fixtures": [], "settings": [], "capabilities": []}
@@ -315,7 +327,7 @@ class SummarizeWithLedger(unittest.TestCase):
         evidence = result["nativeEvidence"]
         self.assertEqual("assessed", evidence["status"])
         self.assertEqual(current, evidence["fingerprint"])
-        self.assertEqual(hashlib.sha256((ROOT / evidence["ledger"]).read_bytes()).hexdigest(), evidence["ledgerSha256"])
+        self.assertEqual(hashlib.sha256(self.ledger_path.read_bytes()).hexdigest(), evidence["ledgerSha256"])
         required = evidence["requiredChecks"]
         self.assertTrue(required)
         self.assertEqual("incomplete", result["classes"]["native"]["verdict"])
@@ -340,7 +352,7 @@ class SummarizeWithLedger(unittest.TestCase):
         self.assertEqual("pass", merged["classes"]["native"]["verdict"])
         self.assertEqual("pass", merged["summary"]["verdict"])
         updated = json.loads((out / "native-assumptions.json").read_text())
-        original = {r["id"]: r for r in rm.load()["rows"]}
+        original = {r["id"]: r for r in rm.load(self.ledger_path)["rows"]}
         commit = result["provenance"]["source"]["commit"]
         expected = sorted(r["id"] for r in updated["rows"] if r["rigCheck"] in required)
         self.assertEqual(expected, sorted(merged["nativeEvidence"]["updatedRows"]))
@@ -376,8 +388,7 @@ class SummarizeWithLedger(unittest.TestCase):
         self.assertEqual("fail", merged["classes"]["native"]["verdict"])
         self.assertEqual(["f9-4"], merged["summary"]["failed"])
         updated = {r["id"]: r for r in json.loads((out / "native-assumptions.json").read_text())["rows"]}
-        before = {r["id"]: r for r in rm.load()["rows"]}["save-epoch"]
-        self.assertEqual(before["lastRigHead"], updated["save-epoch"]["lastRigHead"])  # proved by f9-4: unchanged
+        self.assertIsNone(updated["save-epoch"]["lastRigHead"])  # proved by f9-4, which failed
 
     def test_rig_evidence_on_another_or_unknown_game_never_passes_native(self):
         f, managed, current = self.offline()
@@ -406,6 +417,26 @@ class SummarizeWithLedger(unittest.TestCase):
             rig_stages = [s for s in merged["stages"] if s.get("rig")]
             self.assertTrue(rig_stages and all(reason in s["reason"] for s in rig_stages), game)
             self.assertEqual([], merged["nativeEvidence"].get("updatedRows", []), game)
+
+    def test_rig_set_other_than_the_declared_current_is_refused_when_the_offline_run_hashed_nothing(self):
+        prov = {"source": {"commit": "a" * 40, "dirty": False, "diffSha256": None}, "game": {"supplied": False, "set": None}}
+        rig = copy.deepcopy(prov)
+        rig["game"] = {"supplied": True, "set": "other-game-build"}
+        self.assertIn("declared current set", run.identity_problem({"provenance": prov}, {"provenance": rig}))
+        rig["game"]["set"] = rm.declared_set()
+        self.assertIsNone(run.identity_problem({"provenance": prov}, {"provenance": rig}))
+
+    def test_merge_fixture_does_not_depend_on_committed_evidence(self):
+        # Reviewed updates of the maintained ledger (one check, then every check) leave the merge fixture unchanged.
+        real = rm.load()
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+        partial, _ = rm.update(real, [{"id": "f9-4", "verdict": "pass"}], head, rm.declared_set(), "run-1")
+        complete, _ = rm.update(real, [{"id": c["id"], "verdict": "pass"} for c in real["checks"]], head, rm.declared_set(), "run-2")
+        self.assertEqual(seed_ledger(real), seed_ledger(partial))
+        self.assertEqual(seed_ledger(real), seed_ledger(complete))
+        state = rm.assess(seed_ledger(complete), ROOT, head, rm.declared_set())
+        self.assertEqual(sorted({r["rigCheck"] for r in real["rows"] if r["rigCheck"]}), sorted(state["requiredChecks"]))
+        self.assertIn("f9-4", state["requiredChecks"])
 
     def test_update_needs_a_declared_fingerprint(self):
         led = rm.load()

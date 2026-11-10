@@ -795,6 +795,8 @@ def identity_problem(result, rig):
     offline_set, rig_set = game_set(result), game_set(rig)
     if rig_set == "unknown":
         return "rig game assemblies match no declared fingerprint set"
+    if offline_set is None and rig_set is not None and rig_set != rig_manifest.declared_set():
+        return f"rig game fingerprint {rig_set} is not the declared current set {rig_manifest.declared_set()}"
     if offline_set not in (None, "unknown") and rig_set != offline_set:
         return (f"rig game fingerprint {rig_set} is not the offline build's {offline_set}" if rig_set
                 else "rig records no game fingerprint set")

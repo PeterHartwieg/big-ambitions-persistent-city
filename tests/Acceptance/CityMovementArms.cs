@@ -58,7 +58,7 @@ namespace PersistentCity.Tests.Acceptance
         /// <summary>The followers bound when the mid-journey reload saved, and those a later driver bound again.</summary>
         public List<string> BoundAtReload = new();
         public int ReboundAfterReload;
-        /// <summary>Bodies the drivers created at and after the mid-journey reload's load acquired.</summary>
+        /// <summary>Bodies the driver created by the mid-journey reload's load acquired (before the next load).</summary>
         public long AcquiredAfterReload;
         /// <summary>Away-return: frames with a body bound while the player is 1 km away (after the first away minute), and
         /// after the return.</summary>
@@ -196,7 +196,7 @@ namespace PersistentCity.Tests.Acceptance
                 stats.MaxVisitorBodies = Math.Max(stats.MaxVisitorBodies, d.MaxVisitorBodies);
             }
             if (followedAfterReload != null) stats.ReboundAfterReload = stats.BoundAtReload.Count(followedAfterReload.Contains);
-            if (firstDriverAfterReload >= 0) stats.AcquiredAfterReload = drivers.Skip(firstDriverAfterReload).Sum(d => d.Acquired);
+            if (firstDriverAfterReload >= 0) stats.AcquiredAfterReload = drivers[firstDriverAfterReload].Acquired;
         }
     }
 }
