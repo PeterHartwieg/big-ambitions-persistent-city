@@ -1,6 +1,6 @@
 # F4b perf union probe
 
-Status: implemented (offline); native validation is pending (rig check G2 in [docs/checks/f4b.md](../../docs/checks/f4b.md)). Refs #91. Plan: [F4 plan](../../docs/plans/f4-perf-gate.md), Decisions 3, 5 and 7.
+Status: implemented (offline); native validation is pending (rig check G2 in [docs/checks/f4b.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f4b.md)). Refs #91. Plan: [F4 plan](../../docs/plans/f4-perf-gate.md), Decisions 3, 5 and 7.
 
 A rig-only diagnostic DLL that measures the complete Persistent City mod-work union, per-tick calendar holds and per-call advancement spikes from outside the product. It is **never packaged**: `tools/build.py` does not build or copy it, and it never goes into the Persistent City package, Workshop upload, the normal game or Peter's ordinary save. It adds no Runtime code, so the shipped DLL's behaviour and timing do not change. It reads, and never edits, the F2-owned physical files.
 

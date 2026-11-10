@@ -15,4 +15,4 @@ The input directory must contain `native-result.json`, `probe-output/observed-ro
 
 The retained capture has no verified home-district composition. Its curves therefore use the explicit neutral individual-budget prior. The second chart uses separate controlled 80/15/5 and 15/45/40 working/middle/upper distributions with the same resident IDs and seed. These are sensitivity examples, not observed home demographics. Do not relabel identity donor districts as home districts.
 
-All results remain hypothetical purchases within an eight-shop market with controlled availability. A declined purchase is not a fulfilled meal, and no store receives a customer floor. See [policy and results](../../docs/reviews/2026-10-22-food-household-budgets.md).
+All results remain hypothetical purchases within an eight-shop market with controlled availability. A declined purchase is not a fulfilled meal, and no store receives a customer floor. See [policy and results](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-22-food-household-budgets.md).

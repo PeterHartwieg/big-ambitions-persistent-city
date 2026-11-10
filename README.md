@@ -22,8 +22,7 @@ Details and limitations: [docs/behaviour.md](docs/behaviour.md). Terms: [docs/gl
 | `tests/` | xUnit tests (`PersistentCity.Tests.csproj`) |
 | `tools/` | Build script, harnesses and measurement tools |
 
-Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`), which is held at 1 until release. Cities from an older development schema are refused with a "start a new city" status, not migrated; any other schema number or invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
-Superseded for schema numbers on 9 November 2026: the schema is held at 1 and never bumped before release ([decision](docs/decisions/2026-11-09-schema-one.md)).
+Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`), which is held at 1 until release. Cities from an older development build are refused with a "start a new city" status, not migrated; invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-09-schema-one.md)).
 
 ## Build and test
 
@@ -39,37 +38,14 @@ The build references game assemblies in place; none enters the package. Output i
 
 ## Status
 
-Status words: planned, implemented, partial, stopped, verified by rig. Rig is "pending" until the next batched rig run verifies a slice; nothing is verified by rig yet. Per-slice evidence is in [CHECKS.md](CHECKS.md).
-
-| Slice | Status | Rig |
-| --- | --- | --- |
-| A1–A3, A5 inspector, traits, weighted choice, integrated acceptance | implemented | pending |
-| B0, B0b, B1, B2 memory, loyalty, regulars | implemented | pending |
-| C1, C2a, C2b campaign reader and awareness | implemented | pending |
-| C3 agency payment discovery (no safe fee path found) | implemented | pending |
-| C4 market research (inactive) | implemented | pending |
-| D1, D2, D3a, D4 rival catalogue, choice, outflow, memory | implemented | pending |
-| E1 weather, E2a–E2c street life and interior guard | implemented | pending |
-| E3 per-product feasibility (donut, cupcake, salad, ice cream, French fries, pizza, six more) | stopped | pending |
-| E4 wider-menu envelope | implemented | pending |
-| E5a, E5c, E5d, E5e catalogue reader, metadata, names, metadata API | implemented | pending |
-| E5b complete-menu support | partial | pending |
-| E6 carts and food trucks | planned | pending |
-| Track F: F0 interior view experiment (default off) | implemented | pending |
-| Track F: F1 shop view, F1b street proxy | stopped | pending |
-| Audit F1 accounting backpressure, F3 bounded bulk work | implemented | pending |
-| Audit F5a census, F5b identity core, F5f journey index | implemented | pending |
-| Audit F5c-lite to F5i population | planned | pending |
-| Audit F6a harness, F6b rival limits, F6c feedback v1 | implemented | pending |
-| Audit F6d to F6h economy | planned | pending |
-| Audit F7a save cost, F7b save epoch, F7f reader corpus, F7p compact-format prototype | implemented | pending |
-| Audit F7c to F7e save snapshots | planned | pending |
+Not released. Nothing is verified by rig yet. What is done, what remains and in which order is in the [roadmap](docs/roadmap.md).
 
 ## Links
 
 - [AGENTS.md](AGENTS.md): rules for implementers and reviewers.
-- [Roadmap](docs/roadmap.md): remaining, deferred and superseded work, and the performance gate.
-- [CHECKS.md](CHECKS.md): index of per-slice evidence.
-- [Plans](docs/plans/): F5 population, F6 economy, F7 saves, E5 products, Track F, audit F1.
-- [Decisions](docs/decisions/) and [archive](docs/archive/).
-- [Design](docs/design.md), [RLO contract](docs/rlo-contract.md), [RLO bridge](docs/rlo-bridge.md), [food product metadata API](docs/food-product-metadata-api.md).
+- [Roadmap](docs/roadmap.md): direction, done and remaining work, and the performance gate.
+- [City direction, 10 November 2026](docs/decisions/2026-11-10-city-direction.md) and the [9 November review](docs/reviews/2026-11-09-city-review.md) behind it.
+- [Behaviour](docs/behaviour.md), [glossary](docs/glossary.md), [rig checklist](docs/rig-checklist.md).
+- [Decisions](docs/decisions/) and open [plans](docs/plans/).
+- Contracts: [RLO contract](docs/rlo-contract.md), [RLO bridge](docs/rlo-bridge.md), [save format](docs/save-format.md), [food product metadata API](docs/food-product-metadata-api.md).
+- History before 10 November 2026 is in the tag [`docs-history-2026-11-10`](https://github.com/PeterHartwieg/big-ambitions-persistent-city/tree/docs-history-2026-11-10) ([why](docs/decisions/2026-11-10-lean-docs.md)).

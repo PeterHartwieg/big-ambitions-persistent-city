@@ -252,13 +252,15 @@ public sealed class NativeCapabilityTests
         Assert.Contains("companion: Driven Rides (DrivenRides.Ride)", report.Show(a, CapabilityId.ClockDrivenRides));
     }
 
-    /// <summary>F8a changes no wire: writer 35 and its pinned golden hashes are as F2e left them.</summary>
+    /// <summary>F8a changes no wire: the current writer's golden hashes match the schema-1 pins in
+    /// ChangeJournalTests.CurrentWriterGoldenSnapshotAndReload.</summary>
     [Theory]
-    [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
-    [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
+    [InlineData(5150, "ffa821dea8fe057959a91135db75342a3b69c2bdec8487af7485a35dd5d0889c", 73330)]
+    [InlineData(9217, "a9651c15e44c67fa8e05ac084b638ac1bfaf0c48805a8d1142a873c423a6422c", 72968)]
     public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
     {
-        Assert.Equal(35, CityState.CurrentSchema);
+        Assert.True(CityState.CurrentSchema == 1,
+            "The save schema is held at 1 until release; change the format in place. See docs/decisions/2026-11-09-schema-one.md.");
         string payload = SaveCodec.Write(ChangeJournalTests.Fixture(seed));
         Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
         Assert.Equal(characters, payload.Length);

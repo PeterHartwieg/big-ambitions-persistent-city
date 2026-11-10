@@ -6,8 +6,8 @@ Changed files are the branch's commits since the merge base with --base plus
 uncommitted and untracked files. Every class declared in a changed tests/**/*.cs
 file is passed to `dotnet test --filter`. With no changed test files nothing runs.
 
-This is the focused run for implementers, fix rounds and the harness. It does not
-take the machine-wide dotnet lock (wait-other-dotnet.ps1); only the full suite does.
+This is the focused run for implementers, fix rounds and the harness. The full
+suite runs once before merge. Neither waits for other test runs.
 """
 import argparse
 import os

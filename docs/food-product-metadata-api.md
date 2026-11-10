@@ -37,4 +37,4 @@ E5b owns calling this seam at each **new uncaptured, uncommitted context**, and 
 
 Precedence is per field: valid per-product config > API > defaults. Missing/rejected config fields fall through; unknown or duplicate config properties reject that whole entry, also falling through. Numeric config endpoint clamping remains explicit config. Config round trips preserve absent fields rather than materializing defaults over API values. Defaults are Food, deterministic seeded per-resident taste, and fits 900/100/450. The original three products always retain their saved traits and established class/fits. Bundle metadata does not implement bundles. No schema or native admission/checkout change belongs to E5e.
 
-[Offline proof and pending automated rig checks](checks/e5e-metadata-api.md). No product or real second-mod integration is claimed as verified by rig.
+[Offline proof and pending automated rig checks](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5e-metadata-api.md). No product or real second-mod integration is claimed as verified by rig.
