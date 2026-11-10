@@ -123,7 +123,8 @@ class ResultHygiene(unittest.TestCase):
         self.assertEqual({"os", "architecture", "dotnetSdk", "python"}, set(host))
         self.assertNotIn(os.environ.get("COMPUTERNAME", "<none>"), text)
         self.assertEqual("{python}", f.stage_record(result, "loud")["argv"][0])
-        self.assertNotIn("game", result["provenance"])  # F9b adds the game block
+        # F9b: without supplied assemblies the game block says so and holds no hashes.
+        self.assertEqual({"supplied": False, "managed": None, "set": None, "differing": [], "assemblies": {}}, result["provenance"]["game"])
 
     def test_provenance_records_source_settings_and_compiled_price_weight(self):
         f = Fixture(self)
@@ -498,50 +499,95 @@ class Stages(unittest.TestCase):
         self.assertIsNone(re.search(r"[A-Za-z]:\\\\|/Users/|LOCALAPPDATA|wait-other-dotnet", text))
 
 
+# The 16 arms F9a seeded as expected-red from the F2a baseline (docs-history-2026-11-10:docs/checks/f2a.md), used as synthetic red data now that
+# F2g recorded the green matrix and F9f emptied the expectation list.
+F2A_RED = ["bodies-off/plain-30", "bodies-off/plain-120", "focus/stationary", "focus/sweep", "focus/away-return", "caps/1-1",
+           "caps/24-12", "caps/256-64", "lag/ideal", "lag/slow-head-car", "failures/10pct", "failures/50pct", "cadence/30fps",
+           "cadence/120fps", "transitions/reload-mid-journey", "transitions/hidden-travel"]
+
+
+def red(baseline, arms=F2A_RED):
+    data = copy.deepcopy(baseline)
+    for arm in data["arms"]:
+        if arm["arm"] in arms:
+            arm["comparison"]["Identical"] = False
+    return data
+
+
 class Movement(unittest.TestCase):
     def setUp(self):
         self.baseline = json.loads(BASELINE.read_text(encoding="utf-8"))
         self.listed = json.loads(EXPECTATIONS.read_text(encoding="utf-8"))["expectedRed"]
 
-    def test_expectation_file_is_seeded_from_baseline(self):
-        differing = [a["arm"] for a in self.baseline["arms"] if a.get("comparison") and not a["comparison"]["Identical"]]
-        self.assertEqual(differing, self.listed)
+    def test_expectation_file_is_emptied_after_f2d(self):
+        # F9f: the recorded baseline has every compared arm equal, its self-checks and F2e's E2 rows pass, so the list is empty.
+        compared = [a for a in self.baseline["arms"] if a.get("comparison")]
+        self.assertTrue(compared)
+        self.assertEqual([], [a["arm"] for a in compared if not a["comparison"]["Identical"]])
+        self.assertTrue(self.baseline["e2"])
+        self.assertTrue(all(c["pass"] for c in self.baseline["selfChecks"] + self.baseline["e2"]))
+        self.assertEqual([], self.listed)
+        self.assertTrue(set(F2A_RED) <= {a["arm"] for a in compared})
+
+    def test_recorded_baseline_passes_with_the_empty_list(self):
+        verdict, reason, metrics, notes = run.assess_movement(self.baseline, self.listed)
+        self.assertEqual("pass", verdict)
+        self.assertEqual(len([a for a in self.baseline["arms"] if a.get("comparison")]), len(metrics["equalArms"]))
+        self.assertEqual([], notes)
 
     def test_expected_red_arm_passes(self):
-        verdict, _, metrics, notes = run.assess_movement(self.baseline, self.listed)
+        verdict, _, metrics, notes = run.assess_movement(red(self.baseline), F2A_RED)
         self.assertEqual("expected-red", verdict)
-        self.assertEqual(sorted(self.listed), sorted(metrics["expectedRedArms"]))
+        self.assertEqual(sorted(F2A_RED), sorted(metrics["expectedRedArms"]))
         self.assertEqual([], notes)
         summary = run.summarize_result({"stages": [{"id": "movement", "class": "semantic", "required": True, "verdict": verdict},
                                                    {"id": "rig", "class": "native", "required": True, "verdict": "pass", "rig": True}]})
         self.assertEqual("pass", summary["summary"]["verdict"])
 
     def test_unlisted_differing_arm_fails(self):
-        listed = [a for a in self.listed if a != "focus/sweep"]
-        verdict, reason, metrics, _ = run.assess_movement(self.baseline, listed)
+        # With the emptied list any differing arm fails the stage.
+        verdict, reason, metrics, _ = run.assess_movement(red(self.baseline, ["focus/sweep"]), self.listed)
         self.assertEqual("fail", verdict)
         self.assertEqual(["focus/sweep"], metrics["unexpectedDifferingArms"])
         self.assertIn("focus/sweep", reason)
+        listed = [a for a in F2A_RED if a != "focus/sweep"]
+        self.assertEqual("fail", run.assess_movement(red(self.baseline), listed)[0])
 
     def test_listed_arm_that_turns_green_is_reported_not_failed(self):
-        data = copy.deepcopy(self.baseline)
-        arm = next(a for a in data["arms"] if a["arm"] == "caps/24-12")
-        arm["comparison"]["Identical"] = True
-        verdict, _, metrics, notes = run.assess_movement(data, self.listed)
+        data = red(self.baseline, [a for a in F2A_RED if a != "caps/24-12"])
+        verdict, _, metrics, notes = run.assess_movement(data, F2A_RED)
         self.assertEqual("expected-red", verdict)
         self.assertEqual(["caps/24-12"], metrics["listedNowGreen"])
         self.assertTrue(any("caps/24-12" in n for n in notes))
-        for a in data["arms"]:
-            if a.get("comparison"):
-                a["comparison"]["Identical"] = True
-        verdict, _, metrics, notes = run.assess_movement(data, self.listed)
+        verdict, _, metrics, notes = run.assess_movement(self.baseline, F2A_RED)
         self.assertEqual("pass", verdict)
-        self.assertEqual(len(self.listed), len(notes))
+        self.assertEqual(len(F2A_RED), len(notes))
 
     def test_failed_self_check_fails(self):
         data = copy.deepcopy(self.baseline)
         data["selfChecks"][0]["pass"] = False
         self.assertEqual("fail", run.assess_movement(data, self.listed)[0])
+
+    def test_failed_e2_replay_row_fails(self):
+        # F2e's E2 replay arm is part of the harness output (e2 rows), so the movement stage already runs it.
+        data = copy.deepcopy(self.baseline)
+        row = next(c for c in data["e2"] if "replay from" in c["check"])
+        row["pass"] = False
+        verdict, reason, metrics, _ = run.assess_movement(data, self.listed)
+        self.assertEqual("fail", verdict)
+        self.assertEqual([row["check"]], metrics["failedSelfChecks"])
+
+    def test_city_stages_select_the_f9c_and_f9f_facts(self):
+        # F9f's body arms join the city scenario stages: each filter names both classes' prefix and the trait they declare.
+        stages = {s["id"]: s for s in json.loads((HERE / "stages.json").read_text())["stages"]}
+        sources = [ROOT / "tests/F9IntegratedCityTests.cs", ROOT / "tests/Acceptance/CityMovementArms.cs"]
+        for size in ("city-s", "city-m"):
+            prefix, trait = re.fullmatch(r"FullyQualifiedName~(\w+)&(\w+=[\w-]+)", stages[size]["filter"]).groups()
+            key, value = trait.split("=")
+            for source in sources:
+                text = source.read_text(encoding="utf-8")
+                self.assertIn(f'Trait("{key}", "{value}")', text, source.name)
+                self.assertTrue(any(c.startswith(prefix) for c in re.findall(r"public sealed class (\w+)", text)), source.name)
 
     def test_end_to_end_with_recorded_baseline(self):
         f = Fixture(self)
@@ -551,7 +597,7 @@ class Movement(unittest.TestCase):
                 output="movement.json", expectations="tools/acceptance/expectations/movement.json")
         _, result, _ = f.run()
         stage = f.stage_record(result, "movement")
-        self.assertEqual("expected-red", stage["verdict"])
+        self.assertEqual("pass", stage["verdict"])
         self.assertIn("bodies-off/plain-60", stage["digests"])
 
 

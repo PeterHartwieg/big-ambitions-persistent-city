@@ -2,6 +2,7 @@
 """Compile the Persistent City prototype against an explicitly supplied local game Managed directory."""
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -14,6 +15,8 @@ root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--game-managed", required=True, type=Path)
 parser.add_argument("--json-assembly", type=Path, help="Explicit Newtonsoft.Json reference when the local Managed copy omits it")
+parser.add_argument("--provenance", type=Path, help="Write the game-assembly fingerprint (F9b) to this JSON file; never stops the build")
+parser.add_argument("--fingerprints", type=Path, default=root / "tools/acceptance/supported-game.json", help=argparse.SUPPRESS)
 args = parser.parse_args()
 managed = args.game_managed.resolve()
 references = ["mscorlib", "System", "System.Core", "System.Numerics", "System.Runtime.Serialization", "netstandard", "BigAmbitions",
@@ -25,6 +28,37 @@ for name in references:
 json_reference = (args.json_assembly or managed / "Newtonsoft.Json.dll").resolve()
 if not json_reference.is_file():
     raise SystemExit("Newtonsoft.Json.dll is missing; supply the game's assembly with --json-assembly")
+
+
+def assembly_hashes():
+    """SHA-256 per referenced game assembly plus Newtonsoft.Json.dll, keyed by file name only."""
+    files = {name + ".dll": managed / (name + ".dll") for name in references}
+    files["Newtonsoft.Json.dll"] = json_reference
+    return {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in files.items()}
+
+
+def match_fingerprint(hashes, declared):
+    """The declared set every hash matches, else ("unknown", the file names that differ from the closest set)."""
+    best = None
+    for entry in declared.get("sets", []):
+        differing = sorted(n for n in set(hashes) | set(entry["assemblies"]) if hashes.get(n) != entry["assemblies"].get(n))
+        if not differing:
+            return entry["name"], []
+        if best is None or len(differing) < len(best):
+            best = differing
+    return "unknown", best if best is not None else sorted(hashes)
+
+
+if args.provenance:
+    # Decision 4: read-only hashes of the supplied assemblies. No path is written; an unknown set never stops the build.
+    hashes = assembly_hashes()
+    declared = json.loads(args.fingerprints.read_text(encoding="utf-8")) if args.fingerprints.is_file() else {}
+    game_set, differing = match_fingerprint(hashes, declared)
+    args.provenance.parent.mkdir(parents=True, exist_ok=True)
+    args.provenance.write_text(json.dumps({"schema": "persistentcity-build-provenance-1", "managed": "<supplied>", "set": game_set,
+                                           "differing": differing, "assemblies": hashes}, indent=2) + "\n", encoding="utf-8")
+    print("Game fingerprint set:", game_set + (" (differs: " + ", ".join(differing) + ")" if differing else ""))
+
 dotnet = shutil.which("dotnet")
 if dotnet is None and os.name == "nt" and os.environ.get("LOCALAPPDATA"):
     local_host = Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe"

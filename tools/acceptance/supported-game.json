@@ -1,0 +1,42 @@
+{
+  "schema": "persistentcity-supported-game-1",
+  "rule": "Each set is the SHA-256 of every assembly tools/build.py references plus Newtonsoft.Json.dll. Hashes only, never assemblies. A game update is a new set added by a reviewed change; it marks every native assumption stale (docs/plans/f9-city-acceptance.md, Decisions 4 and 7).",
+  "current": "steam-1331550-build-25482473",
+  "sets": [
+    {
+      "name": "steam-1331550-build-25482473",
+      "recorded": "2026-11-10",
+      "source": "Read-only SHA-256 of the PC's installed Steam game (app 1331550, Steam build 25482473; BigAmbitions.dll dated 2026-09-23). No assembly copied.",
+      "assemblies": {
+        "mscorlib.dll": "98c9b62133db5dd33b22bc6aab6f28e4f04f5b5be6559b28ba5c2738241434d0",
+        "System.dll": "ace2dd6a7d534b581bf4a9d316e743d64508ca2135db73dbff0ddb9365fc454e",
+        "System.Core.dll": "f1b33eb1ae8522edcf9ba4c2b85f532d4bab68bfa2a51527264bb61619bed4ea",
+        "System.Numerics.dll": "55eda0fb467f9356d8f63933fb4b237732f1b215cb8eb0380398f05d3e8a3461",
+        "System.Runtime.Serialization.dll": "c1058a78e3828052b92d535d8fb27f9f3c9eb9cbfcdee1904898611b44d7cdb7",
+        "netstandard.dll": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5",
+        "BigAmbitions.dll": "9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911",
+        "BigAmbitions.ModAPI.dll": "0ab90c0473684ce43cbe22c4049eb509373ab0d8a80216bf882a07d50c876983",
+        "BigAmbitions.AI.dll": "ec4baf862047ef8bcc474f7789e3e2ae42206f8c24db144813932030195c4216",
+        "BigAmbitions.Items.dll": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+        "BigAmbitions.Seasons.dll": "81c69c91af18245ae984571f001bd91db6e19bde7c537b722f0d143621b8c020",
+        "BigAmbitions.Characters.dll": "82864add2ff57fbb68d2933b1abebca89154430e012c224b7ebe37925a306ad8",
+        "BigAmbitions.Neighborhoods.dll": "867cb792e3295f9c67cf0a5ec04464546c9bd337fa47a578d30409e03eeb7205",
+        "BigAmbitions.InteriorDesigner.dll": "04bab0df97d0bf7eb4c04b299e1b59bd81c254b5f57e8edca82f661b3ef50c5c",
+        "HGExtensions.dll": "fafddfadf7aca598343b4679d14bc4e1381153be9a54bf94f35daa6b49b27b38",
+        "HGPlugins.dll": "7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96",
+        "UnityEngine.CoreModule.dll": "5afc743d350e95dc30379a6d2bafa2293b63259acf196fe3f7370f03644ef6f4",
+        "UnityEngine.IMGUIModule.dll": "b9720d33d0709863fcc8b10a4f327e3bbf082486e4b544917393f7ac8a78e460",
+        "UnityEngine.UI.dll": "59647e0f2a145dab47e37e96497483098bc642928eff47ab31eb4e92cca1b7f1",
+        "UnityEngine.InputLegacyModule.dll": "be0fa03c0bd24c778b4cc6e49c26e9302a4af649e391ee34b379aaaefd826317",
+        "BigAmbitions.PlacementSystem.dll": "ab4587b9a976c3c5941041382109e2f39a4f90b9b2e9ca758bf49bd24bace0d7",
+        "UnityEngine.TextRenderingModule.dll": "a829aae9dc1953efb38e2102284a30a9a8c05891aa4dc6afabbf3a4abef6af1c",
+        "UnityEngine.AIModule.dll": "111bbf88581785d6d9f03a33ce8d3d41588ae93b2f3a6f96a08a391c69558f9c",
+        "UnityEngine.PhysicsModule.dll": "c6b1ca3c3f4352ea6069726ec4b2c54e5ad637ccc891729299b03d2b398312be",
+        "UnityEngine.AnimationModule.dll": "a3a74a5bc04bb9e5038a6fbf5bd09322df2565059f0ac269cb2bd7155d2f66d2",
+        "ExternalPlugins.dll": "7d43e9d42d2f464674cff045bcb048c48e0f87aec0a987baa34122ac6e3415d1",
+        "DayNightCycle.dll": "28a354809e8c3fdfe24ac601d31afe061816b1bd7c50f4aaa604dd442aa4fd28",
+        "Newtonsoft.Json.dll": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+      }
+    }
+  ]
+}
