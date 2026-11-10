@@ -113,3 +113,7 @@ Plan check 10 (foreign prefix on checkout) belongs to F8h and is not listed. Rig
 ## Mac rig record — 10 November 2026
 
 [Check 1 Mac record](f8h-check1-modpack-owners-mac.json): verified by rig, city running; required capabilities active, optional capabilities active or off with a reason. Full Mac modpack hook owners and classes are recorded. [Batch results](rig-2026-11-10-mac-results.md) retain the initial creation-save refusal and setup. This is F8h input, not F8h or Windows compatibility proof.
+
+## PC rig record — 10 November 2026
+
+PC: verified by rig at `b3e5a910`: city running, all five required capabilities active; twelve optional active and two off with reasons. [Small F8h input](f8h-check1-modpack-owners-pc.json) records all 49 targets, foreign owner classes, activation excerpts and the full isolated DLL set. [Batched report](rig-2026-11-10-results.md).
