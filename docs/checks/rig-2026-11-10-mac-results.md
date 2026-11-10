@@ -385,4 +385,3 @@ PASS means the numbered assertion passed on this Mac; PARTIAL names the missing 
 | Check | Result | Evidence / reason |
 |---|---|---|
 | `mac-creation-1` | FAIL | Bridge automatic creation save reached PC before detached initialization completed; Save epoch refused: Persistent City initialization has not completed. |
-
