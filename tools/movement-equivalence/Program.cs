@@ -2,7 +2,7 @@
 // Usage: dotnet run --project tools/movement-equivalence -c Release -- [--residents 957] [--days 2]
 //        [--arms <substring,...>] [--out <file.json>] [--dump <directory>] [--no-self-checks]
 // Runs the self-checks and the F2e E2 replay checks, then every arm and its bodies-off reference, prints one line per arm and
-// writes the full JSON (schema persistentcity-f2a-movement-1). Exit code 1 if a self-check fails.
+// writes the full JSON (schema persistentcity-f2a-movement-1). Exit code 1 if a self-check fails or (F2g) an arm DIFFERS.
 // Since F2d (cars follow the traffic kernel) every body arm is expected to equal its bodies-off run; a DIFFERS line
 // is a regression. Before F2d the mixed-city arms were the recorded divergence (red).
 using System;
@@ -31,6 +31,9 @@ for (int i = 0; i < args.Length; i++)
 
 var checks = new List<object>();
 bool failed = false;
+// F2g: wall time per stage (self-checks, E2, arms) for the whole-harness cost.
+var watch = System.Diagnostics.Stopwatch.StartNew();
+double selfCheckSeconds = 0, e2Seconds = 0;
 if (selfChecks)
 {
     foreach (var (check, pass, detail) in SelfChecks.Run())
@@ -41,11 +44,13 @@ if (selfChecks)
     }
 }
 
+selfCheckSeconds = watch.Elapsed.TotalSeconds;
 // F2e E2: a player-contact run with checkpoints, its bodies-off replays and the segment refusals.
 var e2 = new List<object>();
 if (selfChecks)
 {
-    foreach (var (check, pass, detail) in HoldReplay.Check(residents, Math.Min(days, 1)))
+    // F2g: the same E2 arm with visitor bodies on.
+    foreach (var (check, pass, detail) in HoldReplay.Check(residents, Math.Min(days, 1)).Concat(HoldReplay.Check(residents, Math.Min(days, 1), visitors: true)))
     {
         Console.WriteLine((pass ? "PASS " : "FAIL ") + check + (detail.Length > 0 ? " (" + detail + ")" : ""));
         e2.Add(new { check, pass, detail });
@@ -53,6 +58,7 @@ if (selfChecks)
     }
 }
 
+e2Seconds = watch.Elapsed.TotalSeconds - selfCheckSeconds;
 var arms = MovementArms.All(residents, days);
 var wanted = arms.Where(a => filters.Length == 0 || filters.Any(f => a.Name.Contains(f, StringComparison.Ordinal))).ToList();
 // References run first so each comparison has its bodies-off run.
@@ -71,6 +77,7 @@ foreach (var arm in arms.Where(a => needed.Contains(a.Name)).OrderBy(a => a.Refe
     {
         var comparison = Equivalence.Compare(result, results[arm.Reference]);
         comparisons.Add(comparison);
+        failed |= !comparison.Identical;
         line += (comparison.Identical ? "  EQUAL " : "  DIFFERS ") + string.Join(" ", comparison.Equal.Select(e => e.Key + "=" + (e.Value ? "=" : "x")))
             + "  sales " + comparison.Delta["meals.ownSales"].ToString("+0;-0;0", CultureInfo.InvariantCulture)
             + "  missed " + comparison.Delta["routines.missedActivities"].ToString("+0;-0;0", CultureInfo.InvariantCulture)
@@ -79,12 +86,15 @@ foreach (var arm in arms.Where(a => needed.Contains(a.Name)).OrderBy(a => a.Refe
     Console.WriteLine(line);
 }
 
+double totalSeconds = watch.Elapsed.TotalSeconds;
+Console.WriteLine("self-checks " + selfCheckSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s, e2 " + e2Seconds.ToString("F1", CultureInfo.InvariantCulture)
+    + " s, arms " + (totalSeconds - selfCheckSeconds - e2Seconds).ToString("F1", CultureInfo.InvariantCulture) + " s, total " + totalSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s");
 if (output != null)
 {
     var json = new
     {
         schema = MovementRun.Schema, residents, days, representationFactor = MovementFixture.RepresentationFactor,
-        gameMinutesPerRealSecond = MovementRun.GameMinutesPerRealSecond, selfChecks = checks, e2,
+        gameMinutesPerRealSecond = MovementRun.GameMinutesPerRealSecond, selfCheckSeconds, e2Seconds, totalSeconds, selfChecks = checks, e2,
         arms = arms.Where(a => results.ContainsKey(a.Name)).Select(a => new
         {
             arm = a.Name, family = a.Family, reference = a.Reference, result = results[a.Name],
