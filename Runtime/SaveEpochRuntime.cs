@@ -17,7 +17,7 @@ namespace PersistentCity.Runtime
         public object SaveEpochDiagnostics => new {
             policy = "save-epoch-v1", attached = saveEpoch != null,
             sequence = lastSaveEpoch?.Sequence ?? 0, published = lastSaveEpoch?.Published ?? 0,
-            refused = lastSaveEpoch?.Refused ?? 0, lastRefusal = lastSaveEpoch?.LastRefusal ?? "",
+            refused = lastSaveEpoch?.Refused ?? 0, deferred = lastSaveEpoch?.Deferred ?? 0, lastRefusal = lastSaveEpoch?.LastRefusal ?? "",
             detached = lastSaveEpoch?.Detached ?? false, stopPending = saveEpochStopPending
         };
 
