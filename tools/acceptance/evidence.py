@@ -139,7 +139,9 @@ def changed_inputs(base, head, repo=ROOT):
 def source_problem(summaries, recorded, repo):
     """None when every recorded machine ran the same simulation inputs, else the reason they are not comparable."""
     commits = sorted({summaries[k]["provenance"]["source"]["commit"] for k in recorded})
-    settings = {json.dumps(summaries[k]["provenance"].get("settings"), sort_keys=True) for k in recorded}
+    # configSha256 hashes the checkout, so it differs with core.autocrlf; config/ is compared by the git diff below.
+    settings = {json.dumps({key: value for key, value in (summaries[k]["provenance"].get("settings") or {}).items()
+                            if key != "configSha256"}, sort_keys=True) for k in recorded}
     if len(settings) > 1:
         return "recorded machines ran different settings; digests are not comparable"
     sources = {(summaries[k]["provenance"]["source"].get("commit"), summaries[k]["provenance"]["source"].get("diffSha256"))
