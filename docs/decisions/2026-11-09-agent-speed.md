@@ -2,6 +2,12 @@
 
 Peter decided these rules on 9 November 2026 after measuring the harness runs from 30 October to 9 November. Slices that ran in parallel waited 32–82 minutes each for the machine-wide dotnet lock. Each implementer ran the full suite 2–14 times (about 5 minutes per run since 9 November), and the harness ran it again after every fix round. Implementer contexts reached 230k–790k tokens. These rules replace the "Local tests" section of the [6 November delivery rules](2026-11-06-delivery-rules.md); everything else there stands.
 
+## The dotnet lock is removed, 10 November 2026
+
+Peter, 10 November 2026: "remove the lock." No test run waits for another. The lock was `wait-other-dotnet.ps1`, a script that paused a full run while any other worktree ran `dotnet test`. It protected wall-clock assertions from a busy machine, and those are now judged only with `PC_PERF_ASSERTS=1`. In the 14 slices from 9 to 10 November it cost 1,252 minutes of waiting against 398 minutes of testing, and its 45-minute cap let runs overlap anyway.
+
+The script on Peter's PC is now a no-op, so task files that still call it keep working. New task files leave the line out. Where this page says a run "takes the dotnet lock", read "runs".
+
 ## Tests: focused while working, full once before merge
 
 - **While working**, and in every fix round, run only the tests in the test files your branch changed:
@@ -16,7 +22,7 @@ Peter decided these rules on 9 November 2026 after measuring the harness runs fr
 - **Wall-clock budgets in tests** go through `TimingBudget` (tests/Support/TimingBudget.cs) or `PerfGate.Under`, never a bare `Assert.True(elapsed < budget)`. Both are judged only with `PC_PERF_ASSERTS=1` (see "Wall-clock limits in unit tests" below). When judged, `TimingBudget` discounts a busy machine by the test thread's CPU time and retries up to five times. Counters and byte sizes stay exact asserts ([X3](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/x3.md)).
 - A red full run goes to the local-test fixer, which is how the harness handles any red local test.
 
-Harness `task.yaml` block for a slice (replace the worktree path):
+Harness `task.yaml` block for a slice:
 
 ```yaml
 test_scope: final
@@ -26,7 +32,6 @@ local_tests:
   - python tools/test-focused.py
   full:
   - python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"
-  - powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\Peter\Coding_Projects\.agent-logs\wait-other-dotnet.ps1 -Repo "<worktree>"
   - cmd /c "set PATH=%LOCALAPPDATA%\Microsoft\dotnet;%PATH% && dotnet test tests/PersistentCity.Tests.csproj"
 ```
 
