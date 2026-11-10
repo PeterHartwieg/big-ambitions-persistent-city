@@ -37,7 +37,7 @@ No other machine-specific script, path or user name is needed or recorded.
 
 | Stage | Wraps | Verdict |
 | --- | --- | --- |
-| `build` | `tools/build.py --game-managed {managed}` | exit 0 and a printed DLL SHA-256 (recorded as `provenance.artifact`); `not-run` without `--game-managed`. F9b adds `--provenance` and the game fingerprint. |
+| `build` | `tools/build.py --game-managed {managed} --provenance {out}/build.json` | exit 0 and a printed DLL SHA-256 (recorded as `provenance.artifact`); `not-run` without `--game-managed`. The fingerprint record (F9b, below) fills `provenance.game`. |
 | `unit` | the whole test project | zero failed in the TRX |
 | `population` | `FullyQualifiedName~F5hIntegratedAcceptanceTests` | zero failed |
 | `economy-fast` | `F6hIntegratedTests`, `F6kPriceWeightTests` | zero failed |
@@ -70,6 +70,14 @@ nativeEvidence: F9d
 summary: verdict, required[], failed[], incomplete[], deviations[], notes[]
 ```
 
+## Game fingerprints (F9b)
+
+`supported-game.json` declares named fingerprint sets: the SHA-256 of every assembly `tools/build.py` references plus `Newtonsoft.Json.dll`. It holds hashes only, never assemblies. `current` names the set the native ledger is measured against. The first set, `steam-1331550-build-25482473`, was hashed read-only from the PC's installed Steam game on 10 Nov 2026. A game update is a new set added by a reviewed change.
+
+`python tools/build.py --game-managed <Managed> --provenance <file>` hashes the supplied assemblies before compiling and writes `{schema: persistentcity-build-provenance-1, managed: "<supplied>", set, differing[], assemblies{file: sha256}}`: the matching set's name, or `unknown` with the file names that differ from the closest declared set. No path is written. `unknown` never stops the build, so the Mac shim and the Linux box keep building; a missing assembly is still refused before anything is hashed. The flag does not change the compiled DLL.
+
+The `build` stage copies the record into `provenance.game` (`supplied`, `managed: "<supplied>"`, `set`, `differing`, `assemblies`). With `set` `unknown` (or no record) the summary adds a required native item `game-fingerprint` as `incomplete`; the build itself still passes.
+
 ## Summarize
 
 `summarize --result <acceptance.json> --rig <file>... [--performance <file>] [--out DIR]` reads rig results in the same schema. Their stages of class `native` count only when the rig file's `provenance.source` has the same commit, dirty flag and diff hash as the offline run and, when both record one, the same `provenance.artifact.persistentCityDllSha256`. Otherwise they are kept as `incomplete` with the reason, whatever their own verdict (a foreign `fail` does not fail this run); the original verdicts stay in `importedEvidence[].stages`. Each rig file's name, SHA-256, provenance and `sameSource` flag are kept in `importedEvidence`. Every evidence file, the run's own and each rig file's (paths relative to the rig file), is checked against its hash and copied under the merged directory (`rig/<n>-<name>/` for rig files, with `<n>` numbered after every earlier import, so repeated `summarize` runs on a merged result never overwrite earlier evidence); a missing or changed file makes its stage `incomplete`.
@@ -78,7 +86,7 @@ summary: verdict, required[], failed[], incomplete[], deviations[], notes[]
 
 The summary covers the `semantic` and `native` classes only: `fail` if a required stage failed, else `incomplete` if one is `not-run` or `incomplete`, else `pass`. `expected-red` counts as passing. Until rig results are merged with `summarize`, a placeholder `rig` entry is `not-run`, so an offline run is at best `incomplete`. Performance and gameplay are reported beside the verdict and never change it. A `pass` is not a release or readiness claim.
 
-The game block of `provenance` (fingerprint set and per-assembly hashes) is F9b. Fixture save hashes are `null` until F9c supplies them. Every string in the result is cleaned of the checkout, output, home and game paths and the user name; evidence paths are relative to `{out}`.
+Fixture save hashes are `null` until F9c supplies them. Every string in the result is cleaned of the checkout, output, home and game paths and the user name; evidence paths are relative to `{out}`.
 
 To cite a run, record its `runId`, `summary.verdict` and the SHA-256 the runner prints for `acceptance.json`. Raw evidence stays under `{out}` and is not committed; a run kept as reference evidence goes under `tools/acceptance/evidence/` (F9h).
 

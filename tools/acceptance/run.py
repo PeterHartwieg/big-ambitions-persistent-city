@@ -339,6 +339,7 @@ class Context:
         self.settings = settings
         self.unit_trx = None
         self.artifact = None
+        self.game = None  # F9b: the build's fingerprint record (build.py --provenance)
         self.tests_built = None  # None: no test build in this run; True/False: its outcome
 
     def env(self):
@@ -377,7 +378,8 @@ def stage_steps(stage, built=None):
 def stage_outputs(stage):
     """Files and directories under {out} a stage writes; removed before it runs so nothing stale is read."""
     _, trx = stage_steps(stage)
-    owned = [stage.get("acceptance"), stage.get("output"), trx and str(Path(trx).parent), "logs/" + stage["id"] + ".log"]
+    owned = [stage.get("acceptance"), stage.get("output"), stage.get("provenance"), trx and str(Path(trx).parent),
+             "logs/" + stage["id"] + ".log"]
     return [o for o in owned + stage.get("owns", []) if o]
 
 
@@ -494,6 +496,15 @@ def rule_build(ctx, stage, record):
         record["digests"]["PersistentCity.dll"] = match.group(1)
     elif verdict == "pass":
         return "fail", "build printed no DLL SHA256"
+    # F9b (Decision 4): the fingerprint set of the supplied assemblies. "unknown" leaves the build passing; the summary
+    # then holds native incomplete (summarize_result).
+    record_path = ctx.out / stage["provenance"] if stage.get("provenance") else None
+    if record_path is not None and record_path.is_file():
+        record["evidence"].append(record_path)
+        game = json.loads(record_path.read_text(encoding="utf-8"))
+        ctx.game = {"set": game.get("set"), "differing": game.get("differing", []), "assemblies": game.get("assemblies", {})}
+        record["digests"].update(ctx.game["assemblies"])
+        record["metrics"]["gameFingerprintSet"] = ctx.game["set"]
     return verdict, reason
 
 
@@ -623,6 +634,7 @@ def provenance(catalogue, dotnet, profile_stages, price_weight):
     return {
         "source": source,
         "host": host,
+        "game": {"supplied": False, "managed": None, "set": None, "differing": [], "assemblies": {}},
         "artifact": {"persistentCityDllSha256": None},
         "fixtures": fixtures,
         "settings": {"configSha256": sha256_file(config) if config.is_file() else None,
@@ -652,6 +664,12 @@ def summarize_result(result):
     native = [s for s in stages if s["class"] == "native"]
     if not any(s.get("rig") for s in native):
         required.append({"id": "rig", "class": "native", "verdict": "not-run", "reason": "rig results not merged"})
+    # F9b (Decision 4): assemblies outside every declared fingerprint set leave native incomplete, never failed.
+    game = (result.get("provenance") or {}).get("game") or {}
+    if game.get("supplied") and game.get("set") in ("unknown", None):
+        reason = ("game assemblies match no declared set; differing: " + ", ".join(game.get("differing") or [])
+                  if game.get("set") == "unknown" else "no game fingerprint recorded")
+        required.append({"id": "game-fingerprint", "class": "native", "verdict": "incomplete", "reason": reason})
     # Native rows routed from the economy stage stay incomplete until a native record that names the same row
     # (`measures`) reports; an unrelated rig pass never clears them (Decision 2).
     pending = []
@@ -715,6 +733,8 @@ def run_profile(args, catalogue):
         records.append(record)
         print(f"[{name}] {record['verdict']} in {record['seconds']:.1f} s: {record['reason']}", flush=True)
     prov["artifact"]["persistentCityDllSha256"] = ctx.artifact
+    if managed is not None and "build" in names:
+        prov["game"] = dict(prov["game"], supplied=True, managed="<supplied>", **(ctx.game or {}))
     finished = datetime.datetime.now(datetime.timezone.utc)
     result = {"schema": SCHEMA, "runId": run_id, "profile": args.profile, "onlyStages": names if args.only else None,
               "startedUtc": started.isoformat(timespec="seconds"), "finishedUtc": finished.isoformat(timespec="seconds"),

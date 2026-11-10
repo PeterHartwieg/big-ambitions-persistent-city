@@ -7,7 +7,7 @@
   "stages": [
     {"id": "provenance", "class": "provenance", "rule": "provenance", "required": false, "steps": []},
     {"id": "build", "class": "native", "rule": "build", "needsManaged": true, "dotnet": true,
-     "steps": [["{python}", "tools/build.py", "--game-managed", "{managed}"]]},
+     "steps": [["{python}", "tools/build.py", "--game-managed", "{managed}", "--provenance", "{out}/build.json"]], "provenance": "build.json"},
     {"id": "test-build", "class": "semantic", "rule": "exit-zero", "dotnet": true, "buildsTests": true,
      "steps": [["{dotnet}", "build", "tests/PersistentCity.Tests.csproj", "-nologo", "-v", "quiet"]]},
     {"id": "unit", "class": "semantic", "rule": "trx", "dotnet": true, "buildsTests": true,

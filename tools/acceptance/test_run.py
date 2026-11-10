@@ -123,7 +123,8 @@ class ResultHygiene(unittest.TestCase):
         self.assertEqual({"os", "architecture", "dotnetSdk", "python"}, set(host))
         self.assertNotIn(os.environ.get("COMPUTERNAME", "<none>"), text)
         self.assertEqual("{python}", f.stage_record(result, "loud")["argv"][0])
-        self.assertNotIn("game", result["provenance"])  # F9b adds the game block
+        # F9b: without supplied assemblies the game block says so and holds no hashes.
+        self.assertEqual({"supplied": False, "managed": None, "set": None, "differing": [], "assemblies": {}}, result["provenance"]["game"])
 
     def test_provenance_records_source_settings_and_compiled_price_weight(self):
         f = Fixture(self)
