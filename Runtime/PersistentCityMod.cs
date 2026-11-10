@@ -620,7 +620,8 @@ namespace PersistentCity.Runtime
             // F7a: load timing only when save-cost diagnostics are requested; otherwise no timestamps or fields.
             bool timed = timeActivation = saveCost != null;
             if (timed) { activationHadPayload = initializingHadPayload; activationPayloadCharacters = initializingPayload?.Length ?? 0; }
-            // Rule 5: saves during initialization are refused with both markers, never silently skipped.
+            // Rule 5: a clean save during initialization is deferred (nothing written, no stop); unit-on-stack,
+            // nested, replaced-data and poisoned saves still refuse with both markers.
             BeginInitializingSaveEpoch(save, save.modData, epochMarker?.Sequence ?? 0);
             initialization = Task.Run(() =>
             {
