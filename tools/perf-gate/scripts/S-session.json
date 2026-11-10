@@ -1,0 +1,31 @@
+{
+  "format": "perf-gate-script/v1",
+  "name": "S-session",
+  "plan": "G13: a 20 real minute management session at speeds 1-3 on the exact candidate build measured in G4. Every scripted action is acknowledged by a native or PC state readback",
+  "builds": ["candidate"],
+  "min_real_seconds": 1200,
+  "setup": [
+    {"op": "ft.teleport", "args": {"anchor": "owned-shop-1.inside"}}
+  ],
+  "loop": [
+    {"op": "ft.time", "args": {"speed": 1}},
+    {"op": "ui.key", "args": {"keys": "Ctrl+F8", "expect": "Persistent City panel open"}},
+    {"op": "ft.console", "args": {"command": "pc ordinary status", "expect": "readback of the panel state"}},
+    {"op": "ui.key", "args": {"keys": "Ctrl+F8", "expect": "Persistent City panel closed"}},
+    {"op": "ui.click", "args": {"target": "a regular of owned-shop-1", "expect": "inspector open on that resident"}},
+    {"op": "ft.console", "args": {"command": "pc population person <id>", "expect": "same resident as the inspector"}},
+    {"op": "ui.key", "args": {"keys": "Escape", "expect": "inspector closed"}},
+    {"op": "ft.time", "args": {"speed": 2}},
+    {"op": "shop.edit_price", "args": {"shop": "owned-shop-1", "product": "first menu item", "change": "+0.50", "expect": "native price readback"}},
+    {"op": "ui.open_screen", "args": {"screen": "staff", "hold_real_seconds": 10}},
+    {"op": "ui.open_screen", "args": {"screen": "inventory", "hold_real_seconds": 10}},
+    {"op": "ui.key", "args": {"keys": "Escape", "expect": "native screens closed"}},
+    {"op": "ft.time", "args": {"speed": 3}},
+    {"op": "drive.route", "args": {"waypoints": ["owned-shop-1.kerb", "owned-shop-2.kerb"], "expect": "player at owned-shop-2 (FT state)"}},
+    {"op": "drive.route", "args": {"waypoints": ["owned-shop-2.kerb", "owned-shop-1.kerb"], "expect": "player at owned-shop-1 (FT state)"}},
+    {"op": "shop.edit_price", "args": {"shop": "owned-shop-1", "product": "first menu item", "change": "-0.50", "expect": "native price readback equals the original"}}
+  ],
+  "samplers": [
+    {"op": "log.physical_diagnostics", "args": {"line": "60-second physical diagnostics"}, "every_real_seconds": 60, "feeds": "bodies"}
+  ]
+}

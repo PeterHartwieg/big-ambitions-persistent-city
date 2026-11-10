@@ -1,0 +1,86 @@
+{
+  "format": "perf-gate-fixtures/v1",
+  "plan": "docs/plans/f4-perf-gate.md, Decisions 1, 2 and 3",
+  "note": "Fixture specs and window conditions for make_gate_flow.py. Every city is a disposable FT city on the owned rig. Times are game time on day 3; minutes count from 00:00.",
+  "declared_settings": {
+    "primary": {"resolution": "1920x1080", "preset": "Low", "vsync": false, "frame_cap": 90},
+    "report_only_high": {"resolution": "1920x1080", "preset": "High", "vsync": false, "frame_cap": 90}
+  },
+  "declared_pace": {
+    "game_clock_factor": 0.3333333333333333,
+    "native_speed": 1,
+    "real_seconds_per_game_minute": 3.3,
+    "source": "Decision 3: about 3.3 real seconds per game minute at speed 1 and factor 1/3 on the 6 November rig"
+  },
+  "window_margin_fraction": 0.1,
+  "checkpoint_lead_game_minutes": 30,
+  "checkpoint_rule": "A window checkpoint is saved checkpoint_lead_game_minutes before the window start. After load, readiness and the 60 s warm-up, measurement starts when the game clock reaches the window start, so both builds start at the same game minute. A window whose clock has passed the start by more than 1 game minute is aborted and rerun.",
+  "prime_window_real_seconds": 120,
+  "abort_after_planned_fraction": 2.0,
+  "pc_config_defaults": {"GameClockFactor": 0.3333333333333333, "PhysicalEnabled": true, "MaximumPedestrians": 48, "MaximumVehicles": 24, "PhysicalRadiusMetres": 120},
+  "fixtures": {
+    "FT-F4-Declared": {
+      "purpose": "Main gate fixture",
+      "content": "Fresh city at the head build, aged to day 3 so F5g fill has reached its targets, with three staffed and stocked player food shops on one district and the F6 economy at defaults (wages, households, journal, rival limits). The owned car is parked by the dense street for S-drive.",
+      "expected_population": {"residents": 957, "commuters_about": 1020, "pool_members_about": 576, "source": "docs/checks/f5h.md"},
+      "business_load": "The native rivals the city contains plus the three owned shops",
+      "pc_config": {},
+      "provenance": "produce_fixture.py (existing) plus pending RIG-SHOPFIX for the staffed shops",
+      "prepare": [
+        {"op": "fixture.produce", "args": {"save": "FT-F4-Declared", "build": "head"}},
+        {"op": "ft.time", "args": {"advance_to": "day 3 00:30", "speed": 3}},
+        {"op": "fixture.shops", "args": {"count": 3, "district": "one district", "staffed": true, "stocked": true, "kind": "food"}},
+        {"op": "fixture.car", "args": {"owned_car": true, "park_at": "dense-street.car-park"}, "for_checks": ["G6", "G13"]},
+        {"op": "ft.console", "args": {"command": "pc population manifest", "expect": "F5g fill at its targets"}},
+        {"op": "fixture.anchors", "args": {"anchors": ["owned-shop-1.kerb", "owned-shop-2.kerb", "dense-street.wp1", "dense-street.wp2", "dense-street.wp3", "quiet-district.wp1", "quiet-district.wp2", "sweep.kerb-1", "sweep.kerb-2", "sweep.kerb-3", "sweep.kerb-4", "sweep.kerb-5", "sweep.kerb-6", "dense-street.car-park"], "rule": "dense street: the street through owned-shop-1's district with the highest median pedestrian count in a 10-minute 18:00 survey at prep; sweep kerb points 200 m apart along it; kerb points off walking lines (F2 plan check 1 placement). Positions are recorded once and reused by every build."}}
+      ],
+      "windows": ["W-idle", "W-morning", "W-lunch", "W-evening", "W-midnight"],
+      "extra_checkpoints": ["06:00", "10:00"]
+    },
+    "FT-F4-Stress10k": {
+      "purpose": "Stress windows; judged on M1/M2 and S1/S2 only",
+      "content": "About 10,000 persisted persons, fill stopped growing",
+      "business_load": "As produced by the stress fixture",
+      "pc_config": {},
+      "provenance": "Pending RIG-PCFIX (pc-stress-10k@1, requested by the F5 plan)",
+      "prepare": [
+        {"op": "fixture.stress", "args": {"fixture": "pc-stress-10k@1", "save": "FT-F4-Stress10k"}},
+        {"op": "ft.console", "args": {"command": "pc population manifest", "expect": "about 10,000 persons, fill not growing"}},
+        {"op": "fixture.anchors", "args": {"anchors": ["dense-street.wp1", "dense-street.wp2", "dense-street.wp3", "quiet-district.wp1", "quiet-district.wp2"], "rule": "as FT-F4-Declared"}}
+      ],
+      "windows": ["W-morning", "W-evening", "W-midnight"],
+      "extra_checkpoints": []
+    },
+    "FT-F4-FastestTraveller": {
+      "purpose": "Throughput and pace (S rows)",
+      "content": "FT-F4-Declared's 06:00 checkpoint with GameClockFactor = 1, the largest accepted value",
+      "base": "FT-F4-Declared",
+      "business_load": "As FT-F4-Declared",
+      "pc_config": {"GameClockFactor": 1.0},
+      "provenance": "Pending RIG-PCCONFIG row for GameClockFactor; existing RIG-WEEKS time_machine and FT time",
+      "prepare": [],
+      "windows": [],
+      "extra_checkpoints": ["06:00"]
+    },
+    "FT-F4-Reference": {
+      "purpose": "Matched dependency-only reference for every window",
+      "content": "The candidate fixture's checkpoints with Persistent City removed from the mod set and every other mod unchanged, loaded from a disposable copy that is never saved. The F4b probe runs in reference mode with the pace shim at the matched candidate arm's factor.",
+      "base": "FT-F4-Declared",
+      "business_load": "As FT-F4-Declared (the owned shops are native shops without Persistent City)",
+      "pc_config": "n/a",
+      "provenance": "Existing RIG-MODSET per-flow DLL set; pending RIG-PERF-UNION with the probe's reference mode",
+      "never_save": true,
+      "prepare": [],
+      "windows": "as base",
+      "extra_checkpoints": "as base"
+    }
+  },
+  "windows": {
+    "W-idle": {"start": "03:00", "plan_range": "03:00", "stresses": "Background floor", "repetitions": 2, "scripts": ["S-stationary", "S-path"]},
+    "W-morning": {"start": "07:00", "plan_range": "07:00-08:30", "stresses": "Commute departures, the #128 morning burst", "repetitions": 4, "scripts": ["S-stationary", "S-path"]},
+    "W-lunch": {"start": "11:45", "plan_range": "11:45-13:15", "stresses": "Meal decisions, owned-shop checkouts", "repetitions": 2, "scripts": ["S-stationary", "S-path", "S-manage"], "accounting_rollovers": ["12:00", "13:00"]},
+    "W-evening": {"start": "17:45", "plan_range": "17:45-19:15", "stresses": "Evening commute and leisure, the #128 spike window", "repetitions": 4, "scripts": ["S-stationary", "S-path", "S-sweep", "S-drive"], "accounting_rollovers": ["18:00", "19:00"]},
+    "W-midnight": {"start": "23:30", "plan_range": "23:30-01:00", "stresses": "F3 posting units, F5g fill boundary, F6 wages and journal", "repetitions": 2, "scripts": ["S-stationary", "S-path"]}
+  },
+  "w_accounting": "W-accounting is not its own checkpoint. It is the native hour rollovers inside W-lunch and W-evening with the owned shops open (accounting_rollovers above), plus W-midnight for G8."
+}

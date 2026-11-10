@@ -1,0 +1,24 @@
+{
+  "format": "perf-gate-script/v1",
+  "name": "S-path",
+  "plan": "Decision 3: a continuous camera path along a dense street and through a quiet district and back, at walking pace (RIG-VIEW camera look_at along waypoints)",
+  "builds": ["candidate", "reference"],
+  "walking_pace_m_per_s": 1.4,
+  "setup": [
+    {"op": "ft.teleport", "args": {"anchor": "dense-street.wp1"}},
+    {"op": "view.camera", "args": {"look_at": "dense-street.wp1"}}
+  ],
+  "loop": [
+    {"op": "view.camera", "args": {"look_at": "dense-street.wp2", "pace_m_per_s": 1.4}, "segment": "dense"},
+    {"op": "view.camera", "args": {"look_at": "dense-street.wp3", "pace_m_per_s": 1.4}, "segment": "dense"},
+    {"op": "view.camera", "args": {"look_at": "quiet-district.wp1", "pace_m_per_s": 1.4}, "segment": "quiet"},
+    {"op": "view.camera", "args": {"look_at": "quiet-district.wp2", "pace_m_per_s": 1.4}, "segment": "quiet"},
+    {"op": "view.camera", "args": {"look_at": "quiet-district.wp1", "pace_m_per_s": 1.4}, "segment": "quiet"},
+    {"op": "view.camera", "args": {"look_at": "dense-street.wp3", "pace_m_per_s": 1.4}, "segment": "dense"},
+    {"op": "view.camera", "args": {"look_at": "dense-street.wp1", "pace_m_per_s": 1.4}, "segment": "dense"}
+  ],
+  "samplers": [
+    {"op": "view.screen_pos", "args": {"action": "list", "segment": "dense"}, "every_real_seconds": 10, "feeds": "density.pedestrians, density.cars"},
+    {"op": "log.physical_diagnostics", "args": {"line": "60-second physical diagnostics"}, "every_real_seconds": 60, "feeds": "bodies"}
+  ]
+}
