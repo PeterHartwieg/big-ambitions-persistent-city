@@ -11,7 +11,7 @@ namespace PersistentCity.Tests;
 /// (64 for CF64), 14 × 1,024 market-history rows of eight product cells each, scopes of eight product names drawn from
 /// the full 256-name table (32 scopes; 1,024 for CF), and for CF32/CF64 the place table filled to the 20,000-place cap.
 /// The history rows sit on the fresh city's own days, so their businesses are distinct per row instead of per day; the
-/// row count and cell shape are E5d's. Offline measurement only (tests/F7dMeasure.cs).
+/// row count and cell shape are E5d's. Offline measurement only.
 /// </summary>
 internal static class F7dStressFixtures
 {

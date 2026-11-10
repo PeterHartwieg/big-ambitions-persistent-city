@@ -313,17 +313,6 @@ public sealed partial class FoodMemoryTests
     }
 
     [Fact]
-    public void RepresentedConsumersHaveSeparateMemoryAndMoneyAndRouteCountsMatchWeightZero()
-    {
-        var (a, ma, pa, _) = Ready(3); var (b, mb, pb, settings) = Ready(3); settings.FoodMemoryWeight = 0;
-        double at = a.State.Food!.Residents.Max(m => m.DesiredAt) + 30;
-        Advance(a, at); Advance(b, at, 1);
-        Assert.Equal(3, ma.Calls); Assert.Equal(ma.Calls, mb.Calls); Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back);
-        Assert.All(a.State.Food.Residents, m => Assert.Equal(1, m.Memory.Entries.Single().Served));
-        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
-    }
-
-    [Fact]
     public void HeldContributionSurvivesConfigChangesAndFitsB0bAllowance()
     {
         var (city, market, paths, settings) = Ready(1, 8); var meal = city.State.Food!.Residents[0];

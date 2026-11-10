@@ -74,20 +74,13 @@ public sealed partial class FoodCommerceTests
 
 public sealed class ShadowMoneyTokenTests
 {
-    // Both reviewers: the detached shadow document shares the token check, in every schema.
+    // Both reviewers: the detached shadow document shares the token check.
     [Theory]
-    [InlineData(4, "DailyAllowanceCents", "0xA1")] [InlineData(5, "DailyAllowanceCents", "0xA1")]
-    [InlineData(5, "DailyAllowance", "0x10")] [InlineData(4, "DailyAllowanceCents", "0x0")]
-    public void R8_ShadowNonCanonicalMoneyTokenIsRefused(int schema, string field, string token)
+    [InlineData("DailyAllowance", "0x10")] [InlineData("DailyAllowance", "0xA1")] [InlineData("DailyAllowance", "0x0")]
+    public void R8_ShadowNonCanonicalMoneyTokenIsRefused(string field, string token)
     {
         var state = FoodDemandTests.Scenario(1, 1);
         string json = FoodShadowCodec.Write(state);
-        if (field.EndsWith("Cents", StringComparison.Ordinal))
-        {
-            var legacy = LegacyMoneyWire.ToLegacy(SaveWire.Parse(json), wholeCents: schema == 4);
-            legacy["Schema"] = schema;
-            json = legacy.ToString(Formatting.None);
-        }
         Assert.Equal(state.CityKey, FoodShadowCodec.Read(json, state.CityKey).CityKey);
         string damaged = Regex.Replace(json, "\"" + field + "\": ?[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(json, damaged);

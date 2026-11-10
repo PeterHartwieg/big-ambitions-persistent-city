@@ -22,6 +22,8 @@ The `tools/*-regression` suites are not run before release. They stay in the rep
 
 ## No save migration before release
 
+Superseded on 9 November 2026 by [save schema held at 1](2026-11-09-schema-one.md): never bump the schema, including for a switch-over day; change the format in place.
+
 Persistent City has not been released, and development cities are disposable.
 
 - A new schema refuses cities written by an older development schema. The refusal has its own status that tells the player to start a new city. It must not look like corruption, and it keeps the stored payload unchanged.

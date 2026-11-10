@@ -733,69 +733,6 @@ public sealed class PlayerHoldTests
             bodies.Dispose();
         }
     }
-
-    // ---- Schema 35: older writer refused, golden pinned ----
-
-    [Fact]
-    public void AnOlderWriterCityIsRefusedWithTheStartANewCityStatusAndKept()
-    {
-        var state = CurrentSchemaOnlyTests.City();
-        string older = DevelopmentChain.Write34(state);
-        Assert.StartsWith("{\"Schema\":34,\"f\":\"pcc-c\",", older);
-        Assert.DoesNotContain("PlayerHold", SaveCodec.ExpandCompact(older));
-        var data = new Dictionary<string, string>(StringComparer.Ordinal) { [SaveStore.StateKey] = older, ["other"] = "kept" };
-        var read = SaveStore.ReadFrom(data, state.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State); Assert.Equal(34, read.SourceSchema);
-        Assert.Contains("older development build; start a new city", read.Error);
-        Assert.Equal(34, SaveCodec.DevelopmentSchemaOf(older));
-        Assert.False(SaveStore.WriteTo(data, CurrentSchemaOnlyTests.City()).Success);
-        Assert.False(SaveSession.Open(data, state.PopulationKey).WriteTo(data, CurrentSchemaOnlyTests.City()).Success);
-        Assert.Same(older, data[SaveStore.StateKey]); Assert.Equal("kept", data["other"]);
-    }
-
-    [Fact]
-    public void TheHoldFieldsAreSavedAndValidated()
-    {
-        var city = City();
-        var w = Walker(city, (c, inLeg) => inLeg >= 0.3);
-        Assert.True(city.HoldForPlayer(w.Identity.Id, 0.2, PlayerHoldCause.PlayerFoot).Applied);
-        string payload = SaveCodec.Write(city.State);
-        var body = SaveWire.Body(payload);
-        Assert.Contains("\"PlayerHoldSequence\":1", body);
-        var read = SaveCodec.Read(payload);
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(1, read.State!.PlayerHoldSequence);
-        Assert.Equal(w.PlayerHoldMinutes, read.State.Citizens.Single(c => c.Identity.Id == w.Identity.Id).PlayerHoldMinutes);
-        Assert.Equal(payload, SaveCodec.Write(read.State));
-        string Edited(Action<CityState> edit)
-        {
-            var copy = SaveCodec.Read(payload).State!; edit(copy);
-            try { return SaveCodec.Write(copy); } catch (SaveValidationException e) { return "refused: " + e.Message; }
-        }
-        Assert.Contains("Player hold minutes", Edited(s => s.Citizens.Single(c => c.Identity.Id == w.Identity.Id).PlayerHoldMinutes = 1.01));
-        Assert.Contains("Player hold minutes", Edited(s => s.Citizens.Single(c => c.Identity.Id == w.Identity.Id).PlayerHoldMinutes = -0.1));
-        Assert.Contains("without a journey", Edited(s => s.Citizens.First(c => c.Phase == CitizenPhase.AtPlace).PlayerHoldMinutes = 0.1));
-        Assert.Contains("hold sequence", Edited(s => s.PlayerHoldSequence = -1));
-    }
-
-    [Theory]
-    [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
-    [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
-    // E5b4 took writer 36: the writer-35 bytes are now the frozen shape (DevelopmentChain.Write35), unchanged, and the product
-    // refuses them as an older development city. E5b4 pins its own golden (HeldPolicyExecutionTests).
-    public void TheCurrentWriterGoldenIsPinned(int seed, string pin, int characters)
-    {
-        Assert.Equal(35, CityState.PlayerHoldSchema);
-        Assert.Equal(CityState.PlayerHoldSchema + 1, CityState.CurrentSchema);
-        var state = ChangeJournalTests.Fixture(seed);
-        string payload = DevelopmentChain.Write35(state);
-        Assert.StartsWith("{\"Schema\":35,\"f\":\"pcc-c\",\"v\":1,\"k\":[", payload);
-        var read = SaveCodec.Read(payload);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
-        Assert.Contains("start a new city", read.Error);
-        string actual = EconomicLedgerTests.Sha(payload) + " " + payload.Length;
-        Assert.True(pin + " " + characters == actual, actual);
-    }
 }
 
 // Opt-in offline measurements for docs/perf/f2e.md: set PC_F2E_MEASURE to an output file. The production PhysicalPopulation

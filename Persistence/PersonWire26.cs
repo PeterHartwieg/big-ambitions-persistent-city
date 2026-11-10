@@ -9,12 +9,9 @@ using PersistentCity.Core;
 namespace PersistentCity.Persistence
 {
     // F5c-lite (city audit F5 #92): writer 26, the person shape. docs/save-format.md describes the wire.
-    // There is no migration: schemas 1-25 come from older development builds and are refused unchanged.
+    // There is no migration: a city whose schema is not CityState.CurrentSchema is refused unchanged.
     public static partial class SaveCodec
     {
-        public const int PersonSchema = 26;
-        /// <summary>Newest older development writer; it and every earlier development writer are refused.</summary>
-        public const int LatestDevelopmentSchema = CityState.CurrentSchema - 1;
         public const string DevelopmentSchemaMessage = "This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged.";
 
         // Named schema-26 bounds (plan section 5 Bounds), checked while streaming and before every write.
@@ -36,14 +33,9 @@ namespace PersistentCity.Persistence
         private static readonly string EmploymentTail26 = "." + PersonTable.PersonaScheduleCode.ToString(CultureInfo.InvariantCulture)
             + "." + ((int)NativeEmployment.None).ToString(CultureInfo.InvariantCulture);
 
-        /// <summary>Properties that exist only from schema 26 or later; every older writer and frozen reader omits them.</summary>
-        internal static bool PersonProperty26(Type type, string? name)
-            => type == typeof(CityState) && (name == "Visitors" || name == "NextVisitorSequence" || name == "IdentityPolicyVersion" || name == "Portals"
-                || PersonProperty27(type, name) || ResearchProperty29(type, name) || VendorProperty30(type, name))
-            || type == typeof(CitizenState) && name == "EmploymentStartDay";
-
-        /// <summary>Header probe for the native authority bootstrap: the stored schema if a development build wrote it.
-        /// Reads only to the root Schema field; never allocates the population graph.</summary>
+        /// <summary>Header probe for the native authority bootstrap: the stored schema if a development build wrote it (any
+        /// number other than <see cref="CityState.CurrentSchema"/>). Reads only to the root Schema field; never allocates
+        /// the population graph.</summary>
         public static int? DevelopmentSchemaOf(string? source)
         {
             if (source == null || source.Length > MaxInputCharacters) return null;
@@ -57,7 +49,7 @@ namespace PersistentCity.Persistence
                     if (!reader.Read()) return null;
                     if (name != "Schema") { reader.Skip(); continue; }
                     if (reader.TokenType != JsonToken.Integer || !(reader.Value is long schema)) return null;
-                    return schema >= 1 && schema <= LatestDevelopmentSchema ? (int)schema : (int?)null;
+                    return schema != CityState.CurrentSchema && schema >= int.MinValue && schema <= int.MaxValue ? (int)schema : (int?)null;
                 }
             }
             catch (JsonException) { }
@@ -158,7 +150,7 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Structural parse only (plan section 3 Arrival evidence: reading and admission are separate).
-        /// Places and portals resolve by index; cross-record rules run in <see cref="ValidatePersons26"/>.</summary>
+        /// Places and portals resolve by index; cross-record rules run in <see cref="ValidatePersons27"/>.</summary>
         private static VisitorPerson ParseVisitor26(string text, IReadOnlyList<string>? places, PlaceCells cells)
         {
             Require(text.Length <= MaxVisitorTuple, "Oversized visitor tuple.");
@@ -184,7 +176,7 @@ namespace PersistentCity.Persistence
             Require(stay[4] == 'A' || stay[4] == 'D', "Unknown visitor presence.");
             visitor.Stay = new VisitorStay
             {
-                // Resolved against the saved station table by DerivePersons26, whatever the root field order.
+                // Resolved against the saved station table by DerivePersons27, whatever the root field order.
                 OriginPortalId = portalIndex < 0 ? "" : PortalIndexMark26 + portalIndex.ToString(CultureInfo.InvariantCulture),
                 Pattern = stay[3] == 'C' ? VisitorPattern.Commuter : VisitorPattern.DayVisit,
                 Presence = stay[4] == 'A' ? VisitorPresence.Active : VisitorPresence.Dormant,
@@ -262,195 +254,6 @@ namespace PersistentCity.Persistence
             ParseResidentTuple26(value);
             Require(text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid person tuple encoding.");
             Charge(ref records); // one fixed tuple per resident person
-        }
-
-        /// <summary>After a schema-26 decode and before validation: reconcile resident Employment with DayPlaceId and
-        /// derive each roster record's runtime host and slot from the person table (factor-1 roster rule).</summary>
-        private static void DerivePersons26(CityState state)
-        {
-            Require(state.Citizens != null && state.Visitors != null, "Missing person table.");
-            foreach (var person in state.Citizens)
-            {
-                Require(person != null, "Null citizen.");
-                bool employed = person.DayPlaceId != null && person.DayPlaceId.Length > 0;
-                Require(employed == person.EmploymentStartDay >= 0, "Resident Employment differs from its day place.");
-                if (!employed) person.EmploymentStartDay = 0;
-            }
-            Require(state.Portals != null, "Missing station table.");
-            foreach (var visitor in state.Visitors)
-            {
-                Require(visitor?.Stay != null, "Missing visitor stay.");
-                string mark = visitor!.Stay.OriginPortalId;
-                if (mark.Length == 0) continue;
-                Require(mark[0] == PortalIndexMark26, "Invalid visitor portal.");
-                int index = int.Parse(mark.Substring(1), CultureInfo.InvariantCulture);
-                Require(index < state.Portals!.Count, "Visitor portal index is outside the station table.");
-                visitor.Stay.OriginPortalId = state.Portals[index];
-            }
-            var food = state.Food;
-            if (food == null) { Require(state.Visitors.Count == 0, "Visitor persons require a food roster in writer 26."); return; }
-            // Factor-1 roster rule: every record is its own person's (slot 0, own anchor, stored factor 1). The host
-            // and slot of today's represented excursion are a scheduling adapter, assigned from the person table.
-            var hosts = RepresentedHosts26(state, SchedulingFactor26(state));
-            food.RepresentationFactor = 1;
-            Require(food.Residents != null, "Missing meal roster.");
-            var residentIds = new HashSet<string>(state.Citizens.Select(c => c.Identity?.Id ?? ""), StringComparer.Ordinal);
-            foreach (var meal in food.Residents)
-            {
-                Require(meal != null, "Null meal roster record.");
-                meal.AnchorId = meal.ResidentId; meal.Slot = 0;
-                if (residentIds.Contains(meal.ResidentId)) meal.AssignHost(meal.ResidentId, 0);
-                else if (hosts.TryGetValue(meal.ResidentId, out var host)) meal.AssignHost(host.Anchor, host.Slot);
-                else Fail("Meal roster record has no person: " + meal.ResidentId);
-            }
-        }
-
-        /// <summary>Represented consumers per resident for today's excursion schedule (1 + visitors / residents).</summary>
-        private static int SchedulingFactor26(CityState state)
-        {
-            Require(state.Citizens != null && state.Visitors != null, "Missing person table.");
-            int residents = state.Citizens.Count;
-            if (state.Visitors.Count == 0) return 1;
-            Require(residents > 0 && state.Visitors.Count % residents == 0 && state.Visitors.Count / residents <= 2,
-                "Visitor persons are not the represented consumers of the residents.");
-            return 1 + state.Visitors.Count / residents;
-        }
-
-        /// <summary>The represented consumer IDs FoodRepresentation would enrol for this factor, by host.</summary>
-        private static Dictionary<string, (string Anchor, int Slot)> RepresentedHosts26(CityState state, int factor)
-        {
-            var hosts = new Dictionary<string, (string, int)>(state.Citizens.Count * Math.Max(0, factor - 1), StringComparer.Ordinal);
-            foreach (var person in state.Citizens)
-                for (int slot = 1; slot < factor; slot++)
-                    if (person?.Identity != null) hosts[FoodRepresentation.ConsumerId(person.Identity.Id, slot)] = (person.Identity.Id, slot);
-            return hosts;
-        }
-
-        /// <summary>Writer-26 person rules, on every read and before every write. Returns records charged.</summary>
-        private static int ValidatePersons26(CityState state, Dictionary<string, Place> places, Dictionary<string, int> assigned)
-        {
-            Require(state.Visitors != null && state.Portals != null, "Missing person table.");
-            long persons = (long)state.Citizens.Count + state.Visitors.Count;
-            Require(persons <= MaxPersons, "Persons exceed the bound of " + MaxPersons + ".");
-            Require(state.Citizens.Count <= MaxResidents, "Residents exceed the bound of " + MaxResidents + ".");
-            Require(state.Visitors.Count <= MaxVisitors, "Visitors exceed the bound of " + MaxVisitors + ".");
-            Require(state.IdentityPolicyVersion == IdentityPolicy.CurrentVersion, "Unknown identity policy version.");
-            Require(state.Portals.Count <= MaxPortals, "Oversized station table.");
-            for (int i = 0; i < state.Portals.Count; i++)
-            {
-                Text(state.Portals[i], "Station ID", MaxPortalCharacters);
-                Require(i == 0 || string.CompareOrdinal(state.Portals[i - 1], state.Portals[i]) < 0, "Station table is unordered or duplicated.");
-            }
-            int day = (int)(state.Minute / 1440);
-            foreach (var person in state.Citizens)
-            {
-                if (person.DayPlaceId.Length == 0) continue;
-                Require(person.EmploymentStartDay >= (int)(person.JoinedMinute / 1440) && person.EmploymentStartDay <= person.LastEmploymentCheckDay,
-                    "Resident Employment start is outside its residence or employment checks.");
-            }
-            var residents = new HashSet<string>(state.Citizens.Select(c => c.Identity.Id), StringComparer.Ordinal);
-            var food = state.Food;
-            Require(food != null || state.Visitors.Count == 0, "Visitor persons require a food roster in writer 26.");
-            var hosts = RepresentedHosts26(state, SchedulingFactor26(state));
-            int visitorSequences = 0;
-            string? previous = null;
-            foreach (var visitor in state.Visitors)
-            {
-                Require(visitor != null && visitor.Stay != null, "Missing visitor stay.");
-                Text(visitor.Id, "Visitor ID", 256);
-                Require(PersonIds.FitsKind(PersonIds.Classify(visitor.Id), PersonKind.Visitor), "Invalid visitor ID.");
-                Require(previous == null || string.CompareOrdinal(previous, visitor.Id) < 0, "Visitor persons are unordered or duplicated.");
-                previous = visitor.Id;
-                Require(!residents.Contains(visitor.Id), "Visitor duplicates a resident ID.");
-                if (PersonIds.Classify(visitor.Id) == PersonIdFormat.Visitor)
-                {
-                    visitorSequences++;
-                    Require(int.Parse(visitor.Id.Substring(PersonIds.VisitorPrefix.Length), CultureInfo.InvariantCulture) < state.NextVisitorSequence, "Visitor ID is not yet allocated.");
-                }
-                // Writer 26 has no portal arrivals: every visitor is one resident's represented consumer (section 9 Q3).
-                Require(hosts.ContainsKey(visitor.Id), "Visitor has no represented host; writer 26 creates no other visitors.");
-                var stay = visitor.Stay;
-                Known(stay.Pattern, "visitor stay pattern"); Known(stay.Presence, "visitor presence");
-                Require(stay.OriginPortalId.Length == 0 || state.Portals.BinarySearch(stay.OriginPortalId, StringComparer.Ordinal) >= 0, "Visitor portal is missing from the station table.");
-                Require(stay.FirstDay >= 0 && stay.FirstDay <= day, "Invalid visitor first day.");
-                if (stay.Presence == VisitorPresence.Active) Require(BitConverter.DoubleToInt64Bits(stay.NextStayStart) == 0, "An active visitor has no next stay start.");
-                else
-                {
-                    Minute(stay.NextStayStart, "Visitor next stay start");
-                    Require(stay.NextStayStart > state.Minute, "A dormant visitor's next stay must be in the future.");
-                    Require(visitor.LastArrival == null, "A dormant visitor holds no arrival.");
-                }
-                var job = visitor.Employment;
-                if (job != null)
-                {
-                    Require(stay.Pattern == VisitorPattern.Commuter, "A day visitor holds no employment.");
-                    Require(job.PersonId == visitor.Id && job.IsActive && job.ScheduleCode == PersonTable.PersonaScheduleCode && job.NativeEmployment == NativeEmployment.None,
-                        "Invalid visitor employment.");
-                    Reference(places, job.WorkplaceId, job.Kind == EmploymentKind.Study ? PlaceKind.Study : PlaceKind.Work);
-                    Require(job.StartDay >= stay.FirstDay && job.StartDay <= day, "Invalid visitor employment start.");
-                    int count = assigned.TryGetValue(job.WorkplaceId, out int used) ? used + 1 : 1;
-                    if (count > places[job.WorkplaceId].Capacity) Fail("Place assignment exceeds capacity: " + job.WorkplaceId);
-                    assigned[job.WorkplaceId] = count;
-                }
-                if (visitor.CarriedIncomeSource.HasValue) Known(visitor.CarriedIncomeSource.Value, "carried income source");
-                var arrival = visitor.LastArrival;
-                if (arrival != null)
-                {
-                    Minute(arrival.AtMinute, "Arrival minute");
-                    Require(arrival.AtMinute <= state.Minute, "Arrival is in the future.");
-                    Known(arrival.Activity, "arrival activity");
-                    Require(places.ContainsKey(arrival.PlaceId), "Unknown arrival place.");
-                }
-            }
-            Require(state.NextVisitorSequence >= 1 && state.NextVisitorSequence - 1 == visitorSequences, "Visitor creation and active counts disagree.");
-            ValidateOwnership26(state);
-            // One record per person tuple (resident P and visitor) and per station entry, as the streaming check charges.
-            return state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
-        }
-
-        /// <summary>The F5b ownership contract (rules 1-5, duplication guards) over the saved person table. Two facts are
-        /// accepted, each producing exactly one violation that is subtracted: resident IDs stay opaque (contract B1, so
-        /// a resident ID outside the c&lt;n&gt;/pc:&lt;n&gt; formats is allowed), and a represented visitor arrives through
-        /// no portal (an empty OriginPortalId).</summary>
-        private static void ValidateOwnership26(CityState state)
-        {
-            var food = state.Food;
-            var persons = new List<PersonFacts>(state.Citizens.Count + state.Visitors.Count);
-            int tolerated = 0;
-            var employments = new List<Employment>();
-            foreach (var resident in state.Citizens)
-            {
-                persons.Add(new PersonFacts(resident.Identity.Id, PersonKind.Resident, resident.HomeId, null, resident.Car != null));
-                if (!PersonIds.FitsKind(PersonIds.Classify(resident.Identity.Id), PersonKind.Resident)) tolerated++;
-                var job = PersonTable.ResidentEmployment(resident);
-                if (job != null) employments.Add(job);
-            }
-            foreach (var visitor in state.Visitors)
-            {
-                persons.Add(new PersonFacts(visitor.Id, PersonKind.Visitor, "", visitor.Stay));
-                if (visitor.Stay.OriginPortalId.Length == 0) tolerated++;
-                if (visitor.Employment != null) employments.Add(visitor.Employment);
-            }
-            persons.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
-            var input = new OwnershipInput
-            {
-                Persons = persons, Employments = employments, PortalIds = state.Portals,
-                HomePlaceIds = state.Places.Where(p => p.Kind == PlaceKind.Home).Select(p => p.Id).OrderBy(id => id, StringComparer.Ordinal).ToList(),
-                Workplaces = state.Places.Where(p => p.Kind == PlaceKind.Work || p.Kind == PlaceKind.Study)
-                    .OrderBy(p => p.Id, StringComparer.Ordinal).Select(p => new WorkplaceFacts(p.Id, p.Kind)).ToList(),
-                FoodEnabled = food != null, FinancesEnabled = food != null && food.HouseholdFinanceVersion != 0,
-            };
-            if (food != null)
-            {
-                input.Roster = food.Residents.Select(m => new RosterFacts(m.ResidentId, m.AnchorId, m.Slot)).ToList();
-                input.Wallets = food.Residents.Where(m => m.Budget != null).Select(m => new WalletFacts(MoneyOwnerKind.Person, m.ResidentId)).ToList();
-                input.Intents = food.Residents.Select(m => new DemandUnitFacts(m.IntentId, m.ResidentId)).ToList();
-            }
-            var validator = new OwnershipValidator();
-            if (validator.Validate(input) || validator.ViolationCount == tolerated
-                && validator.Violations.All(v => v.Rule == OwnershipRule.PersonIdFormat || v.Rule == OwnershipRule.UnknownPortal)) return;
-            var shown = validator.Violations.FirstOrDefault(v => v.Rule != OwnershipRule.PersonIdFormat && v.Rule != OwnershipRule.UnknownPortal);
-            Fail("Ownership contract violated: " + (shown.Subject == null ? validator.ViolationCount + " violations" : shown.ToString()) + ".");
         }
     }
 }

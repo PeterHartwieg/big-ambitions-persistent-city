@@ -816,9 +816,8 @@ public sealed class DynamicAcquisitionTests
     }
 }
 
-/// <summary>E5b5 raised the offers default to eight, which a held tuning writes as revision 2. Fixtures that write a held
-/// decision through a pre-schema-23 writer stand for cities from before that change, so they capture the historical
-/// four-offer setting that revision 1 encodes.</summary>
+/// <summary>E5b5 raised the offers default to eight, which a held tuning writes as revision 2. Fixtures that pin a held
+/// decision from before that change capture the historical four-offer setting that revision 1 encodes.</summary>
 internal static class LegacyFoodChoice
 {
     public static FoodChoiceSettings Settings() => new FoodChoiceSettings { FoodMenuMaximumOffersPerShop = FoodDecisionTuning.RevisionOneOffers };

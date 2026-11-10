@@ -596,11 +596,10 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(FoodScopeChannel.Vehicle, scope.Channel);
         Assert.Throws<ArgumentOutOfRangeException>(() => scope.UseChannel((FoodScopeChannel)2));
         var city = WeightedFoodChoiceTests.Ready(5).city;
-        // E6c: the vendor writer saves the channel; every existing scope writes Shop. The frozen writer 29 has no channel.
+        // E6c: the writer saves the channel; every existing scope writes Shop.
         string payload = SaveWire.Text(city.State);
         Assert.Contains("\"Channel\":0,", payload);
         Assert.DoesNotContain("\"Channel\":1", payload);
-        Assert.DoesNotContain("Channel", DevelopmentChain.Write29(city.State));
     }
 
     [Fact]

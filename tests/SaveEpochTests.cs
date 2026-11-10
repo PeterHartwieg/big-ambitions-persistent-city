@@ -17,7 +17,7 @@ namespace PersistentCity.Tests;
 public sealed class SaveEpochTests
 {
     private const double Minute = 600;
-    private const string Receipt = "persistentcity:food-sale-v2:intent-1";
+    private const string Receipt = "persistentcity:food-sale-v1:intent-1";
     private const string Authority = "persistentcity:food-authority-v1";
 
     private static CityState City(string key = "source") => Population.Create(

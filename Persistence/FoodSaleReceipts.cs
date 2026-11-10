@@ -12,9 +12,9 @@ namespace PersistentCity.Persistence
     /// because the clock advanced. No separate disk transaction or household ledger.</summary>
     public static class FoodSaleReceipts
     {
-        public const string Prefix = "persistentcity:food-sale-v2:";
-        public const string LegacyPrefix = "persistentcity:food-sale-v1:";
-        public static bool IsReceiptKey(string key) => key.StartsWith(Prefix, StringComparison.Ordinal) || key.StartsWith(LegacyPrefix, StringComparison.Ordinal);
+        // Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature schema constants; change the format in place.
+        public const string Prefix = "persistentcity:food-sale-v1:";
+        public static bool IsReceiptKey(string key) => key.StartsWith(Prefix, StringComparison.Ordinal);
         private static string Key(ResidentMeal m) => Prefix + m.IntentId;
         // Exact canonical cents: the same text the earlier decimal-cents identity wrote for the same amount.
         private static string Identity(ResidentMeal m) => m.Price.ToCentsText()
@@ -41,7 +41,7 @@ namespace PersistentCity.Persistence
             for (int i = from; i < fields.Length; i++)
             {
                 int colon = fields[i].IndexOf(':');
-                if (colon <= 0 || !PositiveCents(fields[i].Substring(0, colon), false) || !CanonicalText(fields[i].Substring(colon + 1))) return false;
+                if (colon <= 0 || !PositiveCents(fields[i].Substring(0, colon)) || !CanonicalText(fields[i].Substring(colon + 1))) return false;
             }
             return true;
         }
@@ -50,18 +50,10 @@ namespace PersistentCity.Persistence
         public static FoodReceiptStatus ReadStatus(IDictionary<string, string> data, ResidentMeal meal)
         {
             if (meal.TargetKind != FoodAlternativeKind.Player) return FoodReceiptStatus.Missing;
-            bool current = data.TryGetValue(Key(meal), out var value);
-            bool legacy = data.TryGetValue(LegacyPrefix + meal.IntentId, out var oldValue);
-            if (current && legacy) return FoodReceiptStatus.Conflict;
-            if (!current && !legacy) return FoodReceiptStatus.Missing;
-            if (legacy)
-            {
-                if (!meal.Price.IsWholeCents()) return FoodReceiptStatus.Conflict;
-                value = oldValue;
-            }
+            if (!data.TryGetValue(Key(meal), out var value)) return FoodReceiptStatus.Missing;
             string identity = Identity(meal);
-            if (value == "paid|" + identity || !legacy && Matches(value, "paid|" + identity)) return FoodReceiptStatus.Paid;
-            if (value == "pending|" + identity || !legacy && Matches(value, "pending|" + identity)) return FoodReceiptStatus.Pending;
+            if (Matches(value, "paid|" + identity)) return FoodReceiptStatus.Paid;
+            if (Matches(value, "pending|" + identity)) return FoodReceiptStatus.Pending;
             return FoodReceiptStatus.Conflict;
         }
         public static bool AlreadyPaid(IDictionary<string, string> data, ResidentMeal meal)
@@ -78,14 +70,9 @@ namespace PersistentCity.Persistence
         {
             total = Money.Zero; extras = Array.Empty<FoodTicketLine>();
             if (meal.TargetKind != FoodAlternativeKind.Player || meal.Price <= Money.Zero) return false;
-            if (data.ContainsKey(LegacyPrefix + meal.IntentId))
-            {
-                if (ReadStatus(data, meal) != FoodReceiptStatus.Paid) return false;
-                total = meal.Price; return true; // legacy receipts are always one product
-            }
             if (!data.TryGetValue(Key(meal), out var value) || value == null) return false;
             var parts = value.Split('|');
-            if (parts.Length < 4 || parts[0] != "paid" || !PositiveCents(parts[1], false)
+            if (parts.Length < 4 || parts[0] != "paid" || !PositiveCents(parts[1])
                 || parts[2] != Uri.EscapeDataString(meal.BusinessId) || parts[3] != Uri.EscapeDataString(meal.ProductId)
                 || !ExtraFields(parts, 4) || !Money.TryParseCents(parts[1], Money.CentBits, out var paid)) return false;
             var lines = new List<FoodTicketLine>();
@@ -150,34 +137,27 @@ namespace PersistentCity.Persistence
         {
             var protectedKeys = new HashSet<string>(StringComparer.Ordinal);
             if (unresolvedIntentIds != null)
-                foreach (var id in unresolvedIntentIds) { protectedKeys.Add(Prefix + id); protectedKeys.Add(LegacyPrefix + id); }
+                foreach (var id in unresolvedIntentIds) protectedKeys.Add(Prefix + id);
             var remove = new List<string>();
             foreach (var pair in data)
             {
-                if (!IsReceiptKey(pair.Key) || protectedKeys.Contains(pair.Key)
-                    || !ConfirmedValue(pair.Value, pair.Key.StartsWith(LegacyPrefix, StringComparison.Ordinal))) continue;
-                string other = (pair.Key.StartsWith(Prefix, StringComparison.Ordinal) ? LegacyPrefix : Prefix)
-                    + pair.Key.Substring(Prefix.Length);
-                if (data.ContainsKey(other)) continue; // Two versions are conflicting evidence, never garbage.
+                if (!IsReceiptKey(pair.Key) || protectedKeys.Contains(pair.Key) || !ConfirmedValue(pair.Value)) continue;
                 if (!KnownDay(pair.Key, out int day)) continue;
                 if (day < nativeDay - 1) remove.Add(pair.Key);
             }
             foreach (var key in remove) data.Remove(key);
         }
-        private static bool ConfirmedValue(string value, bool legacy)
+        private static bool ConfirmedValue(string value)
         {
             // Unknown or damaged markers are evidence to investigate, not garbage to erase.
             if (value == null) return false;
             var parts = value.Split('|');
-            if (parts.Length < 4 || legacy && parts.Length != 4 || parts[0] != "paid" || !PositiveCents(parts[1], legacy)) return false;
+            if (parts.Length < 4 || parts[0] != "paid" || !PositiveCents(parts[1])) return false;
             return CanonicalText(parts[2]) && CanonicalText(parts[3]) && ExtraFields(parts, 4);
         }
-        private static bool PositiveCents(string text, bool legacy)
-        {
-            if (!decimal.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal cents) || cents <= 0
-                || cents.ToString("0.############################", CultureInfo.InvariantCulture) != text) return false;
-            return !legacy || cents == decimal.Truncate(cents) && cents <= int.MaxValue;
-        }
+        private static bool PositiveCents(string text)
+            => decimal.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal cents) && cents > 0
+                && cents.ToString("0.############################", CultureInfo.InvariantCulture) == text;
         private static bool CanonicalText(string value) => value.Length > 0 && value.Length <= 8192
             && Uri.EscapeDataString(Uri.UnescapeDataString(value)) == value;
         private static bool KnownDay(string key, out int day)

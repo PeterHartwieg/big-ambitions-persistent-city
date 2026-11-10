@@ -57,8 +57,8 @@ internal static class CityFixture
     {
         var places = F5gPopulationFillTests.Places(size.Homes, size.Shape.Businesses);
         places.Add(new Place { Id = RivalPlace, Name = "Rival", Kind = PlaceKind.Shop, Capacity = 16, Position = new Position(35, 0, 40) });
-        var state = Population.CreateFromHousing(Schema28Tests.Donors, places, "f9c-city", "0.41.1", CitySize.Seed, StartMinute);
-        PortalPlaces.Add(state, Schema27Tests.Stations);
+        var state = Population.CreateFromHousing(WorkplaceCapacityTests.Donors, places, "f9c-city", "0.41.1", CitySize.Seed, StartMinute);
+        PortalPlaces.Add(state, VisitorRoutineTests.Stations);
         var products = Menu.Select(m => m.Product).ToList();
         state.Food = new FoodCommerceState
         {

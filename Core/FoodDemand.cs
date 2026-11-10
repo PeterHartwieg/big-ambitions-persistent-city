@@ -137,7 +137,9 @@ namespace PersistentCity.Core
 
     public sealed class FoodShadowState
     {
-        public const int CurrentSchema = 5;
+        /// <summary>Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature
+        /// schema constants; change the format in place.</summary>
+        public const int CurrentSchema = 1;
         public int Schema { get; set; } = CurrentSchema;
         public string Kind { get; set; } = "persistentcity:food-shadow";
         public string CityKey { get; set; } = "";

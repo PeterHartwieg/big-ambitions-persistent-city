@@ -819,18 +819,4 @@ public sealed class OwnershipBoundaryTests
         Assert.Equal(expected * refreshes, total);
         Assert.Equal(0, bytes);
     }
-
-    // ---- Golden pins ----
-
-    /// <summary>F9e changes no wire: the writer-36 golden pins (E5b4, HeldPolicyExecutionTests) are unchanged with the view
-    /// interfaces on the entity classes.</summary>
-    [Theory]
-    [InlineData(5150, "12447cdf8cff62a2926452fb51550054bbcf681d89d6c310738988878d7226e5", 73332)]
-    [InlineData(9217, "590df8dcc45df126fe97385fedcc5fcbe8ced21be6d57747246e9e8f1e3fc89e", 72970)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        Assert.Equal(36, CityState.CurrentSchema);
-        string payload = SaveCodec.Write(ChangeJournalTests.Fixture(seed));
-        Assert.Equal(pin + " " + characters, EconomicLedgerTests.Sha(payload) + " " + payload.Length);
-    }
 }

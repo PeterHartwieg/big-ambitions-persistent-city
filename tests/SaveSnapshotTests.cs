@@ -14,39 +14,27 @@ namespace PersistentCity.Tests;
 /// </summary>
 public sealed class SaveSnapshotTests
 {
-    /// <summary>SHA-256 and length of the pre-F7c writer (base 57607b2, live-graph encode) on the same fresh fixtures,
-    /// produced by tests/F7cMeasure.cs on that commit (docs/perf/f7c.md lists every fixture, including the larger ones).
-    /// F6i repins only rush-957x2: it simulates food choices, so anchored prices change its meals/balances.
-    /// The other four inputs and all codec shape assertions remain unchanged.</summary>
+    /// <summary>SHA-256 and length of the writer on the F7c fresh fixtures, re-pinned once by X3 at the held schema 1
+    /// (docs/checks/x3.md). A deliberate format change re-pins them in place.</summary>
     public static IEnumerable<object[]> BasePins() => new[]
     {
-        new object[] { "representative-957x2", "D1CC4FB4EE3F3135AECC0A032FD63AA5257B9BC1739BB76FC98B807113EEE1AF", 2311290 },
-        new object[] { "fresh-957x3", "A6DB1093D09D7B0540B56220C5F51F64027DAED008CE0BAB995829B071BAF0E9", 2900486 },
-        new object[] { "saturated-957x3", "F32DC000A40718334FFACE8F5174E9004161DF7F07D7319A91DF15B18D7A901C", 4211558 },
-        new object[] { "encoding-max", "D222381479282F55F8B0D26A78760E915A676A0BA43593D70367B67A8424696C", 2445781 },
-        new object[] { "rush-957x2", "464EE83F9DABEC5556B84F881344BDCC981210E0461E6F758175566D47DBE2BB", 2240738 },
+        new object[] { "representative-957x2", "D3FCADCFEBE67C5C7EF43AE66FF6DE58842E48C065A85ADEEC45C873528AD07A", 850592 },
+        new object[] { "fresh-957x3", "78B27DE38A8C8741C9FA390597494C326EB7A0B83530062CF5B05F158199BCAB", 1153653 },
+        new object[] { "saturated-957x3", "4A63699D0ED1D4F2393914281BAC6254CC2C663CAE797D65B6494306AE9EE1F7", 1288457 },
+        new object[] { "encoding-max", "DA7D820F16BE9DE857A3A0F55C966E3D8F9398202DC6AB8A2C310F9B0D622A9D", 916885 },
+        new object[] { "rush-957x2", "F48EEA4C8FDE5265EB52AB68CDE2358B3AC0FE5B1A699B4426EC8911684DD669", 909527 },
     };
 
-    /// <summary>E6c: these pins are writer 29's, now the frozen C5c writer (the name is kept for docs/checks/f7c.md). The snapshot path for that schema still
-    /// gives the pinned bytes; the session and the reader use the current writer.</summary>
+    /// <summary>The writer's golden for each F7c fixture (the name is kept for docs/checks/f7c.md). X3 re-pinned them once at
+    /// the held schema 1; the snapshot path, the live writer, the session and the reader give the same bytes.</summary>
     [Theory]
     [MemberData(nameof(BasePins))]
     public void SnapshotAndLiveWriterBytesMatchPinnedFixtures(string fixture, string sha256, int characters)
     {
-        var state = F7cFixtures.Build(fixture, SaveCodec.ResearchSchema).State;
-        const int frozen = SaveCodec.ResearchSchema;
-        state.Schema = frozen;
-        var snapshot = SaveCodec.CaptureForSchema(state, frozen, null);
-        Assert.Equal(frozen, snapshot.Schema);
-        string payload = SaveCodec.EncodeForSchema(snapshot, frozen, null);
-        Assert.Equal(sha256, RepresentativeFixture.Sha256(payload));
-        Assert.Equal(characters, payload.Length);
-        Assert.Equal(payload, SaveCodec.WriteForSchema(state, frozen));
-        var frozenRead = SaveCodec.ReadWriter29(payload);
-        Assert.True(frozenRead.Status == SaveReadStatus.Loaded, frozenRead.Error);
-        Assert.Equal(payload, SaveCodec.WriteForSchema(frozenRead.State!, frozen));
-        state.Schema = CityState.CurrentSchema;
+        var state = F7cFixtures.Build(fixture).State;
         string current = SaveCodec.Encode(SaveCodec.Capture(state));
+        string actual = RepresentativeFixture.Sha256(current) + " " + current.Length;
+        Assert.True(sha256 + " " + characters == actual, "golden " + fixture + ": " + actual);
         Assert.Equal(current, SaveCodec.Write(state));
         var data = new Dictionary<string, string>(StringComparer.Ordinal) { ["other:key"] = "kept" };
         var session = SaveSession.Open(data, state.PopulationKey);
@@ -77,12 +65,12 @@ public sealed class SaveSnapshotTests
         for (int i = 0; i < 16; i++) orders.Add(sections.OrderBy(_ => random.Next()).ToArray());
         foreach (var order in orders)
         {
-            var snapshot = SaveCodec.CaptureForSchema(state, CityState.CurrentSchema, null, order);
-            Assert.Equal(expected, SaveCodec.EncodeForSchema(snapshot, CityState.CurrentSchema, null));
+            var snapshot = SaveCodec.Capture(state, null, order);
+            Assert.Equal(expected, SaveCodec.Encode(snapshot));
         }
         // Every section exactly once.
-        Assert.Throws<ArgumentException>(() => SaveCodec.CaptureForSchema(state, CityState.CurrentSchema, null, sections.Take(6).ToArray()));
-        Assert.Throws<ArgumentException>(() => SaveCodec.CaptureForSchema(state, CityState.CurrentSchema, null, sections.Append(SnapshotSection.Food).ToArray()));
+        Assert.Throws<ArgumentException>(() => SaveCodec.Capture(state, null, sections.Take(6).ToArray()));
+        Assert.Throws<ArgumentException>(() => SaveCodec.Capture(state, null, sections.Append(SnapshotSection.Food).ToArray()));
     }
 
     [Fact]
@@ -109,7 +97,7 @@ public sealed class SaveSnapshotTests
         var committed = new Route { Legs = { new RouteLeg { From = new Position(1, 2, 3), To = new Position(4, 5, 6), Minutes = 7, ServiceId = "s" } } }.Commit();
         state.Citizens.Add(new CitizenState { Journey = committed });
         // The section copy alone (no synchronize or validation): the filled graph is not a valid city.
-        var snapshot = SaveSnapshot.Capture(state, CityState.CurrentSchema);
+        var snapshot = SaveSnapshot.Capture(state);
         var audit = GraphAudit.Compare(state, snapshot.Wire);
         Assert.True(audit.Differences.Count == 0, string.Join("; ", audit.Differences));
         Assert.All(audit.Shared, shared => Assert.True(GraphAudit.Immutable(shared), shared.GetType().Name + " is shared with the live graph"));

@@ -169,8 +169,6 @@ public static class RushSpikeReplay
                 new FoodScope { PlaceId = "shop-002", BusinessId = "b3", ProductId = FoodProducts.Burger, AdditionalProductIds = { FoodProducts.HotDog, FoodProducts.Croissant } },
             }
         };
-        // The pinned #128 replay measures the represented-consumer (writer-26) city it was captured in.
-        city.Schema = SaveCodec.PersonSchema;
         return city;
     }
 

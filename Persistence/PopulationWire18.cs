@@ -63,9 +63,9 @@ namespace PersistentCity.Persistence
                 if (name == "Schema")
                 {
                     schema = HeaderInteger(requireCanonical: false);
-                    if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema < 1 || schema > LatestDevelopmentSchema, DevelopmentSchemaMessage);
-                    Require(schema == CityState.CurrentSchema, "Unsupported population schema; preserve the payload.");
+                    // Held at 1 until release: any other number is an older development city (no migration).
+                    Require(schema == CityState.CurrentSchema, DevelopmentSchemaMessage);
+                    Require(canonicalInteger, "Noncanonical population schema.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -89,22 +89,16 @@ namespace PersistentCity.Persistence
                 }
                 else if (name == "MenuPolicy")
                 {
-                    Require(reader.TokenType == JsonToken.String && ((string)reader.Value! == FoodMenuPolicy.Wire
-                        || (string)reader.Value! == FoodNameIdentity.Wire || (string)reader.Value! == FoodNameIdentity.DynamicWire), "Unsupported menu product policy.");
+                    Require(reader.TokenType == JsonToken.String && (string)reader.Value! == FoodNameIdentity.DynamicWire, "Unsupported menu product policy.");
                     menuPolicy = (string)reader.Value!;
                 }
                 else reader.Skip();
-                if (schema.HasValue && capabilities != null && (schema < 23 || menuPolicy != null))
-                {
-                    Require(schema >= 18, "Unknown capability header in a legacy population schema.");
-                    Require(schema >= 23 || menuPolicy == null, "Menu policy in an old schema.");
-                    Require(schema < 23 || menuPolicy == CityState.ExecutableMenuPolicy(schema.Value), "Unsupported menu product policy.");
-                    return; // Full population startup still validates all fields, duplicates and trailing content.
-                }
+                // Full population startup still validates all fields, duplicates and trailing content.
+                if (schema.HasValue && capabilities != null && menuPolicy != null) return;
             }
             Require(reader.TokenType == JsonToken.EndObject && !reader.Read(), "Incomplete or trailing population content.");
             Require(schema.HasValue, "Missing population schema.");
-            Require(schema < 18, "Missing population capabilities.");
+            Fail("Missing population capabilities.");
         }
         private static readonly char[] ProbeLineBreaks = { '\r', '\n' };
 
@@ -152,24 +146,21 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Reports both published counting paths; callers must budget the larger.</summary>
-        public static (int Streaming, int Semantic) CountRecords(CityState state, string source) => CountRecordsForSchema(state,source,CityState.CurrentSchema);
-
-        internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
+        public static (int Streaming, int Semantic) CountRecords(CityState state, string source)
         {
-            if (schema < 25) throw new ArgumentOutOfRangeException(nameof(schema), "Record counts start at writer 25.");
             // F7d: a compact payload charges its tables on top of the body's streaming count.
-            if (schema >= CityState.CompactSchema && source.StartsWith(CompactPrefix, StringComparison.Ordinal))
+            if (source.StartsWith(CompactPrefix, StringComparison.Ordinal))
             {
                 int tables = CompactTableEntries(source);
-                var body = CountRecordsForSchema(state, ExpandCompact(source), schema);
+                var body = CountRecords(state, ExpandCompact(source));
                 return (body.Streaming + tables, body.Semantic + tables);
             }
-            int semantic = Validate(state,schema), streaming = 0;
+            int semantic = Validate(state), streaming = 0;
             var tokenText = new TokenText(source);
             var context = WireContext.FromSource(source, tokenText);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), ContractsFor(schema), ref streaming, tokenText, schema, new FieldNameSets { Product25Count = context.ProductNames.Length });
+            CheckShape(reader, typeof(CityState), StateContracts, ref streaming, tokenText, new FieldNameSets { Product25Count = context.ProductNames.Length });
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }
@@ -218,8 +209,8 @@ namespace PersistentCity.Persistence
             {
                 var result = new WireContext(state.Places.Select(p => p.Id));
                 if (state.Portals != null) result.Portals = state.Portals;
-                if (state.Schema >= 25) result.SetProducts(state.ProductNames);
-                if (state.Schema >= VendorSchema) result.SetVendors(state.Vendors);
+                result.SetProducts(state.ProductNames);
+                result.SetVendors(state.Vendors);
                 return result;
             }
             public static WireContext FromSource(string source, TokenText? tokenText = null)
@@ -246,7 +237,7 @@ namespace PersistentCity.Persistence
                     }
                     if (name == "Vendors" && reader.TokenType == JsonToken.StartArray)
                     {
-                        // Read before business references are decoded; the shape check refuses the field in older schemas.
+                        // Read before business references are decoded.
                         Require(vendors == null, "Duplicate vendor table.");
                         int records = 0;
                         vendors = ReadVendors30(reader, text, ref records);
@@ -286,17 +277,18 @@ namespace PersistentCity.Persistence
             public readonly Action<JsonWriter, object, JsonSerializer>[] Write;
             public readonly Action<object, JsonReader, JsonSerializer>[] Read;
             public readonly Func<object> Create;
-            public readonly int Version;
-            private TupleLayout(Type type, string fields, int version = 2, string derived = "")
+            // Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature schema constants; change the format in place.
+            public const int CurrentVersion = 1;
+            public readonly int Version = CurrentVersion;
+            private TupleLayout(Type type, string fields, string derived = "")
             {
-                Version = version;
                 var names = fields.Split(' ');
                 var omitted = derived.Split(' ');
                 var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !(type == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")
                     && Array.IndexOf(omitted, p.Name) < 0).ToArray();
                 if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
-                    throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");
+                    throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple fields and the save contract deliberately, in place.");
                 Properties = names.Select(n => type.GetProperty(n) ?? throw new InvalidOperationException(n)).ToArray();
                 Write = Properties.Select(p => {
                     var writer = Expression.Parameter(typeof(JsonWriter)); var target = Expression.Parameter(typeof(object)); var serializer = Expression.Parameter(typeof(JsonSerializer));
@@ -326,25 +318,21 @@ namespace PersistentCity.Persistence
                 }).ToArray();
                 Create = Expression.Lambda<Func<object>>(Expression.Convert(Expression.New(type), typeof(object))).Compile();
             }
-            // Frozen positional contracts, independent of declaration/reflection order. Version 1 is slot zero.
-            private static readonly TupleLayout Budget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent", 2, "Ledger");
-            private static readonly TupleLayout EconomicBudget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent Ledger", 3);
-            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance AnchorId Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Slot Spent Status Today Memory External");
-            // Schema 26: one roster record per person, so the anchor and slot are derived from the person table (PersonWire26).
-            private static readonly TupleLayout Meal3 = new TupleLayout(typeof(ResidentMeal), "Allowance Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", 3, "AnchorId Slot");
-            public static TupleLayout? For(Type type, int schema) => type == typeof(ResidentBudget) ? schema >= EconomicLedgerSchema ? EconomicBudget : Budget : type == typeof(ResidentMeal) ? schema >= PersonSchema ? Meal3 : Meal : null;
+            // Positional contracts, independent of declaration/reflection order. The version is slot zero.
+            private static readonly TupleLayout EconomicBudget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent Ledger");
+            // One roster record per person, so the anchor and slot are derived from the person table (PersonWire26).
+            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", "AnchorId Slot");
+            public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? EconomicBudget : type == typeof(ResidentMeal) ? Meal : null;
         }
         private static double TupleNumber(JsonReader reader) => reader.Value is double d ? d : reader.Value is long n ? n
             : reader.Value is System.Numerics.BigInteger b ? (double)b : throw new SaveValidationException("Invalid tuple number.");
         private sealed class TupleConverter : JsonConverter
         {
-            private readonly int schema;
-            public TupleConverter(int schema) { this.schema = schema; }
-            public override bool CanConvert(Type type) => TupleLayout.For(type, schema) != null;
+            public override bool CanConvert(Type type) => TupleLayout.For(type) != null;
             public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
             {
                 if (value == null) { writer.WriteNull(); return; }
-                var tuple = TupleLayout.For(value.GetType(), schema)!;
+                var tuple = TupleLayout.For(value.GetType())!;
                 writer.WriteStartArray(); writer.WriteValue(tuple.Version);
                 for (int i = 0; i < tuple.Properties.Length; i++)
                 {
@@ -356,7 +344,7 @@ namespace PersistentCity.Persistence
             public override object? ReadJson(JsonReader reader, Type type, object? existingValue, JsonSerializer serializer)
             {
                 if (reader.TokenType == JsonToken.Null) return null;
-                var tuple = TupleLayout.For(type, schema)!;
+                var tuple = TupleLayout.For(type)!;
                 Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, tuple.Version, tuple.Version), "Invalid tuple version.");
                 var value = tuple.Create();
                 for (int i = 0; i < tuple.Properties.Length; i++)
@@ -391,21 +379,19 @@ namespace PersistentCity.Persistence
         }
         private sealed class MemoryConverter : JsonConverter<ConsumerMemory>
         {
-            private readonly int schema;
-            public MemoryConverter(int schema) { this.schema=schema; }
-            public override void WriteJson(JsonWriter writer, ConsumerMemory? value, JsonSerializer serializer) => writer.WriteValue(MemoryWire.Encode(value!)+(schema>=20 ? "|"+(char)('0'+(int)value!.Weather) : ""));
+            public override void WriteJson(JsonWriter writer, ConsumerMemory? value, JsonSerializer serializer) => writer.WriteValue(MemoryWire.Encode(value!)+"|"+(char)('0'+(int)value!.Weather));
             public override ConsumerMemory ReadJson(JsonReader reader, Type type, ConsumerMemory? existingValue, bool hasExistingValue, JsonSerializer serializer) {
                 string wire=(string)reader.Value!;
-                if(schema>=20) CheckMemory20(wire);
-                var memory=MemoryWire.Decode(schema>=20 ? wire.Substring(0,wire.Length-2) : wire);
-                if(schema>=20) memory.Weather=(WeatherSample)(wire[wire.Length-1]-'0');return memory;
+                CheckMemory20(wire);
+                var memory=MemoryWire.Decode(wire.Substring(0,wire.Length-2));
+                memory.Weather=(WeatherSample)(wire[wire.Length-1]-'0');return memory;
             }
         }
         private sealed class VisitConverter : JsonConverter<VisitRecord>
         {
             private readonly WireContext context;
             public VisitConverter(WireContext context) { this.context = context; }
-            // Place cell at 17-19: a city index or, from the vendor schema, "v" and a vendor table row (PlaceCells).
+            // Place cell at 17-19: a city index or "v" and a vendor table row (PlaceCells).
             public static string Check(JsonReader reader, PlaceCells cells)
             {
                 Require(reader.TokenType == JsonToken.String, "Invalid visit token."); string text = (string)reader.Value!;
@@ -434,17 +420,17 @@ namespace PersistentCity.Persistence
         {
             private readonly WireContext context;
             public BusinessReferenceConverter(WireContext context) { this.context = context; }
-            // Place cell: three base-36 digits of the ordinal Places index, or (vendor schema) "v" and two base-36
+            // Place cell: three base-36 digits of the ordinal Places index, or "v" and two base-36
             // digits of the vendor table's saved row order. Each form has its own bound.
-            public static void Check(JsonReader reader, TokenText text, int schema)
+            public static void Check(JsonReader reader, TokenText text)
             {
                 Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference version.");
                 Require(reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 0, MaxPlaces - 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference slot.");
-                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= (schema >= VendorSchema ? IdentityBound((string)reader.Value!, 512) : 512), "Invalid business reference identity.");
+                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= IdentityBound((string)reader.Value!, 512), "Invalid business reference identity.");
                 Require(reader.Read() && reader.TokenType == JsonToken.String && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid business place reference.");
                 string place = (string)reader.Value!;
                 if (place.Length == 1 + VendorIndexWidth && place[0] == VendorPlaceForm)
-                    Require(schema >= VendorSchema && MemoryWire.Number(place, 1, VendorIndexWidth) < MaxVendorRows, "Invalid vendor business place reference.");
+                    Require(MemoryWire.Number(place, 1, VendorIndexWidth) < MaxVendorRows, "Invalid vendor business place reference.");
                 else Require(place.Length == 3 && MemoryWire.Number(place, 0, 3) < MaxPlaces, "Invalid business place reference.");
                 Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Surplus business reference slot.");
             }

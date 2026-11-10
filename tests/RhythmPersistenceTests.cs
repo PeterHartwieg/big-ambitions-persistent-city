@@ -153,7 +153,8 @@ public sealed class RhythmPersistenceTests
         var city = City(); string payload = Legacy(city, schema).ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
+        // An old shape labelled 1 (the number is held at 1 until release) fails strict reading instead of being misread.
+        Assert.Equal(schema == CityState.CurrentSchema ? SaveReadStatus.Invalid : SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 

@@ -210,7 +210,7 @@ namespace PersistentCity.Core
                     if(offer.Units.HasValue) reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out held);
                     int units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1;
                     shop.Offers.Add(new FoodDecisionOffer {ProductId=offer.ProductId,Price=offer.Price,
-                        Metadata=city.State.Schema>=25 ? policy.Capture(offer.ProductId,Traits(meal,person),city.State.Seed,meal.ResidentId) : null,
+                        Metadata=policy.Capture(offer.ProductId,Traits(meal,person),city.State.Seed,meal.ResidentId),
                         Units=units,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
                 }
                 d.Shops.Add(shop);
@@ -224,7 +224,7 @@ namespace PersistentCity.Core
 
         /// <summary>E5b4 (Decision 11): the market's policy at the held-policy writer, the original three otherwise.</summary>
         private IFoodProductPolicy ProductPolicy()
-            => city.State.Schema>=CityState.HeldPolicySchema && city.State.MenuPolicy==FoodNameIdentity.DynamicWire
+            => city.State.MenuPolicy==FoodNameIdentity.DynamicWire
                 && market is IFoodProductPolicyMarket policies ? policies.ProductPolicy : FoodProductPolicy.OriginalThree;
 
         /// <summary>E5b4: a held revision-2 tuple as weight inputs; null for revision 1, which keeps E4's legacy inputs.</summary>

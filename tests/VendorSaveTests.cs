@@ -21,7 +21,6 @@ public sealed class VendorSaveTests
 {
     private const long Day2 = 2 * 1440;
     private static long At(int hour, int minute = 0) => Day2 + hour * 60 + minute;
-    private static string WriterFolder => Path.Combine(AppContext.BaseDirectory, "Writer30");
 
     public VendorSaveTests() => StreetFoodHooks.Reset();
 
@@ -167,42 +166,6 @@ public sealed class VendorSaveTests
         Assert.Contains(table, payload);
         return payload.Replace(table, "\"Vendors\":[1,[" + string.Join(",", rows) + "]]");
     }
-
-    // ---- Schema ----
-
-    [Fact]
-    public void VendorsTakeTheNextFreeWriterAndOlderWritersOmitTheTable()
-    {
-        Assert.Equal(SaveCodec.ResearchSchema + 1, SaveCodec.VendorSchema);
-        Assert.Equal(CityState.HeldPolicySchema, CityState.CurrentSchema);
-        Assert.Equal(CityState.CurrentSchema - 1, SaveCodec.LatestDevelopmentSchema);
-        var city = Table(2, 1, 1).State;
-        string payload = SaveWire.Text(city);
-        Assert.Contains("\"Vendors\":[1,[", payload);
-        Assert.Contains("\"Channel\":1,", payload);
-        // A frozen writer never drops vendor state silently: it refuses a table or a vehicle scope.
-        Assert.Contains("vendor schema", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write29(city)).Message);
-    }
-
-    /// <summary>Outside the vendor table and the channel, writer 30 is writer 29: same bytes after removing the additions.</summary>
-    [Fact]
-    public void WithoutVendorsTheWriterKeepsTheWriter29ShapeAndEveryExistingScopeWritesShop()
-    {
-        foreach (var state in new[] { CurrentSchemaOnlyTests.City(), WeightedFoodChoiceTests.Ready(5, shops: 3).city.State, Researched() })
-        {
-            string current = DevelopmentChain.Write30(state), frozen = DevelopmentChain.Write29(state);
-            Assert.Contains("\"Vendors\":[1,[]]", current);
-            int scopes = state.Food?.Shops.Count ?? 0;
-            Assert.Equal(scopes, current.Split("\"Channel\":0,").Length - 1);
-            Assert.DoesNotContain("\"Channel\":1", current);
-            string stripped = current.Replace("\"Channel\":0,", "").Replace(",\"Vendors\":[1,[]]", "")
-                .Replace("\"Schema\":" + SaveCodec.VendorSchema + ",", "\"Schema\":" + SaveCodec.ResearchSchema + ",");
-            Assert.Equal(frozen, stripped);
-            Assert.Equal(CityState.CurrentSchema, state.Schema);
-        }
-    }
-
-    private static CityState Researched() { var state = CurrentSchemaOnlyTests.City(); state.Research = ResearchSaveTests.AllStates(); return state; }
 
     // ---- Round trip ----
 
@@ -563,20 +526,6 @@ public sealed class VendorSaveTests
     }
 
     [Fact]
-    public void TheVFormNeedsTheVendorSchema()
-    {
-        var state = WeightedFoodChoiceTests.Ready(5).city.State;
-        state.Food!.BusinessReferences.Add(new BusinessReference { Slot = 0, BusinessId = "b0", PlaceId = "s0" });
-        string frozen = DevelopmentChain.Write29(state);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter29(frozen).Status);
-        string forged = frozen.Replace("\"b0\",\"001\"]", "\"b0\",\"v00\"]");
-        Assert.NotEqual(frozen, forged);
-        var read = SaveCodec.ReadWriter29(forged);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Contains("Invalid vendor business place reference.", read.Error);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveWire.Read(forged).Status);
-    }
-
-    [Fact]
     public void AReferenceToAVendorPlaceWithAnotherBusinessIdIsRefused()
     {
         foreach (string business in new[] { "b9", "streetfood:vehicle:l0001:generation:1", "streetfood:vehicle:l0000:generation:0",
@@ -754,8 +703,6 @@ public sealed class VendorSaveTests
         string payload = SaveWire.Text(state);
         string visit = (string)((JArray)((JArray)Wire(payload)["Citizens"]!)[0]["RecentVisits"]!).Last()!;
         Refused(payload.Replace(visit, visit.Substring(0, 17) + cell + visit.Substring(20)), message);
-        // A visit at a vendor place in an older writer is refused as unknown, never written with a city index.
-        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write29(state));
     }
 
     [Fact]
@@ -780,7 +727,7 @@ public sealed class VendorSaveTests
     [Fact]
     public void AVisitorAtAStandWritesTheVendorFormInItsRoutineAndArrival()
     {
-        var (state, market) = Schema28Tests.Fresh();
+        var (state, market) = WorkplaceCapacityTests.Fresh();
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         city.AttachFoodMarket(market);
         double target = state.Minute + 30 * 60;
@@ -960,55 +907,39 @@ public sealed class VendorSaveTests
     [Fact]
     public void AnOlderDevelopmentCityIsRefusedWithTheNewCityStatusAndKept()
     {
-        var pins = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
-        var older = pins["refusedOlder"]!;
-        string payload = File.ReadAllText(Path.Combine(WriterFolder, (string)older["file"]!));
-        Assert.Equal((string)older["sha256"]!, Sha(payload));
-        Assert.Equal(SaveCodec.ResearchSchema, (int)older["schema"]!);
-        Assert.Equal(payload, DevelopmentChain.Write29(CurrentSchemaOnlyTests.City()));
-        RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
-        Assert.Equal(SaveCodec.ResearchSchema, SaveWire.Read(payload).SourceSchema);
-        DevelopmentChain.RequireRefusedCapabilities(payload);
-        // The frozen reader still decodes it, so the refusal is about its schema, not corruption.
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.ReadWriter29(payload).Status);
-    }
-
-    [Fact]
-    public void AFutureCityIsRefusedAndKept()
-    {
-        string payload = SaveWire.Text(Table(1, 1, 1).State)
-            .Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + (CityState.CurrentSchema + 1) + ",");
-        RefusedAndPreserved(payload, SaveReadStatus.Future);
+        // Older development builds wrote 2 to 36; a vendor table does not make any of them readable.
+        foreach (int older in new[] { 29, 36, 37 })
+        {
+            string payload = SaveWire.Text(Table(1, 1, 1).State)
+                .Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + older + ",");
+            RefusedAndPreserved(payload, SaveReadStatus.DevelopmentSchema, "start a new city");
+            Assert.Equal(older, SaveWire.Read(payload).SourceSchema);
+            DevelopmentChain.RequireRefusedCapabilities(payload);
+        }
     }
 
     // ---- Golden ----
 
     internal static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
-        ("current-schema-minimal", CurrentSchemaOnlyTests.City),
         ("shops-only", () => WeightedFoodChoiceTests.Ready(5, shops: 3).city.State),
         ("vendors-all-states", () => { var c = Table(3, 2, 4); c.State.Vendors.Find("l0001")!.DeferredStand = new VendorStand { OpeningId = 9, Position = new Position(400.125, 1, 2), OpenedDay = 3, OpenedMinute = 600 }; return c.State; }),
         ("vendors-at-bounds", () => { var c = WeightedFoodChoiceTests.Ready(5).city; Fill(c, 64, 64, 1024, references: true); return c.State; }),
     };
 
-    /// <summary>The vendor writer's bytes. A shape change without a schema bump fails here; a bump adds a new pin file.</summary>
-    [Fact]
-    public void GoldenVendorWriterBytesArePinned()
+    /// <summary>The writer's golden for each vendor fixture, re-pinned once by X3 at the held schema 1. A deliberate format
+    /// change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
+    [Theory]
+    [InlineData("shops-only", "0ec2cafed23a23a2211adb16d4cb1d78aa2a24cfc3da6eaea2b6415b165472b8", 3598)]
+    [InlineData("vendors-all-states", "ed41824e3928d4cdc98c82895acee402aa2b37523e1e06a2036a119b417a8eaf", 4796)]
+    [InlineData("vendors-at-bounds", "a310bf7b9e238cb59df41e48af2aa5556af8ced162d0704a32e6e0b71f5ab166", 115948)]
+    public void GoldenVendorWriterBytesArePinned(string name, string sha256, int characters)
     {
-        var pins = SaveWire.Parse(File.ReadAllText(Path.Combine(WriterFolder, "golden.json")));
-        Assert.Equal(SaveCodec.VendorSchema, (int)pins["writer"]!);
-        var actual = new List<string>(); var expected = new List<string>();
-        foreach (var (name, build) in GoldenFixtures())
-        {
-            string payload = DevelopmentChain.Write30(build());
-            Assert.Contains("\"Schema\":" + SaveCodec.VendorSchema + ",", payload);
-            actual.Add(name + " " + Sha(payload) + " " + payload.Length);
-            var pin = pins["fixtures"]![name];
-            expected.Add(name + " " + (string?)pin?["sha256"] + " " + (int?)pin?["characters"]);
-            var read = SaveCodec.ReadWriter30(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(payload, DevelopmentChain.Write30(read.State!));
-        }
-        Assert.True(expected.SequenceEqual(actual), string.Join("; ", actual));
+        string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        string actual = Sha(payload) + " " + payload.Length;
+        Assert.True(sha256 + " " + characters == actual, "golden " + name + ": " + actual);
     }
 
     [Fact]

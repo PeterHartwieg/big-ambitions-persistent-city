@@ -22,7 +22,6 @@ public sealed partial class FoodCommerceTests
         var resolver = FoodProductMetadataResolver.Empty.WithApi(registry.Publish(catalogue));
         offer.Metadata = resolver.Capture(name,FoodMetadataApiTests.Traits,957,"pc:1");
         string held = DevelopmentChain.Write(city.State);
-        Assert.Equal(DevelopmentChain.Represented,city.State.Schema); // S17_Full is the frozen represented city
         input.MealClass = MealClass.Bundle; input.TasteBand = 0; input.BreakfastFitCents = 5000;
         Assert.True(provider.TryRegisterProductMetadata(name,input,1,out _));
         var next = FoodProductMetadataResolver.Empty.WithApi(registry.Publish(catalogue)).Capture(name,FoodMetadataApiTests.Traits,957,"pc:1");
@@ -36,7 +35,7 @@ public sealed partial class FoodCommerceTests
         registry.BindPublicationThread();
         var defaults=FoodProductMetadataResolver.Empty.WithApi(registry.Publish(catalogue)).Capture(name,FoodMetadataApiTests.Traits,957,"pc:1");
         Assert.Equal(900,defaults.BreakfastFitCents);
-        // E5d's dynamic execution refusal remains intact; E5b owns executable admission/replay wiring.
-        Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(held));
+        // E5b4: the writer executes DynamicWire, so the held city passes the early authority probe.
+        SaveCodec.RequireExecutableCapabilities(held);
     }
 }

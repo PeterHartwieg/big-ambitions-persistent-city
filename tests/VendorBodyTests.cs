@@ -333,12 +333,4 @@ public sealed class VendorBodyTests
         Assert.Equal(position, body.Position); Assert.Equal(f.Row.Stand!.Position, body.Target);
         Assert.False(body.Agent.isStopped);
     }
-
-    [Fact]
-    public void FrozenLedgerWriterGoldenRemainsUnchanged()
-    {
-        var state = EconomicLedgerTests.Fresh(5150); EconomicLedgerTests.Populate(state);
-        Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal("06b494d2627e0d6675d8c437e1c0dff72e176ab3ae7aaa54a0f152052aace308", EconomicLedgerTests.Sha(DevelopmentChain.WriteLedger(state)));
-    }
 }
