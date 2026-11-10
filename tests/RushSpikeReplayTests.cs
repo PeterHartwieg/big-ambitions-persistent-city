@@ -21,14 +21,28 @@ public sealed class RushSpikeReplayTests
     {
         // Day 3 18:30-19:30 around the rig's 19:19 spike, warmed through two whole days first.
         const double from = 2 * 1440 + 1110, to = 2 * 1440 + 1170;
-        var result = RushSpikeReplay.Run(from, to, nativePrices: nativePrices);
-        output.WriteLine($"nativePrices={nativePrices}; p95={result.FrameP95:F6}ms; frameMax={result.FrameMax:F6}ms; unitMax={result.UnitMax:F6}ms; frame/unit spikes30={result.FrameSpikes30}/{result.UnitSpikes30}; hash={result.SaveSha256}");
-        Assert.True(result.PeakTravelling > 250 && result.PeakVehicles > 50, "fixture lost its rush: " + result.PeakTravelling + " travelling, " + result.PeakVehicles + " cars");
-        PerfGate.Under(result.UnitMax, 30, "single unit (" + result.MaxUnitKind + ")");
-        PerfGate.Under(result.FrameMax, 30, "advancement interval at minute " + result.MaxFrameMinute
-            + " with " + result.CollectionsInMaxFrame + " garbage collections during it");
-        PerfGate.Under(result.FrameP95, 5, "advancement p95");
-        // Frame cadence never changes the city: the sliced replay saves the same bytes as one uninterrupted advance.
-        Assert.Equal(RushSpikeReplay.RunUninterrupted(from, to, nativePrices), result.SaveSha256);
+        // X3: the replay builds its own city, so a missed wall-clock budget re-runs it (TimingBudget). The row and the
+        // spike details are written once, from the last attempt, also when the budget fails.
+        // Frame cadence never changes the city: every sliced replay attempt, retried or not, saves the same bytes as one
+        // uninterrupted advance. A mismatch fails that attempt at once and is never retried away.
+        string uninterrupted = RushSpikeReplay.RunUninterrupted(from, to, nativePrices);
+        RushSpikeReplay.Result? result = null;
+        try
+        {
+            TimingBudget.Run(timing =>
+            {
+                result = RushSpikeReplay.Run(from, to, nativePrices: nativePrices);
+                Assert.Equal(uninterrupted, result.SaveSha256);
+                Assert.True(result.PeakTravelling > 250 && result.PeakVehicles > 50, "fixture lost its rush: " + result.PeakTravelling + " travelling, " + result.PeakVehicles + " cars");
+                timing.Under("single unit max", result.UnitMax, 30);
+                timing.Under("advancement interval max", result.FrameMax, 30);
+                timing.Under("advancement p95", result.FrameP95, 5);
+            });
+        }
+        finally
+        {
+            if (result != null)
+                output.WriteLine($"nativePrices={nativePrices}; p95={result.FrameP95:F6}ms; frameMax={result.FrameMax:F6}ms at minute {result.MaxFrameMinute} with {result.CollectionsInMaxFrame} garbage collections; unitMax={result.UnitMax:F6}ms ({result.MaxUnitKind}); frame/unit spikes30={result.FrameSpikes30}/{result.UnitSpikes30}; hash={result.SaveSha256}");
+        }
     }
 }

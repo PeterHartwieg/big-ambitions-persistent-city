@@ -59,7 +59,7 @@ public sealed class RivalOutflowTests
             prepared.State.Places[i + 1].Position = new Position(10, 0, 0);
         }
         var city = new CitySimulator(prepared.State, paths);
-        city.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings { RivalChoiceWeight = weight },
+        city.AttachFoodMarket(market, LegacyFoodChoice.Settings(), rivalSettings: new RivalFoodSettings { RivalChoiceWeight = weight },
             campaign: new ThrowCampaign());
         food.ChoiceStartsDay = food.AwarenessStartsDay = food.RivalStartsDay = 1;
         if (finances)

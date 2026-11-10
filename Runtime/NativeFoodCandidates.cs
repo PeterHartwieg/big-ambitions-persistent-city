@@ -54,7 +54,7 @@ namespace PersistentCity.Runtime
             if(!candidateBusinesses.Contains(scope.BusinessId) || !shopControllers.TryGetValue(scope.PlaceId,out var controller)) return false;
             var reg=controller.buildingRegistration;
             if(reg==null || !registrations.TryGetValue(scope.PlaceId,out var observed) || !ReferenceEquals(reg,observed)
-                || !SupportedMenu(reg) || !GamePlaces.BuildingAccessible(controller)) return false;
+                || !SupportedMenu(reg) || !GamePlaces.BuildingAccessible(controller) || StartupHeld(reg)) return false;
             var authority=NativeFoodOwnership.Find(reg);
             return authority?.BusinessId==scope.BusinessId && authority.CanServe;
         }
