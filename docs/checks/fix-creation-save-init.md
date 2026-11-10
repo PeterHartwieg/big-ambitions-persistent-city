@@ -19,3 +19,5 @@ The unit-on-stack, nested-save, replaced-dictionary and earlier-failure refusals
    and the city runs with 49/49 targets patched.
 
 Either check may run on the Mac or on Windows.
+
+Rig result, 10 November 2026 (b), Mac at `18008ef3`: check 1 PASS (creation save deferred, city running, 49/49 targets); check 2 FAIL (schema-1 success epoch saved; reload stops PC: `Accounting input epoch was lost`). [Result](fix-creation-save-init-mac-b.json); [batched report](rig-2026-11-10b-mac-results.md).
