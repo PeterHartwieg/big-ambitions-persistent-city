@@ -252,20 +252,6 @@ public sealed class NativeCapabilityTests
         Assert.Contains("companion: Driven Rides (DrivenRides.Ride)", report.Show(a, CapabilityId.ClockDrivenRides));
     }
 
-    /// <summary>F8a changes no wire: the writer-35 golden hashes (now the frozen Write35 shape) are as F2e left them.</summary>
-    [Theory]
-    [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
-    [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        // Pin the constant this slice relies on, not the current writer (agent-speed rule): since E5b4 took writer 36, the
-        // writer-35 bytes are the frozen DevelopmentChain.Write35 shape, as in PlayerHoldTests.
-        Assert.Equal(35, CityState.PlayerHoldSchema);
-        string payload = DevelopmentChain.Write35(ChangeJournalTests.Fixture(seed));
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
-        Assert.Equal(characters, payload.Length);
-    }
-
     /// <summary>Registry update and report cost (plan section 6, F8a row). Writes the table to the test output and, when
     /// PC_F8A_MEASURE names a file, appends it there. Steady-state updates and a reused report allocate nothing.</summary>
     [Fact]
