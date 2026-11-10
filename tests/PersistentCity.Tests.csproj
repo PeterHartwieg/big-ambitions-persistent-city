@@ -49,6 +49,7 @@
     <Compile Include="../tools/compact-format/WireTree.cs" Link="CompactFormat/WireTree.cs" />
     <Compile Include="../tools/compact-format/ColumnarCodec.cs" Link="CompactFormat/ColumnarCodec.cs" />
     <Compile Include="../tools/compact-format/Candidates.cs" Link="CompactFormat/Candidates.cs" />
+    <Compile Include="../tools/capability-matrix/CapabilityMatrix.cs" Link="CapabilityMatrix/CapabilityMatrix.cs" />
     <None Update="ReaderCorpus/**/*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Writer26/*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Writer27/*.json" CopyToOutputDirectory="PreserveNewest" />
