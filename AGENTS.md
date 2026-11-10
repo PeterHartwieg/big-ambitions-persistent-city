@@ -27,7 +27,7 @@ Read this file, your plan row and the sections your task lists. Then read the co
 - Do not change RLO or publish anything upstream. Do not ask about release or Workshop.
 - Implementers do not use the game, the rig, ModsLocal or the bridge.
 
-Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.md); [agent speed, 9 Nov 2026](docs/decisions/2026-11-09-agent-speed.md) (tests, reading); [schema held at 1, 9 Nov 2026](docs/decisions/2026-11-09-schema-one.md).
+Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.md); [agent speed, 9 Nov 2026](docs/decisions/2026-11-09-agent-speed.md) (tests, reading); [schema held at 1, 9 Nov 2026](docs/decisions/2026-11-09-schema-one.md); [city direction, 10 Nov 2026](docs/decisions/2026-11-10-city-direction.md).
 
 ## Safety rules
 

@@ -1,6 +1,6 @@
 # What Persistent City does
 
-Current behaviour of the development line (writer schema 25), 6 November 2026. Status per slice is in [CHECKS.md](../CHECKS.md); nothing here is verified by rig yet. Historical milestones and measurements are in [history-2026-10-development.md](checks/history-2026-10-development.md#readme-body-before-the-6-nov-2026-restructure-moved-6-nov-2026). Terms are in the [glossary](glossary.md).
+Behaviour of the development line as of 6 November 2026. Slices merged since then (movement, population, economy, research, carts) are not described here yet; roadmap row X4 brings this page up to date. Where the page and the code disagree, the code is right. Status per slice is in [CHECKS.md](../CHECKS.md); nothing here is verified by rig yet. Historical milestones and measurements are in [history-2026-10-development.md](checks/history-2026-10-development.md#readme-body-before-the-6-nov-2026-restructure-moved-6-nov-2026). Terms are in the [glossary](glossary.md).
 
 ## Dependency and startup
 
@@ -81,9 +81,9 @@ Current behaviour of the development line (writer schema 25), 6 November 2026. S
 
 ## Saves
 
-- Own state is in the `persistentcity:state_v1` key, written as schema 25. Valid schema 13–24 cities migrate. Older unsupported, corrupt, future or foreign data is kept and refused, never reset. The next schema (F5c-lite) refuses older development cities with a "start a new city" status instead ([decision](decisions/2026-11-06-delivery-rules.md)).
+- Own state is in the `persistentcity:state_v1` key, written at schema 1, which is held until release ([decision](decisions/2026-11-09-schema-one.md)). Nothing migrates. A city from an older development build is kept and refused with a "start a new city" status. Corrupt or foreign data is kept and refused, never reset.
 - Saved cities keep identities, assignments, logical cars, traffic ownership, committed journeys, consumer balances and receipts. Restored physical leases resume in the background until a body is reacquired.
-- A side key `persistentcity:save-epoch_v1` describes each save; every writer-25 build refuses a save that carries its failure or detach marker (audit F7b).
+- A side key `persistentcity:save-epoch_v1` describes each save; the mod refuses a save that carries its failure or detach marker (audit F7b).
 - A genuine clock-modifier change re-evaluates residents safely at home and preserves journey positions; a change that cannot be represented exactly is refused and the mod stops for that session.
 
 ## Settings

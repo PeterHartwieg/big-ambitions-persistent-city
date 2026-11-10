@@ -47,28 +47,39 @@ Status words: planned, implemented, partial, stopped, verified by rig. Rig is "p
 | B0, B0b, B1, B2 memory, loyalty, regulars | implemented | pending |
 | C1, C2a, C2b campaign reader and awareness | implemented | pending |
 | C3 agency payment discovery (no safe fee path found) | implemented | pending |
-| C4 market research (inactive) | implemented | pending |
+| C4 market research engine, C5a–C5f paid research through the native agency | implemented | pending |
 | D1, D2, D3a, D4 rival catalogue, choice, outflow, memory | implemented | pending |
 | E1 weather, E2a–E2c street life and interior guard | implemented | pending |
 | E3 per-product feasibility (donut, cupcake, salad, ice cream, French fries, pizza, six more) | stopped | pending |
 | E4 wider-menu envelope | implemented | pending |
 | E5a, E5c, E5d, E5e catalogue reader, metadata, names, metadata API | implemented | pending |
-| E5b complete-menu support | partial | pending |
-| E6 carts and food trucks | planned | pending |
+| E5b, E5b2–E5b5 complete-menu support | implemented | pending |
+| E6b–E6f carts and food trucks | implemented | pending |
+| E6a Street Food vendor API (Street Food repository) | planned | pending |
 | Track F: F0 interior view experiment (default off) | implemented | pending |
 | Track F: F1 shop view, F1b street proxy | stopped | pending |
 | Audit F1 accounting backpressure, F3 bounded bulk work | implemented | pending |
-| Audit F5a census, F5b identity core, F5f journey index | implemented | pending |
-| Audit F5c-lite to F5i population | planned | pending |
-| Audit F6a harness, F6b rival limits, F6c feedback v1 | implemented | pending |
-| Audit F6d to F6h economy | planned | pending |
-| Audit F7a save cost, F7b save epoch, F7f reader corpus, F7p compact-format prototype | implemented | pending |
-| Audit F7c to F7e save snapshots | planned | pending |
+| Audit F2a–F2h movement: bodies follow logical journeys | implemented | pending |
+| Audit F4a–F4e perf gate contract and tooling | implemented | pending |
+| Audit F4f gate run record | planned | pending |
+| Audit F5a–F5i population: census, identity, schedules, employment, visitors | implemented | pending |
+| Audit F6a–F6k economy: ledger, attended wages, household resources, feedback, calibration | implemented | pending |
+| Audit F7a–F7d, F7f, F7p saves: cost, epoch, snapshot split, compact writer | implemented | pending |
+| Audit F8a capability model | implemented | pending |
+| Audit F8b–F8g capability report and contracts | partial | pending |
+| Audit F9a, F9c, F9e acceptance runner, city fixture, read-only views | implemented | pending |
+| Audit F9b, F9d, F9f–F9h acceptance | planned | pending |
+| X1–X3 codec cleanup, file split, schema held at 1 | implemented | pending |
+| X4–X9 a tree agents can read | planned | pending |
+| Track P saves and spikes | planned | pending |
+| Track G the living city | planned | pending |
+| Track R sales at every business | planned | pending |
 
 ## Links
 
 - [AGENTS.md](AGENTS.md): rules for implementers and reviewers.
-- [Roadmap](docs/roadmap.md): remaining, deferred and superseded work, and the performance gate.
+- [Roadmap](docs/roadmap.md): direction, remaining, deferred and superseded work, and the performance gate.
+- [City direction, 10 November 2026](docs/decisions/2026-11-10-city-direction.md) and the [9 November review](docs/reviews/2026-11-09-city-review.md) behind it.
 - [CHECKS.md](CHECKS.md): index of per-slice evidence.
 - [Plans](docs/plans/): F5 population, F6 economy, F7 saves, E5 products, Track F, audit F1.
 - [Decisions](docs/decisions/) and [archive](docs/archive/).
