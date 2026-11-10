@@ -1,0 +1,269 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using PersistentCity.Core;
+using PersistentCity.Persistence;
+using Xunit;
+
+namespace PersistentCity.Tests;
+
+/// <summary>
+/// 10 Nov (b) Mac rig, run mac-b-save-reload: S1 was saved at logical minute 1921.9687 (08:01, 0.03 game minutes
+/// before 08:02). After the native load, native time ticked into 08:02 before TryStart installed the clock hold
+/// (it waited for RLO Ready), and activation refused with "Accounting input epoch was lost". H1 (1983.011, 0.99
+/// minutes of slack) reloaded. These tests drive the real save-epoch binding, save session, codec, simulator and
+/// <see cref="StartupClockHold"/> through that sequence; the frame loop mirrors PopulationRuntime's startup order.
+/// </summary>
+public sealed partial class FoodCommerceTests
+{
+    private const double RigS1Minute = 1921.9687246084213; // The S1 success marker's minute.
+
+    /// <summary>Native time is Day*1440 + Hour*60 + a float minute of the hour.</summary>
+    private static double Native(int hourStart, float minuteOfHour) => hourStart + (double)minuteOfHour;
+
+    private sealed class SaveObject { public readonly Dictionary<string, string> modData = new(StringComparer.Ordinal); }
+
+    /// <summary>Native time after a load until activation: loading frames, frames waiting for RLO, then RLO Ready
+    /// and initialization. Each unheld frame advances one 30 FPS tick at native speed 1 (one game minute a second).</summary>
+    private sealed class NativeLoad
+    {
+        public int Hour; public float Minute;
+        public double Now => Hour + (double)Minute;
+        public NativeLoad(double saved) { Hour = (int)(Math.Floor(saved / 60) * 60); Minute = (float)(saved - Hour); }
+        public void Tick(bool held) { if (!held) Minute += 1f / 30; }
+
+        /// <summary>Returns the native minute at activation. <paramref name="earlyHold"/> false is the code before this fix:
+        /// the hold started only at TryStart's RLO-Ready path.</summary>
+        public double Run(bool earlyHold, int loadingFrames, int waitingFrames, StartupClockHold startup)
+        {
+            bool clock = false; // NativeCityClock installed and holding
+            for (int frame = 0; frame < loadingFrames + waitingFrames; frame++)
+            {
+                bool loading = frame < loadingFrames;
+                // PopulationRuntime.Update: Wait, then TryStart (RLO NotReady returns early).
+                if (startup.Wait(loading, 1.0 / 30)) clock = false;
+                if (earlyHold && startup.Begin()) clock = true;
+                // GameManager.RunMainGameTick: AccountingPrefix holds while startup or loading-time startup holds.
+                Tick(clock);
+            }
+            // RLO Ready: TryStart installs the hold if needed and starts initialization; activation follows.
+            startup.Initializing();
+            return Now;
+        }
+    }
+
+    private static Dictionary<string, string> OrdinarySave(SaveEpochBinding binding, SaveObject save, SaveSession session, CitySimulator city, double native)
+    {
+        var result = SaveEpochCallback.Run(binding, save, save.modData, false, ticket =>
+        {
+            // CaptureSteps: observations first, then the payload write inside the ticket.
+            Assert.True(city.BeginAccountingObservations(native));
+            Assert.True(binding.CanPublish(ticket, save, save.modData));
+            var written = session.WriteTo(save.modData, city.State);
+            return written.Success ? SaveEpochCapture.Written(city.State.Minute, city.State.PopulationKey) : SaveEpochCapture.Refused(written.Error);
+        }, reason => throw new Exception("stopped: " + reason), _ => { });
+        Assert.Equal(SaveEpochResult.Published, result);
+        return new Dictionary<string, string>(save.modData, StringComparer.Ordinal);
+    }
+
+    /// <summary>TryStart's worker on a loaded file: epoch marker, strict read, marker-describes-state.</summary>
+    private static (CityState State, SaveEpochMarker Marker) LoadFile(Dictionary<string, string> file, string populationKey)
+    {
+        Assert.False(AccountingStopStore.IsStopped(file));
+        Assert.Null(SaveEpochStore.CheckForStart(file, out var marker));
+        var read = SaveSession.Open(new Dictionary<string, string> { [SaveStore.StateKey] = file[SaveStore.StateKey] }, populationKey).InitialReadResult;
+        Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        Assert.Null(SaveEpochStore.DescribesState(marker, read.SourceSchema, read.State));
+        return (read.State!, marker!);
+    }
+
+    /// <summary>CompleteInitialization's accounting checks, unchanged by this fix: either refuses with StopAccounting.</summary>
+    private static CitySimulator? Activate(CityState state, double native, Walking routes, Market market)
+    {
+        if (!AccountingClock.Compatible(state.Minute, native)) return null;
+        var city = new CitySimulator(state, routes);
+        if (!city.IsAccountingEpochDrained(native)) return null;
+        city.AttachFoodMarket(market);
+        return city;
+    }
+
+    /// <summary>Native time held at each minute fence: drain the epoch, cross into the next, observe, up to <paramref name="to"/>.</summary>
+    private static void RunNative(CitySimulator city, double from, double to)
+    {
+        double clock = from;
+        while (true)
+        {
+            Assert.True(city.BeginAccountingObservations(clock));
+            double next = Math.Min(to, Math.Floor(clock) + 1);
+            if (next == to) { Advance(city, Math.Max(city.State.Minute, to), 1); return; }
+            Advance(city, Math.Max(city.State.Minute, AccountingClock.PreviousEpochTarget(next)), 1);
+            clock = next;
+        }
+    }
+
+    private static (CitySimulator City, Dictionary<string, string> File, SaveEpochMarker Marker, CityState Loaded, Walking Routes) FreshCityFirstSave(double saveMinute)
+    {
+        var (city, _, routes) = Ready(60);
+        var save = new SaveObject();
+        // #202: the creation save during initialization is deferred and writes nothing.
+        var binding = new SaveEpochBinding(save, save.modData, 0, initializing: true);
+        Assert.Equal(SaveEpochResult.Deferred, SaveEpochCallback.Run(binding, save, save.modData, false,
+            _ => throw new Exception("captured while initializing"), reason => throw new Exception(reason), _ => { }));
+        Assert.Empty(save.modData);
+        binding.CompleteInitialization();
+        var session = SaveSession.Open(save.modData, city.State.PopulationKey);
+        Assert.True(session.BindTo(save.modData).Success);
+        RunNative(city, 1440, saveMinute);
+        Assert.Equal(saveMinute, city.State.Minute);
+        var file = OrdinarySave(binding, save, session, city, saveMinute);
+        var (loaded, marker) = LoadFile(file, city.State.PopulationKey);
+        Assert.Equal(1, marker.Sequence);
+        Assert.Equal(saveMinute, loaded.Minute);
+        return (city, file, marker, loaded, routes);
+    }
+
+    [Fact]
+    public void FirstOrdinarySaveAfterADeferredCreationSaveReloadsWithNativeHeldFromTheFirstStartupAttempt()
+    {
+        // The rig's S1 minute of the hour (xx:01.97), at 11:01 so lunch is under way and work is due right at the save.
+        double native = Native(2100, 1.9687246f);
+        Assert.Equal(RigS1Minute - 1920, native - 2100);
+        var (city, file, marker, loaded, routes) = FreshCityFirstSave(native);
+        Assert.Contains(city.State.Food!.Residents, m => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving);
+
+        // Before this fix: the rig's reload (3 loading frames, then a second of RLO NotReady) crosses into 11:02.
+        double before = new NativeLoad(loaded.Minute).Run(earlyHold: false, 3, 30, new StartupClockHold());
+        Assert.True(Math.Floor(before) > Math.Floor(native));
+        Assert.Null(Activate(loaded, before, routes, new Market())); // "Accounting input epoch was lost"
+
+        // After: held from the first attempt, behind the loading screen too; native stays at the saved minute.
+        double after = new NativeLoad(loaded.Minute).Run(earlyHold: true, 3, 30, new StartupClockHold());
+        Assert.Equal(native, after);
+        var restored = Activate(loaded, after, routes, new Market());
+        Assert.NotNull(restored);
+        Assert.True(restored!.BeginAccountingObservations(after));
+        // The reloaded city continues exactly as the city that never saved.
+        double later = Native(2100, 3.5f);
+        RunNative(city, native, later); RunNative(restored, after, later);
+        Assert.Equal(SaveCodec.Write(city.State), SaveCodec.Write(restored.State));
+
+        // One in-game hour later (R2 -> H1 style): save again from the reloaded session and reload.
+        var reloadedSave = new SaveObject();
+        foreach (var pair in file) reloadedSave.modData.Add(pair.Key, pair.Value);
+        var next = new SaveEpochBinding(reloadedSave, reloadedSave.modData, marker.Sequence, initializing: true);
+        next.CompleteInitialization();
+        var nextSession = SaveSession.Open(new Dictionary<string, string> { [SaveStore.StateKey] = file[SaveStore.StateKey] }, loaded.PopulationKey);
+        Assert.True(nextSession.BindTo(reloadedSave.modData).Success);
+        double hourLater = Native(2160, 3.0113802f);
+        RunNative(restored, later, hourLater);
+        var h1 = OrdinarySave(next, reloadedSave, nextSession, restored, hourLater);
+        var (h1State, h1Marker) = LoadFile(h1, loaded.PopulationKey);
+        Assert.Equal(2, h1Marker.Sequence);
+        double h1Native = new NativeLoad(h1State.Minute).Run(earlyHold: true, 3, 30, new StartupClockHold());
+        var h1City = Activate(h1State, h1Native, routes, new Market());
+        Assert.NotNull(h1City);
+        Assert.True(h1City!.BeginAccountingObservations(h1Native));
+        Assert.Equal(restored.State.Citizens.Select(c => c.Identity.Id + "|" + c.Identity.Name + "|" + c.HomeId),
+            h1State.Citizens.Select(c => c.Identity.Id + "|" + c.Identity.Name + "|" + c.HomeId));
+    }
+
+    [Fact]
+    public void ReleasedStartupHoldStillRefusesALoadThatCrossedAMinute()
+    {
+        // RLO never became ready within the wait: native time is released, crosses, and the save is still refused.
+        var (_, _, _, loaded, routes) = FreshCityFirstSave(Native(2100, 1.9687246f));
+        var startup = new StartupClockHold();
+        int waiting = (int)(StartupClockHold.MaximumWaitSeconds * 30) + 2;
+        double native = new NativeLoad(loaded.Minute).Run(earlyHold: true, 3, waiting, startup);
+        Assert.True(startup.Released);
+        Assert.True(Math.Floor(native) > Math.Floor(loaded.Minute));
+        Assert.Null(Activate(loaded, native, routes, new Market()));
+    }
+
+    [Fact]
+    public void SaveWithUnfinishedWorkFromAnEarlierEpochStillRefuses()
+    {
+        var (city, _, routes) = Ready();
+        var meal = city.State.Food!.Residents.Single();
+        Advance(city, meal.DesiredAt + 6); Assert.Equal(MealStatus.Serving, meal.Status);
+        // A genuinely lost input: the snapshot's clock is inside the native minute but a purchase from an earlier
+        // epoch is still owed. Holding native time early does not forgive it.
+        double saved = Math.Floor(city.State.Minute) + .5;
+        meal.DueAt = meal.ServiceAt = Math.Floor(saved) - 1.5; meal.Deadline = saved + 30;
+        city.State.Food.Shops.Single().NextServiceAt = meal.ServiceAt;
+        city.State.Minute = saved;
+        Assert.True(AccountingClock.Compatible(saved, saved));
+        Assert.Null(Activate(city.State, saved, routes, new Market()));
+    }
+}
+
+public sealed class StartupClockHoldTests
+{
+    [Fact]
+    public void HoldBeginsOnceAndLoadingScreenTimeIsNotCounted()
+    {
+        var hold = new StartupClockHold();
+        Assert.True(hold.Begin()); Assert.False(hold.Begin());
+        for (int i = 0; i < 10000; i++) Assert.False(hold.Wait(loading: true, 1));
+        Assert.True(hold.Holding);
+    }
+
+    [Fact]
+    public void WaitReleasesExactlyOnceAndNotAgainForThisSave()
+    {
+        var hold = new StartupClockHold();
+        Assert.True(hold.Begin());
+        Assert.False(hold.Wait(false, StartupClockHold.MaximumWaitSeconds - .5));
+        Assert.True(hold.Wait(false, 1));
+        Assert.False(hold.Holding); Assert.True(hold.Released);
+        Assert.False(hold.Wait(false, 100));
+        Assert.False(hold.Begin()); // No second freeze for the same save.
+        hold.Reset();
+        Assert.True(hold.Begin()); // A different save starts a fresh hold.
+    }
+
+    [Fact]
+    public void InitializationTakesOverAndNeverTimesOut()
+    {
+        var hold = new StartupClockHold();
+        Assert.True(hold.Begin());
+        hold.Initializing();
+        Assert.False(hold.Wait(false, 1000));
+        Assert.False(hold.Released);
+        Assert.Throws<ArgumentOutOfRangeException>(() => { var h = new StartupClockHold(); h.Begin(); h.Wait(false, double.NaN); });
+    }
+
+    /// <summary>Pins the Runtime wiring (Unity-bound, not compiled here) to the order the tests model.</summary>
+    [Fact]
+    public void RuntimeHoldsBeforeRloReadyAndBehindTheLoadingScreen()
+    {
+        var root = new DirectoryInfo(AppContext.BaseDirectory);
+        while (root != null && !File.Exists(Path.Combine(root.FullName, "AGENTS.md"))) root = root.Parent;
+        Assert.NotNull(root);
+        string Read(string path) => File.ReadAllText(Path.Combine(root!.FullName, path)).Replace("\r\n", "\n");
+        string mod = Read("Runtime/PersistentCityMod.cs");
+        string start = mod.Substring(mod.IndexOf("private void TryStart()", StringComparison.Ordinal));
+        int stopped = start.IndexOf("if (!CanStartAccountingSave()) return;", StringComparison.Ordinal);
+        int early = start.IndexOf("startupHold.Begin()) StartCityClock(holding);", StringComparison.Ordinal);
+        int rlo = start.IndexOf("ReadRlo(\"startup\")", StringComparison.Ordinal);
+        int late = start.IndexOf("if (!NativeCityClock.Active) StartCityClock(save);", StringComparison.Ordinal);
+        int task = start.IndexOf("Task.Run", StringComparison.Ordinal);
+        Assert.True(stopped >= 0 && stopped < early && early < rlo && rlo < late && late < task);
+        Assert.True(start.IndexOf("startupHold.Initializing();", StringComparison.Ordinal) < task);
+        string update = mod.Substring(mod.IndexOf("private void UpdateCity()", StringComparison.Ordinal));
+        int wait = update.IndexOf("if (startupHold.Wait(UI.Load.LoadScene.isLoading, Time.unscaledDeltaTime))", StringComparison.Ordinal);
+        Assert.True(wait > 0 && wait < update.IndexOf("TryStart();", StringComparison.Ordinal));
+        Assert.True(update.IndexOf("NativeCityClock.Stop();", wait, StringComparison.Ordinal) > wait);
+        string complete = mod.Substring(mod.IndexOf("private void CompleteInitialization(Task<PreparedCity> pending)", StringComparison.Ordinal));
+        // The lost-epoch refusals at activation are unchanged.
+        Assert.Contains("if (!AccountingClock.Compatible(state.Minute, Now()))\n            { StopAccounting(); return; }", complete);
+        Assert.Contains("if (!simulation.IsAccountingEpochDrained(Now()))\n            { StopAccounting(); return; }", complete);
+        Assert.True(complete.IndexOf("NativeCityClock.StartupHold = false;", StringComparison.Ordinal)
+            < complete.IndexOf("saveEpoch.CompleteInitialization();", StringComparison.Ordinal));
+        string clock = Read("Runtime/NativeCityClock.cs");
+        Assert.Contains("if (Active && LoadScene.isLoading && StartupHold && deltaTimeWithMultiplier > 0) { deltaTimeWithMultiplier = 0; return; }", clock);
+        Assert.Contains("AccountingLimited = Refused = StartupHold = false;", clock);
+        Assert.Contains("startupHold.Reset();", Read("Runtime/PopulationLifecycle.cs"));
+    }
+}

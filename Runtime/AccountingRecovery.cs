@@ -1,4 +1,3 @@
-using PersistentCity.Core;
 using PersistentCity.Persistence;
 
 namespace PersistentCity.Runtime
@@ -40,19 +39,6 @@ namespace PersistentCity.Runtime
             if (simulation != null && NativeCityClock.CheckInputEpoch(native, simulation.State.Minute)
                 && simulation.BeginAccountingObservations(native)) return true;
             StopAccounting(); return false;
-        }
-        /// <summary>True while a loaded city still drains the native minute it entered before the clock hold
-        /// (<see cref="AccountingClock.ClassifyLoad"/>). Once drained, initialization completes and observations begin.</summary>
-        private bool ContinueLoadCatchUp()
-        {
-            if (!NativeCityClock.LoadCatchingUp || simulation == null) return false;
-            if (!simulation.IsAccountingEpochDrained(Now())) return true;
-            NativeCityClock.EndLoadCatchUp();
-            if (saveEpoch == null || !saveEpoch.BoundTo(SaveGameManager.Current))
-            { Fail("Save epoch changed during initialization. Every saved key is retained."); return false; }
-            saveEpoch.CompleteInitialization();
-            log?.Info("Load catch-up finished at clock " + simulation.State.Minute.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ".");
-            return false;
         }
         private void RefuseDevelopmentCity()
         {

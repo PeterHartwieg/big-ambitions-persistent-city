@@ -83,6 +83,7 @@ namespace PersistentCity.Runtime
         private bool initializingHadPayload;
         private Assembly? dependency;
         private float nextStart, nextDependencyCheck, nextStationScan, nextSummary;
+        private readonly StartupClockHold startupHold = new StartupClockHold();
         private int gateChanges, roadSnapshots, seenRoadSnapshots, waitingFrames;
         private readonly Dictionary<string, int> roadRebuildReasons = new Dictionary<string, int>(StringComparer.Ordinal);
         private string lastRoadRebuild = "";
@@ -267,15 +268,18 @@ namespace PersistentCity.Runtime
                 if (simulation == null)
                 {
                     if (initialization != null) { CompleteInitialization(); return; }
+                    if (startupHold.Wait(UI.Load.LoadScene.isLoading, Time.unscaledDeltaTime))
+                    {
+                        NativeCityClock.Stop();
+                        log?.Warn("Persistent City startup is still waiting after " + StartupClockHold.MaximumWaitSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            + " seconds; native time is released. If native time enters another minute before the city attaches, the saved city is refused as before.");
+                    }
                     if (Time.unscaledTime < nextStart) return;
                     nextStart = Time.unscaledTime + 1;
                     TryStart();
                     return;
                 }
-                bool catchingUp = ContinueLoadCatchUp();
-                if (failed) return;
-                if (catchingUp) { if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute)) { StopAccounting(); return; } }
-                else if (!BeginAccountingObservations()) return;
+                if (!BeginAccountingObservations()) return;
                 foodMarket?.RefreshDiscovery();
                 routeObjects?.Step(preparingPausedCity: Time.timeScale == 0);
                 if (Time.unscaledTime >= nextDependencyCheck)
@@ -359,14 +363,6 @@ namespace PersistentCity.Runtime
                 }
                 seenRoadSnapshots = snapshots;
                 if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); inspector.Suspend(); return; }
-                if (catchingUp)
-                {
-                    // Events only, up to the crossed minute: no closure or physical observation before its epoch begins.
-                    RecordRoutingFrame(prepareElapsed, 0, true);
-                    if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
-                    AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.PreviousEpochTarget(target), simulation.State.Minute)));
-                    return;
-                }
                 long closureStarted = Stopwatch.GetTimestamp();
                 simulation.RefreshTrafficClosures();
                 double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
@@ -595,6 +591,9 @@ namespace PersistentCity.Runtime
         private void TryStart()
         {
             if (!CanStartAccountingSave()) return;
+            // Hold from the first attempt, before RLO is ready and behind the loading screen (StartupClockHold).
+            var holding = SaveGameManager.Current;
+            if (holding?.modData != null && startupHold.Begin()) StartCityClock(holding);
             if (!NativeTravelPace.StartObservation()) { Fail(NativeTravelPace.LastError); return; }
             dependency = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "RealLifeOverhaul");
             var source = ReadRlo("startup");
@@ -624,9 +623,8 @@ namespace PersistentCity.Runtime
             double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
             // Hold native time throughout detached initialization and route preparation too.
             // Otherwise the world can cross accounting epochs before its scheduler exists.
-            NativeCityClock.Start(save, settings.GameClockFactor,
-                () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
-                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
+            if (!NativeCityClock.Active) StartCityClock(save);
+            startupHold.Initializing();
             initializingSave = save;
             // F7a: load timing only when save-cost diagnostics are requested; otherwise no timestamps or fields.
             bool timed = timeActivation = saveCost != null;
@@ -661,6 +659,14 @@ namespace PersistentCity.Runtime
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
+        }
+
+        private void StartCityClock(object save)
+        {
+            NativeCityClock.Start(save, settings.GameClockFactor,
+                () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
+                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
+            NativeCityClock.StartupHold = true;
         }
 
         private void CompleteInitialization()
@@ -709,11 +715,7 @@ namespace PersistentCity.Runtime
             if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization (" + source.Continuity(state) + ", " + source.Reason + "). Original payload retained."); return; }
             rloTransient = false;
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
-            // A save taken late in a minute can load one native minute later: native time ticks unheld between the
-            // native load and TryStart's hold. That one same-hour minute is drained before any observation.
-            double loadedNative = Now();
-            var loadClock = AccountingClock.ClassifyLoad(state.Minute, loadedNative);
-            if (loadClock == LoadClockStart.Lost)
+            if (!AccountingClock.Compatible(state.Minute, Now()))
             { StopAccounting(); return; }
             // F5d: a city whose first roster is about to be created gets its portal places now, before routes and
             // the scheduler index the catalogue. A saved city keeps its own station table.
@@ -728,10 +730,8 @@ namespace PersistentCity.Runtime
             simulation.AttachWorkplaceAvailability(new NativeWorkplaceAvailability(state.Places));
             ordinaryOwnershipIndex = NativeOrdinaryOwnership.Create(state.Places, state.Minute);
             simulation.AttachOrdinaryExchanges(ordinaryOwnershipIndex, new OrdinaryVisitPrices(settings.OrdinaryRetailVisitCents, settings.OrdinaryLeisureVisitCents));
-            // Catching up, the save's own ending epoch must have drained; the crossed minute is drained next.
-            if (!simulation.IsAccountingEpochDrained(loadClock == LoadClockStart.CatchUp ? state.Minute : loadedNative))
+            if (!simulation.IsAccountingEpochDrained(Now()))
             { StopAccounting(); return; }
-            if (loadClock == LoadClockStart.CatchUp) NativeCityClock.BeginLoadCatchUp(Math.Floor(loadedNative));
             var binding = prepared.Saves.BindTo(save.modData);
             if (!binding.Success) { Fail("Population save binding refused: " + binding.Error); return; }
             saveSession = prepared.Saves;
@@ -764,12 +764,8 @@ namespace PersistentCity.Runtime
             ResetAdvanceDiagnostics();
             if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
             { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }
-            // Attached: publication allowed, detach now marks a still-current city. A load catch-up completes it
-            // once drained (ContinueLoadCatchUp); until then a save is deferred like any initializing save.
-            if (loadClock == LoadClockStart.CatchUp)
-                log?.Info("Load catch-up: native time entered minute " + Math.Floor(loadedNative).ToString(System.Globalization.CultureInfo.InvariantCulture)
-                    + " before the clock hold started; the saved city drains the minute before it first. Native time is held meanwhile.");
-            else saveEpoch.CompleteInitialization();
+            NativeCityClock.StartupHold = false;
+            saveEpoch.CompleteInitialization(); // Attached: publication allowed, detach now marks a still-current city.
             nextDependencyCheck = Time.unscaledTime + 30;
             nextStationScan = float.PositiveInfinity;
             seenRoadSnapshots = 0; clockRetimingRoutes = false;

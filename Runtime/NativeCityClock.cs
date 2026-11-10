@@ -39,21 +39,10 @@ namespace PersistentCity.Runtime
         public static bool CheckInputEpoch(double native, double logical)
         {
             ObserveSimulationLag(AccountingClock.Target(native), logical);
-            if (LoadCatchingUp)
-            {
-                // The ending epoch is the work being drained; native stays held (not caught up) until it is.
-                Refused |= !AccountingClock.CompatibleDuringLoadCatchUp(logical, native, LoadCatchUpEpoch);
-                return !Refused;
-            }
             Refused |= !AccountingClock.Compatible(logical, native);
             if (endingEpochDrained != null && !endingEpochDrained(native)) Refused = true;
             return !Refused;
         }
-        /// <summary>The native minute a loaded city entered before this hold started; NaN when not catching up.</summary>
-        public static double LoadCatchUpEpoch { get; private set; } = double.NaN;
-        public static bool LoadCatchingUp => !double.IsNaN(LoadCatchUpEpoch);
-        public static void BeginLoadCatchUp(double epoch) => LoadCatchUpEpoch = epoch;
-        public static void EndLoadCatchUp() => LoadCatchUpEpoch = double.NaN;
         public static double Factor { get; private set; } = 1;
         public static bool CoordinatesDrivenRides { get; private set; }
         public static bool Active => patches != null && save != null && ReferenceEquals(save, SaveGameManager.Current);
@@ -107,9 +96,13 @@ namespace PersistentCity.Runtime
             if (!Active || Refused || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
             if (OrdinaryTick) deltaTimeWithMultiplier *= (float)Factor;
         }
+        /// <summary>Set while startup holds native time before activation (<see cref="StartupClockHold"/>).</summary>
+        public static bool StartupHold { get; set; }
         private static void AccountingPrefix(ref float deltaTimeWithMultiplier)
         {
             AccountingLimited = false;
+            // Startup also holds behind the loading screen: no native minute may pass before a loaded snapshot attaches.
+            if (Active && LoadScene.isLoading && StartupHold && deltaTimeWithMultiplier > 0) { deltaTimeWithMultiplier = 0; return; }
             if (!Active || LoadScene.isLoading || economyActive?.Invoke() != true || nativeClock == null || populationCaughtUp == null) return;
             double native = nativeClock(), logical = logicalClock?.Invoke() ?? native;
             // A bypassing clock writer or an old cross-epoch save has no replay-safe input image.
@@ -142,8 +135,7 @@ namespace PersistentCity.Runtime
         {
             HeldEconomySkipTicks = HeldOrdinaryTicks = BoundaryClips = waitingSince = lastHeldAt = 0;
             WithheldMinutes = LagMinutes = MaximumLagMinutes = MaximumRecoverySeconds = 0;
-            AccountingLimited = Refused = false;
-            LoadCatchUpEpoch = double.NaN;
+            AccountingLimited = Refused = StartupHold = false;
         }
         private static void RidePrefix(float __0, out float __state) => __state = OrdinaryTick ? __0 : float.NaN;
         private static void RidePostfix(ref float __0, float __state)

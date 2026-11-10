@@ -8,11 +8,12 @@ which waits for RLO to report Ready. S1 was saved at logical minute 1921.9687 (0
 snapshot one native minute behind and stopped. H1 was saved at 1983.011 (0.99 minutes of slack) and reloaded.
 The skipped creation save and sequence 1 play no part.
 
-Fix: at activation, a snapshot exactly one native minute behind, inside the same native hour, is caught up. The
-save's own ending epoch must still have drained. Native time stays held while the city drains the crossed minute,
-no closure or physical observation runs, and a save in that window is deferred like any save during
-initialization. Two or more minutes, an hour or day boundary, a snapshot ahead of native, or unfinished earlier
-work still stop as before.
+Fix: PC now holds native time from its first startup attempt on a save, before RLO is ready and behind the
+loading screen, instead of only once RLO reports Ready ([Core/StartupClockHold.cs](../../Core/StartupClockHold.cs)).
+No native minute can pass between the load and activation, so a save taken late in a minute loads in the same
+minute. If startup still cannot proceed after 15 seconds outside the loading screen (for example RLO never becomes
+ready), native time is released and logged, so the native city is never frozen for good. The activation refusals
+are unchanged: a load that still crossed a minute, or a snapshot with unfinished earlier work, stops as before.
 
 ## In-game checks
 
@@ -20,10 +21,14 @@ work still stop as before.
    Enabled and PhysicalEnabled, autosave off in the isolated profile. Steps: start a fresh native new_game and let
    the creation save finish; once PC reports city running, make an ordinary save S1 and go straight to menu and
    load S1. Expected: PC reaches city running with 49/49 targets patched; no "Accounting input epoch was lost" and
-   no `start refused (clock.city)`. If the loaded native minute is one past the saved one, the log has a
-   "Load catch-up: native time entered minute ..." line followed by "Load catch-up finished at clock ...".
+   no `start refused (clock.city)`; the native clock after activation reads the saved minute (08:01 for a save
+   at 08:01), and no "startup is still waiting" warning is logged.
 2. **Reload one in-game hour later (locked-PC).** Setup: the reloaded city from check 1, running. Steps: run one
    in-game hour, save H1, menu and load H1. Expected: city running with 49/49 targets patched; the resident identity
    digest of H1 equals that of the reloaded H1.
+3. **RLO not ready releases native time (input-only).** Setup: as check 1 with RLO's Social Media option off so
+   Flare never runs. Steps: load S1 and wait 20 seconds unpaused. Expected: one "Persistent City startup is still
+   waiting after 15 seconds; native time is released" warning, then native time advances; the native game stays
+   playable.
 
-Either check may run on the Mac or on Windows.
+Any check may run on the Mac or on Windows.

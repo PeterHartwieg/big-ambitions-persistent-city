@@ -42,20 +42,6 @@ namespace PersistentCity.Core
         }
         public static double PreviousEpochTarget(double nativeMinute)
         { Validate(nativeMinute); return Previous(Math.Floor(nativeMinute)); }
-        /// <summary>Load-time start decision. Native time runs unheld from the native load until Persistent City's
-        /// clock hold starts, so a save taken late in a minute can load one minute later. Only that single crossing,
-        /// inside one native hour (no hourly or daily accounting ran), is caught up; every other gap stays lost.</summary>
-        public static LoadClockStart ClassifyLoad(double logicalMinute, double nativeMinute)
-        {
-            if (Compatible(logicalMinute, nativeMinute)) return LoadClockStart.Current;
-            double epoch = Math.Floor(nativeMinute);
-            return epoch % 60 != 0 && Compatible(logicalMinute, Previous(epoch)) ? LoadClockStart.CatchUp : LoadClockStart.Lost;
-        }
-        /// <summary>While a load catches up: native is held inside <paramref name="catchUpEpoch"/> and the logical
-        /// clock is still in the minute before it. Native moving on to another epoch is lost as before.</summary>
-        public static bool CompatibleDuringLoadCatchUp(double logicalMinute, double nativeMinute, double catchUpEpoch)
-            => Compatible(logicalMinute, nativeMinute)
-            || Math.Floor(nativeMinute) == catchUpEpoch && catchUpEpoch % 60 != 0 && Compatible(logicalMinute, Previous(catchUpEpoch));
         public static float Limit(bool caughtUp, double nativeMinute, float requestedMinutes)
         {
             Validate(nativeMinute);
@@ -75,8 +61,6 @@ namespace PersistentCity.Core
             if (!Position.Finite(minute) || minute < 0 || minute > 1e9) throw new ArgumentOutOfRangeException(nameof(minute));
         }
     }
-
-    public enum LoadClockStart { Current, CatchUp, Lost }
 
     /// <summary>Elapsed-time allowance with the legacy 16-start/2ms per-frame floor. No debt
     /// accumulates after stalls; soft time limits still cannot preempt an individual native call.</summary>
