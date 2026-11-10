@@ -508,7 +508,7 @@ public sealed class Schema27Tests
     // ---- No visitor car or traffic record ----
 
     [Fact]
-    public void VisitorsOwnNoCarTrafficRecordOrBody()
+    public void VisitorsOwnNoCarOrTrafficRecordAndWalkAsBodies()
     {
         var (state, market) = Fresh(3);
         var city = Start(state, market);
@@ -520,9 +520,9 @@ public sealed class Schema27Tests
             {
                 Assert.Null(routine.Car); Assert.False(routine.Preferences.OwnsCar);
                 Assert.True(routine.Journey == null || routine.Journey.Legs.All(l => l.Mode != TravelMode.Car));
-                Assert.DoesNotContain(routine, city.ActiveJourneys.BodyCandidates);
+                // F5i: a travelling visitor is a body candidate (a walker; it owns no car).
                 if (routine.Phase == CitizenPhase.Travelling)
-                { Assert.False(ActiveJourneyIndex.ReceivesBody(routine)); leaseTried = true; }
+                { Assert.Contains(routine, city.ActiveJourneys.BodyCandidates); leaseTried = true; }
             }
             Assert.True(city.ActiveJourneyIndexMatchesState());
         }

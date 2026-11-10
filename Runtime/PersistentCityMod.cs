@@ -141,6 +141,7 @@ namespace PersistentCity.Runtime
             // E5b4: one product policy for shops and vehicles, from config, the API publication and E5b2's loaded-name image.
             var policy = new FoodProductPolicySource(() => shops.LoadedNames, () => settings.FoodProductOverrides.Resolver, FoodProductMetadataApi.PublishSnapshot,
                 message => log?.Warn("Food product policy fell back to the original three: " + message));
+            shops.ProductPolicySource = policy; // E5b5: shop admission classes products with the same policy
             // E6f: the same policy decides which vehicle menus are executable; null while the loaded-name image is not
             // published yet (warm-up or rebuild), which the vehicle market does not treat as a refusal. The choice menu
             // width also bounds vehicle menus.
@@ -770,7 +771,7 @@ namespace PersistentCity.Runtime
                 if (cost != null)
                 {
                     cost.End(capture.Error == null, capture.Error ?? "");
-                    if (capture.Error == null) CountSavedRecords(cost);
+                    if (capture.Error == null) CountSavedRecords(cost, payload => SaveCodec.CountRecords(simulation!.State, payload));
                 }
             }
         }

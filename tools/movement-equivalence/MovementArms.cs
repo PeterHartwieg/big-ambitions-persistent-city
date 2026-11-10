@@ -18,6 +18,7 @@ public static class MovementArms
 {
     public const string Plain = "bodies-off/plain-60";
     public const string WalkingPlain = "walking/plain-60";
+    public const string VisitorsPlain = "visitors/plain-60";
     public static readonly (int Walkers, int Cars)[] Caps = { (0, 0), (1, 1), (24, 12), (48, 24), (256, 64) };
     public static readonly int[] FailurePercents = { 0, 10, 50 };
     public static readonly int[] Cadences = { 30, 60, 120 };
@@ -69,6 +70,23 @@ public static class MovementArms
         Walking("cadence-30fps", o => o.FramesPerSecond = 30, "walking/plain-30");
         Walking("reload-mid-journey", o => o.ReloadMidJourney = true);
         Walking("hidden-travel", o => o.HiddenTravel = true, "walking/plain-hidden-travel");
+        // F5i: the mixed city plus K-1 walking visitors per resident from grid portals. Visitors receive bodies through
+        // the active-journey index under the same caps; every arm must equal its bodies-off run, visitor projection included.
+        foreach (int fps in new[] { 60, 30 })
+            Add("visitors", "plain-" + fps, () => new MovementOptions { Driver = false, Visitors = true, FramesPerSecond = fps }, "");
+        Add("visitors", "plain-hidden-travel", () => new MovementOptions { Driver = false, Visitors = true, HiddenTravel = true }, "");
+        void Visitors(string name, Action<MovementOptions> change, string reference = VisitorsPlain)
+            => Add("visitors", name, () => { var o = Default(""); o.Visitors = true; change(o); return o; }, reference);
+        Visitors("stationary", o => { });
+        Visitors("sweep", o => o.Focus = FocusPath.Sweep);
+        Visitors("away-return", o => o.Focus = FocusPath.AwayReturn);
+        Visitors("caps-1", o => { o.Bodies.Pedestrians = 1; o.Bodies.Vehicles = 1; });
+        Visitors("caps-256", o => { o.Bodies.Pedestrians = 256; o.Bodies.Vehicles = 64; });
+        Visitors("lag-ideal", o => o.Bodies.Lag = LagModel.Ideal);
+        Visitors("failures-50pct", o => o.Bodies.AcquisitionFailurePercent = 50);
+        Visitors("cadence-30fps", o => o.FramesPerSecond = 30, "visitors/plain-30");
+        Visitors("reload-mid-journey", o => o.ReloadMidJourney = true);
+        Visitors("hidden-travel", o => o.HiddenTravel = true, "visitors/plain-hidden-travel");
         return arms;
     }
 }

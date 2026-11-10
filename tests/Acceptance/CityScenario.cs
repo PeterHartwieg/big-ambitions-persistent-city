@@ -135,7 +135,7 @@ internal sealed class CityScenario
         AttachPostingCapture();
         city.ActivityObserved += (id, person, minute) => run.Ledger.Add("a|" + CityOracles.M(minute) + "|" + id + "|" + person.Phase + "|" + person.PlaceId + "|" + person.Activity);
         city.RoutineObserved += r => run.Ledger.Add("r|" + CityOracles.M(r.Minute) + "|" + r.CitizenId + "|" + r.DestinationId + "|" + r.Outcome + "|" + r.Reason);
-        city.FoodDecisionObserved += t => run.Ledger.Add("d|" + CityOracles.M(city.State.Minute) + "|" + t.Intent.ConsumerId + "|" + t.Intent.Id + "|"
+        city.FoodDecisionObserved += t => run.Ledger.Add("d|" + CityOracles.M(city.View.Minute) + "|" + t.Intent.ConsumerId + "|" + t.Intent.Id + "|"
             + t.Intent.Status + "|" + t.Intent.BusinessId + "|" + t.Intent.ProductId);
         billing = new ResearchChargeSession(state.Research, native.Port, () => true, unit => unit());
         notices = new ResearchNoticeTracker();
@@ -158,24 +158,25 @@ internal sealed class CityScenario
         // The fill-unit counter belongs to the simulator, so after the load the pending fill is the state that must survive.
         bool kept = reason == CityReload.BetweenFillUnits ? city.PopulationFillPending : reason == CityReload.DayBoundary || Holds(reason);
         if (!kept) throw new CityViolation("reloaded city lost its " + reason + " state");
-        run.Reloads.Add((reason, city.State.Minute));
+        run.Reloads.Add((reason, city.View.Minute));
         pendingReloads.Remove(reason);
     }
 
     private bool Holds(CityReload state)
     {
-        var s = city.State;
+        // Meals are not in the city view (F9e); research, vendor rows and persons are read through it.
+        var s = city.State; var view = city.View;
         switch (state)
         {
             case CityReload.BetweenFillUnits: return city.PopulationFillPending && city.PopulationFillUnits > 0;
             case CityReload.UncertainReceipt: return s.Food!.Residents.Any(m => m.Status == MealStatus.Uncertain);
-            case CityReload.ResearchPendingBilling: return s.Research.Open.Any(o => o.State == ResearchOrderState.Surveyed);
+            case CityReload.ResearchPendingBilling: return view.Research.OpenOrders.Any(o => o.State == ResearchOrderState.Surveyed);
             case CityReload.VendorLeaseOpen:
-                var row = s.Vendors.Find(CityFixture.Vehicle);
+                var row = view.FindVendor(CityFixture.Vehicle);
                 var vehicle = StreetFoodHooks.Vehicles.Find(v => v.Id == CityFixture.Vehicle);
-                return row != null && row.Authority.Desired && vehicle != null && vehicle.Open && vehicle.Owner == VendorNames.Owner;
+                return row != null && row.AuthorityDesired && vehicle != null && vehicle.Open && vehicle.Owner == VendorNames.Owner;
             case CityReload.HeldMealDecision: return s.Food!.Residents.Any(m => m.Decision != null);
-            case CityReload.MidJourney: return s.Citizens.Any(c => c.Phase == CitizenPhase.Travelling);
+            case CityReload.MidJourney: return view.ResidentList.Any(c => c.Phase == CitizenPhase.Travelling);
             default: return false;
         }
     }
@@ -185,7 +186,7 @@ internal sealed class CityScenario
         if (!arm.Reloads) return;
         if (pendingReloads.Contains(CityReload.BetweenFillUnits) && Holds(CityReload.BetweenFillUnits)) { Reload(CityReload.BetweenFillUnits); return; }
         if (dayReloadDue) { dayReloadDue = false; Reload(CityReload.DayBoundary); return; }
-        if (city.State.Minute < CityFixture.StartMinute + 30) return;
+        if (city.View.Minute < CityFixture.StartMinute + 30) return;
         foreach (var state in new[] { CityReload.UncertainReceipt, CityReload.ResearchPendingBilling,
                      CityReload.VendorLeaseOpen, CityReload.HeldMealDecision, CityReload.MidJourney })
             if (pendingReloads.Contains(state) && Holds(state)) { Reload(state); return; }
@@ -197,7 +198,7 @@ internal sealed class CityScenario
     private void Crossing(long epoch)
     {
         if (!city.IsAccountingEpochDrained(epoch)) throw new CityViolation("ending epoch not drained at " + epoch);
-        if (city.State.Minute >= epoch) throw new CityViolation("epoch " + epoch + " observed before its inputs");
+        if (city.View.Minute >= epoch) throw new CityViolation("epoch " + epoch + " observed before its inputs");
         clock = epoch; native.SetClock(epoch);
         if (epoch % 60 == 0) Checkpoint(epoch);
         if (epoch % 1440 == 0)
@@ -244,7 +245,7 @@ internal sealed class CityScenario
         if (posted == 1)
         {
             run.Postings++;
-            if (due > city.State.Minute) throw new CityViolation("wallet " + next!.ResidentId + " posted before its minute " + CityOracles.M(due));
+            if (due > city.View.Minute) throw new CityViolation("wallet " + next!.ResidentId + " posted before its minute " + CityOracles.M(due));
             // The posting's own minute (daily bill or shift end); the simulator clock at that unit depends on the frame target.
             run.Ledger.Add("p|" + CityOracles.M(due) + "|" + run.Postings.ToString(CultureInfo.InvariantCulture) + "|" + next!.ResidentId
                 + "|" + CityOracles.Posting(next.Budget!));
@@ -272,14 +273,14 @@ internal sealed class CityScenario
     {
         string context = arm.Name + " at " + epoch.ToString(CultureInfo.InvariantCulture);
         run.Checkpoints++;
-        run.Ledger.Add(CityOracles.Checkpoint(city.State, identity, epoch, context));
+        run.Ledger.Add(CityOracles.Checkpoint(city, identity, epoch, context));
         CityOracles.Conserved(city.State, native, context);
-        CityOracles.Research(city.State.Research, native.Port, context);
+        CityOracles.Research(city.View.Research, native.Port, context);
         CityOracles.Vendor(native.Api, context);
         CityOracles.Schedule(schedule, published, epoch, context);
         if (epoch % 1440 == 360)
             foreach (var fact in run.Research.Values.Where(f => f.BilledAt >= 0 && f.BilledAt == epoch - 360))
-                fact.ReadableNextMorning = city.State.Research.Kept.Any(o => o.Product.Code == fact.Product && o.Report != null);
+                fact.ReadableNextMorning = city.View.Research.KeptOrders.Any(o => o.ProductCode == fact.Product && o.HasReport);
     }
 
     private void Publish(long epoch)
@@ -329,17 +330,18 @@ internal sealed class CityScenario
             notices.After(n =>
             {
                 run.Ledger.Add("n|" + epoch + "|" + n.OrderId + "|" + n.Kind);
-                var fact = run.Research.Values.Single(f => city.State.Research.Find(n.OrderId)?.Product.Code == f.Product);
+                var fact = run.Research.Values.Single(f => city.View.Research.Find(n.OrderId)?.ProductCode == f.Product);
                 fact.Notice = n.Kind.ToString(); fact.NoticeAt = epoch;
             });
             if (tally.Attempts > 0) run.Ledger.Add("b|" + epoch + "|" + tally.Attempts + "|" + tally.Paid + "|" + tally.Declined);
         }
-        foreach (var order in city.State.Research.Open.Concat(city.State.Research.Kept).Concat(city.State.Research.Closed))
+        var research = city.View.Research;
+        foreach (var order in research.OpenOrders.Concat(research.KeptOrders).Concat(research.ClosedOrders))
         {
             if (researchStates.TryGetValue(order.Id, out var was) && was == order.State) continue;
             researchStates[order.Id] = order.State;
             run.Ledger.Add("rs|" + epoch + "|" + order.Id + "|" + order.State);
-            if (!run.Research.TryGetValue(order.Product.Code, out var fact)) continue;
+            if (!run.Research.TryGetValue(order.ProductCode, out var fact)) continue;
             if (order.State == ResearchOrderState.Surveyed) fact.SurveyedBy = epoch;
             if (order.State == ResearchOrderState.Paid) fact.BilledAt = epoch;
         }
@@ -392,7 +394,7 @@ internal sealed class CityScenario
             if (++run.Frames > 10_000_000) throw new CityViolation("nonterminating arm");
             admitted.NewFrame();
             long started = Stopwatch.GetTimestamp();
-            if (!AccountingClock.Compatible(city.State.Minute, nativeMinute)) throw new CityViolation("input epoch escaped at " + nativeMinute);
+            if (!AccountingClock.Compatible(city.View.Minute, nativeMinute)) throw new CityViolation("input epoch escaped at " + nativeMinute);
             if (!city.IsAccountingEpochDrained(nativeMinute)) throw new CityViolation("unfinished ending epoch escaped at " + nativeMinute);
             bool ready = city.IsCaughtUpTo(AccountingClock.Target(nativeMinute));
             bool skipping = arm.Skip && nativeMinute >= 2 * 1440 + 13 * 60 && nativeMinute < 2 * 1440 + 15 * 60;
@@ -406,8 +408,8 @@ internal sealed class CityScenario
             if (after >= end) break;
             nativeMinute = next; clock = next; native.SetClock(next);
             if (!city.BeginAccountingObservations(nativeMinute)) throw new CityViolation("observation epoch not published at " + nativeMinute);
-            double target = Math.Max(city.State.Minute, AccountingClock.Target(nativeMinute));
-            run.MaxLag = Math.Max(run.MaxLag, target - city.State.Minute);
+            double target = Math.Max(city.View.Minute, AccountingClock.Target(nativeMinute));
+            run.MaxLag = Math.Max(run.MaxLag, target - city.View.Minute);
             int budget = skipping ? 128 : arm.Budget;
             double milliseconds = skipping ? 16 : arm.Milliseconds;
             double Elapsed() => (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
@@ -441,7 +443,7 @@ internal sealed class CityScenario
         run.Orders = native.Shops.Orders.ToList();
         run.VendorSales = native.Api.Sales.ToList();
         run.ResearchCharges = native.Port.Queue.Count;
-        var vehicle = city.State.Vendors.Find(CityFixture.Vehicle);
+        var vehicle = city.View.FindVendor(CityFixture.Vehicle);
         if (vehicle != null) run.VendorBusiness = vehicle.BusinessId;
         CityOracles.Schedule(schedule, published, end + 1, arm.Name + " at the end");
         run.Final = SaveCodec.Write(city.State);

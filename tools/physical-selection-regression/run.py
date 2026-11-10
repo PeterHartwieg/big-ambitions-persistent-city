@@ -36,7 +36,7 @@ def fragments(vehicle, population, journey):
     }
 baseline_path = here / 'baseline.json'
 baseline = json.loads(baseline_path.read_text())
-current = fragments(*[(root / p).read_text() for p in ['Runtime/PhysicalVehicles.cs', 'Runtime/PhysicalPopulation.cs', 'Core/PhysicalJourneys.cs']])
+current = fragments(*[''.join((root / p).read_text() for p in ps) for ps in [['Runtime/PhysicalVehicles.cs'], [f'Runtime/PhysicalPopulation{part}.cs' for part in ('', '.Following', '.Queues', '.Selection')], ['Core/PhysicalJourneys.cs']]])
 before_f0 = dict(current)
 full_pool_check = '''                // Both pools are full: observations and queue movement above still ran; no
                 // candidate can acquire a body until a later update frees a slot.
@@ -47,8 +47,9 @@ before_f0['selection'] = before_f0['selection'].replace(full_pool_check, '')
 # F2f baseline: the merged F5f selection over every indexed body candidate, reconstructed from the
 # current text by restoring the F5f roster line, so every other line stays production code.
 before_f2f = dict(current)
-f2f_loop = '''            // F2f: the active-journey index members filed in the grid cells within the radius (visitors withheld
-            // until F5i), or every citizen after a shadow mismatch. Filters and order below are the same for both sources.
+f2f_loop = '''            // F2f: the active-journey index members filed in the grid cells within the radius (F5i: residents and
+            // visitors), or every resident after a shadow mismatch (visitors get no body in that fallback, by design: they
+            // receive bodies through the index only). Filters and order below are the same for both sources.
             var roster = journeyIndexFallback ? simulation.State.Citizens : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
 '''
 f5f_roster = '''            // F5f: iterate the maintained active-journey index (visitors withheld until F5i), or every
@@ -68,11 +69,10 @@ f5f_loop = '''            // F5f: iterate the maintained active-journey index (v
             {
                 var c = roster[index];
 '''
-f5f_filter = '''                if (journeyIndexFallback && !ActiveJourneyIndex.ReceivesBody(c)) continue;
-'''
+# F5i removed the fallback-only visitor filter that F5f added, so only the loop head differs from the pre-F5f text.
 for text, base in [(f5f_loop, '''            foreach (var c in simulation.State.Citizens)
             {
-'''), (f5f_filter, '')]:
+''')]:
     assert before_f5f['selection'].count(text) == 1, text
     before_f5f['selection'] = before_f5f['selection'].replace(text, base)
 # The vendor-stay block after the loop (E6e) reads ActiveJourneys.Contains; only the roster loop is reconstructed.

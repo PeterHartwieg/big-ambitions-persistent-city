@@ -10,6 +10,8 @@ Each slice writes its checks under the heading "In-game checks for the next batc
 
 ## Local tests
 
+Superseded on 9 November 2026: focused tests while working, the full suite once before merge. See [agent speed](2026-11-09-agent-speed.md).
+
 Before handing over a slice, run:
 
 1. the build: `python tools/build.py --game-managed "<Big Ambitions_Data/Managed>"`;

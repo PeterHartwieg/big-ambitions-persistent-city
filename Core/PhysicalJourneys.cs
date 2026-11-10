@@ -444,14 +444,16 @@ namespace PersistentCity.Core
     /// (queue planning), holding an optional stop, or at an outdoor scene. Physical selection iterates this set instead
     /// of every citizen. It holds no saved state and decides nothing: caps, the candidate filters and their
     /// priority order stay with Runtime's selection, and movement authority stays with F2 #89.
-    /// Visitors are indexed with their kind but withheld from <see cref="BodyCandidates"/> until F5i.
+    /// Since F5i visitors are body candidates like residents: F2's movement contract makes every body follow the
+    /// logical pose, so a body cannot change a visitor's outcome. The withheld list stays empty.
     /// F2f files every body candidate into a <see cref="PresentationGrid"/> from inside File and Rebuild, so selection
     /// can read only the cells near the focus (<see cref="Grid"/>).
     /// </summary>
     public sealed class ActiveJourneyIndex
     {
-        /// <summary>F5i switch. Visitors receive no body before F2's movement contract lands (plan B5).</summary>
-        public const bool VisitorsReceiveBodies = false;
+        /// <summary>F5i switch (plan B5): visitors receive bodies now that F2's movement contract (F2c walkers, F2d cars,
+        /// F2e player holds) makes physical progress follow logical permissions.</summary>
+        public const bool VisitorsReceiveBodies = true;
         /// <summary>Prefix of native outdoor scene places (Runtime OutdoorPlaces: parks, beaches, party piers).</summary>
         public const string OutdoorScenePrefix = "scene-";
 

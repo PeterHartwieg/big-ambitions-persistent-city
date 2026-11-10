@@ -53,7 +53,7 @@ public sealed class WeightedFoodChoiceTests
         var market=new Market {Shops=state.Food.Shops.Select(s=>new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,MealsPerHour=60,
             Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
             Offers=new(){new FoodOffer {ProductId=FoodProducts.Croissant,Price=Money.FromCents(100),Units=100}}}).ToArray()};
-        var planner=new Planner(); var city=new CitySimulator(state,planner);city.AttachFoodMarket(market);
+        var planner=new Planner(); var city=new CitySimulator(state,planner);city.AttachFoodMarket(market,LegacyFoodChoice.Settings());
         state.Food.ChoiceStartsDay=active?1:2;
         return (city,market,planner);
     }

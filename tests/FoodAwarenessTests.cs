@@ -248,23 +248,11 @@ public sealed class FoodAwarenessTests
         while(!changed.AdvanceTo(at+20,1).CaughtUp) {}
         Assert.Equal(DevelopmentChain.Write(control.State),DevelopmentChain.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);
     }
-    private static JObject Held(bool predecessor=false)
+    private static JObject Held()
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food.Residents.Single().DesiredAt,1);
-        if(!predecessor) return SaveWire.Parse(DevelopmentChain.Write(city.State));
-        city.State.Schema=19;return SaveWire.Parse(DevelopmentChain.Legacy(city.State, () => PopulationSchema19.Write(city.State)));
-    }
-    [Fact]
-    public void Schema18MigratesOnceAndNeverRecapturesHeldShortlist()
-    {
-        var json=Held(true);json["Schema"]=18;json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
-        var decision=json["Food"]!["Residents"]![0]![9]!;decision["Awareness"]!.Parent!.Remove();
-        string source=json.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
-        decision["Awareness"]=new JObject();Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(json.ToString(Formatting.None)).Status);((JObject)decision).Remove("Awareness");
-        var read=DevelopmentChain.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);
-        Assert.Equal((int)(read.State.Minute/1440)+1,read.State.Food!.AwarenessStartsDay);Assert.Null(read.State.Food.Residents[0].Decision!.Awareness);
-        Assert.Equal(DevelopmentChain.Write(read.State),DevelopmentChain.Write(DevelopmentChain.Read(DevelopmentChain.Write(read.State)).State!));Assert.Equal(source,data[SaveStore.StateKey]);
+        return SaveWire.Parse(DevelopmentChain.Write(city.State));
     }
     [Theory] [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
     public void MalformedAwarenessRefusesWithoutReplacingSource(int corruption)

@@ -44,7 +44,7 @@ namespace PersistentCity.Core
         public double ResumeEvent { get; set; }
         public bool Returning { get; set; }
     }
-    public sealed class FoodScope
+    public sealed class FoodScope : IFoodScopeView
     {
         public FoodAlternativeKind AlternativeKind { get; set; }
         public string PlaceId { get; set; } = "";
@@ -63,6 +63,14 @@ namespace PersistentCity.Core
             if (channel != FoodScopeChannel.Shop && channel != FoodScopeChannel.Vehicle) throw new ArgumentOutOfRangeException(nameof(channel));
             Channel = channel;
         }
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IFoodScopeView.PlaceId => PlaceId;
+        string IFoodScopeView.BusinessId => BusinessId;
+        string IFoodScopeView.ProductId => ProductId;
+        IReadOnlyList<string> IFoodScopeView.ExtraProductIds => AdditionalProductIds;
+        FoodScopeChannel IFoodScopeView.Channel => Channel;
+        FoodAlternativeKind IFoodScopeView.AlternativeKind => AlternativeKind;
+        double IFoodScopeView.NextServiceAt => NextServiceAt;
     }
     /// <summary>Shop scopes are served by the native shop market, Vehicle scopes by the Street Food vehicle market.</summary>
     public enum FoodScopeChannel { Shop = 0, Vehicle = 1 }
@@ -159,14 +167,24 @@ namespace PersistentCity.Core
     }
     public readonly struct FoodSale
     {
-        public FoodSale(bool paid, string reason, ShopExperience? failure = null, IReadOnlyList<FoodTicketLine>? soldExtras = null)
-        { Paid = paid; Reason = reason; Failure = failure; this.soldExtras = soldExtras; }
+        public FoodSale(bool paid, string reason, ShopExperience? failure = null, IReadOnlyList<FoodTicketLine>? soldExtras = null,
+            bool priceChanged = false)
+        { Paid = paid; Reason = reason; Failure = failure; this.soldExtras = soldExtras; PriceChanged = priceChanged && !paid; }
+        /// <summary>E5b5 Q2: a definite refusal before any receipt or native order because a menu price changed to another
+        /// valid price. The seller kept ownership; the resident may decide again at the counter.</summary>
+        public bool PriceChanged { get; }
         private readonly IReadOnlyList<FoodTicketLine>? soldExtras;
         /// <summary>F6j: the ticket's extras the seller actually sold, in ticket order. Empty for a main-only sale.</summary>
         public IReadOnlyList<FoodTicketLine> SoldExtras => soldExtras ?? Array.Empty<FoodTicketLine>();
         public ShopExperience? Failure { get; }
         public bool Paid { get; }
         public string Reason { get; }
+    }
+    /// <summary>E5b5: a market whose saved businesses can be briefly unvalidated after a load (contract images warming).
+    /// Core neither checks out nor drops a commitment to such a business; it waits a minute and asks again.</summary>
+    public interface IFoodStartupValidation
+    {
+        bool AwaitingValidation(string businessId);
     }
     /// <summary>One main-thread sale call must finish before saving the native world plus CityState.
     /// Exceptions leave a persisted Uncertain decision which is never retried automatically.</summary>
@@ -384,6 +402,11 @@ namespace PersistentCity.Core
             // obligations (an uncertain receipt above, a held purchase) stay with the same person and wallet.
             if (person.IsVisitor && VisitorSchedules.Dormant(person) && !Active(meal) && meal.Status != MealStatus.Uncertain)
             { SkipDormantMeals(meal, person, now); return; }
+            // E5b5: a saved commitment to a business still being validated after a load waits; it is neither bought nor
+            // dropped. Deadlines and every other check apply unchanged once validation ends.
+            if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodStartupValidation startup
+                && startup.AwaitingValidation(meal.BusinessId))
+            { meal.DueAt = Math.Max(meal.DueAt, now + 1); return; }
             FoodBusiness? closedStand = null;
             if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
             {
@@ -535,6 +558,9 @@ namespace PersistentCity.Core
                     try
                     {
                         var result = ticket != null ? ((IFoodTicketMarket)market).BuyTicket(meal, ticket, now) : market.Buy(meal, now);
+                        // E5b5 Q2: after a price-only refusal the resident decides once more at the counter, on the live price.
+                        if (!result.Paid && result.PriceChanged && result.SoldExtras.Count == 0 && CounterRedecision(meal, now, ref mainPrice))
+                        { ticket = null; result = market.Buy(meal, now); }
                         var sold = SoldExtras(ticket, result);
                         Money held = meal.Price, paid = mainPrice;
                         foreach (var line in sold) paid += line.Price;
@@ -557,6 +583,55 @@ namespace PersistentCity.Core
                     catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
                 }
             }
+        }
+        /// <summary>E5b5 Q2: the seller refused before any receipt because a menu price changed (the selected product's or
+        /// another one's). The resident decides again at the counter from the shop's live menu: the selected product if it
+        /// is still stocked and affordable at its live price, otherwise the stocked, affordable scoped product it likes best
+        /// (taste band, then lower price, then ordinal name; no random draw). Main only. The refused attempt's hold is
+        /// released first; when nothing fits, it is restored and the refusal stands. Called at most once per checkout, so
+        /// a price that keeps moving ends as an ordinary refusal.</summary>
+        private bool CounterRedecision(ResidentMeal meal, double now, ref Money mainPrice)
+        {
+            var business = ReadBusiness(meal.BusinessId, now);
+            var scope = state.Shops.FirstOrDefault(s => s.PlaceId == meal.PlaceId && s.BusinessId == meal.BusinessId);
+            var person = Owner(meal);
+            if (business == null || business.Id != meal.BusinessId || business.PlaceId != meal.PlaceId || scope == null || person == null)
+                return false;
+            Money held = meal.Price; string chosen = meal.ProductId;
+            if (meal.Budget != null) HouseholdFinance.RefusePurchase(meal.Budget); else meal.DayAllowanceUsed -= held;
+            var limit = CurrentAllowance(meal);
+            var policy = ProductPolicy();
+            var candidates = new List<(FoodOffer Offer, int Taste)>(business.Offers.Count);
+            foreach (var offer in business.Offers)
+            {
+                // This meal's own reservation was released when it became uncertain; others' units stay held.
+                reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int reserved);
+                if (!(offer.Units - reserved > 0) || offer.Price > limit || !scope.ContainsProduct(offer.ProductId)
+                    || !policy.Executable(offer.ProductId)) continue;
+                int taste = offer.ProductId == chosen ? int.MaxValue
+                    : FoodProducts.Known(offer.ProductId) ? ExtraTaste(meal, person, offer.ProductId)
+                    : policy.TasteBand(offer.ProductId, Traits(meal, person), city.State.Seed, meal.ResidentId);
+                candidates.Add((offer, taste));
+            }
+            candidates.Sort((a, b) => a.Taste != b.Taste ? b.Taste.CompareTo(a.Taste)
+                : a.Offer.Price != b.Offer.Price ? a.Offer.Price.CompareTo(b.Offer.Price)
+                : StringComparer.Ordinal.Compare(a.Offer.ProductId, b.Offer.ProductId));
+            foreach (var (offer, _) in candidates)
+            {
+                meal.Price = offer.Price; meal.ProductId = offer.ProductId;
+                if (!CanSettle(meal) || meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price)) continue;
+                if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
+                meal.Allowance = Money.Max(meal.Allowance, limit);
+                mainPrice = meal.Price;
+                // The unconfirmed outcome must name the product and terms now held, before native code runs again:
+                // if the second checkout throws, it is what the save keeps (factors of the purchase are retained).
+                RecordOutcome(meal, city.State.Minute, true);
+                return true;
+            }
+            meal.Price = held; meal.ProductId = chosen;
+            if (meal.Budget != null) { if (!HouseholdFinance.HoldPurchase(meal.Budget, held)) throw new InvalidOperationException("Restoring a released hold failed."); }
+            else meal.DayAllowanceUsed += held;
+            return false;
         }
         private void ConfirmPurchase(ResidentMeal meal, string reason, IReadOnlyList<FoodTicketLine>? extras = null)
         {

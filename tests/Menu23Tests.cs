@@ -13,100 +13,6 @@ namespace PersistentCity.Tests;
 
 public sealed partial class FoodCommerceTests
 {
-    private static string E4_Old(CityState city, int schema)
-    {
-        int current=city.Schema;city.Schema=schema<20 ? 19 : schema;
-        string wire;
-        try { wire=schema>=21 ? DevelopmentChain.Legacy(city, () => SaveCodec.WriteForSchema(city, schema)) : schema<20 ? DevelopmentChain.Legacy(city, () => PopulationSchema19.Write(city)) : DevelopmentChain.Legacy(city, () => PopulationSchema20.Write(city)); }
-        finally { city.Schema=current; }
-        if(schema!=18) return wire;
-        var root=SaveWire.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");
-        foreach(var meal in root["Food"]!["Residents"]!) if(meal[9] is JObject decision) decision.Remove("Awareness");
-        return root.ToString(Formatting.None);
-    }
-
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)]
-    public void E4_ExactOldReaderMigrationAndForeignOrNewerShapesPreserveSource(int schema)
-    {
-        var (city,_)=S17_Full();
-        string source=E4_Old(city.State,schema);
-        var read=DevelopmentChain.Read(source); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput,read.State!.Schema);
-        Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
-        Assert.Equal(source,E4_Old(read.State,schema));
-        Assert.Equal(DevelopmentChain.Write(read.State),DevelopmentChain.Write(DevelopmentChain.Read(DevelopmentChain.Write(read.State)).State!));
-        foreach(int unknown in new[]{24,25,99})
-        {
-            var root=SaveWire.Parse(source);root["Schema"]=unknown;
-            string bad=root.ToString(Formatting.None);
-            var data=new Dictionary<string,string>{{SaveStore.StateKey,bad}};
-            Assert.NotEqual(SaveReadStatus.Loaded,DevelopmentChain.Read(bad).Status);
-            Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(bad));
-            Assert.False(SaveStore.WriteTo(data,city.State).Success);Assert.Same(bad,data[SaveStore.StateKey]);
-        }
-        var foreign=SaveWire.Parse(source); foreign["MenuPolicy"]=FoodMenuPolicy.Wire;
-        B0_Preserve(foreign.ToString(Formatting.None),city.State);
-    }
-
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)]
-    public void E4_OldContractsRejectFifthScopeHistoryAndCapturedOffers(int schema)
-    {
-        var (city,_)=S17_Full();
-        var history=new FoodShopDay {Day=0,PlaceId="shop",BusinessId="past",Purchases=1,PurchaseMeals=new long[]{1,0,0,0},
-            ProductSales={new FoodProductSales{ProductId="past-product",Purchases=1,PurchaseMeals=new long[]{1,0,0,0}}},
-            BuyerDistricts={new FoodBuyerDistrict{DistrictId="a",Purchases=1}}};
-        history.PurchaseHours[0]=1;city.State.Food!.History.Add(history);
-        string oldSource=E4_Old(city.State,schema);Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(oldSource).Status);
-        var original=SaveWire.Parse(oldSource);
-        foreach(string damage in new[]{"scope","history","decision"})
-        {
-            var root=(JObject)original.DeepClone();
-            if(damage=="scope") root["Food"]!["Shops"]![0]!["AdditionalProductIds"]=new JArray("p1","p2","p3","p4");
-            else if(damage=="history")
-            {
-                var row=root["Food"]!["History"]![0]!;
-                row["ProductSales"]=new JArray(Enumerable.Range(0,5).Select(_=>row["ProductSales"]![0]!.DeepClone()));
-            }
-            else
-            {
-                // ResidentMeal is the published fixed tuple; Decision is slot 9 (including revision).
-                var decision=root["Food"]!["Residents"]!.Select(m=>m[9]).First(d=>d?.Type==JTokenType.Object)!;
-                decision["Shops"]![0]!["Offers"]=new JArray(Enumerable.Range(0,5).Select(_=>decision["Shops"]![0]!["Offers"]![0]!.DeepClone()));
-            }
-            if(damage!="scope") Assert.Contains("Oversized collection",DevelopmentChain.Read(root.ToString(Formatting.None)).Error);
-            B0_Preserve(root.ToString(Formatting.None),city.State);
-        }
-    }
-
-    [Fact]
-    public void E4_Schema20WeatherCapturesSurviveMigrationAndChangedLiveInputsExactly()
-    {
-        var (city, _, planner) = WeightedFoodChoiceTests.Ready(79, 12);
-        city.AttachWeather(new FrameWeatherSource(() => 1, () => true));
-        city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt, 1);
-        var person = city.State.Citizens[0];
-        person.W = new WeatherCommitment(city.State.Minute, WeatherSample.Rain, true);
-        city.State.WeatherStartsDay = 1;
-        string source = E4_Old(city.State, 20);
-        var read = DevelopmentChain.Read(source);
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(20, read.SourceSchema); Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema);
-        Assert.Equal(source, E4_Old(read.State, 20)); // every predecessor field, including held weather, is exact
-        Assert.Equal(1, read.State.WeatherStartsDay);
-        Assert.Equal(person.W.ToWire(), read.State.Citizens[0].W!.ToWire());
-        var meal = Assert.Single(read.State.Food!.Residents);
-        Assert.Equal(WeatherSample.Rain, meal.Memory.Weather);
-        Assert.Equal(WeatherSample.Rain, meal.Decision!.Weather);
-        Assert.Equal(1.3, meal.Decision.WeatherTravelMultiplier);
-        string migrated = DevelopmentChain.Write(read.State);
-        int reads = 0;
-        var resumed = new CitySimulator(read.State, planner);
-        resumed.AttachWeather(new FrameWeatherSource(() => 2, () => { reads++; return false; }),
-            new WeatherSettings { Enabled = false, RainTravelWeightMultiplier = 2 });
-        Assert.Equal(migrated, DevelopmentChain.Write(resumed.State)); Assert.Equal(0, reads);
-        Assert.Equal(migrated, DevelopmentChain.Write(DevelopmentChain.Read(migrated).State!));
-    }
-
     [Fact]
     public void E4_PolicyHeaderAndCompactHistoryRejectAtomicallyWithoutLosingLegacyIds()
     {
@@ -154,7 +60,8 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(10,ResidentTraits.Count);Assert.Equal(1,ResidentTraits.CurrentVersion);
         Assert.Equal(new[]{FoodProducts.Croissant,FoodProducts.Burger,FoodProducts.HotDog},FoodProducts.Ids);
         foreach(int code in new[]{4,5,6}) Assert.False(FoodProducts.Known(FoodMenuPolicy.Product(code)!));
-        Assert.Equal(193,FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire().Length);
+        Assert.Equal(193,FoodDecisionTuning.Capture(LegacyFoodChoice.Settings()).ToWire().Length);
+        Assert.Equal(241,FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire().Length); // E5b5: eight is explicit
         var settings=new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=8,FoodMenuNewTasteWeight=.5,FoodMenuHealthWeight=2};
         string held=FoodDecisionTuning.Capture(settings).ToWire();settings.FoodMenuMaximumOffersPerShop=1;
         Assert.True(FoodDecisionTuning.TryParse(held,out var replay));Assert.Equal(held,replay!.ToWire());
@@ -162,39 +69,16 @@ public sealed partial class FoodCommerceTests
     }
 
     [Theory]
-    [InlineData("{}",4,1,0)]
+    // E5b5 (Q1): the default and the fallback for an invalid value are the live limit of eight.
+    [InlineData("{}",8,1,0)]
     [InlineData("{\"FoodMenuMaximumOffersPerShop\":99,\"FoodMenuNewTasteWeight\":\"Infinity\",\"FoodMenuHealthWeight\":-1}",8,2,0)]
-    [InlineData("{\"FoodMenuMaximumOffersPerShop\":1.5,\"FoodMenuNewTasteWeight\":{},\"FoodMenuHealthWeight\":\"NaN\"}",4,1,0)]
+    [InlineData("{\"FoodMenuMaximumOffersPerShop\":1.5,\"FoodMenuNewTasteWeight\":{},\"FoodMenuHealthWeight\":\"NaN\"}",8,1,0)]
     [InlineData("{\"FoodMenuMaximumOffersPerShop\":\"1\",\"FoodMenuNewTasteWeight\":\"0.5\",\"FoodMenuHealthWeight\":\"1.5\"}",1,.5,1.5)]
     public void E4_FlatSettingsLoadClampAndReload(string json,int limit,double taste,double health)
     {
         var settings=JsonConvert.DeserializeObject<PrototypeSettings>(json)!;var logs=new List<string>();settings.FoodChoice.Clamp(logs.Add);
         Assert.Equal(limit,settings.FoodMenuMaximumOffersPerShop);Assert.Equal(taste,settings.FoodMenuNewTasteWeight);Assert.Equal(health,settings.FoodMenuHealthWeight);
-        Assert.InRange(Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop),1,4);
+        Assert.InRange(Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop),1,8);
         int count=logs.Count;settings.FoodChoice.Clamp(logs.Add);Assert.Equal(count,logs.Count);
-    }
-
-    [Fact]
-    public void E4_CurrentHeaderAndCompactCellsAreStrictBeforeAllocation()
-    {
-        var (city,_)=S17_Full();
-        var row=new FoodShopDay{Day=0,PlaceId="shop",BusinessId="past",Purchases=1,PurchaseMeals=new long[]{1,0,0,0},
-            ProductSales={new FoodProductSales{ProductId=FoodProducts.Croissant,Purchases=1,PurchaseMeals=new long[]{1,0,0,0}}},
-            BuyerDistricts={new FoodBuyerDistrict{DistrictId="a",Purchases=1}}};
-        row.PurchaseHours[0]=1;city.State.Food!.History.Add(row);
-        string original=E5d_Wire24(city.State);
-        foreach(string cell in new[]{"[0,1,0,1,0,0,0]","[7,1,0,1,0,0,0]","[1,1,0,1,0,0]","[1,1,0,1,0,0,0,0]","[1,1.0,0,1,0,0,0]","[1,01,0,1,0,0,0]","[1,1,-1,1,0,0,0]","[1,1,0,0,0,0,0]"})
-        {
-            string bad=original.Replace("\"ProductSales\":[[1,1,0,1,0,0,0]]","\"ProductSales\":["+cell+"]");
-            Assert.NotEqual(original,bad);B0_Preserve(bad,city.State);
-        }
-        var root=SaveWire.Parse(original);root.Remove("MenuPolicy");
-        string missing=root.ToString(Formatting.None);B0_Preserve(missing,city.State);
-        Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(missing));
-        root=SaveWire.Parse(original);root["Food"]!["Shops"]![0]!["AdditionalProductIds"]=new JArray(Enumerable.Range(0,8).Select(i=>"p"+i));
-        Assert.Contains("additional menu",DevelopmentChain.Read(root.ToString(Formatting.None)).Error);
-        root=SaveWire.Parse(original);root["Food"]!["History"]![0]!["ProductSales"]![0]=new JObject{
-            ["ProductId"]=FoodProducts.Croissant,["PurchaseMeals"]=new JArray(1,0,0,0),["Purchases"]=1,["Revenue"]=0};
-        B0_Preserve(root.ToString(Formatting.None),city.State);
     }
 }

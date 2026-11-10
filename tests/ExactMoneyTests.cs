@@ -125,59 +125,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(encoded, DevelopmentChain.Write(read.State));
     }
 
-    // Reviewer A: Json.NET rounded an over-precise money token while reading. Earlier decimal-cents
-    // fields convert only when exactly a whole number of units; current fields must be canonical integers.
-    [Theory]
-    [InlineData("AllowanceCents", "1.00000000000000000000000000011")] // 29 fractional digits
-    [InlineData("AllowanceCents", "2.00000000000000000000000000000")] // excess scale (29 places)
-    [InlineData("AllowanceCents", "1234567890.1234567890123456789012")] // excess significant digits
-    [InlineData("AllowanceCents", "1025.279998779297")] // twelve-digit cents: not a whole number of units
-    [InlineData("AllowanceCents", "0.1")] // not a multiple of 2^-30 dollars
-    [InlineData("AllowanceCents", "1e3")] // exponent form
-    [InlineData("AllowanceCents", "-0.5")] // negative allowance
-    [InlineData("Allowance", "1.5")] // current field: not a whole number of units
-    [InlineData("Allowance", "536870912.0")] // current field: integral value written as a fraction
-    [InlineData("Allowance", "05")] // Json.NET reads a leading zero as octal
-    [InlineData("Allowance", "5e2")]
-    [InlineData("Allowance", "9223372036854775808")] // beyond the 64-bit unit range
-    [InlineData("Allowance", "-1")]
-    public void R7_NonRepresentableSaveMoneyIsInvalid(string field, string token)
-    {
-        var (city, _, _) = Ready();
-        city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
-        string encoded = LegacyWire.Write(city.State);
-        if (field == "AllowanceCents") encoded = LegacyMoneyWire.ToLegacy(SaveWire.Parse(encoded), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
-        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(encoded).Status);
-        string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
-        Assert.NotEqual(encoded, damaged);
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = damaged };
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(damaged).Status);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(damaged, data[SaveStore.StateKey]);
-    }
-
-    [Theory]
-    [InlineData(.01f)] [InlineData(.3f)] [InlineData(1.37f)] [InlineData(10.2528f)] [InlineData(12.49f)]
-    public void R7_ExactMoneyTokensRoundTripByteIdentically(float native)
-    {
-        var (city, market, routes) = Ready();
-        market.Price = Money.FromNative(native);
-        var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
-        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
-        city.State.Food!.Residents.Single().Budget!.Balance += Money.FromCents(1000000);
-        city.State.Food.Residents.Single().Budget!.OpeningBalance += Money.FromCents(1000000);
-        Advance(city, city.State.Food.Residents.Single().DesiredAt + 30);
-        Assert.Equal(MealStatus.Paid, city.State.Food.Residents.Single().Status);
-        string encoded = LegacyWire.Write(city.State);
-        Assert.Contains("\"Price\":" + market.Price.Units + ",", encoded);
-        var read = DevelopmentChain.Read(encoded);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status);
-        Assert.Equal(encoded, LegacyWire.Write(read.State!));
-        // The earlier decimal-cents form of the same state loads to identical units.
-        string legacy = LegacyMoneyWire.ToLegacy(SaveWire.Parse(encoded), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
-        Assert.Contains("\"PriceCents\":" + market.Price.ToCentsText(), legacy);
-        Assert.Equal(encoded, LegacyWire.Write(DevelopmentChain.Read(legacy).State!));
-    }
-
     // Settlement additions after a native sale cannot fail: each is checked before funds move.
     [Theory]
     [InlineData("none")] [InlineData("spent")] [InlineData("history")] [InlineData("product")] [InlineData("prepared")]

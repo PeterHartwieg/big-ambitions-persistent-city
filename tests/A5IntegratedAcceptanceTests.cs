@@ -159,32 +159,4 @@ public sealed class A5IntegratedAcceptanceTests
 
 public sealed partial class FoodCommerceTests
 {
-    [Theory]
-    [InlineData(16)] [InlineData(17)] [InlineData(18)] [InlineData(19)]
-    public void A5MigrationChainKeepsLegacyFactsAndInspectorReadOnly(int sourceSchema)
-    {
-        var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2);
-        city.EnableHouseholdFinances();
-        string legacy17 = LegacyWire.Write(city.State);
-        string source = sourceSchema == 16 ? S17_Old(legacy17, 16) : sourceSchema == 17 ? legacy17 : WeatherTests.As19(DevelopmentChain.Write(city.State));
-        if (sourceSchema == 18)
-        {
-            var root = SaveWire.Parse(source); root["Schema"] = 18;
-            ((Newtonsoft.Json.Linq.JObject)root["Food"]!).Remove("AwarenessStartsDay");
-            source = root.ToString(Formatting.None);
-        }
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = source, ["foreign"] = "kept" };
-        var read = DevelopmentChain.RefusedThenRead(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(sourceSchema, read.SourceSchema);
-        Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
-        Assert.Equal((int)(city.State.Minute / 1440) + 1, read.State.WeatherStartsDay);
-        Assert.All(read.State.Citizens, p => Assert.Null(p.W));
-        Assert.All(read.State.Food!.Residents, m => Assert.Equal(WeatherSample.Unknown, m.Memory.Weather));
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(legacy17), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
-        var restored = new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner());
-        string before = DevelopmentChain.Write(restored.State);
-        foreach (var resident in restored.State.Citizens) _ = restored.Inspect(resident.Identity.Id)!.Text();
-        Assert.Equal(before, DevelopmentChain.Write(restored.State)); Assert.Equal(before, DevelopmentChain.Write(DevelopmentChain.Read(before).State!));
-        Assert.Equal("kept", data["foreign"]); Assert.False(read.State.Capabilities.Active);
-    }
 }

@@ -138,7 +138,7 @@ namespace PersistentCity.Runtime
             var current = simulation;
             if (failed || current == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
             { Debug.LogWarning("[Persistent City] person unavailable: no active Persistent City population in this save."); return; }
-            string? line = id.Length == 0 ? null : VisitorSchedules.DescribePerson(current.State, id, current.FoodAnchorReads);
+            string? line = id.Length == 0 ? null : CityViewReports.DescribePerson(current.View, id, current.FoodAnchorReads);
             if (line == null) Debug.LogWarning("[Persistent City] Unknown person: " + id);
             else Debug.Log("[Persistent City] population person (read-only)\n" + line);
         }
@@ -150,9 +150,9 @@ namespace PersistentCity.Runtime
             var input = new PopulationCensusInput
             {
                 Places = censusPlaces, Workplaces = censusWorkplaces,
-                Residents = PopulationCensusInput.CaptureResidents(current.State.Citizens), StationIds = DiscoveredStationIds()
+                Residents = CityViewReports.CaptureCensusResidents(current.View), StationIds = DiscoveredStationIds()
             };
-            var result = new CensusResult { Save = save, Sequence = ++censusSequence, Minute = current.State.Minute,
+            var result = new CensusResult { Save = save, Sequence = ++censusSequence, Minute = current.View.Minute,
                 CaptureMilliseconds = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp };
             censusTask = Task.Run(() =>
             {
