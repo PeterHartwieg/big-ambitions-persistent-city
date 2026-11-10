@@ -109,3 +109,7 @@ Fixture for all: a disposable FT city on the owned rig with Persistent City, RLO
 10. **Performance** (plan check 11; F8b, F8d, F8e; locked-PC). Steps: in a clean RIG-PERF-UNION window at default caps, run `pc capability status` once per game minute for 30 game minutes; record the activation scan line (`hook conflicts at activation ... scan <ms>`) from the load log. Expected: mod-work p95 < 5 ms; every mod-work sample >= 30 ms listed with its component; whole-frame metrics reported separately; activation scan time recorded. **Existing:** RIG-PERF-UNION `perf_window`, FT `console`.
 
 Plan check 10 (foreign prefix on checkout) belongs to F8h and is not listed. Rig capability requests (PeterHartwieg/big-ambitions-agent-rig): RIG-FAULT (checks 5-7), RIG-PCSAVE (2, 6-8), RIG-RLOTOGGLE (8).
+
+## Mac rig record — 10 November 2026
+
+[Check 1 Mac record](f8h-check1-modpack-owners.json): initial native new-game save stopped PC before initialization completed. Investigation continues; this is not F8h or a Windows compatibility result.
