@@ -112,4 +112,4 @@ Plan check 10 (foreign prefix on checkout) belongs to F8h and is not listed. Rig
 
 ## Rig check 1 ? 10 November 2026
 
-Verified by rig at `b3e5a910`: city running, all five required capabilities active; twelve optional active and two off with reasons. [Small F8h input](f8h-check1-modpack-owners.json) records all 49 targets, foreign owner classes, activation excerpts and the full isolated DLL set. [Batched report](rig-2026-11-10-results.md).
+Verified by rig at `b3e5a910`: city running, all five required capabilities active; twelve optional active and two off with reasons. [Small F8h input](f8h-check1-modpack-owners-pc.json) records all 49 targets, foreign owner classes, activation excerpts and the full isolated DLL set. [Batched report](rig-2026-11-10-results.md).

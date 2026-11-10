@@ -32,11 +32,11 @@ Intermediate background run authorised by Peter. Tested `b3e5a9101fe065662c0baf3
 
 ## F8h check 1
 
-**Verified by rig.** [Small committed F8h input](f8h-check1-modpack-owners.json): `city running`; five required capabilities active (including Driven Rides when present); twelve optional active; `vendor.streetfood` off because the pinned Street Food vendor API is missing, `interior.view` off by default setting.
+**Verified by rig.** [Small committed F8h input](f8h-check1-modpack-owners-pc.json): `city running`; five required capabilities active (including Driven Rides when present); twelve optional active; `vendor.streetfood` off because the pinned Street Food vendor API is missing, `interior.view` off by default setting.
 
 The report lists **49/49 patched target methods, eight targets with foreign owners, five foreign owners**: `cityperformance.mod`, `drivenrides.mod`, `foodtrucks.mod`, `hardmodepatch`, `agent-tests.rig-input`. Patch classes are retained per target: may-skip, observer, swallows and rewrites. No foreign owner is reported on `ProcessAllCustomersFromThisHour`, `ProcessCustomer`, customer-entry helpers or `IsPriceAcceptable`. `RunMainGameTick` does have foreign prefixes/finalizers; consult the input rather than interpreting the customer-method observation as a city-wide absence of conflicts.
 
-Activation excerpts retain the early `not checked` statuses; the subsequent settled status is active. The input includes the exact head, DLL hash, fresh fixture checkpoint, full DLL inventory and activation scan line. No conflict refusal was implemented or tested. F8h itself remains NOT RUN.
+Activation excerpts retain the early `not checked` statuses; the subsequent settled status is active. The input includes the exact head, DLL hash, fresh fixture checkpoint, full DLL inventory and activation scan line. The 16.278 ms timing in that scan line is diagnostic only: it was recorded on the shared machine outside any measured window and is not a perf-gate sample. No conflict refusal was implemented or tested. F8h itself remains NOT RUN.
 
 ## Findings
 
