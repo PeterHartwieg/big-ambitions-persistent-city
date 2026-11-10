@@ -1,0 +1,830 @@
+{
+  "schema": "persistentcity-acceptance-evidence-1",
+  "machine": "windows-x64",
+  "runId": "20261110T131314Z-d23bb925",
+  "profile": "full",
+  "startedUtc": "2026-11-10T13:13:14+00:00",
+  "finishedUtc": "2026-11-10T13:39:41+00:00",
+  "acceptanceSha256": "ce3e079173e3713e1e37dee895a0dd0285c6f66c73323fba3cdc9434155bbb77",
+  "provenance": {
+    "source": {
+      "commit": "d23bb9256860833175568bb3481c8817bf07d716",
+      "branch": "codex/pc-f9h-first-acceptance-record",
+      "dirty": false,
+      "diffSha256": null,
+      "untrackedFiles": 0
+    },
+    "host": {
+      "os": "Windows",
+      "architecture": "AMD64",
+      "dotnetSdk": "10.0.402",
+      "python": "3.12.10"
+    },
+    "game": {
+      "supplied": true,
+      "managed": "<supplied>",
+      "set": "steam-1331550-build-25482473",
+      "differing": [],
+      "assemblies": {
+        "mscorlib.dll": "98c9b62133db5dd33b22bc6aab6f28e4f04f5b5be6559b28ba5c2738241434d0",
+        "System.dll": "ace2dd6a7d534b581bf4a9d316e743d64508ca2135db73dbff0ddb9365fc454e",
+        "System.Core.dll": "f1b33eb1ae8522edcf9ba4c2b85f532d4bab68bfa2a51527264bb61619bed4ea",
+        "System.Numerics.dll": "55eda0fb467f9356d8f63933fb4b237732f1b215cb8eb0380398f05d3e8a3461",
+        "System.Runtime.Serialization.dll": "c1058a78e3828052b92d535d8fb27f9f3c9eb9cbfcdee1904898611b44d7cdb7",
+        "netstandard.dll": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5",
+        "BigAmbitions.dll": "9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911",
+        "BigAmbitions.ModAPI.dll": "0ab90c0473684ce43cbe22c4049eb509373ab0d8a80216bf882a07d50c876983",
+        "BigAmbitions.AI.dll": "ec4baf862047ef8bcc474f7789e3e2ae42206f8c24db144813932030195c4216",
+        "BigAmbitions.Items.dll": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+        "BigAmbitions.Seasons.dll": "81c69c91af18245ae984571f001bd91db6e19bde7c537b722f0d143621b8c020",
+        "BigAmbitions.Characters.dll": "82864add2ff57fbb68d2933b1abebca89154430e012c224b7ebe37925a306ad8",
+        "BigAmbitions.Neighborhoods.dll": "867cb792e3295f9c67cf0a5ec04464546c9bd337fa47a578d30409e03eeb7205",
+        "BigAmbitions.InteriorDesigner.dll": "04bab0df97d0bf7eb4c04b299e1b59bd81c254b5f57e8edca82f661b3ef50c5c",
+        "HGExtensions.dll": "fafddfadf7aca598343b4679d14bc4e1381153be9a54bf94f35daa6b49b27b38",
+        "HGPlugins.dll": "7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96",
+        "UnityEngine.CoreModule.dll": "5afc743d350e95dc30379a6d2bafa2293b63259acf196fe3f7370f03644ef6f4",
+        "UnityEngine.IMGUIModule.dll": "b9720d33d0709863fcc8b10a4f327e3bbf082486e4b544917393f7ac8a78e460",
+        "UnityEngine.UI.dll": "59647e0f2a145dab47e37e96497483098bc642928eff47ab31eb4e92cca1b7f1",
+        "UnityEngine.InputLegacyModule.dll": "be0fa03c0bd24c778b4cc6e49c26e9302a4af649e391ee34b379aaaefd826317",
+        "BigAmbitions.PlacementSystem.dll": "ab4587b9a976c3c5941041382109e2f39a4f90b9b2e9ca758bf49bd24bace0d7",
+        "UnityEngine.TextRenderingModule.dll": "a829aae9dc1953efb38e2102284a30a9a8c05891aa4dc6afabbf3a4abef6af1c",
+        "UnityEngine.AIModule.dll": "111bbf88581785d6d9f03a33ce8d3d41588ae93b2f3a6f96a08a391c69558f9c",
+        "UnityEngine.PhysicsModule.dll": "c6b1ca3c3f4352ea6069726ec4b2c54e5ad637ccc891729299b03d2b398312be",
+        "UnityEngine.AnimationModule.dll": "a3a74a5bc04bb9e5038a6fbf5bd09322df2565059f0ac269cb2bd7155d2f66d2",
+        "ExternalPlugins.dll": "7d43e9d42d2f464674cff045bcb048c48e0f87aec0a987baa34122ac6e3415d1",
+        "DayNightCycle.dll": "28a354809e8c3fdfe24ac601d31afe061816b1bd7c50f4aaa604dd442aa4fd28",
+        "Newtonsoft.Json.dll": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+      }
+    },
+    "artifact": {
+      "persistentCityDllSha256": "f72508261b3ce3c5b83400610ab60ad5d5cb8ef56b4683e4a1bfd7c11616e85e"
+    },
+    "fixtures": [
+      {
+        "id": "f5h-reference",
+        "size": 957,
+        "seed": 2026,
+        "source": "tests/F5hIntegratedAcceptanceTests.cs",
+        "saveSha256": null
+      },
+      {
+        "id": "city-s",
+        "size": 128,
+        "seed": 2026,
+        "source": "tests/Acceptance/CityFixture.cs (F9c)",
+        "saveSha256": null
+      },
+      {
+        "id": "city-m",
+        "size": 957,
+        "seed": 2026,
+        "source": "tests/Acceptance/CityFixture.cs (F9c)",
+        "saveSha256": null
+      }
+    ],
+    "settings": {
+      "configSha256": "2c14a2bcf8b577b76ab91f7ac40b108777dec1cede5954b4f03fabca93d34691",
+      "compiledDefaults": {
+        "FoodChoicePriceWeight": 1.2,
+        "FoodChoiceHouseholdWeight": 1,
+        "AdvanceToEventBudget": 10000,
+        "AdvanceFrameSliceEventBudget": 1
+      },
+      "declaredOverrides": {}
+    },
+    "capabilities": {
+      "offline": {
+        "PopulationCapabilities.Code": "B",
+        "PopulationCapabilities.Revision": 1
+      },
+      "native": null
+    }
+  },
+  "summary": {
+    "verdict": "incomplete",
+    "required": [
+      "build",
+      "unit",
+      "population",
+      "economy",
+      "saves",
+      "movement",
+      "city-s",
+      "city-m",
+      "f9-2",
+      "f9-3",
+      "f9-4",
+      "f9-5",
+      "f9-6",
+      "f9-7",
+      "f9-8",
+      "f9-9",
+      "f6b-2",
+      "native-wholesale-costs",
+      "native-staffed-throughput"
+    ],
+    "failed": [],
+    "incomplete": [
+      "f9-2",
+      "f9-3",
+      "f9-4",
+      "f9-5",
+      "f9-6",
+      "f9-7",
+      "f9-8",
+      "f9-9",
+      "f6b-2",
+      "native-wholesale-costs",
+      "native-staffed-throughput"
+    ],
+    "deviations": [],
+    "notes": [
+      "native batch due: save-epoch has debt >= 3; native-save-contract has debt >= 3; buylive-sale-authority has debt >= 3; hourly-settlement has debt >= 3; native-shop-inputs has debt >= 3; agency-billing has debt >= 3; streetfood-bridge has debt >= 3; world-census has debt >= 3; physical-bodies has debt >= 3; price-weight-response has debt >= 3; native-staffed-throughput has debt >= 3"
+    ],
+    "nativeBatchDue": true,
+    "staleNativeRows": [],
+    "unprovenNativeRows": [
+      "save-epoch",
+      "native-save-contract",
+      "buylive-sale-authority",
+      "hourly-settlement",
+      "native-clock-and-skip",
+      "native-shop-inputs",
+      "agency-billing",
+      "agency-dialog",
+      "streetfood-bridge",
+      "subway-portals",
+      "world-census",
+      "rlo-donor-contract",
+      "physical-bodies",
+      "native-road-network",
+      "price-weight-response",
+      "native-staffed-throughput",
+      "native-wholesale-costs"
+    ]
+  },
+  "classes": {
+    "semantic": {
+      "verdict": "pass"
+    },
+    "native": {
+      "verdict": "incomplete",
+      "pending": [
+        {
+          "class": "native",
+          "row": "native-wholesale-costs",
+          "verdict": "incomplete",
+          "proof": "pending rig capability RIG-WHOLESALE (native wholesale unit cost per product of the FT-F9 shop)",
+          "criterion": "measured native wholesale costs",
+          "measuredBy": []
+        },
+        {
+          "class": "native",
+          "row": "native-staffed-throughput",
+          "verdict": "incomplete",
+          "proof": "F6b rig check 2, native staffed throughput (docs/checks/f6b.md)",
+          "criterion": "native staffed-throughput calibration",
+          "measuredBy": []
+        }
+      ]
+    },
+    "performance": {
+      "verdict": "not-supplied",
+      "reference": null
+    },
+    "gameplay": {
+      "verdict": "not-assessed"
+    }
+  },
+  "nativeEvidence": {
+    "status": "assessed",
+    "head": "d23bb9256860833175568bb3481c8817bf07d716",
+    "fingerprint": "steam-1331550-build-25482473",
+    "batchDue": true,
+    "batchDueReasons": [
+      "save-epoch has debt >= 3",
+      "native-save-contract has debt >= 3",
+      "buylive-sale-authority has debt >= 3",
+      "hourly-settlement has debt >= 3",
+      "native-shop-inputs has debt >= 3",
+      "agency-billing has debt >= 3",
+      "streetfood-bridge has debt >= 3",
+      "world-census has debt >= 3",
+      "physical-bodies has debt >= 3",
+      "price-weight-response has debt >= 3",
+      "native-staffed-throughput has debt >= 3"
+    ],
+    "stale": [],
+    "unproven": [
+      "save-epoch",
+      "native-save-contract",
+      "buylive-sale-authority",
+      "hourly-settlement",
+      "native-clock-and-skip",
+      "native-shop-inputs",
+      "agency-billing",
+      "agency-dialog",
+      "streetfood-bridge",
+      "subway-portals",
+      "world-census",
+      "rlo-donor-contract",
+      "physical-bodies",
+      "native-road-network",
+      "price-weight-response",
+      "native-staffed-throughput",
+      "native-wholesale-costs"
+    ],
+    "requiredChecks": [
+      "f9-2",
+      "f9-3",
+      "f9-4",
+      "f9-5",
+      "f9-6",
+      "f9-7",
+      "f9-8",
+      "f9-9",
+      "f6b-2"
+    ],
+    "ledgerSha256": "b741901b14b54406ed3f31aa282d49e1ba95166fcd0a6ef8ce833748725fa84f"
+  },
+  "stages": [
+    {
+      "id": "provenance",
+      "class": "provenance",
+      "required": false,
+      "exit": null,
+      "seconds": 0.0,
+      "verdict": "pass",
+      "reason": "recorded in provenance",
+      "metrics": {},
+      "digests": {},
+      "evidence": []
+    },
+    {
+      "id": "build",
+      "class": "native",
+      "required": true,
+      "exit": 0,
+      "seconds": 5.925,
+      "verdict": "pass",
+      "reason": "exit 0",
+      "metrics": {
+        "childSeconds": 5.327,
+        "waitSeconds": 0.585,
+        "gameFingerprintSet": "steam-1331550-build-25482473",
+        "runnerOverheadSeconds": 0.013
+      },
+      "digests": {
+        "PersistentCity.dll": "f72508261b3ce3c5b83400610ab60ad5d5cb8ef56b4683e4a1bfd7c11616e85e",
+        "mscorlib.dll": "98c9b62133db5dd33b22bc6aab6f28e4f04f5b5be6559b28ba5c2738241434d0",
+        "System.dll": "ace2dd6a7d534b581bf4a9d316e743d64508ca2135db73dbff0ddb9365fc454e",
+        "System.Core.dll": "f1b33eb1ae8522edcf9ba4c2b85f532d4bab68bfa2a51527264bb61619bed4ea",
+        "System.Numerics.dll": "55eda0fb467f9356d8f63933fb4b237732f1b215cb8eb0380398f05d3e8a3461",
+        "System.Runtime.Serialization.dll": "c1058a78e3828052b92d535d8fb27f9f3c9eb9cbfcdee1904898611b44d7cdb7",
+        "netstandard.dll": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5",
+        "BigAmbitions.dll": "9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911",
+        "BigAmbitions.ModAPI.dll": "0ab90c0473684ce43cbe22c4049eb509373ab0d8a80216bf882a07d50c876983",
+        "BigAmbitions.AI.dll": "ec4baf862047ef8bcc474f7789e3e2ae42206f8c24db144813932030195c4216",
+        "BigAmbitions.Items.dll": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+        "BigAmbitions.Seasons.dll": "81c69c91af18245ae984571f001bd91db6e19bde7c537b722f0d143621b8c020",
+        "BigAmbitions.Characters.dll": "82864add2ff57fbb68d2933b1abebca89154430e012c224b7ebe37925a306ad8",
+        "BigAmbitions.Neighborhoods.dll": "867cb792e3295f9c67cf0a5ec04464546c9bd337fa47a578d30409e03eeb7205",
+        "BigAmbitions.InteriorDesigner.dll": "04bab0df97d0bf7eb4c04b299e1b59bd81c254b5f57e8edca82f661b3ef50c5c",
+        "HGExtensions.dll": "fafddfadf7aca598343b4679d14bc4e1381153be9a54bf94f35daa6b49b27b38",
+        "HGPlugins.dll": "7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96",
+        "UnityEngine.CoreModule.dll": "5afc743d350e95dc30379a6d2bafa2293b63259acf196fe3f7370f03644ef6f4",
+        "UnityEngine.IMGUIModule.dll": "b9720d33d0709863fcc8b10a4f327e3bbf082486e4b544917393f7ac8a78e460",
+        "UnityEngine.UI.dll": "59647e0f2a145dab47e37e96497483098bc642928eff47ab31eb4e92cca1b7f1",
+        "UnityEngine.InputLegacyModule.dll": "be0fa03c0bd24c778b4cc6e49c26e9302a4af649e391ee34b379aaaefd826317",
+        "BigAmbitions.PlacementSystem.dll": "ab4587b9a976c3c5941041382109e2f39a4f90b9b2e9ca758bf49bd24bace0d7",
+        "UnityEngine.TextRenderingModule.dll": "a829aae9dc1953efb38e2102284a30a9a8c05891aa4dc6afabbf3a4abef6af1c",
+        "UnityEngine.AIModule.dll": "111bbf88581785d6d9f03a33ce8d3d41588ae93b2f3a6f96a08a391c69558f9c",
+        "UnityEngine.PhysicsModule.dll": "c6b1ca3c3f4352ea6069726ec4b2c54e5ad637ccc891729299b03d2b398312be",
+        "UnityEngine.AnimationModule.dll": "a3a74a5bc04bb9e5038a6fbf5bd09322df2565059f0ac269cb2bd7155d2f66d2",
+        "ExternalPlugins.dll": "7d43e9d42d2f464674cff045bcb048c48e0f87aec0a987baa34122ac6e3415d1",
+        "DayNightCycle.dll": "28a354809e8c3fdfe24ac601d31afe061816b1bd7c50f4aaa604dd442aa4fd28",
+        "Newtonsoft.Json.dll": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+      },
+      "evidence": [
+        {
+          "path": "logs/build.log",
+          "sha256": "6df665ad5ea62a042533000984e6acc6c9e4b00ab5d77452e0947bc0bbb812ed",
+          "bytes": 444
+        },
+        {
+          "path": "build.json",
+          "sha256": "eac6c183d1456f40790897c926729706db7aa9e08d557ff16338f383b66265c7",
+          "bytes": 2961
+        }
+      ]
+    },
+    {
+      "id": "unit",
+      "class": "semantic",
+      "required": true,
+      "exit": 0,
+      "seconds": 436.252,
+      "verdict": "pass",
+      "reason": "4003 passed, 0 skipped",
+      "metrics": {
+        "childSeconds": 435.14,
+        "waitSeconds": 1.051,
+        "total": 4003,
+        "passed": 4003,
+        "failed": 0,
+        "skipped": 0,
+        "failedTests": [],
+        "runnerOverheadSeconds": 0.061
+      },
+      "digests": {},
+      "evidence": [
+        {
+          "path": "logs/unit.log",
+          "sha256": "5fbce02c5e8cdde8baaecc33b6dc53a61a919217b07aed907800825a03dbb2b2",
+          "bytes": 2260
+        },
+        {
+          "path": "trx/unit/unit.trx",
+          "sha256": "02551d49317a3a32ccc477d678efa22e53edfe904ef850c6e4723972df1e2a00",
+          "bytes": 6182204
+        }
+      ]
+    },
+    {
+      "id": "population",
+      "class": "semantic",
+      "required": true,
+      "exit": null,
+      "seconds": 0.053,
+      "verdict": "pass",
+      "reason": "8 passed, 0 skipped",
+      "metrics": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0,
+        "failedTests": []
+      },
+      "digests": {},
+      "reusedFrom": "unit",
+      "evidence": []
+    },
+    {
+      "id": "economy",
+      "class": "semantic",
+      "required": true,
+      "exit": 0,
+      "seconds": 475.881,
+      "verdict": "pass",
+      "reason": "functional criteria pass; unmeasured criteria routed",
+      "metrics": {
+        "childSeconds": 474.766,
+        "waitSeconds": 1.099,
+        "runs": 85,
+        "dailyConservationChecks": 6832980,
+        "completeInterventionMatrix": true,
+        "acceptanceStatus": "partial",
+        "acceptanceExit": 1,
+        "failedCriteria": [],
+        "unmeasuredCriteria": [
+          "measured native wholesale costs",
+          "every gain has a measured cost / no Pareto dominant arm",
+          "native staffed-throughput calibration",
+          "F1 cadence byte identity",
+          "F2 body-cap flagged differences",
+          "full section 6 perf and 100000-consumer stress"
+        ],
+        "recordedPriceWeight": 1.2,
+        "runnerOverheadSeconds": 0.016
+      },
+      "digests": {
+        "acceptance.json": "9397589dab8f9e0d3f307ec06ecb93c408defd1e4ec40378ff0a5bd9aeec8b8d"
+      },
+      "routed": [
+        {
+          "class": "native",
+          "row": "native-wholesale-costs",
+          "verdict": "incomplete",
+          "proof": "pending rig capability RIG-WHOLESALE (native wholesale unit cost per product of the FT-F9 shop)",
+          "criterion": "measured native wholesale costs"
+        },
+        {
+          "class": "superseded",
+          "link": "docs/decisions/2026-11-08-price-weight.md",
+          "criterion": "every gain has a measured cost / no Pareto dominant arm"
+        },
+        {
+          "class": "native",
+          "row": "native-staffed-throughput",
+          "verdict": "incomplete",
+          "proof": "F6b rig check 2, native staffed throughput (docs/checks/f6b.md)",
+          "criterion": "native staffed-throughput calibration"
+        },
+        {
+          "class": "semantic",
+          "stages": [
+            "population",
+            "city-s",
+            "city-m"
+          ],
+          "criterion": "F1 cadence byte identity"
+        },
+        {
+          "class": "semantic",
+          "stages": [
+            "movement"
+          ],
+          "criterion": "F2 body-cap flagged differences"
+        },
+        {
+          "class": "performance",
+          "owner": "F4",
+          "criterion": "full section 6 perf and 100000-consumer stress"
+        }
+      ],
+      "deviations": [],
+      "evidence": [
+        {
+          "path": "logs/economy.log",
+          "sha256": "66708b44847f8c0220d9289e35e406aba53a511fd97ebedc34e6573e23e30380",
+          "bytes": 9799
+        },
+        {
+          "path": "f6h/acceptance.json",
+          "sha256": "9397589dab8f9e0d3f307ec06ecb93c408defd1e4ec40378ff0a5bd9aeec8b8d",
+          "bytes": 230907
+        }
+      ],
+      "f6hRuns": {
+        "access-door-closed-2-days-seed0.json": "a1393aa5980d520307f35bae58a8da6df0327daf0a487ae6e2b60b24252121a2",
+        "access-door-closed-2-days-seed1.json": "048c95f284645614704bf8f95e9cb219d85df3ce81044700e14f3f298ff1d8a6",
+        "access-door-closed-2-days-seed2.json": "0127e7239b6561a8b6757ef71a8314dd8b9c4078e6c2ddeaeea2635a686e1eb0",
+        "access-door-closed-2-days-seed3.json": "66a8eeeb23e44da8762a15d1730f1c77ed1460a7b58f10ae7baa8cf665953c50",
+        "access-door-closed-2-days-seed4.json": "267be880393b3dd929dd694168a124e891b86016c68f5d98758b9a2baaf16c0f",
+        "access-route-time-plus-50-seed0.json": "b19d37bb1e1602ec00b680fead9d49cb72e42634cf4887e44e57390568041ea4",
+        "access-route-time-plus-50-seed1.json": "88df0711c42eb8ac8faa9def4149b12da7c3f800ce66d4bc54c098e3cf54fb16",
+        "access-route-time-plus-50-seed2.json": "537f26fcedf90ebc345c6a38f883108cc06d0df684b3ec23d901682e18fd55c6",
+        "access-route-time-plus-50-seed3.json": "800ca39dad26a907473d87a06956c3d66137af90f382ff68337e15f183e18250",
+        "access-route-time-plus-50-seed4.json": "01ea8152d267b9c794cb97c9ee1e987d1b4918992df6a7e374aa39c6368299fc",
+        "access-second-site-2x-seed0.json": "f9274b3c4c0b954b4430154c27721124da758b484060c307dae8d759c73a66d9",
+        "access-second-site-2x-seed1.json": "518ded2256805df1acc20a1a6d64a5900cba3854131b289a5f30746764dd7996",
+        "access-second-site-2x-seed2.json": "9321d45f3141138065df4be9d1599ab693adab844e313df77e342fae0688cf50",
+        "access-second-site-2x-seed3.json": "46db738b0c37cf1ebda6710d3a3447007cde8fe85c6a43e9efe32ef2d58c5f75",
+        "access-second-site-2x-seed4.json": "6f4edd24bfb277419d2d2d3a3e2b3d7830d84803492ea0e1641e48efd016b002",
+        "control-control-seed0.json": "b6ba23f2ada73b90e9800101dcf00e11af84b31d1ad3b2ca152a7f7eac8c38e6",
+        "control-control-seed1.json": "5959cd0026d0c607920fdbe6037dc9cc68dc8d34b21cec282304a6e1e70c2eae",
+        "control-control-seed2.json": "11ebf9d38658e8d95cdd04d2ac33195fe50845c289218aa7c5aab86792f4040d",
+        "control-control-seed3.json": "b52e20fe8ad8f6badcfdbcfc2a8021c6d6186f0f6db8f9b0976babf9ddd32dde",
+        "control-control-seed4.json": "96fdab7d5b94176ca0e58a7a15c4f7eef3cfb01b5de0a3f14c6a6fe997b08c6f",
+        "employment-worker-routes-blocked-5pct-seed0.json": "5616874ade6e1eeae8dcac485e5104e89b4a29f341832a7aefe72ad4cee4c5ca",
+        "employment-worker-routes-blocked-5pct-seed1.json": "5efeaf28f6ebb38336c411fd8f1e930299067a88130f9257df6d1e92eb8da85b",
+        "employment-worker-routes-blocked-5pct-seed2.json": "f572b3cdeaa33dfb4dbeb79d36e954edcaab00c2a54f9f342d70c39c58ce60e5",
+        "employment-worker-routes-blocked-5pct-seed3.json": "b0d5c0203d758493224f62a11a01bcd862d7475a661ddb0f1dde2bfb8c8a8e6d",
+        "employment-worker-routes-blocked-5pct-seed4.json": "4eedc6523667941ad707016432b26f663c7f81e59cc0860a20429d44952fb1e5",
+        "employment-workplaces-closed-10pct-seed0.json": "17cc4814b84b633ed9dbfad76b8a8ca66b2da05051e8cb3f000fdb1ec674d12d",
+        "employment-workplaces-closed-10pct-seed1.json": "f9035dc75fa0d857373350f7de37105af4f5ccb27a1fbb624693c8bf8ce94f62",
+        "employment-workplaces-closed-10pct-seed2.json": "aba492541e702cdbfe6393cc1cf765ca9b196aa9e268fb702d3d66d7b75b9e10",
+        "employment-workplaces-closed-10pct-seed3.json": "429be7daa214b172f9e59d26783c5d96b5d0eccac536fb9bd2ed83fe94c3ede9",
+        "employment-workplaces-closed-10pct-seed4.json": "c6e3869ff7d1c046567d020d442a8805f345c0d60f1897bdfea064b9d5c19912",
+        "hours-breakfast-removed-seed0.json": "d9630958d99955719e854309f5472ff774c6a2fb47d2fc0fe1f1fb2c54970402",
+        "hours-breakfast-removed-seed1.json": "e17a88c0191d8a339f02f30aa82c1992cb74c69c2809be87e57c552755bc7f65",
+        "hours-breakfast-removed-seed2.json": "13cdbdafa3751aadaa192bc0e783ee639e98534ad831f6492054add9431a1e8a",
+        "hours-breakfast-removed-seed3.json": "3cd379f5cc0cde2c0c7174580c14ebc259476838551696e262aed4b7dc92e940",
+        "hours-breakfast-removed-seed4.json": "c1812e972b2488c80efbcd5072d9d4d97af473f38d541c534c2d9f8197cc507a",
+        "hours-close-2h-earlier-seed0.json": "29a5e4b6e30ce9fb80248ea225cd404fca55f3a23d82f94f1383fae9e39e3287",
+        "hours-close-2h-earlier-seed1.json": "a495539202c9a5581dcaa162358700db0e9441482fccfaee146e02e636ae85ce",
+        "hours-close-2h-earlier-seed2.json": "49a46f32a500abf2f370ea6701525ab9bf8e5e228d3131131d7a57def02e6326",
+        "hours-close-2h-earlier-seed3.json": "24f289b6ed70a015df38eb08484492f8cba9ca309ef9e5656237d27124981045",
+        "hours-close-2h-earlier-seed4.json": "4b412912868907cecb4c4e35d8d8ccccfa3f775517aed539e6a4a9d8badcb047",
+        "price-menu-plus-50-seed0.json": "2310b7389ad76f3cfd0127e0c7e8bb513b5732cd6cc4b15696193b33cf3190d6",
+        "price-menu-plus-50-seed1.json": "dca91707014aba78ad39cee882b1a9604f7f13f7bbf36ecf1841ed68a222ea9e",
+        "price-menu-plus-50-seed2.json": "54aa76e34b47a0ec005df7b1c1ae64d7ca09b5583f1ed98ed40bf5ddbb1adca4",
+        "price-menu-plus-50-seed3.json": "287c07176effe689c42519d3a159d8286d27a1b9c1d3a0839701c916916415b0",
+        "price-menu-plus-50-seed4.json": "1cefd66b4301f785ca163168bcd7a98afdb850603a9afcfe45a5c6ce4269b5b8",
+        "price-product-minus-25-seed0.json": "6297ad23563ca8958cbb16c46bae05f0a022e0a895d1d6bb419b499437ffd742",
+        "price-product-minus-25-seed1.json": "64eed8a02fff113481b86be4b7374b9d6c06525aa5f734a59fd73f05e9e3e6cc",
+        "price-product-minus-25-seed2.json": "d979c7619284c2f5ddb9c3d34fd767a0b9937ec0cfd8d5f6b334ec9068742237",
+        "price-product-minus-25-seed3.json": "8ca03d1a215575052eda9a51e2a41a41854e58fa92a9e039e85d2b3c30d22bbc",
+        "price-product-minus-25-seed4.json": "7d0113830f06831aa681cfed0b00a2b5084b660ce145c1f68f2de91fb1fc635d",
+        "price-product-plus-25-seed0.json": "7a35f1bb0d967ccf4d7feb59e3c069675a5b57c5f09a12f7775f4987d7e16a56",
+        "price-product-plus-25-seed1.json": "c45126371c82da37517958d15ca5251234044b1a40118616e47888e2d7606e21",
+        "price-product-plus-25-seed2.json": "a327f6040bcd746d64fa71df173d4e675c598da20ea1c51e4a42a6a1b60a2289",
+        "price-product-plus-25-seed3.json": "132db2b458dfa8a45e223e1eb2dd0cfbeb52b1c66cf07661fd88e172fc0e36b0",
+        "price-product-plus-25-seed4.json": "9ddd6caf38d6bb31289a576eca1ace1f62cb550a345bdb5c46bdcae2c580fc22",
+        "rival-lanes-halved-seed0.json": "f2fa037a55c9761cbfb6370dbf9f45e09c3f3058b23b2e6da8c0d89582e89715",
+        "rival-lanes-halved-seed1.json": "aa7869d7ac849c197b97b076b4d03a70ad8ba251d40d65bb9cacfa4348bff5fd",
+        "rival-lanes-halved-seed2.json": "1c75d5db7e302541a5de07f6ce8d0f705cdbf3929b53863d11165a31a39e9583",
+        "rival-lanes-halved-seed3.json": "ccd44c373f8440b6cabd2cffa85501d7a40c011ae2627048b750dc10295bbece",
+        "rival-lanes-halved-seed4.json": "1632abedb25d44af7a706ed80d2390d0dbc551f22e5fdbc58088f6dd7623b30c",
+        "rival-price-minus-25-seed0.json": "c77a3e04232e51ae6ba389d4537f158221e31246a2573e1b39021b82a5df99fd",
+        "rival-price-minus-25-seed1.json": "77ba2c1f4a947fabdeeac7466698e5e1351d22c5b561bb978b8f948fabd85ea5",
+        "rival-price-minus-25-seed2.json": "7773cebba94767fff98f9fe24baab8ec4322756f8ca474bf07e1fd75ca9a314a",
+        "rival-price-minus-25-seed3.json": "c15231662e4891aa71e75457a4bedb407deb8b36296c398a41a95c66505c1aed",
+        "rival-price-minus-25-seed4.json": "48b2846c4b9951a8d652a5f73bb17f34f31466c3e67b51915d7d96ffa2d94fd4",
+        "shortage-product-3-lunches-seed0.json": "4d8737053b9c3e77aada4d54e355dcda00f8c232813ffbc7fd06e2b41c87df97",
+        "shortage-product-3-lunches-seed1.json": "b548e6da2f9b089b3aa566ddd85fb2cfa163badc711527383ccde83f948391e7",
+        "shortage-product-3-lunches-seed2.json": "1c9b578725f7910a0618d0257dccd4bb675ebfd08673ad1574970ea16222954d",
+        "shortage-product-3-lunches-seed3.json": "4059bc4ee02efe31df4a9c54a219653f646bd7125ac6bd4b378977aaa282e54f",
+        "shortage-product-3-lunches-seed4.json": "33581e5c6af36d4fdf3102f2866c1f4e46d1f728eb7c338767acc0373d317fc7",
+        "shortage-whole-shop-day-seed0.json": "5d5e615034735f134d77a41db5fcc1210500c8053dc65997a40bb7a4c441b433",
+        "shortage-whole-shop-day-seed1.json": "e0735f74daaa15fb15c83d6910d553e3631d1ad3c0ede1f9b6c52441e5b18bab",
+        "shortage-whole-shop-day-seed2.json": "575f01fdaccf633f0c0064a7711144e08db2405d7f2a35a4e7784b3e55843eae",
+        "shortage-whole-shop-day-seed3.json": "46f295fe1b64a27d6e193a797df1563eca10c1a9ed28247f907e7874934874f9",
+        "shortage-whole-shop-day-seed4.json": "70dccc8b67e29469c0dacdda8cb0aa6065cb8cfce384799647d36d40600b95a6",
+        "staffing-lunch-counters-halved-seed0.json": "befc33890da0651570c75c73b07fbb87e79bae9a71aa6ac4810cbdeac0105a26",
+        "staffing-lunch-counters-halved-seed1.json": "b79f032707a6aeed237e511a948a28c4c5d3a29147e395770f0a7d00c36b4c43",
+        "staffing-lunch-counters-halved-seed2.json": "72db505a5555b1515c45a55988d204709dcb3492c6c27a5a3a0333baa8ec1d5b",
+        "staffing-lunch-counters-halved-seed3.json": "9c8f8b4cc06fe3b57b91175ae427e87f9d018f81cac87b1e3ab7cd03f19f9c19",
+        "staffing-lunch-counters-halved-seed4.json": "667dba4623a8af392ba08cc0fbb5c097c92d3bdccf6808f2a08b3873457cf829",
+        "staffing-zero-staff-day-seed0.json": "a7d2501fd23280f53e8a29a081f73ef559416264aa469029453ceb36758697f9",
+        "staffing-zero-staff-day-seed1.json": "517182a116bdc3be8d6d52859f513810b84b5225c9bec199b883453f6a62c6f6",
+        "staffing-zero-staff-day-seed2.json": "4d92646c4ad28072f840886a634a94f05e447290705b8c4f87389c2afd0b280b",
+        "staffing-zero-staff-day-seed3.json": "9e6f0b122fa055fe1ff2a62cd13cc93e42da25c29f20a3d41cdaedd6020343c2",
+        "staffing-zero-staff-day-seed4.json": "942e0260795c97353c1e92487860ee178715eeed83af5a920954e9d0bdaff094"
+      }
+    },
+    {
+      "id": "saves",
+      "class": "semantic",
+      "required": true,
+      "exit": null,
+      "seconds": 0.054,
+      "verdict": "pass",
+      "reason": "82 passed, 0 skipped",
+      "metrics": {
+        "total": 82,
+        "passed": 82,
+        "failed": 0,
+        "skipped": 0,
+        "failedTests": []
+      },
+      "digests": {},
+      "reusedFrom": "unit",
+      "evidence": []
+    },
+    {
+      "id": "movement",
+      "class": "semantic",
+      "required": true,
+      "exit": 0,
+      "seconds": 617.663,
+      "verdict": "pass",
+      "reason": "76 arms equal their reference",
+      "metrics": {
+        "childSeconds": 482.211,
+        "waitSeconds": 135.443,
+        "equalArms": [
+          "bodies-off/plain-30",
+          "bodies-off/plain-120",
+          "bodies-off/focus-none",
+          "bodies-off/plain-reload",
+          "bodies-off/plain-hidden-travel",
+          "focus/stationary",
+          "focus/sweep",
+          "focus/away-return",
+          "caps/0-0",
+          "caps/1-1",
+          "caps/24-12",
+          "caps/256-64",
+          "lag/ideal",
+          "lag/slow-head-car",
+          "failures/10pct",
+          "failures/50pct",
+          "cadence/30fps",
+          "cadence/120fps",
+          "transitions/reload-mid-journey",
+          "transitions/hidden-travel",
+          "walking/stationary",
+          "walking/sweep",
+          "walking/away-return",
+          "walking/caps-1",
+          "walking/caps-256",
+          "walking/lag-ideal",
+          "walking/failures-50pct",
+          "walking/cadence-30fps",
+          "walking/reload-mid-journey",
+          "walking/hidden-travel",
+          "visitors/stationary",
+          "visitors/sweep",
+          "visitors/away-return",
+          "visitors/caps-1",
+          "visitors/caps-256",
+          "visitors/lag-ideal",
+          "visitors/failures-50pct",
+          "visitors/cadence-30fps",
+          "visitors/reload-mid-journey",
+          "visitors/hidden-travel",
+          "visitors/focus-none",
+          "visitors/caps-0",
+          "visitors/caps-24",
+          "visitors/failures-10pct",
+          "visitors/lag-slow-head-car",
+          "visitors/cadence-120fps",
+          "combined/sweep-256-10pct-120fps",
+          "combined/away-return-1-50pct-30fps-reload",
+          "combined/stationary-24-50pct-slow-head-hidden",
+          "combined/visitors-sweep-256-50pct-30fps-reload",
+          "combined/visitors-away-return-24-10pct-slow-head-hidden",
+          "combined/visitors-stationary-1-10pct-120fps",
+          "pairwise/none-0-0-0pct-30fps-ideal",
+          "pairwise/stationary-1-1-10pct-60fps-native-reload",
+          "pairwise/sweep-24-12-50pct-120fps-slow-head-hidden",
+          "pairwise/visitors-away-return-48-24-0pct-60fps-slow-head-reload-hidden",
+          "pairwise/visitors-none-256-64-10pct-30fps-native-hidden",
+          "pairwise/visitors-stationary-1-1-50pct-120fps-ideal",
+          "pairwise/away-return-256-64-10pct-120fps-ideal-reload-hidden",
+          "pairwise/visitors-sweep-24-12-0pct-30fps-ideal-reload",
+          "pairwise/stationary-48-24-50pct-30fps-native-reload-hidden",
+          "pairwise/visitors-sweep-0-0-10pct-60fps-native",
+          "pairwise/none-48-24-50pct-60fps-ideal-hidden",
+          "pairwise/stationary-0-0-0pct-120fps-native-hidden",
+          "pairwise/away-return-1-1-50pct-30fps-slow-head-reload",
+          "pairwise/none-24-12-10pct-60fps-slow-head",
+          "pairwise/stationary-256-64-0pct-60fps-slow-head",
+          "pairwise/sweep-48-24-10pct-120fps-ideal-reload",
+          "pairwise/none-1-1-0pct-120fps-ideal-hidden",
+          "pairwise/away-return-0-0-50pct-30fps-native",
+          "pairwise/stationary-24-12-0pct-30fps-native-reload-hidden",
+          "pairwise/sweep-1-1-0pct-30fps-ideal-reload-hidden",
+          "pairwise/sweep-256-64-50pct-30fps-ideal-reload",
+          "pairwise/away-return-0-0-0pct-30fps-slow-head-hidden",
+          "pairwise/none-48-24-0pct-30fps-ideal",
+          "pairwise/away-return-24-12-0pct-30fps-ideal"
+        ],
+        "expectedRedArms": [],
+        "unexpectedDifferingArms": [],
+        "listedNowGreen": [],
+        "listedNotRun": [],
+        "failedSelfChecks": [],
+        "runnerOverheadSeconds": 0.009
+      },
+      "digests": {
+        "bodies-off/plain-30": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "bodies-off/plain-60": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "bodies-off/plain-120": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "bodies-off/focus-none": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "bodies-off/plain-reload": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "bodies-off/plain-hidden-travel": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "focus/stationary": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "focus/sweep": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "focus/away-return": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "caps/0-0": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "caps/1-1": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "caps/24-12": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "caps/256-64": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "lag/ideal": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "lag/slow-head-car": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "failures/10pct": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "failures/50pct": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "cadence/30fps": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "cadence/120fps": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "transitions/reload-mid-journey": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "transitions/hidden-travel": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "walking/plain-60": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/plain-30": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/plain-hidden-travel": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/stationary": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/sweep": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/away-return": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/caps-1": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/caps-256": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/lag-ideal": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/failures-50pct": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/cadence-30fps": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/reload-mid-journey": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "walking/hidden-travel": "5be3ba2b91010ad02dd65457604c1ef50c507a282b12c915770a571593557005",
+        "visitors/plain-60": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/plain-30": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/plain-hidden-travel": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/stationary": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/sweep": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/away-return": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/caps-1": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/caps-256": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/lag-ideal": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/failures-50pct": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/cadence-30fps": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/reload-mid-journey": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/hidden-travel": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/plain-120": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/focus-none": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/caps-0": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/caps-24": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/failures-10pct": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/lag-slow-head-car": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "visitors/cadence-120fps": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "combined/sweep-256-10pct-120fps": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "combined/away-return-1-50pct-30fps-reload": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "combined/stationary-24-50pct-slow-head-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "combined/visitors-sweep-256-50pct-30fps-reload": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "combined/visitors-away-return-24-10pct-slow-head-hidden": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "combined/visitors-stationary-1-10pct-120fps": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "bodies-off/plain-hidden-30": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "visitors/plain-hidden-30": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "bodies-off/plain-hidden-120": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "visitors/plain-hidden-120": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "pairwise/none-0-0-0pct-30fps-ideal": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/stationary-1-1-10pct-60fps-native-reload": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/sweep-24-12-50pct-120fps-slow-head-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/visitors-away-return-48-24-0pct-60fps-slow-head-reload-hidden": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "pairwise/visitors-none-256-64-10pct-30fps-native-hidden": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "pairwise/visitors-stationary-1-1-50pct-120fps-ideal": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "pairwise/away-return-256-64-10pct-120fps-ideal-reload-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/visitors-sweep-24-12-0pct-30fps-ideal-reload": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "pairwise/stationary-48-24-50pct-30fps-native-reload-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/visitors-sweep-0-0-10pct-60fps-native": "6759183afea60f27107cdb44280026f4488be089b216559a80d81671a06ef4c9",
+        "pairwise/none-48-24-50pct-60fps-ideal-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/stationary-0-0-0pct-120fps-native-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/away-return-1-1-50pct-30fps-slow-head-reload": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/none-24-12-10pct-60fps-slow-head": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/stationary-256-64-0pct-60fps-slow-head": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/sweep-48-24-10pct-120fps-ideal-reload": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/none-1-1-0pct-120fps-ideal-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/away-return-0-0-50pct-30fps-native": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/stationary-24-12-0pct-30fps-native-reload-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/sweep-1-1-0pct-30fps-ideal-reload-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/sweep-256-64-50pct-30fps-ideal-reload": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/away-return-0-0-0pct-30fps-slow-head-hidden": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/none-48-24-0pct-30fps-ideal": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4",
+        "pairwise/away-return-24-12-0pct-30fps-ideal": "272f15c6bd0021190e939d45a50a2aab6385c41d1a286d85d2d5241c834380b4"
+      },
+      "notes": [],
+      "evidence": [
+        {
+          "path": "logs/movement.log",
+          "sha256": "42162748cb96aef6ec2ef32167adc286093eab54e974658b89affe98a3f43afb",
+          "bytes": 14204
+        },
+        {
+          "path": "movement.json",
+          "sha256": "ac027717b584300ca8b7edc2914e6f994b1a7b4a07f0e1a80ff96a7f0808e83f",
+          "bytes": 640040
+        }
+      ]
+    },
+    {
+      "id": "city-s",
+      "class": "semantic",
+      "required": true,
+      "exit": 0,
+      "seconds": 8.873,
+      "verdict": "pass",
+      "reason": "27 passed, 0 skipped",
+      "metrics": {
+        "childSeconds": 8.358,
+        "waitSeconds": 0.508,
+        "total": 27,
+        "passed": 27,
+        "failed": 0,
+        "skipped": 0,
+        "failedTests": [],
+        "runnerOverheadSeconds": 0.007
+      },
+      "digests": {},
+      "evidence": [
+        {
+          "path": "logs/city-s.log",
+          "sha256": "68c55f4ef16691afdb2e7801b67f38d022217e9a15b15fb70ee92a19809c0f90",
+          "bytes": 769
+        },
+        {
+          "path": "trx/city-s/city-s.trx",
+          "sha256": "7000e8009671650803941272dca8ccc24f2008029b26a3fa28080404060cc3fe",
+          "bytes": 48348
+        }
+      ]
+    },
+    {
+      "id": "city-m",
+      "class": "semantic",
+      "required": true,
+      "exit": 0,
+      "seconds": 41.406,
+      "verdict": "pass",
+      "reason": "18 passed, 0 skipped",
+      "metrics": {
+        "childSeconds": 40.844,
+        "waitSeconds": 0.555,
+        "total": 18,
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "failedTests": [],
+        "runnerOverheadSeconds": 0.007
+      },
+      "digests": {},
+      "evidence": [
+        {
+          "path": "logs/city-m.log",
+          "sha256": "8830ebb8673e6316b82a1a5549a83e3b542f84f151a027f227cc68d89377afbd",
+          "bytes": 770
+        },
+        {
+          "path": "trx/city-m/city-m.trx",
+          "sha256": "4858a5c1355155cc2d45805df8154be169852185be29f3344d82f12ef13981fd",
+          "bytes": 33023
+        }
+      ]
+    }
+  ]
+}
