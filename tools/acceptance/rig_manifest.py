@@ -140,15 +140,19 @@ def assess(ledger, repo=ROOT, head="HEAD", fingerprint=None, current=None):
             status = "unproven"
         else:
             status = "fresh"
+        current_evidence = proven and effective not in (None, "unknown") and row.get("lastRigFingerprint") == effective
         rows.append({"id": row["id"], "status": status, "debt": debt, "since": since, "rigCheck": row.get("rigCheck"),
+                     "currentEvidence": current_evidence,
                      "pendingCapability": row.get("pendingCapability"), "capability": row.get("capability"),
                      "reasons": reasons, "touchedBy": [sha[:12] for sha in touched]})
     fingerprint_changed = any(r["status"] == "stale" and any(x.startswith("game fingerprint") for x in r["reasons"]) for r in rows)
     over = [r["id"] for r in rows if r["debt"] is not None and r["debt"] >= threshold]
     if fingerprint_changed:
-        # Decision 7: a game update marks every native assumption stale.
+        # Decision 7: a game update marks every native assumption stale, except rows already proved again on the new
+        # fingerprint (a partial batch after the update keeps the checks it completed).
         for r in rows:
-            r["status"] = "stale"
+            if not r["currentEvidence"]:
+                r["status"] = "stale"
     due_reasons = (["game fingerprint changed"] if fingerprint_changed else []) + [f"{i} has debt >= {threshold}" for i in over]
     return {"schema": SCHEMA, "head": history.head, "fingerprint": effective, "debtThreshold": threshold,
             "fingerprintChanged": fingerprint_changed, "batchDue": bool(due_reasons), "batchDueReasons": due_reasons,

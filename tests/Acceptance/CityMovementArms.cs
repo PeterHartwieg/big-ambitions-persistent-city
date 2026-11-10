@@ -58,6 +58,8 @@ namespace PersistentCity.Tests.Acceptance
         /// <summary>The followers bound when the mid-journey reload saved, and those a later driver bound again.</summary>
         public List<string> BoundAtReload = new();
         public int ReboundAfterReload;
+        /// <summary>Bodies the drivers created at and after the mid-journey reload's load acquired.</summary>
+        public long AcquiredAfterReload;
         /// <summary>Away-return: frames with a body bound while the player is 1 km away (after the first away minute), and
         /// after the return.</summary>
         public long AwayFramesWithBodies, ReturnFramesWithBodies;
@@ -75,6 +77,7 @@ namespace PersistentCity.Tests.Acceptance
         private readonly List<PresentationDriver> drivers = new();
         private readonly List<(CitizenState Citizen, bool Car)> followed = new();
         private HashSet<string>? followedAfterReload;
+        private int firstDriverAfterReload = -1;
         private Position[]? sweep;
         private bool leaked;
 
@@ -176,6 +179,7 @@ namespace PersistentCity.Tests.Acceptance
             run.Bodies.BoundAtReload = followed.Select(f => f.Citizen.Identity.Id).ToList();
             run.Bodies.ReloadMinute = city.View.Minute;
             followedAfterReload = new HashSet<string>(StringComparer.Ordinal);
+            firstDriverAfterReload = drivers.Count; // the load that follows creates this driver
         }
 
         partial void BodiesFinish()
@@ -192,6 +196,7 @@ namespace PersistentCity.Tests.Acceptance
                 stats.MaxVisitorBodies = Math.Max(stats.MaxVisitorBodies, d.MaxVisitorBodies);
             }
             if (followedAfterReload != null) stats.ReboundAfterReload = stats.BoundAtReload.Count(followedAfterReload.Contains);
+            if (firstDriverAfterReload >= 0) stats.AcquiredAfterReload = drivers.Skip(firstDriverAfterReload).Sum(d => d.Acquired);
         }
     }
 }
@@ -256,6 +261,9 @@ namespace PersistentCity.Tests
                     Assert.NotEmpty(b.BoundAtReload);
                     Assert.Equal(b.ReloadMinute, arm.Reloads.Single(r => r.State == CityReload.MidJourney).Minute);
                     Assert.Equal(arm.Reloads.Count + 1, b.Drivers);
+                    // After the load, the new drivers bind followers again (not necessarily the same persons, whose
+                    // journeys may have ended).
+                    Assert.True(b.AcquiredAfterReload > 0, "no body was bound after the mid-journey reload");
                     break;
             }
             if (name != "bodies-failures-50pct") Assert.Equal(0, b.FailedAcquisitions);
@@ -266,7 +274,7 @@ namespace PersistentCity.Tests
             output.WriteLine($"{size} {name}: {arm.Seconds:F2} s tool time ({arm.ToolMsPerDay:F0} ms per simulated day); bodies-off {spec.BodiesOff} "
                 + $"{off.Seconds:F2} s; acquired {b.Acquired}, max walkers {b.MaxWalkers}, walker frames {b.WalkerFrames}, failed {b.FailedAcquisitions}, "
                 + $"hidden frames {b.HiddenFrames}, visitor bodies {b.VisitorAcquired} (max {b.MaxVisitorBodies}), drivers {b.Drivers}, "
-                + $"bound at reload {b.BoundAtReload.Count}, rebound {b.ReboundAfterReload}");
+                + $"bound at reload {b.BoundAtReload.Count}, rebound {b.ReboundAfterReload}, acquired after it {b.AcquiredAfterReload}");
         }
 
         /// <summary>Visitors receive bodies at this base: F5i flipped the index flag. A visitor arriving through a portal is

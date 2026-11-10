@@ -78,7 +78,7 @@ From the plan's [section 7](../plans/f9-city-acceptance.md#7-in-game-checks-for-
    - Rig automation: existing FT `teleport`/`save`/`load`, RIG-CHECKPOINTS `physical_lease_visible`; pending RIG-PCCONFIG `PhysicalEnabled`, RIG-PCSAVE.
 3. **`f9-10` Merged summary for the batch (F9d).** Locked-PC (no game input; offline merge on the rig PC).
    - Setup: the offline `full` `acceptance.json` at the same head (with `--game-managed`), the batch's check records and F4's performance record.
-   - Steps: `python tools/acceptance/run.py summarize --result <full>/acceptance.json --rig <checks.json> --performance <f4.json>`; then `python tools/acceptance/run.py rig-manifest --result <merged>/acceptance.json`.
+   - Steps: `python tools/acceptance/run.py summarize --result <full>/acceptance.json --rig <checks.json> --performance <f4.json>`; then `python tools/acceptance/run.py rig-manifest --result <merged>/acceptance.json` (it reads the `native-assumptions.json` that `summarize` wrote beside the merged result).
    - Expected: one summary verdict over semantic and native; each `requiredChecks` entry satisfied by its record or listed `incomplete`; a failed check makes `native` fail; performance copied with its own verdict; gameplay `not-assessed`; `{out}/native-assumptions.json` records the head and fingerprint set for every row whose check passed, and the manifest from it lists those rows `fresh`. No absolute path or user name in the result.
    - Rig automation: pending RIG-ACCEPT.
 4. **`f9-3` Active capabilities (F9b provenance, R2).** Locked-PC.

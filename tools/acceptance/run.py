@@ -791,7 +791,19 @@ def identity_problem(result, rig):
     ours, theirs = artifact_hash(result), artifact_hash(rig)
     if ours and theirs and ours != theirs:
         return f"rig PersistentCity.dll {theirs} is not the offline run's {ours}"
+    # F9b/F9d: native proof counts only on the declared game the offline build matched.
+    offline_set, rig_set = game_set(result), game_set(rig)
+    if rig_set == "unknown":
+        return "rig game assemblies match no declared fingerprint set"
+    if offline_set not in (None, "unknown") and rig_set != offline_set:
+        return (f"rig game fingerprint {rig_set} is not the offline build's {offline_set}" if rig_set
+                else "rig records no game fingerprint set")
     return None
+
+
+def game_set(result):
+    game = (result.get("provenance") or {}).get("game") or {}
+    return game.get("set") if game.get("supplied", True) else None
 
 
 def package_evidence(stage, src_base, out, prefix):
@@ -923,7 +935,10 @@ def main(argv=None):
         # Decision 1: seconds, no .NET and no lock. --result takes the fingerprint set from that run's build.
         game = (json.loads(Path(args.result).read_text(encoding="utf-8"))["provenance"].get("game") or {}) if args.result else {}
         extra = ["--fingerprint", game["set"]] if game.get("supplied") and game.get("set") else []
-        return rig_manifest.main(["--ledger", str(ROOT / catalogue["nativeAssumptions"]),
+        # summarize writes the ledger with this batch's evidence next to its result; the manifest reads that one.
+        merged = Path(args.result).resolve().parent / "native-assumptions.json" if args.result else None
+        ledger = merged if merged is not None and merged.is_file() else ROOT / catalogue["nativeAssumptions"]
+        return rig_manifest.main(["--ledger", str(ledger),
                                   "--out", args.out or str(ROOT / "build/acceptance/rig-manifest"), *extra])
     try:
         with RunnerLock(args.lock) as lock:
