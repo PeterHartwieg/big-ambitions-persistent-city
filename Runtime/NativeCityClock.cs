@@ -39,10 +39,21 @@ namespace PersistentCity.Runtime
         public static bool CheckInputEpoch(double native, double logical)
         {
             ObserveSimulationLag(AccountingClock.Target(native), logical);
+            if (LoadCatchingUp)
+            {
+                // The ending epoch is the work being drained; native stays held (not caught up) until it is.
+                Refused |= !AccountingClock.CompatibleDuringLoadCatchUp(logical, native, LoadCatchUpEpoch);
+                return !Refused;
+            }
             Refused |= !AccountingClock.Compatible(logical, native);
             if (endingEpochDrained != null && !endingEpochDrained(native)) Refused = true;
             return !Refused;
         }
+        /// <summary>The native minute a loaded city entered before this hold started; NaN when not catching up.</summary>
+        public static double LoadCatchUpEpoch { get; private set; } = double.NaN;
+        public static bool LoadCatchingUp => !double.IsNaN(LoadCatchUpEpoch);
+        public static void BeginLoadCatchUp(double epoch) => LoadCatchUpEpoch = epoch;
+        public static void EndLoadCatchUp() => LoadCatchUpEpoch = double.NaN;
         public static double Factor { get; private set; } = 1;
         public static bool CoordinatesDrivenRides { get; private set; }
         public static bool Active => patches != null && save != null && ReferenceEquals(save, SaveGameManager.Current);
@@ -132,6 +143,7 @@ namespace PersistentCity.Runtime
             HeldEconomySkipTicks = HeldOrdinaryTicks = BoundaryClips = waitingSince = lastHeldAt = 0;
             WithheldMinutes = LagMinutes = MaximumLagMinutes = MaximumRecoverySeconds = 0;
             AccountingLimited = Refused = false;
+            LoadCatchUpEpoch = double.NaN;
         }
         private static void RidePrefix(float __0, out float __state) => __state = OrdinaryTick ? __0 : float.NaN;
         private static void RidePostfix(ref float __0, float __state)
