@@ -18,13 +18,13 @@ def band(low, high):
     return {"mean": (low + high) / 2, "sd": 1.0, "low": low, "high": high, "min": low, "max": high, "perSeed": [low, high]}
 
 
-def write_run(root, os_name, arch, commit="c" * 40, movement="a" * 64, f6h_run="b" * 64, dll="d" * 64):
+def write_run(root, os_name, arch, commit="c" * 40, movement="a" * 64, f6h_run="b" * 64, dll="d" * 64, settings=None):
     out = Path(root) / f"run-{os_name}"
     (out / "f6h").mkdir(parents=True)
     result = {
         "schema": "persistentcity-acceptance-1", "runId": f"run-{os_name}", "profile": "full",
         "provenance": {"source": {"commit": commit}, "host": {"os": os_name, "architecture": arch},
-                       "settings": {"compiledDefaults": {"FoodChoicePriceWeight": 1.2, "FoodChoiceHouseholdWeight": 1}}},
+                       "settings": settings or {"compiledDefaults": {"FoodChoicePriceWeight": 1.2, "FoodChoiceHouseholdWeight": 1}}},
         "summary": {"verdict": "incomplete"}, "classes": {"semantic": "pass"},
         "nativeEvidence": {"status": "assessed", "batchDue": True, "rows": ["dropped"]},
         "stages": [
@@ -118,6 +118,22 @@ class Compare(unittest.TestCase):
             self.assertEqual(doc["firstDifference"], "economy/f6h/control-control-seed0.json")
             movement = next(r for r in doc["digests"] if r["name"] == "movement/stationary")
             self.assertEqual(movement["status"], "equal")
+
+    def test_a_config_hash_that_differs_only_by_checkout_line_endings_is_compared(self):
+        # The working-tree hash of config/ changes with core.autocrlf; its content is checked by the git diff of the inputs.
+        defaults = {"FoodChoicePriceWeight": 1.2, "FoodChoiceHouseholdWeight": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            store = self.store(tmp)
+            evidence.record(write_run(tmp, "Windows", "AMD64", settings={"configSha256": "1" * 64, "compiledDefaults": defaults}), store)
+            evidence.record(write_run(tmp, "Darwin", "arm64", settings={"configSha256": "2" * 64, "compiledDefaults": defaults}), store)
+            self.assertEqual(evidence.compare(store)["verdict"], "cross-machine-deterministic")
+
+    def test_different_compiled_defaults_are_not_compared(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = self.store(tmp)
+            evidence.record(write_run(tmp, "Windows", "AMD64"), store)
+            evidence.record(write_run(tmp, "Darwin", "arm64", settings={"compiledDefaults": {"FoodChoicePriceWeight": 1}}), store)
+            self.assertEqual(evidence.compare(store)["verdict"], "different-source")
 
     def test_different_commits_are_not_compared(self):
         with tempfile.TemporaryDirectory() as tmp:
