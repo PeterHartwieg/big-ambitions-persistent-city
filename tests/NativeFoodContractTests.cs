@@ -220,13 +220,18 @@ namespace PersistentCity.Tests
         /// <summary>The market surface NativeFoodMarket gives Core, reduced to what checkout-off changes: receipt evidence
         /// read from the native save's receipt keys with FoodSaleReceipts (as IsConfirmedPaid does), and Read/Buy gated by
         /// the same FoodCheckoutMode (a shop that SupportedMenu refuses is not read, and CanServe refuses its checkout).</summary>
-        private sealed class CheckoutOffMarket : IFoodMarket, IFoodSaleEvidence
+        private sealed class CheckoutOffMarket : IFoodMarket, IFoodSaleEvidence, IFoodTicketEvidence
         {
+            public int TicketReads, PaidReads;
             public FoodCheckoutMode Checkout = new FoodCheckoutMode(null);
             public readonly Dictionary<string, string> Receipts = new(StringComparer.Ordinal);
             public int LoseFromDay = int.MaxValue, Buys;
             public double EarliestMinute => 0;
-            public bool IsConfirmedPaid(ResidentMeal meal) => FoodSaleReceipts.ReadStatus(Receipts, meal) == FoodReceiptStatus.Paid;
+            public bool IsConfirmedPaid(ResidentMeal meal) { PaidReads++; return FoodSaleReceipts.ReadStatus(Receipts, meal) == FoodReceiptStatus.Paid; }
+            // The reader Core uses when the market implements IFoodTicketEvidence, as NativeFoodMarket and FoodMarkets do;
+            // the same read NativeFoodMarket.TryConfirmedTicket makes.
+            public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
+            { TicketReads++; return FoodSaleReceipts.TryReadPaidTicket(Receipts, meal, out total, out extras); }
             public IReadOnlyList<FoodBusiness> Read(double minute) => !Checkout.Eligible ? Array.Empty<FoodBusiness>() : new[] { new FoodBusiness {
                 Id = "b", PlaceId = "shop", Name = "Bakery", MealsPerHour = 60,
                 Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
@@ -238,7 +243,7 @@ namespace PersistentCity.Tests
                 FoodSaleReceipts.Begin(Receipts, meal);
                 // Day LoseFromDay: half the outcomes are lost before the receipt is confirmed (stays pending, uncertain),
                 // half after it (paid evidence; the acknowledgement was lost). Both leave the meal uncertain in Core.
-                bool late = meal.ResidentId.GetHashCode(StringComparison.Ordinal) % 2 == 0;
+                bool late = int.Parse(Regex.Match(meal.ResidentId, @"\d+").Value, CultureInfo.InvariantCulture) % 2 == 0; // stable split
                 if (meal.Day >= LoseFromDay && !late) throw new InvalidOperationException("outcome lost before the receipt was confirmed");
                 FoodSaleReceipts.Confirm(Receipts, meal);
                 if (meal.Day >= LoseFromDay) throw new InvalidOperationException("receipt confirmed; acknowledgement lost");
@@ -262,7 +267,7 @@ namespace PersistentCity.Tests
             foreach (var meal in city.State.Food!.Residents) meal.Budget!.HomeFoodFundedDay = -1;
             while (!city.AdvanceTo(3 * 1440 - 1, 128).CaughtUp) { }
             var uncertain = city.State.Food.Residents.Where(m => m.Status == MealStatus.Uncertain).ToArray();
-            var paidEvidence = uncertain.Where(m => market.IsConfirmedPaid(m)).Select(m => m.ResidentId).ToHashSet();
+            var paidEvidence = uncertain.Where(m => FoodSaleReceipts.ReadStatus(market.Receipts, m) == FoodReceiptStatus.Paid).Select(m => m.ResidentId).ToHashSet();
             var pendingEvidence = uncertain.Where(m => FoodSaleReceipts.ReadStatus(market.Receipts, m) == FoodReceiptStatus.Pending).Select(m => m.ResidentId).ToHashSet();
             Assert.NotEmpty(paidEvidence); Assert.NotEmpty(pendingEvidence);
             Assert.All(uncertain, m => Assert.True(m.Budget!.HeldPurchase > Money.Zero, "uncertain meals hold their funds before the reload"));
@@ -272,8 +277,16 @@ namespace PersistentCity.Tests
             var receipts = market.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray();
             var off = new CheckoutOffMarket { Checkout = new FoodCheckoutMode("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed") };
             foreach (var pair in receipts) off.Receipts.Add(pair.Key, pair.Value);
+            var purchasesBefore = read.State!.Food!.Residents.ToDictionary(m => m.ResidentId, m => m.Purchases, StringComparer.Ordinal);
+            var spentBefore = read.State.Food.Residents.ToDictionary(m => m.ResidentId, m => m.Spent, StringComparer.Ordinal);
+            var priceOf = read.State.Food.Residents.ToDictionary(m => m.ResidentId, m => m.Price, StringComparer.Ordinal);
             city = new CitySimulator(read.State!, new WalkRoutes()); city.AttachFoodMarket(off);
             while (!city.AdvanceTo(4 * 1440 - 1, 128).CaughtUp) { }
+            // Core read the evidence through the ticket reader production supplies, not the fallback.
+            Assert.True(off.TicketReads > 0); Assert.Equal(0, off.PaidReads);
+            // A further day changes nothing more: each paid obligation settled once.
+            var purchasesAfterReload = city.State.Food!.Residents.ToDictionary(m => m.ResidentId, m => m.Purchases, StringComparer.Ordinal);
+            while (!city.AdvanceTo(5 * 1440 - 1, 128).CaughtUp) { }
 
             var residents = city.State.Food!.Residents;
             var settled = residents.Where(m => paidEvidence.Contains(m.ResidentId)).ToArray();
@@ -281,6 +294,9 @@ namespace PersistentCity.Tests
             Assert.Equal(paidEvidence.Count, settled.Length); Assert.Equal(pendingEvidence.Count, held.Length);
             foreach (var m in settled)
             {
+                Assert.Equal(purchasesBefore[m.ResidentId] + 1, m.Purchases);                       // settled exactly once
+                Assert.Equal(purchasesAfterReload[m.ResidentId], m.Purchases);
+                Assert.Equal(spentBefore[m.ResidentId] + priceOf[m.ResidentId], m.Spent);
                 Assert.NotEqual(MealStatus.Uncertain, m.Status); // settled from the paid receipt, without a checkout
                 Assert.Equal(Money.Zero, m.Budget!.HeldPurchase);
                 Assert.True(HouseholdFinance.CashConserved(m.Budget));
@@ -294,8 +310,11 @@ namespace PersistentCity.Tests
             Assert.Equal(0, off.Buys);                                  // no checkout while the contract is off
             Assert.Equal(receipts, off.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray()); // evidence unchanged
             Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
-            // The double's evidence read is production's: NativeFoodMarket.IsConfirmedPaid reads the same receipt status.
-            Assert.Contains("&& FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;", Source("Runtime/NativeFoodMarket.cs"));
+            // The double's evidence read is production's: NativeFoodMarket.TryConfirmedTicket reads the same paid ticket, and
+            // FoodMarkets (the composite Core attaches) dispatches to it for a shop scope.
+            Assert.Contains("&& FoodSaleReceipts.TryReadPaidTicket(SaveGameManager.Current.modData, meal, out total, out extras);", Source("Runtime/NativeFoodMarket.cs"));
+            Assert.Contains("if (Market(meal.BusinessId) is IFoodTicketEvidence tickets) return tickets.TryConfirmedTicket(meal, out total, out extras);", Source("Runtime/FoodMarkets.cs"));
+            Assert.Contains("IFoodTicketEvidence", Source("Runtime/NativeFoodMarket.cs").Substring(0, Source("Runtime/NativeFoodMarket.cs").IndexOf("{", StringComparison.Ordinal) + 400));
         }
 
         /// <summary>A shop not yet owned: checkout-off requests no ownership, so no boundary ever acquires it.</summary>
