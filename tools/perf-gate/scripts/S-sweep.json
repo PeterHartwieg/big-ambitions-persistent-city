@@ -1,0 +1,27 @@
+{
+  "format": "perf-gate-script/v1",
+  "name": "S-sweep",
+  "plan": "Decision 3: FT teleport across six kerb points 200 m apart, 10 game minutes each (F2 plan check 3 sweep). Evening only; measures acquisition and release churn",
+  "builds": ["candidate", "reference"],
+  "setup": [
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-1"}}
+  ],
+  "loop": [
+    {"op": "wait.game", "args": {"minutes": 10}},
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-2"}},
+    {"op": "wait.game", "args": {"minutes": 10}},
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-3"}},
+    {"op": "wait.game", "args": {"minutes": 10}},
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-4"}},
+    {"op": "wait.game", "args": {"minutes": 10}},
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-5"}},
+    {"op": "wait.game", "args": {"minutes": 10}},
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-6"}},
+    {"op": "wait.game", "args": {"minutes": 10}},
+    {"op": "ft.teleport", "args": {"anchor": "sweep.kerb-1"}}
+  ],
+  "samplers": [
+    {"op": "view.screen_pos", "args": {"action": "list"}, "every_real_seconds": 10, "feeds": "bodies"},
+    {"op": "log.physical_diagnostics", "args": {"line": "60-second physical diagnostics"}, "every_real_seconds": 60, "feeds": "bodies"}
+  ]
+}

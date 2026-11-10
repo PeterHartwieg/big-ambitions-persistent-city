@@ -1,0 +1,23 @@
+{
+  "format": "perf-gate-script/v1",
+  "name": "S-manage",
+  "plan": "Decision 3 and G7: the Ctrl+F8 panel open, the resident inspector on three residents, then native management screens (business overview, staff, inventory) opened and closed in a fixed order. The Ctrl+F8 panel and inspector are Persistent City screens, so the reference arm runs the native screens only",
+  "builds": ["candidate", "reference"],
+  "setup": [
+    {"op": "ft.teleport", "args": {"anchor": "owned-shop-1.inside"}}
+  ],
+  "loop": [
+    {"op": "ui.key", "args": {"keys": "Ctrl+F8", "expect": "Persistent City panel open"}, "builds": ["candidate"]},
+    {"op": "wait.real", "args": {"seconds": 10}, "builds": ["candidate"]},
+    {"op": "ui.key", "args": {"keys": "Ctrl+F8", "expect": "Persistent City panel closed"}, "builds": ["candidate"]},
+    {"op": "ui.click", "args": {"target": "resident 1 in view", "expect": "inspector open"}, "builds": ["candidate"]},
+    {"op": "ui.click", "args": {"target": "resident 2 in view", "expect": "inspector shows resident 2"}, "builds": ["candidate"]},
+    {"op": "ui.click", "args": {"target": "resident 3 in view", "expect": "inspector shows resident 3"}, "builds": ["candidate"]},
+    {"op": "ui.key", "args": {"keys": "Escape", "expect": "inspector closed"}, "builds": ["candidate"]},
+    {"op": "ui.open_screen", "args": {"screen": "business overview", "hold_real_seconds": 10}},
+    {"op": "ui.open_screen", "args": {"screen": "staff", "hold_real_seconds": 10}},
+    {"op": "ui.open_screen", "args": {"screen": "inventory", "hold_real_seconds": 10}},
+    {"op": "ui.key", "args": {"keys": "Escape", "expect": "native screens closed"}}
+  ],
+  "samplers": []
+}
