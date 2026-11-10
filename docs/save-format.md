@@ -16,7 +16,7 @@ The person shape adds these root fields:
 | --- | --- |
 | `Citizens[]` | Residents only (kind Resident). Each row is the existing resident object plus `P`, the resident person tuple. |
 | `Visitors[]` | Visitor persons, one string tuple each, strictly ordinal by person ID. |
-| `NextVisitorSequence` | Next `pv:<n>` sequence. It equals 1 + the number of `pv:` visitors (writer 26 creates none). |
+| `NextVisitorSequence` | Next `pv:<n>` sequence. It equals 1 + the number of `pv:` visitors. |
 | `IdentityPolicyVersion` | Version of the derived, never stored, visitor identity policy (currently 1). |
 | `Portals[]` | Saved station table for visitor stays: at most 256 IDs of at most 128 characters, strictly ordinal. |
 
@@ -41,11 +41,11 @@ The person shape adds these root fields:
 - `<carried>`: `-` or the `ResidentIncomeSource` digit (`0` employment, `1` pension, `2` support).
 - `<arrival>` (`LastArrival`): `-`, or the visit token `1` + 16 hexadecimal binary64 digits + a three-digit base-36 place index + an activity digit `0`–`4`. The reader checks structure only: the alphabet, a finite minute that is not after the city minute, an index inside `Places`, a known activity, and no tuple on a dormant visitor. Place, Shop activity and `DesiredAt` are checked only when service is admitted.
 
-A visitor has no identity, home, car or recent visits; the tuple has no slot for them. In writer 26, each visitor is the represented consumer of one resident. Its ID is `FoodRepresentation.ConsumerId(host, slot)`, and it eats on today's excursion schedule through that host. The fresh-city default is pattern Commuter (`PersonPolicy.MigratedConsumerPattern`, section 9 Q3), active, first day = the roster's enrolment day, with no employment, carried source or arrival.
+A visitor has no identity, home, car or recent visits; the tuple has no slot for them. Each visitor is a person with its own routine that arrives through a portal; there are no represented consumers.
 
 ### Meal roster (factor-1 roster rule)
 
-`Food.Residents[]` holds exactly one roster record per person (residents and visitors). Each record is tuple version 3, which is the writer-25 tuple without `AnchorId` and `Slot`. `Food` has no `RepresentationFactor`. Every record decodes, and is written, as its own person's: `AnchorId == ResidentId`, `Slot == 0`, stored factor 1. The host and slot of a represented consumer's excursion (`ResidentMeal.HostId`/`HostSlot`) are a scheduling adapter that is never stored; they and the scheduling factor (1 + visitors / residents, at most 3) are derived from the person table. Every visitor must be one resident's represented consumer, and every resident has the same number of them. The saved person table must also pass F5b's `OwnershipValidator`; resident IDs stay opaque, and a represented visitor has no portal.
+`Food.Residents[]` holds exactly one roster record per person (residents and visitors). Each record is a positional tuple at version 1 (held at 1, like the schema) with no `AnchorId` or `Slot` field. `Food` has no `RepresentationFactor`. Every record decodes, and is written, as its own person's: `AnchorId == ResidentId`, `Slot == 0`, stored factor 1, host slot 0. The saved person table must also pass F5b's `OwnershipValidator`; resident IDs stay opaque.
 
 Each resident tuple, visitor tuple and station entry charges one embedded record, in the streaming check and the write-side count alike.
 
@@ -63,7 +63,7 @@ Named in `SaveCodec`/`PersonTable` and checked while streaming, before allocatio
 | Stations | 256 |
 | Input | 256 Mi characters and UTF-8 bytes; 4,000,000 embedded records (one per resident tuple, visitor tuple and station entry) |
 
-The other limits are unchanged from writer 25. Nothing is truncated: a payload over a bound is refused.
+The other limits are named in `SaveCodec`. Nothing is truncated: a payload over a bound is refused.
 
 ## Refusals
 

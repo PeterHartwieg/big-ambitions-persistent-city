@@ -46,7 +46,7 @@ public sealed class ChangeJournalTests
     /// 1 until release, so a deliberate format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData(5150, Corpus, 0)]
-    [InlineData(9217, "45fbb88b10d7be22535c226c605b4a819870c9a77b927de4aa97d0ca60957b6b", 72968)]
+    [InlineData(9217, "a9651c15e44c67fa8e05ac084b638ac1bfaf0c48805a8d1142a873c423a6422c", 72968)]
     public void CurrentWriterGoldenSnapshotAndReload(int seed, string pin, int characters)
     {
         var state = Fixture(seed); string payload = SaveCodec.Write(state);

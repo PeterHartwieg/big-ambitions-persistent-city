@@ -277,17 +277,18 @@ namespace PersistentCity.Persistence
             public readonly Action<JsonWriter, object, JsonSerializer>[] Write;
             public readonly Action<object, JsonReader, JsonSerializer>[] Read;
             public readonly Func<object> Create;
-            public readonly int Version;
-            private TupleLayout(Type type, string fields, int version = 2, string derived = "")
+            // Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature schema constants; change the format in place.
+            public const int CurrentVersion = 1;
+            public readonly int Version = CurrentVersion;
+            private TupleLayout(Type type, string fields, string derived = "")
             {
-                Version = version;
                 var names = fields.Split(' ');
                 var omitted = derived.Split(' ');
                 var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !(type == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")
                     && Array.IndexOf(omitted, p.Name) < 0).ToArray();
                 if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
-                    throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");
+                    throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple fields and the save contract deliberately, in place.");
                 Properties = names.Select(n => type.GetProperty(n) ?? throw new InvalidOperationException(n)).ToArray();
                 Write = Properties.Select(p => {
                     var writer = Expression.Parameter(typeof(JsonWriter)); var target = Expression.Parameter(typeof(object)); var serializer = Expression.Parameter(typeof(JsonSerializer));
@@ -317,11 +318,11 @@ namespace PersistentCity.Persistence
                 }).ToArray();
                 Create = Expression.Lambda<Func<object>>(Expression.Convert(Expression.New(type), typeof(object))).Compile();
             }
-            // Frozen positional contracts, independent of declaration/reflection order. Version 1 is slot zero.
-            private static readonly TupleLayout EconomicBudget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent Ledger", 3);
+            // Positional contracts, independent of declaration/reflection order. The version is slot zero.
+            private static readonly TupleLayout EconomicBudget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent Ledger");
             // One roster record per person, so the anchor and slot are derived from the person table (PersonWire26).
-            private static readonly TupleLayout Meal3 = new TupleLayout(typeof(ResidentMeal), "Allowance Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", 3, "AnchorId Slot");
-            public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? EconomicBudget : type == typeof(ResidentMeal) ? Meal3 : null;
+            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", "AnchorId Slot");
+            public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? EconomicBudget : type == typeof(ResidentMeal) ? Meal : null;
         }
         private static double TupleNumber(JsonReader reader) => reader.Value is double d ? d : reader.Value is long n ? n
             : reader.Value is System.Numerics.BigInteger b ? (double)b : throw new SaveValidationException("Invalid tuple number.");

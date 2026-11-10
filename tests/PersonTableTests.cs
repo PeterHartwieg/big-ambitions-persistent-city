@@ -90,8 +90,8 @@ public sealed class PersonTableTests
         string payload = DevelopmentChain.Write(state);
         Assert.Contains("\"Schema\":" + CityState.CurrentSchema + ",", payload);
         Assert.DoesNotContain("RepresentationFactor", payload);
-        // Roster tuple v3: version plus 34 slots, no anchor or slot (routine stops still name their resident anchor).
-        if (food) Assert.All(SaveWire.Parse(payload)["Food"]!["Residents"]!, row => { Assert.Equal(3, (int)row[0]!); Assert.Equal(35, ((JArray)row).Count); });
+        // Roster tuple: version plus 34 slots, no anchor or slot (routine stops still name their resident anchor).
+        if (food) Assert.All(SaveWire.Parse(payload)["Food"]!["Residents"]!, row => { Assert.Equal(1, (int)row[0]!); Assert.Equal(35, ((JArray)row).Count); });
         Assert.DoesNotContain("EmploymentStartDay", payload);
         Assert.Contains("\"P\":\"1R", payload);
         var read = DevelopmentChain.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -319,7 +319,7 @@ public sealed class PersonTableTests
         var data = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [SaveStore.StateKey] = payload, [FoodAuthorityStore.Key] = manifest,
-            ["persistentcity:food-sale-v2:food%3Ac0%3A1%3A0"] = "Pending",
+            ["persistentcity:food-sale-v1:food%3Ac0%3A1%3A0"] = "Pending",
             [AccountingStopStore.Key] = "save-epoch-failed", ["rlo:state"] = "owned by RLO",
         };
         data[SaveEpochStore.Key] = SaveEpochStore.Success(4, 25, loadedHour * 60, "food-live", data);

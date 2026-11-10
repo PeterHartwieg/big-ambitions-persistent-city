@@ -151,9 +151,9 @@ replacement = new BuildingRegistration(); current = new RetailBusinessSimulator(
 Check(!(bool)Hooks.Call("HourlyCustomers", current)!, "replacement object cannot run protected current hour before bounded observation");
 Check(NativeFoodOwnership.Find(replacement) == null, "replacement remains ineligible for mod service until generation observation");
 
-// Review round 1: every supported receipt version proves earlier accounting ownership,
+// Review round 1: a receipt proves earlier accounting ownership,
 // even when the authority manifest is missing or empty.
-foreach (string prefix in new[] { FoodSaleReceipts.LegacyPrefix, FoodSaleReceipts.Prefix })
+foreach (string prefix in new[] { FoodSaleReceipts.Prefix })
 foreach (string state in new[] { "paid", "pending" })
 foreach (bool emptyManifest in new[] { false, true })
 {

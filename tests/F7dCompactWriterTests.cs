@@ -53,7 +53,7 @@ public sealed class F7dCompactWriterTests
             : SaveWire.Text(state).Replace("{\"Schema\":" + CityState.CurrentSchema + ",", "{\"Schema\":" + schema + ",");
         Assert.Equal(schema, SaveCodec.DevelopmentSchemaOf(older));
         var data = new Dictionary<string, string>(StringComparer.Ordinal)
-        { [SaveStore.StateKey] = older, ["persistentcity:food-sale-v2:intent-1"] = "pending", ["other"] = "kept" };
+        { [SaveStore.StateKey] = older, ["persistentcity:food-sale-v1:intent-1"] = "pending", ["other"] = "kept" };
         var before = new Dictionary<string, string>(data);
         var read = SaveCodec.Read(older);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
@@ -116,7 +116,7 @@ public sealed class F7dCompactWriterTests
     private static void RefusedAndKept(string payload, SaveReadStatus status)
     {
         var replacement = CurrentSchemaOnlyTests.City();
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["persistentcity:food-sale-v2:i"] = "pending", ["other"] = "kept" };
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["persistentcity:food-sale-v1:i"] = "pending", ["other"] = "kept" };
         var before = new Dictionary<string, string>(data);
         var read = SaveCodec.Read(payload); Assert.True(read.Status == status, read.Error); Assert.Null(read.State);
         Assert.Equal(status, SaveStore.ReadFrom(data, replacement.PopulationKey).Status);

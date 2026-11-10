@@ -22,7 +22,7 @@ Details and limitations: [docs/behaviour.md](docs/behaviour.md). Terms: [docs/gl
 | `tests/` | xUnit tests (`PersistentCity.Tests.csproj`) |
 | `tools/` | Build script, harnesses and measurement tools |
 
-Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`), which is held at 1 until release. Cities from an older development schema are refused with a "start a new city" status, not migrated; future or invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
+Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`), which is held at 1 until release. Cities from an older development schema are refused with a "start a new city" status, not migrated; any other schema number or invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
 Superseded for schema numbers on 9 November 2026: the schema is held at 1 and never bumped before release ([decision](docs/decisions/2026-11-09-schema-one.md)).
 
 ## Build and test

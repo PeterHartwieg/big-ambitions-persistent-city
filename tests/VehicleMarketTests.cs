@@ -334,7 +334,7 @@ public sealed class VehicleMarketTests
     }
 
     [Fact]
-    public void CancelRequiresExactCurrentPendingIdentityAndRejectsPaidLegacyConflictOrMissing()
+    public void CancelRequiresExactCurrentPendingIdentityAndRejectsPaidOrMissing()
     {
         var f = new Fixture(); var m = f.Meal();
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Cancel(f.Receipts, m));
@@ -347,9 +347,6 @@ public sealed class VehicleMarketTests
             if (field == "product") other.ProductId = FoodProducts.Burger;
             Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Cancel(f.Receipts, other));
         }
-        f.Receipts[FoodSaleReceipts.LegacyPrefix + m.IntentId] = f.Receipts[FoodSaleReceipts.Prefix + m.IntentId];
-        Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Cancel(f.Receipts, m));
-        f.Receipts.Remove(FoodSaleReceipts.LegacyPrefix + m.IntentId);
         FoodSaleReceipts.Confirm(f.Receipts, m);
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Cancel(f.Receipts, m));
         Assert.True(FoodSaleReceipts.AlreadyPaid(f.Receipts, m));

@@ -25,7 +25,7 @@ public sealed class WireHeaderTests
     {
         var layout = typeof(SaveCodec).GetNestedType("TupleLayout", BindingFlags.NonPublic)!;
         var failure = Assert.Throws<TargetInvocationException>(() => Activator.CreateInstance(layout,
-            BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { typeof(ExtendedDto), fields, 2, "" }, null));
+            BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { typeof(ExtendedDto), fields, "" }, null));
         Assert.IsType<InvalidOperationException>(failure.InnerException);
         Assert.Contains("writable properties", failure.InnerException!.Message);
     }

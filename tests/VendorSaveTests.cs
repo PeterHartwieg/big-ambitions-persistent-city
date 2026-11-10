@@ -930,9 +930,9 @@ public sealed class VendorSaveTests
     /// <summary>The writer's golden for each vendor fixture, re-pinned once by X3 at the held schema 1. A deliberate format
     /// change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
-    [InlineData("shops-only", "7bcaeb0a24d0b05eb70eba8ac7e4865eb34c5ce20bc388394931f037fb17cc24", 3598)]
-    [InlineData("vendors-all-states", "7d8401b5ad8b0ab5f0e1a39c7e8bdf443f81f58e5b88defbe4d2bc4f7a56a6ab", 4796)]
-    [InlineData("vendors-at-bounds", "9295ae6d50250840c832dad826866d9ec5a2361645fc0c49c55505d1db11b63b", 115948)]
+    [InlineData("shops-only", "0ec2cafed23a23a2211adb16d4cb1d78aa2a24cfc3da6eaea2b6415b165472b8", 3598)]
+    [InlineData("vendors-all-states", "ed41824e3928d4cdc98c82895acee402aa2b37523e1e06a2036a119b417a8eaf", 4796)]
+    [InlineData("vendors-at-bounds", "a310bf7b9e238cb59df41e48af2aa5556af8ced162d0704a32e6e0b71f5ab166", 115948)]
     public void GoldenVendorWriterBytesArePinned(string name, string sha256, int characters)
     {
         string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());

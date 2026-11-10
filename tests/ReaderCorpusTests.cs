@@ -13,7 +13,7 @@ namespace PersistentCity.Tests;
 /// writer reads and rewrites it exactly as pinned, and any other schema number is refused with every key kept.</summary>
 public sealed class ReaderCorpusTests
 {
-    private const string ReceiptKey = "persistentcity:food-sale-v2:corpus-intent";
+    private const string ReceiptKey = "persistentcity:food-sale-v1:corpus-intent";
 
     private static readonly (string File, string Builder, Func<CityState> City)[] CompactCities =
     {

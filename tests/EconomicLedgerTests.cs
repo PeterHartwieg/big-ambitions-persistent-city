@@ -95,8 +95,8 @@ public sealed class EconomicLedgerTests
         AssertRoundTrip(state);
     }
     [Theory]
-    [InlineData(5150, "b324c60bdf97c233aa1b3e270d1050110c5eb6e38b168097fe81cee1763424dd", 45951)]
-    [InlineData(9217, "f981f8ad81e283cff293752b6b42428044316092388f1af2b1895f6f870badda", 45942)]
+    [InlineData(5150, "2a4decf4fd137835b66eefb24e5372f10f49cb395091cf916bda7d892376530c", 45951)]
+    [InlineData(9217, "7794c1177dab0625f2b44a1d835b504f8ea317268f18ad1afe3712b043010560", 45942)]
     public void PopulatedWriterGoldensAndEveryNewFieldRoundTrips(int seed, string pin, int length)
     {
         var state = Fresh(seed); Populate(state);

@@ -6,7 +6,7 @@
   "fixtures": [
     {
       "file": "full.json",
-      "sha256": "fef7ba712b38b27973f043ada9d6f5b96107eef26158173c79aa302ea9b4032f",
+      "sha256": "ffa821dea8fe057959a91135db75342a3b69c2bdec8487af7485a35dd5d0889c",
       "characters": 73330,
       "builder": "ChangeJournalTests.Fixture(5150) (3-shop fresh city after 2,000 minutes, journal and meal-period causes)",
       "recipe": "SaveCodec.Write(city) (fresh city in the compact writer, no migration)",
