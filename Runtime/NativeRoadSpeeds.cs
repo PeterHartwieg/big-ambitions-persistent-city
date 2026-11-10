@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using GleyTrafficSystem;
+using PersistentCity.Compatibility;
 
 namespace PersistentCity.Runtime
 {
@@ -20,11 +21,18 @@ namespace PersistentCity.Runtime
         { this.capture = capture; }
 
         public bool HasOverrides => overrides.Count != 0;
+        public bool FromRlo => capture != null;
+        /// <summary>F8d: the last capture was a transient RLO answer (NotYet, Refreshing); null after a complete answer.
+        /// The last verified overrides are kept and road preparation waits; nothing is read as "no slowdowns".</summary>
+        public string? Waiting { get; private set; }
         internal static IEqualityComparer<object> ReferenceComparer => References.Instance;
         public void Refresh()
         {
             if (capture == null) return;
-            var next = capture() ?? throw new InvalidOperationException("RLO road speed snapshot is absent.");
+            IReadOnlyDictionary<object, (int Original, int Effective)> next;
+            try { next = capture() ?? throw new InvalidOperationException("RLO road speed snapshot is absent."); }
+            catch (RloRoadSpeedsNotReadyException error) { Waiting = error.Message; return; }
+            Waiting = null;
             var detached = new Dictionary<object, (int Original, int Effective)>(References.Instance);
             foreach (var pair in next)
             {

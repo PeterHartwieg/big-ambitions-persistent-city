@@ -15,6 +15,13 @@ namespace PersistentCity.Compatibility
         public int EffectiveKilometresPerHour { get; }
     }
 
+    /// <summary>F8d: RLO's CityApi answered NotYet or Refreshing for its slowed lanes. Nothing is known about the lanes, so
+    /// the caller must neither read this as "no slowdowns" nor stop the city; route preparation waits for a complete answer.</summary>
+    public sealed class RloRoadSpeedsNotReadyException : InvalidOperationException
+    {
+        public RloRoadSpeedsNotReadyException(string message) : base(message) { }
+    }
+
     /// <summary>Read-only contract for RLO's pothole speed overlay: RLO's CityApi when it has one, otherwise the reviewed
     /// reflection read. Capture on the game's main thread.</summary>
     public sealed class RloRoadSpeedOverrides
@@ -111,6 +118,8 @@ namespace PersistentCity.Compatibility
                 var result = new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
                 RloBridge.Status status = api.ReadSlowedLanes(lanes, originals, currents);
                 if (status == RloBridge.Status.Off) return new ReadOnlyDictionary<object, RloRoadSpeedOverride>(result);
+                if (status == RloBridge.Status.NotYet || status == RloBridge.Status.Refreshing)
+                    throw new RloRoadSpeedsNotReadyException("RLO road speed overrides: ReadSlowedLanes: " + RloBridge.Describe(status));
                 if (status != RloBridge.Status.Ready) throw Invalid("ReadSlowedLanes: " + RloBridge.Describe(status));
                 if (originals.Count != lanes.Count || currents.Count != lanes.Count) throw Invalid("ReadSlowedLanes returned lists of different lengths");
                 for (int i = 0; i < lanes.Count; i++)

@@ -283,6 +283,7 @@ namespace PersistentCity.Runtime
                     // F8d (D6 option B): the saved catalogue is authoritative after activation. A transient RLO answer (Off,
                     // NotYet, Refreshing) continues on it; a different catalogue or Shared, Failed, Incompatible stops as before.
                     var continuity = source.Continuity(simulation.State);
+                    rloDiffers = continuity == DonorContinuity.Different;
                     maxRloCheckMilliseconds = Math.Max(maxRloCheckMilliseconds, (Stopwatch.GetTimestamp() - checkStarted) * MillisecondsPerTimestamp);
                     if (!DonorReads.Continues(continuity))
                     {
@@ -692,6 +693,7 @@ namespace PersistentCity.Runtime
             if (!ReferenceEquals(currentEpoch, prepared.EpochMarker)) { Fail("Save-epoch marker changed during initialization. Every saved key is retained."); return; }
             var source = ReadRlo("activation");
             // F8d: activation stays strict; the class only names why it refused.
+            rloDiffers = source.Status == RloReadStatus.Ready && !source.MatchesPopulation(state);
             if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization (" + source.Continuity(state) + ", " + source.Reason + "). Original payload retained."); return; }
             rloTransient = false;
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
@@ -795,7 +797,9 @@ namespace PersistentCity.Runtime
             if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
             var source = ReadRlo("save");
             // F8d: a transient window saves the same payload a Ready save writes; the snapshot is not touched here.
-            if (!DonorReads.Continues(source.Continuity(simulation!.State)))
+            var saveContinuity = source.Continuity(simulation!.State);
+            rloDiffers = saveContinuity == DonorContinuity.Different;
+            if (!DonorReads.Continues(saveContinuity))
                 return SaveEpochCapture.Refused("RLO changed before saving; original population payload retained.");
             RunPhysical(() => physical?.BeforeSave());
             foodMarket?.CompleteCampaignsForSave();

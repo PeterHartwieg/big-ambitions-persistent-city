@@ -57,7 +57,20 @@ namespace PersistentCity.Core
         public bool VendorMarketAttached { get; set; }
         /// <summary>Street Food's VendorApi bound (the coordinator has an image reader).</summary>
         public bool VendorApiBound { get; set; }
+        /// <summary>The bound API's last snapshot answer; NotYet before the first read.</summary>
+        public VendorApiStatus VendorSnapshot { get; set; } = VendorApiStatus.NotYet;
+        /// <summary>The snapshot's reason when it is not Ready, else the coordinator's own reason.</summary>
         public string VendorReason { get; set; } = "";
+
+        /// <summary>Copies the coordinator's binding and snapshot state (Runtime and tests use the same reader).</summary>
+        public void ReadVendor(bool streetFoodLoaded, VendorCoordinator? coordinator)
+        {
+            StreetFoodLoaded = streetFoodLoaded; VendorMarketAttached = coordinator != null;
+            var image = coordinator?.Image;
+            VendorApiBound = image != null;
+            VendorSnapshot = image?.Status ?? VendorApiStatus.NotYet;
+            VendorReason = image != null && !image.Ready ? image.Reason : coordinator?.Reason ?? "";
+        }
 
         public bool ClockObserving { get; set; }
         public string ClockObserveError { get; set; } = "";
@@ -70,6 +83,12 @@ namespace PersistentCity.Core
         public string RloMessage { get; set; } = "";
         /// <summary>F8d: the running city is inside a transient RLO window.</summary>
         public bool RloTransient { get; set; }
+        /// <summary>The last periodic, save or activation verdict found a Ready catalogue that differs from the saved one.</summary>
+        public bool RloDiffers { get; set; }
+        /// <summary>Road speeds come from RLO (the planner has an RLO capture); false while no route planner exists.</summary>
+        public bool RoadSpeedsFromRlo { get; set; }
+        /// <summary>The road-speed capture's own last transient answer (NativeRoadSpeeds.Waiting); null when complete.</summary>
+        public string? RoadSpeedWaiting { get; set; }
 
         public bool ResearchDialogInstalled { get; set; }
         public string ResearchDialogStatus { get; set; } = "";
@@ -88,8 +107,11 @@ namespace PersistentCity.Core
         public bool InspectorScrollInstalled { get; set; }
         public bool InspectorUiBlockInstalled { get; set; }
 
-        /// <summary>The F0 interior view is configured on (NativeInteriorCityView.Configured).</summary>
+        /// <summary>The F0 interior view is configured on (NativeInteriorCityView.Configured: requested, the guard allowed it
+        /// and the native speed accessor resolved).</summary>
         public bool InteriorConfigured { get; set; }
+        /// <summary>The setting asks for the interior view (InteriorCityView "on").</summary>
+        public bool InteriorRequested { get; set; }
         public bool InteriorGuardAllowed { get; set; } = true;
         public string InteriorGuardReason { get; set; } = "";
     }
@@ -122,8 +144,11 @@ namespace PersistentCity.Core
             if (!input.StreetFoodLoaded) r.Detect(CapabilityId.VendorStreetFood, CapabilityState.Absent, "Street Food (FoodTrucks) is not loaded");
             else if (input.VendorMarketAttached)
             {
-                if (input.VendorApiBound) r.Detect(CapabilityId.VendorStreetFood, CapabilityState.Active);
-                else Off(r, CapabilityId.VendorStreetFood, input.VendorReason.Length > 0 ? input.VendorReason : "VendorApi contract refused");
+                // A bound API whose snapshot is Off, Refused or Failed suspends every vehicle scope: off with its reason.
+                if (!input.VendorApiBound) Off(r, CapabilityId.VendorStreetFood, input.VendorReason.Length > 0 ? input.VendorReason : "VendorApi contract refused");
+                else if (input.VendorSnapshot == VendorApiStatus.Ready) r.Detect(CapabilityId.VendorStreetFood, CapabilityState.Active);
+                else if (input.VendorSnapshot != VendorApiStatus.NotYet || input.VendorReason != "Street Food has not been read yet.")
+                    Off(r, CapabilityId.VendorStreetFood, "snapshot " + input.VendorSnapshot + ": " + Or(input.VendorReason, "not ready"));
             }
 
             if (input.ClockObserveError.Length > 0) Off(r, CapabilityId.ClockObserve, input.ClockObserveError);
@@ -161,10 +186,14 @@ namespace PersistentCity.Core
                 Guard(r, input, CapabilityId.InspectorUiBlock, input.InspectorUiBlockInstalled, "UI block not installed; see Player.log");
             }
 
-            if (input.InteriorConfigured)
+            // NativeInteriorCityView.Start runs at activation and leaves Configured false for a disabled setting, a guard
+            // refusal or a missing speed accessor alike; once a city runs, each is reported with its reason.
+            if (input.InteriorConfigured) r.Detect(CapabilityId.InteriorView, CapabilityState.Active);
+            else if (city)
             {
-                if (input.InteriorGuardAllowed) r.Detect(CapabilityId.InteriorView, CapabilityState.Active);
-                else Off(r, CapabilityId.InteriorView, Or(input.InteriorGuardReason, "third-party interior guard refused"));
+                if (!input.InteriorRequested) Off(r, CapabilityId.InteriorView, "InteriorCityView is off in the settings (default)");
+                else if (!input.InteriorGuardAllowed) Off(r, CapabilityId.InteriorView, Or(input.InteriorGuardReason, "third-party interior guard refused"));
+                else Off(r, CapabilityId.InteriorView, "native speed accessor unavailable; see Player.log");
             }
             return r;
         }
@@ -175,7 +204,10 @@ namespace PersistentCity.Core
             switch (input.RloReason)
             {
                 case DonorReadReason.NotRead: return;
-                case DonorReadReason.Ready: r.Detect(CapabilityId.RloDonor, CapabilityState.Active); return;
+                case DonorReadReason.Ready:
+                    if (input.RloDiffers) Off(r, CapabilityId.RloDonor, "Ready, but RLO's catalogue differs from the saved one; the city stopped and the payload is kept");
+                    else r.Detect(CapabilityId.RloDonor, CapabilityState.Active);
+                    return;
                 case DonorReadReason.Missing: r.Detect(CapabilityId.RloDonor, CapabilityState.Absent, message); return;
                 default:
                     if (!DonorReads.Transient(input.RloReason)) { Off(r, CapabilityId.RloDonor, message); return; }
@@ -186,38 +218,26 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>F8d: reservations and road speeds read the same CityApi status family as the donor read; their state
-        /// follows the last donor answer (no extra RLO read). Off is a complete answer for both.</summary>
+        /// <summary>F8d: each RLO read reports its own last result (no extra RLO read). Road speeds: the planner's capture
+        /// (waiting on a transient answer, or complete). Reservations: the guard's state is private to AmbientPedestrians,
+        /// which F8 does not edit, so it is reported from the physical population that requires a ready guard.</summary>
         private static void DetectRloReads(CapabilityRegistry r, CapabilityInputs input)
         {
-            var reason = input.RloReason;
-            if (reason == DonorReadReason.NotRead) return;
-            if (reason == DonorReadReason.Missing)
+            if (input.RloReason == DonorReadReason.Missing)
             {
                 r.Detect(CapabilityId.RloReservations, CapabilityState.Absent, "RLO is not loaded");
                 r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Absent, "RLO is not loaded; road speeds are native");
                 return;
             }
-            if (reason == DonorReadReason.Ready || reason == DonorReadReason.Off)
-            {
-                // Off: RLO reserves nobody and slows no lane, so bodies continue and roads keep their native limits.
-                r.Detect(CapabilityId.RloReservations, CapabilityState.Active);
-                r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Active);
-                return;
-            }
-            if (DonorReads.Transient(reason))
-            {
-                Off(r, CapabilityId.RloReservations, "RLO " + reason + ": everyone is reserved, so visible bodies pause until RLO answers");
-                Off(r, CapabilityId.RloRoadSpeeds, "RLO " + reason + ": " + RoadSpeedRefusalEffect);
-                return;
-            }
-            Off(r, CapabilityId.RloReservations, "RLO " + reason + ": the reservation guard stops and reserves everyone");
-            Off(r, CapabilityId.RloRoadSpeeds, "RLO " + reason + ": " + RoadSpeedRefusalEffect);
+            if (input.RoadSpeedWaiting != null) Off(r, CapabilityId.RloRoadSpeeds, input.RoadSpeedWaiting + " " + RoadSpeedWaitingEffect);
+            else if (input.RoadSpeedsFromRlo) r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Active);
+            if (input.PhysicalActive) r.Detect(CapabilityId.RloReservations, CapabilityState.Active);
+            else if (input.PhysicalFailed && input.PhysicalEnabled)
+                Off(r, CapabilityId.RloReservations, "physical population stopped (an unready reservation guard is one cause); see Player.log");
         }
 
-        /// <summary>F8d record (docs/checks/f8bg.md, F8d): a refused road-speed capture throws from NativeRoadSpeeds.Refresh
-        /// inside RoadRoutes.Prepare, which UpdateCity calls each frame, so the runtime stops with the payload retained.</summary>
-        public const string RoadSpeedRefusalEffect = "road-speed capture is refused; road preparation throws and the runtime stops (payload retained)";
+        /// <summary>F8d: a transient road-speed answer holds route preparation; it is neither read as "no slowdowns" nor a stop.</summary>
+        public const string RoadSpeedWaitingEffect = "Route preparation waits for a complete answer; the city keeps running and saving.";
 
         /// <summary>The report header: "city running" while a city runs (the start status is then moot), "start waiting"
         /// while a transient RLO answer holds the start; otherwise null (the registry's own start status).</summary>

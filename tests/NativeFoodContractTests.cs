@@ -157,13 +157,19 @@ namespace PersistentCity.Tests
             // Load: the row is read back, then observed ineligible by the checkout-off market.
             var row = FoodAuthorityStore.Read(data[FoodAuthorityStore.Key]).Single();
             Assert.True(row.CanServe && row.OwnsHour(Loaded));
-            Assert.True(row.Observe(Signature, eligible: false, Loaded));
+            // The market's own gate (FoodCheckoutMode, which NativeFoodMarket.SupportedMenu and CanServe apply) with the
+            // refusal checkout construction found; the shop's menu checks would pass.
+            var mode = new FoodCheckoutMode("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed: no method with this parameter list");
+            Assert.False(mode.Serves); Assert.False(mode.InstallsPricePrefix);
+            Assert.StartsWith("Excluded: food checkout contract off: ", mode.ScopeReason);
+            Assert.True(new FoodCheckoutMode(null).Observe(true)); // control: a verified contract keeps the shop eligible
+            Assert.True(row.Observe(Signature, eligible: mode.Observe(true), Loaded));
             // Withdrawal request: Desired false with its requested hour, persisted; the loaded hour stays protected.
             Assert.False(row.Desired); Assert.Equal(Loaded, row.RequestedHour);
             Assert.True(row.OwnsHour(Loaded)); Assert.False(row.CanServe);
             data[FoodAuthorityStore.Key] = FoodAuthorityStore.Write(new[] { row });
             // A later refresh in the same hour changes nothing more (no second write).
-            Assert.False(row.Observe(Signature, false, Loaded));
+            Assert.False(row.Observe(Signature, mode.Observe(true), Loaded));
 
             // Reload in the same hour: the request survives.
             row = FoodAuthorityStore.Read(data[FoodAuthorityStore.Key]).Single();
@@ -186,7 +192,7 @@ namespace PersistentCity.Tests
             row = FoodAuthorityStore.Read(data[FoodAuthorityStore.Key]).Single();
             Assert.False(row.Managed); Assert.Equal(Loaded + 1, row.UntilHour);
             // Checkout-off keeps observing it ineligible: it is never reacquired this session.
-            Assert.False(row.Observe(Signature, false, Loaded + 2));
+            Assert.False(row.Observe(Signature, mode.Observe(true), Loaded + 2));
             Assert.Equal(FoodContractBoundary.Outcome.None, FoodContractBoundary.Commit(row, null, Loaded + 3, false, true, -1, (_, _) => true));
 
             // Receipt evidence is unchanged throughout; only the two authority transitions touched the manifest.
@@ -198,7 +204,7 @@ namespace PersistentCity.Tests
         public void CheckoutOffRequestsNoNewOwnership()
         {
             var row = new FoodAuthority { PlaceId = Place };
-            Assert.True(row.Observe(Signature, eligible: false, 100));
+            Assert.True(row.Observe(Signature, eligible: new FoodCheckoutMode("changed").Observe(true), 100));
             Assert.False(row.Desired); Assert.False(row.Managed);
             for (long hour = 101; hour < 110; hour++)
                 Assert.Equal(FoodContractBoundary.Outcome.None, FoodContractBoundary.Commit(row, null, hour, false, true, -1, (_, _) => true));
@@ -225,10 +231,15 @@ namespace PersistentCity.Tests
         public void TheAuthorityContractIsCheckedBeforeAnyPatchOrSaveRead()
         {
             string install = Body(Source("Runtime/NativeFoodOwnership.cs"), "internal static void Install()");
-            int check = install.IndexOf("contract.Refusal != null) throw", StringComparison.Ordinal);
+            // The body is the InstallChecked action: the contract is checked before it runs (tools/capability-contracts runs
+            // the same InstallChecked with a failing contract and a failing body).
+            int check = install.IndexOf("NativeFoodContract.InstallChecked(NativeFoodContract.Authority, () =>", StringComparison.Ordinal);
             Assert.True(check > 0);
             Assert.True(check < install.IndexOf("Patch(typeof(", StringComparison.Ordinal));
             Assert.True(check < install.IndexOf("Registration =", StringComparison.Ordinal));
+            Assert.Contains("}, () => patches.UnpatchAll(PatchId));", install);
+            string contract = Body(Source("Runtime/NativeFoodContract.cs"), "internal static void InstallChecked(");
+            Assert.True(contract.IndexOf("throw new InvalidOperationException", StringComparison.Ordinal) < contract.IndexOf("install();", StringComparison.Ordinal));
             // Every food-authority target is the verified exact MethodInfo; no name-only lookup is left.
             string ownership = Source("Runtime/NativeFoodOwnership.cs");
             Assert.DoesNotContain("AccessTools.Method(", ownership);
@@ -246,12 +257,14 @@ namespace PersistentCity.Tests
         {
             string market = Source("Runtime/NativeFoodMarket.cs");
             string ctor = Body(market, "public NativeFoodMarket(FoodCommerceState state");
-            int decided = ctor.IndexOf("CheckoutRefusal = NativeFoodContract.Checkout.Refusal;", StringComparison.Ordinal);
+            int decided = ctor.IndexOf("checkout = new FoodCheckoutMode(NativeFoodContract.Checkout.Refusal);", StringComparison.Ordinal);
             Assert.True(decided > 0 && decided < ctor.IndexOf("RefreshKnownOwnership();", StringComparison.Ordinal));
-            Assert.Contains("if (CheckoutRefusal == null)\n                    patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", ctor);
-            Assert.Contains("if (CheckoutRefusal != null || refusedContracts.TryGetValue(r, out _)) return false;", Body(market, "private bool SupportedMenu(BuildingRegistration r)"));
-            Assert.Contains("CheckoutRefusal != null) return false;", Body(market, "public bool CanServe(string businessId)"));
-            Assert.StartsWith("{\n            if (CheckoutRefusal != null) return NativeFoodContractSpec.CheckoutScopeReason(CheckoutRefusal);", Body(market, "public string ScopeStatus(string placeId)"));
+            Assert.Contains("if (checkout.InstallsPricePrefix)\n                    patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", ctor);
+            Assert.Contains("if (!checkout.Eligible || refusedContracts.TryGetValue(r, out _)) return false;", Body(market, "private bool SupportedMenu(BuildingRegistration r)"));
+            Assert.Contains("|| !checkout.Serves) return false;", Body(market, "public bool CanServe(string businessId)"));
+            Assert.StartsWith("{\n            if (checkout.ScopeReason is string off) return off;", Body(market, "public string ScopeStatus(string placeId)"));
+            // RefreshKnownOwnership observes each shop with SupportedMenu, so checkout-off reaches Observe(reg, false).
+            Assert.Contains("NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value))", Source("Runtime/NativeFoodCandidates.cs"));
             string sell = Body(market, "private FoodSale? SellLine(");
             int guard = sell.IndexOf("if (process == null) return RefuseCheckoutContract(reg);", StringComparison.Ordinal);
             Assert.True(guard > 0 && guard < sell.IndexOf("beginReceipt?.Invoke();", StringComparison.Ordinal));

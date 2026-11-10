@@ -26,18 +26,17 @@ public sealed class CapabilityReportTests
     internal static CapabilityInputs Healthy() => new CapabilityInputs
     {
         CityActive = true, FoodAuthorityInstalled = true, FoodMarketAttached = true, FoodPricePrefixInstalled = true, FoodDynamicActive = true,
-        StreetFoodLoaded = true, VendorMarketAttached = true, VendorApiBound = true,
+        StreetFoodLoaded = true, VendorMarketAttached = true, VendorApiBound = true, VendorSnapshot = VendorApiStatus.Ready,
         ClockObserving = true, ClockCityActive = true, ClockFactor = 1.0 / 3, DrivenRidesLoaded = true, DrivenRidesCoordinated = true,
         RloReason = DonorReadReason.Ready, RloMessage = "Read 400 actual RLO citizens.",
         ResearchDialogInstalled = true, ResearchBillingInstalled = true, ResearchMessagesChecked = true, ResearchMessagesPassed = true,
         PhysicalEnabled = true, PhysicalActive = true,
         InspectorClickInstalled = true, InspectorScrollInstalled = true, InspectorUiBlockInstalled = true,
-        InteriorConfigured = true, InteriorGuardAllowed = true,
+        InteriorConfigured = true, InteriorRequested = true, InteriorGuardAllowed = true, RoadSpeedsFromRlo = true,
     };
 
-    /// <summary>Capabilities whose state F8b reads; rlo.reservations and rlo.roadspeeds are added by F8d.</summary>
-    private static readonly CapabilityId[] Read = NativeCapabilities.All.Select(d => d.Id)
-        .Where(id => id != CapabilityId.RloReservations && id != CapabilityId.RloRoadSpeeds).ToArray();
+    /// <summary>Every capability the report reads (F8d added rlo.reservations and rlo.roadspeeds).</summary>
+    private static readonly CapabilityId[] Read = NativeCapabilities.All.Select(d => d.Id).ToArray();
 
     public static IEnumerable<object[]> Cases()
     {
@@ -54,6 +53,17 @@ public sealed class CapabilityReportTests
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.Absent, "is not loaded", i => i.StreetFoodLoaded = false);
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.Off, "contract 2", i => { i.VendorApiBound = false; i.VendorReason = "contract 2"; });
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.NotChecked, null, i => i.VendorMarketAttached = false);
+        // Sol-r1-3: a bound API whose snapshot is not Ready suspends every vehicle scope; before the first read it is not checked.
+        yield return C(CapabilityId.VendorStreetFood, CapabilityState.Off, "snapshot Off: Street Food is off", i => { i.VendorSnapshot = VendorApiStatus.Off; i.VendorReason = "Street Food is off"; });
+        yield return C(CapabilityId.VendorStreetFood, CapabilityState.NotChecked, null, i => { i.VendorSnapshot = VendorApiStatus.NotYet; i.VendorReason = "Street Food has not been read yet."; });
+        // Astra-r1-2: each RLO read reports its own result; Ready but different is off.
+        yield return C(CapabilityId.RloDonor, CapabilityState.Off, "differs from the saved one", i => i.RloDiffers = true);
+        yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.Off, "Route preparation waits", i => i.RoadSpeedWaiting = "RLO road speed overrides: ReadSlowedLanes: RLO is refreshing the city's citizens.");
+        yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.NotChecked, null, i => i.RoadSpeedsFromRlo = false);
+        yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.Absent, "not loaded", i => i.RloReason = DonorReadReason.Missing);
+        yield return C(CapabilityId.RloReservations, CapabilityState.Off, "reservation guard", i => { i.PhysicalActive = false; i.PhysicalFailed = true; });
+        yield return C(CapabilityId.RloReservations, CapabilityState.NotChecked, null, i => i.PhysicalActive = false);
+        yield return C(CapabilityId.RloReservations, CapabilityState.Absent, "not loaded", i => i.RloReason = DonorReadReason.Missing);
         yield return C(CapabilityId.ClockObserve, CapabilityState.Off, "observation unavailable", i => { i.ClockObserving = false; i.ClockObserveError = "Native clock observation unavailable"; });
         yield return C(CapabilityId.ClockObserve, CapabilityState.NotChecked, null, i => i.ClockObserving = false);
         yield return C(CapabilityId.ClockCity, CapabilityState.Off, "the runtime stopped (City clock patch ID already owned.)", i => { i.ClockCityActive = false; i.CityActive = false; i.CityFailed = true; i.FailureStatus = "City clock patch ID already owned."; });
@@ -76,8 +86,11 @@ public sealed class CapabilityReportTests
         yield return C(CapabilityId.InspectorScroll, CapabilityState.Off, "scroll guard not installed", i => i.InspectorScrollInstalled = false);
         yield return C(CapabilityId.InspectorUiBlock, CapabilityState.Off, "UI block not installed", i => i.InspectorUiBlockInstalled = false);
         yield return C(CapabilityId.InspectorClick, CapabilityState.NotChecked, null, i => i.InspectorClickInstalled = i.InspectorScrollInstalled = i.InspectorUiBlockInstalled = false);
-        yield return C(CapabilityId.InteriorView, CapabilityState.Off, "third-party interior mod", i => { i.InteriorGuardAllowed = false; i.InteriorGuardReason = "third-party interior mod detected"; });
-        yield return C(CapabilityId.InteriorView, CapabilityState.NotChecked, null, i => i.InteriorConfigured = false);
+        // Sol-r1-5: NativeInteriorCityView.Start leaves Configured false for each of these; once a city runs each has its reason.
+        yield return C(CapabilityId.InteriorView, CapabilityState.Off, "third-party interior mod", i => { i.InteriorConfigured = false; i.InteriorGuardAllowed = false; i.InteriorGuardReason = "third-party interior mod detected"; });
+        yield return C(CapabilityId.InteriorView, CapabilityState.Off, "off in the settings (default)", i => { i.InteriorConfigured = false; i.InteriorRequested = false; });
+        yield return C(CapabilityId.InteriorView, CapabilityState.Off, "native speed accessor unavailable", i => i.InteriorConfigured = false);
+        yield return C(CapabilityId.InteriorView, CapabilityState.NotChecked, null, i => { i.InteriorConfigured = false; i.CityActive = false; });
     }
 
     [Fact]
@@ -110,7 +123,7 @@ public sealed class CapabilityReportTests
         bool blocks = state == CapabilityState.Off && definition.Requirement != CapabilityRequirement.Optional
             || state == CapabilityState.Absent && definition.Requirement == CapabilityRequirement.Required;
         if (blocks) { Assert.Equal(CapabilityStartStatus.Refused, start.Status); Assert.Contains("not a damaged save", start.Message); }
-        else if (definition.Requirement == CapabilityRequirement.Optional) Assert.NotEqual(CapabilityStartStatus.Refused, start.Status);
+        else if (definition.Requirement == CapabilityRequirement.Optional) Assert.NotEqual((CapabilityId?)id, start.Status == CapabilityStartStatus.Refused ? start.Capability : null);
         string line = new CapabilityReport().Status(registry, "x").Split('\n').Single(l => l.StartsWith(definition.Name + " ", StringComparison.Ordinal));
         Assert.Contains(" " + CapabilityReport.StateWord(state), line);
         string show = new CapabilityReport().Show(registry, id);
@@ -124,7 +137,7 @@ public sealed class CapabilityReportTests
         var covered = Cases().Select(c => ((CapabilityId)c[0], (CapabilityState)c[1])).ToHashSet();
         // Healthy() covers Active. Billing, scroll and UI block share their not-checked inputs with dialog and click.
         var sharedNotChecked = new[] { CapabilityId.ResearchBilling, CapabilityId.InspectorScroll, CapabilityId.InspectorUiBlock, CapabilityId.PhysicalVehicles };
-        var companions = new[] { CapabilityId.VendorStreetFood, CapabilityId.ClockDrivenRides, CapabilityId.RloDonor };
+        var companions = new[] { CapabilityId.VendorStreetFood, CapabilityId.ClockDrivenRides, CapabilityId.RloDonor, CapabilityId.RloReservations, CapabilityId.RloRoadSpeeds };
         foreach (var id in Read)
         {
             string name = NativeCapabilities.Get(id).Name;
@@ -228,20 +241,20 @@ public sealed class CapabilityReportTests
 
     // ---- Wire and cost ------------------------------------------------------------------------------------------
 
-    /// <summary>F8b-F8g change no wire. The pins are the current writer's (E5b4, HeldPolicyExecutionTests); a slice that
-    /// introduces a writer re-pins them.</summary>
+    /// <summary>F8b-F8g change no wire. X3 owns the canonical golden pins of this fixture; this test only shows that the
+    /// payload carries the current writer's envelope and that building and printing the report leaves it unchanged.</summary>
     [Theory]
-    [InlineData(5150, "12447cdf8cff62a2926452fb51550054bbcf681d89d6c310738988878d7226e5", 73332)]
-    [InlineData(9217, "590df8dcc45df126fe97385fedcc5fcbe8ced21be6d57747246e9e8f1e3fc89e", 72970)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
+    [InlineData(5150)]
+    [InlineData(9217)]
+    public void CurrentWriterGoldenHashIsUnchanged(int seed)
     {
         var state = ChangeJournalTests.Fixture(seed);
         string payload = SaveCodec.Write(state);
         Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",", payload);
         // Building and printing the report reads no city state.
         _ = new CapabilityReport().Status(CapabilitySnapshot.Build(Healthy()), "x");
+        _ = HookConflictReport.Build(Array.Empty<HookPatchedMethod>()).Text();
         Assert.Equal(payload, SaveCodec.Write(state));
-        Assert.Equal(pin + " " + characters, EconomicLedgerTests.Sha(payload) + " " + payload.Length);
     }
 
     /// <summary>Plan section 6, F8b: command cost (snapshot build plus report text) while the 957x2 economy city is

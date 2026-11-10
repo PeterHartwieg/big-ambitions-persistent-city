@@ -42,6 +42,19 @@ namespace PersistentCity.Runtime
         /// <summary>The refusal of a contract already checked; null while unchecked or verified. Diagnostics only.</summary>
         internal static string? AuthorityRefusal => authority?.Refusal;
 
+        /// <summary>The install order NativeFoodOwnership.Install uses: the contract is checked before <paramref name="install"/>
+        /// runs; a refusal throws the named start refusal and runs nothing; a failure inside the body runs
+        /// <paramref name="rollback"/> and rethrows.</summary>
+        internal static void InstallChecked(Result contract, Action install, Action rollback)
+        {
+            if (contract.Refusal != null) throw new InvalidOperationException(NativeFoodContractSpec.AuthorityStartMessage(contract.Refusal));
+            try { install(); }
+            catch { rollback(); throw; }
+        }
+
+        /// <summary>Builds a result from specs the caller supplies (the harness's fault arms); production uses Authority.</summary>
+        internal static Result Verify(NativeMemberSpec[] specs) => new Result(NativeMemberContract.CheckAll(specs, out var members), members);
+
         /// <summary>The verified hook target; throws for a member the contract does not name.</summary>
         internal static MethodInfo AuthorityTarget(Type type, string method)
         {

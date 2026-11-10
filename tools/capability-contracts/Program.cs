@@ -30,6 +30,7 @@ internal static partial class Program
         Environment.SetEnvironmentVariable("PC_FAULT_POINT", null);
         VerifiedContractPatchesExactTargets();
         RequiredRefusalPatchesNothingAndWritesNothing();
+        FailedInstallRollsBack();
         CheckoutFaultLeavesAuthorityVerified();
         ResearchFaultReportsTheNamedMember();
         ChangedCheckoutMemberRedOnBaseGreenAfter();
@@ -69,7 +70,7 @@ internal static partial class Program
     {
         var save = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            [SaveStore.StateKey] = "{\"Schema\":36}", [FoodAuthorityStore.Key] = "manifest-bytes", ["persistentcity.food-receipt.example"] = "receipt",
+            [SaveStore.StateKey] = "population-payload-bytes", [FoodAuthorityStore.Key] = "manifest-bytes", ["persistentcity.food-receipt.example"] = "receipt",
         };
         var before = save.ToArray();
         int arms = 0;
@@ -84,7 +85,7 @@ internal static partial class Program
                 Check(refusal != null && refusal.Contains(spec.Name), spec.Label + " " + shape + " is named: " + refusal);
                 // NativeFoodOwnership.Install order: the refusal throws before any Harmony owner exists.
                 Exception? thrown = null;
-                try { InstallShape(specs); } catch (InvalidOperationException error) { thrown = error; }
+                try { InstallShape(specs, save); } catch (InvalidOperationException error) { thrown = error; }
                 Check(thrown != null && thrown.Message.StartsWith("Persistent City did not start: food.authority is off: ", StringComparison.Ordinal), "named start refusal");
                 Check(!Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority), "no food-authority owner after refusal");
                 Check(save.SequenceEqual(before), "every saved key byte-identical");
@@ -94,14 +95,37 @@ internal static partial class Program
         Console.WriteLine("required refusal: " + arms + " fault arms (6 targets x name/signature, 2 fields x name) refused before any patch; saved keys unchanged");
     }
 
-    // The production order in NativeFoodOwnership.Install: check, then patch the resolved members.
-    private static void InstallShape(NativeMemberSpec[] specs)
+    // NativeFoodOwnership.Install's own order (NativeFoodContract.InstallChecked): the body patches and marks the save, so an
+    // unchanged save and no owner prove the body never ran.
+    private static void InstallShape(NativeMemberSpec[] specs, IDictionary<string, string> save)
     {
-        string? refusal = NativeMemberContract.CheckAll(specs, out var members);
-        if (refusal != null) throw new InvalidOperationException(NativeFoodContractSpec.AuthorityStartMessage(refusal));
         var harmony = new Harmony(NativeHookInventory.FoodAuthority);
-        foreach (var method in members.OfType<MethodInfo>()) harmony.Patch(method, prefix: new HarmonyMethod(typeof(Program), nameof(Prefix)));
+        NativeFoodContract.InstallChecked(NativeFoodContract.Verify(specs), () =>
+        {
+            save["install-body-ran"] = "yes";
+            foreach (var spec in specs.Where(s => s.Kind == NativeMemberKind.Method))
+                harmony.Patch(NativeMemberContract.Check(spec, out var m) == null ? (MethodInfo)m! : throw new InvalidOperationException(spec.Label), prefix: new HarmonyMethod(typeof(Program), nameof(Prefix)));
+        }, () => harmony.UnpatchAll(NativeHookInventory.FoodAuthority));
         harmony.UnpatchAll(NativeHookInventory.FoodAuthority);
+        save.Remove("install-body-ran");
+    }
+
+    /// <summary>A failure inside the install body rolls every patch back (the same InstallChecked).</summary>
+    private static void FailedInstallRollsBack()
+    {
+        var harmony = new Harmony(NativeHookInventory.FoodAuthority);
+        bool threw = false;
+        try
+        {
+            NativeFoodContract.InstallChecked(NativeFoodContract.Authority, () =>
+            {
+                harmony.Patch(NativeFoodContract.AuthorityTarget(typeof(GameManager), "RunMainGameTick"), postfix: new HarmonyMethod(typeof(Program), nameof(Postfix)));
+                throw new InvalidOperationException("injected patch failure");
+            }, () => harmony.UnpatchAll(NativeHookInventory.FoodAuthority));
+        }
+        catch (InvalidOperationException) { threw = true; }
+        Check(threw && !Harmony.HasAnyPatches(NativeHookInventory.FoodAuthority), "a failed install rolls back every patch");
+        Console.WriteLine("install rollback: a failure after one patch leaves no food-authority owner");
     }
 
     /// <summary>Check 6 shape: ProcessCustomer under another signature in the checkout arm refuses checkout only.</summary>

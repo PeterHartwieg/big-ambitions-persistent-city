@@ -183,7 +183,12 @@ namespace PersistentCity.Tests
             foreach (int status in new[] { 2, 3 })
             {
                 CityApiHooks.LanesStatus = status;
-                Assert.Throws<InvalidOperationException>(() => new RloRoadSpeedOverrides(rlo).Capture());
+                Assert.Throws<RloRoadSpeedsNotReadyException>(() => new RloRoadSpeedOverrides(rlo).Capture());
+            }
+            foreach (int status in new[] { 4, 5 })
+            {
+                CityApiHooks.LanesStatus = status;
+                Assert.IsNotType<RloRoadSpeedsNotReadyException>(Assert.ThrowsAny<InvalidOperationException>(() => new RloRoadSpeedOverrides(rlo).Capture()));
             }
         }
 
@@ -223,12 +228,21 @@ namespace PersistentCity.Tests
             Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloReservations));
             Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloRoadSpeeds));
 
+            // Astra-r1-2: a transient donor answer says nothing about the other reads; each reports its own result.
             inputs.RloReason = DonorReadReason.Refreshing;
             registry = CapabilitySnapshot.Build(inputs);
-            Assert.Contains("visible bodies pause", registry.Reason(CapabilityId.RloReservations));
-            Assert.Contains("road preparation throws and the runtime stops", registry.Reason(CapabilityId.RloRoadSpeeds));
+            Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloReservations));
+            Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloRoadSpeeds));
+            inputs.RoadSpeedWaiting = "RLO road speed overrides: ReadSlowedLanes: RLO is refreshing the city's citizens.";
+            registry = CapabilitySnapshot.Build(inputs);
+            Assert.Contains("Route preparation waits for a complete answer; the city keeps running and saving.", registry.Reason(CapabilityId.RloRoadSpeeds));
             Assert.True(registry.IsEnabled(CapabilityScope.MarketResearch));
-            Assert.False(registry.IsEnabled(CapabilityScope.VisibleBodies));
+            Assert.False(registry.IsEnabled(CapabilityScope.RouteTiming));
+            // A Ready donor read can coexist with a waiting road-speed read.
+            inputs.RloReason = DonorReadReason.Ready;
+            Assert.Equal(CapabilityState.Off, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloRoadSpeeds));
+            Assert.Equal(CapabilityState.Active, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloDonor));
+            inputs.RloReason = DonorReadReason.Refreshing; inputs.RoadSpeedWaiting = null;
 
             // Before a city: a transient answer holds the start (TryStart waits); Shared stops it.
             inputs.CityActive = false;
@@ -251,13 +265,41 @@ namespace PersistentCity.Tests
             Assert.Single(System.Text.RegularExpressions.Regex.Matches(mod, @"rlo\.Read\("));
             Assert.Contains("nextDependencyCheck = Time.unscaledTime + 30;", mod);
             Assert.Contains("var continuity = source.Continuity(simulation.State);", mod);
-            Assert.Contains("if (!DonorReads.Continues(source.Continuity(simulation!.State)))", mod);
+            Assert.Contains("var saveContinuity = source.Continuity(simulation!.State);", mod);
+            Assert.Contains("if (!DonorReads.Continues(saveContinuity))", mod);
             Assert.Contains("if (!source.MatchesPopulation(state)) { Fail(\"RLO donor catalogue changed during initialization (", mod);
             Assert.Contains("log?.Info(CapabilityActivationLine());", mod);
             // Startup keeps its strict Ready requirement: no city is created from a transient answer.
             Assert.Contains("if (source.Status != RloReadStatus.Ready)", mod);
             // Compatibility owns every RLO read; the classification adds none.
             Assert.DoesNotContain("ReadRlo(", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
+        }
+
+        /// <summary>Sol-r1-1: NotYet and Refreshing slowed-lane answers no longer stop the city through road preparation.
+        /// Compatibility raises a distinct not-ready refusal (EveryBridge... and ReservationsReserve... check its type); the
+        /// Runtime path keeps the last verified overrides, holds route preparation (UpdateCity's existing not-prepared
+        /// branch, which does not Fail) and leaves saving untouched. Shared and Failed still throw and stop as before.</summary>
+        [Fact]
+        public void TransientRoadSpeedsHoldRoutePreparationInsteadOfStopping()
+        {
+            string Read(string file) => File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", file)).Replace("\r\n", "\n");
+            string speeds = Read("NativeRoadSpeeds.cs");
+            Assert.Contains("catch (RloRoadSpeedsNotReadyException error) { Waiting = error.Message; return; }", speeds);
+            Assert.Single(System.Text.RegularExpressions.Regex.Matches(speeds, @"catch \("));       // only the not-ready subtype is caught
+            Assert.Contains("Waiting = null;\n            var detached", speeds);                  // a complete answer clears it before use
+            string roads = Read("RoadRoutes.cs");
+            int prepare = roads.IndexOf("public bool Prepare()", StringComparison.Ordinal);
+            Assert.True(prepare > 0);
+            Assert.True(roads.IndexOf("if (speeds.Waiting != null) return false;", prepare, StringComparison.Ordinal) < roads.IndexOf("speeds.Canonical(", prepare, StringComparison.Ordinal));
+            string routes = Read("MultimodalRoutes.cs");
+            int held = routes.IndexOf("if (roadSpeeds.Waiting != null && roads != null) { roadSpeeds.Refresh(); if (roadSpeeds.Waiting != null) return false; }", StringComparison.Ordinal);
+            Assert.True(held > 0 && held < routes.IndexOf("if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)", StringComparison.Ordinal));
+            string mod = Read("PersistentCityMod.cs");
+            // Not prepared: the frame waits and returns; it does not Fail. Saving never asks the planner.
+            Assert.Contains("if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); inspector.Suspend(); return; }", mod);
+            int capture = mod.IndexOf("private SaveEpochCapture CaptureSteps(", StringComparison.Ordinal);
+            string steps = mod.Substring(capture, mod.IndexOf("private void RestoreInterior()", capture, StringComparison.Ordinal) - capture);
+            Assert.DoesNotContain("routes", steps);
         }
 
         /// <summary>Plan section 6, F8d: classification cost per 30 s read (the read itself is RLO's and already logged).</summary>

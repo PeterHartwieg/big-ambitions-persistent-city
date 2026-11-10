@@ -116,7 +116,19 @@ namespace PersistentCity.Tests
         public void TheBusinessCommandReadsTheExistingScopeStatusOnly()
         {
             string source = CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
-            Assert.Contains("foodMarket?.ScopeStatus(scope.PlaceId)", source);
+            Assert.Contains("foodMarket?.ReadOnlyScopeStatus(scope.PlaceId)", source);
+            Assert.DoesNotContain("foodMarket?.ScopeStatus(", source);
+            // Sol-r1-2: the verdict reads held state only. ScopeStatus reaches SupportedMenu/ContractAdmits (which can refuse a
+            // contract, rebase an image and record a refusal hour) and NativeFoodOwnership.Find (which updates observations).
+            int start = source.IndexOf("internal string ReadOnlyScopeStatus(string placeId)", StringComparison.Ordinal);
+            Assert.True(start > 0);
+            string body = source.Substring(start, source.IndexOf("\n        }", start, StringComparison.Ordinal) - start);
+            foreach (string member in new[] { "ScopeStatus(", "MenuStatus(", "SupportedMenu(", "SupportedBusiness(", "ContractAdmits(", "ContractRecheck(", "RefuseContract(",
+                "RefuseRemovedProduct(", "RefuseStructural(", "LiveMenu(", "StartupHeld(", "NativeFoodOwnership.Find(", "NativeFoodOwnership.Observe(", "Persist(", "modData", ".Remove(", ".Add(", "] =" })
+                Assert.True(body.IndexOf(member, "internal string ReadOnlyScopeStatus(".Length, StringComparison.Ordinal) < 0, "ReadOnlyScopeStatus calls " + member);
+            Assert.Contains("NativeFoodOwnership.Row(placeId)", body);
+            Assert.Contains("internal static FoodAuthority? Row(string place)\n            => ReferenceEquals(save, SaveGameManager.Current) && records.TryGetValue(place, out var row) ? row : null;",
+                File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "NativeFoodOwnership.cs")).Replace("\r\n", "\n"));
             Assert.Contains("vendors.CanServe(scope.BusinessId)", source);
             Assert.Contains("TransactionMechanisms.ForBusiness(scope.Channel, new[] { scope.ProductId }.Concat(scope.ExtraProductIds).ToArray(), status)", source);
             Assert.Contains("if (area == \"capability\") { CapabilityCommand(action, detail); return; }",

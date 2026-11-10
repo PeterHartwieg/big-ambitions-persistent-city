@@ -170,6 +170,10 @@ namespace PersistentCity.Runtime
         }
         // Once an event releases its lease, stop the frame batch until the next bounded preflight
         // publishes deferred inputs. Otherwise the next event can renew the lease indefinitely.
+        /// <summary>F8d: the road-speed capture is waiting on a transient RLO answer (null otherwise); diagnostics only.</summary>
+        internal string? RoadSpeedWaiting => roadSpeeds.Waiting;
+        /// <summary>F8d: road speeds are captured from RLO (false when RLO is not loaded).</summary>
+        internal bool RoadSpeedsFromRlo => roadSpeeds.FromRlo;
         public bool ReadyForPopulation => (routeEventHeld || !refreshDeferred && !stationsDeferred)
             && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
@@ -194,6 +198,8 @@ namespace PersistentCity.Runtime
             // Never pin native topology: city/scene loss above and stale road checks still win.
             // A current replacement may still be importing nodes/building its network. Keep driving
             // its staged preparation until Ready; the pending old job restarts only after preflight.
+            // F8d: while RLO's road speeds are transient (NotYet, Refreshing), preparation waits; the city keeps running and saving.
+            if (roadSpeeds.Waiting != null && roads != null) { roadSpeeds.Refresh(); if (roadSpeeds.Waiting != null) return false; }
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
                 roads.Sweep(1, 1024);

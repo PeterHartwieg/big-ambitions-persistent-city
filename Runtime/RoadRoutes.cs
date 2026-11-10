@@ -390,6 +390,7 @@ namespace PersistentCity.Runtime
         public bool Prepare()
         {
             speeds.Refresh();
+            if (speeds.Waiting != null) return false; // F8d: a transient RLO answer holds preparation; it is not a failure
             var watch = Stopwatch.StartNew();
             int startedAt = copiedNodes;
             int stop = Math.Min(waypoints.Length, copiedNodes + 2048);

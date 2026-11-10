@@ -252,21 +252,6 @@ public sealed class NativeCapabilityTests
         Assert.Contains("companion: Driven Rides (DrivenRides.Ride)", report.Show(a, CapabilityId.ClockDrivenRides));
     }
 
-    /// <summary>F8a changes no wire: writer 35 and its pinned golden hashes are as F2e left them. Writer 36 (E5b4) froze
-    /// writer 35 as DevelopmentChain.Write35, so the pins apply to it (as F9IntegratedCityTests does); the current writer's
-    /// pins are CapabilityReportTests.CurrentWriterGoldenHashIsUnchanged.</summary>
-    [Theory]
-    [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
-    [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        Assert.Equal(35, CityState.PlayerHoldSchema);
-        var state = ChangeJournalTests.Fixture(seed);
-        string payload = CityState.CurrentSchema == CityState.PlayerHoldSchema ? SaveCodec.Write(state) : DevelopmentChain.Write35(state);
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
-        Assert.Equal(characters, payload.Length);
-    }
-
     /// <summary>Registry update and report cost (plan section 6, F8a row). Writes the table to the test output and, when
     /// PC_F8A_MEASURE names a file, appends it there. Steady-state updates and a reused report allocate nothing.</summary>
     [Fact]

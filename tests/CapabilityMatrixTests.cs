@@ -91,6 +91,39 @@ namespace PersistentCity.Tests
             finally { StreetFoodHooks.Reset(); }
         }
 
+        /// <summary>Sol-r1-3: a bound API whose snapshot answers Off, Refused or Failed reports vendor.streetfood off with the
+        /// snapshot's reason (the coordinator suspends every vehicle scope); Ready reports active. The inputs are read from a
+        /// real coordinator with CapabilityInputs.ReadVendor, the reader Runtime uses.</summary>
+        [Theory]
+        [InlineData(1, "Off")]
+        [InlineData(3, "Refused")]
+        [InlineData(4, "Failed")]
+        public void ABoundStreetFoodWhoseSnapshotIsRefusedReportsOff(int status, string word)
+        {
+            StreetFoodHooks.Reset();
+            try
+            {
+                StreetFoodHooks.Add("A");
+                var rig = new StreetFoodVendorTests.Rig();
+                rig.Run(Day2At(8, 5));
+                var inputs = CapabilityReportTests.Healthy(); inputs.ReadVendor(true, rig.Vendors);
+                Assert.Equal(CapabilityState.Active, CapabilitySnapshot.Build(inputs).State(CapabilityId.VendorStreetFood));
+                StreetFoodHooks.ReadStatus = status; StreetFoodHooks.Revision++;
+                rig.Run(Day2At(8, 6));
+                inputs = CapabilityReportTests.Healthy(); inputs.ReadVendor(true, rig.Vendors);
+                Assert.True(inputs.VendorApiBound);
+                var registry = CapabilitySnapshot.Build(inputs);
+                Assert.Equal(CapabilityState.Off, registry.State(CapabilityId.VendorStreetFood));
+                Assert.StartsWith("snapshot " + word + ": ", registry.Reason(CapabilityId.VendorStreetFood));
+                Assert.False(rig.Serves("A"));
+                // Before any read the same bound coordinator is not checked, not off.
+                var fresh = new VendorCoordinator(new VendorTable(), StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi)), "", rig.City, rig.Stands);
+                inputs.ReadVendor(true, fresh);
+                Assert.Equal(CapabilityState.NotChecked, CapabilitySnapshot.Build(inputs).State(CapabilityId.VendorStreetFood));
+            }
+            finally { StreetFoodHooks.Reset(); }
+        }
+
         /// <summary>Every A1-A17 row of docs/checks/f8bg.md names checks that exist in this assembly (Class.Method) or in
         /// the two tools; the suite running them green is the passing check.</summary>
         [Fact]

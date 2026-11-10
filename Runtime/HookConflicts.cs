@@ -34,6 +34,19 @@ namespace PersistentCity.Runtime
             return report;
         }
 
+        /// <summary>"Type.Method" of every method <paramref name="owner"/> has a patch on: one pass over Harmony's
+        /// patched methods (the capability report reads the inspector guards from it). Metadata only.</summary>
+        internal static HashSet<string> PatchedTargets(string owner)
+        {
+            var targets = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var method in Harmony.GetAllPatchedMethods())
+            {
+                var info = Harmony.GetPatchInfo(method);
+                if (info != null && info.Owners.Contains(owner)) targets.Add((method.DeclaringType?.Name ?? "") + "." + method.Name);
+            }
+            return targets;
+        }
+
         private static void Add(List<HookPatch> into, IEnumerable<Patch>? patches, HookPatchKind kind)
         {
             if (patches == null) return;

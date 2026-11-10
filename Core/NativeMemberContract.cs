@@ -101,6 +101,23 @@ namespace PersistentCity.Core
             => method.Name + "(" + string.Join(", ", method.GetParameters().Select(p => p.ParameterType.Name)) + ")";
     }
 
+    /// <summary>F8c checkout-off mode, as NativeFoodMarket applies it: with a refused checkout contract no shop is eligible
+    /// (so every refresh observes it ineligible and the release path hands owned shops back), no shop is served, the price
+    /// prefix is not installed and every shop shows the scope reason.</summary>
+    public sealed class FoodCheckoutMode
+    {
+        public FoodCheckoutMode(string? refusal) { Refusal = refusal; }
+        public string? Refusal { get; }
+        /// <summary>SupportedMenu may admit a shop (the eligibility NativeFoodOwnership.Observe receives).</summary>
+        public bool Eligible => Refusal == null;
+        /// <summary>CanServe may answer true for an owned, serving shop.</summary>
+        public bool Serves => Refusal == null;
+        public bool InstallsPricePrefix => Refusal == null;
+        public string? ScopeReason => Refusal == null ? null : NativeFoodContractSpec.CheckoutScopeReason(Refusal);
+        /// <summary>The eligibility one refresh passes for a shop whose own menu checks gave <paramref name="supported"/>.</summary>
+        public bool Observe(bool supported) => Eligible && supported;
+    }
+
     /// <summary>The game types the food-economy contract names. Runtime passes the real types; tests pass stand-ins.</summary>
     public sealed class NativeFoodTypes
     {
