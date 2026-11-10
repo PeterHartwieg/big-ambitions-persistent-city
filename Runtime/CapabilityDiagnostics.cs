@@ -106,6 +106,7 @@ namespace PersistentCity.Runtime
                 DrivenRidesCoordinated = NativeCityClock.CoordinatesDrivenRides,
                 RloReason = rloRead == null ? DonorReadReason.NotRead : DonorReason(rloRead), RloMessage = rloRead?.Message ?? "", RloTransient = rloTransient,
                 RloDiffers = rloDiffers, RoadSpeedsFromRlo = planner?.RoadSpeedsFromRlo == true, RoadSpeedWaiting = planner?.RoadSpeedWaiting,
+                RoadSpeedsVerified = planner?.RoadSpeedsVerified == true, RoadSpeedRefusal = planner?.RoadSpeedRefusal,
                 ResearchDialogInstalled = ResearchAgencyDialog.Installed, ResearchDialogStatus = ResearchAgencyDialog.Status,
                 ResearchBillingInstalled = ResearchBilling.Installed, ResearchBillingStatus = ResearchBilling.Status,
                 ResearchMessagesPassed = ResearchMessages.ContractPassed, ResearchMessagesStatus = ResearchMessages.Status,
@@ -119,6 +120,9 @@ namespace PersistentCity.Runtime
                 InteriorGuardAllowed = !guard.Detected, InteriorGuardReason = guard.Reason,
             };
             inputs.ReadVendor(streetFood, vendors?.Coordinator);
+            var reservations = RloPhysicalReservations.Last;
+            inputs.ReservationsChecked = reservations != null; inputs.ReservationsReady = reservations?.Ready == true;
+            inputs.ReservationsComplete = reservations?.Complete == true; inputs.ReservationsError = reservations?.Error ?? "";
             return inputs;
         }
 

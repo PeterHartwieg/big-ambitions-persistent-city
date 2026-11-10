@@ -168,15 +168,32 @@ namespace PersistentCity.Tests
             var ready = adapter.Read(rlo);
             var guard = new RloPhysicalReservations(rlo, ready.Identities);
             Assert.True(guard.Ready, guard.LastError);
+            // Sol-r2-3: the guard records its own last result, which the report reads (no extra read).
+            Assert.True(RloPhysicalReservations.Last!.Ready && RloPhysicalReservations.Last.Complete);
             CityApiHooks.ReservedStatus = CityApiHooks.BodiesStatus = 1;
             guard.Update();
             Assert.True(guard.Ready); Assert.Empty(guard.ReservedCitizenIds); Assert.False(guard.IsReserved("c3"));
+            Assert.True(RloPhysicalReservations.Last!.Complete);
             foreach (int status in new[] { 2, 3 })
             {
                 CityApiHooks.ReservedStatus = CityApiHooks.BodiesStatus = status;
                 guard.Update();
                 Assert.True(guard.Ready); Assert.True(guard.IsReserved("c3")); Assert.True(guard.IsReserved("pc:9"));
+                Assert.False(RloPhysicalReservations.Last!.Complete); Assert.True(RloPhysicalReservations.Last.Ready);
+                var inputs = CapabilityReportTests.Healthy(); inputs.ReservationsComplete = false;
+                Assert.Equal(CapabilityState.Off, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloReservations));
             }
+            // Bodies answer Failed while citizens are Ready: the guard stops; the donor read is untouched by it.
+            CityApiHooks.ReservedStatus = 0; CityApiHooks.BodiesStatus = 5;
+            guard.Update();
+            var stopped = RloPhysicalReservations.Last!;
+            Assert.False(stopped.Ready); Assert.Contains("ReadReservedBodies", stopped.Error);
+            Assert.Equal(RloReadStatus.Ready, adapter.Read(rlo).Status);
+            var report = CapabilityReportTests.Healthy();
+            report.ReservationsReady = stopped.Ready; report.ReservationsComplete = stopped.Complete; report.ReservationsError = stopped.Error;
+            var built = CapabilitySnapshot.Build(report);
+            Assert.Equal(CapabilityState.Off, built.State(CapabilityId.RloReservations));
+            Assert.Equal(CapabilityState.Active, built.State(CapabilityId.RloDonor));
             // Road speeds: Off is "no slowdowns"; NotYet and Refreshing are refused (the recorded downstream effect).
             CityApiHooks.LanesStatus = 1;
             Assert.Empty(new RloRoadSpeedOverrides(rlo).Capture());
@@ -283,10 +300,13 @@ namespace PersistentCity.Tests
         public void TransientRoadSpeedsHoldRoutePreparationInsteadOfStopping()
         {
             string Read(string file) => File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", file)).Replace("\r\n", "\n");
+            // tools/road-speed-regression TransientCaptureWaits runs the real RoadRoutes and NativeRoadSpeeds through a held
+            // plan, a lane change during Refreshing and a save in the window; these pin the same wiring in the source.
             string speeds = Read("NativeRoadSpeeds.cs");
-            Assert.Contains("catch (RloRoadSpeedsNotReadyException error) { Waiting = error.Message; return; }", speeds);
-            Assert.Single(System.Text.RegularExpressions.Regex.Matches(speeds, @"catch \("));       // only the not-ready subtype is caught
-            Assert.Contains("Waiting = null;\n            var detached", speeds);                  // a complete answer clears it before use
+            Assert.Contains("catch (Exception error) when (transient?.Invoke(error) is string waiting) { Waiting = waiting; Verified = false; return; }", speeds);
+            Assert.Contains("if (Waiting != null) throw new RoadSpeedsWaitingException(Waiting);", speeds);
+            Assert.DoesNotContain("PersistentCity.Compatibility", speeds); // the road harnesses compile it without Compatibility
+            Assert.Contains("TransientCaptureWaits();", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "tools", "road-speed-regression", "Program.cs")));
             string roads = Read("RoadRoutes.cs");
             int prepare = roads.IndexOf("public bool Prepare()", StringComparison.Ordinal);
             Assert.True(prepare > 0);

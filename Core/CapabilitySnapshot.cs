@@ -89,6 +89,15 @@ namespace PersistentCity.Core
         public bool RoadSpeedsFromRlo { get; set; }
         /// <summary>The road-speed capture's own last transient answer (NativeRoadSpeeds.Waiting); null when complete.</summary>
         public string? RoadSpeedWaiting { get; set; }
+        /// <summary>The capture's last complete answer was verified (NativeRoadSpeeds.Verified).</summary>
+        public bool RoadSpeedsVerified { get; set; }
+        /// <summary>The capture's last terminal refusal (Shared, Failed or a broken answer; it stopped the runtime); null otherwise.</summary>
+        public string? RoadSpeedRefusal { get; set; }
+        /// <summary>The reservation guard's own last result (RloPhysicalReservations.Last): checked, complete, stopped error.</summary>
+        public bool ReservationsChecked { get; set; }
+        public bool ReservationsReady { get; set; }
+        public bool ReservationsComplete { get; set; }
+        public string ReservationsError { get; set; } = "";
 
         public bool ResearchDialogInstalled { get; set; }
         public string ResearchDialogStatus { get; set; } = "";
@@ -218,9 +227,8 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>F8d: each RLO read reports its own last result (no extra RLO read). Road speeds: the planner's capture
-        /// (waiting on a transient answer, or complete). Reservations: the guard's state is private to AmbientPedestrians,
-        /// which F8 does not edit, so it is reported from the physical population that requires a ready guard.</summary>
+        /// <summary>F8d: each RLO read reports its own last recorded result (no extra RLO read). Road speeds: the planner's
+        /// capture (verified, waiting on a transient answer, or refused). Reservations: the guard's last verdict.</summary>
         private static void DetectRloReads(CapabilityRegistry r, CapabilityInputs input)
         {
             if (input.RloReason == DonorReadReason.Missing)
@@ -229,11 +237,13 @@ namespace PersistentCity.Core
                 r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Absent, "RLO is not loaded; road speeds are native");
                 return;
             }
-            if (input.RoadSpeedWaiting != null) Off(r, CapabilityId.RloRoadSpeeds, input.RoadSpeedWaiting + " " + RoadSpeedWaitingEffect);
-            else if (input.RoadSpeedsFromRlo) r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Active);
-            if (input.PhysicalActive) r.Detect(CapabilityId.RloReservations, CapabilityState.Active);
-            else if (input.PhysicalFailed && input.PhysicalEnabled)
-                Off(r, CapabilityId.RloReservations, "physical population stopped (an unready reservation guard is one cause); see Player.log");
+            if (input.RoadSpeedRefusal != null) Off(r, CapabilityId.RloRoadSpeeds, input.RoadSpeedRefusal + " (refused; the runtime stopped, payload kept)");
+            else if (input.RoadSpeedWaiting != null) Off(r, CapabilityId.RloRoadSpeeds, input.RoadSpeedWaiting + " " + RoadSpeedWaitingEffect);
+            else if (input.RoadSpeedsFromRlo && input.RoadSpeedsVerified) r.Detect(CapabilityId.RloRoadSpeeds, CapabilityState.Active);
+            if (!input.ReservationsChecked) return;
+            if (!input.ReservationsReady) Off(r, CapabilityId.RloReservations, Or(input.ReservationsError, "reservation guard stopped") + "; everyone is reserved, visible bodies off");
+            else if (!input.ReservationsComplete) Off(r, CapabilityId.RloReservations, "a read answered NotYet or Refreshing; everyone is reserved, so visible bodies pause until RLO answers");
+            else r.Detect(CapabilityId.RloReservations, CapabilityState.Active);
         }
 
         /// <summary>F8d: a transient road-speed answer holds route preparation; it is neither read as "no slowdowns" nor a stop.</summary>

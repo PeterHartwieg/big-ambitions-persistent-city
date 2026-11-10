@@ -32,7 +32,8 @@ public sealed class CapabilityReportTests
         ResearchDialogInstalled = true, ResearchBillingInstalled = true, ResearchMessagesChecked = true, ResearchMessagesPassed = true,
         PhysicalEnabled = true, PhysicalActive = true,
         InspectorClickInstalled = true, InspectorScrollInstalled = true, InspectorUiBlockInstalled = true,
-        InteriorConfigured = true, InteriorRequested = true, InteriorGuardAllowed = true, RoadSpeedsFromRlo = true,
+        InteriorConfigured = true, InteriorRequested = true, InteriorGuardAllowed = true, RoadSpeedsFromRlo = true, RoadSpeedsVerified = true,
+        ReservationsChecked = true, ReservationsReady = true, ReservationsComplete = true,
     };
 
     /// <summary>Every capability the report reads (F8d added rlo.reservations and rlo.roadspeeds).</summary>
@@ -60,9 +61,14 @@ public sealed class CapabilityReportTests
         yield return C(CapabilityId.RloDonor, CapabilityState.Off, "differs from the saved one", i => i.RloDiffers = true);
         yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.Off, "Route preparation waits", i => i.RoadSpeedWaiting = "RLO road speed overrides: ReadSlowedLanes: RLO is refreshing the city's citizens.");
         yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.NotChecked, null, i => i.RoadSpeedsFromRlo = false);
+        yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.NotChecked, null, i => i.RoadSpeedsVerified = false);
+        yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.Off, "ReadSlowedLanes: Multiplayer", i => { i.RoadSpeedsVerified = false; i.RoadSpeedRefusal = "RLO road speed overrides: ReadSlowedLanes: Multiplayer sessions are unsupported."; });
         yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.Absent, "not loaded", i => i.RloReason = DonorReadReason.Missing);
-        yield return C(CapabilityId.RloReservations, CapabilityState.Off, "reservation guard", i => { i.PhysicalActive = false; i.PhysicalFailed = true; });
-        yield return C(CapabilityId.RloReservations, CapabilityState.NotChecked, null, i => i.PhysicalActive = false);
+        yield return C(CapabilityId.RloReservations, CapabilityState.Off, "ReadReservedBodies", i => { i.ReservationsReady = false; i.ReservationsError = "InvalidOperationException: ReadReservedBodies: RLO's CityApi reported a fault."; });
+        yield return C(CapabilityId.RloReservations, CapabilityState.Off, "visible bodies pause", i => i.ReservationsComplete = false);
+        yield return C(CapabilityId.RloReservations, CapabilityState.NotChecked, null, i => i.ReservationsChecked = false);
+        // An unrelated physical failure no longer marks the reservations off.
+        yield return C(CapabilityId.RloReservations, CapabilityState.Active, null, i => { i.PhysicalActive = false; i.PhysicalFailed = true; });
         yield return C(CapabilityId.RloReservations, CapabilityState.Absent, "not loaded", i => i.RloReason = DonorReadReason.Missing);
         yield return C(CapabilityId.ClockObserve, CapabilityState.Off, "observation unavailable", i => { i.ClockObserving = false; i.ClockObserveError = "Native clock observation unavailable"; });
         yield return C(CapabilityId.ClockObserve, CapabilityState.NotChecked, null, i => i.ClockObserving = false);

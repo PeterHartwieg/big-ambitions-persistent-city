@@ -391,6 +391,12 @@ namespace PersistentCity.Runtime
         {
             speeds.Refresh();
             if (speeds.Waiting != null) return false; // F8d: a transient RLO answer holds preparation; it is not a failure
+            try { return PrepareNodes(); }
+            catch (RoadSpeedsWaitingException) { return false; }
+        }
+
+        private bool PrepareNodes()
+        {
             var watch = Stopwatch.StartNew();
             int startedAt = copiedNodes;
             int stop = Math.Min(waypoints.Length, copiedNodes + 2048);
@@ -534,6 +540,8 @@ namespace PersistentCity.Runtime
             public bool Finished { get; private set; }
             public Route? Result { get; private set; }
             public int Restarts { get; private set; }
+            /// <summary>F8d: the last start met a transient road-speed answer; the plan is unfinished and retries.</summary>
+            public bool WaitingForSpeeds { get; private set; }
             /// <summary>Frontier expansions so far in the current search attempt.</summary>
             public int Expanded => search?.Expanded ?? 0;
 
@@ -549,6 +557,9 @@ namespace PersistentCity.Runtime
                 var owner = this.owner; var from = this.from; var to = this.to;
                 var speeds = owner.speeds; var nodes = owner.nodes; var waypoints = owner.waypoints;
                 speeds.Refresh();
+                // F8d: a transient road-speed answer leaves the plan unfinished; Continue retries it, nothing is consumed.
+                if (speeds.Waiting != null) { WaitingForSpeeds = true; return; }
+                WaitingForSpeeds = false;
                 if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
                     || from.Node == to.Node || !owner.ConnectorClear(from.Position, nodes[from.Node].Position) || !owner.ConnectorClear(to.Position, nodes[to.Node].Position))
                 { Finish(null); return; }
@@ -630,19 +641,26 @@ namespace PersistentCity.Runtime
             public bool Continue(long deadlineTimestamp)
             {
                 if (Finished) return true;
-                if (owner.searchGeneration != generation)
+                if (WaitingForSpeeds || owner.searchGeneration != generation)
                 {
-                    Restarts++; owner.SearchRestarts++;
+                    if (!WaitingForSpeeds) { Restarts++; owner.SearchRestarts++; }
                     search?.Dispose(); search = null;
                     Start();
                     if (Finished) return true;
+                    if (WaitingForSpeeds) return false;
                 }
                 while (true)
                 {
-                    if (search!.Advance(ExpansionSlice)) { Complete(); return true; }
+                    bool done;
+                    // F8d: lane timing went transient mid-search: drop this attempt and start again once RLO answers.
+                    try { done = search!.Advance(ExpansionSlice); }
+                    catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
                     // A finite caller admits one 64-expansion slice even when the clock budget
                     // is large or the host is fast. Only explicit offline/synchronous calls drain.
-                    if (deadlineTimestamp != long.MaxValue) return false;
+                    if (!done) { if (deadlineTimestamp != long.MaxValue) return false; continue; }
+                    try { Complete(); }
+                    catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
+                    return true;
                 }
             }
 
@@ -741,7 +759,7 @@ namespace PersistentCity.Runtime
             if (native.listIndex != index) return Invalid("waypoint-index", index);
             int canonical;
             try { canonical = speeds.Canonical(native); }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException error) when (!(error is RoadSpeedsWaitingException))
             {
                 // Record the cause without changing the existing exception contract on subsequent reads.
                 if (InvalidationReason.Length == 0) { InvalidationReason = "unverified-speed"; InvalidationIndex = index; }

@@ -78,7 +78,7 @@ namespace PersistentCity.Runtime
                 var reviewed = new RloRoadSpeedOverrides(dependency);
                 roadSpeeds = new NativeRoadSpeeds(() => reviewed.Capture().ToDictionary(pair => pair.Key,
                     pair => (pair.Value.OriginalKilometresPerHour, pair.Value.EffectiveKilometresPerHour),
-                    NativeRoadSpeeds.ReferenceComparer));
+                    NativeRoadSpeeds.ReferenceComparer), error => error is RloRoadSpeedsNotReadyException ? error.Message : null);
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
             foreach (var place in places) this.places[place.Id] = place;
@@ -174,7 +174,10 @@ namespace PersistentCity.Runtime
         internal string? RoadSpeedWaiting => roadSpeeds.Waiting;
         /// <summary>F8d: road speeds are captured from RLO (false when RLO is not loaded).</summary>
         internal bool RoadSpeedsFromRlo => roadSpeeds.FromRlo;
-        public bool ReadyForPopulation => (routeEventHeld || !refreshDeferred && !stationsDeferred)
+        internal bool RoadSpeedsVerified => roadSpeeds.Verified;
+        internal string? RoadSpeedRefusal => roadSpeeds.LastRefusal;
+        // F8d: no citizen advances while road speeds wait on a transient RLO answer.
+        public bool ReadyForPopulation => roadSpeeds.Waiting == null && (routeEventHeld || !refreshDeferred && !stationsDeferred)
             && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
         /// <summary>Runtime preflight: do not advance any citizen until this returns true. Staged infrastructure
@@ -202,7 +205,8 @@ namespace PersistentCity.Runtime
             if (roadSpeeds.Waiting != null && roads != null) { roadSpeeds.Refresh(); if (roadSpeeds.Waiting != null) return false; }
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
-                roads.Sweep(1, 1024);
+                try { roads.Sweep(1, 1024); }
+                catch (RoadSpeedsWaitingException) { return false; } // F8d: the held event waits for a complete answer
                 return roads.IsCurrent;
             }
             if (!routeEventHeld)
@@ -251,7 +255,8 @@ namespace PersistentCity.Runtime
             }
             else roads.SetAccess(access!);
             if (!roads.Prepare()) return false;
-            roads.Sweep(1, 1024);
+            try { roads.Sweep(1, 1024); }
+            catch (RoadSpeedsWaitingException) { return false; }
             return roads.IsCurrent;
         }
         public GleyTrafficSystem.Waypoint? ResolveWaypoint(string topology, int index) => roads?.ResolveWaypoint(topology, index);
