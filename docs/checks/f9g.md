@@ -75,7 +75,10 @@ At base `649467b`, `OwnershipBoundaryTests.RuntimeStateReadsAreOnTheAllowedListA
 
 PC (20 logical cores), at this branch's head:
 
-TESTS_PLACEHOLDER
+- Build: `python tools/build.py --game-managed "…\Big Ambitions_Data\Managed"` passed (`DLL SHA256: 4c4482660dc9f22d8ec67c6d088782a81fc382258bc063a6ccfb7375f3fd67f2`).
+- Focused run, 10 November 2026: `dotnet test … --filter` over `MovementEquivalenceTests` (12), `OwnershipBoundaryTests` (13), `PresentationGridTests` (7), `PresentationBoundaryTests` (9) and `VisitorBodyTests` (6): 47 passed, 0 failed, 3 min 3 s.
+- Full suite, 10 November 2026: `dotnet test tests/PersistentCity.Tests.csproj`: 4,011 passed, 0 failed, 8 min 22 s. The `wait-other-dotnet.ps1` wait before it timed out at the tool's 10-minute limit while other sessions' dotnet runs were still active, so this run shared the machine.
+- The first full run (local-test round 1) failed one test: `PresentationBoundaryTests.PhysicalRuntimeCallsOnlyTheReviewedSimulationMembers`, which keeps an exact list of the `CitySimulator` members presentation calls. The F9g reads add `View`. The list now names it; nothing else changed.
 
 | Required test (F9g row) | Fact |
 | --- | --- |
@@ -83,12 +86,13 @@ TESTS_PLACEHOLDER
 | A planted entity-typed read in a presentation fixture is caught | `APlantedEntityReadInAPresentationFixtureIsCaught`. It plants into `PhysicalPopulation.Selection.cs`: a `CitizenState` read helper, a `List<CitizenState>` field, a `(CitizenState)` cast, an `as CitizenState` cast, `VendorRow`, `Place` and `CityState` signatures, `simulation.State.Minute`, and `var current = simulation; current.State`. Each is caught as exactly one violation. A `CitizenState` helper planted in each of the other four presentation files is caught. A named fragment copied into another file is caught. View reads, comments and strings are not reported. |
 | Reflection test that `BodyCandidates` and `Query` return view types | `CandidateQueriesReturnViewTypes`: `Query` returns `IReadOnlyList<IPersonView>` and fills a `List<IPersonView>`; `ActiveJourneyIndex.Contains` takes `IPersonView`. The only entity-typed public result on `ActiveJourneyIndex` and `PresentationGrid` is the named `BodyCandidates`, so adding another one, or making `BodyCandidates` view-typed without removing the exception, fails. The query returns the filed entities themselves (reference-equal), with the expected set. |
 | Selected set and order unchanged on the F2f grid tests | `PresentationGridTests` (11 facts) and `VisitorBodyTests`, unchanged apart from the type change: the grid-against-full-scan comparisons (`Within`, `Waiting`, ordered by distance and ordinal id) run on `Query`'s results cast back to entities in the test. |
-| F2 movement-equivalence harness arms unchanged | `MovementEquivalenceTests` run unchanged (not edited); see the validation run. |
+| F2 movement-equivalence harness arms unchanged | `MovementEquivalenceTests` (12 tests: walker and mixed-city body arms equal bodies-off, the arm catalogue, mid-journey reload, injected faults) passed unchanged at this head in the focused and full runs above; `tools/movement-equivalence/` is not edited. |
 | Current-writer golden pins unchanged | `OwnershipBoundaryTests.CurrentWriterGoldenHashIsUnchanged` (writer 36, seeds 5150 and 9217) |
 
 Test files changed for the type change only (listed for the PR):
 
 - `tests/PresentationGridTests.cs`: query buffers `List<IPersonView>`; `Query(...).Cast<CitizenState>()` before the entity-based `Within`/`Waiting` comparisons; `c.Id` for `c.Identity.Id` on a query result; the runtime-source literal now reads `simulation.View.ResidentList`.
+- `tests/PresentationBoundaryTests.cs`: `View` added to the reviewed `CitySimulator` member list (`ReadOnlyMembers`).
 - `tests/VisitorBodyTests.cs`: the selection replica's query buffer is `List<IPersonView>`, and it casts the query result to the entity before reading the journey, as Runtime does through `Entity()`.
 
 Not run: `tools/physical-selection-regression` (the `tools/*-regression` suites are not run before release). Its selection fragment changed (view reads, `Entity(c)`), so its extraction may need a stub update when it is next run.
