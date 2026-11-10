@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -25,7 +26,6 @@ CAPABILITIES = {
     'rig flow run autosave guard': (EXISTING, 'record, disable and restore the autosave setting'),
     'health autosave_disabled': (EXISTING, 'read back that autosave is off'),
     'RIG-MODSET': (EXISTING, 'per-flow hashed DLL set transaction and restore'),
-    'produce_fixture.py': (EXISTING, 'fresh head city'),
     'FT load': (EXISTING, ''), 'FT save': (EXISTING, ''), 'FT time': (EXISTING, ''), 'FT teleport': (EXISTING, ''),
     'FT state': (EXISTING, ''), 'FT console': (EXISTING, ''),
     'RIG-VIEW camera': (EXISTING, 'camera look_at along waypoints'),
@@ -42,6 +42,7 @@ CAPABILITIES = {
     'RIG-DRIVE': (PENDING, 'drive the owned car along a route (F2 plan)'),
     'RIG-PCFIX': (PENDING, 'pc-stress-10k@1 fixture (F5 plan)'),
     'RIG-SHOPEDIT': (PENDING, 'native price edit (F6a)'),
+    'RIG-F4-PRODUCER': (PENDING, 'current-writer adaptation of produce_fixture.py (that tool pins schema 25 and FT E5b names)'),
 }
 
 # The capabilities each op needs. A step's capability list is derived from this table only.
@@ -57,7 +58,7 @@ OPS = {
     'process.launch': ['rig flow run'], 'process.stop': ['rig flow run'],
     'modset.apply': ['RIG-MODSET'], 'modset.restore': ['RIG-MODSET'],
     'pcconfig.record': ['RIG-PCCONFIG'], 'pcconfig.apply': ['RIG-PCCONFIG'], 'pcconfig.restore': ['RIG-PCCONFIG'],
-    'fixture.produce': ['produce_fixture.py'], 'fixture.shops': ['RIG-SHOPFIX'], 'fixture.stress': ['RIG-PCFIX'],
+    'fixture.produce': ['RIG-F4-PRODUCER'], 'fixture.shops': ['RIG-SHOPFIX'], 'fixture.stress': ['RIG-PCFIX'],
     'fixture.car': ['RIG-DRIVE'], 'fixture.anchors': ['FT state', 'RIG-VIEW screen_pos'],
     'fixture.copy': ['rig flow run'], 'fixture.hash': ['rig flow run'], 'fixture.remove_copies': ['rig flow run'],
     'fixture.verify_inputs': ['rig flow run'],
@@ -389,6 +390,11 @@ def preflight(f, movement_state):
                                        expect='exit 0; expected list hash equals the manifest'))
     f.add('game.build', c, dict(record='game_build'))
     f.add('machine.read', c, dict(record=f.contract['header']['machine_fields']))
+
+
+def preflight_profile(f):
+    """G1 steps that change the isolated profile or the rig: only under the flow lease, after production."""
+    c = ['G1']
     f.add('autosave.record_disable', c, dict(record='original setting, once'))
     f.add('autosave.verify_off', c, dict(after='disable'))
     f.add('settings.apply_readback', c, dict(f.fixtures['declared_settings']['primary'], target='isolated profile preferences',
@@ -723,10 +729,15 @@ def estimate_real_seconds(f):
     return round(total)
 
 
-def build_flow(fixtures, scripts, contract, inputs_sha256, movement_state=None):
+def build_flow(fixtures, scripts, contract, inputs_sha256, movement_state=None, run_id=None):
+    if run_id is not None:
+        if not re.fullmatch(r'[A-Za-z0-9-]{1,24}', run_id):
+            raise FlowError(f'run id {run_id!r}: use 1-24 letters, digits or hyphens')
+        fixtures = json.loads(json.dumps(fixtures).replace('${run}', run_id))
     f = Flow(fixtures, scripts, contract)
     preflight(f, movement_state)
     produce_fixtures(f)
+    preflight_profile(f)
     prepare_fixtures(f)
     f.add('header.require', ['G1'], dict(fields=[x for x in contract['header']['required'] + I1_FIELDS
                                                  if x not in OBSERVED_FIELDS],
@@ -795,12 +806,15 @@ def main(argv=None):
     parser.add_argument('--md-out', type=Path)
     parser.add_argument('--movement-state', help='header movement label, for example movement=pre-F2d; '
                                                  'default: filled by the batch from the candidate commit')
+    parser.add_argument('--run-id', help='batch run id substituted for ${run} in producer save names; '
+                                         'default: left as ${run} for the batch to fill')
     parser.add_argument('--fixtures', type=Path, default=DEFAULT_FIXTURES)
     parser.add_argument('--scripts', type=Path, default=DEFAULT_SCRIPTS)
     parser.add_argument('--contract', type=Path, default=DEFAULT_CONTRACT)
     args = parser.parse_args(argv)
     try:
-        flow = build_flow(*load_inputs(args.fixtures, args.scripts, args.contract), movement_state=args.movement_state)
+        flow = build_flow(*load_inputs(args.fixtures, args.scripts, args.contract), movement_state=args.movement_state,
+                          run_id=args.run_id)
     except FlowError as e:
         print(f'REFUSED: {e}', file=sys.stderr)
         return 2

@@ -27,10 +27,10 @@
       "expected_population": {"residents": 957, "commuters_about": 1020, "pool_members_about": 576, "source": "docs/checks/f5h.md"},
       "business_load": "The native rivals the city contains plus the three owned shops",
       "pc_config": {},
-      "provenance": "produce_fixture.py (existing) plus pending RIG-SHOPFIX for the staffed shops",
-      "produce": {"tool": "tools/e5b-native-rig-proof/produce_fixture.py", "name": "FT E5b F4-Declared", "ready_save": "FT E5b F4-Declared Ready", "evidence": "build/e5b/review-r3/rig_test/f4d-declared-${run}", "mods": "reviewed receipt-hashed declaration of the candidate mod set", "lifecycle": "Runs with no player running and no rig lease held: the producer acquires, uses and releases its own lease and refuses otherwise. Its save names must begin 'FT E5b '. The flow launches afterwards and loads ready_save."},
+      "provenance": "Pending RIG-F4-PRODUCER (current-writer adaptation of produce_fixture.py) plus pending RIG-SHOPFIX for the staffed shops",
+      "produce": {"capability": "RIG-F4-PRODUCER", "base_tool": "tools/e5b-native-rig-proof/produce_fixture.py", "name": "FT F4 Declared ${run}", "ready_save": "FT F4 Declared ${run} Ready", "evidence": "build/perf-gate/${run}/producer", "mods": "reviewed receipt-hashed declaration of the candidate mod set", "accepts_schema": "the current writer (CityState.CurrentSchema at the candidate head)", "lifecycle": "Runs with no player running and no rig lease held: like produce_fixture.py, the producer acquires, uses and releases its own lease, refuses an existing save name and keeps its saves. produce_fixture.py itself cannot be used: it accepts only names beginning 'FT E5b ' and refuses a Ready save whose schema is not 25, so the current-writer adaptation is pending. The run id makes both names new for every batch and retry. The flow launches afterwards and loads ready_save."},
       "prepare": [
-        {"op": "ft.load", "args": {"save": "FT E5b F4-Declared Ready"}},
+        {"op": "ft.load", "args": {"save": "FT F4 Declared ${run} Ready"}},
         {"op": "ft.time", "args": {"advance_to": "day 3 00:30", "speed": 3}},
         {"op": "fixture.shops", "args": {"count": 3, "district": "one district", "staffed": true, "stocked": true, "kind": "food", "expect": "city clock still before day 3 02:00"}},
         {"op": "fixture.car", "args": {"owned_car": true, "park_at": "dense-street.car-park"}, "for_checks": ["G6", "G13"]},

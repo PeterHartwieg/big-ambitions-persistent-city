@@ -460,13 +460,53 @@ class LifecycleTests(unittest.TestCase):
             self.assertLess(index_of(s), index_of(lease), 'the producer takes its own lease')
             self.assertLess(index_of(s), index_of(first_launch), 'the producer refuses a running player')
             self.assertEqual(s['requires'], dict(player_running=False, flow_lease_held=False))
-            self.assertTrue(s['args']['name'].startswith('FT E5b '))
+            self.assertTrue(s['args']['name'].startswith('FT '), 'the probe arms only in FT cities')
+            self.assertIn('${run}', s['args']['name'], 'every batch and retry needs new native save names')
             self.assertEqual(s['args']['ready_save'], s['args']['name'] + ' Ready')
-            self.assertTrue(s['args']['evidence'].startswith('build/e5b/review-r3/rig_test/'))
+            self.assertIn('${run}', s['args']['evidence'])
             loads = [x for x in STEPS if x['op'] == 'ft.load' and x['args']['save'] == s['args']['ready_save']]
             self.assertTrue(loads and index_of(loads[0]) > index_of(lease))
         releases = [s for s in STEPS if s['op'] == 'rig.lease' and s['args']['action'] == 'release']
         self.assertEqual(index_of(releases[-1]), len(STEPS) - 1)
+
+    def test_producer_schema_pin_forces_a_pending_producer(self):
+        # produce_fixture.py refuses a Ready save whose schema is not its pinned literal; the current writer differs,
+        # so the flow must not claim that tool as an existing capability.
+        source = (HERE.parent / 'e5b-native-rig-proof' / 'produce_fixture.py').read_text(encoding='utf-8')
+        pin = re.search(r"saved_schema'\)!=(\d+)", source)
+        name_rule = re.search(r"startswith\('(FT E5b )'\)", source)
+        produce = [s for s in STEPS if s['op'] == 'fixture.produce']
+        self.assertTrue(produce)
+        for s in produce:
+            if pin or name_rule:
+                self.assertIn('RIG-F4-PRODUCER', s['capabilities']['pending'])
+                self.assertNotIn('produce_fixture.py', s['capabilities']['existing'])
+            self.assertIn('current writer', s['args']['accepts_schema'])
+        self.assertNotIn('produce_fixture.py', FLOW['capabilities'])
+
+    def test_run_ids_give_distinct_producer_saves(self):
+        names = {}
+        for run in ('b1', 'b2'):
+            flow = build(run_id=run)
+            produce = next(s for s in flow['steps'] if s['op'] == 'fixture.produce')
+            load = next(s for s in flow['steps'] if s['op'] == 'ft.load' and s['args']['save'] == produce['args']['ready_save'])
+            self.assertNotIn('${run}', json.dumps(produce['args']) + json.dumps(load['args']))
+            names[run] = (produce['args']['name'], produce['args']['ready_save'])
+        self.assertTrue(set(names['b1']).isdisjoint(names['b2']))
+        with self.assertRaises(gen.FlowError):
+            build(run_id='bad/run')
+
+    def test_profile_and_player_changes_happen_under_the_flow_lease(self):
+        lease = next(index_of(s) for s in STEPS if s['op'] == 'rig.lease' and s['args']['action'] == 'acquire')
+        release = next(index_of(s) for s in STEPS if s['op'] == 'rig.lease' and s['args']['action'] == 'release')
+        changing = ('autosave.', 'settings.', 'pcconfig.', 'sampler.', 'priority.', 'process.', 'modset.', 'fixture.copy',
+                    'fixture.shops', 'fixture.stress', 'fixture.car', 'ft.', 'probe.', 'trace.', 'rig.restore_files')
+        before = [s for s in STEPS[:lease] if s['op'].startswith(changing)]
+        self.assertFalse(before, [s['op'] for s in before])
+        self.assertTrue(all(STEPS[i]['op'] in ('rig.lease',) for i in range(release, len(STEPS))))
+        record = next(index_of(s) for s in STEPS if s['op'] == 'autosave.record_disable')
+        produce = max(index_of(s) for s in STEPS if s['op'] == 'fixture.produce')
+        self.assertGreater(record, produce, 'G1 records the original after the producer restored the profile')
 
     def test_preparation_moves_forward_in_game_time(self):
         def minute(text):
