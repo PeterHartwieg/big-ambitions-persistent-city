@@ -1,6 +1,6 @@
 # Fix: new-game creation save during initialization
 
-Status: implemented (offline); not verified by rig. Refs #95, Refs #200 (run mac-creation-1).
+Status: implemented; creation-save check verified by rig (Mac); immediate manual-save reload failed. Refs #95, Refs #200 (run mac-creation-1).
 
 A native save that arrives while Persistent City is still initializing, and hits no other refusal, is now deferred.
 Nothing is written, the epoch is not poisoned, the sequence is not advanced and PC does not stop. PC logs
