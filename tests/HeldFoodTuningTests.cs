@@ -132,36 +132,27 @@ public sealed class HeldFoodTuningTests
         Assert.Equal(4, paths.Calls); Assert.All(meals, m => Assert.Equal(1, m.Day));
     }
 
-    [Theory]
-    [InlineData(false)] [InlineData(true)]
-    public void SelectedOldContextsKeepTheirWinnerWithoutNewRoutes(bool legacy17)
+    [Fact]
+    public void SelectedOldContextsKeepTheirWinnerWithoutNewRoutes()
     {
         var (city, _, _, _) = Ready(); var meal = city.State.Food!.Residents.Single();
         for (int i = 0; i < 3; i++) city.AdvanceFrameSlice(meal.DesiredAt, 1);
         Assert.Equal(FoodDecisionResult.Selected, meal.Decision!.Result);
-        string wire = LegacyWire.Write(city.State);
-        if (!legacy17) {
-            var root = SaveWire.Parse(DevelopmentChain.Write(city.State)); var d = root["Food"]!["Residents"]![0]![8]!;
-            ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
-            wire = root.ToString(Formatting.None);
-        }
+        var root = SaveWire.Parse(DevelopmentChain.Write(city.State)); var d = root["Food"]!["Residents"]![0]![8]!;
+        ((JObject)d).Remove("Tuning"); foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
+        string wire = root.ToString(Formatting.None);
         var resumed = Resume(wire, 3, 128);
         Assert.Equal(FoodProducts.Burger, resumed.product); Assert.Equal(0, resumed.routes); Assert.Equal(0, resumed.orders);
     }
 
-    [Theory]
-    [InlineData(false)] [InlineData(true)]
-    public void Source17AndPreImage18CaptureLiveAtFirstContinuation(bool legacy17)
+    [Fact]
+    public void PreImage18CapturesLiveAtFirstContinuation()
     {
         var (city, _, _, _) = Ready(); var meal = city.State.Food!.Residents.Single(); city.AdvanceFrameSlice(meal.DesiredAt, 1);
-        string wire;
-        if (legacy17) wire = LegacyWire.Write(city.State);
-        else {
-            var root = SaveWire.Parse(DevelopmentChain.Write(city.State));
-            var d = root["Food"]!["Residents"]![0]![8]!; ((JObject)d).Remove("Tuning");
-            foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
-            wire = root.ToString(Formatting.None);
-        }
+        var root = SaveWire.Parse(DevelopmentChain.Write(city.State));
+        var d = root["Food"]!["Residents"]![0]![8]!; ((JObject)d).Remove("Tuning");
+        foreach (JObject shop in d["Shops"]!) shop.Remove("MemoryContribution");
+        string wire = root.ToString(Formatting.None);
         var read = DevelopmentChain.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Null(read.State!.Food!.Residents.Single().Decision!.Tuning);
         Assert.Equal(FoodProducts.Croissant, Resume(wire, 3, 1).product);
@@ -235,20 +226,15 @@ public sealed class HeldFoodTuningTests
         Assert.InRange(wire.Length - before.Length, 1, 65536); // aggregate policy/held-tuning envelope
         var old = DevelopmentChain.Read(before); Assert.Equal(SaveReadStatus.Loaded, old.Status);
         Assert.Equal(SaveCodec.CountRecords(city.State, wire), SaveCodec.CountRecords(old.State!, before));
-        // Frozen old resolver still writes the same schema-17 facts, and refuses an injected new field.
-        string legacy = LegacyWire.Write(city.State);
-        Assert.DoesNotContain("Tuning", legacy); Assert.DoesNotContain("MemoryContribution", legacy);
-        var named = SaveWire.Parse(legacy); named["Food"]!["Residents"]![0]!["Decision"]!["Tuning"] = meal.Decision!.Tuning!.ToWire();
-        Assert.Equal(SaveReadStatus.Invalid, LegacyPopulationCodec.Read(named.ToString(Formatting.None)).Status);
     }
 
     [Fact]
     public void ImageStoresAllTwelveExactCoefficientsAndClampsOnlyCapture()
     {
-        var settings = new FoodChoiceSettings();
+        var settings = LegacyFoodChoice.Settings(); // revision 1: the four-offer menu fields (E5b5 made eight the default)
         var properties = typeof(FoodChoiceSettings).GetProperties().Where(p=>!p.Name.StartsWith("FoodMenu",StringComparison.Ordinal)).ToArray(); Assert.Equal(12, properties.Length);
         foreach (var property in properties) {
-            var changed = new FoodChoiceSettings(); property.SetValue(changed, .37); changed.Clamp();
+            var changed = LegacyFoodChoice.Settings(); property.SetValue(changed, .37); changed.Clamp();
             var capture = FoodDecisionTuning.Capture(changed); string wire = capture.ToWire();
             Assert.Equal(FoodDecisionTuning.WireLength, wire.Length);
             Assert.True(FoodDecisionTuning.TryParse(wire, out var restored)); Assert.Equal(wire, restored!.ToWire());

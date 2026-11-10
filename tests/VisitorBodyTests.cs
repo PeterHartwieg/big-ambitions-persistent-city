@@ -141,7 +141,7 @@ public sealed class VisitorBodyTests
     [Fact]
     public void SelectionOrderIsStillByPriorityWithoutAKindFilter()
     {
-        string population = Source(Path.Combine("Runtime", "PhysicalPopulation.cs"));
+        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => Source(Path.Combine("Runtime", "PhysicalPopulation" + part + ".cs"))));
         string selection = population[population.IndexOf("// Candidate selection.", StringComparison.Ordinal)..population.IndexOf("PhysicalRoadSample road = default;", StringComparison.Ordinal)];
         Assert.Single(selection.Split("candidates.Sort(SelectionCandidate.ByPriority);").Skip(1));
         foreach (var kind in new[] { "ReceivesBody", "IsVisitor", "KindOf", "PersonKind" })
@@ -185,28 +185,6 @@ public sealed class VisitorBodyTests
     }
     private static readonly (string, string, double, double, double) ResidentPin = (
         "a7f8be191f08c52ec7d20c46c1dada69b45e5b30c85ef0940ca2b2bb3853f53c", "4941d18ef26284d373d686db2819d4799febcdeb8e6a078c57d1b8d05d7dff4c", 850, 1438800, 174675);
-
-    /// <summary>Bodies are not saved: writer 35 and its pinned golden hash (F2e) are unchanged. Since E5b4 took writer 36,
-    /// the writer-35 bytes are the frozen shape (DevelopmentChain.Write35), as in F9IntegratedCityTests.</summary>
-    [Theory]
-    [InlineData(5150, "4187373b9cca6eb6c619e7aae9e1d270d067e5bc1ac40ee64c1aee5d02e210ae", 73332)]
-    [InlineData(9217, "149d635dbab32312988b96bcde19d011fe1a06814db5a9f175380d29741a5abb", 72970)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        Assert.Equal(35, CityState.PlayerHoldSchema);
-        var state = ChangeJournalTests.Fixture(seed);
-        string payload;
-        int writer = CityState.CurrentSchema;
-        if (writer == CityState.PlayerHoldSchema) payload = SaveCodec.Write(state);
-        else
-        {
-            var frozen = typeof(DevelopmentChain).GetMethod("Write35", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            Assert.True(frozen != null, "a later writer merged without freezing writer 35 in DevelopmentChain");
-            payload = (string)frozen!.Invoke(null, new object[] { state })!;
-        }
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
-        Assert.Equal(characters, payload.Length);
-    }
 
     private static string Between(string text, string start, string end)
     {

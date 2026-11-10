@@ -225,15 +225,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(0, city.State.Citizens.Single().CompletedJourneys);
     }
     [Fact]
-    public void OldPopulationSchemaAndCurrentCorruptFoodOwnershipAreRejected()
-    {
-        var (city, _, _) = Ready(); var wire = SaveWire.Parse(LegacyWire.Write(city.State));
-        wire["Schema"] = 7; StripNewFields(wire);
-        var read = DevelopmentChain.Read(wire.ToString()); Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
-        wire = SaveWire.Parse(LegacyWire.Write(city.State)); wire["Food"]!["Residents"]![0]!["ResidentId"] = "unknown";
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-    }
-    [Fact]
     public void NativeReceiptPreventsReplayEvenWithAnOlderPopulationSnapshot()
     {
         var (city, market, _) = Ready(); var meal = city.State.Food!.Residents.Single();
@@ -336,22 +327,6 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
-    public void SchemaEightFoodHistoryIsPreservedByRefusingUpgrade()
-    {
-        var (city, market, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Schema"] = 8;
-        RemoveMealRhythmFields(payload);
-        foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>())
-        { m.Remove("ExistingStop"); m.Remove("ExistingStopPurchases"); m.Remove("Budget"); }
-        ((JObject)payload["Food"]!).Remove("HouseholdFinanceVersion");
-        ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents"); ((JObject)payload["Food"]!).Remove("History");
-        string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]); Assert.Single(market.Orders);
-    }
-
-    [Fact]
     public void PersistentHouseholdPaysEssentialsAndActualPurchaseOnceAcrossReload()
     {
         var (city, market, routes) = Ready();
@@ -417,31 +392,6 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
-    public void HouseholdSaveRejectsCreatedCashAndUnknownFinancePolicy()
-    {
-        var (city, _, _) = Ready(); city.EnableHouseholdFinances(); Advance(city, city.State.Minute + 1);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State));
-        payload["Food"]!["Residents"]![0]!["Budget"]!["Balance"] = 999999999L;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
-        payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Food"]!["HouseholdFinanceVersion"] = 99;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
-    }
-
-    [Fact]
-    public void SchemaNineCannotSilentlyBecomeACurrentBudgetedCity()
-    {
-        var (city, _, _) = Ready(); var payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Schema"] = 9;
-        RemoveMealRhythmFields(payload);
-        ((JObject)payload["Food"]!).Remove("HouseholdFinanceVersion"); ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents");
-        ((JObject)payload["Food"]!).Remove("History");
-        foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>()) m.Remove("Budget");
-        string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
-    }
-
-    [Fact]
     public void ABetterLaterOfferCanReplaceAnEarlierDeclineButCannotBuyTwice()
     {
         var (city, market, routes) = Ready();
@@ -477,15 +427,6 @@ public sealed partial class FoodCommerceTests
         city = Reload(city, market, routes);
         Assert.Equal(before, DevelopmentChain.Write(city.State)); Assert.Equal(orders, market.Orders.Count);
         Assert.True(history.Sum(h => h.Purchases) > 0);
-    }
-
-    [Fact]
-    public void ManagementHistoryRejectsInventedCustomerCounts()
-    {
-        var (city, _, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State));
-        payload["Food"]!["History"]![0]!["PurchaseHours"]![0] = 999;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
 
     [Theory]

@@ -16,13 +16,13 @@ Details and limitations: [docs/behaviour.md](docs/behaviour.md). Terms: [docs/gl
 | Folder | Role |
 | --- | --- |
 | `Core/` | Pure C# simulation (netstandard2.1): population, routines, traffic, food demand, money |
-| `Persistence/` | Save codecs and stores; the current writer is schema 25 |
+| `Persistence/` | Save codecs and stores; the writer schema is `CityState.CurrentSchema` |
 | `Runtime/` | Unity and game integration, Harmony hooks, physical bodies, native food market |
 | `Compatibility/` | The only access to RLO |
 | `tests/` | xUnit tests (`PersistentCity.Tests.csproj`) |
 | `tools/` | Build script, harnesses and measurement tools |
 
-Saves: own state is in `persistentcity:state_v1`, written as schema 25. The current code migrates valid schema 13–24 cities and refuses older, future or invalid data without overwriting it. From the next schema bump (F5c-lite, schema 26), older development cities are refused with a "start a new city" status instead of being migrated ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
+Saves: own state is in `persistentcity:state_v1`, written at `CityState.CurrentSchema` (`Core/Model.cs`). Cities from an older development schema are refused with a "start a new city" status, not migrated; future or invalid data is refused without overwriting it ([decision](docs/decisions/2026-11-06-delivery-rules.md)).
 
 ## Build and test
 
@@ -30,7 +30,7 @@ Requires the .NET 10 SDK and Python 3.
 
 ```sh
 python tools/build.py --game-managed "/path/to/Big Ambitions_Data/Managed"
-dotnet test tests/PersistentCity.Tests.csproj
+dotnet test tests/PersistentCity.Tests.csproj   # full suite; while working use python tools/test-focused.py
 python tools/docs-links/check.py
 ```
 
