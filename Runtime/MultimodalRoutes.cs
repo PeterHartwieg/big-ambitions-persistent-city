@@ -78,7 +78,7 @@ namespace PersistentCity.Runtime
                 var reviewed = new RloRoadSpeedOverrides(dependency);
                 roadSpeeds = new NativeRoadSpeeds(() => reviewed.Capture().ToDictionary(pair => pair.Key,
                     pair => (pair.Value.OriginalKilometresPerHour, pair.Value.EffectiveKilometresPerHour),
-                    NativeRoadSpeeds.ReferenceComparer));
+                    NativeRoadSpeeds.ReferenceComparer), error => error is RloRoadSpeedsNotReadyException ? error.Message : null);
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
             foreach (var place in places) this.places[place.Id] = place;
@@ -170,7 +170,14 @@ namespace PersistentCity.Runtime
         }
         // Once an event releases its lease, stop the frame batch until the next bounded preflight
         // publishes deferred inputs. Otherwise the next event can renew the lease indefinitely.
-        public bool ReadyForPopulation => (routeEventHeld || !refreshDeferred && !stationsDeferred)
+        /// <summary>F8d: the road-speed capture is waiting on a transient RLO answer (null otherwise); diagnostics only.</summary>
+        internal string? RoadSpeedWaiting => roadSpeeds.Waiting;
+        /// <summary>F8d: road speeds are captured from RLO (false when RLO is not loaded).</summary>
+        internal bool RoadSpeedsFromRlo => roadSpeeds.FromRlo;
+        internal bool RoadSpeedsVerified => roadSpeeds.Verified;
+        internal string? RoadSpeedRefusal => roadSpeeds.LastRefusal;
+        // F8d: no citizen advances while road speeds wait on a transient RLO answer.
+        public bool ReadyForPopulation => roadSpeeds.Waiting == null && (routeEventHeld || !refreshDeferred && !stationsDeferred)
             && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
         /// <summary>Runtime preflight: do not advance any citizen until this returns true. Staged infrastructure
@@ -194,9 +201,14 @@ namespace PersistentCity.Runtime
             // Never pin native topology: city/scene loss above and stale road checks still win.
             // A current replacement may still be importing nodes/building its network. Keep driving
             // its staged preparation until Ready; the pending old job restarts only after preflight.
+            // F8d: while RLO's road speeds are transient (NotYet, Refreshing), preparation waits; the city keeps running and saving.
+            // A held event skips RoadRoutes.Prepare (which refreshes), so it refreshes here: every frame that reports prepared
+            // has a fresh complete capture before closure refreshes, curb queries or searches can read lane timing.
+            if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
-                roads.Sweep(1, 1024);
+                try { roads.Sweep(1, 1024); }
+                catch (RoadSpeedsWaitingException) { return false; } // F8d: the held event waits for a complete answer
                 return roads.IsCurrent;
             }
             if (!routeEventHeld)
@@ -245,7 +257,8 @@ namespace PersistentCity.Runtime
             }
             else roads.SetAccess(access!);
             if (!roads.Prepare()) return false;
-            roads.Sweep(1, 1024);
+            try { roads.Sweep(1, 1024); }
+            catch (RoadSpeedsWaitingException) { return false; }
             return roads.IsCurrent;
         }
         public GleyTrafficSystem.Waypoint? ResolveWaypoint(string topology, int index) => roads?.ResolveWaypoint(topology, index);

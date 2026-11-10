@@ -280,11 +280,21 @@ namespace PersistentCity.Runtime
                     long checkStarted = Stopwatch.GetTimestamp();
                     nextDependencyCheck = Time.unscaledTime + 30;
                     var source = ReadRlo("periodic");
+                    // F8d (D6 option B): the saved catalogue is authoritative after activation. A transient RLO answer (Off,
+                    // NotYet, Refreshing) continues on it; a different catalogue or Shared, Failed, Incompatible stops as before.
+                    var continuity = source.Continuity(simulation.State);
+                    rloDiffers = continuity == DonorContinuity.Different;
                     maxRloCheckMilliseconds = Math.Max(maxRloCheckMilliseconds, (Stopwatch.GetTimestamp() - checkStarted) * MillisecondsPerTimestamp);
-                    if (!source.MatchesPopulation(simulation.State))
+                    if (!DonorReads.Continues(continuity))
                     {
-                        Fail("RLO donor catalogue is no longer available or differs from this snapshot: " + source.Message + " Existing saved state is preserved.");
+                        Fail("RLO donor catalogue is no longer available or differs from this snapshot (" + continuity + ", " + source.Reason + "): " + source.Message + " Existing saved state is preserved.");
                         return;
+                    }
+                    if ((continuity == DonorContinuity.Transient) != rloTransient)
+                    {
+                        rloTransient = !rloTransient;
+                        log?.Info(rloTransient ? "RLO transient (" + source.Reason + "): " + source.Message + " The city continues and saves on its saved donor catalogue; no identity is created, renamed or regenerated."
+                            : "RLO ready again and matching the saved donor catalogue; the transient window ended.");
                     }
                     long gateStarted = Stopwatch.GetTimestamp();
                     string gateChange = routes?.Refresh() ?? "";
@@ -682,7 +692,10 @@ namespace PersistentCity.Runtime
             save.modData.TryGetValue(SaveEpochStore.Key, out var currentEpoch);
             if (!ReferenceEquals(currentEpoch, prepared.EpochMarker)) { Fail("Save-epoch marker changed during initialization. Every saved key is retained."); return; }
             var source = ReadRlo("activation");
-            if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization. Original payload retained."); return; }
+            // F8d: activation stays strict; the class only names why it refused.
+            rloDiffers = source.Status == RloReadStatus.Ready && !source.MatchesPopulation(state);
+            if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization (" + source.Continuity(state) + ", " + source.Reason + "). Original payload retained."); return; }
+            rloTransient = false;
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
             if (!AccountingClock.Compatible(state.Minute, Now()))
             { StopAccounting(); return; }
@@ -728,6 +741,8 @@ namespace PersistentCity.Runtime
             NativeTravelPace.ResetReading();
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
+            log?.Info(CapabilityActivationLine()); // F8d (D7): one line naming every capability that is not active
+            log?.Info(HookConflictActivationLine()); // F8e: foreign owners on Persistent City targets, once per load
             ResetAdvanceDiagnostics();
             if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
             { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }
@@ -748,6 +763,7 @@ namespace PersistentCity.Runtime
         private RloReadResult ReadRlo(string context)
         {
             var result = rlo.Read(dependency);
+            lastRloRead = result; // F8b: the capability report reads the last answer; no extra read
             log?.Info("RLO single-pass read context=" + context + " status=" + result.Status
                 + " identities=" + result.Identities.Count + " elapsedMs="
                 + rlo.LastReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
@@ -780,7 +796,10 @@ namespace PersistentCity.Runtime
         {
             if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
             var source = ReadRlo("save");
-            if (!source.MatchesPopulation(simulation!.State))
+            // F8d: a transient window saves the same payload a Ready save writes; the snapshot is not touched here.
+            var saveContinuity = source.Continuity(simulation!.State);
+            rloDiffers = saveContinuity == DonorContinuity.Different;
+            if (!DonorReads.Continues(saveContinuity))
                 return SaveEpochCapture.Refused("RLO changed before saving; original population payload retained.");
             RunPhysical(() => physical?.BeforeSave());
             foodMarket?.CompleteCampaignsForSave();

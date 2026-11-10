@@ -24,7 +24,14 @@ namespace PersistentCity.Runtime
     public sealed class FoodAuthorityBootstrap : IModBigAmbitions
     {
         public string[] RelativeAssetBundlePaths => Array.Empty<string>();
-        public Task OnLoadAsync(ModContext context) { NativeFoodOwnership.Install(); return Task.CompletedTask; }
+        public Task OnLoadAsync(ModContext context)
+        {
+            // F8c: a refused required contract installs nothing; native customers keep every shop and the city start
+            // (PopulationRuntime.Initialize) reports the same named refusal.
+            try { NativeFoodOwnership.Install(); }
+            catch (InvalidOperationException error) { context.Logger.Warn(error.Message); }
+            return Task.CompletedTask;
+        }
         public Task OnUnloadAsync() { NativeFoodOwnership.Uninstall(); return Task.CompletedTask; }
     }
 
@@ -32,8 +39,8 @@ namespace PersistentCity.Runtime
     {
         private const string PatchId = "persistentcity.food-authority";
         private static readonly Harmony patches = new Harmony(PatchId);
-        private static readonly FieldInfo Registration = AccessTools.Field(typeof(BusinessSimulator), "buildingRegistration");
-        private static readonly FieldInfo ProcessingHour = AccessTools.Field(typeof(BusinessSimulator), "currentHour");
+        // F8c: exact field types, verified with the hook targets before any patch; the prefixes read them only once patched.
+        private static FieldInfo Registration = null!, ProcessingHour = null!;
         private static readonly Dictionary<string, FoodAuthority> records = new Dictionary<string, FoodAuthority>(StringComparer.Ordinal);
         private static readonly Dictionary<string, BuildingRegistration> observed = new Dictionary<string, BuildingRegistration>(StringComparer.Ordinal);
         private static readonly Dictionary<Address, BuildingRegistration> addresses = new Dictionary<Address, BuildingRegistration>();
@@ -52,21 +59,25 @@ namespace PersistentCity.Runtime
         internal static void Install()
         {
             if (installed) return;
-            try
+            // F8c (D3): NativeFoodContract.InstallChecked checks every target and field with its exact shape first. A refusal
+            // throws the named food.authority start refusal before this body runs, so no Harmony owner is installed and
+            // nothing is written; a failed patch rolls every patch back (tools/capability-contracts runs the same order).
+            NativeFoodContract.InstallChecked(NativeFoodContract.Authority, () =>
             {
-                patches.Patch(AccessTools.Method(typeof(GameManager), "RunMainGameTick"),
-                    postfix: new HarmonyMethod(typeof(NativeFoodOwnership), nameof(AfterNativeTick)));
+                Registration = NativeFoodContract.AuthorityField("buildingRegistration");
+                ProcessingHour = NativeFoodContract.AuthorityField("currentHour");
+                Patch(typeof(GameManager), "RunMainGameTick", nameof(AfterNativeTick), postfix: true);
                 Patch(typeof(RetailBusinessSimulator), "ProcessAllCustomersFromThisHour", nameof(HourlyCustomers));
                 Patch(typeof(RetailBusinessSimulator), "ProcessCustomer", nameof(CustomerSale));
                 Patch(typeof(CustomerEntriesHelper), "GetEntriesByAddress", nameof(CustomerDraw));
                 Patch(typeof(CustomerEntriesHelper), "UpdateCustomerEntriesForPlayerBusiness", nameof(GenerateCustomers));
                 Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));
                 installed = true;
-            }
-            catch { patches.UnpatchAll(PatchId); throw; }
+            }, () => patches.UnpatchAll(PatchId));
         }
-        private static void Patch(Type type, string method, string prefix) => patches.Patch(AccessTools.Method(type, method),
-            prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First });
+        private static void Patch(Type type, string method, string patch, bool postfix = false) => patches.Patch(NativeFoodContract.AuthorityTarget(type, method),
+            prefix: postfix ? null : new HarmonyMethod(typeof(NativeFoodOwnership), patch) { priority = Priority.First },
+            postfix: postfix ? new HarmonyMethod(typeof(NativeFoodOwnership), patch) : null);
         internal static void Uninstall()
         {
             patches.UnpatchAll(PatchId); installed = false; market = null; save = null; StandDown = null;

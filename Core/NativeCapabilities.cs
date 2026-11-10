@@ -288,29 +288,37 @@ namespace PersistentCity.Core
         private readonly StringBuilder text = new StringBuilder(2048);
         private CapabilityRegistry? cachedRegistry;
         private long cachedRevision = -1;
-        private string? cachedContext, cachedStatus;
+        private string? cachedContext, cachedHeader, cachedStatus;
 
         /// <summary><c>pc capability status</c>: one header line and one line per capability. Reused while neither the
         /// registry revision nor the context changes.</summary>
-        public string Status(CapabilityRegistry registry, string gameVersion)
+        public string Status(CapabilityRegistry registry, string gameVersion) => Status(registry, gameVersion, null);
+
+        /// <summary>F8d: <paramref name="header"/>, when given, replaces the start status in the first line (a running city,
+        /// or a start held by a transient RLO answer).</summary>
+        public string Status(CapabilityRegistry registry, string gameVersion, string? header)
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
             gameVersion ??= "";
             if (cachedStatus != null && ReferenceEquals(registry, cachedRegistry) && registry.Revision == cachedRevision
-                && string.Equals(gameVersion, cachedContext, StringComparison.Ordinal))
+                && string.Equals(gameVersion, cachedContext, StringComparison.Ordinal) && string.Equals(header, cachedHeader, StringComparison.Ordinal))
                 return cachedStatus;
             text.Clear();
-            var start = registry.Start();
-            text.Append("Persistent City capabilities (game ").Append(OneLine(gameVersion)).Append("): start ")
-                .Append(StartWord(start.Status));
-            if (start.Capability.HasValue) text.Append(" (").Append(NativeCapabilities.Get(start.Capability.Value).Name).Append(')');
+            text.Append("Persistent City capabilities (game ").Append(OneLine(gameVersion)).Append("): ");
+            if (header != null) text.Append(OneLine(header));
+            else
+            {
+                var start = registry.Start();
+                text.Append("start ").Append(StartWord(start.Status));
+                if (start.Capability.HasValue) text.Append(" (").Append(NativeCapabilities.Get(start.Capability.Value).Name).Append(')');
+            }
             text.Append('\n');
             foreach (var definition in NativeCapabilities.All)
             {
                 Line(registry, definition);
                 text.Append('\n');
             }
-            cachedRegistry = registry; cachedRevision = registry.Revision; cachedContext = gameVersion;
+            cachedRegistry = registry; cachedRevision = registry.Revision; cachedContext = gameVersion; cachedHeader = header;
             return cachedStatus = text.ToString();
         }
 
@@ -397,7 +405,7 @@ namespace PersistentCity.Core
     }
 
     /// <summary>One patched native method for one owner. Parameters use CLR short names; null means the source resolves
-    /// the target by name only (F8c pins those).</summary>
+    /// the target by name only (none since F8c).</summary>
     public sealed class NativeHookTarget
     {
         internal NativeHookTarget(string owner, string type, string method, string[]? parameters, NativePatchKinds kinds, CapabilityId capability)
@@ -435,7 +443,7 @@ namespace PersistentCity.Core
 
         public static readonly IReadOnlyList<NativeHookOwner> Owners = Array.AsReadOnly(new[]
         {
-            new NativeHookOwner(FoodAuthority, "Runtime/NativeFoodOwnership.cs", 2),
+            new NativeHookOwner(FoodAuthority, "Runtime/NativeFoodOwnership.cs", 1),
             new NativeHookOwner(FoodRoutines, "Runtime/NativeFoodMarket.cs", 1),
             new NativeHookOwner(FoodContract, "Runtime/LoadedCatalogueLifecycleMembers.cs", 1, "Runtime/FoodContractHooks.cs"),
             new NativeHookOwner(CityClock, "Runtime/NativeCityClock.cs", 3),
@@ -458,12 +466,13 @@ namespace PersistentCity.Core
 
         public static readonly IReadOnlyList<NativeHookTarget> Targets = Array.AsReadOnly(new[]
         {
-            T(FoodAuthority, "GameManager", "RunMainGameTick", null, Post, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "RetailBusinessSimulator", "ProcessAllCustomersFromThisHour", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "RetailBusinessSimulator", "ProcessCustomer", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "CustomerEntriesHelper", "GetEntriesByAddress", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "CustomerEntriesHelper", "UpdateCustomerEntriesForPlayerBusiness", null, Pre, CapabilityId.FoodAuthority),
-            T(FoodAuthority, "BuildingRegistration", "Reset", null, Pre, CapabilityId.FoodAuthority),
+            // F8c pinned these six (NativeFoodContractSpec.Authority); before F8c they were resolved by name only.
+            T(FoodAuthority, "GameManager", "RunMainGameTick", new[] { "Single" }, Post, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "RetailBusinessSimulator", "ProcessAllCustomersFromThisHour", None, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry" }, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "CustomerEntriesHelper", "GetEntriesByAddress", new[] { "Address" }, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "CustomerEntriesHelper", "UpdateCustomerEntriesForPlayerBusiness", new[] { "BuildingRegistration", "DayOfWeekOrdered" }, Pre, CapabilityId.FoodAuthority),
+            T(FoodAuthority, "BuildingRegistration", "Reset", new[] { "Boolean" }, Pre, CapabilityId.FoodAuthority),
             T(FoodRoutines, "CitizenData", "IsPriceAcceptable", new[] { "String", "Single" }, Pre, CapabilityId.FoodCheckoutShop),
             // E5b2 Decision 1 table (Runtime/FoodContractHooks.cs), in table order.
             Hint("ItemsGetter", "OnItemsLoaded", "IList`1"),

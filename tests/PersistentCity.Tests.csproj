@@ -49,6 +49,8 @@
     <Compile Include="../tools/compact-format/WireTree.cs" Link="CompactFormat/WireTree.cs" />
     <Compile Include="../tools/compact-format/ColumnarCodec.cs" Link="CompactFormat/ColumnarCodec.cs" />
     <Compile Include="../tools/compact-format/Candidates.cs" Link="CompactFormat/Candidates.cs" />
+    <Compile Include="../tools/capability-matrix/CapabilityMatrix.cs" Link="CapabilityMatrix/CapabilityMatrix.cs" />
+    <Compile Include="../Runtime/FoodReceiptEvidence.cs" Link="FoodReceiptEvidence.cs" />
     <None Update="ReaderCorpus/**/*.json" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />

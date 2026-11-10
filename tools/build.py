@@ -15,6 +15,7 @@ root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--game-managed", required=True, type=Path)
 parser.add_argument("--json-assembly", type=Path, help="Explicit Newtonsoft.Json reference when the local Managed copy omits it")
+parser.add_argument("--fault-points", action="store_true", help="Test build only (F8c): define PC_FAULT_POINTS and write build/PersistentCity-faultpoints; never a release package")
 parser.add_argument("--provenance", type=Path, help="Write the game-assembly fingerprint (F9b) to this JSON file; never stops the build")
 parser.add_argument("--fingerprints", type=Path, default=root / "tools/acceptance/supported-game.json", help=argparse.SUPPRESS)
 args = parser.parse_args()
@@ -73,7 +74,7 @@ match = re.fullmatch(r"(\S+) \[(.*)\]", sdk_lines[-1])
 if not match:
     raise SystemExit("Cannot locate the .NET SDK compiler")
 csc = Path(match[2]) / match[1] / "Roslyn/bincore/csc.dll"
-output = root / "build/PersistentCity"
+output = root / ("build/PersistentCity-faultpoints" if args.fault_points else "build/PersistentCity")
 output.mkdir(parents=True, exist_ok=True)
 dependency = output / "Dependencies"
 dependency.mkdir(exist_ok=True)
@@ -96,6 +97,8 @@ command = [dotnet, str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:libr
 command += ["-reference:" + str(managed / (name + ".dll")) for name in references]
 command += ["-reference:" + str(json_reference)]
 command += ["-reference:" + str(harmony)]
+if args.fault_points:
+    command += ["-define:PC_FAULT_POINTS"]
 # A response file keeps long worktree paths under the Windows command-line limit.
 # csc reads -noconfig only from the command line.
 arguments = command[4:] + sources

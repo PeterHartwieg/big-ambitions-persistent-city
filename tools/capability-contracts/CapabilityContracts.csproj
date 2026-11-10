@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- F8c/F8e stub harness (docs/plans/f8-capability-boundaries.md D8): the Runtime contract and conflict classes compiled
+       against game stubs, with the Harmony build tools/build.py pins. Run: dotnet run -c Release (foreground). -->
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors><DefineConstants>$(DefineConstants);PC_FAULT_POINTS</DefineConstants><NoWarn>CS0169;CS0414;CS0649</NoWarn><SourceRoot Condition="'$(SourceRoot)' == ''">../..</SourceRoot></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SourceRoot)/Core/PersistentCity.Core.csproj" />
+    <ProjectReference Include="$(SourceRoot)/Persistence/PersistentCity.Persistence.csproj" />
+    <Compile Include="$(SourceRoot)/Runtime/NativeFoodContract.cs" Link="NativeFoodContract.cs" />
+    <Compile Include="$(SourceRoot)/Runtime/HookConflicts.cs" Link="HookConflicts.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+  </ItemGroup>
+</Project>

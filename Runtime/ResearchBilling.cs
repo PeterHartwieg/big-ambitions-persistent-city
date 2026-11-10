@@ -114,6 +114,9 @@ namespace PersistentCity.Runtime
 
         internal static string? Check(out MethodInfo? runDaily)
         {
+#if PC_FAULT_POINTS
+            if (FaultPoints.Research() is string fault) { runDaily = null; return fault; } // F8c test build only (rig check 7)
+#endif
             runDaily = typeof(MarketingHelper).GetMethod("RunDaily", Static, null, Type.EmptyTypes, null);
             if (runDaily == null || runDaily.ReturnType != typeof(void)) return "MarketingHelper.RunDaily() changed.";
             var safe = typeof(GameManager).GetMethod("ChangeMoneySafe", Static, null,

@@ -27,6 +27,12 @@ namespace PersistentCity.Compatibility
         private FieldInfo castWears = null!, castOut = null!, castPeople = null!, socialPeople = null!, personIndex = null!, personName = null!, personAge = null!, personFemale = null!, personSeed = null!, casualties = null!, casualtyTakeover = null!, takeoverPedestrian = null!, ragdolls = null!;
         public bool Ready { get; private set; }
         public string LastError { get; private set; } = "";
+
+        /// <summary>F8d diagnostics: the last guard's own verification result, recorded by every construction, update and
+        /// failure (no extra read). Static because the guard lives inside the physical population, which the capability
+        /// report does not reach. Null until a guard has been built in this process.</summary>
+        public static RloReservationVerdict? Last { get; private set; }
+        private void Record() => Last = new RloReservationVerdict(Ready, Ready && citizensKnown && bodiesKnown, LastError);
         public IReadOnlyCollection<string> ReservedCitizenIds => reserved;
         public bool IsReserved(string citizenId) => !Ready || !citizensKnown || reserved.Contains(citizenId);
         public bool IsReservedNativePedestrian(object pedestrian, object? character)
@@ -53,7 +59,7 @@ namespace PersistentCity.Compatibility
                 if (bridge != null)
                 {
                     foreach (var source in sources) sourceIds.Add(source.Id);
-                    Ready = true; Update();
+                    Ready = true; Update(); Record();
                     return;
                 }
                 Type director = Type(rlo, "SocialDirector"), cast = Type(rlo, "SocialCast"), person = Type(rlo, "SocialPerson"), cityPerson = Type(rlo, "CityPerson"), state = Type(rlo, "SocialState");
@@ -81,6 +87,12 @@ namespace PersistentCity.Compatibility
         public void Update()
         {
             if (!Ready) return;
+            try { UpdateCore(); }
+            finally { Record(); }
+        }
+
+        private void UpdateCore()
+        {
             if (bridge != null) { UpdateThroughApi(bridge); return; }
             try
             {
@@ -162,7 +174,7 @@ namespace PersistentCity.Compatibility
             finally { readIndexes.Clear(); readPedestrians.Clear(); readCharacters.Clear(); }
         }
 
-        private void Fail(Exception error) { Ready = false; LastError = error.GetType().Name + ": " + error.Message; }
+        private void Fail(Exception error) { Ready = false; LastError = error.GetType().Name + ": " + error.Message; Record(); }
         private static Type Type(Assembly assembly, string name) => assembly.GetType("RealLifeOverhaul." + name, true)!;
         private static FieldInfo Field(Type type, string name, Type expected, bool isStatic = false)
         {
@@ -182,5 +194,15 @@ namespace PersistentCity.Compatibility
             public new bool Equals(object? a, object? b) => ReferenceEquals(a, b);
             public int GetHashCode(object value) => RuntimeHelpers.GetHashCode(value);
         }
+    }
+
+    /// <summary>F8d: one guard verification. Complete is false while either read answered NotYet or Refreshing (everyone is
+    /// reserved for that read); Ready is false once the guard stopped (it then reserves everyone for good).</summary>
+    public sealed class RloReservationVerdict
+    {
+        public RloReservationVerdict(bool ready, bool complete, string error) { Ready = ready; Complete = complete; Error = error ?? ""; }
+        public bool Ready { get; }
+        public bool Complete { get; }
+        public string Error { get; }
     }
 }

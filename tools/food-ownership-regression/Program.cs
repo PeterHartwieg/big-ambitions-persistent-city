@@ -9,6 +9,7 @@ using PersistentCity.Runtime;
 int checks = 0;
 await new FoodAuthorityBootstrap().OnLoadAsync(new BAModAPI.ModContext());
 Check(HarmonyLib.Harmony.Patched.Count == 6, "Initialization installs passive hooks before any city market exists");
+CheckoutOff(); // F8c review: runs before the older arms, which predate the compact wire
 var reg = Fresh();
 var market = new NativeFoodMarket(reg);
 NativeFoodOwnership.Observe(reg, true); NativeFoodOwnership.Attach(market);
@@ -326,6 +327,66 @@ Check(CustomerEntriesHelper.Generated.Count == 14 && CustomerEntriesHelper.Gener
 Check(SaveGameManager.Current.modData[SaveStore.StateKey] == stoppedPopulation, "native handoff never overwrites the stopped population payload");
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 
+void CheckoutOff()
+{
+    BuildingRegistration reg; NativeFoodMarket market;
+    // F8c (review Sol-r2-4): checkout-off for a shop already owned in the save, through production NativeFoodOwnership. A
+    // city owns the shop; it is saved in the middle of an owned hour with one paid and one uncertain receipt and reloaded
+    // with a refused checkout contract. The market applies FoodCheckoutMode, the gate production SupportedMenu uses.
+    reg = Fresh(); market = new NativeFoodMarket(reg);
+    NativeFoodOwnership.Observe(reg, true); NativeFoodOwnership.Attach(market);
+    GameManager.RunMainGameTick(60);
+    long ownedFrom = NativeFoodOwnership.Find(reg)!.FromHour;
+    Check(NativeFoodOwnership.Find(reg)!.CanServe, "checkout-off fixture: the shop is owned");
+    string paidKey = FoodSaleReceipts.Prefix + "food:paid:lunch:1", uncertainKey = FoodSaleReceipts.Prefix + "food:uncertain:lunch:1";
+    SaveGameManager.Current.modData[paidKey] = "paid|1025|business|product";
+    SaveGameManager.Current.modData[uncertainKey] = "pending|1025|business|product";
+    string ownedManifest = SaveGameManager.Current.modData[FoodAuthorityStore.Key];
+    int loadedHour = SaveGameManager.Current.Hour;
+    NativeFoodOwnership.Detach(market);
+    reg = Fresh(loadedHour, ownedManifest, receiptKey: paidKey, receiptValue: "paid|1025|business|product");
+    SaveGameManager.Current.modData[uncertainKey] = "pending|1025|business|product";
+    var receiptsBefore = SaveGameManager.Current.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key).ToArray();
+    market = new NativeFoodMarket(reg) { Checkout = new FoodCheckoutMode("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed") };
+    NativeFoodOwnership.Attach(market);
+    Check(!market.Checkout.Serves && !market.Checkout.InstallsPricePrefix, "checkout-off: no service, no price prefix");
+    // The loaded owned hour stays suppressed.
+    Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "checkout-off: the loaded owned hour stays protected");
+    var loadedSim = new RetailBusinessSimulator(); loadedSim.SetUp(reg, loadedHour);
+    Check(!(bool)Hooks.Call("HourlyCustomers", loadedSim)!, "checkout-off: native customers stay suppressed in the owned hour");
+    // The market's refresh observes the shop ineligible: production Observe persists the withdrawal request.
+    market.RefreshKnownOwnership();
+    var withdrawn = FoodAuthorityStore.Read(SaveGameManager.Current.modData[FoodAuthorityStore.Key]).Single(r => r.PlaceId == NativeFoodMarket.PlaceId(reg));
+    Check(!withdrawn.Desired && withdrawn.RequestedHour == NativeFoodOwnership.Hour && withdrawn.FromHour == ownedFrom && withdrawn.UntilHour < 0,
+        "checkout-off: the withdrawal (Desired false with its hour) is persisted; ownership still runs");
+    Check(!NativeFoodOwnership.Find(reg)!.CanServe, "checkout-off: no new service");
+    // Reload in the same hour: the request survives and the hour is still protected.
+    string withdrawnManifest = SaveGameManager.Current.modData[FoodAuthorityStore.Key];
+    NativeFoodOwnership.Detach(market);
+    reg = Fresh(loadedHour, withdrawnManifest, receiptKey: paidKey, receiptValue: "paid|1025|business|product");
+    SaveGameManager.Current.modData[uncertainKey] = "pending|1025|business|product";
+    market = new NativeFoodMarket(reg) { Checkout = new FoodCheckoutMode("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed") };
+    NativeFoodOwnership.Attach(market);
+    var reloaded = NativeFoodOwnership.Find(reg)!;
+    Check(!reloaded.Desired && reloaded.Managed && reloaded.OwnsHour(NativeFoodOwnership.Hour), "checkout-off: the withdrawal survives a reload inside the owned hour");
+    Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "checkout-off: the reloaded owned hour stays protected");
+    GameManager.RunMainGameTick(0);
+    Check(NativeFoodOwnership.Find(reg)!.Managed, "checkout-off: no hand-back inside the owned hour");
+    // Receipts: paid stays paid, uncertain stays uncertain; nothing is begun or re-sold.
+    Check(SaveGameManager.Current.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key).SequenceEqual(receiptsBefore), "checkout-off: receipt evidence unchanged");
+    // The next drained boundary hands the shop back through production AfterNativeTick and persists it.
+    GameManager.RunMainGameTick(60);
+    var handedBack = FoodAuthorityStore.Read(SaveGameManager.Current.modData[FoodAuthorityStore.Key]).Single(r => r.PlaceId == NativeFoodMarket.PlaceId(reg));
+    Check(!handedBack.Managed && handedBack.UntilHour == NativeFoodOwnership.Hour, "checkout-off: the drained boundary hands the shop back and persists it");
+    Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 1, "checkout-off: native customers serve the shop after the hand-back");
+    Check(CustomerEntriesHelper.Generated.Count > 0 && CustomerEntriesHelper.Generated.All(h => h >= SaveGameManager.Current.Hour), "checkout-off: only current and future native hours are regenerated");
+    // It is never reacquired while checkout is off.
+    GameManager.RunMainGameTick(60); GameManager.RunMainGameTick(60);
+    Check(!NativeFoodOwnership.Find(reg)!.Managed, "checkout-off: no reacquisition");
+    Check(SaveGameManager.Current.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key).SequenceEqual(receiptsBefore), "checkout-off: receipt evidence unchanged after the hand-back");
+    NativeFoodOwnership.Detach(market);
+    Console.WriteLine("PASS checkout-off through production NativeFoodOwnership: owned hour protected across a reload, withdrawal persisted, receipts unchanged, drained-boundary hand-back persisted, no reacquisition");
+}
 BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null, string? receiptKey = null, string? receiptValue = null, string? populationPayload = null)
 {
     var shop = new BuildingRegistration();
@@ -451,6 +512,12 @@ namespace PersistentCity.Runtime
     public sealed class NativeFoodMarket
     {
         public BuildingRegistration Reg; public bool Eligible = true;
+        /// <summary>F8c: the gate production NativeFoodMarket.SupportedMenu applies (checkout-off makes no shop eligible).</summary>
+        public FoodCheckoutMode Checkout = new FoodCheckoutMode(null);
+        public void BeginContractCommit() { }
+        // Production CommitBoundary in Fallback mode: no coordinator, every hand-back commits.
+        public FoodContractBoundary.Outcome CommitBoundary(FoodAuthority row, long hour, bool live)
+            => FoodContractBoundary.Commit(row, null, hour, live, true, -1, (_, _) => true);
         public bool CampaignRunning=true;
         public readonly FoodCommerceState CampaignFood=new();
         private readonly FoodCampaignSource campaign;
@@ -458,7 +525,7 @@ namespace PersistentCity.Runtime
         public NativeFoodMarket(BuildingRegistration reg) { Reg = reg; campaign=new(CampaignFood,79,new()); }
         public static string PlaceId(BuildingRegistration reg) => "address:" + reg.StreetName + ":" + reg.StreetNumber + ":shop";
         public static bool IsBuying(BuildingRegistration reg) => false;
-        public void RefreshKnownOwnership() => NativeFoodOwnership.Observe(Reg, Eligible);
+        public void RefreshKnownOwnership() => NativeFoodOwnership.Observe(Reg, Checkout.Observe(Eligible));
         public void ActivateScope(FoodAuthority row, BuildingRegistration reg)
         {
             if(!CampaignFood.Shops.Any(s=>s.BusinessId==row.BusinessId))
@@ -475,13 +542,43 @@ namespace PersistentCity.Runtime
         }
     }
     public static class FoodBusinessCatalogue { public static string BusinessIdentity(BuildingRegistration reg) => reg.Signature; }
+    public static class FoodMarkets
+    {
+        // Same body as Runtime/FoodMarkets.ValidateShops (that file needs the vehicle market, which this harness does not stub).
+        public static void ValidateShops(FoodCommerceState state, IEnumerable<FoodAuthority> manifest, Func<FoodAuthority, FoodScope, bool> matches, Action<string> refuse)
+        {
+            var rows = manifest.ToDictionary(r => r.PlaceId, StringComparer.Ordinal);
+            foreach (var scope in state.Shops.Where(s => s.Channel == FoodScopeChannel.Shop))
+                if (!rows.TryGetValue(scope.PlaceId, out var row) || !matches(row, scope))
+                    refuse("Saved food scope differs from its authority manifest");
+            foreach (var row in rows.Values.Where(r => r.FromHour >= 0))
+                if (!state.Shops.Any(s => s.Channel == FoodScopeChannel.Shop && s.PlaceId == row.PlaceId && matches(row, s)))
+                    refuse("Saved food authority has no corresponding population scope");
+        }
+    }
+    /// <summary>The harness's native doubles have their own shapes, so the contract here passes; the install order (check,
+    /// then the body, rollback on failure) is the production InstallChecked's.</summary>
+    internal static class NativeFoodContract
+    {
+        internal sealed class Result { internal Result(string? refusal) { Refusal = refusal; } internal string? Refusal { get; } }
+        internal static readonly Result Authority = new Result(null);
+        internal static MethodInfo AuthorityTarget(Type type, string method) => HarmonyLib.AccessTools.Method(type, method);
+        internal static FieldInfo AuthorityField(string name) => HarmonyLib.AccessTools.Field(typeof(Helpers.BusinessSimulation.BusinessSimulator), name);
+        internal static void InstallChecked(Result contract, Action install, Action rollback)
+        {
+            if (contract.Refusal != null) throw new InvalidOperationException(contract.Refusal);
+            try { install(); }
+            catch { rollback(); throw; }
+        }
+    }
 }
-namespace UnityEngine { public static class Debug { public static void LogError(string value) { } } }
+namespace UnityEngine { public static class Debug { public static void LogError(string value) { } public static void LogWarning(string value) { } } }
 namespace BAModAPI
 {
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)] public sealed class RegisterModClassAttribute : Attribute { public RegisterModClassAttribute(Type type) { } }
     public sealed class ModEntryOnInitializationLoadAttribute : Attribute { }
-    public sealed class ModContext { }
+    public sealed class ModContext { public ModLogger Logger { get; } = new ModLogger(); }
+    public sealed class ModLogger { public void Warn(string message) { } }
     public interface IModBigAmbitions { string[] RelativeAssetBundlePaths { get; } Task OnLoadAsync(ModContext context); Task OnUnloadAsync(); }
 }
 namespace HarmonyLib
