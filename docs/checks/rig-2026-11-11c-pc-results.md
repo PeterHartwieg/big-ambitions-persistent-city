@@ -45,7 +45,7 @@ On this run's fresh Ready city, `foreign_patch install` added owner `agent-rig.f
 food.checkout.shop optional off: foreign prefix by agent-rig.foreign.pc1111c on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)
 ```
 
-The hooks entry ended `-> refuses food.checkout.shop`, with one refusing entry; the activation capability line and deciding hook scan named the same refusal (scan 13.002 ms). `foreign_patch remove` succeeded. After reload, status reported checkout active, hooks reported 49/49 targets and 0 refusing, and `ProcessCustomer` had no foreign owner. The final owner list matched the initial owner list. Live PC keys contained no food-sale receipt key. Raw evidence: `<stage>/runs/foreign2/results`, `capability-summary.json`, `foreign-refusal-Player.log`, `foreign-restored-Player.log`.
+The hooks entry ended `-> refuses food.checkout.shop`, with one refusing entry; the activation capability line and deciding hook scan named the same refusal (scan 13.002 ms, a provisional startup observation on the shared PC; no measured window or p95 verdict). `foreign_patch remove` succeeded. After reload, status reported checkout active, hooks reported 49/49 targets and 0 refusing, and `ProcessCustomer` had no foreign owner. The final owner list matched the initial owner list. Live PC keys contained no food-sale receipt key. Raw evidence: `<stage>/runs/foreign2/results`, `capability-summary.json`, `foreign-refusal-Player.log`, `foreign-restored-Player.log`.
 
 The first attempt (`<stage>/runs/foreign`) is retained: after a successful install, the stage loader accepted stale `load=done` state and attempted removal during the menu transition. Exact removal error: `ops_city_required`. Cleanup pause was refused at the menu; normal quit succeeded, removing the process-local owner. Mods and lifecycle were restored. The stage loader was corrected to require a new native `Test bridge: load '…' done` log line. The second attempt ran the full cycle; no rig checkout or overlay change.
 `foreign2` then advanced naturally from 08:00 to 09:00, paused at the boundary, with checkout active and no accounting refusal. Cleanup stopped only the owned game, restored mods/preferences, and released the lease (all cleanup actions succeeded).
@@ -144,20 +144,20 @@ The first S2 pause produced an early-minute checkpoint (`1922.0277554988861`); t
 
 ## Fixtures
 
-Only the two fresh native characters produced at this candidate were loaded. All created fixture saves remain in place. Paths below are within the isolated agent1 profile. The full file/companion inventory is `<stage>/fixtures.json`; SHA-256 was re-read after stop. All ten save hashes still match their creation/manual-save records (`<stage>/fixture-hash-verification.json`).
+Only the two fresh native characters produced at this candidate were loaded. All created fixture saves remain in place. Files below are in the isolated agent1 profile's save folder, one subfolder per character. Absolute paths and the full file/companion inventory are in `<stage>/fixtures.json`; SHA-256 was re-read after stop. All ten save hashes still match their creation/manual-save records (`<stage>/fixture-hash-verification.json`).
 
-| Name | Path | SHA-256 |
+| Name | File | SHA-256 |
 |---|---|---|
-| `FT E5b PC 11 Nov c 10b2d7bf Ready` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/ZbCGauxmqEOYNy3W93PiDg==/FT E5b PC 11 Nov c 10b2d7bf Ready.hsg` | `ec6157fe1173b1264c30e4d99f3a957aebae3529a8f8ac051f312fba9d0bba29` |
-| `FT E5b PC 11 Nov c 10b2d7bf` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/ZbCGauxmqEOYNy3W93PiDg==/FT E5b PC 11 Nov c 10b2d7bf.hsg` | `afede46380a1b0ed15f57ca33aecd3557c3d63cbdbacd18314f4b4260d5d8714` |
-| `FT PC 11 Nov c epoch Toggle Baseline` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/ZbCGauxmqEOYNy3W93PiDg==/FT PC 11 Nov c epoch Toggle Baseline.hsg` | `94294ccd30ee3d10535bc6c24fc56c7ec9a67588dd5bceb0425ffd75c737f9e5` |
-| `FT PC 11 Nov c epoch Toggle Off` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/ZbCGauxmqEOYNy3W93PiDg==/FT PC 11 Nov c epoch Toggle Off.hsg` | `4f4c96407205b0ceca70b8a194c1f9fde21f520122bddad65a4e4fd4136662bd` |
-| `FT PC 11 Nov c epoch Toggle On` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/ZbCGauxmqEOYNy3W93PiDg==/FT PC 11 Nov c epoch Toggle On.hsg` | `436bf5017275bf8fcd4e9a69406aa38fb666f89fe7950fbec9ba30e3f80d790d` |
-| `FT PC 11 Nov c epoch4 Toggle Reload Verified` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/ZbCGauxmqEOYNy3W93PiDg==/FT PC 11 Nov c epoch4 Toggle Reload Verified.hsg` | `7b492348206d4ccf3fbf6c4a253afb275b71f26ddc4cf6c54b3f86a84f5a7519` |
-| `FT E5b PC 11 Nov c S2 10b2d7bf Ready` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/feXVjLbotkuOnEs2vFs5Lw==/FT E5b PC 11 Nov c S2 10b2d7bf Ready.hsg` | `ca1eb123fbbf59907f4a529d633431a155e77e6734fbbca4cb4e40a0d3d0710e` |
-| `FT E5b PC 11 Nov c S2 10b2d7bf` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/feXVjLbotkuOnEs2vFs5Lw==/FT E5b PC 11 Nov c S2 10b2d7bf.hsg` | `5ea11d3ece175561d750f64f6e470e6a04c120eed3a88212de6de6662ea9e559` |
-| `FT PC 11 Nov c epoch S2 Late` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/feXVjLbotkuOnEs2vFs5Lw==/FT PC 11 Nov c epoch S2 Late.hsg` | `25f7eabdd162ff4b7327624ad37f7eb92053b0dd17e4090c8a3219dc7f2e5f3f` |
-| `FT PC 11 Nov c epoch4 S2 Late Verified 1` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/feXVjLbotkuOnEs2vFs5Lw==/FT PC 11 Nov c epoch4 S2 Late Verified 1.hsg` | `16ef92d6e1a151e1ee4097babaa8fedbeaa1fac8f01eccf049e8952b39d4ad82` |
+| `FT E5b PC 11 Nov c 10b2d7bf Ready` | character 1 / `FT E5b PC 11 Nov c 10b2d7bf Ready.hsg` | `ec6157fe1173b1264c30e4d99f3a957aebae3529a8f8ac051f312fba9d0bba29` |
+| `FT E5b PC 11 Nov c 10b2d7bf` | character 1 / `FT E5b PC 11 Nov c 10b2d7bf.hsg` | `afede46380a1b0ed15f57ca33aecd3557c3d63cbdbacd18314f4b4260d5d8714` |
+| `FT PC 11 Nov c epoch Toggle Baseline` | character 1 / `FT PC 11 Nov c epoch Toggle Baseline.hsg` | `94294ccd30ee3d10535bc6c24fc56c7ec9a67588dd5bceb0425ffd75c737f9e5` |
+| `FT PC 11 Nov c epoch Toggle Off` | character 1 / `FT PC 11 Nov c epoch Toggle Off.hsg` | `4f4c96407205b0ceca70b8a194c1f9fde21f520122bddad65a4e4fd4136662bd` |
+| `FT PC 11 Nov c epoch Toggle On` | character 1 / `FT PC 11 Nov c epoch Toggle On.hsg` | `436bf5017275bf8fcd4e9a69406aa38fb666f89fe7950fbec9ba30e3f80d790d` |
+| `FT PC 11 Nov c epoch4 Toggle Reload Verified` | character 1 / `FT PC 11 Nov c epoch4 Toggle Reload Verified.hsg` | `7b492348206d4ccf3fbf6c4a253afb275b71f26ddc4cf6c54b3f86a84f5a7519` |
+| `FT E5b PC 11 Nov c S2 10b2d7bf Ready` | character 2 (S2) / `FT E5b PC 11 Nov c S2 10b2d7bf Ready.hsg` | `ca1eb123fbbf59907f4a529d633431a155e77e6734fbbca4cb4e40a0d3d0710e` |
+| `FT E5b PC 11 Nov c S2 10b2d7bf` | character 2 (S2) / `FT E5b PC 11 Nov c S2 10b2d7bf.hsg` | `5ea11d3ece175561d750f64f6e470e6a04c120eed3a88212de6de6662ea9e559` |
+| `FT PC 11 Nov c epoch S2 Late` | character 2 (S2) / `FT PC 11 Nov c epoch S2 Late.hsg` | `25f7eabdd162ff4b7327624ad37f7eb92053b0dd17e4090c8a3219dc7f2e5f3f` |
+| `FT PC 11 Nov c epoch4 S2 Late Verified 1` | character 2 (S2) / `FT PC 11 Nov c epoch4 S2 Late Verified 1.hsg` | `16ef92d6e1a151e1ee4097babaa8fedbeaa1fac8f01eccf049e8952b39d4ad82` |
 
 ## Per-check results
 
