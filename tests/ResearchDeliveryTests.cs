@@ -301,7 +301,81 @@ public sealed class ResearchDeliveryTests
 
     // ---- window: nothing built while closed ----
 
+    [Fact]
+    public void ClosedWindowBuildsNothing()
+    {
+        var model = new ResearchWindowModel();
+        var ledger = new ResearchLedger();
+        var paid = Surveyed(ledger, Shop(1));
+        Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(paid.Id));
+        int names = 0;
+        string Name(string place) { names++; return "Shop"; }
+        for (int i = 0; i < 1000; i++) Assert.Null(model.Update(i, ledger, Name));
+        Assert.Equal(0, model.Builds); Assert.Equal(0, names); Assert.Null(model.View);
+
+        model.Show();
+        var view = model.Update(10, ledger, Name);
+        Assert.NotNull(view);
+        Assert.Equal(1, model.Builds);
+        Assert.Equal(new[] { paid.Id }, view!.Ids);
+        Assert.Contains("7,0", view.Detail); // the newest Paid report is selected by default
+        // Cached within the refresh interval; rebuilt after it and on a new selection.
+        Assert.Same(view, model.Update(10.5, ledger, Name));
+        Assert.Equal(1, model.Builds);
+        Assert.NotSame(view, model.Update(11.01, ledger, Name));
+        Assert.Equal(2, model.Builds);
+        model.Select(paid.Id);
+        model.Update(11.02, ledger, Name);
+        Assert.Equal(3, model.Builds);
+
+        // Closing drops the view; closed again, nothing is read.
+        model.Hide();
+        Assert.Null(model.View);
+        names = 0;
+        Assert.Null(model.Update(20, null, _ => throw new InvalidOperationException("closed window read a name")));
+        Assert.Equal(3, model.Builds); Assert.Equal(0, names);
+        model.Toggle(); Assert.True(model.Open); model.Toggle(); Assert.False(model.Open);
+
+        // Open without an attached city: a message, no numbers.
+        model.Show();
+        Assert.Equal("Market research is not attached to this city.", model.Update(30, null, Name)!.Detail);
+    }
+
     // ---- activation ----
+
+    [Fact]
+    public void AvailableIsFalseWhenAnyAttachOrContractCheckFails()
+    {
+        var names = new[] { "Persistent City is not attached", "agency dialog contract failed", "billing contract failed",
+            "delivery contract failed", "research ledger not attached" };
+        for (int mask = 0; mask < 32; mask++)
+        {
+            bool Bit(int i) => (mask & (1 << i)) != 0;
+            var activation = new MarketResearchActivation(Bit(0), Bit(1), Bit(2), Bit(3), Bit(4));
+            Assert.Equal(mask == 31, activation.Available);
+            int firstFailed = Enumerable.Range(0, 5).FirstOrDefault(i => !Bit(i), -1);
+            Assert.Equal(firstFailed < 0 ? "" : names[firstFailed], activation.Refusal);
+            var settings = new MarketResearchSettings();
+            settings.DeriveAvailability(() => activation);
+            Assert.Equal(mask == 31, settings.Available);
+        }
+        Assert.False(default(MarketResearchActivation).Available);
+
+        // Unbound, cleared and config-supplied settings are never available; the checks are read on every call.
+        var live = new MarketResearchSettings();
+        Assert.False(live.Available);
+        bool attached = true;
+        live.DeriveAvailability(() => new MarketResearchActivation(attached, true, true, true, true));
+        Assert.True(live.Available);
+        attached = false;
+        Assert.False(live.Available);
+        Assert.Equal("Persistent City is not attached", live.Activation.Refusal);
+        attached = true; live.ClearAvailability();
+        Assert.False(live.Available);
+        Assert.False(typeof(MarketResearchSettings).GetProperty("Available")!.CanWrite);
+        Assert.False(typeof(MarketResearchSettings).GetProperty("Activation")!.CanWrite);
+        Assert.Throws<ArgumentNullException>(() => live.DeriveAvailability(null!));
+    }
 
     [Fact]
     public void AFailedDeliveryContractLeavesASavedSurveyedOrderUnchargedAndUnchanged()
