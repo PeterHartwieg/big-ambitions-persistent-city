@@ -67,3 +67,10 @@ Native reload reached city running, and Social Media's installed restore returne
 
 The earlier S2 minute `1922.0277554988861` and `start ready` observation remain PARTIAL evidence in `<stage>/runs/epoch`; the late-minute verdict uses only the completed `epoch4` observation above.
 
+
+## Shop-rental retry: 18 Fourth Avenue
+
+The one requested attempt at `ba:street_fourthavenue#18` stopped before rental with **`ops_shop_vacant_suitable_required`**. Native `shop_state` identified the existing **Pump Up gym**, 75 m², not player-rented/owned. It was left untouched. The subsequent fixture status returned **`ops_fixture_unknown`**, because no fixture job had been created. Player money was **10000.0 before and after**. Exact requests, refusals and native state: `<stage>/runs/shop/results/007-shop-rental-once.json` through `010-native-state-after-shop.json`. All cleanup actions succeeded; normal stop, exact lifecycle restore and lease release verified.
+
+The installed rig's checked-in history documents a rented fixture at `ba:street_thirdstreet#32` (`docs/reviews/live/20261102-live4/native/shop-build.json`, repeated in the live-6 shop records). One normal `acquire: rent` attempt at that documented alternative follows, using native vacancy/suitability/funds checks. No change to the gym, campaign purchase, money injection, rival-finance write or rental bypass.
+
