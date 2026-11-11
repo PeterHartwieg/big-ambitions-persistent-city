@@ -21,3 +21,19 @@ Role `rig_test`, HomePCHartwieg, Windows background agent1. Candidate `10b2d7bfa
 ## Runs
 
 Setup and build implemented. Native producer currently creating this run's disposable FT city; results will be appended after the segment finishes.
+
+## F8h check 1
+
+**PARTIAL; install/refusal/remove/reload assertions verified by rig.** Also covers the same F8a-11 foreign-prefix row. Owned-shop hand-back, lunch service, sale suppression and reacquisition require the shop fixture and are not inferred from capability reports.
+
+On this run's fresh Ready city, `foreign_patch install` added owner `agent-rig.foreign.pc1111c`, kind `prefix`, to `RetailBusinessSimulator.ProcessCustomer(CustomerEntry)`. Its native readback included `AgentRigOps.ForeignPatchWorld.ForeignPrefix`. Reloaded status:
+
+```text
+food.checkout.shop optional off: foreign prefix by agent-rig.foreign.pc1111c on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)
+```
+
+The hooks entry ended `-> refuses food.checkout.shop`, with one refusing entry; the activation capability line and deciding hook scan named the same refusal (scan 13.002 ms). `foreign_patch remove` succeeded. After reload, status reported checkout active, hooks reported 49/49 targets and 0 refusing, and `ProcessCustomer` had no foreign owner. The final owner list matched the initial owner list. Live PC keys contained no food-sale receipt key. Raw evidence: `<stage>/runs/foreign2/results`, `capability-summary.json`, `foreign-refusal-Player.log`, `foreign-restored-Player.log`.
+
+The first attempt (`<stage>/runs/foreign`) is retained: after a successful install, the stage loader accepted stale `load=done` state and attempted removal during the menu transition. Exact removal error: `ops_city_required`. Normal process exit removed the process-local owner; mods and lifecycle were restored. The stage loader was corrected to require a new native `Test bridge: load '…' done` log line. The second attempt ran the full cycle; no rig checkout or overlay change.
+`foreign2` then advanced naturally from 08:00 to 09:00, paused at the boundary, with checkout active and no accounting refusal. Cleanup stopped only the owned game, restored mods/preferences, and released the lease (all cleanup actions succeeded).
+
