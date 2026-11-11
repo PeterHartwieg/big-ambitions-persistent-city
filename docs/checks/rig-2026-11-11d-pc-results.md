@@ -86,3 +86,7 @@ PARTIAL. The documented croissant/donut setup and a paused native donut-price ed
 ## F9 shop checkpoint
 
 PARTIAL. Created a local unsealed day-three 07:30 f9-city-ready checkpoint from the same fresh character and selected shop; recorded PC capability, manifest, shop, food decisions and existing projections. No official FT-F9 manifest was sealed. Formal rows requiring RIG-ACCEPT, paired head/base or daily-reload controls, PhysicalEnabled/config readback, Street Food vendor/API or reserved presentation steps remain NOT RUN. Raw evidence: `<stage>/runs/remaining`, f9-prefixed actions and `f9-day3-Player.log`.
+
+## F6b supported shop observations
+
+PARTIAL. Recorded one staffed two-offer shop at 10:00/11:00/12:00/13:00, its bounded natural-purchase log, native ledger, RivalFoodDiagnostics, FoodDiagnostics and an intraday rival fingerprint pair where a food rival was available. No native rival field was written. This is no FT-F6b-RivalLimits rush/control or calibration verdict. The reviewed config allowlist lacks RivalServiceLanes and RivalMealPeriodUnits; tight-profile and profile-change rows remain NOT RUN. No performance window was measured. Raw evidence: `<stage>/runs/remaining`, f6-prefixed actions.
