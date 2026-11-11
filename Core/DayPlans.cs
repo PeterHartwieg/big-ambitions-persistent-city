@@ -342,10 +342,11 @@ namespace PersistentCity.Core
             return new WorkWindow(person.DayPlaceId, person.Identity.Persona == Persona.Student ? Activity.Study : Activity.Work, start, start + 480);
         }
 
-        /// <summary>Moves a 480-minute shift into the open part of its plan day (04:00 to midnight) that holds it whole: Early
-        /// to its opening, Late to its closing, Day and Night to the nearest fit. A template already inside the hours stays; a
-        /// day with no long enough opening keeps the template, and the closed venue is met at arrival. A fitted shift never
-        /// starts before the plan's day boundary or after midnight, so it always belongs to the plan of its own day.</summary>
+        /// <summary>Moves a 480-minute shift into an opening that holds it whole and lets it start on this calendar day: Early
+        /// to its opening, Late to its latest start, Day and Night to the nearest fit. It may start before the 04:00 plan
+        /// boundary or run past midnight; the previous plan's saved next shift and the overnight lookup carry it across.
+        /// A template already inside the hours stays; a day with no long enough opening keeps the template, and the closed
+        /// venue is met at arrival.</summary>
         internal static double FitShift(Place workplace, int day, double start, ShiftType shift)
         {
             // Opening hours are only defined within the supported clock; a lookahead near its end keeps the template.
@@ -353,13 +354,13 @@ namespace PersistentCity.Core
             double? close = DailyRoutine.NextClose(workplace, start);
             if (close.HasValue && close.Value >= start + 480) return start;
             double midnight = day * 1440.0, best = start, bestDistance = double.PositiveInfinity;
-            double earliest = midnight + DayBoundaryMinute, latest = midnight + 1440;
             foreach (var interval in DailyRoutine.Intervals(workplace, midnight))
             {
-                double from = Math.Max(interval.From, earliest), to = Math.Min(interval.To, latest);
-                if (to - from < 480) continue;
-                double candidate = shift == ShiftType.Early ? from : shift == ShiftType.Late ? to - 480
-                    : Math.Max(from, Math.Min(to - 480, start));
+                // Starts on this calendar day only, so a shift has one start day (its wage day and its plan's day).
+                double from = Math.Max(interval.From, midnight), last = Math.Min(interval.To - 480, midnight + 1439);
+                if (last < from) continue;
+                double candidate = shift == ShiftType.Early ? from : shift == ShiftType.Late ? last
+                    : Math.Max(from, Math.Min(last, start));
                 double distance = Math.Abs(candidate - start);
                 if (distance < bestDistance) { best = candidate; bestDistance = distance; }
             }
@@ -391,6 +392,25 @@ namespace PersistentCity.Core
                 for (int i = 0; i < plan.Items.Count; i++)
                     if (!DayPlan.Terminal(plan.StateOf(i)) && plan.Items[i].EndsAt > now && plan.Items[i].Kind != PlanItemKind.Meal) return;
             person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals);
+            Adopt(person);
+        }
+
+        /// <summary>A plan drawn while one of its items already runs (a shift begun before the 04:00 boundary, from the
+        /// previous plan's saved next shift) takes that item's state from the person: at the venue it is active, on the
+        /// way it is travelling.</summary>
+        private static void Adopt(CitizenState person)
+        {
+            var plan = person.Plan!;
+            if (person.Activity == Activity.Home && person.DestinationActivity == Activity.Home) return;
+            for (int i = 0; i < plan.Items.Count; i++)
+            {
+                var item = plan.Items[i];
+                if (item.Kind == PlanItemKind.Meal || item.EndsAt != person.ActivityUntilMinute) continue;
+                if (person.Phase == CitizenPhase.AtPlace && person.Activity == item.Activity && person.PlaceId != person.HomeId)
+                    plan.Set(i, PlanItemState.Active);
+                else if (person.Phase == CitizenPhase.Travelling && person.DestinationActivity == item.Activity)
+                    plan.Set(i, PlanItemState.Travelling);
+            }
         }
 
         /// <summary>A job change during the day cancels the old work item that has not begun and plans the new workplace's
@@ -458,26 +478,27 @@ namespace PersistentCity.Core
         {
             var plan = person?.Plan;
             if (plan == null) return;
+            // The record is authoritative, so a state is replaced, never locked: a decline or miss is provisional while
+            // the meal can still be retried at a later stop, and that retry's travel, service and outcome replace it.
             for (int i = 0; i < plan.Items.Count; i++)
             {
                 var item = plan.Items[i];
-                if (item.Kind != PlanItemKind.Meal || DayPlan.Terminal(plan.StateOf(i))) continue;
+                if (item.Kind != PlanItemKind.Meal) continue;
+                bool current = record.Day == plan.Day && record.Kind == item.Meal;
                 var outcome = record.Today != null && record.Today.Day == plan.Day ? record.Today.Find(item.Meal) : null;
-                if (outcome != null)
-                {
+                if (current && record.Status == MealStatus.Travelling) plan.Restore(i, PlanItemState.Travelling, PlanMissCause.None);
+                else if (current && (record.Status == MealStatus.Serving || record.Status == MealStatus.Uncertain)) plan.Restore(i, PlanItemState.Active, PlanMissCause.None);
+                else if (outcome != null)
                     switch (outcome.Status)
                     {
-                        case MealOutcomeStatus.Bought: plan.Set(i, PlanItemState.Done); break;
-                        case MealOutcomeStatus.ChoseAlternative: plan.Set(i, PlanItemState.Cancelled); break;
-                        case MealOutcomeStatus.Skipped: plan.Set(i, PlanItemState.Missed, MealCause(outcome.Reason)); break;
-                        default: plan.Set(i, PlanItemState.Active); break; // unconfirmed: the receipt is still being proven
+                        case MealOutcomeStatus.Bought: plan.Restore(i, PlanItemState.Done, PlanMissCause.None); break;
+                        case MealOutcomeStatus.ChoseAlternative: plan.Restore(i, PlanItemState.Cancelled, PlanMissCause.None); break;
+                        case MealOutcomeStatus.Skipped: plan.Restore(i, PlanItemState.Missed, MealCause(outcome.Reason)); break;
+                        default: plan.Restore(i, PlanItemState.Active, PlanMissCause.None); break; // unconfirmed: the receipt is still being proven
                     }
-                    continue;
-                }
-                bool current = record.Day == plan.Day && record.Kind == item.Meal;
-                if (current && record.Status == MealStatus.Travelling) plan.Set(i, PlanItemState.Travelling);
-                else if (current && (record.Status == MealStatus.Serving || record.Status == MealStatus.Uncertain)) plan.Set(i, PlanItemState.Active);
-                else if (!current && (record.Day > plan.Day || record.Day == plan.Day && record.Kind > item.Meal)) plan.Set(i, PlanItemState.Cancelled);
+                // Passed without an outcome (a dormant visitor's day); an outcome already derived stays.
+                else if (!current && !DayPlan.Terminal(plan.StateOf(i)) && (record.Day > plan.Day || record.Day == plan.Day && record.Kind > item.Meal))
+                    plan.Restore(i, PlanItemState.Cancelled, PlanMissCause.None);
             }
         }
 

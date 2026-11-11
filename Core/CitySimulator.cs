@@ -161,7 +161,7 @@ namespace PersistentCity.Core
             DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Missed, cause != PlanMissCause.None ? cause : DayPlanExecutor.CauseOf(reason));
             if (slot.Activity == Activity.Work)
             {
-                var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1), places);
+                var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places); // a shift's start day
                 if (w.HasValue && person.Accrual.Day == (int)(w.Value.StartsAt / 1440)
                     && (person.Accrual.Shift == EmploymentWages.Closed || person.Accrual.Shift == EmploymentWages.ClosureDay))
                 { ObserveRoutine(person, slot, now, "closed", "workplace-closed"); return; }
@@ -888,7 +888,7 @@ namespace PersistentCity.Core
             }
             if (slot.Activity == Activity.Work)
             {
-                var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1), places);
+                var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places); // a shift's start day
                 if (work.HasValue && now >= work.Value.StartsAt && person.Accrual.Day == (int)(work.Value.StartsAt / 1440)
                     && person.Accrual.Shift == EmploymentWages.Closed)
                 {
@@ -1010,7 +1010,7 @@ namespace PersistentCity.Core
         private double AdmissionFrom(CitizenState person)
         {
             if (!(routes is ICommuteTimingPlanner) || (person.DestinationActivity != Activity.Work && person.DestinationActivity != Activity.Study)) return 0;
-            var window = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 0.001), places);
+            var window = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 480), places); // a shift's start day
             return window.HasValue && window.Value.EndsAt == person.ActivityUntilMinute ? window.Value.StartsAt : 0;
         }
 

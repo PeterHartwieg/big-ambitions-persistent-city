@@ -307,16 +307,17 @@ public sealed class DayPlanTests
 
     // ---- Review round 1 ----
 
-    /// <summary>Sol-r1-1, Astra-r1-1: a fitted shift never starts before its plan's 04:00 boundary or after midnight, so the
-    /// plan of its own day always holds it; hours that only allow such a shift keep the template.</summary>
+    /// <summary>Astra-r1-1, Astra-r2-1: a fitted shift starts on its own calendar day (its wage day and its plan's day),
+    /// before the 04:00 boundary or late enough to run past midnight when the hours call for it, and is never shortened.</summary>
     [Theory]
-    [InlineData(Persona.Commuter, 120, 600)]
-    [InlineData(Persona.Commuter, 1320, 600)]
-    [InlineData(Persona.NightOwl, 1320, 600)]
-    [InlineData(Persona.NightOwl, 1080, 120)]
-    [InlineData(Persona.Parent, 0, 480)]
-    [InlineData(Persona.Commuter, 240, 720)]
-    public void AFittedShiftStaysInsideItsPlanDay(Persona persona, int open, int close)
+    [InlineData(Persona.Commuter, 120, 600, 120)]   // 02:00-10:00
+    [InlineData(Persona.Commuter, 1320, 600, 120)]  // 22:00-10:00: the overnight opening's part from midnight is nearer
+    [InlineData(Persona.NightOwl, 1320, 600, 120)]
+    [InlineData(Persona.NightOwl, 1080, 120, 1080)] // 18:00-02:00
+    [InlineData(Persona.Commuter, 1080, 120, 1080)]
+    [InlineData(Persona.Parent, 0, 480, 0)]
+    [InlineData(Persona.Commuter, 240, 720, 240)]
+    public void AFittedShiftStartsOnItsOwnCalendarDay(Persona persona, int open, int close, int expected)
     {
         var city = City(persona, work: true);
         var work = city.Places.Single(p => p.Id == "work"); work.OpenMinute = open; work.CloseMinute = close;
@@ -324,8 +325,41 @@ public sealed class DayPlanTests
         for (int day = 1; day <= 4; day++)
         {
             var shift = DailyRoutine.WorkOnDay(city.Citizens[0], Seed, day * 1440.0, index)!.Value;
-            Assert.InRange(shift.StartsAt, day * 1440.0 + DayPlanner.DayBoundaryMinute, (day + 1) * 1440.0 - 480);
-            Assert.Equal(480, shift.EndsAt - shift.StartsAt);
+            Assert.Equal((day * 1440.0 + expected, day * 1440.0 + expected + 480), (shift.StartsAt, shift.EndsAt));
+        }
+    }
+
+    /// <summary>Astra-r2-1: shifts across midnight (18:00-02:00) and before the 04:00 boundary (02:00-10:00) are attended
+    /// whole every working day and paid, the plan item ends done, and a reload in the middle of the shift continues to the
+    /// same bytes.</summary>
+    [Theory]
+    [InlineData(1080, 120, 2940)]
+    [InlineData(120, 600, 3060)]
+    public void ShiftsAcrossMidnightOrBeforeTheBoundaryAreAttendedPaidAndSurviveReload(int open, int close, double reloadAt)
+    {
+        CitySimulator Build()
+        {
+            var city = AttendanceWageTests.Fresh(42, count: 3);
+            var work = city.State.Places.Single(p => p.Id == "work"); work.OpenMinute = open; work.CloseMinute = close;
+            return city;
+        }
+        var reference = Build();
+        AttendanceWageTests.Advance(reference, reloadAt);
+        Assert.Contains(reference.State.Citizens, p => p.Activity == Activity.Work && p.Phase == CitizenPhase.AtPlace);
+        var reloaded = new CitySimulator(SaveWire.Read(SaveCodec.Write(reference.State)).State!, new AttendanceWageTests.Routes());
+        reloaded.AttachFoodMarket(new AttendanceWageTests.Market());
+        AttendanceWageTests.Advance(reference, 3 * Monday + 700); AttendanceWageTests.Advance(reloaded, 3 * Monday + 700);
+        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(reloaded.State));
+        var budgets = reference.State.Food!.Residents.ToDictionary(r => r.ResidentId, r => r.Budget!);
+        foreach (var person in reference.State.Citizens)
+        {
+            for (int day = 1; day <= 2; day++)
+                Assert.Single(person.RecentVisits, v => v.Activity == Activity.Work && v.AtMinute >= day * 1440.0 + open && v.AtMinute <= day * 1440.0 + open + 2);
+            Assert.Equal(0, EmploymentWages.RecentMisses(person.Accrual, 3));
+            Assert.True(budgets[person.Identity.Id].Ledger.EmploymentIncome.Units > 0);
+            // Tuesday's shift (plan day 2) has ended by Wednesday 11:40; it is done whichever plan now holds it.
+            var plan = person.Plan!;
+            if (plan.Day == 2) Assert.Equal(PlanItemState.Done, plan.StateOf(Item(plan, PlanItemKind.Work).Index));
         }
     }
 
@@ -434,6 +468,70 @@ public sealed class DayPlanTests
         }
     }
 
+    /// <summary>Sol-r2-1: a decline is provisional while the meal can be retried at a later stop. The retry's travel and
+    /// purchase replace it, also when the city is saved and reloaded between the two attempts.</summary>
+    [Fact]
+    public void ARetriedMealReplacesAnEarlierDeclineAcrossReload()
+    {
+        var city = AttendanceWageTests.Fresh(42);
+        AttendanceWageTests.Advance(city, Monday + 700);
+        var person = city.State.Citizens[0];
+        Assert.Equal(1, person.Plan!.Day);
+        var record = new ResidentMeal { ResidentId = person.Identity.Id, Day = 1, Kind = MealKind.Lunch, Status = MealStatus.Pending,
+            Today = new ResidentFoodToday { Day = 1 } };
+        record.Today.Meals.Add(new MealOutcomeRecord { Kind = MealKind.Lunch, Status = MealOutcomeStatus.ChoseAlternative });
+        PlanItemState Lunch(CitizenState p) { var plan = p.Plan!; return plan.StateOf(Enumerable.Range(0, plan.Items.Count).Single(i => plan.Items[i].Meal == MealKind.Lunch)); }
+        DayPlanExecutor.SyncMeals(person, record);
+        Assert.Equal(PlanItemState.Cancelled, Lunch(person));
+        var read = SaveWire.Read(SaveCodec.Write(city.State)).State!;
+        var reloaded = read.Citizens[0];
+        Assert.Equal(PlanItemState.Cancelled, Lunch(reloaded));
+        record.Status = MealStatus.Travelling; DayPlanExecutor.SyncMeals(reloaded, record);
+        Assert.Equal(PlanItemState.Travelling, Lunch(reloaded));
+        record.Status = MealStatus.Paid; record.Today.Meals[0].Status = MealOutcomeStatus.Bought; DayPlanExecutor.SyncMeals(reloaded, record);
+        Assert.Equal(PlanItemState.Done, Lunch(reloaded));
+        // A miss followed by a purchase likewise ends done.
+        record.Today.Meals[0].Status = MealOutcomeStatus.Skipped; DayPlanExecutor.SyncMeals(reloaded, record);
+        Assert.Equal(PlanItemState.Missed, Lunch(reloaded));
+        record.Today.Meals[0].Status = MealOutcomeStatus.Bought; DayPlanExecutor.SyncMeals(reloaded, record);
+        Assert.Equal(PlanItemState.Done, Lunch(reloaded));
+    }
+
+    /// <summary>Sol-r2-2: in the integrated economy (weighted food decisions, held continuations, shops and rivals), the
+    /// saved meal states equal the food records after every frame, so a save at any frame boundary holds the current
+    /// travelling, served or final state.</summary>
+    [Fact]
+    public void MealStatesMatchTheFoodRecordsAtEveryFrameBoundary()
+    {
+        var (state, market) = PersistentCity.EconomyInterventions.EconomyFixture.Build(3, 24);
+        var city = PersistentCity.EconomyInterventions.EconomyFixture.Attach(state, market, new PersistentCity.EconomyInterventions.EconomyRoutes(market), fresh: true);
+        int checkedStates = 0, inProgress = 0;
+        // The runner's epoch order (EconomyRun): native reads stay inside the published input epoch.
+        long start = (long)state.Minute;
+        market.Enter(start); Assert.True(city.BeginAccountingObservations(start));
+        for (long epoch = start + 1; epoch <= (long)(2 * Monday + 1200); epoch++)
+        {
+            double ending = AccountingClock.PreviousEpochTarget(epoch);
+            while (!city.IsCaughtUpTo(ending)) { city.AdvanceFrameSlice(ending, 2); Check(); }
+            market.Enter(epoch); Assert.True(city.BeginAccountingObservations(epoch));
+        }
+        Assert.True(checkedStates > 1000 && inProgress > 50, checkedStates + " checked, " + inProgress + " in progress");
+
+        void Check()
+        {
+            foreach (var record in state.Food!.Residents)
+            {
+                var person = city.FindCitizen(record.HostId);
+                if (person?.Plan == null) continue;
+                var copy = CitySimulator.CloneForEvent(person);
+                DayPlanExecutor.SyncMeals(copy, record);
+                Assert.True(copy.Plan!.SameAs(person.Plan), person.Identity.Id + " at " + state.Minute);
+                checkedStates++;
+                if (record.Status == MealStatus.Travelling || record.Status == MealStatus.Serving) inProgress++;
+            }
+        }
+    }
+
     [Fact]
     public void MealStatesMapEveryFoodOutcome()
     {
@@ -479,13 +577,24 @@ public sealed class DayPlanTests
         AttendanceWageTests.Advance(reference, Monday + 300);
         var reloaded = new CitySimulator(SaveWire.Read(SaveCodec.Write(reference.State)).State!, new AttendanceWageTests.Routes());
         reloaded.AttachFoodMarket(new AttendanceWageTests.Market());
-        AttendanceWageTests.Advance(reference, 3 * Monday); AttendanceWageTests.Advance(reloaded, 3 * Monday);
+        // Opus-r2-1: after Monday's shift is posted the wage queue has read Tuesday's shift; then the hours change.
+        // Tuesday keeps the saved shift (10:00, still open), Wednesday is drawn with the new hours (09:00).
+        AttendanceWageTests.Advance(reference, Monday + 1300); AttendanceWageTests.Advance(reloaded, Monday + 1300);
+        foreach (var city in new[] { reference, reloaded })
+        {
+            var work = city.State.Places.Single(p => p.Id == "work"); work.OpenMinute = 540; work.CloseMinute = 1260;
+            Assert.All(city.State.Citizens, p => Assert.Equal(2 * Monday + 600, p.Plan!.NextWork!.EarliestStart));
+        }
+        AttendanceWageTests.Advance(reference, 4 * Monday); AttendanceWageTests.Advance(reloaded, 4 * Monday);
         Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(reloaded.State));
+        var budgets = reference.State.Food!.Residents.ToDictionary(r => r.ResidentId, r => r.Budget!);
         foreach (var person in reference.State.Citizens)
         {
-            Assert.Equal(0, EmploymentWages.RecentMisses(person.Accrual, 2));
+            Assert.Equal(0, EmploymentWages.RecentMisses(person.Accrual, 3));
             Assert.InRange(person.Accrual.AttendedMinutes, 470, 480);
-            Assert.All(person.RecentVisits.Where(v => v.Activity == Activity.Work), v => Assert.InRange(v.AtMinute % 1440, 600, 602));
+            var work = person.RecentVisits.Where(v => v.Activity == Activity.Work).ToDictionary(v => (int)(v.AtMinute / 1440), v => v.AtMinute % 1440);
+            Assert.InRange(work[1], 600, 602); Assert.InRange(work[2], 600, 602); Assert.InRange(work[3], 540, 542);
+            Assert.True(budgets[person.Identity.Id].Ledger.EmploymentIncome.Units > 0);
         }
     }
 

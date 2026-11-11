@@ -373,7 +373,7 @@ namespace PersistentCity.Core
             {
                 var pendingMeal=pendingDecision;
                 due.Remove(pendingMeal);
-                try { ContinueFoodDecision(pendingMeal,Owner(pendingMeal)!); }
+                try { ContinueFoodDecision(pendingMeal,Owner(pendingMeal)!); DayPlanExecutor.SyncMeals(city.FindCitizen(pendingMeal.HostId), pendingMeal); }
                 finally { due.Add(pendingMeal); }
                 return;
             }

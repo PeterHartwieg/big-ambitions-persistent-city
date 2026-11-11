@@ -98,6 +98,13 @@ namespace PersistentCity.Core
             var work = today.Work;
             if (work.HasValue && minute >= work.Value.StartsAt && minute < work.Value.EndsAt)
                 return new RoutineSlot(work.Value.PlaceId, work.Value.Activity, Math.Min(MaxMinute, work.Value.EndsAt));
+            // A shift begun yesterday can run past midnight (eight hours at most).
+            if (day > 0 && minute < day * 1440.0 + 480)
+            {
+                var overnight = DayPlanner.WorkFor(person, keys, day - 1, index);
+                if (overnight.HasValue && minute >= overnight.Value.StartsAt && minute < overnight.Value.EndsAt)
+                    return new RoutineSlot(overnight.Value.PlaceId, overnight.Value.Activity, Math.Min(MaxMinute, overnight.Value.EndsAt));
+            }
             double next = MaxMinute;
             // Yesterday supplies overnight leisure (ending by 00:15, so not after the day boundary); a week ahead finds the
             // next real activity even for a worker with no optional venues and a three-day weekend.
