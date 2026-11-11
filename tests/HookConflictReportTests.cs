@@ -234,8 +234,6 @@ namespace PersistentCity.Tests
         [Fact]
         public void TheRefusalIsDecidedOncePerLoadFromTheLoadScan()
         {
-            // Sol-r1-1: the construction call and the post-load settle are the only two; both pass the game's loading flag.
-            // Sol-r2-2: the activation lines wait for a deferred decision and then use its scan.
             // The refusal goes through F8c's checkout-off mode: no price prefix, nothing served, every shop observed ineligible.
             var mode = new FoodCheckoutMode("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)");
             Assert.False(mode.Serves); Assert.False(mode.InstallsPricePrefix); Assert.False(mode.Observe(true));
@@ -245,6 +243,40 @@ namespace PersistentCity.Tests
             Assert.Equal(CapabilityStartStatus.Ready, registry.Start().Status);
             Assert.Contains("food.checkout.shop optional off: foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry) | scope: shop ownership",
                 new CapabilityReport().Status(registry, "x"));
+        }
+
+        /// <summary>The hook inventory: owner and target counts, one capability per owner (moved from the deleted
+        /// HookInventorySourceTests, X9).</summary>
+        [Fact]
+        public void InventoryCountsAndCapabilityMapping()
+        {
+            Assert.Equal(12, NativeHookInventory.Owners.Count);
+            Assert.Equal(52, NativeHookInventory.Targets.Count);
+            Assert.Equal(NativeHookInventory.Owners.Count, NativeHookInventory.Owners.Select(o => o.Id).Distinct().Count());
+            Assert.All(NativeHookInventory.Targets, t => Assert.NotNull(NativeHookInventory.Owner(t.Owner)));
+            Assert.All(NativeHookInventory.Owners, o => Assert.Contains(NativeHookInventory.Targets, t => t.Owner == o.Id));
+            Assert.Equal(NativeHookInventory.Targets.Count, NativeHookInventory.Targets
+                .Select(t => t.Owner + " " + t.Signature).Distinct().Count());
+            Assert.All(NativeHookInventory.Targets, t => Assert.NotEqual(NativePatchKinds.None, t.Kinds));
+
+            string Map(string owner) => string.Join(",", NativeHookInventory.Targets.Where(t => t.Owner == owner)
+                .Select(t => NativeCapabilities.Get(t.Capability).Name).Distinct());
+            Assert.Equal("food.authority", Map(NativeHookInventory.FoodAuthority));
+            Assert.Equal("food.checkout.shop", Map(NativeHookInventory.FoodRoutines));
+            Assert.Equal("food.dynamic", Map(NativeHookInventory.FoodContract));
+            Assert.Equal("clock.city,clock.drivenrides", Map(NativeHookInventory.CityClock));
+            Assert.Equal("clock.observe", Map(NativeHookInventory.ClockObserver));
+            Assert.Equal("research.billing", Map(NativeHookInventory.ResearchBilling));
+            Assert.Equal("research.dialog", Map(NativeHookInventory.ResearchDialog));
+            Assert.Equal("physical.vehicles", Map(NativeHookInventory.PhysicalVehicles));
+            Assert.Equal("physical.vehicles", Map(NativeHookInventory.PhysicalIntersections));
+            Assert.Equal("physical.pedestrians", Map(NativeHookInventory.AmbientPedestrians));
+            Assert.Equal("physical.pedestrians", Map(NativeHookInventory.StationaryCrowds));
+            Assert.Equal("inspector.click,inspector.scroll,inspector.uiblock", Map(NativeHookInventory.InspectorInput));
+
+            // GameManager.RunMainGameTick carries three PC owners (H1, H3, H4): normal, not a conflict (plan section 2).
+            Assert.Equal(new[] { NativeHookInventory.FoodAuthority, NativeHookInventory.CityClock, NativeHookInventory.ClockObserver },
+                NativeHookInventory.Targets.Where(t => t.Type == "GameManager" && t.Method == "RunMainGameTick").Select(t => t.Owner));
         }
 
         /// <summary>F8h with the pinned Harmony 2.4.2 on stand-in methods: a foreign prefix on ProcessCustomer and a foreign

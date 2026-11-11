@@ -218,9 +218,11 @@ public sealed class ResearchMenuTests
     public void EligibilityFollowsCurrentFoodAuthorityThroughWithdrawalAndReacquisition()
     {
         var authority = new FoodAuthority { PlaceId = "address:test:1:shop" };
+        authority.Observe("burger-shop", eligible: true, hour: 10);
         Assert.True(authority.Boundary(11, oldWorkDrained: true, liveNativeCustomers: false, marketReady: true));
         string first = authority.BusinessId;
         Assert.True(ResearchEligibility.Decide(true, first, true, authority));
+        // Not rented or not named, no scope, or not the observed generation: never eligible.
         Assert.False(ResearchEligibility.Decide(false, first, true, authority));
         Assert.False(ResearchEligibility.Decide(true, null, true, authority));
         Assert.False(ResearchEligibility.Decide(true, first, false, authority));
@@ -228,6 +230,7 @@ public sealed class ResearchMenuTests
 
         // An unsupported menu returns the business to native ownership. The scope, registration and BusinessId stay
         // (the retained generation still matches), but the authority can no longer serve: refused at once.
+        authority.Observe("burger-shop", eligible: false, hour: 20);
         Assert.Equal(first, authority.BusinessId);
         Assert.True(authority.Managed);
         Assert.False(authority.CanServe);
@@ -236,15 +239,17 @@ public sealed class ResearchMenuTests
         Assert.False(authority.Managed);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
 
+        // Reacquired at a later boundary: eligible again for the same generation.
+        authority.Observe("burger-shop", eligible: true, hour: 30);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
         Assert.True(authority.Boundary(31, true, false, true));
         Assert.True(ResearchEligibility.Decide(true, first, true, authority));
 
         // A replaced business is a new generation: the old scope's ID no longer matches until the scope follows.
+        authority.Observe("pizza-shop", eligible: true, hour: 40);
         Assert.NotEqual(first, authority.BusinessId);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
 
-        // Ordering (the dialog desk) and billing (the charge port) get the same predicate.
     }
 
     // ---- contract refusal keeps saved research idle ----
