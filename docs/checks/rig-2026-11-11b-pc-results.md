@@ -39,3 +39,5 @@ Live installed operations include `save`, `pcsave`, `perf`, `modwork`, `pcstate`
 The old rig comparator reports an invalid comparison for the current compact envelope and calls the newline `v1` epoch marker unknown; neither result is a product failure or an equality pass. Its raw outputs are retained. The candidate codec above is used for the schema, epoch and full resident identity evidence.
 
 The first one-hour attempt was stopped by a stage clock-poll race before time advanced (08:00 retained). Excluded from hour proof. Its normal-stop, modset/lifecycle restore and lease release all succeeded; a fresh launch will repeat the hour with an explicit target-clock poll.
+
+Completed group: hour reload identity readbacks. Raw evidence: `<stage>/runs/positive2`; progress and request/reply files retained.
