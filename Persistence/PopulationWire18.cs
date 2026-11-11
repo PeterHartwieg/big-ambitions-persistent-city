@@ -25,7 +25,8 @@ namespace PersistentCity.Persistence
         public static void RequireExecutableCapabilities(string source)
         {
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
-            if (source!.StartsWith(CompactPrefix, StringComparison.Ordinal)) { RequireCompactCapabilities(source); return; }
+            // The retired F7d columnar wire is an older development city, never decoded.
+            Require(!RetiredCompact(source!), DevelopmentSchemaMessage);
             using var reader = Reader(source);
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
             int? schema = null;
@@ -148,13 +149,6 @@ namespace PersistentCity.Persistence
         /// <summary>Reports both published counting paths; callers must budget the larger.</summary>
         public static (int Streaming, int Semantic) CountRecords(CityState state, string source)
         {
-            // F7d: a compact payload charges its tables on top of the body's streaming count.
-            if (source.StartsWith(CompactPrefix, StringComparison.Ordinal))
-            {
-                int tables = CompactTableEntries(source);
-                var body = CountRecords(state, ExpandCompact(source));
-                return (body.Streaming + tables, body.Semantic + tables);
-            }
             int semantic = Validate(state), streaming = 0;
             var tokenText = new TokenText(source);
             var context = WireContext.FromSource(source, tokenText);

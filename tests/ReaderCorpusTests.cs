@@ -15,7 +15,7 @@ public sealed class ReaderCorpusTests
 {
     private const string ReceiptKey = "persistentcity:food-sale-v1:corpus-intent";
 
-    private static readonly (string File, string Builder, Func<CityState> City)[] CompactCities =
+    private static readonly (string File, string Builder, Func<CityState> City)[] Cities =
     {
         ("full.json", "ChangeJournalTests.Fixture(5150) (3-shop fresh city after 2,000 minutes, journal and meal-period causes)", () => ChangeJournalTests.Fixture(5150)),
         ("minimal.json", "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)", CurrentSchemaOnlyTests.City),
@@ -54,7 +54,7 @@ public sealed class ReaderCorpusTests
     /// <summary>Writes the writer's folder once. Runs only when <c>PC_READER_CORPUS_WRITE</c> names the
     /// <c>tests/ReaderCorpus</c> directory and never replaces an existing folder.</summary>
     [Fact]
-    public void ReaderCorpus_GenerateCompactFolderOnlyWhenExplicitlyRequested()
+    public void ReaderCorpus_GenerateFolderOnlyWhenExplicitlyRequested()
     {
         string? target = Environment.GetEnvironmentVariable("PC_READER_CORPUS_WRITE");
         if (string.IsNullOrEmpty(target)) return;
@@ -62,7 +62,7 @@ public sealed class ReaderCorpusTests
         if (Directory.Exists(folder)) return;
         Directory.CreateDirectory(folder);
         var fixtures = new Newtonsoft.Json.Linq.JArray();
-        foreach (var (file, builder, city) in CompactCities)
+        foreach (var (file, builder, city) in Cities)
         {
             string text = SaveCodec.Write(city());
             Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(text).Status);
@@ -70,7 +70,7 @@ public sealed class ReaderCorpusTests
             fixtures.Add(new Newtonsoft.Json.Linq.JObject
             {
                 ["file"] = file, ["sha256"] = ReaderCorpus.Sha256(text), ["characters"] = text.Length, ["builder"] = builder,
-                ["recipe"] = "SaveCodec.Write(city) (fresh city in the compact writer, no migration)",
+                ["recipe"] = "SaveCodec.Write(city) (fresh city in the single-pass writer, no migration)",
                 ["kind"] = "synthetic offline payload from test builders; not a native save",
             });
         }
@@ -83,29 +83,29 @@ public sealed class ReaderCorpusTests
     }
 
     [Fact]
-    public void ReaderCorpus_CompactCorpusLoadsAsPinnedRewritesItsOwnBytesAndOtherSchemasAreRefused()
+    public void ReaderCorpus_CorpusLoadsAsPinnedRewritesItsOwnBytesAndOtherSchemasAreRefused()
     {
         var fixtures = ReaderCorpus.Load();
-        Assert.Equal(CompactCities.Select(c => c.File).OrderBy(f => f, StringComparer.Ordinal), fixtures.Select(f => f.File).OrderBy(f => f, StringComparer.Ordinal));
+        Assert.Equal(Cities.Select(c => c.File).OrderBy(f => f, StringComparer.Ordinal), fixtures.Select(f => f.File).OrderBy(f => f, StringComparer.Ordinal));
         foreach (var fixture in fixtures)
         {
             string key = ReaderCorpus.Key(fixture);
-            Assert.StartsWith(SaveCodec.CompactPrefix, fixture.Text);
+            Assert.StartsWith(SaveCodec.BodyPrefix, fixture.Text);
             var read = SaveCodec.Read(fixture.Text);
             Assert.True(read.Status == SaveReadStatus.Loaded, key + ": " + read.Error);
             Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
             // Decode -> re-encode is byte-identical, and the builder still produces the pinned bytes.
             Assert.Equal(fixture.Text, SaveCodec.Write(read.State!));
-            Assert.Equal(fixture.Text, SaveCodec.Write(CompactCities.Single(c => c.File == fixture.File).City()));
-            AssertCompactRefusedAndPreserved(fixture.Text.Substring(0, fixture.Text.Length - 1), read.State!, SaveReadStatus.Invalid, key + " truncated");
+            Assert.Equal(fixture.Text, SaveCodec.Write(Cities.Single(c => c.File == fixture.File).City()));
+            AssertRefusedAndPreserved(fixture.Text.Substring(0, fixture.Text.Length - 1), read.State!, SaveReadStatus.Invalid, key + " truncated");
             // Older development builds wrote 2 to 36; any other number is refused the same way, never migrated.
             foreach (int other in new[] { 0, 2, 33, 36, 37 })
-                AssertCompactRefusedAndPreserved(fixture.Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":" + other + ",\"f\":"), read.State!,
+                AssertRefusedAndPreserved(fixture.Text.Replace(SaveCodec.BodyPrefix, "{\"Schema\":" + other + ",\"Capabilities\":"), read.State!,
                     SaveReadStatus.DevelopmentSchema, key + " relabelled " + other);
         }
     }
 
-    private static void AssertCompactRefusedAndPreserved(string payload, CityState valid, SaveReadStatus expected, string label)
+    private static void AssertRefusedAndPreserved(string payload, CityState valid, SaveReadStatus expected, string label)
     {
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == expected, $"{label}: {read.Status} {read.Error}"); Assert.Null(read.State);

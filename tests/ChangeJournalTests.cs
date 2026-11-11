@@ -40,11 +40,11 @@ public sealed class ChangeJournalTests
     /// 1 until release, so a deliberate format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData(5150, Corpus, 0)]
-    [InlineData(9217, "a9651c15e44c67fa8e05ac084b638ac1bfaf0c48805a8d1142a873c423a6422c", 72968)]
+    [InlineData(9217, "89db0c7e3e0c3f259579b895d3c8d4eccd335e179f9c19a3deab36c57f771979", 200175)]
     public void CurrentWriterGoldenSnapshotAndReload(int seed, string pin, int characters)
     {
         var state = Fixture(seed); string payload = SaveCodec.Write(state);
-        Assert.StartsWith(SaveCodec.CompactPrefix + "\"pcc-c\",\"v\":1,\"k\":[", payload);
+        Assert.StartsWith(SaveCodec.BodyPrefix, payload);
         var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
         var resumed = new FoodChangeJournal(read.State!.Food!, read.State.Economy); var scope = read.State.Food!.Shops[0];

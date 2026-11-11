@@ -241,7 +241,7 @@ public sealed class PersonTableTests
         // A duplicate field cannot pass the token check even with equal values.
         string tuple = "\"P\":\"" + (string)SaveWire.Parse(payload)["Citizens"]![0]!["P"]! + "\"";
         int at = payload.IndexOf(tuple, StringComparison.Ordinal);
-        Invalid(payload.Insert(at, tuple + ","), state, "Duplicate field" /* F7d: a duplicated body field becomes a duplicated compact shape field */);
+        Invalid(payload.Insert(at, tuple + ","), state, "Duplicate field");
     }
 
     // ---- Bounds: named, at the bound and one over, before allocation ----
@@ -300,7 +300,7 @@ public sealed class PersonTableTests
 
     /// <summary>The corpus's full city relabelled with a number an older development build wrote.</summary>
     private static string OlderPayload(int schema)
-        => ReaderCorpus.Load().Single(f => f.File == "full.json").Text.Replace(SaveCodec.CompactPrefix, "{\"Schema\":" + schema + ",\"f\":");
+        => ReaderCorpus.Load().Single(f => f.File == "full.json").Text.Replace(SaveCodec.BodyPrefix, "{\"Schema\":" + schema + ",\"Capabilities\":");
 
     [Fact]
     public void Schema25CityWithOwnedFoodBusinessesIsRefusedAndItsBusinessesReturnNative()

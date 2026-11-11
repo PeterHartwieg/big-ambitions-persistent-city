@@ -159,7 +159,7 @@ public sealed class WorkplaceCapacityTests
     /// <summary>The writer's golden for the banded city, re-pinned once by X3 at the held schema 1. A deliberate format change
     /// re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
-    [InlineData("banded-visitors-factor2-30h", "2c293518705b813c1757213a9d4424fb239764049ccffc8d08b3b1b861724187", 86146)]
+    [InlineData("banded-visitors-factor2-30h", "3893caf52b9ab952d3446e2be4405379c8fe49766dc4e20d69b14fcebad14f12", 188875)]
     public void GoldenBandedCityBytesArePinned(string name, string sha256, int characters)
     {
         string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());

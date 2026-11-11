@@ -133,7 +133,7 @@ public sealed partial class FoodCommerceTests
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(read.State));
     }
 
-    // The raw-JSON whitespace budgets of the frozen JSON writers are gone: the compact wire carries no whitespace.
+    // The raw-JSON whitespace budgets of the frozen JSON writers are gone: the writer emits no whitespace.
     [Fact]
     public void E5d_DuplicateAndNoncanonicalImagesAreRefused()
     {

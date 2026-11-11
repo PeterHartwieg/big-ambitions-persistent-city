@@ -154,7 +154,7 @@ public sealed class HeldFoodTuningTests
         string valid = (string)d["Tuning"]!;
         switch (corruption) {
             case 0: d["Tuning"] = valid + "0"; break;
-            case 1: d["Tuning"] = "2" + valid.Substring(1); break;
+            case 1: d["Tuning"] = (valid[0] == '2' ? "1" : "2") + valid.Substring(1); break; // the other revision digit
             case 2: d["Tuning"] = valid.ToLowerInvariant(); break;
             case 3: d["Tuning"] = "1" + "7FF8000000000000" + valid.Substring(17); break;
             case 4: d["Tuning"] = "1" + "7FF0000000000000" + valid.Substring(17); break;
