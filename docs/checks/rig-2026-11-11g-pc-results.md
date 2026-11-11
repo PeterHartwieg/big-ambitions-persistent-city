@@ -55,7 +55,7 @@ One available customer-service employee has seven Default 09:00–18:00 shifts a
 
 ## F8h first sale / check 1 shop assertions
 
-**Check 2 PARTIAL.** A normal load of this run's fresh Ready city completed with full modpack and no test foreign prefix. Checkout active; 49 target methods inventoried, 38 patched, zero refusing checkout. Shared tick owners remain report-only. Activation scans: creation 25.774 ms, normal shop load 27.216 ms. Captured logs contain zero `Food checkout waits for the city load to finish` refusals.
+**Check 2 PARTIAL.** A normal load of this run's fresh Ready city completed with full modpack and no test foreign prefix. Checkout active; 49 target methods inventoried, 38 patched, zero refusing checkout. Shared tick owners remain report-only. Activation scans (**provisional startup observations, PC shared**; no measured performance window, no p95 verdict): creation 25.774 ms, normal shop load 27.216 ms. Captured logs contain zero `Food checkout waits for the city load to finish` refusals.
 
 **First sale NOT RUN (needs serving shop: `no_staffed_counter`).** No natural-purchase window ran. No zero-sale wait is substituted for first-sale evidence. The diagnostic failed before any sale assertion.
 
@@ -124,7 +124,7 @@ The address-form `pc capability business ba:street_fifthavenue#58` also returned
 
 Only the independent character directory created by this run was used. All saves remain in place; three recorded hashes verified after cleanup. Directory:
 
-`C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/nl7uJ56WxU2FNuvoyKvJ4w==/`
+`<isolated-profile>/SaveGames/Big Ambitions/<run-character>/` (exact path recorded in `<stage>/fixtures.json`)
 
 | File / fixture name | SHA-256 |
 |---|---|
@@ -140,7 +140,7 @@ Both game instances launched by this run quit normally; no kill. 301/301 protect
 
 Agent1 closed; lease free, pending=0; no live owned game/helper process. `<stage>/final-verification.json`, `<stage>/restore-verification.json`, `<stage>/owned-process-verification.json`. No rollback revision used. Final-verification SHA-256 `f734d5426d184a0472acec18fa335b97135f1b434905516cf1d88541cd83e29c`.
 
-Selection/readiness segment committed separately before final reporting. Results PR is docs only, remains open and unmerged. Build worktree is removed after evidence commit; evidence worktree detached after PR creation. Report copy: `C:/Users/Peter/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-11g-pc.md`.
+Selection/readiness segment committed separately before final reporting. Results PR is docs only, remains open and unmerged. Build worktree is removed after evidence commit; evidence worktree detached after PR creation. Report copy: `<agent-logs>/persistent-city-rig-2026-11-11g-pc.md`.
 
 ## Per-check results
 
