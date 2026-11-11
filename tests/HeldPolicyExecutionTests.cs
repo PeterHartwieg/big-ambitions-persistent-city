@@ -112,7 +112,7 @@ public sealed class HeldPolicyExecutionTests
         var state = CurrentSchemaOnlyTests.City();
         Assert.Equal(FoodNameIdentity.DynamicWire, state.MenuPolicy);
         string payload = SaveCodec.Write(state);
-        Assert.StartsWith(SaveCodec.CompactPrefix + "\"pcc-c\",", payload);
+        Assert.StartsWith(SaveCodec.BodyPrefix, payload);
         Assert.Contains(FoodNameIdentity.DynamicWire, payload);
         SaveCodec.RequireExecutableCapabilities(payload);
         var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -134,7 +134,7 @@ public sealed class HeldPolicyExecutionTests
         string current = SaveCodec.Write(ChangeJournalTests.Fixture(5150));
         foreach (int other in new[] { 2, 36, 37 })
         {
-            string payload = current.Replace(SaveCodec.CompactPrefix, "{\"Schema\":" + other + ",\"f\":");
+            string payload = current.Replace(SaveCodec.BodyPrefix, "{\"Schema\":" + other + ",\"Capabilities\":");
             Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveCodec.Read(payload).Status);
             EconomicLedgerTests.Refused(payload, SaveReadStatus.DevelopmentSchema);
         }

@@ -139,8 +139,8 @@ public sealed class ActivationValidationTests
                 Assert.Throws<SaveValidationException>(() => SaveCodec.ValidateForActivation(state)).Message);
             // Small output proves the global converter is also used by the retained save path.
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Converters = { new ExactLengthConverter(7) } };
-            // F7d: the compact writer builds an exact token tree and refuses the converter's raw JSON, so the converter
-            // reached the save path and the save is refused instead of writing a body the reader could not read.
+            // The single-pass writer refuses the converter's raw JSON, so the converter reached the save path and the save
+            // is refused instead of writing a body the reader could not read.
             Assert.Contains("Raw JSON", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
             SaveCodec.ValidateForActivation(state);
         }

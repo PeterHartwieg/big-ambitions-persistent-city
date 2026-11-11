@@ -15,8 +15,8 @@ namespace PersistentCity.Persistence
     /// One save epoch's detached, immutable projection of the state the wire carries (F7 plan section 3.2, slice F7c).
     /// It is captured on the main thread inside the save callback, after the synchronize step, and then validated
     /// and encoded. It holds no native object and no list or record the runtime can reach; committed journey routes
-    /// are frozen (<see cref="Route.Commit"/>) and shared by reference. The current writer encodes it with the same
-    /// wire DTO types as the live model, so the bytes are the ones the writer produced from the live graph.
+    /// are frozen (<see cref="Route.Commit"/>) and shared by reference. The single-pass writer (P-A) serializes it with
+    /// the same wire DTO types as the live model, so the bytes are the ones the writer would produce from the live graph.
     /// Never cached across saves: <see cref="SaveSession"/> publishes a snapshot at most once.
     /// </summary>
     public sealed class SaveSnapshot

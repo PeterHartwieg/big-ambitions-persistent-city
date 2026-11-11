@@ -212,9 +212,9 @@ public sealed class PersistenceTests
             case "string-bool": citizen["Identity"]!["Female"] = "true"; break;
             case "wrong-case": citizen["phase"] = citizen["Phase"]; citizen.Remove("Phase"); break;
         }
-        // The mutated body reaches the product reader as a compact payload, so the semantic check is what refuses it.
+        // The mutated body reaches the product reader in the writer's spelling, so the semantic check is what refuses it.
         string mutated = SaveWire.Payload(json.ToString());
-        Assert.StartsWith(SaveCodec.CompactPrefix, mutated);
+        Assert.StartsWith(SaveCodec.BodyPrefix, mutated);
         var read = SaveCodec.Read(mutated);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.NotEmpty(read.Error);
         Assert.DoesNotContain("compact", read.Error, StringComparison.OrdinalIgnoreCase);

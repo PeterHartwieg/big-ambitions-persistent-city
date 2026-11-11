@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -32,7 +33,11 @@ namespace PersistentCity.Persistence
         public SaveValidationException(string message) : base(message) { }
     }
 
-    /// <summary>Strict current-development codec. Unsupported and failed reads never replace a city.</summary>
+    /// <summary>
+    /// Strict current-development codec (P-A single-pass save). The save string is the JSON body itself: one writer
+    /// serializes the snapshot straight into it in a single pass, and one strict reader (token shape, caps, then semantic
+    /// validation) reads it straight back. There is no second encoding. Unsupported and failed reads never replace a city.
+    /// </summary>
     public static partial class SaveCodec
     {
         public const string StateKey = "persistentcity:state_v1";
@@ -79,18 +84,82 @@ namespace PersistentCity.Persistence
             return SaveSnapshot.Capture(state, order);
         }
 
-        /// <summary>Validate the snapshot and encode it in the compact wire. The bytes equal the ones the writer
-        /// produced from the live graph before F7c (pinned golden hashes).</summary>
+        /// <summary>Validate the snapshot, then write it in one pass: the body serializer streams straight into one text
+        /// buffer, and that text is the save string. The size caps are checked on the finished string.</summary>
         public static string Encode(SaveSnapshot snapshot, SaveCostRecorder? cost = null)
         {
             if (snapshot == null) throw new SaveValidationException("Snapshot is null.");
             var state = snapshot.Wire;
             cost?.Enter(SaveCostPhase.Validate);
-            int records = Validate(state);
+            Validate(state);
             cost?.Enter(SaveCostPhase.Encode);
-            string json = EncodeCompact(state, Settings(WireContext.FromState(state)), records + StreamingOnlyRecords(state), cost);
-            cost?.Payload(json.Length, System.Text.Encoding.UTF8.GetByteCount(json));
+            string json = WriteBody(state);
+            Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
+            // A UTF-16 character is at most three UTF-8 bytes (a surrogate pair is four for two), so the byte count can
+            // only pass the cap above a third of it; below that it is counted only for an explicit save-cost record.
+            if (cost != null || json.Length > MaxInputCharacters / 3)
+            {
+                int bytes = System.Text.Encoding.UTF8.GetByteCount(json);
+                Require(bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
+                cost?.Payload(json.Length, bytes);
+            }
             return json;
+        }
+
+        /// <summary>The start of every current-writer string: the body's first two fields. A match skips the generic
+        /// top-level schema scan and goes straight to the strict reader.</summary>
+        internal static readonly string BodyPrefix = "{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",\"Capabilities\":";
+
+        /// <summary>The start of the retired F7d columnar wire (<c>{"Schema":1,"f":"pcc-c",...}</c>). Development builds
+        /// before P-A wrote it; it is refused as an older development city and kept unchanged. There is no decoder.</summary>
+        internal static readonly string RetiredCompactPrefix = "{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",\"f\":";
+
+        internal static bool RetiredCompact(string source) => source.StartsWith(RetiredCompactPrefix, StringComparison.Ordinal);
+
+        private static SaveReadResult RetiredCompactRefusal() => new SaveReadResult(SaveReadStatus.DevelopmentSchema, null,
+            DevelopmentSchemaMessage + " (schema " + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ", retired compact format)", CityState.CurrentSchema);
+
+        // One reusable text buffer per thread (the save callback runs on the main thread). It keeps the capacity of the
+        // largest save so far, so a save allocates only its finished string. Never shared between threads. The cost is
+        // that the thread keeps about two bytes per character of its largest save for the session (about 7.5 MB at
+        // 3,000 persons, 15 MB at 6,000); the first Clear after the buffer grew in chunks allocates that once.
+        [ThreadStatic] private static System.Text.StringBuilder? bodyBuffer;
+
+        /// <summary>The single writer pass: the same serializer, settings and converters as
+        /// <c>JsonConvert.SerializeObject(state, Formatting.None, settings)</c>, into the reused buffer.</summary>
+        private static string WriteBody(CityState state)
+        {
+            var serializer = JsonSerializer.CreateDefault(Settings(WireContext.FromState(state)));
+            serializer.Formatting = Formatting.None;
+            var buffer = bodyBuffer ??= new System.Text.StringBuilder(4096);
+            buffer.Clear();
+            try
+            {
+                using (var text = new StringWriter(buffer, CultureInfo.InvariantCulture))
+                using (var writer = new BodyWriter(text))
+                    serializer.Serialize(writer, state);
+                return buffer.ToString();
+            }
+            finally { buffer.Clear(); }
+        }
+
+        /// <summary>The body's text writer. Application-wide Json.NET defaults reach the save serializer, so a foreign
+        /// converter could write raw JSON or a token kind the body never holds; the save is then refused instead of
+        /// publishing a string the reader could not read.</summary>
+        private sealed class BodyWriter : JsonTextWriter
+        {
+            public BodyWriter(TextWriter text) : base(text) { Formatting = Formatting.None; }
+            public override void WriteRaw(string? json) => Fail("Raw JSON is not part of the save body.");
+            public override void WriteRawValue(string? json) => Fail("Raw JSON is not part of the save body.");
+            public override void WriteStartConstructor(string name) => Fail("Constructors are not part of the save body.");
+            public override void WriteUndefined() => Fail("Undefined is not part of the save body.");
+            public override void WriteComment(string? text) => Fail("Comments are not part of the save body.");
+            public override void WriteValue(DateTime value) => Fail("Dates are not part of the save body.");
+            public override void WriteValue(DateTimeOffset value) => Fail("Dates are not part of the save body.");
+            public override void WriteValue(Guid value) => Fail("GUIDs are not part of the save body.");
+            public override void WriteValue(TimeSpan value) => Fail("Time spans are not part of the save body.");
+            public override void WriteValue(byte[]? value) => Fail("Bytes are not part of the save body.");
+            public override void WriteValue(Uri? value) => Fail("URIs are not part of the save body.");
         }
 
         /// <summary>Run the save contract without retaining the serialized activation payload.</summary>
@@ -151,22 +220,24 @@ namespace PersistentCity.Persistence
             if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
             try
             {
-                // F7d: the writer's own prefix goes straight to the strict compact reader, which checks the whole envelope.
-                if (source.StartsWith(CompactPrefix, StringComparison.Ordinal)) return ReadCompact(source);
+                // The writer's own prefix goes straight to the strict reader, which checks the whole body.
+                if (source.StartsWith(BodyPrefix, StringComparison.Ordinal)) return ReadExact(source);
+                if (RetiredCompact(source)) return RetiredCompactRefusal();
                 int schema = ReadSchema(source);
                 // The schema is held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Any other number came
                 // from an older development build and is refused unchanged. There is no migration.
                 if (schema != CityState.CurrentSchema)
                     return new SaveReadResult(SaveReadStatus.DevelopmentSchema, null, DevelopmentSchemaMessage + " (schema " + schema.ToString(CultureInfo.InvariantCulture) + ")", schema);
-                return ReadCompact(source);
+                // Root field order and whitespace carry no meaning; the same strict reader decides.
+                return ReadExact(source);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
             { return Invalid("Invalid state: " + exception.Message); }
         }
 
-        /// <summary>The strict body reader. F7d's compact reader passes its table entries, charged with the body's own
-        /// records against <see cref="MaxEmbeddedRecords"/> exactly as the writer charged them, and interns string values.</summary>
-        private static SaveReadResult ReadExact(string source, int tableRecords, bool intern)
+        /// <summary>The one strict reader: token shape and caps, then deserialization (every string value interned), then
+        /// semantic validation. It reads the save string itself; nothing is decoded first.</summary>
+        private static SaveReadResult ReadExact(string source)
         {
             Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
             var tokenText = new TokenText(source);
@@ -180,12 +251,11 @@ namespace PersistentCity.Persistence
                 Require(!shape.Read(), "State contains trailing JSON content.");
             }
             using var reader = Reader(source);
-            if (intern) serializer.Converters.Add(new InternConverter());
+            serializer.Converters.Add(new InternConverter());
             var state = serializer.Deserialize<CityState>(reader);
             Require(state != null, "State is null.");
             DerivePersons27(state!);
-            int semantic = Validate(state!);
-            if (tableRecords > 0) Require((long)semantic + StreamingOnlyRecords(state!) + tableRecords <= MaxEmbeddedRecords, "Too many embedded records with the compact tables charged.");
+            Validate(state!);
             return new SaveReadResult(SaveReadStatus.Loaded, state, "", CityState.CurrentSchema);
         }
 
@@ -437,17 +507,7 @@ namespace PersistentCity.Persistence
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
         }
 
-        /// <summary>Collection fields the token reader bounds with its own check instead of <see cref="CollectionLimit"/>:
-        /// the menu IDs of a scope (CheckMenuIds23), the product name table (CheckNameTable25) and the station table
-        /// (CheckPortals26). F7d's compact reader uses the same bounds for these fields.</summary>
-        internal static int? SpecializedCollectionLimit(Type owner, string field) =>
-            owner == typeof(FoodScope) && field == "AdditionalProductIds" ? FoodMenuPolicy.MaximumOffers - 1
-            : owner == typeof(CityState) && field == "ProductNames" ? FoodNameIdentity.MaximumNames
-            : owner == typeof(CityState) && field == "Portals" ? MaxPortals
-            : (int?)null;
-
-        /// <summary>The token reader's bound for a saved collection of <paramref name="item"/> (CheckShape); F7d's compact reader
-        /// derives its per-field bounds from the same table.</summary>
+        /// <summary>The token reader's bound for a saved collection of <paramref name="item"/> (CheckShape).</summary>
         internal static int CollectionLimit(Type item) => item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? 32 : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
                     : item == typeof(FoodDecisionOffer) ? FoodMenuPolicy.MaximumOffers
                     : item == typeof(FoodProductSales) ? FoodMenuPolicy.MaximumOffers : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces
@@ -491,7 +551,58 @@ namespace PersistentCity.Persistence
             settings.Converters.Add(new EconomicConverter(context));
             settings.Converters.Add(new ObservationConverter(context));
             settings.Converters.Add(new ProductSales25Converter(context));
+            var table = new ConverterTable(settings.Converters.ToArray());
+            settings.Converters.Clear();
+            settings.Converters.Add(table);
             return settings;
+        }
+
+        /// <summary>
+        /// The wire converters behind one lookup. Json.NET asks every settings converter <c>CanConvert</c> for every value
+        /// it writes or reads, in list order, until one matches; with 21 converters that scan was over half of the writer's
+        /// time. The table asks each converter once per type, keeps the first match (the same choice Json.NET makes) and
+        /// hands the call to it, so the bytes and the reads are unchanged. One table per serializer settings instance.
+        /// </summary>
+        private sealed class ConverterTable : JsonConverter
+        {
+            private readonly JsonConverter[] converters;
+            private readonly Dictionary<Type, JsonConverter?> byType = new Dictionary<Type, JsonConverter?>();
+            public ConverterTable(JsonConverter[] converters) { this.converters = converters; }
+
+            private JsonConverter? For(Type type)
+            {
+                if (byType.TryGetValue(type, out var known)) return known;
+                JsonConverter? match = null;
+                foreach (var converter in converters) if (converter.CanConvert(type)) { match = converter; break; }
+                byType.Add(type, match);
+                return match;
+            }
+
+            public override bool CanConvert(Type objectType) => For(objectType) != null;
+            // Json.NET resolves the written value's contract from its runtime type and matched the converter on that type.
+            public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => For(value!.GetType())!.WriteJson(writer, value, serializer);
+            public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+                => For(objectType)!.ReadJson(reader, objectType, existingValue, serializer);
+        }
+
+        /// <summary>Intern on read: every string value one strict read materializes is one instance per distinct text.
+        /// Read only; the shape check already ran on the token stream.</summary>
+        private sealed class InternConverter : JsonConverter
+        {
+            private readonly Dictionary<string, string> pool = new Dictionary<string, string>(StringComparer.Ordinal);
+            public override bool CanRead => true;
+            public override bool CanWrite => false;
+            public override bool CanConvert(Type objectType) => objectType == typeof(string);
+            public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+            {
+                if (reader.TokenType == JsonToken.Null) return null;
+                Require(reader.TokenType == JsonToken.String, "Expected a string.");
+                string value = (string)reader.Value!;
+                if (pool.TryGetValue(value, out var shared)) return shared;
+                pool.Add(value, value);
+                return value;
+            }
+            public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => throw new NotSupportedException();
         }
 
         private static void ValidateOptionalStop(CitizenState citizen, CityState state, IReadOnlyDictionary<string, Place> places,
@@ -1401,6 +1512,12 @@ namespace PersistentCity.Persistence
 
         private sealed class StateContractResolver : DefaultContractResolver
         {
+            /// <summary>The game's Newtonsoft build has no compiled accessors: every property it writes or reads goes through
+            /// <c>PropertyInfo.GetValue</c>/<c>SetValue</c>. A typed delegate per saved property, bound once per contract, does
+            /// the same work without reflection. Struct owners and indexers keep Json.NET's own provider.</summary>
+            protected override IValueProvider CreateMemberValueProvider(MemberInfo member)
+                => (member as PropertyInfo is PropertyInfo property ? PropertyAccess.For(property) : null) ?? base.CreateMemberValueProvider(member);
+
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
                 var properties = base.CreateProperties(type, memberSerialization).Where(property => property.Writable
@@ -1424,6 +1541,55 @@ namespace PersistentCity.Persistence
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();
+            }
+        }
+
+        /// <summary>Typed getter and setter delegates for one saved property. Failures are wrapped exactly as Json.NET's
+        /// reflection provider wraps them, so a refused read reports the same error.</summary>
+        private abstract class PropertyAccess : IValueProvider
+        {
+            public static IValueProvider? For(PropertyInfo property)
+            {
+                var owner = property.DeclaringType;
+                var get = property.GetGetMethod(nonPublic: true);
+                if (owner == null || owner.IsValueType || owner.ContainsGenericParameters || property.GetIndexParameters().Length != 0
+                    || property.PropertyType.IsByRef || property.PropertyType.IsPointer || get == null || get.IsStatic) return null;
+                var set = property.GetSetMethod(nonPublic: true);
+                var access = typeof(PropertyAccess<,>).MakeGenericType(owner, property.PropertyType);
+                return (IValueProvider)Activator.CreateInstance(access, property, get, set)!;
+            }
+
+            public abstract object? GetValue(object target);
+            public abstract void SetValue(object target, object? value);
+        }
+
+        private sealed class PropertyAccess<TOwner, TValue> : PropertyAccess where TOwner : class
+        {
+            private readonly Func<TOwner, TValue> get;
+            private readonly Action<TOwner, TValue>? set;
+            private readonly string name;
+
+            public PropertyAccess(PropertyInfo property, MethodInfo get, MethodInfo? set)
+            {
+                name = property.Name;
+                this.get = (Func<TOwner, TValue>)Delegate.CreateDelegate(typeof(Func<TOwner, TValue>), get);
+                this.set = set == null || set.IsStatic ? null : (Action<TOwner, TValue>)Delegate.CreateDelegate(typeof(Action<TOwner, TValue>), set);
+            }
+
+            public override object? GetValue(object target)
+            {
+                try { return get((TOwner)target); }
+                catch (Exception e) { throw new JsonSerializationException(string.Format(CultureInfo.InvariantCulture, "Error getting value from '{0}' on '{1}'.", name, target.GetType()), e); }
+            }
+
+            public override void SetValue(object target, object? value)
+            {
+                try
+                {
+                    if (set == null) throw new ArgumentException("Property set method not found.");
+                    set((TOwner)target, (TValue)value!);
+                }
+                catch (Exception e) { throw new JsonSerializationException(string.Format(CultureInfo.InvariantCulture, "Error setting value to '{0}' on '{1}'.", name, target.GetType()), e); }
             }
         }
 

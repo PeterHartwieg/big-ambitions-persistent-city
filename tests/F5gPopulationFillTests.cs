@@ -657,7 +657,7 @@ public sealed class F5gPopulationFillTests
         var meal = copy.Food!.Residents.Single(m => m.ResidentId == commuter.Id);
         copy.Visitors.RemoveAt(at); copy.VisitorRoutines.RemoveAt(at); copy.Food.Residents.Remove(meal);
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(copy));
-        // F7d: the save is the compact wire; edits are made on its body and re-encoded (SaveWire).
+        // The save is the JSON body; edits are respaced to the writer's spelling (SaveWire).
         var root = SaveWire.Parse(payload);
         var visitors = (Newtonsoft.Json.Linq.JArray)root["Visitors"]!;
         int index = visitors.Select((v, i) => (v, i)).First(t => ((string)t.v!).Contains("|" + commuter.Id + "|")).i;
@@ -1022,7 +1022,7 @@ public sealed class F5gPopulationFillTests
         string body = SaveWire.Body(payload);
         Assert.Matches(tuple, body);
         string forged = SaveWire.Payload(tuple.Replace(body, m => "|" + seated.Id + "|" + m.Groups[1].Value + "D", 1));
-        Assert.StartsWith(SaveCodec.CompactPrefix, forged);
+        Assert.StartsWith(SaveCodec.BodyPrefix, forged);
         var refused = SaveCodec.Read(forged);
         Assert.Equal(SaveReadStatus.Invalid, refused.Status); Assert.Contains("day visitor holds no employment", refused.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = forged, ["rlo:state"] = "kept" };

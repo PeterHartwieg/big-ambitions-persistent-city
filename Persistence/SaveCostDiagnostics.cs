@@ -3,7 +3,9 @@ using System.Diagnostics;
 namespace PersistentCity.Persistence
 {
     /// <summary>Contiguous save phases inside one native onSaveGame callback (F7a). F7c adds Capture, the snapshot
-    /// copy between Synchronize and Validate; it is appended so the earlier phase numbers stay.</summary>
+    /// copy between Synchronize and Validate; it is appended so the earlier phase numbers stay. In the single-pass save
+    /// (P-A) Capture is the snapshot copy, Validate the semantic check of that snapshot and Encode the one writer pass
+    /// that produces the save string; nothing else runs between them.</summary>
     public enum SaveCostPhase { Observe, Synchronize, Validate, Encode, Publish, Capture }
 
     /// <summary>

@@ -284,7 +284,7 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     public void TheIntegratedCityWithAnotherSchemaNumberIsRefusedWithStartANewCityAndKept()
     {
         var (_, reloaded) = runs.SevenDays;
-        string older = reloaded.Final.Replace(SaveCodec.CompactPrefix, "{\"Schema\":36,\"f\":");
+        string older = reloaded.Final.Replace(SaveCodec.BodyPrefix, "{\"Schema\":36,\"Capabilities\":");
         Assert.Equal(36, SaveCodec.DevelopmentSchemaOf(older));
         var read = SaveCodec.Read(older);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);

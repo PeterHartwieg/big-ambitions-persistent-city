@@ -44,7 +44,7 @@ No other machine-specific script, path or user name is needed or recorded.
 | `population` | `FullyQualifiedName~F5hIntegratedAcceptanceTests` | zero failed |
 | `economy-fast` | `F6hIntegratedTests`, `F6kPriceWeightTests` | zero failed |
 | `economy` | `tests/economy-interventions --integrated`, then `acceptance.py`, then `economy_stage.py` | see below |
-| `saves` | `F7dCompactWriterTests`, `ReaderCorpusTests`, `SaveEpochTests` and every `*CurrentWriterGolden*` fact | zero failed |
+| `saves` | `SaveRoundTripTests`, `ReaderCorpusTests`, `SaveEpochTests` and every `*CurrentWriterGolden*` fact | zero failed |
 | `movement` | `tests/movement-equivalence --out {out}/movement.json` | see below |
 | `city-s`, `city-m` | `FullyQualifiedName~F9IntegratedCity&Size=city-s` / `city-m` | zero failed. Selects F9c's `F9IntegratedCityTests` and F9f's body arms `F9IntegratedCityMovementTests`, both with `[Trait("Size", "city-s")]` / `"city-m"`. |
 

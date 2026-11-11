@@ -33,7 +33,7 @@ public sealed class TrafficPersistenceTests
     [Fact]
     public void OldTrafficSchemaIsRefusedWithoutChangingTheOwnedQueue()
     {
-        var state = QueuedCity(); var wire = SaveWire.Parse(DevelopmentChain.Write(state)); wire["Traffic"]!["Schema"] = 1;
+        var state = QueuedCity(); var wire = SaveWire.Parse(DevelopmentChain.Write(state)); wire["Traffic"]!["Schema"] = TrafficKernelState.CurrentSchema + 1;
         string payload = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "unchanged" };
         var read = SaveStore.ReadFrom(data, state.PopulationKey);

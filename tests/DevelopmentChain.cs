@@ -9,11 +9,11 @@ namespace PersistentCity.Tests;
 /// DevelopmentSchema, and there are no frozen writers or readers.</summary>
 internal static class DevelopmentChain
 {
-    /// <summary>The product reader for a payload with another schema number, else the compact reader of an edited body.</summary>
+    /// <summary>The product reader for a payload with another schema number, else the strict reader of an edited body.</summary>
     public static SaveReadResult Read(string? source) => source != null && SaveCodec.DevelopmentSchemaOf(source) != null
         ? SaveCodec.Read(source) : SaveWire.Read(source);
 
-    /// <summary>The JSON body of the writer's compact payload, for tests that edit saved text.</summary>
+    /// <summary>The writer's payload (the JSON body itself), for tests that edit saved text.</summary>
     public static string Write(CityState state) => SaveWire.Text(state);
 
     public static void ValidateForActivation(CityState state) => SaveCodec.ValidateForActivation(state);

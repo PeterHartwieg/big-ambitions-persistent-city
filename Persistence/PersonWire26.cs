@@ -34,11 +34,13 @@ namespace PersistentCity.Persistence
             + "." + ((int)NativeEmployment.None).ToString(CultureInfo.InvariantCulture);
 
         /// <summary>Header probe for the native authority bootstrap: the stored schema if a development build wrote it (any
-        /// number other than <see cref="CityState.CurrentSchema"/>). Reads only to the root Schema field; never allocates
+        /// number other than <see cref="CityState.CurrentSchema"/>, or the retired compact wire at schema 1). Reads only to the root Schema field; never allocates
         /// the population graph.</summary>
         public static int? DevelopmentSchemaOf(string? source)
         {
             if (source == null || source.Length > MaxInputCharacters) return null;
+            // The retired F7d columnar wire carried schema 1 but is an older development city all the same.
+            if (RetiredCompact(source)) return CityState.CurrentSchema;
             try
             {
                 using var reader = Reader(source);

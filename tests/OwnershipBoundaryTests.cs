@@ -111,21 +111,18 @@ public sealed class OwnershipBoundaryTests
             (typeof(VendorRow), typeof(IVendorRowView)), (typeof(EconomicLedger), typeof(IEconomicLedgerView)) })
         {
             Assert.True(view.IsAssignableFrom(entity), entity.Name + " does not implement " + view.Name);
-            // Explicit implementations only: the view adds no public member, so the JSON and compact writers see the same shape.
+            // Explicit implementations only: the view adds no public member, so the writer sees the same shape.
             var map = entity.GetInterfaceMap(view);
             Assert.All(map.TargetMethods, m => Assert.True(m.IsPrivate && m.Name.Contains(view.Name, StringComparison.Ordinal), entity.Name + "." + m.Name));
         }
-        // No view collection shares a name with a public collection anywhere else in Core or Persistence: the compact reader
-        // takes each saved field's bound as the largest over every property of that name (CompactWire34.BuildFieldLimits),
-        // so a shared name would loosen a saved bound. The specialized bounds stay as F7d pinned them.
+        // No view collection shares a name with a public collection anywhere else in Core or Persistence, so a saved
+        // field name always means one collection and one bound.
         var viewCollections = seen.SelectMany(t => t.GetProperties()).Where(p => p.PropertyType != typeof(string)
             && typeof(System.Collections.IEnumerable).IsAssignableFrom(p.PropertyType)).Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
         Assert.Contains("ExtraProductIds", viewCollections);
         foreach (var type in typeof(CityState).Assembly.GetTypes().Concat(typeof(SaveCodec).Assembly.GetTypes()).Where(t => !seen.Any(v => v.IsAssignableFrom(t))))
             foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 Assert.False(viewCollections.Contains(p.Name), type.Name + "." + p.Name + " shares its name with a view collection");
-        Assert.Equal(FoodMenuPolicy.MaximumOffers - 1, SaveCodec.CompactCollectionLimit("AdditionalProductIds"));
-        Assert.Equal(SaveCodec.MaxPortals, SaveCodec.CompactCollectionLimit("Portals"));
         // The city view implementation is not public, so an observer cannot name it to reach the state.
         Assert.False(typeof(CitySimulator).Assembly.GetType("PersistentCity.Core.CityView")!.IsPublic);
     }
