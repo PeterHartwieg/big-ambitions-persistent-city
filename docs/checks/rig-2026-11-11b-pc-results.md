@@ -59,3 +59,5 @@ The 09:00–09:30 window completed: 2,944 complete frames, coverage complete, va
 | 30 capability reads, one per game minute, speed 1 | 2.7691 / 6.365 / 9.1013 / 18.5813 | 0 | 35.7151 / 185.7155 | FAIL: p95 is not <5 ms; provisional (PC shared). F8a-12 / F8bg-10 aliases. Owned shop/cart coverage remains absent. |
 
 No repeat was selected to replace this result. F2g/F5i sweep or declared visitor-load performance is not inferred from this window.
+
+Completed group: RLO absent payload readbacks. Raw evidence: `<stage>/runs/rlo-absent`; progress and request/reply files retained.
