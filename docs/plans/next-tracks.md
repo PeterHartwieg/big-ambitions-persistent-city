@@ -186,12 +186,14 @@ Every code slice runs the build, `python tools/test-focused.py` and its own new 
 - **Scope.** Offices, factories and warehouses staffed on venue hours; inspector words and business panel for non-food visits, purchases and refusals with causes.
 - **Schema:** no. **Testing:** offline; rig-needing for panel text. **Depends on:** GR-4.
 - **Owns:** `Core/WorkplaceCapacity.cs`, `Runtime/ResidentInspector.cs`, `Runtime/FoodEconomyPanel.cs`, `Runtime/Localization/`.
+- **Tests:** offline: workers arrive before opening and leave after closing, and no workplace holds more than its capacity; a closed venue staffs nobody; native production and wages are unchanged by the golden fixture; every refused non-food visit and purchase records one cause, and the panel model lists it. Batched rig check: inspector and panel text for a visit, a purchase and a refusal.
 
 ### GR-8: through-traffic cars (G5)
 
 - **Scope.** Anonymous cars edge to edge in the traffic kernel; inspector says "Passing through the city"; share is a setting with a low default.
 - **Schema:** no (not saved, regenerated). **Testing:** offline; rig-needing for queues. **Depends on:** GR-4.
 - **Owns:** `Core/TrafficKernel.cs` (entries), `Core/ThroughTraffic.cs` (new).
+- **Tests:** offline: through-cars enter and leave only at map edges and count toward road capacity like resident cars; they never park, carry no passenger and get no person ID; the share setting at 0 leaves the kernel identical to today; reload regenerates them without touching saved state. Batched rig check: queues at the default share and the inspector line.
 - **Reserved:** Q3.
 
 ### GR-9: bodies and own cars (G6, G7)
@@ -199,6 +201,7 @@ Every code slice runs the build, `python tools/test-focused.py` and its own new 
 - **Scope.** Fades, wider appearance and wardrobe, higher walker cap; the mod's own kinematic cars replace borrowed native cars and their IL hooks.
 - **Schema:** no. **Testing:** rig-needing. **Depends on:** P-C, GR-4.
 - **Owns:** `Runtime/PhysicalPopulation*.cs`, `Runtime/PhysicalVehicles.cs`, `Runtime/PhysicalTrafficHooks.cs`.
+- **Tests:** offline: a journey gives the same legs, times and arrival with own cars as with borrowed cars over a seeded day; person and car IDs survive pool reuse, reload and camera movement; appearance is reproducible from the person ID. Batched rig checks: walkers fade in and out without popping; parked cars stay where their owner left them across reload; no native car is borrowed and no IL hook is installed.
 
 ## 4. File conflicts
 
