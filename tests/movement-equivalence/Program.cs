@@ -1,6 +1,7 @@
 // F2a movement-equivalence harness (city audit F2 #89, docs/plans/f2-movement.md section 4).
 // Usage: dotnet run --project tests/movement-equivalence -c Release -- [--residents 957] [--days 2]
-//        [--arms <substring,...>] [--out <file.json>] [--dump <directory>] [--no-self-checks]
+//        [--arms <substring,...>] [--out <file.json>] [--dump <directory>] [--no-self-checks] [--pose-aim]
+// --pose-aim (P-C comparison): walkers aim with the F2c pose rule instead of one path per leg.
 // Runs the self-checks and the F2e E2 replay checks, then every arm and its bodies-off reference, prints one line per arm and
 // writes the full JSON (schema persistentcity-f2a-movement-1). Exit code 1 if a self-check fails or (F2g) an arm DIFFERS.
 // Since F2d (cars follow the traffic kernel) every body arm is expected to equal its bodies-off run; a DIFFERS line
@@ -14,7 +15,7 @@ using System.Text.Json;
 using PersistentCity.MovementEquivalence;
 
 int residents = MovementFixture.Residents, days = MovementRun.Days;
-string? output = null, dump = null; string[] filters = Array.Empty<string>(); bool selfChecks = true;
+string? output = null, dump = null; string[] filters = Array.Empty<string>(); bool selfChecks = true, poseAim = false;
 for (int i = 0; i < args.Length; i++)
 {
     switch (args[i])
@@ -25,6 +26,7 @@ for (int i = 0; i < args.Length; i++)
         case "--out": output = args[++i]; break;
         case "--dump": dump = args[++i]; break;
         case "--no-self-checks": selfChecks = false; break;
+        case "--pose-aim": poseAim = true; break;
         default: Console.Error.WriteLine("unknown argument " + args[i]); return 2;
     }
 }
@@ -70,6 +72,7 @@ foreach (var arm in arms.Where(a => needed.Contains(a.Name)).OrderBy(a => a.Refe
 {
     var options = arm.Options();
     options.DumpDirectory = dump;
+    options.Bodies.PoseAim = poseAim;
     var result = MovementRun.Run(options);
     results[arm.Name] = result;
     string line = arm.Name.PadRight(36) + " " + result.Seconds.ToString("F1", CultureInfo.InvariantCulture) + " s";
@@ -81,7 +84,10 @@ foreach (var arm in arms.Where(a => needed.Contains(a.Name)).OrderBy(a => a.Refe
         line += (comparison.Identical ? "  EQUAL " : "  DIFFERS ") + string.Join(" ", comparison.Equal.Select(e => e.Key + "=" + (e.Value ? "=" : "x")))
             + "  sales " + comparison.Delta["meals.ownSales"].ToString("+0;-0;0", CultureInfo.InvariantCulture)
             + "  missed " + comparison.Delta["routines.missedActivities"].ToString("+0;-0;0", CultureInfo.InvariantCulture)
-            + "  bodies " + result.Metrics["bodies.acquired"].ToString(CultureInfo.InvariantCulture);
+            + "  bodies " + result.Metrics["bodies.acquired"].ToString(CultureInfo.InvariantCulture)
+            + "  paths " + result.Metrics["walkers.pathRequests"].ToString(CultureInfo.InvariantCulture)
+            + "  lag_p95 " + result.Metrics["walkers.lagP95Metres"].ToString("F2", CultureInfo.InvariantCulture)
+            + "  ahead " + result.Metrics["walkers.aheadFrames"].ToString(CultureInfo.InvariantCulture);
     }
     Console.WriteLine(line);
 }

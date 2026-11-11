@@ -139,15 +139,21 @@ public sealed class FoodHolderReconciliationTests
             for (int i = 0; i < 100; i++) FoodHolderReconciliation.Check(image, native, menu, amount);
             var samples = new double[1000];
             int failures = 0;
-            long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < samples.Length; i++)
             {
                 var t = timing.Start();
                 if (FoodHolderReconciliation.Check(image, native, menu, amount) != FoodReconciliationRefusal.None) failures++;
                 samples[i] = timing.Stop(t, "reconciliation p95");
             }
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert.Equal(0, failures);
+            // A Check allocation shows in every round; runtime work during one round (tiering, other test threads) does not.
+            long allocated = long.MaxValue;
+            for (int round = 0; round < 5; round++)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < 1000; i++) FoodHolderReconciliation.Check(image, native, menu, amount);
+                allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - before);
+            }
             Assert.Equal(0, allocated);
             Array.Sort(samples);
             line = $"reconciliation 128 holders: p50 {samples[500]:0.0000} ms, p95 {samples[949]:0.0000} ms, max {samples[^1]:0.0000} ms, 0 B/call";

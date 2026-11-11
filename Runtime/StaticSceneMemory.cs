@@ -86,4 +86,28 @@ namespace PersistentCity.Runtime
         public bool Available(string targetId, Position facing)
             => sites.TryGetValue(targetId, out var site) && Position.Distance(facing, site.Position) <= FacingTolerance;
     }
+
+    internal enum SceneScan { None, Parks, Performers }
+
+    /// <summary>P2: which whole-scene optional-stop scans are pending. A scene-set change or a destroyed park trigger
+    /// marks a cache pending at once, before any availability or spot query reads it; the flag clears only when that
+    /// scan has run, so a frame spent on another scan leaves it pending. Unity-free so tests can drive it.</summary>
+    internal sealed class SceneScanSchedule
+    {
+        private bool parks = true, performers = true;
+        public void SceneSetChanged() { parks = true; performers = true; }
+        public void ParkTriggerLost() => parks = true;
+        /// <summary>Frontage kinds are scheduled by the frontage rebind, not here.</summary>
+        public bool Due(DwellKind kind) => kind == DwellKind.Audience ? performers : kind == DwellKind.Resting && parks;
+        public SceneScan Next => parks ? SceneScan.Parks : performers ? SceneScan.Performers : SceneScan.None;
+        public void Completed(SceneScan scan)
+        {
+            if (scan == SceneScan.Parks) parks = false;
+            else if (scan == SceneScan.Performers) performers = false;
+        }
+        /// <summary>A geometry failure read while a scan is pending, including one the geometry read itself raised,
+        /// is Deferred; pass the pending state read after the geometry status.</summary>
+        public static OptionalStopAvailability AfterGeometry(OptionalStopAvailability geometry, bool scanPending)
+            => geometry != OptionalStopAvailability.Ready && scanPending ? OptionalStopAvailability.Deferred : geometry;
+    }
 }

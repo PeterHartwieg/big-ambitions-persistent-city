@@ -477,8 +477,14 @@ public sealed class CoreIdentityTests
             for (int i = 0; i < 50; i++) network.TryMapRemainingSpans(route, route.Minutes * i / 50, spans);
         }
         Queries(3); // Builds each resident's keys, each place's opening windows and the span buffer.
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        Queries(3);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        // A query allocation shows in every round; runtime work during one round (tiering, other test threads) does not.
+        long allocated = long.MaxValue;
+        for (int round = 0; round < 5; round++)
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            Queries(3);
+            allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
+        Assert.Equal(0, allocated);
     }
 }

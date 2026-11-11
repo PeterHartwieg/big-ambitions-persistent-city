@@ -42,7 +42,8 @@ namespace PersistentCity.Runtime
             {
                 var ui = InstanceBehavior<UIs>.Instance;
                 var controller = ui == null ? null : ui.gameSpeed;
-                var speed = controller == null ? null : SpeedField?.GetValue(controller) as GameSpeed;
+                // P2: the prepared reader replaces the boxed reflection read; same answer, the field is the same.
+                var speed = controller == null ? null : readSpeed != null ? readSpeed(controller) : SpeedField?.GetValue(controller) as GameSpeed;
                 return speed != null && speed.speed == TimeSpeed.FastForward;
             }
         }
