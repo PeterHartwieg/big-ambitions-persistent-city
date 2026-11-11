@@ -90,3 +90,7 @@ PARTIAL. Created a local unsealed day-three 07:30 f9-city-ready checkpoint from 
 ## F6b supported shop observations
 
 PARTIAL. Recorded one staffed two-offer shop at 10:00/11:00/12:00/13:00, its bounded natural-purchase log, native ledger, RivalFoodDiagnostics, FoodDiagnostics and an intraday rival fingerprint pair where a food rival was available. No native rival field was written. This is no FT-F6b-RivalLimits rush/control or calibration verdict. The reviewed config allowlist lacks RivalServiceLanes and RivalMealPeriodUnits; tight-profile and profile-change rows remain NOT RUN. No performance window was measured. Raw evidence: `<stage>/runs/remaining`, f6-prefixed actions.
+
+## F7 shop save subsets
+
+PARTIAL check 1 subset. Made two explicitly named same-minute paused saves of this fresh shop city and requested native-reader PC extracts, with live native state retained. Receipt Pending, just-after-paid-sale and posting-unit interruption assertions require observed states; no checkpoint label fabricates those states. Check 3 is NOT RUN unless actual receipt_pending activity can be established; the checked-in FT F7 food shop template contains a placeholder for reaching that state. No RIG-FAULT, historical schema, stress/50k, F7e, repeated F7-2/7/9 or save-profiling run. Raw evidence: `<stage>/runs/remaining`, f7-prefixed actions. Final comparison and fresh-process continuation are reported after this lifecycle.
