@@ -29,44 +29,58 @@ public sealed partial class FoodCommerceTests
     {
         /// <summary>Base code: TryStart's RLO-Ready path, just before initialization.</summary>
         RloReady,
-        /// <summary>Fix round 1: TryStart's first attempt, inside PopulationRuntime.Update.</summary>
+        /// <summary>Fix rounds 1-2: the first PopulationRuntime.Update on the loaded save.</summary>
         FirstUpdate,
-        /// <summary>This fix: the startup guard armed while no city is attached (the menu), before the load.</summary>
-        BeforeLoad,
+        /// <summary>This fix: the city-load callback (OnLoadAsync -> ArmForCityLoad), before the loaded save's ticks.</summary>
+        CityLoadCallback,
     }
 
-    /// <summary>Native time after a load until activation: loading frames, frames waiting for RLO, then RLO Ready
-    /// and initialization. Each frame runs GameManager.RunMainGameTick before PopulationRuntime.Update (the order
-    /// Unity does not guarantee either way); an unheld tick advances 1/30 game minute (one game minute a second).</summary>
+    /// <summary>One menu/load cycle as production runs it: the previous runtime's Shutdown removed its clock, and
+    /// ModEntryOnCityLoad creates a new runtime (a new <see cref="StartupClockHold"/>) in OnLoadAsync. Then loading
+    /// frames, frames waiting for RLO, RLO Ready and initialization. Each frame runs GameManager.RunMainGameTick before
+    /// PopulationRuntime.Update (Unity orders neither); an unheld tick advances 1/30 game minute.</summary>
     private sealed class NativeLoad
     {
         public int Hour; public float Minute;
         public double Now => Hour + (double)Minute;
         public NativeLoad(double saved) { Hour = (int)(Math.Floor(saved / 60) * 60); Minute = (float)(saved - Hour); }
 
-        /// <summary>Returns the native minute at activation.</summary>
-        public double Run(HoldFrom from, int loadingFrames, int waitingFrames, StartupClockHold startup)
+        /// <summary>Returns the native minute at activation. <paramref name="currentAtCallback"/> false models a city-load
+        /// callback that runs before SaveGameManager.Current names the loaded save.</summary>
+        public double Run(HoldFrom from, int loadingFrames, int waitingFrames, bool currentAtCallback = true)
         {
             var loaded = new object();
-            bool held = false;
-            if (from == HoldFrom.BeforeLoad) { startup.ForSave(null); held = startup.Begin(); } // armed at the menu
+            var startup = new StartupClockHold(); // a new runtime per load; nothing carried from the unloaded one
+            bool held = false;                    // Shutdown stopped the previous clock
+            if (from == HoldFrom.CityLoadCallback)
+            {
+                // OnLoadAsync -> ArmForCityLoad -> ArmStartupClock(SaveGameManager.Current)
+                startup.ForSave(currentAtCallback ? loaded : null);
+                if (startup.Begin()) held = true; // NativeCityClock.Arm()
+            }
             for (int frame = 0; frame < loadingFrames + waitingFrames; frame++)
             {
                 bool loading = frame < loadingFrames;
                 if (!held) Minute += 1f / 30; // the native tick first
                 // PopulationRuntime.Update: ArmStartupClock, Wait, then TryStart (RLO NotReady returns early).
-                if (from == HoldFrom.BeforeLoad)
+                if (from == HoldFrom.CityLoadCallback)
                 {
-                    startup.ForSave(loaded); // the guard bound to no save stays installed; only the bookkeeping starts over
+                    startup.ForSave(loaded); // a guard bound to no save stays installed; only the bookkeeping starts over
+                    if (startup.Begin()) held = true;
+                }
+                if (from == HoldFrom.FirstUpdate)
+                {
+                    startup.ForSave(loaded);
                     if (startup.Begin()) held = true;
                 }
                 if (startup.Wait(loading, 1.0 / 30)) held = false;
-                if (from == HoldFrom.FirstUpdate && startup.Begin()) held = true;
             }
             // RLO Ready: TryStart installs the bound clock and starts initialization; activation follows.
             startup.Initializing();
+            ReleasedAtEnd = startup.Released;
             return Now;
         }
+        public bool ReleasedAtEnd { get; private set; }
     }
 
     private static Dictionary<string, string> OrdinarySave(SaveEpochBinding binding, SaveObject save, SaveSession session, CitySimulator city, double native)
@@ -149,16 +163,18 @@ public sealed partial class FoodCommerceTests
         Assert.Contains(city.State.Food!.Residents, m => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving);
 
         // Before this fix: the rig's reload (3 loading frames, then a second of RLO NotReady) crosses into 11:02.
-        double before = new NativeLoad(loaded.Minute).Run(HoldFrom.RloReady, 3, 30, new StartupClockHold());
+        double before = new NativeLoad(loaded.Minute).Run(HoldFrom.RloReady, 3, 30);
         Assert.True(Math.Floor(before) > Math.Floor(native));
         Assert.Null(Activate(loaded, before, routes, new Market())); // "Accounting input epoch was lost"
         // A hold installed by the first Update is still late if the first native tick runs before it: 11:02.002.
-        double firstUpdate = new NativeLoad(loaded.Minute).Run(HoldFrom.FirstUpdate, 3, 30, new StartupClockHold());
+        double firstUpdate = new NativeLoad(loaded.Minute).Run(HoldFrom.FirstUpdate, 3, 30);
         Assert.Equal(2102, Math.Floor(firstUpdate));
         Assert.Null(Activate(loaded, firstUpdate, routes, new Market()));
 
-        // After: the guard is armed before the load; native stays at the saved minute even with the tick first.
-        double after = new NativeLoad(loaded.Minute).Run(HoldFrom.BeforeLoad, 3, 30, new StartupClockHold());
+        // After: the city-load callback arms the guard; native stays at the saved minute even with the tick first,
+        // whether or not SaveGameManager.Current already names the loaded save in the callback.
+        Assert.Equal(native, new NativeLoad(loaded.Minute).Run(HoldFrom.CityLoadCallback, 3, 30, currentAtCallback: false));
+        double after = new NativeLoad(loaded.Minute).Run(HoldFrom.CityLoadCallback, 3, 30);
         Assert.Equal(native, after);
         var restored = Activate(loaded, after, routes, new Market());
         Assert.NotNull(restored);
@@ -180,7 +196,7 @@ public sealed partial class FoodCommerceTests
         var h1 = OrdinarySave(next, reloadedSave, nextSession, restored, hourLater);
         var (h1State, h1Marker) = LoadFile(h1, loaded.PopulationKey);
         Assert.Equal(2, h1Marker.Sequence);
-        double h1Native = new NativeLoad(h1State.Minute).Run(HoldFrom.BeforeLoad, 3, 30, new StartupClockHold());
+        double h1Native = new NativeLoad(h1State.Minute).Run(HoldFrom.CityLoadCallback, 3, 30);
         var h1City = Activate(h1State, h1Native, routes, new Market());
         Assert.NotNull(h1City);
         Assert.True(h1City!.BeginAccountingObservations(h1Native));
@@ -193,10 +209,10 @@ public sealed partial class FoodCommerceTests
     {
         // RLO never became ready within the wait: native time is released, crosses, and the save is still refused.
         var (_, _, _, loaded, routes) = FreshCityFirstSave(Native(2100, 1.9687246f));
-        var startup = new StartupClockHold();
         int waiting = (int)(StartupClockHold.MaximumWaitSeconds * 30) + 2;
-        double native = new NativeLoad(loaded.Minute).Run(HoldFrom.BeforeLoad, 3, waiting, startup);
-        Assert.True(startup.Released);
+        var load = new NativeLoad(loaded.Minute);
+        double native = load.Run(HoldFrom.CityLoadCallback, 3, waiting);
+        Assert.True(load.ReleasedAtEnd);
         Assert.True(Math.Floor(native) > Math.Floor(loaded.Minute));
         Assert.Null(Activate(loaded, native, routes, new Market()));
     }
@@ -284,6 +300,13 @@ public sealed class StartupClockHoldTests
         Assert.NotNull(root);
         string Read(string path) => File.ReadAllText(Path.Combine(root!.FullName, path)).Replace("\r\n", "\n");
         string mod = Read("Runtime/PersistentCityMod.cs");
+        // ModEntryOnCityLoad: each load creates a new runtime; its load callback arms the guard after Initialize.
+        string onLoad = mod.Substring(mod.IndexOf("public Task OnLoadAsync(ModContext context)", StringComparison.Ordinal));
+        int init = onLoad.IndexOf("runtime.Initialize(context);", StringComparison.Ordinal);
+        int armed = onLoad.IndexOf("runtime.ArmForCityLoad();", StringComparison.Ordinal);
+        Assert.True(init > 0 && init < armed && armed < onLoad.IndexOf("return Task.CompletedTask;", init, StringComparison.Ordinal));
+        string armForLoad = mod.Substring(mod.IndexOf("public void ArmForCityLoad()", StringComparison.Ordinal));
+        Assert.Contains("try { ArmStartupClock(SaveGameManager.Current); }", armForLoad.Substring(0, armForLoad.IndexOf("\n        }", StringComparison.Ordinal)));
         string start = mod.Substring(mod.IndexOf("private void TryStart()", StringComparison.Ordinal));
         int rlo = start.IndexOf("ReadRlo(\"startup\")", StringComparison.Ordinal);
         int late = start.IndexOf("if (!NativeCityClock.Active) StartCityClock(save);", StringComparison.Ordinal);

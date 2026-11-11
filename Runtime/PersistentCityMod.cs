@@ -33,7 +33,10 @@ namespace PersistentCity.Runtime
                 return Task.CompletedTask;
             }
             host = new GameObject(name);
-            host.AddComponent<PopulationRuntime>().Initialize(context);
+            var runtime = host.AddComponent<PopulationRuntime>();
+            runtime.Initialize(context);
+            // The city-load callback precedes the loaded save's native ticks; Update's order against them is not guaranteed.
+            runtime.ArmForCityLoad();
             return Task.CompletedTask;
         }
 
@@ -658,6 +661,15 @@ namespace PersistentCity.Runtime
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
+        }
+
+        /// <summary>Arms the startup guard from the city-load callback (<see cref="PersistentCityMod.OnLoadAsync"/>): each load
+        /// creates a new runtime, so no earlier Update has armed it, and the first Update may follow the first native tick.</summary>
+        public void ArmForCityLoad()
+        {
+            if (!enabled || failed) return;
+            try { ArmStartupClock(SaveGameManager.Current); }
+            catch (Exception error) { Fail(error.Message); }
         }
 
         /// <summary>While no city is attached, keep the startup guard armed for the current save (none at the menu), so
