@@ -241,3 +241,5 @@ Historical slice text was read from `docs-history-2026-11-10` where retired; cur
 ## Cleanup
 
 Restored this run's current post-install backup, with 301 protected entries matching SHA-256/absence and the exact isolated HKCU key verified. ModsLocal, install receipt/managed overlay, launcher/run state, preferences, persistent-city.json and autosave state match the backup. The rollback revision was not used. All owned game processes exited normally; final agent1 stopped, lease free, pending=0. No process this run started remains running. Evidence: `<stage>/restore-verification.json`, `final-verification.json`, `owned-process-verification.json`. Fresh fixture saves and their test evidence remain.
+
+Follow-up: [11 November d PC shop-selection results](rig-2026-11-11d-pc-results.md) at `86c2e92f` rented 24 Fourth Avenue (C2). Shop hand-back/reacquisition verified; first sale and successful native service remain partial. This follow-up does not change the verdicts above.
