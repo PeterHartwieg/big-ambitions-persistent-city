@@ -29,3 +29,5 @@ Role `rig_test`, HomePCHartwieg, agent1 background. Run in progress; this commit
 ## Findings
 
 Fresh native creation and Ready save succeeded. Payload, digest and timing readbacks are next. All #209 passes remain carried evidence; no pending capability is assumed present.
+
+Completed group: payload and success epoch. Raw evidence: `<stage>/runs/positive`; progress and request/reply files retained.
