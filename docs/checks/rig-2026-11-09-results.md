@@ -507,7 +507,7 @@ Protected-manifest verification: **303/303 entries** match (301 file SHA-256 has
 
 Rows retain the 6 November IDs: 494 rows in 77 candidate files, plus 16 NOT RUN rows in the three slices merged while this run was active (510 rows total). The two C2a handoff sections retain separate `c2a-*` / `c2a-s2-*` IDs, as in the earlier catalogue. Historical writer numbers and migration requests remain in their owning files; current-writer smoke does not silently pass them. PASS means the full stated assertion was observed; PARTIAL names the observed subset. Flow setup/input failures do not become product FAILs.
 
-The short requirement labels refer to the grouped NOT RUN explanation above. Full check titles and unabridged per-row requirements are in [checks.json](rig-2026-11-09/checks.json); native/public diagnostic readbacks are in [readbacks.json](rig-2026-11-09/readbacks.json), key hashes/prefixes in [headers.json](rig-2026-11-09/headers.json), and save assertion audits in [save-audit.json](rig-2026-11-09/save-audit.json).
+The short requirement labels refer to the grouped NOT RUN explanation above. [checks.json](rig-2026-11-09/checks.json) is a compact excerpt (id, status, group, key); full check titles and unabridged per-row requirements are in the archived blob `05d505b:docs/checks/rig-2026-11-09/checks.json` (SHA-256 in the excerpt's `archive` block); native/public diagnostic readbacks are in [readbacks.json](rig-2026-11-09/readbacks.json), key hashes/prefixes in [headers.json](rig-2026-11-09/headers.json), and save assertion audits in [save-audit.json](rig-2026-11-09/save-audit.json).
 
 ### [a3-weighted-choice.md](a3-weighted-choice.md)
 
