@@ -29,7 +29,7 @@ namespace PersistentCity.Runtime
         private static readonly Harmony patches = new Harmony(PatchId);
         /// <summary>Native automatic restocking (a shelf's last unit refilled from stock boxes or parked-vehicle cargo)
         /// moves stock outside the building image Undo restores, so it does not run inside a probe. The shelf is refilled
-        /// by the native hourly restock as usual.</summary>
+        /// at the native closing-hour restock (or by hand); until then it stays empty and later native customers skip it.</summary>
         private static bool SkipRefillWhileProbing() => probing == null;
         /// <summary>True only inside a probe's native ProcessCustomer call for this registration; the food authority's
         /// customer gate lets it through as it does the mod's own food checkout.</summary>
