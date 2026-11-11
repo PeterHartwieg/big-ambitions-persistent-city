@@ -140,10 +140,57 @@ Evidence is kept per machine under `tools/acceptance/evidence/<os>-<arch>/`. `py
 | Machine | Status | runId | Semantic | Digests |
 | --- | --- | --- | --- | --- |
 | PC (`windows-x64`) | recorded at `b3e5a910` (committed); first record at `d23bb925` superseded as the comparison baseline | `20261110T201123Z-b3e5a910` | pass | 174 recorded, equal to the first record |
-| Mac (`macos-arm64`) | pending F9h-mac, at `b3e5a910` or a later head with no simulation-input change | – | – | – |
+| Mac (`macos-arm64`) | recorded at `b5f2a1de` (F9h-mac, below) | `20261110T215417Z-b5f2a1de` | pass | 174 recorded; 173 equal to the PC, `economy/acceptance.json` differs by line endings only |
 | Linux box | not run: the Linux box does not build or test (team rule) | – | – | – |
 
-Comparison verdict: `pending` (one machine recorded; recomputed with this run). The F9h-mac run runs `full` on the Mac at the head where this PR merged, then `evidence.py record --result <its acceptance.json>` and `evidence.py compare`, and adds its column here. The PC comparison record stays at `b3e5a910`: `compare` accepts records from different commits when `git diff` between them touches no simulation input (`Core`, `Persistence`, `Runtime`, `Compatibility`, `config`, `tests`, `tools/economy-interventions`, `tools/movement-equivalence`, the stage catalogue, the movement expectations, `tools/acceptance/run.py` and `economy_stage.py`), the recorded settings are equal and no record comes from a dirty tree with another commit or diff. This PR changes none of them, so the merged head compares with the PC record. F8b-g did change simulation inputs between `d23bb925` and `b3e5a910`, which is why the same-head re-record above exists. If a simulation input changes before the Mac run, the verdict is `different-source`, and F9h-mac runs `full` on the PC again at the Mac's head and records it before comparing.
+Comparison verdict: `platform-divergent`, first differing digest `economy/acceptance.json`. See the F9h-mac section below. The semantic class passes on both machines.
+
+## F9h-mac: Mac record and PC-vs-Mac comparison, 10 November 2026
+
+Task `pc-f9h-mac-acceptance-compare`, branch `codex/pc-f9h-mac-acceptance-compare` from `codex/persistent-city` at `18008ef3` (#202).
+
+**Where the Mac run ran.** The committed PC record is at `b3e5a910` and merged in `b5f2a1de` (#201), which changed no simulation input. The branch tip `18008ef3` (#202) changed `Persistence/SaveEpoch.cs`, `Runtime/PersistentCityMod.cs`, `Runtime/SaveEpochRuntime.cs` and `tests/SaveEpochTests.cs`, all simulation inputs, so a Mac `full` at the tip would compare `different-source`. I ran the Mac `full` from a second, detached worktree at exactly `b5f2a1de`, in the foreground, recorded that run's `acceptance.json` into `macos-arm64/` on this branch and ran `compare` here. Both records are then at commits with no simulation-input diff. The second worktree was removed after recording. This is the same-source Mac record the plan asks for, not a substitute for a PC re-record.
+
+| Field | Value |
+| --- | --- |
+| runId | `20261110T215417Z-b5f2a1de` (21:54:17 to 22:21:06 UTC) |
+| Source | `b5f2a1de0d132a476c0e1e5c695c5be9f1b6f386`, clean (`dirty: false`, 0 untracked), detached |
+| Host | Darwin arm64 (`macos-arm64`), .NET SDK 10.0.400, Python 3.15.0 |
+| Game fingerprint set | `unknown`: the Mac dll-import-shim's assemblies differ from every declared set (all 27 listed in `differing`), so `game-fingerprint` is a required native item `incomplete` |
+| `PersistentCity.dll` SHA-256 | `0f34e6e22e5157f7aed25b41fe8cb2af14727275cdea99fbf64a5bd5be476c2d`, the same as the PC build at `b3e5a910` |
+| Compiled defaults | 1.2 / 1, event budgets 10000 / 1; no declared override |
+| `acceptance.json` SHA-256 | `126056c73bdb9ce55071062bdf412cfcf42b7a0b5c3aa722f16f1060d6c89cd9` |
+| Exit | 0 (summary `incomplete`; failed `[]`; incomplete: `f9-2` to `f9-9`, `f6b-2`, `game-fingerprint`, `native-wholesale-costs`, `native-staffed-throughput`) |
+
+| Stage | Verdict | Result | Mac wall (s) | PC wall at `b3e5a910` (s) |
+| --- | --- | --- | --- | --- |
+| provenance | pass | recorded | 0.0 | 0.0 |
+| build | pass | exit 0 | 20.9 | 4.9 |
+| unit | pass | 4,128 passed | 584.2 | 391.8 |
+| population | pass | 8 passed | 0.1 | 0.1 |
+| economy | pass | functional criteria pass; unmeasured criteria routed | 496.5 | 446.2 |
+| saves | pass | 84 passed | 0.1 | 0.1 |
+| movement | pass | 76 arms equal their reference | 450.2 | 467.8 |
+| city-s | pass | 27 passed | 8.3 | 10.0 |
+| city-m | pass | 18 passed | 48.2 | 43.8 |
+
+The Mac has one more incomplete native item than the PC (`game-fingerprint`), because the shim is not a declared Steam set. That is a property of the Mac's reference assemblies, not of the simulation.
+
+### Comparison
+
+[`comparison.json`](../../tools/acceptance/evidence/comparison.json): verdict `platform-divergent`, first differing digest `economy/acceptance.json`. The other 173 digests are equal: all 85 F6h run files and all 88 movement save hashes. The semantic class passes on both machines; the divergence does not fail it.
+
+The one difference is line endings. The PC wrote F6h's `acceptance.json` with CRLF. Converting the Mac file's LF to CRLF gives `9397589d…aeec8b8d`, the PC digest exactly. The JSON content is the same on both machines, so the simulation itself agrees. The runner hashes the file bytes, though, and `compare` reports what it was given. Hashing that file in a newline-independent way would need a change to `run.py` or `economy_stage.py`, which are simulation inputs. That change would make this pair of records `different-source`, so it is left for a later slice.
+
+### Runner fix: `configSha256` in the settings check
+
+The first `compare` returned `different-source` ("recorded machines ran different settings"). The only differing setting was `configSha256`: `2c14a2bc…d34691` on the PC, `f0940fcb…1a0d85` on the Mac. The committed `config/persistent-city.json` hashes to `f0940fcb…` and its CRLF checkout to `2c14a2bc…`, so the PC's value is the Windows `core.autocrlf` checkout of the same file. `config/` is a simulation input and already compared by the git diff between the record commits. `evidence.py` now leaves `configSha256` out of the settings comparison, and compiled defaults and overrides still have to match. Two new tests in `test_evidence.py` cover it: a config hash that differs only by checkout compares, and different compiled defaults are `different-source`. `evidence.py` is not a simulation input.
+
+### Household bands
+
+[`macos-arm64/f6h-household-bands.json`](../../tools/acceptance/evidence/macos-arm64/f6h-household-bands.json), derived by `evidence.py record` with `acceptance.derive_household_thresholds`. Every derived value, band and per-seed flag equals the PC file. Only `runId`, `commit` and `machine` differ. Not adopted: `acceptance.py`, `FoodChoicePriceWeight` and `FoodChoiceHouseholdWeight` are unchanged.
+
+The Linux box stays not run: it does not build or test (team rule).
 
 ## Reference run under `tools/acceptance/evidence/`
 

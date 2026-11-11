@@ -21,6 +21,7 @@ namespace PersistentCity.Runtime
             if (initialization != null)
                 _ = initialization.ContinueWith(task => { _ = task.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
             initialization = null; initializingSave = null; initializingPayload = null; initializingHadPayload = false;
+            startupHold.Reset();
             simulation = null; saveSession = null; stopEnvironment = null;
             routes = null; clockRetimingRoutes = false; saveIdentity = null;
             accountingText = ""; nextAccountingText = 0;

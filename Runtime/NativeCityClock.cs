@@ -56,6 +56,7 @@ namespace PersistentCity.Runtime
         {
             if (double.IsNaN(factor) || double.IsInfinity(factor) || factor < .1 || factor > 1)
                 throw new ArgumentOutOfRangeException(nameof(factor), "GameClockFactor must be between 0.1 and 1.");
+            if (Armed) Stop(); // The startup guard hands over to the bound clock within this call; no tick runs between.
             if (patches != null) throw new InvalidOperationException("City clock already active.");
             if (factor == 1 && readPopulationReady == null) return; // Native pace also retains Driven Rides' independent ride setting.
             if (!ReferenceEquals(currentSave, SaveGameManager.Current)) throw new InvalidOperationException("City clock save changed.");
@@ -68,9 +69,7 @@ namespace PersistentCity.Runtime
                 // Calendar policy precedes boundary caps (including the rig's Priority.First
                 // run-until limiter), so a last partial tick still reaches its requested time.
                 installing.Patch(tick, prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(TickPrefix)) { priority = Priority.First + 1 });
-                // Last, after calendar/ride/run-until caps. Never allow another local pace
-                // policy to undo the accounting hold. This prefix performs no simulation work.
-                installing.Patch(tick, prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(AccountingPrefix)) { priority = Priority.Last });
+                PatchAccounting(installing, tick);
                 // Optional adapter for the installed Driven Rides contract. Undo only its positive
                 // ride multiplier, preserving an explicit zero/held clock and all other tick patches.
                 var ride = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("DrivenRides.Ride", false)).FirstOrDefault(t => t != null);
@@ -91,14 +90,50 @@ namespace PersistentCity.Runtime
             catch { installing.UnpatchAll(Owner); CoordinatesDrivenRides = false; throw; }
         }
 
+        /// <summary>Installed and bound to no save: the startup guard.</summary>
+        public static bool Armed => patches != null && save == null;
+        /// <summary>Installed and bound to a save (current or not).</summary>
+        public static bool Bound => patches != null && save != null;
+        /// <summary>Startup guard (<see cref="StartupClockHold"/>): installs only the accounting prefix, bound to no save, so it
+        /// holds every native tick until a city binds the clock. Installed by the city-load callback
+        /// (PopulationRuntime.ArmForCityLoad), before a loaded save's first native tick; Update keeps it armed until
+        /// TryStart binds the clock. No runtime exists at the menu.</summary>
+        public static void Arm()
+        {
+            if (patches != null) return;
+            if (Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("City clock patch ID already owned.");
+            var installing = new Harmony(Owner);
+            try
+            {
+                var tick = AccessTools.Method(typeof(GameManager), nameof(GameManager.RunMainGameTick), new[] { typeof(float) })
+                    ?? throw new MissingMethodException("GameManager.RunMainGameTick(float)");
+                PatchAccounting(installing, tick);
+                ResetDiagnostics();
+                patches = installing;
+            }
+            catch { installing.UnpatchAll(Owner); throw; }
+        }
+
+        // Last, after calendar/ride/run-until caps. Never allow another local pace
+        // policy to undo the accounting hold. This prefix performs no simulation work.
+        private static void PatchAccounting(Harmony installing, System.Reflection.MethodInfo tick)
+            => installing.Patch(tick, prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(AccountingPrefix)) { priority = Priority.Last });
+
         private static void TickPrefix(ref float deltaTimeWithMultiplier)
         {
             if (!Active || Refused || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
             if (OrdinaryTick) deltaTimeWithMultiplier *= (float)Factor;
         }
+        /// <summary>Set while startup holds native time before activation (<see cref="StartupClockHold"/>).</summary>
+        public static bool StartupHold { get; set; }
         private static void AccountingPrefix(ref float deltaTimeWithMultiplier)
         {
             AccountingLimited = false;
+            // Installed but not bound to the current save (the startup guard, or a save change PopulationRuntime has
+            // not handled yet): no native minute may pass before that save's snapshot attaches.
+            if (patches != null && !Active) { if (deltaTimeWithMultiplier > 0) deltaTimeWithMultiplier = 0; return; }
+            // Startup also holds behind the loading screen once the clock is bound.
+            if (LoadScene.isLoading && StartupHold && deltaTimeWithMultiplier > 0) { deltaTimeWithMultiplier = 0; return; }
             if (!Active || LoadScene.isLoading || economyActive?.Invoke() != true || nativeClock == null || populationCaughtUp == null) return;
             double native = nativeClock(), logical = logicalClock?.Invoke() ?? native;
             // A bypassing clock writer or an old cross-epoch save has no replay-safe input image.
@@ -131,7 +166,7 @@ namespace PersistentCity.Runtime
         {
             HeldEconomySkipTicks = HeldOrdinaryTicks = BoundaryClips = waitingSince = lastHeldAt = 0;
             WithheldMinutes = LagMinutes = MaximumLagMinutes = MaximumRecoverySeconds = 0;
-            AccountingLimited = Refused = false;
+            AccountingLimited = Refused = StartupHold = false;
         }
         private static void RidePrefix(float __0, out float __state) => __state = OrdinaryTick ? __0 : float.NaN;
         private static void RidePostfix(ref float __0, float __state)

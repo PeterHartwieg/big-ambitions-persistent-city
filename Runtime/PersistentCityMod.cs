@@ -33,7 +33,10 @@ namespace PersistentCity.Runtime
                 return Task.CompletedTask;
             }
             host = new GameObject(name);
-            host.AddComponent<PopulationRuntime>().Initialize(context);
+            var runtime = host.AddComponent<PopulationRuntime>();
+            runtime.Initialize(context);
+            // The city-load callback precedes the loaded save's native ticks; Update's order against them is not guaranteed.
+            runtime.ArmForCityLoad();
             return Task.CompletedTask;
         }
 
@@ -83,6 +86,7 @@ namespace PersistentCity.Runtime
         private bool initializingHadPayload;
         private Assembly? dependency;
         private float nextStart, nextDependencyCheck, nextStationScan, nextSummary;
+        private readonly StartupClockHold startupHold = new StartupClockHold();
         private int gateChanges, roadSnapshots, seenRoadSnapshots, waitingFrames;
         private readonly Dictionary<string, int> roadRebuildReasons = new Dictionary<string, int>(StringComparer.Ordinal);
         private string lastRoadRebuild = "";
@@ -261,12 +265,20 @@ namespace PersistentCity.Runtime
                 var save = SaveGameManager.Current;
                 if (NativeInteriorCityView.Configured && (save == null || UI.Load.LoadScene.isLoading
                     || saveIdentity != null && !ReferenceEquals(saveIdentity, save))) RestoreInterior();
+                ArmStartupClock(save);
                 if (save == null) return;
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                     ResetPopulationForSaveChange();
                 if (simulation == null)
                 {
                     if (initialization != null) { CompleteInitialization(); return; }
+                    ArmStartupClock(save);
+                    if (startupHold.Wait(UI.Load.LoadScene.isLoading, Time.unscaledDeltaTime))
+                    {
+                        NativeCityClock.Stop();
+                        log?.Warn("Persistent City startup is still waiting after " + StartupClockHold.MaximumWaitSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            + " seconds; native time is released. If native time enters another minute before the city attaches, the saved city is refused as before.");
+                    }
                     if (Time.unscaledTime < nextStart) return;
                     nextStart = Time.unscaledTime + 1;
                     TryStart();
@@ -613,9 +625,8 @@ namespace PersistentCity.Runtime
             double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
             // Hold native time throughout detached initialization and route preparation too.
             // Otherwise the world can cross accounting epochs before its scheduler exists.
-            NativeCityClock.Start(save, settings.GameClockFactor,
-                () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
-                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
+            if (!NativeCityClock.Active) StartCityClock(save);
+            startupHold.Initializing();
             initializingSave = save;
             // F7a: load timing only when save-cost diagnostics are requested; otherwise no timestamps or fields.
             bool timed = timeActivation = saveCost != null;
@@ -650,6 +661,34 @@ namespace PersistentCity.Runtime
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
+        }
+
+        /// <summary>Arms the startup guard from the city-load callback (<see cref="PersistentCityMod.OnLoadAsync"/>): each load
+        /// creates a new runtime, so no earlier Update has armed it, and the first Update may follow the first native tick.</summary>
+        public void ArmForCityLoad()
+        {
+            if (!enabled || failed) return;
+            try { ArmStartupClock(SaveGameManager.Current); }
+            catch (Exception error) { Fail(error.Message); }
+        }
+
+        /// <summary>Keeps the startup guard armed for the current save until TryStart binds the clock. The city-load
+        /// callback (ArmForCityLoad) installs it first; no runtime exists at the menu. The hold belongs to one save: a
+        /// different save stops a clock bound to the old one and starts over. Released (the wait expired) stays released
+        /// for that save.</summary>
+        private void ArmStartupClock(object? save)
+        {
+            if (simulation != null || initialization != null) return;
+            if (startupHold.ForSave(save) && NativeCityClock.Bound) NativeCityClock.Stop();
+            if (startupHold.Begin() || startupHold.Holding && !NativeCityClock.Armed && !NativeCityClock.Bound) NativeCityClock.Arm();
+        }
+
+        private void StartCityClock(object save)
+        {
+            NativeCityClock.Start(save, settings.GameClockFactor,
+                () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
+                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
+            NativeCityClock.StartupHold = true;
         }
 
         private void CompleteInitialization()
@@ -747,6 +786,7 @@ namespace PersistentCity.Runtime
             ResetAdvanceDiagnostics();
             if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
             { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }
+            NativeCityClock.StartupHold = false;
             saveEpoch.CompleteInitialization(); // Attached: publication allowed, detach now marks a still-current city.
             nextDependencyCheck = Time.unscaledTime + 30;
             nextStationScan = float.PositiveInfinity;
