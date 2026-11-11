@@ -126,16 +126,26 @@ namespace PersistentCity.Runtime
             get
             {
                 if (!Valid) return false;
-                if (renderers == null) { renderers = new List<Renderer>(); Vehicle.GetComponentsInChildren(true, renderers); }
-                bool any = false;
-                foreach (var renderer in renderers)
-                {
-                    if (renderer == null) continue;
-                    any = true;
-                    if (ScreenVisibility.Contains(renderer)) return true;
-                }
-                return !any && ScreenVisibility.Contains(null);
+                // P5: read once a frame; the follower and its correction ask several times.
+                int frame = Time.frameCount;
+                if (onScreenFrame == frame) return onScreen;
+                onScreenFrame = frame;
+                return onScreen = ReadOnScreen();
             }
+        }
+        private int onScreenFrame = -1;
+        private bool onScreen;
+        private bool ReadOnScreen()
+        {
+            if (renderers == null) { renderers = new List<Renderer>(); Vehicle.GetComponentsInChildren(true, renderers); }
+            bool any = false;
+            foreach (var renderer in renderers)
+            {
+                if (renderer == null) continue;
+                any = true;
+                if (ScreenVisibility.Contains(renderer)) return true;
+            }
+            return !any && ScreenVisibility.Contains(null);
         }
         private List<Renderer>? renderers;
         /// <summary>F2d Q3 fade: whether every renderer of this car can show a base-colour alpha

@@ -458,6 +458,8 @@ namespace PersistentCity.Runtime
             double elapsed = 0, unitStarted = 0, slowestUnit = 0;
             string slowestKind = "";
             int collectionsBefore = GC.CollectionCount(0);
+            // P2: whole-scene optional-stop reads before the timed advancement, never inside an event.
+            stopEnvironment?.Maintain();
             double stopsBefore = stopEnvironment?.SeamMilliseconds ?? 0;
             void Unit(string kind)
             {

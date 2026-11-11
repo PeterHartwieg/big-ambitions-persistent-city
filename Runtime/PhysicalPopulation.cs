@@ -45,6 +45,8 @@ namespace PersistentCity.Runtime
             // Released at a mode boundary: a body of the new kind is re-acquired without the retry cooldown.
             public bool Handoff;
             public int LagFrame = -1;
+            // P5: the last frame this car synced its own progress; off screen it syncs every CarSyncFrames frames.
+            public int CarSyncFrame = int.MinValue;
             public PhysicalPedestrianBody? Person;
             public PhysicalVehicleBody? Car;
             public int TargetLeg = -1;
