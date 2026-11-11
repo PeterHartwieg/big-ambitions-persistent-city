@@ -15,3 +15,5 @@ Standing gate: mod-work p95 < 5 ms; every mod-work sample >= 30 ms flagged; whol
 | Rig activation scan at `b3e5a910`, full modpack (F8e, input to this row) | PC 16.278 ms, Mac 19.693 ms | [PC record](../checks/f8h-check1-modpack-owners-pc.json), [Mac record](../checks/f8h-check1-modpack-owners-mac.json) |
 
 The policy adds nothing measurable over the scan: the two columns overlap within run noise. The rig scan numbers include the first call's JIT and a 49-target modpack. Both stay under the 30 ms flag and run once per load, outside gameplay windows. Reusing the load scan for the activation line is the cheap win: without it a load would scan twice. The second scan would be warm, about 0.2 ms here. Rig check 2 in the F8h checks records the real number at head.
+
+11 November 2026 (b), Mac at `2f1e8136`, full 29-DLL modpack: fresh-city activation `scan 11.024 ms`, checkout active, 0 refusing checkout. Provisional because concurrent harness activity was not excluded; startup observation only, no gameplay window or p95 verdict. Autosave-off unavailable. [Rig results](../checks/rig-2026-11-11b-mac-results.md).
