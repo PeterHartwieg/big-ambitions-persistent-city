@@ -9,3 +9,5 @@ The original checklist is retained in [docs history](https://github.com/PeterHar
 10 November Mac batch (b): [creation-save fix and re-run results](rig-2026-11-10b-mac-results.md), [fix checks](fix-creation-save-init-mac-b.json); creation save PASS, immediate manual-save reload FAIL at `18008ef3`.
 
 11 November 2026, Mac at `eaac521c`: [reload accounting-epoch fix and re-run rows](rig-2026-11-11-mac-results.md) — 2 passed / 6 partial / 0 failed / 150 not run; isolated restore/hash check and lease release complete.
+
+11 November 2026 (b), Mac at `2f1e8136`: [F8h conflict refusals and autosave re-runs](rig-2026-11-11b-mac-results.md).
