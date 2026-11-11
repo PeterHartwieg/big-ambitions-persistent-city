@@ -47,3 +47,5 @@ Completed group: hour reload identity readbacks. Raw evidence: `<stage>/runs/pos
 The stage .NET host's full reader rejects some Mono round-trip numeric strings in visitor routines (`commute duration`, then `visitor next event`); the native game accepts both saves and runs. Candidate `ExpandCompact` expands the lossless envelope without reformatting those tuples; identity projections and exact epoch fields/lengths above are checked from that output. No host-reader refusal is called a native failure, and no all-journey equality is claimed.
 
 `modwork arm` succeeds: coverage complete, no untimed entries, missing components or patch failures. The stage argument-name error before `begin` produced no measured window. Its process stopped normally and its modset/lifecycle restoration and lease release succeeded. The actual 30-minute window uses a separate background launch from this run's H1.
+
+Completed group: capability union timing. Raw evidence: `<stage>/runs/perf`; progress and request/reply files retained.
