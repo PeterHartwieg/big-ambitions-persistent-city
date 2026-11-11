@@ -12,7 +12,9 @@ namespace PersistentCity.Persistence
     /// </summary>
     public static partial class SaveCodec
     {
-        /// <summary>Links every roster record to its person's wallet: a resident by its ID, a visitor by its routine.</summary>
+        /// <summary>Links every roster record to its person's wallet: a resident by its ID, a visitor by its routine. Only for
+        /// read or snapshot state: it overwrites each record's link and never adopts a record's own budget (the live city
+        /// adopts with FoodCommerce.AdoptRecordWallets).</summary>
         internal static void LinkWallets(CityState state)
         {
             var food = state.Food;

@@ -294,7 +294,7 @@ namespace PersistentCity.Core
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
             // A loaded roster reads no wallet of its own: link each record to its person's before anything spends.
-            LinkWallets();
+            AdoptRecordWallets();
             InitializeRepresentation();
             long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
             foreach (var entry in state.Residents)

@@ -25,7 +25,8 @@ namespace PersistentCity.Runtime
             if (changes.Any || reason != "hour") businessTypes.Rebuild(places);
             double milliseconds = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
             maxBusinessTypeMilliseconds = Math.Max(maxBusinessTypeMilliseconds, milliseconds);
-            if (changes.Any || reason != "hour")
+            // A quiet hour is logged only when the scan is slow, so a spike near the 30 ms flag is always visible.
+            if (changes.Any || reason != "hour" || milliseconds >= 5)
                 log?.Info("Business types (" + reason + "): " + changes + "; types=" + businessTypes.TypeCount
                     + " live_addresses=" + liveBusinessTypes.Count + " ms=" + milliseconds.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
                     + " max_ms=" + maxBusinessTypeMilliseconds.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + ".");

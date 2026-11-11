@@ -132,9 +132,11 @@ namespace PersistentCity.Core
         /// <summary>GR-1: essential categories bought as needs, which the daily posting no longer deducts. Empty until the
         /// need model (GR-3) sets it.</summary>
         internal EssentialNeeds EssentialNeeds { get; set; } = EssentialNeeds.None;
-        /// <summary>GR-1: binds every roster record to its person's wallet. The wallet is the person's; a record built in
-        /// memory with only a budget hands that budget to its person. Two different objects refuse.</summary>
-        private void LinkWallets()
+        /// <summary>GR-1: binds every roster record of the live city to its person's wallet when food attaches. The wallet
+        /// is the person's; a record built in memory with only a budget hands that budget to its person (adopts it), and two
+        /// different objects refuse. Not SaveCodec.LinkWallets, which overwrites every link from the persons and is only for
+        /// read or snapshot state.</summary>
+        private void AdoptRecordWallets()
         {
             foreach (var meal in state.Residents)
             {
