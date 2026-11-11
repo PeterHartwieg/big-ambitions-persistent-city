@@ -285,7 +285,8 @@ namespace PersistentCity.Tests
             Assert.Contains("var saveContinuity = source.Continuity(simulation!.State);", mod);
             Assert.Contains("if (!DonorReads.Continues(saveContinuity))", mod);
             Assert.Contains("if (!source.MatchesPopulation(state)) { Fail(\"RLO donor catalogue changed during initialization (", mod);
-            Assert.Contains("log?.Info(CapabilityActivationLine());", mod);
+            Assert.Contains("LogActivationLines();", mod); // F8h: the lines moved into CapabilityDiagnostics, logged after the checkout decision
+            Assert.Contains("log?.Info(CapabilityActivationLine());", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
             // Startup keeps its strict Ready requirement: no city is created from a transient answer.
             Assert.Contains("if (source.Status != RloReadStatus.Ready)", mod);
             // Compatibility owns every RLO read; the classification adds none.

@@ -270,6 +270,13 @@ namespace PersistentCity.Tests
             Assert.Contains("members.Refusal != null || conflict == null ? members : new Result(conflict, members.Members)", contract);
             Assert.Single(Regex.Matches(string.Concat(sources.Values), @"ScanForLoad\b(?!\s*\(\)\s*\{)")); // only CheckoutForLoad uses it
             Assert.Contains("loadScan = null;", sources["Runtime/HookConflicts.cs"]); // Opus-r1-1: a failed scan leaves no stale one
+            // Sol-r2-2: the activation lines wait for a deferred decision and then use its scan.
+            Assert.Contains("LogActivationLines();", sources["Runtime/PersistentCityMod.cs"]);
+            Assert.DoesNotContain("HookConflictActivationLine()", sources["Runtime/PersistentCityMod.cs"]);
+            string diagnostics = sources["Runtime/CapabilityDiagnostics.cs"];
+            Assert.Contains("if (market == null || market.CheckoutSettled) { WriteActivationLines(); return; }", diagnostics);
+            Assert.Contains("market.CheckoutSettledOnce = () => { if (ReferenceEquals(foodMarket, market) && !failed) WriteActivationLines(); };", diagnostics);
+            Assert.Contains("else InstallCheckoutPrefix();\n            var settledNow = CheckoutSettledOnce; CheckoutSettledOnce = null;\n            settledNow?.Invoke();", market);
             Assert.Contains("(HookConflicts.TakeLoadScan() ?? HookConflicts.Scan()).ActivationLine()", sources["Runtime/CapabilityDiagnostics.cs"]);
             // The refusal goes through F8c's checkout-off mode: no price prefix, nothing served, every shop observed ineligible.
             var mode = new FoodCheckoutMode("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)");

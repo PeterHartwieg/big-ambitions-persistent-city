@@ -203,6 +203,75 @@ namespace PersistentCity.Tests
             Assert.Equal(receipts, data.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)).OrderBy(p => p.Key, StringComparer.Ordinal).ToArray());
         }
 
+        /// <summary>F8h (review Sol-r2-1): NativeFoodMarket's gates while checkout waits for the city load. Unsettled, CanServe
+        /// is false and (with the fix) AwaitingValidation is true for every scoped shop; settled, both follow the decided
+        /// FoodCheckoutMode. <see cref="Hold"/> false is the round-2 code, which only returned false from CanServe.</summary>
+        private sealed class CheckoutGateMarket : IFoodMarket, IFoodBusinessAuthority, IFoodStartupValidation
+        {
+            public readonly WeightedFoodChoiceTests.Market Inner;
+            public CheckoutGateMarket(WeightedFoodChoiceTests.Market inner, bool hold) { Inner = inner; Hold = hold; }
+            public readonly bool Hold;
+            public bool Settled;
+            public FoodCheckoutMode Mode = new FoodCheckoutMode(null);
+            public int Attempts;
+            public double EarliestMinute => 0;
+            public IReadOnlyList<FoodBusiness> Read(double at) => Inner.Read(at);
+            public bool CanServe(string businessId) => Settled && Mode.Serves;
+            public bool AwaitingValidation(string businessId) => Hold && !Settled;
+            public FoodSale Buy(ResidentMeal m, double at)
+            {
+                Attempts++;
+                Assert.True(Settled); // BuyLive refuses before any receipt while unsettled
+                return Inner.Buy(m, at);
+            }
+        }
+
+        /// <summary>A saved commitment survives the wait for the post-load decision, is bought after a verified decision
+        /// and ends with no checkout after a refusal (the existing withdrawal: CanServe false). Red: without the hold the
+        /// waiting interval already finishes it as Missed.</summary>
+        [Theory]
+        [InlineData(null)]
+        [InlineData("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)")]
+        public void SavedCommitmentWaitsForTheCheckoutDecision(string? refusal)
+        {
+            foreach (bool hold in new[] { false, true })
+            {
+                var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
+                var market = new CheckoutGateMarket(inner, hold) { Settled = true };
+                var city = new CitySimulator(prepared.State, planner); city.AttachFoodMarket(market, LegacyFoodChoice.Settings());
+                var m = city.State.Food!.Residents[0]; double at = m.DesiredAt;
+                // A committed (travelling) meal: the saved commitment the reload carries.
+                for (int i = 0; i < 400 && m.Status != MealStatus.Travelling; i++) { at += .25; city.AdvanceTo(at, 1); m = city.State.Food!.Residents[0]; }
+                Assert.Equal(MealStatus.Travelling, m.Status);
+                string intent = m.IntentId;
+                market.Settled = false; // reloaded; the market was built while the game was still loading the city
+                for (double t = at; t <= at + 6; t += .5) city.AdvanceTo(t, 1);
+                m = city.State.Food!.Residents[0];
+                if (!hold) { Assert.Equal(MealStatus.Missed, m.Status); continue; } // red: lost before checkout settled
+                Assert.True(m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving, m.Status.ToString());
+                Assert.Equal(intent, m.IntentId); Assert.Equal(0, market.Attempts); Assert.Empty(inner.Orders);
+
+                market.Mode = new FoodCheckoutMode(refusal); market.Settled = true; // the post-load decision
+                while (!city.AdvanceTo(at + 30, 1).CaughtUp) { }
+                m = city.State.Food!.Residents[0];
+                if (refusal == null)
+                {
+                    Assert.Equal(MealStatus.Paid, m.Status);
+                    Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(1, market.Attempts);
+                }
+                else
+                {
+                    Assert.Equal(MealStatus.Missed, m.Status);
+                    Assert.Equal(0, market.Attempts); Assert.Empty(inner.Orders);
+                    Assert.Equal(Money.Zero, m.Spent);
+                }
+            }
+            // The Runtime gates this market stands for.
+            string market2 = Source("Runtime/NativeFoodMarket.cs");
+            Assert.Contains("&& (!checkoutSettled || registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg));", market2);
+            Assert.Contains("|| !checkoutSettled || !checkout.Serves) return false;", Body(market2, "public bool CanServe(string businessId)"));
+        }
+
         /// <summary>Sol-r2-4: the same transition runs through production NativeFoodOwnership (Observe, Persist, suppression,
         /// reload in the owned hour, drained-boundary hand-back) in tools/food-ownership-regression, driven by FoodCheckoutMode.</summary>
         [Fact]

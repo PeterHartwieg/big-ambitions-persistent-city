@@ -121,6 +121,22 @@ namespace PersistentCity.Runtime
 
         private static DonorReadReason DonorReason(RloReadResult read) => read.Reason;
 
+        /// <summary>F8d (D7) and F8e: the two activation lines, once per load. F8h (review Sol-r2-2): when the market waits
+        /// for the city load to finish before deciding checkout, both lines are logged when it decides, from the deciding
+        /// scan, so they show the final food.checkout.shop state.</summary>
+        private void LogActivationLines()
+        {
+            var market = foodMarket;
+            if (market == null || market.CheckoutSettled) { WriteActivationLines(); return; }
+            market.CheckoutSettledOnce = () => { if (ReferenceEquals(foodMarket, market) && !failed) WriteActivationLines(); };
+        }
+
+        private void WriteActivationLines()
+        {
+            log?.Info(CapabilityActivationLine()); // F8d (D7): one line naming every capability that is not active
+            log?.Info(HookConflictActivationLine()); // F8e: foreign owners on Persistent City targets
+        }
+
         /// <summary>F8e: the once-per-load conflict line. F8h: it reuses the scan this load's checkout decision used (taken
         /// once the city load finished), so a load scans once. A scan failing here only changes this line; a load scan
         /// that failed already refused food.checkout.shop with its reason (pc capability status).</summary>

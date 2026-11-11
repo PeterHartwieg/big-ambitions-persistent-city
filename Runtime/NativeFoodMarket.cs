@@ -60,6 +60,8 @@ namespace PersistentCity.Runtime
         internal string? CheckoutRefusal => checkout.Refusal;
         /// <summary>The once-per-load checkout decision is made (the city load finished).</summary>
         internal bool CheckoutSettled => checkoutSettled;
+        /// <summary>Sol-r2-2: run once when a decision deferred past construction is made (the activation lines).</summary>
+        internal Action? CheckoutSettledOnce { get; set; }
         private bool buying;
         private int receiptDay = -1;
         private float approvedPrice;
@@ -171,6 +173,8 @@ namespace PersistentCity.Runtime
             checkoutSettled = true;
             if (checkout.Refusal != null) RefreshKnownOwnership();
             else InstallCheckoutPrefix();
+            var settledNow = CheckoutSettledOnce; CheckoutSettledOnce = null;
+            settledNow?.Invoke();
         }
         public static string PlaceId(BuildingRegistration r) => "address:" + Uri.EscapeDataString(r.StreetName) + ":"
             + r.StreetNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":shop";
@@ -245,9 +249,11 @@ namespace PersistentCity.Runtime
         private bool StartupHeld(BuildingRegistration r, FoodLiveMenuRefusal menu)
             => menu == FoodLiveMenuRefusal.OriginalThreeGuard && StartupPhase && NativeFoodOwnership.Find(r)?.Managed == true;
         private bool StartupHeld(BuildingRegistration r) => StartupHeld(r, LiveMenu(r.cachedAvailableProducts));
+        // F8h (review Sol-r2-1): while checkout waits for the city load, every scoped shop awaits validation, so Core holds
+        // its saved commitments (neither bought nor missed) until the decision serves or withdraws it.
         public bool AwaitingValidation(string businessId)
             => ReferenceEquals(save, SaveGameManager.Current) && scopesByBusiness.TryGetValue(businessId, out var scope)
-                && registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg);
+                && (!checkoutSettled || registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg));
         public const string StartupValidationRefusal = "Waiting: saved food contract is validated after load; no sale before";
         // E5b5: a mod removed (or a product reclassed) under an owned or wanted shop is a recorded refusal, so desire is
         // withdrawn now, the hand-back waits for the boundary, and a return goes through Decision 7 recovery with a

@@ -109,7 +109,10 @@ internal static partial class Program
                 Check(done && final.Refusal == "foreign prefix by " + Foreign + " on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)" && finalProcess == null
                     && !final.Observe(true), "green: decided after the load, refused with the owner named, every shop observed ineligible (existing withdrawal)");
                 Check(receipts.Count == 0, "no receipt before or after the late decision");
-                Check(HookConflicts.TakeLoadScan()?.CheckoutRefusal == final.Refusal, "the activation line gets the deciding scan");
+                // Sol-r2-2: the deferred activation lines run after this decision and take its scan (no second scan).
+                var deciding = HookConflicts.TakeLoadScan();
+                Check(deciding?.CheckoutRefusal == final.Refusal && deciding!.ActivationLine().Contains("food.checkout.shop off: " + final.Refusal + ".", StringComparison.Ordinal),
+                    "the activation line gets the deciding scan and shows the final refusal");
                 harmonies[Foreign].UnpatchAll(Foreign);
                 Console.WriteLine("late city-load patch: undecided while loading, refused after the load with no receipt; a construction-time decision kept checkout on (red)");
             }
