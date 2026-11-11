@@ -190,16 +190,36 @@ public sealed class PhysicalProgressTests
     public void FollowPaceIsNativeUpToCatchUpAndNeverAboveOneAndAHalf(double lag, double factor)
         => Assert.Equal(factor, WalkerFollow.PaceFactor(lag), 12);
 
+    private const string UrpLit = "Universal Render Pipeline/Lit";
+    // The facts the production probe reads from a material, for the verified shaders and their look-alikes.
     [Theory]
-    [InlineData(2000, true, 5f, 10f, true, false)] [InlineData(2450, true, 5f, 10f, true, false)] [InlineData(2500, true, 5f, 10f, true, false)]
-    [InlineData(2501, true, 5f, 10f, true, true)] [InlineData(3000, true, 5f, 10f, true, true)] [InlineData(3000, false, 5f, 10f, true, false)]
-    // A transparent queue with a colour but blending disabled (One/Zero), additive, or no blend properties at all.
-    [InlineData(3000, true, 1f, 0f, true, false)] [InlineData(3000, true, 5f, 1f, true, false)] [InlineData(3000, true, null, null, true, false)]
-    [InlineData(3000, true, 5f, null, true, false)]
+    // URP transparent surfaces fade through _BaseColor.
+    [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, true, false, false, true)]
+    [InlineData("Universal Render Pipeline/Simple Lit", 3000, true, false, 5f, 10f, 1f, true, false, false, true)]
+    [InlineData("Universal Render Pipeline/Unlit", 2501, true, false, 5f, 10f, 1f, true, false, false, true)]
     // URP Lit with an opaque surface (_Surface 0), queue 3000 and blend 5/10: its fragment alpha is forced to 1.
-    [InlineData(3000, true, 5f, 10f, false, false)]
-    public void OnlyAlphaOutputBlendedTransparentMaterialsWithAColourCanFade(int queue, bool colour, float? source, float? destination, bool alphaSurface, bool fades)
-        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(queue, colour, source, destination, alphaSurface));
+    [InlineData(UrpLit, 3000, true, false, 5f, 10f, 0f, false, false, false, false)]
+    [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, false, false, false, false)] // keyword missing
+    // Alpha clipping cuts the body out halfway instead of fading it.
+    [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, true, false, true, false)]
+    // Queue, blend and colour must all agree.
+    [InlineData(UrpLit, 2500, true, false, 5f, 10f, 1f, true, false, false, false)]
+    [InlineData(UrpLit, 3000, true, false, 1f, 0f, 1f, true, false, false, false)]
+    [InlineData(UrpLit, 3000, true, false, 5f, 1f, 1f, true, false, false, false)]
+    [InlineData(UrpLit, 3000, true, false, null, null, 1f, true, false, false, false)]
+    [InlineData(UrpLit, 3000, false, true, 5f, 10f, 1f, true, false, false, false)] // no _BaseColor
+    // Built-in Standard in its alpha-blend (Fade) mode fades through _Color.
+    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, true, false, true)]
+    [InlineData("Standard (Specular setup)", 3000, false, true, 5f, 10f, null, false, true, false, true)]
+    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, false, false, false)] // opaque or cutout mode
+    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, true, true, false)]   // alpha test on
+    // An unsupported shader exposing every matching property and keyword is still opaque for the fade.
+    [InlineData("Custom/Character", 3000, true, true, 5f, 10f, 1f, true, true, false, false)]
+    [InlineData("", 3000, true, true, 5f, 10f, 1f, true, true, false, false)]
+    public void OnlyVerifiedAlphaBlendedShaderConfigurationsCanFade(string shader, int queue, bool baseColour, bool colour,
+        float? source, float? destination, float? surface, bool transparentKeyword, bool alphaBlendKeyword, bool alphaTest, bool fades)
+        => Assert.Equal(fades, WalkerFollow.MaterialCanFade(new MaterialFadeFacts(shader, queue, baseColour, colour, source, destination,
+            surface, transparentKeyword, alphaBlendKeyword, alphaTest)));
 
     [Fact]
     public void AProjectedPoseAheadOnTheLegIsNotUsable()
@@ -209,6 +229,15 @@ public sealed class PhysicalProgressTests
         Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(43.8, 0.1, 0.2))); // behind and aside
         Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44.3, 0.1, 0)));  // ahead along the leg
         Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(double.NaN, 0, 0)));
+        // A pose that is not an exact float, projected straight up through float coordinates, is not ahead.
+        // 44.1234 and 44.7 round up in float (ahead by about a micrometre), the others round down.
+        foreach (double x in new[] { 44.1234, 44.7, 44.123456789, 344.987654321, 1234.5678912 })
+        {
+            var exact = new Position(x, 0, 0.3333333333);
+            var rounded = new Position((float)exact.X, 0.12f, (float)exact.Z);
+            Assert.True(WalkerFollow.NotAheadOnLeg(new Position(x - 4, 0, 0), new Position(x + 26, 0, 0), exact, rounded), "x " + x);
+        }
+        Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44.02, 0, 0)));
     }
 
     [Fact]
