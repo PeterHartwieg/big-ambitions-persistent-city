@@ -672,9 +672,10 @@ namespace PersistentCity.Runtime
             catch (Exception error) { Fail(error.Message); }
         }
 
-        /// <summary>While no city is attached, keep the startup guard armed for the current save (none at the menu), so
-        /// native time is held before the loaded save's first tick. The hold belongs to one save: a different save stops a
-        /// clock bound to the old one and starts over. Released (the wait expired) stays released for that save.</summary>
+        /// <summary>Keeps the startup guard armed for the current save until TryStart binds the clock. The city-load
+        /// callback (ArmForCityLoad) installs it first; no runtime exists at the menu. The hold belongs to one save: a
+        /// different save stops a clock bound to the old one and starts over. Released (the wait expired) stays released
+        /// for that save.</summary>
         private void ArmStartupClock(object? save)
         {
             if (simulation != null || initialization != null) return;

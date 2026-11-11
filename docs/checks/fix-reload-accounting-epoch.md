@@ -13,8 +13,9 @@ runtime for each load) and keeps it armed while no city is attached. The guard h
 city has bound yet ([Core/StartupClockHold.cs](../../Core/StartupClockHold.cs), `NativeCityClock.Arm`). It does
 not depend on PopulationRuntime's first Update running before the first native tick, and RLO readiness no longer
 matters. TryStart replaces the guard with the bound clock in one call. The hold belongs to one save: loading
-another save before the first attaches starts over for it. If startup still cannot proceed after 15 seconds outside the loading screen (for example RLO never
-becomes ready), native time is released and logged, so the native city is never frozen for good. The
+another save before the first attaches starts over for it. If startup still cannot proceed after 15 seconds
+outside the loading screen (for example RLO never becomes ready), native time is released and logged, so the
+native city is never frozen for good. The
 activation refusals are unchanged: a load that still crossed a minute, or a snapshot with unfinished earlier
 work, stops as before.
 

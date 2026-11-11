@@ -2,12 +2,13 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Native time is held from before a loaded save's first native tick (the guard is armed while no city is
-    /// attached, including at the menu) until activation, not only once RLO reports Ready. A save taken late in a
-    /// minute (rig 10 Nov b, S1 at 08:01.97) otherwise loads into the next minute before the hold starts, and
-    /// activation refuses it as a lost accounting epoch. A startup that
-    /// cannot proceed releases native time after <see cref="MaximumWaitSeconds"/> outside the loading screen, so a
-    /// city whose RLO never becomes ready is never frozen; its later activation keeps today's refusal rules.</summary>
+    /// <summary>Native time is held from before a loaded save's first native tick until activation, not only once RLO
+    /// reports Ready. The city-load callback (PopulationRuntime.ArmForCityLoad) installs the guard; no runtime exists at
+    /// the menu. Update keeps it armed until TryStart binds the clock. A save taken late in a minute (rig 10 Nov b, S1
+    /// at 08:01.97) otherwise loads into the next minute before the hold starts, and activation refuses it as a lost
+    /// accounting epoch. A startup that cannot proceed releases native time after <see cref="MaximumWaitSeconds"/>
+    /// outside the loading screen, so a city whose RLO never becomes ready is never frozen; its later activation
+    /// keeps today's refusal rules.</summary>
     public sealed class StartupClockHold
     {
         public const double MaximumWaitSeconds = 15;

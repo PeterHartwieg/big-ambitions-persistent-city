@@ -95,8 +95,9 @@ namespace PersistentCity.Runtime
         /// <summary>Installed and bound to a save (current or not).</summary>
         public static bool Bound => patches != null && save != null;
         /// <summary>Startup guard (<see cref="StartupClockHold"/>): installs only the accounting prefix, bound to no save, so it
-        /// holds every native tick until a city binds the clock. Armed from PopulationRuntime.Update while no city is
-        /// attached, including at the menu, so it is in place before a loaded save's first native tick.</summary>
+        /// holds every native tick until a city binds the clock. Installed by the city-load callback
+        /// (PopulationRuntime.ArmForCityLoad), before a loaded save's first native tick; Update keeps it armed until
+        /// TryStart binds the clock. No runtime exists at the menu.</summary>
         public static void Arm()
         {
             if (patches != null) return;
