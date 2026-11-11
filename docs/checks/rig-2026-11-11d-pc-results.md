@@ -66,3 +66,11 @@ Each completed lifecycle restored its named state and released its lease. Final 
 ### Corrected normal-load first-sale window
 
 **F8h-2 PARTIAL.** The corrected waiter reached native day 2 10:00 paused exactly. The mixed shop was Published / passed / managed, desired=true, lastReadiness=Ready. A manual checkpoint was normally reloaded; autosave suppression verified. The exact 10:00?12:00 window completed with **0 purchases, 0 dropped, 0 hook faults**, no log entries, unchanged 100 croissants / 100 donuts / 300 bags, $0 daily shop revenue and no food-sale receipt key. Checkout was active, but there was no first sale to prove. Raw evidence: `<stage>/runs/firstsale2`, including `arrived-exact-nextday-1000.json`, window boundary facts and the retained checkpoint.
+
+### F8h check 1 shop boundary assertions
+
+**PARTIAL, ownership transitions verified by rig.** This fresh prefix cycle was required for the shop assertions left open on 11c. The normal 12:00?13:00 extension had zero purchases and no new receipt. Installed `agent-rig.foreign.pc1111d`, reloaded the owned-shop checkpoint, and recorded the exact shop exclusion: `Excluded: food checkout contract off: foreign prefix by agent-rig.foreign.pc1111d on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)`.
+
+At hour 61 the shop was managed=true, desired=false, nextBoundary=hand back. By hour 63 it was managed=false, nextBoundary=native. The 13:00?15:00 native window recorded **4 visits, 8 not_purchased entries and 4 left_without_buying**, all purchases zero; native reason `unavailable`, stock and $0 revenue unchanged, dropped=0 and hook_faults=0. No food-sale receipt key existed before or after the refused window. Native dispatch is observed; successful native service is unproved.
+
+After removal and normal reload at hour 63 the shop was managed=false, desired=true, nextBoundary=Ready. At hour 64 (16:00) it was managed=true, nextBoundary=owned, lastBoundary=64, lastReadiness=Ready. Thus hand-back and reacquisition are proved. Raw evidence: `<stage>/runs/foreignshop/results`, boundary records 033/046/059/067 and retained logs. No reload-epoch check was repeated.
