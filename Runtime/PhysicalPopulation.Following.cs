@@ -63,6 +63,7 @@ namespace PersistentCity.Runtime
 
         private bool Observe(Binding binding)
         {
+            binding.BoundPace = 0; // only WalkLeg commands a bounded walk; every other state stands or uses its own target
             if (binding.Person != null && !binding.Person.Valid || binding.Car != null && !binding.Car.Valid) return false;
             if (binding.VendorOpening > 0) return ObserveVendorQueue(binding);
             if (binding.Optional != null) return ObserveOptional(binding);
@@ -176,8 +177,9 @@ namespace PersistentCity.Runtime
 
         /// <summary>Walk at the pace the lag asks for. P-C: one native path per leg, to the leg's own corner
         /// (<see cref="WalkerFollow.NeedsPath"/>). The commanded speed is capped at the lag per frame
-        /// (<see cref="WalkerFollow.CommandSpeed"/>) and the agent moves after Update in the same frame, so the body
-        /// stops at the logical pose instead of at its destination, also while the logical clock stands still. A leg
+        /// (<see cref="WalkerFollow.CommandSpeed"/>), and capped again before each navigation update with that step's
+        /// duration (<see cref="BoundWalkers"/>), so the body stops at the logical pose instead of at its destination,
+        /// whatever the frame durations, also while the logical clock stands still. A leg
         /// whose corner path is refused falls back to the F2c pose aim, re-aimed every <see cref="WalkerFollow.RetargetMetres"/>.</summary>
         private bool WalkLeg(Binding binding, PhysicalJourneySample own, double lag, PhysicalJourneySample logical)
         {
@@ -219,7 +221,27 @@ namespace PersistentCity.Runtime
                 }
             }
             body.Pace(WalkerFollow.CommandSpeed(NativeTravelPace.WalkingMetresPerSecond * pace, lag, Time.deltaTime));
+            binding.BoundPace = NativeTravelPace.WalkingMetresPerSecond * pace; binding.BoundMinutes = logical.ElapsedMinutes;
             return true;
+        }
+
+        /// <summary>P-C: the position bound for one path per leg. Unity moves agents in its navigation update, which can
+        /// come before Update with the next frame's duration, or in a frame whose Update skipped the population. Right
+        /// before each navigation update (<see cref="PhysicalPedestrians.BeforeNavigation"/>) every walking follower's
+        /// speed is capped again at its remaining along-route distance to the logical pose its follow last saw, over this
+        /// frame's Time.deltaTime, so the coming step cannot pass that pose. It only re-caps a walk WalkLeg commanded;
+        /// nothing is written to the binding or the simulation.</summary>
+        private void BoundWalkers()
+        {
+            if (!active || disposed) return;
+            float seconds = Time.deltaTime;
+            foreach (var binding in bindings.Values)
+            {
+                var body = binding.Person; var route = binding.Journey;
+                if (body == null || route == null || !(binding.BoundPace > 0) || !body.Valid) continue;
+                double progress = WalkerFollow.Advance(route, binding.BodyMinutes, binding.BoundMinutes, body.Position);
+                body.Pace(WalkerFollow.CommandSpeed(binding.BoundPace, WalkerFollow.RouteMetres(route, progress, binding.BoundMinutes), seconds));
+            }
         }
 
         /// <summary>

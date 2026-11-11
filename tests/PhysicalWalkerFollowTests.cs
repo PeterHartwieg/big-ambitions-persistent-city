@@ -260,45 +260,57 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         long requests = PhysicalPopulation.Telemetry.PathRequests, ahead = PhysicalPopulation.Telemetry.AheadFrames;
         f.Advance(Now + 0.1); // logical pose at 40.2 m; the body stands at 40 m
-        // Native movement double: the agent walks toward its destination at the commanded speed and stops there. Unity
-        // moves it after Update in the same frame, for that frame's duration (an overrun moves it for longer).
-        void Native(float seconds)
+        // Native movement double: the agent walks toward its destination at its speed and stops there. Unity's navigation
+        // update can move it before Update, for that frame's duration; BeforeNavigation runs right before it.
+        static void Native(Fixture x, float seconds)
         {
-            var body = f.Body;
+            var body = x.Body;
             if (body.Agent.isStopped) return;
             double d = Position.Distance(body.Position, body.Target), step = body.Speed * seconds;
-            f.Place(d <= step ? body.Target : Position.Lerp(body.Position, body.Target, step / d));
+            x.Place(d <= step ? body.Target : Position.Lerp(body.Position, body.Target, step / d));
         }
-        // Long and varying frames while the clock stands still: the destination stays the leg's corner (one path for
-        // the leg) and the speed cap stops the body at the pose.
-        foreach (float frame in new[] { 1 / 60f, 0.5f, 1 / 120f, 0.2f, 1 / 60f, 1f, 0.05f, 2f })
+        static void Frame(Fixture x, float seconds, bool update = true)
         {
-            f.Tick(frame);
+            Time.Next(seconds);
+            x.Pool.BeforeNavigation?.Invoke();
+            Native(x, seconds);
+            if (update) x.Bodies.Update();
+        }
+        // A short frame sets the speed, then long and varying frames move the body before their Update, some of them in
+        // frames whose Update skips the population, while the clock stands still: the destination stays the leg's corner
+        // (one path for the leg) and the bound before each native step stops the body at the pose.
+        f.Tick(1 / 60f);
+        foreach (var (frame, update) in new[] { (0.5f, true), (1 / 120f, true), (0.2f, false), (1 / 60f, true), (1f, false),
+            (1f, false), (0.05f, true), (2f, true) })
+        {
+            Frame(f, frame, update);
             Assert.Equal(new Position(70, 0, 0), f.Body.Target);
-            Native(frame);
-            Assert.True(f.Body.Position.X <= 40.2 + 1e-4, "body at " + f.Body.Position.X);
+            Assert.True(f.Body.Position.X <= 40.2 + WalkerFollow.AheadToleranceMetres, "body at " + f.Body.Position.X);
         }
         f.Tick(0.5f);
         Assert.Equal(0, f.Body.Speed); Assert.True(f.Body.Agent.isStopped);
         Assert.True(Position.Distance(new Position(40.2, 0, 0), f.Body.Position) < 1e-4);
         Assert.Equal(requests, PhysicalPopulation.Telemetry.PathRequests); // the leg's path from the first frame
         Assert.Equal(ahead, PhysicalPopulation.Telemetry.AheadFrames);
-        // A native overrun (the agent moved for longer than the frame its speed was set for) puts the body ahead of the
-        // pose: that frame is counted, the body stands until the pose passes it, and nobody is corrected or re-aimed.
-        f.Advance(Now + 0.2); // pose at 40.4 m
-        f.Tick(1 / 60f);
-        Native(0.5f);
-        Assert.True(f.Body.Position.X > 40.4 + WalkerFollow.AheadToleranceMetres, "body at " + f.Body.Position.X);
-        f.Tick(1 / 60f);
-        Assert.Equal(0, f.Body.Speed);
-        Assert.Equal(ahead + 1, PhysicalPopulation.Telemetry.AheadFrames);
-        Assert.True(PhysicalPopulation.Telemetry.MaximumAheadMetres > WalkerFollow.AheadToleranceMetres);
-        f.Advance(Now + 1); // pose at 42 m, ahead of the body again
-        f.Tick(1 / 60f);
+        // The pose moves on: the body follows it on the same path.
+        f.Advance(Now + 1); // pose at 42 m
+        Frame(f, 1 / 60f); Frame(f, 1 / 60f);
         Assert.True(f.Body.Speed > 0); Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+        Assert.True(f.Body.Position.X > 40.2 && f.Body.Position.X <= 42 + WalkerFollow.AheadToleranceMetres);
         Assert.Equal(requests, PhysicalPopulation.Telemetry.PathRequests);
-        Assert.Equal(ahead + 1, PhysicalPopulation.Telemetry.AheadFrames);
+        Assert.Equal(ahead, PhysicalPopulation.Telemetry.AheadFrames);
         Assert.Empty(f.Corrections());
+        // Control: without the bound before the native step, the same short-then-long frames carry the body past the
+        // pose (the speed was set for 1/60 s, the step lasts 0.5 s). The follow then counts that frame and stands it.
+        using var g = new Fixture();
+        g.Tick();
+        g.Advance(Now + 0.1);
+        g.Tick(1 / 60f);
+        Time.Next(0.5f); Native(g, 0.5f);
+        Assert.True(g.Body.Position.X > 40.2 + WalkerFollow.AheadToleranceMetres, "body at " + g.Body.Position.X);
+        g.Bodies.Update();
+        Assert.Equal(0, g.Body.Speed);
+        Assert.Equal(ahead + 1, PhysicalPopulation.Telemetry.AheadFrames);
         Assert.Contains("ahead_frames=", PhysicalPopulation.Telemetry.Status(1));
     }
 
@@ -332,23 +344,25 @@ public sealed class PhysicalWalkerFollowTests
         using var f = new Fixture();
         long requests = PhysicalPopulation.Telemetry.PathRequests, ahead = PhysicalPopulation.Telemetry.AheadFrames;
         double minute = Now;
-        // 60 m in two legs at 2 m per game minute, one game minute per real second at 60 frames a second; the native
-        // agent moves after Update at the commanded speed for the frame.
+        // 60 m in two legs at 2 m per game minute, one game minute per real second at 60 frames a second with a 0.25 s
+        // spike every 50 frames. The native agent moves before Update (after BeforeNavigation) for the frame's duration.
         f.Tick(1 / 60f);
         f.Body.OnScreen = true;
         int frames = 0;
         for (; frames < 60 * 40 && f.Bound; frames++)
         {
-            minute += 1 / 60.0; f.Advance(minute); f.Tick(1 / 60f);
-            if (!f.Bound) break;
+            float seconds = frames % 50 == 49 ? 0.25f : 1 / 60f;
+            Time.Next(seconds);
+            f.Pool.BeforeNavigation?.Invoke();
             var body = f.Body;
             if (!body.Agent.isStopped)
             {
-                double d = Position.Distance(body.Position, body.Target), step = body.Speed / 60;
+                double d = Position.Distance(body.Position, body.Target), step = body.Speed * seconds;
                 f.Place(d <= step ? body.Target : Position.Lerp(body.Position, body.Target, step / d));
             }
             if (f.W.Phase == CitizenPhase.Travelling)
                 Assert.True(body.Position.X <= f.City.PositionOf(f.W).X + 1e-6, "ahead at frame " + frames);
+            minute += seconds; f.Advance(minute); f.Bodies.Update();
         }
         Assert.False(f.Bound); // it walked the route and went in at the door
         // Two legs, two paths (the F2c pose aim re-aimed every 0.5 m of pose progress, about 120 for this walk).
@@ -404,6 +418,11 @@ public sealed class PhysicalWalkerFollowTests
         f.Advance(Now + 7); f.Tick(); f.Tick();
         Assert.Equal(requests + 2, PhysicalPopulation.Telemetry.PathRequests);
         Assert.True(f.Body.Speed > 0);
+        // A NavMesh change makes the held path stale (autoRepath is off): it is calculated once more, then held.
+        f.Body.Agent.isPathStale = true;
+        f.Advance(Now + 8); f.Tick(); f.Tick();
+        Assert.Equal(requests + 3, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.False(f.Body.Agent.isPathStale); Assert.True(f.Body.Speed > 0);
         f.AssertSameAsBodiesOff();
     }
 

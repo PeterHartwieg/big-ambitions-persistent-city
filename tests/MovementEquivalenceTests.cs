@@ -96,7 +96,10 @@ public sealed class MovementEquivalenceTests
     }
 
     /// <summary>P-C: one path per leg follows as the F2c pose aim did. Both equal the bodies-off run on every projection,
-    /// the walker lag is no worse, no walker frame stands ahead of its logical pose, and the path calculations drop.</summary>
+    /// the walker lag is no worse, and the path calculations drop. The ahead count is structural here: the driver steps a
+    /// body at most its lag (MoveBodies), so it checks the AheadMetres accounting, not native movement. Native movement
+    /// against the pose is covered by PhysicalWalkerFollowTests (BeforeNavigation, steps before Update, skipped Updates)
+    /// and in game by pc movement status ahead_frames.</summary>
     [Fact]
     public void OnePathPerLegFollowsLikeThePoseAimWithFewerPathCalculations()
     {

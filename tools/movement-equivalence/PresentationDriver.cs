@@ -134,7 +134,8 @@ public sealed class PresentationDriver
             if (!body.Car)
             {
                 if (binding.Journey == null || !body.HasTarget || Blocked(body)) continue;
-                // Runtime WalkerFollow.CommandSpeed: never more than the lag in one frame.
+                // Runtime WalkerFollow.CommandSpeed and BoundWalkers: never more than the lag in one frame. Clamped here
+                // directly, so walkers.aheadFrames is 0 by construction (it checks the accounting, not native movement).
                 Step(body, body.Target, Math.Min(binding.LagMetres, GridPlanner.WalkMetresPerMinute * body.Pace * binding.PaceFactor * gameMinutes));
                 continue;
             }

@@ -52,7 +52,7 @@ namespace UnityEngine.AI
     public sealed class NavMeshPath { public NavMeshPathStatus status = NavMeshPathStatus.PathComplete; }
     public sealed class NavMeshAgent
     {
-        public bool isStopped = true, hasPath;
+        public bool isStopped = true, hasPath, isPathStale;
         public void ResetPath() { hasPath = false; }
     }
     public static partial class NavMesh
@@ -246,7 +246,7 @@ namespace PersistentCity.Runtime
         // F2b: a test can make a target unreachable (no complete NavMesh path).
         internal static Func<Position, bool>? Unreachable;
         internal bool SetPathTarget(Position p, double _)
-        { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isStopped = false; return true; }
+        { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isPathStale = false; Agent.isStopped = false; return true; }
         internal bool SetTarget(Position p, double speed) { SetTargets++; return SetPathTarget(p, speed); }
         // F2c: a pose is projected onto the walkable surface through the NavMesh.Sample hook; SetTarget counts its calls.
         internal int SetTargets;
@@ -258,7 +258,7 @@ namespace PersistentCity.Runtime
         }
         internal void Stop(bool value) { Agent.isStopped = value; }
         // P-C: the agent still holds the path SetTarget gave it (a warp drops it; a test may drop it too).
-        internal bool HasPath => Valid && Agent.hasPath;
+        internal bool HasPath => Valid && Agent.hasPath && !Agent.isPathStale;
         // F2c follower hooks: the commanded pace, an off-screen move, and the test-controlled on-screen flag.
         internal double Speed;
         internal int Warps;
@@ -288,6 +288,8 @@ namespace PersistentCity.Runtime
         internal PhysicalPedestrians(Transform _, int maximum) { this.maximum = maximum; Last = this; }
         // F2c: whether a point is in the camera's view; tests decide. Unset means out of view.
         internal static Func<Position, bool>? VisiblePoint;
+        // P-C: the production pool calls this right before each native navigation update; tests call it before moving bodies.
+        internal Action? BeforeNavigation { get; set; }
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
         {
