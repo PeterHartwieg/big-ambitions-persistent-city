@@ -44,3 +44,10 @@ The first attempt (`<stage>/runs/foreign`) is retained: after a successful insta
 
 Check 4 and the related mid-session switch are being executed in the same owned lifecycle. The first S2 checkpoint's saved marker is minute `1922.0277554988861`; it crossed into the next minute before pause, so it is not the requested late-minute setup. A subsequent check 4 run will require a verified saved fraction before a verdict is completed.
 
+
+### Startup switch first observation and mid-session sequence
+
+The first check-4 switch requested S2 0.312 seconds after S1's native load completion. Native S2 returned at 08:02 with no `City clock already active` or `Accounting input epoch was lost` in the captured log. Its status was still `start ready`; together with the early-minute save (`1922.0277554988861`), this makes that observation PARTIAL. It is retained, not used as a completed check-4 verdict.
+
+The related F8a-9/F8bg-8 sequence ran 08:00→09:00 on, 09:00→10:00 off, then 10:00→11:00 on, with an explicit save at each endpoint. All three saves succeeded. Off-state capabilities, native walker snapshots, live keys and payloads were captured. Social Media was restored to live-on/stored-absent/`original_saved=false`; all lifecycle cleanup actions succeeded and the lease was released. Raw evidence: `<stage>/runs/epoch`. A fresh-process post-reload live checkpoint and lossless identity comparison follow before completing the related-row verdicts.
+
