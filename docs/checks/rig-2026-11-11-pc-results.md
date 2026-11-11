@@ -38,3 +38,9 @@ E5b5-1 PASS: dynamicAcquisition true, productPolicy published and capabilitiesPa
 The sampled resident IDs/home/work assignments c1/c500/c957 match across the 09:00 reload. Two full console records match; c1's next_event changes from 1989.7508482813714 to 1981.6334733148396. No full state-equality claim. Earlier setup checkpoints labelled H1/Hour were actually saved at 08:00 after an interrupted advance; only the Verified checkpoints prove the hour.
 
 Positive session cleanup: normal stop, mods and lifecycle hash restoration passed; lease free, pending 0. Raw evidence: `<stage>/runs/positive`.
+
+## Group 3 ? Driven Rides absent
+
+F8a-4 and F8bg-3 PASS. Candidate city runs with `clock.drivenrides required-when-present absent: Driven Rides is not loaded`; activation log records `City clock factor=0.33333333333333331; Driven Rides coordinated=False`. This matches the compiled default; no config override. Original autosave preference read back without editing: 5 minutes / 3 saves. Native autosave guard remains enabled/off; preference sliders are intentionally unchanged. Native Options readback: `<stage>/runs/dr-absent/results/016.json`. No foreground input.
+
+Normal stop, modset restore and lifecycle file/registry hash checks passed; lease free, pending 0. `<stage>/runs/dr-absent`.
