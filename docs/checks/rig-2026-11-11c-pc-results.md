@@ -51,3 +51,12 @@ The first check-4 switch requested S2 0.312 seconds after S1's native load compl
 
 The related F8a-9/F8bg-8 sequence ran 08:00→09:00 on, 09:00→10:00 off, then 10:00→11:00 on, with an explicit save at each endpoint. All three saves succeeded. Off-state capabilities, native walker snapshots, live keys and payloads were captured. Social Media was restored to live-on/stored-absent/`original_saved=false`; all lifecycle cleanup actions succeeded and the lease was released. Raw evidence: `<stage>/runs/epoch`. A fresh-process post-reload live checkpoint and lossless identity comparison follow before completing the related-row verdicts.
 
+
+### F8a-9 / F8bg-8: Social Media switched off mid-session
+
+**PASS, verified by rig.** The 09:00 baseline, 10:00 off-state, 11:00 on-state and fresh-process post-reload live checkpoint all contain 957 residents and 957 visitors. Canonical SHA-256 of all resident identity fields (`Age`, `AppearanceSeed`, `District`, `Female`, `Id`, `Name`, `Persona`) is identical: `fdd762cbaf0cb0f162f79cef4db4b79da356a0d16d1ef458ec0f7978c247e9ec`. Saved minutes are 1980 / 2040 / 2100 / 2100; success-epoch sequences 2 / 3 / 4 / 5 have valid payload lengths and schema 1, with no accounting-stop key. The final checkpoint was newly saved after `city running` in a fresh process, not re-extracted from the pre-reload file. `<stage>/identity-summary.json` and its four source extracts/expansions retain the projection and hashes.
+
+Off-state status reported `city running` and `rlo.donor required off: transient (Off)` with `The city continues and saves on its saved donor catalogue.` Reservations, road speeds and physical capabilities were active. During the off hour, PC's own population line at logical minute 2017.5 reported physical=true, 48 pedestrians, 6 cars, 132 acquired and 78 released. Native walker snapshots had 53 / 55 walkers, 39 shared observation handles and 37 with changed world position. Logical identity equality uses the saved person fields; native handles remain observation handles. `<stage>/runs/epoch/toggle-off-Player.log:7710`, results 045–057 and `walker-summary.json`.
+
+Native reload reached city running, and Social Media's installed restore returned live-on, stored-absent, `original_saved=false`. The strict host semantic reader's visitor timing refusals remain recorded; identity comparison uses the candidate's lossless expansion, not that host reader's acceptance verdict.
+
