@@ -342,6 +342,22 @@ public sealed class PhysicalWalkerFollowTests
     }
 
     [Fact]
+    public void APoseThatIsNotAnExactFloatStillUsesItsStraightUpProjection()
+    {
+        using var f = new Fixture();
+        f.Tick();
+        NavMesh.Sample = p => new Vector3(p.x, 0.12f, p.z);
+        PhysicalPedestrianBody.Unreachable = p => Math.Abs(p.Y - 0.12) > 0.01;
+        long requests = PhysicalPopulation.Telemetry.PathRequests;
+        f.Advance(Now + 4.1234 / 2); // logical pose at x = 44.1234, which rounds up (ahead) as a float
+        f.Tick();
+        Assert.True(Math.Abs(f.Body.Target.Y - 0.12) < 1e-4, "target " + f.Body.Target);
+        Assert.True(Math.Abs(f.Body.Target.X - 44.1234) < 1e-4);
+        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests); // the projection was used, no raw retry
+        Assert.False(f.Body.Agent.isStopped);
+    }
+
+    [Fact]
     public void AnOpaqueBodyIsNotFadedButKeptUntilItIsOutOfView()
     {
         using var f = new Fixture();

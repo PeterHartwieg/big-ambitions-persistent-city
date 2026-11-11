@@ -255,16 +255,16 @@ namespace PersistentCity.Runtime
                 if (renderer == null) continue;
                 foreach (var material in renderer.sharedMaterials)
                 {
-                    if (material == null) { probe.Clear(); return false; }
-                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
-                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
-                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
-                    // Only shader configurations whose fragment alpha follows the colour: URP with a transparent surface
-                    // (_Surface 1 and its keyword), or the built-in Standard alpha-blend mode keyword.
-                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
-                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
-                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
-                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) { probe.Clear(); return false; }
+                    if (material == null || material.shader == null) { probe.Clear(); return false; }
+                    // Only the facts are read here; WalkerFollow.MaterialCanFade decides (verified shaders only).
+                    var facts = new MaterialFadeFacts(material.shader.name, material.renderQueue,
+                        material.HasProperty(BaseColorId), material.HasProperty(ColorId),
+                        material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null,
+                        material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null,
+                        material.HasProperty(SurfaceId) ? material.GetFloat(SurfaceId) : (float?)null,
+                        material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), material.IsKeywordEnabled("_ALPHABLEND_ON"),
+                        material.IsKeywordEnabled("_ALPHATEST_ON"));
+                    if (!WalkerFollow.MaterialCanFade(facts)) { probe.Clear(); return false; }
                     any = true;
                 }
             }

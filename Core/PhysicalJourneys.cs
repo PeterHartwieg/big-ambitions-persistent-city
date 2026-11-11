@@ -169,20 +169,34 @@ namespace PersistentCity.Core
         /// URP shaders configure for their Fade/Transparent surface through the _SrcBlend/_DstBlend properties.</summary>
         public const int SourceAlphaBlend = 5, OneMinusSourceAlphaBlend = 10;
 
-        /// <summary>Whether a material shows the fade: it has the colour property the fade scales, renders in a
-        /// transparent queue (above 2500), declares alpha blending (_SrcBlend SrcAlpha, _DstBlend OneMinusSrcAlpha), and
-        /// its shader configuration outputs the colour's alpha (<paramref name="alphaSurface"/>: a URP transparent
-        /// surface, or the built-in Standard alpha-blend mode). Queue and blend values alone do not establish that the
-        /// fragment alpha follows the colour (URP's opaque surface forces it to 1), so any other configuration counts as
-        /// opaque and the body is kept until it is out of view instead.</summary>
-        public static bool MaterialCanFade(int renderQueue, bool hasColourProperty, float? sourceBlend, float? destinationBlend, bool alphaSurface)
-            => alphaSurface && hasColourProperty && renderQueue > 2500
-            && sourceBlend.HasValue && (int)sourceBlend.Value == SourceAlphaBlend
-            && destinationBlend.HasValue && (int)destinationBlend.Value == OneMinusSourceAlphaBlend;
+        /// <summary>Shaders whose fade configuration is verified: the URP Lit, Simple Lit and Unlit shaders, which output
+        /// _BaseColor's alpha on a transparent surface, and the built-in Standard shaders, which output _Color's alpha in
+        /// their alpha-blend (Fade) mode. Any other shader is opaque for the fade, whatever properties it exposes.</summary>
+        public static readonly string[] UrpFadeShaders = { "Universal Render Pipeline/Lit", "Universal Render Pipeline/Simple Lit", "Universal Render Pipeline/Unlit" };
+        public static readonly string[] StandardFadeShaders = { "Standard", "Standard (Specular setup)" };
+
+        /// <summary>Whether a material shows the fade the colour alpha applies: a verified shader (above) in its
+        /// alpha-blended configuration, using that shader's own colour property, in a transparent queue (above 2500),
+        /// with _SrcBlend SrcAlpha and _DstBlend OneMinusSrcAlpha, and without alpha clipping (_ALPHATEST_ON would cut
+        /// the body out halfway through instead of fading it). URP needs _Surface 1 with _SURFACE_TYPE_TRANSPARENT and
+        /// _BaseColor; Standard needs _ALPHABLEND_ON and _Color. Everything else counts as opaque, and the body is kept
+        /// until it is out of view instead.</summary>
+        public static bool MaterialCanFade(MaterialFadeFacts m)
+        {
+            if (m.AlphaTestKeyword || !(m.RenderQueue > 2500)
+                || !(m.SourceBlend.HasValue && (int)m.SourceBlend.Value == SourceAlphaBlend)
+                || !(m.DestinationBlend.HasValue && (int)m.DestinationBlend.Value == OneMinusSourceAlphaBlend)) return false;
+            if (Array.IndexOf(UrpFadeShaders, m.ShaderName) >= 0)
+                return m.HasBaseColour && m.Surface == 1f && m.TransparentSurfaceKeyword;
+            if (Array.IndexOf(StandardFadeShaders, m.ShaderName) >= 0)
+                return m.HasColour && !m.HasBaseColour && m.AlphaBlendKeyword;
+            return false;
+        }
 
         /// <summary>A NavMesh projection of a pose may shift it along the leg (kerbs, ramps). It is usable only if it is
         /// not ahead of the pose along the leg <paramref name="from"/>→<paramref name="to"/> (horizontal), so the
         /// destination stays behind the logical progress.</summary>
+        public const double ProjectionAheadMetres = 0.01;
         public static bool NotAheadOnLeg(Position from, Position to, Position pose, Position projected)
         {
             double dx = to.X - from.X, dz = to.Z - from.Z, square = dx * dx + dz * dz;
@@ -190,7 +204,9 @@ namespace PersistentCity.Core
             if (square <= 1e-12) return true;
             double alongPose = ((pose.X - from.X) * dx + (pose.Z - from.Z) * dz) / square;
             double alongProjected = ((projected.X - from.X) * dx + (projected.Z - from.Z) * dz) / square;
-            return alongProjected <= alongPose + 1e-9;
+            // Compared in metres along the leg: a pose passed through float coordinates rounds by up to a few
+            // hundredths of a millimetre, which must not count as ahead; a real forward shift does.
+            return (alongProjected - alongPose) * Math.Sqrt(square) <= ProjectionAheadMetres;
         }
 
         /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
@@ -262,6 +278,28 @@ namespace PersistentCity.Core
             }
             return progress;
         }
+    }
+
+    /// <summary>What the fade probe reads from one material (Runtime PhysicalPedestrianBody.CanFade fills it).</summary>
+    public readonly struct MaterialFadeFacts
+    {
+        public MaterialFadeFacts(string shaderName, int renderQueue, bool hasBaseColour, bool hasColour, float? sourceBlend, float? destinationBlend,
+            float? surface, bool transparentSurfaceKeyword, bool alphaBlendKeyword, bool alphaTestKeyword)
+        {
+            ShaderName = shaderName ?? ""; RenderQueue = renderQueue; HasBaseColour = hasBaseColour; HasColour = hasColour;
+            SourceBlend = sourceBlend; DestinationBlend = destinationBlend; Surface = surface;
+            TransparentSurfaceKeyword = transparentSurfaceKeyword; AlphaBlendKeyword = alphaBlendKeyword; AlphaTestKeyword = alphaTestKeyword;
+        }
+        public string ShaderName { get; }
+        public int RenderQueue { get; }
+        public bool HasBaseColour { get; }
+        public bool HasColour { get; }
+        public float? SourceBlend { get; }
+        public float? DestinationBlend { get; }
+        public float? Surface { get; }
+        public bool TransparentSurfaceKeyword { get; }
+        public bool AlphaBlendKeyword { get; }
+        public bool AlphaTestKeyword { get; }
     }
 
     public enum WalkerCorrectionKind

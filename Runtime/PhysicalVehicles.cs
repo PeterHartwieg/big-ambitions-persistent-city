@@ -154,14 +154,16 @@ namespace PersistentCity.Runtime
                 if (renderer == null) continue;
                 foreach (var material in renderer.sharedMaterials)
                 {
-                    if (material == null) return false;
-                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
-                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
-                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
-                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
-                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
-                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
-                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) return false;
+                    if (material == null || material.shader == null) return false;
+                    // Only the facts are read here; WalkerFollow.MaterialCanFade decides (verified shaders only).
+                    var facts = new MaterialFadeFacts(material.shader.name, material.renderQueue,
+                        material.HasProperty(BaseColorId), material.HasProperty(ColorId),
+                        material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null,
+                        material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null,
+                        material.HasProperty(SurfaceId) ? material.GetFloat(SurfaceId) : (float?)null,
+                        material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), material.IsKeywordEnabled("_ALPHABLEND_ON"),
+                        material.IsKeywordEnabled("_ALPHATEST_ON"));
+                    if (!WalkerFollow.MaterialCanFade(facts)) return false;
                     any = true;
                 }
             }
