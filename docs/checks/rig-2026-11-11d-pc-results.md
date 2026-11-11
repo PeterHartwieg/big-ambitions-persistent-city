@@ -58,3 +58,7 @@ Owned staffed shop checkpoint: `FT PC 11 Nov d shop Owned Staffed Food Shop`, `C
 ## Cleanup
 
 Each completed lifecycle restored its named state and released its lease. Final full-run restore is pending.
+
+## E5b supported mixed-shop setup
+
+**PARTIAL, verified by rig setup only.** The checked-in `shop-multi-offer.json` spec reconciled the same named rented business at 24 Fourth Avenue with a new fixture id. No new rental, funding or campaign step. Native readback now advertises croissant and donut, with 100 units each and 300 bags. The loaded catalogue identifies donut as a base-game product with a complete bakery-showcase holder link; the native product whitelist includes croissant/cupcake/donut. PC?s post-build image has `passed:true`, `refusal:null`; it is still native-owned until a future acquisition boundary. Checkout, accounting and visual assertions remain unproved. Raw evidence: `<stage>/runs/mixed`.
