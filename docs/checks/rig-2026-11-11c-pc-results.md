@@ -60,3 +60,10 @@ Off-state status reported `city running` and `rlo.donor required off: transient 
 
 Native reload reached city running, and Social Media's installed restore returned live-on, stored-absent, `original_saved=false`. The strict host semantic reader's visitor timing refusals remain recorded; identity comparison uses the candidate's lossless expansion, not that host reader's acceptance verdict.
 
+
+### Check 4: verified late-minute switch
+
+**PASS, verified by rig.** S2 belongs to this run's second fresh native FT character. Its saved success marker is schema 1, minute `1920.7541997432709` (final quarter of 08:00), sequence 2. With Social Media off, S1 was loaded; Social Media was set on and S2 requested **0.406 seconds** after S1's native load completion. The native load path traversed the menu without foreground or real input. S2 reached `city running`, with logical minute exactly `1920.7541997432709`, native minute `1920.7562360167503`, no accounting refusal and zero historical clock misses. Neither `City clock already active` nor `Accounting input epoch was lost` appeared in the captured process log. Autosave suppression was checked after loads. Social Media restore/readback returned stored absent, live true, `original_saved=false`; all cleanup actions succeeded, game stopped normally and lease free. Evidence: `<stage>/runs/epoch4/saved-minute-1.json`, `epoch4-switch.json`, results 026–042 and `epoch4-verified-Player.log`.
+
+The earlier S2 minute `1922.0277554988861` and `start ready` observation remain PARTIAL evidence in `<stage>/runs/epoch`; the late-minute verdict uses only the completed `epoch4` observation above.
+
