@@ -82,8 +82,8 @@ public sealed class FirstSaleTravelPaceTests
             foreach (var choice in trace.Intent.Choices.Where(c => c.BusinessId == Business))
                 reasons[choice.Reason] = reasons.TryGetValue(choice.Reason, out int n) ? n + 1 : 1;
         };
-        // The rig window: through the first full shop day and on to next-day noon.
-        for (double at = state.Minute + 60; at <= 3 * 1440 + 720; at += 60)
+        // The rig window: from day 1 05:00 through the first shop day (09:00-18:00) to day 2 noon.
+        for (double at = state.Minute + 60; at <= 2 * 1440 + 720; at += 60)
             while (!city.AdvanceTo(at, 64).CaughtUp) { }
         output.WriteLine("rate " + clockRate.ToString("R", CultureInfo.InvariantCulture) + ": " + market.Orders.Count + " orders; "
             + string.Join(", ", reasons.OrderBy(r => r.Key, StringComparer.Ordinal).Select(r => r.Key + "=" + r.Value)));
