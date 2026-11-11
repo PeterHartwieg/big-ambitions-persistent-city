@@ -74,3 +74,17 @@ The one requested attempt at `ba:street_fourthavenue#18` stopped before rental w
 
 The installed rig's checked-in history documents a rented fixture at `ba:street_thirdstreet#32` (`docs/reviews/live/20261102-live4/native/shop-build.json`, repeated in the live-6 shop records). One normal `acquire: rent` attempt at that documented alternative follows, using native vacancy/suitability/funds checks. No change to the gym, campaign purchase, money injection, rival-finance write or rental bypass.
 
+
+## Shop-rental results
+
+**No owned staffed food shop established; shop-dependent checks NOT RUN.** One attempt used the requested `ba:street_fourthavenue#18`; one permitted alternative used the checked-in historical fixture address `ba:street_thirdstreet#32` (`docs/reviews/live/20261102-live4/native/shop-build.json`, repeated in live-6 records). Both used `acquire: rent`, with native vacancy/suitability/funds gates and the documented coffee-shop equipment/staff/stock spec. No further address or rental workaround was attempted.
+
+| Flow / address | Exact build error | Native readback | Follow-up status | Money before / after |
+|---|---|---|---|---|
+| `shop`, 18 Fourth Avenue | `ops_shop_vacant_suitable_required` | Existing Pump Up gym, 75 m²; not player-rented/owned | `ops_fixture_unknown` | 10000.0 / 10000.0 |
+| `shopalt`, 32 Third Street | `ops_shop_vacant_suitable_required` | Existing The Grocery Cart supermarket, 75 m²; not player-rented/owned | `ops_fixture_unknown` | 10000.0 / 10000.0 |
+
+Both refusals occurred before a fixture job or acquisition step existed. These are current-fixture vacancy gaps. **Native rental was not reached**, so the previous `ops_shop_native_rental_refused` defect and absent agent-rig #71 fix were not retested. The existing businesses were left untouched; no campaign, money injection, purchase offer, rival-finance write or native-field workaround was used. `<stage>/runs/shop` and `shopalt`, results 007–010, retain exact requests/errors/state and the money comparison.
+
+F8h-2's missing first-sale half, F8h-1/F8a-11 shop service/receipt/ownership halves, native-shop halves F8a-5/F8bg-4, the named E5b shop rows, F9 owned-shop/f9-city-ready rows, F6b staffed/rush/config variants and F7-1/3 remain NOT RUN. Existing `save`, `pcsave`, `pcstate`, `modwork`, `ledger` and `rival_fingerprint` were not mislabeled as missing. Both shop lifecycles stopped normally, restored their named state and released the lease.
+
