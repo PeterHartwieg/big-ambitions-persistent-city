@@ -139,7 +139,9 @@ namespace PersistentCity.Runtime
         public object? FoodAwareness(string consumerId, int? day=null) => simulation?.InspectFoodAwareness(consumerId,day);
         public object RivalFoodDiagnostics => new { Core=simulation?.DumpRivalFood(), RefreshUnits=foodMarket?.RivalRefreshUnits ?? 0, DetailReads=foodMarket?.RivalDetailReads ?? 0, Unavailable=foodMarket?.RivalUnavailable ?? "" };
         public object FoodDiagnostics => new { active = foodMarket != null, hourlyCustomerBatchesSuppressed = foodMarket?.SuppressedBatches ?? 0,
-            nativeDrawsSuppressed = foodMarket?.SuppressedDraws ?? 0, nativePurchasesThisSession = foodMarket?.NativePurchases ?? 0 };
+            nativeDrawsSuppressed = foodMarket?.SuppressedDraws ?? 0, nativePurchasesThisSession = foodMarket?.NativePurchases ?? 0,
+            // Walking reach behind every food time-fit check: 2 m per scaled second over the observed clock rate.
+            travelClockRate = simulation?.State.TravelClockRate ?? 0, walkingMetresPerGameMinute = routes?.WalkingMetresPerMinute ?? 0 };
 
         /// <summary>Explicit read-only diagnostic; the caller must finish/dispose the bounded recorder.</summary>
         public FoodRoutineRecorder ObserveFoodRoutines()
