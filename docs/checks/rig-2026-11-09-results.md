@@ -306,7 +306,7 @@ Ambient load for these runs is retained in [timing.json](rig-2026-11-09/timing.j
 
 ### Input for the F7e decision
 
-Current PC encode sits **outside and before** the portrait/screenshot request: PC runs synchronously in onSaveGame, followed by those native calls, as documented in [F7 §2.2/§3.5](../plans/f7-save-snapshots.md#22-native-save-contract-read-only-ilspy-inspection-installed-bigambitionsdll). In the representative head Default samples, encode is provisional (PC shared: S1) **374.440 / 400.655 / 400.655 ms**, while portrait plus screenshot dispatch is provisional (PC shared: S1) **10.131 / 18.013 / 18.013 ms**; capture is 2.435 / 3.743 / 3.743% of encode. The observed subscriber order also places RLO’s save hook after PC: remaining subscribers plus portrait/dispatch total provisional (PC shared: S1) **11.079 / 42.467 / 42.467 ms**. Capture satisfies the ≤25% premise, but this measured overlap opportunity is small beside encode. Inference: portrait-only F7e would recover a small part of the pause; even the broader measured post-PC interval would not approach the typical pause budget. The profiler measures screenshot dispatch, not asynchronous capture completion or a timestamped worker join. This is input against relying on portrait overlap for the target pause, not proof that a worker has no benefit. The final matched batch remains necessary; no F7e implementation or frozen-plan change is made here.
+Current PC encode sits **outside and before** the portrait/screenshot request: PC runs synchronously in onSaveGame, followed by those native calls, as documented in [F7 §2.2/§3.5](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/plans/f7-save-snapshots.md#22-native-save-contract-read-only-ilspy-inspection-installed-bigambitionsdll). In the representative head Default samples, encode is provisional (PC shared: S1) **374.440 / 400.655 / 400.655 ms**, while portrait plus screenshot dispatch is provisional (PC shared: S1) **10.131 / 18.013 / 18.013 ms**; capture is 2.435 / 3.743 / 3.743% of encode. The observed subscriber order also places RLO’s save hook after PC: remaining subscribers plus portrait/dispatch total provisional (PC shared: S1) **11.079 / 42.467 / 42.467 ms**. Capture satisfies the ≤25% premise, but this measured overlap opportunity is small beside encode. Inference: portrait-only F7e would recover a small part of the pause; even the broader measured post-PC interval would not approach the typical pause budget. The profiler measures screenshot dispatch, not asynchronous capture completion or a timestamped worker join. This is input against relying on portrait overlap for the target pause, not proof that a worker has no benefit. The final matched batch remains necessary; no F7e implementation or frozen-plan change is made here.
 
 ## Performance
 
@@ -509,7 +509,7 @@ Rows retain the 6 November IDs: 494 rows in 77 candidate files, plus 16 NOT RUN 
 
 The short requirement labels refer to the grouped NOT RUN explanation above. [checks.json](rig-2026-11-09/checks.json) is a compact excerpt (id, status, group, key); full check titles and unabridged per-row requirements are in the archived blob `05d505b:docs/checks/rig-2026-11-09/checks.json` (SHA-256 in the excerpt's `archive` block); native/public diagnostic readbacks are in [readbacks.json](rig-2026-11-09/readbacks.json), key hashes/prefixes in [headers.json](rig-2026-11-09/headers.json), and save assertion audits in [save-audit.json](rig-2026-11-09/save-audit.json).
 
-### [a3-weighted-choice.md](a3-weighted-choice.md)
+### [a3-weighted-choice.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/a3-weighted-choice.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -526,7 +526,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `a3-11` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `a3-12` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [a5-integrated-acceptance.md](a5-integrated-acceptance.md)
+### [a5-integrated-acceptance.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/a5-integrated-acceptance.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -543,7 +543,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `a5-11` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 | `a5-12` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [b0-schema18.md](b0-schema18.md)
+### [b0-schema18.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/b0-schema18.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -555,7 +555,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `b0-6` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 | `b0-7` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 
-### [b0b-held-tuning.md](b0b-held-tuning.md)
+### [b0b-held-tuning.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/b0b-held-tuning.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -565,7 +565,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `b0b-4` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 | `b0b-5` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 
-### [b1-memory-loyalty.md](b1-memory-loyalty.md)
+### [b1-memory-loyalty.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/b1-memory-loyalty.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -578,7 +578,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `b1-7` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `b1-8` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [b2-regulars-inspector.md](b2-regulars-inspector.md)
+### [b2-regulars-inspector.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/b2-regulars-inspector.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -591,7 +591,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `b2-7` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `b2-8` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [c1-campaign-reader.md](c1-campaign-reader.md)
+### [c1-campaign-reader.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c1-campaign-reader.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -601,7 +601,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c1-4` | NOT RUN | Needs prepared campaign/payment fixture; purchases prohibited. |
 | `c1-5` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [c2a-core-awareness.md](c2a-core-awareness.md)
+### [c2a-core-awareness.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c2a-core-awareness.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -620,7 +620,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c2a-6` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 | `c2a-7` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [c2b-campaign-awareness.md](c2b-campaign-awareness.md)
+### [c2b-campaign-awareness.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c2b-campaign-awareness.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -632,7 +632,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c2b-6` | NOT RUN | Needs prepared campaign/payment fixture; purchases prohibited. |
 | `c2b-7` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [c3-agency-payment.md](c3-agency-payment.md)
+### [c3-agency-payment.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c3-agency-payment.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -643,7 +643,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c3-5` | NOT RUN | Needs prepared campaign/payment fixture; purchases prohibited. |
 | `c3-6` | NOT RUN | Needs prepared campaign/payment fixture; purchases prohibited. |
 
-### [c4-market-research.md](c4-market-research.md)
+### [c4-market-research.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c4-market-research.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -652,7 +652,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c4-3` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 | `c4-4` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 
-### [c5a.md](c5a.md)
+### [c5a.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c5a.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -661,7 +661,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c5a-3` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 | `c5a-4` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 
-### [c5b.md](c5b.md)
+### [c5b.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c5b.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -670,7 +670,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c5b-3` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 | `c5b-4` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 
-### [c5c.md](c5c.md)
+### [c5c.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c5c.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -681,7 +681,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c5c-5` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 | `c5c-6` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 
-### [c5d.md](c5d.md)
+### [c5d.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c5d.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -694,7 +694,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c5d-7` | NOT RUN | Needs the named foreign-prefix/runtime-stop fault fixture and billing assertions. No payload mutation or injected stop was invoked. |
 | `c5d-8` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 
-### [c5e-agency-dialog.md](c5e-agency-dialog.md)
+### [c5e-agency-dialog.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c5e-agency-dialog.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -704,7 +704,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c5e-agency-dialog-4` | PARTIAL | Idle status ledgerAttached=true with no orders/messages/billing and closedWindowBuilds=0. Matched open/closed research UI and its geometry were not exercised. Evidence: `head-diag-r2`. |
 | `c5e-agency-dialog-5` | NOT RUN | Needs the named foreign-prefix/runtime-stop fault fixture and billing assertions. No payload mutation or injected stop was invoked. |
 
-### [c5f-delivery-reports.md](c5f-delivery-reports.md)
+### [c5f-delivery-reports.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/c5f-delivery-reports.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -719,7 +719,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `c5f-delivery-reports-9` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 | `c5f-delivery-reports-10` | NOT RUN | Needs ordered/paid research and billing/delivery trace; purchases prohibited. |
 
-### [d1-rival-catalogue.md](d1-rival-catalogue.md)
+### [d1-rival-catalogue.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/d1-rival-catalogue.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -729,7 +729,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `d1-4` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `d1-5` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [d2-rival-outflow.md](d2-rival-outflow.md)
+### [d2-rival-outflow.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/d2-rival-outflow.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -742,7 +742,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `d2-7` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 | `d2-8` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [d3a-outflow-line.md](d3a-outflow-line.md)
+### [d3a-outflow-line.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/d3a-outflow-line.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -753,7 +753,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `d3a-5` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `d3a-6` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [d4-rival-memory.md](d4-rival-memory.md)
+### [d4-rival-memory.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/d4-rival-memory.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -764,7 +764,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `d4-5` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `d4-6` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [e1-rain.md](e1-rain.md)
+### [e1-rain.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e1-rain.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -775,7 +775,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e1-5` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 | `e1-6` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e2a-street-life.md](e2a-street-life.md)
+### [e2a-street-life.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e2a-street-life.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -788,7 +788,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e2a-7` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 | `e2a-8` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [e2b-street-life.md](e2b-street-life.md)
+### [e2b-street-life.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e2b-street-life.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -800,7 +800,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e2b-6` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 | `e2b-7` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [e2c-interior-guard.md](e2c-interior-guard.md)
+### [e2c-interior-guard.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e2c-interior-guard.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -809,7 +809,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e2c-3` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 | `e2c-4` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [e3-cupcake.md](e3-cupcake.md)
+### [e3-cupcake.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-cupcake.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -820,7 +820,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-cupcake-5` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-cupcake-6` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e3-donut.md](e3-donut.md)
+### [e3-donut.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-donut.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -830,7 +830,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-donut-4` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-donut-5` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e3-frenchfries.md](e3-frenchfries.md)
+### [e3-frenchfries.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-frenchfries.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -843,7 +843,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-frenchfries-7` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-frenchfries-8` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e3-icecream.md](e3-icecream.md)
+### [e3-icecream.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-icecream.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -856,7 +856,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-icecream-7` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-icecream-8` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e3-pizza.md](e3-pizza.md)
+### [e3-pizza.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-pizza.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -868,7 +868,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-pizza-6` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-pizza-7` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e3-remaining-batch.md](e3-remaining-batch.md)
+### [e3-remaining-batch.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-remaining-batch.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -884,7 +884,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-remaining-10` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-remaining-11` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e3-salad.md](e3-salad.md)
+### [e3-salad.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e3-salad.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -896,7 +896,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e3-salad-6` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e3-salad-7` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e4-wider-menu.md](e4-wider-menu.md)
+### [e4-wider-menu.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e4-wider-menu.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -907,7 +907,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e4-5` | NOT RUN | Needs genuine product/holder fixture and native reader/transaction comparison. |
 | `e4-6` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e5a-catalogue-eligibility.md](e5a-catalogue-eligibility.md)
+### [e5a-catalogue-eligibility.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5a-catalogue-eligibility.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -917,7 +917,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e5a-4` | NOT RUN | Not implemented on this head / needs real mixed-menu and lifecycle trace. |
 | `e5a-5` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [e5b-complete-menu.md](e5b-complete-menu.md)
+### [e5b-complete-menu.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5b-complete-menu.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -928,7 +928,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e5b-5` | NOT RUN | Not implemented on this head / needs real mixed-menu and lifecycle trace. |
 | `e5b-6` | NOT RUN | Not implemented on this head / needs real mixed-menu and lifecycle trace. |
 
-### [e5b2.md](e5b2.md)
+### [e5b2.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5b2.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -937,7 +937,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e5b2-3` | NOT RUN | Merged after c2fc1b0 during this run (origin advanced to ece4878). Not present in the tested DLL; needs a new candidate batch. |
 | `e5b2-4` | NOT RUN | Merged after c2fc1b0 during this run (origin advanced to ece4878). Not present in the tested DLL; needs a new candidate batch. |
 
-### [e5c-neutral-metadata.md](e5c-neutral-metadata.md)
+### [e5c-neutral-metadata.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5c-neutral-metadata.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -947,7 +947,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e5c-4` | NOT RUN | Not exercised: metadata/bad-config arms and likes/held-state fixtures. |
 | `e5c-5` | NOT RUN | Not exercised: metadata/bad-config arms and likes/held-state fixtures. |
 
-### [e5d-name-identity-save.md](e5d-name-identity-save.md)
+### [e5d-name-identity-save.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5d-name-identity-save.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -958,7 +958,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e5d-5` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 | `e5d-6` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 
-### [e5e-metadata-api.md](e5e-metadata-api.md)
+### [e5e-metadata-api.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e5e-metadata-api.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -966,7 +966,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e5e-2` | NOT RUN | Needs actual metadata provider/identity-conflict fixture. |
 | `e5e-3` | NOT RUN | Needs actual metadata provider/identity-conflict fixture. |
 
-### [e6b.md](e6b.md)
+### [e6b.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e6b.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -978,7 +978,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e6b-6` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 | `e6b-7` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 
-### [e6c.md](e6c.md)
+### [e6c.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e6c.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -989,7 +989,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e6c-5` | NOT RUN | Needs the specifically named older vendor-writer fixture; writer-33/34 refusal alone does not verify that vendor save assertion. |
 | `e6c-6` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 
-### [e6d.md](e6d.md)
+### [e6d.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e6d.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1002,7 +1002,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e6d-7` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 | `e6d-8` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 
-### [e6e.md](e6e.md)
+### [e6e.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/e6e.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1010,7 +1010,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `e6e-2` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 | `e6e-3` | NOT RUN | Needs compatible Street Food vendor API and vehicle fixture. |
 
-### [f0-interior-view.md](f0-interior-view.md)
+### [f0-interior-view.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f0-interior-view.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1022,7 +1022,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f0-6` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 | `f0-7` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [f1-accounting-backlog.md](f1-accounting-backlog.md)
+### [f1-accounting-backlog.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f1-accounting-backlog.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1033,7 +1033,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f1-accounting-5` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 | `f1-accounting-6` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 
-### [f1-shop-view.md](f1-shop-view.md)
+### [f1-shop-view.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f1-shop-view.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1045,7 +1045,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f1-shop-view-6` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 | `f1-shop-view-7` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [f1b-street-proxy.md](f1b-street-proxy.md)
+### [f1b-street-proxy.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f1b-street-proxy.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1058,7 +1058,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f1b-7` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 | `f1b-8` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [f2a.md](f2a.md)
+### [f2a.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f2a.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1069,7 +1069,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f2a-5` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 | `f2a-6` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [f2b.md](f2b.md)
+### [f2b.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f2b.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1077,7 +1077,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f2b-2` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 | `f2b-3` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [f2c.md](f2c.md)
+### [f2c.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f2c.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1087,7 +1087,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f2c-4` | NOT RUN | Merged after c2fc1b0 during this run (origin advanced to ece4878). Not present in the tested DLL; needs a new candidate batch. |
 | `f2c-5` | NOT RUN | Merged after c2fc1b0 during this run (origin advanced to ece4878). Not present in the tested DLL; needs a new candidate batch. |
 
-### [f2d.md](f2d.md)
+### [f2d.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f2d.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1099,7 +1099,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f2d-6` | NOT RUN | Merged after c2fc1b0 during this run (origin advanced to ece4878). Not present in the tested DLL; needs a new candidate batch. |
 | `f2d-7` | NOT RUN | Merged after c2fc1b0 during this run (origin advanced to ece4878). Not present in the tested DLL; needs a new candidate batch. |
 
-### [f2f.md](f2f.md)
+### [f2f.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f2f.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1107,13 +1107,13 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f2f-2` | PARTIAL | Stationary physical logs stayed within 48 pedestrian/24 vehicle caps with zero reported index mismatches; reloads completed. Camera sweeps, hidden-skip and exact body-ID/full-scan arms were not run. Evidence: `head-business-age`. |
 | `f2f-3` | NOT RUN | Not exercised: specified body/camera/input equivalence arms. |
 
-### [f2h.md](f2h.md)
+### [f2h.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f2h.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
 | `f2h-1` | PARTIAL | All actions and PC readbacks worked in background -rig-test without focus or real input. The controlled nearby-object/player-position route-equivalence arms and compact projections were not run. Evidence: `head-business-age`. |
 
-### [f5a.md](f5a.md)
+### [f5a.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5a.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1123,7 +1123,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5a-4` | PARTIAL | Census and runtime remained active after fresh-process and same-process reloads of current writer 34. Pending-station and separate-city scoping arms were not exercised. Evidence: `head-reload`. |
 | `f5a-5` | PARTIAL | Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised. Evidence: `head-business-perf`. |
 
-### [f5b-identity-core.md](f5b-identity-core.md)
+### [f5b-identity-core.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5b-identity-core.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1132,7 +1132,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5b-3` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 | `f5b-4` | PARTIAL | Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised. Evidence: `head-business-perf`. |
 
-### [f5c-lite.md](f5c-lite.md)
+### [f5c-lite.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5c-lite.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1143,7 +1143,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5c-lite-5` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 | `f5c-lite-6` | PARTIAL | Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised. Evidence: `head-business-perf`. |
 
-### [f5d.md](f5d.md)
+### [f5d.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5d.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1156,7 +1156,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5d-7` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 | `f5d-8` | PARTIAL | Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised. Evidence: `head-business-perf`. |
 
-### [f5e.md](f5e.md)
+### [f5e.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5e.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1167,7 +1167,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5e-5` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 | `f5e-6` | PARTIAL | Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised. Evidence: `head-business-perf`. |
 
-### [f5f.md](f5f.md)
+### [f5f.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5f.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1176,7 +1176,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5f-3` | PARTIAL | Physical diagnostics reported withheld visitors, body caps and zero index mismatches. Complete body/car/lease identity membership against all visitors was not exported. Evidence: `head-business-age`. |
 | `f5f-4` | NOT RUN | Not exercised: check-specific matched earlier-build/config/cadence/camera arms. |
 
-### [f5g.md](f5g.md)
+### [f5g.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5g.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1190,7 +1190,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5g-8` | PARTIAL | Fill completed at the native boundary and portal/route/lag counters were retained. No declared stress/camera/fill-budget sweep was available. Evidence: `head-declared`, `head-business-age`. |
 | `f5g-9` | PARTIAL | Base writer 33 was created fresh and reloaded; current writer 34 refuses that older city and keeps all PC values across a native save. Four-week writer-33 and sealed writer-32 arms were not run. Evidence: `base-producer`, `base-save`, `head-refusal`. |
 
-### [f5h.md](f5h.md)
+### [f5h.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f5h.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1201,7 +1201,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f5h-5` | PARTIAL | Candidate refused fresh writer 33 with the distinct start-a-new-city message; all three PC values stayed byte-identical after native save, with no stop key. Historical fixture matrix/second negative reload were not run. Evidence: `head-refusal`. |
 | `f5h-6` | NOT RUN | Not exercised: automated panel/inspector/geometry/screenshot arms. |
 
-### [f6a-intervention-harness.md](f6a-intervention-harness.md)
+### [f6a-intervention-harness.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6a-intervention-harness.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1215,7 +1215,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6a-8` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 | `f6a-9` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 
-### [f6b.md](f6b.md)
+### [f6b.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6b.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1228,7 +1228,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6b-7` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 | `f6b-8` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 
-### [f6c.md](f6c.md)
+### [f6c.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6c.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1241,7 +1241,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6c-7` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 | `f6c-8` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 
-### [f6d.md](f6d.md)
+### [f6d.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6d.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1249,7 +1249,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6d-2` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 | `f6d-3` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 
-### [f6e.md](f6e.md)
+### [f6e.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6e.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1260,7 +1260,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6e-5` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 | `f6e-6` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 
-### [f6f.md](f6f.md)
+### [f6f.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6f.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1271,7 +1271,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6f-5` | NOT RUN | Needs selected venue/admission/transfer/endowment fixture. |
 | `f6f-6` | NOT RUN | Needs selected venue/admission/transfer/endowment fixture. |
 
-### [f6g.md](f6g.md)
+### [f6g.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6g.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1284,7 +1284,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6g-7` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 | `f6g-8` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 
-### [f6h.md](f6h.md)
+### [f6h.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6h.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1310,7 +1310,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6h-20` | NOT RUN | Needs exact PC ledger/export + serving/intervention/week fixtures. |
 | `f6h-21` | PARTIAL | Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised. Evidence: `head-business-perf`. |
 
-### [f6i.md](f6i.md)
+### [f6i.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6i.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1318,7 +1318,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6i-2` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `f6i-3` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [f6j.md](f6j.md)
+### [f6j.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6j.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1328,7 +1328,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6j-4` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 | `f6j-5` | NOT RUN | Needs serving food fixture + exact PC receipt/wallet/order join (serving). |
 
-### [f6k.md](f6k.md)
+### [f6k.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f6k.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1338,7 +1338,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f6k-4` | NOT RUN | Needs effective-config readback and explicit config arms. |
 | `f6k-5` | NOT RUN | Needs effective-config readback and explicit config arms. |
 
-### [f7a.md](f7a.md)
+### [f7a.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f7a.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1350,7 +1350,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f7a-6` | PASS | All nine ordinary windows: SaveCostDiagnostics.save unchanged, save-epoch sequence unchanged and zero union save callbacks; guard verified off at begin. Explicit saves occurred between/after windows. Evidence: `head-business-perf`. |
 | `f7a-7` | NOT RUN | Needs named interrupted checkpoints + compact semantic comparison (replay). |
 
-### [f7b.md](f7b.md)
+### [f7b.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f7b.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1362,7 +1362,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f7b-6` | NOT RUN | Not exercised: named runtime/encode/marker/relocation fault arm. |
 | `f7b-7` | FAIL | F-PERF-1: provisional shared-PC head union p95 breached <5 ms (d2-14-18=5.0849 ms, d2-18-22=5.0698 ms). Timing valid, coverage complete, zero save callbacks and sampled dotnet/testhost/MSBuild=0. Likely integration follow-up: F3/PR #98; optional-stop tail provider F2h/PR #159 with #128 diagnostics PR #133. No single-PR regression attribution. Evidence: `head-business-perf`. |
 
-### [f7c.md](f7c.md)
+### [f7c.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f7c.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1373,7 +1373,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f7c-5` | NOT RUN | Needs supported population/fixture builder for the specified load. |
 | `f7c-6` | FAIL | F-PERF-1: provisional shared-PC head union p95 breached <5 ms (d2-14-18=5.0849 ms, d2-18-22=5.0698 ms). Timing valid, coverage complete, zero save callbacks and sampled dotnet/testhost/MSBuild=0. Likely integration follow-up: F3/PR #98; optional-stop tail provider F2h/PR #159 with #128 diagnostics PR #133. No single-PR regression attribution. Evidence: `head-business-perf`. |
 
-### [f7d.md](f7d.md)
+### [f7d.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f7d.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1383,7 +1383,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f7d-4` | PARTIAL | Writer 33 -> head refused with start-a-new-city; writer 34 -> base refused as Unsupported population schema; all three PC values unchanged after native save in both directions. Literal Future enum and malformed/historical matrix are not exposed/tested. Evidence: `head-refusal`, `base-refusal`. |
 | `f7d-5` | NOT RUN | Needs supported population/fixture builder for the specified load. |
 
-### [f7f.md](f7f.md)
+### [f7f.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f7f.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1392,7 +1392,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f7f-3` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 | `f7f-4` | NOT RUN | Needs the named historical checkpoint/build (historical); no migration. |
 
-### [f7p.md](f7p.md)
+### [f7p.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/f7p.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1400,7 +1400,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `f7p-2` | NOT RUN | Needs supported population/fixture builder for the specified load. |
 | `f7p-3` | PARTIAL | Native serialization/compression, payload sizes/UTF-16 share and ms per million characters retained for writers 33/34. This is not the specified writer-25/prototype comparison or stress fixture. Evidence: `head-save`, `base-save`, `head-declared`, `base-declared`. |
 
-### [fix-128-rush-spike.md](fix-128-rush-spike.md)
+### [fix-128-rush-spike.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/fix-128-rush-spike.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
@@ -1409,7 +1409,7 @@ The short requirement labels refer to the grouped NOT RUN explanation above. [ch
 | `fix-128-rush-spike-3` | PARTIAL | Park scans were 0 in observed prep/day windows. Unmatched pre-fix build/Hamptons load/bench-count equivalence arms were not run; >=30 ms optional-stop tails are flagged separately. Evidence: `head-declared`, `base-declared`, `head-business-age`. |
 | `fix-128-rush-spike-4` | PASS | Owned-business day-3 evening: complete supported union, p95=4.8478 ms, 3 intervals >=30 ms, all listed with components; zero save callbacks. Provisional shared-PC measurement. The broader strict interval gate is assessed separately under F-PERF-1; likely integration owner F3/PR #98 if p95 breaches. Evidence: `head-business-perf`. |
 
-### [pc-f3-bounded-bulk-work.md](pc-f3-bounded-bulk-work.md)
+### [pc-f3-bounded-bulk-work.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/pc-f3-bounded-bulk-work.md)
 
 | Check | Result | Evidence / remaining requirement |
 |---|---|---|
