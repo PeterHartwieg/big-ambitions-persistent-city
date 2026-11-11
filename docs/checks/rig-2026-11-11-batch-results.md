@@ -30,10 +30,12 @@ Raw evidence is external: `<stage>` = `C:/Users/Peter/HART-Builds/persistent-cit
 | day1-save | FAIL | Stage query stopped before saves: ActivationDiagnostics absent; corrected subsequent flow. |
 | day1-save-cost | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
 | day3-save-cost | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
+| day1-native-loads | INPUT_ERROR | Scenario needs checks: name its CHECKS.md rows |
+| native-loads | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
 
 ## F7 check 2 / F7e input
 
-Fresh native head city: **957 residents / 957 visitors**, day 1 08:00, no rented food shop. All three declared SaveTypes completed on both day 1 and day 3. The day-3 copy reached native 06:00 at speed 20, with **957 residents / 1,914 visitors**, fill created=957; no shop was rented. Both Default checkpoints cold-reloaded to their recorded counts. This is not the sealed FT-F4-Declared fixture. The historical writer-25 arm is **NOT RUN**: no documented pre-produced compatible checkpoint; representative/historical recipes blocked, and head refuses older schemas with “start a new city”. This is head-writer input, not a matched before/after campaign.
+Fresh native head city: **957 residents / 957 visitors**, day 1 08:00, no rented food shop. All three declared SaveTypes completed on day 1 and day 3. The second copy reached native day 3 06:00 at speed 20 with **957 residents / 1,914 visitors**, fill created=957, no rented shop. Both Default checkpoints cold-reloaded to their recorded counts. This is not the sealed FT-F4-Declared fixture. The historical writer-25 arm is **NOT RUN**: no documented pre-produced compatible checkpoint; representative/historical recipes blocked, and head refuses older schemas with “start a new city”. This is head-writer input, not a matched before/after campaign.
 
 | Checkpoint / SaveType | Capture ms | Encode ms | Capture / encode | Portrait Create ms | Screenshot request ms | Method-window sum ms |
 |---|---|---|---|---|---|---|
@@ -187,11 +189,67 @@ day3-save-cost / RecoverSave:
 | InvokeOnGameLoaded | **3292.970** | main |
 | Load_total | **41114.442** | main |
 
+`native-loads`, evidence `runs/native-loads/steps/001-response.json`:
+
+| Phase | ms | Thread |
+|---|---|---|
+| DeserializeBinaryDataAsync | **477.830** | task |
+| InitializeLoadedSave | 10.104 | main |
+| CompleteLoad | 0.284 | main |
+| LoadAsync | **666.849** | task |
+| InvokeOnGameLoaded | **2859.236** | main |
+| Load_total | **26369.275** | main |
+
+`native-loads`, evidence `runs/native-loads/steps/008-response.json`:
+
+| Phase | ms | Thread |
+|---|---|---|
+| DeserializeBinaryDataAsync | **665.180** | task |
+| InitializeLoadedSave | 8.995 | main |
+| CompleteLoad | 0.238 | main |
+| LoadAsync | **882.298** | task |
+| InvokeOnGameLoaded | **2806.959** | main |
+| Load_total | **26587.874** | main |
+
+`native-loads`, evidence `runs/native-loads/steps/015-response.json`:
+
+| Phase | ms | Thread |
+|---|---|---|
+| DeserializeBinaryDataAsync | **576.940** | task |
+| InitializeLoadedSave | 9.095 | main |
+| CompleteLoad | 0.267 | main |
+| LoadAsync | **804.775** | task |
+| InvokeOnGameLoaded | **3337.067** | main |
+| Load_total | **30509.027** | main |
+
+`native-loads`, evidence `runs/native-loads/steps/022-response.json`:
+
+| Phase | ms | Thread |
+|---|---|---|
+| DeserializeBinaryDataAsync | **855.417** | task |
+| InitializeLoadedSave | 16.215 | main |
+| CompleteLoad | 0.388 | main |
+| LoadAsync | **1233.624** | task |
+| InvokeOnGameLoaded | **4233.399** | main |
+| Load_total | **35127.989** | main |
+
 PC activation `day1-save-cost`:
 
 | Background read ms | Create ms | Validate ms | Main-thread CompleteInitialization ms | Succeeded |
 |---|---|---|---|---|
 | **1011.924** | 0.667 | **323.662** | **161.112** | True |
+
+PC activation `native-loads`:
+
+| Background read ms | Create ms | Validate ms | Main-thread CompleteInitialization ms | Succeeded |
+|---|---|---|---|---|
+| **1217.792** | 0.884 | **315.827** | **206.060** | True |
+
+PC activation `native-loads`:
+
+| Background read ms | Create ms | Validate ms | Main-thread CompleteInitialization ms | Succeeded |
+|---|---|---|---|---|
+| **965.489** | 0.849 | **316.595** | **195.547** | True |
 
 ## Findings
 
@@ -214,6 +272,8 @@ PC activation `day1-save-cost`:
 
 | Capability | Error / limitation | Flow | Blocked check? |
 |---|---|---|---|
+| Stage load-flow input | Scenario needs checks: name its CHECKS.md rows. Fixed required label before any lease/game action. | day1-native-loads | That submission refused pre-lease; corrected native-loads follows. |
+| Stage aging controller | BOM read then private in-memory lease credential mismatch; speed-change command refused, no mutation. Native speed20 target remained unchanged. | day3-save-cost; stage-control-refusals.json | No; normal aging finished. |
 | Stage pcstate query | `ops_pcstate_property_missing`: requested nonexistent ActivationDiagnostics. Corrected to SaveCostDiagnostics plus its documented SaveCostDiagnostics=true config. | day1-save step 3 | Stopped that attempt before saves; corrected flow succeeded. |
 | RIG-SAVEPROF memory | working_set_bytes / peak_working_set_bytes / private_bytes all 0. | save-cost profiles | Process-memory proof partial; GC heap available. |
 | RIG-SAVEPROF destination size | CompressSaveGame destination_bytes=-1. | save-cost profiles | No; stopped native checkpoint copies hashed and sized. |
@@ -241,7 +301,7 @@ All files below are this run’s fresh native FT character only, retained in `C:
 | Check | Status | Result |
 |---|---|---|
 | F7 check 2 / F4 G12 | PARTIAL | All three 957 head SaveTypes measured; capture/window inputs recorded. Historical before arm and reliable process-memory fields absent. |
-| F7 check 7 (957 portion) | PARTIAL | Default cold load measured with native decode/activation and F7a initialization; remaining native-type copies and day-3 load campaign pending. Stress portion NOT RUN. |
+| F7 check 7 (957 portion) | PARTIAL | All six day-1/day-3 SaveType checkpoints cold-loaded with native decode/activation, F7a initialization and successful running population. Accounting readbacks retain zero refused/historical misses on recovery copies. Stress portion NOT RUN. |
 | F4 G10 | NOT RUN | Later separate startup/reload/skip segment pending. |
 | F7 check 9 | NOT RUN | Later ordinary clean union segment pending; not a substitute for F4 G4. |
 | F4 G1–G9, G11, G13–G15; F7 1,3–6,8; F8h1; reload3–4 | NOT RUN | Grouped capability/fixture reasons above. |
@@ -252,7 +312,7 @@ All files below are this run’s fresh native FT character only, retained in `C:
 |---|---|
 | backup-manifest.json | `7b8b4820e80dad526ce83d6d9d87fc4022bd76bbc23362313d238436562e3add` |
 | head-mods.json | `76cc17060e5b580cfa3976d4b8e0f943f8901aa84725cdd9f9d1787a1b6d14cb` |
-| save-summary.json | `9891cf3fe7ee7f08131f7705cf9190e4e8d9733bb9c88174726bd6763102215a` |
+| save-summary.json | `550e9aecc41a7c38ecb330a9eaf083b8d8201f9ae2e9f872f6565f39f4441566` |
 | runs/creation/report.json | `8ec864fe7b4d21b701bebab44cf040c40268a66699dfd752cce110d9a18b292e` |
 | runs/day1-save/report.json | `0c3c407011c3636e65e89c781a2ecc133a57fcf37853154725b65dfa34b1d5e9` |
 | runs/day1-save-cost/report.json | `f42cf628c713968d8aa4c932c4c2dd7055f84c30b1a394e8b258cf9848d00215` |
