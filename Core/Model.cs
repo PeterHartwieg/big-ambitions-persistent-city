@@ -312,6 +312,9 @@ namespace PersistentCity.Core
         /// no household finances. Every spender pays from it; the food roster's <see cref="ResidentMeal.Budget"/> is only
         /// a link to this same object.</summary>
         public ResidentBudget? Wallet { get; set; }
+        /// <summary>GR-2: this person's plan for the current game day, drawn once and saved (residents and visitors). Null
+        /// until the person's first event after its first day boundary.</summary>
+        public DayPlan? Plan { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
         public string PlaceId { get; set; } = "";

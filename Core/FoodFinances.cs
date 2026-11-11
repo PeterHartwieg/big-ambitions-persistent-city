@@ -57,7 +57,7 @@ namespace PersistentCity.Core
                 e.Workplace = e.Person.DayPlaceId; e.WageAt = double.PositiveInfinity;
                 if (!EmploymentWages.Eligible(e.Person)) return;
                 double now = food.city.State.Minute;
-                e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window);
+                e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window, food.city.PlaceIndex);
                 if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
             }
             // Ties break by ordinal person ID, the order Build sorts by (before F5g: that rank as an int). F5g compares the IDs

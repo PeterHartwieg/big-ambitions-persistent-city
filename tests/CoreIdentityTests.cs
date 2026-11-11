@@ -167,6 +167,11 @@ public sealed class CoreIdentityTests
     {
         int seed = state.Seed;
         places.TryGetValue(person.HomeId, out var home);
+        // GR-2: the reference is the F5 persona routine before day plans. A saved plan freezes its day (the leisure venue
+        // chosen at drawing, the shift fitted to the workplace's hours), so the comparison runs on an unplanned copy; the
+        // draw path without the simulator's place index is exactly the reference.
+        person = CitySimulator.CloneForEvent(person);
+        person.Plan = null;
         var minutes = new List<double> { now, now + 17, now + 333 };
         if (person.NextEventMinute < 1e8) minutes.Add(person.NextEventMinute);
         if (person.ActivityUntilMinute > 0 && person.ActivityUntilMinute < 1e8) minutes.Add(person.ActivityUntilMinute - 0.001);

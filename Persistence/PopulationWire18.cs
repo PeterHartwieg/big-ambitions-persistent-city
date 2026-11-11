@@ -26,7 +26,7 @@ namespace PersistentCity.Persistence
         {
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
             // The retired F7d columnar wire is an older development city, never decoded.
-            Require(!RetiredCompact(source!) && !PreWalletBody(source!), DevelopmentSchemaMessage);
+            Require(!RetiredCompact(source!) && !PreWalletBody(source!) && !PrePlanBody(source!), DevelopmentSchemaMessage);
             using var reader = Reader(source);
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
             int? schema = null;

@@ -28,16 +28,23 @@ namespace PersistentCity.Core
     public static class DailyRoutine
     {
         public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places)
-            => At(person, citySeed, minute, places, null, true);
+            => At(person, citySeed, minute, places, null, true, null);
 
         /// <summary>As At with the place list, with the resident's home already resolved by the caller
         /// (null when HomeId names no place), so no catalogue scan is needed.</summary>
         public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home)
-            => At(person, citySeed, minute, places, home, false);
+            => At(person, citySeed, minute, places, home, false, null);
 
-        private static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home, bool findHome)
+        /// <summary>The simulator's lookup: with the place index, so unplanned days fit work to the workplace's hours exactly
+        /// as their plan will.</summary>
+        internal static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home,
+            IReadOnlyDictionary<string, Place> index)
+            => At(person, citySeed, minute, places, home, false, index);
+
+        private static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home, bool findHome,
+            IReadOnlyDictionary<string, Place>? index)
         {
-            var slot = SelectRoutine(person, citySeed, minute, out int anchorDay);
+            var slot = SelectRoutine(person, citySeed, minute, index, out int anchorDay, out bool chosen);
             if (slot.Activity != Activity.Leisure) return slot;
             // A committed activity owns its venue until its deadline, including waits
             // at a closed entrance and reloads during its journey.
@@ -51,80 +58,71 @@ namespace PersistentCity.Core
             // routine windows also avoids retaining a late previous-day arrival.
             if (person.Phase == CitizenPhase.AtPlace && person.Activity == Activity.Leisure && person.ActivityUntilMinute > 0)
             {
-                var committed = At(person, citySeed, Math.Max(0, person.ActivityUntilMinute - 0.001));
+                var committed = SelectRoutine(person, citySeed, Math.Max(0, person.ActivityUntilMinute - 0.001), index, out _, out _);
                 if (committed.Activity == Activity.Leisure && committed.EndsAt == slot.EndsAt)
                     return new RoutineSlot(person.PlaceId, slot.Activity, slot.EndsAt);
             }
+            // GR-2: a saved plan chose its leisure venue when it was drawn.
+            if (chosen) return slot;
             if (findHome)
             {
                 home = null;
                 foreach (var place in places) if (place.Id == person.HomeId) { home = place; break; }
             }
             if (home == null) return slot;
-            // The choice key is Identity.Id + ":leisure-day:" + anchorDay, hashed per venue as key + ":" + venue ID.
-            uint key = StableRandom.Append(StableRandom.AppendDecimal(RoutineKeys.For(person, citySeed).LeisureChoiceDay, anchorDay), ':');
-            string selected = DestinationChoice.Choose(places, home, PlaceKind.Leisure, key);
-            return selected == "" ? slot : new RoutineSlot(selected, slot.Activity, slot.EndsAt);
+            return new RoutineSlot(DayPlanner.ChooseLeisure(RoutineKeys.For(person, citySeed), anchorDay, places, home, slot.PlaceId), slot.Activity, slot.EndsAt);
         }
 
         // Absolute minutes follow Big Ambitions' Day * 1440 + Hour * 60 + Minute.
         // Home spans end at an actual activity, rather than at calendar/quiet-hour boundaries.
         public static RoutineSlot At(CitizenState person, int citySeed, double minute)
-            => SelectRoutine(person, citySeed, minute, out _);
+            => SelectRoutine(person, citySeed, minute, null, out _, out _);
+
+        internal static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index)
+            => SelectRoutine(person, citySeed, minute, index, out _, out _);
 
         private const double MaxMinute = 1000000000;
 
-        private static RoutineSlot SelectRoutine(CitizenState person, int citySeed, double minute, out int anchorDay)
+        // GR-2: each day's windows come from the person's saved plan for that day, or from the same draws for a day not
+        // planned yet (lookahead), so a Home span ends where the next plan will start an item.
+        private static RoutineSlot SelectRoutine(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index,
+            out int anchorDay, out bool chosen)
         {
             CheckMinute(minute);
             if (minute == MaxMinute) throw new ArgumentOutOfRangeException(nameof(minute), "The supported simulation clock is exhausted.");
             int day = (int)Math.Floor(minute / 1440);
-            anchorDay = day;
+            anchorDay = day; chosen = false;
             var keys = RoutineKeys.For(person, citySeed);
-            int shift = keys.HourShift;
-            var work = WorkOnDay(person, day, shift);
+            var quiet = new DailyRhythm.Lookup(person, keys);
+            var today = DayPlanner.On(person, keys, day, index, ref quiet);
+            var work = today.Work;
             if (work.HasValue && minute >= work.Value.StartsAt && minute < work.Value.EndsAt)
                 return new RoutineSlot(work.Value.PlaceId, work.Value.Activity, Math.Min(MaxMinute, work.Value.EndsAt));
-            var quiet = new DailyRhythm.Lookup(person, keys);
-            bool late = person.Identity.Persona == Persona.NightOwl;
             double next = MaxMinute;
-            // Yesterday supplies overnight leisure; a week ahead finds the next real activity
-            // even for a worker with no optional venues and a three-day weekend.
-            for (int offset = -1; offset <= 8; offset++)
+            // Yesterday supplies overnight leisure (ending by 00:15, so not after the day boundary); a week ahead finds the
+            // next real activity even for a worker with no optional venues and a three-day weekend.
+            for (int offset = minute >= day * 1440.0 + DayPlanner.DayBoundaryMinute ? 0 : -1; offset <= 8; offset++)
             {
                 int currentDay = day + offset;
                 if (currentDay < 0) continue;
                 double midnight = currentDay * 1440.0;
                 if (midnight >= MaxMinute) break;
-                var futureWork = WorkOnDay(person, currentDay, shift);
+                var routine = offset == 0 ? today : DayPlanner.On(person, keys, currentDay, index, ref quiet);
+                var futureWork = routine.Work;
                 if (futureWork.HasValue && futureWork.Value.StartsAt > minute && futureWork.Value.StartsAt < next)
                     next = futureWork.Value.StartsAt;
-                bool weekend = Weekend(currentDay);
-                // A commuter visitor's stays recur on weekdays only; at weekends it stays off-map at its portal. F5g: a
-                // day-visitor pool member stays only on its seeded visit days and spends them at its shop and leisure venue.
-                bool dayVisit = person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit;
-                if (person.IsVisitor && (dayVisit ? !VisitorSchedules.VisitsOn(keys, currentDay, weekend) : weekend)) continue;
-                double shopFrom = midnight + (late ? 1230 : weekend ? 660 : 1050) + shift;
-                double shopUntil = Math.Min(MaxMinute, shopFrom + 45);
-                if (person.ShopId.Length > 0 && shopUntil > minute && shopUntil > shopFrom && shopFrom < next
-                    && (dayVisit || person.Identity.Persona == Persona.Foodie
-                    || RoutineKeys.Draw(keys.ShopDay, currentDay) % 3 != 0))
+                if (!routine.Present) continue;
+                if (routine.HasShop)
                 {
-                    double until = quiet.OptionalEndsAt(shopFrom, shopUntil);
-                    if (until > shopFrom && minute >= shopFrom && minute < until)
-                    { anchorDay = currentDay; return new RoutineSlot(person.ShopId, Activity.Shop, until); }
-                    if (until > shopFrom && shopFrom > minute) next = Math.Min(next, shopFrom);
+                    if (minute >= routine.ShopFrom && minute < routine.ShopUntil)
+                    { anchorDay = currentDay; return new RoutineSlot(routine.ShopVenue, Activity.Shop, routine.ShopUntil); }
+                    if (routine.ShopFrom > minute) next = Math.Min(next, routine.ShopFrom);
                 }
-                double leisureFrom = midnight + (late ? 1320 : weekend ? 840 : 1140) + shift;
-                double leisureUntil = Math.Min(MaxMinute, leisureFrom + (weekend ? 120 : 75));
-                if (person.LeisureId.Length > 0 && leisureUntil > minute && leisureUntil > leisureFrom && leisureFrom < next
-                    && (dayVisit || weekend || person.Identity.Persona == Persona.Sporty || late
-                    || RoutineKeys.Draw(keys.LeisureDay, currentDay) % 2 == 0))
+                if (routine.HasLeisure)
                 {
-                    double until = quiet.OptionalEndsAt(leisureFrom, leisureUntil);
-                    if (until > leisureFrom && minute >= leisureFrom && minute < until)
-                    { anchorDay = currentDay; return new RoutineSlot(person.LeisureId, Activity.Leisure, until); }
-                    if (until > leisureFrom && leisureFrom > minute) next = Math.Min(next, leisureFrom);
+                    if (minute >= routine.LeisureFrom && minute < routine.LeisureUntil)
+                    { anchorDay = currentDay; chosen = routine.LeisureChosen; return new RoutineSlot(routine.LeisureVenue, Activity.Leisure, routine.LeisureUntil); }
+                    if (routine.LeisureFrom > minute) next = Math.Min(next, routine.LeisureFrom);
                 }
                 // Later days cannot precede an activity already found in this day.
                 // Avoid recomputing a week's hashes/windows at every ordinary event.
@@ -136,42 +134,38 @@ namespace PersistentCity.Core
             return new RoutineSlot(person.HomeId, Activity.Home, next);
         }
 
-        private static bool Weekend(int day) => ((day - 1) % 7 + 7) % 7 >= 4;
         private static void CheckMinute(double minute)
         {
             if (!Position.Finite(minute) || minute < 0 || minute > MaxMinute)
                 throw new ArgumentOutOfRangeException(nameof(minute));
         }
 
-        /// <summary>The fixed work/study window on this game day, independent of current attendance.</summary>
-        public static WorkWindow? WorkOnDay(CitizenState person, int citySeed, double minute)
+        /// <summary>The fixed work/study window on this game day, independent of current attendance: the saved plan's for
+        /// a planned day, else the shift template.</summary>
+        public static WorkWindow? WorkOnDay(CitizenState person, int citySeed, double minute) => WorkOnDay(person, citySeed, minute, null);
+
+        /// <summary>As WorkOnDay; with the place index an unplanned day fits the shift to the workplace's hours.</summary>
+        internal static WorkWindow? WorkOnDay(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index)
         {
             CheckMinute(minute);
-            return WorkOnDay(person, (int)Math.Floor(minute / 1440), HourShift(person, citySeed));
-        }
-
-        private static int HourShift(CitizenState person, int citySeed) => RoutineKeys.For(person, citySeed).HourShift;
-
-        private static WorkWindow? WorkOnDay(CitizenState person, int day, int shift)
-        {
-            if (Weekend(day) || person.DayPlaceId.Length == 0 || person.Identity.Persona == Persona.Retiree) return null;
-            double start = day * 1440.0 + (person.Identity.Persona == Persona.NightOwl ? 720 : person.Identity.Persona == Persona.Parent ? 465 : 510) + shift;
-            return new WorkWindow(person.DayPlaceId, person.Identity.Persona == Persona.Student ? Activity.Study : Activity.Work, start, start + 480);
+            return DayPlanner.WorkFor(person, RoutineKeys.For(person, citySeed), (int)Math.Floor(minute / 1440), index);
         }
 
         /// <summary>The earliest future shift, including shifts after the three-day weekend.</summary>
-        public static WorkWindow? NextWork(CitizenState person, int citySeed, double minute)
+        public static WorkWindow? NextWork(CitizenState person, int citySeed, double minute) => NextWork(person, citySeed, minute, null);
+
+        internal static WorkWindow? NextWork(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index)
         {
             CheckMinute(minute);
             if (person.DayPlaceId.Length == 0 || person.Identity.Persona == Persona.Retiree) return null;
             int day = (int)Math.Floor(minute / 1440);
-            int shift = HourShift(person, citySeed);
+            var keys = RoutineKeys.For(person, citySeed);
             double midnight = day * 1440.0;
             for (int offset = 0; offset <= 8; offset++)
             {
                 double onDay = midnight + offset * 1440;
                 if (onDay > MaxMinute) break;
-                var work = WorkOnDay(person, day + offset, shift);
+                var work = DayPlanner.WorkFor(person, keys, day + offset, index);
                 if (work.HasValue && work.Value.StartsAt > minute && work.Value.EndsAt <= MaxMinute) return work;
             }
             return null;
@@ -227,6 +221,9 @@ namespace PersistentCity.Core
             }
             return null;
         }
+
+        /// <summary>The opening intervals from the day before <paramref name="minute"/>'s day to a week after, sorted.</summary>
+        internal static OpeningInterval[] Intervals(Place place, double minute) => OpeningIntervals(place, minute);
 
         private static OpeningInterval[] OpeningIntervals(Place place, double minute)
         {
