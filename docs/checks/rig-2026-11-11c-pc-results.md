@@ -37,3 +37,10 @@ The hooks entry ended `-> refuses food.checkout.shop`, with one refusing entry; 
 The first attempt (`<stage>/runs/foreign`) is retained: after a successful install, the stage loader accepted stale `load=done` state and attempted removal during the menu transition. Exact removal error: `ops_city_required`. Normal process exit removed the process-local owner; mods and lifecycle were restored. The stage loader was corrected to require a new native `Test bridge: load '…' done` log line. The second attempt ran the full cycle; no rig checkout or overlay change.
 `foreign2` then advanced naturally from 08:00 to 09:00, paused at the boundary, with checkout active and no accounting refusal. Cleanup stopped only the owned game, restored mods/preferences, and released the lease (all cleanup actions succeeded).
 
+
+## fix-reload-accounting-epoch checks 3-4
+
+**Check 3 PASS.** `rlo_option` read Social Media live-on, stored absent, `original_saved=false`; set-off and readback confirmed live-off. Reloaded S1 with autosave suppression verified. During 20.203 seconds unpaused, one new warning said `Persistent City startup is still waiting after 15 seconds; native time is released.` Native time advanced 08:00→08:15; frames advanced 7242→7763, and the city continued answering commands. Capability status was `start waiting (rlo.donor transient)` with `transient (Off): Flare is not running`, as expected for this startup case. Evidence: `<stage>/runs/epoch/epoch3-wait20-clock.json`, `epoch3-loaded-Player.log`, `epoch3-complete-Player.log`, results 016–025.
+
+Check 4 and the related mid-session switch are being executed in the same owned lifecycle. The first S2 checkpoint's saved marker is minute `1922.0277554988861`; it crossed into the next minute before pause, so it is not the requested late-minute setup. A subsequent check 4 run will require a verified saved fraction before a verdict is completed.
+
