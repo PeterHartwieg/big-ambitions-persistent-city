@@ -71,7 +71,9 @@ internal sealed class GraphAudit
     /// <summary>Types a snapshot may share with the live graph: they have no setters, or Core treats them as derived.</summary>
     public static bool Immutable(object shared) => shared is WeatherCommitment || shared is FoodOfferMetadata || shared is FoodDecisionTuning
         || shared is FoodCampaignImage || shared is MarketResearchReport || shared is ResearchProduct || shared is RoutineKeys
-        || shared is Route route && route.IsCommitted;
+        || shared is Route route && route.IsCommitted
+        // GR-2: a plan's item definitions never change after drawing; a copy owns only the item states.
+        || shared is PlanItem[] || shared is PlanItem;
 }
 
 /// <summary>
@@ -123,6 +125,14 @@ internal sealed class GraphFill
         if (type == typeof(Position)) return new Position(n, n + 0.25, n + 0.5);
         if (type == typeof(long[])) return new long[] { n, n + 1 };
         if (type == typeof(ResearchLedger)) return ResearchSaveTests.AllStates();
+        if (type == typeof(DayPlan))
+        {
+            var plan = new DayPlan(n, (uint)n + 1, ShiftType.Late, n % 128, "s" + n, new[] {
+                new PlanItem(PlanItemKind.Work, Activity.Work, "s" + n, n, n + 1, n + 2, PlanPriority.Fixed),
+                new PlanItem(PlanItemKind.Meal, Activity.Home, "", n + 3, n + 4, n + 4, PlanPriority.Wanted, MealKind.Dinner) });
+            plan.Restore(0, PlanItemState.Missed, PlanMissCause.NoRoute); plan.Restore(1, PlanItemState.Active, PlanMissCause.None);
+            return plan;
+        }
         if (type == typeof(RivalOutflowHistory))
         {
             var history = new RivalOutflowHistory { StartDay = n, ThroughDay = n + 1, PartialStart = true, Baseline = n, ExpiredUnits = n + 1, ExpiredCount = n + 2 };

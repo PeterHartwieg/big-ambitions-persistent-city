@@ -52,11 +52,11 @@ public sealed class AttendanceWageTests
     }
 
     /// <summary>The golden of <see cref="Fresh"/>(42) after 1,440 + 1,100 minutes, also pinned with the ordinary policy attached.</summary>
-    internal const string Pin42 = "615ea5ab77a1f7a840423274564c8f0b19dc9fecb521d45908ae449624f29f35";
+    internal const string Pin42 = "54038c278ad2c55bedee134dee49f0d078f667ca60abc6981f8f8e1966c33c59";
 
     [Theory]
     [InlineData(42, Pin42)]
-    [InlineData(9217, "80c0dfb74bf79335806e04fbb8405ffd86d0a8a7623ca751726bf39a2adcd873")]
+    [InlineData(9217, "f624b6aa5e3dbba98dfeb6098afc13cb852771328916d2537a7af47b7b7d2e80")]
     public void FreshWriterGoldenAndSnapshotArePinned(int seed, string pin)
     {
         var city = Fresh(seed); Advance(city, 1440 + 1100);

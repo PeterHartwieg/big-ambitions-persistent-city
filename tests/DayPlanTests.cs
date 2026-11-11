@@ -296,7 +296,10 @@ public sealed class DayPlanTests
         Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p.Replace(item, missedWithoutCause))).Status);
         Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => "1|5|" + string.Join("|", parts.Skip(2)))).Status);
         var fields = item.Split(',');
-        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p.Replace(item, fields[0] + "," + fields[1] + "," + fields[2] + ".0," + fields[3] + "," + fields[4]))).Status);
+        Assert.Equal(4, fields.Length);
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p.Replace(item, fields[0] + "," + fields[1] + "," + fields[2] + ".0," + fields[3]))).Status);
+        // The end is written only when it differs from the latest start.
+        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p.Replace(item, item + "," + fields[3]))).Status);
         Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p + ";")).Status);
     }
 

@@ -119,7 +119,7 @@ public sealed class VisitorRoutineTests
     /// <summary>The writer's golden for the visitor city, re-pinned once by X3 at the held schema 1. A deliberate format
     /// change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
-    [InlineData("fresh-visitors-factor2-30h", "500f150174e27877e28769ba859127bb203de8a960abbbd8b241bc04146345cd", 14799)]
+    [InlineData("fresh-visitors-factor2-30h", "9e2cb5fd5a35867cb9bdaca0b6375be92336687b4e66145f02e5f530ab66a553", 14699)]
     public void GoldenVisitorCityBytesArePinned(string name, string sha256, int characters)
     {
         string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());

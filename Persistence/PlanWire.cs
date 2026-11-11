@@ -13,8 +13,9 @@ namespace PersistentCity.Persistence
     /// older development city and kept unchanged.
     ///
     /// "1|day|seed|shift|days off|workplace|items", items joined by ';' (empty for none). Item:
-    /// "KAPMSC,venue,earliest,latest,ends": kind, activity, priority, meal, state and cause as one digit each; venue a place
-    /// cell (PlaceCells) or "---"; minutes as invariant round-trip text, refused unless canonical. Workplace a place cell or "---".
+    /// "KAPMSC,venue,earliest,latest[,ends]": kind, activity, priority, meal, state and cause as one digit each; venue a place
+    /// cell (PlaceCells) or "---"; minutes as invariant round-trip text, refused unless canonical; ends is written only when
+    /// it differs from the latest start (today never). Workplace a place cell or "---".
     /// </summary>
     public static partial class SaveCodec
     {
@@ -33,7 +34,8 @@ namespace PersistentCity.Persistence
                 if (i > 0) text.Append(';');
                 text.Append(Digit((int)item.Kind)).Append(Digit((int)item.Activity)).Append(Digit((int)item.Priority)).Append(Digit((int)item.Meal))
                     .Append(Digit((int)plan.StateOf(i))).Append(Digit((int)plan.CauseOf(i))).Append(',').Append(Cell(item.VenueId)).Append(',')
-                    .Append(R27(item.EarliestStart)).Append(',').Append(R27(item.LatestStart)).Append(',').Append(R27(item.EndsAt));
+                    .Append(R27(item.EarliestStart)).Append(',').Append(R27(item.LatestStart));
+                if (item.EndsAt != item.LatestStart) text.Append(',').Append(R27(item.EndsAt));
             }
             Require(text.Length <= MaxPlanWire, "Oversized day plan.");
             return text.ToString();
@@ -57,7 +59,7 @@ namespace PersistentCity.Persistence
                 foreach (string cell in parts[6].Split(';'))
                 {
                     var fields = cell.Split(',');
-                    Require(fields.Length == 5 && fields[0].Length == 6, error);
+                    Require((fields.Length == 4 || fields.Length == 5) && fields[0].Length == 6, error);
                     var code = fields[0];
                     for (int i = 0; i < 6; i++) Require(code[i] >= '0' && code[i] <= '9', error);
                     var kind = (PlanItemKind)(code[0] - '0'); var activity = (Activity)(code[1] - '0'); var priority = (PlanPriority)(code[2] - '0');
@@ -69,8 +71,9 @@ namespace PersistentCity.Persistence
                     Require(kind == PlanItemKind.Meal ? meal != MealKind.Legacy && activity == Activity.Home && fields[1] == NoPlace27
                         : meal == MealKind.Legacy && activity != Activity.Home && fields[1] != NoPlace27, error);
                     string venue = PlanPlace(fields[1], cells);
-                    double earliest = ParseR27(fields[2], "plan item start"), latest = ParseR27(fields[3], "plan item latest start"), ends = ParseR27(fields[4], "plan item end");
-                    Require(earliest <= latest && latest <= ends && ends <= MaxMinute, error);
+                    double earliest = ParseR27(fields[2], "plan item start"), latest = ParseR27(fields[3], "plan item latest start");
+                    double ends = fields.Length == 5 ? ParseR27(fields[4], "plan item end") : latest;
+                    Require(earliest <= latest && latest <= ends && ends <= MaxMinute && (fields.Length == 4 || ends != latest), error);
                     items.Add(new PlanItem(kind, activity, venue, earliest, latest, ends, priority, meal));
                     marks.Add((state, cause));
                 }

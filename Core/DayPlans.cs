@@ -292,6 +292,8 @@ namespace PersistentCity.Core
         /// day with no long enough interval keeps the template, and the closed venue is met at arrival.</summary>
         internal static double FitShift(Place workplace, int day, double start, ShiftType shift)
         {
+            // Opening hours are only defined within the supported clock; a lookahead near its end keeps the template.
+            if (start + 480 + 10080 > MaxMinute) return start;
             double? close = DailyRoutine.NextClose(workplace, start);
             if (close.HasValue && close.Value >= start + 480) return start;
             double midnight = day * 1440.0, best = start, bestDistance = double.PositiveInfinity;
