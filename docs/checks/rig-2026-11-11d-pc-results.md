@@ -82,3 +82,7 @@ After removal and normal reload at hour 63 the shop was managed=false, desired=t
 ## E5b shop subsets
 
 PARTIAL. The documented croissant/donut setup and a paused native donut-price edit/restore were recorded with shop_state, PC boundary/stamps/hints and capability readbacks. This is a two-offer subset; no in-flight checkout, burger/hot-dog mutation matrix, eight/nine-offer fixture, independent notification trace, in-place definition edit, removal/return transport, or paired performance controls were supplied. Raw evidence: `<stage>/runs/remaining/results`, e5b-prefixed actions.
+
+## F9 shop checkpoint
+
+PARTIAL. Created a local unsealed day-three 07:30 f9-city-ready checkpoint from the same fresh character and selected shop; recorded PC capability, manifest, shop, food decisions and existing projections. No official FT-F9 manifest was sealed. Formal rows requiring RIG-ACCEPT, paired head/base or daily-reload controls, PhysicalEnabled/config readback, Street Food vendor/API or reserved presentation steps remain NOT RUN. Raw evidence: `<stage>/runs/remaining`, f9-prefixed actions and `f9-day3-Player.log`.
