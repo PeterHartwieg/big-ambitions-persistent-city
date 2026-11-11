@@ -48,7 +48,7 @@ public sealed class E6dVehicleMarketMeasure
     [Fact]
     public void SnapshotReadCaptureCheckoutAnd64VehicleLunchRush()
     {
-        if (Environment.GetEnvironmentVariable("PC_E6D_MEASURE") != "1") return;
+        if (PerfGate.Variable("PC_E6D_MEASURE") != "1") return;
         StreetFoodHooks.Reset();
         var f = new VehicleMarketTests.Fixture(64, 8);
         foreach (var v in StreetFoodHooks.Vehicles) { v.Units[0] = v.Units[1] = 1000000; }

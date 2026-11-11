@@ -190,7 +190,7 @@ public sealed class F6iPriceAnchorTests
                 new InterventionInput(EconomyFixture.StartMinute + 1, InputKind.RivalPrice, EconomyFixture.RivalBusiness, m.Product, m.Cents) }));
         var price = menu.Select(m => new InterventionInput(2 * 1440, InputKind.ProductPrice,
             EconomyFixture.Shop, m.Product, (m.Cents * 3 + 1) / 2));
-        bool measure = Environment.GetEnvironmentVariable("PC_F6I_MEASURE") == "1";
+        bool measure = PerfGate.Variable("PC_F6I_MEASURE") == "1";
         RunResult Run(IEnumerable<InterventionInput> inputs) => EconomyRun.Run(new RunOptions {
             Integrated = true, Seed = 3, Residents = 128, Days = 3, RivalListed = rivalListed,
             Inputs = inputs.ToArray(), MeasureSlices = measure });
@@ -213,7 +213,7 @@ public sealed class F6iPriceAnchorTests
     [Fact]
     public void OptionalPolicyCost()
     {
-        if (Environment.GetEnvironmentVariable("PC_F6I_MEASURE") != "1") return;
+        if (PerfGate.Variable("PC_F6I_MEASURE") != "1") return;
         var settings = new FoodChoiceSettings();
         var offer = Offer(1875, travel: 5);
         double sum = 0;

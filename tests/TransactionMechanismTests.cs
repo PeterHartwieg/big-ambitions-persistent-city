@@ -114,7 +114,7 @@ namespace PersistentCity.Tests
             Array.Sort(times);
             string line = string.Format(System.Globalization.CultureInfo.InvariantCulture, "F8f pc capability business (Core part, 957x2 city): p50={0:0.0000} ms p95={1:0.0000} ms max={2:0.0000} ms",
                 times[Samples / 2], times[Samples * 95 / 100], times[^1]);
-            string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+            string? path = PerfGate.Variable("PC_F8_MEASURE");
             if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
             Assert.StartsWith("shop-far (shop, b-far): shop.fullservice-bag.v1", text);
             PerfGate.Under(times[Samples * 95 / 100], 5, "F8f business command p95");

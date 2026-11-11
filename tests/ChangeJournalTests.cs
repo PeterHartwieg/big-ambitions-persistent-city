@@ -21,13 +21,7 @@ public sealed class ChangeJournalTests
     static ShopObservedOffer[] Offers(long cents = 250, int stock = 40) => new[] {
         new ShopObservedOffer { ProductId = FoodProducts.Croissant, PriceUnits = Money.FromCents(cents).Units, Stock = stock } };
     static List<OpeningWindow> Hours(int close = 1320) => new() { new OpeningWindow { Day = 0, FromMinute = 360, ToMinute = close } };
-    static CityState Fresh(int seed = 5150)
-    {
-        var (state, market) = WorkplaceCapacityTests.Fresh(3, seed);
-        var city = new CitySimulator(state, new FreshCityTraceTests.Walk()); city.AttachFoodMarket(market);
-        while (!city.AdvanceTo(2000, 128).CaughtUp) { }
-        return state;
-    }
+    static CityState Fresh(int seed = 5150) => TestCity.Banded(seed, 2000);
     internal static CityState Fixture(int seed = 5150)
     {
         var state = Fresh(seed);

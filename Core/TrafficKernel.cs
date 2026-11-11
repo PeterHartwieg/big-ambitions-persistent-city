@@ -912,8 +912,7 @@ namespace PersistentCity.Core
                         // Retain the actual full-section spatial point when a completed nominal
                         // prefix is fixed while remaining route coordinates are retimed.
                         // A near-end point can round onto the endpoint in either coordinate
-                        // system. Keep one representable residual step; a physical lease still
-                        // requires an explicit endpoint observation before it can complete.
+                        // system. Keep one representable residual step.
                         if (vehicle.NominalMinutes >= current.EndNominalMinutes)
                             vehicle.NominalMinutes = PreviousDouble(current.EndNominalMinutes);
                         current.StartNominalMinutes = vehicle.NominalMinutes;

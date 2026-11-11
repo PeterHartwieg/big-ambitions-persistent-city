@@ -252,20 +252,6 @@ public sealed class NativeCapabilityTests
         Assert.Contains("companion: Driven Rides (DrivenRides.Ride)", report.Show(a, CapabilityId.ClockDrivenRides));
     }
 
-    /// <summary>F8a changes no wire: the current writer's golden hashes match the schema-1 pins in
-    /// ChangeJournalTests.CurrentWriterGoldenSnapshotAndReload.</summary>
-    [Theory]
-    [InlineData(5150, "ffa821dea8fe057959a91135db75342a3b69c2bdec8487af7485a35dd5d0889c", 73330)]
-    [InlineData(9217, "a9651c15e44c67fa8e05ac084b638ac1bfaf0c48805a8d1142a873c423a6422c", 72968)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        Assert.True(CityState.CurrentSchema == 1,
-            "The save schema is held at 1 until release; change the format in place. See docs/decisions/2026-11-09-schema-one.md.");
-        string payload = SaveCodec.Write(ChangeJournalTests.Fixture(seed));
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
-        Assert.Equal(characters, payload.Length);
-    }
-
     /// <summary>Registry update and report cost (plan section 6, F8a row). Writes the table to the test output and, when
     /// PC_F8A_MEASURE names a file, appends it there. Steady-state updates and a reused report allocate nothing.</summary>
     [Fact]
@@ -324,7 +310,7 @@ public sealed class NativeCapabilityTests
         var table = new List<string> { "| Arm | p50 µs | p95 µs | max µs | B/call | >= 30 ms |", "| --- | ---: | ---: | ---: | ---: | ---: |" };
         table.AddRange(rows);
         foreach (var line in table) output.WriteLine(line);
-        string? path = Environment.GetEnvironmentVariable("PC_F8A_MEASURE");
+        string? path = PerfGate.Variable("PC_F8A_MEASURE");
         if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, table);
 
         Assert.Equal(0, update);

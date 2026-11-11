@@ -522,7 +522,7 @@ public sealed class ResearchSurveyTests
     [Fact]
     public void Perf()
     {
-        if (Environment.GetEnvironmentVariable("PC_C5B_PERF") != "1") return;
+        if (PerfGate.Variable("PC_C5B_PERF") != "1") return;
         double Ms(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
         string Stats(List<double> v)
         {

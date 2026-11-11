@@ -92,7 +92,7 @@ public sealed class PhysicalCarPerfTests
     [Fact]
     public void MeasureUpdateKernelWorkAndHarnessWithTwentyFourCars()
     {
-        string? path = System.Environment.GetEnvironmentVariable("PC_F2D_MEASURE");
+        string? path = PerfGate.Variable("PC_F2D_MEASURE");
         if (path == null) return;
         var lines = new List<string>();
         int warmFrames = 0;

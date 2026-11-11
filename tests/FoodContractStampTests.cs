@@ -310,7 +310,7 @@ public sealed class FoodContractStampTests
     }
     internal static void Write(string arm, object result)
     {
-        string? path = Environment.GetEnvironmentVariable("PC_E5B2_MEASURE");
+        string? path = PerfGate.Variable("PC_E5B2_MEASURE");
         if (!string.IsNullOrEmpty(path)) File.AppendAllText(path, JsonConvert.SerializeObject(new { arm, result }) + "\n");
     }
 
@@ -318,7 +318,7 @@ public sealed class FoodContractStampTests
     [Fact]
     public void MeasureStampReadPerDiscoveryVisit()
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PC_E5B2_MEASURE"))) return;
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E5B2_MEASURE"))) return;
         var r = new Registration();
         var recorded = Stamp(r);
         const int warm = 1_000, samples = 100_000;

@@ -20,9 +20,7 @@ public sealed class SaveEpochTests
     private const string Receipt = "persistentcity:food-sale-v1:intent-1";
     private const string Authority = "persistentcity:food-authority-v1";
 
-    private static CityState City(string key = "source") => Population.Create(
-        new[] { new CitizenIdentity { Id = "resident", Name = "Resident", Age = 35, Persona = Persona.Commuter } },
-        new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2 } }, key, "0.40.4", 42, Minute);
+    private static CityState City(string key = "source") => TestCity.Minimal(key, "0.40.4", Minute, "resident");
 
     /// <summary>A native GameInstance double: one object owning one modData dictionary.</summary>
     private sealed class GameInstance { public readonly Dictionary<string, string> modData = new(StringComparer.Ordinal); }

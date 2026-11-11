@@ -202,7 +202,7 @@ public sealed class CapabilityReportTests
         string line = string.Format(CultureInfo.InvariantCulture, "F8b pc capability status: p50={0:0.000} ms p95={1:0.000} ms max={2:0.000} ms bytes/call={3} residents={4}",
             times[Samples / 2], times[Samples * 95 / 100], times[^1], bytes, state.Citizens.Count);
         output.WriteLine(line);
-        string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+        string? path = PerfGate.Variable("PC_F8_MEASURE");
         if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
         Assert.Contains("rlo.donor required off: transient (Off): Flare is off", status);
         PerfGate.Under(times[Samples * 95 / 100], 5, "F8b command p95");

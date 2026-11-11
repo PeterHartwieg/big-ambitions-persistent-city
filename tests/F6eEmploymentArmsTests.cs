@@ -16,7 +16,7 @@ public sealed class F6eEmploymentArmsTests
     [Fact]
     public void EmploymentInterventionsReduceEarnedIncomeAndConserveEveryOwnerEveryDay()
     {
-        if (Environment.GetEnvironmentVariable("PC_F6E_ARMS") != "1") return;
+        if (PerfGate.Variable("PC_F6E_ARMS") != "1") return;
         foreach (int seed in Enumerable.Range(0, 5))
         {
             var control = EconomyRun.Run(new RunOptions { Seed = seed, Residents = ResidentCount });

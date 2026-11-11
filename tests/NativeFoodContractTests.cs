@@ -410,7 +410,7 @@ namespace PersistentCity.Tests
             string line = string.Format(CultureInfo.InvariantCulture, "F8c contract check (13 members, once per process): p50={0:0.000} ms p95={1:0.000} ms max={2:0.000} ms bytes/check={3}",
                 times[Samples / 2], times[Samples * 95 / 100], times[^1], bytes);
             output.WriteLine(line);
-            string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+            string? path = PerfGate.Variable("PC_F8_MEASURE");
             if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
             PerfGate.Under(times[Samples * 95 / 100], 1, "F8c contract check p95");
         }

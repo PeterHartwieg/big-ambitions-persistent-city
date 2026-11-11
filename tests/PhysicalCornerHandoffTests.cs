@@ -7,8 +7,6 @@ namespace PersistentCity.Tests;
 // the kernel's coordinate is short of the marker's projection onto the next leg; it never credits progress.
 public sealed class PhysicalCornerHandoffTests
 {
-    private sealed class Planner : IRoutePlanner
-    { public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null; }
 
     private static PhysicalJourneySample Sample(double elapsed, bool obtuse = false)
     {
@@ -22,7 +20,7 @@ public sealed class PhysicalCornerHandoffTests
             Journey = route, PlaceId = "a", DestinationId = "b", NextEventMinute = route.Minutes };
         var state = new CityState { Minute = elapsed, Citizens = new() { citizen }, Places = new()
         { new Place { Id = "a" }, new Place { Id = "b", Position = new Position(20,0,10) } } };
-        return new CitySimulator(state, new Planner()).SampleJourney(citizen, elapsed);
+        return new CitySimulator(state, new NoRoutes()).SampleJourney(citizen, elapsed);
     }
 
     [Theory]

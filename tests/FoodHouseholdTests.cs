@@ -85,8 +85,6 @@ public sealed class FoodHouseholdTests
         Assert.Equal("district", captured.Residents.Single().HomeDistrictId); Assert.Equal(8, captured.HomeDistrictMixes.Single().UpperPercent);
         Assert.Equal(before, SaveCodec.Write(city));
     }
-    private sealed class NoRoutes : IRoutePlanner
-    { public Route? Plan(Place from, Place to, double at, TravelPreferences p) => null; }
 
     [Fact]
     public void ExplicitControlPreservesCommonAllowanceAndCanDisableOutsideChoices()

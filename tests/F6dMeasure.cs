@@ -122,7 +122,7 @@ public sealed class F6dMeasure
     [Fact]
     public void MeasureAndCheckComposedSaveBudget()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_F6D_MEASURE"); if (path == null) return;
+        string? path = PerfGate.Variable("PC_F6D_MEASURE"); if (path == null) return;
         foreach (string name in (Environment.GetEnvironmentVariable("PC_F6D_FIXTURES") ?? "957x2,957x3,5000x2,5000x3,50000x2,50000x3,CF32,CF64").Split(','))
         {
             bool cf = name.StartsWith("CF", StringComparison.Ordinal);

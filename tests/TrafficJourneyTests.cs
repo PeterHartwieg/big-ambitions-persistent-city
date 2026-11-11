@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Xunit;
@@ -189,6 +190,22 @@ public sealed class TrafficJourneyTests
         Assert.Equal(engine.State.Citizens.Select(c=>engine.PositionOf(c).X),restored.State.Citizens.Select(c=>restored.PositionOf(c).X));
         engine.AdvanceTo(1510); while(!restored.AdvanceTo(1510,3).CaughtUp) { }
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
+    }
+
+    /// <summary>X6: the kernel has no physical control, so a saved traffic vehicle has no PhysicalControl field. The format
+    /// changed in place at schema 1: a payload that still carries the field is refused, not silently read.</summary>
+    [Fact]
+    public void SavedTrafficVehiclesHaveNoPhysicalControlFieldAndOlderPayloadsAreRefused()
+    {
+        var engine=Engine(15,2,3); engine.AdvanceTo(1445.1);
+        Assert.True(engine.Traffic!.VehicleCount > 0);
+        string body=SaveWire.Body(SaveCodec.Write(engine.State));
+        Assert.DoesNotContain("PhysicalControl",body);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveWire.Payload(body)).Status);
+        var root=JObject.Parse(body);
+        foreach(var vehicle in root["Traffic"]!["Vehicles"]!.Children<JObject>()) vehicle.Property("NominalMinutes")!.AddAfterSelf(new JProperty("PhysicalControl",false));
+        var read=SaveWire.Read(SaveWire.Payload(root.ToString(Newtonsoft.Json.Formatting.None)));
+        Assert.Equal(SaveReadStatus.Invalid,read.Status);Assert.Null(read.State);Assert.Contains("PhysicalControl",read.Error);
     }
 
     /// <summary>F2d: a visible head car no longer holds its followers. The queue discharges in FIFO order on the kernel's

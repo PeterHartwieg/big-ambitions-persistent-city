@@ -75,7 +75,7 @@ public sealed class F5dMeasure
     [Fact]
     public void VisitorCreationCostAtInitialization()
     {
-        string? output = Environment.GetEnvironmentVariable("PC_F5D_MEASURE");
+        string? output = PerfGate.Variable("PC_F5D_MEASURE");
         if (string.IsNullOrEmpty(output)) return;
         string[] only = (Environment.GetEnvironmentVariable("PC_F5D_FIXTURES") ?? "957x2,957x3,5000x2,5000x3,50000x2,50000x3").Split(',');
         double Attach(int residents, int factor, out int visitors)
@@ -111,7 +111,7 @@ public sealed class F5dMeasure
     [Fact]
     public void ActiveVisitorWireAtMidday()
     {
-        string? output = Environment.GetEnvironmentVariable("PC_F5D_MEASURE");
+        string? output = PerfGate.Variable("PC_F5D_MEASURE");
         if (string.IsNullOrEmpty(output)) return;
         var state = EconomyScenario.Create(957, RepresentativeFixture.Seed); state.Food = EconomyScenario.Food();
         PortalPlaces.Add(state, RepresentativeFixture.Portals);
@@ -137,7 +137,7 @@ public sealed class F5dMeasure
     [Fact]
     public void FreshCityPersonsCostAtWriter27()
     {
-        string? output = Environment.GetEnvironmentVariable("PC_F5D_MEASURE");
+        string? output = PerfGate.Variable("PC_F5D_MEASURE");
         if (string.IsNullOrEmpty(output)) return; // measurement only on request
         int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_F5D_SAMPLES"), out int n) ? n : 5;
         string[] only = (Environment.GetEnvironmentVariable("PC_F5D_FIXTURES") ?? "957x2,957x3,5000x2,5000x3,50000x2,50000x3").Split(',');

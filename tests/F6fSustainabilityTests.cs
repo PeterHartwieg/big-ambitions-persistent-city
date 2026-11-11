@@ -39,13 +39,13 @@ public sealed class F6fSustainabilityTests
             string row = $"{name} week {week.Key}: owners={last.Owners}, arrears={last.ArrearsOwners}, unfed={week.Sum(d => d.UnfedDays)}, "
                 + $"p10Units={last.P10BalanceUnits}, medianUnits={last.MedianBalanceUnits}, ordinaryLifetimeUnits={last.OrdinaryDiscretionaryUnits}";
             output.WriteLine(row);
-            if (Environment.GetEnvironmentVariable("PC_F6F_SUSTAINABILITY") is string path) File.AppendAllText(path, row + Environment.NewLine);
+            if (PerfGate.Variable("PC_F6F_SUSTAINABILITY") is string path) File.AppendAllText(path, row + Environment.NewLine);
         }
     }
     [Fact]
     public void FullSizeFiveSeedArmsConserveAndReportSustainability()
     {
-        if (Environment.GetEnvironmentVariable("PC_F6F_FULL_ARMS") != "1") return;
+        if (PerfGate.Variable("PC_F6F_FULL_ARMS") != "1") return;
         foreach (int seed in Enumerable.Range(0, 5))
             foreach (string name in new[] { "control", "workplaces-closed-10pct", "worker-routes-blocked-5pct" })
             {
@@ -61,7 +61,7 @@ public sealed class F6fSustainabilityTests
                     + $"weekArrears={string.Join(',', weeks.Select(w => w.ArrearsOwners))} "
                     + $"unfed={run.Days.Sum(d => d.UnfedDays)} ordinaryUnits={run.Days.Last().OrdinaryDiscretionaryUnits}";
                 output.WriteLine(row);
-                if (Environment.GetEnvironmentVariable("PC_F6F_SUSTAINABILITY") is string path) File.AppendAllText(path, row + Environment.NewLine);
+                if (PerfGate.Variable("PC_F6F_SUSTAINABILITY") is string path) File.AppendAllText(path, row + Environment.NewLine);
             }
     }
 

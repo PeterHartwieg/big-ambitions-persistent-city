@@ -186,7 +186,7 @@ public sealed class VisitorBodyTests
 /// ActiveJourneyIndex.VisitorsReceiveBodies false/true. 100 warm-up calls, then 300 timed single calls per row.</summary>
 public sealed class VisitorBodyMeasure
 {
-    private static string? Output => Environment.GetEnvironmentVariable("PC_F5I_MEASURE") is { Length: > 0 } path ? path : null;
+    private static string? Output => PerfGate.Variable("PC_F5I_MEASURE") is { Length: > 0 } path ? path : null;
 
     private static Dictionary<string, object> Time(string name, Action action)
     {

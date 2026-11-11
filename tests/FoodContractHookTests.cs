@@ -400,7 +400,7 @@ public sealed class FoodContractHookTests
     [Fact]
     public void MeasurePostfixCost()
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PC_E5B2_MEASURE"))) return;
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E5B2_MEASURE"))) return;
         var sink = new Sink(); sink.Publish("ba:itemname_burger");
         object shop = new object(); sink.Track("A", shop, "Main Street", 5);
         using var router = Install(sink);

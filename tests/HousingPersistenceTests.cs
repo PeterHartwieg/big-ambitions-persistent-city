@@ -119,7 +119,7 @@ public sealed class HousingPersistenceTests
         Assert.True(originalIds.SetEquals(city.Citizens.Select(c => c.Identity.Id)));
         Assert.All(city.Citizens, c => { Assert.Equal(home.Id, c.HomeId); Assert.Equal(home.Id, c.PlaceId); });
 
-        new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
+        new CitySimulator(city, new FixedWalk(1)).AdvanceTo(city.Minute);
         Assert.Equal(nextSequence, city.NextResidentSequence);
         Assert.True(originalIds.SetEquals(city.Citizens.Select(c => c.Identity.Id)));
         Assert.Equal((long)city.Citizens.Count, (long)city.InitialImportedResidents + city.NextResidentSequence - 1);
@@ -130,11 +130,6 @@ public sealed class HousingPersistenceTests
         Assert.Equal(saved, SaveCodec.Write(reloaded.State!));
     }
 
-    private sealed class Direct : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double minute, TravelPreferences preferences) => new Route
-        { Legs = new List<RouteLeg> { new() { From = from.Position, To = to.Position, Minutes = 1, Mode = TravelMode.Walk } } };
-    }
 
     [Theory]
     [InlineData("duplicate")]

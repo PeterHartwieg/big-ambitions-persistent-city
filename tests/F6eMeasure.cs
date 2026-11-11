@@ -26,7 +26,7 @@ public sealed class F6eMeasure
         var row = new { name, n = ms.Length, p50 = ms[ms.Length / 2], p95 = ms[(int)Math.Ceiling(ms.Length * .95) - 1],
             max = ms[^1], bytesPerOperation = bytes < 0 ? (double?)null : bytes / (double)ms.Length, spikes30 = ms.Where(x => x >= 30).ToArray() };
         string text = JsonConvert.SerializeObject(row); output.WriteLine(text);
-        File.AppendAllText(Environment.GetEnvironmentVariable("PC_F6E_MEASURE")!, text + Environment.NewLine);
+        File.AppendAllText(PerfGate.Variable("PC_F6E_MEASURE")!, text + Environment.NewLine);
     }
     private static double Ms(long start) => (Stopwatch.GetTimestamp() - start) * 1000d / Stopwatch.Frequency;
     private static FoodCommerce Food(CitySimulator city) => (FoodCommerce)typeof(CitySimulator)
@@ -35,7 +35,7 @@ public sealed class F6eMeasure
     [Fact]
     public void AccrualPostingAndSaveLatency()
     {
-        if (Environment.GetEnvironmentVariable("PC_F6E_MEASURE") == null) return;
+        if (PerfGate.Variable("PC_F6E_MEASURE") == null) return;
         var p = new CitizenState { Identity = new CitizenIdentity { Id = "c0", Age = 30, Persona = Persona.Commuter },
             DayPlaceId = "work", PlaceId = "work", Activity = Activity.Work, Phase = CitizenPhase.AtPlace,
             ActivityUntilMinute = 1980, RecentVisits = new List<VisitRecord> { new VisitRecord { AtMinute = 1500, PlaceId = "work", Activity = Activity.Work } } };

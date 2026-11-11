@@ -7,11 +7,6 @@ namespace PersistentCity.Tests;
 
 public sealed class OptionalVisitTests
 {
-    private sealed class Walking : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double at, TravelPreferences preferences) => new()
-        { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk, Minutes = 10 } } };
-    }
     private static CitySimulator Ready()
     {
         var state = Population.Create(new[] { new CitizenIdentity { Id = "person", Name = "Resident", Persona = Persona.Commuter } },
@@ -20,9 +15,9 @@ public sealed class OptionalVisitTests
         var person = state.Citizens.Single();
         person.Phase = CitizenPhase.AtPlace; person.PlaceId = person.HomeId; person.Activity = Activity.Home;
         person.ActivityUntilMinute = person.NextEventMinute = 1800;
-        return new CitySimulator(state, new Walking());
+        return new CitySimulator(state, new FixedWalk(10));
     }
-    private static Route Out(CitySimulator s) => new Walking().Plan(s.State.Places.Single(p => p.Id == "home"),
+    private static Route Out(CitySimulator s) => new FixedWalk(10).Plan(s.State.Places.Single(p => p.Id == "home"),
         s.State.Places.Single(p => p.Id == "shop"), s.State.Minute, new TravelPreferences());
 
     [Fact]
@@ -60,17 +55,17 @@ public sealed class OptionalVisitTests
         using var recorder = new FoodRoutineRecorder(original);
         Assert.True(original.TryBeginOptionalShopVisit(person.Identity.Id, "shop", Out(original), 10, 15, 1500));
         original.AdvanceTo(1445);
-        var rebuilt = original.RebuildRoutes(new Walking());
+        var rebuilt = original.RebuildRoutes(new FixedWalk(10));
         rebuilt.AdvanceTo(1450);
         Assert.Equal(1, arrivals);
-        rebuilt = rebuilt.RebuildRoutes(new Walking());
+        rebuilt = rebuilt.RebuildRoutes(new FixedWalk(10));
         rebuilt.AdvanceTo(1475);
         var captured = recorder.Finish();
         Assert.Contains(captured.Spans, s => s.Activity == Activity.Shop && s.From == 1450 && s.Until == 1465);
         original.ActivityObserved -= Observe;
         // Removing a subscription through its original simulator also removes it after rebuilds.
         person.ActivityUntilMinute = person.NextEventMinute = 1800;
-        rebuilt = rebuilt.RebuildRoutes(new Walking());
+        rebuilt = rebuilt.RebuildRoutes(new FixedWalk(10));
         Assert.True(rebuilt.TryBeginOptionalShopVisit(person.Identity.Id, "shop", Out(rebuilt), 10, 15, 1550));
         rebuilt.AdvanceTo(1510);
         Assert.Equal(1, arrivals);
@@ -82,7 +77,7 @@ public sealed class OptionalVisitTests
         var sim = Ready(); var c = sim.State.Citizens.Single();
         Assert.True(sim.TryBeginOptionalShopVisit(c.Identity.Id, "shop", Out(sim), 10, 15, 1500));
         sim.AdvanceTo(1445);
-        var resumed = new CitySimulator(SaveWire.Read(SaveCodec.Write(sim.State)).State!, new Walking());
+        var resumed = new CitySimulator(SaveWire.Read(SaveCodec.Write(sim.State)).State!, new FixedWalk(10));
         sim.AdvanceTo(1475);
         while (!resumed.AdvanceTo(1475, 1).CaughtUp) { }
         Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(resumed.State));

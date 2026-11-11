@@ -18,7 +18,7 @@ namespace PersistentCity.Tests;
 /// whole day-visitor pool, active or dormant.</summary>
 public sealed class F5hMeasure
 {
-    private static string? Output => Environment.GetEnvironmentVariable("PC_F5H_MEASURE") is { Length: > 0 } path ? path : null;
+    private static string? Output => PerfGate.Variable("PC_F5H_MEASURE") is { Length: > 0 } path ? path : null;
 
     private static object Stats(List<double> values, int digits = 4)
     {

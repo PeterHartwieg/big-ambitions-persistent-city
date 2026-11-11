@@ -9,11 +9,6 @@ using Xunit;
 namespace PersistentCity.Tests;
 public sealed class OptionalStopSchedulingTests
 {
-    private sealed class Walking : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double at, TravelPreferences p) => new()
-        { Legs = { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk, Minutes = 10 } } };
-    }
     private sealed class Environment : IOptionalStopEnvironment
     {
         public int SpotQueries;
@@ -45,11 +40,11 @@ public sealed class OptionalStopSchedulingTests
             c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home;
             c.DestinationId = "venue"; c.DestinationActivity = activity;
             c.DepartureMinute = minute; c.NextEventMinute = minute + 10; c.ActivityUntilMinute = minute + 10 + stay;
-            c.Journey = new Walking().Plan(places[0], places[1], minute, c.Preferences);
+            c.Journey = new FixedWalk(10).Plan(places[0], places[1], minute, c.Preferences);
             c.Journey.Legs[0].Mode = arrivalMode;
         }
         var env = new Environment { Kind = kind };
-        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, percentage);
+        var sim = new CitySimulator(state, new FixedWalk(10)); sim.AttachOptionalStops(env, percentage);
         return (sim, env);
     }
     [Theory]
@@ -62,11 +57,11 @@ public sealed class OptionalStopSchedulingTests
         baseline.AdvanceTo(1450); defaults.AdvanceTo(1450);
         Assert.Equal(DevelopmentChain.Write(baseline.State), DevelopmentChain.Write(defaults.State));
         string saved = DevelopmentChain.Write(defaults.State);
-        var loaded = new CitySimulator(DevelopmentChain.Read(saved).State!, new Walking());
+        var loaded = new CitySimulator(DevelopmentChain.Read(saved).State!, new FixedWalk(10));
         var minimum = new OptionalStopTiming(5, 10, 1, 2, 10);
         loaded.AttachOptionalStops(defaultEnv, rate, minimum);
         Assert.Equal(saved, DevelopmentChain.Write(loaded.State)); // no saved stop shortened or restarted
-        var rebuilt = loaded.RebuildRoutes(new Walking());
+        var rebuilt = loaded.RebuildRoutes(new FixedWalk(10));
         Assert.Equal(saved, DevelopmentChain.Write(rebuilt.State));
         var (tuned, env) = Ready(kind, count: 48, percentage: rate);
         tuned.AttachOptionalStops(env, rate, minimum); tuned.AdvanceTo(1450);
@@ -115,7 +110,7 @@ public sealed class OptionalStopSchedulingTests
             sim.AdvanceTo(activeMinute);
             string saved = DevelopmentChain.Write(sim.State);
             var read = DevelopmentChain.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, rate);
+            var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, rate);
             Assert.Equal(saved, DevelopmentChain.Write(loaded.State));
             sim.AdvanceTo(minute + 140); loaded.AdvanceTo(minute + 140);
             Assert.Equal(DevelopmentChain.Write(sim.State), DevelopmentChain.Write(loaded.State));
@@ -136,7 +131,7 @@ public sealed class OptionalStopSchedulingTests
         Assert.Equal(0, env.SpotQueries);
         Assert.All(sim.State.Citizens, c => Assert.Null(c.OptionalStop));
         var read = DevelopmentChain.Read(DevelopmentChain.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking());
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10));
         env.Raining = false; loaded.AttachOptionalStops(env, rate); loaded.AdvanceTo(1451); loaded.RefreshOptionalStops();
         Assert.Equal(0, loaded.OptionalStopChances.Eligible);
         Assert.All(loaded.State.Citizens, c => { Assert.Null(c.OptionalStop); Assert.Single(c.RecentVisits); Assert.Equal(1570, c.NextEventMinute); });
@@ -161,7 +156,7 @@ public sealed class OptionalStopSchedulingTests
         Assert.All(sim.State.Citizens.Where(c => originals.ContainsKey(c.Identity.Id)), c => Assert.True(c.OptionalStop!.Cancelled));
         string saved = DevelopmentChain.Write(sim.State);
         var read = DevelopmentChain.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking()); env.Raining = false; loaded.AttachOptionalStops(env, rate);
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10)); env.Raining = false; loaded.AttachOptionalStops(env, rate);
         loaded.RefreshOptionalStops(); Assert.Equal(saved, DevelopmentChain.Write(loaded.State));
         foreach (var c in loaded.State.Citizens.Where(c => originals.ContainsKey(c.Identity.Id)))
         {
@@ -205,9 +200,9 @@ public sealed class OptionalStopSchedulingTests
         sim.AdvanceTo(1450);
         string saved = DevelopmentChain.Write(sim.State);
         var read = DevelopmentChain.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking());
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10));
         loaded.AttachOptionalStops(env, newRate);
-        loaded = loaded.RebuildRoutes(new Walking());
+        loaded = loaded.RebuildRoutes(new FixedWalk(10));
         loaded.RefreshOptionalStops();
         Assert.Equal(saved, DevelopmentChain.Write(loaded.State));
         loaded.AdvanceTo(1451);
@@ -229,10 +224,10 @@ public sealed class OptionalStopSchedulingTests
         // The second citizen is still en route when the first visit is saved.
         sim.State.Citizens[1].Journey!.Legs[0].Minutes = 20;
         sim.State.Citizens[1].NextEventMinute = 1460;
-        sim = sim.RebuildRoutes(new Walking()); sim.AdvanceTo(1450);
+        sim = sim.RebuildRoutes(new FixedWalk(10)); sim.AdvanceTo(1450);
         Assert.Equal(joins, sim.State.Citizens[0].OptionalStopChoice);
         var read = DevelopmentChain.Read(DevelopmentChain.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100);
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 100);
         loaded.AdvanceTo(1460);
         Assert.Equal(joins, loaded.State.Citizens[0].OptionalStopChoice);
         Assert.All(loaded.State.Citizens, c => Assert.Equal(joins, c.OptionalStop != null));
@@ -270,7 +265,7 @@ public sealed class OptionalStopSchedulingTests
         Assert.True(c.OptionalStop!.Cancelled); Assert.Equal(end, c.OptionalStop.EndMinute); Assert.Same(identity, c.Identity);
         Assert.Equal(1570, c.NextEventMinute); Assert.Equal(1, c.CompletedJourneys);
         var read = DevelopmentChain.Read(DevelopmentChain.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100);
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 100);
         Assert.True(loaded.State.Citizens[0].OptionalStop!.Cancelled);
     }
     [Theory]
@@ -342,8 +337,8 @@ public sealed class OptionalStopSchedulingTests
         var (whole, _) = Ready(kind, 4); whole.AdvanceTo(1451);
         var (sliced, env) = Ready(kind, 4); while (!sliced.AdvanceTo(1450, 1).CaughtUp) { }
         var read = DevelopmentChain.Read(DevelopmentChain.Write(sliced.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100);
-        loaded = loaded.RebuildRoutes(new Walking()); loaded.AdvanceTo(1451);
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 100);
+        loaded = loaded.RebuildRoutes(new FixedWalk(10)); loaded.AdvanceTo(1451);
         Assert.Equal(DevelopmentChain.Write(whole.State), DevelopmentChain.Write(loaded.State));
     }
     [Fact]
@@ -360,7 +355,7 @@ public sealed class OptionalStopSchedulingTests
         Assert.Null(sim.State.Citizens[0].OptionalStop);
         var (active, _) = Ready(DwellKind.WindowShopping); active.AdvanceTo(1450);
         var read = DevelopmentChain.Read(DevelopmentChain.Write(active.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, null);
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, null);
         Assert.Equal(active.State.Citizens[0].OptionalStop!.EndMinute, loaded.State.Citizens[0].OptionalStop!.EndMinute);
         Assert.False(loaded.State.Citizens[0].OptionalStop!.Cancelled);
     }
@@ -378,7 +373,7 @@ public sealed class OptionalStopSchedulingTests
         var (sim, env) = Ready(DwellKind.WindowShopping); sim.AdvanceTo(1450);
         var c = sim.State.Citizens[0]; double end = c.OptionalStop!.EndMinute;
         sim.AdvanceTo(end + 1); Assert.Equal(CitizenPhase.AtPlace, c.Phase); Assert.Single(c.RecentVisits);
-        var loaded = new CitySimulator(DevelopmentChain.Read(DevelopmentChain.Write(sim.State)).State!, new Walking()); loaded.AttachOptionalStops(env,100);
+        var loaded = new CitySimulator(DevelopmentChain.Read(DevelopmentChain.Write(sim.State)).State!, new FixedWalk(10)); loaded.AttachOptionalStops(env,100);
         sim.AdvanceTo(1580); loaded.AdvanceTo(1580);
         Assert.Equal(DevelopmentChain.Write(sim.State), DevelopmentChain.Write(loaded.State));
         Assert.Null(c.OptionalStop); Assert.Equal(2,c.CompletedJourneys); Assert.Equal(Activity.Home,c.Activity);
@@ -426,9 +421,9 @@ public sealed class OptionalStopSchedulingTests
         arriving.Phase = CitizenPhase.Travelling; arriving.PlaceId = "home";
         arriving.DestinationId = "venue"; arriving.DestinationActivity = Activity.Leisure;
         arriving.DepartureMinute = 1450; arriving.NextEventMinute = 1451;
-        arriving.Journey = new Walking().Plan(sim.State.Places[0], sim.State.Places[1], 1450, arriving.Preferences);
+        arriving.Journey = new FixedWalk(10).Plan(sim.State.Places[0], sim.State.Places[1], 1450, arriving.Preferences);
         arriving.Journey.Legs[0].Minutes = 1;
-        sim = sim.RebuildRoutes(new Walking()); env.Present = true; sim.AdvanceTo(1451);
+        sim = sim.RebuildRoutes(new FixedWalk(10)); env.Present = true; sim.AdvanceTo(1451);
         Assert.Null(shortStay.OptionalStop);
         Assert.Equal(new[] { "c1", "c2" }, sim.State.Citizens.Where(c => c.OptionalStop != null).Select(c => c.Identity.Id));
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(sim.State)).Status);
@@ -459,16 +454,16 @@ public sealed class OptionalStopSchedulingTests
         var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 2, percentage: rate);
         sim.State.Citizens[1].Journey!.Legs[0].Minutes = 20;
         sim.State.Citizens[1].NextEventMinute = 1460;
-        sim = sim.RebuildRoutes(new Walking()); sim.AdvanceTo(1450);
+        sim = sim.RebuildRoutes(new FixedWalk(10)); sim.AdvanceTo(1450);
         var first = sim.State.Citizens[0];
         Assert.Equal(chosen, first.OptionalStopChoice);
         // A lifecycle/routine wakeup keeps the admitted activity and its original deadline.
-        first.NextEventMinute = 1451; sim = sim.RebuildRoutes(new Walking());
+        first.NextEventMinute = 1451; sim = sim.RebuildRoutes(new FixedWalk(10));
         sim.AttachOptionalStops(env, 100-rate); sim.AdvanceTo(1451);
         Assert.Equal(chosen, first.OptionalStopChoice);
         Assert.Single(first.RecentVisits); Assert.Equal(1570, first.ActivityUntilMinute);
         var read = DevelopmentChain.Read(DevelopmentChain.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        sim = new CitySimulator(read.State!, new Walking()); sim.AttachOptionalStops(env, 100);
+        sim = new CitySimulator(read.State!, new FixedWalk(10)); sim.AttachOptionalStops(env, 100);
         sim.AdvanceTo(1460);
         Assert.Equal(chosen, sim.State.Citizens[0].OptionalStopChoice);
         Assert.All(sim.State.Citizens, c => Assert.Equal(chosen, c.OptionalStop != null));
@@ -486,11 +481,11 @@ public sealed class OptionalStopSchedulingTests
             c.Journey!.Legs[0].Minutes=60+(i-2)*10;
             c.NextEventMinute=1500+(i-2)*10;
         }
-        sim=sim.RebuildRoutes(new Walking()); sim.AdvanceTo(1450);
+        sim=sim.RebuildRoutes(new FixedWalk(10)); sim.AdvanceTo(1450);
         var first=sim.State.Citizens[0]; var partner=sim.State.Citizens[1];
         var original=first.OptionalStop!.Copy();
         first.NextEventMinute=eventMinute;
-        sim=sim.RebuildRoutes(new Walking()); sim.AdvanceTo(eventMinute);
+        sim=sim.RebuildRoutes(new FixedWalk(10)); sim.AdvanceTo(eventMinute);
         Assert.True(first.OptionalStop!.Cancelled);
         Assert.True(partner.OptionalStop!.Cancelled);
         Assert.True(first.OptionalStopChoice); Assert.True(partner.OptionalStopChoice);
@@ -500,7 +495,7 @@ public sealed class OptionalStopSchedulingTests
         string saved=DevelopmentChain.Write(sim.State);
         var read=DevelopmentChain.Read(saved); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         Assert.Equal(saved,DevelopmentChain.Write(read.State!));
-        sim=new CitySimulator(read.State!,new Walking()); sim.AttachOptionalStops(env,100);
+        sim=new CitySimulator(read.State!,new FixedWalk(10)); sim.AttachOptionalStops(env,100);
         sim.AdvanceTo(1500);
         Assert.Null(sim.State.Citizens[2].OptionalStop); // neither old partner is reusable
         sim.AdvanceTo(1510);

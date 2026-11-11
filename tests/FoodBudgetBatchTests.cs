@@ -14,11 +14,6 @@ public sealed class FoodBudgetBatchTests
 {
     internal const double Midnight = 2 * 1440.0;
 
-    internal sealed class Walking : IRoutePlanner
-    {
-        public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => new()
-        { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Minutes = 5, Mode = TravelMode.Walk } } };
-    }
 
     // Records every native call the food layer makes, with the clock and how many budgets had
     // posted for that day when the call happened.
@@ -50,7 +45,7 @@ public sealed class FoodBudgetBatchTests
     {
         public CitySimulator City = null!;
         public readonly TracingMarket Market = new();
-        public readonly Walking Routes = new();
+        public readonly FixedWalk Routes = new(5);
         public readonly List<string> Trace = new();
         public long Events;
         public bool Legacy;
@@ -257,7 +252,7 @@ public sealed class FoodBudgetBatchTests
                 DueAt = 1e8, Budget = HouseholdFinance.Create(citizen, 7, 1440, null, id) };
             meal.AssignHost(id, 0); state.Food.Residents.Add(meal);
         }
-        var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new TracingMarket());
+        var city = new CitySimulator(state, new FixedWalk(5)); city.AttachFoodMarket(new TracingMarket());
         var food = Food(city); int calls = 0;
         do
         {

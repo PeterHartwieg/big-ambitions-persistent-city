@@ -193,7 +193,7 @@ public sealed class PresentationBoundaryTests
     [Fact]
     public void MeasureUpdateWithOptionalStopBodies()
     {
-        string? path = System.Environment.GetEnvironmentVariable("PC_F2B_MEASURE");
+        string? path = PerfGate.Variable("PC_F2B_MEASURE");
         if (path == null) return;
         void Measure(string label, Fixture f, int count = 2000)
         {

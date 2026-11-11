@@ -23,7 +23,7 @@ public sealed class F6fMeasure
         string text = JsonConvert.SerializeObject(new { name, n = ms.Length, p50 = ms[ms.Length / 2],
             p95 = ms[(int)Math.Ceiling(ms.Length * .95) - 1], max = ms[^1], bytesPerOperation = bytes / (double)ms.Length,
             spikes30 = ms.Where(t => t >= 30).ToArray(), extra });
-        output.WriteLine(text); File.AppendAllText(Environment.GetEnvironmentVariable("PC_F6F_MEASURE")!, text + Environment.NewLine);
+        output.WriteLine(text); File.AppendAllText(PerfGate.Variable("PC_F6F_MEASURE")!, text + Environment.NewLine);
     }
     private void Measure(string name, Action action, int n = 20000)
     {
@@ -46,7 +46,7 @@ public sealed class F6fMeasure
     [Fact]
     public void AdmissionLookupPublicationAndRequestedLine()
     {
-        if (Environment.GetEnvironmentVariable("PC_F6F_MEASURE") == null) return;
+        if (PerfGate.Variable("PC_F6F_MEASURE") == null) return;
         var budget = OrdinaryExchangeTests.Wallet(100000); var price = Money.FromCents(500);
         Measure("admission gate", () => { if (!OrdinaryExchanges.CanAdmit(budget, price, 1501)) throw new Exception("refusal"); });
         foreach (int count in new[] { 1914, 10000, 100000 })

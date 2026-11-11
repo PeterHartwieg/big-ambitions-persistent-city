@@ -299,7 +299,7 @@ namespace PersistentCity.Tests
             }
             var lines = new[] { Measure("Ready (400-identity match, as before)", ready), Measure("transient (no comparison)", transient) };
             foreach (var line in lines) output.WriteLine(line);
-            string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+            string? path = PerfGate.Variable("PC_F8_MEASURE");
             if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, lines);
         }
     }

@@ -19,6 +19,7 @@
     <Compile Include="../../tests/Support/*.cs" />
     <Compile Include="../../tests/Kit/*.cs" />
     <Compile Include="../../tests/Kit/CompactFormat/*.cs" />
+    <Compile Include="../../tests/capability-matrix/CapabilityMatrix.cs" />
     <Compile Include="../../Runtime/DecisionSupplyImage.cs" />
     <Compile Include="../../Runtime/FoodContractStamps.cs" />
     <Compile Include="../../Runtime/FoodContractHooks.cs" />
@@ -40,6 +41,7 @@
     <Compile Include="../../Runtime/NativeCampaignReader.cs" />
     <Compile Include="../../Runtime/ResearchAgencyMenu.cs" />
     <Compile Include="../../Runtime/ResearchReportText.cs" />
+    <Compile Include="../../Runtime/FoodReceiptEvidence.cs" />
     <Compile Include="../../tests/economy-interventions/EconomyFixture.cs" />
     <Compile Include="../../tests/economy-interventions/InterventionInputs.cs" />
     <Compile Include="../../tests/economy-interventions/EconomyRun.cs" />

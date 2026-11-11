@@ -21,7 +21,7 @@ public sealed class E6eBodyMeasure
     private void Report(string line)
     {
         output.WriteLine(line);
-        if (Environment.GetEnvironmentVariable("PC_E6E_MEASURE") is string path) File.AppendAllText(path, line + Environment.NewLine);
+        if (PerfGate.Variable("PC_E6E_MEASURE") is string path) File.AppendAllText(path, line + Environment.NewLine);
     }
     private void Measure(string label, Action action, int count = 1000)
     {
@@ -49,7 +49,7 @@ public sealed class E6eBodyMeasure
     [Fact]
     public void QueueSamplingCachedDwellAndBodySelection()
     {
-        if (Environment.GetEnvironmentVariable("PC_E6E_MEASURE") == null) return;
+        if (PerfGate.Variable("PC_E6E_MEASURE") == null) return;
         using var f = new VendorBodyTests.Fixture(people: 8, cap: 8);
         var vehicle = f.Vendors.Market.Coordinator.Image!.Find("v00")!;
         Measure("cold eight-spot queue sampling", () => { Time.Next(); new DwellSpots().TryVendorQueue(f.Row, vehicle, out _); });

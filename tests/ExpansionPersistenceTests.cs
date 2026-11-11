@@ -162,7 +162,7 @@ public sealed class ExpansionPersistenceTests
     public void CurrentRoundTripPreservesOriginalSourceAndPersistentIdentity()
     {
         var city=City(); var source=city.SourceIdentities.Select(Population.CloneIdentity).ToArray();
-        var sim=new CitySimulator(city,new Direct()); sim.AdvanceTo(city.Minute);
+        var sim=new CitySimulator(city,new FixedWalk(1)); sim.AdvanceTo(city.Minute);
         Assert.Equal(source.Select(c=>c.Id), city.Citizens.Select(c=>c.Identity.Id));
         string json=DevelopmentChain.Write(city); var copy=DevelopmentChain.Read(json).State!;
         Assert.Equal(json,DevelopmentChain.Write(copy)); Assert.Equal(2,copy.Citizens.Count);
@@ -220,8 +220,4 @@ public sealed class ExpansionPersistenceTests
         }
     }
 
-    private sealed class Direct:IRoutePlanner
-    {
-        public Route Plan(Place from,Place to,double minute,TravelPreferences pref)=>new(){Legs=new List<RouteLeg>{new(){From=from.Position,To=to.Position,Minutes=1,Mode=TravelMode.Walk}}};
-    }
 }

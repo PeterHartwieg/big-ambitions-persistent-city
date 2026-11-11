@@ -20,7 +20,7 @@ public sealed class F6hMeasurements
 {
     readonly ITestOutputHelper output;
     public F6hMeasurements(ITestOutputHelper output) { this.output = output; }
-    static string? DirectoryPath => Environment.GetEnvironmentVariable("PC_F6H_MEASURE");
+    static string? DirectoryPath => PerfGate.Variable("PC_F6H_MEASURE");
     void Write(object row)
     {
         string json = JsonConvert.SerializeObject(row);

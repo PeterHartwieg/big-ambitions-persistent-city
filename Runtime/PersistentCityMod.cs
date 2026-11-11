@@ -115,27 +115,6 @@ namespace PersistentCity.Runtime
         private int slowestAdvanceCollections;
         private OptionalStopEnvironment? stopEnvironment;
 
-        /// <summary>Legacy diagnostic fixture helper for a small selected retail slice.
-        /// Normal initialization creates food demand and discovers eligible shops automatically.</summary>
-        public void StartFoodRoutines(IReadOnlyCollection<string> shops)
-        {
-            if (simulation == null || routes == null || !routes.ReadyForPopulation || failed
-                || !ReferenceEquals(saveIdentity, SaveGameManager.Current) || simulation.State.Food != null)
-                throw new InvalidOperationException("A ready city without an existing food scope is required.");
-            if (shops == null || shops.Count < 1 || shops.Count > 8 || shops.Distinct(StringComparer.Ordinal).Count() != shops.Count
-                || shops.Any(id => !simulation.State.Places.Any(p => p.Id == id && p.Kind == PlaceKind.Shop)))
-                throw new InvalidOperationException("Select one to eight established shops recognized by this city's population.");
-            var catalogue = FoodBusinessCatalogue.Read(shops, FoodProducts.Ids.ToArray());
-            if (catalogue.Businesses.Count != shops.Count) throw new InvalidOperationException("Food scope is incomplete.");
-            var state = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, Shops = catalogue.Businesses.Select(b => new FoodScope {
-                PlaceId = b.PlaceId, BusinessId = b.Id, ProductId = b.Offers.First().ProductId,
-                AdditionalProductIds = b.Offers.Skip(1).Select(o => o.ProductId).ToList() }).ToList(),
-                Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home && !PortalPlaces.Is(p))
-                    .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
-            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop, economy: simulation.State.Economy);
-            try { simulation.State.Food = state; simulation.AttachFoodMarket(ComposeFoodMarkets(adapter), settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
-            catch { vendorMarket?.Dispose(); vendorMarket = null; simulation.State.Food = null; adapter.Dispose(); throw; }
-        }
         private IFoodMarket ComposeFoodMarkets(NativeFoodMarket shops)
         {
             var current = simulation ?? throw new InvalidOperationException("Vendor market needs an active city.");
@@ -156,12 +135,6 @@ namespace PersistentCity.Runtime
                 + ms.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms");
             AttachVendorDecisionDiagnostics(current);
             return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position, policy);
-        }
-        public void EnableHouseholdFinances()
-        {
-            if (simulation == null || failed || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
-                throw new InvalidOperationException("A ready current city is required.");
-            simulation.EnableHouseholdFinances();
         }
         public object? FoodAwareness(string consumerId, int? day=null) => simulation?.InspectFoodAwareness(consumerId,day);
         public object RivalFoodDiagnostics => new { Core=simulation?.DumpRivalFood(), RefreshUnits=foodMarket?.RivalRefreshUnits ?? 0, DetailReads=foodMarket?.RivalDetailReads ?? 0, Unavailable=foodMarket?.RivalUnavailable ?? "" };
