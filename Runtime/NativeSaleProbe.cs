@@ -25,6 +25,12 @@ namespace PersistentCity.Runtime
     {
         private static BuildingRegistration? probing;
         private static MethodInfo? process;
+        private const string PatchId = "persistentcity.sale-probe";
+        private static readonly Harmony patches = new Harmony(PatchId);
+        /// <summary>Native automatic restocking (a shelf's last unit refilled from stock boxes or parked-vehicle cargo)
+        /// moves stock outside the building image Undo restores, so it does not run inside a probe. The shelf is refilled
+        /// by the native hourly restock as usual.</summary>
+        private static bool SkipRefillWhileProbing() => probing == null;
         /// <summary>True only inside a probe's native ProcessCustomer call for this registration; the food authority's
         /// customer gate lets it through as it does the mod's own food checkout.</summary>
         internal static bool IsProbing(BuildingRegistration reg) => ReferenceEquals(probing, reg);
@@ -38,7 +44,8 @@ namespace PersistentCity.Runtime
         private readonly int hour;
         internal readonly Dictionary<string, object?> Evidence = new Dictionary<string, object?>(StringComparer.Ordinal);
         // Pre-sale image for Undo: every holder's cargo list and amounts, the booked-order count, the claimed entry's slot.
-        private readonly List<(List<CargoInstance> list, CargoInstance[] cargo, int[] amounts)> stock = new List<(List<CargoInstance>, CargoInstance[], int[])>();
+        private readonly List<(List<CargoInstance> list, CargoInstance[] cargo, int[] amounts, float[] prices)> stock = new List<(List<CargoInstance>, CargoInstance[], int[], float[])>();
+        private string[] itemIds = Array.Empty<string>();
         private int ordersBefore = -1, claimedSlot = -1;
 
         private NativeSaleProbe(object save, BuildingRegistration reg, BusinessType type, ProbeFamily family, CustomerEntry? claimed, string? fee)
@@ -139,12 +146,20 @@ namespace PersistentCity.Runtime
                 // Native ProcessAllCustomersFromThisHour, not SetUp, sets the theatre's no-actors refusal; check it here.
                 if (family == ProbeFamily.CinemaTheater && BusinessHelper.ShouldWarnTheaterHasNoActors(reg))
                     return ProbeNativeOutcome.Interrupted("Theatre has no actors");
+                var refill = AccessTools.Method(typeof(ReStockingHelper), "RefillSingleItemWithLimit", new[] { typeof(ItemInstance) });
+                if (refill == null) return ProbeNativeOutcome.Interrupted("ReStockingHelper.RefillSingleItemWithLimit(ItemInstance) not found");
+                patches.Patch(refill, prefix: new HarmonyMethod(typeof(NativeSaleProbe), nameof(SkipRefillWhileProbing)) { priority = Priority.First });
                 Capture();
                 probing = reg;
                 try { process.Invoke(simulator, new object[] { customer }); }
                 catch (Exception error) { failure = error is TargetInvocationException { InnerException: { } inner } ? inner : error; }
             }
-            finally { probing = null; UnityEngine.Object.Destroy(simulator); }
+            finally
+            {
+                probing = null;
+                try { patches.UnpatchAll(PatchId); } catch (Exception error) { Evidence["refillUnpatch"] = error.Message; }
+                UnityEngine.Object.Destroy(simulator);
+            }
             bool completed = customer.order.completed;
             int added = reg.unprocessedCompletedOrders.Count - orders;
             Evidence["orderCompleted"] = completed; Evidence["ordersAdded"] = added;
@@ -191,19 +206,24 @@ namespace PersistentCity.Runtime
                 var list = instance?.cargoInstances;
                 if (list == null) continue;
                 var cargo = list.ToArray();
-                stock.Add((list, cargo, cargo.Select(c => c?.amount ?? 0).ToArray()));
+                stock.Add((list, cargo, cargo.Select(c => c?.amount ?? 0).ToArray(), cargo.Select(c => c?.pricePerUnit ?? 0f).ToArray()));
             }
+            itemIds = reg.itemInstances.Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
         }
 
-        /// <summary>Restores the pre-sale stock (cargo lists and amounts), drops orders booked since, and puts the claimed
-        /// entry back unserved. Dirt and other furniture wear from processing are not restored.</summary>
+        /// <summary>Restores the pre-sale stock (cargo lists, amounts and unit costs), drops orders booked since, and puts
+        /// the claimed entry back unserved. Dirt and other furniture wear from processing are not restored. A building item
+        /// added or removed during the probe is outside this image: the restore is refused, and Core keeps an uncertain
+        /// receipt instead of reporting the books restored.</summary>
         public void Undo()
         {
             if (ordersBefore < 0) return; // Sell stopped before its first native effect
-            foreach (var (list, cargo, amounts) in stock)
+            if (!reg.itemInstances.Keys.OrderBy(k => k, StringComparer.Ordinal).SequenceEqual(itemIds, StringComparer.Ordinal))
+                throw new InvalidOperationException("Building items changed during the probe; restore refused.");
+            foreach (var (list, cargo, amounts, prices) in stock)
             {
                 list.Clear(); list.AddRange(cargo);
-                for (int i = 0; i < cargo.Length; i++) if (cargo[i] != null) cargo[i].amount = amounts[i];
+                for (int i = 0; i < cargo.Length; i++) if (cargo[i] != null) { cargo[i].amount = amounts[i]; cargo[i].pricePerUnit = prices[i]; }
             }
             int added = reg.unprocessedCompletedOrders.Count - ordersBefore;
             if (added < 0) throw new InvalidOperationException("Native orders were removed during the probe; restore refused.");
