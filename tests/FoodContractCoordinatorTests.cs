@@ -1490,8 +1490,8 @@ public sealed class FoodContractCoordinatorTests
                 long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / samples.Length;
                 Assert.Equal(0, failures);
                 Array.Sort(samples);
-                line = $"recheck offers={offers} holders={holders} decor={decor} dependencies={image.Definitions.Count}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call";
                 timing.Under("recheck p95", samples[1899], 1.0);
+                long timedBytes = bytes;
                 // Steady state allocates nothing. A one-off runtime allocation on this thread during a loaded full-suite
                 // run (a few KB over the whole pass, not per call) is re-measured on untimed passes; a real per-call
                 // allocation shows on every pass.
@@ -1501,6 +1501,7 @@ public sealed class FoodContractCoordinatorTests
                     for (int i = 0; i < samples.Length; i++) { epoch.Begin(); FoodContractRecheck.Structure(image, live, epoch); FoodContractRecheck.Prices(image, live); }
                     bytes = (GC.GetAllocatedBytesForCurrentThread() - start) / samples.Length;
                 }
+                line = $"recheck offers={offers} holders={holders} decor={decor} dependencies={image.Definitions.Count}: p50 {samples[1000]:0.0000} ms, p95 {samples[1899]:0.0000} ms, max {samples[^1]:0.0000} ms, {bytes} B/call (first timed pass {timedBytes} B/call)";
                 Assert.Equal(0, bytes);
             });
             rows.Add(line);

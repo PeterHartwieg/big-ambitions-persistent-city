@@ -38,7 +38,7 @@
      "rigCheck": "f9-5", "relatedChecks": [], "capability": "clock.city", "lastRigHead": null, "lastRigFingerprint": null, "lastRigEvidence": null},
     {"id": "native-shop-inputs", "assumption": "Native price, opening-hours, stock and staffing changes on a player shop are read at the minute they happen and published at a drained epoch boundary.",
      "records": ["docs-history-2026-11-10:docs/checks/f6a-intervention-harness.md", "docs-history-2026-11-10:docs/checks/f9c.md"], "recordedAt": "e9995e5",
-     "paths": ["Runtime/FoodSupplyReader.cs", "Runtime/NativeFoodHours.cs", "Runtime/DirectStockShowcaseReader.cs", "Runtime/WorkplaceDiagnostics.cs", "Core/WorkplaceAvailability.cs"],
+     "paths": ["Runtime/FoodSupplyReader.cs", "Runtime/NativeFoodHours.cs", "Runtime/WorkplaceDiagnostics.cs", "Core/WorkplaceAvailability.cs"],
      "rigCheck": "f9-5", "relatedChecks": [], "capability": "food.checkout.shop", "lastRigHead": null, "lastRigFingerprint": null, "lastRigEvidence": null},
     {"id": "agency-billing", "assumption": "A research charge is one ChangeMoneySafe transaction per order after RunDaily, on that night's marketing bill and before the financial summary (C5d).",
      "records": ["docs-history-2026-11-10:docs/checks/c5d.md", "docs-history-2026-11-10:docs/plans/c5-agency-research.md#35-charge-through-the-native-agency-bill-runtime"], "recordedAt": "30a9de7",
