@@ -38,11 +38,10 @@ public sealed class WireHeaderTests
         var layout = typeof(SaveCodec).GetNestedType("TupleLayout", BindingFlags.NonPublic)!;
         var instance = layout.GetMethod("For")!.Invoke(null, new object[] { dto })!;
         var fields = (PropertyInfo[])layout.GetField("Properties")!.GetValue(instance)!;
-        // The allowance-only external account uses the existing Budget slot's scalar variant. A roster record's anchor
-        // and slot are derived from the person table (one record per person).
+        // A roster record's anchor and slot are derived from the person table (one record per person), and its wallet
+        // link from the person's own wallet (GR-1); the allowance-only external account has its own slot.
         var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null
-            && !(dto == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")
-            && !(dto == typeof(ResidentMeal) && (p.Name == "AnchorId" || p.Name == "Slot")));
+            && !(dto == typeof(ResidentMeal) && (p.Name == "AnchorId" || p.Name == "Slot" || p.Name == "Budget")));
         Assert.Equal(expected, fields.Length);
         Assert.Equal(fields.Length, fields.Select(p => p.Name).Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(writable.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal), fields.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));

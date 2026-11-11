@@ -130,6 +130,8 @@ namespace PersistentCity.Runtime
                         ResidentialAreaSquareMetres = residentialArea,
                         NativeTrafficIndex = building.trafficIndex >= 0 && building.trafficIndex <= 100 ? building.trafficIndex : -1,
                         AttractionWeight = Attraction(kind, registration?.businessTypeName),
+                        // GR-1: a dormant address and a home have none; BusinessTypeRefresh keeps it current afterwards.
+                        BusinessType = kind == PlaceKind.Home ? BusinessTypes.None : EstablishedType(registration),
                         EvidenceSource = evidence ?? "native-building-traffic;policy:destination-weight" };
                     if (copyWeeklyHours)
                         foreach (var window in weekly) place.WeeklyHours.Add(new OpeningWindow { Day = window.Day, FromMinute = window.FromMinute, ToMinute = window.ToMinute });
@@ -142,6 +144,36 @@ namespace PersistentCity.Runtime
             foreach (var place in OutdoorPlaces.Read(places)) if (ids.Add(place.Id)) places.Add(place);
             places.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
             return places;
+        }
+
+        /// <summary>GR-1: the normalized type of an established business (any catalogue name, modded included); none for an
+        /// address without one.</summary>
+        private static string EstablishedType(BuildingRegistration? registration)
+        {
+            if (registration == null || !registration.HasEstablishedBusiness || registration.AvailableForRent) return BusinessTypes.None;
+            string type = BusinessTypes.Normalize(registration.businessTypeName);
+            return type.Length <= BusinessTypes.MaximumNameLength ? type : BusinessTypes.None;
+        }
+
+        /// <summary>GR-1: address key to type for every accessible address with an established business now, from the
+        /// already-assigned registration fields (no registration helper, no interior load). Same address rule as
+        /// <see cref="Read(List{CensusWorkplace})"/>. Closed and dormant addresses are absent.</summary>
+        public static Dictionary<string, string> ReadBusinessTypes(Dictionary<string, string>? reuse = null)
+        {
+            var types = reuse ?? new Dictionary<string, string>(StringComparer.Ordinal);
+            types.Clear();
+            var manager = CityManager.Instance;
+            if (manager == null || manager.cityBuildingControllers == null) return types;
+            foreach (var controller in manager.cityBuildingControllers)
+            {
+                if (controller == null || controller.building == null || controller.blockPedestrianSpawn || !BuildingAccessible(controller)) continue;
+                var registration = controller.buildingRegistration;
+                if (registration == null || controller.building.BuildingType == "ba:buildingtype_residential") continue;
+                string type = EstablishedType(registration);
+                if (type.Length == 0 || string.IsNullOrWhiteSpace(registration.StreetName)) continue;
+                types["address:" + Uri.EscapeDataString(registration.StreetName) + ":" + registration.StreetNumber.ToString(CultureInfo.InvariantCulture)] = type;
+            }
+            return types;
         }
 
         internal static bool IsRetailShopActivity(string? businessType) => businessType != "ba:businesstype_school"

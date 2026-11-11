@@ -302,6 +302,7 @@ namespace PersistentCity.Runtime
                 // Finish at most one vendor continuation unit before advancing any logical event.
                 if (vendorMarket?.Prepare((long)target) == true) return;
                 foodMarket?.RefreshRoutineHours(target);
+                RefreshBusinessTypes(simulation.State.Places, target, "hour");
                 // Build/refresh native road data in bounded slices before advancing any event.
                 // Mode availability must not depend on which citizen happened to request a route
                 // while the graph was half prepared, or on the number of rendered frames.
@@ -721,6 +722,9 @@ namespace PersistentCity.Runtime
                 PortalPlaces.Add(state, NativePortalStations.Read());
                 log?.Info("Visitor portals: " + state.Portals.Count + " subway stations.");
             }
+            // GR-1: a saved city's places take the types the catalogue has now (opened, closed, replaced since the save).
+            businessTypeHour = long.MinValue;
+            RefreshBusinessTypes(state.Places, state.Minute, "load");
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);

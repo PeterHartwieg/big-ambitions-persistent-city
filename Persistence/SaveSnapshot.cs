@@ -56,6 +56,8 @@ namespace PersistentCity.Persistence
                 copier.Section(section, live, wire);
             }
             foreach (bool section in done) if (!section) throw new ArgumentException("A snapshot needs every section.");
+            // GR-1: the copied roster links to the copied persons' wallets, as the live roster links to the live ones.
+            SaveCodec.LinkWallets(wire);
             return new SaveSnapshot(wire, copier.SharedRoutes, copier.CopiedRoutes);
         }
 
@@ -123,7 +125,7 @@ namespace PersistentCity.Persistence
                 Id = p.Id, Name = p.Name, District = p.District, Kind = p.Kind, Position = p.Position, Capacity = p.Capacity,
                 OpenMinute = p.OpenMinute, CloseMinute = p.CloseMinute, WeeklyHours = List(p.WeeklyHours, WindowCopy)!,
                 AttractionWeight = p.AttractionWeight, NativeTrafficIndex = p.NativeTrafficIndex, EvidenceSource = p.EvidenceSource,
-                ResidentialAreaSquareMetres = p.ResidentialAreaSquareMetres,
+                ResidentialAreaSquareMetres = p.ResidentialAreaSquareMetres, BusinessType = p.BusinessType,
             };
 
             private static OpeningWindow Window(OpeningWindow w) => new OpeningWindow { Day = w.Day, FromMinute = w.FromMinute, ToMinute = w.ToMinute };
@@ -153,7 +155,7 @@ namespace PersistentCity.Persistence
                 copy.OptionalStopChoice = c.OptionalStopChoice;
                 copy.Car = c.Car == null ? null : new CarState { ModelId = c.Car.ModelId, PaintSeed = c.Car.PaintSeed, Id = c.Car.Id, ParkedPosition = c.Car.ParkedPosition };
                 copy.JoinedMinute = c.JoinedMinute; copy.LastEmploymentCheckDay = c.LastEmploymentCheckDay; copy.JobChanges = c.JobChanges;
-                copy.EmploymentStartDay = c.EmploymentStartDay; copy.Accrual = c.Accrual;
+                copy.EmploymentStartDay = c.EmploymentStartDay; copy.Accrual = c.Accrual; copy.Wallet = Budget(c.Wallet);
                 copy.Phase = c.Phase; copy.Activity = c.Activity; copy.PlaceId = c.PlaceId; copy.DestinationId = c.DestinationId;
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
                 copy.DepartureMinute = c.DepartureMinute; copy.NextEventMinute = c.NextEventMinute; copy.ActivityUntilMinute = c.ActivityUntilMinute;
@@ -306,7 +308,7 @@ namespace PersistentCity.Persistence
                     Day = m.Day, Kind = m.Kind, DayAllowanceUsed = m.DayAllowanceUsed, DesiredAt = m.DesiredAt, ExpiresAt = m.ExpiresAt,
                     DueAt = m.DueAt, Status = m.Status, PlaceId = m.PlaceId, BusinessId = m.BusinessId, ProductId = m.ProductId,
                     Reason = m.Reason, Allowance = m.Allowance, Price = m.Price, ServiceMinutes = m.ServiceMinutes, ServiceAt = m.ServiceAt,
-                    Deadline = m.Deadline, ReturnMinutes = m.ReturnMinutes, Budget = Budget(m.Budget), ExistingStop = m.ExistingStop,
+                    Deadline = m.Deadline, ReturnMinutes = m.ReturnMinutes, ExistingStop = m.ExistingStop,
                     ExistingStopPurchases = m.ExistingStopPurchases, Purchases = m.Purchases, Spent = m.Spent,
                     RepresentedTraits = Traits(m.RepresentedTraits), Today = Today(m.Today), Decision = Decision(m.Decision),
                     LastContextKey = m.LastContextKey, ContextAttempts = m.ContextAttempts, Memory = Memory(m.Memory)!,

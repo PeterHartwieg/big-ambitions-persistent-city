@@ -625,7 +625,7 @@ namespace PersistentCity.Core
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
-            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual,
+            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet,
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
@@ -682,6 +682,8 @@ namespace PersistentCity.Core
             }
             live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
             live.EmploymentStartDay = working.EmploymentStartDay; live.Accrual = working.Accrual;
+            // GR-1: the copy shares the person's wallet; an event never replaces it.
+            live.Wallet = working.Wallet;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
             // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
             live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;

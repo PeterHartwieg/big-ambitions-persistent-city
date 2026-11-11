@@ -90,8 +90,8 @@ public sealed class EconomicLedgerTests
         AssertRoundTrip(state);
     }
     [Theory]
-    [InlineData(5150, "3c461d281458d63b3ba3304cec46260de689dead22e244a8e2489d365f06a40a", 173892)]
-    [InlineData(9217, "bcd350cfc8577cd0df2795c599aa182d7f378239c44d708d30209f18f6773e25", 173856)]
+    [InlineData(5150, "f287cfabed5331b098ed1a8a4e16313d92d468550be1d5f9e3f3624c186b1b92", 176871)]
+    [InlineData(9217, "5b3b5cbed834823e6e25a1a0f824e3a23e1b42376516aa1e6017744d7018e59b", 176835)]
     public void PopulatedWriterGoldensAndEveryNewFieldRoundTrips(int seed, string pin, int length)
     {
         var state = Fresh(seed); Populate(state);
@@ -163,14 +163,14 @@ public sealed class EconomicLedgerTests
             case "missing-ledger": root.Remove("Economy"); break;
             case "missing-accrual": ((JObject)root["Citizens"]![0]!).Remove("Accrual"); break;
             case "missing-causes": ((JObject)root["Food"]!["History"]![0]!).Remove("Causes"); break;
-            case "missing-owner": ((JArray)root["Food"]!["Residents"]![0]![2]!).RemoveAt(20); break;
+            case "missing-owner": ((JArray)root["Citizens"]![0]!["Wallet"]!).RemoveAt(20); break;
             case "duplicate-root": raw = root.ToString(Formatting.None).Replace("\"Economy\":", "\"Economy\":{},\"Economy\":"); break;
             case "duplicate-ledger": raw = root.ToString(Formatting.None).Replace("\"Outside\":", "\"Outside\":[],\"Outside\":"); break;
             case "cause-width": root["Food"]!["History"]![0]!["Causes"] = new string('0', 49); break;
             case "accrual-money-overflow": root["Citizens"]![0]!["Accrual"] = "0001Y2P0IJ32E8E8" + new string('0', 10); break;
             case "bad-enum": { string s = (string)shops[0][1]![0]!; shops[0][1]![0] = s[..6] + "Z" + s[7..]; break; }
-            case "lowercase-money": root["Food"]!["Residents"]![0]![2]![20] = new string('a', 32); break;
-            case "overflow-money": root["Food"]!["Residents"]![0]![2]![20] = new string('Z', 13) + new string('0', 19); break;
+            case "lowercase-money": root["Citizens"]![0]!["Wallet"]![20] = new string('a', 32); break;
+            case "overflow-money": root["Citizens"]![0]!["Wallet"]![20] = new string('Z', 13) + new string('0', 19); break;
             case "escaped-money": raw = root.ToString(Formatting.None).Replace("\"" + new string('0', 26), "\"\\u0030" + new string('0', 25)); break;
             default:
                 string bad = fault == "wide-leading-zero" ? "01" : fault == "wide-exponent" ? "1e1" : fault == "wide-negative" ? "-1" : new string('9', 27);
@@ -273,7 +273,7 @@ public sealed class EconomicLedgerTests
         var root = SaveWire.Parse(SaveCodec.Write(state));
         // One unit beyond the signed-64 range is representable by the base36 width but always refused.
         const string overflow = "1Y2P0IJ32E8E8";
-        root["Food"]!["Residents"]![0]![2]![20] = overflow + new string('0', 19);
+        root["Citizens"]![0]!["Wallet"]![20] = overflow + new string('0', 19);
         Refused(root.ToString(Formatting.None));
     }
 

@@ -47,6 +47,11 @@ namespace PersistentCity.Core
         public int NativeTrafficIndex { get; set; } = -1;
         public string EvidenceSource { get; set; } = "legacy";
         public double ResidentialAreaSquareMetres { get; set; }
+        /// <summary>GR-1: the native business type established at this address, exactly as the loaded catalogue names it
+        /// (modded types included). Empty for homes, outdoor spots and an address without an established business; a
+        /// closed business returns its place to empty. <see cref="BusinessTypes.For"/> gives the neutral profile for empty
+        /// and unknown names.</summary>
+        public string BusinessType { get; set; } = "";
         // Transient and never serialized: DailyRoutine's opening windows for recently queried days,
         // validated against an exact copy of the hours on every use.
         internal OpeningCache? OpeningCache;
@@ -303,6 +308,10 @@ namespace PersistentCity.Core
         /// unassigned. Bookkeeping only: no routine, choice or money reads it.</summary>
         public int EmploymentStartDay { get; set; }
         public EmploymentAccrual Accrual { get; set; }
+        /// <summary>GR-1: this person's own wallet (budget, wages, savings), saved with the person. Null while the city has
+        /// no household finances. Every spender pays from it; the food roster's <see cref="ResidentMeal.Budget"/> is only
+        /// a link to this same object.</summary>
+        public ResidentBudget? Wallet { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
         public string PlaceId { get; set; } = "";

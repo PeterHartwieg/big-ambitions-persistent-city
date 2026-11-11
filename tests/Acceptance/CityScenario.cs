@@ -244,7 +244,7 @@ internal sealed partial class CityScenario
     /// ledger at its execution point: its scheduled minute, the run-wide posting sequence, the wallet and its posted fields.</summary>
     private AdvanceResult Step(double target)
     {
-        var next = (int)budgetCount.GetValue(budgetDue)! > 0 ? (ResidentMeal)budgetMin.GetValue(budgetDue)! : null;
+        var next = (int)budgetCount.GetValue(budgetDue)! > 0 ? (CitizenState)budgetMin.GetValue(budgetDue)! : null;
         double due = (double)budgetMinute.GetValue(budgetDue)!;
         long before = food.BudgetPostings;
         var advanced = city.AdvanceFrameSlice(target, 1);
@@ -253,10 +253,10 @@ internal sealed partial class CityScenario
         if (posted == 1)
         {
             run.Postings++;
-            if (due > city.View.Minute) throw new CityViolation("wallet " + next!.ResidentId + " posted before its minute " + CityOracles.M(due));
+            if (due > city.View.Minute) throw new CityViolation("wallet " + next!.Identity.Id + " posted before its minute " + CityOracles.M(due));
             // The posting's own minute (daily bill or shift end); the simulator clock at that unit depends on the frame target.
-            run.Ledger.Add("p|" + CityOracles.M(due) + "|" + run.Postings.ToString(CultureInfo.InvariantCulture) + "|" + next!.ResidentId
-                + "|" + CityOracles.Posting(next.Budget!));
+            run.Ledger.Add("p|" + CityOracles.M(due) + "|" + run.Postings.ToString(CultureInfo.InvariantCulture) + "|" + next!.Identity.Id
+                + "|" + CityOracles.Posting(next.Wallet!));
         }
         return advanced;
     }
