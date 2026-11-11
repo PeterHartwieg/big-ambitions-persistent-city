@@ -120,7 +120,9 @@ namespace PersistentCity.Persistence
             DevelopmentSchemaMessage + " (schema " + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ", retired compact format)", CityState.CurrentSchema);
 
         // One reusable text buffer per thread (the save callback runs on the main thread). It keeps the capacity of the
-        // largest save so far, so a save allocates only its finished string. Never shared between threads.
+        // largest save so far, so a save allocates only its finished string. Never shared between threads. The cost is
+        // that the thread keeps about two bytes per character of its largest save for the session (about 7.5 MB at
+        // 3,000 persons, 15 MB at 6,000); the first Clear after the buffer grew in chunks allocates that once.
         [ThreadStatic] private static System.Text.StringBuilder? bodyBuffer;
 
         /// <summary>The single writer pass: the same serializer, settings and converters as
