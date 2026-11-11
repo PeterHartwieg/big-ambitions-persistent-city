@@ -36,7 +36,7 @@ public sealed class TrafficSignalMigrationTests
     public void OldTerminalAndHandoffSchedulesAreRefusedWithoutChangingOwnedState(bool handoff)
     {
         var old = Legacy(handoff); string original = JsonSerializer.Serialize(old);
-        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(old, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(old));
         Assert.Throws<ArgumentException>(() => TrafficKernel.ValidateState(old));
         Assert.Equal(original, JsonSerializer.Serialize(old));
     }
@@ -50,7 +50,7 @@ public sealed class TrafficSignalMigrationTests
         if (defect == "readiness") state.Vehicles[0].ReadyAt -= .001;
         if (defect == "future") state.Schema = 3;
         string original = JsonSerializer.Serialize(state);
-        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state));
         Assert.Equal(original, JsonSerializer.Serialize(state));
     }
 
@@ -58,10 +58,10 @@ public sealed class TrafficSignalMigrationTests
     public void CurrentSchemaDoesNotAcceptAnOldLateEventAndOldOverflowStateIsUntouched()
     {
         var state = Legacy(); state.Schema = 2;
-        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state));
         state.Schema = 1; state.NextEventOrder = long.MaxValue;
         string original = JsonSerializer.Serialize(state);
-        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state));
         Assert.Equal(original, JsonSerializer.Serialize(state));
     }
 }

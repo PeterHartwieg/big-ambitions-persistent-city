@@ -21,7 +21,7 @@ public sealed class F7cSnapshotMeasure
     [Fact]
     public void SnapshotSplit()
     {
-        string? output = Environment.GetEnvironmentVariable("PC_F7C_SNAPSHOT_MEASURE");
+        string? output = PerfGate.Variable("PC_F7C_SNAPSHOT_MEASURE");
         if (string.IsNullOrEmpty(output)) return;
         int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_F7C_SAMPLES"), out int n) ? n : 7;
         foreach (string fixture in F7cMeasure.Fixtures(Environment.GetEnvironmentVariable("PC_F7C_FIXTURES")))

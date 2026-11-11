@@ -14,7 +14,7 @@ public sealed class OriginalThreeDecisionMeasure
     [Fact]
     public void MeasureOriginalThreeDecisions()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_E5B4_MEASURE_LEGACY");
+        string? path = PerfGate.Variable("PC_E5B4_MEASURE_LEGACY");
         if (string.IsNullOrEmpty(path)) return;
         long Run(int seed, out double ms)
         {

@@ -148,12 +148,12 @@ From numbers already recorded in the repo; nothing new was run.
 
 | Quantity | Value | Source |
 | --- | --- | --- |
-| Population of the reference city | 957 residents; 957 visitors on day 1, 1,914 by day 3 | [rig 11 Nov batch](../checks/rig-2026-11-11-batch-results.md) |
-| Places | 1,083 | [F8h check 1 log](../checks/f8h-check1-modpack-owners-mac.json) |
+| Population of the reference city | 957 residents; 957 visitors on day 1, 1,914 by day 3 | [rig 11 Nov batch](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/rig-2026-11-11-batch-results.md) |
+| Places | 1,083 | [F8h check 1 log](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/f8h-check1-modpack-owners-mac.json) |
 | Resident visits | about 3 per shop per day | [9 Nov review](../reviews/2026-11-09-city-review.md) |
-| Offline own-shop ceiling | 60 meals per hour, capacity-bound profile | [F9h record](../checks/f9h.md) |
-| Price response at weight 1.2 | +50% menu: meals −1.7%, revenue +29.7% (offline) | [F9h record](../checks/f9h.md) |
-| Native customers at a player shop | not measured: every rig fixture so far recorded no orders and revenue 0 | [rig 9 Nov](../checks/rig-2026-11-09-results.md), [rig 11 Nov e](../checks/rig-2026-11-11e-mac-results.md) |
+| Offline own-shop ceiling | 60 meals per hour, capacity-bound profile | [F9h record](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/f9h.md) |
+| Price response at weight 1.2 | +50% menu: meals −1.7%, revenue +29.7% (offline) | [F9h record](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/f9h.md) |
+| Native customers at a player shop | not measured: every rig fixture so far recorded no orders and revenue 0 | [rig 9 Nov](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/rig-2026-11-09-results.md), [rig 11 Nov e](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/rig-2026-11-11e-mac-results.md) |
 
 The mod's side is known: about 3 visits per shop per day, estimated for the 9 November reference city of 957 residents plus 1,914 commuters, 2,871 people. The native side is not measured, so the revenue gap is unknown. S1 shows the native count is `ceil(initial × promotion × day and hour factor)` for every open hour, capped at `customerCapacity` for retail. Scenarios, not measurements: if a shop open 9 hours got one native customer per open hour, native visits would be 9 a day, 3× the resident visits; with the multipliers above 1 the ratio could be 10× or more. These are visit ratios. The revenue ratio also depends on basket size and price per visit, which the records do not give for native customers. S2 gives the native visit count: log `GetCustomersByHour` and `customerCapacity` for the FT shop for one day, with its booked revenue.
 

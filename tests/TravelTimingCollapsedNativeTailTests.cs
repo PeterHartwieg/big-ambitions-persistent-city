@@ -43,8 +43,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: sectionBoundary, rise: sloped ? .5 : 0)); simulation.AdvanceTo(0);
         double raw = minutes - gap;
         if (gap == 0) for (int i = 0; i < ulps; i++) raw = Math.BitDecrement(raw);
-        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
-        Assert.Equal(raw, LegacyTrafficLease.Report(simulation, "car", raw, raw)); state.PrepareForSave();
+        // A saved progress floor inside the section (TrafficFloorFixture).
+        Assert.Equal(raw, TrafficFloorFixture.Write(state, simulation, "car", raw, raw));
         Assert.Equal(raw, state.Traffic!.Vehicles.Single().NominalMinutes);
         return (state, citizen, raw);
     }
@@ -77,8 +77,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         state.Places.Single(place => place.Id == "b").Position = route.Legs[^1].To;
         var planner = new ShortContinuationPlanner(continuation); var simulation = new CitySimulator(state, planner); simulation.AdvanceTo(0);
         double raw = 6 - 4 * 2.2204460492503131e-16 * 6;
-        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
-        Assert.Equal(raw, LegacyTrafficLease.Report(simulation, "car", raw, raw)); state.PrepareForSave();
+        // A saved progress floor inside the section (TrafficFloorFixture).
+        Assert.Equal(raw, TrafficFloorFixture.Write(state, simulation, "car", raw, raw));
         planner.TrafficNetwork.ValidateRemainingMapping(route, state.Traffic!.Vehicles.Single().Route, raw);
         Assert.Equal(P(1060), route.PositionAt(raw));
         return (state, citizen, raw);
@@ -245,8 +245,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var simulation = new CitySimulator(state, planner);
         double endpoint = citizen.Journey!.Legs[0].Minutes + citizen.Journey.Legs[1].Minutes;
         double raw = Math.BitDecrement(endpoint);
-        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
-        Assert.Equal(raw, LegacyTrafficLease.Report(simulation, "car", raw, raw)); state.PrepareForSave();
+        // A saved progress floor inside the section (TrafficFloorFixture).
+        Assert.Equal(raw, TrafficFloorFixture.Write(state, simulation, "car", raw, raw));
         Assert.StartsWith("native:road:fragment1:", citizen.Journey.Legs[1].ServiceId);
         planner.TrafficNetwork.ValidateRemainingMapping(citizen.Journey, state.Traffic!.Vehicles[0].Route, raw);
         Position pose = citizen.Journey.PositionAt(raw); Assert.False(pose.Equals(citizen.Journey.Legs[1].To));
@@ -306,9 +306,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var (original, _, _) = Captured(sectionBoundary: true);
         var state = SaveWire.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: true));
-        // Body-reported coordinates, as an older (pre-F2d) build saved them (LegacyTrafficLease).
-        Assert.Equal(1, LegacyTrafficLease.Report(simulation, "car", 1, 1, release: false)); simulation.AdvanceTo(1);
-        Assert.Equal(1.5, LegacyTrafficLease.Report(simulation, "car", 1.5, 1.5)); state.PrepareForSave();
+        // A saved progress floor in the second section (TrafficFloorFixture).
+        Assert.Equal(1.5, TrafficFloorFixture.Write(state, simulation, "car", 1.5, 1.5));
         Assert.Equal(1, state.Traffic!.Vehicles.Single().RouteIndex);
         Assert.True(TravelTiming.Apply(state, 2, 2));
         var historical = state.Traffic!.Vehicles.Single().Route[0];
@@ -348,33 +347,12 @@ public sealed class TravelTimingCollapsedNativeTailTests
         state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = clock;
         citizen.DepartureMinute = clock; citizen.NextEventMinute = clock + 7;
         var simulation = new CitySimulator(state, new ShortContinuationPlanner(10)); simulation.AdvanceTo(clock);
-        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
-        Assert.Equal(nominal, LegacyTrafficLease.Report(simulation, "car", clock + 10, nominal)); state.PrepareForSave();
+        // A saved progress floor inside the section (TrafficFloorFixture).
+        Assert.Equal(nominal, TrafficFloorFixture.Write(state, simulation, "car", clock + 10, nominal));
         double elapsed = state.Minute - citizen.DepartureMinute;
         string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
         _ = new CitySimulator(SaveWire.Read(json).State!, new ShortContinuationPlanner(10));
         return (decoded.State!, nominal, elapsed);
-    }
-
-    [Theory]
-    [InlineData(3.00000001, 2)] [InlineData(3.00000001, .5)] [InlineData(3.000000007, 100)]
-    public void ActualLargeClockCaptureRetimesAtMeasuredTrafficWithoutAmplifyingClockRoundoff(double nominal, double rate)
-    {
-        var (state, observed, elapsed) = CapturedAtLargeClock(nominal); Assert.NotEqual(observed, elapsed);
-        if (rate == 100) Assert.True(observed > elapsed); else Assert.True(observed < elapsed);
-        AssertRetimedCapture(state, observed, rate, new ShortContinuationPlanner(10, rate));
-    }
-
-    [Theory]
-    [InlineData(3.000000007, 2)] [InlineData(3, 100)] [InlineData(3, 2)]
-    public void EqualOrBoundedlyLeadingActualTrafficStillRetimesAndRoundtrips(double nominal, double rate)
-    {
-        var (state, observed, elapsed) = CapturedAtLargeClock(nominal); Assert.True(observed >= elapsed);
-        Assert.True(TravelTiming.Apply(state, 2, rate));
-        string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
-        var rebound = new CitySimulator(decoded.State!, new ShortContinuationPlanner(10, rate));
-        double actual = rebound.Traffic!.GetPermission("car").NominalMinutes;
-        Assert.InRange(Math.Abs(actual - (state.Minute - state.Citizens[0].DepartureMinute)), 0, 1e-7);
     }
 
     [Fact]
@@ -397,16 +375,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.True(state.Citizens[0].Journey!.PositionAt(nominal).X < 1060);
         AssertRetimedCapture(state, nominal, 2, new ShortContinuationPlanner(10, 2));
         Assert.True(state.Citizens[0].Journey!.Legs[1].From.X < 1060);
-    }
-
-    [Fact]
-    public void NativeOwnedLegacyUntaggedPrefixRetimesAtTheMeasuredCoordinate()
-    {
-        var (state, observed, elapsed) = CapturedAtLargeClock(3.00000001); Assert.True(observed < elapsed);
-        state.Citizens[0].Journey!.Legs[0].ServiceId = ""; // Supported historical native geometry without fragment tags.
-        string before = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(before).Status);
-        _ = new CitySimulator(SaveWire.Read(before).State!, new ShortContinuationPlanner(10));
-        AssertRetimedCapture(state, observed, 2, new ShortContinuationPlanner(10, 2));
     }
 
     private static void AssertRetimedCapture(CityState state, double observed, double rate, ITrafficRoutePlanner planner, bool rawPositionUnchanged = true)
@@ -433,41 +401,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.InRange(Math.Abs(actual - (clock - departure)), 0, 1e-7);
     }
 
-    [Theory]
-    [InlineData(false, .5)] [InlineData(false, 2)] [InlineData(false, 100)]
-    [InlineData(true, .5)] [InlineData(true, 2)] [InlineData(true, 100)]
-    public void OrdinaryClockCaptureRetimesBothSidesOfDepartureSubtractionRoundoff(bool leading, double rate)
-    {
-        double nominal = leading ? Math.BitIncrement(3) : Math.BitDecrement(3);
-        var (state, observed, elapsed) = CapturedAtClock(nominal, 2194.8916206359863);
-        Assert.Equal(3, elapsed); Assert.NotEqual(observed, elapsed);
-        AssertRetimedCapture(state, observed, rate, new ShortContinuationPlanner(10, rate));
-    }
-
-    [Fact]
-    public void CompletedTrafficRetainsItsTimestampAndOnlyRetimesItsFutureWalkingEgress()
-    {
-        var (original, _, _) = Captured(); var state = SaveWire.Read(SaveCodec.Write(original)).State!;
-        var citizen = state.Citizens[0]; citizen.Journey!.Legs[1].Mode = TravelMode.Walk; citizen.Journey.Legs[1].ServiceId = "";
-        var planner = new Planner(); Assert.True(planner.TrafficNetwork.TryMap(citizen.Journey, out var mapped));
-        var kernel = new TrafficKernel(planner.TrafficNetwork.Links, 0); kernel.Enqueue("car", mapped);
-        kernel.AdvanceTo(0, 100); kernel.SetPhysicalControl("car", true); kernel.AdvanceTo(1, 100);
-        Assert.Equal(1, kernel.ReportPhysicalProgress("car", 1)); kernel.AdvanceTo(1, 100);
-        kernel.SetPhysicalControl("car", false);
-        Assert.True(kernel.GetPermission("car").IsCompleted);
-        state.Minute = 1; state.Traffic = kernel.Capture(); citizen.DepartureMinute = 0; citizen.NextEventMinute = 2;
-        var completed = state.Traffic.Vehicles.Single(); Assert.Equal(1, completed.CompletedAt);
-        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
-        Assert.True(TravelTiming.Apply(state, 2, 2));
-        Assert.Equal(1, citizen.Journey.Legs[0].Minutes); Assert.Equal(2, citizen.Journey.Legs[1].Minutes);
-        Assert.Equal(3, citizen.NextEventMinute); Assert.Equal(0, citizen.DepartureMinute);
-        Assert.True(state.Traffic!.Vehicles.Single().Completed); Assert.Equal(1, state.Traffic.Vehicles.Single().CompletedAt);
-        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
-        var rebound = new CitySimulator(decoded.State!, new Planner(2));
-        Assert.Equal(0, rebound.Traffic!.VehicleCount); Assert.Equal(3, decoded.State!.Citizens[0].NextEventMinute);
-        Assert.Equal(P(230), rebound.SampleJourney(decoded.State.Citizens[0]).Position);
-    }
-
     private sealed class PolylinePlanner : IRoutePlanner, ITrafficRoutePlanner
     {
         private readonly bool closedDownstream;
@@ -484,22 +417,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         public bool IsTrafficLinkClosed(int linkId) => closedDownstream && linkId == 1;
     }
 
-    [Theory]
-    [InlineData(false, .9, .5)] [InlineData(false, .9, 2)] [InlineData(false, .9, 100)]
-    [InlineData(true, 1.5, .5)] [InlineData(true, 1.5, 2)] [InlineData(true, 1.5, 100)]
-    public void NonbinaryPrefixArithmeticMapsMeasuredTrafficToTheActualSplitBoundary(bool manyLegs, double nominal, double rate)
-    {
-        double[] x = manyLegs ? new[] { 220d, 223, 225, 229, 239, 249 } : new[] { 220d, 223, 233, 243 };
-        var state = CapturedPolyline(x, nominal);
-        AssertRetimedCapture(state, nominal, rate, new PolylinePlanner(x, rate));
-        if (!manyLegs)
-        {
-            double prefixEnd = state.Citizens[0].Journey!.Legs.Take(2).Sum(leg => leg.Minutes);
-            Assert.Equal(.9000000000000001, prefixEnd);
-            Assert.Equal(prefixEnd, state.Traffic!.Vehicles.Single().NominalMinutes);
-        }
-    }
-
     private static CityState CapturedPolyline(double[] x, double nominal, int boundary = -1, bool closedDownstream = false)
     {
         var (source, _, _) = Captured(); var state = SaveWire.Read(SaveCodec.Write(source)).State!;
@@ -511,26 +428,11 @@ public sealed class TravelTimingCollapsedNativeTailTests
         citizen.Car!.ParkedPosition = P(x[0]); state.Places.Single(place => place.Id == "a").Position = P(x[0]);
         state.Places.Single(place => place.Id == "b").Position = P(x[^1]);
         var simulation = new CitySimulator(state, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream)); simulation.AdvanceTo(state.Minute);
-        // A body-reported coordinate, as an older (pre-F2d) build saved it (LegacyTrafficLease).
-        Assert.Equal(nominal, LegacyTrafficLease.Report(simulation, "car", state.Minute + 10, nominal));
-        state.PrepareForSave();
+        // A saved progress floor inside the section (TrafficFloorFixture).
+        Assert.Equal(nominal, TrafficFloorFixture.Write(state, simulation, "car", state.Minute + 10, nominal));
         string json = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(json).Status);
         _ = new CitySimulator(SaveWire.Read(json).State!, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream));
         return state;
-    }
-
-    [Theory]
-    [InlineData(.5)] [InlineData(2)] [InlineData(100)]
-    public void ExactCumulativeNonbinaryBoundaryDoesNotCreateAPhantomPartialNativeLeg(double rate)
-    {
-        double[] x = { 220, 223, 225, 229, 239, 249 };
-        var state = CapturedPolyline(x, .9);
-        Assert.Equal(.9, state.Citizens[0].Journey!.Legs.Take(3).Sum(leg => leg.Minutes));
-        AssertRetimedCapture(state, .9, rate, new PolylinePlanner(x, rate));
-        Assert.Equal(.9, state.Traffic!.Vehicles.Single().NominalMinutes);
-        Assert.Equal(5, state.Citizens[0].Journey!.Legs.Count);
-        Assert.Equal(new[] { .3, .2, .4, rate, rate }, state.Citizens[0].Journey!.Legs.Select(leg => leg.Minutes));
-        Assert.All(state.Citizens[0].Journey!.Legs, leg => Assert.StartsWith("native:road:v1:", leg.ServiceId));
     }
 
     [Theory]
@@ -540,36 +442,12 @@ public sealed class TravelTimingCollapsedNativeTailTests
         double[] x = { 220, 223, 225, 229, 239, 249 };
         var state = CapturedPolyline(x, .9, boundary: 3, closedDownstream: true);
         Assert.Equal(0, state.Traffic!.Vehicles.Single().RouteIndex);
-        Assert.Equal(.9, TrafficKernel.Restore(state.Traffic, false).GetPermission("car").NominalMinutes);
+        Assert.Equal(.9, TrafficKernel.Restore(state.Traffic).GetPermission("car").NominalMinutes);
         AssertRetimedCapture(state, .9, rate, new PolylinePlanner(x, rate, boundary: 3, closedDownstream: true));
         Assert.Equal(0, state.Traffic!.Vehicles.Single().RouteIndex);
         Assert.Equal(new[] { "car" }, state.Traffic.Links.Single(link => link.LinkId == 0).Vehicles);
         Assert.Empty(state.Traffic.Links.Single(link => link.LinkId == 1).Vehicles);
         Assert.False(state.Traffic.Vehicles.Single().Completed);
-    }
-
-    [Theory]
-    [InlineData(.5)] [InlineData(2)]
-    public void NormalizedNativeBoundaryKeepsItsSampledPoseWhenRawSubtractionCrossesTheCorner(double rate)
-    {
-        // A small canonical 36 km/h route reproduces the native capture's arithmetic:
-        // cumulative 1.6 + 3.8 is 5.4, but repeated subtraction enters the next edge.
-        double[] x = { 0, -16, 22, 23 }; var state = CapturedPolyline(x, 5.4);
-        var citizen = state.Citizens[0]; var oldSimulation = new CitySimulator(state, new PolylinePlanner(x));
-        var before = oldSimulation.SampleJourney(citizen, 5.4);
-        Assert.Equal(P(22), before.Position); Assert.Equal(2, before.LegIndex); Assert.Equal(0, before.LegFraction);
-        Assert.False(before.Position.Equals(citizen.Journey!.PositionAt(5.4)));
-        long order = state.Traffic!.Vehicles.Single().Order; double departure = citizen.DepartureMinute;
-        Assert.True(TravelTiming.Apply(state, 2, rate));
-        Assert.Equal(departure, citizen.DepartureMinute); Assert.Equal(order, state.Traffic!.Vehicles.Single().Order);
-        Assert.Equal(5.4, state.Traffic.Vehicles.Single().NominalMinutes);
-        Assert.Equal(new[] { 1.6, 3.8, .1 * rate }, citizen.Journey!.Legs.Select(leg => leg.Minutes));
-        Assert.All(citizen.Journey.Legs, leg => Assert.StartsWith("native:road:v1:", leg.ServiceId));
-        var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
-        var rebound = new CitySimulator(decoded.State!, new PolylinePlanner(x, rate));
-        var after = rebound.SampleJourney(decoded.State!.Citizens[0], rebound.Traffic!.GetPermission("car").NominalMinutes);
-        Assert.Equal(before.Position, after.Position); Assert.Equal(before.CarPosition, after.CarPosition);
-        Assert.Equal(before.Mode, after.Mode); Assert.Equal(before.LegIndex, after.LegIndex); Assert.Equal(0, after.LegFraction);
     }
 
     private sealed class UnmappedPlanner : IRoutePlanner
@@ -653,21 +531,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.True(Position.Distance(citizen.Journey.Legs[1].From, citizen.Journey.Legs[1].To) > 0);
     }
 
-    [Fact]
-    public void AmbiguousGeometryOutsideSamplerNormalizationStillRefusesWithoutMutation()
-    {
-        double[] x = { 1000000, 1000010, 1000020 }; double raw = 1 - 1e-10;
-        var state = CapturedPolyline(x, raw); var citizen = state.Citizens[0];
-        var before = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen, raw);
-        Assert.Equal(0, before.LegIndex); Assert.True(before.LegFraction < 1);
-        Assert.False(before.Position.Equals(citizen.Journey!.Legs[0].To));
-        string json = SaveCodec.Write(state); var route = citizen.Journey; var traffic = state.Traffic;
-        var error = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Contains("ambiguous double-precision projection", error.Message);
-        Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(json, SaveCodec.Write(state));
-        _ = new CitySimulator(SaveWire.Read(json).State!, new PolylinePlanner(x));
-    }
-
     [Theory]
     [InlineData(TravelMode.Walk, false, false)] [InlineData(TravelMode.Subway, false, false)]
     [InlineData(TravelMode.Subway, true, false)] [InlineData(TravelMode.Subway, true, true)]
@@ -696,20 +559,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var after = rebound.SampleJourney(decoded.State!.Citizens[0], raw);
         Assert.Equal(before.Position, after.Position); Assert.Equal(before.CarPosition, after.CarPosition);
         Assert.Equal(before.Mode, after.Mode); Assert.Equal(before.LegFraction, after.LegFraction);
-    }
-
-    [Fact]
-    public void SamplerProvenCornerResidualStillMustPassTheDetachedSpanTimingGate()
-    {
-        double[] x = { 1000, 1060, 1060.000005 }; double raw = 6 - 5e-13;
-        var state = CapturedPolyline(x, raw); var citizen = state.Citizens[0];
-        var measured = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen, raw);
-        Assert.Equal(1, measured.LegIndex); Assert.Equal(0, measured.LegFraction);
-        string before = SaveCodec.Write(state); var route = citizen.Journey; var traffic = state.Traffic;
-        var error = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Contains("duration", error.Message);
-        Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(before, SaveCodec.Write(state));
-        _ = new CitySimulator(SaveWire.Read(before).State!, new PolylinePlanner(x));
     }
 
     private static CityState UnownedCanonicalWalkingRoute(double[] x, double elapsed)

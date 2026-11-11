@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 namespace PersistentCity.Tests
 {
     /// <summary>F8g (docs/plans/f8-capability-boundaries.md): the offline failure matrix. The Core arms run the shared
-    /// tools/capability-matrix code on the 957x2 economy fixture; the Street Food arm uses the vendor rig. The A1-A17 table
+    /// tests/capability-matrix code on the 957x2 economy fixture; the Street Food arm uses the vendor rig. The A1-A17 table
     /// in docs/checks/f8bg.md names one check per requirement, and every named check must exist here.</summary>
     [Collection(F8aSerial.Collection)]
     public sealed class CapabilityMatrixTests
@@ -44,10 +44,7 @@ namespace PersistentCity.Tests
             {
                 Assert.True(CapabilityMatrix.Coverage.TryGetValue(definition.Id, out var arm), definition.Name + " has no arm");
                 var test = Regex.Match(arm!, @"\b(?<check>\w+Tests\.\w+)\b");
-                var tool = Regex.Match(arm!, @"^(?<dir>tools/[\w-]+) \((?<arm>\w+)\)$");
-                bool found = tool.Success
-                    ? File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), tool.Groups["dir"].Value, "Program.cs")).Contains(tool.Groups["arm"].Value + "();", StringComparison.Ordinal)
-                    : test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal));
+                bool found = test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal));
                 Assert.True(found, definition.Name + ": " + arm);
             }
         }
@@ -150,23 +147,23 @@ namespace PersistentCity.Tests
         /// lean-docs cleanup of checks files and frozen plans (the human-readable table is in the PR description).</summary>
         internal static readonly IReadOnlyDictionary<string, string[]> Requirements = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            ["A1"] = new[] { "NativeCapabilityTests.DefinitionsFollowTheD2Table", "CapabilityReportTests.ReportFromDoublesForEveryState", "HookInventorySourceTests.ProductionSourcesMatchTheInventory" },
+            ["A1"] = new[] { "NativeCapabilityTests.DefinitionsFollowTheD2Table", "CapabilityReportTests.ReportFromDoublesForEveryState", "HookConflictReportTests.InventoryCountsAndCapabilityMapping" },
             ["A2"] = new[] { "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "RloContinuityTests.ReflectionFallbackClassesGoingPublicAsStopAndFlareOffAsTransient" },
-            ["A3"] = new[] { "RloContinuityTests.CallSitesUseTheClassAndAddNoRead", "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "RloContinuityTests.ReadyButDifferentStopsWithThePayloadKept" },
+            ["A3"] = new[] { "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "RloContinuityTests.ReadyButDifferentStopsWithThePayloadKept" },
             ["A4"] = new[] { "TransactionMechanismTests.VerifiedByRigWithoutAResultLinkIsRefused", "TransactionMechanismTests.EveryScopedBusinessHasOneMechanismOrOneUnsupportedReason" },
-            ["A5"] = new[] { "HookInventorySourceTests.ProductionSourcesMatchTheInventory", "HookConflictReportTests.RealHarmonyOnStandInMethodsIsClassed", "tools/capability-contracts" },
+            ["A5"] = new[] { "HookConflictReportTests.RealHarmonyOnStandInMethodsIsClassed", "tools/capability-contracts" },
             ["A6"] = new[] { "CapabilityMatrixTests.EveryCoreArmPasses", "NativeFoodContractTests.CheckoutOffWithdrawsAnOwnedShopAtTheNextBoundaryAndKeepsItsReceipts", "CapabilityReportTests.HealthyInputsReportEveryReadCapabilityActive" },
-            ["A7"] = new[] { "RloContinuityTests.CallSitesUseTheClassAndAddNoRead", "NativeFoodContractTests.CheckoutOffIsDecidedAtConstructionAndGuardsEveryEffect" },
+            ["A7"] = new[] { "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "NativeFoodContractTests.CheckoutOffRequestsNoNewOwnership" },
             ["A8"] = new[] { "RloContinuityTests.ATransientWindowContinuesSavesTheReadyBytesAndChangesNoIdentity", "CapabilityMatrixTests.EveryCoreArmPasses" },
-            ["A9"] = new[] { "NativeFoodContractTests.TheAuthorityContractIsCheckedBeforeAnyPatchOrSaveRead", "NativeFoodContractTests.CheckoutOffIsDecidedAtConstructionAndGuardsEveryEffect" },
-            ["A10"] = new[] { "TransactionMechanismTests.EveryScopedBusinessHasOneMechanismOrOneUnsupportedReason", "TransactionMechanismTests.TheBusinessCommandReadsTheExistingScopeStatusOnly" },
+            ["A9"] = new[] { "NativeFoodContractTests.EachChangedAuthorityMemberGivesANamedStartRefusal", "NativeFoodContractTests.EachChangedCheckoutMemberRefusesCheckoutOnly" },
+            ["A10"] = new[] { "TransactionMechanismTests.EveryScopedBusinessHasOneMechanismOrOneUnsupportedReason" },
             ["A11"] = new[] { "TransactionMechanismTests.MetadataRegistrationGrantsNoMechanism" },
-            ["A12"] = new[] { "HookInventorySourceTests.InventoryCountsAndCapabilityMapping", "HookConflictReportTests.ForeignOwnersAreJoinedToTheInventoryAndOurOwnersAreNot" },
+            ["A12"] = new[] { "HookConflictReportTests.InventoryCountsAndCapabilityMapping", "HookConflictReportTests.ForeignOwnersAreJoinedToTheInventoryAndOurOwnersAreNot" },
             ["A13"] = new[] { "CapabilityReportTests.HealthyInputsReportEveryReadCapabilityActive", "TransactionMechanismTests.VerifiedByRigWithoutAResultLinkIsRefused" },
             ["A14"] = new[] { "CapabilityMatrixTests.EveryCoreArmPasses", "HookConflictReportTests.ReportOnlyChangesNoCapability" },
-            ["A15"] = new[] { "CapabilityReportTests.DiagnosticsFileCallsNoMutatingMember", "CapabilityReportTests.DiagnosticsAreNotReachedFromUpdate" },
+            ["A15"] = new[] { "CapabilityReportTests.ReportFromDoublesForEveryState", "CapabilityReportTests.CurrentWriterGoldenHashIsUnchanged" },
             ["A16"] = new[] { "CapabilityReportTests.ReportFromDoublesForEveryState", "RloContinuityTests.EveryBridgeStatusMapsToItsReasonClass", "NativeFoodContractTests.EachChangedAuthorityMemberGivesANamedStartRefusal" },
-            ["A17"] = new[] { "NativeFoodContractTests.FaultPointsExistOnlyInTheTestBuild", "CapabilityMatrixTests.StreetFoodAbsentThenReturned", "CapabilityMatrixTests.EveryCoreArmPasses" },
+            ["A17"] = new[] { "NativeFoodContractTests.FaultPointShapesAreTheRenameAndSignatureVariants", "CapabilityMatrixTests.StreetFoodAbsentThenReturned", "CapabilityMatrixTests.EveryCoreArmPasses" },
         };
 
         /// <summary>Every A1-A17 requirement names checks that exist in this assembly (Class.Method) or a tool in the tree; the

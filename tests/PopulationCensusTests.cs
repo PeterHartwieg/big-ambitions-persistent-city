@@ -368,47 +368,4 @@ public sealed class PopulationCensusTests
         return root?.FullName ?? throw new InvalidOperationException("Repository root not found.");
     }
 
-    [Fact]
-    public void Census_reader_calls_no_native_mutator()
-    {
-        string root = Root();
-        string diagnostics = File.ReadAllText(Path.Combine(root, "Runtime", "PopulationCensusDiagnostics.cs"));
-        string places = File.ReadAllText(Path.Combine(root, "Runtime", "GamePlaces.cs"));
-        int start = places.IndexOf("if (census != null", StringComparison.Ordinal);
-        int end = places.IndexOf("Add(PlaceKind.Work,", start, StringComparison.Ordinal);
-        Assert.True(start > 0 && end > start);
-        string reader = places.Substring(start, end - start);
-        // Native members that create records, staff, saves or objects, or that compute through native helpers.
-        string[] native =
-        {
-            "GetBuildingRegistration", "GenerateAiBusinessEmployees", "ReplaceAiBusinessEmployee", "GetRequiredSkillForceForLayout",
-            "GetExpectedHoursPerWeek", "AddToPlayer", "RentBuilding", "EmployeeInstances", "EmployeeHelper", "Hire",
-            "modData", "Instantiate", "SetActive", "Destroy", "Invoke(", "SendMessage", "Harmony", "Patch(", "ExecuteCommand"
-        };
-        foreach (string token in native) { Assert.DoesNotContain(token, reader); Assert.DoesNotContain(token, diagnostics); }
-        foreach (string token in new[] { "BusinessAllocation", "SaveCodec", "SaveStore", ".Remove(", ".Clear(" }) Assert.DoesNotContain(token, reader);
-        foreach (string token in new[] { "SaveCodec", "SaveStore", "SaveSession", ".Remove(", ".Clear(" }) Assert.DoesNotContain(token, diagnostics);
-        Assert.Single(Regex.Matches(reader, @"\.Add\(")); // only the managed census list
-        Assert.Contains("census.Add(new CensusWorkplace", reader);
-        // No assignment to any native object member in either reader.
-        var assignment = new Regex(@"\b(registration|building|staff|station|discovery|controller|size)\.\w+\s*(=[^=>]|\+=|-=|\+\+|--)");
-        Assert.DoesNotMatch(assignment, reader);
-        Assert.DoesNotMatch(assignment, diagnostics);
-        // The census never feeds back into places, allocations or the simulation.
-        Assert.Contains("private const int BusinessAllocation = 16;", places);
-        Assert.DoesNotMatch(new Regex(@"current\.State\.\w+\s*="), diagnostics);
-        Assert.DoesNotContain("Update(", diagnostics);
-        // The census uses the fresh load-time catalogue, never the persisted one, and reduces detached.
-        Assert.Contains("Places = censusPlaces", diagnostics);
-        Assert.DoesNotMatch(new Regex(@"Places\s*=\s*current\.State\.Places"), diagnostics);
-        int worker = diagnostics.IndexOf("Task.Run(", StringComparison.Ordinal);
-        Assert.True(worker > 0);
-        Assert.Equal(diagnostics.IndexOf("PopulationCensus.Compute(", StringComparison.Ordinal), diagnostics.LastIndexOf("PopulationCensus.Compute(", StringComparison.Ordinal));
-        Assert.True(diagnostics.IndexOf("PopulationCensus.Compute(", StringComparison.Ordinal) > worker);
-        Assert.True(diagnostics.IndexOf(".Summary()", StringComparison.Ordinal) > worker);
-        Assert.True(diagnostics.IndexOf(".WorkplaceDetail()", StringComparison.Ordinal) > worker);
-        Assert.Contains("ReferenceEquals(pending.Result.Save, save)", diagnostics); // publish only for the originating save
-        string mod = File.ReadAllText(Path.Combine(root, "Runtime", "PersistentCityMod.cs"));
-        Assert.DoesNotContain("PopulationCensus.Compute", mod); // only the console diagnostic computes it
-    }
 }

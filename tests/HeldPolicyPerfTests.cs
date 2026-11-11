@@ -51,7 +51,7 @@ public sealed class HeldPolicyPerfTests
     [Fact]
     public void MeasureHeldPolicyCosts()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_E5B4_MEASURE");
+        string? path = PerfGate.Variable("PC_E5B4_MEASURE");
         if (string.IsNullOrEmpty(path)) return;
         var report = new StringBuilder();
         var traits = new ResidentTraits { Bands = "2222222222" };

@@ -48,37 +48,14 @@ public sealed class TrafficBoundaryTests
     }
 
     [Fact]
-    public void PhysicalPredecessorMustPassCurbWithSpacingBeforeInteriorTerminalCanLeave()
-    {
-        var kernel=new TrafficKernel(new[]{Link(red:true)});kernel.Enqueue("through",Route());kernel.Enqueue("curb",Route(.5,1));kernel.Enqueue("rear",Route());kernel.AdvanceTo(0,100);
-        kernel.SetPhysicalControl("through",true);kernel.AdvanceTo(100,100);
-        kernel.ReportPhysicalProgress("through",7.4);kernel.AdvanceTo(100,100);
-        Assert.False(kernel.GetPermission("curb").IsCompleted);Assert.Equal(0,kernel.PendingEventCount);
-        kernel.ReportPhysicalProgress("through",7.5);kernel.AdvanceTo(100,100);
-        Assert.Equal(100,kernel.GetPermission("curb").CompletedAt);
-        Assert.Equal(new[]{"through","rear"},kernel.Capture().Links[0].Vehicles);
-        Assert.False(kernel.GetPermission("through").IsCompleted);Assert.False(kernel.GetPermission("rear").IsCompleted);
-    }
-
-    [Fact]
-    public void PhysicalCurbRequiresEndpointObservationAndCompletesCallbackExactlyOnce()
-    {
-        var kernel=new TrafficKernel(new[]{Link(red:true)});kernel.Enqueue("curb",Route(.5,1));kernel.AdvanceTo(0,100);kernel.SetPhysicalControl("curb",true);
-        int callbacks=0;kernel.VehicleCompleted+=(id,at)=>{Assert.Equal("curb",id);Assert.Equal(100,at);callbacks++;Assert.True(kernel.RemoveCompleted(id));};
-        kernel.AdvanceTo(100,100);Assert.Equal(0,callbacks);Assert.Equal(0,kernel.PendingEventCount);
-        kernel.ReportPhysicalProgress("curb",1);kernel.AdvanceTo(100,1);kernel.AdvanceTo(200,100);
-        Assert.Equal(1,callbacks);Assert.Equal(0,kernel.VehicleCount);
-    }
-
-    [Fact]
     public void InteriorCurbWakeupReloadAndOneEventBudgetsPreserveExactState()
     {
         var continuous=new TrafficKernel(new[]{Link(red:true)});continuous.Enqueue("through",Route());continuous.Enqueue("curb",Route(.5,1));continuous.AdvanceTo(0,100);
         var missingWake=continuous.Capture();missingWake.Events.Clear();
         Assert.Throws<ArgumentException>(()=>TrafficKernel.ValidateState(missingWake));
-        var restored=TrafficKernel.Restore(continuous.Capture(),false);
+        var restored=TrafficKernel.Restore(continuous.Capture());
         continuous.AdvanceTo(100,100);
-        while(!restored.AdvanceTo(100,1).ReachedTarget)restored=TrafficKernel.Restore(restored.Capture(),false);
+        while(!restored.AdvanceTo(100,1).ReachedTarget)restored=TrafficKernel.Restore(restored.Capture());
         Assert.Equal(Capture(continuous),Capture(restored));Assert.Equal(7.5,restored.GetPermission("curb").CompletedAt);
     }
 
@@ -131,23 +108,6 @@ public sealed class TrafficBoundaryTests
         downstream.AdvanceTo(0,100);Assert.Equal(10,downstream.ForecastEntry(0,0,.5));
     }
 
-    [Fact]
-    public void InteriorEntryExtrapolatesPhysicalCopiesButRefusesProvenFiniteStorageCycle()
-    {
-        var physical=new TrafficKernel(new[]{Link()});physical.Enqueue("body",Route());physical.AdvanceTo(0,100);physical.SetPhysicalControl("body",true);
-        physical.AdvanceTo(100,100);string physicalBefore=Capture(physical);
-        Assert.Equal(10,physical.ForecastEntry(0,100,.5));Assert.Equal(physicalBefore,Capture(physical));
-        Assert.True(physical.GetPermission("body").PhysicalControl);Assert.Equal(0,physical.GetPermission("body").NominalMinutes);
-        Assert.True(double.IsFinite(physical.Forecast(0,100).DelayMinutes));
-        var cycle=new TrafficKernel(new[]{new TrafficLinkDefinition{Id=0,Capacity=1,FreeFlowMinutes=1},new TrafficLinkDefinition{Id=1,Capacity=1,FreeFlowMinutes=1}});
-        cycle.Enqueue("a",new[]{new TrafficRouteLeg{LinkId=0,StartNominalMinutes=0,EndNominalMinutes=1},new TrafficRouteLeg{LinkId=1,StartNominalMinutes=1,EndNominalMinutes=2}});
-        cycle.Enqueue("b",new[]{new TrafficRouteLeg{LinkId=1,StartNominalMinutes=0,EndNominalMinutes=1},new TrafficRouteLeg{LinkId=0,StartNominalMinutes=1,EndNominalMinutes=2}});
-        cycle.AdvanceTo(100,100);string before=Capture(cycle);
-        Assert.True(double.IsPositiveInfinity(cycle.Forecast(0,100).DelayMinutes));Assert.True(double.IsPositiveInfinity(cycle.Forecast(1,100).DelayMinutes));
-        Assert.True(double.IsPositiveInfinity(cycle.ForecastEntry(0,100,.5)));Assert.Equal(before,Capture(cycle));
-        Assert.Equal(0,cycle.PendingEventCount);Assert.Equal(2,cycle.VehicleCount);
-    }
-
     [Theory]
     [InlineData(.9,true)]
     [InlineData(.25,false)]
@@ -165,15 +125,6 @@ public sealed class TrafficBoundaryTests
     }
 
     [Fact]
-    public void PhysicalStopLineAdmissionAlreadyInOrdinaryForecastIsNotChargedAgain()
-    {
-        var link=Link(1,.1);link.Signal=new TrafficSignalSchedule{CycleMinutes=20,GreenStartMinutes=0,GreenDurationMinutes=1};
-        var kernel=new TrafficKernel(new[]{link});kernel.Enqueue("body",Route());kernel.AdvanceTo(0,100);kernel.SetPhysicalControl("body",true);
-        kernel.AdvanceTo(10,100);kernel.ReportPhysicalProgress("body",10);
-        Assert.Equal(10,kernel.Forecast(0,10).DelayMinutes,9);Assert.Equal(0,kernel.ForecastEntry(0,10,.5));
-    }
-
-    [Fact]
     public void InteriorProjectionRefusesDependenciesBeyondDeclaredBoundsWithoutMutatingDemand()
     {
         var links=Enumerable.Range(0,33).Select(id=>new TrafficLinkDefinition{Id=id,Capacity=1,FreeFlowMinutes=1});
@@ -184,138 +135,6 @@ public sealed class TrafficBoundaryTests
         queued.Enqueue("over-bound",Route());
         Assert.True(double.IsPositiveInfinity(queued.ForecastEntry(0,0,.5)));Assert.Equal(65,queued.VehicleCount);
         var empty=new TrafficKernel(new[]{Link()});Assert.Equal(0,empty.ForecastEntry(0,0,.5));
-    }
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1000000000)]
-    public void RestoreRejectsForgedEarlyReadinessWithoutRejectingLegitimatePhysicalHolds(double clock)
-    {
-        var kernel=new TrafficKernel(new[]{Link()},clock);kernel.Enqueue("car",Route());kernel.AdvanceTo(clock+.5,100);
-        var forged=kernel.Capture();forged.Vehicles[0].ReadyAt=clock+.5;
-        Assert.Throws<ArgumentException>(()=>TrafficKernel.ValidateState(forged));
-        kernel.SetPhysicalControl("car",true);kernel.AdvanceTo(clock+100,100);
-        TrafficKernel.ValidateState(kernel.Capture());
-        var retimed=kernel.RescaleTime(.5);TrafficKernel.ValidateState(retimed.Capture());
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void RetimeNearEndpointRetainsUnreportedPhysicalResidualInsteadOfZeroSpatialSpan(bool mapCoordinates)
-    {
-        var kernel=new TrafficKernel(new[]{Link(2)});kernel.Enqueue("car",Route(1,1,.9));kernel.AdvanceTo(0,100);kernel.SetPhysicalControl("car",true);kernel.AdvanceTo(10,100);
-        double almostEnd=Math.BitDecrement(1);Assert.Equal(almostEnd,kernel.ReportPhysicalProgress("car",almostEnd));
-        var retimed=kernel.RescaleTime(2,mapCoordinates?(id,p)=>100+p*.5:null);
-        var state=retimed.Capture();TrafficKernel.ValidateState(state);
-        var leg=state.Vehicles.Single().Route.Single();
-        Assert.True(leg.StartLinkFraction<leg.EndLinkFraction);Assert.True(leg.StartNominalMinutes<leg.EndNominalMinutes);
-        Assert.True(retimed.GetPermission("car").NominalMinutes<leg.EndNominalMinutes);
-        retimed.AdvanceTo(100,100);Assert.False(retimed.GetPermission("car").IsCompleted);Assert.Equal(0,retimed.PendingEventCount);
-        retimed.ReportPhysicalProgress("car",leg.EndNominalMinutes);retimed.AdvanceTo(100,100);
-        Assert.True(retimed.GetPermission("car").IsCompleted);
-    }
-    [Theory]
-    [InlineData(1)] [InlineData(11)] [InlineData(12)]
-    public void PhysicalHeadCanReportItsExactAllowedEndpointAndEventuallyComplete(int capacity)
-    {
-        var kernel = new TrafficKernel(new[]
-        {
-            new TrafficLinkDefinition { Id = 0, Capacity = capacity, FreeFlowMinutes = 10 },
-            new TrafficLinkDefinition { Id = 1, Capacity = capacity, FreeFlowMinutes = 10 }
-        });
-        kernel.Enqueue("body", new[]
-        {
-            new TrafficRouteLeg { LinkId = 0, StartNominalMinutes = 0, EndNominalMinutes = 10 },
-            new TrafficRouteLeg { LinkId = 1, StartNominalMinutes = 10, EndNominalMinutes = 20 }
-        });
-        kernel.AdvanceTo(0, 100); kernel.SetPhysicalControl("body", true);
-        kernel.AdvanceTo(100, 100);
-        Assert.Equal(0, kernel.GetPermission("body").LinkId);
-        Assert.Equal(0, kernel.GetPermission("body").NominalMinutes);
-        Assert.Equal(0, kernel.PendingEventCount); // Time alone never supplies physical arrival.
-        var first = kernel.GetPermission("body");
-        Assert.True(first.CanCrossBoundary); Assert.Equal(10, first.MaximumNominalMinutes);
-        Assert.Equal(10, kernel.ReportPhysicalProgress("body", first.MaximumNominalMinutes));
-        kernel.AdvanceTo(100, 100);
-        Assert.Equal(1, kernel.GetPermission("body").LinkId);
-        Assert.Empty(kernel.Capture().Links.Single(link => link.LinkId == 0).Vehicles);
-        Assert.Equal(new[] { "body" }, kernel.Capture().Links.Single(link => link.LinkId == 1).Vehicles);
-        int completed = 0; kernel.VehicleCompleted += (_, _) => completed++;
-        kernel.AdvanceTo(200, 100);
-        Assert.False(kernel.GetPermission("body").IsCompleted);
-        Assert.Equal(20, kernel.ReportPhysicalProgress("body", kernel.GetPermission("body").MaximumNominalMinutes));
-        kernel.AdvanceTo(200, 100); kernel.AdvanceTo(300, 100);
-        Assert.True(kernel.GetPermission("body").IsCompleted); Assert.Equal(1, completed);
-        Assert.All(kernel.Capture().Links, link => Assert.Empty(link.Vehicles));
-        Assert.Equal(0, kernel.PendingEventCount); Assert.Equal(1, kernel.VehicleCount);
-    }
-
-    [Fact]
-    public void FullyAllowedPhysicalHeadUsesCommittedEndpointInsteadOfRoundedSpanReconstruction()
-    {
-        const double start = 98.60761910894645, end = 250.12917554692152;
-        Assert.True(start + (end - start) < end); // Independent arithmetic regression fixture.
-        var kernel = new TrafficKernel(new[] { Link(1) });
-        kernel.Enqueue("body", new[] { new TrafficRouteLeg { LinkId = 0,
-            StartNominalMinutes = start, EndNominalMinutes = end, FreeFlowMinutes = 10 } });
-        kernel.AdvanceTo(0, 100); kernel.SetPhysicalControl("body", true); kernel.AdvanceTo(100, 100);
-        Assert.Equal(end, kernel.GetPermission("body").MaximumNominalMinutes);
-        Assert.Equal(end, kernel.ReportPhysicalProgress("body", kernel.GetPermission("body").MaximumNominalMinutes));
-        kernel.AdvanceTo(100, 100);
-        Assert.True(kernel.GetPermission("body").IsCompleted); Assert.Equal(end, kernel.GetPermission("body").NominalMinutes);
-        Assert.Equal(0, kernel.PendingEventCount);
-    }
-
-    [Theory]
-    [InlineData(11)] [InlineData(12)]
-    public void ExactHeadEndpointPreservesFollowerSpacingAndFiniteSourceStorage(int capacity)
-    {
-        var kernel = new TrafficKernel(new[] { Link(capacity) });
-        for (int i = 0; i <= capacity; i++) kernel.Enqueue("car" + i, Route());
-        kernel.AdvanceTo(0, 1000);
-        for (int i = 0; i < capacity; i++) kernel.SetPhysicalControl("car" + i, true);
-        kernel.AdvanceTo(100, 1000);
-        Assert.Equal(capacity, kernel.Capture().Links.Single().Vehicles.Count);
-        Assert.Single(kernel.Capture().Links.Single().WaitingSources);
-        Assert.Null(kernel.GetPermission("car" + capacity).LinkId);
-        Assert.Equal(10, kernel.GetPermission("car0").MaximumNominalMinutes);
-        Assert.Equal(0, kernel.GetPermission("car1").MaximumNominalMinutes); // Unobserved head still occupies its source point.
-        kernel.ReportPhysicalProgress("car0", 10);
-        double follower = kernel.GetPermission("car1").MaximumNominalMinutes;
-        Assert.True(follower < 10);
-        Assert.Equal((1 - 1.0 / capacity) * 10, follower);
-        Assert.Equal(0, kernel.GetPermission("car2").MaximumNominalMinutes);
-        kernel.AdvanceTo(100, 1000);
-        Assert.True(kernel.GetPermission("car0").IsCompleted);
-        Assert.Equal(capacity, kernel.Capture().Links.Single().Vehicles.Count);
-        Assert.Empty(kernel.Capture().Links.Single().WaitingSources);
-        Assert.Equal(10, kernel.GetPermission("car1").MaximumNominalMinutes);
-        TrafficKernel.ValidateState(kernel.Capture());
-    }
-
-    [Fact]
-    public void StalledInteriorPhysicalProgressCannotRegressOnReleaseRestoreOrReacquire()
-    {
-        const double start = .9518824138568586, end = 28.182987254561827, clock = .5864380512395461;
-        var kernel = new TrafficKernel(new[] { new TrafficLinkDefinition { Id = 0, Capacity = 1, FreeFlowMinutes = 1 } });
-        kernel.Enqueue("body", new[] { new TrafficRouteLeg { LinkId = 0,
-            StartNominalMinutes = start, EndNominalMinutes = end, FreeFlowMinutes = 1 } });
-        kernel.AdvanceTo(0, 100); kernel.SetPhysicalControl("body", true); kernel.AdvanceTo(clock, 100);
-        double observed = kernel.ReportPhysicalProgress("body", kernel.GetPermission("body").MaximumNominalMinutes);
-        Assert.Equal(16.92123846973965, observed);
-        Assert.True(start + ((observed - start) / (end - start)) * (end - start) < observed);
-        var restored = TrafficKernel.Restore(kernel.Capture()); // Saved bodies resume background at the same actual point.
-        Assert.Equal(observed, restored.GetPermission("body").NominalMinutes);
-        kernel.SetPhysicalControl("body", false);
-        Assert.Equal(observed, kernel.GetPermission("body").MaximumNominalMinutes);
-        Assert.Equal(observed, kernel.GetPermission("body").NominalMinutes);
-        kernel.SetPhysicalControl("body", true);
-        Assert.Equal(observed, kernel.GetPermission("body").NominalMinutes);
-        Assert.Equal(observed, kernel.GetPermission("body").MaximumNominalMinutes);
-        Assert.False(kernel.GetPermission("body").IsCompleted);
-        Assert.Equal(new[] { "body" }, kernel.Capture().Links.Single().Vehicles);
-        restored.AdvanceTo(100, 100); Assert.True(restored.GetPermission("body").IsCompleted);
     }
 
 }

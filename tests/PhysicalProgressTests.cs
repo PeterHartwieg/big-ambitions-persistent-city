@@ -7,10 +7,6 @@ namespace PersistentCity.Tests;
 
 public sealed class PhysicalProgressTests
 {
-    private sealed class Planner : IRoutePlanner
-    {
-        public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null;
-    }
     private static PhysicalJourneySample Sample(double elapsed = 0, TravelMode mode = TravelMode.Walk, bool wait = false)
     {
         var route = new Route { Legs = new()
@@ -22,7 +18,7 @@ public sealed class PhysicalProgressTests
             Journey = route, PlaceId = "a", DestinationId = "b", DepartureMinute = 0, NextEventMinute = 20 };
         var state = new CityState { Minute = elapsed, Citizens = new() { citizen }, Places = new()
         { new Place { Id = "a", Position = route.Legs[0].From }, new Place { Id = "b", Position = route.Legs[1].To } } };
-        return new CitySimulator(state, new Planner()).SampleJourney(citizen, elapsed);
+        return new CitySimulator(state, new NoRoutes()).SampleJourney(citizen, elapsed);
     }
 
     private static PhysicalJourneySample Vertical(double elapsed = 0, TravelMode mode = TravelMode.Walk, double height = 4)
@@ -33,7 +29,7 @@ public sealed class PhysicalProgressTests
             Journey = route, PlaceId = "a", DestinationId = "b", DepartureMinute = 0, NextEventMinute = 8 };
         var state = new CityState { Minute = elapsed, Citizens = new() { citizen }, Places = new()
         { new Place { Id = "a", Position = route.Legs[0].From }, new Place { Id = "b", Position = route.Legs[0].To } } };
-        return new CitySimulator(state, new Planner()).SampleJourney(citizen, elapsed);
+        return new CitySimulator(state, new NoRoutes()).SampleJourney(citizen, elapsed);
     }
 
     [Fact]

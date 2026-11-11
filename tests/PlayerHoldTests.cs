@@ -825,7 +825,7 @@ public sealed class PlayerHoldPerfTests
     [Fact]
     public void MeasureContactDetectionAndHoldCost()
     {
-        string? path = System.Environment.GetEnvironmentVariable("PC_F2E_MEASURE");
+        string? path = PerfGate.Variable("PC_F2E_MEASURE");
         if (path == null) return;
         var lines = new List<string>();
         for (int run = 0; run < 2; run++)

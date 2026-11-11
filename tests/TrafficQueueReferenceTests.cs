@@ -18,20 +18,9 @@ public sealed class TrafficQueueReferenceTests
     private static string State(TrafficKernel kernel) => JsonConvert.SerializeObject(kernel.Capture());
 
     [Fact]
-    public void ProjectedPhysicalQueuesNeverShareTheirVehiclesWithTheLiveKernel()
-    {
-        var live = City(); live.SetPhysicalControl("car0", true); live.AdvanceTo(1, 100);
-        string before = State(live);
-        var permissions = Enumerable.Range(0, 6).Select(i => live.GetPermission("car" + i)).ToArray();
-        for (int i = 0; i < 20; i++) live.ForecastEntry(7, live.Clock, .25, .75);
-        Assert.Equal(before, State(live));
-        Assert.Equal(permissions, Enumerable.Range(0, 6).Select(i => live.GetPermission("car" + i)).ToArray());
-    }
-
-    [Fact]
     public void RestoredQueueSurvivesCancellationAndReuseOfAnExternalId()
     {
-        var live = City(); var restored = TrafficKernel.Restore(live.Capture(), false);
+        var live = City(); var restored = TrafficKernel.Restore(live.Capture());
         Assert.Equal(State(live), State(restored));
         Assert.True(restored.Cancel("car2"));
         restored.Enqueue("car2", new[] { new TrafficRouteLeg { LinkId = 7, StartNominalMinutes = 0, EndNominalMinutes = 2 } });

@@ -35,7 +35,7 @@ public sealed class PhysicalWalkerPerfTests
     [Fact]
     public void MeasureUpdateWithFortyEightWalkers()
     {
-        string? path = System.Environment.GetEnvironmentVariable("PC_F2C_MEASURE");
+        string? path = PerfGate.Variable("PC_F2C_MEASURE");
         if (path == null) return;
         StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear();
         const double now = 1440 + 600;

@@ -36,7 +36,7 @@ public sealed class E6cVendorSaveMeasure
     [Fact]
     public void SaveBytesAndReadWriteTime()
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PC_E6C_MEASURE"))) return; // measurement only on request
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6C_MEASURE"))) return; // measurement only on request
         foreach (string city in new[] { "small", "representative-957x2" })
         {
             int samples = city == "small" ? 200 : 20;

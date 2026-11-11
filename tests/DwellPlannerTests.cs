@@ -294,10 +294,6 @@ public sealed class DwellPlannerTests
         sim.AdvanceTo(opening); Assert.Equal(CitizenPhase.AtPlace, loaded.Citizens.Single().Phase); Assert.Single(loaded.Citizens.Single().RecentVisits);
     }
 
-    private sealed class NoRoutes : IRoutePlanner
-    {
-        public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
-    }
 
     private sealed class NoOptionalGeometry : IOptionalStopEnvironment
     {

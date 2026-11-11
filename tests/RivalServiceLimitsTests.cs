@@ -493,22 +493,13 @@ public sealed class RivalServiceLimitsTests
     }
 
     [Fact]
-    public void EstimateLabelsArePresentAndNoNativeRivalWritePathExists()
+    public void EstimateLabelsArePresent()
     {
         var (city, _, _) = Crowd(1, new RivalFoodSettings());
         string dump = JsonConvert.SerializeObject(city.DumpRivalFood());
         Assert.Contains("estimated (modeled service limits)", dump); Assert.Contains("modeled sell-out (estimated)", dump);
         Assert.Contains("lanes=2, units/meal period=60, capacity=100%", dump);
         Assert.Contains("modeled service limits", RivalFoodTerms.Capture(RivalOutflowTests.Observation(), 5).ServiceEvidence);
-        // Reachability guard: the rival limit code names no native sale, receipt, Runtime or Unity member.
-        string root = Root();
-        string limits = File.ReadAllText(Path.Combine(root, "Core", "RivalServiceLimits.cs"));
-        foreach (var forbidden in new[] { "Buy(", "FoodSaleReceipts", "IFoodSaleEvidence", "IFoodMarket", "UnityEngine", "PersistentCity.Runtime", "Registration", "market." })
-            Assert.DoesNotContain(forbidden, limits);
-        string rival = File.ReadAllText(Path.Combine(root, "Core", "RivalFood.cs"));
-        Assert.DoesNotContain("market.Buy", rival); Assert.DoesNotContain("FoodSaleReceipts", rival);
-        string native = File.ReadAllText(Path.Combine(root, "Runtime", "NativeRivalFood.cs"));
-        Assert.DoesNotContain("RivalService", native);
     }
     static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;
 }

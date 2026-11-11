@@ -20,12 +20,7 @@ public sealed class EconomicLedgerTests
     public EconomicLedgerTests(ITestOutputHelper output) { this.output = output; }
     internal static string Sha(string s) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     internal static string Fingerprint => new string('0', 20);
-    internal static CityState Fresh(int seed = 5150)
-    {
-        var (state, market) = WorkplaceCapacityTests.Fresh(3, seed);
-        var city = new CitySimulator(state, new FreshCityTraceTests.Walk()); city.AttachFoodMarket(market);
-        return city.State;
-    }
+    internal static CityState Fresh(int seed = 5150) => TestCity.Banded(seed);
     internal static void Populate(CityState state)
     {
         foreach (var p in PersonTable.Schedules(state).Where(p => p.DayPlaceId.Length != 0))

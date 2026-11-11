@@ -185,11 +185,6 @@ public sealed class F6jMealExtrasTests
 
     // ---- Integrated checkout (allowance mode). ----
 
-    private sealed class Walking : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double at, TravelPreferences preferences) => new()
-        { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Minutes = 5, Mode = TravelMode.Walk } } };
-    }
     private sealed class TicketMarket : IFoodMarket, IFoodTicketMarket, IFoodSaleEvidence, IFoodTicketEvidence
     {
         public bool Extras = true;
@@ -257,7 +252,7 @@ public sealed class F6jMealExtrasTests
             new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant, AdditionalProductIds = new() { FoodProducts.Burger, FoodProducts.HotDog } },
             new FoodScope { PlaceId = "shop2", BusinessId = "b2", ProductId = FoodProducts.Burger } } };
         market ??= new TicketMarket();
-        var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(market);
+        var city = new CitySimulator(state, new FixedWalk(5)); city.AttachFoodMarket(market);
         if (allowanceCents.HasValue) foreach (var meal in city.State.Food!.Residents) meal.Allowance = Money.FromCents(allowanceCents.Value);
         if (finances)
         {
@@ -269,7 +264,7 @@ public sealed class F6jMealExtrasTests
     private static CitySimulator Reload(CitySimulator city, TicketMarket market)
     {
         var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
-        var next = new CitySimulator(read.State!, new Walking()); next.AttachFoodMarket(market); return next;
+        var next = new CitySimulator(read.State!, new FixedWalk(5)); next.AttachFoodMarket(market); return next;
     }
     private static void Advance(CitySimulator city, double at) { while (!city.AdvanceTo(at, 128).CaughtUp) { } }
     // Day 1 runs the legacy choice; day 2 is the first F6i policy day. Each run ends after day 2's meals.
@@ -367,7 +362,7 @@ public sealed class F6jMealExtrasTests
             Advance(straight, t); Advance(reloaded, t);
             active += reloaded.State.Food!.Residents.Count(m => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving || m.Decision != null);
             var read = DevelopmentChain.Read(DevelopmentChain.Write(reloaded.State)); Assert.Equal("", read.Error);
-            reloaded = new CitySimulator(read.State!, new Walking()); reloaded.AttachFoodMarket(reloadMarket);
+            reloaded = new CitySimulator(read.State!, new FixedWalk(5)); reloaded.AttachFoodMarket(reloadMarket);
         }
         Assert.True(active > 0);
         Advance(straight, Until(straight)); Advance(reloaded, Until(reloaded));

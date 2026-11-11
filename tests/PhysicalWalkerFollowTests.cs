@@ -677,7 +677,7 @@ public sealed class PhysicalWalkerFollowTests
     [Fact]
     public void MeasureFollowerArithmeticPerBody()
     {
-        string? path = System.Environment.GetEnvironmentVariable("PC_F2C_MEASURE");
+        string? path = PerfGate.Variable("PC_F2C_MEASURE");
         if (path == null) return;
         var city = new CitySimulator(Build(null, false), new Walk());
         var c = city.State.Citizens[0]; var route = c.Journey!;

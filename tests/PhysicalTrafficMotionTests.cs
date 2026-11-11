@@ -6,15 +6,13 @@ namespace PersistentCity.Tests;
 
 public sealed class PhysicalTrafficMotionTests
 {
-    private sealed class Planner : IRoutePlanner
-    { public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null; }
     private static PhysicalJourneySample Sample()
     {
         var route = new Route { Legs = new() { new RouteLeg { From = new Position(0, 0, 0), To = new Position(10, 0, 0), Mode = TravelMode.Car, Minutes = 10 } } };
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "test-car" }, Phase = CitizenPhase.Travelling, Journey = route,
             PlaceId = "a", DestinationId = "b", DepartureMinute = 0, NextEventMinute = 10 };
         var state = new CityState { Citizens = new() { person }, Places = new() { new Place { Id = "a" }, new Place { Id = "b", Position = new Position(10, 0, 0) } } };
-        return new CitySimulator(state, new Planner()).SampleJourney(person, 0);
+        return new CitySimulator(state, new NoRoutes()).SampleJourney(person, 0);
     }
 
     [Fact]

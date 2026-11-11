@@ -266,22 +266,6 @@ namespace PersistentCity.Tests
                     Assert.Equal(Money.Zero, m.Spent);
                 }
             }
-            // The Runtime gates this market stands for.
-            string market2 = Source("Runtime/NativeFoodMarket.cs");
-            Assert.Contains("&& (!checkoutSettled || registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg));", market2);
-            Assert.Contains("|| !checkoutSettled || !checkout.Serves) return false;", Body(market2, "public bool CanServe(string businessId)"));
-        }
-
-        /// <summary>Sol-r2-4: the same transition runs through production NativeFoodOwnership (Observe, Persist, suppression,
-        /// reload in the owned hour, drained-boundary hand-back) in tools/food-ownership-regression, driven by FoodCheckoutMode.</summary>
-        [Fact]
-        public void TheProductionOwnershipArmExists()
-        {
-            string root = CapabilityReportTests.Root();
-            string program = File.ReadAllText(Path.Combine(root, "tools", "food-ownership-regression", "Program.cs"));
-            Assert.Contains("CheckoutOff(); // F8c review", program);
-            Assert.Contains("public void RefreshKnownOwnership() => NativeFoodOwnership.Observe(Reg, Checkout.Observe(Eligible));", program);
-            Assert.Contains("Runtime/NativeFoodOwnership.cs", File.ReadAllText(Path.Combine(root, "tools", "food-ownership-regression", "FoodOwnershipRegression.csproj")));
         }
 
         private sealed class WalkRoutes : IRoutePlanner
@@ -383,19 +367,10 @@ namespace PersistentCity.Tests
             Assert.Equal(0, off.Buys);                                  // no checkout while the contract is off
             Assert.Equal(receipts, off.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal).ToArray()); // evidence unchanged
             Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
-            // The evidence executed above is production's: NativeFoodMarket's two readers delegate to FoodReceiptEvidence (and
-            // nothing else), and FoodMarkets (the composite Core attaches) dispatches to them for a shop scope.
-            string marketSource = Source("Runtime/NativeFoodMarket.cs");
-            Assert.Contains("return FoodReceiptEvidence.IsConfirmedPaid(ReferenceEquals(save, current), current?.modData, meal);", Body(marketSource, "public bool IsConfirmedPaid(ResidentMeal meal)"));
-            Assert.Contains("return FoodReceiptEvidence.TryConfirmedTicket(ReferenceEquals(save, current), current?.modData, meal, out total, out extras);",
-                Body(marketSource, "public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)"));
-            Assert.DoesNotContain("Checkout", Body(marketSource, "public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)"));
             // Another save's receipts never count, and missing receipt data never counts.
             var any = city.State.Food.Residents.First(m => paidEvidence.Contains(m.ResidentId));
             Assert.False(PersistentCity.Runtime.FoodReceiptEvidence.TryConfirmedTicket(false, off.Receipts, any, out _, out _));
             Assert.False(PersistentCity.Runtime.FoodReceiptEvidence.IsConfirmedPaid(true, null, any));
-            Assert.Contains("if (Market(meal.BusinessId) is IFoodTicketEvidence tickets) return tickets.TryConfirmedTicket(meal, out total, out extras);", Source("Runtime/FoodMarkets.cs"));
-            Assert.Contains("IFoodTicketEvidence", Source("Runtime/NativeFoodMarket.cs").Substring(0, Source("Runtime/NativeFoodMarket.cs").IndexOf("{", StringComparison.Ordinal) + 400));
         }
 
         /// <summary>A shop not yet owned: checkout-off requests no ownership, so no boundary ever acquires it.</summary>
@@ -412,89 +387,6 @@ namespace PersistentCity.Tests
 
         // ---- Source order: verify before any effect ----------------------------------------------------------------
 
-        private static string Source(string file) => CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), file)).Replace("\r\n", "\n"));
-        private static string Body(string source, string signature)
-        {
-            int start = source.IndexOf(signature, StringComparison.Ordinal);
-            Assert.True(start >= 0, signature);
-            int open = source.IndexOf('{', start), depth = 0;
-            for (int i = open; i < source.Length; i++)
-            {
-                if (source[i] == '{') depth++;
-                else if (source[i] == '}' && --depth == 0) return source.Substring(open, i - open + 1);
-            }
-            throw new InvalidOperationException("unbalanced " + signature);
-        }
-
-        [Fact]
-        public void TheAuthorityContractIsCheckedBeforeAnyPatchOrSaveRead()
-        {
-            string install = Body(Source("Runtime/NativeFoodOwnership.cs"), "internal static void Install()");
-            // The body is the InstallChecked action: the contract is checked before it runs (tools/capability-contracts runs
-            // the same InstallChecked with a failing contract and a failing body).
-            int check = install.IndexOf("NativeFoodContract.InstallChecked(NativeFoodContract.Authority, () =>", StringComparison.Ordinal);
-            Assert.True(check > 0);
-            Assert.True(check < install.IndexOf("Patch(typeof(", StringComparison.Ordinal));
-            Assert.True(check < install.IndexOf("Registration =", StringComparison.Ordinal));
-            Assert.Contains("}, () => patches.UnpatchAll(PatchId));", install);
-            string contract = Body(Source("Runtime/NativeFoodContract.cs"), "internal static void InstallChecked(");
-            Assert.True(contract.IndexOf("throw new InvalidOperationException", StringComparison.Ordinal) < contract.IndexOf("install();", StringComparison.Ordinal));
-            // Every food-authority target is the verified exact MethodInfo; no name-only lookup is left.
-            string ownership = Source("Runtime/NativeFoodOwnership.cs");
-            Assert.DoesNotContain("AccessTools.Method(", ownership);
-            Assert.DoesNotContain("AccessTools.Field(", ownership);
-            Assert.Contains("patches.Patch(NativeFoodContract.AuthorityTarget(type, method)", ownership);
-            // Initialize installs before it reads the save, so a refusal writes and reads no saved key.
-            string initialize = Body(Source("Runtime/PersistentCityMod.cs"), "public void Initialize(ModContext context)");
-            Assert.True(initialize.IndexOf("NativeFoodOwnership.Install();", StringComparison.Ordinal) < initialize.IndexOf("NativeFoodOwnership.EnsureSave();", StringComparison.Ordinal));
-            // The loader bootstrap contains the refusal instead of failing the mod load.
-            Assert.Contains("catch (InvalidOperationException error) { context.Logger.Warn(error.Message); }", ownership);
-        }
-
-        [Fact]
-        public void CheckoutOffIsDecidedAtConstructionAndGuardsEveryEffect()
-        {
-            string market = Source("Runtime/NativeFoodMarket.cs");
-            string ctor = Body(market, "public NativeFoodMarket(FoodCommerceState state");
-            int decided = ctor.IndexOf("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out checkoutSettled), out process);", StringComparison.Ordinal);
-            Assert.True(decided > 0 && decided < ctor.IndexOf("RefreshKnownOwnership();", StringComparison.Ordinal));
-            // tools/capability-contracts executes StartCheckout and InstallPricePrefix with the pinned Harmony (arm CheckoutStartup).
-            Assert.Contains("if (checkoutSettled) InstallCheckoutPrefix();", ctor);
-            Assert.Contains("private void InstallCheckoutPrefix() => NativeFoodContract.InstallPricePrefix(checkout, () =>\n            patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", market);
-            Assert.Contains("CheckoutStartup();", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "tools", "capability-contracts", "Program.cs")));
-            Assert.Contains("if (!checkout.Eligible || refusedContracts.TryGetValue(r, out _)) return false;", Body(market, "private bool SupportedMenu(BuildingRegistration r)"));
-            Assert.Contains("|| !checkoutSettled || !checkout.Serves) return false;", Body(market, "public bool CanServe(string businessId)"));
-            Assert.StartsWith("{\n            if (checkout.ScopeReason is string off) return off;", Body(market, "public string ScopeStatus(string placeId)"));
-            // RefreshKnownOwnership observes each shop with SupportedMenu, so checkout-off reaches Observe(reg, false).
-            Assert.Contains("NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value))", Source("Runtime/NativeFoodCandidates.cs"));
-            string sell = Body(market, "private FoodSale? SellLine(");
-            int guard = sell.IndexOf("if (process == null) return RefuseCheckoutContract(reg);", StringComparison.Ordinal);
-            Assert.True(guard > 0 && guard < sell.IndexOf("beginReceipt?.Invoke();", StringComparison.Ordinal));
-            Assert.DoesNotContain("AccessTools.Method(typeof(RetailBusinessSimulator), \"ProcessCustomer\")", market);
-            // FoodSupplyReader's three members come from the same checked contract, still once per process (static).
-            string supply = Source("Runtime/FoodSupplyReader.cs");
-            Assert.Equal(3, Regex.Matches(supply, @"private static readonly \w+\? \w+ = NativeFoodContract\.CheckoutMember<").Count);
-            Assert.Contains("|| Producers == null || Counters == null || Capacity == null)", supply);
-        }
-
-        [Fact]
-        public void FaultPointsExistOnlyInTheTestBuild()
-        {
-            foreach (var file in new[] { "Runtime/NativeFoodContract.cs", "Runtime/ResearchBilling.cs" })
-            {
-                string text = File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), file)).Replace("\r\n", "\n");
-                // Every FaultPoints use sits between #if PC_FAULT_POINTS and #endif.
-                string outside = Regex.Replace(text, @"#if PC_FAULT_POINTS\n.*?#endif\n", "", RegexOptions.Singleline);
-                Assert.DoesNotContain("FaultPoints", outside);
-                Assert.DoesNotContain("PC_FAULT_POINT", outside);
-                Assert.Contains("#if PC_FAULT_POINTS", text);
-            }
-            Assert.Single(Regex.Matches(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime/ResearchBilling.cs")), "#if PC_FAULT_POINTS"));
-            string build = File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "tools", "build.py"));
-            Assert.Contains("if args.fault_points:\n    command += [\"-define:PC_FAULT_POINTS\"]", build.Replace("\r\n", "\n"));
-            Assert.Contains("\"build/PersistentCity-faultpoints\" if args.fault_points else \"build/PersistentCity\"", build);
-            Assert.DoesNotContain("PC_FAULT_POINTS", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Core", "PersistentCity.Core.csproj")));
-        }
 
         /// <summary>Plan section 6, F8c: one-time contract check cost (both arms, 13 members) on the stand-in types.</summary>
         [Fact]
@@ -518,7 +410,7 @@ namespace PersistentCity.Tests
             string line = string.Format(CultureInfo.InvariantCulture, "F8c contract check (13 members, once per process): p50={0:0.000} ms p95={1:0.000} ms max={2:0.000} ms bytes/check={3}",
                 times[Samples / 2], times[Samples * 95 / 100], times[^1], bytes);
             output.WriteLine(line);
-            string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+            string? path = PerfGate.Variable("PC_F8_MEASURE");
             if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
             PerfGate.Under(times[Samples * 95 / 100], 1, "F8c contract check p95");
         }

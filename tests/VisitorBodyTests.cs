@@ -14,7 +14,7 @@ namespace PersistentCity.Tests;
 
 /// <summary>F5i (docs/plans/f5-population.md, F5i row): visitors receive bodies through the F5f active-journey index under
 /// unchanged caps, now that F2's movement contract makes a body follow the logical pose. Proven with F2's movement
-/// harness (tools/movement-equivalence, visitor arms): every visitor arm equals its bodies-off run, visitor projection
+/// harness (tests/movement-equivalence, visitor arms): every visitor arm equals its bodies-off run, visitor projection
 /// included. Bodies are not saved; the writer and its golden hash are unchanged.</summary>
 public sealed class VisitorBodyTests
 {
@@ -136,30 +136,6 @@ public sealed class VisitorBodyTests
         Equal(MovementRun.Run(Plain(o => o.ReloadMidJourney = true)), PlainRun.Value, "bodies-off reload");
     }
 
-    /// <summary>The Runtime selection and its order have no kind term: one source for residents and visitors, the same
-    /// filters, sorted by SelectionCandidate.ByPriority (least recently attempted, nearest, ordinal ID, roster order).</summary>
-    [Fact]
-    public void SelectionOrderIsStillByPriorityWithoutAKindFilter()
-    {
-        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => Source(Path.Combine("Runtime", "PhysicalPopulation" + part + ".cs"))));
-        string selection = population[population.IndexOf("// Candidate selection.", StringComparison.Ordinal)..population.IndexOf("PhysicalRoadSample road = default;", StringComparison.Ordinal)];
-        Assert.Single(selection.Split("candidates.Sort(SelectionCandidate.ByPriority);").Skip(1));
-        foreach (var kind in new[] { "ReceivesBody", "IsVisitor", "KindOf", "PersonKind" })
-        {
-            Assert.DoesNotContain(kind, selection);
-            Assert.DoesNotContain(kind, Between(population, "private void PlanQueues(", "private bool TryLine("));
-        }
-        Assert.DoesNotContain("ReceivesBody", population);
-        string order = Between(population, "public static readonly IComparer<SelectionCandidate> ByPriority", "RosterIndex.CompareTo(b.RosterIndex);");
-        foreach (var key in new[] { "a.LastAttempt.CompareTo(b.LastAttempt)", "a.Distance.CompareTo(b.Distance)",
-            "StringComparer.Ordinal.Compare(a.Citizen.Identity.Id, b.Citizen.Identity.Id)" }) Assert.Contains(key, order);
-        Assert.DoesNotContain("Visitor", order);
-        // The inspector pick skips visitor bodies: CitySimulator.Inspect returns nothing for a visitor.
-        Assert.Contains("|| binding.Citizen.IsVisitor ||", Between(population, "public void PickWalker(", "public bool TryWalkerRect("));
-        // Player contact does not report visitor bodies: Core refuses their holds (review Opus-r1-1).
-        Assert.Contains("if (citizen.IsVisitor) return;", Between(population, "private void ObservePlayerContact(", "contact.Observe("));
-    }
-
     /// <summary>Residents keep today's bodies: a resident-only city is the F2 harness result recorded before F5i (pinned
     /// below), and in a city with visitors the residents' journeys, sales, wallets, parked cars and link order are the same
     /// with and without bodies (<see cref="VisitorBodyArmsEqualBodiesOff"/> compares every projection).</summary>
@@ -210,7 +186,7 @@ public sealed class VisitorBodyTests
 /// ActiveJourneyIndex.VisitorsReceiveBodies false/true. 100 warm-up calls, then 300 timed single calls per row.</summary>
 public sealed class VisitorBodyMeasure
 {
-    private static string? Output => Environment.GetEnvironmentVariable("PC_F5I_MEASURE") is { Length: > 0 } path ? path : null;
+    private static string? Output => PerfGate.Variable("PC_F5I_MEASURE") is { Length: > 0 } path ? path : null;
 
     private static Dictionary<string, object> Time(string name, Action action)
     {

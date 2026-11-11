@@ -174,7 +174,7 @@ public sealed class F5gMeasure
     [Fact]
     public void MeasureCapacity()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_F5G_MEASURE");
+        string? path = PerfGate.Variable("PC_F5G_MEASURE");
         if (string.IsNullOrEmpty(path)) return;
         File.AppendAllText(path, JsonConvert.SerializeObject(Capacity()) + Environment.NewLine);
     }
@@ -183,7 +183,7 @@ public sealed class F5gMeasure
     // Stress: 3,339 residents (530 homes) filled to their whole visitor capacity, about 10,000 persisted persons.
     private static void MeasureShape(string name, int homes, long commuterTarget)
     {
-        string? path = Environment.GetEnvironmentVariable("PC_F5G_MEASURE");
+        string? path = PerfGate.Variable("PC_F5G_MEASURE");
         if (string.IsNullOrEmpty(path)) return;
         long target = commuterTarget;
         var (probe, _) = F5gPopulationFillTests.City(homes, 1, seed: 2026);

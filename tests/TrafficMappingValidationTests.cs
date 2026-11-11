@@ -406,7 +406,7 @@ public sealed class TrafficMappingValidationTests
         nodes[1].Signal!.CycleMinutes = 20;
         var newNetwork = new TrafficNetwork(NativeId, nodes, 2);
         var saved = state.Traffic!.Vehicles[0];
-        double progress = TrafficKernel.Restore(state.Traffic, false).GetPermission("final").NominalMinutes;
+        double progress = TrafficKernel.Restore(state.Traffic).GetPermission("final").NominalMinutes;
         newNetwork.ValidateRemainingMapping(citizen.Journey, saved.Route, progress);
         TrafficRouteLeg shortened = saved.Route[0];
         shortened.EndNominalMinutes = (shortened.StartNominalMinutes + shortened.EndNominalMinutes) / 2;

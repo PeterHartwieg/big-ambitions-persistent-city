@@ -29,7 +29,7 @@ public sealed class F5cLiteMeasure
     [Fact]
     public void VisitorEnrolmentOrderingInsertVersusSortOnce()
     {
-        string? output = Environment.GetEnvironmentVariable("PC_F5C_LITE_MEASURE");
+        string? output = PerfGate.Variable("PC_F5C_LITE_MEASURE");
         if (string.IsNullOrEmpty(output)) return;
         foreach (int residents in new[] { 957, 5000, 50000 })
             foreach (int factor in new[] { 2, 3 })

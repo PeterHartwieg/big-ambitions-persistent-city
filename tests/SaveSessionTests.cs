@@ -7,9 +7,7 @@ namespace PersistentCity.Tests;
 
 public sealed class SaveSessionTests
 {
-    private static CityState City(string key = "source") => Population.Create(
-        new[] { new CitizenIdentity { Id = "resident", Name = "Resident", Age = 35, Persona = Persona.Commuter } },
-        new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2 } }, key, "0.40.4", 42, 0);
+    private static CityState City(string key = "source") => TestCity.Minimal(key, "0.40.4", 0, "resident");
 
     [Theory]
     [InlineData(false)]

@@ -29,7 +29,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 EVIDENCE = HERE / "evidence"
-ACCEPTANCE_PY = ROOT / "tools/economy-interventions/acceptance.py"
+ACCEPTANCE_PY = ROOT / "tests/economy-interventions/acceptance.py"
 SUMMARY_SCHEMA = "persistentcity-acceptance-evidence-1"
 BANDS_SCHEMA = "persistentcity-f6h-household-bands-1"
 COMPARISON_SCHEMA = "persistentcity-acceptance-comparison-1"
@@ -38,8 +38,8 @@ ARCH_NAMES = {"amd64": "x64", "x86_64": "x64", "arm64": "arm64", "aarch64": "arm
 NOT_COMPARED = {"build"}
 # Paths whose content decides the simulation digests. Two records from different commits are compared only when no file
 # under these paths differs between the commits and their settings match (a docs or evidence commit between them is fine).
-SIMULATION_INPUTS = ["Core", "Persistence", "Runtime", "Compatibility", "config", "tests", "tools/economy-interventions",
-                     "tools/movement-equivalence", "tools/acceptance/stages.json", "tools/acceptance/expectations",
+SIMULATION_INPUTS = ["Core", "Persistence", "Runtime", "Compatibility", "config", "tests", "tests/economy-interventions",
+                     "tests/movement-equivalence", "tools/acceptance/stages.json", "tools/acceptance/expectations",
                      "tools/acceptance/run.py", "tools/acceptance/economy_stage.py"]
 
 
@@ -68,7 +68,7 @@ def household_bands(f6h, result):
     derived = module.derive_household_thresholds(household)
     week6 = {name: {k: household[name][5][k] for k in ("mean", "sd", "low", "high", "min", "max", "perSeed")}
              for name in ("arrearsShare", "unfedOwnerDays", "p10Dollars")}
-    return {"schema": BANDS_SCHEMA, "for": "F6 owner (tools/economy-interventions/acceptance.py HOUSEHOLD_THRESHOLDS)",
+    return {"schema": BANDS_SCHEMA, "for": "F6 owner (tests/economy-interventions/acceptance.py HOUSEHOLD_THRESHOLDS)",
             "adopted": False, "runId": result["runId"], "commit": result["provenance"]["source"]["commit"],
             "machine": machine_key(result["provenance"]["host"]),
             "priceWeight": (f6h.get("defaults") or {}).get("priceWeight"),

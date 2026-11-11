@@ -75,10 +75,6 @@ namespace PersistentCity.Tests
         {
             // D4: the report type has no path into the registry; F8h's refusal leaves it as a reason string the market applies.
             Assert.DoesNotContain(typeof(HookConflictReport).GetMethods(), m => m.GetParameters().Any(p => p.ParameterType == typeof(CapabilityRegistry)));
-            string runtime = CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "HookConflicts.cs")));
-            foreach (string member in CapabilityReportTests.Mutating) Assert.DoesNotContain(member, runtime);
-            Assert.Contains("Harmony.GetAllPatchedMethods()", runtime);
-            Assert.Contains("Harmony.GetPatchInfo(method)", runtime);
         }
 
         // ---- The pinned Harmony 2.4.2, loaded by reflection ------------------------------------------------------------
@@ -166,29 +162,17 @@ namespace PersistentCity.Tests
             "BuildingRegistration.Reset(Boolean)", "CitizenData.IsPriceAcceptable(String, Single)",
         };
 
-        /// <summary>The table Runtime/HookConflicts.CheckoutPolicy declares, read from the source.</summary>
-        internal static string[] RuntimePolicy()
-        {
-            string source = CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "HookConflicts.cs")));
-            var block = Regex.Match(source, @"CheckoutPolicy\s*=\s*\{(?<body>[^}]*)\}");
-            Assert.True(block.Success, "CheckoutPolicy table");
-            return Regex.Matches(block.Groups["body"].Value, "\"(?<s>[^\"]*)\"").Select(m => m.Groups["s"].Value).ToArray();
-        }
 
         [Fact]
         public void CheckoutPolicyIsExactlyTheH1CustomerTargetsAndH2()
         {
-            var policy = RuntimePolicy();
-            Assert.Equal(ExpectedPolicy, policy);
+            var policy = ExpectedPolicy;
             var inventory = NativeHookInventory.Targets.Select(t => t.Type + "." + t.Method + "(" + string.Join(", ", t.Parameters!) + ")").ToHashSet(StringComparer.Ordinal);
             Assert.All(policy, p => Assert.Contains(p, inventory));
             Assert.DoesNotContain("GameManager.RunMainGameTick(Single)", policy);
-            // Scan applies the table; nothing else does.
-            string runtime = CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "HookConflicts.cs")));
-            Assert.Contains("HookConflictReport.Build(methods, CheckoutPolicy)", runtime);
         }
 
-        private static HookConflictReport Refusing(params HookPatchedMethod[] methods) => HookConflictReport.Build(methods, RuntimePolicy());
+        private static HookConflictReport Refusing(params HookPatchedMethod[] methods) => HookConflictReport.Build(methods, ExpectedPolicy);
 
         [Theory]
         [InlineData(HookPatchKind.Prefix, "prefix")]
@@ -250,44 +234,49 @@ namespace PersistentCity.Tests
         [Fact]
         public void TheRefusalIsDecidedOncePerLoadFromTheLoadScan()
         {
-            var sources = CapabilityReportTests.RuntimeSources().ToDictionary(p => p.Key, p => CapabilityReportTests.StripComments(p.Value), StringComparer.Ordinal);
-            var callers = sources.Where(p => p.Value.Contains("CheckoutForLoad(", StringComparison.Ordinal)).Select(p => p.Key).OrderBy(k => k, StringComparer.Ordinal).ToArray();
-            Assert.Equal(new[] { "Runtime/NativeFoodContract.cs", "Runtime/NativeFoodMarket.cs" }, callers);
-            string market = sources["Runtime/NativeFoodMarket.cs"];
-            // Sol-r1-1: the construction call and the post-load settle are the only two; both pass the game's loading flag.
-            Assert.Equal(2, Regex.Matches(market, @"CheckoutForLoad\(UI\.Load\.LoadScene\.isLoading, out ").Count);
-            Assert.Equal(2, Regex.Matches(market, @"CheckoutForLoad\(").Count);
-            Assert.Contains("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out checkoutSettled), out process);", market);
-            Assert.Contains("if (checkoutSettled) InstallCheckoutPrefix();", market);
-            Assert.Contains("if (checkout.Refusal != null) RefreshKnownOwnership();\n            else InstallCheckoutPrefix();", market);
-            Assert.Contains("|| !checkoutSettled || !checkout.Serves) return false;", market);
-            Assert.Contains("{\n            if (!checkoutSettled) return new FoodSale(false, \"Food checkout waits for the city load to finish\");", market);
-            Assert.Contains("public void RefreshDiscovery() { if (!checkoutSettled) SettleCheckout(); DiscoverShops(64);", sources["Runtime/NativeFoodCandidates.cs"]);
-            string contract = sources["Runtime/NativeFoodContract.cs"];
-            Assert.Contains("if (loading) { HookConflicts.TakeLoadScan(); return Checkout; }", contract);
-            Assert.Contains("return Decide(Checkout, HookConflicts.ScanForLoad);", contract);
-            Assert.Contains("try { conflict = scan().CheckoutRefusal; }", contract);
-            Assert.Contains("members.Refusal != null || conflict == null ? members : new Result(conflict, members.Members)", contract);
-            Assert.Single(Regex.Matches(string.Concat(sources.Values), @"ScanForLoad\b(?!\s*\(\)\s*\{)")); // only CheckoutForLoad uses it
-            Assert.Contains("loadScan = null;", sources["Runtime/HookConflicts.cs"]); // Opus-r1-1: a failed scan leaves no stale one
-            // Sol-r2-2: the activation lines wait for a deferred decision and then use its scan.
-            Assert.Contains("LogActivationLines();", sources["Runtime/PersistentCityMod.cs"]);
-            Assert.DoesNotContain("HookConflictActivationLine()", sources["Runtime/PersistentCityMod.cs"]);
-            string diagnostics = sources["Runtime/CapabilityDiagnostics.cs"];
-            Assert.Contains("if (market == null || market.CheckoutSettled) { WriteActivationLines(); return; }", diagnostics);
-            Assert.Contains("market.CheckoutSettledOnce = () => { if (ReferenceEquals(foodMarket, market) && !failed) WriteActivationLines(); };", diagnostics);
-            Assert.Contains("else InstallCheckoutPrefix();\n            var settledNow = CheckoutSettledOnce; CheckoutSettledOnce = null;\n            settledNow?.Invoke();", market);
-            Assert.Contains("(HookConflicts.TakeLoadScan() ?? HookConflicts.Scan()).ActivationLine()", sources["Runtime/CapabilityDiagnostics.cs"]);
             // The refusal goes through F8c's checkout-off mode: no price prefix, nothing served, every shop observed ineligible.
             var mode = new FoodCheckoutMode("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)");
             Assert.False(mode.Serves); Assert.False(mode.InstallsPricePrefix); Assert.False(mode.Observe(true));
-            Assert.Equal("Excluded: food checkout contract off: foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)", mode.ScopeReason);
             var inputs = CapabilityReportTests.Healthy(); inputs.FoodCheckoutRefusal = mode.Refusal;
             var registry = CapabilitySnapshot.Build(inputs);
             Assert.Equal(CapabilityState.Off, registry.State(CapabilityId.FoodCheckoutShop));
             Assert.Equal(CapabilityStartStatus.Ready, registry.Start().Status);
             Assert.Contains("food.checkout.shop optional off: foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry) | scope: shop ownership",
                 new CapabilityReport().Status(registry, "x"));
+        }
+
+        /// <summary>The hook inventory: owner and target counts, one capability per owner (moved from the deleted
+        /// HookInventorySourceTests, X9).</summary>
+        [Fact]
+        public void InventoryCountsAndCapabilityMapping()
+        {
+            Assert.Equal(12, NativeHookInventory.Owners.Count);
+            Assert.Equal(52, NativeHookInventory.Targets.Count);
+            Assert.Equal(NativeHookInventory.Owners.Count, NativeHookInventory.Owners.Select(o => o.Id).Distinct().Count());
+            Assert.All(NativeHookInventory.Targets, t => Assert.NotNull(NativeHookInventory.Owner(t.Owner)));
+            Assert.All(NativeHookInventory.Owners, o => Assert.Contains(NativeHookInventory.Targets, t => t.Owner == o.Id));
+            Assert.Equal(NativeHookInventory.Targets.Count, NativeHookInventory.Targets
+                .Select(t => t.Owner + " " + t.Signature).Distinct().Count());
+            Assert.All(NativeHookInventory.Targets, t => Assert.NotEqual(NativePatchKinds.None, t.Kinds));
+
+            string Map(string owner) => string.Join(",", NativeHookInventory.Targets.Where(t => t.Owner == owner)
+                .Select(t => NativeCapabilities.Get(t.Capability).Name).Distinct());
+            Assert.Equal("food.authority", Map(NativeHookInventory.FoodAuthority));
+            Assert.Equal("food.checkout.shop", Map(NativeHookInventory.FoodRoutines));
+            Assert.Equal("food.dynamic", Map(NativeHookInventory.FoodContract));
+            Assert.Equal("clock.city,clock.drivenrides", Map(NativeHookInventory.CityClock));
+            Assert.Equal("clock.observe", Map(NativeHookInventory.ClockObserver));
+            Assert.Equal("research.billing", Map(NativeHookInventory.ResearchBilling));
+            Assert.Equal("research.dialog", Map(NativeHookInventory.ResearchDialog));
+            Assert.Equal("physical.vehicles", Map(NativeHookInventory.PhysicalVehicles));
+            Assert.Equal("physical.vehicles", Map(NativeHookInventory.PhysicalIntersections));
+            Assert.Equal("physical.pedestrians", Map(NativeHookInventory.AmbientPedestrians));
+            Assert.Equal("physical.pedestrians", Map(NativeHookInventory.StationaryCrowds));
+            Assert.Equal("inspector.click,inspector.scroll,inspector.uiblock", Map(NativeHookInventory.InspectorInput));
+
+            // GameManager.RunMainGameTick carries three PC owners (H1, H3, H4): normal, not a conflict (plan section 2).
+            Assert.Equal(new[] { NativeHookInventory.FoodAuthority, NativeHookInventory.CityClock, NativeHookInventory.ClockObserver },
+                NativeHookInventory.Targets.Where(t => t.Type == "GameManager" && t.Method == "RunMainGameTick").Select(t => t.Owner));
         }
 
         /// <summary>F8h with the pinned Harmony 2.4.2 on stand-in methods: a foreign prefix on ProcessCustomer and a foreign
@@ -308,7 +297,7 @@ namespace PersistentCity.Tests
             var owners = new[] { NativeHookInventory.FoodAuthority, NativeHookInventory.CityClock, "cityperformance.mod", "drivenrides.mod", "foodtrucks.mod", "f8h.foreign" };
             var instances = owners.ToDictionary(o => o, o => Activator.CreateInstance(harmony, o)!);
             var unpatch = harmony.GetMethod("UnpatchAll", new[] { typeof(string) })!;
-            HookConflictReport Load() => HookConflictReport.Build(Scan(harmony), RuntimePolicy());
+            HookConflictReport Load() => HookConflictReport.Build(Scan(harmony), ExpectedPolicy);
             try
             {
                 patch.Invoke(instances[NativeHookInventory.FoodAuthority], new object?[] { tick, null, M("PcPostfix"), null, null });

@@ -230,6 +230,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void GuardedWorkloadsPassBesideAFullCpuLoad()
     {
+        if (!PerfGate.Enabled) return; // wall-clock budgets are judged only with PC_PERF_ASSERTS=1
         using var enforced = TimingBudget.Enforce();
         int before = TimingBudget.Retries;
         var watch = Stopwatch.StartNew();
@@ -248,6 +249,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void TenfoldSlowdownStillFails()
     {
+        if (!PerfGate.Enabled) return; // wall-clock budgets are judged only with PC_PERF_ASSERTS=1
         using var enforced = TimingBudget.Enforce();
         // The budget is three times the fastest quiet run; the slowed workload does ten times the work.
         long iterations = SpinFor(1.0);

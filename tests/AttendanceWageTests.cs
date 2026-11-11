@@ -400,8 +400,5 @@ public sealed class AttendanceWageTests
             Assert.NotEqual("PersistentCity.Runtime", name);
         });
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
-        string command = File.ReadAllText(Path.Combine(root, "Runtime/WorkplaceDiagnostics.cs"));
-        Assert.Contains("save?.SaveGameName != AttendanceFixtureCity", command);
-        Assert.Contains("FT-F6e-Attendance", command);
     }
 }

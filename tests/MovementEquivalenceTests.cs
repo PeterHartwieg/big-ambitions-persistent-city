@@ -357,7 +357,7 @@ public sealed class MovementEquivalenceTests
     [Fact]
     public void RecordedBaselineIsTheGreenMatrix()
     {
-        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "tools", "movement-equivalence", "baseline.json")));
+        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "tests", "movement-equivalence", "baseline.json")));
         var root = json.RootElement;
         Assert.Equal(MovementRun.Schema, root.GetProperty("schema").GetString());
         Assert.Equal(MovementFixture.Residents, root.GetProperty("residents").GetInt32());

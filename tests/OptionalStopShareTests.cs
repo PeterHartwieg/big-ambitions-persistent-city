@@ -11,11 +11,6 @@ namespace PersistentCity.Tests;
 public sealed class OptionalStopShareTests(ITestOutputHelper output)
 {
     private const double Start = 1440, Window = 600;
-    private sealed class Walking : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double at, TravelPreferences p) => new()
-        { Legs = { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk, Minutes = 10 } } };
-    }
     // Only some venues have validated geometry, as on the rig where most routes lack a usable spot.
     // Leisure venues listed in Chat offer only two conversation spots, like a nightclub facade without a park.
     private sealed class Geometry : IOptionalStopEnvironment
@@ -67,11 +62,11 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home;
             c.DestinationId = venue.Id; c.DestinationActivity = Activity.Shop;
             c.DepartureMinute = Start; c.NextEventMinute = arrival; c.ActivityUntilMinute = arrival + (brief ? 0.5 : stay);
-            c.Journey = new Walking().Plan(places[0], venue, Start, c.Preferences); c.Journey.Legs[0].Minutes = arrival - Start;
+            c.Journey = new FixedWalk(10).Plan(places[0], venue, Start, c.Preferences); c.Journey.Legs[0].Minutes = arrival - Start;
             if (!brief && env.Feasible.Contains(venue.Id)) tally.FeasibleVisits.Add(c.Identity.Id);
             if (OptionalStopPolicy.Choose(OptionalStopPolicy.VisitKey(new CitizenState { Identity = c.Identity, PlaceId = venue.Id }, arrival), state.Seed, percentage)) tally.Drawn++;
         }
-        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, percentage);
+        var sim = new CitySimulator(state, new FixedWalk(10)); sim.AttachOptionalStops(env, percentage);
         Observe(sim, tally);
         return (sim, env, tally);
     }
@@ -179,9 +174,9 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         var (sliced, env, _) = City(25, 400); while (!sliced.AdvanceTo(Start + Window / 2, 7).CaughtUp) { }
         string saved = SaveCodec.Write(sliced.State);
         var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking());
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10));
         // A different rate on reload neither re-rolls nor drops saved stops, choices or handed-on chances.
-        loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new Walking()); loaded.RefreshOptionalStops();
+        loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new FixedWalk(10)); loaded.RefreshOptionalStops();
         Assert.Equal(saved, SaveCodec.Write(loaded.State));
         Assert.Contains(loaded.State.Citizens, c => c.OptionalStop != null);
         Assert.Contains(loaded.State.Citizens, c => c.OptionalStopChoice == false);
@@ -237,13 +232,13 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             if (!sim.State.Citizens.Any(c => old[c.Identity.Id] == true && c.OptionalStopChoice == false)) continue;
             // Saved just before: the reload makes the same hand-on.
             var read = SaveWire.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 25);
+            var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 25);
             loaded.AdvanceTo(next, 1);
             string after = SaveCodec.Write(sim.State);
             Assert.Equal(after, SaveCodec.Write(loaded.State));
             // Saved just after: reload at another rate changes nothing until resumed at 25.
             read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new Walking());
+            loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new FixedWalk(10));
             Assert.Equal(after, SaveCodec.Write(loaded.State));
             loaded.AttachOptionalStops(env, 25);
             sim.AdvanceTo(Start + Window); loaded.AdvanceTo(Start + Window);
@@ -266,7 +261,7 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         CitySimulator Load(int rate)
         {
             var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, rate);
+            var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, rate);
             loaded.AdvanceTo(Start + Window + 45); return loaded;
         }
         var zero = Load(0);
@@ -295,10 +290,10 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             double arrival = (i % 2 == 0 ? 1450 : 1460) + offset; c.ShopId = ""; c.LeisureId = "";
             c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home; c.DestinationId = place.Id; c.DestinationActivity = Activity.Leisure;
             c.DepartureMinute = Start; c.NextEventMinute = arrival; c.ActivityUntilMinute = 1580 + offset;
-            c.Journey = new Walking().Plan(places[0], place, Start, c.Preferences); c.Journey.Legs[0].Minutes = arrival - Start;
+            c.Journey = new FixedWalk(10).Plan(places[0], place, Start, c.Preferences); c.Journey.Legs[0].Minutes = arrival - Start;
             if (OptionalStopPolicy.Choose(OptionalStopPolicy.VisitKey(new CitizenState { Identity = c.Identity, PlaceId = place.Id }, arrival), 17, percentage)) drawn++;
         }
-        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, percentage);
+        var sim = new CitySimulator(state, new FixedWalk(10)); sim.AttachOptionalStops(env, percentage);
         return (sim, env, drawn);
     }
     private static void AssertConversationsAreWellFormed(CitySimulator sim)
@@ -338,12 +333,12 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         var (sim, _, _) = Pairs(25); sim.AdvanceTo(1455);
         Assert.True(Pending(sim) > 100);
         var read = SaveWire.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 25);
+        var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 25);
         loaded.AdvanceTo(1460);
         string after = SaveCodec.Write(loaded.State);
         Assert.Equal(SaveCodec.Write(whole.State), after);
         read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 25); loaded.RefreshOptionalStops();
+        loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 25); loaded.RefreshOptionalStops();
         Assert.Equal(after, SaveCodec.Write(loaded.State));
         AssertConversationsAreWellFormed(loaded);
     }
@@ -363,7 +358,7 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             state.Places.AddRange(pairs.State.Places.Where(p => p.Kind == PlaceKind.Leisure));
             state.Citizens.AddRange(pairs.State.Citizens);
             foreach (var place in state.Places.Where(p => p.Kind == PlaceKind.Leisure)) env.Chat.Add(place.Id);
-            var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, rate);
+            var sim = new CitySimulator(state, new FixedWalk(10)); sim.AttachOptionalStops(env, rate);
             var eligible = new HashSet<string>(StringComparer.Ordinal); var stops = new HashSet<string>(StringComparer.Ordinal); int chats = 0;
             var byId = state.Citizens.ToDictionary(c => c.Identity.Id);
             sim.ActivityObserved += (id, c, minute) =>

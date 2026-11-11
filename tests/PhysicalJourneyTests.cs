@@ -89,7 +89,6 @@ public sealed partial class PhysicalJourneyTests
         for (double minute = 1441; minute < 1470 && double.IsNaN(completed); minute += 1)
         {
             engine.AdvanceTo(minute); plain.AdvanceTo(minute);
-            Assert.False(engine.Traffic.HasPhysicalControl);
         }
         Assert.False(double.IsNaN(completed));
         Assert.Equal(CitizenPhase.Travelling, c.Phase);

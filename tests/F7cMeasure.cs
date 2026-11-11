@@ -26,7 +26,7 @@ public sealed class F7cMeasure
     [Fact]
     public void SaveCostBeforeAndAfter()
     {
-        string? output = Environment.GetEnvironmentVariable("PC_F7C_MEASURE");
+        string? output = PerfGate.Variable("PC_F7C_MEASURE");
         if (string.IsNullOrEmpty(output)) return; // measurement only on request
         int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_F7C_SAMPLES"), out int n) ? n : 7;
         foreach (string fixture in Fixtures(Environment.GetEnvironmentVariable("PC_F7C_FIXTURES")))

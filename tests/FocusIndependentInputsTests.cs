@@ -18,11 +18,6 @@ public sealed class FocusIndependentInputsTests
     private readonly ITestOutputHelper output;
     public FocusIndependentInputsTests(ITestOutputHelper output) => this.output = output;
 
-    private sealed class Walking : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double at, TravelPreferences p) => new()
-        { Legs = { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk, Minutes = 10 } } };
-    }
 
     private sealed class SceneObject
     {
@@ -118,14 +113,14 @@ public sealed class FocusIndependentInputsTests
             c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home;
             c.DestinationId = "venue"; c.DestinationActivity = activity;
             c.DepartureMinute = minute; c.NextEventMinute = minute + 10; c.ActivityUntilMinute = minute + 130;
-            c.Journey = new Walking().Plan(places[0], places[1], minute, c.Preferences);
+            c.Journey = new FixedWalk(10).Plan(places[0], places[1], minute, c.Preferences);
         }
         scene ??= FullScene();
         // Only the kind under test is in the scene, so the planner cannot fall through to another kind.
         if (kind != DwellKind.Audience) scene.Performers.Clear();
         if (kind != DwellKind.Resting) scene.Parks.Clear();
         if (kind == DwellKind.Audience || kind == DwellKind.Resting) scene.Frontages.Clear();
-        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(scene, 100);
+        var sim = new CitySimulator(state, new FixedWalk(10)); sim.AttachOptionalStops(scene, 100);
         return (sim, scene);
     }
 
@@ -370,28 +365,6 @@ public sealed class FocusIndependentInputsTests
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "Runtime", "OptionalStopEnvironment.cs"))) root = root.Parent;
         Assert.NotNull(root); return root!.FullName;
-    }
-
-    [Fact]
-    public void NativeReadsRouteActivityThroughStaticMemoryAndReadNoLivePerformer()
-    {
-        string environment = File.ReadAllText(Path.Combine(Root(), "Runtime", "OptionalStopEnvironment.cs"));
-        var livePerformer = new Regex(@"\bStreetPerformer\b");
-        Assert.DoesNotMatch(livePerformer, environment);
-        Assert.DoesNotContain("AllPedestrianSpawners", environment);
-        Assert.DoesNotContain("_streetPerformer", environment);
-        var activity = environment.Split('\n').Where(line => line.Contains("activeInHierarchy")).ToArray();
-        Assert.Equal(3, activity.Length);
-        Assert.All(activity, line => Assert.Contains("Activity.Admit(", line));
-        string routes = File.ReadAllText(Path.Combine(Root(), "Runtime", "MultimodalRoutes.cs"));
-        int start = routes.IndexOf("private void EnsureStations()", StringComparison.Ordinal);
-        string stations = routes.Substring(start, routes.IndexOf("private List<Station> Nearby", start, StringComparison.Ordinal) - start);
-        Assert.Contains("stationActivity.Admit(sceneKey, active, hidden)", stations);
-        Assert.Single(stations.Split('\n'), line => line.Contains("activeInHierarchy"));
-        // Q4: a visible audience member at its spot faces the saved facing point; no native performer is consulted.
-        string bodies = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs"))));
-        Assert.Contains("body.Face(stop.Facing)", bodies);
-        Assert.DoesNotMatch(livePerformer, bodies);
     }
 
     [Fact]

@@ -68,7 +68,6 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
         for (double minute = 100; minute <= 104; minute += 0.01)
         {
             f.Simulation.AdvanceTo(minute);
-            Assert.False(f.Simulation.Traffic.HasPhysicalControl);
             if (f.Simulation.TryGetTrafficPermission(id, out var permission) && (links.Count == 0 || links[^1] != permission.LinkId)) links.Add(permission.LinkId);
         }
         Assert.Equal(new int?[] { f.Mapped[0].LinkId, f.Mapped[1].LinkId }, links);
@@ -108,40 +107,10 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
         var last = WalkerFollow.Sample(f.Road, crossed);
         Assert.Equal(2, last.LegIndex); Assert.True(crossed <= cap);
         Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(last, f.Corner, cap));
-        Assert.False(f.Simulation.Traffic.HasPhysicalControl);
         // Reopening lets the kernel finish on its own clock.
         f.Simulation.Traffic.SetLinkClosed(f.Mapped[1].LinkId, false);
         f.Simulation.AdvanceTo(112);
         Assert.Equal(1, f.Citizen.CompletedJourneys);
     }
 
-    /// <summary>An older development city saved with the vehicle under physical control at the under-reported
-    /// boundary (the state the removed lease left) loads, is released to background travel at its saved coordinate,
-    /// crosses and completes exactly once. The live writer then never emits physical control.</summary>
-    [Fact]
-    public void OlderSavedPhysicalVehicleAtTheUnderreportedBoundaryLoadsReleasesAndCompletes()
-    {
-        var f = new Fixture(); string id = f.Citizen.Identity.Id;
-        f.Simulation.Traffic!.SetLinkClosed(f.Mapped[1].LinkId, true);
-        var older = SaveWire.Read(SaveCodec.Write(f.Simulation.State)).State!;
-        double endpoint = LegacyTrafficLease.Report(f.Simulation, id, 110, 1.6009497070312497, release: false);
-        Assert.Equal(1.6009497070312497, endpoint); Assert.True(endpoint < f.Mapped[0].EndNominalMinutes);
-        // Detached copy of what an older build wrote: the kernel snapshot with physical control, at the city clock.
-        var kernel = f.Simulation.Traffic.Capture();
-        Assert.True(kernel.Vehicles.Single().PhysicalControl);
-        older.Minute = kernel.Clock; older.Traffic = kernel;
-        var person = older.Citizens.Single(c => c.Identity.Id == id);
-        person.DepartureMinute = older.Minute - endpoint; person.NextEventMinute = person.DepartureMinute + person.Journey!.Minutes;
-        var read = SaveWire.Read(DevelopmentChain.Write(older));
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.True(read.State!.Traffic!.Vehicles.Single().PhysicalControl);
-        var loaded = new CitySimulator(read.State, new Planner());
-        Assert.False(loaded.Traffic!.HasPhysicalControl);
-        Assert.Equal(endpoint, loaded.Traffic.GetPermission(id).NominalMinutes);
-        Assert.DoesNotContain("\"PhysicalControl\":true", SaveCodec.Write(loaded.State));
-        loaded.Traffic.SetLinkClosed(f.Mapped[1].LinkId, false);
-        loaded.AdvanceTo(113);
-        Assert.Equal(1, loaded.State.Citizens.Single(c => c.Identity.Id == id).CompletedJourneys);
-        Assert.False(loaded.Traffic.HasPhysicalControl);
-    }
 }

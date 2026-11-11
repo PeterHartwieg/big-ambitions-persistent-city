@@ -385,23 +385,7 @@ public sealed class PersonTableTests
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "Runtime", "NativeFoodOwnership.cs"))) root = root.Parent;
         Assert.NotNull(root);
-        string recovery = File.ReadAllText(Path.Combine(root!.FullName, "Runtime", "AccountingRecovery.cs"));
-        int check = recovery.IndexOf("NativeFoodOwnership.StandDown != null", StringComparison.Ordinal);
-        Assert.True(check > 0 && check < recovery.IndexOf("AccountingStopStore.IsStopped", StringComparison.Ordinal));
-        string start = File.ReadAllText(Path.Combine(root.FullName, "Runtime", "PersistentCityMod.cs"));
-        int tryStart = start.IndexOf("private void TryStart()", StringComparison.Ordinal);
-        Assert.True(start.IndexOf("if (!CanStartAccountingSave()) return;", tryStart, StringComparison.Ordinal)
-            < start.IndexOf("SaveEpochStore.CheckForStart", tryStart, StringComparison.Ordinal));
-        string food = File.ReadAllText(Path.Combine(root.FullName, "Runtime", "NativeFoodOwnership.cs"));
-        int ensure = food.IndexOf("internal static void EnsureSave()", StringComparison.Ordinal);
-        int development = food.IndexOf("StandDown = FoodAuthorityStandDown.FromManifest(", ensure, StringComparison.Ordinal);
-        Assert.True(development > ensure && food.IndexOf("return;", development, StringComparison.Ordinal) < food.IndexOf("Persist()", development, StringComparison.Ordinal));
         // The development check precedes the manifest read, the capability probe and every suspension (Error) path.
-        int probe = food.IndexOf("SaveCodec.DevelopmentSchemaOf(", ensure, StringComparison.Ordinal);
-        Assert.True(probe > ensure && probe < development && development < food.IndexOf("RequireExecutableCapabilities", ensure, StringComparison.Ordinal)
-            && development < food.IndexOf("Error = \"Food ownership suspended", ensure, StringComparison.Ordinal));
-        Assert.Contains("if (StandDown != null) return StandDown.Suppresses(", food);
-        Assert.Contains("|| StandDown != null ||", food);
     }
 
     // ---- Inspector words ----

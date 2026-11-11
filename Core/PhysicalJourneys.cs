@@ -576,7 +576,7 @@ namespace PersistentCity.Core
         public static bool ReceivesBody(CitizenState c) => VisitorsReceiveBodies || !c.IsVisitor && KindOf(c) != PersonKind.Visitor;
 
         /// <summary>Indexed persons that may receive a body, in no particular order. F9g named exception: still entity-typed,
-        /// because the F2 movement-equivalence driver (tools/movement-equivalence/PresentationDriver.cs, owned by F2g) follows
+        /// because the F2 movement-equivalence driver (tests/movement-equivalence/PresentationDriver.cs, owned by F2g) follows
         /// each candidate's journey through it. Runtime presentation reads <see cref="Grid"/> instead.</summary>
         public IReadOnlyList<CitizenState> BodyCandidates => eligible;
         /// <summary>Every indexed person, visitors included.</summary>

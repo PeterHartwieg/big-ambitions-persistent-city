@@ -9,10 +9,7 @@ namespace PersistentCity.Tests;
 
 public sealed class CurrentSchemaOnlyTests
 {
-    internal static CityState City() => Population.Create(
-        new[] { new CitizenIdentity { Id = "r", Name = "Resident", Age = 35, Persona = Persona.Commuter } },
-        new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2 } },
-        "current-development", "0.41.1", 42, 0);
+    internal static CityState City() => TestCity.Minimal();
 
     /// <summary>The schema is held at 1 until release: older development builds wrote 2 to 36, and every other number is
     /// a DevelopmentSchema refusal (no migration).</summary>
