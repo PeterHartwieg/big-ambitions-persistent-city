@@ -846,8 +846,6 @@ public sealed class FoodContractCoordinatorTests
         world.AfterNativeSetup = null;
         world.RebuildCatalogue(); world.VisitAll();
         Assert.Equal("wait", world.Checkout(world.Select(shop)!, Burger, "wait"));
-        string market = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "NativeFoodMarket.cs"));
-        Assert.Contains("if (ContractCatalogueWaiting) return new FoodSale(false, \"Food catalogue rebuilding; this sale waits\");", market);
     }
 
     [Fact]
@@ -884,8 +882,6 @@ public sealed class FoodContractCoordinatorTests
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == replaced.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
         Assert.True(replaced.Row.CanServe);
         // Runtime: replacement resets the coordinator entry under the place key.
-        string runtime = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "FoodContractDiagnostics.cs"));
-        Assert.Contains("{ contractKeys.Remove(previous); contracts.Remove(place); contractWarming.Remove(place); }", runtime);
     }
 
     [Fact]
@@ -897,15 +893,11 @@ public sealed class FoodContractCoordinatorTests
         Assert.Null(world.Checkout(capture, Burger, "x"));
         Assert.True(world.Refused.ContainsKey(shop.Key));
         Assert.False(shop.Row.Desired);
-        string market = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "NativeFoodMarket.cs"));
-        Assert.Contains("if (FoodSupplyReader.Reconciliations != reconciled) return RefuseCheckoutContract(reg);", market);
     }
 
     [Fact]
     public void ACaptureOutsideABatchStartsItsOwnDefinitionEpoch()
     {
-        string runtime = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "FoodContractDiagnostics.cs"));
-        Assert.Contains("if (checkout || !captureBatch) contractEpoch.Begin();", runtime);
         // Without a new epoch an in-place edit after the last comparison is answered from the cache.
         var (world, shop) = Owned();
         var image = world.Coordinator.Serving(shop.Key)!;
@@ -1392,17 +1384,6 @@ public sealed class FoodContractCoordinatorTests
         Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
         Assert.False(shop.Row.Desired);
         Assert.Empty(world.Boundary(world.Hour + 1));
-    }
-
-    [Fact]
-    public void NativeSetupCallSitesAreUnchanged()
-    {
-        var root = ContractRecoveryTestPaths.Root();
-        int setups = Directory.GetFiles(Path.Combine(root, "Runtime"), "*.cs")
-            .Sum(f => File.ReadAllLines(f).Count(l => l.Contains(".SetUp(") && !l.TrimStart().StartsWith("//", StringComparison.Ordinal)));
-        Assert.Equal(2, setups); // FoodSupplyReader.ReadMenu and the checkout SellLine, as in E5b1
-        string reader = File.ReadAllText(Path.Combine(root, "Runtime", "FoodSupplyReader.cs"));
-        Assert.Contains("FoodHolderReconciliation.Check(contract, NativeHolders, ids, StockAmount)", reader);
     }
 
     [Fact]

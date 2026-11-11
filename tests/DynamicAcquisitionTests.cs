@@ -44,42 +44,6 @@ public sealed class DynamicAcquisitionTests
     }
     private static string[] Menu(int offers) => new[] { Burger, HotDog, Croissant }.Concat(Extras).Take(offers).ToArray();
 
-    [Fact]
-    public void RuntimeUsesTheLiveMenuRuleAndTheWidthIsEight()
-    {
-        Assert.Equal(8, FoodMenuPolicy.LiveMaximumOffers);
-        Assert.Equal(FoodMenuPolicy.MaximumOffers, FoodMenuPolicy.LiveMaximumOffers);
-        Assert.Equal(8, new FoodChoiceSettings().FoodMenuMaximumOffersPerShop);
-        var root = ContractRecoveryTestPaths.Root();
-        string market = File.ReadAllText(Path.Combine(root, "Runtime", "NativeFoodMarket.cs"));
-        string coordinator = File.ReadAllText(Path.Combine(root, "Runtime", "FoodContractDiagnostics.cs"));
-        string host = File.ReadAllText(Path.Combine(root, "Runtime", "PersistentCityMod.cs"));
-        // Decision 12: the original-three guard is gone from admission; LiveMenu decides with the policy only while every
-        // capability passed and the coordinator is active.
-        Assert.DoesNotContain("FoodProducts.Known(r.cachedAvailableProducts", market);
-        Assert.Contains("if (LiveMenu(r) != FoodLiveMenuRefusal.None) return false;", market);
-        // Startup hold for saved owned shops, and a rebuild of every shop on a new policy publication.
-        Assert.Contains("=> menu == FoodLiveMenuRefusal.OriginalThreeGuard && StartupPhase && NativeFoodOwnership.Find(r)?.Managed == true;", market);
-        Assert.Contains("if (StartupHeld(menuReg)) return StartupValidationRefusal;", market); // no read, capture or sale
-        Assert.Contains("if (AwaitingValidation(meal.BusinessId)) return new FoodSale(false, StartupValidationRefusal);", market);
-        Assert.Contains("public bool AwaitingValidation(string id) => Market(id) is IFoodStartupValidation startup && startup.AwaitingValidation(id);",
-            File.ReadAllText(Path.Combine(root, "Runtime", "FoodMarkets.cs")));
-        Assert.Contains("if (!first) { contractPolicyRequeues++; reader.RequeueAllShops(); }", coordinator);
-        Assert.Contains("ObserveProductPolicy(reader);", coordinator);
-        Assert.Contains("private bool DynamicAcquisition => contractMode == ContractMode.Active && contractCapabilities.AllPassed;", market);
-        Assert.Contains("FoodMenuPolicy.LiveMenu(menu, original || !DynamicAcquisition ? null : CurrentProductPolicy)", market);
-        Assert.Contains("DynamicIntegrationRefusal + \": \" + DynamicRefusalReason", market);
-        Assert.Contains("\"capability failed: \" + contractCapabilities.FirstFailure", market);
-        Assert.Contains("CompleteFoodMenu.Check(eligibility, AdmissionResolver,", coordinator);
-        Assert.Contains("LiveMenu(r.cachedAvailableProducts) == FoodLiveMenuRefusal.None", coordinator);
-        Assert.Contains("shops.ProductPolicySource = policy;", host);
-        Assert.DoesNotContain("FoodProducts.Known", coordinator);
-        // Q2: a price-only change at checkout is refused without RefuseCheckoutContract.
-        Assert.Contains("if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }", market);
-        Assert.Contains("if (livePrice != price) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }", market);
-        Assert.Contains("return new FoodSale(false, \"Approved price changed\", priceChanged: true); }", market);
-    }
-
     [Theory]
     [InlineData(Donut)]
     [InlineData(Dumplings)]

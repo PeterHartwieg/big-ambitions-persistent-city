@@ -1,6 +1,6 @@
 """F9a economy stage adapter (docs/plans/f9-city-acceptance.md, Decision 2, "Economy stage adapter").
 
-Reads the JSON that tools/economy-interventions/acceptance.py writes and turns it into one stage verdict.
+Reads the JSON that tests/economy-interventions/acceptance.py writes and turns it into one stage verdict.
 acceptance.py belongs to F6 and is not changed; its exit code is ignored because it exits 1 on every
 complete sweep (it always lists unmeasured criteria). Standard library only.
 

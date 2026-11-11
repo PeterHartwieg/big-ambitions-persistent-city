@@ -203,7 +203,6 @@ public sealed class TrafficJourneyTests
         engine.AdvanceTo(1480); plain.AdvanceTo(1480);
         Assert.True(order.Count>0);
         Assert.Equal(order.OrderBy(id=>queued.IndexOf(id)).ToList(),order);
-        Assert.False(engine.Traffic.HasPhysicalControl);
         engine.AdvanceTo(1500); plain.AdvanceTo(1500);
         Assert.All(engine.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
         Assert.Equal(SaveCodec.Write(plain.State),SaveCodec.Write(engine.State));
@@ -226,26 +225,6 @@ public sealed class TrafficJourneyTests
         Assert.Equal(permission.MaximumNominalMinutes,engine.Traffic.GetPermission(behind.Identity.Id).MaximumNominalMinutes);
         Assert.Equal(before,SaveCodec.Write(engine.State));
         engine.AdvanceTo(1500); Assert.All(engine.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
-    }
-
-    /// <summary>An older development city saved with its head car under physical control (the state the removed lease
-    /// left) resumes as the same background queue: the reader releases it at its saved coordinate.</summary>
-    [Fact]
-    public void OlderSavedPhysicalQueueResumesAsSameBackgroundQueue()
-    {
-        var engine=Engine(4); engine.AdvanceTo(1440);
-        string id=engine.State.Citizens[0].Identity.Id;
-        LegacyTrafficLease.Report(engine,id,1440.5,0.3,release:false);
-        string older=LegacyTrafficLease.OlderSave(engine);
-        var read=SaveWire.Read(older); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.True(read.State!.Traffic!.Vehicles.Single(v=>v.VehicleId==id).PhysicalControl);
-        var restored=new CitySimulator(read.State,new Planner());
-        Assert.False(restored.Traffic!.HasPhysicalControl);
-        Assert.Equal(0.3,restored.Traffic.GetPermission(id).NominalMinutes);
-        // The in-memory original releases the same way Restore does.
-        engine.Traffic!.SetPhysicalControl(id,false);
-        engine.AdvanceTo(1500); restored.AdvanceTo(1500);
-        Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
 
     [Fact]

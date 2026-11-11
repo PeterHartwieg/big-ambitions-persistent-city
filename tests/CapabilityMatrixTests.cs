@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 namespace PersistentCity.Tests
 {
     /// <summary>F8g (docs/plans/f8-capability-boundaries.md): the offline failure matrix. The Core arms run the shared
-    /// tools/capability-matrix code on the 957x2 economy fixture; the Street Food arm uses the vendor rig. The A1-A17 table
+    /// tests/capability-matrix code on the 957x2 economy fixture; the Street Food arm uses the vendor rig. The A1-A17 table
     /// in docs/checks/f8bg.md names one check per requirement, and every named check must exist here.</summary>
     [Collection(F8aSerial.Collection)]
     public sealed class CapabilityMatrixTests
@@ -44,10 +44,7 @@ namespace PersistentCity.Tests
             {
                 Assert.True(CapabilityMatrix.Coverage.TryGetValue(definition.Id, out var arm), definition.Name + " has no arm");
                 var test = Regex.Match(arm!, @"\b(?<check>\w+Tests\.\w+)\b");
-                var tool = Regex.Match(arm!, @"^(?<dir>tools/[\w-]+) \((?<arm>\w+)\)$");
-                bool found = tool.Success
-                    ? File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), tool.Groups["dir"].Value, "Program.cs")).Contains(tool.Groups["arm"].Value + "();", StringComparison.Ordinal)
-                    : test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal));
+                bool found = test.Success ? tests.Contains(test.Groups["check"].Value) : names.Any(n => arm!.StartsWith(n, StringComparison.Ordinal));
                 Assert.True(found, definition.Name + ": " + arm);
             }
         }

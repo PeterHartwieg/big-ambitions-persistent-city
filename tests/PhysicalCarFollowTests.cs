@@ -112,7 +112,6 @@ public sealed class PhysicalCarFollowTests
             Cars.Drive(seconds, speed, Corner);
             Minute += seconds * GamePerSecond; City.AdvanceTo(Minute); Plain.AdvanceTo(Minute);
             Time.Next(seconds); Bodies.Update();
-            Assert.False(City.Traffic!.HasPhysicalControl);
         }
         internal void Until(Func<bool> done, int frames = 20000, float seconds = 1 / 30f)
         {
@@ -418,7 +417,6 @@ public sealed class PhysicalCarFollowTests
         f.Bodies.BeforeSave();
         string saved = SaveCodec.Write(f.City.State);
         Assert.Equal(SaveCodec.Write(f.Plain.State), saved);
-        Assert.DoesNotContain(SaveWire.Read(saved).State!.Traffic!.Vehicles, v => v.PhysicalControl);
         var reloaded = new CitySimulator(SaveWire.Read(saved).State!, new Roads(null));
         reloaded.AdvanceTo(f.Minute + 30); f.Plain.AdvanceTo(f.Minute + 30);
         Assert.Equal(SaveCodec.Write(f.Plain.State), SaveCodec.Write(reloaded.State));

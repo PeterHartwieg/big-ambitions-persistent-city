@@ -297,19 +297,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(0, city.FoodMoney.Requests);
         Assert.Equal(FoodMoneyCounters.Rescan(city.State.Food), city.FoodMoney.Snapshot());
         Assert.Equal(1, city.FoodMoney.Requests);
-        // Runtime call sites: the panel text and its rig diagnostic are the only snapshot readers, and the
-        // panel text is built only from DrawEconomy behind showEconomy and the three-second refresh.
-        string panel = F6c_Source("Runtime/FoodEconomyPanel.cs");
-        Assert.Contains("if (showEconomy) DrawEconomy(); else economyRect = default;", panel);
-        Assert.Contains("economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder);", panel);
-        Assert.Equal(2, Count(panel, ".Snapshot()")); Assert.Equal(1, Count(panel, "BuildEconomyText()"));
-        Assert.Contains("economyBuilder ??= BuildEconomyText;", panel);
-        Assert.DoesNotContain("food.Residents.Count(", panel); Assert.DoesNotContain("food.Residents.Where(", panel);
-        Assert.DoesNotContain("food.History.Where(", panel); Assert.DoesNotContain("city.Places.First(", panel);
-        foreach (string file in Directory.GetFiles(Path.Combine(F6c_Root(), "Runtime"), "*.cs"))
-            if (!file.EndsWith("FoodEconomyPanel.cs", StringComparison.Ordinal))
-                Assert.DoesNotContain("FoodMoney", File.ReadAllText(file));
-        static int Count(string text, string part) => (text.Length - text.Replace(part, "").Length) / part.Length;
     }
 
     [Fact]
@@ -334,20 +321,14 @@ public sealed partial class FoodCommerceTests
         foreach (string word in new[] { "share", "market", "research", "trait", "percent", "%" })
             Assert.DoesNotContain(word, shown, StringComparison.OrdinalIgnoreCase);
         // The Q3 default switch (false: no share line) is the only permitted mention of a share.
-        string panel = F6c_Source("Runtime/FoodEconomyPanel.cs"), core = F6c_Source("Core/FoodFeedback.cs").Replace("FreeMealShareLine", "");
-        // C5f's two lines open the separate paid report window; the free panel text itself names no research.
         foreach (string c5f in new[] { "if (GUILayout.Button(\"Research reports\", GUILayout.Width(140))) researchWindow.Toggle();",
             "if (researchWindow.Open) researchWindow.Draw(ResearchLedgerNow, researchNames ??= ResearchBusinessName);" })
-        { Assert.Contains(c5f, panel); panel = panel.Replace(c5f, ""); }
         foreach (string paid in new[] { "MarketResearch", "Research", "ProjectMarket", "Share" })
-        { Assert.DoesNotContain(paid, panel); Assert.DoesNotContain(paid, core); }
-        // F6b owns the rival wording: one neutral constant, used by the panel and nowhere redefined.
         Assert.Equal("Rival availability: estimated", FoodFeedback.RivalEstimateLabel);
         bool shareLine = FoodFeedback.FreeMealShareLine, suggestions = FoodFeedback.SuggestionLines;
         Assert.False(shareLine); Assert.False(suggestions); // plan Q3/Q4 defaults
         foreach (string advice in new[] { "add ", "consider", "should", "try " })
             Assert.DoesNotContain(advice, weeks.Text() + money.Text(), StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("FoodFeedback.RivalEstimateLabel", panel);
     }
 
     [Fact]

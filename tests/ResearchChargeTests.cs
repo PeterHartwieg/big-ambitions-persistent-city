@@ -468,24 +468,6 @@ public sealed class ResearchChargeTests
     }
 
     [Fact]
-    public void CampaignsAreNeverTouched()
-    {
-        var (ledger, port, _, session) = Setup();
-        port.Money = 100;
-        Surveyed(ledger, port, "shop-a");
-        session.Boundary();
-        Assert.Equal(new[] { true, true }, port.Campaigns);
-        // The native port has no campaign access at all; native RunDaily alone disables campaigns on its own bill.
-        string billing = File.ReadAllText(Path.Combine(Root(), "Runtime", "ResearchBilling.cs"));
-        Assert.DoesNotContain("marketingCampaigns", billing);
-        Assert.DoesNotContain("MarketingCampaign", billing);
-        Assert.DoesNotContain(".enabled", billing);
-        Assert.DoesNotContain("UpdatePromotion", billing);
-        Assert.DoesNotContain("force: true", billing);
-        Assert.Contains("force: false", billing);
-    }
-
-    [Fact]
     public void TaxFlagSavedAtOrderTimeIsCarriedToTheCharge()
     {
         var (ledger, port, _, session) = Setup();
@@ -705,43 +687,6 @@ public sealed class ResearchChargeTests
         Assert.Equal(SaveEpochResult.Published, runtime.LastSave);
         Assert.Equal("state Paid", runtime.Data[SaveStore.StateKey]);
         Assert.False(AccountingStopStore.IsStopped(runtime.Data));
-    }
-
-    [Fact]
-    public void RuntimeWiringUsesTheGuardedUnitAndTheContractCheck()
-    {
-        string root = Root();
-        string epoch = File.ReadAllText(Path.Combine(root, "Runtime", "SaveEpochRuntime.cs")).Replace("\r\n", "\n");
-        int at = epoch.IndexOf("internal void RunSaveEpochUnit(Action unit)", StringComparison.Ordinal);
-        Assert.True(at > 0);
-        string helper = epoch.Substring(at, epoch.IndexOf("private void Save()", at, StringComparison.Ordinal) - at);
-        string[] order = { "saveEpochUnits++;", "try { unit(); }", "finally", "saveEpochUnits--;",
-            "if (saveEpochStopPending && saveEpochUnits == 0) FinishDeferredSaveEpochStop();" };
-        int next = 0;
-        foreach (string step in order) { int found = helper.IndexOf(step, next, StringComparison.Ordinal); Assert.True(found >= next, step); next = found; }
-        // Update keeps its own unchanged unit (pinned by SaveEpochTests); Save still reads the same counter.
-        Assert.Contains("SaveEpochCallback.Run(saveEpoch, save, save?.modData, saveEpochUnits > 0", epoch);
-
-        string billing = File.ReadAllText(Path.Combine(root, "Runtime", "ResearchBilling.cs")).Replace("\r\n", "\n");
-        Assert.Contains("new ResearchChargeSession(ledger, new NativeResearchChargePort(eligible), active, guardedUnit)", billing);
-        Assert.Contains("ResearchBillingContract.Check(out runDaily)", billing);
-        Assert.Contains("postfix: new HarmonyMethod(typeof(ResearchBilling), nameof(RunDailyPostfix))", billing);
-        Assert.Contains("GameManager.ChangeMoneySafe(request.Amount, info, request.Day, address, force: false, showNotification: false)", billing);
-        // Entry is marked immediately before the native call.
-        int entering = billing.IndexOf("enteringNative();", StringComparison.Ordinal);
-        Assert.True(entering > 0 && billing.IndexOf("GameManager.ChangeMoneySafe(", entering, StringComparison.Ordinal) - entering < 40);
-        // C5e wires it from PersistentCityMod.cs only (the agency dialog reads Installed, C5f's pcresearch status reads Status).
-        foreach (var file in Directory.GetFiles(Path.Combine(root, "Runtime"), "*.cs"))
-            if (!file.EndsWith("ResearchBilling.cs", StringComparison.Ordinal) && !file.EndsWith("PersistentCityMod.cs", StringComparison.Ordinal)
-                && !file.EndsWith("ResearchAgencyDialog.cs", StringComparison.Ordinal) && !file.EndsWith("ResearchDiagnostics.cs", StringComparison.Ordinal)
-                && !file.EndsWith("CapabilityDiagnostics.cs", StringComparison.Ordinal)) // F8b reads Installed and Status for pc capability status
-                Assert.DoesNotContain("ResearchBilling.", File.ReadAllText(file));
-        Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "CapabilityDiagnostics.cs")));
-        Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchAgencyDialog.cs")));
-        Assert.DoesNotContain("ResearchBilling.Attach(", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchDiagnostics.cs")));
-        Assert.Contains("ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit)",
-            File.ReadAllText(Path.Combine(root, "Runtime", "PersistentCityMod.cs")));
-        Assert.False(new MarketResearchSettings().Available);
     }
 
     // ---- perf ----

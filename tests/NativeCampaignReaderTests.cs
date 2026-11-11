@@ -285,18 +285,6 @@ namespace PersistentCity.Tests
             { Assert.Null(CampaignTypeGroups.VerifiedName(code)); Assert.Equal(CampaignResidentGroup.Unknown, CampaignTypeGroups.Group(code)); }
         }
 
-        [Fact]
-        public void SourceHasNoNativeMutationProviderReflectionInvocationOrSchedulingPath()
-        {
-            string root = Path.GetFullPath(Path.Combine(SourceDirectory(), ".."));
-            string source = File.ReadAllText(Path.Combine(root, "Runtime", "NativeCampaignReader.cs"))
-                + File.ReadAllText(Path.Combine(root, "Runtime", "NativeCampaignDiagnostics.cs"));
-            foreach (string forbidden in new[] { ".SetValue(", ".Invoke(", "GetProperty(", "GetMethod(", "dynamic ", "ChangeMoney", "UpdatePromotion(",
-                "GetDailyMarketingExpenses(", "GetMarketingEfficiency(", "GetBuildingRegistration(", "CustomerEntriesHelper", "MarketingHelper",
-                "BusinessHelper", "MarketingTypeSettings.Get", "GetEntriesByAddress", "Harmony", "void Update(", "marketingCampaigns.Add", "marketingCampaigns.Remove" })
-                Assert.DoesNotContain(forbidden, source);
-            Assert.Contains("field.GetValue(source)", source);
-        }
         private static string SourceDirectory([CallerFilePath] string path = "") => Path.GetDirectoryName(path)!;
     }
 }

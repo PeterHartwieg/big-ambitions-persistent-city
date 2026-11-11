@@ -53,12 +53,6 @@ namespace PersistentCity.Core
         /// events since construction or restore. Never saved; a forecast projection keeps its own.</summary>
         public long Reconsiders { get; private set; }
         public long ProcessedEvents { get; private set; }
-        /// <summary>F2d check: whether any vehicle is under physical control (only an older development city's saved
-        /// vehicle before Restore releases it). Scans the vehicles; for tests and harness checks, not per-frame mod work.</summary>
-        public bool HasPhysicalControl
-        {
-            get { foreach (var vehicle in vehicles.Values) if (vehicle.PhysicalControl) return true; return false; }
-        }
         public event Action<string, double>? VehicleCompleted;
         /// <summary>Stable detached closure-refresh set: demand/occupancy plus blocked heads' immediate receivers.</summary>
         public IEnumerable<int> RelevantLinkIds
@@ -183,44 +177,6 @@ namespace PersistentCity.Core
 
         private static bool SameDuration(double a, double b) => Math.Abs(a - b) <= 1e-9 * Math.Max(1, Math.Max(Math.Abs(a), Math.Abs(b)));
 
-        /// <summary>Acquisition/release preserves identity, demand order and occupied link. Call at the simulation cursor.
-        /// Kernel internal since F2d: the simulator never sets physical control, and Restore uses the release to resume an
-        /// older development city's saved physical vehicle in the background.</summary>
-        public void SetPhysicalControl(string vehicleId, bool physicalControl)
-        {
-            TrafficVehicleState vehicle = FindVehicle(vehicleId);
-            if (vehicle.Completed || vehicle.PhysicalControl == physicalControl) return;
-            TrafficVehicleSnapshot previous = Snapshot(vehicle);
-            vehicle.NominalMinutes = previous.NominalMinutes;
-            vehicle.PhysicalControl = physicalControl;
-            if (vehicle.RouteIndex >= 0 && !physicalControl)
-            {
-                TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
-                double fraction = (vehicle.NominalMinutes - leg.StartNominalMinutes) / (leg.EndNominalMinutes - leg.StartNominalMinutes);
-                vehicle.MotionStartFraction = fraction;
-                vehicle.MotionStartedAt = Clock;
-                vehicle.ReadyAt = Clock + (1 - fraction) * leg.FreeFlowMinutes;
-            }
-            if (vehicle.RouteIndex >= 0) Reconsider(links[vehicle.Route[vehicle.RouteIndex].LinkId]);
-        }
-
-        /// <summary>
-        /// Reports cannot grant queue priority or completion. The accepted coordinate is monotone and
-        /// capped by permission; the native adapter must brake before MaximumNominalMinutes itself.
-        /// Kernel internal since F2d: no body reports progress, so the kernel never waits for one.
-        /// </summary>
-        public double ReportPhysicalProgress(string vehicleId, double nominalMinutes)
-        {
-            RequireTime(nominalMinutes, nameof(nominalMinutes));
-            TrafficVehicleState vehicle = FindVehicle(vehicleId);
-            if (!vehicle.PhysicalControl) throw new InvalidOperationException("Vehicle has no physical control lease.");
-            if (vehicle.Completed) return vehicle.NominalMinutes;
-            TrafficVehicleSnapshot permission = Snapshot(vehicle);
-            vehicle.NominalMinutes = Math.Max(vehicle.NominalMinutes, Math.Min(nominalMinutes, permission.MaximumNominalMinutes));
-            if (vehicle.RouteIndex >= 0) Reconsider(links[vehicle.Route[vehicle.RouteIndex].LinkId]);
-            return vehicle.NominalMinutes;
-        }
-
         /// <summary>
         /// F2e player hold (plan Decision 4): the vehicle was blocked by the player for the last <paramref name="minutes"/>,
         /// so its analytical motion and readiness are rebased to where it was before that interval, at <see cref="Clock"/>.
@@ -239,7 +195,7 @@ namespace PersistentCity.Core
             if (!Finite(minutes) || minutes <= 0) throw new ArgumentOutOfRangeException(nameof(minutes));
             if (double.IsNaN(maximumCharge) || maximumCharge <= 0) throw new ArgumentOutOfRangeException(nameof(maximumCharge));
             if (vehicleId == null || !vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle)
-                || vehicle.Completed || vehicle.RouteIndex < 0 || vehicle.PhysicalControl) return default;
+                || vehicle.Completed || vehicle.RouteIndex < 0) return default;
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
             Link link = links[leg.LinkId];
             LinkedListNode<TrafficVehicleState>? node = link.Queue.Find(vehicle);
@@ -321,7 +277,7 @@ namespace PersistentCity.Core
                 double spatial = leg.EndLinkFraction - leg.StartLinkFraction;
                 double limit = rank == 0 ? 1 : Math.Max(0, Math.Min(1, (previous - 1.0 / link.Definition.Capacity - leg.StartLinkFraction) / spatial));
                 double allowed = Math.Max(floor, Math.Min(motion, limit));
-                previous = leg.StartLinkFraction + (occupant.PhysicalControl ? floor : allowed) * spatial;
+                previous = leg.StartLinkFraction + allowed * spatial;
                 if (ReferenceEquals(queued, target)) return previous;
             }
             throw new InvalidOperationException("The vehicle is not queued on its link.");
@@ -339,7 +295,7 @@ namespace PersistentCity.Core
             Reconsider(link);
         }
 
-        /// <summary>Only acknowledged terminal state can be discarded; rendering release uses SetPhysicalControl.</summary>
+        /// <summary>Only acknowledged terminal state can be discarded.</summary>
         public bool RemoveCompleted(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || !vehicle.Completed) return false;
@@ -361,16 +317,6 @@ namespace PersistentCity.Core
                 if (link.Queue.Count >= link.Definition.Capacity && link.Queue.First != null)
                 {
                     TrafficVehicleState head = link.Queue.First.Value;
-                    if (head.PhysicalControl)
-                    {
-                        TrafficRouteLeg leg = head.Route[head.RouteIndex];
-                        double remainingFraction = (leg.EndNominalMinutes - head.NominalMinutes) /
-                            (leg.EndNominalMinutes - leg.StartNominalMinutes);
-                        double predicted = Math.Max(head.ReadyAt, Clock + remainingFraction * leg.FreeFlowMinutes);
-                        predicted = Math.Max(predicted, link.State.NextDischargeAt);
-                        predicted = link.Definition.Signal?.NextGreen(predicted) ?? predicted;
-                        delay = Math.Max(delay, Math.Max(0, predicted - entryMinute));
-                    }
                     if (head.RouteIndex + 1 < head.Route.Count && links[head.Route[head.RouteIndex + 1].LinkId].State.Closed)
                         delay = double.PositiveInfinity;
                 }
@@ -382,8 +328,7 @@ namespace PersistentCity.Core
         /// <summary>
         /// Extra, unweighted wait for an interior source's empty-section opportunity. Subtracts the
         /// queue/headway admission estimate already in Forecast, weighted by sectionShare. Current committed dependencies only;
-        /// blocked queues or projection bounds return positive infinity. Physical copies extrapolate
-        /// from observed progress at nominal speed; future collision/stop behavior is unknown.
+        /// blocked queues or projection bounds return positive infinity.
         /// Boundary/empty fast paths allocate nothing. Projection is bounded to 32 links, 64 vehicles,
         /// 1024 inspected route/predecessor references and 256 events; it never mutates live queues.
         /// </summary>
@@ -412,19 +357,6 @@ namespace PersistentCity.Core
             }
             double included = Math.Max(0, link.State.NextDischargeAt - entryMinute)
                 + (link.Queue.Count + link.Sources.Count) * link.Definition.HeadwayMinutes;
-            if (link.Queue.Count >= link.Definition.Capacity && link.Queue.First != null)
-            {
-                TrafficVehicleState head = link.Queue.First.Value;
-                if (head.PhysicalControl)
-                {
-                    TrafficRouteLeg leg = head.Route[head.RouteIndex];
-                    double residualFraction = (leg.EndNominalMinutes - head.NominalMinutes) / (leg.EndNominalMinutes - leg.StartNominalMinutes);
-                    double predicted = Math.Max(head.ReadyAt, Clock + residualFraction * leg.FreeFlowMinutes);
-                    predicted = Math.Max(predicted, link.State.NextDischargeAt);
-                    predicted = link.Definition.Signal?.NextGreen(predicted) ?? predicted;
-                    included = Math.Max(included, Math.Max(0, predicted - entryMinute));
-                }
-            }
             return Math.Max(0, projection.Clock - entryMinute - included * sectionShare);
         }
 
@@ -480,7 +412,7 @@ namespace PersistentCity.Core
                     VehicleId = original.VehicleId, Order = original.Order, RouteIndex = original.RouteIndex < 0 ? -1 : 0,
                     EnqueuedAt = original.EnqueuedAt, EnteredAt = original.EnteredAt, ReadyAt = original.ReadyAt,
                     MotionStartedAt = original.MotionStartedAt, MotionStartFraction = original.MotionStartFraction,
-                    NominalMinutes = original.NominalMinutes, PhysicalControl = original.PhysicalControl
+                    NominalMinutes = original.NominalMinutes
                 };
                 for (int index = start; index < original.Route.Count; index++)
                 {
@@ -497,11 +429,8 @@ namespace PersistentCity.Core
             foreach (int id in selected)
                 foreach (var vehicle in links[id].Queue)
                     projection.links[id].Queue.AddLast(projection.vehicles[vehicle.VehicleId]);
+            // This is an ETA projection, never authority over a live actor.
             foreach (Link copy in projection.links.Values) projection.Reconsider(copy);
-            // This is an ETA projection, never authority over a live actor. Extrapolate
-            // measured physical points at nominal speed without moving live ownership.
-            foreach (TrafficVehicleState original in selectedVehicles)
-                if (original.PhysicalControl) projection.SetPhysicalControl(original.VehicleId, false);
             return projection;
         }
 
@@ -668,7 +597,6 @@ namespace PersistentCity.Core
         private double EligibleAt(Link source, TrafficVehicleState vehicle)
         {
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
-            if (vehicle.PhysicalControl && vehicle.NominalMinutes < leg.EndNominalMinutes) return double.PositiveInfinity;
             double ready = Math.Max(Clock, Math.Max(vehicle.ReadyAt, source.State.NextDischargeAt));
             var signal = source.Definition.Signal;
             return signal == null ? ready : signal.NextGreen(ready);
@@ -681,12 +609,10 @@ namespace PersistentCity.Core
         {
             TrafficVehicleState vehicle = target.Value;
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
-            if (vehicle.PhysicalControl && vehicle.NominalMinutes < leg.EndNominalMinutes) return double.PositiveInfinity;
             double at = Math.Max(Clock, vehicle.ReadyAt);
             int separation = 0;
             // Each predecessor must clear the curb point plus one storage spacing.
-            // Physical blockers wake this link on observation/release; background motion
-            // supplies an analytical threshold, never a periodic retry.
+            // Background motion supplies an analytical threshold, never a periodic retry.
             for (var predecessor = target.Previous; predecessor != null; predecessor = predecessor.Previous)
             {
                 double required = leg.EndLinkFraction + ++separation / (double)link.Definition.Capacity;
@@ -696,7 +622,6 @@ namespace PersistentCity.Core
                 double fraction = (required - aheadLeg.StartLinkFraction) / (aheadLeg.EndLinkFraction - aheadLeg.StartLinkFraction);
                 double actual = (ahead.NominalMinutes - aheadLeg.StartNominalMinutes) / (aheadLeg.EndNominalMinutes - aheadLeg.StartNominalMinutes);
                 if (actual >= fraction) continue;
-                if (ahead.PhysicalControl) return double.PositiveInfinity;
                 at = Math.Max(at, ahead.MotionStartedAt + Math.Max(0, fraction - ahead.MotionStartFraction) * aheadLeg.FreeFlowMinutes);
             }
             return at;
@@ -720,10 +645,10 @@ namespace PersistentCity.Core
         {
             if (vehicle.Completed)
                 return new TrafficVehicleSnapshot(vehicle.VehicleId, vehicle.RouteIndex, null, vehicle.NominalMinutes,
-                    vehicle.NominalMinutes, false, vehicle.PhysicalControl, true, vehicle.CompletedAt);
+                    vehicle.NominalMinutes, false, true, vehicle.CompletedAt);
             if (vehicle.RouteIndex < 0)
                 return new TrafficVehicleSnapshot(vehicle.VehicleId, -1, null, vehicle.NominalMinutes,
-                    vehicle.NominalMinutes, false, vehicle.PhysicalControl, false, null);
+                    vehicle.NominalMinutes, false, false, null);
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
             Link link = links[leg.LinkId];
             int rank = 0;
@@ -752,10 +677,9 @@ namespace PersistentCity.Core
                     maximum = Math.Max(occupant.NominalMinutes, maximum);
                     break;
                 }
-                previousFraction = occupantLeg.StartLinkFraction + (occupant.PhysicalControl ? floor : allowed) * spatialSpan;
+                previousFraction = occupantLeg.StartLinkFraction + allowed * spatialSpan;
                 rank++;
             }
-            double progress = vehicle.PhysicalControl ? vehicle.NominalMinutes : maximum;
             bool green = (link.Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
             bool cross = rank == 0 && Math.Max(vehicle.ReadyAt, link.State.NextDischargeAt) <= Clock && green;
             if (cross && vehicle.RouteIndex + 1 < vehicle.Route.Count)
@@ -764,8 +688,8 @@ namespace PersistentCity.Core
                 cross = CanReceive(destination, vehicle, vehicle.RouteIndex + 1);
             }
             if (IsCurbExit(vehicle)) cross = CurbExitAt(link, queueNode!) <= Clock;
-            return new TrafficVehicleSnapshot(vehicle.VehicleId, vehicle.RouteIndex, leg.LinkId, progress,
-                maximum, cross, vehicle.PhysicalControl, false, null, green, leg.EndNominalMinutes);
+            return new TrafficVehicleSnapshot(vehicle.VehicleId, vehicle.RouteIndex, leg.LinkId, maximum,
+                maximum, cross, false, null, green, leg.EndNominalMinutes);
         }
 
         public TrafficKernelState Capture()
@@ -791,14 +715,11 @@ namespace PersistentCity.Core
             return state;
         }
 
-        /// <summary>Restores a detached snapshot. By default, a saved physically controlled vehicle (an older development
-        /// city; F2d never sets it) resumes background travel from its actual progress; false preserves it exactly, for
-        /// validation and clock retiming.</summary>
-        public static TrafficKernel Restore(TrafficKernelState state, bool releasePhysicalControl = true)
-            => Restore(state, releasePhysicalControl, false);
+        /// <summary>Restores a detached snapshot exactly.</summary>
+        public static TrafficKernel Restore(TrafficKernelState state) => Restore(state, false);
 
         // Retiming can reconstruct derived wakeups. Saved states must already supply timely wakeups.
-        private static TrafficKernel Restore(TrafficKernelState state, bool releasePhysicalControl, bool rebuildWakeups)
+        private static TrafficKernel Restore(TrafficKernelState state, bool rebuildWakeups)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (state.Schema != TrafficKernelState.CurrentSchema) throw new ArgumentException("Unsupported traffic schema.", nameof(state));
@@ -899,13 +820,6 @@ namespace PersistentCity.Core
             if (rebuildWakeups)
                 foreach (Link link in kernel.links.Values) kernel.Reconsider(link);
             kernel.ValidateRequiredWakeups();
-            if (releasePhysicalControl)
-                foreach (TrafficVehicleState vehicle in kernel.vehicles.Values.OrderBy(v => v.Order))
-                    if (vehicle.PhysicalControl)
-                    {
-                        if (vehicle.Completed) vehicle.PhysicalControl = false;
-                        else kernel.SetPhysicalControl(vehicle.VehicleId, false);
-                    }
             return kernel;
         }
 
@@ -1021,7 +935,7 @@ namespace PersistentCity.Core
             // Signal/curb calculations can round earlier than independently scaled events.
             // Reconsider in stable link order before validation: retain safe early events,
             // bring late ones forward, and let the normal admission guards decide movement.
-            return Restore(state, false, true);
+            return Restore(state, true);
         }
 
         private void ValidateRequiredWakeups()
@@ -1118,7 +1032,7 @@ namespace PersistentCity.Core
             Route = value.Route.Select(leg => new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes, FreeFlowMinutes = leg.FreeFlowMinutes, StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction }).ToList(),
             RouteIndex = value.RouteIndex, EnqueuedAt = value.EnqueuedAt, EnteredAt = value.EnteredAt,
             ReadyAt = value.ReadyAt, MotionStartedAt = value.MotionStartedAt, MotionStartFraction = value.MotionStartFraction,
-            NominalMinutes = value.NominalMinutes, PhysicalControl = value.PhysicalControl,
+            NominalMinutes = value.NominalMinutes,
             Completed = value.Completed, CompletedAt = value.CompletedAt
         };
         private static long NextOrder(ref long counter)

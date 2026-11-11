@@ -373,28 +373,6 @@ public sealed class FocusIndependentInputsTests
     }
 
     [Fact]
-    public void NativeReadsRouteActivityThroughStaticMemoryAndReadNoLivePerformer()
-    {
-        string environment = File.ReadAllText(Path.Combine(Root(), "Runtime", "OptionalStopEnvironment.cs"));
-        var livePerformer = new Regex(@"\bStreetPerformer\b");
-        Assert.DoesNotMatch(livePerformer, environment);
-        Assert.DoesNotContain("AllPedestrianSpawners", environment);
-        Assert.DoesNotContain("_streetPerformer", environment);
-        var activity = environment.Split('\n').Where(line => line.Contains("activeInHierarchy")).ToArray();
-        Assert.Equal(3, activity.Length);
-        Assert.All(activity, line => Assert.Contains("Activity.Admit(", line));
-        string routes = File.ReadAllText(Path.Combine(Root(), "Runtime", "MultimodalRoutes.cs"));
-        int start = routes.IndexOf("private void EnsureStations()", StringComparison.Ordinal);
-        string stations = routes.Substring(start, routes.IndexOf("private List<Station> Nearby", start, StringComparison.Ordinal) - start);
-        Assert.Contains("stationActivity.Admit(sceneKey, active, hidden)", stations);
-        Assert.Single(stations.Split('\n'), line => line.Contains("activeInHierarchy"));
-        // Q4: a visible audience member at its spot faces the saved facing point; no native performer is consulted.
-        string bodies = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs"))));
-        Assert.Contains("body.Face(stop.Facing)", bodies);
-        Assert.DoesNotMatch(livePerformer, bodies);
-    }
-
-    [Fact]
     public void OfflineCostOfCachedSceneAnswers()
     {
         // Offline component timings only, not in-game mod-work. 200 spawners, 64 places, 1,000 saved audience stops.

@@ -37,7 +37,7 @@ public sealed class TrafficRetimingPrecisionTests
         Assert.Equal(progress, retimed.GetPermission("car").NominalMinutes, 10);
         var snapshot = retimed.Capture();
         TrafficKernel.ValidateState(snapshot);
-        var reloaded = TrafficKernel.Restore(snapshot, false);
+        var reloaded = TrafficKernel.Restore(snapshot);
         double ready = snapshot.Vehicles.Single().ReadyAt;
         double expected = Now + shift + (Duration - ((Now + shift) - (Entered + shift))) * 60;
         Assert.InRange(Math.Abs(ready - expected), 0, shift == 0 ? 1e-9 : 1e-5);
@@ -57,7 +57,7 @@ public sealed class TrafficRetimingPrecisionTests
     {
         var snapshot = Interrupted().Capture();
         snapshot.Vehicles.Single().ReadyAt += 5;
-        var kernel = TrafficKernel.Restore(snapshot, false);
+        var kernel = TrafficKernel.Restore(snapshot);
         double expected = Now + (snapshot.Vehicles.Single().ReadyAt - Now) * 60;
         var retimed = kernel.RescaleTime(60);
         Assert.Equal(expected, retimed.Capture().Vehicles.Single().ReadyAt);
@@ -75,33 +75,6 @@ public sealed class TrafficRetimingPrecisionTests
         Assert.Throws<ArgumentException>(() => TrafficKernel.ValidateState(snapshot));
     }
 
-    [Fact]
-    public void RepeatedClockChangesPreservePhysicalProgressAndRequireEndpointObservation()
-    {
-        var kernel = Interrupted();
-        kernel.SetPhysicalControl("car", true);
-        double progress = kernel.GetPermission("car").NominalMinutes;
-        double spatial = progress / Duration;
-        double rate = 1;
-        foreach (double next in new[] { 60.0, 1.0, .25, 1.0, 1000.0, .01, 1.0, 60.0, 1.0 })
-        {
-            kernel = kernel.RescaleTime(next / rate);
-            var snapshot = kernel.Capture();
-            TrafficKernel.ValidateState(snapshot);
-            var leg = snapshot.Vehicles.Single().Route.Single();
-            Assert.Equal(spatial, leg.StartLinkFraction, 10);
-            Assert.Equal(progress, kernel.GetPermission("car").NominalMinutes, 10);
-            Assert.True(snapshot.Vehicles.Single().PhysicalControl);
-            kernel = TrafficKernel.Restore(snapshot, false);
-            rate = next;
-        }
-        kernel.AdvanceTo(Now + 1000, 100);
-        Assert.False(kernel.GetPermission("car").IsCompleted);
-        double end = kernel.Capture().Vehicles.Single().Route.Single().EndNominalMinutes;
-        kernel.ReportPhysicalProgress("car", end);
-        kernel.AdvanceTo(Now + 1000, 100);
-        Assert.True(kernel.GetPermission("car").IsCompleted);
-    }
     private static TrafficKernel WaitingAtSignal()
     {
         const double start = 2209.9961150297877, duration = 1.391151728043869;
@@ -146,11 +119,11 @@ public sealed class TrafficRetimingPrecisionTests
     {
         var missing = WaitingAtSignal().Capture();
         missing.Events.Clear();
-        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(missing, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(missing));
         Assert.Throws<ArgumentException>(() => TrafficKernel.ValidateState(missing));
         var late = WaitingAtSignal().Capture();
         late.Events.Single().At += 0.001;
-        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(late, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(late));
         Assert.Throws<ArgumentException>(() => TrafficKernel.ValidateState(late));
     }
 
@@ -159,7 +132,7 @@ public sealed class TrafficRetimingPrecisionTests
     {
         var state = WaitingAtSignal().Capture();
         state.NextEventOrder = long.MaxValue;
-        var kernel = TrafficKernel.Restore(state, false);
+        var kernel = TrafficKernel.Restore(state);
         string before = JsonSerializer.Serialize(kernel.Capture());
         Assert.Throws<InvalidOperationException>(() => kernel.RescaleTime(60));
         Assert.Equal(before, JsonSerializer.Serialize(kernel.Capture()));

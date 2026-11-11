@@ -18,8 +18,8 @@ import economy_stage  # noqa: E402
 import run  # noqa: E402
 
 ROOT = HERE.parents[1]
-SAMPLE = ROOT / "tools/economy-interventions/evidence/f6h-f6j-rerun-acceptance.json"
-BASELINE = ROOT / "tools/movement-equivalence/baseline.json"
+SAMPLE = ROOT / "tests/economy-interventions/evidence/f6h-f6j-rerun-acceptance.json"
+BASELINE = ROOT / "tests/movement-equivalence/baseline.json"
 EXPECTATIONS = HERE / "expectations/movement.json"
 HOUSEHOLD = "control household week-6 metrics outside the rerun thresholds in at least one seed"
 
@@ -593,7 +593,7 @@ class Movement(unittest.TestCase):
         f = Fixture(self)
         copier = f.script("movement.py", f"import shutil, sys; shutil.copy(sys.argv[1], sys.argv[2])\n")
         f.stage(id="movement", **{"class": "semantic"}, rule="movement",
-                steps=[["{python}", copier, "tools/movement-equivalence/baseline.json", "{out}/movement.json"]],
+                steps=[["{python}", copier, "tests/movement-equivalence/baseline.json", "{out}/movement.json"]],
                 output="movement.json", expectations="tools/acceptance/expectations/movement.json")
         _, result, _ = f.run()
         stage = f.stage_record(result, "movement")
@@ -819,7 +819,7 @@ class Lock(unittest.TestCase):
             ("14", "dotnet", "/usr/bin/dotnet test --filter X"),
             ("15", "dotnet.exe", '"' + sdk + '" "C:\\sdk\\MSBuild.dll" /nodemode:1 /nodeReuse:false'),
             ("16", "dotnet.exe", sdk + " build tests/PersistentCity.Tests.csproj"),
-            ("17", "dotnet.exe", sdk + " run --project tools/movement-equivalence -- --out x"),
+            ("17", "dotnet.exe", sdk + " run --project tests/movement-equivalence -- --out x"),
             ("99", "dotnet.exe", sdk + " test"),
         ]
         self.assertEqual(["dotnet.exe 11", "dotnet.exe 12", "testhost.exe 13", "dotnet 14"],

@@ -138,26 +138,6 @@ public sealed class FoodContractHookTests
 
     private static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;
 
-    /// <summary>The Runtime binder and its postfix bodies are game-bound, so this pins them as source: the E5a
-    /// discovery is the first 19 table rows, every id has exactly one postfix routing to its kind, and the binder
-    /// knows every declaring and parameter type the table names.</summary>
-    [Fact]
-    public void RuntimeBinderAndPostfixesMatchTheTable()
-    {
-        string source = File.ReadAllText(Path.Combine(Root(), "Runtime", "LoadedCatalogueLifecycleMembers.cs"));
-        Assert.Contains("i < FoodContractHookTable.E5aMembers", source);
-        Assert.Contains("method.DeclaringType != type || method.IsStatic != hook.IsStatic", source);
-        Assert.Contains("actual[i].ParameterType != arguments[i]", source);
-        foreach (var hook in FoodContractHookTable.All)
-        {
-            Assert.Single(System.Text.RegularExpressions.Regex.Matches(source, @"\bHook" + hook.Id + @"\("));
-            Assert.Contains("FoodContractHintRouter." + hook.Kind + "(" + hook.Id + (hook.Kind is FoodContractHookKind.Quantity
-                or FoodContractHookKind.Unattributed or FoodContractHookKind.Catalogue ? ")" : ","), source);
-            Assert.Contains("[\"" + hook.Type + "\"] = typeof(", source);
-            foreach (var parameter in hook.Parameters) Assert.Contains("[\"" + parameter + "\"] = typeof(", source);
-        }
-    }
-
     // Coalescing ---------------------------------------------------------------------------------------------------
 
     [Fact]

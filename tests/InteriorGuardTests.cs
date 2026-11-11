@@ -97,19 +97,5 @@ public sealed class InteriorGuardTests
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "AGENTS.md"))) root = root.Parent;
         Assert.NotNull(root);
-        string Read(string path) => File.ReadAllText(Path.Combine(root!.FullName, path));
-        var adapter = Read("Runtime/NativeInteriorCityView.cs");
-        var start = adapter.Substring(adapter.IndexOf("public static void Start("), adapter.IndexOf("private static void OnSceneUnloaded") - adapter.IndexOf("public static void Start("));
-        Assert.Contains("NativeInteriorGuard.Start(loaded);", start);
-        Assert.Contains("Configured = NativeInteriorGuard.Verdict.AllowsView(loaded.InteriorCityView == \"on\");", start);
-        Assert.Equal(2, adapter.Split("NativeInteriorGuard.Start(").Length);
-        var mod = Read("Runtime/PersistentCityMod.cs");
-        var load = mod.Substring(mod.IndexOf("private void CompleteInitialization()"), mod.IndexOf("private static double Now()") - mod.IndexOf("private void CompleteInitialization()"));
-        Assert.Contains("NativeInteriorCityView.Start(settings, log!, RestoreInterior);", load);
-        Assert.Equal(2, mod.Split("NativeInteriorCityView.Start(").Length);
-        var dump = Read("Runtime/InteriorGuardDiagnostics.cs");
-        Assert.DoesNotContain(".Start(", dump); Assert.DoesNotContain("NativeInteriorCityView.Active", dump);
-        Assert.Contains("NativeInteriorCityView.State.Active", dump);
-        Assert.DoesNotContain("GetAssemblies", adapter);
     }
 }

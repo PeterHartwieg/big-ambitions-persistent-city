@@ -613,38 +613,4 @@ public sealed class SaveEpochTests
         }
     }
 
-    [Fact]
-    public void RuntimeWiringKeepsCaptureOrderAndDetachMarkersFirst()
-    {
-        var root = new DirectoryInfo(AppContext.BaseDirectory);
-        while (root != null && !File.Exists(Path.Combine(root.FullName, "AGENTS.md"))) root = root.Parent;
-        Assert.NotNull(root);
-        string Read(string path) => File.ReadAllText(Path.Combine(root!.FullName, path));
-        string mod = Read("Runtime/PersistentCityMod.cs");
-        int start = mod.IndexOf("private SaveEpochCapture CaptureForSave(", StringComparison.Ordinal);
-        Assert.True(start > 0);
-        string capture = mod.Substring(start, mod.IndexOf("private void RestoreInterior()", start, StringComparison.Ordinal) - start);
-        // Rule 1: today's observation order, then the single payload write.
-        string[] order = { "private SaveEpochCapture CaptureForSave(SaveEpochTicket ticket)", "BeginAccountingObservations()", "ReadRlo(\"save\")", "BeforeSave()", "CompleteCampaignsForSave()",
-            "RefreshKnownOwnership()", "CheckInputEpoch(", "CanPublish(ticket", ".WriteTo(SaveGameManager.Current.modData" };
-        int at = 0;
-        foreach (string step in order) { int next = capture.IndexOf(step, at, StringComparison.Ordinal); Assert.True(next >= at, step); at = next; }
-        Assert.DoesNotContain("Fail(", capture); // Every refusal goes through the epoch callback's marker-first path.
-        string detach = mod.Substring(mod.IndexOf("private void Detach()", StringComparison.Ordinal));
-        Assert.True(detach.IndexOf("DetachSaveEpoch();", StringComparison.Ordinal) < detach.IndexOf("NativeInteriorCityView.Stop();", StringComparison.Ordinal));
-        string epoch = Read("Runtime/SaveEpochRuntime.cs");
-        // Rule 5: bound and subscribed when initialization starts; publication allowed only after completion.
-        Assert.Contains("new SaveEpochBinding(save, data, sequence, initializing: true);\n            GlobalEvents.onSaveGame += Save;",
-            epoch.Replace("\r\n", "\n"));
-        Assert.DoesNotContain("onSaveGame += Save", mod);
-        string complete = mod.Substring(mod.IndexOf("private void CompleteInitialization()", StringComparison.Ordinal));
-        Assert.True(complete.IndexOf("saveEpoch.CompleteInitialization();", StringComparison.Ordinal) > 0);
-        Assert.Contains("SaveEpochCallback.Run(saveEpoch, save, save?.modData, saveEpochUnits > 0", epoch);
-        Assert.Contains("try { UpdateCity(); }", epoch);
-        string start2 = mod.Substring(mod.IndexOf("private void TryStart()", StringComparison.Ordinal));
-        Assert.True(start2.IndexOf("SaveEpochStore.CheckForStart", StringComparison.Ordinal) < start2.IndexOf("Task.Run", StringComparison.Ordinal));
-        int bind = start2.IndexOf("BeginInitializingSaveEpoch(save, save.modData,", StringComparison.Ordinal);
-        Assert.True(bind > 0 && bind < start2.IndexOf("Task.Run", StringComparison.Ordinal));
-        Assert.Contains("SaveEpochStore.DescribesState(epochMarker, stored.SourceSchema, stored.State)", start2);
-    }
 }

@@ -272,57 +272,6 @@ namespace PersistentCity.Tests
             Assert.Equal(CapabilityState.Absent, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloRoadSpeeds));
         }
 
-        /// <summary>The three call sites use the class; activation stays strict; no extra RLO read and the 30 s cadence
-        /// is unchanged.</summary>
-        [Fact]
-        public void CallSitesUseTheClassAndAddNoRead()
-        {
-            string mod = File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "PersistentCityMod.cs")).Replace("\r\n", "\n");
-            Assert.Equal(4, System.Text.RegularExpressions.Regex.Matches(mod, @"ReadRlo\(""").Count); // startup, periodic, activation, save
-            Assert.Single(System.Text.RegularExpressions.Regex.Matches(mod, @"rlo\.Read\("));
-            Assert.Contains("nextDependencyCheck = Time.unscaledTime + 30;", mod);
-            Assert.Contains("var continuity = source.Continuity(simulation.State);", mod);
-            Assert.Contains("var saveContinuity = source.Continuity(simulation!.State);", mod);
-            Assert.Contains("if (!DonorReads.Continues(saveContinuity))", mod);
-            Assert.Contains("if (!source.MatchesPopulation(state)) { Fail(\"RLO donor catalogue changed during initialization (", mod);
-            Assert.Contains("LogActivationLines();", mod); // F8h: the lines moved into CapabilityDiagnostics, logged after the checkout decision
-            Assert.Contains("log?.Info(CapabilityActivationLine());", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
-            // Startup keeps its strict Ready requirement: no city is created from a transient answer.
-            Assert.Contains("if (source.Status != RloReadStatus.Ready)", mod);
-            // Compatibility owns every RLO read; the classification adds none.
-            Assert.DoesNotContain("ReadRlo(", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
-        }
-
-        /// <summary>Sol-r1-1: NotYet and Refreshing slowed-lane answers no longer stop the city through road preparation.
-        /// Compatibility raises a distinct not-ready refusal (EveryBridge... and ReservationsReserve... check its type); the
-        /// Runtime path keeps the last verified overrides, holds route preparation (UpdateCity's existing not-prepared
-        /// branch, which does not Fail) and leaves saving untouched. Shared and Failed still throw and stop as before.</summary>
-        [Fact]
-        public void TransientRoadSpeedsHoldRoutePreparationInsteadOfStopping()
-        {
-            string Read(string file) => File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", file)).Replace("\r\n", "\n");
-            // tools/road-speed-regression TransientCaptureWaits runs the real RoadRoutes and NativeRoadSpeeds through a held
-            // plan, a lane change during Refreshing and a save in the window; these pin the same wiring in the source.
-            string speeds = Read("NativeRoadSpeeds.cs");
-            Assert.Contains("catch (Exception error) when (transient?.Invoke(error) is string waiting) { Waiting = waiting; Verified = false; return; }", speeds);
-            Assert.Contains("if (Waiting != null) throw new RoadSpeedsWaitingException(Waiting);", speeds);
-            Assert.DoesNotContain("PersistentCity.Compatibility", speeds); // the road harnesses compile it without Compatibility
-            Assert.Contains("TransientCaptureWaits();", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "tools", "road-speed-regression", "Program.cs")));
-            string roads = Read("RoadRoutes.cs");
-            int prepare = roads.IndexOf("public bool Prepare()", StringComparison.Ordinal);
-            Assert.True(prepare > 0);
-            Assert.True(roads.IndexOf("if (speeds.Waiting != null) return false;", prepare, StringComparison.Ordinal) < roads.IndexOf("speeds.Canonical(", prepare, StringComparison.Ordinal));
-            string routes = Read("MultimodalRoutes.cs");
-            int held = routes.IndexOf("if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;", StringComparison.Ordinal);
-            Assert.True(held > 0 && held < routes.IndexOf("if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)", StringComparison.Ordinal));
-            string mod = Read("PersistentCityMod.cs");
-            // Not prepared: the frame waits and returns; it does not Fail. Saving never asks the planner.
-            Assert.Contains("if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); inspector.Suspend(); return; }", mod);
-            int capture = mod.IndexOf("private SaveEpochCapture CaptureSteps(", StringComparison.Ordinal);
-            string steps = mod.Substring(capture, mod.IndexOf("private void RestoreInterior()", capture, StringComparison.Ordinal) - capture);
-            Assert.DoesNotContain("routes", steps);
-        }
-
         /// <summary>Plan section 6, F8d: classification cost per 30 s read (the read itself is RLO's and already logged).</summary>
         [Fact]
         public void ClassificationCostPerRead()

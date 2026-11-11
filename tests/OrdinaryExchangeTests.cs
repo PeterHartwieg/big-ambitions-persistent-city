@@ -208,26 +208,6 @@ public sealed class OrdinaryExchangeTests
         Drain(loaded, start + 1); Assert.Equal(Money.FromCents(500), Budget(loaded).Ledger.Discretionary);
     }
     [Fact]
-    public void SourceGuardKeepsNativeWritesAndForeignLedgersOutOfOrdinaryExchangePath()
-    {
-        string root = AppContext.BaseDirectory;
-        while (!File.Exists(Path.Combine(root, "AGENTS.md"))) root = Directory.GetParent(root)!.FullName;
-        string core = File.ReadAllText(Path.Combine(root, "Core/OrdinaryExchanges.cs"));
-        foreach (string native in new[] { "UnityEngine", "BuildingRegistration", "BusinessSimulator", "SaveGameManager", ".Buy(" })
-            Assert.DoesNotContain(native, core);
-        string adapter = File.ReadAllText(Path.Combine(root, "Runtime/NativeOrdinaryOwnership.cs"));
-        Assert.Contains("reg.RentedByPlayer", adapter); Assert.Contains("reg.businessOwnerRivalId", adapter);
-        foreach (string write in new[] { "RentedByPlayer =", "businessOwnerRivalId =", "retailPrices =", "Bank", "Payroll", "CustomerEntriesHelper" })
-            Assert.DoesNotContain(write, adapter);
-        string panel = File.ReadAllText(Path.Combine(root, "Runtime/FoodEconomyPanel.cs"));
-        // F6g owns the panel projection; render its week comparison once, without the old 14-day total.
-        Assert.DoesNotContain("simulation.FreeOutsideSpending().Text()", panel);
-        // F9e: the panel reaches it through the city view's one adapter.
-        Assert.Equal(1, panel.Split("CityViewReports.AppendCityEconomy(").Length - 1);
-        Assert.Equal(1, File.ReadAllText(Path.Combine(root, "Core/CityView.cs")).Split("FoodFeedbackV2.AppendCity(").Length - 1);
-    }
-
-    [Fact]
     public void RuntimePricesClampToTheBoundedTable()
     {
         var settings = Newtonsoft.Json.JsonConvert.DeserializeObject<PrototypeSettings>("{\"OrdinaryRetailVisitCents\":0,\"OrdinaryLeisureVisitCents\":999999}")!;

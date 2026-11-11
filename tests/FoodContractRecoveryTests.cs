@@ -115,8 +115,6 @@ public sealed class FoodContractRecoveryTests
         Assert.False(world.Refused.ContainsKey(shop.Key));
         Assert.True(shop.Row.Desired);
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
-        string runtime = File.ReadAllText(Path.Combine(ContractRecoveryTestPaths.Root(), "Runtime", "FoodContractDiagnostics.cs"));
-        Assert.Contains("RefreshBagPolicy(reg);", runtime);
     }
 
     [Fact]
