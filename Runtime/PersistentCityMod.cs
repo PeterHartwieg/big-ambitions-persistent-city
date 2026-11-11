@@ -262,12 +262,14 @@ namespace PersistentCity.Runtime
                 var save = SaveGameManager.Current;
                 if (NativeInteriorCityView.Configured && (save == null || UI.Load.LoadScene.isLoading
                     || saveIdentity != null && !ReferenceEquals(saveIdentity, save))) RestoreInterior();
+                ArmStartupClock(save);
                 if (save == null) return;
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                     ResetPopulationForSaveChange();
                 if (simulation == null)
                 {
                     if (initialization != null) { CompleteInitialization(); return; }
+                    ArmStartupClock(save);
                     if (startupHold.Wait(UI.Load.LoadScene.isLoading, Time.unscaledDeltaTime))
                     {
                         NativeCityClock.Stop();
@@ -591,9 +593,6 @@ namespace PersistentCity.Runtime
         private void TryStart()
         {
             if (!CanStartAccountingSave()) return;
-            // Hold from the first attempt, before RLO is ready and behind the loading screen (StartupClockHold).
-            var holding = SaveGameManager.Current;
-            if (holding?.modData != null && startupHold.Begin()) StartCityClock(holding);
             if (!NativeTravelPace.StartObservation()) { Fail(NativeTravelPace.LastError); return; }
             dependency = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "RealLifeOverhaul");
             var source = ReadRlo("startup");
@@ -659,6 +658,16 @@ namespace PersistentCity.Runtime
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
+        }
+
+        /// <summary>While no city is attached, keep the startup guard armed for the current save (none at the menu), so
+        /// native time is held before the loaded save's first tick. The hold belongs to one save: a different save stops a
+        /// clock bound to the old one and starts over. Released (the wait expired) stays released for that save.</summary>
+        private void ArmStartupClock(object? save)
+        {
+            if (simulation != null || initialization != null) return;
+            if (startupHold.ForSave(save) && NativeCityClock.Bound) NativeCityClock.Stop();
+            if (startupHold.Begin() || startupHold.Holding && !NativeCityClock.Armed && !NativeCityClock.Bound) NativeCityClock.Arm();
         }
 
         private void StartCityClock(object save)

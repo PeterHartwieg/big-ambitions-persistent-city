@@ -24,30 +24,46 @@ public sealed partial class FoodCommerceTests
 
     private sealed class SaveObject { public readonly Dictionary<string, string> modData = new(StringComparer.Ordinal); }
 
+    /// <summary>When PopulationRuntime installs a hold on native time after a load.</summary>
+    private enum HoldFrom
+    {
+        /// <summary>Base code: TryStart's RLO-Ready path, just before initialization.</summary>
+        RloReady,
+        /// <summary>Fix round 1: TryStart's first attempt, inside PopulationRuntime.Update.</summary>
+        FirstUpdate,
+        /// <summary>This fix: the startup guard armed while no city is attached (the menu), before the load.</summary>
+        BeforeLoad,
+    }
+
     /// <summary>Native time after a load until activation: loading frames, frames waiting for RLO, then RLO Ready
-    /// and initialization. Each unheld frame advances one 30 FPS tick at native speed 1 (one game minute a second).</summary>
+    /// and initialization. Each frame runs GameManager.RunMainGameTick before PopulationRuntime.Update (the order
+    /// Unity does not guarantee either way); an unheld tick advances 1/30 game minute (one game minute a second).</summary>
     private sealed class NativeLoad
     {
         public int Hour; public float Minute;
         public double Now => Hour + (double)Minute;
         public NativeLoad(double saved) { Hour = (int)(Math.Floor(saved / 60) * 60); Minute = (float)(saved - Hour); }
-        public void Tick(bool held) { if (!held) Minute += 1f / 30; }
 
-        /// <summary>Returns the native minute at activation. <paramref name="earlyHold"/> false is the code before this fix:
-        /// the hold started only at TryStart's RLO-Ready path.</summary>
-        public double Run(bool earlyHold, int loadingFrames, int waitingFrames, StartupClockHold startup)
+        /// <summary>Returns the native minute at activation.</summary>
+        public double Run(HoldFrom from, int loadingFrames, int waitingFrames, StartupClockHold startup)
         {
-            bool clock = false; // NativeCityClock installed and holding
+            var loaded = new object();
+            bool held = false;
+            if (from == HoldFrom.BeforeLoad) { startup.ForSave(null); held = startup.Begin(); } // armed at the menu
             for (int frame = 0; frame < loadingFrames + waitingFrames; frame++)
             {
                 bool loading = frame < loadingFrames;
-                // PopulationRuntime.Update: Wait, then TryStart (RLO NotReady returns early).
-                if (startup.Wait(loading, 1.0 / 30)) clock = false;
-                if (earlyHold && startup.Begin()) clock = true;
-                // GameManager.RunMainGameTick: AccountingPrefix holds while startup or loading-time startup holds.
-                Tick(clock);
+                if (!held) Minute += 1f / 30; // the native tick first
+                // PopulationRuntime.Update: ArmStartupClock, Wait, then TryStart (RLO NotReady returns early).
+                if (from == HoldFrom.BeforeLoad)
+                {
+                    startup.ForSave(loaded); // the guard bound to no save stays installed; only the bookkeeping starts over
+                    if (startup.Begin()) held = true;
+                }
+                if (startup.Wait(loading, 1.0 / 30)) held = false;
+                if (from == HoldFrom.FirstUpdate && startup.Begin()) held = true;
             }
-            // RLO Ready: TryStart installs the hold if needed and starts initialization; activation follows.
+            // RLO Ready: TryStart installs the bound clock and starts initialization; activation follows.
             startup.Initializing();
             return Now;
         }
@@ -133,12 +149,16 @@ public sealed partial class FoodCommerceTests
         Assert.Contains(city.State.Food!.Residents, m => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving);
 
         // Before this fix: the rig's reload (3 loading frames, then a second of RLO NotReady) crosses into 11:02.
-        double before = new NativeLoad(loaded.Minute).Run(earlyHold: false, 3, 30, new StartupClockHold());
+        double before = new NativeLoad(loaded.Minute).Run(HoldFrom.RloReady, 3, 30, new StartupClockHold());
         Assert.True(Math.Floor(before) > Math.Floor(native));
         Assert.Null(Activate(loaded, before, routes, new Market())); // "Accounting input epoch was lost"
+        // A hold installed by the first Update is still late if the first native tick runs before it: 11:02.002.
+        double firstUpdate = new NativeLoad(loaded.Minute).Run(HoldFrom.FirstUpdate, 3, 30, new StartupClockHold());
+        Assert.Equal(2102, Math.Floor(firstUpdate));
+        Assert.Null(Activate(loaded, firstUpdate, routes, new Market()));
 
-        // After: held from the first attempt, behind the loading screen too; native stays at the saved minute.
-        double after = new NativeLoad(loaded.Minute).Run(earlyHold: true, 3, 30, new StartupClockHold());
+        // After: the guard is armed before the load; native stays at the saved minute even with the tick first.
+        double after = new NativeLoad(loaded.Minute).Run(HoldFrom.BeforeLoad, 3, 30, new StartupClockHold());
         Assert.Equal(native, after);
         var restored = Activate(loaded, after, routes, new Market());
         Assert.NotNull(restored);
@@ -160,7 +180,7 @@ public sealed partial class FoodCommerceTests
         var h1 = OrdinarySave(next, reloadedSave, nextSession, restored, hourLater);
         var (h1State, h1Marker) = LoadFile(h1, loaded.PopulationKey);
         Assert.Equal(2, h1Marker.Sequence);
-        double h1Native = new NativeLoad(h1State.Minute).Run(earlyHold: true, 3, 30, new StartupClockHold());
+        double h1Native = new NativeLoad(h1State.Minute).Run(HoldFrom.BeforeLoad, 3, 30, new StartupClockHold());
         var h1City = Activate(h1State, h1Native, routes, new Market());
         Assert.NotNull(h1City);
         Assert.True(h1City!.BeginAccountingObservations(h1Native));
@@ -175,7 +195,7 @@ public sealed partial class FoodCommerceTests
         var (_, _, _, loaded, routes) = FreshCityFirstSave(Native(2100, 1.9687246f));
         var startup = new StartupClockHold();
         int waiting = (int)(StartupClockHold.MaximumWaitSeconds * 30) + 2;
-        double native = new NativeLoad(loaded.Minute).Run(earlyHold: true, 3, waiting, startup);
+        double native = new NativeLoad(loaded.Minute).Run(HoldFrom.BeforeLoad, 3, waiting, startup);
         Assert.True(startup.Released);
         Assert.True(Math.Floor(native) > Math.Floor(loaded.Minute));
         Assert.Null(Activate(loaded, native, routes, new Market()));
@@ -234,9 +254,30 @@ public sealed class StartupClockHoldTests
         Assert.Throws<ArgumentOutOfRangeException>(() => { var h = new StartupClockHold(); h.Begin(); h.Wait(false, double.NaN); });
     }
 
+    [Fact]
+    public void HoldBelongsToOneSaveAndASwitchStartsOver()
+    {
+        object s1 = new object(), s2 = new object();
+        var hold = new StartupClockHold();
+        Assert.True(hold.ForSave(s1)); Assert.True(hold.Begin());
+        Assert.False(hold.ForSave(s1)); Assert.True(hold.Holding);
+        // S1 waits past the limit and is released; loading S2 starts a fresh hold from its first attempt.
+        Assert.True(hold.Wait(false, StartupClockHold.MaximumWaitSeconds));
+        Assert.True(hold.Released);
+        Assert.True(hold.ForSave(s2));
+        Assert.False(hold.Released);
+        Assert.True(hold.Begin());
+        // S2 replaces S1 while S1 still holds: S2 holds again, with its own full wait.
+        Assert.True(hold.ForSave(s1)); Assert.True(hold.Begin());
+        Assert.False(hold.Wait(false, StartupClockHold.MaximumWaitSeconds - 1));
+        Assert.True(hold.ForSave(s2)); Assert.True(hold.Begin());
+        Assert.False(hold.Wait(false, StartupClockHold.MaximumWaitSeconds - 1));
+        Assert.True(hold.Holding);
+    }
+
     /// <summary>Pins the Runtime wiring (Unity-bound, not compiled here) to the order the tests model.</summary>
     [Fact]
-    public void RuntimeHoldsBeforeRloReadyAndBehindTheLoadingScreen()
+    public void RuntimeArmsTheGuardBeforeTheLoadAndTiesItToOneSave()
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "AGENTS.md"))) root = root.Parent;
@@ -244,17 +285,22 @@ public sealed class StartupClockHoldTests
         string Read(string path) => File.ReadAllText(Path.Combine(root!.FullName, path)).Replace("\r\n", "\n");
         string mod = Read("Runtime/PersistentCityMod.cs");
         string start = mod.Substring(mod.IndexOf("private void TryStart()", StringComparison.Ordinal));
-        int stopped = start.IndexOf("if (!CanStartAccountingSave()) return;", StringComparison.Ordinal);
-        int early = start.IndexOf("startupHold.Begin()) StartCityClock(holding);", StringComparison.Ordinal);
         int rlo = start.IndexOf("ReadRlo(\"startup\")", StringComparison.Ordinal);
         int late = start.IndexOf("if (!NativeCityClock.Active) StartCityClock(save);", StringComparison.Ordinal);
         int task = start.IndexOf("Task.Run", StringComparison.Ordinal);
-        Assert.True(stopped >= 0 && stopped < early && early < rlo && rlo < late && late < task);
+        Assert.True(rlo > 0 && rlo < late && late < task);
         Assert.True(start.IndexOf("startupHold.Initializing();", StringComparison.Ordinal) < task);
         string update = mod.Substring(mod.IndexOf("private void UpdateCity()", StringComparison.Ordinal));
+        // Armed before the save check (the menu) and again after a save change reset, before any TryStart.
+        int arm = update.IndexOf("ArmStartupClock(save);", StringComparison.Ordinal);
+        Assert.True(arm > 0 && arm < update.IndexOf("if (save == null) return;", StringComparison.Ordinal));
+        int rearm = update.IndexOf("ArmStartupClock(save);", update.IndexOf("ResetPopulationForSaveChange();", StringComparison.Ordinal), StringComparison.Ordinal);
         int wait = update.IndexOf("if (startupHold.Wait(UI.Load.LoadScene.isLoading, Time.unscaledDeltaTime))", StringComparison.Ordinal);
-        Assert.True(wait > 0 && wait < update.IndexOf("TryStart();", StringComparison.Ordinal));
+        Assert.True(rearm > 0 && rearm < wait && wait < update.IndexOf("TryStart();", StringComparison.Ordinal));
         Assert.True(update.IndexOf("NativeCityClock.Stop();", wait, StringComparison.Ordinal) > wait);
+        string armClock = mod.Substring(mod.IndexOf("private void ArmStartupClock(object? save)", StringComparison.Ordinal));
+        Assert.Contains("if (simulation != null || initialization != null) return;", armClock);
+        Assert.Contains("if (startupHold.ForSave(save) && NativeCityClock.Bound) NativeCityClock.Stop();", armClock);
         string complete = mod.Substring(mod.IndexOf("private void CompleteInitialization(Task<PreparedCity> pending)", StringComparison.Ordinal));
         // The lost-epoch refusals at activation are unchanged.
         Assert.Contains("if (!AccountingClock.Compatible(state.Minute, Now()))\n            { StopAccounting(); return; }", complete);
@@ -262,7 +308,10 @@ public sealed class StartupClockHoldTests
         Assert.True(complete.IndexOf("NativeCityClock.StartupHold = false;", StringComparison.Ordinal)
             < complete.IndexOf("saveEpoch.CompleteInitialization();", StringComparison.Ordinal));
         string clock = Read("Runtime/NativeCityClock.cs");
-        Assert.Contains("if (Active && LoadScene.isLoading && StartupHold && deltaTimeWithMultiplier > 0) { deltaTimeWithMultiplier = 0; return; }", clock);
+        // The guard and a clock bound to a replaced save hold every tick; Start replaces the guard in one call.
+        Assert.Contains("if (patches != null && !Active) { if (deltaTimeWithMultiplier > 0) deltaTimeWithMultiplier = 0; return; }", clock);
+        Assert.Contains("if (LoadScene.isLoading && StartupHold && deltaTimeWithMultiplier > 0) { deltaTimeWithMultiplier = 0; return; }", clock);
+        Assert.True(clock.IndexOf("if (Armed) Stop();", StringComparison.Ordinal) < clock.IndexOf("if (patches != null) throw new InvalidOperationException(\"City clock already active.\");", StringComparison.Ordinal));
         Assert.Contains("AccountingLimited = Refused = StartupHold = false;", clock);
         Assert.Contains("startupHold.Reset();", Read("Runtime/PopulationLifecycle.cs"));
     }
