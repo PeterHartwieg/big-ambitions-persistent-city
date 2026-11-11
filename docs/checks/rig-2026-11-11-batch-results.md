@@ -367,7 +367,7 @@ Coverage/validity and all component and spike details are retained with the raw 
 
 ## Fixtures
 
-All files below are this run’s fresh native FT character only, retained in `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/R1CzA3x4k6wqK4jp4SCUA==`. No borrowed old checkpoint. Native recovery bytes are retained as FT-named copies after the player stops; native slot names are cleaned by the standard runner. These copies are not sealed library manifests.
+All files below are this run’s fresh native FT character only, retained in `<isolated-test-save-directory>`. No borrowed old checkpoint. Native recovery bytes are retained as FT-named copies after the player stops; native slot names are cleaned by the standard runner. These copies are not sealed library manifests.
 
 | Fixture file | Bytes | SHA-256 |
 |---|---|---|
