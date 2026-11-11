@@ -78,3 +78,7 @@ After removal and normal reload at hour 63 the shop was managed=false, desired=t
 ### Native-shop halves: F8a-5 / F8bg-4
 
 **PARTIAL.** Loaded the same fresh shop checkpoint without RLO. PC reported `start refused (rlo.donor)` and `RealLifeOverhaul is required and is not loaded.`, with no start-a-new-city wording. The 16:00?17:00 window completed; all live PC key hashes remained identical and no new food receipt appeared. The bounded native shop log contained zero visits/purchases, dropped=0, hook_faults=0; native service remains unproved. RLO and the complete DLL set were restored by the lifecycle. No absent-state checkpoint was saved. Raw evidence: `<stage>/runs/rlo-absent` and `<stage>/rlo-absent-summary.json`.
+
+## E5b shop subsets
+
+PARTIAL. The documented croissant/donut setup and a paused native donut-price edit/restore were recorded with shop_state, PC boundary/stamps/hints and capability readbacks. This is a two-offer subset; no in-flight checkout, burger/hot-dog mutation matrix, eight/nine-offer fixture, independent notification trace, in-place definition edit, removal/return transport, or paired performance controls were supplied. Raw evidence: `<stage>/runs/remaining/results`, e5b-prefixed actions.
