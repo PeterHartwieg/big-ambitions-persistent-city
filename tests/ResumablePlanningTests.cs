@@ -632,7 +632,8 @@ public sealed class ResumablePlanningTests
         DepartureMinute = 60 * n, NextEventMinute = 70 * n, ActivityUntilMinute = 80 * n, CompletedJourneys = 4 * n, MissedActivities = 5 * n,
         PlayerHoldMinutes = 0.1 * n,
         RecentVisits = { new VisitRecord { AtMinute = n, PlaceId = "visit-" + n, Activity = (Activity)(n % 5) } },
-        Traits = ResidentTraits.Generate(n, "traits-" + n)
+        Traits = ResidentTraits.Generate(n, "traits-" + n),
+        Wallet = new ResidentBudget { BaseIncomeCents = n, Balance = Money.FromUnits(n) }
     };
 
     [Fact]
@@ -654,6 +655,8 @@ public sealed class ResumablePlanningTests
         Assert.Same(live.Identity, working.Identity); Assert.Same(live.Journey, working.Journey);
         // Traits are immutable after generation, so the event copy shares them and events never write them back.
         Assert.Same(live.Traits, working.Traits);
+        // GR-1: the wallet is the person's own object; events spend nothing and share it.
+        Assert.Same(live.Wallet, working.Wallet);
         Assert.NotSame(live.RecentVisits, working.RecentVisits); Assert.NotSame(live.Car, working.Car);
         Assert.NotSame(live.CommutePreparation, working.CommutePreparation); Assert.NotSame(live.MealOuting, working.MealOuting);
         Assert.NotSame(live.Preferences, working.Preferences);

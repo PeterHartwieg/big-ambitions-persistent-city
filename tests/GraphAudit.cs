@@ -88,6 +88,9 @@ internal sealed class GraphFill
     {
         var state = new CityState();
         Fill(state, 0);
+        // GR-1: a roster record links to its person's wallet and carries none of its own.
+        var meal = state.Food!.Residents[0]; var person = state.Citizens[0];
+        meal.ResidentId = person.Identity.Id; meal.Budget = person.Wallet;
         return state;
     }
 

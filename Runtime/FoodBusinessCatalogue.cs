@@ -87,7 +87,7 @@ namespace PersistentCity.Runtime
                 string address = Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber.ToString(CultureInfo.InvariantCulture);
                 string place = "address:" + address + ":shop";
                 if (!selected.Contains(place) || !reg.HasEstablishedBusiness || reg.AvailableForRent
-                    || string.IsNullOrWhiteSpace(reg.businessTypeName) || reg.businessTypeName == "ba:businesstype_empty") continue;
+                    || BusinessTypes.Normalize(reg.businessTypeName).Length == 0) continue;
                 // A null gameplay menu means this registration is not a current owned scope.
                 var completeMenu = menu?.Invoke(reg);
                 if (menu != null && completeMenu == null) continue;

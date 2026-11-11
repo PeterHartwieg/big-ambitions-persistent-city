@@ -26,7 +26,7 @@ namespace PersistentCity.Persistence
         {
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
             // The retired F7d columnar wire is an older development city, never decoded.
-            Require(!RetiredCompact(source!), DevelopmentSchemaMessage);
+            Require(!RetiredCompact(source!) && !PreWalletBody(source!), DevelopmentSchemaMessage);
             using var reader = Reader(source);
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
             int? schema = null;
@@ -278,7 +278,7 @@ namespace PersistentCity.Persistence
             {
                 var names = fields.Split(' ');
                 var omitted = derived.Split(' ');
-                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !(type == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")
+                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null
                     && Array.IndexOf(omitted, p.Name) < 0).ToArray();
                 if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
@@ -314,8 +314,9 @@ namespace PersistentCity.Persistence
             }
             // Positional contracts, independent of declaration/reflection order. The version is slot zero.
             private static readonly TupleLayout EconomicBudget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent Ledger");
-            // One roster record per person, so the anchor and slot are derived from the person table (PersonWire26).
-            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", "AnchorId Slot");
+            // One roster record per person, so the anchor and slot are derived from the person table (PersonWire26). GR-1: the
+            // wallet is saved with its person (Budget is a link, derived after the read); its old slot holds the legacy account.
+            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance LegacyExternalFoodSpent BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", "AnchorId Slot Budget");
             public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? EconomicBudget : type == typeof(ResidentMeal) ? Meal : null;
         }
         private static double TupleNumber(JsonReader reader) => reader.Value is double d ? d : reader.Value is long n ? n
@@ -328,11 +329,7 @@ namespace PersistentCity.Persistence
                 if (value == null) { writer.WriteNull(); return; }
                 var tuple = TupleLayout.For(value.GetType())!;
                 writer.WriteStartArray(); writer.WriteValue(tuple.Version);
-                for (int i = 0; i < tuple.Properties.Length; i++)
-                {
-                    if (value is ResidentMeal meal && tuple.Properties[i].Name == "Budget" && meal.Budget == null) writer.WriteValue(meal.LegacyExternalFoodSpent.Units);
-                    else tuple.Write[i](writer, value, serializer);
-                }
+                for (int i = 0; i < tuple.Properties.Length; i++) tuple.Write[i](writer, value, serializer);
                 writer.WriteEndArray();
             }
             public override object? ReadJson(JsonReader reader, Type type, object? existingValue, JsonSerializer serializer)
@@ -344,9 +341,7 @@ namespace PersistentCity.Persistence
                 for (int i = 0; i < tuple.Properties.Length; i++)
                 {
                     Require(reader.Read() && reader.TokenType != JsonToken.EndArray, "Missing tuple slot.");
-                    if (value is ResidentMeal meal && tuple.Properties[i].Name == "Budget" && reader.TokenType == JsonToken.Integer)
-                        meal.LegacyExternalFoodSpent = Money.FromUnits((long)reader.Value!);
-                    else tuple.Read[i](value, reader, serializer);
+                    tuple.Read[i](value, reader, serializer);
                 }
                 Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Surplus tuple slot."); return value;
             }

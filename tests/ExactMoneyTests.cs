@@ -78,7 +78,8 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         var resident = city.State.Food!.Residents.Single();
         b.NextPostingMinute = resident.Budget!.NextPostingMinute; b.LastPostedDay = resident.Budget.LastPostedDay; b.HomeFoodFundedDay = -1;
-        resident.Budget = b;
+        // GR-1: the wallet is the person's; the roster record links to the same object.
+        city.State.Citizens.Single().Wallet = b; resident.Budget = b;
         string encoded = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);

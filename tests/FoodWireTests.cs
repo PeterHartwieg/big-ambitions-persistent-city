@@ -124,7 +124,8 @@ public sealed partial class FoodCommerceTests
         state.Citizens[0].RecentVisits.Add(new VisitRecord { PlaceId = state.Citizens[0].HomeId });
         state.Food!.BusinessReferences.Add(new BusinessReference { BusinessId = "retained", PlaceId = "shop" });
         var root = SaveWire.Parse(DevelopmentChain.Write(state)); var meal = (JArray)root["Food"]!["Residents"]![0]!;
-        var budget = (JArray)meal[2]!; /* roster tuple v3 (schema 26) omits AnchorId and Slot */ var table = (JArray)root["Food"]!["BusinessReferences"]!;
+        // GR-1: the wallet is saved with its person; the roster tuple omits AnchorId, Slot and the wallet link.
+        var budget = (JArray)root["Citizens"]![0]!["Wallet"]!; var table = (JArray)root["Food"]!["BusinessReferences"]!;
         var visits = (JArray)root["Citizens"]![0]!["RecentVisits"]!;
         switch (damage)
         {

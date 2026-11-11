@@ -293,6 +293,8 @@ namespace PersistentCity.Core
             if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; state.RivalStartsDay=state.ChoiceStartsDay; }
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
+            // A loaded roster reads no wallet of its own: link each record to its person's before anything spends.
+            LinkWallets();
             InitializeRepresentation();
             long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
             foreach (var entry in state.Residents)
@@ -300,7 +302,7 @@ namespace PersistentCity.Core
                 rivalLoad.Observe(entry, rivalPeriod);
                 if (entry.DueAt < city.State.Minute) throw new InvalidOperationException("Overdue meal record.");
                 due.Add(entry);
-                if (entry.Budget != null) budgetDue.Add(entry);
+                if (entry.Budget != null) budgetDue.Add(Owner(entry)!);
                 if (Active(entry)) Reserve(entry, 1);
                 if (entry.Decision != null) pendingDecision = entry;
                 if (market is IRivalFoodMarket && (Active(entry) && entry.TargetKind == FoodAlternativeKind.Rival

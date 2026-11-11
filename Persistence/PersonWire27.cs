@@ -58,6 +58,7 @@ namespace PersistentCity.Persistence
                 ValueProvider = new RoutineTupleProvider(), Readable = true, Writable = true, Required = Required.Always
             } };
             result.Add(inherited.Single(p => p.PropertyName == "Accrual"));
+            result.Add(inherited.Single(p => p.PropertyName == "Wallet"));
             return result;
         }
 
@@ -441,7 +442,9 @@ namespace PersistentCity.Persistence
             if (food != null)
             {
                 input.Roster = food.Residents.Select(m => new RosterFacts(m.ResidentId, m.AnchorId, m.Slot)).ToList();
-                input.Wallets = food.Residents.Where(m => m.Budget != null).Select(m => new WalletFacts(MoneyOwnerKind.Person, m.ResidentId)).ToList();
+                // GR-1: wallets are the persons' own, not the roster's.
+                input.Wallets = state.Citizens.Concat<CitizenState>(state.VisitorRoutines).Where(p => p.Wallet != null)
+                    .Select(p => new WalletFacts(MoneyOwnerKind.Person, p.Identity.Id)).ToList();
                 input.Intents = food.Residents.Select(m => new DemandUnitFacts(m.IntentId, m.ResidentId)).ToList();
             }
             var validator = new OwnershipValidator();

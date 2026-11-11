@@ -6,6 +6,7 @@ Golden population payloads of the writer. The save schema is held at 1 until rel
 
 - `schema-01/`: `full.json` and `minimal.json` are single-line UTF-8 payloads (no BOM, no trailing newline). `corpus.json` pins each file's SHA-256 and records provenance.
 - `retired-pcc-c-minimal.json`: the same 1-resident city as the F7d columnar writer stored it before P-A. Not a corpus fixture; `SaveRoundTripTests` checks that it is refused as an older development city and kept.
+- `retired-pre-wallet-full.json`: the old `full.json`, written before GR-1 moved the wallet from the food roster record to the person and added the place business type. Not a corpus fixture; `BusinessTypesWalletTests` checks that it is refused as an older development city and kept, and that every person's wallet in the current `full.json` is the exact budget this file stored in that person's roster record.
 - `.gitattributes` marks this tree `-text`, so line-ending conversion cannot change a pinned byte.
 
 ## Provenance

@@ -8,12 +8,14 @@ namespace PersistentCity.Core
     {
         // Daily and shift postings share one stable minute/ordinal heap and its 32-posting bound.
         // Reuse entries; employment changes repair their existing slot. All due times are derived.
+        // GR-1: an entry is a person and that person's own wallet; the food roster is not consulted.
         private sealed class BudgetQueue
         {
             private sealed class Entry
             {
-                internal ResidentMeal Meal = null!;
                 internal CitizenState Person = null!;
+                internal ResidentBudget Wallet = null!;
+                internal string Id = "";
                 internal double Minute, WageAt = double.PositiveInfinity;
                 internal int Index;
                 internal WorkWindow Window;
@@ -25,27 +27,28 @@ namespace PersistentCity.Core
             internal BudgetQueue(FoodCommerce food) { this.food = food; }
             public int Count => items.Count;
             internal bool Contains(string personId) => byPerson.ContainsKey(personId);
-            public ResidentMeal Min => items[0].Meal;
+            public CitizenState Min => items[0].Person;
             public double Minute => items.Count == 0 ? double.PositiveInfinity : items[0].Minute;
-            public void Add(ResidentMeal meal)
+            public void Add(CitizenState person)
             {
-                var e = new Entry { Meal = meal, Person = food.Owner(meal)! };
-                meal.Budget!.VisitorEndowment = food.city.VisitorEndowments && e.Person.IsVisitor;
+                var wallet = person.Wallet ?? throw new InvalidOperationException("A posted person has no wallet: " + person.Identity.Id + ".");
+                var e = new Entry { Person = person, Wallet = wallet, Id = person.Identity.Id };
+                wallet.VisitorEndowment = food.city.VisitorEndowments && person.IsVisitor;
                 items.Add(e);
-                byPerson.Add(meal.ResidentId, e);
+                byPerson.Add(e.Id, e);
             }
             internal void RestoreVisitorWalletModes()
             {
                 foreach (var e in items)
-                    e.Meal.Budget!.VisitorEndowment = food.city.VisitorEndowments && e.Person.IsVisitor;
+                    e.Wallet.VisitorEndowment = food.city.VisitorEndowments && e.Person.IsVisitor;
             }
             public void Build()
             {
-                items.Sort((a, b) => StringComparer.Ordinal.Compare(a.Meal.ResidentId, b.Meal.ResidentId));
+                items.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
                 for (int i = 0; i < items.Count; i++)
                 {
                     var e = items[i]; e.Index = i;
-                    Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
+                    Schedule(e); e.Minute = Math.Min(e.Wallet.NextPostingMinute, e.WageAt);
                 }
                 for (int i = items.Count / 2 - 1; i >= 0; i--) Repair(i);
             }
@@ -57,19 +60,19 @@ namespace PersistentCity.Core
                 e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window);
                 if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
             }
-            // Ties break by ordinal ResidentId, the order Build sorts by (before F5g: that rank as an int). F5g compares the IDs
+            // Ties break by ordinal person ID, the order Build sorts by (before F5g: that rank as an int). F5g compares the IDs
             // themselves so a person enrolled later (Insert) takes its rank without renumbering every entry.
             private static int Compare(Entry a, Entry b)
             {
                 int time = a.Minute.CompareTo(b.Minute);
-                return time == 0 ? string.CompareOrdinal(a.Meal.ResidentId, b.Meal.ResidentId) : time;
+                return time == 0 ? string.CompareOrdinal(a.Id, b.Id) : time;
             }
             /// <summary>F5g: adds the wallet of a person created after the queue was built, in its ordinary heap position.</summary>
-            internal void Insert(ResidentMeal meal)
+            internal void Insert(CitizenState person)
             {
-                Add(meal);
+                Add(person);
                 var e = items[items.Count - 1];
-                Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
+                Schedule(e); e.Minute = Math.Min(e.Wallet.NextPostingMinute, e.WageAt);
                 int at = items.Count - 1;
                 while (at > 0)
                 {
@@ -81,7 +84,7 @@ namespace PersistentCity.Core
             }
             public void PostMinimum()
             {
-                var e = items[0]; var budget = e.Meal.Budget!;
+                var e = items[0]; var budget = e.Wallet;
                 if (e.WageAt <= budget.NextPostingMinute)
                 {
                     if (!EmploymentWages.Active(e.Person.Accrual))
@@ -89,7 +92,7 @@ namespace PersistentCity.Core
                     else EmploymentWages.Settle(e.Person, budget, e.Window, e.WageAt);
                     Schedule(e);
                 }
-                else HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments);
+                else HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments, food.EssentialNeeds);
                 e.Minute = Math.Min(budget.NextPostingMinute, e.WageAt);
                 Repair(0);
             }
@@ -101,7 +104,7 @@ namespace PersistentCity.Core
             internal void Changed(CitizenState person)
             {
                 if (!byPerson.TryGetValue(person.Identity.Id, out var e) || e.Workplace == person.DayPlaceId) return;
-                Schedule(e); e.Minute = Math.Min(e.Meal.Budget!.NextPostingMinute, e.WageAt);
+                Schedule(e); e.Minute = Math.Min(e.Wallet.NextPostingMinute, e.WageAt);
                 int at = e.Index;
                 while (at > 0)
                 {
@@ -126,6 +129,22 @@ namespace PersistentCity.Core
         }
         private readonly BudgetQueue budgetDue;
         private double NextBudgetMinute => budgetDue.Minute;
+        /// <summary>GR-1: essential categories bought as needs, which the daily posting no longer deducts. Empty until the
+        /// need model (GR-3) sets it.</summary>
+        internal EssentialNeeds EssentialNeeds { get; set; } = EssentialNeeds.None;
+        /// <summary>GR-1: binds every roster record to its person's wallet. The wallet is the person's; a record built in
+        /// memory with only a budget hands that budget to its person. Two different objects refuse.</summary>
+        private void LinkWallets()
+        {
+            foreach (var meal in state.Residents)
+            {
+                var person = city.FindCitizen(meal.ResidentId);
+                if (person == null) { if (meal.Budget != null) throw new InvalidOperationException("A wallet has no person: " + meal.ResidentId + "."); continue; }
+                if (person.Wallet == null) person.Wallet = meal.Budget;
+                else if (meal.Budget == null) meal.Budget = person.Wallet;
+                else if (!ReferenceEquals(person.Wallet, meal.Budget)) throw new InvalidOperationException("A food record holds a wallet that is not its person's: " + meal.ResidentId + ".");
+            }
+        }
         /// <summary>F5g: enrols a person created at a day boundary exactly once: its own meal record (meal rhythm from the
         /// current day) and, with finances on, its wallet from <see cref="HouseholdFinance.Create"/> with its portal
         /// district's mix. An existing record is refused, never re-seeded.</summary>
@@ -135,7 +154,7 @@ namespace PersistentCity.Core
             var meal = Enrol(person);
             rivalLoad.Observe(meal, RivalServiceCalibration.Period(city.State.Minute));
             due.Add(meal);
-            if (meal.Budget != null) budgetDue.Insert(meal);
+            if (meal.Budget != null) budgetDue.Insert(person);
         }
         internal void RestoreVisitorWalletModes() => budgetDue.RestoreVisitorWalletModes();
         internal bool TracksEmployment(CitizenState person) => EmploymentWages.Eligible(person) && budgetDue.Contains(person.Identity.Id);
@@ -151,14 +170,16 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("Finish current purchases before enabling household finances.");
             state.HouseholdFinanceVersion = HouseholdFinance.PolicyVersion;
             foreach (var meal in state.Residents)
-            { CreateBudget(meal, Owner(meal)!); budgetDue.Add(meal); }
+            { var person = Owner(meal)!; CreateBudget(meal, person); budgetDue.Add(person); }
             budgetDue.Build();
         }
         private void CreateBudget(ResidentMeal meal, CitizenState person)
         {
             string district = city.FindPlace(person.HomeId).District;
-            meal.Budget = HouseholdFinance.Create(person, city.State.Seed, city.State.Minute,
+            // The wallet is the person's; the food record only links to it.
+            person.Wallet = HouseholdFinance.Create(person, city.State.Seed, city.State.Minute,
                 state.Districts.SingleOrDefault(d => d.DistrictId == district), meal.ResidentId);
+            meal.Budget = person.Wallet;
         }
         public const int MaximumBudgetPostingsPerUnit = 32;
         // Tests may lower the cap to compare interruption cadences, but cannot raise the runtime bound.

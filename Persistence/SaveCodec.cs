@@ -80,6 +80,8 @@ namespace PersistentCity.Persistence
             state.PrepareForSave();
             InitializeOutflow24(state);
             PrepareNames25(state);
+            // GR-1: a live record holding another wallet than its person's would be saved with the person's alone.
+            RequireLinkedWallets(state);
             cost?.Enter(SaveCostPhase.Capture);
             return SaveSnapshot.Capture(state, order);
         }
@@ -232,7 +234,11 @@ namespace PersistentCity.Persistence
                 return ReadExact(source);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
-            { return Invalid("Invalid state: " + exception.Message); }
+            {
+                // GR-1 changed the held-schema wire in place; a body from before it is an older development city.
+                if (PreWalletBody(source)) return PreWalletRefusal();
+                return Invalid("Invalid state: " + exception.Message);
+            }
         }
 
         /// <summary>The one strict reader: token shape and caps, then deserialization (every string value interned), then
@@ -255,6 +261,7 @@ namespace PersistentCity.Persistence
             var state = serializer.Deserialize<CityState>(reader);
             Require(state != null, "State is null.");
             DerivePersons27(state!);
+            LinkWallets(state!);
             Validate(state!);
             return new SaveReadResult(SaveReadStatus.Loaded, state, "", CityState.CurrentSchema);
         }
@@ -328,7 +335,6 @@ namespace PersistentCity.Persistence
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token == JsonToken.Null)
             {
-                Require(type != typeof(ResidentBudget), "Legacy account must use its canonical scalar slot.");
                 Require(nullable != null || NullableRecord(type), "Unexpected null value.");
                 if (type == typeof(ResidentFoodToday)) Charge(ref records); // one rollup slot per consumer, including null
                 return;
@@ -379,11 +385,6 @@ namespace PersistentCity.Persistence
                 Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire - 256 + VendorNames.MaximumPlaceIdLength
                     && RivalWire21.CanonicalOutcome((string)reader.Value!)
                     && ExactString25(text, (IJsonLineInfo)reader, (string)reader.Value!), "Invalid meal outcome record.");
-                return;
-            }
-            if (type == typeof(ResidentBudget) && token == JsonToken.Integer)
-            {
-                Require(IntegerToken(reader.Value, 0, long.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid legacy external-food account.");
                 return;
             }
             if (TupleLayout.For(type) is TupleLayout tuple)
@@ -694,6 +695,8 @@ namespace PersistentCity.Persistence
                 Bounded(place.AttractionWeight, 0.01, 100, "Attraction weight");
                 Require(place.NativeTrafficIndex >= -1 && place.NativeTrafficIndex <= 1000000, "Invalid native traffic index.");
                 Text(place.EvidenceSource, "Place evidence source", 256);
+                Text(place.BusinessType, "Place business type", BusinessTypes.MaximumNameLength, true);
+                Require(place.BusinessType.Length == 0 || place.Kind != PlaceKind.Home && place.BusinessType != BusinessTypes.Empty, "A home or empty business type on a place.");
                 Bounded(place.ResidentialAreaSquareMetres, 0, 1000000000, "Residential area");
                 Require(place.Capacity >= 0 && place.Capacity <= 1000000, "Invalid place capacity.");
                 Require(place.OpenMinute >= 0 && place.OpenMinute < 1440 && place.CloseMinute >= 0 && place.CloseMinute <= 1440, "Invalid opening hours.");
@@ -1083,6 +1086,7 @@ namespace PersistentCity.Persistence
         {
             Require(state != null && state.Citizens != null && state.Places != null, "Missing food population.");
             var food = state.Food;
+            ValidateWallets(state);
             if (food == null) { Require(state.Citizens.All(c => c != null && c.MealOuting == null), "Meal outing without economy."); return 0; }
             int records = ValidateBusinessReferences(state, vendors) + ValidateCampaigns22(food), routeBearing = 0;
             int currentDay = (int)Math.Floor(state.Minute / 1440);

@@ -1,10 +1,72 @@
 using System;
+using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
     public enum ResidentIncomeSource { ExternalEmployment, ExternalPension, ExternalSupport }
 
-    /// <summary>Individual budget unit, not an inferred family. Policy rates are whole cents;
+    /// <summary>GR-1: the drawn daily essentials (<see cref="ResidentBudget.DailyEssentialsCents"/>) cut into categories.
+    /// The draw and its total are unchanged; a category that has become a need (<see cref="EssentialNeeds"/>) is bought
+    /// through the wallet by its own spender and is no longer deducted at the daily posting, so it is never paid twice.</summary>
+    public static class HouseholdEssentials
+    {
+        public const string Utilities = "utilities", HouseholdGoods = "household-goods", Clothing = "clothing", PersonalCare = "personal-care";
+        // Whole percent of the daily essentials; the last row takes the rounding remainder, so the shares sum exactly.
+        private static readonly (string Category, int Percent)[] Shares =
+            { (Utilities, 40), (HouseholdGoods, 25), (Clothing, 20), (PersonalCare, 15) };
+        private static readonly string[] Names = { Utilities, HouseholdGoods, Clothing, PersonalCare };
+        public static IReadOnlyList<string> Categories => Names;
+        public static bool Known(string category) => Array.IndexOf(Names, category) >= 0;
+        /// <summary>Utilities are billed, never bought at a business, so they cannot become a need.</summary>
+        public static bool CanBecomeNeed(string category) => Known(category) && category != Utilities;
+
+        /// <summary>This category's whole cents of the daily essentials.</summary>
+        public static int Share(int dailyEssentialsCents, string category)
+        {
+            if (dailyEssentialsCents < 0) throw new ArgumentOutOfRangeException(nameof(dailyEssentialsCents));
+            int taken = 0;
+            for (int i = 0; i < Shares.Length; i++)
+            {
+                int part = i == Shares.Length - 1 ? dailyEssentialsCents - taken : (int)((long)dailyEssentialsCents * Shares[i].Percent / 100);
+                if (Shares[i].Category == category) return part;
+                taken += part;
+            }
+            throw new ArgumentException("Unknown essential category: " + category, nameof(category));
+        }
+
+        /// <summary>The part of the daily essentials the posting still deducts.</summary>
+        public static int Payable(int dailyEssentialsCents, EssentialNeeds? needs)
+        {
+            if (needs == null || needs.Count == 0) return dailyEssentialsCents;
+            int payable = dailyEssentialsCents;
+            foreach (var category in needs.Categories) payable -= Share(dailyEssentialsCents, category);
+            return payable;
+        }
+    }
+
+    /// <summary>GR-1: the essential categories that are needs, bought by their own spender from the person's wallet.
+    /// Empty until the need model (GR-3) names one.</summary>
+    public sealed class EssentialNeeds
+    {
+        private readonly List<string> categories = new List<string>();
+        public static EssentialNeeds None { get; } = new EssentialNeeds();
+        public int Count => categories.Count;
+        public IReadOnlyList<string> Categories => categories;
+        public bool Contains(string category) => categories.Contains(category);
+        public static EssentialNeeds Of(params string[] categories)
+        {
+            var needs = new EssentialNeeds();
+            foreach (var category in categories)
+            {
+                if (!HouseholdEssentials.CanBecomeNeed(category)) throw new ArgumentException("Not an essential category that can become a need: " + category);
+                if (!needs.categories.Contains(category)) needs.categories.Add(category);
+            }
+            return needs;
+        }
+    }
+
+    /// <summary>A person's wallet (GR-1: owned by <see cref="CitizenState.Wallet"/>; food is one spender of it).
+    /// Individual budget unit, not an inferred family. Policy rates are whole cents;
     /// ledger amounts are exact <see cref="Money"/>.
     /// Income and essentials cross an explicit outside-economy boundary. Native business
     /// payroll is not credited a second time and native retail remains the sale authority.</summary>
@@ -81,10 +143,10 @@ namespace PersistentCity.Core
             return budget;
         }
 
-        public static void PostDay(ResidentBudget budget, double minute, CitizenState? person = null, bool visitorEndowment = false)
-            => PostDayCore(budget, minute, person, visitorEndowment);
+        public static void PostDay(ResidentBudget budget, double minute, CitizenState? person = null, bool visitorEndowment = false, EssentialNeeds? needs = null)
+            => PostDayCore(budget, minute, person, visitorEndowment, needs);
 
-        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool visitorEndowment = false)
+        private static void PostDayCore(ResidentBudget budget, double minute, CitizenState? person, bool visitorEndowment, EssentialNeeds? needs)
         {
             int day = checked((int)(minute / 1440));
             if (minute != budget.NextPostingMinute || day <= budget.LastPostedDay)
@@ -117,7 +179,9 @@ namespace PersistentCity.Core
             var homeFoodPaid = fed ? budget.HomeFoodPaid + homeFood : budget.HomeFoodPaid;
             if (fed) balance -= homeFood;
             int unfed = fed ? budget.DaysWithoutHomeFood : checked(budget.DaysWithoutHomeFood + 1);
-            var required = budget.Arrears + Money.FromCents(budget.DailyHousingCents) + Money.FromCents(budget.DailyEssentialsCents);
+            // Essentials that are needs are paid by their own spender, not here (GR-1 re-cut).
+            var required = budget.Arrears + Money.FromCents(budget.DailyHousingCents)
+                + Money.FromCents(HouseholdEssentials.Payable(budget.DailyEssentialsCents, needs));
             var paid = Money.Min(balance, required);
             var essentials = budget.EssentialsPaid + paid;
             balance -= paid;
