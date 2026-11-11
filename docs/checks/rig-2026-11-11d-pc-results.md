@@ -62,3 +62,7 @@ Each completed lifecycle restored its named state and released its lease. Final 
 ## E5b supported mixed-shop setup
 
 **PARTIAL, verified by rig setup only.** The checked-in `shop-multi-offer.json` spec reconciled the same named rented business at 24 Fourth Avenue with a new fixture id. No new rental, funding or campaign step. Native readback now advertises croissant and donut, with 100 units each and 300 bags. The loaded catalogue identifies donut as a base-game product with a complete bakery-showcase holder link; the native product whitelist includes croissant/cupcake/donut. PC?s post-build image has `passed:true`, `refusal:null`; it is still native-owned until a future acquisition boundary. Checkout, accounting and visual assertions remain unproved. Raw evidence: `<stage>/runs/mixed`.
+
+### Corrected normal-load first-sale window
+
+**F8h-2 PARTIAL.** The corrected waiter reached native day 2 10:00 paused exactly. The mixed shop was Published / passed / managed, desired=true, lastReadiness=Ready. A manual checkpoint was normally reloaded; autosave suppression verified. The exact 10:00?12:00 window completed with **0 purchases, 0 dropped, 0 hook faults**, no log entries, unchanged 100 croissants / 100 donuts / 300 bags, $0 daily shop revenue and no food-sale receipt key. Checkout was active, but there was no first sale to prove. Raw evidence: `<stage>/runs/firstsale2`, including `arrived-exact-nextday-1000.json`, window boundary facts and the retained checkpoint.
