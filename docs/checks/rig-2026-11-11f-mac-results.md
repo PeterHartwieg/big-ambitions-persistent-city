@@ -15,7 +15,7 @@ Role `rig_test`, where `mac`, isolated instance `agentmac`. Candidate **858b7a54
 | Candidate / worktrees | Detached `rig-2026-11-11f-mac`; separate `codex/mac-rig-2026-11-11f` evidence worktree, both from verified `858b7a5`. Main worktree unchanged. |
 | Host / player | Native Apple Silicon, private `Big Ambitions Agent Tests Mac.app`, isolated `com.hovgaardgames.bigambitions.agenttests.mac`; loopback 28330, no tunnel; runtime 7. |
 | Official rig checkout | **10cf7d873a733ac564a84d95cc23b4213c101d7f**, clean before/after; read only. No install/update/rollback script used. |
-| Rollback retained, unused | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/updates/20261111T152017Z`; older rollback also untouched. |
+| Rollback retained, unused | `$HOME/Library/Application Support/BigAmbitionsAgentTestsMac/updates/20261111T152017Z`; older rollback also untouched. |
 | Build | `python3 tools/build.py --game-managed "$HOME/Library/Application Support/BigAmbitionsAgentTestsMac/Big Ambitions Agent Tests Mac.app/Contents/Resources/Data/Managed" --provenance <stage>/build-provenance.json`; succeeded. Same compile-reference location as Mac e. |
 | Environment | Every Python/.NET/build command used `PATH="/opt/homebrew/bin:$PATH"` and `DOTNET_ROOT="$(/opt/homebrew/bin/brew --prefix dotnet)/libexec"`. |
 | DLL SHA-256 | `de1f287842d0f28d890aaaebd1cead3877ac4e3e33bbfe00be4a74f292678d90`; installed hash matched. |
@@ -175,7 +175,7 @@ Shop business id **`ba:street_fourthstreet#7`**; PC place `address:ba%3Astreet_f
 | `commands.jsonl` | `61cd5ddb244c7d5eb0b9baa10f2a44b60469adab451e16ed3146d2cf217a023a` |
 | `native-pcsave-extraction.json` | `b1ee5d144a6e7ed7a93a2adebe9c8600a9c6ed019459af49a40dc211260ab02b` |
 
-Also retained: `build.log`, `build-provenance.json`, `recipe.json`, source recipe snapshots, `check-results.json`, `save-summary.json`, hook/capability/diagnostic replies, backups/manifest, `restore.json`, `status-final.json`, `owned-process-verification.json`. Raw JSON, binaries and saves are not committed. A report copy is at `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-11f-mac.md`.
+Also retained: `build.log`, `build-provenance.json`, `recipe.json`, source recipe snapshots, `check-results.json`, `save-summary.json`, hook/capability/diagnostic replies, backups/manifest, `restore.json`, `status-final.json`, `owned-process-verification.json`. Raw JSON, binaries and saves are not committed. A report copy is at `$HOME/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-11f-mac.md`.
 
 ## Per-check results
 
