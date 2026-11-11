@@ -77,6 +77,7 @@ namespace PersistentCity.Core
         internal int DueMealEventsAtOrBefore(double minute) => food?.DueMealsAtOrBefore(minute) ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
+        internal IReadOnlyDictionary<string, Place> PlaceIndex => places;
         // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
         // change of a live citizen's phase, activity, place or optional stop (FileOptionalStop and the visit starts).
         // F2f: its presentation grid resolves stationary candidates through this simulator's place table.
@@ -155,11 +156,12 @@ namespace PersistentCity.Core
             activityObservers.RoutineHandlers(new RoutineDiagnostic(person.Identity.Id, person.PlaceId,
                 slot.PlaceId, slot.Activity, now, slot.EndsAt, outcome, reason));
         }
-        private void MissRoutine(CitizenState person, RoutineSlot slot, double now, string reason)
+        private void MissRoutine(CitizenState person, RoutineSlot slot, double now, string reason, PlanMissCause cause = PlanMissCause.None)
         {
+            DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Missed, cause != PlanMissCause.None ? cause : DayPlanExecutor.CauseOf(reason));
             if (slot.Activity == Activity.Work)
             {
-                var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1));
+                var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places); // a shift's start day
                 if (w.HasValue && person.Accrual.Day == (int)(w.Value.StartsAt / 1440)
                     && (person.Accrual.Shift == EmploymentWages.Closed || person.Accrual.Shift == EmploymentWages.ClosureDay))
                 { ObserveRoutine(person, slot, now, "closed", "workplace-closed"); return; }
@@ -324,7 +326,7 @@ namespace PersistentCity.Core
                 if (meal.Budget != null)
                 {
                     var person = FindCitizen(meal.HostId);
-                    if (person != null && EmploymentWages.NextPosting(person, State.Seed, State.Minute, out _) <= target) return false;
+                    if (person != null && EmploymentWages.NextPosting(person, State.Seed, State.Minute, out _, places) <= target) return false;
                 }
                 if (meal.DueAt <= target || meal.Decision != null && meal.Decision.OriginAt <= target
                     || meal.Budget != null && meal.Budget.NextPostingMinute <= target) return false;
@@ -599,6 +601,7 @@ namespace PersistentCity.Core
             // its sort key just changed inside the set.
             if (!due.Add(item)) throw new InvalidOperationException("A completed event was already queued.");
             food?.ObserveStop(live);
+            food?.SyncPlanMeals(live);
             ScheduleOptionalStop(live, arrivalRoute);
             FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
@@ -625,7 +628,7 @@ namespace PersistentCity.Core
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
-            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet,
+            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet, Plan = live.Plan?.Copy(),
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
@@ -684,6 +687,7 @@ namespace PersistentCity.Core
             live.EmploymentStartDay = working.EmploymentStartDay; live.Accrual = working.Accrual;
             // GR-1: the copy shares the person's wallet; an event never replaces it.
             live.Wallet = working.Wallet;
+            live.Plan = working.Plan;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
             // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
             live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
@@ -758,6 +762,9 @@ namespace PersistentCity.Core
         // answer, so the side effects before and after each plan keep the order of the former synchronous Step.
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
+            // GR-2: the event is the plan executor. Today's plan is drawn once and items past their deadline are closed.
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null);
+            DayPlanExecutor.Settle(person, now);
             person.OptionalStopChoice = null;
             person.OptionalStop = null; // The original activity event owns the continuation.
             var outing = BeginMealOuting(person, now);
@@ -792,7 +799,11 @@ namespace PersistentCity.Core
                     || (!closedWorkShift && now >= admissionFrom && now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now));
                 bool affordable = !admitted || CanAdmitOrdinary(person, person.PlaceId, person.Activity, now);
                 admitted &= affordable; paidRefusedArrival = !affordable;
-                if (admitted) VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
+                if (admitted)
+                {
+                    VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
+                    DayPlanExecutor.Mark(person, person.Activity, person.ActivityUntilMinute, PlanItemState.Active);
+                }
                 else
                 {
                     // A closure during travel can still leave a later opening in this activity.
@@ -823,6 +834,8 @@ namespace PersistentCity.Core
                     ResidentLifecycle.AssignWorkplace(person, candidate);
                     break;
                 }
+            // A job found or lost just now replans today's work item.
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null);
             // Retain a home fallback until its original window ends. This also survives reload
             // and prevents counting the same closed activity again after the journey home.
             if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)
@@ -852,7 +865,7 @@ namespace PersistentCity.Core
             var slot = committedWait
                 ? new RoutineSlot(person.DestinationId, person.DestinationActivity, person.ActivityUntilMinute)
                 : attending || homeFallback ? new RoutineSlot(person.HomeId, Activity.Home, person.ActivityUntilMinute)
-                : DailyRoutine.At(person, State.Seed, now, State.Places, places.TryGetValue(person.HomeId, out var home) ? home : null);
+                : DailyRoutine.At(person, State.Seed, now, State.Places, places.TryGetValue(person.HomeId, out var home) ? home : null, places);
             Route? commuteRoute = null;
             bool earlyCommute = false;
             double commuteAt = double.PositiveInfinity;
@@ -875,10 +888,11 @@ namespace PersistentCity.Core
             }
             if (slot.Activity == Activity.Work)
             {
-                var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1));
+                var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places); // a shift's start day
                 if (work.HasValue && now >= work.Value.StartsAt && person.Accrual.Day == (int)(work.Value.StartsAt / 1440)
                     && person.Accrual.Shift == EmploymentWages.Closed)
                 {
+                    DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Missed, PlanMissCause.Closed);
                     ObserveRoutine(person, slot, now, "closed", "workplace-closed");
                     slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt);
                     earlyCommute = false; commuteAt = double.PositiveInfinity;
@@ -925,7 +939,10 @@ namespace PersistentCity.Core
             if (slot.PlaceId == person.PlaceId)
             {
                 if (recordArrival)
+                {
                     VisitorSchedules.RecordArrival(person, now, slot.PlaceId, slot.Activity);
+                    DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Active);
+                }
                 person.Phase = CitizenPhase.AtPlace;
                 person.Activity = slot.Activity;
                 person.DestinationId = "";
@@ -959,6 +976,7 @@ namespace PersistentCity.Core
             person.Journey = route.Commit();
             person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
+            DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Travelling);
         }
 
         private RouteRequest WorkplaceProbe(CitizenState person, Place destination)
@@ -992,7 +1010,7 @@ namespace PersistentCity.Core
         private double AdmissionFrom(CitizenState person)
         {
             if (!(routes is ICommuteTimingPlanner) || (person.DestinationActivity != Activity.Work && person.DestinationActivity != Activity.Study)) return 0;
-            var window = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 0.001));
+            var window = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 480), places); // a shift's start day
             return window.HasValue && window.Value.EndsAt == person.ActivityUntilMinute ? window.Value.StartsAt : 0;
         }
 
@@ -1016,9 +1034,9 @@ namespace PersistentCity.Core
             if (!(routes is ICommuteTimingPlanner) || !ResidentLifecycle.IsSafelyHome(person)) return CommuteDecision.None;
             // A current shift is handled by the ordinary activity path, never by
             // planning tomorrow while today's worker still needs to leave home.
-            var current = DailyRoutine.WorkOnDay(person, State.Seed, now);
+            var current = DailyRoutine.WorkOnDay(person, State.Seed, now, places);
             if (current.HasValue && now >= current.Value.StartsAt && now < current.Value.EndsAt) return CommuteDecision.None;
-            var planned = DailyRoutine.NextWork(person, State.Seed, now);
+            var planned = DailyRoutine.NextWork(person, State.Seed, now, places);
             if (!planned.HasValue || planned.Value.PlaceId == person.HomeId) return CommuteDecision.None;
             var window = planned.Value;
             // A return-home fallback owns a missed activity's original deadline.
@@ -1100,7 +1118,7 @@ namespace PersistentCity.Core
             // Existing saves encode a failed activity window as Home until its
             // original deadline. Preserve that window even when timing conversion
             // or a lifecycle event wakes this resident before the deadline.
-            var original = DailyRoutine.At(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 0.001));
+            var original = DailyRoutine.At(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 0.001), places);
             return original.Activity != Activity.Home && original.EndsAt == person.ActivityUntilMinute;
         }
 

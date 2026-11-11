@@ -20,6 +20,8 @@ namespace PersistentCity.Core
                 internal int Index;
                 internal WorkWindow Window;
                 internal string Workplace = "";
+                // GR-2: the plan items the window was read with; a newly drawn or replanned plan schedules the entry again.
+                internal object? PlanItems;
             }
             private readonly FoodCommerce food;
             private readonly List<Entry> items = new List<Entry>();
@@ -54,10 +56,10 @@ namespace PersistentCity.Core
             }
             private void Schedule(Entry e)
             {
-                e.Workplace = e.Person.DayPlaceId; e.WageAt = double.PositiveInfinity;
+                e.Workplace = e.Person.DayPlaceId; e.PlanItems = e.Person.Plan?.Items; e.WageAt = double.PositiveInfinity;
                 if (!EmploymentWages.Eligible(e.Person)) return;
                 double now = food.city.State.Minute;
-                e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window);
+                e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window, food.city.PlaceIndex);
                 if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
             }
             // Ties break by ordinal person ID, the order Build sorts by (before F5g: that rank as an int). F5g compares the IDs
@@ -103,7 +105,13 @@ namespace PersistentCity.Core
             }
             internal void Changed(CitizenState person)
             {
-                if (!byPerson.TryGetValue(person.Identity.Id, out var e) || e.Workplace == person.DayPlaceId) return;
+                if (!byPerson.TryGetValue(person.Identity.Id, out var e)) return;
+                if (e.Workplace == person.DayPlaceId)
+                {
+                    if (ReferenceEquals(e.PlanItems, person.Plan?.Items)) return;
+                    // A running shift keeps the window it began with; only a shift not yet begun follows a new plan.
+                    if (EmploymentWages.Active(person.Accrual)) { e.PlanItems = person.Plan?.Items; return; }
+                }
                 Schedule(e); e.Minute = Math.Min(e.Wallet.NextPostingMinute, e.WageAt);
                 int at = e.Index;
                 while (at > 0)

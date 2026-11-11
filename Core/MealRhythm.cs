@@ -16,9 +16,25 @@ namespace PersistentCity.Core
         public static string IntentId(string id, int day, MealKind kind) => kind == MealKind.Legacy
             ? FoodDemand.IntentId(id, day)
             : "food:" + Uri.EscapeDataString(id) + ":" + kind.ToString().ToLowerInvariant() + ":" + day.ToString(CultureInfo.InvariantCulture);
+        /// <summary>GR-2: the saved day plan's meal window for its day; any other day (and a window the plan left out) is
+        /// drawn here with the same rules.</summary>
         public static double DesiredAt(CitizenState person, int seed, int day, MealKind kind)
         {
             if (kind == MealKind.Legacy) return FoodRoutinePlanning.DesiredMealMinute(person, seed, day);
+            var planned = Planned(person, day, kind);
+            return planned != null ? planned.EarliestStart : DrawDesiredAt(person, seed, day, kind);
+        }
+
+        private static PlanItem? Planned(CitizenState person, int day, MealKind kind)
+        {
+            var plan = person.Plan;
+            if (plan == null || plan.Day != day) return null;
+            foreach (var item in plan.Items) if (item.Kind == PlanItemKind.Meal && item.Meal == kind) return item;
+            return null;
+        }
+
+        internal static double DrawDesiredAt(CitizenState person, int seed, int day, MealKind kind)
+        {
             double wake = DailyRhythm.OnDay(person, seed, day - 1).EndsAt;
             int offset = kind == MealKind.Breakfast ? 30 : kind == MealKind.Lunch ? 300 : 690;
             int radius = kind == MealKind.Breakfast ? 15 : kind == MealKind.Lunch ? 30 : 45;
@@ -28,7 +44,12 @@ namespace PersistentCity.Core
         }
         public static double ExpiresAt(CitizenState person, int seed, int day, MealKind kind)
         {
-            double desired = DesiredAt(person, seed, day, kind);
+            var planned = kind == MealKind.Legacy ? null : Planned(person, day, kind);
+            return planned != null ? planned.EndsAt : DrawExpiresAt(person, seed, day, kind, DesiredAt(person, seed, day, kind));
+        }
+
+        internal static double DrawExpiresAt(CitizenState person, int seed, int day, MealKind kind, double desired)
+        {
             int window = kind == MealKind.Legacy ? 240 : kind == MealKind.Breakfast ? 90 : kind == MealKind.Lunch ? 120 : 150;
             double end = Math.Min((day + 1) * 1440.0, desired + window);
             return kind == MealKind.Legacy ? end : Math.Min(end, DailyRhythm.OnDay(person, seed, day).StartsAt);

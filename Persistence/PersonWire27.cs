@@ -59,6 +59,7 @@ namespace PersistentCity.Persistence
             } };
             result.Add(inherited.Single(p => p.PropertyName == "Accrual"));
             result.Add(inherited.Single(p => p.PropertyName == "Wallet"));
+            result.Add(inherited.Single(p => p.PropertyName == "Plan"));
             return result;
         }
 

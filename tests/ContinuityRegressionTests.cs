@@ -53,9 +53,10 @@ public sealed class ContinuityRegressionTests
         Assert.True(465 + Shift < 480);
         var city = City(Persona.Parent, 1440, work: true);
         var work = city.Places.Single(p => p.Id == "work");
-        work.OpenMinute = 480; work.CloseMinute = 960;
+        // GR-2 fits a shift into hours that hold all 480 minutes; 470 open minutes keep the template, so the parent waits.
+        work.OpenMinute = 480; work.CloseMinute = 950;
         if (weekly)
-            for (int day = 0; day < 4; day++) work.WeeklyHours.Add(new OpeningWindow { Day = day, FromMinute = 480, ToMinute = 960 });
+            for (int day = 0; day < 4; day++) work.WeeklyHours.Add(new OpeningWindow { Day = day, FromMinute = 480, ToMinute = 950 });
         var engine = new CitySimulator(city, new Routes());
         engine.AdvanceTo(1440 + 479);
         Assert.Equal("home", city.Citizens[0].PlaceId);
@@ -117,7 +118,8 @@ public sealed class ContinuityRegressionTests
     {
         var city = City(Persona.Parent, 1440, work: true);
         var work = city.Places.Single(p => p.Id == "work");
-        work.OpenMinute = 465 + Shift + 480; work.CloseMinute = 1440;
+        // Too short for a whole shift, so GR-2 keeps the template window and the opening falls on its deadline.
+        work.OpenMinute = 465 + Shift + 480; work.CloseMinute = 465 + Shift + 780;
         var engine = new CitySimulator(city, new Routes());
         engine.AdvanceTo(2 * 1440);
         Assert.Equal(1, city.Citizens[0].MissedActivities);

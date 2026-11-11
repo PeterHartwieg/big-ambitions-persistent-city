@@ -38,6 +38,8 @@ namespace PersistentCity.Core
             if(weather.Value==0)
             {
                 choice.Slot=new RoutineSlot(person.HomeId,Activity.Home,proposed.EndsAt);
+                // GR-2: declining in the rain is the person's choice, not a miss.
+                DayPlanExecutor.Mark(person,proposed.Activity,proposed.EndsAt,PlanItemState.Cancelled);
                 ObserveRoutine(person,proposed,now,"weather-declined","captured-rain");
                 yield break;
             }
@@ -49,20 +51,23 @@ namespace PersistentCity.Core
                 if (candidate.Id != proposed.PlaceId && candidates.Count < 8) candidates.Add(candidate);
             int routeCalls = 0;
             double stay = MinimumOptionalStay(proposed.Activity);
+            // GR-2: a missed item records why its first candidate (the planned venue when it can serve) was refused.
+            var cause = PlanMissCause.None;
             foreach (var candidate in candidates)
             {
+                bool first = ReferenceEquals(candidate, candidates[0]);
                 var slot = new RoutineSlot(candidate.Id, proposed.Activity, proposed.EndsAt);
                 if ((candidate.Id != person.PlaceId || RecordsSamePlaceArrival(person, slot))
                     && !CanAdmitOrdinary(person, candidate.Id, proposed.Activity, now))
-                { ObserveRoutine(person, slot, now, "candidate-rejected", "paid-visit-unaffordable"); continue; }
+                { if (first) cause = PlanMissCause.Refused; ObserveRoutine(person, slot, now, "candidate-rejected", "paid-visit-unaffordable"); continue; }
                 if (!UsefulOpening(candidate, now, slot.EndsAt, stay).HasValue)
-                { ObserveRoutine(person, slot, now, "candidate-rejected", "no-useful-opening"); continue; }
+                { if (first) cause = PlanMissCause.Closed; ObserveRoutine(person, slot, now, "candidate-rejected", "no-useful-opening"); continue; }
                 // Only a walking-only traveller can use a walking lower bound safely.
                 if (!person.Preferences.OwnsCar && !person.Preferences.AllowTransit && candidate.Id != origin.Id)
                 {
                     if (Position.Distance(origin.Position, candidate.Position) > person.Preferences.WalkingToleranceMetres
                         || (routes is IWalkingTimeBound bound && now + bound.MinimumWalkingMinutes(origin, candidate) + stay > slot.EndsAt))
-                    { ObserveRoutine(person, slot, now, "candidate-rejected", "walking-bound"); continue; }
+                    { if (first) cause = PlanMissCause.NoRoute; ObserveRoutine(person, slot, now, "candidate-rejected", "walking-bound"); continue; }
                 }
                 Route? route = null;
                 if (candidate.Id != origin.Id)
@@ -74,17 +79,17 @@ namespace PersistentCity.Core
                     yield return request;
                     route = request.Result;
                     if (route == null)
-                    { ObserveRoutine(person, slot, now, "route-rejected", "unreachable"); continue; }
+                    { if (first) cause = PlanMissCause.NoRoute; ObserveRoutine(person, slot, now, "route-rejected", "unreachable"); continue; }
                     ValidateRoute(route, origin.Position, candidate.Position); ValidateCarRoute(route, person);
                 }
                 double arrival = now + (route?.EstimatedMinutes ?? 0);
                 if (!UsefulOpening(candidate, arrival, slot.EndsAt, stay).HasValue)
-                { ObserveRoutine(person, slot, now, "route-rejected", "arrival-no-useful-opening"); continue; }
+                { if (first) cause = PlanMissCause.Late; ObserveRoutine(person, slot, now, "route-rejected", "arrival-no-useful-opening"); continue; }
                 choice.Slot = slot; choice.Route = route; choice.Selected = true;
                 ObserveRoutine(person, slot, now, "selected", candidate.Id == proposed.PlaceId ? "preferred-feasible" : "alternative-feasible");
                 yield break;
             }
-            MissRoutine(person, proposed, now, routeCalls == 2 ? "optional-search-exhausted" : "no-feasible-optional-venue");
+            MissRoutine(person, proposed, now, routeCalls == 2 ? "optional-search-exhausted" : "no-feasible-optional-venue", cause);
             choice.Slot = new RoutineSlot(person.HomeId, Activity.Home, proposed.EndsAt);
             choice.Route = null; choice.Selected = false;
         }

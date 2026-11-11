@@ -373,13 +373,13 @@ namespace PersistentCity.Core
             {
                 var pendingMeal=pendingDecision;
                 due.Remove(pendingMeal);
-                try { ContinueFoodDecision(pendingMeal,Owner(pendingMeal)!); }
+                try { ContinueFoodDecision(pendingMeal,Owner(pendingMeal)!); DayPlanExecutor.SyncMeals(city.FindCitizen(pendingMeal.HostId), pendingMeal); }
                 finally { due.Add(pendingMeal); }
                 return;
             }
             if (StepBudget()) return;
             var meal = due.Min!; due.Remove(meal);
-            try { StepMeal(meal); }
+            try { StepMeal(meal); DayPlanExecutor.SyncMeals(city.FindCitizen(meal.HostId), meal); }
             finally { due.Add(meal); }
         }
         private void StepMeal(ResidentMeal meal)

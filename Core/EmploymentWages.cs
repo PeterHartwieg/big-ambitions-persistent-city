@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
@@ -19,21 +20,22 @@ namespace PersistentCity.Core
 
         internal static bool Active(EmploymentAccrual a) => a.Shift == Working || a.Shift == Closed || AfterMidnightStage(a);
         // Derived from the saved employment tuple and F5 schedule, never saved as a second cursor.
-        internal static double NextPosting(CitizenState person, int seed, double now, out WorkWindow selected)
+        internal static double NextPosting(CitizenState person, int seed, double now, out WorkWindow selected,
+            IReadOnlyDictionary<string, Place>? places = null)
         {
             selected = default;
             if (!Eligible(person)) return double.PositiveInfinity;
             var a = person.Accrual;
             WorkWindow? window;
-            if (Active(a)) window = ActiveWindow(person, seed);
+            if (Active(a)) window = ActiveWindow(person, seed, places);
             else
             {
-                window = DailyRoutine.WorkOnDay(person, seed, now);
+                window = DailyRoutine.WorkOnDay(person, seed, now, places);
                 bool freshPartialShift = window.HasValue && a.Shift == 0 && now < window.Value.EndsAt
                     && person.JoinedMinute >= window.Value.StartsAt;
                 if (!window.HasValue || window.Value.StartsAt < now && !freshPartialShift
                     || a.Shift != 0 && a.Day >= (int)(window.Value.StartsAt / 1440))
-                    window = DailyRoutine.NextWork(person, seed, now);
+                    window = DailyRoutine.NextWork(person, seed, now, places);
             }
             if (!window.HasValue) return double.PositiveInfinity;
             selected = window.Value;
@@ -43,7 +45,7 @@ namespace PersistentCity.Core
                 : Math.Max(now, selected.StartsAt);
         }
 
-        internal static WorkWindow? ActiveWindow(CitizenState person, int seed)
+        internal static WorkWindow? ActiveWindow(CitizenState person, int seed, IReadOnlyDictionary<string, Place>? places = null)
         {
             var prepared = person.CommutePreparation;
             // F5 already saves the committed work window. Retain it across reload, including an
@@ -51,7 +53,9 @@ namespace PersistentCity.Core
             if (prepared.PlaceId == person.DayPlaceId && (int)(prepared.WorkStartsAt / 1440) == person.Accrual.Day
                 && prepared.WorkEndsAt - prepared.WorkStartsAt == 480)
                 return new WorkWindow(person.DayPlaceId, Activity.Work, prepared.WorkStartsAt, prepared.WorkEndsAt);
-            return DailyRoutine.WorkOnDay(person, seed, person.Accrual.Day * 1440.0);
+            // GR-2: otherwise the saved plan's shift for the accrual day (its work item or its saved next shift), which is
+            // also the window the wage queue began the shift with: a newly drawn plan schedules the entry again before Begin.
+            return DailyRoutine.WorkOnDay(person, seed, person.Accrual.Day * 1440.0, places);
         }
 
         private static bool AfterMidnightStage(EmploymentAccrual a) => a.Shift == AfterMidnight || a.Shift == AfterMidnightAttended;

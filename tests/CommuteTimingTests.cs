@@ -65,7 +65,8 @@ public sealed class CommuteTimingTests
     public void ClosedWorkplaceReceivesCommuteBeforeOpeningAndWaitsAtItsEntrance()
     {
         var state = City(); var c = state.Citizens[0]; var shift = DailyRoutine.WorkOnDay(c, state.Seed, state.Minute)!.Value;
-        state.Places[1].OpenMinute = (int)(shift.StartsAt - 1440 + 30); state.Places[1].CloseMinute = 1300;
+        // 470 open minutes: GR-2 cannot fit the whole shift, so the template stands and the commuter waits at the door.
+        state.Places[1].OpenMinute = (int)(shift.StartsAt - 1440 + 30); state.Places[1].CloseMinute = (int)(shift.StartsAt - 1440 + 500);
         var engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(shift.StartsAt);
         Assert.Equal("work", c.PlaceId); Assert.Equal(CitizenPhase.WaitingForOpening, c.Phase);
         Assert.Equal(shift.StartsAt + 30, c.NextEventMinute); Assert.Empty(c.RecentVisits);

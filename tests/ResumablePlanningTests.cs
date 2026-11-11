@@ -633,7 +633,9 @@ public sealed class ResumablePlanningTests
         PlayerHoldMinutes = 0.1 * n,
         RecentVisits = { new VisitRecord { AtMinute = n, PlaceId = "visit-" + n, Activity = (Activity)(n % 5) } },
         Traits = ResidentTraits.Generate(n, "traits-" + n),
-        Wallet = new ResidentBudget { BaseIncomeCents = n, Balance = Money.FromUnits(n) }
+        Wallet = new ResidentBudget { BaseIncomeCents = n, Balance = Money.FromUnits(n) },
+        Plan = new DayPlan(n, (uint)n, (ShiftType)(n % 4), n, "work-" + n,
+            new[] { new PlanItem(PlanItemKind.Work, Activity.Work, "work-" + n, 10 * n, 10 * n, 20 * n, PlanPriority.Fixed) })
     };
 
     [Fact]
@@ -662,6 +664,9 @@ public sealed class ResumablePlanningTests
         Assert.NotSame(live.Preferences, working.Preferences);
         Assert.NotSame(live.OptionalStop, working.OptionalStop);
         Assert.NotSame(live.OptionalStop!.Members, working.OptionalStop!.Members);
+        // GR-2: the copy owns its item states and shares the immutable item definitions.
+        Assert.NotSame(live.Plan, working.Plan); Assert.True(live.Plan!.SameAs(working.Plan!));
+        Assert.Same(live.Plan.Items, working.Plan!.Items);
         var car = live.Car; var preparation = live.CommutePreparation; var outing = live.MealOuting; var preferences = live.Preferences; var visits = live.RecentVisits;
         CitySimulator.CommitEvent(live, Filled(2, identity));
         // F2e: the player-hold allowance belongs to one journey; a replaced journey (or arrival) clears it.

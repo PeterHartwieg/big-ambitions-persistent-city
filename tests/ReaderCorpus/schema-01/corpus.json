@@ -6,16 +6,16 @@
   "fixtures": [
     {
       "file": "full.json",
-      "sha256": "98545e1eda714cc4cbe1f7ff3709913c23160d053754d2a6d33f222a5b330d7c",
-      "characters": 203324,
+      "sha256": "de946bd64a9c0dbf99c99d3b9ce934582277c968e62137f47d0a6602bf7da464",
+      "characters": 234584,
       "builder": "ChangeJournalTests.Fixture(5150) (3-shop fresh city after 2,000 minutes, journal and meal-period causes)",
       "recipe": "SaveCodec.Write(city) (fresh city in the single-pass writer, no migration)",
       "kind": "synthetic offline payload from test builders; not a native save"
     },
     {
       "file": "minimal.json",
-      "sha256": "6486d2aa6af80db212f86020f8e9b09e3ea17a6b96e65d2e5bf00069109e1953",
-      "characters": 1950,
+      "sha256": "7b92fa85fd4083c43409d547ebaa4962a64aa8205e601d27ddd9ef51ab8429ba",
+      "characters": 1962,
       "builder": "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)",
       "recipe": "SaveCodec.Write(city) (fresh city in the single-pass writer, no migration)",
       "kind": "synthetic offline payload from test builders; not a native save"
