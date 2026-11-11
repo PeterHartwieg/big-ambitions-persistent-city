@@ -457,15 +457,21 @@ public sealed class FocusIndependentInputsTests
     {
         var scans = new SceneScanSchedule();
         scans.Completed(SceneScan.Parks); scans.Completed(SceneScan.Performers);
+        // The geometry read finds the cached trigger destroyed and raises the park scan, then reports a miss.
         scans.ParkTriggerLost();
-        Assert.True(scans.Due(DwellKind.Resting)); Assert.False(scans.Due(DwellKind.Audience));
+        Assert.Equal(OptionalStopAvailability.Deferred,
+            SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Unavailable, scans.Due(DwellKind.Resting)));
+        Assert.Equal(OptionalStopAvailability.Deferred,
+            SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Deferred, scans.Due(DwellKind.Resting)));
+        Assert.False(scans.Due(DwellKind.Audience));
+        Assert.Equal(OptionalStopAvailability.Unavailable,
+            SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Unavailable, scans.Due(DwellKind.Audience)));
+        // Maintain runs the park scan; a miss after it ends the stop, and a hit is Ready either way.
         Assert.Equal(SceneScan.Parks, scans.Next); scans.Completed(SceneScan.Parks);
-        Assert.False(scans.Due(DwellKind.Resting));
+        Assert.Equal(OptionalStopAvailability.Unavailable,
+            SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Unavailable, scans.Due(DwellKind.Resting)));
+        Assert.Equal(OptionalStopAvailability.Ready, SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Ready, true));
         string environment = File.ReadAllText(Path.Combine(Root(), "Runtime", "OptionalStopEnvironment.cs"));
-        int read = environment.IndexOf("private OptionalStopAvailability ReadAvailable(", StringComparison.Ordinal);
-        string body = environment.Substring(read, environment.IndexOf("private OptionalStopAvailability GeometryStatus(", read, StringComparison.Ordinal) - read);
-        // The geometry failure is returned only after the pending-scan check that GeometryStatus itself can raise.
-        Assert.Matches(new Regex(@"var geometryStatus = GeometryStatus\(place, stop\);\s+if \(geometryStatus != OptionalStopAvailability\.Ready\)\s+return ScanDue\(stop\.Kind\)[^;]*OptionalStopAvailability\.Deferred : geometryStatus;"), body);
         // Scene changes are observed on the first read of a frame, RefreshOptionalStops before Maintain included.
         foreach (string entry in new[] { "public void Maintain()", "public IReadOnlyList<OptionalStopSpot> Spots(", "public OptionalStopAvailability Available(" })
         {

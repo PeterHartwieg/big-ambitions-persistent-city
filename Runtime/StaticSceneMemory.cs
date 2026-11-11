@@ -105,5 +105,9 @@ namespace PersistentCity.Runtime
             if (scan == SceneScan.Parks) parks = false;
             else if (scan == SceneScan.Performers) performers = false;
         }
+        /// <summary>A geometry failure read while a scan is pending, including one the geometry read itself raised,
+        /// is Deferred; pass the pending state read after the geometry status.</summary>
+        public static OptionalStopAvailability AfterGeometry(OptionalStopAvailability geometry, bool scanPending)
+            => geometry != OptionalStopAvailability.Ready && scanPending ? OptionalStopAvailability.Deferred : geometry;
     }
 }

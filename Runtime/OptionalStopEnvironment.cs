@@ -413,7 +413,7 @@ namespace PersistentCity.Runtime
             // GeometryStatus can discover a destroyed park trigger or controller; that scan is pending, not a failure.
             var geometryStatus = GeometryStatus(place, stop);
             if (geometryStatus != OptionalStopAvailability.Ready)
-                return ScanDue(stop.Kind) || unresolved.Contains(place) ? OptionalStopAvailability.Deferred : geometryStatus;
+                return SceneScanSchedule.AfterGeometry(geometryStatus, ScanDue(stop.Kind) || unresolved.Contains(place));
             // Rebind saved native identities once. A destroyed volume or a site gone from the scene ends the saved
             // stop; a later reappearance cannot restart it. A deactivation does not end it (F2h).
             if (stop.Kind == DwellKind.Audience)
