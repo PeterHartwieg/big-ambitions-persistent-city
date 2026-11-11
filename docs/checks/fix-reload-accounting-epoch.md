@@ -42,3 +42,7 @@ work, stops as before.
 Any check may run on the Mac or on Windows.
 
 11 November 2026, Mac at `eaac521c`: check 1 PARTIAL (reload assertions pass; autosave-off setup unverified), check 2 PASS, checks 3–4 NOT RUN (RIG-RLOTOGGLE). Creation-save-init check 2 PASS. [Results](rig-2026-11-11-mac-results.md); [compact result](fix-reload-accounting-epoch-mac.json).
+
+11 November 2026 (c), PC at `10b2d7bf`: check 3 PASS — RIG-RLOTOGGLE set Social Media off, reload waited, exactly one 15-second release warning appeared in the 20.203-second unpaused window, and native time advanced 08:00→08:15. Autosave suppression verified after reload. [Rig results](rig-2026-11-11c-pc-results.md).
+
+11 November 2026 (c), PC at `10b2d7bf`: check 4 PASS — after a retained early-minute PARTIAL attempt, a second fresh FT city's schema-one save at minute `1920.7541997432709` was requested 0.406 seconds after off-state S1 completed loading, with Social Media back on. S2 reached city running at its exact saved logical minute; no already-active-clock or lost-epoch refusal. Option restore/readback and lifecycle cleanup verified. Related F8a-9/F8bg-8 off/on mid-session checks PASS with 957 resident identities unchanged through a fresh-process reload. [Rig results](rig-2026-11-11c-pc-results.md).
