@@ -278,7 +278,7 @@ namespace PersistentCity.Runtime
         private static bool CustomerSale(RetailBusinessSimulator __instance)
         {
             var reg = (BuildingRegistration)Registration.GetValue(__instance)!;
-            return NativeFoodMarket.IsBuying(reg) || !Suppress(reg, BatchHour(__instance));
+            return NativeFoodMarket.IsBuying(reg) || NativeSaleProbe.IsProbing(reg) || !Suppress(reg, BatchHour(__instance));
         }
         private static bool GenerateCustomers(BuildingRegistration registration) => !Suppress(registration, Hour);
         private static bool CustomerDraw(Address address, ref List<CustomerEntry> __result)
