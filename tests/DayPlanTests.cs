@@ -329,6 +329,35 @@ public sealed class DayPlanTests
         }
     }
 
+    /// <summary>Astra-r3-1: hours that change during an overnight shift (22:00-06:00, then 23:00-07:00 from 23:30) do not
+    /// stretch it. The resident leaves at the saved end, uninterrupted and after a reload during the shift, and the shift
+    /// is never drawn again from the new hours once today's plan has replaced yesterday's.</summary>
+    [Fact]
+    public void HoursChangedDuringAnOvernightShiftDoNotExtendItsSavedEnd()
+    {
+        var reference = City(Persona.Commuter, work: true);
+        var work = reference.Places.Single(p => p.Id == "work"); work.OpenMinute = 1320; work.CloseMinute = 360;
+        var engine = new CitySimulator(reference, new Routes());
+        engine.AdvanceTo(Monday + 1410);
+        Assert.Equal((CitizenPhase.AtPlace, Activity.Work, 2 * Monday + 360), (reference.Citizens[0].Phase, reference.Citizens[0].Activity, reference.Citizens[0].ActivityUntilMinute));
+        var read = SaveWire.Read(SaveCodec.Write(reference)).State!;
+        foreach (var city in new[] { reference, read })
+        {
+            var place = city.Places.Single(p => p.Id == "work"); place.OpenMinute = 1380; place.CloseMinute = 420;
+        }
+        var resumed = new CitySimulator(read, new Routes());
+        engine.AdvanceTo(2 * Monday + 400); resumed.AdvanceTo(2 * Monday + 400);
+        Assert.Equal(SaveCodec.Write(reference), SaveCodec.Write(read));
+        foreach (var person in new[] { reference.Citizens[0], read.Citizens[0] })
+        {
+            Assert.Equal((CitizenPhase.AtPlace, "home"), (person.Phase, person.PlaceId));
+            Assert.Contains(person.RecentVisits, v => v.Activity == Activity.Home && v.AtMinute == 2 * Monday + 360 + 12);
+            Assert.Equal(2, person.Plan!.Day);
+            // Tuesday's own shift was drawn with Monday's plan, before the change.
+            Assert.Equal(2 * Monday + 1320, Item(person.Plan, PlanItemKind.Work).Item.EarliestStart);
+        }
+    }
+
     /// <summary>Astra-r2-1: shifts across midnight (18:00-02:00) and before the 04:00 boundary (02:00-10:00) are attended
     /// whole every working day and paid, the plan item ends done, and a reload in the middle of the shift continues to the
     /// same bytes.</summary>

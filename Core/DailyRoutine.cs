@@ -98,8 +98,10 @@ namespace PersistentCity.Core
             var work = today.Work;
             if (work.HasValue && minute >= work.Value.StartsAt && minute < work.Value.EndsAt)
                 return new RoutineSlot(work.Value.PlaceId, work.Value.Activity, Math.Min(MaxMinute, work.Value.EndsAt));
-            // A shift begun yesterday can run past midnight (eight hours at most).
-            if (day > 0 && minute < day * 1440.0 + 480)
+            // A shift begun yesterday can run past midnight (eight hours at most). Once today's plan has replaced
+            // yesterday's, every item of that plan has ended (DayPlanExecutor.Ensure), so its shift is over and is never
+            // drawn again from hours that may have changed since it was committed.
+            if (day > 0 && minute < day * 1440.0 + 480 && !(person.Plan != null && person.Plan.Day >= day))
             {
                 var overnight = DayPlanner.WorkFor(person, keys, day - 1, index);
                 if (overnight.HasValue && minute >= overnight.Value.StartsAt && minute < overnight.Value.EndsAt)
