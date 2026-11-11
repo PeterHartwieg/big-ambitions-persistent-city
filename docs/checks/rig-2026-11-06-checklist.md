@@ -16,3 +16,7 @@ Results of the intermediate batched run (head `c2fc1b0`): [rig-2026-11-09-result
 11 November 2026 (b), Mac at `2f1e8136`: [F8h conflict refusals and autosave re-runs](rig-2026-11-11b-mac-results.md).
 
 11 November 2026 PC at `11217a8f`: [Windows-only rows, autosave-off re-runs and F8h first-sale attempt](rig-2026-11-11-pc-results.md) ? 6 passed / 8 partial / 0 failed / 170 not run; restore/hash verification and lease release complete.
+
+11 November 2026 Windows combined-batch subset at `97448c04`: F7 check 2 / F4 G12 **PARTIAL**, fresh day-1 957 head city, Default/MidnightSave/RecoverSave capture-to-encode **1.917?3.563%**, synchronous portrait/screenshot-request methods **8.395?20.787 ms**. F7 check 7 Default cold load restored 957/957. Historical before arm and process-memory profiler fields remain unavailable. [Save-phase tables and subsequent runnable rows](rig-2026-11-11-batch-results.md).
+
+11 November 2026 Windows combined-batch completion at `97448c04`: F7 check 2 / F4 G12 **PARTIAL**, all three SaveTypes on day 1 and day 3 (957 residents; 957/1,914 visitors), capture/encode **1.054-3.563%**, portrait/screenshot-request method window **8.395-20.787 ms**; all six checkpoints cold-loaded with F7a initialization timings. F4 G10 head subset partial, native 120m skip completed. F7 check 9 lunch union **FAIL**, provisional (PC shared): p95 6.6857 ms, five >=30 ms spikes (max 193.3404 ms); this is not F4 G4. [Full report and grouped NOT RUN rows](rig-2026-11-11-batch-results.md).
