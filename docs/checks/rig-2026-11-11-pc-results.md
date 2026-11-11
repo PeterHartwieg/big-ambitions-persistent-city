@@ -26,3 +26,15 @@ Candidate verified by `git fetch origin`, exact head `11217a8f68c8dc3cbf7b2dd300
 
 - `FT E5b PC 11 Nov 11217a8f`: `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT E5b PC 11 Nov 11217a8f.hsg`, SHA-256 `e73caffd08acef116ee407355898aaa36852985043793eb9b5d60fd38abd07c8`.
 - `FT E5b PC 11 Nov 11217a8f Ready`: `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT E5b PC 11 Nov 11217a8f Ready.hsg`, SHA-256 `f1c5c41923e9057bb206fa917dd6b6081b37c82ade4f409af04b6108dbe683a3`.
+
+## Group 2 ? guarded reload and shop attempt
+
+Native S1 reloaded at 08:00; verified one-hour checkpoint `FT PC 11 Nov 0900 Verified` saved/reloaded at 09:00 with PC city running, 49/49 targets and autosave guard enabled/off. No lost accounting epoch, clock.city refusal or startup-wait warning observed. The separate main-menu confirmation was refused by the bridge guard, so the documented native `load` command was used; the menu step is qualified as PARTIAL. Full payload/epoch and identity readbacks need the unavailable installed RIG-PCSAVE op.
+
+F8h-2 PARTIAL: checkout active, 0 refusing, shared-tick owners report-only, activation scan retained; shop_fixture refused `ops_shop_native_rental_refused` for `ba:street_fourthavenue#18`, no rented/owned shop and no sale. No money injection or retry of the refused rental. Installed ops lists no `save`, `pcsave`, `pcstate` or `modwork`; direct capability reads return `ops_unknown_op`.
+
+E5b5-1 PASS: dynamicAcquisition true, productPolicy published and capabilitiesPassed true after warm-up across reloads. E5b3-1 PARTIAL: settled Active and passed cargo version-reader/self-test, but immediate Warming was not captured. F8a-2 and F8bg-1 PASS: required capabilities active, optional states/reasons and owners captured.
+
+The sampled resident IDs/home/work assignments c1/c500/c957 match across the 09:00 reload. Two full console records match; c1's next_event changes from 1989.7508482813714 to 1981.6334733148396. No full state-equality claim. Earlier setup checkpoints labelled H1/Hour were actually saved at 08:00 after an interrupted advance; only the Verified checkpoints prove the hour.
+
+Positive session cleanup: normal stop, mods and lifecycle hash restoration passed; lease free, pending 0. Raw evidence: `<stage>/runs/positive`.
