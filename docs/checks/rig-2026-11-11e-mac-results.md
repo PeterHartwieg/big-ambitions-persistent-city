@@ -13,7 +13,7 @@ Role `rig_test`, where `mac`, isolated instance `agentmac`. Candidate `86c2e92f3
 | Candidate / worktrees | Detached build `rig-2026-11-11e-mac`; separate evidence branch/worktree `codex/mac-rig-2026-11-11e` / `rig-2026-11-11e-mac-evidence`, both from the verified candidate. Main tree unchanged. |
 | Host / player | Native Apple Silicon Mac; private `Big Ambitions Agent Tests Mac.app`; isolated `com.hovgaardgames.bigambitions.agenttests.mac` profile; loopback 28330, no tunnel. Runtime 7. |
 | Official rig checkout | `508185c59979cd77e2129e998675503a3eba4563`, clean/read only. Official `scripts/mac-agent` used directly; no prior LocalControl wrapper needed. No install/update/rollback script used. |
-| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/Big Ambitions Agent Tests Mac.app/Contents/Resources/Data/Managed" --provenance <stage>/build-provenance.json`; succeeded. Same private-app reference location as run b, with the already installed #70 overlay. |
+| Build | `python3 tools/build.py --game-managed "$HOME/Library/Application Support/BigAmbitionsAgentTestsMac/Big Ambitions Agent Tests Mac.app/Contents/Resources/Data/Managed" --provenance <stage>/build-provenance.json`; succeeded. Same private-app reference location as run b, with the already installed #70 overlay. |
 | Environment | Every Python/.NET/build invocation used `PATH="/opt/homebrew/bin:$PATH"` and `DOTNET_ROOT="$(/opt/homebrew/bin/brew --prefix dotnet)/libexec"`. |
 | DLL SHA-256 | `4c500997601b098e18665feca8d2b6a3130e7a0180249f515944ce09d6436850`; installed hash matched. |
 | Dependencies / provenance | Reused local Harmony DLL/license; build verified pinned DLL SHA-256 `7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c`. Mac assembly fingerprint `unknown`, 27 differences from declared sets; no Windows compatibility claim. |
@@ -212,7 +212,7 @@ Both stops were normal `python3 scripts/mac-agent stop`; no force stop. Restored
 
 Final status: `running=false`, lease `held=false`, pending **0**. Game PIDs **49991** and **53151** are absent; no caffeinate assertion targeting either remains. An unrelated caffeinate was left untouched. All foreground build/helper/launcher commands completed. Main mod checkout and official rig checkout are clean. No Windows/agent1, normal/Steam install/profile, OS setting or unrelated process was controlled. No WRAP_UP_NOW marker appeared at checked boundaries.
 
-Report copied to `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-11e-mac.md`. Evidence worktree is detached after PR creation so its branch is available for review. Results PR is docs only and is not merged.
+Report copied to `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-11e-mac.md`. Evidence worktree is detached after PR creation so its branch is available for review. Results PR is docs only and is not merged.
 
 ## Per-check results
 
