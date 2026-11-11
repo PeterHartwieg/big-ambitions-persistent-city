@@ -22,16 +22,18 @@ Order of work, top to bottom. "Prove a sale" starts now and runs beside tracks X
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Rig serving fixture | planned | Rig repository. On 9 November the test shop refused service even without the mod, so no sales, receipt or accounting check can run. |
-| R0 native customer path | planned | Read the game assembly: where orders are generated, which processing each customer-facing business type uses, what the native customer counts already include. Then prove in game one food sale, one goods sale and one service sale by a resident, with a refusal and a reload. |
+| Rig serving fixture | partial | Rig repository. On 9 November the test shop refused service even without the mod. On 11 November the fixed-address rental was refused (`ops_shop_native_rental_refused`, [PR #209](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/209)); agent-rig #71 (rental fix, vacant-shop selection) and #70 (Mac) are installed. PC rig 11d and Mac rig 11e exercise it; no sale is recorded yet. |
+| R0 native customer path | planned | Slice S1 in the [next-tracks plan](plans/next-tracks.md). Read the game assembly: where orders are generated, which processing each customer-facing business type uses, what the native customer counts already include. Then prove in game one food sale, one goods sale and one service sale by a resident, with a refusal and a reload. |
 
 ### In flight
 
+Snapshot at `86c2e92` (11 November). Rig runs and checks, no implementation slice.
+
 | Item | Status | Notes |
 | --- | --- | --- |
-| F8b to F8g capability report, verified food contracts, hook conflicts | partial | [PR #194](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/194) open. F8h is conditional on rig check 1. [F8 plan](plans/f8-capability-boundaries.md). |
-| F9g presentation reads through the view | partial | [PR #190](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/190) open. |
-| F9f movement in the integrated city | planned | Body and follower arms in the F9c scenario. [F9 plan](plans/f9-city-acceptance.md). |
+| PC rig 11d | partial | Shop fixture with vacant-shop selection, F8h first sale and the shop-dependent rows (E5b2 to E5b5, F9, F6b, F7 checks 1 and 3). Report PR not open yet. |
+| Mac rig 11e | partial | Rig smoke, Mac shop fixture, autosave-off re-runs. Report PR not open yet. |
+| F2c coverage check | partial | Whether the unpushed fade-shader and along-leg-tolerance review round (`16fb2129`) is covered by merged F2c `c42240f`. A gap found becomes a fix slice. |
 | E6a Street Food vendor API | planned | Lives in the Street Food repository. Carts and trucks cannot sell until it exists. [E6 plan](plans/e6-carts-food-trucks.md). |
 
 ### Track X: a tree agents can read
@@ -40,11 +42,11 @@ From [review section 4](reviews/2026-11-09-city-review.md#4-agent-readability). 
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| X4 entry docs match the code | planned | `docs/behaviour.md`, `docs/glossary.md` and `docs/save-format.md` describe the 6 November state: research inactive, visitors without bodies, measured body motion as authority, a JSON save wire. Bring them up to the code. |
-| X5 tools history out of the tree | planned | The docs half is done ([lean docs](decisions/2026-11-10-lean-docs.md)). Left: `tools/*-regression` and their evidence JSON move to a tag; the tool folders the test project compiles move under `tests/`. |
-| X6 delete dead code | planned | E3 feasibility readers, street proxy, the traffic kernel's physical-control branches and saved field, legacy representation code with no caller. Track F's F0 experiment goes unless a plan still needs it. |
-| X7 code map | planned | One `docs/map.md`: tick path, save path, settings, the partial classes and their files, three how-to recipes. |
-| X9 test kit | planned | One test city builder, one fake planner, one golden hash per fixture, measurements behind an environment flag. Remove tests that assert on source text. |
+| X4 entry docs match the code | planned | Slice X-A in the [next-tracks plan](plans/next-tracks.md). `docs/behaviour.md`, `docs/glossary.md` and `docs/save-format.md` describe the 6 November state: research inactive, visitors without bodies, measured body motion as authority, a JSON save wire. Bring them up to the code. |
+| X5 tools history out of the tree | planned | Slice X-B in the [next-tracks plan](plans/next-tracks.md). The docs half is done ([lean docs](decisions/2026-11-10-lean-docs.md)). Left: `tools/*-regression` and their evidence JSON move to a tag; `docs/checks/` and `docs/perf/` were refilled by F8, F9, the two fixes and the 9 to 11 November rig reports and move to the tag the same way; the tool folders the test project compiles move under `tests/`. |
+| X6 delete dead code | planned | Slice X-B in the [next-tracks plan](plans/next-tracks.md). E3 feasibility readers, street proxy, the traffic kernel's physical-control branches and saved field, legacy representation code with no caller. Track F's F0 experiment goes unless a plan still needs it. |
+| X7 code map | planned | Slice X-A in the [next-tracks plan](plans/next-tracks.md). One `docs/map.md`: tick path, save path, settings, the partial classes and their files, three how-to recipes. |
+| X9 test kit | planned | Slice X-B in the [next-tracks plan](plans/next-tracks.md). One test city builder, one fake planner, one golden hash per fixture, measurements behind an environment flag. Remove tests that assert on source text. |
 
 ### Track P: saves and spikes
 
@@ -52,11 +54,11 @@ From [review section 3](reviews/2026-11-09-city-review.md#3-performance). The po
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| P1 single-pass save | planned | One writer and one strict reader straight from the snapshot, inside the existing save callback. Measure capture, validation and encoding separately. Target: under 40 ms p95 on the main thread at 3,000 persons, in game. The 9 November rig measured 374 to 986 ms. Replaces the compact columnar writer and F7e. Encoding on a worker or into a sidecar file comes only with a mechanism that keeps wallets and native sales in one consistent save. |
-| P2 remove the known spikes | planned | Optional-stop scene reads on the event path (97 and 129 ms), the first frames after a speed change (110 to 430 ms), the 30-second RLO reflection read and path-cache clear. |
-| P3 walkers keep one path per leg | planned | Today each body recalculates a NavMesh path about every half metre. Needed before the walker cap can rise. |
-| P4 Mono GC measurement | planned | Rig capability: GC pauses against heap size at 3,000, 10,000 and 20,000 persons. Pool the per-event working copy if the numbers call for it. |
-| P5 per-frame scans | planned | Index active optional stops; sync car progress only for visible cars. |
+| P1 single-pass save | planned | Slice P-A in the [next-tracks plan](plans/next-tracks.md). One writer and one strict reader straight from the snapshot, inside the existing save callback. Measure capture, validation and encoding separately. Target: under 40 ms p95 on the main thread at 3,000 persons, in game. The 9 November rig measured 374 to 986 ms. Replaces the compact columnar writer and F7e. Encoding on a worker or into a sidecar file comes only with a mechanism that keeps wallets and native sales in one consistent save. |
+| P2 remove the known spikes | planned | Slice P-B in the [next-tracks plan](plans/next-tracks.md). Optional-stop scene reads on the event path (97 and 129 ms), the first frames after a speed change (110 to 430 ms), the 30-second RLO reflection read and path-cache clear. |
+| P3 walkers keep one path per leg | planned | Slice P-C in the [next-tracks plan](plans/next-tracks.md). Today each body recalculates a NavMesh path about every half metre. Needed before the walker cap can rise. |
+| P4 Mono GC measurement | planned | Slice P-D in the [next-tracks plan](plans/next-tracks.md). Rig capability: GC pauses against heap size at 3,000, 10,000 and 20,000 persons. Pool the per-event working copy if the numbers call for it. |
+| P5 per-frame scans | planned | Slice P-B in the [next-tracks plan](plans/next-tracks.md). Index active optional stops; sync car progress only for visible cars. |
 
 ### Tracks G and R: the living city and sales at every business
 
@@ -64,7 +66,7 @@ One joint plan, because a need coming due and a shared outing are both plan item
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| J0 joint plan | planned | Docs only, after R0's reading of the game assembly. The day-plan model and its executor, the purchase contract, the need model, household rules, the capacity rule for homes without interior area, through-traffic share. Measures the revenue-scale gap and brings the options to Peter. |
+| J0 joint plan | planned | Docs only, after R0's reading of the game assembly. The [next-tracks plan](plans/next-tracks.md) sizes the G and R slices that J0 then fixes in detail. The day-plan model and its executor, the purchase contract, the need model, household rules, the capacity rule for homes without interior area, through-traffic share. Measures the revenue-scale gap and brings the options to Peter. |
 | R1 business types and a live catalogue | planned | Every place carries its business type from the loaded catalogue, modded types included. New and closed businesses refresh. |
 | R2 wallet on the person | planned | Budget and wages move out of the food roster. Food becomes one spender among several. Household essentials are re-cut so a need is not paid for twice. |
 | G2 day plans | planned | A plan per person per day, generated once with seeded draws and saved. One executor replaces the separate scheduling state for commutes, meals, opening waits and optional stops. Work windows come from the workplace's hours and a shift type. |
@@ -86,15 +88,15 @@ One joint plan, because a need coming due and a shared outing are both plan item
 | Item | Status | Notes |
 | --- | --- | --- |
 | Recorded rig walk-through | planned | Once G2 lands: a recording of the same street at morning, midday and night. A stand-in for the owner's eyes until the hands-on session. |
-| Batched rig run | planned | Runs every merged slice's in-game checks against the development head. The [9 November intermediate run](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/170) ran 75 of 510. |
-| F4f gate run record | planned | After the combined batch. [F4 plan](plans/f4-perf-gate.md). |
+| Batched rig run | partial | Runs every merged slice's in-game checks against the development head. Runs so far: [9 November](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/170) (75 of 510), 10 November ([#199](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/199), [#200](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/200), [#203](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/203)), 11 November ([#206](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/206), [#208](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/208), [#209](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/209), [#210](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/210), [#211](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/211), [#212](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/212)). Most shop rows wait on the serving fixture. |
+| F4f gate run record | planned | Not launched. Waits on sealed FT-F4 and FT-F9 fixtures and on the reserved present, foreground and priority caps. [F4 plan](plans/f4-perf-gate.md). |
 | Final performance gate | planned | Re-check the gate below on the final development head. Save latency is measured in its own requested run against P1's target. |
 | Hands-on session | planned | Peter's playtest, last, including A5's pointer and input checks 1–3 and check 12's interactive extension (Peter, 10 November). |
 | Single release | planned | One Workshop release after all of the above. |
 
 ### Done
 
-Merged, none verified by rig. Per-slice records are in the [history tag](https://github.com/PeterHartwieg/big-ambitions-persistent-city/tree/docs-history-2026-11-10/docs/checks).
+Merged. None is verified by rig as a whole slice; the rig reports above record individual rows. Per-slice records are in the [history tag](https://github.com/PeterHartwieg/big-ambitions-persistent-city/tree/docs-history-2026-11-10/docs/checks).
 
 - A1 to A3, A5: inspector, traits, weighted choice. B0 to B2: memory, loyalty, regulars.
 - C1 to C2b: campaign reader and awareness. C4, C5a to C5f: market research, ordered and billed through the native agency.
@@ -102,7 +104,10 @@ Merged, none verified by rig. Per-slice records are in the [history tag](https:/
 - E4, E5a to E5e, E5b to E5b5: wider menus, loaded-catalogue products, complete menus. E6b to E6f: carts and food trucks.
 - Audit F1 and F3: accounting backpressure, bounded bulk work. F2a to F2h: bodies follow logical journeys. F4a to F4e: perf gate tooling.
 - F5a to F5i: census, identity, schedules, employment, visitors. F6a to F6k: ledger, attended wages, household resources, feedback, calibration.
-- F7a to F7d, F7f, F7p: save cost, epoch, snapshot split, compact writer. F8a, F9a, F9c, F9e: capability model, acceptance runner, city fixture, read-only views.
+- F7a to F7d, F7f, F7p: save cost, epoch, snapshot split, compact writer.
+- F8a to F8h: capability model, capability report, verified food contracts, RLO transient split, hook conflicts, mechanisms, failure matrix ([#194](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/194)), economy-hook conflict refusals ([#207](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/207)).
+- F9a to F9h: acceptance runner, city fixture, read-only views, presentation reads through the view ([#190](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/190)), assembly fingerprints, native-evidence ledger and movement arms ([#197](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/197)), PC and Mac acceptance records ([#198](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/198), [#201](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/201), [#204](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/204)).
+- Fixes: new-game creation save during initialization ([#202](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/202)), reload of an ordinary save losing the accounting epoch ([#205](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/205)).
 - X1 to X3: old codecs deleted, file split, schema held at 1.
 - Stopped: E3 per-product feasibility, Track F shop view and street proxy. Track F's F0 interior experiment is merged and off by default.
 
@@ -117,7 +122,6 @@ Merged, none verified by rig. Per-slice records are in the [history tag](https:/
 | Indoor customers and staff shown as the residents they are | planned | A question for the joint plan (J0). The interior view experiments found no safe renderer. |
 | Shared household budgets, relationships beyond a shared home | planned | Peter, 10 November: wallets stay individual. |
 | Social and employee identity unification with RLO | planned | Native employees and RLO social profiles stay separate. |
-| F9b assembly fingerprints, F9d native-evidence ledger, F9h cross-machine acceptance record | planned | Guarding that changes nothing a player or an agent sees. Revisit before release. [F9 plan](plans/f9-city-acceptance.md). |
 
 ## Superseded
 
@@ -130,7 +134,7 @@ Merged, none verified by rig. Per-slice records are in the [history tag](https:/
 | Running the `tools/*-regression` suites before release | Build, unit tests and each slice's own checks (6 Nov). |
 | "Later: residents as employees, households" | F5 households and employment, F6 attended wages. Shared outings are G4. |
 | C4 paid research held inactive | C5a to C5f: research ordered and billed through the native agency path. |
-| F7e overlap in the native save window | P1. The 9 November rig measured the overlap window at about 3 percent of encode time. |
+| F7e overlap in the native save window | P1. The 9 November rig measured the overlap window at about 3 percent of encode time; the [11 November batch](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/211) check 2 found capture at most 25 percent of encode in every row, so F7e is recorded as not worthwhile. |
 | Re-scope plan rows for no migration | The slices merged under the no-migration and schema-at-1 rules. |
 | "Food-first products" (31 October) | Track R: every player business (Peter, 10 November). |
 | The fixed daily template and the shared three-day weekend | G2 and G3. |
