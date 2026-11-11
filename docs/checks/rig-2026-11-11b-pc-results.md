@@ -49,3 +49,13 @@ The stage .NET host's full reader rejects some Mono round-trip numeric strings i
 `modwork arm` succeeds: coverage complete, no untimed entries, missing components or patch failures. The stage argument-name error before `begin` produced no measured window. Its process stopped normally and its modset/lifecycle restoration and lease release succeeded. The actual 30-minute window uses a separate background launch from this run's H1.
 
 Completed group: capability union timing. Raw evidence: `<stage>/runs/perf`; progress and request/reply files retained.
+
+## Measured performance (provisional, PC shared)
+
+The 09:00–09:30 window completed: 2,944 complete frames, coverage complete, validity valid, no off-thread/cross-frame/unbalanced scopes, no dropped frames. Autosave suppression was verified before and after; epoch diagnostics unchanged; no PC save callback inside the window. Full record: `<stage>/runs/perf/modwork-capability-30.json`.
+
+| Window | Mod p50 / p95 / p99 / max ms | Mod spikes ≥30 ms | Whole-frame p95 / max ms | Gate |
+|---|---|---:|---|---|
+| 30 capability reads, one per game minute, speed 1 | 2.7691 / 6.365 / 9.1013 / 18.5813 | 0 | 35.7151 / 185.7155 | FAIL: p95 is not <5 ms; provisional (PC shared). F8a-12 / F8bg-10 aliases. Owned shop/cart coverage remains absent. |
+
+No repeat was selected to replace this result. F2g/F5i sweep or declared visitor-load performance is not inferred from this window.
