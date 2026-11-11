@@ -48,8 +48,8 @@ namespace PersistentCity.Runtime
             public PhysicalPedestrianBody? Person;
             public PhysicalVehicleBody? Car;
             public int TargetLeg = -1;
-            // F2c: the walker's native destination. On the leg of the logical pose it is that pose (refreshed every
-            // 0.5 m), so the agent stops there and cannot walk past it; on an earlier leg it is that leg's corner.
+            // P-C: the walker's native destination, one path per leg: the leg's corner (the capped speed stops the agent
+            // at the logical pose), or the pose itself on a leg whose corner path was refused (TargetIsPose).
             public Position TargetPoint;
             public bool TargetIsPose;
             // F2d: Gley's reached evidence for the car's own leg, and the corner hold that shapes the visible turn.

@@ -111,7 +111,7 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         Assert.True(f.Bound);
         Assert.Equal(NativeTravelPace.WalkingMetresPerSecond * WalkerFollow.MaximumPaceFactor, f.Body.Speed, 9);
-        Assert.True(Position.Distance(new Position(90, 0, 0), f.Body.Target) < 1e-4); // its destination is the logical pose on the same leg
+        Assert.Equal(Work, f.Body.Target); // P-C: its destination is its leg's corner; the commanded speed keeps it behind the pose
         f.AssertSameAsBodiesOff();
         // The arrival happens at the logical minute, exactly as without bodies, while the body is still 10 m out.
         f.Advance(Now + 30);
@@ -255,11 +255,13 @@ public sealed class PhysicalWalkerFollowTests
     public void TheBodyNeverPassesTheLogicalPoseWhileTheClockStandsStillWhateverTheFrameDurations(bool projectionAhead)
     {
         using var f = new Fixture();
-        // A kerb whose nearest walkable point lies 0.3 m further along the leg: that projection is not used.
+        // A kerb whose nearest walkable point lies 0.3 m further along the leg: the corner path never projects a pose.
         if (projectionAhead) NavMesh.Sample = p => new Vector3(p.x + 0.3f, p.y + 0.1f, p.z);
         f.Tick();
+        long requests = PhysicalPopulation.Telemetry.PathRequests, ahead = PhysicalPopulation.Telemetry.AheadFrames;
         f.Advance(Now + 0.1); // logical pose at 40.2 m; the body stands at 40 m
-        // Native movement double: the agent walks toward its destination at the commanded speed and stops there.
+        // Native movement double: the agent walks toward its destination at the commanded speed and stops there. Unity
+        // moves it after Update in the same frame, for that frame's duration (an overrun moves it for longer).
         void Native(float seconds)
         {
             var body = f.Body;
@@ -267,37 +269,141 @@ public sealed class PhysicalWalkerFollowTests
             double d = Position.Distance(body.Position, body.Target), step = body.Speed * seconds;
             f.Place(d <= step ? body.Target : Position.Lerp(body.Position, body.Target, step / d));
         }
-        // A short frame commands a speed, then long and varying native frames run while the clock stands still.
+        // Long and varying frames while the clock stands still: the destination stays the leg's corner (one path for
+        // the leg) and the speed cap stops the body at the pose.
         foreach (float frame in new[] { 1 / 60f, 0.5f, 1 / 120f, 0.2f, 1 / 60f, 1f, 0.05f, 2f })
         {
             f.Tick(frame);
-            Assert.True(Position.Distance(new Position(40.2, 0, 0), f.Body.Target) < 1e-4);
-            Native(frame * 30);
+            Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+            Native(frame);
             Assert.True(f.Body.Position.X <= 40.2 + 1e-4, "body at " + f.Body.Position.X);
         }
         f.Tick(0.5f);
         Assert.Equal(0, f.Body.Speed); Assert.True(f.Body.Agent.isStopped);
         Assert.True(Position.Distance(new Position(40.2, 0, 0), f.Body.Position) < 1e-4);
+        Assert.Equal(requests, PhysicalPopulation.Telemetry.PathRequests); // the leg's path from the first frame
+        Assert.Equal(ahead, PhysicalPopulation.Telemetry.AheadFrames);
+        // A native overrun (the agent moved for longer than the frame its speed was set for) puts the body ahead of the
+        // pose: that frame is counted, the body stands until the pose passes it, and nobody is corrected or re-aimed.
+        f.Advance(Now + 0.2); // pose at 40.4 m
+        f.Tick(1 / 60f);
+        Native(0.5f);
+        Assert.True(f.Body.Position.X > 40.4 + WalkerFollow.AheadToleranceMetres, "body at " + f.Body.Position.X);
+        f.Tick(1 / 60f);
+        Assert.Equal(0, f.Body.Speed);
+        Assert.Equal(ahead + 1, PhysicalPopulation.Telemetry.AheadFrames);
+        Assert.True(PhysicalPopulation.Telemetry.MaximumAheadMetres > WalkerFollow.AheadToleranceMetres);
+        f.Advance(Now + 1); // pose at 42 m, ahead of the body again
+        f.Tick(1 / 60f);
+        Assert.True(f.Body.Speed > 0); Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+        Assert.Equal(requests, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.Equal(ahead + 1, PhysicalPopulation.Telemetry.AheadFrames);
+        Assert.Empty(f.Corrections());
+        Assert.Contains("ahead_frames=", PhysicalPopulation.Telemetry.Status(1));
     }
 
     [Fact]
-    public void AFinalDestinationCachedShortOfTheDoorIsReaimedSoTheTailReachesTheDoor()
+    public void TheLastLegIsAimedAtTheDoorOnceAndTheTailReachesIt()
     {
         using var f = new Fixture();
         f.Tick();
         f.Body.OnScreen = true;
         f.Advance(Now + 29.8); // the logical pose is at 99.6 m on the last leg
         f.Place(new Position(99.5, 0, 0));
+        long requests = PhysicalPopulation.Telemetry.PathRequests;
         f.Tick();
-        Assert.True(Position.Distance(new Position(99.6, 0, 0), f.Body.Target) < 1e-4);
-        f.Place(new Position(99.6, 0, 0)); // the agent reached that destination
-        f.Advance(Now + 30); // arrival: the door is 0.4 m on, under the 0.5 m re-aim distance
+        Assert.Equal(Work, f.Body.Target);
+        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests);
+        f.Place(new Position(99.6, 0, 0)); // the agent stopped at the pose
+        f.Advance(Now + 30); // arrival: the door is 0.4 m on
         f.Run();
-        Assert.True(f.Bound); Assert.Equal(Work, f.Body.Target);
+        Assert.True(f.Bound); Assert.Equal(Work, f.Body.Target); Assert.True(f.Body.Speed > 0);
+        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests); // the leg's path is kept through the tail
         f.Place(f.Body.Target);
         f.Run();
         Assert.False(f.Bound); // it reached the door and went in
         Assert.Empty(f.Corrections());
+        f.AssertSameAsBodiesOff();
+    }
+
+    [Fact]
+    public void AWholeWalkCalculatesOnePathPerLegAndNeverRunsAheadOfThePose()
+    {
+        using var f = new Fixture();
+        long requests = PhysicalPopulation.Telemetry.PathRequests, ahead = PhysicalPopulation.Telemetry.AheadFrames;
+        double minute = Now;
+        // 60 m in two legs at 2 m per game minute, one game minute per real second at 60 frames a second; the native
+        // agent moves after Update at the commanded speed for the frame.
+        f.Tick(1 / 60f);
+        f.Body.OnScreen = true;
+        int frames = 0;
+        for (; frames < 60 * 40 && f.Bound; frames++)
+        {
+            minute += 1 / 60.0; f.Advance(minute); f.Tick(1 / 60f);
+            if (!f.Bound) break;
+            var body = f.Body;
+            if (!body.Agent.isStopped)
+            {
+                double d = Position.Distance(body.Position, body.Target), step = body.Speed / 60;
+                f.Place(d <= step ? body.Target : Position.Lerp(body.Position, body.Target, step / d));
+            }
+            if (f.W.Phase == CitizenPhase.Travelling)
+                Assert.True(body.Position.X <= f.City.PositionOf(f.W).X + 1e-6, "ahead at frame " + frames);
+        }
+        Assert.False(f.Bound); // it walked the route and went in at the door
+        // Two legs, two paths (the F2c pose aim re-aimed every 0.5 m of pose progress, about 120 for this walk).
+        Assert.Equal(requests + 2, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.Equal(ahead, PhysicalPopulation.Telemetry.AheadFrames);
+        Assert.Empty(f.Corrections());
+        f.AssertSameAsBodiesOff();
+    }
+
+    [Fact]
+    public void AheadIsMeasuredOnlyOnThePosesOwnLeg()
+    {
+        // A U-turn: 10 m east, then back west. The pose is 1 m into the return leg (x = 9).
+        var route = new Route { Legs = new() { Leg(new Position(0, 0, 0), new Position(10, 0, 0)), Leg(new Position(10, 0, 0), new Position(0, 0, 0.2)) } };
+        var logical = WalkerFollow.Sample(route, 5.5);
+        // A body at 8 m on the first leg lies on the return leg's line, 1 m "past" the pose there: it is behind.
+        Assert.Equal(0, WalkerFollow.AheadMetres(WalkerFollow.Sample(route, 4), logical, new Position(8, 0, 0)));
+        // On the pose's own leg, 0.5 m further west than the pose is ahead.
+        Assert.InRange(WalkerFollow.AheadMetres(logical, logical, new Position(8.5, 0, 0.1)), 0.45, 0.55);
+        Assert.Equal(0, WalkerFollow.AheadMetres(logical, logical, new Position(9.5, 0, 0)));
+    }
+
+    [Fact]
+    public void AnInterruptedLegResumesWithTheSameIdentityAndOneNewPath()
+    {
+        using var f = new Fixture();
+        f.Tick();
+        var first = f.Pool.Acquisitions[^1];
+        f.Advance(Now + 5); // logical pose at 50 m on the first leg
+        f.Place(new Position(49.5, 0, 0));
+        f.Tick();
+        Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+        // The walk is interrupted: the focus moves away and the body goes back to the pool.
+        NativeTravelPace.Focus = new Position(1000, 0, 1000);
+        f.Tick();
+        Assert.False(f.Bound);
+        f.AssertSameAsBodiesOff();
+        // Back in view: the pooled actor is reused for the same person, who resumes the same leg at the logical pose.
+        NativeTravelPace.Focus = Work;
+        f.Advance(Now + 6);
+        long requests = PhysicalPopulation.Telemetry.PathRequests;
+        for (int i = 0; i < 20 && !f.Bound; i++) f.Tick();
+        Assert.True(f.Bound);
+        var again = f.Pool.Acquisitions[^1];
+        Assert.Same(first.Actor, again.Actor);
+        Assert.Same(first.Identity, again.Identity); Assert.Equal("w", f.Body.IdentityId);
+        Assert.True(again.Generation > first.Generation);
+        Assert.True(Position.Distance(new Position(52, 0, 0), f.Body.Position) < 1e-6);
+        Assert.Equal(new Position(70, 0, 0), f.Body.Target);
+        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests);
+        // The agent drops its path mid-leg (a native reset): the corner is calculated once more, then held.
+        f.Body.Agent.hasPath = false;
+        f.Advance(Now + 7); f.Tick(); f.Tick();
+        Assert.Equal(requests + 2, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.True(f.Body.Speed > 0);
         f.AssertSameAsBodiesOff();
     }
 
@@ -307,21 +413,24 @@ public sealed class PhysicalWalkerFollowTests
         using var f = new Fixture();
         long requests = PhysicalPopulation.Telemetry.PathRequests;
         f.Tick();
+        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests); // the first leg's corner path
         // A crowned road: the walkable surface is 0.12 m above the straight leg, and the native endpoint check
-        // refuses any destination off that surface.
+        // refuses any destination off that surface, the leg's corner included. The agent drops its path.
         NavMesh.Sample = p => new Vector3(p.x, 0.12f, p.z);
         PhysicalPedestrianBody.Unreachable = p => Math.Abs(p.Y - 0.12) > 0.01;
+        f.Body.Agent.hasPath = false;
         f.Advance(Now + 2); // logical pose at 44 m, the body 4 m behind at 40 m
         f.Tick();
+        // The corner is refused, so this leg falls back to the F2c pose aim, at the projected pose.
         Assert.True(Position.Distance(new Position(44, 0.12, 0), f.Body.Target) < 1e-4);
         Assert.False(f.Body.Agent.isStopped); Assert.True(f.Body.Speed > 0);
-        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.Equal(requests + 3, PhysicalPopulation.Telemetry.PathRequests);
         // The projection is found but its path is refused: the raw pose is tried too, and both calculations count.
         PhysicalPedestrianBody.Unreachable = p => p.Y > 0.05;
         f.Advance(Now + 3);
         f.Tick();
         Assert.True(Position.Distance(new Position(46, 0, 0), f.Body.Target) < 1e-4);
-        Assert.Equal(requests + 3, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.Equal(requests + 5, PhysicalPopulation.Telemetry.PathRequests);
         // Projection and the raw pose both fail: it keeps walking to its previous destination, retrying once a second.
         NavMesh.Sample = _ => null;
         PhysicalPedestrianBody.Unreachable = _ => true;
@@ -337,7 +446,7 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick(0.6f);
         Assert.Equal(calls + 2, f.Body.SetTargets);
         Assert.False(f.Body.Agent.isStopped);
-        Assert.Equal(requests + 3 + 2, PhysicalPopulation.Telemetry.PathRequests);
+        Assert.Equal(requests + 5 + 2, PhysicalPopulation.Telemetry.PathRequests);
         Assert.Contains("path_requests=", PhysicalPopulation.Telemetry.Status(1));
     }
 
@@ -348,12 +457,13 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         NavMesh.Sample = p => new Vector3(p.x, 0.12f, p.z);
         PhysicalPedestrianBody.Unreachable = p => Math.Abs(p.Y - 0.12) > 0.01;
+        f.Body.Agent.hasPath = false; // the corner path is calculated again and refused: the pose fallback
         long requests = PhysicalPopulation.Telemetry.PathRequests;
         f.Advance(Now + 4.1234 / 2); // logical pose at x = 44.1234, which rounds up (ahead) as a float
         f.Tick();
         Assert.True(Math.Abs(f.Body.Target.Y - 0.12) < 1e-4, "target " + f.Body.Target);
         Assert.True(Math.Abs(f.Body.Target.X - 44.1234) < 1e-4);
-        Assert.Equal(requests + 1, PhysicalPopulation.Telemetry.PathRequests); // the projection was used, no raw retry
+        Assert.Equal(requests + 2, PhysicalPopulation.Telemetry.PathRequests); // the refused corner, then the projection; no raw retry
         Assert.False(f.Body.Agent.isStopped);
     }
 
@@ -394,7 +504,8 @@ public sealed class PhysicalWalkerFollowTests
             f.Place(Work);
             f.Tick(); f.Tick();
             Assert.True(f.Bound);
-            Assert.True(Position.Distance(new Position(100, 0, 2), f.Body.Target) < 1e-4); // following the new journey's logical pose
+            Assert.Equal(new Position(100, 0, 30), f.Body.Target); // following the new journey, aimed at its first leg's corner
+            Assert.True(f.Body.Speed > 0);
             Assert.Empty(f.Corrections());
         }
         using (var f = new Fixture())
@@ -520,7 +631,7 @@ public sealed class PhysicalWalkerFollowTests
         f.Place(Venue);
         f.Tick(); f.Tick();
         Assert.True(f.Bound);
-        Assert.True(Position.Distance(f.City.PositionOf(f.W), f.Body.Target) < 1e-4);
+        Assert.Equal(f.W.Journey!.Legs[0].To, f.Body.Target); // its leg's corner
         Assert.True(f.Body.Speed > NativeTravelPace.WalkingMetresPerSecond);
         f.AssertSameAsBodiesOff();
     }

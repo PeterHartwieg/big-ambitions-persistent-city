@@ -257,6 +257,8 @@ namespace PersistentCity.Runtime
             projected = Point(hit.position); return true;
         }
         internal void Stop(bool value) { Agent.isStopped = value; }
+        // P-C: the agent still holds the path SetTarget gave it (a warp drops it; a test may drop it too).
+        internal bool HasPath => Valid && Agent.hasPath;
         // F2c follower hooks: the commanded pace, an off-screen move, and the test-controlled on-screen flag.
         internal double Speed;
         internal int Warps;

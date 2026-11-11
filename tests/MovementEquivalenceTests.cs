@@ -95,6 +95,29 @@ public sealed class MovementEquivalenceTests
         Assert.True(hidden.Metrics["bodies.hiddenTravelFrames"] > 0);
     }
 
+    /// <summary>P-C: one path per leg follows as the F2c pose aim did. Both equal the bodies-off run on every projection,
+    /// the walker lag is no worse, no walker frame stands ahead of its logical pose, and the path calculations drop.</summary>
+    [Fact]
+    public void OnePathPerLegFollowsLikeThePoseAimWithFewerPathCalculations()
+    {
+        var legs = BodiesRun.Value;
+        var pose = MovementRun.Run(Small(o => o.Bodies.PoseAim = true));
+        foreach (var run in new[] { legs, pose })
+        {
+            var comparison = Equivalence.Compare(run, PlainRun.Value);
+            Assert.True(comparison.Identical, string.Join(" ", comparison.Equal.Where(e => !e.Value).Select(e => e.Key)));
+        }
+        Assert.True(legs.Metrics["walkers.aheadFrames"] == 0 && pose.Metrics["walkers.aheadFrames"] == 0,
+            string.Join(" ", new[] { legs, pose }.Select(r => r.Metrics["walkers.aheadFrames"] + "/" + r.Metrics["walkers.aheadMaxMetres"]
+                + "/" + r.Metrics["walkers.lagP95Metres"] + "/" + r.Metrics["walkers.pathRequests"])));
+        Assert.True(legs.Metrics["walkers.lagP95Metres"] <= pose.Metrics["walkers.lagP95Metres"]);
+        // The maximum is the correction threshold plus one frame in both (a body is moved off screen beyond 8 m).
+        Assert.True(legs.Metrics["walkers.lagMaxMetres"] < PersistentCity.Core.WalkerFollow.CorrectionMetres + 0.1, "max lag " + legs.Metrics["walkers.lagMaxMetres"]);
+        Assert.True(legs.Metrics["walkers.pathRequests"] > 0);
+        Assert.True(legs.Metrics["walkers.pathRequests"] * 4 < pose.Metrics["walkers.pathRequests"],
+            legs.Metrics["walkers.pathRequests"] + " vs " + pose.Metrics["walkers.pathRequests"]);
+    }
+
     [Fact]
     public void HiddenTravelReleasesBodiesBeforeTheHiddenSliceAdvances()
     {

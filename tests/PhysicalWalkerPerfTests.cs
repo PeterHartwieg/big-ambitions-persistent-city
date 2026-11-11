@@ -58,13 +58,14 @@ public sealed class PhysicalWalkerPerfTests
         using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
             typeof(PhysicalWalkerPerfTests).Assembly, new VendorBodyTests.Log(), 64, 8, 120, new DwellSpots());
         var pool = PhysicalPedestrians.Last!;
-        // Native movement double: a walking body steps toward its target at native pace, slowed for a seeded third of them.
+        // Native movement double: a walking body steps toward its target at native pace, slowed for a seeded third of
+        // them, never faster than the commanded speed (P-C: the destination can be the leg's corner, beyond the pose).
         void Move(float seconds)
         {
             foreach (var body in pool.Active.Values)
             {
                 if (body.Agent.isStopped) continue;
-                double pace = NativeTravelPace.WalkingMetresPerSecond * (body.IdentityId.GetHashCode() % 3 == 0 ? 0.85 : 1);
+                double pace = Math.Min(body.Speed, NativeTravelPace.WalkingMetresPerSecond * (body.IdentityId.GetHashCode() % 3 == 0 ? 0.85 : 1));
                 var at = body.Position; double d = Position.Distance(at, body.Target), step = pace * seconds;
                 body.Character.transform.position = PhysicalPedestrianBody.Vector(d <= step ? body.Target : Position.Lerp(at, body.Target, step / d));
             }
@@ -74,6 +75,7 @@ public sealed class PhysicalWalkerPerfTests
         void Frame() { Move(frame); minute += frame / 3.0; city.AdvanceTo(minute); Time.Next(frame); }
         for (int i = 0; i < 120; i++) { Frame(); bodies.Update(); }
         int count = 2400;
+        long requests = PhysicalPopulation.Telemetry.PathRequests;
         var times = new List<double>(count); int bodiesSeen = 0;
         for (int i = 0; i < count; i++)
         {
@@ -85,7 +87,8 @@ public sealed class PhysicalWalkerPerfTests
         }
         times.Sort();
         File.AppendAllText(path, string.Format(CultureInfo.InvariantCulture,
-            "Update, 48 travelling walkers: bound max={0}, n={1}, p50={2:F4} ms, p95={3:F4} ms, max={4:F4} ms, spikes>=30ms={5}{6}",
-            bodiesSeen, count, times[count / 2], times[(int)Math.Ceiling(count * .95) - 1], times[^1], times.Count(t => t >= 30), System.Environment.NewLine));
+            "Update, 48 travelling walkers: bound max={0}, n={1}, p50={2:F4} ms, p95={3:F4} ms, max={4:F4} ms, spikes>=30ms={5}, path requests={6}{7}",
+            bodiesSeen, count, times[count / 2], times[(int)Math.Ceiling(count * .95) - 1], times[^1], times.Count(t => t >= 30),
+            PhysicalPopulation.Telemetry.PathRequests - requests, System.Environment.NewLine));
     }
 }

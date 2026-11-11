@@ -471,6 +471,10 @@ public static class MovementRun
         m["walkers.moves"] = drivers.Sum(d => d.Walking.Moves);
         m["walkers.lagReleases"] = drivers.Sum(d => d.Walking.LagReleases);
         m["walkers.handoffs"] = drivers.Sum(d => d.Walking.Handoffs - d.Walking.CarHandoffs);
+        // P-C: walker path calculations (one per leg) and frames a walker stood ahead of its logical pose.
+        m["walkers.pathRequests"] = drivers.Sum(d => d.Walking.PathRequests);
+        m["walkers.aheadFrames"] = drivers.Sum(d => d.Walking.AheadFrames);
+        m["walkers.aheadMaxMetres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.MaximumAheadMetres);
         // F2d car follow (E3 car lag; every correction is an off-screen release and re-acquisition here).
         m["cars.lagSamples"] = drivers.Sum(d => d.Walking.CarLagSamples);
         m["cars.lagP50Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.CarLagQuantile(.5));

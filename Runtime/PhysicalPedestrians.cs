@@ -231,12 +231,18 @@ namespace PersistentCity.Runtime
             stopped = false; Tick(); return true;
         }
         public void Stop(bool stop) { stopped = stop; Tick(); }
-        /// <summary>F2c follow pace along the current path; zero or less stands the body still.</summary>
+        /// <summary>P-C: the agent still holds a path to follow (one per leg; a warp or reset drops it).</summary>
+        public bool HasPath => Valid && Agent.hasPath;
+        /// <summary>F2c follow pace along the current path; zero or less stands the body still. P-C: the destination is
+        /// the leg's corner, so the agent's own velocity is clamped to the pace at once; deceleration under its
+        /// acceleration limit would otherwise carry it past the logical pose.</summary>
         public void Pace(double metresPerScaledSecond)
         {
             if (!Valid) return;
-            if (!(metresPerScaledSecond > 0) || metresPerScaledSecond > 12) { stopped = true; Tick(); return; }
+            if (!(metresPerScaledSecond > 0) || metresPerScaledSecond > 12) { stopped = true; Agent.velocity = Vector3.zero; Tick(); return; }
             Agent.speed = (float)metresPerScaledSecond;
+            Vector3 velocity = Agent.velocity;
+            if (velocity.sqrMagnitude > Agent.speed * Agent.speed) Agent.velocity = velocity.normalized * Agent.speed;
             stopped = false; Tick();
         }
         /// <summary>F2c Q3 fade: whether every renderer of this body can show a base-colour alpha (a transparent-queue

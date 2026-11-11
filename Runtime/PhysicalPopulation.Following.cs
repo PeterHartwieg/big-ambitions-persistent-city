@@ -97,8 +97,12 @@ namespace PersistentCity.Runtime
             if (!float.IsNaN(binding.FadeOutSince)) return FadeOut(binding, logical.Position);
             binding.BodyMinutes = WalkerFollow.Advance(route, binding.BodyMinutes, logical.ElapsedMinutes, body.Position);
             double lag = WalkerFollow.RouteMetres(route, binding.BodyMinutes, logical.ElapsedMinutes);
-            if (binding.LagFrame != Time.frameCount) { binding.LagFrame = Time.frameCount; Telemetry.RecordLag(lag); }
             var own = WalkerFollow.Sample(route, binding.BodyMinutes);
+            if (binding.LagFrame != Time.frameCount)
+            {
+                binding.LagFrame = Time.frameCount; Telemetry.RecordLag(lag);
+                if (following) Telemetry.RecordAhead(WalkerFollow.AheadMetres(own, logical, body.Position));
+            }
             if (binding.Tail) return ObserveArrivalTail(binding, own, lag);
             // The body reached the car, bus or subway it follows: hand over to a body of the new kind (or none).
             if (own.Mode != TravelMode.Walk) { binding.Handoff = true; Telemetry.Handoffs++; return false; }
@@ -170,41 +174,43 @@ namespace PersistentCity.Runtime
             return false;
         }
 
-        /// <summary>Walk at the pace the lag asks for. The native destination is bounded by the logical pose: on the
-        /// logical pose's leg it is that pose (refreshed every <see cref="WalkerFollow.RetargetMetres"/>), on an earlier
-        /// leg the leg's corner, so the agent stops before the pose whatever the frame durations, even while the logical
-        /// clock stands still. The speed is also capped at the lag per frame.</summary>
+        /// <summary>Walk at the pace the lag asks for. P-C: one native path per leg, to the leg's own corner
+        /// (<see cref="WalkerFollow.NeedsPath"/>). The commanded speed is capped at the lag per frame
+        /// (<see cref="WalkerFollow.CommandSpeed"/>) and the agent moves after Update in the same frame, so the body
+        /// stops at the logical pose instead of at its destination, also while the logical clock stands still. A leg
+        /// whose corner path is refused falls back to the F2c pose aim, re-aimed every <see cref="WalkerFollow.RetargetMetres"/>.</summary>
         private bool WalkLeg(Binding binding, PhysicalJourneySample own, double lag, PhysicalJourneySample logical)
         {
             var body = binding.Person!;
             double pace = float.IsNaN(binding.HurrySince) ? WalkerFollow.PaceFactor(lag)
                 : lag > WalkerFollow.StopMetres ? WalkerFollow.MaximumPaceFactor : 0;
             if (own.Stationary || own.AtEnd) { body.Pace(0); return true; }
-            bool pose = logical.Mode == TravelMode.Walk && !logical.Stationary && own.LegIndex == logical.LegIndex;
-            Position goal = pose ? logical.Position : own.To;
-            // A pose at the leg's own corner (the door at the end of the route) is always re-aimed, so a destination
-            // cached a few decimetres short can never strand the body before the door.
-            bool corner = Position.Distance(goal, own.To) <= 1e-6;
-            bool retarget = binding.TargetLeg != own.LegIndex || binding.TargetIsPose != pose
-                || pose && (Position.Distance(goal, binding.TargetPoint) >= WalkerFollow.RetargetMetres
-                    || corner && Position.Distance(goal, binding.TargetPoint) > 1e-6);
-            if (retarget && !(pose && lag <= WalkerFollow.StopMetres))
+            bool retarget = WalkerFollow.NeedsPath(own, logical, lag, binding.TargetLeg, binding.TargetIsPose, binding.TargetPoint,
+                body.HasPath, out bool atPose);
+            if (retarget)
             {
-                // The previous destination on this route (an earlier pose or corner) is never past the pose: while a
-                // re-aim fails, or waits out its one-second retry, the body keeps walking to it.
+                // The previous destination on this route (an earlier corner, this leg's corner or an earlier pose) is
+                // walked to at the capped speed while a new aim fails or waits out its one-second retry.
                 bool previous = binding.TargetLeg >= 0 && binding.TargetLeg <= own.LegIndex;
                 if (Time.unscaledTime < binding.NextTargetAttempt) { if (!previous) { body.Pace(0); return true; } }
                 else
                 {
-                    bool aimed = false;
-                    // A pose between corners is projected onto the walkable surface first (a straight leg can cross a
-                    // kerb or a crowned road without a NavMesh corner); a projection that lands ahead of the pose along
-                    // the leg is not used. Then the pose is tried as given. Each SetTarget is one path calculation.
-                    if (pose && !corner && body.TryProjectPose(goal, out var projected)
-                        && WalkerFollow.NotAheadOnLeg(logical.From, logical.To, goal, projected))
-                    { Telemetry.PathRequests++; aimed = body.SetTarget(projected, NativeTravelPace.WalkingMetresPerSecond); }
-                    if (!aimed) { Telemetry.PathRequests++; aimed = body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond); }
-                    if (aimed) { binding.TargetLeg = own.LegIndex; binding.TargetIsPose = pose; binding.TargetPoint = goal; binding.NextTargetAttempt = 0; }
+                    bool aimed = false, poseAim = atPose;
+                    Position goal = atPose ? logical.Position : own.To;
+                    // Each SetTarget is one path calculation.
+                    if (!atPose) { Telemetry.PathRequests++; aimed = body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond); }
+                    if (!aimed && WalkerFollow.PoseOnLeg(own, logical) && lag > WalkerFollow.StopMetres
+                        && Position.Distance(logical.Position, own.To) > 1e-6)
+                    {
+                        // Fallback: a pose between corners is projected onto the walkable surface first (a straight leg can
+                        // cross a kerb or a crowned road without a NavMesh corner); a projection that lands ahead of the
+                        // pose along the leg is not used. Then the pose is tried as given.
+                        poseAim = true; goal = logical.Position;
+                        if (body.TryProjectPose(goal, out var projected) && WalkerFollow.NotAheadOnLeg(logical.From, logical.To, goal, projected))
+                        { Telemetry.PathRequests++; aimed = body.SetTarget(projected, NativeTravelPace.WalkingMetresPerSecond); }
+                        if (!aimed) { Telemetry.PathRequests++; aimed = body.SetTarget(goal, NativeTravelPace.WalkingMetresPerSecond); }
+                    }
+                    if (aimed) { binding.TargetLeg = own.LegIndex; binding.TargetIsPose = poseAim; binding.TargetPoint = goal; binding.NextTargetAttempt = 0; }
                     else
                     {
                         binding.NextTargetAttempt = Time.unscaledTime + 1; blockedSamples++;
@@ -212,7 +218,6 @@ namespace PersistentCity.Runtime
                     }
                 }
             }
-            else if (retarget) { body.Pace(0); return true; }
             body.Pace(WalkerFollow.CommandSpeed(NativeTravelPace.WalkingMetresPerSecond * pace, lag, Time.deltaTime));
             return true;
         }
