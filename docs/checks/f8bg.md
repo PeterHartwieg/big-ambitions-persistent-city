@@ -117,3 +117,5 @@ Plan check 10 (foreign prefix on checkout) belongs to F8h and is not listed. Rig
 ## PC rig record — 10 November 2026
 
 PC: verified by rig at `b3e5a910`: city running, all five required capabilities active; twelve optional active and two off with reasons. [Small F8h input](f8h-check1-modpack-owners-pc.json) records all 49 targets, foreign owner classes, activation excerpts and the full isolated DLL set. [Batched report](rig-2026-11-10-results.md).
+
+11 November 2026 (d), PC at `86c2e92f`: F8bg check 4 native-shop half PARTIAL at the fresh 24 Fourth Avenue rental. RLO-absent startup refused by `rlo.donor`; all live PC key hashes unchanged through 16:00?17:00 and no new food receipt. Native log had 0 visits/purchases, so successful service remains unproved. Full modpack restored. [Rig results](rig-2026-11-11d-pc-results.md).
