@@ -119,7 +119,17 @@ namespace PersistentCity.Core
         private static string Key(NativeHookTarget target)
             => target.Type + "." + target.Method + "(" + string.Join(", ", target.Parameters ?? Array.Empty<string>()) + ")";
 
-        /// <summary><c>pc capability hooks</c>: one line per inventory target method.</summary>
+        /// <summary><c>pc capability hooks</c>: one line per inventory target method. Opus-r1-2: the marks come from this
+        /// live scan; when the attached market's once-per-load decision (<paramref name="settled"/>,
+        /// <paramref name="loadRefusal"/>) differs, a closing line says the marks apply at the next load.</summary>
+        public string Text(bool settled, string? loadRefusal)
+        {
+            string text = Text();
+            if (!settled || loadRefusal == CheckoutRefusal) return text;
+            return text + "food.checkout.shop at this load: " + (loadRefusal == null ? "active" : "off: " + loadRefusal)
+                + "; the marks above are the live scan and apply at the next load.\n";
+        }
+
         public string Text()
         {
             var text = new StringBuilder("Persistent City hook conflicts: ")

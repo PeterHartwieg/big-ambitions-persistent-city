@@ -29,7 +29,11 @@ namespace PersistentCity.Runtime
         private static HookConflictReport? loadScan;
 
         /// <summary>F8h: the scan the checkout decision of this city load uses, kept for the activation line.</summary>
-        internal static HookConflictReport ScanForLoad() => loadScan = Scan();
+        internal static HookConflictReport ScanForLoad()
+        {
+            loadScan = null; // a failed scan leaves no older one for the activation line
+            return loadScan = Scan();
+        }
 
         /// <summary>The load scan once, for the activation line (null when no market scanned since the last take).</summary>
         internal static HookConflictReport? TakeLoadScan()

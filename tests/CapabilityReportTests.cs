@@ -204,7 +204,8 @@ public sealed class CapabilityReportTests
     }
 
     /// <summary>The only callers allowed outside the file: the console router, the once-per-load activation tail and F8h's
-    /// once-per-load checkout decision (NativeFoodContract.CheckoutForLoad, called only from the market's constructor:
+    /// once-per-load checkout decision (NativeFoodContract.CheckoutForLoad, called only from the market's constructor and
+    /// its one post-load settle:
     /// HookConflictReportTests.TheRefusalIsDecidedOncePerLoadFromTheLoadScan).</summary>
     internal static readonly string[] AllowedCallers = { "RunCensusCommand", "CompleteInitialization", "CheckoutForLoad" };
 

@@ -87,6 +87,39 @@ internal static partial class Program
             Check(Load(out _) == "foreign finalizer by " + Foreign + " on RetailBusinessSimulator.ProcessAllCustomersFromThisHour()", "foreign finalizer refuses");
             harmonies[Foreign].UnpatchAll(Foreign);
 
+            // Sol-r1-1 lifecycle: population preparation finishes and the market is built while the game is still loading
+            // the city; another mod installs its ProcessCustomer prefix later in the same load. Red (round-1 code, decided
+            // at construction): the scan before the patch keeps checkout on for the whole load. Green: nothing is decided
+            // or sold while loading; the first call after the load scans, refuses with the owner named, sells nothing.
+            {
+                var lifecycleMeal = new ResidentMeal { ResidentId = "r-load", Day = 3, Kind = MealKind.Lunch, BusinessId = "business:x:generation:1",
+                    ProductId = FoodProducts.HotDog, Price = Money.FromCents(825) };
+                var receipts = new Dictionary<string, string>(StringComparer.Ordinal);
+                var latched = NativeFoodContract.Decide(NativeFoodContract.Checkout, HookConflicts.Scan);
+                Check(latched.Refusal == null, "red: a decision taken at construction, before the late patch, leaves checkout on");
+                var built = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(true, out bool settled), out _);
+                Check(!settled && built.Refusal == null && HookConflicts.TakeLoadScan() == null, "while loading: undecided, nothing scanned");
+                harmonies[Foreign].Patch(policyTargets[1].Method, prefix: FPre()); // the late city-load patch
+                // The market's gates while undecided (BuyLive and CanServe return before any receipt).
+                if (settled && built.Serves) FoodSaleReceipts.Begin(receipts, lifecycleMeal);
+                NativeFoodContract.CheckoutForLoad(true, out bool stillLoading);
+                Check(!stillLoading, "a frame still inside the load stays undecided");
+                var final = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(false, out bool done), out var finalProcess);
+                if (done && final.Serves) FoodSaleReceipts.Begin(receipts, lifecycleMeal);
+                Check(done && final.Refusal == "foreign prefix by " + Foreign + " on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)" && finalProcess == null
+                    && !final.Observe(true), "green: decided after the load, refused with the owner named, every shop observed ineligible (existing withdrawal)");
+                Check(receipts.Count == 0, "no receipt before or after the late decision");
+                Check(HookConflicts.TakeLoadScan()?.CheckoutRefusal == final.Refusal, "the activation line gets the deciding scan");
+                harmonies[Foreign].UnpatchAll(Foreign);
+                Console.WriteLine("late city-load patch: undecided while loading, refused after the load with no receipt; a construction-time decision kept checkout on (red)");
+            }
+
+            // Opus-r1-1: a scan that throws refuses (fail closed) with its reason; a member refusal stays first.
+            var failed = NativeFoodContract.Decide(NativeFoodContract.Checkout, () => throw new InvalidOperationException("injected scan failure"));
+            Check(failed.Refusal == "hook conflict scan failed: injected scan failure" && !NativeFoodContract.StartCheckout(failed, out _).Serves, "a failed scan refuses checkout with its reason");
+            var changed = NativeFoodContract.Verify(new[] { NativeMemberSpec.Method(typeof(GameManager), "Missing", typeof(void), false) });
+            Check(NativeFoodContract.Decide(changed, () => throw new InvalidOperationException("x")).Refusal == changed.Refusal, "a member refusal comes before a scan refusal");
+
             // Plan check 10 shape: a foreign prefix on ProcessCustomer. Red on the base code (the checkout decision read the
             // member contract only, so the market served and a sale began a receipt); green: checkout-off, no receipt.
             harmonies[Foreign].Patch(policyTargets[1].Method, prefix: FPre());
@@ -97,7 +130,7 @@ internal static partial class Program
             if (baseMode.Serves && baseProcess != null) FoodSaleReceipts.Begin(baseData, meal);
             Check(baseMode.Serves && FoodSaleReceipts.ReadStatus(baseData, meal) == FoodReceiptStatus.Pending, "base: a foreign prefix on ProcessCustomer still serves and begins a receipt (red)");
 
-            var mode = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(), out var process);
+            var mode = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(false, out _), out var process);
             var scan = HookConflicts.TakeLoadScan()!;
             const string Expected = "foreign prefix by " + Foreign + " on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)";
             var data = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -114,6 +147,9 @@ internal static partial class Program
                 "pc capability hooks marks the refusing entry");
             Check(scan.ActivationLine().Contains("food.checkout.shop off: " + Expected + ".", StringComparison.Ordinal), "activation line names the refusal");
             Check(!scan.Text().Contains("compatible", StringComparison.OrdinalIgnoreCase), "never says compatible");
+            Check(scan.Text(true, mode.Refusal) == scan.Text() && scan.Text(false, null) == scan.Text(), "hooks adds no note when the load decision matches or none is made");
+            Check(scan.Text(true, null).EndsWith("food.checkout.shop at this load: active; the marks above are the live scan and apply at the next load.\n", StringComparison.Ordinal),
+                "hooks says when the live marks differ from this load's decision");
             Check(HookConflicts.TakeLoadScan() == null, "the load scan is taken once");
             Console.WriteLine("conflict refusal: " + Expected + " -> checkout-off, no receipt; base served and began a receipt (red)");
 
@@ -125,7 +161,7 @@ internal static partial class Program
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
                 _ = HookConflicts.Scan();
                 long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
-                _ = NativeFoodContract.CheckoutForLoad();
+                _ = NativeFoodContract.CheckoutForLoad(false, out _);
                 long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
                 if (i >= 0)
                 {
@@ -146,7 +182,7 @@ internal static partial class Program
     /// <summary>One city load's checkout decision; returns its refusal (null when checkout is on).</summary>
     private static string? Load(out HookConflictReport scan)
     {
-        string? refusal = NativeFoodContract.CheckoutForLoad().Refusal;
+        string? refusal = NativeFoodContract.CheckoutForLoad(false, out _).Refusal;
         scan = HookConflicts.TakeLoadScan()!;
         Check(scan != null && scan.CheckoutRefusal == refusal, "the decision comes from the load scan");
         Check(scan!.Entries.Count(e => e.PcOwners.Contains(NativeHookInventory.FoodAuthority)) == 6, "the PC owner stays on the tick and the five H1 customer targets");

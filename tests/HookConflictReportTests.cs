@@ -251,14 +251,25 @@ namespace PersistentCity.Tests
         public void TheRefusalIsDecidedOncePerLoadFromTheLoadScan()
         {
             var sources = CapabilityReportTests.RuntimeSources().ToDictionary(p => p.Key, p => CapabilityReportTests.StripComments(p.Value), StringComparer.Ordinal);
-            var callers = sources.Where(p => p.Value.Contains("CheckoutForLoad()", StringComparison.Ordinal)).Select(p => p.Key).OrderBy(k => k, StringComparer.Ordinal).ToArray();
+            var callers = sources.Where(p => p.Value.Contains("CheckoutForLoad(", StringComparison.Ordinal)).Select(p => p.Key).OrderBy(k => k, StringComparer.Ordinal).ToArray();
             Assert.Equal(new[] { "Runtime/NativeFoodContract.cs", "Runtime/NativeFoodMarket.cs" }, callers);
-            Assert.Single(Regex.Matches(sources["Runtime/NativeFoodMarket.cs"], @"CheckoutForLoad\(\)"));
-            Assert.Contains("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(), out process);", sources["Runtime/NativeFoodMarket.cs"]);
+            string market = sources["Runtime/NativeFoodMarket.cs"];
+            // Sol-r1-1: the construction call and the post-load settle are the only two; both pass the game's loading flag.
+            Assert.Equal(2, Regex.Matches(market, @"CheckoutForLoad\(UI\.Load\.LoadScene\.isLoading, out ").Count);
+            Assert.Equal(2, Regex.Matches(market, @"CheckoutForLoad\(").Count);
+            Assert.Contains("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out checkoutSettled), out process);", market);
+            Assert.Contains("if (checkoutSettled) InstallCheckoutPrefix();", market);
+            Assert.Contains("if (checkout.Refusal != null) RefreshKnownOwnership();\n            else InstallCheckoutPrefix();", market);
+            Assert.Contains("|| !checkoutSettled || !checkout.Serves) return false;", market);
+            Assert.Contains("{\n            if (!checkoutSettled) return new FoodSale(false, \"Food checkout waits for the city load to finish\");", market);
+            Assert.Contains("public void RefreshDiscovery() { if (!checkoutSettled) SettleCheckout(); DiscoverShops(64);", sources["Runtime/NativeFoodCandidates.cs"]);
             string contract = sources["Runtime/NativeFoodContract.cs"];
-            Assert.Contains("conflict = HookConflicts.ScanForLoad().CheckoutRefusal;", contract);
+            Assert.Contains("if (loading) { HookConflicts.TakeLoadScan(); return Checkout; }", contract);
+            Assert.Contains("return Decide(Checkout, HookConflicts.ScanForLoad);", contract);
+            Assert.Contains("try { conflict = scan().CheckoutRefusal; }", contract);
             Assert.Contains("members.Refusal != null || conflict == null ? members : new Result(conflict, members.Members)", contract);
-            Assert.Single(Regex.Matches(string.Concat(sources.Values), @"ScanForLoad\(\)\.")); // only CheckoutForLoad reads it
+            Assert.Single(Regex.Matches(string.Concat(sources.Values), @"ScanForLoad\b(?!\s*\(\)\s*\{)")); // only CheckoutForLoad uses it
+            Assert.Contains("loadScan = null;", sources["Runtime/HookConflicts.cs"]); // Opus-r1-1: a failed scan leaves no stale one
             Assert.Contains("(HookConflicts.TakeLoadScan() ?? HookConflicts.Scan()).ActivationLine()", sources["Runtime/CapabilityDiagnostics.cs"]);
             // The refusal goes through F8c's checkout-off mode: no price prefix, nothing served, every shop observed ineligible.
             var mode = new FoodCheckoutMode("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)");

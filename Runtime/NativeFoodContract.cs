@@ -39,16 +39,25 @@ namespace PersistentCity.Runtime
         /// <summary>food.checkout.shop: IsPriceAcceptable, ProcessCustomer and the three supply members. Checked once per process.</summary>
         internal static Result Checkout => checkout ??= Check(NativeFoodContractSpec.Checkout(Types), "checkout");
 
-        /// <summary>F8h (D4): the checkout result one city load uses, decided once at the market's construction: the member
-        /// contract (<see cref="Checkout"/>) and then the conflict policy on this load's hook scan
-        /// (HookConflicts.CheckoutPolicy). A foreign may-skip, rewrites or swallows owner on an H1 customer target or on H2
-        /// refuses food.checkout.shop with the owner named, through the same checkout-off mode as a changed member. A
-        /// failed scan refuses too: the owners could not be checked.</summary>
-        internal static Result CheckoutForLoad()
+        /// <summary>F8h (D4): the checkout result one city load uses: the member contract (<see cref="Checkout"/>) and then
+        /// the conflict policy on this load's hook scan (HookConflicts.CheckoutPolicy). A foreign may-skip, rewrites or
+        /// swallows owner on an H1 customer target or on H2 refuses food.checkout.shop with the owner named, through the
+        /// same checkout-off mode as a changed member. While the game is still loading the city (<paramref name="loading"/>,
+        /// review Sol-r1-1) nothing is scanned and <paramref name="settled"/> is false: another mod may still install its
+        /// patches, so the market sells nothing and asks again after the load. Decided once, at the first call after it.</summary>
+        internal static Result CheckoutForLoad(bool loading, out bool settled)
         {
-            var members = Checkout;
+            settled = !loading;
+            if (loading) { HookConflicts.TakeLoadScan(); return Checkout; } // drop a scan from an earlier market
+            return Decide(Checkout, HookConflicts.ScanForLoad);
+        }
+
+        /// <summary>The decision from a scan the caller supplies (the harness's throwing arm). A failed scan refuses
+        /// (Opus-r1-1, fail closed): the owners could not be checked, so no shop is taken over on an unchecked hook.</summary>
+        internal static Result Decide(Result members, Func<HookConflictReport> scan)
+        {
             string? conflict;
-            try { conflict = HookConflicts.ScanForLoad().CheckoutRefusal; }
+            try { conflict = scan().CheckoutRefusal; }
             catch (Exception error) { conflict = "hook conflict scan failed: " + error.Message; }
             return WithConflict(members, conflict);
         }

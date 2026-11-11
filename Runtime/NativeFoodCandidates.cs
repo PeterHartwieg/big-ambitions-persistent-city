@@ -83,7 +83,7 @@ namespace PersistentCity.Runtime
         // Called every frame. The 64-slot slice keeps the first observation of a newly eligible business
         // in the frame it changes, which fixes FoodAuthority.RequestedHour and therefore the acquisition hour.
         // Place IDs are memoized per slot, so a slice over unchanged addresses builds no strings.
-        public void RefreshDiscovery() { DiscoverShops(64); ContinueContractShadow(); }
+        public void RefreshDiscovery() { if (!checkoutSettled) SettleCheckout(); DiscoverShops(64); ContinueContractShadow(); }
         /// <summary>Escaped place IDs discovery has built (diagnostic); unchanged addresses reuse theirs.</summary>
         internal long DiscoveryPlaceIdBuilds { get; private set; }
         private void DiscoverShops(int budget)

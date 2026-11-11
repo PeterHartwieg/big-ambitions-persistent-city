@@ -387,13 +387,14 @@ namespace PersistentCity.Tests
         {
             string market = Source("Runtime/NativeFoodMarket.cs");
             string ctor = Body(market, "public NativeFoodMarket(FoodCommerceState state");
-            int decided = ctor.IndexOf("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(), out process);", StringComparison.Ordinal);
+            int decided = ctor.IndexOf("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out checkoutSettled), out process);", StringComparison.Ordinal);
             Assert.True(decided > 0 && decided < ctor.IndexOf("RefreshKnownOwnership();", StringComparison.Ordinal));
             // tools/capability-contracts executes StartCheckout and InstallPricePrefix with the pinned Harmony (arm CheckoutStartup).
-            Assert.Contains("NativeFoodContract.InstallPricePrefix(checkout, () =>\n                    patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", ctor);
+            Assert.Contains("if (checkoutSettled) InstallCheckoutPrefix();", ctor);
+            Assert.Contains("private void InstallCheckoutPrefix() => NativeFoodContract.InstallPricePrefix(checkout, () =>\n            patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", market);
             Assert.Contains("CheckoutStartup();", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "tools", "capability-contracts", "Program.cs")));
             Assert.Contains("if (!checkout.Eligible || refusedContracts.TryGetValue(r, out _)) return false;", Body(market, "private bool SupportedMenu(BuildingRegistration r)"));
-            Assert.Contains("|| !checkout.Serves) return false;", Body(market, "public bool CanServe(string businessId)"));
+            Assert.Contains("|| !checkoutSettled || !checkout.Serves) return false;", Body(market, "public bool CanServe(string businessId)"));
             Assert.StartsWith("{\n            if (checkout.ScopeReason is string off) return off;", Body(market, "public string ScopeStatus(string placeId)"));
             // RefreshKnownOwnership observes each shop with SupportedMenu, so checkout-off reaches Observe(reg, false).
             Assert.Contains("NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value))", Source("Runtime/NativeFoodCandidates.cs"));
