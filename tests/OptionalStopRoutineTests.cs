@@ -150,6 +150,23 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         return (sim, env);
     }
 
+    // P5: over a seeded day the active-stop index, which refresh and occupancy read instead of every citizen,
+    // equals a full scan after every event, and stops are active during that day.
+    [Fact]
+    public void ActiveStopIndexEqualsAFullScanOverASeededDay()
+    {
+        var (sim, _) = Mixed(25, true); int stale = 0, seen = 0;
+        sim.ActivityObserved += (_, _, _) =>
+        {
+            if (!sim.ActiveStopIndexMatchesScan()) stale++;
+            seen = Math.Max(seen, sim.State.Citizens.Count(c => c.OptionalStop is { Cancelled: false } s && sim.State.Minute < s.EndMinute));
+        };
+        Until(sim, sim.State.Minute + 1440);
+        Assert.Equal(0, stale);
+        Assert.True(seen > 0);
+        Assert.True(sim.OptionalStopIndexesMatchState());
+    }
+
     // Ten days of mixed routines with conversations. The indexes stay exact after every event.
     [Theory]
     [InlineData(false)] [InlineData(true)]

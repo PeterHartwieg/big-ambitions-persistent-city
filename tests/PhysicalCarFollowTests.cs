@@ -165,6 +165,25 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
+    /// <summary>P5: an off-screen car syncs its own progress only every few frames. It keeps up with the kernel all
+    /// the same: shown again, it is within the follow distance of the logical pose, nothing was corrected, and the
+    /// journey ends as in the city without bodies.</summary>
+    [Fact]
+    public void InvisibleCarSyncsLessOftenAndResumesAtTheKernelPosition()
+    {
+        using var f = new Fixture();
+        f.Until(() => f.Car("c0") != null, 600);
+        var body = f.Car("c0")!;
+        for (int i = 0; i < 60; i++) f.Frame();
+        Assert.Same(body, f.Car("c0"));
+        body.OnScreen = true; f.Frame();
+        Assert.Same(body, f.Car("c0"));
+        Assert.InRange(f.LogicalX("c0") - body.Position.X, -1e-6, CarFollow.CatchUpMetres);
+        Assert.Empty(f.Corrections());
+        f.Until(() => f.Person("c0").CompletedJourneys == 1);
+        f.AssertSameAsBodiesOff();
+    }
+
     /// <summary>Off screen, a car more than 30 m behind its kernel coordinate is released (one LagRelease with the
     /// before pose and the logical pose) and a car is re-acquired at the logical pose at the next selection, without the
     /// retry cooldown. It never reappears in view.</summary>

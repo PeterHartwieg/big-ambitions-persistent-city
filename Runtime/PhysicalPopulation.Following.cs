@@ -270,6 +270,7 @@ namespace PersistentCity.Runtime
         /// still drives, an on-screen car drives on to its parking point under the same correction rule and an
         /// off-screen one is released. Reads only; nothing is written to the simulation or the kernel.
         /// </summary>
+        internal const int CarSyncFrames = 4;
         private bool ObserveCar(Binding binding)
         {
             var body = binding.Car!; var citizen = binding.Citizen; var route = binding.Journey!;
@@ -281,6 +282,11 @@ namespace PersistentCity.Runtime
                 Telemetry.Record(Time.frameCount, citizen.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, logical.Position, false, car: true);
                 return false;
             }
+            // P5: progress is synced every frame only for a visible car. Off screen it is synced every CarSyncFrames
+            // frames; the projection is absolute, so a skipped frame delays the sync and loses nothing.
+            if (following && !body.OnScreen && (long)Time.frameCount - binding.CarSyncFrame < CarSyncFrames
+                && Time.frameCount >= binding.CarSyncFrame) return true;
+            binding.CarSyncFrame = Time.frameCount;
             var permission = default(TrafficVehicleSnapshot);
             bool admitted = following && simulation.TryGetTrafficPermission(citizen.Identity.Id, out permission)
                 && permission.LinkId.HasValue && !permission.IsCompleted;

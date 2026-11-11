@@ -130,6 +130,10 @@ namespace PersistentCity.Core
         private readonly SortedSet<CitizenState> waitingChances = new SortedSet<CitizenState>(ById);
         private readonly HashSet<CitizenState> withStops = new HashSet<CitizenState>();
         private readonly SortedSet<CitizenState> freeOfChances = new SortedSet<CitizenState>(ById);
+        // P5: holders of a stop not yet cancelled or ended. Cancellation and the clock do not refile, so entries
+        // that have since ended or been cancelled are pruned lazily where the set is read; it is never missing one.
+        private readonly HashSet<CitizenState> activeStops = new HashSet<CitizenState>();
+        private readonly List<CitizenState> stopScratch = new List<CitizenState>();
         private OptionalStopChanceTally chanceTally;
         /// <summary>Diagnostics since the last attach (not saved): eligible visits, draws, stops, moved and dropped chances.</summary>
         public OptionalStopChanceTally OptionalStopChances => chanceTally;
@@ -137,7 +141,7 @@ namespace PersistentCity.Core
         {
             if (percentage < 0 || percentage > 100) throw new ArgumentOutOfRangeException(nameof(percentage));
             stopEnvironment = environment ?? throw new ArgumentNullException(nameof(environment)); stopPercentage = percentage; stopTiming = timing;
-            bankedChances.Clear(); waitingChances.Clear(); withStops.Clear(); freeOfChances.Clear(); chanceTally = default;
+            bankedChances.Clear(); waitingChances.Clear(); withStops.Clear(); freeOfChances.Clear(); activeStops.Clear(); chanceTally = default;
             foreach (var person in State.Citizens) FileOptionalStop(person);
             // Old saves do not acquire new stops just because they were loaded.
             RefreshOptionalStops();
@@ -148,17 +152,19 @@ namespace PersistentCity.Core
         public void RefreshOptionalStops()
         {
             if (stopEnvironment == null) return;
-            foreach (var person in State.Citizens)
+            // Each check reads only the citizen and its pair, whose members are symmetric, so order does not matter.
+            PruneActiveStops();
+            stopScratch.Clear(); stopScratch.AddRange(activeStops);
+            foreach (var person in stopScratch)
             {
-                var stop = person.OptionalStop;
-                if (stop == null || stop.Cancelled || State.Minute >= stop.EndMinute) continue;
+                var stop = person.OptionalStop!;
                 if (stopEnvironment.Raining || person.Phase != CitizenPhase.AtPlace || person.PlaceId != stop.PlaceId
                     || person.MealOuting != null || State.Minute >= person.ActivityUntilMinute
                     || !DailyRoutine.Open(places[person.PlaceId], State.Minute) || OptionalStopStatus(stop) == OptionalStopAvailability.Unavailable)
                     stop.Cancelled = true;
             }
             // A conversation requires its actual persistent partner, including after removal or cancellation.
-            foreach (var person in State.Citizens)
+            foreach (var person in stopScratch)
             {
                 var stop = person.OptionalStop;
                 if (stop == null || stop.Cancelled || State.Minute >= stop.EndMinute || stop.Kind != DwellKind.ChatOutsideVenue) continue;
@@ -167,7 +173,11 @@ namespace PersistentCity.Core
                     || item.Citizen.OptionalStop.Cancelled || item.Citizen.OptionalStop.TargetId != stop.TargetId
                     || item.Citizen.OptionalStop.StartMinute != stop.StartMinute)) stop.Cancelled = true;
             }
+            stopScratch.Clear();
         }
+        private static bool StopActive(CitizenState c, double minute)
+            => c.OptionalStop != null && !c.OptionalStop.Cancelled && minute < c.OptionalStop.EndMinute;
+        private void PruneActiveStops() => activeStops.RemoveWhere(c => !StopActive(c, State.Minute));
         // Logical callers only (meal outings, optional visits, a replaced visit). Presentation never cancels
         // a stop: a body that cannot reach or use its spot stands short of it (F2b, PresentationBoundaryTests).
         public void CancelOptionalStop(string citizenId)
@@ -191,6 +201,7 @@ namespace PersistentCity.Core
             if (pending && !waiting) bankedChances.Add(person); else bankedChances.Remove(person);
             if (waiting) waitingChances.Add(person); else waitingChances.Remove(person);
             if (person.OptionalStop != null) withStops.Add(person); else withStops.Remove(person);
+            if (StopActive(person, State.Minute)) activeStops.Add(person); else activeStops.Remove(person);
             if (Free(person)) freeOfChances.Add(person); else freeOfChances.Remove(person);
         }
         private static bool Free(CitizenState c) => c.OptionalStopChoice != true && c.OptionalStop == null;
@@ -198,7 +209,15 @@ namespace PersistentCity.Core
             => bankedChances.SetEquals(State.Citizens.Where(c => PendingChance(c) && !WaitingForPartner(c)))
             && waitingChances.SetEquals(State.Citizens.Where(c => PendingChance(c) && WaitingForPartner(c)))
             && withStops.SetEquals(State.Citizens.Where(c => c.OptionalStop != null))
-            && freeOfChances.SetEquals(State.Citizens.Where(Free));
+            && freeOfChances.SetEquals(State.Citizens.Where(Free))
+            && ActiveStopIndexMatchesScan();
+        /// <summary>P5 check: after pruning, the active-stop index equals a full scan of the citizens.</summary>
+        internal bool ActiveStopIndexMatchesScan()
+        {
+            if (stopEnvironment == null) return activeStops.Count == 0;
+            PruneActiveStops();
+            return activeStops.SetEquals(State.Citizens.Where(c => !c.IsVisitor && StopActive(c, State.Minute)));
+        }
 
         private void ScheduleOptionalStop(CitizenState person, Route? arrivalRoute)
         {
@@ -322,7 +341,8 @@ namespace PersistentCity.Core
         // Only citizens with a stop can occupy a spot; the answer does not depend on iteration order.
         private bool Occupied(Position at, double start, double end)
         {
-            foreach (var c in withStops)
+            // Stops that ended before now cannot overlap a window starting now or later.
+            foreach (var c in activeStops)
                 if (c.OptionalStop != null && !c.OptionalStop.Cancelled && c.OptionalStop.EndMinute > start
                     && c.OptionalStop.StartMinute < end && Position.Distance(c.OptionalStop.Position, at) < 0.65) return true;
             return false;
