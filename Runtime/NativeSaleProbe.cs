@@ -88,6 +88,11 @@ namespace PersistentCity.Runtime
                 foreach (var entry in claimed.order.entries)
                     if (entry == null || !Line(entry.itemName, reg, IsTicket(entry.itemName), basket)) { refusal = "Claimed entry has an unpriced line"; return null; }
             }
+            else if (family == ProbeFamily.CinemaTheater)
+            {
+                // A written entry would have to rebuild the native ticket-first order; the probe needs a native one here.
+                refusal = "No uncompleted native entry this hour"; return null;
+            }
             else
             {
                 string? product = reg.cachedAvailableProducts?.FirstOrDefault(p => p != fee && !IsTicket(p) && Price(p, reg).HasValue);
@@ -119,6 +124,7 @@ namespace PersistentCity.Runtime
                 customerDemandTypes = claimed?.order.customerDemandTypes != null ? new List<string>(claimed.order.customerDemandTypes) : new List<string>() } };
             int orders = reg.unprocessedCompletedOrders.Count;
             var simulator = UnityEngine.Object.Instantiate(type.simulator);
+            Exception? failure = null;
             try
             {
                 simulator.SetUp(reg, hour);
@@ -127,29 +133,45 @@ namespace PersistentCity.Runtime
                     || !reg.HasEstablishedBusiness || !BusinessHelper.IsBusinessOpen(reg) || BuildingManager.IsInsideBuilding
                     || lines.Any(l => Price(l.ItemId, reg) != l.Price))
                     return ProbeNativeOutcome.Interrupted("Save, hour, opening, player position or a price changed during native setup");
+                // Native ProcessAllCustomersFromThisHour, not SetUp, sets the theatre's no-actors refusal; check it here.
+                if (family == ProbeFamily.CinemaTheater && BusinessHelper.ShouldWarnTheaterHasNoActors(reg))
+                    return ProbeNativeOutcome.Interrupted("Theatre has no actors");
                 probing = reg;
-                process.Invoke(simulator, new object[] { customer });
+                try { process.Invoke(simulator, new object[] { customer }); }
+                catch (Exception error) { failure = error is TargetInvocationException { InnerException: { } inner } ? inner : error; }
             }
             finally { probing = null; UnityEngine.Object.Destroy(simulator); }
             bool completed = customer.order.completed;
             int added = reg.unprocessedCompletedOrders.Count - orders;
             Evidence["orderCompleted"] = completed; Evidence["ordersAdded"] = added;
             Evidence["entries"] = customer.order.entries.Select(e => new { e.itemName, e.price, e.available, e.priceAccceptable, e.paid }).ToArray();
+            if (failure != null) Evidence["nativeException"] = failure.Message;
             // A skipped body (another owner's gate) leaves the order untouched: no native effect.
-            if (!completed && added == 0 && customer.order.entries.All(e => !e.processed && !e.paid))
+            if (failure == null && !completed && added == 0 && customer.order.entries.All(e => !e.processed && !e.paid))
                 return ProbeNativeOutcome.Interrupted("Native processor skipped the order");
+            // Without exactly one booked order no revenue reaches the daily boundary, so there is nothing to charge.
+            // From here on nothing throws: a booked order is always handed to Core, which debits it once.
             if (added != 1 || !completed)
-                throw new InvalidOperationException("Native order booking is uncertain (" + added + " orders added)");
+                throw new InvalidOperationException("Native order booking is uncertain (" + added + " orders added)", failure);
             var paid = new List<ProbeLine>();
+            var skipped = new List<string>();
             foreach (var entry in customer.order.entries)
             {
                 if (!entry.paid || ItemsGetter.GetByName(entry.itemName)?.HasTag(BigAmbitions.Tags.TagRef.Itemtag.isbag) == true) continue;
-                if (!Money.TryFromNative(entry.price, out var price)) throw new InvalidOperationException("Native paid price is unsupported: " + entry.itemName);
-                paid.Add(new ProbeLine(entry.itemName, price, false));
+                // A paid entry at price 0 is a consumable the processor records (a haircut's hair-care product), not a charge.
+                if (entry.price == 0f) continue;
+                if (Money.TryFromNative(entry.price, out var price)) paid.Add(new ProbeLine(entry.itemName, price, false));
+                else skipped.Add(entry.itemName);
             }
-            // The claimed native entry is now served: the hourly batch must not serve it again.
-            if (claimed != null) claimed.completed = true;
-            return ProbeNativeOutcome.Processed(paid);
+            if (skipped.Count > 0) Evidence["unpricedPaidEntries"] = skipped;
+            // The hourly batch queues every entry of the hour whatever its completed flag, so the served entry leaves the list.
+            // The booked order counts against the hour when native code regenerates entries, so none replaces it.
+            if (claimed != null)
+            {
+                claimed.completed = true;
+                Evidence["claimedEntryRetired"] = CustomerEntriesHelper.GetEntriesByAddress(reg.Address)?.Remove(claimed) == true;
+            }
+            return ProbeNativeOutcome.Processed(paid, skipped.Count);
         }
     }
 
@@ -210,13 +232,16 @@ namespace PersistentCity.Runtime
             int ordersBefore = target.unprocessedCompletedOrders.Count;
             PurchaseProbeResult result;
             saleProbeRunning = true;
-            try { result = PurchaseProbe.Run(request, person.Wallet, save.modData, native); }
+            PurchaseProbeResult? ran = null;
+            // A native save started inside the probe is re-entrant: it publishes no epoch and stops Persistent City afterwards.
+            try { RunSaveEpochUnit(() => ran = PurchaseProbe.Run(request, person.Wallet, save.modData, native)); }
             finally { saleProbeRunning = false; }
+            result = ran!;
             Debug.Log("[Persistent City] sale probe\n" + JsonConvert.SerializeObject(new {
                 resident = person.Identity.Id, place = detail, type = target.businessTypeName, simulator = native.SimulatorName,
                 family = familyFound.ToString(), kind = kind.ToString(), claimedNativeEntry = native.Claimed, recovered,
                 basket = basket.Select(l => new { l.ItemId, cents = l.Price.ToCentsText(), l.Mandatory }),
-                ceiling = result.Quote?.Ceiling.ToCentsText(), quoted = result.Quote?.Total.ToCentsText(), dropped = result.Quote?.Dropped,
+                ceiling = result.Quote?.Ceiling.ToCentsText(), quoted = result.Quote?.Total.ToCentsText(),
                 refusal = result.Refusal.ToString(), receipt = result.Receipt.ToString(), result.Key, paid = result.Paid.ToCentsText(), result.Reason,
                 walletBefore = walletBefore?.ToCentsText(), walletAfter = person.Wallet?.Balance.ToCentsText(),
                 ordersBefore, ordersAfter = target.unprocessedCompletedOrders.Count, native = native.Evidence }));

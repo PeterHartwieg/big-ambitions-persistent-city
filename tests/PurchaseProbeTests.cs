@@ -53,7 +53,7 @@ public sealed class PurchaseProbeTests
         var result = PurchaseProbe.Run(Request(499), wallet, receipts, native);
 
         Assert.Equal(ProbeRefusal.Ceiling, result.Refusal);
-        Assert.Equal(Money.FromCents(500), result.Quote!.Total); // the fee alone, never trimmed
+        Assert.Equal(Money.FromCents(1000), result.Quote!.Total); // the whole basket, fee included
         Assert.Equal(0, native.Calls);
         Assert.Empty(receipts);
         Assert.Equal(walletBefore, WalletText(wallet));
@@ -73,19 +73,35 @@ public sealed class PurchaseProbeTests
         Assert.Empty(receipts);
     }
 
+    /// <summary>S2 refuses the whole basket when it is above the ceiling, optional goods included; nothing is trimmed.</summary>
     [Fact]
-    public void OptionalGoodsAreTrimmedFromTheEndAndTheNativeSideSeesOnlyTheQuote()
+    public void ACeilingBelowAnOptionalGoodsBasketRefusesBeforeAnyNativeCall()
+    {
+        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
+        string walletBefore = WalletText(wallet), books = native.Books;
+
+        var result = PurchaseProbe.Run(Request(400, basket: new[] { Shirt, Socks }), wallet, receipts, native);
+
+        Assert.Equal(ProbeRefusal.Ceiling, result.Refusal);
+        Assert.Equal(Money.FromCents(500), result.Quote!.Total);
+        Assert.Equal(0, native.Calls);
+        Assert.Empty(receipts);
+        Assert.Equal(walletBefore, WalletText(wallet));
+        Assert.Equal(books, native.Books);
+    }
+
+    [Fact]
+    public void ABasketAtTheCeilingSellsEveryLine()
     {
         var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
         IReadOnlyList<ProbeLine>? seen = null;
         native.Before = lines => { seen = lines; return null; };
 
-        var result = PurchaseProbe.Run(Request(850), wallet, receipts, native);
+        var result = PurchaseProbe.Run(Request(1000), wallet, receipts, native);
 
         Assert.True(result.Bought);
-        Assert.Equal(new[] { Fee.ItemId, Shirt.ItemId }, seen!.Select(l => l.ItemId));
-        Assert.Equal(1, result.Quote!.Dropped);
-        Assert.True(result.Paid <= Money.FromCents(850));
+        Assert.Equal(new[] { Fee.ItemId, Shirt.ItemId, Socks.ItemId }, seen!.Select(l => l.ItemId));
+        Assert.Equal(Money.FromCents(1000), result.Paid);
     }
 
     [Fact]
@@ -123,8 +139,30 @@ public sealed class PurchaseProbeTests
         Assert.Equal(walletBefore, WalletText(wallet));
     }
 
+    /// <summary>Once the native side reports a booked order, the sale is reconciled in the same call: stock and order
+    /// changed, so the wallet is debited the booked total once, even when the paid lines differ from the quote.</summary>
     [Fact]
-    public void PaidLinesOutsideTheQuoteAreUncertainAndNotDebited()
+    public void ABookedOrderThatDiffersFromTheQuoteIsStillDebitedOnce()
+    {
+        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
+        // The processor booked the shirt one cent cheaper than quoted.
+        native.Report = paid => paid.Select(l => l.ItemId == Shirt.ItemId ? new ProbeLine(l.ItemId, l.Price - Money.FromCents(1), false) : l).ToList();
+
+        var result = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
+        var repeat = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
+
+        Assert.Equal(ProbeRefusal.None, result.Refusal);
+        Assert.Equal(Money.FromCents(999), result.Paid);
+        Assert.NotEqual("", result.Reason);
+        Assert.Equal(Money.FromCents(100000 - 999), wallet.Balance);
+        Assert.Single(native.Orders);
+        Assert.Equal(ProbeReceiptStatus.Paid, PurchaseProbe.Status(receipts[result.Key]));
+        Assert.Equal(ProbeRefusal.AlreadyRecorded, repeat.Refusal);
+        Assert.True(HouseholdFinance.CashConserved(wallet));
+    }
+
+    [Fact]
+    public void ABookedOrderAboveTheQuoteIsRecordedUnreconciledWithoutADebit()
     {
         var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
         string walletBefore = WalletText(wallet);
@@ -132,8 +170,9 @@ public sealed class PurchaseProbeTests
 
         var result = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
 
-        Assert.Equal(ProbeRefusal.Uncertain, result.Refusal);
+        Assert.Equal(ProbeReceiptStatus.Unreconciled, PurchaseProbe.Status(receipts[result.Key]));
         Assert.Equal(walletBefore, WalletText(wallet));
+        Assert.Equal(0, PurchaseProbe.Recover(receipts)); // visible in pc probe status, never retried
     }
 
     [Fact]
