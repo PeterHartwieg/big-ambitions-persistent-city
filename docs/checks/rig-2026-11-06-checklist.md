@@ -11,3 +11,5 @@ The original checklist is retained in [docs history](https://github.com/PeterHar
 11 November 2026, Mac at `eaac521c`: [reload accounting-epoch fix and re-run rows](rig-2026-11-11-mac-results.md) — 2 passed / 6 partial / 0 failed / 150 not run; isolated restore/hash check and lease release complete.
 
 11 November 2026 (b), Mac at `2f1e8136`: [F8h conflict refusals and autosave re-runs](rig-2026-11-11b-mac-results.md).
+
+11 November 2026 PC at `11217a8f`: [Windows-only rows, autosave-off re-runs and F8h first-sale attempt](rig-2026-11-11-pc-results.md) ? 6 passed / 8 partial / 0 failed / 170 not run; restore/hash verification and lease release complete.
