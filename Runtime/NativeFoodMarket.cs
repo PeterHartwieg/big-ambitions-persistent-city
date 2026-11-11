@@ -51,10 +51,17 @@ namespace PersistentCity.Runtime
         // F8c (D3): the checkout contract is verified at construction. Refused, the market runs in checkout-off mode: no
         // price prefix, CanServe false for every shop, and each owned shop is observed ineligible so the existing release
         // path hands it back at the next drained accounting boundary. Paid and uncertain receipts are still confirmed.
-        private readonly MethodInfo? process;
-        private readonly FoodCheckoutMode checkout;
+        // F8h (review Sol-r1-1): the conflict decision waits for the game's city load to finish. Until then checkout uses
+        // the member contract for eligibility, sells nothing (CanServe, BuyLive) and installs no price prefix.
+        private MethodInfo? process;
+        private FoodCheckoutMode checkout;
+        private bool checkoutSettled;
         /// <summary>food.checkout.shop refusal; null when the checkout contract is verified.</summary>
         internal string? CheckoutRefusal => checkout.Refusal;
+        /// <summary>The once-per-load checkout decision is made (the city load finished).</summary>
+        internal bool CheckoutSettled => checkoutSettled;
+        /// <summary>Sol-r2-2: run once when a decision deferred past construction is made (the activation lines).</summary>
+        internal Action? CheckoutSettledOnce { get; set; }
         private bool buying;
         private int receiptDay = -1;
         private float approvedPrice;
@@ -120,7 +127,7 @@ namespace PersistentCity.Runtime
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
-            checkout = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out process);
+            checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out checkoutSettled), out process);
             if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
             contractEconomy = economy;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
@@ -147,12 +154,27 @@ namespace PersistentCity.Runtime
             {
                 NativeFoodOwnership.Attach(this);
                 journalReady = true;
-                NativeFoodContract.InstallPricePrefix(checkout, () =>
-                    patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
-                        prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First }));
+                if (checkoutSettled) InstallCheckoutPrefix();
                 StartContractShadow(); // E5b2 hint hooks and stamps; shadow only, never throws.
             }
             catch { Dispose(); throw; }
+        }
+        private void InstallCheckoutPrefix() => NativeFoodContract.InstallPricePrefix(checkout, () =>
+            patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
+                prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First }));
+        /// <summary>F8h (Sol-r1-1): the first RefreshDiscovery after the city load decides checkout once. A refusal
+        /// observes every shop ineligible now, so owned shops go through the existing withdrawal; otherwise the price
+        /// prefix is installed as at construction.</summary>
+        private void SettleCheckout()
+        {
+            var decided = NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out bool settled);
+            if (!settled) return;
+            checkout = NativeFoodContract.StartCheckout(decided, out process);
+            checkoutSettled = true;
+            if (checkout.Refusal != null) RefreshKnownOwnership();
+            else InstallCheckoutPrefix();
+            var settledNow = CheckoutSettledOnce; CheckoutSettledOnce = null;
+            settledNow?.Invoke();
         }
         public static string PlaceId(BuildingRegistration r) => "address:" + Uri.EscapeDataString(r.StreetName) + ":"
             + r.StreetNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":shop";
@@ -227,9 +249,11 @@ namespace PersistentCity.Runtime
         private bool StartupHeld(BuildingRegistration r, FoodLiveMenuRefusal menu)
             => menu == FoodLiveMenuRefusal.OriginalThreeGuard && StartupPhase && NativeFoodOwnership.Find(r)?.Managed == true;
         private bool StartupHeld(BuildingRegistration r) => StartupHeld(r, LiveMenu(r.cachedAvailableProducts));
+        // F8h (review Sol-r2-1): while checkout waits for the city load, every scoped shop awaits validation, so Core holds
+        // its saved commitments (neither bought nor missed) until the decision serves or withdraws it.
         public bool AwaitingValidation(string businessId)
             => ReferenceEquals(save, SaveGameManager.Current) && scopesByBusiness.TryGetValue(businessId, out var scope)
-                && registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg);
+                && (!checkoutSettled || registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg));
         public const string StartupValidationRefusal = "Waiting: saved food contract is validated after load; no sale before";
         // E5b5: a mod removed (or a product reclassed) under an owned or wanted shop is a recorded refusal, so desire is
         // withdrawn now, the hand-back waits for the boundary, and a return goes through Decision 7 recovery with a
@@ -321,7 +345,7 @@ namespace PersistentCity.Runtime
         }
         public bool CanServe(string businessId)
         {
-            if (!ReferenceEquals(save, SaveGameManager.Current) || !checkout.Serves) return false;
+            if (!ReferenceEquals(save, SaveGameManager.Current) || !checkoutSettled || !checkout.Serves) return false;
             if(!scopesByBusiness.TryGetValue(businessId,out var scope) || !registrations.TryGetValue(scope.PlaceId,out var reg)) return false;
             var authority=NativeFoodOwnership.Find(reg);
             if(authority?.BusinessId!=businessId) return false;
@@ -507,6 +531,7 @@ namespace PersistentCity.Runtime
         // With a ticket, meal.Price is the planned total and the main line is sold at ticket.Main.Price.
         private FoodSale BuyLive(ResidentMeal meal, double minute, FoodMealTicket? ticket)
         {
+            if (!checkoutSettled) return new FoodSale(false, "Food checkout waits for the city load to finish"); // before any receipt
             if (minute < EarliestMinute || minute >= EarliestMinute + 60 || !ReferenceEquals(save, SaveGameManager.Current))
                 return new FoodSale(false, "Native clock differs from service time");
             var data = SaveGameManager.Current.modData;

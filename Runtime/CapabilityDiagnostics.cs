@@ -34,7 +34,11 @@ namespace PersistentCity.Runtime
             // F8e: foreign Harmony owners on every Persistent City target, classed by patch kind (report only).
             if (action == "hooks" && detail.Length == 0)
             {
-                try { Debug.Log("[Persistent City] capability hooks (read-only)\n" + HookConflicts.Scan().Text()); }
+                try
+                {
+                    var market = foodMarket;
+                    Debug.Log("[Persistent City] capability hooks (read-only)\n" + HookConflicts.Scan().Text(market != null && market.CheckoutSettled, market?.CheckoutRefusal));
+                }
                 catch (Exception error) { Debug.LogWarning("[Persistent City] hook conflict report unavailable: " + error.Message); }
                 return;
             }
@@ -117,11 +121,29 @@ namespace PersistentCity.Runtime
 
         private static DonorReadReason DonorReason(RloReadResult read) => read.Reason;
 
-        /// <summary>F8e: the once-per-load conflict line. A failed scan is reported and changes nothing.</summary>
+        /// <summary>F8d (D7) and F8e: the two activation lines, once per load. F8h (review Sol-r2-2): when the market waits
+        /// for the city load to finish before deciding checkout, both lines are logged when it decides, from the deciding
+        /// scan, so they show the final food.checkout.shop state.</summary>
+        private void LogActivationLines()
+        {
+            var market = foodMarket;
+            if (market == null || market.CheckoutSettled) { WriteActivationLines(); return; }
+            market.CheckoutSettledOnce = () => { if (ReferenceEquals(foodMarket, market) && !failed) WriteActivationLines(); };
+        }
+
+        private void WriteActivationLines()
+        {
+            log?.Info(CapabilityActivationLine()); // F8d (D7): one line naming every capability that is not active
+            log?.Info(HookConflictActivationLine()); // F8e: foreign owners on Persistent City targets
+        }
+
+        /// <summary>F8e: the once-per-load conflict line. F8h: it reuses the scan this load's checkout decision used (taken
+        /// once the city load finished), so a load scans once. A scan failing here only changes this line; a load scan
+        /// that failed already refused food.checkout.shop with its reason (pc capability status).</summary>
         private static string HookConflictActivationLine()
         {
-            try { return HookConflicts.Scan().ActivationLine(); }
-            catch (Exception error) { return "Persistent City hook conflict scan unavailable (report only): " + error.Message; }
+            try { return (HookConflicts.TakeLoadScan() ?? HookConflicts.Scan()).ActivationLine(); }
+            catch (Exception error) { return "Persistent City hook conflict scan unavailable for the activation line: " + error.Message; }
         }
 
         /// <summary>F8d (D7): the activation Player.log line, once per load. Builds the same on-request snapshot.</summary>

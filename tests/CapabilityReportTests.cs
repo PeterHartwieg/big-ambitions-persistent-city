@@ -203,8 +203,11 @@ public sealed class CapabilityReportTests
         Assert.Contains(DiagnosticCallers(injected), v => v.Contains("Scan from UpdateCity", StringComparison.Ordinal));
     }
 
-    /// <summary>The only callers allowed outside the file: the console router and the once-per-load activation tail.</summary>
-    internal static readonly string[] AllowedCallers = { "RunCensusCommand", "CompleteInitialization" };
+    /// <summary>The only callers allowed outside the file: the console router, the once-per-load activation tail and F8h's
+    /// once-per-load checkout decision (NativeFoodContract.CheckoutForLoad, called only from the market's constructor and
+    /// its one post-load settle:
+    /// HookConflictReportTests.TheRefusalIsDecidedOncePerLoadFromTheLoadScan).</summary>
+    internal static readonly string[] AllowedCallers = { "RunCensusCommand", "CompleteInitialization", "CheckoutForLoad" };
 
     internal static Dictionary<string, string> RuntimeSources()
         => Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs").ToDictionary(
