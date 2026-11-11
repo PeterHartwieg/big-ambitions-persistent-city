@@ -29,16 +29,20 @@ Raw evidence is external: `<stage>` = `C:/Users/Peter/HART-Builds/persistent-cit
 | creation | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
 | day1-save | FAIL | Stage query stopped before saves: ActivationDiagnostics absent; corrected subsequent flow. |
 | day1-save-cost | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
+| day3-save-cost | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
 
 ## F7 check 2 / F7e input
 
-Fresh native head city: **957 residents / 957 visitors**, day 1 08:00, no rented food shop. All three declared SaveTypes completed and the Default checkpoint cold-reloaded to the same counts. The historical writer-25 arm is **NOT RUN**: no documented pre-produced compatible checkpoint; representative/historical recipes blocked, and head refuses older schemas with “start a new city”. This is head-writer input, not a matched before/after campaign.
+Fresh native head city: **957 residents / 957 visitors**, day 1 08:00, no rented food shop. All three declared SaveTypes completed on both day 1 and day 3. The day-3 copy reached native 06:00 at speed 20, with **957 residents / 1,914 visitors**, fill created=957; no shop was rented. Both Default checkpoints cold-reloaded to their recorded counts. This is not the sealed FT-F4-Declared fixture. The historical writer-25 arm is **NOT RUN**: no documented pre-produced compatible checkpoint; representative/historical recipes blocked, and head refuses older schemas with “start a new city”. This is head-writer input, not a matched before/after campaign.
 
 | Checkpoint / SaveType | Capture ms | Encode ms | Capture / encode | Portrait Create ms | Screenshot request ms | Method-window sum ms |
 |---|---|---|---|---|---|---|
 | day1-save-cost / Default | 15.137 | **424.848** | 3.563% | 18.364 | 2.423 | 20.787 |
 | day1-save-cost / MidnightSave | 8.088 | **365.676** | 2.212% | 10.354 | 0.549 | 10.903 |
 | day1-save-cost / RecoverSave | 7.666 | **399.872** | 1.917% | 7.763 | 0.632 | 8.395 |
+| day3-save-cost / Default | 24.931 | **1099.964** | 2.267% | 12.532 | 2.413 | 14.945 |
+| day3-save-cost / MidnightSave | 15.108 | **1339.811** | 1.128% | 10.283 | 0.598 | 10.881 |
+| day3-save-cost / RecoverSave | 14.036 | **1332.085** | 1.054% | 7.985 | 0.516 | 8.501 |
 
 Capture is <=25% of encode in every recorded row. The two method durations give the measured synchronous portrait/request work between callbacks and serialization; they do not time asynchronous image completion. F7e remains an owner decision under plan section 3.5; this run implements no overlap slice or official F4f verdict.
 
@@ -47,6 +51,9 @@ Capture is <=25% of encode in every recorded row. The two method durations give 
 | day1-save-cost / Default | **1081.325** | **909.375** | **95.603** | **144.085** | **422.478** |
 | day1-save-cost / MidnightSave | **1078.188** | **1040.982** | 22.647 | **145.616** | **630.221** |
 | day1-save-cost / RecoverSave | **901.078** | **865.900** | 22.436 | **157.779** | **411.426** |
+| day3-save-cost / Default | **2640.052** | **2454.670** | **123.025** | **575.218** | **1246.089** |
+| day3-save-cost / MidnightSave | **2707.383** | **2654.878** | **34.801** | **683.446** | **1227.505** |
+| day3-save-cost / RecoverSave | **2668.425** | **2623.159** | **30.648** | **522.950** | **1203.008** |
 
 Native Save is its main-thread method duration; compression is separate on `SaveGame Compress Thread`. Requested F7a record counting adds substantial diagnostic-only work after publication. It is outside the PC phase total and remains inside the PC subscriber/native Save measurement. Compression destination_bytes=-1 is unavailable; retained fixture file sizes/hashes are authoritative.
 
@@ -55,12 +62,18 @@ Native Save is its main-thread method duration; compression is separate on `Save
 | day1-save-cost / Default | 2.509 | 7.574 | 15.137 | **35.128** | **424.848** | 0.343 | **485.539** |
 | day1-save-cost / MidnightSave | 1.669 | 5.482 | 8.088 | 29.814 | **365.676** | 0.006 | **410.735** |
 | day1-save-cost / RecoverSave | 2.148 | 5.246 | 7.666 | **39.513** | **399.872** | 0.005 | **454.450** |
+| day3-save-cost / Default | 3.811 | 10.711 | 24.931 | **67.035** | **1099.964** | 0.513 | **1206.965** |
+| day3-save-cost / MidnightSave | 2.350 | 8.274 | 15.108 | **61.792** | **1339.811** | 0.007 | **1427.342** |
+| day3-save-cost / RecoverSave | 2.327 | 7.734 | 14.036 | **63.932** | **1332.085** | 0.009 | **1420.123** |
 
 | Checkpoint / type | Payload chars | UTF-8 bytes | UTF-16 bytes | UTF-16 share of native temp | GC heap before / after (bytes) |
 |---|---|---|---|---|---|
 | day1-save-cost / Default | 1293483 | 1293484 | 2586966 | 30.3385% | 916885504 / 944984064 |
 | day1-save-cost / MidnightSave | 1293483 | 1293484 | 2586966 | 30.3385% | 970846208 / 904003584 |
 | day1-save-cost / RecoverSave | 1321725 | 1321726 | 2643450 | 30.7969% | 984481792 / 992194560 |
+| day3-save-cost / Default | 7654642 | 7654643 | 15309284 | 71.8170% | 984309760 / 1427963904 |
+| day3-save-cost / MidnightSave | 7654642 | 7654643 | 15309284 | 71.8143% | 1438326784 / 1461886976 |
+| day3-save-cost / RecoverSave | 7654642 | 7654643 | 15309284 | 71.8143% | 1473007616 / 1374011392 |
 
 Working-set, peak-working-set and private-bytes readings are all 0 from the installed save profiler; these are **unavailable**, not measured zero use. GC heap figures above are retained.
 
@@ -108,6 +121,48 @@ day1-save-cost / RecoverSave:
 | PersistentCity.Runtime.PopulationRuntime.Save | **865.900** | False |
 | RealLifeOverhaul.SaveHook.Run | 0.957 | False |
 
+day3-save-cost / Default:
+
+| Subscriber | ms | Threw |
+|---|---|---|
+| GameManager+<>c.<Start>b__70_2 | 0.294 | False |
+| Helpers.PlayerHelper.SaveCurrentPosition | 0.466 | False |
+| UI.DraggableWindows.DraggableWindows.Save | 0.613 | False |
+| BuildingManager.<Awake>b__59_1 | 0.007 | False |
+| CityPerformance.FrameTrace.Save | 0.012 | False |
+| FoodTrucks.FoodTrucksSession.OnSaveGame | 10.435 | False |
+| RealLifeOverhaul.Guard+Calls+Caught.Run | 0.135 | False |
+| PersistentCity.Runtime.PopulationRuntime.Save | **2454.670** | False |
+| RealLifeOverhaul.SaveHook.Run | **30.292** | False |
+
+day3-save-cost / MidnightSave:
+
+| Subscriber | ms | Threw |
+|---|---|---|
+| GameManager+<>c.<Start>b__70_2 | 0.004 | False |
+| Helpers.PlayerHelper.SaveCurrentPosition | 0.004 | False |
+| UI.DraggableWindows.DraggableWindows.Save | 0.090 | False |
+| BuildingManager.<Awake>b__59_1 | 0.001 | False |
+| CityPerformance.FrameTrace.Save | 0.003 | False |
+| FoodTrucks.FoodTrucksSession.OnSaveGame | 0.786 | False |
+| RealLifeOverhaul.Guard+Calls+Caught.Run | 0.002 | False |
+| PersistentCity.Runtime.PopulationRuntime.Save | **2654.878** | False |
+| RealLifeOverhaul.SaveHook.Run | 1.943 | False |
+
+day3-save-cost / RecoverSave:
+
+| Subscriber | ms | Threw |
+|---|---|---|
+| GameManager+<>c.<Start>b__70_2 | 0.003 | False |
+| Helpers.PlayerHelper.SaveCurrentPosition | 0.006 | False |
+| UI.DraggableWindows.DraggableWindows.Save | 0.079 | False |
+| BuildingManager.<Awake>b__59_1 | 0.001 | False |
+| CityPerformance.FrameTrace.Save | 0.003 | False |
+| FoodTrucks.FoodTrucksSession.OnSaveGame | 0.836 | False |
+| RealLifeOverhaul.Guard+Calls+Caught.Run | 0.002 | False |
+| PersistentCity.Runtime.PopulationRuntime.Save | **2623.159** | False |
+| RealLifeOverhaul.SaveHook.Run | 1.615 | False |
+
 ### F7 check 7 — load phases
 
 `day1-save-cost`, evidence `runs/day1-save-cost/steps/016-response.json`:
@@ -121,6 +176,17 @@ day1-save-cost / RecoverSave:
 | InvokeOnGameLoaded | **3045.793** | main |
 | Load_total | **27595.036** | main |
 
+`day3-save-cost`, evidence `runs/day3-save-cost/steps/020-response.json`:
+
+| Phase | ms | Thread |
+|---|---|---|
+| DeserializeBinaryDataAsync | **1080.912** | task |
+| InitializeLoadedSave | 14.842 | main |
+| CompleteLoad | 0.263 | main |
+| LoadAsync | **1522.145** | task |
+| InvokeOnGameLoaded | **3292.970** | main |
+| Load_total | **41114.442** | main |
+
 PC activation `day1-save-cost`:
 
 | Background read ms | Create ms | Validate ms | Main-thread CompleteInitialization ms | Succeeded |
@@ -131,7 +197,7 @@ PC activation `day1-save-cost`:
 
 - F7a captures and publishes schema 1 at this head. All measured save phases succeeded; records retained per SaveType. No older development save loaded.
 - Fresh native save, profile and reload evidence is separate from gameplay performance. No ordinary gameplay gate is inferred from a save-specific process.
-- The generic pcsave epoch comparator reports `marker: unknown` for the current JSON side key. It is retained as a tooling gap, never presented as a failed or missing PC epoch. This run does not assert semantic identity equivalence from that comparator.
+- The generic pcsave epoch comparator reports `marker: unknown` for the current side key. It is retained as a tooling gap, never presented as a failed or missing PC epoch. This run does not assert semantic identity equivalence from that comparator.
 
 ## NOT RUN grouped by missing capability or fixture
 
@@ -151,7 +217,7 @@ PC activation `day1-save-cost`:
 | Stage pcstate query | `ops_pcstate_property_missing`: requested nonexistent ActivationDiagnostics. Corrected to SaveCostDiagnostics plus its documented SaveCostDiagnostics=true config. | day1-save step 3 | Stopped that attempt before saves; corrected flow succeeded. |
 | RIG-SAVEPROF memory | working_set_bytes / peak_working_set_bytes / private_bytes all 0. | save-cost profiles | Process-memory proof partial; GC heap available. |
 | RIG-SAVEPROF destination size | CompressSaveGame destination_bytes=-1. | save-cost profiles | No; stopped native checkpoint copies hashed and sized. |
-| RIG-PCSAVE epoch parser | Current epoch JSON classified unknown by generic comparator. | day1-save-cost pcsave/day1-default.summary.json | Semantic epoch comparator proof not claimed. |
+| RIG-PCSAVE epoch parser | Current epoch side key classified unknown by generic comparator. | day1-save-cost pcsave/day1-default.summary.json | Semantic epoch comparator proof not claimed. |
 | RIG-PRESENT / FOREGROUND / PRIORITY | Reserved validation refusal, documented at rig 19595b8. | Official generated gate flows | Yes; NOT RUN, no bypass. |
 | RIG-SHOPFIX / RIG-PCFIX | Known native rental refusal and pending manifests/readback inspector; not reattempted. | Official FT-F4 / FT-F9, representative recipes | Yes for official fixture rows; did not block save-cost subset. |
 
@@ -163,8 +229,11 @@ All files below are this run’s fresh native FT character only, retained in `C:
 |---|---|---|
 | FT Batch day1-save-cost Recover Midnight.hsg | 890515 | `05da86bbf54c1b1bc52abd0e73f09069eb4ed0da4a004077b58987550754a34f` |
 | FT Batch day1-save-cost Recover slot0.hsg | 894937 | `e5761416484bb9c0b67e613c89f06dc6c417d88ad71be4d5a7accf9d8d74335f` |
+| FT Batch day3-save-cost Recover Midnight.hsg | 2179329 | `f94191b23cc97033ebb450d4aa38b916b90abeac162d27c3f359fede6fe08eb6` |
+| FT Batch day3-save-cost Recover slot0.hsg | 2179326 | `6888b96345d190a4dd23c149e124da1642e4857702b2e101e752351ddbc43951` |
 | FT E5b 11 Nov Batch 957 Ready.hsg | 890619 | `3a08f8e6f25d175d9b27168ab921ca72eedcdc7b2036b692701a7cf4599ffa1c` |
 | FT E5b 11 Nov Batch 957.hsg | 502081 | `a52b4386ef413fe51a08a33bc6490dba232690a4476586122e345637d99471c9` |
+| FT rig checkpoint a6d2374da99e4691940094a2e2bde68c.hsg | 2179306 | `d048d7e37875f33fb06bf637cc2667f0f367fd03e8babfe24f0bd87187422dcd` |
 | FT rig checkpoint c765060fb4d44eb99e91ff91e555d5fb.hsg | 890515 | `13c6098f465b88e848385c83989a49c549df29b2fb6f0dd48286191aeaa0bbfc` |
 
 ## Per-check results
@@ -183,13 +252,16 @@ All files below are this run’s fresh native FT character only, retained in `C:
 |---|---|
 | backup-manifest.json | `7b8b4820e80dad526ce83d6d9d87fc4022bd76bbc23362313d238436562e3add` |
 | head-mods.json | `76cc17060e5b580cfa3976d4b8e0f943f8901aa84725cdd9f9d1787a1b6d14cb` |
-| save-summary.json | `3e40e5edbd3197ab9ade6cef6d95f0ceb90baee431dae9ecdb7ed0e6e3dfbd2c` |
+| save-summary.json | `9891cf3fe7ee7f08131f7705cf9190e4e8d9733bb9c88174726bd6763102215a` |
 | runs/creation/report.json | `8ec864fe7b4d21b701bebab44cf040c40268a66699dfd752cce110d9a18b292e` |
 | runs/day1-save/report.json | `0c3c407011c3636e65e89c781a2ecc133a57fcf37853154725b65dfa34b1d5e9` |
 | runs/day1-save-cost/report.json | `f42cf628c713968d8aa4c932c4c2dd7055f84c30b1a394e8b258cf9848d00215` |
 | runs/day1-save-cost/save-profile/00145-Default.json | `5e327cda90ad001dcee7cf158c752874f1740845c35e2d5e2f355b63008abbeb` |
 | runs/day1-save-cost/save-profile/00158-MidnightSave.json | `ae87cdcda295f3dd81fad1a33edbe9a98f564e36921dc3bfca277b0ab14a5a2c` |
 | runs/day1-save-cost/save-profile/00171-RecoverSave.json | `98cdb0c4280be739ae2f245840244a779ac6c54cae039cf3298c1172a31178fe` |
+| runs/day3-save-cost/save-profile/18144-Default.json | `37860f8ee81548a2e265d51b7d651b710fa92f8fe2f8bf75cef25e5bfc4548a7` |
+| runs/day3-save-cost/save-profile/18157-MidnightSave.json | `3d91b34c64e222d53d2e8c3abf7a57abf563abdb66020b382a2c46e1620bc960` |
+| runs/day3-save-cost/save-profile/18170-RecoverSave.json | `799f88d91b73bc7e7400d2c424ae3fb2a36b6d4cf04cbfefa88889be323ddf95` |
 
 First save-segment cleanup: producer and profiling processes stopped normally; each flow restored mods/config/save-mode/preferences, removed only its own scratch/temporary copies, verified original fixture hashes and released the lease. This run’s original 301-entry backup remains authoritative for final restoration. Later segments and final whole-backup verification pending.
 
