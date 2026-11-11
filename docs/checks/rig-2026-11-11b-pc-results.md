@@ -6,7 +6,7 @@ Role `rig_test`, HomePCHartwieg, Windows background agent1. Candidate `113a5e32d
 
 [Combined checklist](rig-2026-11-06-checklist.md). [Previous PC results (#209)](rig-2026-11-11-pc-results.md). The checklist is a history link. Historical slice definitions were read at `docs-history-2026-11-10`; current fix/F8bg/F8h definitions were read at the candidate. X3-1 retains the fresh schema-one row counted in #209.
 
-`<stage>` = `C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-11b-pc`; `<profile>` = `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests`. Large logs, extraction/expanded payloads, raw replies, saves and binaries remain outside Git. Earlier stages/worktrees and the rig checkout were read only.
+`<stage>` = `C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-11b-pc`; `<profile>` = the isolated `Big Ambitions Agent Tests` game profile under the rig user's `AppData/LocalLow/Hovgaard Games`; `<save-dir>` = its per-account save directory (identifier redacted). Large logs, extraction/expanded payloads, raw replies, saves and binaries remain outside Git. Earlier stages/worktrees and the rig checkout were read only.
 
 ## Build and rig
 
@@ -102,12 +102,12 @@ All six saves belong to this run's one fresh native FT character, created at the
 
 | Name | Path | SHA-256 |
 |---|---|---|
-| `FT E5b PC 11 Nov b 113a5e32 Ready` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\HzeC2ec54UuZDSJce9cxuA==\FT E5b PC 11 Nov b 113a5e32 Ready.hsg` | `cc473dd9d7b4127227c2d9e21f6b67fadfd83d2a6731debff4df4a3be93224ce` |
-| `FT E5b PC 11 Nov b 113a5e32` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\HzeC2ec54UuZDSJce9cxuA==\FT E5b PC 11 Nov b 113a5e32.hsg` | `8c8c3e947f74de64f0c078c0f7c1e37336b1dbf57d77d87872d89f80db2ba95a` |
-| `FT PC 11 Nov b positive2 H1 0900` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\HzeC2ec54UuZDSJce9cxuA==\FT PC 11 Nov b positive2 H1 0900.hsg` | `112ac51e20fafc5b9c7c9d5fe73fde23658920bdcba1f061e0efb037c0881b22` |
-| `FT PC 11 Nov b positive2 H1 Reload` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\HzeC2ec54UuZDSJce9cxuA==\FT PC 11 Nov b positive2 H1 Reload.hsg` | `2f89f9a8d8a464986b31b933403d17793b021d87695d4d3e4787d9bf61d2bb5b` |
-| `FT PC 11 Nov b S1 Reload` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\HzeC2ec54UuZDSJce9cxuA==\FT PC 11 Nov b S1 Reload.hsg` | `c6135660b456e64395aae4fe899181b48cb05a0a9d2177a9d2e987f3c9381bbb` |
-| `FT PC 11 Nov b S1` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\HzeC2ec54UuZDSJce9cxuA==\FT PC 11 Nov b S1.hsg` | `315ee67f982859132268435a1f535d493bfb21f01fdca1337f1b66f3ec1e87e0` |
+| `FT E5b PC 11 Nov b 113a5e32 Ready` | `<profile>/SaveGames/Big Ambitions/<save-dir>/FT E5b PC 11 Nov b 113a5e32 Ready.hsg` | `cc473dd9d7b4127227c2d9e21f6b67fadfd83d2a6731debff4df4a3be93224ce` |
+| `FT E5b PC 11 Nov b 113a5e32` | `<profile>/SaveGames/Big Ambitions/<save-dir>/FT E5b PC 11 Nov b 113a5e32.hsg` | `8c8c3e947f74de64f0c078c0f7c1e37336b1dbf57d77d87872d89f80db2ba95a` |
+| `FT PC 11 Nov b positive2 H1 0900` | `<profile>/SaveGames/Big Ambitions/<save-dir>/FT PC 11 Nov b positive2 H1 0900.hsg` | `112ac51e20fafc5b9c7c9d5fe73fde23658920bdcba1f061e0efb037c0881b22` |
+| `FT PC 11 Nov b positive2 H1 Reload` | `<profile>/SaveGames/Big Ambitions/<save-dir>/FT PC 11 Nov b positive2 H1 Reload.hsg` | `2f89f9a8d8a464986b31b933403d17793b021d87695d4d3e4787d9bf61d2bb5b` |
+| `FT PC 11 Nov b S1 Reload` | `<profile>/SaveGames/Big Ambitions/<save-dir>/FT PC 11 Nov b S1 Reload.hsg` | `c6135660b456e64395aae4fe899181b48cb05a0a9d2177a9d2e987f3c9381bbb` |
+| `FT PC 11 Nov b S1` | `<profile>/SaveGames/Big Ambitions/<save-dir>/FT PC 11 Nov b S1.hsg` | `315ee67f982859132268435a1f535d493bfb21f01fdca1337f1b66f3ec1e87e0` |
 
 ## Per-check results grouped by slice
 
