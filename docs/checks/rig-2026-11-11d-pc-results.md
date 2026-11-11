@@ -37,7 +37,9 @@ Picked **24 Fourth Avenue**, business id `ba:street_fourthavenue#24`, neighborho
 
 ## F8h first sale / check 1 shop assertions
 
-Pending the next segment. No sale verdict inferred from a successful fixture build.
+**PARTIAL, first attempt retained.** Normal reload reported checkout active, but the built shop?s boundary image was Refused / MissingDefinition. The natural window recorded zero purchases, no dropped entries and no hook faults; native attempted croissant orders were unavailable, while native stock still read 100 croissants / 300 bags. No PC sale receipt was written. This is no first-sale proof.
+
+The stage waiter accepted an old paused-health snapshot after requesting next-day 10:00, so that attempted setup was not the specified window. The actual retained window loaded day 1 near 08:00 and ran to 12:00. The corrected stage waiter will require exact target day/time. Raw evidence: `<stage>/runs/firstsale`, including the complete shop log and boundary diagnostics. No production change or timing verdict.
 
 ## Findings
 
