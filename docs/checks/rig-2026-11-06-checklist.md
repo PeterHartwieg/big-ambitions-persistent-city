@@ -5,3 +5,5 @@ The original checklist is retained in [docs history](https://github.com/PeterHar
 10 November Mac batch: [results](rig-2026-11-10-mac-results.md), [F8h check 1 input](f8h-check1-modpack-owners-mac.json).
 
 10 November PC batch: [intermediate results](rig-2026-11-10-results.md), [F8h check 1 owner inventory](f8h-check1-modpack-owners-pc.json) verified by rig at `b3e5a910`; post-9-Nov checks tracked in the report.
+
+11 November 2026, Mac at `eaac521c`: [reload accounting-epoch fix and re-run rows](rig-2026-11-11-mac-results.md) — 2 passed / 6 partial / 0 failed / 150 not run; isolated restore/hash check and lease release complete.

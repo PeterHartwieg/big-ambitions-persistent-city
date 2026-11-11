@@ -40,3 +40,5 @@ work, stops as before.
    refusal.
 
 Any check may run on the Mac or on Windows.
+
+11 November 2026, Mac at `eaac521c`: check 1 PARTIAL (reload assertions pass; autosave-off setup unverified), check 2 PASS, checks 3–4 NOT RUN (RIG-RLOTOGGLE). Creation-save-init check 2 PASS. [Results](rig-2026-11-11-mac-results.md); [compact result](fix-reload-accounting-epoch-mac.json).

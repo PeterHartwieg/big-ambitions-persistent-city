@@ -26,7 +26,7 @@
   },
   "fix_creation_save_init_check2": "PASS",
   "autosave": "Original native keys absent; isolated preference set to 0, UI clamps to 1 minute. Recovery saves occurred. Native autosave-off not established. No measured performance windows. Original plist restored byte-for-byte.",
-  "evidence_stage": "/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-11-mac",
+  "evidence_stage": "~/HART-Builds/persistent-city-rig-2026-11-11-mac",
   "check2": {
     "result": "PASS",
     "from": "08:01",
