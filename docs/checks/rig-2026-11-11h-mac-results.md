@@ -144,7 +144,7 @@ Only this run's new character directory was used: `<isolated-profile>/SaveGames/
 
 ## Restore and delivery
 
-Normal stop of only this run's agentmac player. All 260 protected original hashes match, isolated ModsLocal/config/preferences/plist/receipt restored; original autosave behavior restored by stopping the process-only guard and restoring the plist. Disposable FT saves retained and hash-verified. Lease free, pending=0; owned game/helper processes gone. No system setting change or rollback revision used. Official rig checkout and main mod working tree clean. Evidence branch pushed with a normal push; docs-only PR opened without reviewers and left unmerged. Build worktree removed and evidence worktree detached after PR creation. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-11h-mac.md`.
+Normal stop of only this run's agentmac player. All 260 protected original hashes match, isolated ModsLocal/config/preferences/plist/receipt restored; original autosave behavior restored by stopping the process-only guard and restoring the plist. Disposable FT saves retained and hash-verified. Lease free, pending=0; owned game/helper processes gone. No system setting change or rollback revision used. Official rig checkout and main mod working tree clean. Evidence branch pushed with a normal push; docs-only PR opened without reviewers and left unmerged. Build worktree removed and evidence worktree detached after PR creation. Report copy: `.agent-logs/persistent-city-rig-2026-11-11h-mac.md`.
 
 ## Per-check results
 
