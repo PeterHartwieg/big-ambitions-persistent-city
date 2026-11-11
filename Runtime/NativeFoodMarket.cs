@@ -120,7 +120,7 @@ namespace PersistentCity.Runtime
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
-            checkout = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out process);
+            checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(), out process);
             if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
             contractEconomy = economy;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();

@@ -117,10 +117,11 @@ namespace PersistentCity.Runtime
 
         private static DonorReadReason DonorReason(RloReadResult read) => read.Reason;
 
-        /// <summary>F8e: the once-per-load conflict line. A failed scan is reported and changes nothing.</summary>
+        /// <summary>F8e: the once-per-load conflict line. F8h: it reuses the scan this load's checkout decision used (taken
+        /// at the market's construction), so a load scans once. A failed scan is reported and changes nothing.</summary>
         private static string HookConflictActivationLine()
         {
-            try { return HookConflicts.Scan().ActivationLine(); }
+            try { return (HookConflicts.TakeLoadScan() ?? HookConflicts.Scan()).ActivationLine(); }
             catch (Exception error) { return "Persistent City hook conflict scan unavailable (report only): " + error.Message; }
         }
 

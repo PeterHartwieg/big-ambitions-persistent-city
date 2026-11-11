@@ -39,6 +39,25 @@ namespace PersistentCity.Runtime
         /// <summary>food.checkout.shop: IsPriceAcceptable, ProcessCustomer and the three supply members. Checked once per process.</summary>
         internal static Result Checkout => checkout ??= Check(NativeFoodContractSpec.Checkout(Types), "checkout");
 
+        /// <summary>F8h (D4): the checkout result one city load uses, decided once at the market's construction: the member
+        /// contract (<see cref="Checkout"/>) and then the conflict policy on this load's hook scan
+        /// (HookConflicts.CheckoutPolicy). A foreign may-skip, rewrites or swallows owner on an H1 customer target or on H2
+        /// refuses food.checkout.shop with the owner named, through the same checkout-off mode as a changed member. A
+        /// failed scan refuses too: the owners could not be checked.</summary>
+        internal static Result CheckoutForLoad()
+        {
+            var members = Checkout;
+            string? conflict;
+            try { conflict = HookConflicts.ScanForLoad().CheckoutRefusal; }
+            catch (Exception error) { conflict = "hook conflict scan failed: " + error.Message; }
+            return WithConflict(members, conflict);
+        }
+
+        /// <summary>A member refusal comes first; a conflict refusal keeps the resolved members (StartCheckout drops
+        /// ProcessCustomer while off, so nothing can invoke it).</summary>
+        internal static Result WithConflict(Result members, string? conflict)
+            => members.Refusal != null || conflict == null ? members : new Result(conflict, members.Members);
+
         /// <summary>The refusal of a contract already checked; null while unchecked or verified. Diagnostics only.</summary>
         internal static string? AuthorityRefusal => authority?.Refusal;
 

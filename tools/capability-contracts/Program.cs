@@ -9,7 +9,7 @@ using PersistentCity.Core;
 using PersistentCity.Persistence;
 using PersistentCity.Runtime;
 
-/// <summary>F8c/F8e stub harness (docs/plans/f8-capability-boundaries.md D8). Every arm prints one line; any failed check
+/// <summary>F8c/F8e/F8h stub harness (docs/plans/f8-capability-boundaries.md D8). Every arm prints one line; any failed check
 /// throws. Synthetic native surfaces with the pinned Harmony 2.4.2; this is not game execution.</summary>
 internal static partial class Program
 {
@@ -37,6 +37,7 @@ internal static partial class Program
         CheckoutStartup();
         ContractCheckTime();
         HookConflictArms();
+        ConflictRefusalArms();
         Console.WriteLine(checks + " capability-contract checks passed (synthetic native surfaces and Harmony 2.4.2, not game execution).");
         return 0;
     }
@@ -228,4 +229,5 @@ internal static partial class Program
     }
 
     static partial void HookConflictArms();
+    static partial void ConflictRefusalArms();
 }

@@ -142,9 +142,13 @@ namespace PersistentCity.Tests
         /// <summary>Reload in the middle of an owned hour with one paid and one uncertain receipt, checkout contract refused
         /// at construction. The market observes every shop ineligible (SupportedMenu false), which is all checkout-off adds;
         /// the rest is the existing release path. Red on today's code: a changed ProcessCustomer was found by name, a
-        /// receipt was begun and the invoke failed, leaving an uncertain receipt (tools/capability-contracts, arm legacy).</summary>
-        [Fact]
-        public void CheckoutOffWithdrawsAnOwnedShopAtTheNextBoundaryAndKeepsItsReceipts()
+        /// receipt was begun and the invoke failed, leaving an uncertain receipt (tools/capability-contracts, arm legacy).
+        /// F8h: a foreign-owner refusal (D4 policy) takes exactly the same path; red on the base code, where a foreign prefix
+        /// on ProcessCustomer left checkout on (tools/capability-contracts, arm ConflictRefusalArms).</summary>
+        [Theory]
+        [InlineData("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed: no method with this parameter list")]
+        [InlineData("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)")]
+        public void CheckoutOffWithdrawsAnOwnedShopAtTheNextBoundaryAndKeepsItsReceipts(string refusal)
         {
             const long Loaded = 4 * 24 + 12; // the owned lunch hour the save was made in
             var saved = new FoodAuthority { PlaceId = Place, Signature = Signature, Desired = true, RequestedHour = 50, FromHour = 51 };
@@ -159,7 +163,7 @@ namespace PersistentCity.Tests
             Assert.True(row.CanServe && row.OwnsHour(Loaded));
             // The market's own gate (FoodCheckoutMode, which NativeFoodMarket.SupportedMenu and CanServe apply) with the
             // refusal checkout construction found; the shop's menu checks would pass.
-            var mode = new FoodCheckoutMode("RetailBusinessSimulator.ProcessCustomer(CustomerEntry) changed: no method with this parameter list");
+            var mode = new FoodCheckoutMode(refusal);
             Assert.False(mode.Serves); Assert.False(mode.InstallsPricePrefix);
             Assert.StartsWith("Excluded: food checkout contract off: ", mode.ScopeReason);
             Assert.True(new FoodCheckoutMode(null).Observe(true)); // control: a verified contract keeps the shop eligible
@@ -383,7 +387,7 @@ namespace PersistentCity.Tests
         {
             string market = Source("Runtime/NativeFoodMarket.cs");
             string ctor = Body(market, "public NativeFoodMarket(FoodCommerceState state");
-            int decided = ctor.IndexOf("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.Checkout, out process);", StringComparison.Ordinal);
+            int decided = ctor.IndexOf("checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(), out process);", StringComparison.Ordinal);
             Assert.True(decided > 0 && decided < ctor.IndexOf("RefreshKnownOwnership();", StringComparison.Ordinal));
             // tools/capability-contracts executes StartCheckout and InstallPricePrefix with the pinned Harmony (arm CheckoutStartup).
             Assert.Contains("NativeFoodContract.InstallPricePrefix(checkout, () =>\n                    patches.Patch(AccessTools.Method(typeof(CitizenData), \"IsPriceAcceptable\"", ctor);
