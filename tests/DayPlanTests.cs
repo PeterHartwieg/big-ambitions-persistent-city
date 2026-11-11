@@ -108,9 +108,11 @@ public sealed class DayPlanTests
         var person = changed.Citizens[0];
         Assert.Equal(today, Definitions(person.Plan!));
         Assert.Contains(person.RecentVisits, v => v.Activity == Activity.Work && v.AtMinute < Monday + 700);
+        // Tuesday's shift was drawn with Monday's plan, before the change, and stays; Wednesday's is drawn with Tuesday's.
         city.AdvanceTo(2 * Monday + 800);
         var tomorrow = Item(person.Plan!, PlanItemKind.Work).Item;
-        Assert.Equal((2 * Monday + 700, 2 * Monday + 1180), (tomorrow.EarliestStart, tomorrow.EndsAt));
+        Assert.Equal(2 * Monday + 510 + Shift, tomorrow.EarliestStart);
+        Assert.Equal((3 * Monday + 700, 3 * Monday + 1180), (person.Plan!.NextWork!.EarliestStart, person.Plan.NextWork.EndsAt));
     }
 
     [Fact]
@@ -301,6 +303,190 @@ public sealed class DayPlanTests
         // The end is written only when it differs from the latest start.
         Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p.Replace(item, item + "," + fields[3]))).Status);
         Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read(Edit(p => p + ";")).Status);
+    }
+
+    // ---- Review round 1 ----
+
+    /// <summary>Sol-r1-1, Astra-r1-1: a fitted shift never starts before its plan's 04:00 boundary or after midnight, so the
+    /// plan of its own day always holds it; hours that only allow such a shift keep the template.</summary>
+    [Theory]
+    [InlineData(Persona.Commuter, 120, 600)]
+    [InlineData(Persona.Commuter, 1320, 600)]
+    [InlineData(Persona.NightOwl, 1320, 600)]
+    [InlineData(Persona.NightOwl, 1080, 120)]
+    [InlineData(Persona.Parent, 0, 480)]
+    [InlineData(Persona.Commuter, 240, 720)]
+    public void AFittedShiftStaysInsideItsPlanDay(Persona persona, int open, int close)
+    {
+        var city = City(persona, work: true);
+        var work = city.Places.Single(p => p.Id == "work"); work.OpenMinute = open; work.CloseMinute = close;
+        var index = Index(city);
+        for (int day = 1; day <= 4; day++)
+        {
+            var shift = DailyRoutine.WorkOnDay(city.Citizens[0], Seed, day * 1440.0, index)!.Value;
+            Assert.InRange(shift.StartsAt, day * 1440.0 + DayPlanner.DayBoundaryMinute, (day + 1) * 1440.0 - 480);
+            Assert.Equal(480, shift.EndsAt - shift.StartsAt);
+        }
+    }
+
+    /// <summary>Sol-r1-1: a shift at the 04:00 boundary is drawn as the previous plan's saved next shift before it begins.
+    /// A reload at 03:00 that changes the hours neither moves it nor adds a second visit; the change reaches the next plan
+    /// that draws a shift.</summary>
+    [Fact]
+    public void AShiftAtTheDayBoundaryIsSavedBeforeItBeginsAndNotRepeatedAfterReloadWithNewHours()
+    {
+        var city = City(Persona.Commuter, work: true);
+        var work = city.Places.Single(p => p.Id == "work"); work.OpenMinute = 240; work.CloseMinute = 720;
+        var engine = new CitySimulator(city, new Routes());
+        engine.AdvanceTo(Monday + 180);
+        var saved = city.Citizens[0].Plan!;
+        Assert.Equal(0, saved.Day);
+        Assert.Equal(Monday + 240, saved.NextWork!.EarliestStart);
+        var read = SaveWire.Read(SaveCodec.Write(city)).State!;
+        var place = read.Places.Single(p => p.Id == "work"); place.OpenMinute = 480; place.CloseMinute = 960;
+        var resumed = new CitySimulator(read, new Routes());
+        resumed.AdvanceTo(2 * Monday - 1);
+        var person = read.Citizens[0];
+        var visits = person.RecentVisits.Where(v => v.Activity == Activity.Work && v.AtMinute >= Monday && v.AtMinute < 2 * Monday).ToList();
+        // The saved 04:00 shift stands: the resident waits for the new opening, then goes once.
+        Assert.Single(visits);
+        Assert.Equal(Monday + 480 + 12, visits[0].AtMinute);
+        var (at, item) = Item(person.Plan!, PlanItemKind.Work);
+        Assert.Equal((Monday + 240, PlanItemState.Done), (item.EarliestStart, person.Plan!.StateOf(at)));
+        // Tuesday was drawn with Monday's plan, after the change.
+        Assert.Equal(2 * Monday + 480, person.Plan.NextWork!.EarliestStart);
+    }
+
+    /// <summary>Sol-r1-2: a shift fitted into the afternoon leaves out the shop visit it would overlap, so the resident is
+    /// at work on time.</summary>
+    [Fact]
+    public void AnOptionalItemThatWouldOverlapAFittedShiftIsLeftOut()
+    {
+        var city = City(Persona.Foodie, work: true, shop: true);
+        var work = city.Places.Single(p => p.Id == "work"); work.OpenMinute = 720; work.CloseMinute = 1230;
+        var index = Index(city);
+        var plan = DayPlanner.Generate(city.Citizens[0], Seed, 1, city.Places, index, meals: false);
+        var shift = Item(plan, PlanItemKind.Work).Item;
+        Assert.Equal(Monday + 720, shift.EarliestStart);
+        Assert.DoesNotContain(plan.Items, i => i.Kind == PlanItemKind.Need);
+        Assert.All(plan.Items.Where(i => i.Priority == PlanPriority.Optional),
+            i => Assert.True(i.EndsAt <= shift.EarliestStart - DayPlanner.WorkTravelAllowance || i.EarliestStart >= shift.EndsAt));
+        // Lookahead (no plan yet) agrees with the plan.
+        Assert.Equal(Activity.Work, DailyRoutine.At(city.Citizens[0], Seed, Monday + 1050 + Shift + 1, index).Activity);
+        new CitySimulator(city, new Routes()).AdvanceTo(2 * Monday - 1);
+        var person = city.Citizens[0];
+        Assert.Equal(Monday + 720 + 12, person.RecentVisits.Single(v => v.Activity == Activity.Work).AtMinute);
+        Assert.DoesNotContain(person.RecentVisits, v => v.Activity == Activity.Shop && v.AtMinute < 2 * Monday);
+    }
+
+    /// <summary>Astra-r1-4: a work route that never opens is missed for want of a route, not late.</summary>
+    [Fact]
+    public void AWorkRouteThatNeverOpensIsMissedNoRoute()
+    {
+        var city = City(Persona.Commuter, work: true);
+        new CitySimulator(city, new Routes { Reachable = false }).AdvanceTo(2 * Monday - 1);
+        var plan = city.Citizens[0].Plan!;
+        var (at, _) = Item(plan, PlanItemKind.Work);
+        Assert.Equal((PlanItemState.Missed, PlanMissCause.NoRoute), (plan.StateOf(at), plan.CauseOf(at)));
+    }
+
+    /// <summary>Opus-r1-5: a job found in the small hours does not add the previous day's ended shift to its plan.</summary>
+    [Fact]
+    public void AJobChangeAfterMidnightAddsNoEndedShift()
+    {
+        var city = City(Persona.Commuter, work: true);
+        var person = city.Citizens[0];
+        var index = Index(city);
+        person.Plan = DayPlanner.Generate(person, Seed, 1, city.Places, index, meals: false);
+        person.DayPlaceId = "work2";
+        DayPlanExecutor.Ensure(person, Seed, 2 * Monday + 60, city.Places, index, meals: false);
+        var plan = person.Plan!;
+        Assert.Equal(1, plan.Day);
+        Assert.DoesNotContain(plan.Items, i => i.Kind == PlanItemKind.Work && i.VenueId == "work2");
+        Assert.Equal("work2", plan.NextWork!.VenueId);
+        Assert.Equal(2 * Monday + 510 + Shift, DailyRoutine.WorkOnDay(person, Seed, 2 * Monday + 60, index)!.Value.StartsAt);
+    }
+
+    /// <summary>Sol-r1-3: the meal items follow the food record. With no shops every meal ends at home (chose another
+    /// option), so by midnight none is still pending; a reload mid-day continues to the same states and bytes.</summary>
+    [Fact]
+    public void MealItemsFollowTheFoodRecordAndContinueAcrossReload()
+    {
+        var reference = AttendanceWageTests.Fresh(42, count: 6);
+        AttendanceWageTests.Advance(reference, Monday + 700);
+        var reloaded = new CitySimulator(SaveWire.Read(SaveCodec.Write(reference.State)).State!, new AttendanceWageTests.Routes());
+        reloaded.AttachFoodMarket(new AttendanceWageTests.Market());
+        AttendanceWageTests.Advance(reference, 2 * Monday - 1); AttendanceWageTests.Advance(reloaded, 2 * Monday - 1);
+        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(reloaded.State));
+        foreach (var person in reference.State.Citizens)
+        {
+            var plan = person.Plan!;
+            var record = reference.State.Food!.Residents.Single(r => r.ResidentId == person.Identity.Id);
+            for (int i = 0; i < plan.Items.Count; i++)
+            {
+                if (plan.Items[i].Kind != PlanItemKind.Meal) continue;
+                Assert.True(DayPlan.Terminal(plan.StateOf(i)), person.Identity.Id + " " + plan.Items[i].Meal + " " + plan.StateOf(i));
+                var outcome = record.Today?.Day == plan.Day ? record.Today.Find(plan.Items[i].Meal) : null;
+                if (outcome?.Status == MealOutcomeStatus.ChoseAlternative) Assert.Equal(PlanItemState.Cancelled, plan.StateOf(i));
+                if (outcome?.Status == MealOutcomeStatus.Bought) Assert.Equal(PlanItemState.Done, plan.StateOf(i));
+                if (outcome?.Status == MealOutcomeStatus.Skipped) Assert.Equal(PlanItemState.Missed, plan.StateOf(i));
+            }
+        }
+    }
+
+    [Fact]
+    public void MealStatesMapEveryFoodOutcome()
+    {
+        var city = City(Persona.Commuter, work: true);
+        var person = city.Citizens[0];
+        person.Plan = DayPlanner.Generate(person, Seed, 1, city.Places, Index(city), meals: true);
+        var record = new ResidentMeal { ResidentId = Id, Day = 1, Kind = MealKind.Dinner, Status = MealStatus.Travelling,
+            Today = new ResidentFoodToday { Day = 1 } };
+        record.Today.Meals.Add(new MealOutcomeRecord { Kind = MealKind.Breakfast, Status = MealOutcomeStatus.Bought });
+        record.Today.Meals.Add(new MealOutcomeRecord { Kind = MealKind.Lunch, Status = MealOutcomeStatus.Skipped, Reason = MealReasonCode.ShopClosed });
+        DayPlanExecutor.SyncMeals(person, record);
+        PlanItemState State(MealKind kind, out PlanMissCause cause)
+        {
+            var plan = person.Plan!;
+            int i = Enumerable.Range(0, plan.Items.Count).Single(x => plan.Items[x].Meal == kind);
+            cause = plan.CauseOf(i); return plan.StateOf(i);
+        }
+        Assert.Equal(PlanItemState.Done, State(MealKind.Breakfast, out _));
+        Assert.Equal((PlanItemState.Missed, PlanMissCause.Closed), (State(MealKind.Lunch, out var lunch), lunch));
+        Assert.Equal(PlanItemState.Travelling, State(MealKind.Dinner, out _));
+        record.Status = MealStatus.Serving; DayPlanExecutor.SyncMeals(person, record);
+        Assert.Equal(PlanItemState.Active, State(MealKind.Dinner, out _));
+        // A declined dinner (another option chosen) cancels the item; the record moving on to tomorrow leaves it so.
+        record.Today.Meals.Add(new MealOutcomeRecord { Kind = MealKind.Dinner, Status = MealOutcomeStatus.ChoseAlternative });
+        record.Day = 2; record.Kind = MealKind.Breakfast; record.Status = MealStatus.Pending;
+        DayPlanExecutor.SyncMeals(person, record);
+        Assert.Equal(PlanItemState.Cancelled, State(MealKind.Dinner, out _));
+    }
+
+    /// <summary>Opus-r1-1: with wages on, hours that change after the wage queue read the next shift and before the day's
+    /// plan is drawn move the wage window with the plan, so the whole fitted shift is paid; a reload between the plan
+    /// and the shift continues to the same bytes.</summary>
+    [Fact]
+    public void TheWageWindowFollowsThePlanWhenHoursChangeBeforeTheDayIsDrawn()
+    {
+        CitySimulator Build()
+        {
+            var city = AttendanceWageTests.Fresh(42, count: 3);
+            var work = city.State.Places.Single(p => p.Id == "work"); work.OpenMinute = 600; work.CloseMinute = 1200;
+            return city;
+        }
+        var reference = Build();
+        AttendanceWageTests.Advance(reference, Monday + 300);
+        var reloaded = new CitySimulator(SaveWire.Read(SaveCodec.Write(reference.State)).State!, new AttendanceWageTests.Routes());
+        reloaded.AttachFoodMarket(new AttendanceWageTests.Market());
+        AttendanceWageTests.Advance(reference, 3 * Monday); AttendanceWageTests.Advance(reloaded, 3 * Monday);
+        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(reloaded.State));
+        foreach (var person in reference.State.Citizens)
+        {
+            Assert.Equal(0, EmploymentWages.RecentMisses(person.Accrual, 2));
+            Assert.InRange(person.Accrual.AttendedMinutes, 470, 480);
+            Assert.All(person.RecentVisits.Where(v => v.Activity == Activity.Work), v => Assert.InRange(v.AtMinute % 1440, 600, 602));
+        }
     }
 
     private static string WithoutPlans(string payload) => System.Text.RegularExpressions.Regex.Replace(payload, "\"Plan\":(null|\"[^\"]*\"),", "");

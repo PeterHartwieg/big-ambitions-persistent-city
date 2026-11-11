@@ -601,6 +601,7 @@ namespace PersistentCity.Core
             // its sort key just changed inside the set.
             if (!due.Add(item)) throw new InvalidOperationException("A completed event was already queued.");
             food?.ObserveStop(live);
+            food?.SyncPlanMeals(live);
             ScheduleOptionalStop(live, arrivalRoute);
             FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);

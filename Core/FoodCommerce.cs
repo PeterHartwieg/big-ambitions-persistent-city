@@ -379,7 +379,7 @@ namespace PersistentCity.Core
             }
             if (StepBudget()) return;
             var meal = due.Min!; due.Remove(meal);
-            try { StepMeal(meal); }
+            try { StepMeal(meal); DayPlanExecutor.SyncMeals(city.FindCitizen(meal.HostId), meal); }
             finally { due.Add(meal); }
         }
         private void StepMeal(ResidentMeal meal)

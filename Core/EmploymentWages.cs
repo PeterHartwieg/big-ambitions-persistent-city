@@ -53,6 +53,8 @@ namespace PersistentCity.Core
             if (prepared.PlaceId == person.DayPlaceId && (int)(prepared.WorkStartsAt / 1440) == person.Accrual.Day
                 && prepared.WorkEndsAt - prepared.WorkStartsAt == 480)
                 return new WorkWindow(person.DayPlaceId, Activity.Work, prepared.WorkStartsAt, prepared.WorkEndsAt);
+            // GR-2: otherwise the saved plan's shift for the accrual day (its work item or its saved next shift), which is
+            // also the window the wage queue began the shift with: a newly drawn plan schedules the entry again before Begin.
             return DailyRoutine.WorkOnDay(person, seed, person.Accrual.Day * 1440.0, places);
         }
 

@@ -6,8 +6,8 @@
   "fixtures": [
     {
       "file": "full.json",
-      "sha256": "527084838d999b54e60d33fa378eecbd76e52c183b51889012aeb377e1f54f14",
-      "characters": 232614,
+      "sha256": "de946bd64a9c0dbf99c99d3b9ce934582277c968e62137f47d0a6602bf7da464",
+      "characters": 234584,
       "builder": "ChangeJournalTests.Fixture(5150) (3-shop fresh city after 2,000 minutes, journal and meal-period causes)",
       "recipe": "SaveCodec.Write(city) (fresh city in the single-pass writer, no migration)",
       "kind": "synthetic offline payload from test builders; not a native save"

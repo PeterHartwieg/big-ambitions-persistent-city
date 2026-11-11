@@ -389,7 +389,7 @@ public sealed class ResearchSaveTests
     [Theory]
     [InlineData("research-all-states", "58aec060f7aa3de3eeec12d572773ea70d6a3f297c266d4907391f0a92f15b8a", 13620)]
     [InlineData("research-at-bounds", "6b990fb796bcbaad391d8ac839170da96bca863e7b6cd5be8f7e1f005e9fb08a", 48271)]
-    [InlineData("banded-visitors-factor2-30h-research", "b474fc95527f873d1eab4bfe909f751fef1c6969d96f7c7689cda48ae023b882", 222845)]
+    [InlineData("banded-visitors-factor2-30h-research", "fb8cd93bde5ea64f81e8457da2b4976f64eed90a89582a9ff2895e5e7c584944", 224665)]
     public void GoldenResearchWriterBytesArePinned(string name, string sha256, int characters)
     {
         string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());

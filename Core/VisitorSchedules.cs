@@ -328,7 +328,8 @@ namespace PersistentCity.Core
                     .Append(" place=").Append(meal.PlaceId).Append(" purchases=").Append(meal.Purchases)
                     .Append(meal.Budget == null ? "" : " income=" + meal.Budget.IncomeSource + " balance_units=" + meal.Budget.Balance.Units.ToString(CultureInfo.InvariantCulture));
             var accrual = person.Accrual;
-            var shift = EmploymentWages.ActiveWindow(person, city.Seed);
+            // Diagnostic only: the place index fits an unplanned day's shift to its workplace's hours, as the wage path does.
+            var shift = EmploymentWages.ActiveWindow(person, city.Seed, System.Linq.Enumerable.ToDictionary(city.Places, p => p.Id, StringComparer.Ordinal));
             int attended = accrual.AttendedMinutes;
             if (shift.HasValue && EmploymentWages.Active(accrual) && accrual.Shift != EmploymentWages.Closed)
                 attended += EmploymentWages.CurrentMinutes(person, shift.Value, city.Minute);

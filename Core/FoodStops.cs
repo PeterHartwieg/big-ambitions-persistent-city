@@ -14,6 +14,12 @@ namespace PersistentCity.Core
         // An observed activity transition wakes only this resident. No population scan or
         // per-frame market query. A declined or failed earlier offer does not consume the
         // prepared-meal intention; a later, better-context offer may still satisfy it.
+        /// <summary>GR-2: after a person's event, the meal items of its plan follow its food record again.</summary>
+        internal void SyncPlanMeals(CitizenState person)
+        {
+            if (records.TryGetValue(person.Identity.Id, out var record)) DayPlanExecutor.SyncMeals(person, record);
+        }
+
         internal void ObserveStop(CitizenState person)
         {
             CaptureRoutineStop(person);

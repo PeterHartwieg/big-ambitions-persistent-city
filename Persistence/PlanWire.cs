@@ -12,7 +12,8 @@ namespace PersistentCity.Persistence
     /// the person's first plan. The schema stays 1; a city written before day plans has no "Plan" field and is refused as an
     /// older development city and kept unchanged.
     ///
-    /// "1|day|seed|shift|days off|workplace|items", items joined by ';' (empty for none). Item:
+    /// "1|day|seed|shift|days off|workplace|items|next shift", items joined by ';' (empty for none), next shift one work
+    /// item with state and cause 0, or "-" for none. Item:
     /// "KAPMSC,venue,earliest,latest[,ends]": kind, activity, priority, meal, state and cause as one digit each; venue a place
     /// cell (PlaceCells) or "---"; minutes as invariant round-trip text, refused unless canonical; ends is written only when
     /// it differs from the latest start (today never). Workplace a place cell or "---".
@@ -30,15 +31,43 @@ namespace PersistentCity.Persistence
                 .Append(plan.DaysOff.ToString(CultureInfo.InvariantCulture)).Append('|').Append(Cell(plan.WorkplaceId)).Append('|');
             for (int i = 0; i < plan.Items.Count; i++)
             {
-                var item = plan.Items[i];
                 if (i > 0) text.Append(';');
-                text.Append(Digit((int)item.Kind)).Append(Digit((int)item.Activity)).Append(Digit((int)item.Priority)).Append(Digit((int)item.Meal))
-                    .Append(Digit((int)plan.StateOf(i))).Append(Digit((int)plan.CauseOf(i))).Append(',').Append(Cell(item.VenueId)).Append(',')
-                    .Append(R27(item.EarliestStart)).Append(',').Append(R27(item.LatestStart));
-                if (item.EndsAt != item.LatestStart) text.Append(',').Append(R27(item.EndsAt));
+                ItemText(text, plan.Items[i], plan.StateOf(i), plan.CauseOf(i), Cell);
             }
+            text.Append('|');
+            if (plan.NextWork == null) text.Append('-'); else ItemText(text, plan.NextWork, PlanItemState.Pending, PlanMissCause.None, Cell);
             Require(text.Length <= MaxPlanWire, "Oversized day plan.");
             return text.ToString();
+        }
+
+        private static void ItemText(StringBuilder text, PlanItem item, PlanItemState state, PlanMissCause cause, Func<string, string> cell)
+        {
+            text.Append(Digit((int)item.Kind)).Append(Digit((int)item.Activity)).Append(Digit((int)item.Priority)).Append(Digit((int)item.Meal))
+                .Append(Digit((int)state)).Append(Digit((int)cause)).Append(',').Append(cell(item.VenueId)).Append(',')
+                .Append(R27(item.EarliestStart)).Append(',').Append(R27(item.LatestStart));
+            if (item.EndsAt != item.LatestStart) text.Append(',').Append(R27(item.EndsAt));
+        }
+
+        private static PlanItem ParseItem(string cell, PlaceCells cells, out PlanItemState state, out PlanMissCause cause)
+        {
+            const string error = "Invalid day plan.";
+            var fields = cell.Split(',');
+            Require((fields.Length == 4 || fields.Length == 5) && fields[0].Length == 6, error);
+            var code = fields[0];
+            for (int i = 0; i < 6; i++) Require(code[i] >= '0' && code[i] <= '9', error);
+            var kind = (PlanItemKind)(code[0] - '0'); var activity = (Activity)(code[1] - '0'); var priority = (PlanPriority)(code[2] - '0');
+            var meal = (MealKind)(code[3] - '0'); state = (PlanItemState)(code[4] - '0'); cause = (PlanMissCause)(code[5] - '0');
+            Require(Enum.IsDefined(typeof(PlanItemKind), kind) && Enum.IsDefined(typeof(Activity), activity) && Enum.IsDefined(typeof(PlanPriority), priority)
+                && Enum.IsDefined(typeof(MealKind), meal) && Enum.IsDefined(typeof(PlanItemState), state) && Enum.IsDefined(typeof(PlanMissCause), cause)
+                && (state == PlanItemState.Missed) == (cause != PlanMissCause.None), error);
+            // A meal names its kind and picks its venue when it starts; every other item has a venue and no meal kind.
+            Require(kind == PlanItemKind.Meal ? meal != MealKind.Legacy && activity == Activity.Home && fields[1] == NoPlace27
+                : meal == MealKind.Legacy && activity != Activity.Home && fields[1] != NoPlace27, error);
+            string venue = PlanPlace(fields[1], cells);
+            double earliest = ParseR27(fields[2], "plan item start"), latest = ParseR27(fields[3], "plan item latest start");
+            double ends = fields.Length == 5 ? ParseR27(fields[4], "plan item end") : latest;
+            Require(earliest <= latest && latest <= ends && ends <= MaxMinute && (fields.Length == 4 || ends != latest), error);
+            return new PlanItem(kind, activity, venue, earliest, latest, ends, priority, meal);
         }
 
         /// <summary>The one plan parser: the streaming check (placeholder places) and the reader (the place table).</summary>
@@ -47,7 +76,7 @@ namespace PersistentCity.Persistence
             const string error = "Invalid day plan.";
             Require(text.Length >= 12 && text.Length <= MaxPlanWire && text[0] == '1' && text[1] == '|', error);
             var parts = text.Split('|');
-            Require(parts.Length == 7, error);
+            Require(parts.Length == 8, error);
             int day = (int)PlanNumber(parts[1], int.MaxValue);
             uint seed = (uint)PlanNumber(parts[2], uint.MaxValue);
             Require(parts[3].Length == 1 && parts[3][0] >= '0' && parts[3][0] <= '3', error);
@@ -58,28 +87,19 @@ namespace PersistentCity.Persistence
             if (parts[6].Length != 0)
                 foreach (string cell in parts[6].Split(';'))
                 {
-                    var fields = cell.Split(',');
-                    Require((fields.Length == 4 || fields.Length == 5) && fields[0].Length == 6, error);
-                    var code = fields[0];
-                    for (int i = 0; i < 6; i++) Require(code[i] >= '0' && code[i] <= '9', error);
-                    var kind = (PlanItemKind)(code[0] - '0'); var activity = (Activity)(code[1] - '0'); var priority = (PlanPriority)(code[2] - '0');
-                    var meal = (MealKind)(code[3] - '0'); var state = (PlanItemState)(code[4] - '0'); var cause = (PlanMissCause)(code[5] - '0');
-                    Require(Enum.IsDefined(typeof(PlanItemKind), kind) && Enum.IsDefined(typeof(Activity), activity) && Enum.IsDefined(typeof(PlanPriority), priority)
-                        && Enum.IsDefined(typeof(MealKind), meal) && Enum.IsDefined(typeof(PlanItemState), state) && Enum.IsDefined(typeof(PlanMissCause), cause)
-                        && (state == PlanItemState.Missed) == (cause != PlanMissCause.None), error);
-                    // A meal names its kind and picks its venue when it starts; every other item has a venue and no meal kind.
-                    Require(kind == PlanItemKind.Meal ? meal != MealKind.Legacy && activity == Activity.Home && fields[1] == NoPlace27
-                        : meal == MealKind.Legacy && activity != Activity.Home && fields[1] != NoPlace27, error);
-                    string venue = PlanPlace(fields[1], cells);
-                    double earliest = ParseR27(fields[2], "plan item start"), latest = ParseR27(fields[3], "plan item latest start");
-                    double ends = fields.Length == 5 ? ParseR27(fields[4], "plan item end") : latest;
-                    Require(earliest <= latest && latest <= ends && ends <= MaxMinute && (fields.Length == 4 || ends != latest), error);
-                    items.Add(new PlanItem(kind, activity, venue, earliest, latest, ends, priority, meal));
+                    items.Add(ParseItem(cell, cells, out var state, out var cause));
                     marks.Add((state, cause));
                 }
+            PlanItem? next = null;
+            if (parts[7] != "-")
+            {
+                next = ParseItem(parts[7], cells, out var state, out var cause);
+                Require(next.Kind == PlanItemKind.Work && state == PlanItemState.Pending && cause == PlanMissCause.None
+                    && (int)Math.Floor(next.EarliestStart / 1440) > day, error);
+            }
             Require(items.Count <= DayPlan.MaximumItems, error);
             for (int i = 1; i < items.Count; i++) Require(items[i - 1].EarliestStart <= items[i].EarliestStart, error);
-            var plan = new DayPlan(day, seed, (ShiftType)(parts[3][0] - '0'), daysOff, workplace, items);
+            var plan = new DayPlan(day, seed, (ShiftType)(parts[3][0] - '0'), daysOff, workplace, items, next);
             for (int i = 0; i < marks.Count; i++) plan.Restore(i, marks[i].Item1, marks[i].Item2);
             return plan;
         }
