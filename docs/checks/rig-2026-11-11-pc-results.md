@@ -6,7 +6,7 @@ Role `rig_test`, HomePCHartwieg, Windows background agent1. Candidate `11217a8f6
 
 [Combined checklist](rig-2026-11-06-checklist.md). Its current file is a history link; historical definitions were read from `docs-history-2026-11-10`, current F8bg/F8h/fix definitions from the candidate. Source catalogues and exact check results stay in the stage.
 
-`<stage>` = `C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-11-pc`; `<profile>` = `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests`. Raw logs, requests/replies, fixture files, manifests and stage-only test orchestration are outside Git. The earlier PC and Mac stages/worktrees were read only.
+`<stage>` = `C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-11-pc`; `<profile>` = the isolated `Big Ambitions Agent Tests` profile under the Windows user's `LocalLow/Hovgaard Games` folder. Raw logs, requests/replies, fixture files, manifests and stage-only test orchestration are outside Git. The earlier PC and Mac stages/worktrees were read only.
 
 ## Build and rig
 
@@ -95,15 +95,15 @@ All files below belong to the single new native FT character at this candidate, 
 
 | Name | Path | SHA-256 |
 |---|---|---|
-| `FT E5b PC 11 Nov 11217a8f Ready` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT E5b PC 11 Nov 11217a8f Ready.hsg` | `f1c5c41923e9057bb206fa917dd6b6081b37c82ade4f409af04b6108dbe683a3` |
-| `FT E5b PC 11 Nov 11217a8f` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT E5b PC 11 Nov 11217a8f.hsg` | `e73caffd08acef116ee407355898aaa36852985043793eb9b5d60fd38abd07c8` |
-| `FT PC 11 Nov 0900 Verified Reload` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov 0900 Verified Reload.hsg` | `32937bf59c19d232ed5f9d18f749d01fc077fdc835b98234b7a7ad730740cd6f` |
-| `FT PC 11 Nov 0900 Verified` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov 0900 Verified.hsg` | `f6658607e0ab3c281246247c21eb358134aa3b599a9f06792e4e72883748e457` |
-| `FT PC 11 Nov H1 Reload` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov H1 Reload.hsg` | `33d2c3a6cebdcd07df2c32f559107fc1bfe3839332472715c5174794f597593c` |
-| `FT PC 11 Nov H1` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov H1.hsg` | `782b2396febaef4b7d17f26448d9004391d498c66d50fffa9950c2b63088bf79` |
-| `FT PC 11 Nov Hour 0900` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov Hour 0900.hsg` | `cd788013294516588e40ab5223c1024bcd107ea1796fe9afbb47f2d6f9fbfdb3` |
-| `FT PC 11 Nov Hour Reload` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov Hour Reload.hsg` | `1b7086f1540496c3ce06dca949653b59cc13bf1728d3aeec0225891f527a377e` |
-| `FT PC 11 Nov S1` | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\SaveGames\Big Ambitions\+yVpXTtLw0a80hg25pNjnw==\FT PC 11 Nov S1.hsg` | `42828f3b27dd852e6157c1aacdf27384b9232d18a48a176107b0383eeb9dd5d8` |
+| `FT E5b PC 11 Nov 11217a8f Ready` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT E5b PC 11 Nov 11217a8f Ready.hsg` | `f1c5c41923e9057bb206fa917dd6b6081b37c82ade4f409af04b6108dbe683a3` |
+| `FT E5b PC 11 Nov 11217a8f` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT E5b PC 11 Nov 11217a8f.hsg` | `e73caffd08acef116ee407355898aaa36852985043793eb9b5d60fd38abd07c8` |
+| `FT PC 11 Nov 0900 Verified Reload` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov 0900 Verified Reload.hsg` | `32937bf59c19d232ed5f9d18f749d01fc077fdc835b98234b7a7ad730740cd6f` |
+| `FT PC 11 Nov 0900 Verified` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov 0900 Verified.hsg` | `f6658607e0ab3c281246247c21eb358134aa3b599a9f06792e4e72883748e457` |
+| `FT PC 11 Nov H1 Reload` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov H1 Reload.hsg` | `33d2c3a6cebdcd07df2c32f559107fc1bfe3839332472715c5174794f597593c` |
+| `FT PC 11 Nov H1` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov H1.hsg` | `782b2396febaef4b7d17f26448d9004391d498c66d50fffa9950c2b63088bf79` |
+| `FT PC 11 Nov Hour 0900` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov Hour 0900.hsg` | `cd788013294516588e40ab5223c1024bcd107ea1796fe9afbb47f2d6f9fbfdb3` |
+| `FT PC 11 Nov Hour Reload` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov Hour Reload.hsg` | `1b7086f1540496c3ce06dca949653b59cc13bf1728d3aeec0225891f527a377e` |
+| `FT PC 11 Nov S1` | `<profile>/SaveGames/Big Ambitions/<fixture-character>/FT PC 11 Nov S1.hsg` | `42828f3b27dd852e6157c1aacdf27384b9232d18a48a176107b0383eeb9dd5d8` |
 
 ## Per-check results grouped by slice
 
