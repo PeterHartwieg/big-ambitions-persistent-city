@@ -17,6 +17,9 @@ public sealed class DriverSettings
     public int AcquisitionFailurePercent;
     public LagModel Lag = LagModel.Native;
     public int Seed;
+    /// <summary>P-C comparison: walkers aim with the F2c rule (the logical pose on its own leg, re-aimed every
+    /// WalkerFollow.RetargetMetres) instead of one path per leg.</summary>
+    public bool PoseAim;
 }
 
 /// <summary>Presentation driver double. It follows the rules that Runtime/PhysicalPopulation.cs uses for
@@ -57,6 +60,10 @@ public sealed class PresentationDriver
         public Route? Journey;
         public double BodyMinutes, PaceFactor, TailUntil, LagMetres;
         public bool Tail, Handoff;
+        // Runtime Binding's walker destination: the leg it was aimed on, whether at the pose, and the point.
+        public int TargetLeg = -1;
+        public bool TargetIsPose;
+        public Position TargetPoint;
         public long LagFrame = -1;
     }
     private readonly struct Candidate
@@ -127,7 +134,8 @@ public sealed class PresentationDriver
             if (!body.Car)
             {
                 if (binding.Journey == null || !body.HasTarget || Blocked(body)) continue;
-                // Runtime WalkerFollow.CommandSpeed: never more than the lag in one frame.
+                // Runtime WalkerFollow.CommandSpeed and BoundWalkers: never more than the lag in one frame. Clamped here
+                // directly, so walkers.aheadFrames is 0 by construction (it checks the accounting, not native movement).
                 Step(body, body.Target, Math.Min(binding.LagMetres, GridPlanner.WalkMetresPerMinute * body.Pace * binding.PaceFactor * gameMinutes));
                 continue;
             }
@@ -273,8 +281,12 @@ public sealed class PresentationDriver
         var logical = following ? simulation.SampleJourney(citizen) : WalkerFollow.Sample(route, route.Minutes);
         binding.BodyMinutes = WalkerFollow.Advance(route, binding.BodyMinutes, logical.ElapsedMinutes, body.Position);
         double lag = WalkerFollow.RouteMetres(route, binding.BodyMinutes, logical.ElapsedMinutes);
-        if (binding.LagFrame != frame) { binding.LagFrame = frame; Walking.RecordLag(lag); }
         var own = WalkerFollow.Sample(route, binding.BodyMinutes);
+        if (binding.LagFrame != frame)
+        {
+            binding.LagFrame = frame; Walking.RecordLag(lag);
+            if (following) Walking.RecordAhead(WalkerFollow.AheadMetres(own, logical, body.Position));
+        }
         if (binding.Tail)
         {
             if (own.AtEnd || realTime >= binding.TailUntil || own.Mode != TravelMode.Walk) return false;
@@ -292,7 +304,7 @@ public sealed class PresentationDriver
                 Walking.Record(frame, citizen.Identity.Id, WalkerCorrectionKind.LagRelease, before, logical.Position, false);
                 return false;
             }
-            body.Position = logical.Position; binding.BodyMinutes = logical.ElapsedMinutes;
+            body.Position = logical.Position; binding.BodyMinutes = logical.ElapsedMinutes; binding.TargetLeg = -1;
             Walking.Record(frame, citizen.Identity.Id, WalkerCorrectionKind.Move, before, body.Position, false);
             own = WalkerFollow.Sample(route, binding.BodyMinutes); lag = 0;
         }
@@ -300,13 +312,29 @@ public sealed class PresentationDriver
         return true;
     }
 
-    // Runtime WalkLeg: the destination is the logical pose on its own leg, the leg's corner on an earlier one.
-    private static void Aim(Binding binding, PhysicalJourneySample own, double lag, PhysicalJourneySample logical)
+    // Runtime WalkLeg: one path per leg to the leg's corner (WalkerFollow.NeedsPath; every corner path succeeds here),
+    // counted as a path request. PoseAim: the F2c rule, the pose on its own leg re-aimed every RetargetMetres.
+    private void Aim(Binding binding, PhysicalJourneySample own, double lag, PhysicalJourneySample logical)
     {
         binding.PaceFactor = own.Stationary || own.AtEnd ? 0 : WalkerFollow.PaceFactor(lag);
         binding.LagMetres = lag;
-        bool pose = logical.Mode == TravelMode.Walk && !logical.Stationary && own.LegIndex == logical.LegIndex;
-        binding.Body.Target = pose ? logical.Position : own.To; binding.Body.HasTarget = true;
+        if (own.Stationary || own.AtEnd) return;
+        bool pose = false;
+        if (settings.PoseAim)
+        {
+            pose = WalkerFollow.PoseOnLeg(own, logical);
+            Position goal = pose ? logical.Position : own.To;
+            bool corner = Position.Distance(goal, own.To) <= 1e-6;
+            bool retarget = binding.TargetLeg != own.LegIndex || binding.TargetIsPose != pose
+                || pose && (Position.Distance(goal, binding.TargetPoint) >= WalkerFollow.RetargetMetres
+                    || corner && Position.Distance(goal, binding.TargetPoint) > 1e-6);
+            if (!retarget) return;
+            if (pose && lag <= WalkerFollow.StopMetres) { binding.PaceFactor = 0; return; }
+        }
+        else if (!WalkerFollow.NeedsPath(own, logical, lag, binding.TargetLeg, binding.TargetIsPose, binding.TargetPoint, true, out _)) return;
+        Walking.PathRequests++;
+        binding.TargetLeg = own.LegIndex; binding.TargetIsPose = pose; binding.TargetPoint = pose ? logical.Position : own.To;
+        binding.Body.Target = binding.TargetPoint; binding.Body.HasTarget = true;
     }
 
     private bool Observe(Binding binding)

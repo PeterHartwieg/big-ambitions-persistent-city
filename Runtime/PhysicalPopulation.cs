@@ -50,10 +50,13 @@ namespace PersistentCity.Runtime
             public PhysicalPedestrianBody? Person;
             public PhysicalVehicleBody? Car;
             public int TargetLeg = -1;
-            // F2c: the walker's native destination. On the leg of the logical pose it is that pose (refreshed every
-            // 0.5 m), so the agent stops there and cannot walk past it; on an earlier leg it is that leg's corner.
+            // P-C: the walker's native destination, one path per leg: the leg's corner (the capped speed stops the agent
+            // at the logical pose), or the pose itself on a leg whose corner path was refused (TargetIsPose).
             public Position TargetPoint;
             public bool TargetIsPose;
+            // P-C: the walk this frame's follow commanded (pace before the lag cap, m/s; 0 when it stands) and the logical
+            // route minute that bounds it, re-applied before each navigation update (BoundWalkers).
+            public double BoundPace, BoundMinutes;
             // F2d: Gley's reached evidence for the car's own leg, and the corner hold that shapes the visible turn.
             public int ReachedCarLeg = -1;
             public Position ReachedCarMarker;
@@ -160,7 +163,7 @@ namespace PersistentCity.Runtime
             RefreshVendorMeals();
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
             places = simulation.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
-            pedestrians = new PhysicalPedestrians(parent, pedestrianLimit);
+            pedestrians = new PhysicalPedestrians(parent, pedestrianLimit) { BeforeNavigation = BoundWalkers };
             vehicles = new PhysicalVehicles(routes.ResolveWaypoint, vehicleLimit);
             vehicles.SuspendForNativeFastForward = SuspendBeforeNativeFastForward;
             vehicles.CommandLimit = CommandLimit;

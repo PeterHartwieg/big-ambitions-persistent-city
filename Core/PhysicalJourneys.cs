@@ -147,8 +147,11 @@ namespace PersistentCity.Core
         public const double StopMetres = 0.05;
         /// <summary>Q3: an on-screen body hurries this long before it fades at the next corner or doorway.</summary>
         public const double HurrySeconds = 10;
-        /// <summary>A walker on the logical pose's leg is re-aimed at that pose once it has moved this far.</summary>
+        /// <summary>A walker on a fallback pose aim (<see cref="NeedsPath"/>) is re-aimed at the pose once it has moved this far.</summary>
         public const double RetargetMetres = 0.5;
+        /// <summary>P-C along-leg tolerance: a body further than this ahead of the logical pose on the pose's leg is
+        /// counted (<see cref="WalkerMovementTelemetry.AheadFrames"/>). The commanded speed keeps it at zero.</summary>
+        public const double AheadToleranceMetres = 0.01;
         /// <summary>After the logical arrival, a visible walker keeps walking to the door this long.</summary>
         public const double ArrivalTailSeconds = 10;
         /// <summary>Q3 fade: a corrected on-screen body stands and fades out over this long before it is released.</summary>
@@ -217,6 +220,47 @@ namespace PersistentCity.Core
             if (!(paceMetresPerSecond > 0) || !Position.Finite(lagMetres) || lagMetres <= StopMetres) return 0;
             double frame = Position.Finite(deltaSeconds) && deltaSeconds > 1e-3 ? deltaSeconds : 1e-3;
             return Math.Min(paceMetresPerSecond, lagMetres / frame);
+        }
+
+        /// <summary>The logical pose is a walk between corners on the body's own leg.</summary>
+        public static bool PoseOnLeg(PhysicalJourneySample own, PhysicalJourneySample logical)
+            => logical.Mode == TravelMode.Walk && !logical.Stationary && own.LegIndex == logical.LegIndex;
+
+        /// <summary>
+        /// P-C (P3): whether a walker needs a new native path this frame. One path per leg: the destination is the leg's
+        /// own corner, calculated once when the body takes the leg (or after a move, a re-acquisition or a refused aim),
+        /// and <see cref="CommandSpeed"/> keeps the body behind the logical pose along the leg. Only a leg whose corner
+        /// path was refused aims at the pose instead (<paramref name="atPose"/>, the F2c rule): it is re-aimed every
+        /// <see cref="RetargetMetres"/> of pose progress while the lag is above <see cref="StopMetres"/>, and tries the
+        /// corner again once the pose reaches the corner or leaves the leg. A corner path the agent no longer holds
+        /// (<paramref name="pathHeld"/> false) is calculated again while the body is behind the pose.
+        /// </summary>
+        public static bool NeedsPath(PhysicalJourneySample own, PhysicalJourneySample logical, double lagMetres,
+            int targetLeg, bool targetIsPose, Position targetPoint, bool pathHeld, out bool atPose)
+        {
+            atPose = targetIsPose && targetLeg == own.LegIndex && PoseOnLeg(own, logical)
+                && Position.Distance(logical.Position, own.To) > 1e-6;
+            if (!atPose) return targetLeg != own.LegIndex || targetIsPose || !pathHeld && lagMetres > StopMetres;
+            return lagMetres > StopMetres && Position.Distance(logical.Position, targetPoint) >= RetargetMetres;
+        }
+
+        /// <summary>Horizontal metres the body stands ahead of the logical pose along the pose's own walk leg, the body
+        /// clamped to that leg; 0 when it is behind, more than 0.35 m beside the leg (PhysicalProgress's walk bound), its
+        /// own progress <paramref name="own"/> is on an earlier leg (a body before a U-turn corner lies on the next
+        /// leg's line), it is within 0.08 m of the leg's start (PhysicalProgress counts a corner that close as reached,
+        /// while the body is still on the previous leg), or the pose is not a walk between corners.</summary>
+        public static double AheadMetres(PhysicalJourneySample own, PhysicalJourneySample logical, Position actual)
+        {
+            if (own.LegIndex != logical.LegIndex || logical.Mode != TravelMode.Walk || logical.Stationary || !actual.IsFinite
+                || Position.Distance(actual, logical.From) <= 0.08) return 0;
+            double dx = logical.To.X - logical.From.X, dz = logical.To.Z - logical.From.Z, square = dx * dx + dz * dz;
+            if (!Position.Finite(square) || square <= 1e-12) return 0;
+            double length = Math.Sqrt(square);
+            double along = ((actual.X - logical.From.X) * dx + (actual.Z - logical.From.Z) * dz) / length;
+            double beside = Math.Abs((actual.X - logical.From.X) * dz - (actual.Z - logical.From.Z) * dx) / length;
+            if (!Position.Finite(along) || !Position.Finite(beside) || beside > 0.35) return 0;
+            double ahead = Math.Min(along, length) - logical.LegFraction * length;
+            return ahead > 0 ? ahead : 0;
         }
 
         /// <summary>True when the follow must be corrected: too far behind, or the logical leg is not a walk
@@ -383,6 +427,15 @@ namespace PersistentCity.Core
         /// <summary>Walker path calculations: every SetTarget a follower issues (one NavMesh CalculatePath each, the
         /// projected and the raw attempt counted separately). Their rate scales with game speed.</summary>
         public long PathRequests { get; set; }
+        /// <summary>P-C: walker frames with the body more than <see cref="WalkerFollow.AheadToleranceMetres"/> ahead of the
+        /// logical pose on its leg (<see cref="WalkerFollow.AheadMetres"/>), and the largest such distance.</summary>
+        public long AheadFrames { get; private set; }
+        public double MaximumAheadMetres { get; private set; }
+        public void RecordAhead(double metres)
+        {
+            if (!(metres > WalkerFollow.AheadToleranceMetres)) return;
+            AheadFrames++; MaximumAheadMetres = Math.Max(MaximumAheadMetres, metres);
+        }
         /// <summary>Acquisitions refused by the test-profile key MovementFaultAcquirePercent.</summary>
         public long FaultedAcquisitions { get; set; }
         public long LagSamples => walkers.Samples;
@@ -453,12 +506,12 @@ namespace PersistentCity.Core
         public string Status(int followers, int carFollowers) => string.Format(CultureInfo.InvariantCulture,
             "followers={0}\nlag_samples={1}\nlag_p50_m={2:F2}\nlag_p95_m={3:F2}\nlag_max_m={4:F2}\ncorrections={5}\nmoves={6}\n"
             + "on_screen_moves={7}\nfades={8}\nlag_releases={9}\nhandoffs={10}\nfaulted_acquisitions={11}\nlast_sequence={12}\n"
-            + "path_requests={20}\n"
+            + "path_requests={20}\nahead_frames={21}\nahead_max_m={22:F3}\n"
             + "thresholds=catch_up_m:{13};correct_m:{14};max_pace:{15};hurry_s:{16};arrival_tail_s:{17};fade_out_s:{18};retarget_m:{19}",
             followers, LagSamples, LagQuantile(0.5), LagQuantile(0.95), MaximumLagMetres, Corrections, Moves, OnScreenMoves, Fades,
             LagReleases, Handoffs, FaultedAcquisitions, LastSequence, WalkerFollow.CatchUpMetres, WalkerFollow.CorrectionMetres,
             WalkerFollow.MaximumPaceFactor, WalkerFollow.HurrySeconds, WalkerFollow.ArrivalTailSeconds,
-            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres, PathRequests)
+            WalkerFollow.FadeOutSeconds, WalkerFollow.RetargetMetres, PathRequests, AheadFrames, MaximumAheadMetres)
             + string.Format(CultureInfo.InvariantCulture,
             "\ncar_followers={0}\ncar_lag_samples={1}\ncar_lag_p50_m={2:F2}\ncar_lag_p95_m={3:F2}\ncar_lag_max_m={4:F2}\n"
             + "car_catch_up_frames={5}\ncar_corrections={6}\ncar_fades={7}\ncar_lag_releases={8}\ncar_handoffs={9}\n"
