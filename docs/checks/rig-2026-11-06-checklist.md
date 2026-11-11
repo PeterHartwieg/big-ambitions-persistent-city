@@ -25,4 +25,6 @@ Results of the intermediate batched run (head `c2fc1b0`): [rig-2026-11-09-result
 
 11 November 2026 (e), Mac at `86c2e92f`: [#70 --rig-test / Mac shop_fixture smoke and autosave-off re-runs](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/rig-2026-11-11e-mac-results.md) — 4 passed / 1 partial / 0 failed / 1 not run (targeted subset); reload-epoch checks 1–2 PASS, X3-1 PARTIAL; restore/hash verification and lease release complete.
 
+11 November 2026 (f), Mac at `858b7a5`: [#72 serving-shop readiness and first-sale checks](rig-2026-11-11f-mac-results.md) — 2 passed / 3 partial / 1 failed / 66 not run; 7 Fourth Street, readiness FAIL `empty_cargo_entry` / `no_staffed_counter`, PC image `MissingDefinition`; first sale unproved. Isolated restore/hash verification complete, game stopped and lease free.
+
 11 November 2026 (g) PC at `4438c81`: [#72 readiness and first-sale results](rig-2026-11-11g-pc-results.md) — 1 passed / 1 partial / 1 failed / 67 not run. Selection rented 58 Fifth Avenue (Murray Hill, C1). Serving readiness **FAIL**: `no_staffed_counter`; no empty cargo holder. F8h-2 normal-load diagnostics PARTIAL; first sale and check-1 shop assertions NOT RUN after the failed prerequisite, with no sale wait or workaround. Restore/hash and lease release verified.
