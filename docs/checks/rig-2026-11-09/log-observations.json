@@ -1,0 +1,219 @@
+{
+ "archive": {
+  "sha256": "5eea4235c3be5fcf9687e51dbb09435483f2752c7719c82883d409f244adf8fe",
+  "bytes": 70637,
+  "git": "05d505b678ba71c564186193f1e66ec0793e7a3e:docs/checks/rig-2026-11-09/log-observations.json",
+  "github": "https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/05d505b678ba71c564186193f1e66ec0793e7a3e/docs/checks/rig-2026-11-09/log-observations.json",
+  "stage": "<stage> (%USERPROFILE%\\HART-Builds\\persistent-city-rig-2026-11-09) holds the raw reports this file was derived from",
+  "note": "Excerpt only. The full file is the committed blob above; verify it with the SHA-256."
+ },
+ "qualification": "Advancement observations are coarse blocks; >=30 counts are observations, not every individual interval. Whole-frame numbers are separate.",
+ "runs": {
+  "base-declared": {
+   "segments": [
+    "speed=6 until day 2 00:30",
+    "startup"
+   ],
+   "flags_ge30": 1,
+   "physical_samples": 14,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "base-producer": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 1,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "base-refusal": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 0,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "base-save": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 1,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "base-types": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 2,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-business-age": {
+   "segments": [
+    "speed=6 until day 1 11:00",
+    "speed=6 until day 2 00:30",
+    "startup"
+   ],
+   "flags_ge30": 2,
+   "physical_samples": 12,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-business-perf": {
+   "segments": [
+    "speed=1 until day 2 10:00",
+    "speed=1 until day 2 14:00",
+    "speed=1 until day 2 18:00",
+    "speed=1 until day 2 22:00",
+    "speed=1 until day 3 02:00",
+    "speed=1 until day 3 07:00",
+    "speed=1 until day 3 09:30",
+    "speed=1 until day 3 14:30",
+    "speed=1 until day 3 20:30",
+    "speed=6 until day 2 06:00",
+    "speed=6 until day 3 11:30",
+    "speed=6 until day 3 17:30",
+    "startup"
+   ],
+   "flags_ge30": 5,
+   "physical_samples": 119,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-declared": {
+   "segments": [
+    "speed=6 until day 2 00:30",
+    "startup"
+   ],
+   "flags_ge30": 1,
+   "physical_samples": 12,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-declared-types": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 2,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-diag-r2": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 4,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-producer": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 1,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-refusal": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 0,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-reload": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 2,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-save": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 1,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-shop-1": {
+   "segments": [],
+   "flags_ge30": 0,
+   "physical_samples": 0,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-shop-2": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 1,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-shop-3": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 1,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "head-types-r2": {
+   "segments": [
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 2,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  },
+  "native-control": {
+   "segments": [
+    "speed=6 until day 2 11:00",
+    "startup"
+   ],
+   "flags_ge30": 0,
+   "physical_samples": 0,
+   "other_sections": [
+    "pc_stop_lines"
+   ]
+  }
+ },
+ "omitted": "Segment statistics, each >=30 ms flag and physical samples are in the archived file."
+}

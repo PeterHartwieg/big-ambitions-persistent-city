@@ -1,0 +1,149 @@
+{
+  "role": "rig_test",
+  "overlay_rollback_revision": "C:/BigAmbitions-AgentTests/revisions/20261109T072213296",
+  "overlay_rollback_verified": true,
+  "registry_restore_verified": true,
+  "graceful_shutdowns": true,
+  "forced_terminations": 0,
+  "lease_after": {
+    "instance": "agent1",
+    "held": false,
+    "owner": null
+  },
+  "repository": {
+    "tested": "c2fc1b094767cf2ed08e9cfa3eb688e315a7b4ef",
+    "origin_initial": "c2fc1b094767cf2ed08e9cfa3eb688e315a7b4ef",
+    "origin_final": "ece487837da2faba1e52448939f58fb51b5bd404",
+    "evidence_base": "ece487837da2faba1e52448939f58fb51b5bd404",
+    "main_worktree_unchanged": true
+  },
+  "restore": {
+    "utc": "2026-11-09T11:06:45.745767+00:00",
+    "protected_files": 303,
+    "verified_files": 303,
+    "existing_hash_entries": 301,
+    "absence_entries": 2,
+    "mismatches": [],
+    "mods_local_extra_files": [],
+    "lifecycle_restores": [
+      {
+        "run": "base-declared",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "base-producer",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "base-refusal",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "base-save",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "base-types",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-business-age",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-business-perf",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-declared",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-declared-types",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-diag-r2",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-producer",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-refusal",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-reload",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-save",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-shop-1",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-shop-2",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-shop-3",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "head-types-r2",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      },
+      {
+        "run": "native-control",
+        "verified": true,
+        "registry_verified": true,
+        "failures": []
+      }
+    ],
+    "isolated_players": [],
+    "own_workers": [],
+    "verified": true
+  },
+  "protected_manifest_sha256": "5eee0476799ec791189ca8fa2730e1695f271a98a5e7b175a06fb324627c3b95"
+}

@@ -1,0 +1,353 @@
+[
+  {
+    "run": "base-declared",
+    "line": 1572,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "preparation_frame",
+    "max_ms": 97.501,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "base-declared",
+    "line": 1572,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 89.776,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "base-declared",
+    "line": 2072,
+    "segment": "speed=6 until day 2 00:30",
+    "clock": 2537.9,
+    "component": "optional_stop_read",
+    "max_ms": 118.44,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "base-producer",
+    "line": 1630,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "preparation_frame",
+    "max_ms": 106.245,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "base-producer",
+    "line": 1630,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 98.733,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "base-save",
+    "line": 1582,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "preparation_frame",
+    "max_ms": 113.843,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "base-save",
+    "line": 1582,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 105.635,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "base-types",
+    "line": 1570,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "preparation_frame",
+    "max_ms": 95.512,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "base-types",
+    "line": 1570,
+    "segment": "startup",
+    "clock": 1922.0,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 88.247,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-business-age",
+    "line": 1574,
+    "segment": "startup",
+    "clock": 1922.7,
+    "component": "preparation_frame",
+    "max_ms": 91.291,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-business-age",
+    "line": 1574,
+    "segment": "startup",
+    "clock": 1922.7,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 84.069,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-business-age",
+    "line": 2481,
+    "segment": "speed=6 until day 2 00:30",
+    "clock": 2500.8,
+    "component": "optional_stop_read",
+    "max_ms": 108.48,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-business-perf",
+    "line": 1575,
+    "segment": "startup",
+    "clock": 2910.0,
+    "component": "preparation_frame",
+    "max_ms": 111.122,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-business-perf",
+    "line": 1575,
+    "segment": "startup",
+    "clock": 2910.0,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 101.11,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-business-perf",
+    "line": 1915,
+    "segment": "speed=1 until day 2 10:00",
+    "clock": 3245.1,
+    "component": "closure_refresh",
+    "max_ms": 52.633,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-business-perf",
+    "line": 3910,
+    "segment": "speed=1 until day 2 18:00",
+    "clock": 3931.2,
+    "component": "optional_stop_read",
+    "max_ms": 127.616,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-business-perf",
+    "line": 4208,
+    "segment": "speed=1 until day 2 22:00",
+    "clock": 4024.2,
+    "component": "optional_stop_read",
+    "max_ms": 97.08,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-business-perf",
+    "line": 7767,
+    "segment": "speed=1 until day 3 20:30",
+    "clock": 5378.8,
+    "component": "closure_refresh",
+    "max_ms": 31.011,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-declared",
+    "line": 1569,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 120.44,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-declared",
+    "line": 1569,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 110.428,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-declared",
+    "line": 1989,
+    "segment": "speed=6 until day 2 00:30",
+    "clock": 2554.3,
+    "component": "optional_stop_read",
+    "max_ms": 98.364,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-declared-types",
+    "line": 1577,
+    "segment": "startup",
+    "clock": 2910.0,
+    "component": "preparation_frame",
+    "max_ms": 101.16,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-declared-types",
+    "line": 1577,
+    "segment": "startup",
+    "clock": 2910.0,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 91.811,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-diag-r2",
+    "line": 1570,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 94.585,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-diag-r2",
+    "line": 1570,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 87.557,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-producer",
+    "line": 1629,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 98.109,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-producer",
+    "line": 1629,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 90.656,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-reload",
+    "line": 1569,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 92.429,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-reload",
+    "line": 1569,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 85.013,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-reload",
+    "line": 2735,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 103.535,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-reload",
+    "line": 2735,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 101.137,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-save",
+    "line": 1595,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 97.986,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-save",
+    "line": 1595,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 89.925,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-shop-2",
+    "line": 1568,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 96.198,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-shop-2",
+    "line": 1568,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 88.726,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-shop-3",
+    "line": 1577,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 107.036,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-shop-3",
+    "line": 1577,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 99.413,
+    "count_kind": "distinct reported lifetime maximum"
+  },
+  {
+    "run": "head-types-r2",
+    "line": 1573,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "preparation_frame",
+    "max_ms": 114.359,
+    "count_kind": "coarse observation maximum"
+  },
+  {
+    "run": "head-types-r2",
+    "line": 1573,
+    "segment": "startup",
+    "clock": 1922.1,
+    "component": "planner_scene_search_lifetime",
+    "max_ms": 106.743,
+    "count_kind": "distinct reported lifetime maximum"
+  }
+]

@@ -1,0 +1,2720 @@
+{
+ "archive": {
+  "sha256": "89c6b8f727426f4fdf516d94a3996ba3355ece3c8807245dfe4de362f380a851",
+  "bytes": 393450,
+  "git": "05d505b678ba71c564186193f1e66ec0793e7a3e:docs/checks/rig-2026-11-09/checks.json",
+  "github": "https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/05d505b678ba71c564186193f1e66ec0793e7a3e/docs/checks/rig-2026-11-09/checks.json",
+  "stage": "<stage> (%USERPROFILE%\\HART-Builds\\persistent-city-rig-2026-11-09) holds the raw reports this file was derived from",
+  "note": "Excerpt only. The full file is the committed blob above; verify it with the SHA-256."
+ },
+ "totals": {
+  "rows": 510,
+  "PASS": 6,
+  "PARTIAL": 64,
+  "FAIL": 5,
+  "NOT RUN": 435
+ },
+ "by_group": {
+  "arms": {
+   "NOT RUN": 34,
+   "PASS": 3,
+   "PARTIAL": 11,
+   "FAIL": 5
+  },
+  "campaign": {
+   "NOT RUN": 17
+  },
+  "config": {
+   "NOT RUN": 5
+  },
+  "dynamic": {
+   "NOT RUN": 6
+  },
+  "fault": {
+   "NOT RUN": 6
+  },
+  "historical": {
+   "NOT RUN": 34,
+   "PARTIAL": 13
+  },
+  "ledger": {
+   "PARTIAL": 6,
+   "NOT RUN": 49
+  },
+  "menu": {
+   "NOT RUN": 47,
+   "PARTIAL": 2
+  },
+  "metadata": {
+   "NOT RUN": 5
+  },
+  "ordinary": {
+   "NOT RUN": 5,
+   "PARTIAL": 2
+  },
+  "outside_candidate": {
+   "NOT RUN": 16
+  },
+  "physical": {
+   "NOT RUN": 44,
+   "PARTIAL": 7
+  },
+  "provider": {
+   "NOT RUN": 3
+  },
+  "replay": {
+   "NOT RUN": 39,
+   "PARTIAL": 5,
+   "PASS": 2
+  },
+  "research": {
+   "NOT RUN": 26,
+   "PASS": 1,
+   "PARTIAL": 1
+  },
+  "serving": {
+   "NOT RUN": 70,
+   "PARTIAL": 7
+  },
+  "stress": {
+   "PARTIAL": 5,
+   "NOT RUN": 7
+  },
+  "ui": {
+   "PARTIAL": 3,
+   "NOT RUN": 2
+  },
+  "vendor": {
+   "PARTIAL": 2,
+   "NOT RUN": 20
+  }
+ },
+ "rows_note": "One row per catalogue check: id, verdict, group; 'key' is the full result text for PASS/PARTIAL/FAIL rows. NOT RUN reasons are per group in ../rig-2026-11-09-results.md.",
+ "rows": [
+  {
+   "id": "a3-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-6",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-7",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-8",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "a3-9",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-10",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-11",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a3-12",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "a5-1",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-3",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-4",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-6",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-7",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-8",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "a5-9",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-10",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-11",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "a5-12",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "b0-1",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0-2",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0-4",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0-5",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0-6",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0-7",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0b-1",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "b0b-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "b0b-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "b0b-4",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "b0b-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "b1-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-6",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-7",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b1-8",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-6",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-7",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "b2-8",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c1-1",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c1-2",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "c1-3",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c1-4",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c1-5",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "c2a-s2-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-s2-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-s2-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-s2-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-s2-5",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c2a-s2-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "c2a-s2-7",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2b-1",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c2b-2",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c2b-3",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c2b-4",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c2b-5",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c2b-6",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c2b-7",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "c3-1",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c3-2",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c3-3",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c3-4",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c3-5",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c3-6",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c4-1",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c4-2",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c4-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c4-4",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c5a-1",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5a-2",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5a-3",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5a-4",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5b-1",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5b-2",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5b-3",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5b-4",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5c-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "c5c-2",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c5c-3",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5c-4",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5c-5",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5c-6",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5d-1",
+   "status": "PASS",
+   "group": "research",
+   "key": "Idle research status exposed billingContract=true and attached/available=true; no billing-off warning was emitted. No order or purchase was created."
+  },
+  {
+   "id": "c5d-2",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5d-3",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5d-4",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5d-5",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5d-6",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5d-7",
+   "status": "NOT RUN",
+   "group": "fault"
+  },
+  {
+   "id": "c5d-8",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5e-agency-dialog-1",
+   "status": "PARTIAL",
+   "group": "ui",
+   "key": "Idle status available/attached with dialogContract=true and deliveryContract=true. Button visibility/geometry/native dialog interaction were not captured."
+  },
+  {
+   "id": "c5e-agency-dialog-2",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c5e-agency-dialog-3",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5e-agency-dialog-4",
+   "status": "PARTIAL",
+   "group": "research",
+   "key": "Idle status ledgerAttached=true with no orders/messages/billing and closedWindowBuilds=0. Matched open/closed research UI and its geometry were not exercised."
+  },
+  {
+   "id": "c5e-agency-dialog-5",
+   "status": "NOT RUN",
+   "group": "fault"
+  },
+  {
+   "id": "c5f-delivery-reports-1",
+   "status": "PARTIAL",
+   "group": "ui",
+   "key": "Idle status available/attached with dialogContract=true and deliveryContract=true. Button visibility/geometry/native dialog interaction were not captured."
+  },
+  {
+   "id": "c5f-delivery-reports-2",
+   "status": "NOT RUN",
+   "group": "campaign"
+  },
+  {
+   "id": "c5f-delivery-reports-3",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5f-delivery-reports-4",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5f-delivery-reports-5",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5f-delivery-reports-6",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5f-delivery-reports-7",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5f-delivery-reports-8",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh writer-33 city was refused by current head; PC values preserved across native save, research unavailable/unattached. The specifically named writer-32 fixture was not produced."
+  },
+  {
+   "id": "c5f-delivery-reports-9",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "c5f-delivery-reports-10",
+   "status": "NOT RUN",
+   "group": "research"
+  },
+  {
+   "id": "d1-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d1-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d1-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d1-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d1-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-6",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d2-7",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "d2-8",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d3a-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d3a-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d3a-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d3a-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d3a-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d3a-6",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d4-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d4-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d4-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d4-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d4-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "d4-6",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "e1-1",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e1-2",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e1-3",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e1-4",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "e1-5",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e1-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e2a-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-4",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-5",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-6",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-7",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2a-8",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-4",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-5",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-6",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2b-7",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2c-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2c-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2c-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e2c-4",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "e3-cupcake-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-cupcake-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-cupcake-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-cupcake-4",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-cupcake-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-cupcake-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-donut-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-donut-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-donut-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-donut-4",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-donut-5",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-frenchfries-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-4",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-6",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-7",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-frenchfries-8",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-icecream-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-4",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-6",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-7",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-icecream-8",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-pizza-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-pizza-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-pizza-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-pizza-4",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-pizza-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-pizza-6",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-pizza-7",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-remaining-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-4",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "e3-remaining-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-6",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-7",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-8",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-9",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-remaining-10",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-remaining-11",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e3-salad-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-salad-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-salad-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-salad-4",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-salad-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-salad-6",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e3-salad-7",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e4-1",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e4-2",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e4-3",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e4-4",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e4-5",
+   "status": "NOT RUN",
+   "group": "menu"
+  },
+  {
+   "id": "e4-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e5a-1",
+   "status": "PARTIAL",
+   "group": "menu",
+   "key": "Live catalogue count=807 and filtered original products/dumplings/chopped-cheese/holder definitions captured. Griddle whitelist contained tacos/chopped cheese. Independent tag-cache, building-placeability and consuming-holder identity were not exposed; no completed holder-negative result is claimed."
+  },
+  {
+   "id": "e5a-2",
+   "status": "NOT RUN",
+   "group": "dynamic"
+  },
+  {
+   "id": "e5a-3",
+   "status": "NOT RUN",
+   "group": "dynamic"
+  },
+  {
+   "id": "e5a-4",
+   "status": "NOT RUN",
+   "group": "dynamic"
+  },
+  {
+   "id": "e5a-5",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "e5b-1",
+   "status": "PARTIAL",
+   "group": "menu",
+   "key": "Live catalogue count=807 and filtered original products/dumplings/chopped-cheese/holder definitions captured. Griddle whitelist contained tacos/chopped cheese. Independent tag-cache, building-placeability and consuming-holder identity were not exposed; no completed holder-negative result is claimed."
+  },
+  {
+   "id": "e5b-2",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "Native rental/setup succeeded at Third Street 54 (75 sqm), with register, bakery showcase, stock, price, hours and saved staff/shifts. It is a single-croissant setup, not a serving mixed/eight-offer fixture; no visual clearance proof."
+  },
+  {
+   "id": "e5b-3",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "PC-absent control exercised the same setup: four croissant attempts all unavailable, zero purchases/orders/revenue, stock unchanged, log lost=false/hook_faults=0. No positive paid control or modded-product refusal checkout was reached."
+  },
+  {
+   "id": "e5b-4",
+   "status": "NOT RUN",
+   "group": "dynamic"
+  },
+  {
+   "id": "e5b-5",
+   "status": "NOT RUN",
+   "group": "dynamic"
+  },
+  {
+   "id": "e5b-6",
+   "status": "NOT RUN",
+   "group": "dynamic"
+  },
+  {
+   "id": "e5c-1",
+   "status": "NOT RUN",
+   "group": "metadata"
+  },
+  {
+   "id": "e5c-2",
+   "status": "NOT RUN",
+   "group": "metadata"
+  },
+  {
+   "id": "e5c-3",
+   "status": "NOT RUN",
+   "group": "metadata"
+  },
+  {
+   "id": "e5c-4",
+   "status": "NOT RUN",
+   "group": "metadata"
+  },
+  {
+   "id": "e5c-5",
+   "status": "NOT RUN",
+   "group": "metadata"
+  },
+  {
+   "id": "e5d-1",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "e5d-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "e5d-3",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "e5d-4",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "e5d-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "e5d-6",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "e5e-1",
+   "status": "NOT RUN",
+   "group": "provider"
+  },
+  {
+   "id": "e5e-2",
+   "status": "NOT RUN",
+   "group": "provider"
+  },
+  {
+   "id": "e5e-3",
+   "status": "NOT RUN",
+   "group": "provider"
+  },
+  {
+   "id": "e6b-1",
+   "status": "PARTIAL",
+   "group": "vendor",
+   "key": "Pinned Street Food set returned bridge=Absent, Street Food vendor API missing, without PC stop. Contract-1/old-API variant and positive vehicle fixture were unavailable."
+  },
+  {
+   "id": "e6b-2",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6b-3",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6b-4",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6b-5",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6b-6",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6b-7",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6c-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "e6c-2",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6c-3",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6c-4",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6c-5",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "e6c-6",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-1",
+   "status": "PARTIAL",
+   "group": "vendor",
+   "key": "Pinned Street Food set returned bridge=Absent, Street Food vendor API missing, without PC stop. Contract-1/old-API variant and positive vehicle fixture were unavailable."
+  },
+  {
+   "id": "e6d-2",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-3",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-4",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-5",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-6",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-7",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6d-8",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6e-1",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6e-2",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "e6e-3",
+   "status": "NOT RUN",
+   "group": "vendor"
+  },
+  {
+   "id": "f0-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f0-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f0-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f0-4",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f0-5",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f0-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f0-7",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-accounting-1",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f1-accounting-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f1-accounting-3",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f1-accounting-4",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f1-accounting-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f1-accounting-6",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f1-shop-view-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-shop-view-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-shop-view-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-shop-view-4",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-shop-view-5",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-shop-view-6",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1-shop-view-7",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-4",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-5",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f1b-6",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-7",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f1b-8",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f2a-1",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f2a-2",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f2a-3",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f2a-4",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f2a-5",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f2a-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f2b-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f2b-2",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f2b-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f2f-1",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f2f-2",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "Stationary physical logs stayed within 48 pedestrian/24 vehicle caps with zero reported index mismatches; reloads completed. Camera sweeps, hidden-skip and exact body-ID/full-scan arms were not run."
+  },
+  {
+   "id": "f2f-3",
+   "status": "NOT RUN",
+   "group": "physical"
+  },
+  {
+   "id": "f2h-1",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "All actions and PC readbacks worked in background -rig-test without focus or real input. The controlled nearby-object/player-position route-equivalence arms and compact projections were not run."
+  },
+  {
+   "id": "f5a-1",
+   "status": "PASS",
+   "group": "arms",
+   "key": "Native census published: 335 homes, 1,064 beds, 957 residents, 20 portals; no over-band/without-home resident; home/job/student consistency checks were ok. Census and workplace rows were retained."
+  },
+  {
+   "id": "f5a-2",
+   "status": "PARTIAL",
+   "group": "replay",
+   "key": "Player business independently read as 75 sqm and player-owned; census reports one player-owned workplace, intrinsic band 6 and no assigned PC worker. Exact compact saved-place comparison is unavailable."
+  },
+  {
+   "id": "f5a-3",
+   "status": "PARTIAL",
+   "group": "ledger",
+   "key": "Paused diagnostics left all PC key hashes unchanged across readback. The full five-read native staff/business fingerprint assertion was not run."
+  },
+  {
+   "id": "f5a-4",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Census and runtime remained active after fresh-process and same-process reloads of current writer 34. Pending-station and separate-city scoping arms were not exercised."
+  },
+  {
+   "id": "f5a-5",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised."
+  },
+  {
+   "id": "f5b-1",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f5b-2",
+   "status": "PARTIAL",
+   "group": "ledger",
+   "key": "Fixture retained its native employee/register/Default shifts across setup and reload; PC census seated nobody at the player business. No full three-day all-rival aiEmployees fingerprint was captured."
+  },
+  {
+   "id": "f5b-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f5b-4",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised."
+  },
+  {
+   "id": "f5c-lite-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "f5c-lite-2",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f5c-lite-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f5c-lite-4",
+   "status": "NOT RUN",
+   "group": "ui"
+  },
+  {
+   "id": "f5c-lite-5",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f5c-lite-6",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised."
+  },
+  {
+   "id": "f5d-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "f5d-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f5d-3",
+   "status": "PARTIAL",
+   "group": "replay",
+   "key": "Named resident c0 and commuter pv:1 were read over the working day; aggregate travelling/route counts changed. Complete per-person schedule and exact cadence equivalence were not captured."
+  },
+  {
+   "id": "f5d-4",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "Physical diagnostics reported withheld visitors, body caps and zero index mismatches. Complete body/car/lease identity membership against all visitors was not exported."
+  },
+  {
+   "id": "f5d-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f5d-6",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Ordinary advancement/budget/lag counters and full mod-work intervals were observed. Controlled frame-cap/body-cap arms and exact event admission stream were not exercised."
+  },
+  {
+   "id": "f5d-7",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f5d-8",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised."
+  },
+  {
+   "id": "f5e-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "f5e-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f5e-3",
+   "status": "PARTIAL",
+   "group": "replay",
+   "key": "Independent shop area=75 sqm; census intrinsic band=6, owner=player, excluded from PC work seating, assigned=0, jobs-within-capacity ok. Saved compact place capacity/assignment comparison is unavailable; no mismatch is inferred from the census band."
+  },
+  {
+   "id": "f5e-4",
+   "status": "PARTIAL",
+   "group": "ledger",
+   "key": "Fixture retained its native employee/register/Default shifts across setup and reload; PC census seated nobody at the player business. No full three-day all-rival aiEmployees fingerprint was captured."
+  },
+  {
+   "id": "f5e-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f5e-6",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised."
+  },
+  {
+   "id": "f5f-1",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "Stationary physical logs stayed within 48 pedestrian/24 vehicle caps with zero reported index mismatches; reloads completed. Camera sweeps, hidden-skip and exact body-ID/full-scan arms were not run."
+  },
+  {
+   "id": "f5f-2",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "Stationary physical logs stayed within 48 pedestrian/24 vehicle caps with zero reported index mismatches; reloads completed. Camera sweeps, hidden-skip and exact body-ID/full-scan arms were not run."
+  },
+  {
+   "id": "f5f-3",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "Physical diagnostics reported withheld visitors, body caps and zero index mismatches. Complete body/car/lease identity membership against all visitors was not exported."
+  },
+  {
+   "id": "f5f-4",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f5g-1",
+   "status": "PARTIAL",
+   "group": "stress",
+   "key": "Head natural midnight fill reached 1,914 visitors plus 957 residents; target/cap=1,914, pool target=0, 957 creations in 15 units. Base predates fill and stayed at 957 visitors. Positive day-visitor-pool fixture unavailable."
+  },
+  {
+   "id": "f5g-2",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f5g-3",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f5g-4",
+   "status": "PARTIAL",
+   "group": "physical",
+   "key": "Physical diagnostics reported withheld visitors, body caps and zero index mismatches. Complete body/car/lease identity membership against all visitors was not exported."
+  },
+  {
+   "id": "f5g-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f5g-6",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f5g-7",
+   "status": "PARTIAL",
+   "group": "stress",
+   "key": "Clamped target and pool target were read before/after natural midnight fill. No controlled mid-day census mutation or shrinking-target arm was run."
+  },
+  {
+   "id": "f5g-8",
+   "status": "PARTIAL",
+   "group": "stress",
+   "key": "Fill completed at the native boundary and portal/route/lag counters were retained. No declared stress/camera/fill-budget sweep was available."
+  },
+  {
+   "id": "f5g-9",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Base writer 33 was created fresh and reloaded; current writer 34 refuses that older city and keeps all PC values across a native save. Four-week writer-33 and sealed writer-32 arms were not run."
+  },
+  {
+   "id": "f5h-1",
+   "status": "FAIL",
+   "group": "arms",
+   "key": "F-PERF-1: provisional shared-PC head union p95 breached <5 ms (d2-14-18=5.0849 ms, d2-18-22=5.0698 ms). Timing valid, coverage complete, zero save callbacks and sampled dotnet/testhost/MSBuild=0. Likely integration follow-up: F3/PR #98; optional-stop tail provider F2h/PR #159 with #128 diagnostics PR #133. No single-PR regression attribution."
+  },
+  {
+   "id": "f5h-2",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f5h-3",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Ordinary advancement/budget/lag counters and full mod-work intervals were observed. Controlled frame-cap/body-cap arms and exact event admission stream were not exercised."
+  },
+  {
+   "id": "f5h-4",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "f5h-5",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Candidate refused fresh writer 33 with the distinct start-a-new-city message; all three PC values stayed byte-identical after native save, with no stop key. Historical fixture matrix/second negative reload were not run."
+  },
+  {
+   "id": "f5h-6",
+   "status": "NOT RUN",
+   "group": "ui"
+  },
+  {
+   "id": "f6a-1",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "Native day-1 ledger reconciled bank 5,599 to start 10,000 minus deposit/setup 4,110, payroll 225 and rent 66; revenue/orders=0, stock=100 croissants/300 bags. PC aggregates were captured; no paid-sale PC/native receipt join was possible."
+  },
+  {
+   "id": "f6a-2",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-3",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-4",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-5",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-6",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-7",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-8",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6a-9",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-1",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-2",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-3",
+   "status": "PARTIAL",
+   "group": "ledger",
+   "key": "Rival diagnostics exposed ServiceLimits/SellOut/Availability/NativeRivalCheckout estimate labels. No captured served rival decision or native rival settlement was exercised."
+  },
+  {
+   "id": "f6b-4",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-5",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-6",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-7",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6b-8",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6c-1",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6c-2",
+   "status": "PARTIAL",
+   "group": "ledger",
+   "key": "Observed FoodFeedbackOverview reported countersMatchRescan=true, rebuildsBefore=1, panelBuilds=0. Full hourly/day/week/migration and paid-shop counter coverage was not run."
+  },
+  {
+   "id": "f6c-3",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "Feedback recorded 82 evaluated offers refused as No staffed counter. Saved fixture shifts existed, but native control also refused service; no controlled staff-removal/restoration arm or successful-serving baseline."
+  },
+  {
+   "id": "f6c-4",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6c-5",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6c-6",
+   "status": "PARTIAL",
+   "group": "ui",
+   "key": "Repeated paused projections did not alter saved PC keys; panel stayed closed with panelBuilds=0. Matched open-panel/performance/native field-fingerprint arms were not run."
+  },
+  {
+   "id": "f6c-7",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6c-8",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6d-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "f6d-2",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f6d-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f6e-1",
+   "status": "PARTIAL",
+   "group": "ledger",
+   "key": "Aggregate EconomyOverview reported nonzero day income and a balanced aggregate ledger; named-worker shift/attendance/posting reconciliation and partial-attendance checks were not captured."
+  },
+  {
+   "id": "f6e-2",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6e-3",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6e-4",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6e-5",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6e-6",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6f-1",
+   "status": "NOT RUN",
+   "group": "ordinary"
+  },
+  {
+   "id": "f6f-2",
+   "status": "NOT RUN",
+   "group": "ordinary"
+  },
+  {
+   "id": "f6f-3",
+   "status": "NOT RUN",
+   "group": "ordinary"
+  },
+  {
+   "id": "f6f-4",
+   "status": "PARTIAL",
+   "group": "ordinary",
+   "key": "Commuter pv:1 exposed stable portal/work identity and carried resource/attendance fields. No controlled low-endowment spending/admission/debit fixture was run."
+  },
+  {
+   "id": "f6f-5",
+   "status": "NOT RUN",
+   "group": "ordinary"
+  },
+  {
+   "id": "f6f-6",
+   "status": "NOT RUN",
+   "group": "ordinary"
+  },
+  {
+   "id": "f6g-1",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "f6g-2",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6g-3",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6g-4",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6g-5",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6g-6",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6g-7",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6g-8",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-1",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "Native day-1 ledger reconciled bank 5,599 to start 10,000 minus deposit/setup 4,110, payroll 225 and rent 66; revenue/orders=0, stock=100 croissants/300 bags. PC aggregates were captured; no paid-sale PC/native receipt join was possible."
+  },
+  {
+   "id": "f6h-2",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-3",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-4",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-5",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-6",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-7",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-8",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-9",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-10",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-11",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Fresh current writer-34 city saved and reloaded with PC active; prefix/epoch schema and length matched. This does not assert the historical slice writer or unavailable compact assignment/vendor/order semantics."
+  },
+  {
+   "id": "f6h-12",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-13",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-14",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-15",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-16",
+   "status": "PARTIAL",
+   "group": "ordinary",
+   "key": "Commuter pv:1 exposed stable portal/work identity and carried resource/attendance fields. No controlled low-endowment spending/admission/debit fixture was run."
+  },
+  {
+   "id": "f6h-17",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-18",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-19",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-20",
+   "status": "NOT RUN",
+   "group": "ledger"
+  },
+  {
+   "id": "f6h-21",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Current-head ordinary mod-work union and separate whole-frame timing were captured with visitors and one owned non-serving shop. Check-specific matched earlier-build/camera/cadence/inspector arms and fine native observation counters were not exercised."
+  },
+  {
+   "id": "f6i-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6i-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6i-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6j-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6j-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6j-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6j-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6j-5",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "f6k-1",
+   "status": "NOT RUN",
+   "group": "config"
+  },
+  {
+   "id": "f6k-2",
+   "status": "NOT RUN",
+   "group": "config"
+  },
+  {
+   "id": "f6k-3",
+   "status": "NOT RUN",
+   "group": "config"
+  },
+  {
+   "id": "f6k-4",
+   "status": "NOT RUN",
+   "group": "config"
+  },
+  {
+   "id": "f6k-5",
+   "status": "NOT RUN",
+   "group": "config"
+  },
+  {
+   "id": "f7a-1",
+   "status": "PASS",
+   "group": "replay",
+   "key": "Default-off load/save returned requested=false, save=null and activation=null. Armed reloads of the same fresh head city returned successful activation with sequence >=1."
+  },
+  {
+   "id": "f7a-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f7a-3",
+   "status": "PASS",
+   "group": "replay",
+   "key": "Representative head: five saves of each Default/MidnightSave/RecoverSave. All success; diagnostics sequence increments by one, phase sums within 0.01 ms, recordCountMs/native adjusted totals and characters/UTF-8/UTF-16/records retained. Every >=30 ms sample flagged as save latency. This is measurement proof, not a met pause budget."
+  },
+  {
+   "id": "f7a-4",
+   "status": "PARTIAL",
+   "group": "replay",
+   "key": "Settled head fresh-process activation: success/hadPayload, background read/validate and main-thread timers captured. Not every timed save was separately reloaded, and calendar-held/native load timeline was not asserted."
+  },
+  {
+   "id": "f7a-5",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f7a-6",
+   "status": "PASS",
+   "group": "arms",
+   "key": "All nine ordinary windows: SaveCostDiagnostics.save unchanged, save-epoch sequence unchanged and zero union save callbacks; guard verified off at begin. Explicit saves occurred between/after windows."
+  },
+  {
+   "id": "f7a-7",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f7b-1",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "Current compact prefix and newline-v1 epoch schema/length/sequence observed; PC active with no accounting-stop after fresh/same-process reload. Paid/Pending receipt and exact compact wallet/native epoch reconciliation unavailable."
+  },
+  {
+   "id": "f7b-2",
+   "status": "PARTIAL",
+   "group": "replay",
+   "key": "Explicit save, native return-to-menu/load in the same process and fresh-process reload all reached attached=true without stop. Exact native post-unload file hash/mtime sequence was not captured."
+  },
+  {
+   "id": "f7b-3",
+   "status": "NOT RUN",
+   "group": "fault"
+  },
+  {
+   "id": "f7b-4",
+   "status": "NOT RUN",
+   "group": "fault"
+  },
+  {
+   "id": "f7b-5",
+   "status": "NOT RUN",
+   "group": "fault"
+  },
+  {
+   "id": "f7b-6",
+   "status": "NOT RUN",
+   "group": "fault"
+  },
+  {
+   "id": "f7b-7",
+   "status": "FAIL",
+   "group": "arms",
+   "key": "F-PERF-1: provisional shared-PC head union p95 breached <5 ms (d2-14-18=5.0849 ms, d2-18-22=5.0698 ms). Timing valid, coverage complete, zero save callbacks and sampled dotnet/testhost/MSBuild=0. Likely integration follow-up: F3/PR #98; optional-stop tail provider F2h/PR #159 with #128 diagnostics PR #133. No single-PR regression attribution."
+  },
+  {
+   "id": "f7c-1",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f7c-2",
+   "status": "PARTIAL",
+   "group": "stress",
+   "key": "Both builds measured all requested phases at 1,914 persons. Head also reached 2,871; base day-2 stayed at 1,914 (no F5g fill). A matched base 2,871 fixture, common seed and readable peak transient metric are unavailable; comparison is unmatched and provisional."
+  },
+  {
+   "id": "f7c-3",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f7c-4",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f7c-5",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f7c-6",
+   "status": "FAIL",
+   "group": "arms",
+   "key": "F-PERF-1: provisional shared-PC head union p95 breached <5 ms (d2-14-18=5.0849 ms, d2-18-22=5.0698 ms). Timing valid, coverage complete, zero save callbacks and sampled dotnet/testhost/MSBuild=0. Likely integration follow-up: F3/PR #98; optional-stop tail provider F2h/PR #159 with #128 diagnostics PR #133. No single-PR regression attribution."
+  },
+  {
+   "id": "f7d-1",
+   "status": "PARTIAL",
+   "group": "serving",
+   "key": "Current compact prefix and newline-v1 epoch schema/length/sequence observed; PC active with no accounting-stop after fresh/same-process reload. Paid/Pending receipt and exact compact wallet/native epoch reconciliation unavailable."
+  },
+  {
+   "id": "f7d-2",
+   "status": "PARTIAL",
+   "group": "stress",
+   "key": "Both builds measured all requested phases at 1,914 persons. Head also reached 2,871; base day-2 stayed at 1,914 (no F5g fill). A matched base 2,871 fixture, common seed and readable peak transient metric are unavailable; comparison is unmatched and provisional."
+  },
+  {
+   "id": "f7d-3",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f7d-4",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Writer 33 -> head refused with start-a-new-city; writer 34 -> base refused as Unsupported population schema; all three PC values unchanged after native save in both directions. Literal Future enum and malformed/historical matrix are not exposed/tested."
+  },
+  {
+   "id": "f7d-5",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f7f-1",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f7f-2",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f7f-3",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f7f-4",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f7p-1",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "f7p-2",
+   "status": "NOT RUN",
+   "group": "stress"
+  },
+  {
+   "id": "f7p-3",
+   "status": "PARTIAL",
+   "group": "historical",
+   "key": "Native serialization/compression, payload sizes/UTF-16 share and ms per million characters retained for writers 33/34. This is not the specified writer-25/prototype comparison or stress fixture."
+  },
+  {
+   "id": "fix-128-rush-spike-1",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Requested day-3 window(s) and all coarse unit/GC/optional-stop counters retained, with no union advancement >=30 ms. Exact block alignment/old mean comparison and a matched pre-fix seed are not a complete before/after proof."
+  },
+  {
+   "id": "fix-128-rush-spike-2",
+   "status": "FAIL",
+   "group": "arms",
+   "key": "F-PERF-1: >=30 ms advancement observed in the requested day-3 window(s), with production slowest-unit/optional-stop/GC attribution retained. Likely path owner F2h/PR #159 and #128 diagnostic slice PR #133; route/GC tails also belong to F3/PR #98. Provisional shared-PC result."
+  },
+  {
+   "id": "fix-128-rush-spike-3",
+   "status": "PARTIAL",
+   "group": "arms",
+   "key": "Park scans were 0 in observed prep/day windows. Unmatched pre-fix build/Hamptons load/bench-count equivalence arms were not run; >=30 ms optional-stop tails are flagged separately."
+  },
+  {
+   "id": "fix-128-rush-spike-4",
+   "status": "PASS",
+   "group": "arms",
+   "key": "Owned-business day-3 evening: complete supported union, p95=4.8478 ms, 3 intervals >=30 ms, all listed with components; zero save callbacks. Provisional shared-PC measurement. The broader strict interval gate is assessed separately under F-PERF-1; likely integration owner F3/PR #98 if p95 breaches."
+  },
+  {
+   "id": "f3-1",
+   "status": "FAIL",
+   "group": "arms",
+   "key": "F-PERF-1: valid current-head ordinary windows breached the union p95/<30 ms interval gate, provisional on shared PC. Likely follow-up owners F3/PR #98 (integration/route units), F2h/PR #159 + #128/PR #133 (optional-stop reads), and F2b/PR #151 (clock-rate rebuild). Stress, cadence and open-UI arms remain unrun."
+  },
+  {
+   "id": "f3-2",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f3-3",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f3-4",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "f3-5",
+   "status": "NOT RUN",
+   "group": "replay"
+  },
+  {
+   "id": "c2a-1",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-2",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-3",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-4",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "c2a-5",
+   "status": "NOT RUN",
+   "group": "historical"
+  },
+  {
+   "id": "c2a-6",
+   "status": "NOT RUN",
+   "group": "arms"
+  },
+  {
+   "id": "c2a-7",
+   "status": "NOT RUN",
+   "group": "serving"
+  },
+  {
+   "id": "e5b2-1",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "e5b2-2",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "e5b2-3",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "e5b2-4",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2c-1",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2c-2",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2c-3",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2c-4",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2c-5",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-1",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-2",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-3",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-4",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-5",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-6",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  },
+  {
+   "id": "f2d-7",
+   "status": "NOT RUN",
+   "group": "outside_candidate"
+  }
+ ]
+}

@@ -1,0 +1,71 @@
+{
+ "archive": {
+  "sha256": "6b22c4a372ff5a19779ebcae8c3f485caf186a9e41dfe5f93b9b6ea33e356744",
+  "bytes": 121405,
+  "git": "05d505b678ba71c564186193f1e66ec0793e7a3e:docs/checks/rig-2026-11-09/wholeframe-traces.json",
+  "github": "https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/05d505b678ba71c564186193f1e66ec0793e7a3e/docs/checks/rig-2026-11-09/wholeframe-traces.json",
+  "stage": "<stage> (%USERPROFILE%\\HART-Builds\\persistent-city-rig-2026-11-09) holds the raw reports this file was derived from",
+  "note": "Excerpt only. The full file is the committed blob above; verify it with the SHA-256."
+ },
+ "qualification": "Supplemental RLO diagnostic traces are throttled; counts refer only to reported traces, not all stalls. Clock-command segments include between-window reads. CPU counters are coarse; page faults are not proof of hard paging. Whole-frame data is separate from PC union gates.",
+ "source": "head-business-perf/Player.log",
+ "record_count": 259,
+ "summary": [
+  {
+   "segment": "speed=6 until day 2 06:00",
+   "reported_traces_ge100": 13,
+   "max_ms": 487
+  },
+  {
+   "segment": "speed=1 until day 2 10:00",
+   "reported_traces_ge100": 31,
+   "max_ms": 473
+  },
+  {
+   "segment": "speed=1 until day 2 14:00",
+   "reported_traces_ge100": 31,
+   "max_ms": 221
+  },
+  {
+   "segment": "speed=1 until day 2 18:00",
+   "reported_traces_ge100": 29,
+   "max_ms": 172
+  },
+  {
+   "segment": "speed=1 until day 2 22:00",
+   "reported_traces_ge100": 6,
+   "max_ms": 170
+  },
+  {
+   "segment": "speed=1 until day 3 02:00",
+   "reported_traces_ge100": 2,
+   "max_ms": 794
+  },
+  {
+   "segment": "speed=1 until day 3 09:30",
+   "reported_traces_ge100": 2,
+   "max_ms": 4365
+  },
+  {
+   "segment": "speed=6 until day 3 11:30",
+   "reported_traces_ge100": 2,
+   "max_ms": 467
+  },
+  {
+   "segment": "speed=1 until day 3 14:30",
+   "reported_traces_ge100": 2,
+   "max_ms": 796
+  },
+  {
+   "segment": "speed=6 until day 3 17:30",
+   "reported_traces_ge100": 2,
+   "max_ms": 352
+  },
+  {
+   "segment": "speed=1 until day 3 20:30",
+   "reported_traces_ge100": 3,
+   "max_ms": 460
+  }
+ ],
+ "omitted": "The individual trace records are in the archived file."
+}
