@@ -432,4 +432,46 @@ public sealed class FocusIndependentInputsTests
         output.WriteLine($"F2H-PERF refresh-before stops={before.Stops} p50={before.P50:F4}ms p95={before.P95:F4}ms max={before.Max:F4}ms");
         output.WriteLine($"F2H-PERF refresh-after stops={after.Stops} p50={after.P50:F4}ms p95={after.P95:F4}ms max={after.Max:F4}ms");
     }
+    // P2 review: a scene-set change marks park and performer caches pending together, before any query, and each stays
+    // pending until its own scan runs, even while another scan takes the frame's slot.
+    [Fact]
+    public void SceneChangeKeepsEveryCachePendingUntilItsOwnScan()
+    {
+        var scans = new SceneScanSchedule();
+        scans.Completed(SceneScan.Parks); scans.Completed(SceneScan.Performers);
+        Assert.Equal(SceneScan.None, scans.Next);
+        scans.SceneSetChanged();
+        Assert.True(scans.Due(DwellKind.Resting)); Assert.True(scans.Due(DwellKind.Audience));
+        Assert.False(scans.Due(DwellKind.Break));
+        Assert.Equal(SceneScan.Parks, scans.Next); scans.Completed(SceneScan.Parks);
+        // The park scan used this frame: the performer catalogue is still the old scene's and is not read.
+        Assert.False(scans.Due(DwellKind.Resting)); Assert.True(scans.Due(DwellKind.Audience));
+        Assert.Equal(SceneScan.Performers, scans.Next); scans.Completed(SceneScan.Performers);
+        Assert.False(scans.Due(DwellKind.Audience)); Assert.Equal(SceneScan.None, scans.Next);
+    }
+
+    // P2 review: a cold saved resting stop whose cached trigger was replaced stays Deferred while the rescan is pending
+    // and is decided only after Maintain has run it.
+    [Fact]
+    public void ReplacedParkTriggerDefersAColdSavedStopUntilMaintainRescans()
+    {
+        var scans = new SceneScanSchedule();
+        scans.Completed(SceneScan.Parks); scans.Completed(SceneScan.Performers);
+        scans.ParkTriggerLost();
+        Assert.True(scans.Due(DwellKind.Resting)); Assert.False(scans.Due(DwellKind.Audience));
+        Assert.Equal(SceneScan.Parks, scans.Next); scans.Completed(SceneScan.Parks);
+        Assert.False(scans.Due(DwellKind.Resting));
+        string environment = File.ReadAllText(Path.Combine(Root(), "Runtime", "OptionalStopEnvironment.cs"));
+        int read = environment.IndexOf("private OptionalStopAvailability ReadAvailable(", StringComparison.Ordinal);
+        string body = environment.Substring(read, environment.IndexOf("private OptionalStopAvailability GeometryStatus(", read, StringComparison.Ordinal) - read);
+        // The geometry failure is returned only after the pending-scan check that GeometryStatus itself can raise.
+        Assert.Matches(new Regex(@"var geometryStatus = GeometryStatus\(place, stop\);\s+if \(geometryStatus != OptionalStopAvailability\.Ready\)\s+return ScanDue\(stop\.Kind\)[^;]*OptionalStopAvailability\.Deferred : geometryStatus;"), body);
+        // Scene changes are observed on the first read of a frame, RefreshOptionalStops before Maintain included.
+        foreach (string entry in new[] { "public void Maintain()", "public IReadOnlyList<OptionalStopSpot> Spots(", "public OptionalStopAvailability Available(" })
+        {
+            int at = environment.IndexOf(entry, StringComparison.Ordinal);
+            Assert.True(at >= 0, entry);
+            Assert.Contains("ObserveScenes();", environment.Substring(at, 220));
+        }
+    }
 }
