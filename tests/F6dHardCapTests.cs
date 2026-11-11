@@ -33,7 +33,7 @@ public sealed class F6dHardCapTests
     [Fact]
     public void CurrentLedgerAtGlobalRecordAndCharacterCapsAndOneOver()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_F6D_CAPS"); if (path == null) return;
+        string? path = PerfGate.Variable("PC_F6D_CAPS"); if (path == null) return;
         var state = F6dMeasure.Build(50000, 3, 64, true); F6dMeasure.FillLedger(state);
         state.MenuPolicy = FoodNameIdentity.Wire; state.Food!.Residents[0].Decision = null;
         state.PopulationKey = CurrentSchemaOnlyTests.City().PopulationKey;

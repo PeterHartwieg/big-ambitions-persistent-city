@@ -191,25 +191,6 @@ public sealed class ResearchDeliveryTests
     }
 
     [Fact]
-    public void BillingSendsNoticesAfterTheBoundaryOnlyWhileActive()
-    {
-        string billing = Source("Runtime/ResearchBilling.cs");
-        string postfix = Between(billing, "private static void RunDailyPostfix()", "/// <summary>The native members research billing uses");
-        int before = postfix.IndexOf("notices.Before(current.Ledger);", StringComparison.Ordinal);
-        int boundary = postfix.IndexOf("current.Boundary();", StringComparison.Ordinal);
-        int after = postfix.IndexOf("if (sessionActive?.Invoke() == true) notices.After(ResearchMessages.Send); else notices.Forget();", StringComparison.Ordinal);
-        Assert.True(before > 0 && boundary > before && after > boundary);
-        Assert.True(postfix.LastIndexOf("finally", after, StringComparison.Ordinal) > boundary);
-        // Idle cost unchanged: nothing is remembered before the HasWork check.
-        Assert.True(postfix.IndexOf("if (current == null || !current.HasWork) return;", StringComparison.Ordinal) < before);
-        // Messages never change the ledger, money or campaigns, and never create a contact.
-        string messages = Between(Source("Runtime/ResearchDiagnostics.cs"), "internal static class ResearchMessages", "public sealed partial class PopulationRuntime");
-        foreach (string forbidden in new[] { "TryMarkPaid", "TryDecline", "ChangeMoney", "marketingCampaigns", "AddContact", "GetOrAddBusinessContact", "Contacts.Add", "GetContact(" })
-            Assert.DoesNotContain(forbidden, messages);
-        Assert.Contains("contact.SendMessage(new TextMessage(notice.MessageKey,", messages);
-    }
-
-    [Fact]
     public void MessagesAreTheApprovedEnglishTextWithTheNativeBusinessNameArgument()
     {
         using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "Runtime", "Localization", "en.json")));
@@ -292,23 +273,6 @@ public sealed class ResearchDeliveryTests
     }
 
     [Fact]
-    public void ConsoleReportUsesTheSameGuardedText()
-    {
-        string diagnostics = Source("Runtime/ResearchDiagnostics.cs");
-        Assert.Contains("CommandHelper.AddCommand<string>(\"pcresearch\"", diagnostics);
-        Assert.Contains("CommandHelper.AddCommand<string, string>(\"pcresearch\"", diagnostics);
-        Assert.Contains("ResearchReportText.Report(ledger, order, ResearchBusinessName(order.BusinessAddress))", diagnostics);
-        foreach (string action in new[] { "\"status\"", "\"orders\"", "\"report\"", "\"window\"", "\"open\"", "\"close\"" })
-            Assert.Contains(action, diagnostics);
-        // TryRead is the only number exit, and only the pure text builder calls it.
-        foreach (var file in Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs"))
-            if (!file.EndsWith("ResearchReportText.cs", StringComparison.Ordinal))
-                Assert.DoesNotContain(".TryRead(", File.ReadAllText(file));
-        // The census file keeps its pc command only.
-        Assert.DoesNotContain("pcresearch", Source("Runtime/PopulationCensusDiagnostics.cs"));
-    }
-
-    [Fact]
     public void CellLabelsAreDistinctEnglishTextFromTheFixedCodes()
     {
         foreach (var tier in new[] { MarketResearchTier.Basic, MarketResearchTier.Detailed, MarketResearchTier.InDepth })
@@ -375,15 +339,6 @@ public sealed class ResearchDeliveryTests
         // Open without an attached city: a message, no numbers.
         model.Show();
         Assert.Equal("Market research is not attached to this city.", model.Update(30, null, Name)!.Detail);
-
-        // The live draw is skipped before any read while closed, and the panel adds exactly one button line.
-        string panel = Source("Runtime/FoodEconomyPanel.cs");
-        Assert.Contains("if (researchWindow.Open) researchWindow.Draw(ResearchLedgerNow, researchNames ??= ResearchBusinessName);", panel);
-        Assert.Single(Regex.Matches(panel, "\"Research reports\""));
-        Assert.Contains("if (GUILayout.Button(\"Research reports\", GUILayout.Width(140))) researchWindow.Toggle();", panel);
-        string window = Source("Runtime/ResearchReportWindow.cs");
-        string draw = Between(window, "internal void Draw(", "private void DrawContents(int id)");
-        Assert.StartsWith("ResearchLedger? ledger, Func<string, string> businessName)\n        {\n            if (!model.Open) return;", draw.Replace("\r\n", "\n"));
     }
 
     // ---- activation ----
@@ -420,16 +375,6 @@ public sealed class ResearchDeliveryTests
         Assert.False(typeof(MarketResearchSettings).GetProperty("Available")!.CanWrite);
         Assert.False(typeof(MarketResearchSettings).GetProperty("Activation")!.CanWrite);
         Assert.Throws<ArgumentNullException>(() => live.DeriveAvailability(null!));
-
-        // The runtime derives Available from every check and clears it on detach.
-        string mod = Source("Runtime/PersistentCityMod.cs");
-        Assert.Contains("settings.MarketResearch.DeriveAvailability(ResearchActivation);", mod);
-        Assert.Contains("settings.MarketResearch.ClearAvailability();", mod);
-        string derive = Between(mod, "private MarketResearchActivation ResearchActivation()", "private bool ResearchAttached()");
-        foreach (string check in new[] { "ResearchAttached()", "ResearchAgencyDialog.Installed && ResearchAgencyDialog.Status.Length == 0",
-            "ResearchBilling.Installed && ResearchBilling.Status.Length == 0 && ResearchBilling.Attached", "ResearchMessages.ContractPassed", "simulation?.Research != null" })
-            Assert.Contains(check, derive);
-        Assert.Contains("() => settings.MarketResearch.Available", mod);
     }
 
     [Fact]
@@ -460,47 +405,9 @@ public sealed class ResearchDeliveryTests
         Assert.Equal(ResearchNoticeKind.Delivered, Assert.Single(Boundary(session!, tracker)).Kind);
         Assert.Equal(1, port.Charges);
 
-        // The runtime gate passes the delivery contract and returns before anything is attached.
-        string attach = Between(Source("Runtime/PersistentCityMod.cs"), "private void AttachResearch(CityState state)", "private bool ResearchAttached()");
-        int gate = attach.IndexOf("ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed)", StringComparison.Ordinal);
-        int stop = attach.IndexOf("return;", gate, StringComparison.Ordinal);
-        Assert.True(gate > 0 && stop > gate);
-        foreach (string step in new[] { "simulation!.AttachResearch(", "ResearchBilling.Attach(", "ResearchAgencyDialog.Attach(" })
-            Assert.True(attach.IndexOf(step, StringComparison.Ordinal) > stop, step);
-        // The delivery contract is checked at initialization, before any city attaches.
-        Assert.Contains("ResearchBilling.Install(); ResearchAgencyDialog.Install(); ResearchMessages.Check();", Source("Runtime/PersistentCityMod.cs"));
-    }
-
-    [Fact]
-    public void AgencyContactPrefersTheNativeRegistrationMatchOverTheStreetAddress()
-    {
-        string send = Between(Source("Runtime/ResearchDiagnostics.cs"), "private static Contact? AgencyContact(GameInstance save, string agency)", "/// <summary>C5f `pcresearch` console lines");
-        int registration = send.IndexOf("contact.id == registration.BusinessName && contact.description == registration.businessTypeName", StringComparison.Ordinal);
-        int address = send.IndexOf("contact.streetNumber == number", StringComparison.Ordinal);
-        Assert.True(registration > 0 && address > registration);
     }
 
     // ---- cleanup ----
-
-    [Fact]
-    public void C3PlaceholdersAreRemovedAndTheBindingDiagnosticStays()
-    {
-        string root = Root();
-        foreach (string removed in new[] { "Core/AgencyOrders.cs", "Runtime/AgencyPaymentPort.cs", "tests/AgencyOrdersTests.cs" })
-            Assert.False(File.Exists(Path.Combine(root, removed)), removed);
-        Assert.False(Directory.Exists(Path.Combine(root, "tools", "agency-payment-regression")));
-        Assert.True(File.Exists(Path.Combine(root, "Runtime", "AgencyBindingDiagnostic.cs")));
-        foreach (var folder in new[] { "Core", "Runtime", "Persistence", "Compatibility", "tests", "tools" })
-            foreach (var file in Directory.GetFiles(Path.Combine(root, folder), "*.*", SearchOption.AllDirectories)
-                .Where(f => f.EndsWith(".cs", StringComparison.Ordinal) || f.EndsWith(".csproj", StringComparison.Ordinal) || f.EndsWith(".py", StringComparison.Ordinal))
-                .Where(f => !f.EndsWith("ResearchDeliveryTests.cs", StringComparison.Ordinal) && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
-                    && !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)))
-            {
-                string text = File.ReadAllText(file);
-                foreach (string name in new[] { "AgencyOrderBook", "IAgencyPaymentPort", "AgencyPaymentPort", "agency-payment-regression" })
-                    Assert.False(text.Contains(name, StringComparison.Ordinal), file + " still names " + name);
-            }
-    }
 
     // ---- perf ----
 

@@ -39,6 +39,52 @@ namespace PersistentCity.Runtime
             PublishFrontages(this.places.Values);
         }
         public bool Raining => RainHelper.isRaining;
+        // P2: whole-scene reads (frontage rebind, new-place frontage lookup, park and performer scans) run here, once a
+        // frame before advancement, at most one per frame. The event path only reads their results; while one is due,
+        // new spots are withheld and saved stops report Deferred, never Unavailable, so nothing is cancelled meanwhile.
+        private bool rebindDue;
+        private readonly List<Place> unresolved = new List<Place>();
+        private readonly SceneScanSchedule scans = new SceneScanSchedule();
+        public long MaintainScans { get; private set; }
+        public void Maintain()
+        {
+            try
+            {
+                ObserveScenes();
+                if (rebindDue || unresolved.Count > 0)
+                {
+                    MaintainScans++;
+                    if (rebindDue) { rebindDue = false; PublishFrontages(places.Values, rebind: true); }
+                    else PublishFrontages(unresolved);
+                    unresolved.Clear();
+                    return;
+                }
+                switch (scans.Next)
+                {
+                    case SceneScan.Parks:
+                        MaintainScans++; ParkTriggerScans++;
+                        parkTriggers = UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true);
+                        scans.Completed(SceneScan.Parks);
+                        return;
+                    case SceneScan.Performers:
+                        MaintainScans++; ScanPerformers(); scans.Completed(SceneScan.Performers);
+                        return;
+                }
+            }
+            catch (Exception) { }
+        }
+        // Scene sets change between frames. The first read of a frame, a RefreshOptionalStops read before Maintain
+        // included, marks the scene caches pending before anything consumes them.
+        private int observedFrame = -1;
+        private readonly List<int> observedScenes = new List<int>();
+        private void ObserveScenes()
+        {
+            int frame = Time.frameCount;
+            if (frame == observedFrame) return;
+            observedFrame = frame;
+            if (!SameScenes(observedScenes)) scans.SceneSetChanged();
+        }
+        private bool ScanDue(DwellKind kind) => kind == DwellKind.Audience || kind == DwellKind.Resting ? scans.Due(kind) : rebindDue;
         // Issue #128 attribution: every Spots/Available read, both inside advancement units and from
         // RefreshOptionalStops before them. The per-advance delta isolates advancement reads.
         // Read and reset by the 60-second summary; timing adds no allocation.
@@ -62,6 +108,7 @@ namespace PersistentCity.Runtime
             long started = BeginSeam();
             try
             {
+                ObserveScenes();
                 var result = ReadSpots(place, kind);
                 foreach (var spot in result) validatedSpots[spot.Id] = spot;
                 return result;
@@ -92,15 +139,13 @@ namespace PersistentCity.Runtime
             bool known = buildings.TryGetValue(place.Id, out var found);
             // A cached refusal is retained until publication. A destroyed previously owned
             // controller triggers a rebind; missing/ambiguous frontages are never polled each frame.
-            if (known && !ReferenceEquals(found, null) && found == null)
-            {
-                PublishFrontages(places.Values, rebind: true);
-                found = buildings[place.Id];
-            }
+            if (rebindDue) return false;
+            if (known && !ReferenceEquals(found, null) && found == null) { rebindDue = true; return false; }
             if (!known)
             {
                 places[place.Id] = place;
-                buildings[place.Id] = found = ResolveFrontage(place);
+                if (!unresolved.Contains(place)) unresolved.Add(place);
+                return false;
             }
             // Access, business and closure are game reasons, read every time. Activity counts once (F2h).
             return found != null && GamePlaces.BuildingAccessible(found)
@@ -207,7 +252,6 @@ namespace PersistentCity.Runtime
             }
             return image;
         }
-        private static CityBuildingController? ResolveFrontage(Place place) => ResolveFrontage(place, ReadFrontages());
         private static CityBuildingController? ResolveFrontage(Place place, FrontageImage image)
         {
             if (!place.Position.IsFinite) return null;
@@ -242,11 +286,11 @@ namespace PersistentCity.Runtime
             if (!place.Id.StartsWith("scene-park:", StringComparison.Ordinal)
                 || !place.EvidenceSource.StartsWith("native-park-volume;", StringComparison.Ordinal)) return Array.Empty<OptionalStopSpot>();
             // A destroyed cached trigger may have been replaced inside an already-loaded scene; the
-            // former per-call scan would see the replacement, so rescan once before reporting no match.
-            for (int attempt = 0; attempt < 2; attempt++)
+            // former per-call scan would see the replacement, so Maintain rescans before no match is final.
+            if (parkTriggers == null || scans.Due(DwellKind.Resting)) return Array.Empty<OptionalStopSpot>();
             {
                 bool destroyed = false;
-                foreach (var trigger in ParkTriggers())
+                foreach (var trigger in parkTriggers)
                 {
                     if (trigger == null) { destroyed = true; continue; }
                     if (!OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id
@@ -270,8 +314,7 @@ namespace PersistentCity.Runtime
                     if (result.Count == 0) return result;
                     targets[place.Id] = trigger.transform; cached[key] = result.ToArray(); return cached[key];
                 }
-                if (!destroyed) break;
-                parkTriggers = null;
+                if (destroyed) scans.ParkTriggerLost();
             }
             return Array.Empty<OptionalStopSpot>();
         }
@@ -280,14 +323,6 @@ namespace PersistentCity.Runtime
         // only change when a scene loads, finishes loading or unloads. Rescan exactly then; every call still
         // applies the same null, activity and live scene-key checks in the same order.
         private LocationHappinessTrigger[]? parkTriggers;
-        private readonly List<int> parkTriggerScenes = new List<int>();
-        private LocationHappinessTrigger[] ParkTriggers()
-        {
-            bool same = SameScenes(parkTriggerScenes);
-            if (same && parkTriggers != null) return parkTriggers;
-            ParkTriggerScans++;
-            return parkTriggers = UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true);
-        }
         // Compares the loaded scene set with the recorded one, then records the current set.
         private static bool SameScenes(List<int> recorded)
         {
@@ -312,13 +347,10 @@ namespace PersistentCity.Runtime
         // spawners included whatever their activity at the scan (CityMapHider deactivates city objects while the
         // player is indoors or the map is open), and rescan only when the scene set changes. Spawner settings
         // and DLC visibility are the game reasons that exclude a site.
-        private readonly List<int> performerScenes = new List<int>();
-        private bool performersRead;
         public long PerformerScans { get; private set; }
-        private void EnsurePerformers()
+        private void ScanPerformers()
         {
-            if (SameScenes(performerScenes) && performersRead) return;
-            performersRead = true; PerformerScans++;
+            PerformerScans++;
             var readings = new List<PerformerSiteReading>();
             foreach (var zone in UnityEngine.Object.FindObjectsOfType<StationaryAiSpawner>(true))
             {
@@ -341,7 +373,7 @@ namespace PersistentCity.Runtime
         }
         private IReadOnlyList<OptionalStopSpot> Audience(Place place)
         {
-            EnsurePerformers();
+            if (scans.Due(DwellKind.Audience)) return Array.Empty<OptionalStopSpot>();
             // Only pedestrians passing this entrance; no destination/trip is generated for a show.
             return audiences.Get(place, performers.Near(place), SampleAudience);
         }
@@ -368,24 +400,28 @@ namespace PersistentCity.Runtime
         public OptionalStopAvailability Available(OptionalStopState stop)
         {
             long started = BeginSeam();
-            try { return ReadAvailable(stop); }
+            try { ObserveScenes(); return ReadAvailable(stop); }
             catch (Exception) { return OptionalStopAvailability.Unavailable; }
             finally { RecordSeam(started); }
         }
         private OptionalStopAvailability ReadAvailable(OptionalStopState stop)
         {
             if (!places.TryGetValue(stop.PlaceId, out var place)) return OptionalStopAvailability.Unavailable;
-            if (stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting && !NativeDoorPresent(place, stop.Kind)) return OptionalStopAvailability.Unavailable;
+            if (ScanDue(stop.Kind) || unresolved.Contains(place)) return OptionalStopAvailability.Deferred;
+            if (stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting && !NativeDoorPresent(place, stop.Kind))
+                return rebindDue || unresolved.Contains(place) ? OptionalStopAvailability.Deferred : OptionalStopAvailability.Unavailable;
+            // GeometryStatus can discover a destroyed park trigger or controller; that scan is pending, not a failure.
             var geometryStatus = GeometryStatus(place, stop);
-            if (geometryStatus != OptionalStopAvailability.Ready) return geometryStatus;
+            if (geometryStatus != OptionalStopAvailability.Ready)
+                return SceneScanSchedule.AfterGeometry(geometryStatus, ScanDue(stop.Kind) || unresolved.Contains(place));
             // Rebind saved native identities once. A destroyed volume or a site gone from the scene ends the saved
             // stop; a later reappearance cannot restart it. A deactivation does not end it (F2h).
             if (stop.Kind == DwellKind.Audience)
             {
-                EnsurePerformers();
                 if (!performers.Available(stop.TargetId, stop.Facing)) return OptionalStopAvailability.Unavailable;
             }
             if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId)) ParkEdge(place, place.Id + ":" + stop.Kind);
+            if (ScanDue(stop.Kind)) return OptionalStopAvailability.Deferred;
             if (stop.Kind == DwellKind.Resting && (!targets.TryGetValue(stop.TargetId, out var target) || target == null
                 || !parkActivity.Admit(stop.TargetId, target.gameObject.activeInHierarchy, false))) return OptionalStopAvailability.Unavailable;
             return NavMesh.SamplePosition(PhysicalPedestrianBody.Vector(stop.Position), out var hit, 0.15f, WalkingRoutes.DryFilter)

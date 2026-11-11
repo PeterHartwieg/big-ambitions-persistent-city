@@ -21,7 +21,7 @@ public sealed class TrafficPersistenceTests
 
         Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
         Assert.Equal(wire, DevelopmentChain.Write(read.State!));
-        var restored = TrafficKernel.Restore(read.State!.Traffic!, false);
+        var restored = TrafficKernel.Restore(read.State!.Traffic!);
         Assert.Equal(2, restored.VehicleCount);
         Assert.Equal(7, restored.GetPermission("c0").NominalMinutes);
         Assert.Equal(4, restored.GetPermission("c1").NominalMinutes);
@@ -153,28 +153,6 @@ public sealed class TrafficPersistenceTests
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Null(field.GetValue(state));
         DevelopmentChain.Write(state); Assert.False(synchronized);
-    }
-
-    [Fact]
-    public void PhysicalSaveAndClockChangePreserveActualQueuePositionBeforeSafeBackgroundRelease()
-    {
-        var state = QueuedCity();
-        var kernel = TrafficKernel.Restore(state.Traffic!, false);
-        kernel.SetPhysicalControl("c0", true);
-        state.Traffic = kernel.Capture();
-        var read = DevelopmentChain.Read(DevelopmentChain.Write(state));
-        Assert.Equal(SaveReadStatus.Loaded, read.Status);
-        Assert.True(read.State!.Traffic!.Vehicles[0].PhysicalControl);
-        var released = TrafficKernel.Restore(read.State.Traffic);
-        Assert.False(released.GetPermission("c0").PhysicalControl);
-        Assert.Equal(7, released.GetPermission("c0").NominalMinutes);
-        Assert.True(TravelTiming.Apply(state, 2, 0.5));
-        Assert.Equal(40, state.Citizens[0].Journey!.PositionAt(7).X);
-        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
-        var retimed = TrafficKernel.Restore(state.Traffic!);
-        Assert.False(retimed.GetPermission("c0").PhysicalControl);
-        Assert.Equal(7, retimed.GetPermission("c0").NominalMinutes);
-        Assert.Equal(new[] { "c0" }, state.Traffic!.Links[0].Vehicles);
     }
 
     [Fact]

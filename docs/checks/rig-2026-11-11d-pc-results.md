@@ -4,7 +4,7 @@
 
 Role `rig_test`, HomePCHartwieg, Windows background agent1. Candidate `86c2e92f33e176fd29cea0072c0f5341f299e97f`, fetched and verified before build; tip unchanged. Schema held at 1. Testing only: no production changes, offline dotnet suite, overlay update, release, Workshop, version/changelog, issue or merge.
 
-[Combined checklist](rig-2026-11-06-checklist.md). [Previous PC run #212](rig-2026-11-11c-pc-results.md).
+[Combined checklist](rig-2026-11-06-checklist.md). [Previous PC run #212](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a76b197ddce32def329eb3e34b25c00a01ead318/docs/checks/rig-2026-11-11c-pc-results.md).
 
 `<stage>` = `C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-11d-pc`. Raw JSON, logs, saves, binaries, captures and backups stay outside Git. Earlier stages/worktrees and the official rig source were left unchanged.
 

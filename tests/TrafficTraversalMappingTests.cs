@@ -42,45 +42,6 @@ public sealed class TrafficTraversalMappingTests
     }
 
     [Theory]
-    [InlineData(1)] [InlineData(1.5)] [InlineData(1.75)]
-    public void UniformCommittedSlowdownBindsAndReloadsWithoutChangingCanonicalNetwork(double factor)
-    {
-        var planner = new Planner(); var route = Uniform(factor);
-        Assert.True(planner.TrafficNetwork.TryMap(route, out var mapping));
-        planner.TrafficNetwork.ValidateRemainingMapping(route, mapping, 0);
-        Assert.Equal(3 * factor, Assert.Single(mapping).FreeFlowMinutes);
-        Assert.Equal(3, planner.TrafficNetwork.Links.Single().FreeFlowMinutes);
-        var (state, citizen) = State(route); var simulation = new CitySimulator(state, planner); simulation.AdvanceTo(100);
-        // Saved by an older (pre-F2d) build with the body's coordinate under physical control; the reader releases it there.
-        Assert.Equal(factor, LegacyTrafficLease.Report(simulation, citizen.Identity.Id, 102, factor, release: false));
-        var decoded = SaveWire.Read(LegacyTrafficLease.OlderSave(simulation)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
-        var restored = new CitySimulator(decoded.State!, new Planner());
-        Assert.False(restored.Traffic!.HasPhysicalControl);
-        Assert.Equal(factor, restored.Traffic.GetPermission(citizen.Identity.Id).NominalMinutes);
-        Assert.Equal(3 * factor, restored.State.Citizens[0].Journey!.Minutes);
-        Assert.Equal(1, restored.Traffic!.VehicleCount);
-    }
-
-    [Fact]
-    public void UniformSlowdownSurvivesActualClockRetimingCropAndASecondReload()
-    {
-        var (state, citizen) = State(Uniform()); var simulation = new CitySimulator(state, new Planner()); simulation.AdvanceTo(100);
-        // Saved by an older (pre-F2d) build with the body's coordinate under physical control (LegacyTrafficLease).
-        Assert.Equal(1.5, LegacyTrafficLease.Report(simulation, citizen.Identity.Id, 102, 1.5, release: false));
-        state = SaveWire.Read(LegacyTrafficLease.OlderSave(simulation)).State!;
-        Assert.True(TravelTiming.Apply(state, 2, 2));
-        var newNetwork = new Planner(2).TrafficNetwork;
-        var saved = Assert.Single(state.Traffic!.Vehicles);
-        Assert.Equal(1.5, saved.Route[0].StartNominalMinutes);
-        Assert.Equal(6, saved.Route[0].FreeFlowMinutes, 12);
-        newNetwork.ValidateRemainingMapping(state.Citizens[0].Journey!, saved.Route, saved.NominalMinutes);
-        state = SaveWire.Read(SaveCodec.Write(state)).State!;
-        var restored = new CitySimulator(state, new Planner(2));
-        Assert.Equal(1, restored.Traffic!.VehicleCount);
-        Assert.Equal(7.5, restored.State.Citizens[0].Journey!.Minutes);
-    }
-
-    [Theory]
     [InlineData(.9)] [InlineData(1.7501)]
     public void FutureCanonicalSpeedupAndUnreviewedSlowdownAreRefused(double factor)
     {

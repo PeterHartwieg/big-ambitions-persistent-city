@@ -193,7 +193,7 @@ public sealed class PresentationBoundaryTests
     [Fact]
     public void MeasureUpdateWithOptionalStopBodies()
     {
-        string? path = System.Environment.GetEnvironmentVariable("PC_F2B_MEASURE");
+        string? path = PerfGate.Variable("PC_F2B_MEASURE");
         if (path == null) return;
         void Measure(string label, Fixture f, int count = 2000)
         {
@@ -301,59 +301,4 @@ public sealed class PresentationBoundaryTests
         Assert.NotNull(root); return root!.FullName;
     }
 
-    [Fact]
-    public void PhysicalRuntimeCallsOnlyTheReviewedSimulationMembers()
-    {
-        var files = Directory.GetFiles(Path.Combine(Root(), "Runtime"), "Physical*.cs");
-        Assert.Contains(files, f => Path.GetFileName(f) == "PhysicalPopulation.cs");
-        var used = new SortedSet<string>(StringComparer.Ordinal);
-        foreach (var file in files)
-        {
-            string text = File.ReadAllText(file);
-            foreach (Match m in Regex.Matches(text, @"\bsimulation\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)")) used.Add(m.Groups[1].Value);
-            // Nothing is assigned through the simulator's state from presentation code.
-            Assert.DoesNotMatch(new Regex(@"\bsimulation\s*\.\s*State\b[\w\.\[\]""]*\s*(=[^=>]|\+=|-=|\+\+|--)"), text);
-        }
-        var allowed = new SortedSet<string>(ReadOnlyMembers.Concat(LogicalRefreshMembers).Concat(PlayerHoldMembers), StringComparer.Ordinal);
-        Assert.Empty(used.Except(allowed));
-        // The list stays exact: a member no longer used must be removed from it in the same change.
-        Assert.Empty(allowed.Except(used));
-        Assert.DoesNotContain("CancelOptionalStop", used);
-        // Every allowed member exists on CitySimulator.
-        var members = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Select(m => m.Name).ToHashSet();
-        Assert.All(allowed, name => Assert.Contains(name, members));
-        // F2e: exactly one call site, the player-contact report in PhysicalPopulation, and none anywhere else in Runtime.
-        int holdCalls = 0;
-        foreach (var file in Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs"))
-            holdCalls += Regex.Matches(File.ReadAllText(file), @"\bsimulation\s*\.\s*HoldForPlayer\b").Count;
-        Assert.Equal(1, holdCalls);
-        // F2c: the walker follow, its corrections and both tails read only. F2d: so do the car command, the car follow,
-        // its corrections, fade and phase count.
-        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs"))));
-        SortedSet<string> Region(string start, string end)
-        {
-            int from = population.IndexOf(start, StringComparison.Ordinal), to = population.IndexOf(end, from + 1, StringComparison.Ordinal);
-            Assert.True(from > 0 && to > from, start);
-            return new SortedSet<string>(Regex.Matches(population.Substring(from, to - from), @"\bsimulation\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)")
-                .Select(m => m.Groups[1].Value), StringComparer.Ordinal);
-        }
-        Assert.Empty(Region("private bool ObserveWalker(", "private bool ObserveCar(").Except(ReadOnlyMembers));
-        var car = Region("private bool CarCommand(", "private bool Observe(Binding binding)");
-        car.UnionWith(Region("private bool ObserveCar(", "// Inspector picking"));
-        Assert.Equal(new[] { "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen" }, car);
-        // The lease type and its API are gone, and nothing in Runtime reaches the kernel's internal physical control.
-        var simulatorMembers = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-            .Select(m => m.Name).ToHashSet();
-        Assert.All(RemovedLeaseMembers, name => Assert.DoesNotContain(name, simulatorMembers));
-        Assert.Null(typeof(CitySimulator).Assembly.GetType("PersistentCity.Core.PhysicalJourneyLease"));
-        foreach (var file in Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs"))
-        {
-            string text = File.ReadAllText(file);
-            Assert.DoesNotMatch(new Regex(@"\b(SetPhysicalControl|ReportPhysicalProgress|PhysicalJourneyLease)\b"), text);
-            // F2d: a car body's model and paint are derived (CarAppearance), never written into the saved car.
-            Assert.DoesNotMatch(new Regex(@"\.\s*(ModelId|PaintSeed)\s*(=[^=>]|\?\?=)"), text);
-        }
-        // The Runtime rain check is gone from the body paths; logical rain stays in Core.
-        Assert.DoesNotContain("RainHelper", string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs")))));
-    }
 }

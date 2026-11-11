@@ -79,7 +79,7 @@ namespace PersistentCity.Core
             {
                 if (legacy || state.Traffic.Clock != state.Minute)
                     throw new ArgumentException("Traffic needs native timing at the city clock.");
-                savedTraffic = TrafficKernel.Restore(state.Traffic, false);
+                savedTraffic = TrafficKernel.Restore(state.Traffic);
             }
             var changes = new List<Change>();
             var maps = new Dictionary<string, NominalMap>(StringComparer.Ordinal);
@@ -157,7 +157,7 @@ namespace PersistentCity.Core
             {
                 if (legacy || state.Traffic.Clock != state.Minute)
                     throw new ArgumentException("Traffic needs native timing at the city clock.", nameof(state));
-                var kernel = TrafficKernel.Restore(state.Traffic, false);
+                var kernel = TrafficKernel.Restore(state.Traffic);
                 var citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
                 foreach (var citizen in state.Citizens) citizens.Add(citizen.Identity.Id, citizen);
                 foreach (var vehicle in state.Traffic.Vehicles)

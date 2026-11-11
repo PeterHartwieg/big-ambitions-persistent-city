@@ -105,7 +105,7 @@ public sealed class HousingPopulationTests
         Assert.Equal("pc:16", city.Citizens.Last().Identity.Id);
         CheckAccounting(city);
 
-        new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
+        new CitySimulator(city, new FixedWalk(1)).AdvanceTo(city.Minute);
         Assert.Same(existing[1], city.Citizens[1]);
         CheckAccounting(city);
         Assert.Equal(sources, JsonConvert.SerializeObject(city.SourceIdentities));
@@ -127,7 +127,7 @@ public sealed class HousingPopulationTests
         Assert.Equal(2, city.PopulationTarget);
         Assert.Equal(2, city.InitialImportedResidents);
         Assert.Equal(2, city.Citizens.Select(c => c.DayPlaceId).Distinct().Count());
-        new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
+        new CitySimulator(city, new FixedWalk(1)).AdvanceTo(city.Minute);
         Assert.All(city.Places, p => Assert.True(city.Citizens.Count(c => c.HomeId == p.Id || c.DayPlaceId == p.Id) <= p.Capacity));
         CheckAccounting(city);
         Assert.Throws<InvalidOperationException>(() => Population.Create(Donors(3), places, "source", "0.40.4", 7, 1440));
@@ -183,9 +183,4 @@ public sealed class HousingPopulationTests
         Assert.Equal(957, HousingPolicy.Target(capacity));
     }
 
-    private sealed class Direct : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double minute, TravelPreferences preferences)
-            => new() { Legs = new() { new() { From = from.Position, To = to.Position, Minutes = 1, Mode = TravelMode.Walk } } };
-    }
 }

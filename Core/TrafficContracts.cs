@@ -80,11 +80,11 @@ namespace PersistentCity.Core
     public readonly struct TrafficVehicleSnapshot
     {
         internal TrafficVehicleSnapshot(string vehicleId, int routeIndex, int? linkId, double progress,
-            double maximum, bool canCross, bool physical, bool completed, double? completedAt,
+            double maximum, bool canCross, bool completed, double? completedAt,
             bool signalGreen = true, double linkEndNominalMinutes = double.NaN)
         {
             VehicleId = vehicleId; RouteIndex = routeIndex; LinkId = linkId; NominalMinutes = progress;
-            MaximumNominalMinutes = maximum; CanCrossBoundary = canCross; PhysicalControl = physical;
+            MaximumNominalMinutes = maximum; CanCrossBoundary = canCross;
             IsCompleted = completed; CompletedAt = completedAt; SignalGreen = signalGreen; LinkEndNominalMinutes = linkEndNominalMinutes;
         }
         public string VehicleId { get; }
@@ -95,7 +95,6 @@ namespace PersistentCity.Core
         public double MaximumNominalMinutes { get; }
         /// <summary>Advisory only. Crossing ownership changes only when AdvanceTo processes the transfer.</summary>
         public bool CanCrossBoundary { get; }
-        public bool PhysicalControl { get; }
         public bool IsCompleted { get; }
         public double? CompletedAt { get; }
         /// <summary>F2d: the occupied link's kernel signal is green now (true without a signal or a link). Read-only,
@@ -155,7 +154,6 @@ namespace PersistentCity.Core
         public double MotionStartedAt { get; set; }
         public double MotionStartFraction { get; set; }
         public double NominalMinutes { get; set; }
-        public bool PhysicalControl { get; set; }
         public bool Completed { get; set; }
         public double? CompletedAt { get; set; }
     }

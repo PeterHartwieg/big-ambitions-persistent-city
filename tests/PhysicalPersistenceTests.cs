@@ -60,7 +60,7 @@ public sealed class PhysicalPersistenceTests
             string encoded = DevelopmentChain.Write(state); var read = DevelopmentChain.Read(encoded);
             Assert.Equal(SaveReadStatus.Loaded, read.Status);
             Assert.Equal(encoded, DevelopmentChain.Write(read.State!));
-            var resumed = new CitySimulator(read.State!, new Direct()); var restored = read.State!.Citizens[0];
+            var resumed = new CitySimulator(read.State!, new FixedWalk(1)); var restored = read.State!.Citizens[0];
             Assert.Equal(clock, restored.NextEventMinute);
             Assert.True(resumed.SampleJourney(restored).AtEnd);
             Assert.Equal(1, resumed.AdvanceTo(clock).Events);
@@ -90,11 +90,6 @@ public sealed class PhysicalPersistenceTests
         Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(json.ToString()).Status);
     }
 
-    private sealed class Direct : IRoutePlanner
-    {
-        public Route Plan(Place from, Place to, double minute, TravelPreferences preferences) => new Route
-        { Legs = new List<RouteLeg> { new() { From = from.Position, To = to.Position, Minutes = 1, Mode = TravelMode.Walk } } };
-    }
 
     private static JObject SchemaFour(CityState city)
     {

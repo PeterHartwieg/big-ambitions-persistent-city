@@ -110,7 +110,7 @@ internal static class Export
             ["cars"] = "none (the F5h planner routes walking legs only; vehicle bodies stay at 0)",
         }),
         ["contract_version"] = "perf-gate/v1",
-        ["movement_state"] = "offline driver double (tools/movement-equivalence/PresentationDriver.cs: F2c walkers, F2d car follow, F2e followed list)",
+        ["movement_state"] = "offline driver double (tests/movement-equivalence/PresentationDriver.cs: F2c walkers, F2d car follow, F2e followed list)",
         ["rig_capabilities"] = NotApplicable,
     };
 

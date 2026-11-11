@@ -426,7 +426,7 @@ public sealed class ResearchSaveTests
     [Fact]
     public void MeasureSectionCostAtBounds()
     {
-        if (Environment.GetEnvironmentVariable("PC_C5C_MEASURE") == null) return;
+        if (PerfGate.Variable("PC_C5C_MEASURE") == null) return;
         var full = City(AtBounds()); var empty = City();
         string fullPayload = SaveWire.Text(full), emptyPayload = SaveWire.Text(empty);
         for (int i = 0; i < 200; i++) { SaveWire.Read(SaveWire.Text(full)); SaveWire.Read(SaveWire.Text(empty)); }

@@ -126,16 +126,26 @@ namespace PersistentCity.Runtime
             get
             {
                 if (!Valid) return false;
-                if (renderers == null) { renderers = new List<Renderer>(); Vehicle.GetComponentsInChildren(true, renderers); }
-                bool any = false;
-                foreach (var renderer in renderers)
-                {
-                    if (renderer == null) continue;
-                    any = true;
-                    if (ScreenVisibility.Contains(renderer)) return true;
-                }
-                return !any && ScreenVisibility.Contains(null);
+                // P5: read once a frame; the follower and its correction ask several times.
+                int frame = Time.frameCount;
+                if (onScreenFrame == frame) return onScreen;
+                onScreenFrame = frame;
+                return onScreen = ReadOnScreen();
             }
+        }
+        private int onScreenFrame = -1;
+        private bool onScreen;
+        private bool ReadOnScreen()
+        {
+            if (renderers == null) { renderers = new List<Renderer>(); Vehicle.GetComponentsInChildren(true, renderers); }
+            bool any = false;
+            foreach (var renderer in renderers)
+            {
+                if (renderer == null) continue;
+                any = true;
+                if (ScreenVisibility.Contains(renderer)) return true;
+            }
+            return !any && ScreenVisibility.Contains(null);
         }
         private List<Renderer>? renderers;
         /// <summary>F2d Q3 fade: whether every renderer of this car can show a base-colour alpha
@@ -154,14 +164,16 @@ namespace PersistentCity.Runtime
                 if (renderer == null) continue;
                 foreach (var material in renderer.sharedMaterials)
                 {
-                    if (material == null) return false;
-                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
-                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
-                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
-                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
-                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
-                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
-                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) return false;
+                    if (material == null || material.shader == null) return false;
+                    // Only the facts are read here; WalkerFollow.MaterialCanFade decides (verified shaders only).
+                    var facts = new MaterialFadeFacts(material.shader.name, material.renderQueue,
+                        material.HasProperty(BaseColorId), material.HasProperty(ColorId),
+                        material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null,
+                        material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null,
+                        material.HasProperty(SurfaceId) ? material.GetFloat(SurfaceId) : (float?)null,
+                        material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), material.IsKeywordEnabled("_ALPHABLEND_ON"),
+                        material.IsKeywordEnabled("_ALPHATEST_ON"));
+                    if (!WalkerFollow.MaterialCanFade(facts)) return false;
                     any = true;
                 }
             }

@@ -112,7 +112,6 @@ public sealed class PhysicalCarFollowTests
             Cars.Drive(seconds, speed, Corner);
             Minute += seconds * GamePerSecond; City.AdvanceTo(Minute); Plain.AdvanceTo(Minute);
             Time.Next(seconds); Bodies.Update();
-            Assert.False(City.Traffic!.HasPhysicalControl);
         }
         internal void Until(Func<bool> done, int frames = 20000, float seconds = 1 / 30f)
         {
@@ -162,6 +161,25 @@ public sealed class PhysicalCarFollowTests
         Assert.True(f.T.CarLagSamples > 0 && f.T.CarMaximumLagMetres > CarFollow.CatchUpMetres);
         Assert.DoesNotContain(f.Corrections(), c => c.OnScreen && c.Kind == WalkerCorrectionKind.Move);
         f.Until(() => f.Person("c0").CompletedJourneys == 1 && f.Person("c1").CompletedJourneys == 1);
+        f.AssertSameAsBodiesOff();
+    }
+
+    /// <summary>P5: an off-screen car syncs its own progress only every few frames. It keeps up with the kernel all
+    /// the same: shown again, it is within the follow distance of the logical pose, nothing was corrected, and the
+    /// journey ends as in the city without bodies.</summary>
+    [Fact]
+    public void InvisibleCarSyncsLessOftenAndResumesAtTheKernelPosition()
+    {
+        using var f = new Fixture();
+        f.Until(() => f.Car("c0") != null, 600);
+        var body = f.Car("c0")!;
+        for (int i = 0; i < 60; i++) f.Frame();
+        Assert.Same(body, f.Car("c0"));
+        body.OnScreen = true; f.Frame();
+        Assert.Same(body, f.Car("c0"));
+        Assert.InRange(f.LogicalX("c0") - body.Position.X, -1e-6, CarFollow.CatchUpMetres);
+        Assert.Empty(f.Corrections());
+        f.Until(() => f.Person("c0").CompletedJourneys == 1);
         f.AssertSameAsBodiesOff();
     }
 
@@ -418,7 +436,6 @@ public sealed class PhysicalCarFollowTests
         f.Bodies.BeforeSave();
         string saved = SaveCodec.Write(f.City.State);
         Assert.Equal(SaveCodec.Write(f.Plain.State), saved);
-        Assert.DoesNotContain(SaveWire.Read(saved).State!.Traffic!.Vehicles, v => v.PhysicalControl);
         var reloaded = new CitySimulator(SaveWire.Read(saved).State!, new Roads(null));
         reloaded.AdvanceTo(f.Minute + 30); f.Plain.AdvanceTo(f.Minute + 30);
         Assert.Equal(SaveCodec.Write(f.Plain.State), SaveCodec.Write(reloaded.State));

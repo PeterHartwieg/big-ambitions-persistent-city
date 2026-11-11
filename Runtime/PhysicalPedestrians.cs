@@ -30,7 +30,12 @@ namespace PersistentCity.Runtime
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (maximum < 1 || maximum > 256) throw new ArgumentOutOfRangeException(nameof(maximum));
             this.parent = parent; this.maximum = maximum;
+            NavigationHook.Attach(this);
         }
+
+        /// <summary>P-C: runs immediately before each of Unity's navigation updates, with that frame's Time.deltaTime,
+        /// also in frames whose Update skipped the population. The follower bounds each walker's coming step there.</summary>
+        public Action? BeforeNavigation { get; set; }
 
         public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
         {
@@ -167,6 +172,7 @@ namespace PersistentCity.Runtime
         {
             if (disposed) return;
             disposed = true;
+            BeforeNavigation = null; NavigationHook.Detach(this);
             foreach (var body in active.Values) body.Invalidate();
             active.Clear(); idle.Clear();
             foreach (var character in all) if (character != null)
@@ -231,12 +237,19 @@ namespace PersistentCity.Runtime
             stopped = false; Tick(); return true;
         }
         public void Stop(bool stop) { stopped = stop; Tick(); }
-        /// <summary>F2c follow pace along the current path; zero or less stands the body still.</summary>
+        /// <summary>P-C: the agent still holds a current path to follow (one per leg; a warp or reset drops it, and a
+        /// NavMesh change that invalidates it makes it stale, autoRepath being off).</summary>
+        public bool HasPath => Valid && Agent.hasPath && !Agent.isPathStale;
+        /// <summary>F2c follow pace along the current path; zero or less stands the body still. P-C: the destination is
+        /// the leg's corner, so the agent's own velocity is clamped to the pace at once; deceleration under its
+        /// acceleration limit would otherwise carry it past the logical pose.</summary>
         public void Pace(double metresPerScaledSecond)
         {
             if (!Valid) return;
-            if (!(metresPerScaledSecond > 0) || metresPerScaledSecond > 12) { stopped = true; Tick(); return; }
+            if (!(metresPerScaledSecond > 0) || metresPerScaledSecond > 12) { stopped = true; Agent.velocity = Vector3.zero; Tick(); return; }
             Agent.speed = (float)metresPerScaledSecond;
+            Vector3 velocity = Agent.velocity;
+            if (velocity.sqrMagnitude > Agent.speed * Agent.speed) Agent.velocity = velocity.normalized * Agent.speed;
             stopped = false; Tick();
         }
         /// <summary>F2c Q3 fade: whether every renderer of this body can show a base-colour alpha (a transparent-queue
@@ -255,16 +268,16 @@ namespace PersistentCity.Runtime
                 if (renderer == null) continue;
                 foreach (var material in renderer.sharedMaterials)
                 {
-                    if (material == null) { probe.Clear(); return false; }
-                    bool colour = material.HasProperty(BaseColorId) || material.HasProperty(ColorId);
-                    float? source = material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null;
-                    float? destination = material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null;
-                    // Only shader configurations whose fragment alpha follows the colour: URP with a transparent surface
-                    // (_Surface 1 and its keyword), or the built-in Standard alpha-blend mode keyword.
-                    bool alphaSurface = material.HasProperty(SurfaceId) && material.GetFloat(SurfaceId) == 1f
-                        && material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
-                        || material.IsKeywordEnabled("_ALPHABLEND_ON");
-                    if (!WalkerFollow.MaterialCanFade(material.renderQueue, colour, source, destination, alphaSurface)) { probe.Clear(); return false; }
+                    if (material == null || material.shader == null) { probe.Clear(); return false; }
+                    // Only the facts are read here; WalkerFollow.MaterialCanFade decides (verified shaders only).
+                    var facts = new MaterialFadeFacts(material.shader.name, material.renderQueue,
+                        material.HasProperty(BaseColorId), material.HasProperty(ColorId),
+                        material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null,
+                        material.HasProperty(DstBlendId) ? material.GetFloat(DstBlendId) : (float?)null,
+                        material.HasProperty(SurfaceId) ? material.GetFloat(SurfaceId) : (float?)null,
+                        material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), material.IsKeywordEnabled("_ALPHABLEND_ON"),
+                        material.IsKeywordEnabled("_ALPHATEST_ON"));
+                    if (!WalkerFollow.MaterialCanFade(facts)) { probe.Clear(); return false; }
                     any = true;
                 }
             }
@@ -424,6 +437,77 @@ namespace PersistentCity.Runtime
             if (camera == null || !PhysicalPedestrianBody.Fits(at)) return true;
             var centre = PhysicalPedestrianBody.Vector(at) + Vector3.up * 0.9f;
             return GeometryUtility.TestPlanesAABB(planes, new Bounds(centre, new Vector3(0.8f, 1.8f, 0.8f)));
+        }
+    }
+
+    /// <summary>P-C: a player-loop system in front of PreUpdate.AIUpdate and PreLateUpdate.AIUpdatePostScript that calls
+    /// the current pool's <see cref="PhysicalPedestrians.BeforeNavigation"/>. Whichever of the two moves the agents, the
+    /// walker bound is applied right before it with the step's own duration. Main thread only.</summary>
+    internal static class NavigationHook
+    {
+        private struct PersistentCityWalkerBound { }
+        private static PhysicalPedestrians? owner;
+        private static bool installed;
+
+        internal static void Attach(PhysicalPedestrians pool)
+        {
+            owner = pool;
+            if (installed) return;
+            var loop = UnityEngine.LowLevel.PlayerLoop.GetCurrentPlayerLoop();
+            int inserted = 0;
+            loop = Insert(loop, ref inserted);
+            if (inserted == 0) { Debug.LogWarning("[Persistent City] navigation update not found; walkers are bounded in Update only."); return; }
+            UnityEngine.LowLevel.PlayerLoop.SetPlayerLoop(loop);
+            installed = true;
+        }
+
+        internal static void Detach(PhysicalPedestrians pool)
+        {
+            if (!ReferenceEquals(owner, pool)) return;
+            owner = null;
+            if (!installed) return;
+            UnityEngine.LowLevel.PlayerLoop.SetPlayerLoop(Remove(UnityEngine.LowLevel.PlayerLoop.GetCurrentPlayerLoop()));
+            installed = false;
+        }
+
+        private static void Run()
+        {
+            var hook = owner?.BeforeNavigation;
+            if (hook == null) return;
+            try { hook(); }
+            catch (Exception error)
+            {
+                // A failing bound must not break the player loop; the Update speed cap still applies.
+                if (owner != null) owner.BeforeNavigation = null;
+                Debug.LogWarning("[Persistent City] walker navigation bound disabled: " + error.Message);
+            }
+        }
+
+        private static UnityEngine.LowLevel.PlayerLoopSystem Insert(UnityEngine.LowLevel.PlayerLoopSystem system, ref int inserted)
+        {
+            if (system.subSystemList == null) return system;
+            var list = new List<UnityEngine.LowLevel.PlayerLoopSystem>(system.subSystemList.Length + 1);
+            foreach (var child in system.subSystemList)
+            {
+                if (child.type == typeof(UnityEngine.PlayerLoop.PreUpdate.AIUpdate) || child.type == typeof(UnityEngine.PlayerLoop.PreLateUpdate.AIUpdatePostScript))
+                {
+                    list.Add(new UnityEngine.LowLevel.PlayerLoopSystem { type = typeof(PersistentCityWalkerBound), updateDelegate = Run });
+                    inserted++;
+                }
+                list.Add(Insert(child, ref inserted));
+            }
+            system.subSystemList = list.ToArray();
+            return system;
+        }
+
+        private static UnityEngine.LowLevel.PlayerLoopSystem Remove(UnityEngine.LowLevel.PlayerLoopSystem system)
+        {
+            if (system.subSystemList == null) return system;
+            var list = new List<UnityEngine.LowLevel.PlayerLoopSystem>(system.subSystemList.Length);
+            foreach (var child in system.subSystemList)
+                if (child.type != typeof(PersistentCityWalkerBound)) list.Add(Remove(child));
+            system.subSystemList = list.ToArray();
+            return system;
         }
     }
 

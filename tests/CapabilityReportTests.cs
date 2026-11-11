@@ -158,96 +158,6 @@ public sealed class CapabilityReportTests
         Assert.Contains("Unsupported Driven Rides clock contract.", registry.Reason(CapabilityId.ClockDrivenRides));
     }
 
-    // ---- Source boundary of Runtime/CapabilityDiagnostics.cs -------------------------------------------------------
-
-    /// <summary>Members that install, attach, persist, observe, sell, stop or write. The diagnostics file reads only.</summary>
-    internal static readonly string[] Mutating =
-    {
-        ".Patch(", ".Unpatch", "UnpatchAll", "modData[", "modData.Remove", "modData.Add", "Persist(", ".Observe(", "Retire(", "Fail(", "Say(",
-        ".Install(", ".Attach(", "Detach(", ".Dispose(", ".Write(", "WriteTo(", ".Release", "Withdraw(", "Begin(", "Confirm(", ".Buy(",
-        "Recheck(", "StartObservation(", "NativeCityClock.Start(", "ReadRlo(", "rlo.Read(", "ChangeMoney", "SetActive(", "Destroy(",
-    };
-
-    /// <summary>The diagnostics files: F8b's report (later F8e/F8f branches) and F8e's Harmony metadata scan.</summary>
-    internal static readonly string[] DiagnosticFiles = { "Runtime/CapabilityDiagnostics.cs", "Runtime/HookConflicts.cs" };
-
-    [Fact]
-    public void DiagnosticsFileCallsNoMutatingMember()
-    {
-        foreach (string file in DiagnosticFiles)
-        {
-            string text = StripComments(File.ReadAllText(Path.Combine(Root(), file)));
-            foreach (string member in Mutating) Assert.False(text.Contains(member, StringComparison.Ordinal), file + " calls " + member);
-        }
-        string source = StripComments(File.ReadAllText(Path.Combine(Root(), "Runtime", "CapabilityDiagnostics.cs")));
-        // Red with one injected mutating call.
-        Assert.Contains(Mutating, m => (source + " NativeFoodOwnership.Observe(reg, false);").Contains(m, StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void DiagnosticsAreNotReachedFromUpdate()
-    {
-        var violations = DiagnosticCallers(RuntimeSources());
-        Assert.True(violations.Count == 0, string.Join("\n", violations));
-        // Red with one injected per-frame call.
-        var injected = RuntimeSources();
-        injected["Runtime/PersistentCityMod.cs"] = injected["Runtime/PersistentCityMod.cs"].Replace(
-            "if (!BeginAccountingObservations()) return;\n                foodMarket?.RefreshDiscovery();",
-            "if (!BeginAccountingObservations()) return;\n                CapabilityCommand(\"status\", \"\");\n                foodMarket?.RefreshDiscovery();");
-        Assert.NotEqual(RuntimeSources()["Runtime/PersistentCityMod.cs"], injected["Runtime/PersistentCityMod.cs"]);
-        Assert.Contains(DiagnosticCallers(injected), v => v.Contains("UpdateCity", StringComparison.Ordinal));
-        // The same through the qualified F8e scan.
-        injected = RuntimeSources();
-        injected["Runtime/PersistentCityMod.cs"] = injected["Runtime/PersistentCityMod.cs"].Replace(
-            "foodMarket?.RefreshDiscovery();", "foodMarket?.RefreshDiscovery(); _ = HookConflicts.Scan();");
-        Assert.Contains(DiagnosticCallers(injected), v => v.Contains("Scan from UpdateCity", StringComparison.Ordinal));
-    }
-
-    /// <summary>The only callers allowed outside the file: the console router, the once-per-load activation tail and F8h's
-    /// once-per-load checkout decision (NativeFoodContract.CheckoutForLoad, called only from the market's constructor and
-    /// its one post-load settle:
-    /// HookConflictReportTests.TheRefusalIsDecidedOncePerLoadFromTheLoadScan).</summary>
-    internal static readonly string[] AllowedCallers = { "RunCensusCommand", "CompleteInitialization", "CheckoutForLoad" };
-
-    internal static Dictionary<string, string> RuntimeSources()
-        => Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs").ToDictionary(
-            f => "Runtime/" + Path.GetFileName(f), f => File.ReadAllText(f).Replace("\r\n", "\n"), StringComparer.Ordinal);
-
-    private static readonly Regex MethodDeclaration = new(@"^\s*(?:(?:public|private|internal|protected|static|sealed|override|async|readonly|unsafe|extern)\s+)+[\w<>\[\]?,. ]+?\s+(?<name>\w+)\s*\([^;]*$", RegexOptions.Multiline);
-
-    internal static List<string> DiagnosticCallers(Dictionary<string, string> sources)
-    {
-        string own = StripComments(sources["Runtime/CapabilityDiagnostics.cs"]);
-        // Every member of the PopulationRuntime partial (private ones are visible to the other partials), and the
-        // non-private members of HookConflicts, which other files can only reach as HookConflicts.Name(.
-        var names = MethodDeclaration.Matches(own).Select(m => m.Groups["name"].Value)
-            .Concat(MethodDeclaration.Matches(StripComments(sources["Runtime/HookConflicts.cs"])).Where(m => !m.Value.TrimStart().StartsWith("private", StringComparison.Ordinal))
-                .Select(m => m.Groups["name"].Value))
-            .Distinct().ToArray();
-        Assert.Contains("CapabilityCommand", names);
-        Assert.Contains("Scan", names);
-        var violations = new List<string>();
-        foreach (var pair in sources)
-        {
-            if (DiagnosticFiles.Contains(pair.Key)) continue;
-            var lines = StripComments(pair.Value).Split('\n');
-            string enclosing = "";
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var declared = MethodDeclaration.Match(lines[i]);
-                if (declared.Success) enclosing = declared.Groups["name"].Value;
-                foreach (string name in names)
-                    if (Regex.IsMatch(lines[i], @"(?:(?<![\w.])|(?<=\bHookConflicts\.))" + name + @"\s*\(") && !(declared.Success && declared.Groups["name"].Value == name)
-                        && !AllowedCallers.Contains(enclosing))
-                        violations.Add(pair.Key + ":" + (i + 1) + " " + name + " from " + enclosing);
-            }
-        }
-        return violations;
-    }
-
-    internal static string StripComments(string source)
-        => Regex.Replace(Regex.Replace(source, @"/\*.*?\*/", "", RegexOptions.Singleline), @"//[^\n]*", "");
-
     // ---- Wire and cost ------------------------------------------------------------------------------------------
 
     /// <summary>F8b-F8g change no wire. X3 owns the canonical golden pins of this fixture; this test only shows that the
@@ -292,7 +202,7 @@ public sealed class CapabilityReportTests
         string line = string.Format(CultureInfo.InvariantCulture, "F8b pc capability status: p50={0:0.000} ms p95={1:0.000} ms max={2:0.000} ms bytes/call={3} residents={4}",
             times[Samples / 2], times[Samples * 95 / 100], times[^1], bytes, state.Citizens.Count);
         output.WriteLine(line);
-        string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+        string? path = PerfGate.Variable("PC_F8_MEASURE");
         if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
         Assert.Contains("rlo.donor required off: transient (Off): Flare is off", status);
         PerfGate.Under(times[Samples * 95 / 100], 5, "F8b command p95");

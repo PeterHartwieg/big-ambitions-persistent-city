@@ -85,7 +85,7 @@ public sealed class F5eMeasure
             max = Math.Round(s[^1], 4), atLeast30Ms = s.Count(v => v >= 30) };
     }
 
-    private static string? Output() => Environment.GetEnvironmentVariable("PC_F5E_MEASURE");
+    private static string? Output() => PerfGate.Variable("PC_F5E_MEASURE");
     private static string[] Fixtures(string defaults) => (Environment.GetEnvironmentVariable("PC_F5E_FIXTURES") ?? defaults).Split(',');
 
     /// <summary>The job-finding path of one successful daily roll: capacity bookkeeping (occupancy of every assigned

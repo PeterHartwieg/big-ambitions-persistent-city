@@ -235,7 +235,7 @@ namespace PersistentCity.Persistence
                         EndNominalMinutes = r.EndNominalMinutes, FreeFlowMinutes = r.FreeFlowMinutes, StartLinkFraction = r.StartLinkFraction,
                         EndLinkFraction = r.EndLinkFraction })!,
                     RouteIndex = v.RouteIndex, EnqueuedAt = v.EnqueuedAt, EnteredAt = v.EnteredAt, ReadyAt = v.ReadyAt, MotionStartedAt = v.MotionStartedAt,
-                    MotionStartFraction = v.MotionStartFraction, NominalMinutes = v.NominalMinutes, PhysicalControl = v.PhysicalControl,
+                    MotionStartFraction = v.MotionStartFraction, NominalMinutes = v.NominalMinutes,
                     Completed = v.Completed, CompletedAt = v.CompletedAt })!,
                 Events = List(t.Events, e => new TrafficEventState { LinkId = e.LinkId, At = e.At, Order = e.Order })!,
             };

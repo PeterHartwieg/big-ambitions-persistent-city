@@ -86,7 +86,7 @@ public sealed class AccountingBacklogTests
     {
         var state = EconomyScenario.Create(1, 7); state.Food = EconomyScenario.Food();
         // The shared scenario starts at 05:00; use its real codec-valid city and no new meals.
-        var routes = new EmptyRoutes(); var market = new EmptyMarket();
+        var routes = new NoRoutes(); var market = new EmptyMarket();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
         double native = state.Minute + AccountingClock.Limit(true, state.Minute, 1);
         double target = AccountingClock.Target(native);
@@ -101,10 +101,6 @@ public sealed class AccountingBacklogTests
         var restored = new CitySimulator(restoredState, routes); restored.AttachFoodMarket(market);
         Assert.True(restored.IsCaughtUpTo(target));
         Assert.True(AccountingClock.Limit(restored.IsCaughtUpTo(target), native, 1) > 0);
-    }
-    private sealed class EmptyRoutes : IRoutePlanner
-    {
-        public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => null;
     }
     private sealed class EmptyMarket : IFoodMarket
     {

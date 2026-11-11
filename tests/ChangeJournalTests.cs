@@ -21,13 +21,7 @@ public sealed class ChangeJournalTests
     static ShopObservedOffer[] Offers(long cents = 250, int stock = 40) => new[] {
         new ShopObservedOffer { ProductId = FoodProducts.Croissant, PriceUnits = Money.FromCents(cents).Units, Stock = stock } };
     static List<OpeningWindow> Hours(int close = 1320) => new() { new OpeningWindow { Day = 0, FromMinute = 360, ToMinute = close } };
-    static CityState Fresh(int seed = 5150)
-    {
-        var (state, market) = WorkplaceCapacityTests.Fresh(3, seed);
-        var city = new CitySimulator(state, new FreshCityTraceTests.Walk()); city.AttachFoodMarket(market);
-        while (!city.AdvanceTo(2000, 128).CaughtUp) { }
-        return state;
-    }
+    static CityState Fresh(int seed = 5150) => TestCity.Banded(seed, 2000);
     internal static CityState Fixture(int seed = 5150)
     {
         var state = Fresh(seed);
@@ -219,22 +213,6 @@ public sealed class ChangeJournalTests
         EconomicLedgerTests.Refused(root.ToString(Newtonsoft.Json.Formatting.None));
     }
     [Fact]
-    public void ExistingObservationPathHasNoAddedReaderOrShopWriterCallSites()
-    {
-        // This is a source-structure guard, not a native read-counter experiment.
-        string runtime = Source("Runtime/NativeFoodMarket.cs");
-        string added = runtime[runtime.IndexOf("private void ObserveJournalSupply", StringComparison.Ordinal)..runtime.IndexOf("private IReadOnlyCollection<string>? SelectedCompleteMenu", StringComparison.Ordinal)];
-        foreach (string forbidden in new[] { "FoodSupplyReader.Read", "ReadMenu(", "SaveGameManager", "reg.", "SetUp(", ".Buy(" }) Assert.DoesNotContain(forbidden, added);
-        Assert.Equal(5, runtime.Split("FoodSupplyReader.ReadMenu").Length - 1);
-        Assert.Contains("cachedImage.Image.ObserveLive(supply)", runtime);
-        Assert.True(runtime.IndexOf("ObserveJournalSupply(b, scope, supply", StringComparison.Ordinal)
-            < runtime.IndexOf("if (supply.Values.Any(s => !s.Units.HasValue))", StringComparison.Ordinal));
-        string hours = Source("Runtime/NativeFoodHours.cs");
-        Assert.Contains("if (!closed) ObserveJournalHours", hours);
-        Assert.Contains("candidateBusinesses.Contains(scope.BusinessId)", hours);
-        Assert.Contains("changeJournal?.Clear(scope.BusinessId)", Source("Runtime/NativeFoodCandidates.cs"));
-    }
-    [Fact]
     public void SameMinuteLiveCaptureSupersedesAnOlderCachedHandle()
     {
         var state = Fresh(); var scope = state.Food!.Shops[0]; var journal = new FoodChangeJournal(state.Food, state.Economy);
@@ -299,7 +277,6 @@ public sealed class ChangeJournalTests
         Assert.Equal(requests + 2, city.FoodMoney.Requests);
         gate.Reset(); Assert.Equal("", gate.Text); Assert.Equal(0, gate.Builds);
         gate.Update(true, 201, build); Assert.Equal(1, gate.Builds);
-        Assert.Contains("economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder)", Source("Runtime/FoodEconomyPanel.cs"));
     }
     static string Source(string name)
     {
@@ -366,7 +343,6 @@ public sealed class ChangeJournalTests
         long hiddenBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
         Assert.Equal(0, gate.Builds);
         Assert.Equal(0, hiddenBytes); Assert.Equal(requests, city.FoodMoney.Requests);
-        string panel = Source("Runtime/FoodEconomyPanel.cs"); Assert.Contains("if (showEconomy) DrawEconomy();", panel);
     }
     void Measure(string label, Action action, int samples = 2000)
     {

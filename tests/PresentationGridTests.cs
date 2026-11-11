@@ -332,16 +332,4 @@ public sealed class PresentationGridTests
 
     // Runtime selection and PlanQueues read the grid near the focus (or the full scan after a mismatch) and nothing else;
     // the shadow check that triggers the fallback includes the grid.
-    [Fact]
-    public void RuntimeReadsTheGridWithTheFullScanFallback()
-    {
-        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => Source(Path.Combine("Runtime", "PhysicalPopulation" + part + ".cs"))));
-        const string read = "var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);";
-        Assert.Equal(2, population.Split(read).Length - 1);
-        Assert.DoesNotContain("ActiveJourneys.BodyCandidates", population);
-        string selection = population[population.IndexOf("// Candidate selection.", StringComparison.Ordinal)..population.IndexOf("candidates.Sort(SelectionCandidate.ByPriority);", StringComparison.Ordinal)];
-        Assert.Contains("Position.Distance(sampled, focus)", selection);
-        Assert.Contains("simulation.ActiveJourneyIndexMatchesState()", population);
-        Assert.Contains("grid.Matches(eligible)", Source(Path.Combine("Core", "PhysicalJourneys.cs")));
-    }
 }

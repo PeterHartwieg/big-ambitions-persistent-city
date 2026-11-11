@@ -214,7 +214,7 @@ public sealed class VendorDynamicProductTests
     [Fact]
     public void ChoiceCostWithEightItemVehicleMenusAndDynamicNames()
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PC_E6F_MEASURE"))) return;
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6F_MEASURE"))) return;
         var lines = new List<string>();
         static (double p50, double p95, double max) Stats(List<double> values)
         {

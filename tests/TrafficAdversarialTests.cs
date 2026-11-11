@@ -73,7 +73,6 @@ public sealed class TrafficAdversarialTests
         city.AdvanceTo(1450);
         Assert.True(city.TryGetTrafficPermission(citizen.Identity.Id,out var permission));
         Assert.Null(permission.LinkId);
-        Assert.False(city.Traffic!.HasPhysicalControl);
         Assert.Equal(0,citizen.CompletedJourneys);
         Assert.Equal(0,city.CarPositionOf(citizen)!.Value.X);
     }
@@ -89,38 +88,6 @@ public sealed class TrafficAdversarialTests
         Assert.True(kernel.Cancel("clockwise"));
         kernel.AdvanceTo(200,100);
         Conserved(kernel,1);Assert.True(kernel.GetPermission("counterclockwise").IsCompleted);
-    }
-
-    [Fact]
-    public void RepeatedClosureAndPhysicalReleaseAreDeterministicAcrossEveryEventReload()
-    {
-        TrafficKernel Make()
-        {
-            var k=new TrafficKernel(new[]{Link(1,4),Link(2,3),Link(3,2),Link(4,2)});
-            for(int i=0;i<91;i++)k.Enqueue("v"+i.ToString("D3"),i%3==0?Route(2,3,4):Route(1,3,4));
-            return k;
-        }
-        var whole=Make();var interrupted=Make();
-        void Advance(double at)
-        {
-            whole.AdvanceTo(at,10000);int turns=0;
-            while(!interrupted.AdvanceTo(at,1).ReachedTarget)
-            {
-                Conserved(interrupted,91);interrupted=TrafficKernel.Restore(interrupted.Capture(),false);
-                Assert.True(++turns<10000);
-            }
-            Conserved(whole,91);Conserved(interrupted,91);
-            Assert.Equal(JsonSerializer.Serialize(whole.Capture()),JsonSerializer.Serialize(interrupted.Capture()));
-        }
-        Advance(0);
-        whole.SetPhysicalControl("v000",true);interrupted.SetPhysicalControl("v000",true);
-        whole.SetLinkClosed(4,true);interrupted.SetLinkClosed(4,true);Advance(20);
-        whole.ReportPhysicalProgress("v000",.5);interrupted.ReportPhysicalProgress("v000",.5);Advance(25);
-        whole.SetPhysicalControl("v000",false);interrupted.SetPhysicalControl("v000",false);Advance(30);
-        whole.SetLinkClosed(4,false);interrupted.SetLinkClosed(4,false);Advance(32);
-        whole.SetLinkClosed(3,true);interrupted.SetLinkClosed(3,true);Advance(50);
-        whole.SetLinkClosed(3,false);interrupted.SetLinkClosed(3,false);Advance(200);
-        Assert.All(whole.Capture().Vehicles,v=>Assert.True(v.Completed));
     }
 
     [Fact]

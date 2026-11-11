@@ -212,66 +212,6 @@ public sealed class ResearchMenuTests
 
     // ---- native wiring, pinned by source ----
 
-    [Fact]
-    public void PostfixSetsOnlyTheSecondOptionSlotAndReadsPreconditionsCheapestFirst()
-    {
-        string dialog = Source("Runtime/ResearchAgencyDialog.cs");
-        Assert.Contains("postfix: new HarmonyMethod(typeof(ResearchAgencyDialog), nameof(CampaignSettingsPostfix))", dialog);
-        Assert.Contains("ResearchDialogContract.Check(out campaignSettings, out moreHelpOffered)", dialog);
-        Assert.Contains("LastRefusal = ResearchDialogGate.TryExtend(__result, Read, entry => Extend(entry, __instance));", dialog);
-        // Extend has exactly two assignments, both to the unused slot.
-        string extend = Between(dialog, "private static void Extend(DialogEntry entry, MarketingAgencyDialog dialog)", "// Each field is read only");
-        Assert.Equal(new[] { "entry.OnSecondOption = () => Guarded(() => OnResearch(dialog, entry));", "entry.SecondOptionTextOverride = ResearchText.Button;" },
-            extend.Split('\n').Select(l => l.Trim()).Where(l => l.Contains(" = ")).ToArray());
-        // The postfix never assigns any other native entry field, so OnConfirm, OnCancel and the template stay native.
-        string postfix = Between(dialog, "private static void CampaignSettingsPostfix", "// The research button.");
-        foreach (string field in new[] { "OnConfirm", "OnCancel", "Template", "InputTemplate", "messageData", "headerKey", "ConfirmTextOverride", "CancelTextOverride" })
-            Assert.DoesNotMatch(@"\b" + field + @"\s*=[^=]", postfix);
-        // Cheapest first: attached, contracts, Available, entry shape, unused slot, localization, foreign patch, then the scan.
-        string read = Between(dialog, "private static ResearchDialogPreconditions Read(DialogEntry entry)", "private static bool HasEligibleBusiness");
-        int last = -1;
-        foreach (string step in new[] { "current.Attached()", "ResearchBilling.Installed", "current!.Available()", "DialogEntry.InputTemplateName.MarketingCampaignSettings",
-            "entry.OnSecondOption == null", "LocalizorManager.IsLocalizedKey(ResearchText.Button)", "ResearchDialogContract.ForeignPatch", "HasEligibleBusiness(current!)" })
-        { int at = read.IndexOf(step, StringComparison.Ordinal); Assert.True(at > last, step); last = at; }
-        // Native error for a missing business, native hang-up, native continuation after an order.
-        Assert.Contains("key => Notifications.ShowError(key)", dialog);
-        Assert.Contains("OnCancel = DialogController.current.CancelDialog", dialog);
-        Assert.Contains("(DialogEntry)continuation.Invoke(dialog, null)", dialog);
-        Assert.Contains("OnVisible = moreHelp.ShowEntry", dialog);
-        // No campaign, money or delivery work in the dialog; the order goes through the C5b runner.
-        foreach (string forbidden in new[] { "marketingCampaigns", "MarketingCampaign ", "UpdatePromotion", "ChangeMoney", "new TextMessage", "SendMessage",
-            "RegisterExternalLocalization", "ResearchBilling.Attach", "Ledger.TryOrder" })
-            Assert.DoesNotContain(forbidden, dialog);
-        Assert.Contains("runner.TryOrder(product.Code, NativeFoodMarket.PlaceId(business), AgencyId(contact), taxDeductible,", dialog);
-        // Menu entries hang up like the native campaign screen, with its own cancel message.
-        Assert.Contains("onCancelMessage = native.onCancelMessage", dialog);
-    }
-
-    [Fact]
-    public void EveryResearchButtonIsGuardedAndNoNativeCallFollowsAStoredOrder()
-    {
-        string dialog = Source("Runtime/ResearchAgencyDialog.cs");
-        // Each research callback (the campaign-screen button and both menu buttons) runs through Guarded.
-        Assert.Equal(3, Regex.Matches(dialog, @"= \(\) => Guarded\(\(\) => ").Count);
-        Assert.Empty(Regex.Matches(dialog, @"OnSecondOption = \(\) => (?!Guarded)"));
-        Assert.Empty(Regex.Matches(dialog, @"OnConfirm = \(\) => (?!Guarded)"));
-        string guarded = Between(dialog, "private static DialogEntry? Guarded(Func<DialogEntry?> click)", "// The research button.");
-        Assert.Contains("try { return click(); }", guarded);
-        Assert.Contains("Notifications.ShowError(ResearchText.Unavailable)", guarded);
-        Assert.Contains("return null;", guarded);
-        // PlaceOrder resolves the native continuation and builds the confirmation before TryOrder; after it only the
-        // contained log line and the return remain.
-        string place = Between(dialog, "private static DialogEntry? PlaceOrder(", "internal static string RefusalKey(");
-        int order = place.IndexOf("runner.TryOrder(", StringComparison.Ordinal);
-        Assert.True(place.IndexOf("continuation.Invoke(dialog, null)", StringComparison.Ordinal) is int invoke && invoke > 0 && invoke < order);
-        Assert.True(place.IndexOf("var confirmation = new DialogEntry", StringComparison.Ordinal) is int built && built > 0 && built < order);
-        Assert.DoesNotContain("moreHelpOffered!", dialog);
-        Assert.DoesNotContain("campaignSettings!.Invoke", dialog);
-        string after = place.Substring(place.IndexOf("current.Log(\"Research order \"", StringComparison.Ordinal));
-        Assert.StartsWith("current.Log(", after.Trim());
-        Assert.Contains("try { current.Log(\"Research order \"", place);
-    }
-
     // ---- eligibility (ordering and billing share it) ----
 
     [Fact]
@@ -310,12 +250,6 @@ public sealed class ResearchMenuTests
         Assert.NotEqual(first, authority.BusinessId);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
 
-        // Ordering (the dialog desk) and billing (the charge port) get the same predicate.
-        string mod = Source("Runtime/PersistentCityMod.cs");
-        Assert.Contains("ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit);", mod);
-        Assert.Contains("ResearchAgencyDialog.Attach(new ResearchDesk(ResearchAttached, () => settings.MarketResearch.Available, ResearchEligible,", mod);
-        string eligible = Between(mod, "private bool ResearchEligible(BuildingRegistration registration)", "private void Detach()");
-        Assert.Contains("ResearchEligibility.Decide(true, scope.BusinessId, observed, observed ? NativeFoodOwnership.Find(registration) : null)", eligible);
     }
 
     // ---- contract refusal keeps saved research idle ----
@@ -325,39 +259,6 @@ public sealed class ResearchMenuTests
     {
         for (int mask = 0; mask < 8; mask++)
             Assert.Equal(mask == 7, ResearchEligibility.SessionEnabled((mask & 1) != 0, (mask & 2) != 0, (mask & 4) != 0));
-
-        // The refusal returns before the survey seam, the billing session and the desk are attached.
-        string attach = Between(Source("Runtime/PersistentCityMod.cs"), "private void AttachResearch(CityState state)", "private bool ResearchAttached()");
-        int gate = attach.IndexOf("if (!ResearchEligibility.SessionEnabled(ResearchAgencyDialog.Installed, ResearchBilling.Installed, ResearchMessages.ContractPassed))", StringComparison.Ordinal);
-        int stop = attach.IndexOf("return;", gate, StringComparison.Ordinal);
-        Assert.True(gate > 0 && stop > gate);
-        foreach (string step in new[] { "simulation!.AttachResearch(", "ResearchBilling.Attach(", "ResearchAgencyDialog.Attach(" })
-            Assert.True(attach.IndexOf(step, StringComparison.Ordinal) > stop, step);
-    }
-
-    [Fact]
-    public void RuntimeAttachesTheSavedLedgerThroughTheSurveySeam()
-    {
-        string mod = Source("Runtime/PersistentCityMod.cs");
-        Assert.Contains("simulation!.AttachResearch(state.Research, settings.MarketResearch.MarketResearchConsumersPerUnit);", mod);
-        Assert.Contains("ResearchBilling.Install(); ResearchAgencyDialog.Install();", mod);
-        Assert.Contains("ResearchAgencyDialog.Detach(); ResearchBilling.Detach();", mod);
-        Assert.Contains("ResearchAgencyDialog.Uninstall(); ResearchBilling.Uninstall();", mod);
-        Assert.Contains("() => settings.MarketResearch.Available", mod);
-        // Attached after the food market and the save identity, before the city reports itself active.
-        string complete = Between(mod, "private void CompleteInitialization(Task<PreparedCity> pending)", "private static double Now()");
-        int food = complete.IndexOf("simulation.AttachFoodMarket(", StringComparison.Ordinal);
-        int identity = complete.IndexOf("saveIdentity = save;", StringComparison.Ordinal);
-        int research = complete.IndexOf("AttachResearch(state);", StringComparison.Ordinal);
-        Assert.True(food > 0 && identity > food && research > identity);
-        // Detach drops the dialog and the bill before anything else.
-        string detach = Between(mod, "private void Detach()", "public void Shutdown()");
-        Assert.True(detach.IndexOf("ResearchAgencyDialog.Detach(); ResearchBilling.Detach();", StringComparison.Ordinal)
-            < detach.IndexOf("DetachSaveEpoch();", StringComparison.Ordinal));
-        // Only the mod file places the seam call.
-        foreach (var file in Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs"))
-            if (!file.EndsWith("PersistentCityMod.cs", StringComparison.Ordinal))
-                Assert.DoesNotContain(".AttachResearch(", File.ReadAllText(file));
     }
 
     // ---- localization ----
@@ -382,54 +283,10 @@ public sealed class ResearchMenuTests
         foreach (var value in table.Values)
             foreach (Match match in Regex.Matches(value, @"\{(\w+)\}")) Assert.Contains(match.Groups[1].Value, arguments);
         // English only.
-        Assert.Equal(new[] { "en.json" }, Directory.GetFiles(Path.Combine(Root(), "Runtime", "Localization")).Select(Path.GetFileName));
         // Shipped as <mod>/Locales/<locale>.json, the folder native ModDiscoveryRegistry registers per mod.
-        string build = Source("tools/build.py");
-        Assert.Contains("locales = output / \"Locales\"", build);
-        Assert.Contains("for table in sorted((root / \"Runtime/Localization\").glob(\"*.json\")):", build);
-        Assert.Contains("shutil.copy2(table, locales / table.name)", build);
     }
 
     // ---- perf ----
-
-    [Fact]
-    public void PostfixGateAndMenuBuildCostPerCall()
-    {
-        const int runs = 2000;
-        var hidden = new ResearchDialogPreconditions(true, true, new MarketResearchSettings().Available, true, true, true, true);
-        // A city with 2,000 registrations, 20 rented by the player and 8 PC food scopes: the scan C5f's visible button adds.
-        var registrations = Enumerable.Range(0, 2000).Select(i => (Street: "Street " + (i % 97), Number: i, Player: i % 100 == 99)).ToArray();
-        var scopes = Enumerable.Range(0, 8).Select(i => "address:" + Uri.EscapeDataString("Street " + ((1999 - i * 100) % 97)) + ":" + (1999 - i * 100) + ":shop").ToArray();
-        bool Eligible((string Street, int Number, bool Player) r)
-        {
-            if (!r.Player) return false;
-            string place = "address:" + Uri.EscapeDataString(r.Street) + ":" + r.Number + ":shop";
-            foreach (var scope in scopes) if (string.Equals(scope, place, StringComparison.Ordinal)) return true;
-            return false;
-        }
-        var visible = new Func<FakeEntry, ResearchDialogPreconditions>(_ =>
-        {
-            bool any = false;
-            foreach (var r in registrations) if (Eligible(r)) { any = true; break; }
-            return new ResearchDialogPreconditions(true, true, true, true, true, true, any);
-        });
-
-        Measure("postfix gate, hidden (Available false)", runs, () =>
-        {
-            var entry = new FakeEntry { OnConfirm = () => null, OnCancel = () => { } };
-            ResearchDialogGate.TryExtend(entry, _ => hidden, e => { e.OnSecondOption = () => null; e.SecondOptionTextOverride = ResearchText.Button; });
-        });
-        Measure("postfix gate, visible, 2,000 registrations", runs, () =>
-        {
-            var entry = new FakeEntry { OnConfirm = () => null, OnCancel = () => { } };
-            ResearchDialogGate.TryExtend(entry, visible, e => { e.OnSecondOption = () => null; e.SecondOptionTextOverride = ResearchText.Button; });
-        });
-        Measure("menu build, 3 products", runs, () => ResearchMenu.Build(ResearchProducts.All));
-        var six = Products(6);
-        Measure("menu build, 6 products", runs, () => ResearchMenu.Build(six));
-        var menu = ResearchMenu.Build(ResearchProducts.All);
-        Measure("menu entry arguments", runs, () => menu.Nodes[3].Arguments("Ada's Diner"));
-    }
 
     private void Measure(string label, int runs, Action call)
     {

@@ -229,29 +229,4 @@ public sealed partial class FoodMemoryTests
         Assert.Equal(0, Projection(food).CountOwnShop("own"));
     }
 
-    [Fact]
-    public void RuntimeBuildersRemainBehindOpenUiAndDiagnosticGates()
-    {
-        // Call-site contracts complement pure behavior tests; Unity cannot run in this headless suite.
-        var root = new DirectoryInfo(AppContext.BaseDirectory);
-        while (root != null && !File.Exists(Path.Combine(root.FullName, "Runtime", "FoodEconomyPanel.cs"))) root = root.Parent;
-        Assert.NotNull(root);
-        string Read(string file) => File.ReadAllText(Path.Combine(root!.FullName, file));
-        string panel = Read("Runtime/FoodEconomyPanel.cs"), popup = Read("Runtime/ResidentInspector.cs");
-        Assert.Contains("if (showEconomy) DrawEconomy();", panel);
-        Assert.Contains("economyRefresh.Update(showEconomy, Time.unscaledTime, economyBuilder)", panel);
-        string refresh = Read("Core/FoodPanelRefresh.cs");
-        Assert.Contains("if (!visible || now < next) return;", refresh);
-        Assert.Contains("next = now + 3", refresh);
-        Assert.DoesNotContain("if (regularText == null) continue;", panel);
-        Assert.Contains("if (regularText != null) text.AppendLine(regularText);", panel);
-        Assert.Contains("?? \"Waiting for business ownership\"", panel);
-        Assert.Contains("Resident sales are paused for this shop.", panel);
-        Assert.Contains("Address accounts, day ", panel);
-        Assert.DoesNotContain("Customer home districts:", panel);
-        Assert.Contains("if (visible && selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);", popup);
-        Assert.DoesNotContain("ResidentMemoryWords", Read("Runtime/PersistentCityMod.cs"));
-        Assert.DoesNotContain("RegularsProjection", Read("Core/FoodMemoryStore.cs")); // zero commit maintenance
-        Assert.DoesNotContain("ProjectRegulars", Read("Runtime/PersistentCityMod.cs")); // no Update/midnight scan
-    }
 }

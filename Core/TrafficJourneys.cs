@@ -249,13 +249,7 @@ namespace PersistentCity.Core
         private void CaptureTraffic()
         {
             SynchronizeSnapshot();
-            var captured = traffic?.Capture();
-            // F2d: no traffic leg is ever under physical control. Restore releases a saved one, and nothing sets it again,
-            // so the writer never emits PhysicalControl = true. The field stays on the wire for older development cities.
-            if (captured != null)
-                foreach (var vehicle in captured.Vehicles)
-                    if (vehicle.PhysicalControl) throw new InvalidOperationException("A traffic vehicle is under physical control; F2d bodies follow the kernel.");
-            State.Traffic = captured;
+            State.Traffic = traffic?.Capture();
         }
 
         /// <summary>Publish progress after a batch of budgeted native-frame slices. Saving also calls this.</summary>

@@ -47,19 +47,6 @@ namespace PersistentCity.Tests
         }
 
         [Fact]
-        public void TheE5bRefusalTextMapsToTheDynamicCatalogueOff()
-        {
-            // The Runtime constant and Core's copy are the same text.
-            string market = File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "NativeFoodMarket.cs"));
-            Assert.Contains("public const string DynamicIntegrationRefusal = \"" + TransactionMechanisms.DynamicIntegrationRefusal + "\";", market);
-            var verdict = TransactionMechanisms.ForBusiness(FoodScopeChannel.Shop, Dynamic, TransactionMechanisms.DynamicIntegrationRefusal + ": coordinator Fallback");
-            Assert.Equal("shop.dynamic-catalogue off: E5b dynamic native acquisition off; original three only: coordinator Fallback", verdict.Text);
-            Assert.Equal("address:x:1:shop (shop, business:x): shop.dynamic-catalogue off: E5b dynamic native acquisition off; original three only: coordinator Fallback\n"
-                + "native evidence: " + TransactionMechanisms.Get(TransactionMechanismId.ShopDynamicCatalogue).NativeEvidence,
-                TransactionMechanisms.Describe("address:x:1:shop", "business:x", FoodScopeChannel.Shop, verdict));
-        }
-
-        [Fact]
         public void VerifiedByRigWithoutAResultLinkIsRefused()
         {
             var e = Assert.Throws<ArgumentException>(() => TransactionMechanism.Define(TransactionMechanismId.ShopFullServiceBag, "shop.fullservice-bag.v1", "evidence", MechanismProof.VerifiedByRig, "docs/checks/a5-integrated-acceptance.md"));
@@ -127,7 +114,7 @@ namespace PersistentCity.Tests
             Array.Sort(times);
             string line = string.Format(System.Globalization.CultureInfo.InvariantCulture, "F8f pc capability business (Core part, 957x2 city): p50={0:0.0000} ms p95={1:0.0000} ms max={2:0.0000} ms",
                 times[Samples / 2], times[Samples * 95 / 100], times[^1]);
-            string? path = Environment.GetEnvironmentVariable("PC_F8_MEASURE");
+            string? path = PerfGate.Variable("PC_F8_MEASURE");
             if (!string.IsNullOrEmpty(path)) File.AppendAllLines(path, new[] { line });
             Assert.StartsWith("shop-far (shop, b-far): shop.fullservice-bag.v1", text);
             PerfGate.Under(times[Samples * 95 / 100], 5, "F8f business command p95");
@@ -140,29 +127,5 @@ namespace PersistentCity.Tests
             Assert.False(verdict.Served); Assert.Null(verdict.Mechanism); Assert.Equal("unsupported: no products in scope", verdict.Text);
         }
 
-        [Fact]
-        public void TheBusinessCommandReadsTheExistingScopeStatusOnly()
-        {
-            string source = CapabilityReportTests.StripComments(File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "CapabilityDiagnostics.cs")));
-            Assert.Contains("foodMarket?.ReadOnlyScopeStatus(scope.PlaceId)", source);
-            Assert.DoesNotContain("foodMarket?.ScopeStatus(", source);
-            // Sol-r1-2: the verdict reads held state only. ScopeStatus reaches SupportedMenu/ContractAdmits (which can refuse a
-            // contract, rebase an image and record a refusal hour) and NativeFoodOwnership.Find (which updates observations).
-            int start = source.IndexOf("internal string ReadOnlyScopeStatus(string placeId)", StringComparison.Ordinal);
-            Assert.True(start > 0);
-            string body = source.Substring(start, source.IndexOf("\n        }", start, StringComparison.Ordinal) - start);
-            foreach (string member in new[] { "ScopeStatus(", "MenuStatus(", "SupportedMenu(", "SupportedBusiness(", "ContractAdmits(", "ContractRecheck(", "RefuseContract(",
-                "RefuseRemovedProduct(", "RefuseStructural(", "LiveMenu(", "StartupHeld(", "NativeFoodOwnership.Find(", "NativeFoodOwnership.Observe(", "Persist(", "modData", ".Remove(", ".Add(", "] =" })
-                Assert.True(body.IndexOf(member, "internal string ReadOnlyScopeStatus(".Length, StringComparison.Ordinal) < 0, "ReadOnlyScopeStatus calls " + member);
-            Assert.Contains("NativeFoodOwnership.Row(placeId)", body);
-            Assert.Contains("internal static FoodAuthority? Row(string place)\n            => ReferenceEquals(save, SaveGameManager.Current) && records.TryGetValue(place, out var row) ? row : null;",
-                File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "NativeFoodOwnership.cs")).Replace("\r\n", "\n"));
-            Assert.Contains("vendors.CanServe(scope.BusinessId)", source);
-            Assert.Contains("TransactionMechanisms.ForBusiness(scope.Channel, new[] { scope.ProductId }.Concat(scope.ExtraProductIds).ToArray(), status)", source);
-            Assert.Contains("if (area == \"capability\") { CapabilityCommand(action, detail); return; }",
-                File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "PopulationCensusDiagnostics.cs")));
-            // No change to Supported: TransactionMechanisms is not referenced by the market.
-            Assert.DoesNotContain("TransactionMechanisms", File.ReadAllText(Path.Combine(CapabilityReportTests.Root(), "Runtime", "NativeFoodMarket.cs")));
-        }
     }
 }

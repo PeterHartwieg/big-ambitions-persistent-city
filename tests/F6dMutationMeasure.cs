@@ -17,7 +17,7 @@ public sealed class F6dMutationMeasure
     [Fact]
     public void CheckedLedgerTransactionsInThirtyTwoOwnerUnits()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_F6D_OPERATIONS"); if (path == null) return;
+        string? path = PerfGate.Variable("PC_F6D_OPERATIONS"); if (path == null) return;
         var budgets = Enumerable.Range(0, 100032).Select(_ => new ResidentBudget { OpeningBalance = Money.FromCents(1000), Balance = Money.FromCents(1000),
             DailyIncomeCents = 100, DailyHomeFoodCents = 1, Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(9), Discretionary = Money.FromUnits(9) } }).ToArray();
         void Unit(int start)

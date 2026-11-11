@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Xunit;
@@ -191,6 +192,22 @@ public sealed class TrafficJourneyTests
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
 
+    /// <summary>X6: the kernel has no physical control, so a saved traffic vehicle has no PhysicalControl field. The format
+    /// changed in place at schema 1: a payload that still carries the field is refused, not silently read.</summary>
+    [Fact]
+    public void SavedTrafficVehiclesHaveNoPhysicalControlFieldAndOlderPayloadsAreRefused()
+    {
+        var engine=Engine(15,2,3); engine.AdvanceTo(1445.1);
+        Assert.True(engine.Traffic!.VehicleCount > 0);
+        string body=SaveWire.Body(SaveCodec.Write(engine.State));
+        Assert.DoesNotContain("PhysicalControl",body);
+        Assert.Equal(SaveReadStatus.Loaded,SaveWire.Read(SaveWire.Payload(body)).Status);
+        var root=JObject.Parse(body);
+        foreach(var vehicle in root["Traffic"]!["Vehicles"]!.Children<JObject>()) vehicle.Property("NominalMinutes")!.AddAfterSelf(new JProperty("PhysicalControl",false));
+        var read=SaveWire.Read(SaveWire.Payload(root.ToString(Newtonsoft.Json.Formatting.None)));
+        Assert.Equal(SaveReadStatus.Invalid,read.Status);Assert.Null(read.State);Assert.Contains("PhysicalControl",read.Error);
+    }
+
     /// <summary>F2d: a visible head car no longer holds its followers. The queue discharges in FIFO order on the kernel's
     /// clock, exactly as without bodies.</summary>
     [Fact]
@@ -203,7 +220,6 @@ public sealed class TrafficJourneyTests
         engine.AdvanceTo(1480); plain.AdvanceTo(1480);
         Assert.True(order.Count>0);
         Assert.Equal(order.OrderBy(id=>queued.IndexOf(id)).ToList(),order);
-        Assert.False(engine.Traffic.HasPhysicalControl);
         engine.AdvanceTo(1500); plain.AdvanceTo(1500);
         Assert.All(engine.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
         Assert.Equal(SaveCodec.Write(plain.State),SaveCodec.Write(engine.State));
@@ -226,26 +242,6 @@ public sealed class TrafficJourneyTests
         Assert.Equal(permission.MaximumNominalMinutes,engine.Traffic.GetPermission(behind.Identity.Id).MaximumNominalMinutes);
         Assert.Equal(before,SaveCodec.Write(engine.State));
         engine.AdvanceTo(1500); Assert.All(engine.State.Citizens,c=>Assert.Equal(1,c.CompletedJourneys));
-    }
-
-    /// <summary>An older development city saved with its head car under physical control (the state the removed lease
-    /// left) resumes as the same background queue: the reader releases it at its saved coordinate.</summary>
-    [Fact]
-    public void OlderSavedPhysicalQueueResumesAsSameBackgroundQueue()
-    {
-        var engine=Engine(4); engine.AdvanceTo(1440);
-        string id=engine.State.Citizens[0].Identity.Id;
-        LegacyTrafficLease.Report(engine,id,1440.5,0.3,release:false);
-        string older=LegacyTrafficLease.OlderSave(engine);
-        var read=SaveWire.Read(older); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.True(read.State!.Traffic!.Vehicles.Single(v=>v.VehicleId==id).PhysicalControl);
-        var restored=new CitySimulator(read.State,new Planner());
-        Assert.False(restored.Traffic!.HasPhysicalControl);
-        Assert.Equal(0.3,restored.Traffic.GetPermission(id).NominalMinutes);
-        // The in-memory original releases the same way Restore does.
-        engine.Traffic!.SetPhysicalControl(id,false);
-        engine.AdvanceTo(1500); restored.AdvanceTo(1500);
-        Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
 
     [Fact]

@@ -11,8 +11,6 @@ namespace PersistentCity.Tests;
 // Nothing here credits logical progress.
 public sealed class PhysicalTrafficCornerPermissionTests
 {
-    private sealed class Planner : IRoutePlanner
-    { public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null; }
 
     private static (CitySimulator Simulator, CitizenState Citizen) Journey(double prefix = 0, double minutes = 10,
         Position? from = null, Position? to = null, TravelMode mode = TravelMode.Car)
@@ -28,7 +26,7 @@ public sealed class PhysicalTrafficCornerPermissionTests
             Journey = route, PlaceId = "a", DestinationId = "b", NextEventMinute = route.Minutes };
         var state = new CityState { Minute = route.Minutes, Citizens = new() { citizen }, Places = new()
         { new Place { Id = "a", Position = a }, new Place { Id = "b", Position = legs[legs.Count - 1].To } } };
-        return (new CitySimulator(state, new Planner()), citizen);
+        return (new CitySimulator(state, new NoRoutes()), citizen);
     }
 
     private static PhysicalJourneySample Captured(out Position marker, out double maximum)

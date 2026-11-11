@@ -37,7 +37,7 @@ public sealed class E6bVendorMeasure
     [Fact]
     public void RevisionPollImageCopyStandPublishReferencesAndAwarenessRebuild()
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PC_E6B_MEASURE"))) return; // measurement only on request
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6B_MEASURE"))) return; // measurement only on request
         // Revision poll with an unchanged revision, 64 live rows.
         var polls = new List<double>(1000); long pollBytes = 0;
         TimingBudget.Run(timing =>

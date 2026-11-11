@@ -199,7 +199,7 @@ public sealed class F5gAccountingTests
     [Fact]
     public void Measure()
     {
-        string? path = Environment.GetEnvironmentVariable("PC_F5G_MEASURE");
+        string? path = PerfGate.Variable("PC_F5G_MEASURE");
         if (string.IsNullOrEmpty(path)) return;
         foreach (var (name, homes, since) in new[] { ("accounting-small", 12, 3), ("accounting-reference", 152, 45) })
             foreach (var (fps, budget, ms, skip) in new[] { (30, 1, .01, false), (60, 16, .5, false), (120, 128, 2.0, false), (60, 1, .01, true) })

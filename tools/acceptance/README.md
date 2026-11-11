@@ -43,9 +43,9 @@ No other machine-specific script, path or user name is needed or recorded.
 | `unit` | the whole test project | zero failed in the TRX |
 | `population` | `FullyQualifiedName~F5hIntegratedAcceptanceTests` | zero failed |
 | `economy-fast` | `F6hIntegratedTests`, `F6kPriceWeightTests` | zero failed |
-| `economy` | `tools/economy-interventions --integrated`, then `acceptance.py`, then `economy_stage.py` | see below |
+| `economy` | `tests/economy-interventions --integrated`, then `acceptance.py`, then `economy_stage.py` | see below |
 | `saves` | `F7dCompactWriterTests`, `ReaderCorpusTests`, `SaveEpochTests` and every `*CurrentWriterGolden*` fact | zero failed |
-| `movement` | `tools/movement-equivalence --out {out}/movement.json` | see below |
+| `movement` | `tests/movement-equivalence --out {out}/movement.json` | see below |
 | `city-s`, `city-m` | `FullyQualifiedName~F9IntegratedCity&Size=city-s` / `city-m` | zero failed. Selects F9c's `F9IntegratedCityTests` and F9f's body arms `F9IntegratedCityMovementTests`, both with `[Trait("Size", "city-s")]` / `"city-m"`. |
 
 Before a stage runs, the runner deletes the outputs it owns under `{out}` (its log, TRX directory, harness JSON, `f6h/`), so a rerun into the same directory never reads a stale report. A filter stage runs with `--no-build` only after this run's test build (`test-build` or `unit`) succeeded; if that build failed, the filter stages fail without running older binaries, and without a test build in the run they build themselves. A TRX stage with no executed test is `not-run` when the exit is 0 or the log says no test matched the filter; a non-zero exit with no result (a crashed test host) is `fail`. A stage with no TRX and a non-zero exit is `fail` (build or host failure). In `full`, the filter stages whose filter is a plain `FullyQualifiedName~` alternation are evaluated on the `unit` TRX instead of running again (`reusedFrom: "unit"`); trait filters run on their own.
@@ -56,7 +56,7 @@ Before a stage runs, the runner deletes the outputs it owns under `{out}` (its l
 - `incomplete`: a household-threshold miss alone (deviation "household thresholds measured at weight 1"); an `unmeasuredCriteria` entry the adapter does not know; a declared `--price-weight`.
 - Known `unmeasuredCriteria` entries are routed, never failed: native wholesale costs and staffed throughput to the `native` class as rows `native-wholesale-costs` and `native-staffed-throughput` (`classes.native.pending`). Each row is a required native result that stays `incomplete` until a native stage record with `"measures": "<row>"` reports; an unrelated rig pass does not clear it. Then the perf/stress item to `performance` (F4), F1 cadence and F2 body-cap items to the `population`/`city-*` and `movement` stages, and the Pareto item to `superseded` ([price-weight decision](../../docs/decisions/2026-11-08-price-weight.md)).
 
-**Movement expectations** (`expectations/movement.json`). Seeded from `tools/movement-equivalence/baseline.json`: every arm whose comparison was not identical. The harness's self-checks must pass. A listed arm may differ (`expected-red`); any other arm must equal its reference or the stage fails. A listed arm that now equals its reference is reported in `summary.notes`, not failed. F9f empties the list.
+**Movement expectations** (`expectations/movement.json`). Seeded from `tests/movement-equivalence/baseline.json`: every arm whose comparison was not identical. The harness's self-checks must pass. A listed arm may differ (`expected-red`); any other arm must equal its reference or the stage fails. A listed arm that now equals its reference is reported in `summary.notes`, not failed. F9f empties the list.
 
 ## Result (`{out}/acceptance.json`, schema `persistentcity-acceptance-1`)
 

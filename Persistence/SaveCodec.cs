@@ -817,7 +817,7 @@ namespace PersistentCity.Persistence
             }
             foreach (var item in traffic.Events) { Require(item != null, "Null traffic event."); Minute(item.At, "Traffic event time"); }
             TrafficKernel restored;
-            try { restored = TrafficKernel.Restore(traffic, false); }
+            try { restored = TrafficKernel.Restore(traffic); }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             { throw new SaveValidationException("Invalid traffic state: " + exception.Message); }
             foreach (var vehicle in traffic.Vehicles)

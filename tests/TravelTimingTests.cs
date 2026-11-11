@@ -8,10 +8,6 @@ namespace PersistentCity.Tests;
 
 public sealed class TravelTimingTests
 {
-    private sealed class Planner : IRoutePlanner
-    {
-        public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
-    }
 
     private static CityState City(TravelMode mode = TravelMode.Walk, int count = 1, double now = 1443)
     {
@@ -37,8 +33,8 @@ public sealed class TravelTimingTests
         return state;
     }
 
-    private static Position Position(CityState state) => new CitySimulator(state, new Planner()).PositionOf(state.Citizens[0]);
-    private static Position? CarPosition(CityState state) => new CitySimulator(state, new Planner()).CarPositionOf(state.Citizens[0]);
+    private static Position Position(CityState state) => new CitySimulator(state, new NoRoutes()).PositionOf(state.Citizens[0]);
+    private static Position? CarPosition(CityState state) => new CitySimulator(state, new NoRoutes()).CarPositionOf(state.Citizens[0]);
 
     [Fact]
     public void InterruptedWalkPreservesPositionAndRetimesOnlyRemainingDistance()
@@ -228,7 +224,7 @@ public sealed class TravelTimingTests
         const double duration = 567634.374533236;
         var state = City(); var c = state.Citizens[0]; state.Minute = clock;
         c.DepartureMinute = clock; c.Journey!.Legs[0].Minutes = duration; c.NextEventMinute = clock + duration;
-        var engine = new CitySimulator(state, new Planner());
+        var engine = new CitySimulator(state, new NoRoutes());
         // F2c: walk legs are not leased. Set the completed state a completion leaves: departure = clock - duration.
         c.DepartureMinute = clock - duration; c.NextEventMinute = clock;
         Assert.True(Math.Abs(c.NextEventMinute - (c.DepartureMinute + c.Journey.Minutes)) > 1e-7);

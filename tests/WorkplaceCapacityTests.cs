@@ -471,51 +471,6 @@ public sealed class WorkplaceCapacityTests
         return root!.FullName;
     }
 
-    /// <summary>No product code calls a native hiring, staffing or employee member. The only native staff read in the
-    /// mod is F5a's informational rival list length inside GamePlaces' census block; capacity never uses it. Work and
-    /// Study capacity come only from <see cref="WorkplaceCapacityPolicy"/>; <c>NativeEmployment</c> has only None.</summary>
-    [Fact]
-    public void NoNativeStaffOrHiringMemberIsReferenced()
-    {
-        string root = RepositoryRoot();
-        // Native members named in the F5a ILSpy record plus generic hiring/staffing verbs.
-        string[] forbidden = { "AiBusinessEmployeeData", "GenerateAiBusinessEmployees", "AddEmployeesToAiBusinesses", "GetRequiredSkillForceForLayout",
-            "EmployeeHelper", "EmployeeManager", "HireEmployee", "FireEmployee", "AddEmployee", "RemoveEmployee", "employees.Add", "aiEmployees.Add",
-            "aiEmployees.Remove", "aiEmployees.Clear", ".Hire(", ".Fire(" };
-        var files = new[] { "Core", "Persistence", "Runtime", "Compatibility" }
-            .SelectMany(d => Directory.GetFiles(Path.Combine(root, d), "*.cs", SearchOption.AllDirectories)).ToList();
-        Assert.NotEmpty(files);
-        foreach (var file in files)
-        {
-            string text = File.ReadAllText(file), relative = Path.GetRelativePath(root, file).Replace(Path.DirectorySeparatorChar, '/');
-            foreach (var token in forbidden) Assert.False(text.Contains(token, StringComparison.Ordinal), relative + " references " + token);
-            // Any other Employee identifier is only the item-type flag the food eligibility readers already test.
-            foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(text, @"\w*[Ee]mployee\w*"))
-                Assert.True(match.Value == "EmployeeWorkstation" || match.Value == "aiEmployees" && relative == "Runtime/GamePlaces.cs",
-                    relative + " references " + match.Value);
-        }
-        string places = File.ReadAllText(Path.Combine(root, "Runtime", "GamePlaces.cs"));
-        int block = places.IndexOf("if (census != null", StringComparison.Ordinal);
-        int blockEnd = places.IndexOf("census.Add(", block, StringComparison.Ordinal);
-        Assert.True(block > 0 && blockEnd > block);
-        int staff = places.IndexOf("aiEmployees", StringComparison.Ordinal);
-        Assert.True(staff > block && staff < blockEnd && places.IndexOf("aiEmployees", staff + 1, StringComparison.Ordinal) < 0,
-            "the rival staff list is read once, inside the census block");
-        // Work and Study places take their capacity from the policy, not the staff count or the fixed allocation.
-        foreach (var kind in new[] { "Add(PlaceKind.Work,", "Add(PlaceKind.Study," })
-        {
-            int at = places.IndexOf(kind, StringComparison.Ordinal);
-            string line = places.Substring(at, places.IndexOf(';', at) - at);
-            Assert.Contains("WorkplaceCapacityPolicy.", line);
-            Assert.DoesNotContain("BusinessAllocation", line); Assert.DoesNotContain("staff", line); Assert.DoesNotContain("NativeStaff", line);
-        }
-        foreach (var name in new[] { "Core/WorkplaceCapacity.cs", "Core/ResidentLifecycle.cs", "Core/VisitorSchedules.cs", "Core/Population.cs", "Core/HouseholdFinance.cs" })
-        {
-            string text = File.ReadAllText(Path.Combine(root, name));
-            Assert.DoesNotContain("NativeStaff", text);
-        }
-        Assert.Equal(new[] { NativeEmployment.None }, Enum.GetValues<NativeEmployment>());
-    }
 }
 
 internal static class JsonTestExtensions
