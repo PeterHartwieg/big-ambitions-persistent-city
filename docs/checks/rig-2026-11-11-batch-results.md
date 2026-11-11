@@ -32,6 +32,10 @@ Raw evidence is external: `<stage>` = `C:/Users/Peter/HART-Builds/persistent-cit
 | day3-save-cost | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
 | day1-native-loads | INPUT_ERROR | Scenario needs checks: name its CHECKS.md rows |
 | native-loads | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
+| g10 | INFRA | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
+| g10-remaining | FAIL | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
+| g10-ready | STOPPED | Stage requested pending after load call had already completed; wait could not succeed. Runner interrupt ended before finally. |
+| g10-recovered | PASS | See steps, profile, pcstate, selfchecks and Player.log in run directory; all cleanup actions retained. |
 
 ## F7 check 2 / F7e input
 
@@ -293,6 +297,7 @@ All files below are this run’s fresh native FT character only, retained in `C:
 | FT Batch day3-save-cost Recover slot0.hsg | 2179326 | `6888b96345d190a4dd23c149e124da1642e4857702b2e101e752351ddbc43951` |
 | FT E5b 11 Nov Batch 957 Ready.hsg | 890619 | `3a08f8e6f25d175d9b27168ab921ca72eedcdc7b2036b692701a7cf4599ffa1c` |
 | FT E5b 11 Nov Batch 957.hsg | 502081 | `a52b4386ef413fe51a08a33bc6490dba232690a4476586122e345637d99471c9` |
+| FT rig 6c34cb1756ae41ff8368cf9c5422fd92.hsg | 890619 | `3a08f8e6f25d175d9b27168ab921ca72eedcdc7b2036b692701a7cf4599ffa1c` |
 | FT rig checkpoint a6d2374da99e4691940094a2e2bde68c.hsg | 2179306 | `d048d7e37875f33fb06bf637cc2667f0f367fd03e8babfe24f0bd87187422dcd` |
 | FT rig checkpoint c765060fb4d44eb99e91ff91e555d5fb.hsg | 890515 | `13c6098f465b88e848385c83989a49c549df29b2fb6f0dd48286191aeaa0bbfc` |
 
@@ -301,8 +306,8 @@ All files below are this run’s fresh native FT character only, retained in `C:
 | Check | Status | Result |
 |---|---|---|
 | F7 check 2 / F4 G12 | PARTIAL | All three 957 head SaveTypes measured; capture/window inputs recorded. Historical before arm and reliable process-memory fields absent. |
-| F7 check 7 (957 portion) | PARTIAL | All six day-1/day-3 SaveType checkpoints cold-loaded with native decode/activation, F7a initialization and successful running population. Accounting readbacks retain zero refused/historical misses on recovery copies. Stress portion NOT RUN. |
-| F4 G10 | NOT RUN | Later separate startup/reload/skip segment pending. |
+| F7 check 7 (957 portion) | PARTIAL | Default cold load measured with native decode/activation and F7a initialization; remaining native-type copies and day-3 load campaign pending. Stress portion NOT RUN. |
+| F4 G10 | PARTIAL | Cold/fresh loads measured; in-session activation recovered after staged readiness errors. Native skiptime 120m completed in 9578 ms, running?stopped observed. Stale/pending records excluded. See g10-recovered/report.json for same-owner normal quit, original-backup restoration and free lease; no lease edit or takeover. |
 | F7 check 9 | NOT RUN | Later ordinary clean union segment pending; not a substitute for F4 G4. |
 | F4 G1–G9, G11, G13–G15; F7 1,3–6,8; F8h1; reload3–4 | NOT RUN | Grouped capability/fixture reasons above. |
 
