@@ -19,7 +19,8 @@ public sealed class PurchaseProbeTests
     private static PurchaseProbeRequest Request(long ceilingCents, ProbeKind kind = ProbeKind.Goods, long minute = 600, params ProbeLine[] basket)
         => new PurchaseProbeRequest(Resident, Place, kind, minute, Money.FromCents(ceilingCents), basket.Length == 0 ? new[] { Fee, Shirt, Socks } : basket);
 
-    /// <summary>Native double: stock and booked orders, changed only when a sale goes through.</summary>
+    /// <summary>Native double: stock and booked orders, changed only when a sale goes through. Sell takes the pre-sale
+    /// image before its first effect, as Runtime does, and Undo restores it.</summary>
     private sealed class Native : IProbeNativeSale
     {
         public readonly Dictionary<string, int> Stock = new Dictionary<string, int>(StringComparer.Ordinal) { ["ba:itemname_shirt"] = 5, ["ba:itemname_socks"] = 5 };
@@ -28,16 +29,29 @@ public sealed class PurchaseProbeTests
         public Func<IReadOnlyList<ProbeLine>, ProbeNativeOutcome?>? Before;
         public Func<ProbeLine, bool> Accept = _ => true;
         public Func<IReadOnlyList<ProbeLine>, IReadOnlyList<ProbeLine>>? Report;
+        public bool FailAfterStock, FailUndo;
+        public int Undos;
+        private Dictionary<string, int>? stockImage; private int ordersImage = -1;
         public string Books => string.Join(",", Stock.OrderBy(p => p.Key).Select(p => p.Key + "=" + p.Value)) + "|" + string.Join(",", Orders);
         public ProbeNativeOutcome Sell(IReadOnlyList<ProbeLine> lines)
         {
             Calls++;
             var early = Before?.Invoke(lines);
             if (early.HasValue) return early.Value;
+            stockImage = new Dictionary<string, int>(Stock, StringComparer.Ordinal); ordersImage = Orders.Count;
             var paid = lines.Where(Accept).ToList();
             foreach (var line in paid) if (Stock.ContainsKey(line.ItemId)) Stock[line.ItemId]--;
+            if (FailAfterStock) throw new InvalidOperationException("processor threw after taking stock");
             Orders.Add(string.Join("+", lines.Select(l => l.ItemId)));
             return ProbeNativeOutcome.Processed(Report?.Invoke(paid) ?? paid);
+        }
+        public void Undo()
+        {
+            Undos++;
+            if (FailUndo) throw new InvalidOperationException("restore refused");
+            if (stockImage == null) return;
+            Stock.Clear(); foreach (var p in stockImage) Stock[p.Key] = p.Value;
+            Orders.RemoveRange(ordersImage, Orders.Count - ordersImage);
         }
     }
 
@@ -121,15 +135,32 @@ public sealed class PurchaseProbeTests
         Assert.True(HouseholdFinance.CashConserved(wallet));
     }
 
+    /// <summary>A processor fault after it took stock, before any order was booked: the native books are restored, the
+    /// pending receipt is dropped and the wallet is untouched, so a save right after the command holds no half sale.</summary>
     [Fact]
-    public void AnUncertainNativeOutcomeNeverDebitsAndIsNeverRetried()
+    public void AFaultAfterStockConsumptionRestoresTheNativeBooks()
     {
-        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
+        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native { FailAfterStock = true };
+        string walletBefore = WalletText(wallet), books = native.Books;
+
+        var result = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
+
+        Assert.Equal(ProbeRefusal.Reversed, result.Refusal);
+        Assert.Equal(1, native.Undos);
+        Assert.Equal(books, native.Books);
+        Assert.Empty(receipts);
+        Assert.Equal(walletBefore, WalletText(wallet));
+    }
+
+    /// <summary>Only a failed restore leaves an uncertain receipt; it is never debited or retried.</summary>
+    [Fact]
+    public void AFailedRestoreIsUncertainNeverDebitedAndNeverRetried()
+    {
+        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native { FailAfterStock = true, FailUndo = true };
         string walletBefore = WalletText(wallet);
-        native.Before = _ => throw new InvalidOperationException("Native order booking is uncertain");
 
         var first = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
-        native.Before = null;
+        native.FailAfterStock = false;
         var repeat = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
 
         Assert.Equal(ProbeRefusal.Uncertain, first.Refusal);
@@ -161,18 +192,39 @@ public sealed class PurchaseProbeTests
         Assert.True(HouseholdFinance.CashConserved(wallet));
     }
 
+    /// <summary>A booked order above the quote (stock taken, order booked, nothing debited yet) is reversed: books, wallet
+    /// and receipts end as they began. The probe can then run again at a later minute.</summary>
     [Fact]
-    public void ABookedOrderAboveTheQuoteIsRecordedUnreconciledWithoutADebit()
+    public void ABookedOrderAboveTheQuoteIsReversedBeforeTheDebit()
     {
         var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
-        string walletBefore = WalletText(wallet);
+        string walletBefore = WalletText(wallet), books = native.Books;
         native.Report = paid => paid.Select(l => new ProbeLine(l.ItemId, l.Price + Money.FromCents(1), false)).ToList();
+
+        var result = PurchaseProbe.Run(Request(100000, basket: new[] { Shirt }), wallet, receipts, native);
+
+        Assert.Equal(ProbeRefusal.Reversed, result.Refusal);
+        Assert.Equal(books, native.Books); // shirt stock back at 5, no booked order
+        Assert.Empty(receipts);
+        Assert.Equal(walletBefore, WalletText(wallet));
+        Assert.Equal(0, PurchaseProbe.Recover(receipts));
+    }
+
+    /// <summary>The wallet limit can fall between the quote and the debit only through native callbacks; the booked
+    /// order is then reversed rather than left unpaid.</summary>
+    [Fact]
+    public void AWalletThatCannotTakeTheBookedTotalReversesTheSale()
+    {
+        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
+        string books = native.Books;
+        native.Report = paid => { wallet.HeldPurchase = Money.FromCents(1); wallet.Balance -= Money.FromCents(1); return paid; };
 
         var result = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
 
-        Assert.Equal(ProbeReceiptStatus.Unreconciled, PurchaseProbe.Status(receipts[result.Key]));
-        Assert.Equal(walletBefore, WalletText(wallet));
-        Assert.Equal(0, PurchaseProbe.Recover(receipts)); // visible in pc probe status, never retried
+        Assert.Equal(ProbeRefusal.Reversed, result.Refusal);
+        Assert.Equal(books, native.Books);
+        Assert.Empty(receipts);
+        Assert.Equal(Money.Zero, wallet.Ledger.Discretionary);
     }
 
     [Fact]

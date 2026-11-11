@@ -37,6 +37,9 @@ namespace PersistentCity.Runtime
         private readonly string? fee;
         private readonly int hour;
         internal readonly Dictionary<string, object?> Evidence = new Dictionary<string, object?>(StringComparer.Ordinal);
+        // Pre-sale image for Undo: every holder's cargo list and amounts, the booked-order count, the claimed entry's slot.
+        private readonly List<(List<CargoInstance> list, CargoInstance[] cargo, int[] amounts)> stock = new List<(List<CargoInstance>, CargoInstance[], int[])>();
+        private int ordersBefore = -1, claimedSlot = -1;
 
         private NativeSaleProbe(object save, BuildingRegistration reg, BusinessType type, ProbeFamily family, CustomerEntry? claimed, string? fee)
         { this.save = save; this.reg = reg; this.type = type; this.family = family; this.claimed = claimed; this.fee = fee; hour = SaveGameManager.Current.Hour; }
@@ -136,6 +139,7 @@ namespace PersistentCity.Runtime
                 // Native ProcessAllCustomersFromThisHour, not SetUp, sets the theatre's no-actors refusal; check it here.
                 if (family == ProbeFamily.CinemaTheater && BusinessHelper.ShouldWarnTheaterHasNoActors(reg))
                     return ProbeNativeOutcome.Interrupted("Theatre has no actors");
+                Capture();
                 probing = reg;
                 try { process.Invoke(simulator, new object[] { customer }); }
                 catch (Exception error) { failure = error is TargetInvocationException { InnerException: { } inner } ? inner : error; }
@@ -149,8 +153,7 @@ namespace PersistentCity.Runtime
             // A skipped body (another owner's gate) leaves the order untouched: no native effect.
             if (failure == null && !completed && added == 0 && customer.order.entries.All(e => !e.processed && !e.paid))
                 return ProbeNativeOutcome.Interrupted("Native processor skipped the order");
-            // Without exactly one booked order no revenue reaches the daily boundary, so there is nothing to charge.
-            // From here on nothing throws: a booked order is always handed to Core, which debits it once.
+            // Anything but one booked order is reversed: Core calls Undo for a throw. Below, nothing throws.
             if (added != 1 || !completed)
                 throw new InvalidOperationException("Native order booking is uncertain (" + added + " orders added)", failure);
             var paid = new List<ProbeLine>();
@@ -165,13 +168,53 @@ namespace PersistentCity.Runtime
             }
             if (skipped.Count > 0) Evidence["unpricedPaidEntries"] = skipped;
             // The hourly batch queues every entry of the hour whatever its completed flag, so the served entry leaves the list.
-            // The booked order counts against the hour when native code regenerates entries, so none replaces it.
+            // Native regeneration subtracts only the hour's listed entries, not booked orders: a regeneration later in this
+            // hour (a price, schedule or furniture change) may add one replacement native entry. The flag shows it on the rig.
             if (claimed != null)
             {
                 claimed.completed = true;
-                Evidence["claimedEntryRetired"] = CustomerEntriesHelper.GetEntriesByAddress(reg.Address)?.Remove(claimed) == true;
+                var list = CustomerEntriesHelper.GetEntriesByAddress(reg.Address);
+                claimedSlot = list?.IndexOf(claimed) ?? -1;
+                if (claimedSlot >= 0) list!.RemoveAt(claimedSlot);
+                Evidence["claimedEntryRetired"] = claimedSlot >= 0;
+                Evidence["sameHourRegenerationMayAddOneEntry"] = claimedSlot >= 0;
             }
             return ProbeNativeOutcome.Processed(paid, skipped.Count);
+        }
+
+        private void Capture()
+        {
+            stock.Clear(); ordersBefore = reg.unprocessedCompletedOrders.Count;
+            if (reg.itemInstances == null || reg.itemInstances.Count > 2000) throw new InvalidOperationException("Unsupported native item list.");
+            foreach (var instance in reg.itemInstances.Values)
+            {
+                var list = instance?.cargoInstances;
+                if (list == null) continue;
+                var cargo = list.ToArray();
+                stock.Add((list, cargo, cargo.Select(c => c?.amount ?? 0).ToArray()));
+            }
+        }
+
+        /// <summary>Restores the pre-sale stock (cargo lists and amounts), drops orders booked since, and puts the claimed
+        /// entry back unserved. Dirt and other furniture wear from processing are not restored.</summary>
+        public void Undo()
+        {
+            if (ordersBefore < 0) return; // Sell stopped before its first native effect
+            foreach (var (list, cargo, amounts) in stock)
+            {
+                list.Clear(); list.AddRange(cargo);
+                for (int i = 0; i < cargo.Length; i++) if (cargo[i] != null) cargo[i].amount = amounts[i];
+            }
+            int added = reg.unprocessedCompletedOrders.Count - ordersBefore;
+            if (added < 0) throw new InvalidOperationException("Native orders were removed during the probe; restore refused.");
+            reg.unprocessedCompletedOrders.RemoveRange(ordersBefore, added);
+            if (claimed != null)
+            {
+                claimed.completed = false;
+                var list = CustomerEntriesHelper.GetEntriesByAddress(reg.Address);
+                if (claimedSlot >= 0 && list != null && !list.Contains(claimed)) list.Insert(Math.Min(claimedSlot, list.Count), claimed);
+            }
+            Evidence["nativeRestored"] = true;
         }
     }
 

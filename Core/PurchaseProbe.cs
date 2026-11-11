@@ -9,8 +9,8 @@ namespace PersistentCity.Core
     /// with its own code) is <see cref="Unsupported"/> and stays native.</summary>
     public enum ProbeFamily { Unsupported, FullService, SelfService, Hairdresser, Gym, CinemaTheater, Nightclub }
     public enum ProbeKind { Food, Goods, Service }
-    public enum ProbeRefusal { None, Empty, Ceiling, Wallet, AlreadyRecorded, Interrupted, NativeDeclined, Uncertain }
-    public enum ProbeReceiptStatus { Missing, Pending, Paid, Declined, Abandoned, Uncertain, Unreconciled, Conflict }
+    public enum ProbeRefusal { None, Empty, Ceiling, Wallet, AlreadyRecorded, Interrupted, Reversed, NativeDeclined, Uncertain }
+    public enum ProbeReceiptStatus { Missing, Pending, Paid, Declined, Abandoned, Uncertain, Conflict }
 
     /// <summary>One basket line at its live price. Mandatory marks a line the processor charges first (entrance fee,
     /// ticket); it is reported, and the native side leaves a checkout-added fee out of the order it builds.</summary>
@@ -68,12 +68,14 @@ namespace PersistentCity.Core
         public string Reason { get; }
     }
 
-    /// <summary>The only native call of a probe. Runtime processes one order through the family's own ProcessCustomer;
-    /// tests use a double. It is called only after the whole basket fits the ceiling. Contract: it returns Processed for
-    /// every booked order and throws only when no order was booked (so no revenue reaches the native daily boundary).</summary>
+    /// <summary>The only native calls of a probe. Runtime processes one order through the family's own ProcessCustomer;
+    /// tests use a double. Sell is called only after the whole basket fits the ceiling. Undo, called only after Sell,
+    /// restores the native books (stock, booked orders, the claimed entry) to the image taken before Sell's first native
+    /// effect; it throws when it cannot.</summary>
     public interface IProbeNativeSale
     {
         ProbeNativeOutcome Sell(IReadOnlyList<ProbeLine> lines);
+        void Undo();
     }
 
     public sealed class PurchaseProbeResult
@@ -129,37 +131,43 @@ namespace PersistentCity.Core
             receipts[key] = "pending|" + identity;
             ProbeNativeOutcome outcome;
             try { outcome = native.Sell(quote.Kept); }
-            catch (Exception error)
-            {
-                // No order was booked (the native contract), so there is no revenue to pay for. Native stock the failed
-                // processor may have used is the game's loss, as with any native failure. Never debit, never retry.
-                receipts[key] = "uncertain|" + identity;
-                return new PurchaseProbeResult(key, ProbeRefusal.Uncertain, ProbeReceiptStatus.Uncertain, quote, Money.Zero, error.Message);
-            }
+            catch (Exception error) { return Reverse(key, identity, quote, receipts, native, "Native sale failed: " + error.Message); }
             if (!outcome.Sold)
             {
                 receipts.Remove(key);
                 return new PurchaseProbeResult(key, ProbeRefusal.Interrupted, ProbeReceiptStatus.Missing, quote, Money.Zero, outcome.Reason);
             }
-            // From here one order is booked: it is reconciled now, exactly once. Prices were rechecked after native setup,
-            // so paid lines outside the quote are not expected; they are still charged when they fit, and reported.
+            // From here one order is booked: it is debited now, exactly once, or the native books are restored. Prices were
+            // rechecked after native setup, so paid lines outside the quote are not expected; they are charged when they fit.
             Money paid = Money.Sum(outcome.Paid.Select(l => l.Price));
             string note = WithinQuote(outcome.Paid, quote.Kept) && outcome.Unpriced == 0 ? "" : "Native paid lines differ from the quote";
             if (paid > quote.Total || paid > Money.Zero && !CanDebit(wallet, request.Kind, paid))
-            {
-                // Unreachable while the rechecked quote holds: the booked order exceeds what the resident may pay.
-                receipts[key] = "unreconciled|" + paid.ToCentsText() + "|" + identity;
-                return new PurchaseProbeResult(key, ProbeRefusal.Uncertain, ProbeReceiptStatus.Unreconciled, quote, Money.Zero, "Booked order " + paid.ToCentsText() + " exceeds the quote or the wallet");
-            }
+                return Reverse(key, identity, quote, receipts, native, "Booked order " + paid.ToCentsText() + " exceeds the quote or the wallet");
             if (paid == Money.Zero)
             {
                 // The game's own per-item price check refused every line: an order with no paid entry, no money.
                 receipts[key] = "declined|" + identity;
                 return new PurchaseProbeResult(key, ProbeRefusal.NativeDeclined, ProbeReceiptStatus.Declined, quote, Money.Zero, "Native price check refused every line");
             }
-            Debit(wallet, request.Kind, paid);
+            // Debit can throw only at its first cash check or a refused hold, before it assigns anything.
+            try { Debit(wallet, request.Kind, paid); }
+            catch (Exception error) { return Reverse(key, identity, quote, receipts, native, "Wallet debit failed: " + error.Message); }
             receipts[key] = "paid|" + paid.ToCentsText() + "|" + identity;
             return new PurchaseProbeResult(key, ProbeRefusal.None, ProbeReceiptStatus.Paid, quote, paid, note);
+        }
+
+        // Restore the native books and drop the pending receipt: wallet, receipts and books are as before the probe.
+        // Only a failed restore leaves evidence, an uncertain receipt that is never retried or debited.
+        private static PurchaseProbeResult Reverse(string key, string identity, ProbeQuote quote, IDictionary<string, string> receipts, IProbeNativeSale native, string reason)
+        {
+            try { native.Undo(); }
+            catch (Exception error)
+            {
+                receipts[key] = "uncertain|" + identity;
+                return new PurchaseProbeResult(key, ProbeRefusal.Uncertain, ProbeReceiptStatus.Uncertain, quote, Money.Zero, reason + "; native restore failed: " + error.Message);
+            }
+            receipts.Remove(key);
+            return new PurchaseProbeResult(key, ProbeRefusal.Reversed, ProbeReceiptStatus.Missing, quote, Money.Zero, reason + "; native books restored");
         }
 
         /// <summary>A pending receipt outside a running probe was cut before the native call returned: Run records every
@@ -183,7 +191,6 @@ namespace PersistentCity.Core
                 case "declined": return ProbeReceiptStatus.Declined;
                 case "abandoned": return ProbeReceiptStatus.Abandoned;
                 case "uncertain": return ProbeReceiptStatus.Uncertain;
-                case "unreconciled": return ProbeReceiptStatus.Unreconciled;
                 default: return ProbeReceiptStatus.Conflict;
             }
         }
