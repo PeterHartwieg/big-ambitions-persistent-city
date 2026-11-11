@@ -76,19 +76,30 @@ public sealed class PhysicalWalkerPerfTests
         for (int i = 0; i < 120; i++) { Frame(); bodies.Update(); }
         int count = 2400;
         long requests = PhysicalPopulation.Telemetry.PathRequests;
-        var times = new List<double>(count); int bodiesSeen = 0;
+        var times = new List<double>(count); var bounds = new List<double>(count); int bodiesSeen = 0;
+        double Elapsed(long start) => (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
         for (int i = 0; i < count; i++)
         {
             Frame();
+            // P-C: the navigation hook runs BoundWalkers twice a frame (before PreUpdate.AIUpdate and before
+            // PreLateUpdate.AIUpdatePostScript); both passes are timed together, separately from Update.
             long start = Stopwatch.GetTimestamp();
+            pool.BeforeNavigation?.Invoke();
+            double bound = Elapsed(start);
+            start = Stopwatch.GetTimestamp();
             bodies.Update();
-            times.Add((Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency);
+            times.Add(Elapsed(start));
+            start = Stopwatch.GetTimestamp();
+            pool.BeforeNavigation?.Invoke();
+            bounds.Add(bound + Elapsed(start));
             bodiesSeen = Math.Max(bodiesSeen, pool.Active.Count);
         }
-        times.Sort();
+        times.Sort(); bounds.Sort();
         File.AppendAllText(path, string.Format(CultureInfo.InvariantCulture,
             "Update, 48 travelling walkers: bound max={0}, n={1}, p50={2:F4} ms, p95={3:F4} ms, max={4:F4} ms, spikes>=30ms={5}, path requests={6}{7}",
             bodiesSeen, count, times[count / 2], times[(int)Math.Ceiling(count * .95) - 1], times[^1], times.Count(t => t >= 30),
-            PhysicalPopulation.Telemetry.PathRequests - requests, System.Environment.NewLine));
+            PhysicalPopulation.Telemetry.PathRequests - requests, System.Environment.NewLine)
+            + string.Format(CultureInfo.InvariantCulture, "BoundWalkers, both passes per frame: p50={0:F4} ms, p95={1:F4} ms, max={2:F4} ms{3}",
+                bounds[count / 2], bounds[(int)Math.Ceiling(count * .95) - 1], bounds[^1], System.Environment.NewLine));
     }
 }
