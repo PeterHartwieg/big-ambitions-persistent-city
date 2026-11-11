@@ -6,6 +6,7 @@ using System.Linq;
 using System.Numerics;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
+using PersistentCity.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -732,8 +733,10 @@ public sealed class ResearchChargeTests
         // C5e wires it from PersistentCityMod.cs only (the agency dialog reads Installed, C5f's pcresearch status reads Status).
         foreach (var file in Directory.GetFiles(Path.Combine(root, "Runtime"), "*.cs"))
             if (!file.EndsWith("ResearchBilling.cs", StringComparison.Ordinal) && !file.EndsWith("PersistentCityMod.cs", StringComparison.Ordinal)
-                && !file.EndsWith("ResearchAgencyDialog.cs", StringComparison.Ordinal) && !file.EndsWith("ResearchDiagnostics.cs", StringComparison.Ordinal))
+                && !file.EndsWith("ResearchAgencyDialog.cs", StringComparison.Ordinal) && !file.EndsWith("ResearchDiagnostics.cs", StringComparison.Ordinal)
+                && !file.EndsWith("CapabilityDiagnostics.cs", StringComparison.Ordinal)) // F8b reads Installed and Status for pc capability status
                 Assert.DoesNotContain("ResearchBilling.", File.ReadAllText(file));
+        Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "CapabilityDiagnostics.cs")));
         Assert.DoesNotContain("ResearchBilling.Attach", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchAgencyDialog.cs")));
         Assert.DoesNotContain("ResearchBilling.Attach(", File.ReadAllText(Path.Combine(root, "Runtime", "ResearchDiagnostics.cs")));
         Assert.Contains("ResearchBilling.Attach(state.Research, ResearchAttached, ResearchEligible, RunSaveEpochUnit)",
@@ -765,38 +768,43 @@ public sealed class ResearchChargeTests
         foreach (int orders in new[] { 0, 1, 8 })
         {
             const int runs = 300;
-            var samples = new double[runs];
-            long bytes = 0;
-            for (int run = 0; run < runs + 20; run++)
+            string line = "";
+            TimingBudget.Run(timing =>
             {
-                var (ledger, port, _, session) = Setup();
-                port.Money = 1e6f;
-                for (int i = 0; i < 1000; i++)
-                    port.Queue.Add(new Record { Type = i % 7 == 0 ? ResearchCharge.MarketingType : "ba:transaction_rent", Amount = -10, Day = 40,
-                        Data = new Dictionary<string, string> { { "businessName", "b" + (i % 13) } } });
-                // A city with 2,000 registrations, 20 of them rented by the player; orders go to the last rented ones,
-                // so every resolution walks the whole list and builds 20 place IDs.
-                port.Registrations = new List<(string, int, bool)>(2000);
-                for (int i = 0; i < 2000; i++) port.Registrations.Add(("Street " + (i % 97), i, i % 100 == 99));
-                for (int i = 0; i < orders; i++)
+                var samples = new double[runs];
+                long bytes = 0;
+                for (int run = 0; run < runs + 20; run++)
                 {
-                    var (street, number, _) = port.Registrations[(19 - i) * 100 + 99];
-                    string place = "address:" + Uri.EscapeDataString(street) + ":" + number + ":shop";
-                    Surveyed(ledger, port, place, ResearchProducts.All[i % 3].Code);
+                    var (ledger, port, _, session) = Setup();
+                    port.Money = 1e6f;
+                    for (int i = 0; i < 1000; i++)
+                        port.Queue.Add(new Record { Type = i % 7 == 0 ? ResearchCharge.MarketingType : "ba:transaction_rent", Amount = -10, Day = 40,
+                            Data = new Dictionary<string, string> { { "businessName", "b" + (i % 13) } } });
+                    // A city with 2,000 registrations, 20 of them rented by the player; orders go to the last rented ones,
+                    // so every resolution walks the whole list and builds 20 place IDs.
+                    port.Registrations = new List<(string, int, bool)>(2000);
+                    for (int i = 0; i < 2000; i++) port.Registrations.Add(("Street " + (i % 97), i, i % 100 == 99));
+                    for (int i = 0; i < orders; i++)
+                    {
+                        var (street, number, _) = port.Registrations[(19 - i) * 100 + 99];
+                        string place = "address:" + Uri.EscapeDataString(street) + ":" + number + ":shop";
+                        Surveyed(ledger, port, place, ResearchProducts.All[i % 3].Code);
+                    }
+                    var start = timing.Start();
+                    long allocated = GC.GetAllocatedBytesForCurrentThread();
+                    if (session.HasWork) session.Boundary();
+                    var sample = timing.End(start);
+                    if (run < 20) continue;
+                    bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
+                    samples[run - 20] = timing.Keep("postfix p95 (5 ms gate)", sample);
+                    Assert.Equal(orders, port.Charges);
+                    Assert.Equal(orders, ledger.Kept.Count);
                 }
-                long start = Stopwatch.GetTimestamp();
-                long allocated = GC.GetAllocatedBytesForCurrentThread();
-                if (session.HasWork) session.Boundary();
-                long end = Stopwatch.GetTimestamp();
-                if (run < 20) continue;
-                bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
-                samples[run - 20] = (end - start) * 1000.0 / Stopwatch.Frequency;
-                Assert.Equal(orders, port.Charges);
-                Assert.Equal(orders, ledger.Kept.Count);
-            }
-            Array.Sort(samples);
-            output.WriteLine($"orders={orders} queue=1000 p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/boundary={bytes / runs}");
-            Assert.True(samples[runs * 95 / 100] < 5, "p95 under the 5 ms gate");
+                Array.Sort(samples);
+                line = $"orders={orders} queue=1000 p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/boundary={bytes / runs}";
+                timing.Under("postfix p95 (5 ms gate)", samples[runs * 95 / 100], 5);
+            });
+            output.WriteLine(line);
         }
     }
 
@@ -842,18 +850,23 @@ public sealed class ResearchChargeTests
             var current = getInfo.Invoke(null, new object[] { target })!;
             Assert.Equal(2, ((System.Collections.ICollection)current.GetType().GetField("Postfixes")!.GetValue(current)!).Count);
             const int runs = 1000;
-            var samples = new double[runs];
-            long allocated = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < runs; i++)
+            string line = "";
+            TimingBudget.Run(timing =>
             {
-                long start = Stopwatch.GetTimestamp();
-                Check();
-                samples[i] = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
-            }
-            long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / runs;
-            Array.Sort(samples);
-            output.WriteLine($"foreign-patch check: p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/call={bytes}");
-            Assert.True(samples[runs * 95 / 100] < 1);
+                var samples = new double[runs];
+                long allocated = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < runs; i++)
+                {
+                    var start = timing.Start();
+                    Check();
+                    samples[i] = timing.Stop(start, "foreign-patch check p95");
+                }
+                long bytes = (GC.GetAllocatedBytesForCurrentThread() - allocated) / runs;
+                Array.Sort(samples);
+                line = $"foreign-patch check: p50={samples[runs / 2]:F4}ms p95={samples[runs * 95 / 100]:F4}ms max={samples[runs - 1]:F4}ms bytes/call={bytes}";
+                timing.Under("foreign-patch check p95", samples[runs * 95 / 100], 1);
+            });
+            output.WriteLine(line);
         }
         finally
         {

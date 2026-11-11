@@ -10,14 +10,6 @@ namespace PersistentCity.Tests;
 
 public sealed partial class FoodCommerceTests
 {
-    private static void RemoveMealRhythmFields(JObject payload)
-    {
-        RemoveMenuFields(payload);
-        var food = (JObject)payload["Food"]!; food.Remove("MealRhythmVersion");
-        foreach (var meal in food["Residents"]!.Children<JObject>()) { meal.Remove("Kind"); meal.Remove("DayAllowanceUsed"); }
-        foreach (var history in food["History"]!.Children<JObject>()) history.Remove("PurchaseMeals");
-    }
-
     [Fact]
     public void MealsVaryByResidentAndDayAndStayOrderedWithinWakingHours()
     {
@@ -100,21 +92,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(Money.FromCents(100), meal.Budget!.HeldPurchase); Assert.Equal(Money.FromCents(0), meal.Budget.PreparedFoodSpent);
     }
 
-    [Theory]
-    [InlineData(2)] [InlineData(7)] [InlineData(40)]
-    public void SchemaTenPendingOrPaidPurchasesAreRefusedWithoutReissuing(int afterDecision)
-    {
-        var (city, market, _) = Ready(); city.EnableHouseholdFinances();
-        Advance(city, city.State.Food!.Residents.Single().DesiredAt + afterDecision);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Schema"] = 10; RemoveMealRhythmFields(payload);
-        string source = payload.ToString(); var orders = market.Orders.ToArray();
-        var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
-        Assert.Equal(orders, market.Orders);
-    }
-
     [Fact]
     public void MealReceiptsAreSeparateAndPrunedWithTheirNativeDay()
     {
@@ -180,17 +157,5 @@ public sealed partial class FoodCommerceTests
             return intent.BusinessId;
         }
         Assert.Equal("quick", Choose(MealKind.Breakfast)); Assert.Equal("quality", Choose(MealKind.Dinner));
-    }
-
-    [Theory]
-    [InlineData("Kind")] [InlineData("MealRhythmVersion")] [InlineData("PurchaseMeals")]
-    public void InvalidMealStateIsRejectedWithoutRepair(string field)
-    {
-        var (city, _, _) = Ready(threeMeals: true); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 60);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State));
-        if (field == "Kind") payload["Food"]!["Residents"]![0]![field] = 99;
-        else if (field == "MealRhythmVersion") payload["Food"]![field] = 99;
-        else payload["Food"]!["History"]![0]![field]![1] = 99;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
 }

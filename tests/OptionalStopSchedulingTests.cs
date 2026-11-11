@@ -239,21 +239,6 @@ public sealed class OptionalStopSchedulingTests
         Assert.True(loaded.State.Citizens[1].OptionalStopChoice);
     }
 
-    [Fact]
-    public void Schema15MigrationPreservesStopsButDoesNotInventWaitingChoices()
-    {
-        var (sim, env) = Ready(DwellKind.Resting); sim.AdvanceTo(1450);
-        var wire = LegacyMoneyWire.AsSchema(SaveWire.Parse(LegacyWire.Write(sim.State)), 15);
-        var read = DevelopmentChain.Read(wire.ToString()); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Null(read.State!.Citizens[0].OptionalStopChoice);
-        var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env, 0);
-        Assert.Equal(sim.State.Citizens[0].OptionalStop!.EndMinute, loaded.State.Citizens[0].OptionalStop!.EndMinute);
-        wire["Citizens"]![0]!["OptionalStopChoice"] = true;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        wire["Schema"] = 16; ((JObject)wire["Citizens"]![0]!).Remove("OptionalStopChoice");
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-    }
-
     [Theory]
     [InlineData(DwellKind.Break, 5, 10)] [InlineData(DwellKind.WindowShopping, 1, 3)]
     [InlineData(DwellKind.Resting, 10, 40)] [InlineData(DwellKind.Audience, 2, 8)]
@@ -337,23 +322,6 @@ public sealed class OptionalStopSchedulingTests
         Assert.Equal(3, sim.State.Citizens.Select(c => c.OptionalStop!.SpotId).Distinct().Count());
     }
     [Fact]
-    public void LegacyMigrationAddsNoStopsAndDoesNotInventVisitsOnLoad()
-    {
-        var (sim, env) = Ready(DwellKind.WindowShopping, percentage: 0); sim.AdvanceTo(1450);
-        foreach (int schema in new[] {13,14})
-        {
-            var wire = LegacyMoneyWire.AsSchema(SaveWire.Parse(LegacyWire.Write(sim.State)), schema);
-            string source = wire.ToString(); var read = DevelopmentChain.Read(source);
-            Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
-            Assert.Equal(DevelopmentChain.ChainOutput, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
-            var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env,100); loaded.AdvanceTo(1451);
-            Assert.Null(loaded.State.Citizens[0].OptionalStop); Assert.Single(loaded.State.Citizens[0].RecentVisits);
-            Assert.Equal(source, wire.ToString());
-            wire["Citizens"]![0]!["OptionalStop"] = null;
-            Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        }
-    }
-    [Fact]
     public void StrictWireRejectsMissingFieldsUnknownKindsAndImpossibleContinuation()
     {
         var (sim, _) = Ready(DwellKind.Resting); sim.AdvanceTo(1450); string source = DevelopmentChain.Write(sim.State);
@@ -364,7 +332,7 @@ public sealed class OptionalStopSchedulingTests
             j => j["Citizens"]![0]!["OptionalStop"]!["ResumeEventMinute"] = 1600,
             j => j["Citizens"]![0]!["OptionalStop"]!["Members"] = new JArray("anonymous") })
         { var wire = SaveWire.Parse(source); damage(wire); Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status); }
-        var future = SaveWire.Parse(source); future["Schema"] = CityState.CurrentSchema + 1; Assert.Equal(SaveReadStatus.Future, DevelopmentChain.Read(future.ToString()).Status);
+        var other = SaveWire.Parse(source); other["Schema"] = CityState.CurrentSchema + 1; Assert.Equal(SaveReadStatus.DevelopmentSchema, DevelopmentChain.Read(other.ToString()).Status);
     }
     [Theory]
     [InlineData(DwellKind.Break)] [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)]
@@ -403,13 +371,6 @@ public sealed class OptionalStopSchedulingTests
         sim.CancelOptionalStop(sim.State.Citizens[0].Identity.Id);
         Assert.All(sim.State.Citizens, c => Assert.True(c.OptionalStop!.Cancelled));
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(sim.State)).Status);
-    }
-    [Fact]
-    public void OrphanedActiveConversationCannotLoad()
-    {
-        var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
-        var wire = SaveWire.Parse(LegacyWire.Write(sim.State)); wire["Citizens"]![0]!["OptionalStop"] = null;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
     }
     [Fact]
     public void ExistingStopResumesOriginalActivityAndNewJourneyWithoutReplayingVisit()
@@ -488,18 +449,6 @@ public sealed class OptionalStopSchedulingTests
         var stop = Assert.Single(sim.State.Citizens, c => c.OptionalStop != null).OptionalStop!;
         Assert.Equal("e", stop.SpotId);
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(sim.State)).Status);
-    }
-
-    [Fact]
-    public void IndexedStopValidationStillRejectsDuplicateAndMissingReferences()
-    {
-        var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
-        var wire = SaveWire.Parse(LegacyWire.Write(sim.State));
-        wire["Citizens"]![1]!["Identity"]!["Id"] = "c0";
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        wire = SaveWire.Parse(LegacyWire.Write(sim.State));
-        wire["Citizens"]![0]!["OptionalStop"]!["PlaceId"] = "missing";
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
     }
 
     [Theory]

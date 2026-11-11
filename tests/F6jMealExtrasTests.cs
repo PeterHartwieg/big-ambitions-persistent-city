@@ -256,7 +256,6 @@ public sealed class F6jMealExtrasTests
         state.Food = new FoodCommerceState { Shops = new() {
             new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant, AdditionalProductIds = new() { FoodProducts.Burger, FoodProducts.HotDog } },
             new FoodScope { PlaceId = "shop2", BusinessId = "b2", ProductId = FoodProducts.Burger } } };
-        DevelopmentChain.RepresentedSchema(state, 1);
         market ??= new TicketMarket();
         var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(market);
         if (allowanceCents.HasValue) foreach (var meal in city.State.Food!.Residents) meal.Allowance = Money.FromCents(allowanceCents.Value);

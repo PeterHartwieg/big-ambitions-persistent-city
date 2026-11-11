@@ -23,7 +23,7 @@ public sealed class ChangeJournalTests
     static List<OpeningWindow> Hours(int close = 1320) => new() { new OpeningWindow { Day = 0, FromMinute = 360, ToMinute = close } };
     static CityState Fresh(int seed = 5150)
     {
-        var (state, market) = Schema28Tests.Fresh(3, seed);
+        var (state, market) = WorkplaceCapacityTests.Fresh(3, seed);
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk()); city.AttachFoodMarket(market);
         while (!city.AdvanceTo(2000, 128).CaughtUp) { }
         return state;
@@ -42,39 +42,33 @@ public sealed class ChangeJournalTests
             StockoutObserved = true, PeriodCauses = new MealPeriodCauses { Counts = Enumerable.Range(0,16).ToArray() } });
         return state;
     }
+    /// <summary>The writer's golden for this fixture. The schema is held at
+    /// 1 until release, so a deliberate format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
-    [InlineData(5150, "570461024fd65a093220d73de492518a87b5395d4d6a93fd563db86a32fe4c13")]
-    [InlineData(9217, "df8c95a30d401b72b580794efe27da15eb15d941ea20e05afe5ae36aa68b4404")]
-    public void CurrentWriterGoldenSnapshotAndReload(int seed, string pin)
+    [InlineData(5150, Corpus, 0)]
+    [InlineData(9217, "a9651c15e44c67fa8e05ac084b638ac1bfaf0c48805a8d1142a873c423a6422c", 72968)]
+    public void CurrentWriterGoldenSnapshotAndReload(int seed, string pin, int characters)
     {
-        // F7d: writer 33 is now the frozen predecessor JSON writer; its pins and reader are unchanged.
-        Assert.Equal(CityState.AttendanceSchema + 1, CityState.ChangeJournalSchema);
-        Assert.Equal(CityState.ChangeJournalSchema + 1, CityState.CurrentSchema);
-        var state = Fixture(seed); string payload = DevelopmentChain.Write33(state);
-        output.WriteLine($"F6g golden {seed}: {EconomicLedgerTests.Sha(payload)} chars={payload.Length}");
-        var read = SaveCodec.ReadWriter33(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(payload, DevelopmentChain.Write33(read.State!));
+        var state = Fixture(seed); string payload = SaveCodec.Write(state);
+        Assert.StartsWith(SaveCodec.CompactPrefix + "\"pcc-c\",\"v\":1,\"k\":[", payload);
+        var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
         var resumed = new FoodChangeJournal(read.State!.Food!, read.State.Economy); var scope = read.State.Food!.Shops[0];
         resumed.ObserveSupply(scope.BusinessId, scope.PlaceId, 2000, Offers(275, 0), 1, 1);
         resumed.ObserveHours(scope.BusinessId, scope.PlaceId, 2000, Hours(1200));
-        Assert.Equal(payload, DevelopmentChain.Write33(read.State));
-        state.Schema = CityState.ChangeJournalSchema;
-        var snapshot = SaveCodec.CaptureForSchema(state, CityState.ChangeJournalSchema, null);
+        Assert.Equal(payload, SaveCodec.Write(read.State));
+        var snapshot = SaveCodec.Capture(state);
         var audit = GraphAudit.Compare(state, snapshot.Wire);
         Assert.Empty(audit.Differences); Assert.All(audit.Shared, shared => Assert.True(GraphAudit.Immutable(shared)));
         state.Economy.Shops[0].Supply[0] = Offers(999)[0]; state.Economy.Shops[0].Hours[0] = 1;
         state.Food!.History[0].PeriodCauses.Counts[0]++; state.Economy.Shops[0].Changes.Clear();
-        Assert.Equal(payload, SaveCodec.EncodeForSchema(snapshot, CityState.ChangeJournalSchema, null));
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
+        Assert.Equal(payload, SaveCodec.Encode(snapshot));
+        if (pin == Corpus) { Assert.Equal(ReaderCorpus.Load().Single(f => f.File == "full.json").Text, payload); return; }
+        string actual = EconomicLedgerTests.Sha(payload) + " " + payload.Length;
+        Assert.True(pin + " " + characters == actual, "golden " + seed + ": " + actual);
     }
-    [Fact]
-    public void OlderAttendancePayloadIsDistinctRefusalAndKept()
-    {
-        string older = DevelopmentChain.WriteAttendance(AttendanceWageTests.Fresh().State);
-        EconomicLedgerTests.Refused(older, SaveReadStatus.DevelopmentSchema);
-        Assert.Contains("start a new city", SaveWire.Read(older).Error);
-        Assert.DoesNotContain("WageStartsDay", SaveCodec.Write(Fixture()));
-    }
+    /// <summary>Seed 5150 is the reader corpus's <c>full.json</c>, pinned there once.</summary>
+    private const string Corpus = "corpus";
     [Fact]
     public void OnlyObservedShopChangesAtObservationMinuteAndReloadContinuesExactImage()
     {
@@ -362,7 +356,7 @@ public sealed class ChangeJournalTests
         Measure("save write fresh", () => SaveCodec.Write(state), 50);
         Measure("save read fresh", () => { Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status); }, 50);
         var observed = Fixture(); string populated = SaveCodec.Write(observed);
-        output.WriteLine($"save observed fixture: residents={observed.Citizens.Count} visitors={observed.Visitors.Count} chars={populated.Length} predecessorChars={DevelopmentChain.WriteAttendance(observed).Length} records={SaveCodec.CountRecords(observed, populated)}");
+        output.WriteLine($"save observed fixture: residents={observed.Citizens.Count} visitors={observed.Visitors.Count} chars={populated.Length} records={SaveCodec.CountRecords(observed, populated)}");
         Measure("save write observed fixture", () => SaveCodec.Write(observed), 20);
         Measure("save read observed fixture", () => Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(populated).Status), 20);
         long requests = city.FoodMoney!.Requests; long bytes = GC.GetAllocatedBytesForCurrentThread();

@@ -32,7 +32,7 @@ namespace PersistentCity.Core
         public int AppearanceSeed { get; set; }
     }
 
-    public sealed class Place
+    public sealed class Place : IPlaceView
     {
         public string Id { get; set; } = "";
         public string Name { get; set; } = "";
@@ -50,6 +50,19 @@ namespace PersistentCity.Core
         // Transient and never serialized: DailyRoutine's opening windows for recently queried days,
         // validated against an exact copy of the hours on every use.
         internal OpeningCache? OpeningCache;
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IPlaceView.Id => Id;
+        string IPlaceView.Name => Name;
+        string IPlaceView.District => District;
+        PlaceKind IPlaceView.Kind => Kind;
+        Position IPlaceView.Position => Position;
+        int IPlaceView.Capacity => Capacity;
+        int IPlaceView.OpenMinute => OpenMinute;
+        int IPlaceView.CloseMinute => CloseMinute;
+        double IPlaceView.AttractionWeight => AttractionWeight;
+        int IPlaceView.NativeTrafficIndex => NativeTrafficIndex;
+        string IPlaceView.EvidenceSource => EvidenceSource;
+        double IPlaceView.ResidentialAreaSquareMetres => ResidentialAreaSquareMetres;
     }
 
     public sealed class OpeningWindow
@@ -268,7 +281,7 @@ namespace PersistentCity.Core
         public double TravelMinutes { get; set; }
     }
 
-    public class CitizenState
+    public class CitizenState : IPersonView
     {
         public WeatherCommitment? W { get; set; }
         public CitizenIdentity Identity { get; set; } = new CitizenIdentity();
@@ -302,6 +315,10 @@ namespace PersistentCity.Core
         public int CompletedJourneys { get; set; }
         public int MissedActivities { get; set; }
         public List<VisitRecord> RecentVisits { get; set; } = new List<VisitRecord>();
+        /// <summary>F2e (schema 35): game minutes of player hold already charged to the current journey, at most
+        /// <see cref="PlayerHolds.MaximumMinutesPerJourney"/>. Zero unless travelling; cleared when the journey ends or is
+        /// replaced, so reloading during a blockage cannot reset the allowance.</summary>
+        public double PlayerHoldMinutes { get; set; }
         /// <summary>Lifestyle traits, generated once from the city seed and this stable ID (schema 17).
         /// Required for every resident, even without a food scope; immutable once generated.</summary>
         public ResidentTraits? Traits { get; set; }
@@ -316,6 +333,32 @@ namespace PersistentCity.Core
         internal ResidentIncomeSource? VisitorCarried;
         /// <summary>True for a schema-27 visitor's routine (also on an event's working copy).</summary>
         public bool IsVisitor => Visitor != null;
+        // F9e: the read-only view (getters only; no field, wire or save change).
+        string IPersonView.Id => Identity.Id;
+        string IPersonView.Name => Identity.Name;
+        string IPersonView.District => Identity.District;
+        int IPersonView.Age => Identity.Age;
+        bool IPersonView.Female => Identity.Female;
+        Persona IPersonView.Persona => Identity.Persona;
+        string IPersonView.HomeId => HomeId;
+        string IPersonView.DayPlaceId => DayPlaceId;
+        string IPersonView.ShopId => ShopId;
+        string IPersonView.LeisureId => LeisureId;
+        CitizenPhase IPersonView.Phase => Phase;
+        Activity IPersonView.Activity => Activity;
+        string IPersonView.PlaceId => PlaceId;
+        string IPersonView.DestinationId => DestinationId;
+        Activity IPersonView.DestinationActivity => DestinationActivity;
+        double IPersonView.DepartureMinute => DepartureMinute;
+        double IPersonView.NextEventMinute => NextEventMinute;
+        double IPersonView.ActivityUntilMinute => ActivityUntilMinute;
+        int IPersonView.CompletedJourneys => CompletedJourneys;
+        int IPersonView.MissedActivities => MissedActivities;
+        double IPersonView.JoinedMinute => JoinedMinute;
+        int IPersonView.EmploymentStartDay => EmploymentStartDay;
+        int IPersonView.JobChanges => JobChanges;
+        double IPersonView.PlayerHoldMinutes => PlayerHoldMinutes;
+        bool IPersonView.IsVisitor => IsVisitor;
     }
 
     public sealed class VisitRecord
@@ -327,18 +370,11 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        /// <summary>C5c: the next writer after F5e's workplace-capacity schema; it adds <see cref="Research"/>.</summary>
-        public const int ResearchSchema = PersonTable.WorkplaceCapacitySchema + 1;
-        /// <summary>E6c: the next writer after C5c's research schema; it adds <see cref="Vendors"/> and the scope channel.</summary>
-        public const int VendorSchema = ResearchSchema + 1;
-        public const int EconomicLedgerSchema = VendorSchema + 1;
-        public const int AttendanceSchema = EconomicLedgerSchema + 1;
-        public const int ChangeJournalSchema = AttendanceSchema + 1;
-        /// <summary>F7d: the next writer after F6g's change-journal schema. Same entity shape; the save string is the compact
-        /// columnar wire (candidate C), not JSON of this graph.</summary>
-        public const int CompactSchema = ChangeJournalSchema + 1;
-        public const int CurrentSchema = CompactSchema;
-        public string MenuPolicy { get; set; } = FoodNameIdentity.Wire;
+        /// <summary>Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature
+        /// schema constants; change the format in place.</summary>
+        public const int CurrentSchema = 1;
+        /// <summary>The one executable menu product policy. New cities hold <see cref="FoodNameIdentity.DynamicWire"/>.</summary>
+        public string MenuPolicy { get; set; } = FoodNameIdentity.DynamicWire;
         public List<string> ProductNames { get; set; } = new List<string>();
         // Reserved next-day policy boundary; E5d adds no dynamic choice/market execution.
         public int NamePolicyStartsDay { get; set; }
@@ -387,6 +423,9 @@ namespace PersistentCity.Core
         /// <summary>E6c: the Street Food vendor rows, ordinal by vehicle id. Their places are rebuilt from this table
         /// on load and never stored in <see cref="Places"/>. A fresh city starts with an empty table.</summary>
         public VendorTable Vendors { get; set; } = new VendorTable();
+        /// <summary>F2e (schema 35): sequence number of the last applied player hold; the next hold takes this plus one.
+        /// A replay segment starts and ends at the sequences saved in its two checkpoints.</summary>
+        public long PlayerHoldSequence { get; set; }
     }
 
 }

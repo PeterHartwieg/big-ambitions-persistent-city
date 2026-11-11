@@ -1,6 +1,6 @@
 # What Persistent City does
 
-Current behaviour of the development line (writer schema 25), 6 November 2026. Status per slice is in [CHECKS.md](../CHECKS.md); nothing here is verified by rig yet. Historical milestones and measurements are in [history-2026-10-development.md](checks/history-2026-10-development.md#readme-body-before-the-6-nov-2026-restructure-moved-6-nov-2026). Terms are in the [glossary](glossary.md).
+Behaviour of the development line as of 6 November 2026. Slices merged since then (movement, population, economy, research, carts) are not described here yet; roadmap row X4 brings this page up to date. Where the page and the code disagree, the code is right. Status per slice is in [CHECKS.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/CHECKS.md); nothing here is verified by rig yet. Historical milestones and measurements are in [history-2026-10-development.md](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/history-2026-10-development.md#readme-body-before-the-6-nov-2026-restructure-moved-6-nov-2026). Terms are in the [glossary](glossary.md).
 
 ## Dependency and startup
 
@@ -81,9 +81,9 @@ Current behaviour of the development line (writer schema 25), 6 November 2026. S
 
 ## Saves
 
-- Own state is in the `persistentcity:state_v1` key, written as schema 25. Valid schema 13–24 cities migrate. Older unsupported, corrupt, future or foreign data is kept and refused, never reset. The next schema (F5c-lite) refuses older development cities with a "start a new city" status instead ([decision](decisions/2026-11-06-delivery-rules.md)).
+- Own state is in the `persistentcity:state_v1` key, written at schema 1, which is held until release ([decision](decisions/2026-11-09-schema-one.md)). Nothing migrates. A city from an older development build is kept and refused with a "start a new city" status. Corrupt or foreign data is kept and refused, never reset.
 - Saved cities keep identities, assignments, logical cars, traffic ownership, committed journeys, consumer balances and receipts. Restored physical leases resume in the background until a body is reacquired.
-- A side key `persistentcity:save-epoch_v1` describes each save; every writer-25 build refuses a save that carries its failure or detach marker (audit F7b).
+- A side key `persistentcity:save-epoch_v1` describes each save; the mod refuses a save that carries its failure or detach marker (audit F7b).
 - A genuine clock-modifier change re-evaluates residents safely at home and preserves journey positions; a change that cannot be represented exactly is refused and the mod stops for that session.
 
 ## Settings
@@ -104,3 +104,22 @@ Edit `<game directory>/ModsLocal/PersistentCity/persistent-city.json` with the c
 - Social and employee identity unification with RLO and native employees is deferred; resident income is an explicit outside flow.
 - Track F interior view: the default-off F0 experiment can keep bodies at shop entrances, but city drawing from interiors is a no-op (F1 NO-GO).
 - Windows performance over long soaks and user playtesting are not verified.
+
+## Continuity rules
+
+Binding rules carried over from the October design page. Residents no longer depart or get replaced; where a rule says so, they stay in the city.
+
+- A route is contiguous and ends at a known destination. Unreachable routes wait and retry; arrival is never fabricated.
+- Player/camera position must change only representation quality, never determine which citizen exists or what they did.
+- Travel completes before another activity can start. Late/closed arrivals may lose an activity; they do not teleport to recover a timetable.
+- Personal quiet hours affect optional outings; work/study and committed journeys/waits retain priority. Home spans cross midnight. Commute preparation is staggered and stores a duration estimate; departure always selects a fresh route. See the [daily-rhythm policy and checks](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-19-daily-rhythms.md).
+- An attainable later opening uses a persisted waiting state with the original destination and activity deadline. It never replaces that deadline with a return-home wake time. Waiting is at the current physical entrance; admission is recorded separately.
+- A simulation step has a bounded event budget and records how far it has caught up. A snapshot between simultaneous events is valid and deterministic.
+- Keep the immutable RLO source roster separate from active residents. Departures happen only at home, release simulated assignments and allocate a nonreused mod-owned identity remixed from source donors. Source profiles remain in RLO.
+- Choose work and leisure with a seeded distance bias, allowing farther attractive venues. Daily leisure choices remain fixed once a trip or waiting period begins.
+- Persist actual assignments and journeys. Reject incompatible snapshots instead of re-rolling people or discarding newer fields. Housing-policy migrations preserve existing occupants and physical events, and cannot silently shrink an experimental legacy population.
+- Native housing inputs use only known rentable/buyable interior area and current access checks. Gated private estates remain excluded regardless of player ownership; fixed AI villas and special-rival homes receive read-only catalogue filters. The reference Hamptons residences are currently excluded by their gates.
+- A renderer reports physical delays back to the simulation. Arrival uses the normal admission queue only after measured motion reaches the route end. Small native avoidance detours withhold unproven progress while continuing the already validated corner path; they do not permanently latch a stop flag.
+- Road presentation requires the persisted topology fingerprint and directed node sequence. No current waypoint match means no body lease; it never fabricates a road route or borrows an active foreign vehicle. Actual native corner evidence gates segment completion, including stop lines and multiple physics steps between rendered frames.
+- Pausing retains physical bodies. Time-machine skips and interiors release them before background catch-up. Native 6× also releases owned bodies and continues background travel after the game's normal traffic clear; normal speed reacquires eligible bodies. Unloading restores native pause/spawn behaviour.
+- One later population ID maps Flare, social contacts, employees, scene actors and passengers. The prototype currently imports Flare only and claims no such unification.

@@ -61,8 +61,7 @@ namespace PersistentCity.Core
             }
             else if (person.DayPlaceId != "")
             {
-                if (chance >= (city.Schema >= CityState.AttendanceSchema
-                    ? EmploymentWages.JobLossChance(person.Accrual, day) : CityBalance.DailyJobLossChance)) return null;
+                if (chance >= EmploymentWages.JobLossChance(person.Accrual, day)) return null;
                 person.DayPlaceId = "";
                 person.Accrual = default;
                 person.EmploymentStartDay = 0;

@@ -13,6 +13,8 @@ public sealed class MovementMarket : IFoodMarket, IFoodSaleEvidence
     public double Clock;
     public double EarliestMinute => Math.Floor(Clock / 60) * 60;
     public readonly List<string> Sales = new();
+    /// <summary>F5i: the person of each confirmed sale, in sale order (parallel to <see cref="Sales"/>).</summary>
+    public readonly List<string> SaleOwners = new();
     public long RevenueUnits, Refusals;
     private readonly HashSet<string> paid = new(StringComparer.Ordinal);
     public static readonly (string Product, int Cents)[] Menu = {
@@ -34,9 +36,19 @@ public sealed class MovementMarket : IFoodMarket, IFoodSaleEvidence
         if (!paid.Add(meal.IntentId)) throw new HarnessViolation("duplicate native order " + meal.IntentId);
         RevenueUnits += meal.Price.Units;
         Sales.Add(meal.IntentId + "@" + at.ToString("R", CultureInfo.InvariantCulture) + ":" + meal.Price.Units);
+        SaleOwners.Add(meal.ResidentId);
         return new FoodSale(true, "Native double confirmed");
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
+    /// <summary>F2e checkpoint: the native checkout's own state, so a replay resumes against the same receipts.</summary>
+    public MovementMarket Copy()
+    {
+        var copy = new MovementMarket { Clock = Clock, RevenueUnits = RevenueUnits, Refusals = Refusals };
+        copy.Sales.AddRange(Sales);
+        copy.SaleOwners.AddRange(SaleOwners);
+        copy.paid.UnionWith(paid);
+        return copy;
+    }
 }
 
 public sealed class HarnessViolation : Exception { public HarnessViolation(string message) : base(message) { } }
@@ -177,7 +189,13 @@ public static class MovementFixture
     public static Position ShopPosition => Door(12, 12);
     public static Position Door(int x, int z) { var n = GridPlanner.Node(x, z); return new Position(n.X + DoorOffset.X, n.Y, n.Z + DoorOffset.Z); }
 
-    public static CityState Build(int seed, int residents, bool carOwners = true)
+    /// <summary>F5i: three subway portals a few blocks from the own shop, so visitors walk past it and buy there. With
+    /// them, attaching the food market creates the representation factor's K−1 visitors per resident (walking, no car),
+    /// as Runtime does.</summary>
+    public static readonly PortalStation[] Portals = {
+        new("subway:west", Door(10, 12)), new("subway:east", Door(14, 12)), new("subway:north", Door(12, 15)) };
+
+    public static CityState Build(int seed, int residents, bool carOwners = true, int representationFactor = RepresentationFactor, bool visitors = false)
     {
         uint draw = (uint)(seed * 2654435761u + 12345u);
         int Pick(int n) { draw = draw * 1664525u + 1013904223u; return (int)((draw >> 8) % (uint)n); }
@@ -206,7 +224,8 @@ public static class MovementFixture
             person.Car = new CarState { Id = person.Identity.Id + ":car", ModelId = "harness", ParkedPosition = GridPlanner.Node(corner.X, corner.Z) };
         }
         var products = MovementMarket.Menu.Select(m => m.Product).OrderBy(p => p, StringComparer.Ordinal).ToList();
-        state.Food = new FoodCommerceState { RepresentationFactor = RepresentationFactor, MealRhythmVersion = MealRhythm.PolicyVersion,
+        if (visitors) PortalPlaces.Add(state, Portals);
+        state.Food = new FoodCommerceState { RepresentationFactor = representationFactor, MealRhythmVersion = MealRhythm.PolicyVersion,
             Shops = new List<FoodScope> { new FoodScope { PlaceId = ShopPlace, BusinessId = Business,
                 ProductId = products[0], AdditionalProductIds = products.Skip(1).ToList() } } };
         return state;

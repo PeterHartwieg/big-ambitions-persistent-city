@@ -22,7 +22,7 @@ public sealed class EconomicLedgerTests
     internal static string Fingerprint => new string('0', 20);
     internal static CityState Fresh(int seed = 5150)
     {
-        var (state, market) = Schema28Tests.Fresh(3, seed);
+        var (state, market) = WorkplaceCapacityTests.Fresh(3, seed);
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk()); city.AttachFoodMarket(market);
         return city.State;
     }
@@ -84,10 +84,8 @@ public sealed class EconomicLedgerTests
     }
 
     [Fact]
-    public void NextFreeWriterAndFreshZeroShape()
+    public void FreshZeroShape()
     {
-        Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var state = Fresh();
         Assert.Empty(state.Economy.Outside); Assert.Empty(state.Economy.Shops);
         Assert.All(PersonTable.Schedules(state), p => Assert.Equal(default, p.Accrual));
@@ -95,23 +93,17 @@ public sealed class EconomicLedgerTests
         string payload = SaveCodec.Write(state);
         Assert.DoesNotContain("WageStartsDay", payload);
         AssertRoundTrip(state);
-        // Every new fixed tuple adds zero embedded records.
-        string predecessor = DevelopmentChain.Write30(state);
-        var old = SaveCodec.CountRecordsForSchema(SaveCodec.ReadWriter30(predecessor).State!, predecessor, SaveCodec.VendorSchema);
-        Assert.Equal(old, SaveCodec.CountRecords(state, SaveWire.Body(payload)));
     }
     [Theory]
-    [InlineData(5150, "06b494d2627e0d6675d8c437e1c0dff72e176ab3ae7aaa54a0f152052aace308", 172016)]
-    [InlineData(9217, "c026ffd0611c3a89a0809f3a5217525206d91c853a5d1f443b2d25ac4d30c664", 171980)]
+    [InlineData(5150, "2a4decf4fd137835b66eefb24e5372f10f49cb395091cf916bda7d892376530c", 45951)]
+    [InlineData(9217, "7794c1177dab0625f2b44a1d835b504f8ea317268f18ad1afe3712b043010560", 45942)]
     public void PopulatedWriterGoldensAndEveryNewFieldRoundTrips(int seed, string pin, int length)
     {
         var state = Fresh(seed); Populate(state);
         string payload = SaveCodec.Write(state);
         AssertRoundTrip(state);
-        output.WriteLine($"frozen ledger golden {seed}: {Sha(DevelopmentChain.WriteLedger(state))} {payload.Length}");
-        if (Environment.GetEnvironmentVariable("PC_F6D_PINS") is string path)
-            File.AppendAllText(path, $"golden {seed} {Sha(DevelopmentChain.WriteLedger(state))} {payload.Length}" + Environment.NewLine);
-        Assert.Equal(pin, Sha(DevelopmentChain.WriteLedger(state))); Assert.Equal(length, DevelopmentChain.WriteAttendance(state).Length);
+        string actual = Sha(payload) + " " + payload.Length;
+        Assert.True(pin + " " + length == actual, "golden " + seed + ": " + actual);
         var snapshot = SaveCodec.Capture(state);
         state.Citizens[0].Accrual = default; state.VisitorRoutines[0].Accrual = default;
         state.Food!.Residents[0].Budget!.Ledger = default;
@@ -137,8 +129,8 @@ public sealed class EconomicLedgerTests
         state.Economy.Shops[0].Fingerprint = string.Concat(Enumerable.Repeat("a<>&a", 4));
         string expected = SaveCodec.Write(state);
         var context = typeof(SaveCodec).GetNestedType("WireContext", System.Reflection.BindingFlags.NonPublic)!.GetMethod("FromState")!.Invoke(null, new object[] { state });
-        var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("SettingsForSchema", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
-            .Invoke(null, new object[] { context!, CityState.CurrentSchema })!;
+        var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .Invoke(null, new object[] { context! })!;
         settings.StringEscapeHandling = StringEscapeHandling.EscapeHtml;
         string payload = JsonConvert.SerializeObject(state, Formatting.None, settings);
         Assert.Contains("a<>&a", payload);
@@ -147,14 +139,15 @@ public sealed class EconomicLedgerTests
     }
 
     [Fact]
-    public void PredecessorAndFutureAreRefusedAndKept()
+    public void AnotherSchemaNumberIsRefusedAndKept()
     {
-        var state = Fresh(); string old = DevelopmentChain.Write30(state);
-        Refused(old, SaveReadStatus.DevelopmentSchema);
-        Assert.Contains("start a new city", SaveWire.Read(old).Error);
-        Assert.Equal(old, DevelopmentChain.Write30(SaveCodec.ReadWriter30(old).State!));
-        var wire = SaveWire.Parse(SaveCodec.Write(state)); wire["Schema"] = CityState.CurrentSchema + 1;
-        Refused(wire.ToString(Formatting.None), SaveReadStatus.Future);
+        var state = Fresh();
+        foreach (int other in new[] { 30, 36, 37 })
+        {
+            var wire = SaveWire.Parse(SaveCodec.Write(state)); wire["Schema"] = other;
+            Refused(wire.ToString(Formatting.None), SaveReadStatus.DevelopmentSchema);
+            Assert.Contains("start a new city", SaveWire.Read(wire.ToString(Formatting.None)).Error);
+        }
     }
     [Theory]
     [InlineData("unknown-root")] [InlineData("unknown-ledger")] [InlineData("missing-ledger")]
@@ -234,8 +227,8 @@ public sealed class EconomicLedgerTests
         {
             var contextType = typeof(SaveCodec).GetNestedType("WireContext", System.Reflection.BindingFlags.NonPublic)!;
             var context = contextType.GetMethod("FromState")!.Invoke(null, new object[] { state });
-            var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("SettingsForSchema", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
-                .Invoke(null, new object[] { context!, CityState.CurrentSchema })!;
+            var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .Invoke(null, new object[] { context! })!;
             Refused(JsonConvert.SerializeObject(state, Formatting.None, settings));
         }
         catch (SaveValidationException) { } // negative/over-width scalars have no wire representation at all

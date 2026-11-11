@@ -33,20 +33,35 @@ namespace PersistentCity.Runtime
     /// Menu stock is read in one setup. Bags are shared and rechecked at checkout, never multiplied by menu size.</summary>
     public static class FoodSupplyReader
     {
-        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
-        private static readonly FieldInfo Producers = typeof(RetailBusinessSimulator).GetField("availableProducers", Hidden)!;
-        private static readonly FieldInfo Counters = typeof(RetailBusinessSimulator).GetField("pointOfSales", Hidden)!;
-        private static readonly MethodInfo Capacity = typeof(RetailBusinessSimulator).GetMethod("GetMaxCustomerCapacityThisHour", Hidden)!;
+        // F8c: exact field and return types from the checkout contract, checked once; null when changed, which the existing
+        // supply-contract refusal below already turns into an unverified (whole-business refused) read.
+        private static readonly FieldInfo? Producers = NativeFoodContract.CheckoutMember<FieldInfo>(NativeFoodContractSpec.Producers);
+        private static readonly FieldInfo? Counters = NativeFoodContract.CheckoutMember<FieldInfo>(NativeFoodContractSpec.Counters);
+        private static readonly MethodInfo? Capacity = NativeFoodContract.CheckoutMember<MethodInfo>(NativeFoodContractSpec.Capacity);
         private static readonly double MillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
         /// <summary>Native simulator setups this reader has made, and their total time including stock inspection (diagnostic).</summary>
         public static long Setups { get; private set; }
         public static double SetupMilliseconds { get; private set; }
 
+        /// <summary>E5b3 Decision 5 refusals (diagnostic): native effective holders that differed from the image.</summary>
+        public static long Reconciliations { get; private set; }
+        public static FoodReconciliationRefusal LastReconciliation { get; private set; }
+        // Main thread only; reused by every reconciliation so the check allocates nothing.
+        private static readonly List<FoodNativeHolder> NativeHolders = new List<FoodNativeHolder>();
+        private static readonly Func<object, int> StockAmount = stock => ((CargoInstance)stock).amount;
+
         public static FoodSupplySnapshot Read(BuildingRegistration registration, string productId)
             => ReadMenu(registration, new[] { productId })[productId];
 
         public static IReadOnlyDictionary<string, FoodSupplySnapshot> ReadMenu(BuildingRegistration registration, IEnumerable<string> products)
+            => ReadMenu(registration, products, null);
+
+        /// <summary>With <paramref name="contract"/>, the setup's producers and counters are reconciled with the
+        /// image's validated holders (Decision 5). A mismatch leaves every product unverified, which callers already
+        /// treat as a whole-business refusal. It reuses this setup and adds none.</summary>
+        public static IReadOnlyDictionary<string, FoodSupplySnapshot> ReadMenu(BuildingRegistration registration, IEnumerable<string> products,
+            FoodContractImage? contract)
         {
             // Native callers already capture an immutable ordered menu array. Reuse it rather than
             // rebuilding a hash set and array on every refresh. Refuse duplicate/oversized menus.
@@ -83,6 +98,23 @@ namespace PersistentCity.Runtime
                 bool bags = type.HasTag(TagRef.Businesstag.customersneedpaperbags);
                 if (!bags)
                 { Evidence("Authored/native paper-bag policy disagreement; menu contract is unverified"); return result; }
+                if (contract != null)
+                {
+                    NativeHolders.Clear();
+                    foreach (var counter in counters) NativeHolders.Add(new FoodNativeHolder(counter.instance, null, false, true));
+                    foreach (string id in ids)
+                        if (producers.TryGetValue(id, out var indexed))
+                            foreach (var producer in indexed)
+                                NativeHolders.Add(new FoodNativeHolder(producer, id, (producer.ItemCached.type & ItemType.EmployeeWorkstation) != 0, false));
+                    var reconciliation = FoodHolderReconciliation.Check(contract, NativeHolders, ids, StockAmount);
+                    NativeHolders.Clear();
+                    if (reconciliation != FoodReconciliationRefusal.None)
+                    {
+                        Reconciliations++; LastReconciliation = reconciliation;
+                        Evidence("Native effective holders differ from the validated contract image (" + reconciliation + "); whole business withdrawn");
+                        return result;
+                    }
+                }
                 int bagUnits = 0, stocked = 0;
                 foreach (var counter in counters)
                 {

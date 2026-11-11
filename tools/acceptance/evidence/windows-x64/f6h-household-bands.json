@@ -1,0 +1,77 @@
+{
+  "schema": "persistentcity-f6h-household-bands-1",
+  "for": "F6 owner (tools/economy-interventions/acceptance.py HOUSEHOLD_THRESHOLDS)",
+  "adopted": false,
+  "runId": "20261110T201123Z-b3e5a910",
+  "commit": "b3e5a9101fe065662c0baf3aedab01caa123773e",
+  "machine": "windows-x64",
+  "priceWeight": 1.2,
+  "householdWeight": 1,
+  "runs": 85,
+  "derivedWith": "acceptance.derive_household_thresholds",
+  "derived": {
+    "week6ArrearsShareMax": 0.0049,
+    "week6UnfedOwnerDaysMax": 6.1,
+    "week6P10DollarsMin": 655.0
+  },
+  "currentThresholds": {
+    "week6ArrearsShareMax": 0.0047,
+    "week6UnfedOwnerDaysMax": 5.7,
+    "week6P10DollarsMin": 658.0
+  },
+  "currentThresholdsMeasuredAt": "FoodChoicePriceWeight 1",
+  "withinCurrentThresholdsPerSeed": [
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "week6ControlBands": {
+    "arrearsShare": {
+      "mean": 0.001985370950888192,
+      "sd": 0.0014497844227284856,
+      "low": -0.0009141978945687791,
+      "high": 0.004884939796345163,
+      "min": 0.0005224660397074191,
+      "max": 0.0036572622779519333,
+      "perSeed": [
+        0.0005224660397074191,
+        0.0036572622779519333,
+        0.003134796238244514,
+        0.0005224660397074191,
+        0.0020898641588296763
+      ]
+    },
+    "unfedOwnerDays": {
+      "mean": 2.2,
+      "sd": 1.9235384061671346,
+      "low": -1.647076812334269,
+      "high": 6.04707681233427,
+      "min": 0,
+      "max": 5,
+      "perSeed": [
+        3,
+        5,
+        2,
+        1,
+        0
+      ]
+    },
+    "p10Dollars": {
+      "mean": 687.688,
+      "sd": 16.063924489364364,
+      "low": 655.5601510212713,
+      "high": 719.8158489787287,
+      "min": 671.54,
+      "max": 714.5,
+      "perSeed": [
+        687.23,
+        682.95,
+        682.22,
+        671.54,
+        714.5
+      ]
+    }
+  }
+}

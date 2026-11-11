@@ -49,21 +49,21 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     /// catalogue, so every workplace the census counts is one commuters can be seated in (review Astra-r1-1).</summary>
     internal sealed class Shape
     {
-        public Shape(int homes, Schema28Tests.Business[] businesses)
+        public Shape(int homes, WorkplaceCapacityTests.Business[] businesses)
         { Homes = homes; Businesses = businesses; Catalogue = F5gPopulationFillTests.Catalogue(homes, businesses); }
         public int Homes { get; }
-        public Schema28Tests.Business[] Businesses { get; }
+        public WorkplaceCapacityTests.Business[] Businesses { get; }
         public PopulationFillCatalogue Catalogue { get; }
-        public (CityState State, Schema27Tests.Market Market) City(int factor = 1) => F5gPopulationFillTests.City(Homes, factor, seed: Seed, businesses: Businesses);
+        public (CityState State, VisitorRoutineTests.Market Market) City(int factor = 1) => F5gPopulationFillTests.City(Homes, factor, seed: Seed, businesses: Businesses);
     }
 
-    private static readonly Dictionary<(int Homes, long Target), Schema28Tests.Business[]> extras = new();
+    private static readonly Dictionary<(int Homes, long Target), WorkplaceCapacityTests.Business[]> extras = new();
 
     /// <summary>The large businesses (900 m², 24 seats) added to F5g's base set for a fresh city of <paramref name="homes"/>:
     /// the fewest for which the city built with them as saved places has a commuter target of at least
     /// <paramref name="commuterTarget"/>, or of the whole visitor capacity minus the pool demand when negative (as F5g's
     /// stress arm). The new workplaces also seat residents, so the target is measured on the city itself.</summary>
-    private static Schema28Tests.Business[] Extras(int homes, long commuterTarget)
+    private static WorkplaceCapacityTests.Business[] Extras(int homes, long commuterTarget)
     {
         lock (extras)
         {
@@ -215,13 +215,12 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         return run;
     }
 
-
     [Fact]
     public void FreshReferenceCityRunsSevenDaysWithASaveAndReloadAtEveryDayBoundaryAndEqualsTheUninterruptedRun()
     {
         var (plain, reloaded) = runs.SevenDays;
         Assert.Equal(CityState.CurrentSchema, reloaded.State.Schema);
-        Assert.StartsWith("{\"Schema\":" + CityState.CompactSchema + ",", reloaded.Final);
+        Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema + ",", reloaded.Final);
         // Seven boundaries (2,880 … 11,520), each reloaded exactly once on its minute. At the first two the slice that lands
         // on the boundary has already run fill units, so that one reload falls between fill units.
         Assert.Equal(7, reloaded.Boundaries.Count);
@@ -260,7 +259,7 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         var census = PopulationCensus.Compute(new PopulationCensusInput
         {
             Places = F5gPopulationFillTests.Places(ReferenceHomes, plain.Shape.Businesses),
-            Workplaces = Schema28Tests.Workplaces(plain.Shape.Businesses).Census,
+            Workplaces = WorkplaceCapacityTests.Workplaces(plain.Shape.Businesses).Census,
             Residents = PopulationCensusInput.CaptureResidents(plain.State.Citizens), StationIds = plain.State.Portals.ToList()
         });
         Assert.False(census.Refused);
@@ -282,11 +281,11 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     }
 
     [Fact]
-    public void TheIntegratedCityWrittenByTheOlderWriterIsRefusedWithStartANewCityAndKept()
+    public void TheIntegratedCityWithAnotherSchemaNumberIsRefusedWithStartANewCityAndKept()
     {
         var (_, reloaded) = runs.SevenDays;
-        string older = DevelopmentChain.Write33(reloaded.State);
-        Assert.Equal(CityState.ChangeJournalSchema, SaveCodec.DevelopmentSchemaOf(older));
+        string older = reloaded.Final.Replace(SaveCodec.CompactPrefix, "{\"Schema\":36,\"f\":");
+        Assert.Equal(36, SaveCodec.DevelopmentSchemaOf(older));
         var read = SaveCodec.Read(older);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
         Assert.Null(read.State);
@@ -323,19 +322,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             while (city.PlanningPending) { planner.NewFrame(); city.ContinuePlanning(2); }
         }
         Assert.True(pendingSlices > 0, "no event waited for its route");
-    }
-
-    /// <summary>F5h changes no wire: writer 34 and both of its pinned golden hashes are as F7d left them.</summary>
-    [Theory]
-    [InlineData(5150, "a3b70408cd5c5f0a23d9e41344d1530283232449f2b9ade5dd37755c92da4a70", 73192)]
-    [InlineData(9217, "cb39d7938dfbe874054cf53afb46b660883686adc93d82654e43e7243e317c01", 72830)]
-    public void CurrentWriterGoldenHashIsUnchanged(int seed, string pin, int characters)
-    {
-        Assert.Equal(34, CityState.CurrentSchema);
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
-        string payload = SaveCodec.Write(ChangeJournalTests.Fixture(seed));
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
-        Assert.Equal(characters, payload.Length);
     }
 
     // ---- The F1 accounting harness with the whole F5 population ----
@@ -608,7 +594,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     {
         new object[] { 30, 32, 4.0, false }, new object[] { 60, 16, 2.0, false }, new object[] { 120, 128, 2.0, false }, new object[] { 60, 32, 4.0, true },
     };
-
 
     /// <summary>The declared load through the F1 matrix: from 06:00 on day 2 (957 residents and the first boundary's 1,024
     /// visitors) to 06:00 on day 3, across the second boundary that completes the fill. Every arm, with a save at

@@ -1,0 +1,667 @@
+{
+  "schema": "persistentcity-rig-manifest-1",
+  "head": "b3e5a9101fe065662c0baf3aedab01caa123773e",
+  "fingerprint": "steam-1331550-build-25482473",
+  "batchDue": true,
+  "batchDueReasons": [
+    "save-epoch has debt >= 3",
+    "native-save-contract has debt >= 3",
+    "buylive-sale-authority has debt >= 3",
+    "hourly-settlement has debt >= 3",
+    "native-shop-inputs has debt >= 3",
+    "agency-billing has debt >= 3",
+    "streetfood-bridge has debt >= 3",
+    "world-census has debt >= 3",
+    "rlo-donor-contract has debt >= 3",
+    "physical-bodies has debt >= 3",
+    "price-weight-response has debt >= 3",
+    "native-staffed-throughput has debt >= 3"
+  ],
+  "checks": [
+    {
+      "id": "f9-1",
+      "title": "Build provenance at the rig head",
+      "mode": "locked-PC",
+      "existing": [
+        "RIG-MODSET"
+      ],
+      "pending": [
+        "RIG-ACCEPT"
+      ],
+      "pinned": "first",
+      "rows": [],
+      "status": null,
+      "debt": 0,
+      "due": false
+    },
+    {
+      "id": "f9-8",
+      "title": "Older-schema city refused and kept",
+      "mode": "locked-PC",
+      "existing": [],
+      "pending": [
+        "older-schema FT loader",
+        "RIG-PCSAVE"
+      ],
+      "rows": [
+        "native-save-contract"
+      ],
+      "status": "unproven",
+      "debt": 29,
+      "due": true
+    },
+    {
+      "id": "f9-4",
+      "title": "Seven days with daily save/reload against an uninterrupted copy",
+      "mode": "locked-PC",
+      "existing": [
+        "rig flow run",
+        "FT time/save/load/console"
+      ],
+      "pending": [
+        "RIG-PCSAVE",
+        "RIG-LEDGER",
+        "RIG-LIVE"
+      ],
+      "rows": [
+        "save-epoch",
+        "buylive-sale-authority"
+      ],
+      "status": "unproven",
+      "debt": 20,
+      "due": true
+    },
+    {
+      "id": "f9-7",
+      "title": "Research and a food truck in the same city",
+      "mode": "input-only",
+      "existing": [
+        "RIG-MODSET",
+        "FT console/save/load"
+      ],
+      "pending": [
+        "RIG-LIVE agency phone dialog input"
+      ],
+      "rows": [
+        "agency-billing",
+        "agency-dialog",
+        "streetfood-bridge"
+      ],
+      "status": "unproven",
+      "debt": 7,
+      "due": true
+    },
+    {
+      "id": "f9-2",
+      "title": "FT-F9 fixture with a player food business",
+      "mode": "locked-PC",
+      "existing": [
+        "produce_fixture.py",
+        "shop_fixture",
+        "shop_state",
+        "FT save/console"
+      ],
+      "pending": [
+        "RIG-SHOPRENT"
+      ],
+      "rows": [
+        "subway-portals",
+        "world-census"
+      ],
+      "status": "unproven",
+      "debt": 6,
+      "due": true
+    },
+    {
+      "id": "f9-6",
+      "title": "Detail transitions and in-flight reload",
+      "mode": "locked-PC",
+      "existing": [
+        "FT teleport/save/load",
+        "RIG-CHECKPOINTS physical_lease_visible"
+      ],
+      "pending": [
+        "RIG-PCCONFIG PhysicalEnabled",
+        "RIG-PCSAVE"
+      ],
+      "rows": [
+        "physical-bodies",
+        "native-road-network"
+      ],
+      "status": "unproven",
+      "debt": 6,
+      "due": true
+    },
+    {
+      "id": "f6b-2",
+      "title": "Native staffed throughput (F6b check 2)",
+      "mode": "locked-PC",
+      "existing": [
+        "shop_fixture",
+        "shop_state",
+        "shop_log",
+        "FT console"
+      ],
+      "pending": [
+        "RIG-MODSET per-flow PC config",
+        "RIG-LEDGER"
+      ],
+      "rows": [
+        "native-staffed-throughput"
+      ],
+      "status": "unproven",
+      "debt": 6,
+      "due": true
+    },
+    {
+      "id": "f9-5",
+      "title": "Timestamped native changes across cadences",
+      "mode": "locked-PC",
+      "existing": [
+        "RIG-SHOPEDIT shop_edit",
+        "RIG-CHECKPOINTS",
+        "FT time"
+      ],
+      "pending": [
+        "RIG-FRAMECAP",
+        "RIG-PCSAVE"
+      ],
+      "rows": [
+        "hourly-settlement",
+        "native-clock-and-skip",
+        "native-shop-inputs"
+      ],
+      "status": "unproven",
+      "debt": 4,
+      "due": true
+    },
+    {
+      "id": "f9-3",
+      "title": "Active capabilities",
+      "mode": "locked-PC",
+      "existing": [
+        "FT console"
+      ],
+      "pending": [
+        "F8 capability report",
+        "RIG-ACCEPT"
+      ],
+      "rows": [
+        "rlo-donor-contract"
+      ],
+      "status": "unproven",
+      "debt": 3,
+      "due": true
+    },
+    {
+      "id": "f9-9",
+      "title": "Price response on the real shop at weight 1.2",
+      "mode": "locked-PC",
+      "existing": [
+        "RIG-SHOPEDIT",
+        "RIG-WEEKS",
+        "FT console"
+      ],
+      "pending": [
+        "RIG-LEDGER",
+        "RIG-PCCONFIG readback"
+      ],
+      "rows": [
+        "price-weight-response"
+      ],
+      "status": "unproven",
+      "debt": 3,
+      "due": true
+    },
+    {
+      "id": "f9-10",
+      "title": "Merged summary for the batch",
+      "mode": "locked-PC",
+      "existing": [],
+      "pending": [
+        "RIG-ACCEPT"
+      ],
+      "pinned": "last",
+      "rows": [],
+      "status": null,
+      "debt": 0,
+      "due": false
+    }
+  ],
+  "unscheduled": [
+    {
+      "row": "native-wholesale-costs",
+      "status": "unproven",
+      "debt": 2,
+      "pendingCapability": "RIG-WHOLESALE"
+    }
+  ],
+  "ledger": {
+    "schema": "persistentcity-native-assumptions-1",
+    "head": "b3e5a9101fe065662c0baf3aedab01caa123773e",
+    "fingerprint": "steam-1331550-build-25482473",
+    "debtThreshold": 3,
+    "fingerprintChanged": false,
+    "batchDue": true,
+    "batchDueReasons": [
+      "save-epoch has debt >= 3",
+      "native-save-contract has debt >= 3",
+      "buylive-sale-authority has debt >= 3",
+      "hourly-settlement has debt >= 3",
+      "native-shop-inputs has debt >= 3",
+      "agency-billing has debt >= 3",
+      "streetfood-bridge has debt >= 3",
+      "world-census has debt >= 3",
+      "rlo-donor-contract has debt >= 3",
+      "physical-bodies has debt >= 3",
+      "price-weight-response has debt >= 3",
+      "native-staffed-throughput has debt >= 3"
+    ],
+    "stale": [],
+    "unproven": [
+      "save-epoch",
+      "native-save-contract",
+      "buylive-sale-authority",
+      "hourly-settlement",
+      "native-clock-and-skip",
+      "native-shop-inputs",
+      "agency-billing",
+      "agency-dialog",
+      "streetfood-bridge",
+      "subway-portals",
+      "world-census",
+      "rlo-donor-contract",
+      "physical-bodies",
+      "native-road-network",
+      "price-weight-response",
+      "native-staffed-throughput",
+      "native-wholesale-costs"
+    ],
+    "requiredChecks": [
+      "f9-2",
+      "f9-3",
+      "f9-4",
+      "f9-5",
+      "f9-6",
+      "f9-7",
+      "f9-8",
+      "f9-9",
+      "f6b-2"
+    ],
+    "rows": [
+      {
+        "id": "save-epoch",
+        "status": "unproven",
+        "debt": 20,
+        "since": "bde746a",
+        "rigCheck": "f9-4",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": null,
+        "reasons": [
+          "20 commits touched its paths since bde746a",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "bf343e3c8c16",
+          "17dccf8bbd2c",
+          "a1aa36ffbb00",
+          "eb9e82f6bb66",
+          "9cb149071d84",
+          "b8feb06cb016",
+          "c42240f13314",
+          "21aea400fb5e",
+          "6e428c9154e4",
+          "75a33aaeb6a8",
+          "3c5ce3b4e591",
+          "84fa16f07e63",
+          "7a79f2a5fbdd",
+          "fb64fa576d2a",
+          "b8724f2c3277",
+          "b1dbc82b8054",
+          "30a9de73fbc4",
+          "6cfc30b007ff",
+          "b9249e950700"
+        ]
+      },
+      {
+        "id": "native-save-contract",
+        "status": "unproven",
+        "debt": 29,
+        "since": "dc59049",
+        "rigCheck": "f9-8",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": null,
+        "reasons": [
+          "29 commits touched its paths since dc59049",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "bf343e3c8c16",
+          "17dccf8bbd2c",
+          "a1aa36ffbb00",
+          "649467be5194",
+          "eb9e82f6bb66",
+          "9cb149071d84",
+          "b8feb06cb016",
+          "c42240f13314",
+          "21aea400fb5e",
+          "077d27c7c27f",
+          "6e428c9154e4",
+          "75a33aaeb6a8",
+          "3c5ce3b4e591",
+          "84fa16f07e63",
+          "7a79f2a5fbdd",
+          "fb64fa576d2a",
+          "eef1bdc17472",
+          "b2a0ab706c1e",
+          "b8724f2c3277",
+          "57607b214ed8",
+          "450db996da28",
+          "b1dbc82b8054",
+          "a254d739af34",
+          "6cfc30b007ff",
+          "b9249e950700",
+          "bde746a0f1c2",
+          "4375cd025642",
+          "c64e3e2062a8"
+        ]
+      },
+      {
+        "id": "buylive-sale-authority",
+        "status": "unproven",
+        "debt": 9,
+        "since": "d6b534a",
+        "rigCheck": "f9-4",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "food.checkout.shop",
+        "reasons": [
+          "9 commits touched its paths since d6b534a",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "bf343e3c8c16",
+          "a1aa36ffbb00",
+          "874df5d4862e",
+          "ae2001e973ea",
+          "ec186f97282f",
+          "3c5ce3b4e591",
+          "fb64fa576d2a",
+          "a254d739af34"
+        ]
+      },
+      {
+        "id": "hourly-settlement",
+        "status": "unproven",
+        "debt": 3,
+        "since": "d6b534a",
+        "rigCheck": "f9-5",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "clock.observe",
+        "reasons": [
+          "3 commits touched its paths since d6b534a",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "eb9e82f6bb66",
+          "a254d739af34",
+          "bde746a0f1c2"
+        ]
+      },
+      {
+        "id": "native-clock-and-skip",
+        "status": "unproven",
+        "debt": 0,
+        "since": "d6b534a",
+        "rigCheck": "f9-5",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "clock.city",
+        "reasons": [
+          "no rig evidence yet"
+        ],
+        "touchedBy": []
+      },
+      {
+        "id": "native-shop-inputs",
+        "status": "unproven",
+        "debt": 4,
+        "since": "e9995e5",
+        "rigCheck": "f9-5",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "food.checkout.shop",
+        "reasons": [
+          "4 commits touched its paths since e9995e5",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "874df5d4862e",
+          "3c5ce3b4e591",
+          "7a79f2a5fbdd"
+        ]
+      },
+      {
+        "id": "agency-billing",
+        "status": "unproven",
+        "debt": 4,
+        "since": "30a9de7",
+        "rigCheck": "f9-7",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "research.billing",
+        "reasons": [
+          "4 commits touched its paths since 30a9de7",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "eb9e82f6bb66",
+          "6e428c9154e4",
+          "b8724f2c3277"
+        ]
+      },
+      {
+        "id": "agency-dialog",
+        "status": "unproven",
+        "debt": 1,
+        "since": "75a33aa",
+        "rigCheck": "f9-7",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "research.dialog",
+        "reasons": [
+          "1 commits touched its paths since 75a33aa",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "6e428c9154e4"
+        ]
+      },
+      {
+        "id": "streetfood-bridge",
+        "status": "unproven",
+        "debt": 7,
+        "since": "eb86259",
+        "rigCheck": "f9-7",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "vendor.streetfood",
+        "reasons": [
+          "7 commits touched its paths since eb86259",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "17dccf8bbd2c",
+          "eb9e82f6bb66",
+          "ae2001e973ea",
+          "c42240f13314",
+          "7a79f2a5fbdd",
+          "fb64fa576d2a",
+          "b2a0ab706c1e"
+        ]
+      },
+      {
+        "id": "subway-portals",
+        "status": "unproven",
+        "debt": 0,
+        "since": "21aea40",
+        "rigCheck": "f9-2",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": null,
+        "reasons": [
+          "no rig evidence yet"
+        ],
+        "touchedBy": []
+      },
+      {
+        "id": "world-census",
+        "status": "unproven",
+        "debt": 6,
+        "since": "c64e3e2",
+        "rigCheck": "f9-2",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": null,
+        "reasons": [
+          "6 commits touched its paths since c64e3e2",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "eb9e82f6bb66",
+          "21aea400fb5e",
+          "84fa16f07e63",
+          "450db996da28",
+          "b1dbc82b8054"
+        ]
+      },
+      {
+        "id": "rlo-donor-contract",
+        "status": "unproven",
+        "debt": 3,
+        "since": "d1abbb8",
+        "rigCheck": "f9-3",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "rlo.donor",
+        "reasons": [
+          "3 commits touched its paths since d1abbb8",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "7357f78ca13e",
+          "63248e411c6f"
+        ]
+      },
+      {
+        "id": "physical-bodies",
+        "status": "unproven",
+        "debt": 6,
+        "since": "c42240f",
+        "rigCheck": "f9-6",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "physical.pedestrians",
+        "reasons": [
+          "6 commits touched its paths since c42240f",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "9004a997ba24",
+          "dad85b802dff",
+          "baa775db4929",
+          "b8feb06cb016",
+          "ece487837da2"
+        ]
+      },
+      {
+        "id": "native-road-network",
+        "status": "unproven",
+        "debt": 1,
+        "since": "ece4878",
+        "rigCheck": "f9-6",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": "rlo.roadspeeds",
+        "reasons": [
+          "1 commits touched its paths since ece4878",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4"
+        ]
+      },
+      {
+        "id": "price-weight-response",
+        "status": "unproven",
+        "debt": 3,
+        "since": "45660ba",
+        "rigCheck": "f9-9",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": null,
+        "reasons": [
+          "3 commits touched its paths since 45660ba",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "bf343e3c8c16",
+          "a1aa36ffbb00",
+          "9cb149071d84"
+        ]
+      },
+      {
+        "id": "native-staffed-throughput",
+        "status": "unproven",
+        "debt": 6,
+        "since": "4375cd0",
+        "rigCheck": "f6b-2",
+        "currentEvidence": false,
+        "pendingCapability": null,
+        "capability": null,
+        "reasons": [
+          "6 commits touched its paths since 4375cd0",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "297f32eaa5c4",
+          "a1aa36ffbb00",
+          "874df5d4862e",
+          "ae2001e973ea",
+          "ec186f97282f",
+          "3c5ce3b4e591"
+        ]
+      },
+      {
+        "id": "native-wholesale-costs",
+        "status": "unproven",
+        "debt": 2,
+        "since": "6fdbc19",
+        "rigCheck": null,
+        "currentEvidence": false,
+        "pendingCapability": "RIG-WHOLESALE",
+        "capability": null,
+        "reasons": [
+          "2 commits touched its paths since 6fdbc19",
+          "no rig evidence yet"
+        ],
+        "touchedBy": [
+          "bf343e3c8c16",
+          "21aea400fb5e"
+        ]
+      }
+    ],
+    "gitQueries": 1
+  }
+}

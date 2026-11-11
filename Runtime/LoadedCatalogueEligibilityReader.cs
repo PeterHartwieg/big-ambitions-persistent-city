@@ -31,21 +31,43 @@ namespace PersistentCity.Runtime
             var f = typeof(TaggedScriptableObject).GetField("tags", BindingFlags.Instance | BindingFlags.NonPublic);
             return f != null && !f.IsStatic && f.FieldType == typeof(List<string>) ? f : null;
         }
-        private static List<string>? Tags(TaggedScriptableObject item)
+        // E5b3: the same field through a DynamicMethod, so rechecks read tags without reflection per call.
+        private static readonly Func<TaggedScriptableObject, List<string>?>? ReadTags = BindTagReader();
+        private static Func<TaggedScriptableObject, List<string>?>? BindTagReader()
         {
-            var tags = AuthoredTags?.GetValue(item) as List<string>;
+            if (AuthoredTags == null) return null;
+            try
+            {
+                var method = new System.Reflection.Emit.DynamicMethod("PersistentCityReadTags", typeof(List<string>),
+                    new[] { typeof(TaggedScriptableObject) }, typeof(LoadedCatalogueEligibilityReader).Module, true);
+                var il = method.GetILGenerator();
+                il.Emit(System.Reflection.Emit.OpCodes.Ldarg_0); il.Emit(System.Reflection.Emit.OpCodes.Ldfld, AuthoredTags);
+                il.Emit(System.Reflection.Emit.OpCodes.Ret);
+                return (Func<TaggedScriptableObject, List<string>?>)method.CreateDelegate(typeof(Func<TaggedScriptableObject, List<string>?>));
+            }
+            catch (Exception) { return null; }
+        }
+        internal static List<string>? RawTags(TaggedScriptableObject item)
+            => ReadTags != null ? ReadTags(item) : AuthoredTags?.GetValue(item) as List<string>;
+        private static List<string>? Tags(TaggedScriptableObject item) => ValidTags(RawTags(item));
+        private static List<string>? ValidTags(List<string>? tags)
+        {
             if (tags == null || tags.Count > LoadedStockLimits.Rows) return null;
             for (int i = 0; i < tags.Count; i++) if (string.IsNullOrWhiteSpace(tags[i])) return null;
             return tags;
         }
-        private static LoadedStockDefinition Definition(Item item)
+        /// <summary>E5b3 Decision 3a: the live fields the contract reads, uncopied and without allocation. The
+        /// catalogue copy and every recheck use this one function, so the two cannot disagree on a field.</summary>
+        internal static LoadedStockFacts Facts(Item item)
         {
-            var tags = Tags(item);
+            var raw = RawTags(item);
+            var tags = ValidTags(raw);
             var whitelist = item.itemsThatCanShowcase;
             var outputs = item.producerSettings?.itemsToProduce;
+            var cargoWhitelist = item.itemsWhitelist;
             bool rows = (whitelist == null || whitelist.Length <= LoadedStockLimits.Rows)
                 && (outputs == null || outputs.Length <= LoadedStockLimits.Rows);
-            return new LoadedStockDefinition(item.itemName, (item.type & ItemType.RetailProduct) != 0,
+            return new LoadedStockFacts(item.itemName, (item.type & ItemType.RetailProduct) != 0,
                 (item.type & ItemType.ServiceProduct) != 0, (item.type & ItemType.ShowcaseShelf) != 0,
                 (item.type & ItemType.EmployeeWorkstation) != 0, tags != null && rows,
                 item.season == SeasonName.None && !item.isSpecialGift && !item.isSeasonalForSale
@@ -53,8 +75,11 @@ namespace PersistentCity.Runtime
                     && string.IsNullOrEmpty(item.itemToReplaceWithWhenOvertakingBusiness),
                 tags?.Contains("ba:itemtag_isbag") == true, tags?.Contains("ba:itemtag_isfullservicecashregister") == true,
                 item.producerSettings != null && item.producerSettings.ResourcesRequired,
-                rows ? whitelist : null, rows ? outputs : null);
+                rows ? whitelist : null, rows ? outputs : null,
+                raw?.Count ?? -1, LoadedStockRows.Hash(raw), item.cargoCapacity,
+                cargoWhitelist?.Length ?? -1, LoadedStockRows.Hash(cargoWhitelist));
         }
+        private static LoadedStockDefinition Definition(Item item) => new LoadedStockDefinition(Facts(item));
 
         private sealed class Shop : IContractDirtyUnit
         {
@@ -125,6 +150,8 @@ namespace PersistentCity.Runtime
             return stampsReady;
         }
         public static bool StampsReady => stampsReady;
+        /// <summary>E5b3: the registration's current Decision 2 stamp; default (never matching) until the readers bind.</summary>
+        internal static ShopContractStamp CurrentStamp(BuildingRegistration r) => stampsReady && r != null ? Stamp(r) : default;
         private static ShopContractStamp Stamp(BuildingRegistration r)
         {
             var menu = r.cachedAvailableProducts; var prices = r.retailPrices; var furniture = r.itemInstances;
@@ -135,6 +162,47 @@ namespace PersistentCity.Runtime
         }
 
         public long CatalogueRevision => catalogueRevision;
+        /// <summary>E5b3: the sealed catalogue of the current revision, or null while it is dirty or rebuilding.</summary>
+        internal LoadedStockCatalogue? Catalogue => catalogueDirty ? null : catalogue;
+        /// <summary>E5b3 coordinator: called once per finished shop pass with the pass's registration, image and start stamp.</summary>
+        internal Action<string, BuildingRegistration, FoodEligibilityImage, ShopContractStamp, IReadOnlyList<string>>? ShopPublished;
+        /// <summary>Most distinct definition names one pass records for E5b3 Decision 3a.</summary>
+        internal const int MaximumPassDefinitions = 512;
+        // Every definition name the current pass read: menu products, furniture and cargo, participating or not,
+        // including the one that refused. Cleared with the pass.
+        private readonly List<string> passDefinitions = new List<string>();
+        private readonly HashSet<string> passDefinitionSet = new HashSet<string>(StringComparer.Ordinal);
+        private void PassDefinition(string? name)
+        {
+            if (string.IsNullOrEmpty(name) || passDefinitions.Count == MaximumPassDefinitions || !passDefinitionSet.Add(name!)) return;
+            passDefinitions.Add(name!);
+        }
+        public long DefinitionRecopies { get; private set; }
+        public long FullRecopies { get; private set; }
+        /// <summary>E5b3 Decision 3a: re-copies the named live definitions into a new catalogue revision and
+        /// requeues every shop, so every image built afterwards uses the fresh facts. Falls back to a full
+        /// catalogue rebuild when the overlay cannot take them.</summary>
+        internal void RecopyDefinitions(IReadOnlyList<Item> items)
+        {
+            if (items.Count == 0) return;
+            var copies = new LoadedStockDefinition[items.Count];
+            bool readable = true;
+            for (int i = 0; i < copies.Length; i++)
+            {
+                var item = items[i];
+                if (item == null || !LoadedStockLimits.CanonicalName(item.itemName)) { readable = false; break; }
+                try { copies[i] = Definition(item); } catch (Exception) { readable = false; break; }
+            }
+            if (readable && revision.Replace(copies))
+            {
+                DefinitionRecopies += copies.Length; CancelShop();
+                foreach (var shop in shops.Values) Dirty(shop);
+                return;
+            }
+            FullRecopies++; MarkCatalogueDirty();
+        }
+        /// <summary>E5b3: requeues every tracked shop (a business-type re-copy), keeping the catalogue.</summary>
+        internal void RequeueAllShops() { foreach (var shop in shops.Values) Dirty(shop); }
         /// <summary>The loaded-name image of the current catalogue revision, or null while it is dirty or rebuilding.</summary>
         public LoadedNameImage? LoadedNames => revision.Names;
         public LoadedNameImage? LastLoadedNames => revision.LastPublished;
@@ -288,6 +356,9 @@ namespace PersistentCity.Runtime
         private void StartShop(Shop shop)
         {
             ShopPasses++;
+            passDefinitions.Clear(); passDefinitionSet.Clear();
+            var products = shop.Registration.cachedAvailableProducts;
+            if (products != null && products.Count <= LoadedStockLimits.Rows) for (int i = 0; i < products.Count; i++) PassDefinition(products[i]);
             var r = shop.Registration;
             shop.Start = stampsReady ? Stamp(r) : default;
             try
@@ -331,6 +402,7 @@ namespace PersistentCity.Runtime
                     HoldersRead++;
                     var pair = furnitureCursor.Current; var instance = pair.Value;
                     if (instance == null) { menu.Fail(FoodEligibilityRefusal.FurnitureIdentity); PublishShop(); return; }
+                    PassDefinition(instance.itemName);
                     var cargo = instance.cargoInstances;
                     if (cargo != null && cargo.Count > LoadedStockLimits.Rows)
                     { menu.Fail(FoodEligibilityRefusal.CargoBounds); PublishShop(); return; }
@@ -341,6 +413,7 @@ namespace PersistentCity.Runtime
                         if (c == null) { menu.Fail(FoodEligibilityRefusal.CargoShape); break; }
                         if (!cargoIdentities.Add(c)) { menu.Fail(FoodEligibilityRefusal.SharedCargo); break; }
                         cargoBuffer[j] = new StockCargoFields(c.itemName, c.amount, c.nestedCargoInstances?.Count ?? -1);
+                        PassDefinition(c.itemName);
                     }
                     menu.AddHolder(pair.Key, instance.id, instance.itemName, cargo != null,
                         new ReadOnlySpan<StockCargoFields>(cargoBuffer, 0, count));
@@ -355,7 +428,9 @@ namespace PersistentCity.Runtime
         {
             var result = menu!.Finish();
             scanning!.Image = result; scanning.PublishedCatalogue = catalogueRevision; scanning.Stamp = scanning.Start;
+            var shop = scanning; var stamp = scanning.Start;
             CancelShop(false);
+            ShopPublished?.Invoke(shop.Key, shop.Registration, result, stamp, passDefinitions);
         }
         private void CancelShop(bool requeue = true)
         {

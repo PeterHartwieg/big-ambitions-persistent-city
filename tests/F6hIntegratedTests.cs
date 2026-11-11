@@ -13,7 +13,6 @@ public sealed class F6hIntegratedTests
     [Fact]
     public void OtherF6DefaultsStayPinnedAfterF6kPriceWeight()
     {
-        Assert.Equal(34, CityState.CurrentSchema);
         var rivals = new RivalFoodSettings();
         Assert.Equal(2, rivals.Lanes("fastfood"));
         Assert.Equal(60, rivals.MealPeriodUnits("fastfood"));

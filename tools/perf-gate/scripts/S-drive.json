@@ -1,0 +1,21 @@
+{
+  "format": "perf-gate-script/v1",
+  "name": "S-drive",
+  "plan": "Decision 3: the player drives the owned car along a fixed route through the dense street (pending RIG-DRIVE, also requested by F2)",
+  "builds": ["candidate", "reference"],
+  "setup": [
+    {"op": "ft.teleport", "args": {"anchor": "dense-street.car-park"}},
+    {"op": "drive.enter", "args": {"vehicle": "owned car"}}
+  ],
+  "loop": [
+    {"op": "drive.route", "args": {"waypoints": ["dense-street.wp1", "dense-street.wp2", "dense-street.wp3"], "speed": "street limit"}, "segment": "dense"},
+    {"op": "drive.route", "args": {"waypoints": ["quiet-district.wp1", "quiet-district.wp2"], "speed": "street limit"}, "segment": "quiet"},
+    {"op": "drive.route", "args": {"waypoints": ["dense-street.wp3", "dense-street.wp1"], "speed": "street limit"}, "segment": "dense"}
+  ],
+  "teardown": [
+    {"op": "drive.exit", "args": {"park_at": "dense-street.car-park"}}
+  ],
+  "samplers": [
+    {"op": "log.physical_diagnostics", "args": {"line": "60-second physical diagnostics"}, "every_real_seconds": 60, "feeds": "bodies"}
+  ]
+}

@@ -4,8 +4,8 @@ using Newtonsoft.Json.Linq;
 static partial class Program
 {
     // Size accounting for the existing fixtures without product histories. This driver also
-    // compiles against archived Core/Persistence. Semantic migration comparisons re-encode
-    // through PopulationSchema24.Write (name-identity-regression), including its fixed codes.
+    // compiles against archived Core/Persistence. X1 removed the schema-24 writer that semantic
+    // migration comparisons re-encoded through; run those against an archived source tree.
     private static string WithoutNames25(string wire)
     {
         var root = JObject.Parse(wire);

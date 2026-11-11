@@ -3,29 +3,9 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // Isolated schema-20 -> 21 step. The frozen E1 reader first upgrades older
-    // payloads through 20 and preserves captured weather without resampling.
+    // Schema-21 rival outcome and validation rules, still part of the current contract.
     internal static class RivalWire21
     {
-        internal static bool AddedProperty(Type type, string name)
-            => type == typeof(ResidentBudget) && name == "ExternalFoodSpent"
-            || type == typeof(ResidentMeal) && (name == "External" || name == "LegacyExternalFoodSpent")
-            || type == typeof(FoodScope) && name == "AlternativeKind"
-            || type == typeof(FoodAwarenessCandidate) && name == "AlternativeKind"
-            || type == typeof(FoodCommerceState) && name == "RivalStartsDay"
-            || type == typeof(FoodDecisionShop) && (name == "AlternativeKind" || name == "RivalTerms"
-                || name == "RivalServiceMinutes" || name == "AlternativeWeight");
-
-        internal static SaveReadResult Migrate(string source)
-        {
-            var old = PopulationSchema20.Read(source);
-            if (old.Status != SaveReadStatus.Loaded) return old;
-            var state = old.State!;
-            state.Schema = 21;
-            if (state.Food != null) state.Food.RivalStartsDay = (int)(state.Minute / 1440) + 1;
-            SaveCodec.ValidateForActivation(state,21);
-            return new SaveReadResult(SaveReadStatus.Loaded, state, "", old.SourceSchema);
-        }
         private static void Require(bool condition, string reason)
         { if (!condition) throw new SaveValidationException(reason); }
 
@@ -80,7 +60,7 @@ namespace PersistentCity.Persistence
                 Require(meal.Purchases > 0 && meal.Spent >= meal.Price && (meal.Budget?.ExternalFoodSpent ?? meal.LegacyExternalFoodSpent) >= meal.Price
                     && (meal.Budget != null || meal.DayAllowanceUsed >= meal.Price), "Settled rival target lost its outflow account.");
         }
-        internal static void ValidateShop(FoodDecisionShop shop, FoodDecisionState decision, int schema)
+        internal static void ValidateShop(FoodDecisionShop shop, FoodDecisionState decision)
         {
             Require(shop.AlternativeKind == FoodAlternativeKind.Player || shop.AlternativeKind == FoodAlternativeKind.Rival, "Unknown captured target kind.");
             Require(Position.Finite(shop.AlternativeWeight) && shop.AlternativeWeight >= 0 && shop.AlternativeWeight <= 2, "Invalid rival choice weight.");
@@ -90,8 +70,6 @@ namespace PersistentCity.Persistence
             {
                 Require(RivalFoodTerms.Canonical(shop.RivalTerms) && shop.RivalServiceMinutes >= 1 && shop.RivalServiceMinutes <= 30
                     && shop.MealsPerHour == -1 && shop.AlternativeWeight > 0
-                    // D4 widens only the current contract; genuine 21/22/23 remain neutral.
-                    && (schema >= 24 || shop.MemoryContribution == 0)
                     && !shop.ServiceUnavailable && shop.DistrictId == "" && shop.NextServiceAt == decision.OriginAt, "Invalid estimated rival candidate.");
                 Require(shop.Offers != null, "Missing rival offers.");
                 foreach (var offer in shop.Offers!) Require(offer != null && offer.Units == -1 && offer.DistrictDemandPercent == -1, "Rival stock/demand must remain unknown.");

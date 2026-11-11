@@ -29,8 +29,5 @@ namespace PersistentCity.Core
             }
             return true;
         }
-        public static bool AddedProperty(Type type, string? name)
-            => type == typeof(CityState) && (name == "ProductNames" || name == "NamePolicyStartsDay")
-            || type == typeof(FoodDecisionOffer) && name == "Metadata";
     }
 }

@@ -254,7 +254,6 @@ public sealed class PersonIdentityTests
             foreach (var draw in new[] { "IdentityPolicy.V1", ".Derive(", "IdentityPolicy.Draw" })
                 Assert.False(text.Contains(draw, StringComparison.Ordinal), relative + " draws derived identity: " + draw);
         }
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
     }
 
     // ---- Per-person income source ----

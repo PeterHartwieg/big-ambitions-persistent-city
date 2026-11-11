@@ -17,7 +17,7 @@ namespace PersistentCity.Tests;
 public sealed class SaveEpochTests
 {
     private const double Minute = 600;
-    private const string Receipt = "persistentcity:food-sale-v2:intent-1";
+    private const string Receipt = "persistentcity:food-sale-v1:intent-1";
     private const string Authority = "persistentcity:food-authority-v1";
 
     private static CityState City(string key = "source") => Population.Create(
@@ -332,12 +332,10 @@ public sealed class SaveEpochTests
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
-    // Rule 5: a native save while initialization is pending (worker running, or its steps on the stack)
-    // refuses with both markers, takes no snapshot and returns normally.
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void SaveDuringPendingInitializationRefusesWithBothMarkersAndKeepsPayload(bool initializationOnStack)
+    // Rule 5: a native save while initialization steps are on the stack (a PC unit) still refuses with both
+    // markers, takes no snapshot and returns normally.
+    [Fact]
+    public void SaveDuringInitializationOnTheStackRefusesWithBothMarkersAndKeepsPayload()
     {
         var save = new GameInstance(); var runtime = new Runtime();
         save.modData[SaveStore.StateKey] = SaveCodec.Write(runtime.State);
@@ -346,8 +344,7 @@ public sealed class SaveEpochTests
         runtime.Attach(save, initializing: true);
         Dictionary<string, string>? file = null;
         Exception? error = null;
-        if (initializationOnStack) runtime.Unit(() => error = Record.Exception(() => file = NativeSave(save, runtime)));
-        else error = Record.Exception(() => file = NativeSave(save, runtime));
+        runtime.Unit(() => error = Record.Exception(() => file = NativeSave(save, runtime)));
         Assert.Null(error); // Native Save completes normally.
         Assert.Equal(0, runtime.Captures); // No snapshot of a half-initialized city.
         Assert.Same(previous, file![SaveStore.StateKey]);
@@ -356,6 +353,65 @@ public sealed class SaveEpochTests
         Assert.Equal("Confirmed", file[Receipt]);
         Assert.True(runtime.Failed); Assert.Equal(1, runtime.Stops);
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
+    }
+
+    // Rig mac-creation-1 (10 Nov 2026): a new city's native creation save arrives while the initialization
+    // worker is running. It is deferred: no key is written or removed, the epoch is not poisoned, nothing stops,
+    // the sequence the worker read still matches, and the next ordinary save publishes the normal payload.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SaveDuringPendingInitializationIsDeferredAndTheCityStillAttaches(bool loadedPayload)
+    {
+        var save = new GameInstance(); var runtime = new Runtime();
+        if (loadedPayload) save.modData[SaveStore.StateKey] = SaveCodec.Write(runtime.State);
+        save.modData[Receipt] = "Confirmed";
+        var before = new Dictionary<string, string>(save.modData, StringComparer.Ordinal);
+        runtime.Attach(save, initializing: true);
+        long workerSequence = runtime.Epoch!.Sequence;
+
+        Dictionary<string, string>? file = null;
+        var error = Record.Exception(() => file = NativeSave(save, runtime));
+        Assert.Null(error);
+        Assert.Equal(before, file); // Creation save carries no PC state, partial or otherwise.
+        Assert.Equal(before, save.modData);
+        Assert.Equal(0, runtime.Captures);
+        Assert.False(runtime.Failed); Assert.Equal(0, runtime.Stops); Assert.False(runtime.StopPending);
+        Assert.NotNull(runtime.Epoch);
+        Assert.Equal(1, runtime.Epoch!.Deferred); Assert.Equal(0, runtime.Epoch.Refused);
+        Assert.Equal(workerSequence, runtime.Epoch.Sequence); // CompleteInitialization's epoch check still passes.
+        Assert.False(runtime.Epoch.Saving);
+        Assert.Contains(runtime.Reports, r => r.StartsWith("Persistent City skipped the save during initialization", StringComparison.Ordinal));
+
+        runtime.Epoch.CompleteInitialization();
+        file = NativeSave(save, runtime);
+        Assert.Equal(1, runtime.Captures);
+        Assert.False(file.ContainsKey(AccountingStopStore.Key));
+        Assert.True(SaveEpochStore.TryRead(file[SaveEpochStore.Key], out var marker, out _));
+        Assert.Equal(SaveEpochMarkerKind.Success, marker!.Kind);
+        Assert.Equal(workerSequence + 1, marker.Sequence);
+        var loaded = SaveCodec.Read(file[SaveStore.StateKey]);
+        Assert.Equal(runtime.State.PopulationKey, loaded.State!.PopulationKey);
+    }
+
+    // The other entry refusals keep refusing while initializing: replaced dictionary and an earlier failure.
+    [Fact]
+    public void OtherRefusalsStillRefuseWhileInitializing()
+    {
+        var save = new GameInstance();
+        var replaced = new SaveEpochBinding(save, save.modData, 0, initializing: true);
+        var ticket = replaced.Begin(save, new Dictionary<string, string>(), unitOnStack: false)!;
+        Assert.Equal("The save object's mod data dictionary was replaced.", ticket.Refusal);
+        Assert.Null(ticket.Deferral); Assert.Equal(0, replaced.Deferred);
+
+        var save2 = new GameInstance();
+        var nested = new SaveEpochBinding(save2, save2.modData, 0, initializing: true);
+        var unit = nested.Begin(save2, save2.modData, unitOnStack: true)!; // poisons the epoch
+        Assert.Equal("A Persistent City unit was executing when the native save started.", unit.Refusal);
+        var later = nested.Begin(save2, save2.modData, unitOnStack: false)!;
+        Assert.Equal("An earlier save epoch of this session failed.", later.Refusal);
+        Assert.Null(later.Deferral); Assert.Equal(0, nested.Deferred);
+        Assert.StartsWith(SaveEpochStore.FailedPrefix, save2.modData[SaveEpochStore.Key]);
     }
 
     // Rules 5 and 9: an initialization that fails or is abandoned writes nothing (load refusals preserve

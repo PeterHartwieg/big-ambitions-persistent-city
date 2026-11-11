@@ -170,7 +170,7 @@ public sealed class VendorBodyTests
         Assert.Equal(Math.Min(8, cap), f.Pool.Active.Count);
         Assert.DoesNotContain("body00", f.Pool.Active.Keys);
         Assert.Equal(f.Pool.Active.Count, f.Pool.Active.Values.Select(b => b.Target).Distinct().Count());
-        Assert.False(ActiveJourneyIndex.VisitorsReceiveBodies);
+        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies); // F5i
     }
 
     [Fact]
@@ -332,13 +332,5 @@ public sealed class VendorBodyTests
         vehicle.QueueZ += 4; f.Tick();
         Assert.Equal(position, body.Position); Assert.Equal(f.Row.Stand!.Position, body.Target);
         Assert.False(body.Agent.isStopped);
-    }
-
-    [Fact]
-    public void FrozenLedgerWriterGoldenRemainsUnchanged()
-    {
-        var state = EconomicLedgerTests.Fresh(5150); EconomicLedgerTests.Populate(state);
-        Assert.Equal(CityState.VendorSchema + 1, CityState.EconomicLedgerSchema);
-        Assert.Equal("06b494d2627e0d6675d8c437e1c0dff72e176ab3ae7aaa54a0f152052aace308", EconomicLedgerTests.Sha(DevelopmentChain.WriteLedger(state)));
     }
 }

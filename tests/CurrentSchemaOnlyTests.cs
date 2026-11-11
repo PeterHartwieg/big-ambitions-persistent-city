@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -13,16 +14,20 @@ public sealed class CurrentSchemaOnlyTests
         new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2 } },
         "current-development", "0.41.1", 42, 0);
 
+    /// <summary>The schema is held at 1 until release: older development builds wrote 2 to 36, and every other number is
+    /// a DevelopmentSchema refusal (no migration).</summary>
+    public static IEnumerable<object[]> OldDevelopmentSchemas() => new[] { 0, 2, 12, 25, 26, 35, 36, 37 }.Select(s => new object[] { s });
+
     [Theory]
-    [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
-    [InlineData(5)] [InlineData(6)] [InlineData(7)] [InlineData(8)]
-    [InlineData(9)] [InlineData(10)] [InlineData(11)] [InlineData(12)]
-    [InlineData(13)] [InlineData(24)] [InlineData(25)] [InlineData(26)] [InlineData(27)] [InlineData(28)] [InlineData(29)] [InlineData(30)]
+    [MemberData(nameof(OldDevelopmentSchemas))]
     public void EveryOldDevelopmentSchemaBlocksCodecStoreAndSessionWrites(int schema)
     {
         var city = City(); var wire = SaveWire.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
         string payload = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "owned by RLO" };
+        var direct = SaveCodec.Read(payload);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, direct.Status); Assert.Equal(schema, direct.SourceSchema);
+        Assert.Equal(SaveCodec.DevelopmentSchemaMessage + " (schema " + schema + ")", direct.Error);
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
         // F5c-lite: no migration before release; every older development schema is its own refusal, not corruption.
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State); Assert.Equal(schema, read.SourceSchema);

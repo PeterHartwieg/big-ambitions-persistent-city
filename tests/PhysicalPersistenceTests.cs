@@ -121,10 +121,10 @@ public sealed class PhysicalPersistenceTests
     {
         Assert.Equal(0, DevelopmentChain.Read(null).SourceSchema);
         Assert.Equal(0, DevelopmentChain.Read("corrupt").SourceSchema);
-        int futureSchema = CityState.CurrentSchema + 1;
-        var future = DevelopmentChain.Read("{\"Schema\":" + futureSchema + "}");
-        Assert.Equal(SaveReadStatus.Future, future.Status); Assert.Equal(futureSchema, future.SourceSchema);
-        Assert.Null(future.State);
+        int otherSchema = CityState.CurrentSchema + 1;
+        var other = DevelopmentChain.Read("{\"Schema\":" + otherSchema + "}");
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, other.Status); Assert.Equal(otherSchema, other.SourceSchema);
+        Assert.Null(other.State);
         var loaded = DevelopmentChain.Read(DevelopmentChain.Write(Journey()));
         Assert.Equal(CityState.CurrentSchema, loaded.SourceSchema);
 

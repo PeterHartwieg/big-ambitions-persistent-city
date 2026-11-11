@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- F8g offline failure matrix. Run in the foreground: dotnet run -c Release, optionally followed by a day count. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="CapabilityMatrix.cs" /><Compile Include="Program.cs" />
+    <Compile Include="../economy-interventions/EconomyFixture.cs" Link="EconomyFixture.cs" />
+    <Compile Include="../economy-interventions/InterventionInputs.cs" Link="InterventionInputs.cs" />
+    <Compile Include="../economy-interventions/EconomyRun.cs" Link="EconomyRun.cs" />
+    <Compile Include="../economy-interventions/EconomyMetrics.cs" Link="EconomyMetrics.cs" />
+    <Compile Include="../economy-interventions/InterventionArms.cs" Link="InterventionArms.cs" />
+    <Compile Include="../economy-interventions/SelfChecks.cs" Link="SelfChecks.cs" />
+    <Compile Include="../movement-equivalence/MovementFixture.cs" Link="MovementFixture.cs" />
+    <Compile Include="../movement-equivalence/PresentationDriver.cs" Link="PresentationDriver.cs" />
+    <Compile Include="../../Runtime/ResearchAgencyMenu.cs" Link="ResearchAgencyMenu.cs" />
+    <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
+    <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
+  </ItemGroup>
+</Project>

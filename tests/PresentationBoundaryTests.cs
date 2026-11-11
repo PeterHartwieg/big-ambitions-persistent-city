@@ -280,7 +280,7 @@ public sealed class PresentationBoundaryTests
     // needs a reviewed change here. F2c removed TryHoldPhysicalDeparture and every walker lease call; F2d removed the
     // traffic lease group, so every member is read-only. F2e adds HoldForPlayer.
     private static readonly string[] ReadOnlyMembers = {
-        "State", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
+        "State", "View", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
         "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen",
     };
     // The removed lease surface (F2c, F2d). None of it may come back on CitySimulator or in Runtime.
@@ -291,6 +291,8 @@ public sealed class PresentationBoundaryTests
     // Core's own logical rules (rain, closing, phase, availability, partners), run before a save exactly as
     // PersistentCityMod runs them every frame. The answer does not depend on any body.
     private static readonly string[] LogicalRefreshMembers = { "RefreshOptionalStops" };
+    // F2e (Decision 4): the visible world's only write into Core, the bounded player hold, from one call site.
+    private static readonly string[] PlayerHoldMembers = { "HoldForPlayer" };
 
     private static string Root()
     {
@@ -312,7 +314,7 @@ public sealed class PresentationBoundaryTests
             // Nothing is assigned through the simulator's state from presentation code.
             Assert.DoesNotMatch(new Regex(@"\bsimulation\s*\.\s*State\b[\w\.\[\]""]*\s*(=[^=>]|\+=|-=|\+\+|--)"), text);
         }
-        var allowed = new SortedSet<string>(ReadOnlyMembers.Concat(LogicalRefreshMembers), StringComparer.Ordinal);
+        var allowed = new SortedSet<string>(ReadOnlyMembers.Concat(LogicalRefreshMembers).Concat(PlayerHoldMembers), StringComparer.Ordinal);
         Assert.Empty(used.Except(allowed));
         // The list stays exact: a member no longer used must be removed from it in the same change.
         Assert.Empty(allowed.Except(used));
@@ -320,9 +322,14 @@ public sealed class PresentationBoundaryTests
         // Every allowed member exists on CitySimulator.
         var members = typeof(CitySimulator).GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Select(m => m.Name).ToHashSet();
         Assert.All(allowed, name => Assert.Contains(name, members));
+        // F2e: exactly one call site, the player-contact report in PhysicalPopulation, and none anywhere else in Runtime.
+        int holdCalls = 0;
+        foreach (var file in Directory.GetFiles(Path.Combine(Root(), "Runtime"), "*.cs"))
+            holdCalls += Regex.Matches(File.ReadAllText(file), @"\bsimulation\s*\.\s*HoldForPlayer\b").Count;
+        Assert.Equal(1, holdCalls);
         // F2c: the walker follow, its corrections and both tails read only. F2d: so do the car command, the car follow,
         // its corrections, fade and phase count.
-        string population = File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs"));
+        string population = string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs"))));
         SortedSet<string> Region(string start, string end)
         {
             int from = population.IndexOf(start, StringComparison.Ordinal), to = population.IndexOf(end, from + 1, StringComparison.Ordinal);
@@ -347,6 +354,6 @@ public sealed class PresentationBoundaryTests
             Assert.DoesNotMatch(new Regex(@"\.\s*(ModelId|PaintSeed)\s*(=[^=>]|\?\?=)"), text);
         }
         // The Runtime rain check is gone from the body paths; logical rain stays in Core.
-        Assert.DoesNotContain("RainHelper", File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation.cs")));
+        Assert.DoesNotContain("RainHelper", string.Concat(new[] { "", ".Following", ".Queues", ".Selection" }.Select(part => File.ReadAllText(Path.Combine(Root(), "Runtime", "PhysicalPopulation" + part + ".cs")))));
     }
 }

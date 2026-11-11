@@ -11,4 +11,4 @@ The full comparison uses 957 synthetic residents over seven days with equal rout
 
 Higher customer service can justify a modest premium for residents who value it. Higher district product demand improves an offer's relative appeal, with a smaller provisional weight. Neither is a population or service-capacity multiplier. Unknown observations contribute no adjustment. The native demand percentage already includes supplier saturation; do not interpret it as a count of buyers or apply it again to every shop's customer allocation.
 
-See [implementation and evidence](../../docs/reviews/2026-10-22-food-quality-demand.md) for the exact policy, current limitations and native validation boundary.
+See [implementation and evidence](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/reviews/2026-10-22-food-quality-demand.md) for the exact policy, current limitations and native validation boundary.

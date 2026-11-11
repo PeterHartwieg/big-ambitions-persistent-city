@@ -45,7 +45,7 @@ public sealed class F7cSnapshotMeasure
             double encodeMs = Stopwatch.GetElapsedTime(t).TotalMilliseconds; long encodedBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
             if (encoded != payload) throw new InvalidOperationException("Snapshot bytes differ on " + fixture);
             bytes = GC.GetAllocatedBytesForCurrentThread(); t = Stopwatch.GetTimestamp();
-            var copied = SaveSnapshot.Capture(state, CityState.CurrentSchema);
+            var copied = SaveSnapshot.Capture(state);
             double copyMs = Stopwatch.GetElapsedTime(t).TotalMilliseconds; long copiedBytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
             GC.KeepAlive(copied);
             last = snapshot;

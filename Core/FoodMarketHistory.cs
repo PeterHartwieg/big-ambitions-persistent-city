@@ -63,17 +63,14 @@ namespace PersistentCity.Core
                 var shop = businesses.First(b => b.Id == choice.BusinessId);
                 if (shop.AlternativeKind == FoodAlternativeKind.Rival) continue;
                 var row = ShopDay(shop.PlaceId, shop.Id, intent.Day); row.OffersConsidered++;
-                if (city.State.Schema >= CityState.ChangeJournalSchema)
+                int cause = choice.Reason == "No staffed counter" ? 0 : choice.Reason.StartsWith("Out of stock", StringComparison.Ordinal) ? 1
+                    : choice.Reason == "Closed or too late" ? 3
+                    : choice.Reason == "Service unavailable" || choice.Reason.Contains("queue") || choice.Reason.Contains("Service and return") ? 2 : -1;
+                if (cause >= 0 && !choice.ScoreCents.HasValue)
                 {
-                    int cause = choice.Reason == "No staffed counter" ? 0 : choice.Reason.StartsWith("Out of stock", StringComparison.Ordinal) ? 1
-                        : choice.Reason == "Closed or too late" ? 3
-                        : choice.Reason == "Service unavailable" || choice.Reason.Contains("queue") || choice.Reason.Contains("Service and return") ? 2 : -1;
-                    if (cause >= 0 && !choice.ScoreCents.HasValue)
-                    {
-                        int cell = (int)period * 4 + cause;
-                        if (row.PeriodCauses.Counts[cell] < MealPeriodCauses.MaximumCount) row.PeriodCauses.Counts[cell]++;
-                        if (cause == 1) row.StockoutObserved = true;
-                    }
+                    int cell = (int)period * 4 + cause;
+                    if (row.PeriodCauses.Counts[cell] < MealPeriodCauses.MaximumCount) row.PeriodCauses.Counts[cell]++;
+                    if (cause == 1) row.StockoutObserved = true;
                 }
                 if (choice.Reason.StartsWith("Chosen:", StringComparison.Ordinal) && intent.Status == FoodIntentStatus.Travelling) row.ChosenOffers++;
                 else if (choice.ScoreCents.HasValue) row.PreferredAlternatives++;

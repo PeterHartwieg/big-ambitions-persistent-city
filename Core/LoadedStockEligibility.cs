@@ -22,6 +22,70 @@ namespace PersistentCity.Core
         }
     }
 
+    /// <summary>E5b3 Decision 3a: the live fields of one loaded definition that the contract reads, uncopied.
+    /// Runtime fills it from a live <c>Item</c> without allocating; <see cref="LoadedStockDefinition.Matches"/>
+    /// compares it with the catalogue copy by content. Tag lists and the cargo whitelist enter as count plus an
+    /// ordinal FNV-1a hash (<see cref="LoadedStockRows.Hash"/>); the derived bag, counter and verified facts are exact.</summary>
+    public readonly struct LoadedStockFacts
+    {
+        public LoadedStockFacts(string name, bool retail, bool service, bool showcase, bool workstation,
+            bool metadataVerified, bool ungated, bool bag, bool counter, bool consumes,
+            IReadOnlyList<string>? whitelist, IReadOnlyList<string>? outputs,
+            int tagCount = -1, ulong tagHash = 0, int cargoCapacity = 0, int cargoWhitelistCount = -1, ulong cargoWhitelistHash = 0)
+        {
+            Name = name; Retail = retail; Service = service; Showcase = showcase; Workstation = workstation;
+            MetadataVerified = metadataVerified; Ungated = ungated; Bag = bag; Counter = counter; Consumes = consumes;
+            Whitelist = whitelist; Outputs = outputs; TagCount = tagCount; TagHash = tagHash; CargoCapacity = cargoCapacity;
+            CargoWhitelistCount = cargoWhitelistCount; CargoWhitelistHash = cargoWhitelistHash;
+        }
+        public string Name { get; }
+        public bool Retail { get; }
+        public bool Service { get; }
+        public bool Showcase { get; }
+        public bool Workstation { get; }
+        public bool MetadataVerified { get; }
+        public bool Ungated { get; }
+        public bool Bag { get; }
+        public bool Counter { get; }
+        public bool Consumes { get; }
+        public IReadOnlyList<string>? Whitelist { get; }
+        public IReadOnlyList<string>? Outputs { get; }
+        /// <summary>-1 when the list is null or unreadable.</summary>
+        public int TagCount { get; }
+        public ulong TagHash { get; }
+        public int CargoCapacity { get; }
+        public int CargoWhitelistCount { get; }
+        public ulong CargoWhitelistHash { get; }
+    }
+
+    public static class LoadedStockRows
+    {
+        /// <summary>Ordinal FNV-1a over count, lengths and chars. Deterministic across runs; no allocation.</summary>
+        public static ulong Hash(IReadOnlyList<string?>? values)
+        {
+            if (values == null) return 0;
+            ulong h = 14695981039346656037UL;
+            void Mix(int v) { h = (h ^ (uint)v) * 1099511628211UL; }
+            Mix(values.Count);
+            for (int i = 0; i < values.Count; i++)
+            {
+                string? s = values[i];
+                if (s == null) { Mix(-1); continue; }
+                Mix(s.Length);
+                for (int j = 0; j < s.Length; j++) Mix(s[j]);
+            }
+            return h;
+        }
+        /// <summary>Element-by-element ordinal equality; null equals only null.</summary>
+        public static bool Same(IReadOnlyList<string>? copy, IReadOnlyList<string>? live)
+        {
+            if (copy == null || live == null) return copy == null && live == null;
+            if (copy.Count != live.Count) return false;
+            for (int i = 0; i < copy.Count; i++) if (!string.Equals(copy[i], live[i], StringComparison.Ordinal)) return false;
+            return true;
+        }
+    }
+
     /// <summary>Detached loaded fields. Optional native arrays may be null (no entries).
     /// Missing/unreadable required metadata is represented explicitly, never as an ungated default.</summary>
     public sealed class LoadedStockDefinition
@@ -30,14 +94,46 @@ namespace PersistentCity.Core
         public LoadedStockDefinition(string name, bool retail, bool service, bool showcase, bool workstation,
             bool metadataVerified, bool ungated, bool bag, bool counter, bool consumes,
             string[]? whitelist, string[]? outputs)
+            : this(new LoadedStockFacts(name, retail, service, showcase, workstation, metadataVerified, ungated, bag, counter, consumes,
+                whitelist, outputs)) { }
+        /// <summary>Copies the live rows once per catalogue revision (or per Decision 3a re-copy).</summary>
+        public LoadedStockDefinition(in LoadedStockFacts facts)
         {
-            Name = name; Retail = retail; Service = service; Showcase = showcase; Workstation = workstation;
-            MetadataVerified = metadataVerified; Ungated = ungated; Bag = bag; Counter = counter; Consumes = consumes;
-            Whitelist = Copy(whitelist); Outputs = Copy(outputs);
+            Name = facts.Name; Retail = facts.Retail; Service = facts.Service; Showcase = facts.Showcase; Workstation = facts.Workstation;
+            MetadataVerified = facts.MetadataVerified; Ungated = facts.Ungated; Bag = facts.Bag; Counter = facts.Counter; Consumes = facts.Consumes;
+            Whitelist = Copy(facts.Whitelist); Outputs = Copy(facts.Outputs);
+            TagCount = facts.TagCount; TagHash = facts.TagHash; CargoCapacity = facts.CargoCapacity;
+            CargoWhitelistCount = facts.CargoWhitelistCount; CargoWhitelistHash = facts.CargoWhitelistHash;
         }
-        private static IReadOnlyList<string>? Copy(string[]? values)
-            => values == null ? null : values.Length == 0 ? EmptyNames : values.Length > LoadedStockLimits.Rows
-                ? throw new ArgumentException("Overbound definition rows") : Array.AsReadOnly((string[])values.Clone());
+        private static IReadOnlyList<string>? Copy(IReadOnlyList<string>? values)
+        {
+            if (values == null) return null;
+            if (values.Count == 0) return EmptyNames;
+            if (values.Count > LoadedStockLimits.Rows) throw new ArgumentException("Overbound definition rows");
+            var copy = new string[values.Count];
+            for (int i = 0; i < copy.Length; i++) copy[i] = values[i];
+            return Array.AsReadOnly(copy);
+        }
+        /// <summary>Decision 3a: live content equals this copy, element by element. An in-place element edit of
+        /// <c>itemsThatCanShowcase</c> or <c>itemsToProduce</c>, or any tag edit, is a mismatch.</summary>
+        public bool Matches(in LoadedStockFacts live)
+            => string.Equals(Name, live.Name, StringComparison.Ordinal) && Retail == live.Retail && Service == live.Service
+                && Showcase == live.Showcase && Workstation == live.Workstation && MetadataVerified == live.MetadataVerified
+                && Ungated == live.Ungated && Bag == live.Bag && Counter == live.Counter && Consumes == live.Consumes
+                && TagCount == live.TagCount && TagHash == live.TagHash && CargoCapacity == live.CargoCapacity
+                && CargoWhitelistCount == live.CargoWhitelistCount && CargoWhitelistHash == live.CargoWhitelistHash
+                && LoadedStockRows.Same(Whitelist, live.Whitelist) && LoadedStockRows.Same(Outputs, live.Outputs);
+        /// <summary>Same copied facts as <paramref name="other"/>, field by field (a full catalogue rebuild makes new
+        /// copy objects; an unchanged definition still compares equal).</summary>
+        public bool SameContent(LoadedStockDefinition other)
+            => other != null && Matches(new LoadedStockFacts(other.Name, other.Retail, other.Service, other.Showcase, other.Workstation,
+                other.MetadataVerified, other.Ungated, other.Bag, other.Counter, other.Consumes, other.Whitelist, other.Outputs,
+                other.TagCount, other.TagHash, other.CargoCapacity, other.CargoWhitelistCount, other.CargoWhitelistHash));
+        public int TagCount { get; }
+        public ulong TagHash { get; }
+        public int CargoCapacity { get; }
+        public int CargoWhitelistCount { get; }
+        public ulong CargoWhitelistHash { get; }
         public string Name { get; }
         public bool Retail { get; }
         public bool Service { get; }
@@ -54,13 +150,39 @@ namespace PersistentCity.Core
 
     public sealed class LoadedStockCatalogue
     {
-        private readonly Dictionary<string, LoadedStockDefinition> definitions = new Dictionary<string, LoadedStockDefinition>(StringComparer.Ordinal);
+        /// <summary>Most definitions one revision chain may re-copy in place before a full rebuild is required.</summary>
+        public const int MaximumReplacements = 256;
+        private readonly Dictionary<string, LoadedStockDefinition> definitions;
+        // Decision 3a re-copies: a sealed revision that shares the base table and overrides a few names.
+        private readonly Dictionary<string, LoadedStockDefinition>? replacements;
         private bool complete;
-        public LoadedStockCatalogue(long revision) { Revision = revision; }
+        public LoadedStockCatalogue(long revision)
+        { Revision = revision; definitions = new Dictionary<string, LoadedStockDefinition>(StringComparer.Ordinal); }
+        private LoadedStockCatalogue(long revision, Dictionary<string, LoadedStockDefinition> shared, Dictionary<string, LoadedStockDefinition> overrides)
+        { Revision = revision; definitions = shared; replacements = overrides; complete = true; Refusal = FoodEligibilityRefusal.None; }
         public long Revision { get; }
         public FoodEligibilityRefusal Refusal { get; private set; } = FoodEligibilityRefusal.CatalogueUnavailable;
         public int Count => definitions.Count;
+        public int Replacements => replacements?.Count ?? 0;
         public bool Ready => complete && Refusal == FoodEligibilityRefusal.None;
+        /// <summary>Decision 3a: a new sealed revision whose named definitions are re-copied from live content.
+        /// Every other definition is shared, so this costs the replaced rows only. Null when this catalogue is not
+        /// ready, a name is not already present, or the chain would exceed <see cref="MaximumReplacements"/>:
+        /// the caller then rebuilds the whole catalogue.</summary>
+        public LoadedStockCatalogue? WithReplacements(long revision, IReadOnlyList<LoadedStockDefinition> changed)
+        {
+            if (!Ready || revision <= Revision || changed == null || changed.Count == 0) return null;
+            var overrides = replacements == null ? new Dictionary<string, LoadedStockDefinition>(StringComparer.Ordinal)
+                : new Dictionary<string, LoadedStockDefinition>(replacements, StringComparer.Ordinal);
+            for (int i = 0; i < changed.Count; i++)
+            {
+                var d = changed[i];
+                if (d == null || !definitions.ContainsKey(d.Name)) return null;
+                overrides[d.Name] = d;
+                if (overrides.Count > MaximumReplacements) return null;
+            }
+            return new LoadedStockCatalogue(revision, definitions, overrides);
+        }
         public bool Add(LoadedStockDefinition definition)
         {
             if (complete) throw new InvalidOperationException("Catalogue already sealed");
@@ -72,7 +194,11 @@ namespace PersistentCity.Core
         public void Seal(FoodEligibilityRefusal refusal = FoodEligibilityRefusal.None)
         { if (complete) return; complete = true; Refusal = refusal; }
         public bool TryGet(string name, out LoadedStockDefinition definition)
-        { definition = null!; return Ready && name != null && definitions.TryGetValue(name, out definition!); }
+        {
+            definition = null!;
+            if (!Ready || name == null) return false;
+            return replacements != null && replacements.TryGetValue(name, out definition!) || definitions.TryGetValue(name, out definition!);
+        }
     }
 
     public readonly struct StockPriceFields

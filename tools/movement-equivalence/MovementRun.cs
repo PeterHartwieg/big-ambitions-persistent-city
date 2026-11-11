@@ -32,15 +32,29 @@ public sealed class MovementOptions
     public bool HiddenTravel;
     /// <summary>F2c: nobody owns a car, so every journey walks. Walker follow makes these arms equal bodies-off.</summary>
     public bool WalkingOnly;
+    /// <summary>F5i: portals on the grid, so the city also holds K-1 walking visitors per resident (K =
+    /// <see cref="RepresentationFactor"/>). A reload then waits until a visitor body is bound as well.</summary>
+    public bool Visitors;
+    public int RepresentationFactor = MovementFixture.RepresentationFactor;
+    /// <summary>F5i: called after every frame's presentation update with the live simulator (it changes at a reload) and
+    /// driver, so tests can check invariants inside the harness loop. Must not change state.</summary>
+    public Action<CitySimulator, PresentationDriver?>? AfterFrame;
     public Fault Fault;
     /// <summary>Optional directory for the arm's journey records and ordered sales (one text file), for diffing arms.</summary>
     public string? DumpDirectory;
+    /// <summary>F2e E2 arm: a scripted player blocks some followed bodies and reports holds (PlayerDouble).</summary>
+    public bool PlayerContact;
+    /// <summary>F2e: integral minutes at which to keep a replay checkpoint (save, native clock, checkout, hold sequence).</summary>
+    public double[] Checkpoints = Array.Empty<double>();
 }
 
 public sealed class Boundary
 {
     public double Minute;
     public string SaveSha256 = "", SalesSha256 = "", JourneysSha256 = "", ParkedSha256 = "", WalletsSha256 = "", FifoSha256 = "";
+    /// <summary>F5i: visitors only: their journeys (commit and arrival minute, place), their confirmed sales, and per
+    /// visitor wallet balance, food spending and purchases. Empty-input hash in a city without visitors.</summary>
+    public string VisitorsSha256 = "";
     public int Sales, Arrivals, MissedActivities;
     /// <summary>Skipped meal outcomes of the day that ended before this 03:00 boundary.</summary>
     public int SkippedMeals;
@@ -54,8 +68,16 @@ public sealed class MovementResult
     public SortedDictionary<string, double> Metrics = new(StringComparer.Ordinal);
     public long Frames, Events, FifoSamples, QueuedFifoSamples;
     public int Reloads, InFlightAtReload, BodiesAtReload;
+    /// <summary>F5i: visitors bound to a body when the run saved and reloaded, and how many of them the new driver
+    /// gave a body again afterwards.</summary>
+    public List<string> VisitorBodiesAtReload = new();
+    public int VisitorsReacquiredAfterReload;
     public double Seconds, SimulatedDays;
     public long AllocatedBytes;
+    /// <summary>F2e: the complete hold stream of the run (parsed back from its Player.log lines) and its checkpoints.</summary>
+    public List<PlayerHoldRecord> Holds = new();
+    public List<HoldCheckpoint> Checkpoints = new();
+    public PlayerDouble? Player;
 }
 
 /// <summary>Deterministic frame-driven run. Each frame: native clock step under the F1 accounting fence,
@@ -103,6 +125,8 @@ public static class MovementRun
         private readonly Dictionary<string, Open> open = new(StringComparer.Ordinal);
         public readonly SortedDictionary<string, List<double>> Durations = new(StringComparer.Ordinal);
         public readonly StringBuilder Records = new();
+        public readonly StringBuilder VisitorRecords = new();
+        public int VisitorArrivals;
         public int Arrivals, Replaced, ShopArrivals, AdmittedAtShop, WorkArrivals;
         public void Observe(string id, CitizenState c, double minute)
         {
@@ -135,11 +159,17 @@ public static class MovementRun
             if (o.Activity == Activity.Work) WorkArrivals++;
             Records.Append(id).Append('@').Append(o.Start.ToString("R", CultureInfo.InvariantCulture)).Append('>')
                 .Append(minute.ToString("R", CultureInfo.InvariantCulture)).Append(':').Append(c.PlaceId).Append('\n');
+            if (c.IsVisitor)
+            {
+                VisitorArrivals++;
+                VisitorRecords.Append(id).Append('@').Append(o.Start.ToString("R", CultureInfo.InvariantCulture)).Append('>')
+                    .Append(minute.ToString("R", CultureInfo.InvariantCulture)).Append(':').Append(c.PlaceId).Append('\n');
+            }
         }
         /// <summary>After a reload every in-flight journey is a new object with the same saved route.</summary>
         public void Rebind(CityState state)
         {
-            foreach (var c in state.Citizens)
+            foreach (var c in PersonTable.Schedules(state))
                 if (open.TryGetValue(c.Identity.Id, out var o))
                 {
                     Require(c.Phase == CitizenPhase.Travelling && c.Journey != null, "reload lost an in-flight journey of " + c.Identity.Id);
@@ -177,7 +207,8 @@ public static class MovementRun
         var timer = System.Diagnostics.Stopwatch.StartNew();
         var planner = new GridPlanner();
         var market = new MovementMarket();
-        var state = MovementFixture.Build(options.Seed, options.Residents, carOwners: !options.WalkingOnly);
+        var state = MovementFixture.Build(options.Seed, options.Residents, carOwners: !options.WalkingOnly,
+            representationFactor: options.RepresentationFactor, visitors: options.Visitors);
         var city = MovementFixture.Attach(state, market, planner, fresh: true);
         var ledger = new JourneyLedger();
         city.ActivityObserved += ledger.Observe;
@@ -188,7 +219,10 @@ public static class MovementRun
         if (driver != null) drivers.Add(driver);
         var fifo = new FifoDigest();
         var result = new MovementResult { Arm = options.Arm, SimulatedDays = options.Days };
-        int initialCompleted = state.Citizens.Sum(c => c.CompletedJourneys);
+        var player = options.PlayerContact ? new PlayerDouble() : null;
+        result.Player = player;
+        var checkpoints = new Queue<double>(options.Checkpoints.OrderBy(m => m));
+        int initialCompleted = Completed(state);
 
         double start = MovementFixture.StartMinute;
         double end = start + options.Days * 1440.0 + SampleMinute;
@@ -229,13 +263,21 @@ public static class MovementRun
                 fifo.Sample(city, nextFifo);
                 nextFifo += FifoSampleMinutes;
             }
+            while (checkpoints.Count > 0 && native >= checkpoints.Peek() && previous < checkpoints.Peek())
+            {
+                double at = checkpoints.Dequeue();
+                Require(city.State.Minute == at, "checkpoint is not at its drained epoch minute");
+                driver?.BeforeSave();
+                result.Checkpoints.Add(new HoldCheckpoint(at, SaveCodec.Write(city.State), market.Copy(), hour, minute,
+                    city.State.PlayerHoldSequence, options.FramesPerSecond));
+            }
             if (native >= boundaries.Peek() && previous < boundaries.Peek())
             {
                 double at = boundaries.Dequeue();
                 driver?.BeforeSave();
                 result.Boundaries.Add(Sample(city, market, ledger, fifo, at));
-                Require(city.State.Citizens.Sum(c => c.CompletedJourneys) - initialCompleted == ledger.Arrivals,
-                    "journey ledger: completed journeys differ from observed arrivals (" + (city.State.Citizens.Sum(c => c.CompletedJourneys) - initialCompleted) + " vs " + ledger.Arrivals + ", replaced " + ledger.Replaced + ")");
+                Require(Completed(city.State) - initialCompleted == ledger.Arrivals,
+                    "journey ledger: completed journeys differ from observed arrivals (" + (Completed(city.State) - initialCompleted) + " vs " + ledger.Arrivals + ", replaced " + ledger.Replaced + ")");
                 if (boundaries.Count == 0) break;
             }
             if (hidden && driver != null)
@@ -265,6 +307,8 @@ public static class MovementRun
             }
             city.SynchronizeSnapshot();
             driver?.Update(Focus(options.Focus, native), hidden);
+            if (player != null && driver != null && !hidden) player.Update(city, driver, result.Holds);
+            options.AfterFrame?.Invoke(city, driver);
             // F2d: no traffic leg is ever under physical control, whatever the bodies do.
             Require(city.Traffic == null || !city.Traffic.HasPhysicalControl, "a traffic vehicle is under physical control");
 
@@ -276,10 +320,11 @@ public static class MovementRun
             }
             if (options.ReloadMidJourney && !reloaded && native >= start + 7 * 60 + 30 && city.IsCaughtUpTo(target)
                 && (driver == null ? city.State.Citizens.Count(c => c.Phase == CitizenPhase.Travelling) >= 3 && (city.Traffic?.VehicleCount ?? 0) >= 1
-                    : driver.Walkers >= 1 && (driver.Cars >= 1 || options.WalkingOnly)))
+                    : driver.Walkers >= 1 && (driver.Cars >= 1 || options.WalkingOnly) && (!options.Visitors || driver.VisitorBodies >= 1)))
             {
                 reloaded = true;
                 result.BodiesAtReload = driver?.Count ?? 0;
+                if (driver != null) result.VisitorBodiesAtReload = driver.BoundVisitors();
                 driver?.BeforeSave();
                 string json = SaveCodec.Write(city.State);
                 var read = SaveCodec.Read(json);
@@ -297,6 +342,9 @@ public static class MovementRun
             }
         }
         Require(options.Fault == Fault.None || faultInjected, "fault was never injected");
+        // F2g: a reload arm that never reloaded would pass E1 without testing the reload.
+        Require(!options.ReloadMidJourney || reloaded, "mid-journey reload never happened");
+        if (reloaded && driver != null) result.VisitorsReacquiredAfterReload = result.VisitorBodiesAtReload.Count(driver.AcquiredVisitors.Contains);
         Require(city.HistoricalClockMisses == 0, "unreported workload-caused lost demand");
         result.FinalSaveSha256 = result.Boundaries[result.Boundaries.Count - 1].SaveSha256;
         result.SalesSha256 = Sha(string.Join("\n", market.Sales));
@@ -313,6 +361,31 @@ public static class MovementRun
         result.Seconds = timer.Elapsed.TotalSeconds;
         result.AllocatedBytes = GC.GetTotalAllocatedBytes(true) - allocated;
         return result;
+    }
+
+    private static int Completed(CityState state)
+    {
+        int completed = 0;
+        foreach (var c in PersonTable.Schedules(state)) completed += c.CompletedJourneys;
+        return completed;
+    }
+
+    private static bool IsVisitorId(string id) => PersonIds.FitsKind(PersonIds.Classify(id), PersonKind.Visitor);
+
+    /// <summary>F5i: the visitor projection (see <see cref="Boundary.VisitorsSha256"/>).</summary>
+    private static string VisitorOutcomes(CityState state, MovementMarket market, JourneyLedger ledger)
+    {
+        var text = new StringBuilder(ledger.VisitorRecords.ToString()).Append("--sales--\n");
+        for (int i = 0; i < market.Sales.Count; i++)
+            if (IsVisitorId(market.SaleOwners[i])) text.Append(market.Sales[i]).Append('\n');
+        text.Append("--wallets--\n");
+        foreach (var m in state.Food!.Residents)
+        {
+            if (!IsVisitorId(m.ResidentId)) continue;
+            text.Append(m.ResidentId).Append(':').Append(m.Budget?.Balance.Units ?? 0).Append(',')
+                .Append(m.Budget?.PreparedFoodSpent.Units ?? 0).Append(',').Append(m.Purchases).Append('\n');
+        }
+        return Sha(text.ToString());
     }
 
     private static Boundary Sample(CitySimulator city, MovementMarket market, JourneyLedger ledger, FifoDigest fifo, double at)
@@ -334,7 +407,7 @@ public static class MovementRun
         }
         return new Boundary { Minute = at, SaveSha256 = Sha(SaveCodec.Write(state)), SalesSha256 = Sha(string.Join("\n", market.Sales)),
             JourneysSha256 = Sha(ledger.Records.ToString()), ParkedSha256 = Sha(parked.ToString()), WalletsSha256 = Sha(wallets.ToString()),
-            FifoSha256 = fifo.Sha, Sales = market.Sales.Count, Arrivals = ledger.Arrivals,
+            FifoSha256 = fifo.Sha, VisitorsSha256 = VisitorOutcomes(state, market, ledger), Sales = market.Sales.Count, Arrivals = ledger.Arrivals,
             MissedActivities = state.Citizens.Sum(c => c.MissedActivities), SkippedMeals = skipped };
     }
 
@@ -358,6 +431,17 @@ public static class MovementRun
         m["visits.admittedAtShop"] = ledger.AdmittedAtShop;
         m["visits.workArrivals"] = ledger.WorkArrivals;
         m["routines.missedActivities"] = state.Citizens.Sum(c => c.MissedActivities);
+        // F5i: visitor outcomes (zero in a city without visitors).
+        var visitorMeals = state.Food!.Residents.Where(r => IsVisitorId(r.ResidentId)).ToList();
+        m["visitors.count"] = state.VisitorRoutines.Count;
+        m["visitors.arrivals"] = ledger.VisitorArrivals;
+        m["visitors.purchases"] = visitorMeals.Sum(r => r.Purchases);
+        m["visitors.ownSales"] = market.SaleOwners.Count(IsVisitorId);
+        m["visitors.walletUnits"] = visitorMeals.Sum(r => r.Budget?.Balance.Units ?? 0);
+        m["visitors.foodSpentUnits"] = visitorMeals.Sum(r => r.Budget?.PreparedFoodSpent.Units ?? 0);
+        m["bodies.visitorAcquired"] = drivers.Sum(d => d.VisitorAcquired);
+        m["bodies.visitorFrames"] = drivers.Sum(d => d.VisitorFrames);
+        m["bodies.maxVisitorBodies"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.MaxVisitorBodies);
         var food = state.Food!.Residents;
         m["meals.bought"] = food.Sum(r => r.Purchases);
         m["meals.ownSales"] = market.Sales.Count;

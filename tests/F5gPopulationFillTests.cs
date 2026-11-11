@@ -15,14 +15,14 @@ public sealed class F5gPopulationFillTests
 {
     // ---- Fixtures ----
 
-    internal static readonly Schema28Tests.Business[] Base = Schema28Tests.Businesses;
+    internal static readonly WorkplaceCapacityTests.Business[] Base = WorkplaceCapacityTests.Businesses;
 
     /// <summary>Homes of seven beds, the given businesses (Work/Study places as GamePlaces builds them), a park and three shops.</summary>
-    internal static List<Place> Places(int homes, IEnumerable<Schema28Tests.Business> businesses)
+    internal static List<Place> Places(int homes, IEnumerable<WorkplaceCapacityTests.Business> businesses)
     {
         var places = Enumerable.Range(0, homes).Select(h => new Place { Id = "home:" + h.ToString("000"), Name = "Home " + h, Kind = PlaceKind.Home,
             Capacity = 7, ResidentialAreaSquareMetres = 160, Position = new Position(-60 + 25 * (h % 8), 0, -40 + 30 * (h / 8)) }).ToList();
-        places.AddRange(Schema28Tests.Workplaces(businesses).Places);
+        places.AddRange(WorkplaceCapacityTests.Workplaces(businesses).Places);
         places.Add(new Place { Id = "leisure:a", Name = "Park", Kind = PlaceKind.Leisure, Capacity = 64, Position = new Position(60, 0, -80) });
         places.AddRange(Enumerable.Range(0, 3).Select(i => new Place { Id = "shop:" + i, Name = "Shop " + i, Kind = PlaceKind.Shop,
             Capacity = 16, Position = new Position(20 + i * 30, 0, 15 - i * 5) }));
@@ -31,25 +31,25 @@ public sealed class F5gPopulationFillTests
 
     /// <summary>The census catalogue Runtime reads at load: the city's businesses plus businesses established since
     /// (catalogue-only, never saved places), as many as needed for the requested commuter demand.</summary>
-    internal static PopulationFillCatalogue Catalogue(int homes, IEnumerable<Schema28Tests.Business> businesses, IEnumerable<Schema28Tests.Business>? since = null)
+    internal static PopulationFillCatalogue Catalogue(int homes, IEnumerable<WorkplaceCapacityTests.Business> businesses, IEnumerable<WorkplaceCapacityTests.Business>? since = null)
     {
-        var all = businesses.Concat(since ?? Array.Empty<Schema28Tests.Business>()).ToList();
+        var all = businesses.Concat(since ?? Array.Empty<WorkplaceCapacityTests.Business>()).ToList();
         var places = Places(homes, all);
-        return new PopulationFillCatalogue(places, Schema28Tests.Workplaces(all).Census);
+        return new PopulationFillCatalogue(places, WorkplaceCapacityTests.Workplaces(all).Census);
     }
 
-    internal static Schema28Tests.Business[] Since(int large, int small = 0)
-        => Enumerable.Range(0, large).Select(i => new Schema28Tests.Business("address:new:" + i.ToString("000"), 900))
-            .Concat(Enumerable.Range(0, small).Select(i => new Schema28Tests.Business("address:newsmall:" + i, 30))).ToArray();
+    internal static WorkplaceCapacityTests.Business[] Since(int large, int small = 0)
+        => Enumerable.Range(0, large).Select(i => new WorkplaceCapacityTests.Business("address:new:" + i.ToString("000"), 900))
+            .Concat(Enumerable.Range(0, small).Select(i => new WorkplaceCapacityTests.Business("address:newsmall:" + i, 30))).ToArray();
 
     /// <summary>A catalogue whose commuter target for <paramref name="state"/> is exactly <paramref name="target"/>.</summary>
     /// <remarks>Every band capacity is even, so round(80% of capacity) skips some integers; whether a target is reachable
     /// depends on the residents' worker count. <see cref="TryCatalogueFor"/> reports that instead of throwing.</remarks>
-    internal static (PopulationFillCatalogue Catalogue, Schema28Tests.Business[] Since) CatalogueFor(CityState state, int homes, long target)
+    internal static (PopulationFillCatalogue Catalogue, WorkplaceCapacityTests.Business[] Since) CatalogueFor(CityState state, int homes, long target)
         => TryCatalogueFor(state, homes, target, Base) ?? throw new InvalidOperationException("No catalogue gives commuter target " + target);
 
-    internal static (PopulationFillCatalogue Catalogue, Schema28Tests.Business[] Since)? TryCatalogueFor(CityState state, int homes, long target,
-        IEnumerable<Schema28Tests.Business>? saved = null)
+    internal static (PopulationFillCatalogue Catalogue, WorkplaceCapacityTests.Business[] Since)? TryCatalogueFor(CityState state, int homes, long target,
+        IEnumerable<WorkplaceCapacityTests.Business>? saved = null)
     {
         var own = (saved ?? Base).ToArray();
         long previous = -1;
@@ -67,15 +67,15 @@ public sealed class F5gPopulationFillTests
         return null;
     }
 
-    internal static (CityState State, Schema27Tests.Market Market) City(int homes = 12, int factor = 1, int seed = 5150, bool portals = true,
-        bool finances = true, IEnumerable<Schema28Tests.Business>? businesses = null)
+    internal static (CityState State, VisitorRoutineTests.Market Market) City(int homes = 12, int factor = 1, int seed = 5150, bool portals = true,
+        bool finances = true, IEnumerable<WorkplaceCapacityTests.Business>? businesses = null)
     {
-        var state = Population.CreateFromHousing(Schema28Tests.Donors, Places(homes, businesses ?? Base), "f5g-fill", "0.41.1", seed, 1440 + 6 * 60);
-        if (portals) PortalPlaces.Add(state, Schema27Tests.Stations);
+        var state = Population.CreateFromHousing(WorkplaceCapacityTests.Donors, Places(homes, businesses ?? Base), "f5g-fill", "0.41.1", seed, 1440 + 6 * 60);
+        if (portals) PortalPlaces.Add(state, VisitorRoutineTests.Stations);
         state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = finances ? HouseholdFinance.PolicyVersion : 0,
             RepresentationFactor = factor,
             Shops = Enumerable.Range(0, 3).Select(i => new FoodScope { PlaceId = "shop:" + i, BusinessId = "b" + i, ProductId = FoodProducts.Croissant }).ToList() };
-        var market = new Schema27Tests.Market { Shops = Shops(state) };
+        var market = new VisitorRoutineTests.Market { Shops = Shops(state) };
         // Attaching the market creates the roster and the factor's K−1 visitors per resident, as Runtime does.
         new CitySimulator(state, new FreshCityTraceTests.Walk()).AttachFoodMarket(market);
         return (state, market);
@@ -85,7 +85,7 @@ public sealed class F5gPopulationFillTests
         Name = s.PlaceId, MealsPerHour = 30, Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 6 * 60, ToMinute = 22 * 60 }).ToList(),
         Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(250), Units = 100000 } } }).ToArray();
 
-    internal static CitySimulator Start(CityState state, Schema27Tests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
+    internal static CitySimulator Start(CityState state, VisitorRoutineTests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
     {
         var city = new CitySimulator(state, routes ?? new FreshCityTraceTests.Walk());
         city.AttachFoodMarket(market);
@@ -94,7 +94,7 @@ public sealed class F5gPopulationFillTests
     }
 
     /// <summary>Saves and loads. Persons staged for a coming boundary are not in the city, so they are not saved.</summary>
-    internal static CitySimulator Reload(CitySimulator city, Schema27Tests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
+    internal static CitySimulator Reload(CitySimulator city, VisitorRoutineTests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
     {
         string payload = SaveCodec.Write(city.State);
         var read = SaveCodec.Read(payload);
@@ -152,7 +152,7 @@ public sealed class F5gPopulationFillTests
             {
                 var (state, _) = City(12, 1, seed);
                 var places = Places(12, Base.Concat(since));
-                var census = Schema28Tests.Workplaces(Base.Concat(since)).Census;
+                var census = WorkplaceCapacityTests.Workplaces(Base.Concat(since)).Census;
                 var targets = new PopulationFillCatalogue(places, census).Targets(state);
                 var reference = PopulationCensus.Compute(new PopulationCensusInput { Places = places, Workplaces = census,
                     Residents = PopulationCensusInput.CaptureResidents(state.Citizens), StationIds = state.Portals.ToList() });
@@ -281,7 +281,7 @@ public sealed class F5gPopulationFillTests
         Assert.Empty(state.Visitors); Assert.False(city.PopulationFillAttached);
         // A refused catalogue (duplicate place) detaches the fill too.
         var places = Places(12, Base); places.Add(places[0]);
-        var refused = new PopulationFillCatalogue(places, Schema28Tests.Workplaces(Base).Census);
+        var refused = new PopulationFillCatalogue(places, WorkplaceCapacityTests.Workplaces(Base).Census);
         Assert.True(refused.Refused);
         city.AttachPopulationFill(refused);
         Assert.False(city.PopulationFillAttached);
@@ -323,12 +323,12 @@ public sealed class F5gPopulationFillTests
     {
         const int homes = 90;
         // A seed whose resident worker count lets the even band capacities reach both 1,000 and 700 exactly.
-        CityState state = null!; Schema27Tests.Market market = null!; PopulationFillCatalogue thousand = null!;
-        Schema28Tests.Business[] own = Base;
+        CityState state = null!; VisitorRoutineTests.Market market = null!; PopulationFillCatalogue thousand = null!;
+        WorkplaceCapacityTests.Business[] own = Base;
         for (int extra = 0; ; extra++)
         {
             // Small businesses of the city itself change both the capacity and the seated resident workers.
-            own = Base.Concat(Enumerable.Range(0, extra).Select(i => new Schema28Tests.Business("address:own:" + i, 30))).ToArray();
+            own = Base.Concat(Enumerable.Range(0, extra).Select(i => new WorkplaceCapacityTests.Business("address:own:" + i, 30))).ToArray();
             (state, market) = City(homes, 1, seed: 1234, businesses: own);
             var found = TryCatalogueFor(state, homes, 1000, own);
             if (found != null && TryCatalogueFor(state, homes, 700, own) != null) { thousand = found.Value.Catalogue; break; }
@@ -381,7 +381,7 @@ public sealed class F5gPopulationFillTests
         PopulationFillCatalogue Fill()
         {
             var since = Since(3, 1);
-            var places = Places(12, Base.Concat(since)); var census = Schema28Tests.Workplaces(Base.Concat(since)).Census;
+            var places = Places(12, Base.Concat(since)); var census = WorkplaceCapacityTests.Workplaces(Base.Concat(since)).Census;
             if (shuffled) { places = places.OrderBy(p => StableRandom.Hash(p.Id, 3)).ToList(); census = census.OrderBy(w => StableRandom.Hash(w.WorkPlaceId, 3)).ToList(); }
             return new PopulationFillCatalogue(places, census);
         }
@@ -467,7 +467,7 @@ public sealed class F5gPopulationFillTests
         // Review Sol-r1-1, case 1: after the fill at minute 2880 a larger catalogue attached in process waits for 4320, and a
         // reload of the 2880 checkpoint with that catalogue does the same instead of re-filling 2880.
         var (state, market) = City(12, 1);
-        market = new Schema27Tests.Market { Shops = Shops(state) };
+        market = new VisitorRoutineTests.Market { Shops = Shops(state) };
         var city = Start(state, market, Catalogue(12, Base));
         Advance(city, 2 * 1440);
         int filled = state.Visitors.Count;
@@ -479,7 +479,7 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(filled, state.Visitors.Count);
         var read = SaveCodec.Read(checkpoint); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         // Its own market double, so the two cities' native orders are not shared.
-        var reloaded = Start(read.State!, new Schema27Tests.Market { Shops = Shops(read.State!) }, larger);
+        var reloaded = Start(read.State!, new VisitorRoutineTests.Market { Shops = Shops(read.State!) }, larger);
         Advance(reloaded, 2 * 1440 + 1);
         Assert.Equal(filled, read.State!.Visitors.Count); Assert.Equal(0, reloaded.PopulationFillCreated);
         Advance(city, 3 * 1440 + 1); Advance(reloaded, 3 * 1440 + 1);
@@ -729,8 +729,8 @@ public sealed class F5gPopulationFillTests
         Invariants(city.State, "finances off reload");
 
         // Without a food roster the current writer refuses visitors, so the fill creates none.
-        var foodless = Population.CreateFromHousing(Schema28Tests.Donors, Places(12, Base), "f5g-fill", "0.41.1", 5150, 1440 + 360);
-        PortalPlaces.Add(foodless, Schema27Tests.Stations);
+        var foodless = Population.CreateFromHousing(WorkplaceCapacityTests.Donors, Places(12, Base), "f5g-fill", "0.41.1", 5150, 1440 + 360);
+        PortalPlaces.Add(foodless, VisitorRoutineTests.Stations);
         var plain = new CitySimulator(foodless, new FreshCityTraceTests.Walk());
         plain.AttachPopulationFill(Catalogue(12, Base, Since(10)));
         Advance(plain, 4 * 1440);
@@ -942,8 +942,8 @@ public sealed class F5gPopulationFillTests
             Assert.Equal(active.Count, active.Select(r => r.Legs).Distinct(ReferenceEqualityComparer.Instance).Count());
             journeys.AddRange(active);
             Assert.True(city.ActiveJourneyIndexMatchesState());
-            // No visitor is ever a body candidate or receives a body.
-            Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.False(ActiveJourneyIndex.ReceivesBody(r)));
+            // F5i: a travelling visitor is a body candidate.
+            Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.True(ActiveJourneyIndex.ReceivesBody(r) && city.ActiveJourneys.BodyCandidates.Contains(r)));
         }
         Assert.True(planner.PortalHits > 0 && planner.PortalMisses > 0, $"hits {planner.PortalHits} misses {planner.PortalMisses}");
         Assert.True(planner.PortalHits > planner.PortalMisses);
@@ -998,16 +998,14 @@ public sealed class F5gPopulationFillTests
     // ---- Persistence ----
 
     [Fact]
-    public void DayVisitorsRoundTripInWriter33AndMalformedDayVisitorsAreRefusedAndKept()
+    public void DayVisitorsRoundTripAndMalformedDayVisitorsAreRefusedAndKept()
     {
-        // F7d (writer 34) landed before this slice merged: the visitor shape is writer 33's, carried in the compact wire.
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var (state, market) = City(12, 1);
         var city = Start(state, market, Catalogue(12, Base, Since(2)));
         Advance(city, 2 * 1440 + 600);
         Assert.Contains(state.Visitors, v => v.Stay.Pattern == VisitorPattern.DayVisit);
         string payload = SaveCodec.Write(state);
-        Assert.StartsWith("{\"Schema\":" + CityState.CompactSchema + ",", payload);
+        Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema + ",", payload);
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));

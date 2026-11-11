@@ -27,16 +27,14 @@ namespace PersistentCity.Persistence
             SnapshotSection.Traffic, SnapshotSection.Food, SnapshotSection.Research, SnapshotSection.Vendors, SnapshotSection.Economy,
         };
 
-        private SaveSnapshot(CityState wire, int schema, int sharedRoutes, int copiedRoutes)
+        private SaveSnapshot(CityState wire, int sharedRoutes, int copiedRoutes)
         {
-            Wire = wire; Schema = schema; Minute = wire.Minute; PopulationKey = wire.PopulationKey ?? "";
+            Wire = wire; Minute = wire.Minute; PopulationKey = wire.PopulationKey ?? "";
             SharedRoutes = sharedRoutes; CopiedRoutes = copiedRoutes;
         }
 
         /// <summary>The detached graph. Only validation and the encoder read it; it is never handed to the runtime.</summary>
         internal CityState Wire { get; }
-        /// <summary>The writer schema this snapshot was captured for.</summary>
-        public int Schema { get; }
         public double Minute { get; }
         public string PopulationKey { get; }
         /// <summary>Committed journey routes shared by reference instead of copied.</summary>
@@ -46,7 +44,7 @@ namespace PersistentCity.Persistence
         /// <summary>Set once a session published this snapshot's payload.</summary>
         internal bool Published { get; set; }
 
-        internal static SaveSnapshot Capture(CityState live, int schema, IReadOnlyList<SnapshotSection>? order = null)
+        internal static SaveSnapshot Capture(CityState live, IReadOnlyList<SnapshotSection>? order = null)
         {
             var copier = new Copier();
             var wire = new CityState();
@@ -58,7 +56,7 @@ namespace PersistentCity.Persistence
                 copier.Section(section, live, wire);
             }
             foreach (bool section in done) if (!section) throw new ArgumentException("A snapshot needs every section.");
-            return new SaveSnapshot(wire, schema, copier.SharedRoutes, copier.CopiedRoutes);
+            return new SaveSnapshot(wire, copier.SharedRoutes, copier.CopiedRoutes);
         }
 
         // Copies tolerate null records and lists and keep out-of-range values unchanged, so validation reports
@@ -90,6 +88,7 @@ namespace PersistentCity.Persistence
                         wire.PopulationTarget = live.PopulationTarget; wire.InitialImportedResidents = live.InitialImportedResidents;
                         wire.NextVisitorSequence = live.NextVisitorSequence; wire.IdentityPolicyVersion = live.IdentityPolicyVersion;
                         wire.Portals = Values(live.Portals)!;
+                        wire.PlayerHoldSequence = live.PlayerHoldSequence;
                         return;
                     case SnapshotSection.Places: wire.Places = List(live.Places, Place)!; return;
                     case SnapshotSection.Residents:
@@ -159,6 +158,7 @@ namespace PersistentCity.Persistence
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
                 copy.DepartureMinute = c.DepartureMinute; copy.NextEventMinute = c.NextEventMinute; copy.ActivityUntilMinute = c.ActivityUntilMinute;
                 copy.CompletedJourneys = c.CompletedJourneys; copy.MissedActivities = c.MissedActivities;
+                copy.PlayerHoldMinutes = c.PlayerHoldMinutes;
                 copy.RecentVisits = List(c.RecentVisits, VisitCopy)!;
                 copy.Traits = Traits(c.Traits);
                 // Derived from the immutable identity and the seed; DailyRoutine rebuilds it when either differs.

@@ -18,14 +18,28 @@ namespace PersistentCity.Compatibility
 
     public sealed class RloReadResult
     {
-        internal RloReadResult(RloReadStatus status, string message, string version = "", string key = "", int seed = 0, IReadOnlyList<CitizenIdentity>? identities = null)
-        { Status = status; Message = message; SourceVersion = version; PopulationKey = key; CitySeed = seed; Identities = identities ?? Array.Empty<CitizenIdentity>(); }
+        internal RloReadResult(RloReadStatus status, string message, string version = "", string key = "", int seed = 0, IReadOnlyList<CitizenIdentity>? identities = null,
+            DonorReadReason reason = DonorReadReason.NotReady)
+        {
+            Status = status; Message = message; SourceVersion = version; PopulationKey = key; CitySeed = seed; Identities = identities ?? Array.Empty<CitizenIdentity>();
+            // F8d (D6 option B): every construction site states its reason class; Status keeps its four values.
+            Reason = status == RloReadStatus.Ready ? DonorReadReason.Ready : status == RloReadStatus.MissingDependency ? DonorReadReason.Missing : reason;
+        }
         public RloReadStatus Status { get; }
+        /// <summary>F8d: why this read is or is not Ready (Off, NotYet, Refreshing are transient; Shared, Failed and
+        /// Incompatible stop).</summary>
+        public DonorReadReason Reason { get; }
         public string Message { get; }
         public string SourceVersion { get; }
         public string PopulationKey { get; }
         public int CitySeed { get; }
         public IReadOnlyList<CitizenIdentity> Identities { get; }
+
+        /// <summary>F8d, after activation only: Match continues, Different and Unsupported stop as before, Transient
+        /// continues on the saved catalogue (no identity is read, created or changed). Activation stays strict
+        /// (<see cref="MatchesPopulation"/>).</summary>
+        public DonorContinuity Continuity(CityState state)
+            => Status == RloReadStatus.Ready ? (MatchesPopulation(state) ? DonorContinuity.Match : DonorContinuity.Different) : DonorReads.Continuity(Reason);
 
         /// <summary>Checks a structurally validated snapshot against the actual current RLO identities.</summary>
         public bool MatchesPopulation(CityState state)
@@ -227,15 +241,15 @@ namespace PersistentCity.Compatibility
             try
             {
                 var c = Contract(assembly);
-                if ((bool)c.InSession.GetValue(null)!) return NotReady("Multiplayer sessions are unsupported by Persistent City v0.1; leave the Going Public session first.", version);
+                if ((bool)c.InSession.GetValue(null)!) return NotReady(DonorReadReason.Shared, "Multiplayer sessions are unsupported by Persistent City v0.1; leave the Going Public session first.", version);
                 if (!supplied) director = c.Instance.GetValue(null);
-                if (director == null) return NotReady("FlareDirector.Instance is not available yet.", version);
+                if (director == null) return NotReady(DonorReadReason.NotYet, "FlareDirector.Instance is not available yet.", version);
                 if (director.GetType() != c.DirectorType) throw new ContractException("Director snapshot is not the reviewed RLO type.");
-                if (!(bool)c.Running.GetValue(director)!) return NotReady("Flare is not running; enable RLO's Social Media option and load a city with Flare available.", version);
+                if (!(bool)c.Running.GetValue(director)!) return NotReady(DonorReadReason.Off, "Flare is not running; enable RLO's Social Media option and load a city with Flare available.", version);
                 object? liveFile = c.File.GetValue(director);
-                if (liveFile == null) return NotReady("Flare's current account is not available yet.", version);
+                if (liveFile == null) return NotReady(DonorReadReason.NotYet, "Flare's current account is not available yet.", version);
                 int seed = (int)c.CitySeed.Invoke(null, new[] { liveFile })!;
-                if (seed == 0) return NotReady("Flare has no initialized city seed yet.", version);
+                if (seed == 0) return NotReady(DonorReadReason.NotYet, "Flare has no initialized city seed yet.", version);
                 if (!(c.Citizens.GetValue(director) is IEnumerable population)) throw new ContractException("Citizens is not enumerable.");
                 var identities = new List<CitizenIdentity>(ReviewedPopulation);
                 var ids = new HashSet<int>();
@@ -254,14 +268,14 @@ namespace PersistentCity.Compatibility
                     object plan = c.Avatar.Invoke(null, new object[] { seed, id })!;
                     int appearance = (int)c.LookSeed.GetValue(plan)!;
                     if (appearance == 0 || (int)c.LookAge.GetValue(plan)! != years || (bool)c.LookFemale.GetValue(plan)! != sex)
-                        return NotReady("Current citizen age/sex and city avatar seed disagree; wait for RLO's city refresh.", version);
+                        return NotReady(DonorReadReason.Refreshing, "Current citizen age/sex and city avatar seed disagree; wait for RLO's city refresh.", version);
                     identities.Add(new CitizenIdentity { Id = "c" + id.ToString(CultureInfo.InvariantCulture), Name = given + " " + family,
                         District = (string?)c.District.GetValue(citizen) ?? "", Age = years, Female = sex, Persona = (Persona)character, AppearanceSeed = appearance });
                 }
-                if (identities.Count == 0) return NotReady("Flare's actual citizen population is not initialized yet.", version);
+                if (identities.Count == 0) return NotReady(DonorReadReason.NotYet, "Flare's actual citizen population is not initialized yet.", version);
                 if (identities.Count != ReviewedPopulation) throw new ContractException("Citizens must contain the reviewed 400 identities; found " + identities.Count + ".");
                 if (!(bool)c.Running.GetValue(director)! || !ReferenceEquals(liveFile, c.File.GetValue(director)) || seed != (int)c.CitySeed.Invoke(null, new[] { liveFile })!)
-                    return NotReady("RLO's current account changed during the read; retry on the main thread.", version);
+                    return NotReady(DonorReadReason.Refreshing, "RLO's current account changed during the read; retry on the main thread.", version);
                 identities.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
                 return new RloReadResult(RloReadStatus.Ready, "Read 400 actual RLO citizens through the reviewed reflection contract.", version, PopulationHash(seed, identities), seed, identities.AsReadOnly());
             }
@@ -275,10 +289,10 @@ namespace PersistentCity.Compatibility
             {
                 var read = new List<RloBridgeCitizen>(ReviewedPopulation);
                 RloBridge.Status status = bridge.ReadCitizens(read, out int seed);
-                if (status == RloBridge.Status.Failed) throw new ContractException(RloBridge.Describe(status));
-                if (status != RloBridge.Status.Ready) return NotReady(RloBridge.Describe(status), version);
-                if (read.Count == 0) return NotReady("Flare's actual citizen population is not initialized yet.", version);
-                if (seed == 0) return NotReady("Flare has no initialized city seed yet.", version);
+                if (status == RloBridge.Status.Failed) return Failure(new ContractException(RloBridge.Describe(status)), version, DonorReadReason.Failed);
+                if (status != RloBridge.Status.Ready) return NotReady(Reason(status), RloBridge.Describe(status), version);
+                if (read.Count == 0) return NotReady(DonorReadReason.NotYet, "Flare's actual citizen population is not initialized yet.", version);
+                if (seed == 0) return NotReady(DonorReadReason.NotYet, "Flare has no initialized city seed yet.", version);
                 // Persistent City's own donor requirements; the contract itself does not fix the count.
                 if (read.Count != ReviewedPopulation) throw new ContractException("Citizens must contain the reviewed 400 identities; found " + read.Count + ".");
                 var identities = new List<CitizenIdentity>(ReviewedPopulation);
@@ -339,12 +353,18 @@ namespace PersistentCity.Compatibility
             if (method == null || method.ReturnType != returns) throw new ContractException("Missing or changed public method: " + type.Name + "." + name + ".");
             return method;
         }
-        private static RloReadResult NotReady(string message, string version) => new RloReadResult(RloReadStatus.NotReady, message, version);
-        private static RloReadResult Failure(Exception exception, string version)
+        private static RloReadResult NotReady(DonorReadReason reason, string message, string version)
+            => new RloReadResult(RloReadStatus.NotReady, message, version, reason: reason);
+        private static RloReadResult Failure(Exception exception, string version, DonorReadReason reason = DonorReadReason.Incompatible)
         {
             Exception detail = exception is TargetInvocationException invocation && invocation.InnerException != null ? invocation.InnerException : exception;
-            return new RloReadResult(RloReadStatus.Incompatible, detail.GetType().Name + ": " + detail.Message, version);
+            return new RloReadResult(RloReadStatus.Incompatible, detail.GetType().Name + ": " + detail.Message, version, reason: reason);
         }
+        internal static DonorReadReason Reason(RloBridge.Status status) => status switch
+        {
+            RloBridge.Status.Ready => DonorReadReason.Ready, RloBridge.Status.Off => DonorReadReason.Off, RloBridge.Status.NotYet => DonorReadReason.NotYet,
+            RloBridge.Status.Refreshing => DonorReadReason.Refreshing, RloBridge.Status.Shared => DonorReadReason.Shared, _ => DonorReadReason.Failed,
+        };
         private sealed class ContractException : Exception { public ContractException(string message) : base(message) { } }
     }
 }

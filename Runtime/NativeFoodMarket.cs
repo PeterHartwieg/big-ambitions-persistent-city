@@ -19,7 +19,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>Automatic whole-business food authority. Saves use the same native snapshot
     /// as population/meal records. Native code owns inventory, orders and daily accounting.</summary>
-    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IDisposable
+    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IFoodStartupValidation, IDisposable
     {
         public const string Product = "ba:itemname_croissant";
         private const string PatchId = "persistentcity.food-routines";
@@ -41,10 +41,27 @@ namespace PersistentCity.Runtime
         private ConditionalWeakTable<BuildingRegistration, ContractRefusal> refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();
         private long lastContractRecoveryHour = -1;
         private void RefuseContract(BuildingRegistration registration)
-        { if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration,
-            new ContractRefusal(SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour)); }
+        {
+            long hour = SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
+            if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration, new ContractRefusal(hour));
+            // E5b3 Decision 7: the coordinator keeps the same first refused hour for its recovery gates.
+            if (contractMode != ContractMode.Fallback) contracts.Refuse(PlaceId(registration), hour);
+        }
         private readonly Harmony patches = new Harmony(PatchId);
-        private static readonly MethodInfo Process = AccessTools.Method(typeof(RetailBusinessSimulator), "ProcessCustomer");
+        // F8c (D3): the checkout contract is verified at construction. Refused, the market runs in checkout-off mode: no
+        // price prefix, CanServe false for every shop, and each owned shop is observed ineligible so the existing release
+        // path hands it back at the next drained accounting boundary. Paid and uncertain receipts are still confirmed.
+        // F8h (review Sol-r1-1): the conflict decision waits for the game's city load to finish. Until then checkout uses
+        // the member contract for eligibility, sells nothing (CanServe, BuyLive) and installs no price prefix.
+        private MethodInfo? process;
+        private FoodCheckoutMode checkout;
+        private bool checkoutSettled;
+        /// <summary>food.checkout.shop refusal; null when the checkout contract is verified.</summary>
+        internal string? CheckoutRefusal => checkout.Refusal;
+        /// <summary>The once-per-load checkout decision is made (the city load finished).</summary>
+        internal bool CheckoutSettled => checkoutSettled;
+        /// <summary>Sol-r2-2: run once when a decision deferred past construction is made (the activation lines).</summary>
+        internal Action? CheckoutSettledOnce { get; set; }
         private bool buying;
         private int receiptDay = -1;
         private float approvedPrice;
@@ -106,11 +123,13 @@ namespace PersistentCity.Runtime
         private bool journalReady;
         public ShopObservation? JournalFor(string businessId) => changeJournal?.Find(businessId);
         private readonly ShopObservedOffer[] journalOffers = new ShopObservedOffer[8];
-        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = 4, EconomicLedger? economy = null)
+        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = FoodMenuPolicy.LiveMaximumOffers, EconomicLedger? economy = null)
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
+            checkout = NativeFoodContract.StartCheckout(NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out checkoutSettled), out process);
             if (economy != null) changeJournal = new FoodChangeJournal(state, economy);
+            contractEconomy = economy;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
             this.rivalWarning = rivalWarning;
             menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));
@@ -135,11 +154,27 @@ namespace PersistentCity.Runtime
             {
                 NativeFoodOwnership.Attach(this);
                 journalReady = true;
-                patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
-                    prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First });
+                if (checkoutSettled) InstallCheckoutPrefix();
                 StartContractShadow(); // E5b2 hint hooks and stamps; shadow only, never throws.
             }
             catch { Dispose(); throw; }
+        }
+        private void InstallCheckoutPrefix() => NativeFoodContract.InstallPricePrefix(checkout, () =>
+            patches.Patch(AccessTools.Method(typeof(CitizenData), "IsPriceAcceptable", new[] { typeof(string), typeof(float) }),
+                prefix: new HarmonyMethod(typeof(NativeFoodMarket), nameof(ResidentPrice)) { priority = Priority.First }));
+        /// <summary>F8h (Sol-r1-1): the first RefreshDiscovery after the city load decides checkout once. A refusal
+        /// observes every shop ineligible now, so owned shops go through the existing withdrawal; otherwise the price
+        /// prefix is installed as at construction.</summary>
+        private void SettleCheckout()
+        {
+            var decided = NativeFoodContract.CheckoutForLoad(UI.Load.LoadScene.isLoading, out bool settled);
+            if (!settled) return;
+            checkout = NativeFoodContract.StartCheckout(decided, out process);
+            checkoutSettled = true;
+            if (checkout.Refusal != null) RefreshKnownOwnership();
+            else InstallCheckoutPrefix();
+            var settledNow = CheckoutSettledOnce; CheckoutSettledOnce = null;
+            settledNow?.Invoke();
         }
         public static string PlaceId(BuildingRegistration r) => "address:" + Uri.EscapeDataString(r.StreetName) + ":"
             + r.StreetNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":shop";
@@ -166,8 +201,72 @@ namespace PersistentCity.Runtime
                 bags = tags.Contains("ba:businesstag_customersneedpaperbags");
             authoredBagPolicies.Add(type, new BagPolicy(bags));
         }
-        private bool SupportedMenu(BuildingRegistration r) => !refusedContracts.TryGetValue(r, out _) && SupportedBusiness(r)
-            && r.cachedAvailableProducts.Count <= menuLimit;
+        // E5b3: also the published contract image plus its stamp (Decision 2); E5b1 rules while the coordinator is not active.
+        private bool SupportedMenu(BuildingRegistration r)
+        {
+            if (!checkout.Eligible || refusedContracts.TryGetValue(r, out _)) return false;
+            if (!SupportedBusiness(r)) { RefuseRemovedProduct(r); return false; }
+            return r.cachedAvailableProducts.Count <= menuLimit && ContractAdmits(r);
+        }
+
+        /// <summary>E5b5: the market's product policy (config, API publication and E5b2's loaded-name image), the same
+        /// source new decision contexts read. Set once by the host after composing the markets; unset admits no
+        /// dynamic product.</summary>
+        internal FoodProductPolicySource? ProductPolicySource { get; set; }
+        // Decision 12: dynamic acquisition only while every capability passed at city start and the coordinator is active.
+        // Warming and fallback keep the original-three guard.
+        private bool DynamicAcquisition => contractMode == ContractMode.Active && contractCapabilities.AllPassed;
+        private readonly FoodLivePolicy livePolicy = new FoodLivePolicy();
+        // A rebuilding catalogue (no current loaded-name image while the reader runs) is not a removed product.
+        private FoodProductPolicy CurrentProductPolicy => livePolicy.Resolve(ProductPolicySource?.Current ?? FoodProductPolicy.OriginalThree,
+            contractReader != null && contractReader.LoadedNames == null);
+        // Image admission (CompleteFoodMenu.Check) classes products with the same resolver, also while warming, so a
+        // dynamic shop has a passing image when the coordinator turns active.
+        private FoodProductMetadataResolver AdmissionResolver
+            => contractCapabilities.AllPassed ? CurrentProductPolicy.Resolver : FoodProductMetadataResolver.Empty;
+        // An all-original menu never reads the policy.
+        private FoodLiveMenuRefusal LiveMenu(List<string>? menu)
+        {
+            if (menu == null) return FoodLiveMenuRefusal.Empty;
+            bool original = true;
+            for (int i = 0; i < menu.Count && original; i++) original = FoodProducts.Known(menu[i]);
+            return FoodMenuPolicy.LiveMenu(menu, original || !DynamicAcquisition ? null : CurrentProductPolicy);
+        }
+        // Startup: from construction until the coordinator first leaves warming (shadow not started yet, or warming).
+        private bool StartupPhase => contractMode == ContractMode.Warming
+            || contractMode == ContractMode.Fallback && contractFallback == ShadowNotStarted;
+        // E5b5: a shop the saved city already owns keeps its ownership and desire through startup, so a reload does not
+        // withdraw it while images warm. It sells nothing until its contract image is validated: it is not a capture
+        // candidate, checkout refuses it, and Core holds its travelling or serving meals (IFoodStartupValidation). Its
+        // names are checked against the policy once loaded names exist. New acquisitions stay guarded, and a failed
+        // capability ends startup (Fallback), which withdraws the shop as Decision 12 requires.
+        private FoodLiveMenuRefusal LiveMenu(BuildingRegistration r)
+        {
+            var menu = LiveMenu(r.cachedAvailableProducts);
+            if (!StartupHeld(r, menu)) return menu;
+            return FoodMenuPolicy.LiveMenu(r.cachedAvailableProducts, CurrentProductPolicy, loadedNamesPending: true);
+        }
+        private bool StartupHeld(BuildingRegistration r, FoodLiveMenuRefusal menu)
+            => menu == FoodLiveMenuRefusal.OriginalThreeGuard && StartupPhase && NativeFoodOwnership.Find(r)?.Managed == true;
+        private bool StartupHeld(BuildingRegistration r) => StartupHeld(r, LiveMenu(r.cachedAvailableProducts));
+        // F8h (review Sol-r2-1): while checkout waits for the city load, every scoped shop awaits validation, so Core holds
+        // its saved commitments (neither bought nor missed) until the decision serves or withdraws it.
+        public bool AwaitingValidation(string businessId)
+            => ReferenceEquals(save, SaveGameManager.Current) && scopesByBusiness.TryGetValue(businessId, out var scope)
+                && (!checkoutSettled || registrations.TryGetValue(scope.PlaceId, out var reg) && StartupHeld(reg));
+        public const string StartupValidationRefusal = "Waiting: saved food contract is validated after load; no sale before";
+        // E5b5: a mod removed (or a product reclassed) under an owned or wanted shop is a recorded refusal, so desire is
+        // withdrawn now, the hand-back waits for the boundary, and a return goes through Decision 7 recovery with a
+        // fresh image before any reacquisition. History and receipts are untouched.
+        private void RefuseRemovedProduct(BuildingRegistration r)
+        {
+            if (!DynamicAcquisition || !contractKeys.TryGetValue(r, out var key)) return;
+            var row = NativeFoodOwnership.Row(key);
+            if (row == null || !row.Managed && !row.Desired) return;
+            var menu = LiveMenu(r.cachedAvailableProducts);
+            if (menu != FoodLiveMenuRefusal.NotLoaded && menu != FoodLiveMenuRefusal.MealClass) return;
+            contractLastRefusal = "menu: " + menu; RefuseContract(r);
+        }
         private bool CurrentAuthoredBagPolicy(BuildingRegistration r)
         {
             var type = BusinessTypeHelper.GetData(r.businessTypeName);
@@ -185,48 +284,68 @@ namespace PersistentCity.Runtime
         internal static bool Supported(BuildingRegistration r) => active != null && active.SupportedMenu(r);
         private bool SupportedBusiness(BuildingRegistration r)
         {
-            if (!r.RentedByPlayer || !r.HasEstablishedBusiness || r.AvailableForRent || r.cachedAvailableProducts == null
-                || r.cachedAvailableProducts.Count < 1 || r.cachedAvailableProducts.Count > FoodMenuPolicy.LiveMaximumOffers) return false;
-            for (int i = 0; i < r.cachedAvailableProducts.Count; i++)
-            {
-                // Historical live support remains bounded here until the notification contract
-                // and schema-25 dynamic execution can be integrated together. No new name list.
-                if (!FoodProducts.Known(r.cachedAvailableProducts[i])) return false;
-                for (int j = 0; j < i; j++) if (r.cachedAvailableProducts[i] == r.cachedAvailableProducts[j]) return false;
-            }
+            if (!r.RentedByPlayer || !r.HasEstablishedBusiness || r.AvailableForRent) return false;
+            // E5b5: width, duplicates and the name rule (Decision 12); the published image and CompleteFoodMenu.Check
+            // decide the rest through ContractAdmits.
+            if (LiveMenu(r) != FoodLiveMenuRefusal.None) return false;
             var type = BusinessTypeHelper.GetData(r.businessTypeName);
             return type?.simulator?.GetType() == typeof(FullServiceBusinessSimulator) && !type.hasEntranceFee
                 && authoredBagPolicies.TryGetValue(type, out var bags) && bags.Bags;
         }
         public string ScopeStatus(string placeId)
         {
+            if (checkout.ScopeReason is string off) return off;
             if (supplyExclusions.TryGetValue(placeId, out var excluded)) return excluded;
             string menu = MenuStatus(placeId);
             return menu.Length > 0 ? menu : supplyExclusions.TryGetValue(placeId, out var supply) ? supply : "";
         }
         private string MenuStatus(string placeId)
         {
-            if (registrations.TryGetValue(placeId, out var dynamicReg) && dynamicReg.cachedAvailableProducts != null)
-                for (int i = 0; i < dynamicReg.cachedAvailableProducts.Count; i++)
-                    if (!FoodProducts.Known(dynamicReg.cachedAvailableProducts[i])) return DynamicIntegrationRefusal;
+            if (registrations.TryGetValue(placeId, out var menuReg) && menuReg.cachedAvailableProducts != null)
+            {
+                // Held at startup: no read, capture or sale until the image is validated (ownership kept).
+                if (StartupHeld(menuReg)) return StartupValidationRefusal;
+                var menu = LiveMenu(menuReg);
+                if (menu == FoodLiveMenuRefusal.OriginalThreeGuard)
+                    return contractMode == ContractMode.Warming ? "Waiting: food contract warming; non-original products wait for every shop's first image"
+                        : DynamicIntegrationRefusal + ": " + DynamicRefusalReason;
+                if (menu != FoodLiveMenuRefusal.None) return "Excluded: " + MenuRefusalText(menu);
+            }
             if (!registrations.TryGetValue(placeId, out var reg) || !SupportedMenu(reg)) return "Excluded: unsupported menu or business type";
             var authority = NativeFoodOwnership.Find(reg);
             if (authority == null || !authority.CanServe) return "Waiting for a safe native accounting boundary";
             return "";
         }
-        public const string DynamicIntegrationRefusal = "E5b dynamic native integration incomplete: mutation notifications, holder reconciliation and held execution need implementation and RIG-CAT/RIG-SHOPEDIT proof";
+        /// <summary>E5b5 (Decision 12): shown only when a runtime capability failed or the coordinator fell back; the reason
+        /// follows. <c>pc food contract capabilities</c> lists every capability.</summary>
+        public const string DynamicIntegrationRefusal = "E5b dynamic native acquisition off; original three only";
+        private string DynamicRefusalReason => !contractCapabilities.AllPassed ? "capability failed: " + contractCapabilities.FirstFailure
+            : contractFallback.Length > 0 ? contractFallback : "coordinator " + contractMode;
+        private static string MenuRefusalText(FoodLiveMenuRefusal refusal) => refusal switch
+        {
+            FoodLiveMenuRefusal.Empty => "empty menu",
+            FoodLiveMenuRefusal.Width => "more than eight products",
+            FoodLiveMenuRefusal.Duplicate => "duplicate menu product",
+            FoodLiveMenuRefusal.Name => "malformed product name",
+            FoodLiveMenuRefusal.NotLoaded => "menu product not in the loaded catalogue",
+            FoodLiveMenuRefusal.MealClass => "menu product is not classed Food",
+            _ => refusal.ToString()
+        };
         internal static bool IsBuying(BuildingRegistration reg) => active != null && active.buying && ReferenceEquals(active.buyerShop, reg);
-        public bool IsConfirmedPaid(ResidentMeal meal) => meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
-            && FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;
+        // F8c (review Sol-r5-1): the shared reader the unit tests execute; checkout-off does not change it.
+        public bool IsConfirmedPaid(ResidentMeal meal)
+        {
+            var current = SaveGameManager.Current;
+            return FoodReceiptEvidence.IsConfirmedPaid(ReferenceEquals(save, current), current?.modData, meal);
+        }
         public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
         {
-            total = Money.Zero; extras = Array.Empty<FoodTicketLine>();
-            return meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
-                && FoodSaleReceipts.TryReadPaidTicket(SaveGameManager.Current.modData, meal, out total, out extras);
+            var current = SaveGameManager.Current;
+            return FoodReceiptEvidence.TryConfirmedTicket(ReferenceEquals(save, current), current?.modData, meal, out total, out extras);
         }
         public bool CanServe(string businessId)
         {
-            if (!ReferenceEquals(save, SaveGameManager.Current)) return false;
+            if (!ReferenceEquals(save, SaveGameManager.Current) || !checkoutSettled || !checkout.Serves) return false;
             if(!scopesByBusiness.TryGetValue(businessId,out var scope) || !registrations.TryGetValue(scope.PlaceId,out var reg)) return false;
             var authority=NativeFoodOwnership.Find(reg);
             if(authority?.BusinessId!=businessId) return false;
@@ -288,10 +407,18 @@ namespace PersistentCity.Runtime
                     RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(b.PlaceId);
                     continue;
                 }
+                // E5b3 Decision 3: a selected capture or checkout rechecks the published image before any supply read.
+                if ((observed != null || capture) && !ContractRecheck(reg, observed != null))
+                {
+                    supplyExclusions[b.PlaceId] = ContractCatalogueWaiting ? "Waiting: food catalogue rebuilding"
+                        : "Excluded: complete food contract changed since its published image";
+                    continue;
+                }
                 b.Offers.RemoveAll(o => !scope.ContainsProduct(o.ProductId));
                 var products = scope.Products().ToArray();
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.
-                var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products)
+                // E5b3 Decision 5: every pre-sale read reconciles native effective holders with the image.
+                var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg))
                     : DecisionMenu(observationMinute, b.PlaceId, reg, b.Id, products);
                 // A live capture supersedes any older decision image without another native read.
                 if ((observed != null || capture) && decisionSupply.TryGetValue(b.PlaceId, out var cachedImage))
@@ -384,7 +511,7 @@ namespace PersistentCity.Runtime
                 && decisionSupply.TryGetValue(placeId, out var cached) && cached.Matches(reg, businessId, products))
             { DecisionSupplyHits++; return cached.Supply; }
             DecisionSupplyMisses++;
-            var supply = FoodSupplyReader.ReadMenu(reg, products);
+            var supply = FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg));
             decisionSupply[placeId] = new DecisionSupply(reg, businessId, products, supply);
             return supply;
         }
@@ -404,6 +531,7 @@ namespace PersistentCity.Runtime
         // With a ticket, meal.Price is the planned total and the main line is sold at ticket.Main.Price.
         private FoodSale BuyLive(ResidentMeal meal, double minute, FoodMealTicket? ticket)
         {
+            if (!checkoutSettled) return new FoodSale(false, "Food checkout waits for the city load to finish"); // before any receipt
             if (minute < EarliestMinute || minute >= EarliestMinute + 60 || !ReferenceEquals(save, SaveGameManager.Current))
                 return new FoodSale(false, "Native clock differs from service time");
             var data = SaveGameManager.Current.modData;
@@ -416,6 +544,7 @@ namespace PersistentCity.Runtime
                 FoodSaleReceipts.Prune(data, receiptDay, state.Residents
                     .Where(m => m.Status == MealStatus.Uncertain).Select(m => m.IntentId));
             }
+            if (AwaitingValidation(meal.BusinessId)) return new FoodSale(false, StartupValidationRefusal); // Core never asks here
             if (!CanServe(meal.BusinessId)) return new FoodSale(false, "Business is no longer owned by Persistent City");
             var observed = new Dictionary<string, SupplyObservation>(1, StringComparer.Ordinal);
             FoodBusiness? business;
@@ -432,7 +561,7 @@ namespace PersistentCity.Runtime
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
-            if (offer != null && offer.Price != mainPrice) return new FoodSale(false, "Approved price changed");
+            if (offer != null && offer.Price != mainPrice) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, "Approved price changed", priceChanged: true); }
             var reg = registrations[meal.PlaceId];
             if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service", ShopExperience.Closed);
             // A zero sellable-unit count can also mean no staffed counter. Name stockout only
@@ -455,7 +584,13 @@ namespace PersistentCity.Runtime
             if (observed.TryGetValue(meal.PlaceId, out var seen) && ReferenceEquals(seen.Registration, reg)
                 && seen.Products.SequenceEqual(products, StringComparer.Ordinal) && seen.Supply.Values.All(s => s.AtMinute == now))
             { before = seen.Supply; CheckoutSupplyReuses++; }
-            else before = FoodSupplyReader.ReadMenu(reg, products);
+            else
+            {
+                long reconciled = FoodSupplyReader.Reconciliations;
+                before = FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg));
+                // Decision 5: a reconciliation mismatch in this read withdraws the whole business, before any receipt.
+                if (FoodSupplyReader.Reconciliations != reconciled) return RefuseCheckoutContract(reg);
+            }
             if (before.Values.Any(s => !s.Units.HasValue)) return new FoodSale(false, "Menu supply contract changed");
             var refusal = SellLine(meal, minute, reg, business!, scope, meal.ProductId, mainPrice, before,
                 () => FoodSaleReceipts.Begin(data, meal, ticket?.Extras), out before);
@@ -513,18 +648,26 @@ namespace PersistentCity.Runtime
                     RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
                     return new FoodSale(false, "Approved price is outside the supported range");
                 }
-                if (livePrice != price)
-                    return new FoodSale(false, "Approved price changed during native setup");
+                if (livePrice != price) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }
                 // Setup/open checks may invoke native callbacks. Check the whole approved menu
                 // again, not only the chosen price, before creating a receipt or native order.
-                if (!CompletePricesMatch(reg, business) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
-                    || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true)
+                // A catalogue that started rebuilding during setup cannot vouch for the image: this sale waits.
+                if (ContractCatalogueWaiting) return new FoodSale(false, "Food catalogue rebuilding; this sale waits");
+                // E5b3 Decision 3: the published image's holders, definitions and price rows, after native setup.
+                var completePrices = CompletePrices(reg, business);
+                if (completePrices == FoodPriceVerdict.Refused || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
+                    || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true
+                    || !ContractRecheck(reg, true))
                 {
                     return RefuseCheckoutContract(reg);
                 }
+                // E5b5 Q2 default: another valid price is a price-only change. Ownership is kept and this sale is refused
+                // before any receipt and Core lets the resident decide again at the counter. Never a sale on changed terms.
+                if (completePrices == FoodPriceVerdict.PriceOnly) { CheckoutPriceOnlyRefusals++; return new FoodSale(false, PriceOnlyRefusal, priceChanged: true); }
+                if (process == null) return RefuseCheckoutContract(reg); // never after a receipt
                 beginReceipt?.Invoke();
                 buyerShop = reg; buying = true;
-                Process.Invoke(simulator, new object[] { customer });
+                process.Invoke(simulator, new object[] { customer });
             }
             finally { buying = false; buyerShop = null; UnityEngine.Object.Destroy(simulator); }
             var entries = customer.order.entries.Where(e => e.paid && ItemsGetter.GetByName(e.itemName)?.HasTag(BigAmbitions.Tags.TagRef.Itemtag.isbag) != true).ToArray();
@@ -543,10 +686,16 @@ namespace PersistentCity.Runtime
             RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
             return new FoodSale(false, "Complete food menu changed before native checkout");
         }
-        private static bool CompletePricesMatch(BuildingRegistration reg, FoodBusiness approved)
+        /// <summary>Checkouts refused because a menu price changed to another valid price (Q2); ownership was kept.</summary>
+        public long CheckoutPriceOnlyRefusals { get; private set; }
+        public const string PriceOnlyRefusal = "Approved price changed during native setup; ownership kept";
+        // E5b5 Q2: a menu that is still one row per product with an exact valid price is PriceOnly when a price differs
+        // from the approved terms; a missing, duplicated or invalid row, or a different menu, is Refused (hand-back).
+        private static FoodPriceVerdict CompletePrices(BuildingRegistration reg, FoodBusiness approved)
         {
             if (reg.cachedAvailableProducts == null || reg.retailPrices == null || reg.retailPrices.Count > 128
-                || reg.cachedAvailableProducts.Count != approved.Offers.Count) return false;
+                || reg.cachedAvailableProducts.Count != approved.Offers.Count) return FoodPriceVerdict.Refused;
+            var verdict = FoodPriceVerdict.Same;
             foreach (var offer in approved.Offers)
             {
                 int advertised = 0, prices = 0;
@@ -554,12 +703,12 @@ namespace PersistentCity.Runtime
                 foreach (var price in reg.retailPrices) if (price != null && price.itemName == offer.ProductId)
                 {
                     prices++;
-                    try { if (Money.FromNative(price.price) != offer.Price) return false; }
-                    catch (ArgumentOutOfRangeException) { return false; }
+                    if (!Money.TryFromNative(price.price, out var live)) return FoodPriceVerdict.Refused;
+                    if (live != offer.Price) verdict = FoodPriceVerdict.PriceOnly;
                 }
-                if (advertised != 1 || prices != 1) return false;
+                if (advertised != 1 || prices != 1) return FoodPriceVerdict.Refused;
             }
-            return true;
+            return verdict;
         }
         public void Dispose()
         {

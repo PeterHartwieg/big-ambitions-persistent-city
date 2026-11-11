@@ -61,8 +61,9 @@ public sealed class ActiveJourneyIndexTests
         Assert.Equal(expected.Count, index.Count);
         Assert.All(expected, c => Assert.True(index.Contains(c)));
         var bodies = index.BodyCandidates.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal);
-        Assert.Equal(expected.Where(c => !IsVisitor(c.Identity.Id)).Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal), bodies);
-        Assert.Equal(expected.Count(c => IsVisitor(c.Identity.Id)), index.WithheldVisitors);
+        // F5i: visitors are body candidates like residents; nothing is withheld.
+        Assert.Equal(expected.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal), bodies);
+        Assert.Equal(0, index.WithheldVisitors);
         Assert.Equal(index.BodyCandidates.Count, index.BodyCandidates.Distinct().Count());
     }
 
@@ -217,27 +218,28 @@ public sealed class ActiveJourneyIndexTests
     }
 
     [Fact]
-    public void VisitorsAreIndexedButNeverBodyCandidates()
+    public void VisitorsAreIndexedAsBodyCandidates()
     {
-        Assert.False(ActiveJourneyIndex.VisitorsReceiveBodies);
+        // F5i: visitors receive bodies through the index (before F5i they were indexed and withheld).
+        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
         var sim = Travellers("c0", "consumer:c0:1", "pv:1", "pv:2", "r5");
         AssertIndexed(sim);
-        Assert.Equal(5, sim.ActiveJourneys.Count); Assert.Equal(3, sim.ActiveJourneys.WithheldVisitors);
-        Assert.Equal(new[] { "c0", "r5" }, sim.ActiveJourneys.BodyCandidates.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal));
+        Assert.Equal(5, sim.ActiveJourneys.Count); Assert.Equal(0, sim.ActiveJourneys.WithheldVisitors);
+        Assert.Equal(new[] { "c0", "consumer:c0:1", "pv:1", "pv:2", "r5" }, sim.ActiveJourneys.BodyCandidates.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal));
         Assert.All(sim.State.Citizens.Where(c => IsVisitor(c.Identity.Id)), c =>
-        { Assert.Equal(PersonKind.Visitor, ActiveJourneyIndex.KindOf(c)); Assert.False(ActiveJourneyIndex.ReceivesBody(c)); Assert.True(sim.ActiveJourneys.Contains(c)); });
-        var loaded = Reload(sim, new Walking()); AssertIndexed(loaded); Assert.Equal(3, loaded.ActiveJourneys.WithheldVisitors);
+        { Assert.Equal(PersonKind.Visitor, ActiveJourneyIndex.KindOf(c)); Assert.True(ActiveJourneyIndex.ReceivesBody(c)); Assert.True(sim.ActiveJourneys.Contains(c)); });
+        var loaded = Reload(sim, new Walking()); AssertIndexed(loaded); Assert.Equal(0, loaded.ActiveJourneys.WithheldVisitors);
         sim.AdvanceTo(1460); AssertIndexed(sim); Assert.Equal(0, sim.ActiveJourneys.Count); Assert.Equal(0, sim.ActiveJourneys.WithheldVisitors);
-        // A whole mixed day with visitor-format IDs keeps visitors out of body candidates after every event.
+        // A whole mixed day with visitor-format IDs files visitors as body candidates after every event.
         var mixed = Mixed(new Walking(), 120, i => i % 3 == 0 ? PersonIds.Visitor(i + 1) : "r" + i.ToString("D4"));
-        int withheld = 0;
+        int visitors = 0;
         mixed.ActivityObserved += (_, _, _) =>
         {
-            Assert.DoesNotContain(mixed.ActiveJourneys.BodyCandidates, c => IsVisitor(c.Identity.Id));
-            withheld = Math.Max(withheld, mixed.ActiveJourneys.WithheldVisitors);
+            Assert.Equal(0, mixed.ActiveJourneys.WithheldVisitors);
+            visitors = Math.Max(visitors, mixed.ActiveJourneys.BodyCandidates.Count(c => IsVisitor(c.Identity.Id)));
         };
         mixed.AdvanceTo(mixed.State.Minute + 1440); AssertIndexed(mixed);
-        Assert.True(withheld > 0);
+        Assert.True(visitors > 0);
     }
 
     // The index is a superset of every stateful candidate filter of Runtime physical selection
@@ -267,11 +269,10 @@ public sealed class ActiveJourneyIndexTests
         Assert.False(waiting.ActiveJourneys.Contains(w));
     }
 
-    // Derived only: reading the index never changes saved state, identity or money, and the writer schema is pinned.
+    // Derived only: reading the index never changes saved state, identity or money.
     [Fact]
     public void IndexHasNoIdentityOrEconomyEffect()
     {
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
         var plain = Mixed(new Walking(), 160); var probed = Mixed(new Walking(), 160);
         var identities = probed.State.Citizens.Select(c => c.Identity).ToArray();
         probed.ActivityObserved += (_, _, _) => { _ = probed.ActiveJourneyIndexMatchesState(); _ = probed.ActiveJourneys.BodyCandidates.Count; };

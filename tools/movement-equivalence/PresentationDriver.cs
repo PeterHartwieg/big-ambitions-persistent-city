@@ -91,6 +91,12 @@ public sealed class PresentationDriver
     /// <summary>F2c walker and F2d car lag, corrections and handoffs, as Runtime's pc movement status reports them.</summary>
     public readonly WalkerMovementTelemetry Walking = new();
     public int MaxWalkers, MaxCars;
+    /// <summary>F5i: visitor bodies acquired, frames with a visitor body, the most bound at once, and every visitor
+    /// that ever had a body (ordinal set).</summary>
+    public long VisitorAcquired, VisitorFrames;
+    public int MaxVisitorBodies;
+    public readonly SortedSet<string> AcquiredVisitors = new(StringComparer.Ordinal);
+    public int VisitorBodies { get; private set; }
     public int Walkers { get; private set; }
     public int Cars { get; private set; }
     public int Count => bindings.Count;
@@ -223,6 +229,7 @@ public sealed class PresentationDriver
             // Runtime: a car spawns at the road sample of its journey pose, a walker at the selected position.
             binding.Body = NewBody(citizen, car, car ? sample.Position : candidate.Position);
             bindings.Add(citizen.Identity.Id, binding); Acquired++;
+            if (citizen.IsVisitor) { VisitorAcquired++; AcquiredVisitors.Add(citizen.Identity.Id); }
             if (!Observe(binding)) { Release(binding); continue; }
             if (car) cars++; else people++;
         }
@@ -241,13 +248,14 @@ public sealed class PresentationDriver
 
     private void Recount()
     {
-        int walkers = 0, cars = 0;
-        foreach (var b in bindings.Values) if (b.Body.Car) cars++; else walkers++;
-        Walkers = walkers; Cars = cars;
+        int walkers = 0, cars = 0, visitors = 0;
+        foreach (var b in bindings.Values) { if (b.Body.Car) cars++; else walkers++; if (b.Citizen.IsVisitor) visitors++; }
+        Walkers = walkers; Cars = cars; VisitorBodies = visitors;
     }
     private void Tally()
     {
-        MaxWalkers = Math.Max(MaxWalkers, Walkers); MaxCars = Math.Max(MaxCars, Cars);
+        MaxWalkers = Math.Max(MaxWalkers, Walkers); MaxCars = Math.Max(MaxCars, Cars); MaxVisitorBodies = Math.Max(MaxVisitorBodies, VisitorBodies);
+        VisitorFrames += VisitorBodies;
         BodyFrames += Walkers + Cars; WalkerFrames += Walkers; CarFrames += Cars;
     }
 
@@ -346,6 +354,23 @@ public sealed class PresentationDriver
         if (logical.Mode != TravelMode.Car && lag <= CarFollow.CorrectionMetres) { Walking.Handoffs++; Walking.CarHandoffs++; return false; }
         Walking.Record(frame, c.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, logical.Position, false, car: true);
         return false;
+    }
+
+    /// <summary>F5i: IDs of the visitors bound now, in ordinal order.</summary>
+    public List<string> BoundVisitors()
+    {
+        var ids = bindings.Values.Where(b => b.Citizen.IsVisitor).Select(b => b.Citizen.Identity.Id).ToList();
+        ids.Sort(StringComparer.Ordinal);
+        return ids;
+    }
+
+    /// <summary>F2e player double: the bodies following their journey this frame, in ordinal person order.</summary>
+    public void Followed(List<(CitizenState Citizen, bool Car)> into)
+    {
+        foreach (var b in bindings.Values)
+            if (b.Journey != null && !b.Tail && b.Citizen.Phase == CitizenPhase.Travelling && ReferenceEquals(b.Citizen.Journey, b.Journey))
+                into.Add((b.Citizen, b.Body.Car));
+        into.Sort((x, y) => StringComparer.Ordinal.Compare(x.Citizen.Identity.Id, y.Citizen.Identity.Id));
     }
 
     /// <summary>Runtime ObserveForSave: observe every body and release those whose follow ended.</summary>

@@ -15,6 +15,10 @@
     <Compile Include="../Runtime/OrdinaryOwnershipIndex.cs" Link="OrdinaryOwnershipIndex.cs" />
     <Compile Include="../Runtime/DwellSpots.cs" Link="DwellSpots.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.cs" Link="PhysicalPopulation.cs" />
+    <Compile Include="../Runtime/PhysicalPopulation.Following.cs" Link="PhysicalPopulation.Following.cs" />
+    <Compile Include="../Runtime/PhysicalPopulation.Queues.cs" Link="PhysicalPopulation.Queues.cs" />
+    <Compile Include="../Runtime/PhysicalPopulation.Selection.cs" Link="PhysicalPopulation.Selection.cs" />
+    <Compile Include="../Runtime/PlayerContact.cs" Link="PlayerContact.cs" />
     <Compile Include="../Runtime/FoodMarkets.cs" Link="FoodMarkets.cs" />
     <Compile Include="../Runtime/StreetFoodVendorMarket.cs" Link="StreetFoodVendorMarket.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
@@ -40,16 +44,14 @@
     <Compile Include="../tools/movement-equivalence/MovementArms.cs" Link="MovementEquivalence/MovementArms.cs" />
     <Compile Include="../tools/movement-equivalence/Equivalence.cs" Link="MovementEquivalence/Equivalence.cs" />
     <Compile Include="../tools/movement-equivalence/SelfChecks.cs" Link="MovementEquivalence/SelfChecks.cs" />
+    <Compile Include="../tools/movement-equivalence/HoldReplay.cs" Link="MovementEquivalence/HoldReplay.cs" />
     <Compile Include="../tools/save-cost/RepresentativeFixture.cs" Link="RepresentativeFixture.cs" />
     <Compile Include="../tools/compact-format/WireTree.cs" Link="CompactFormat/WireTree.cs" />
     <Compile Include="../tools/compact-format/ColumnarCodec.cs" Link="CompactFormat/ColumnarCodec.cs" />
     <Compile Include="../tools/compact-format/Candidates.cs" Link="CompactFormat/Candidates.cs" />
+    <Compile Include="../tools/capability-matrix/CapabilityMatrix.cs" Link="CapabilityMatrix/CapabilityMatrix.cs" />
+    <Compile Include="../Runtime/FoodReceiptEvidence.cs" Link="FoodReceiptEvidence.cs" />
     <None Update="ReaderCorpus/**/*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Writer26/*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Writer27/*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Writer28/*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Writer29/*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Writer30/*.json" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />

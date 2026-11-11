@@ -8,11 +8,8 @@ using PersistentCity.Core;
 namespace PersistentCity.Persistence
 {
     // E6c (docs/plans/e6-carts-food-trucks.md section 5): the vendor table, CityState.Vendors, and FoodScope.Channel.
-    // There is no migration: a city from an older development schema is refused unchanged.
     public static partial class SaveCodec
     {
-        /// <summary>The first writer with the vendor table: the next schema after C5c's research schema.</summary>
-        public const int VendorSchema = CityState.VendorSchema;
         public const int MaxVendorLive = VendorTable.MaximumLive;
         public const int MaxVendorLiveAndRetired = VendorTable.MaximumLiveAndRetired;
         public const int MaxVendorTombstones = VendorTable.MaximumTombstones;
@@ -26,17 +23,15 @@ namespace PersistentCity.Persistence
         private const int MaxVendorDay = (int)(MaxMinute / 1440);
 
         /// <summary>A place cell inside a compact person or visit token: three base-36 digits of the ordinal Places
-        /// index, or (vendor schema) <c>v</c> and two base-36 digits of the vendor table's saved row order. With no
+        /// index, or <c>v</c> and two base-36 digits of the vendor table's saved row order. With no
         /// tables (the streaming check) it bounds the index and returns a placeholder that is never published.</summary>
         private sealed class PlaceCells
         {
-            private static readonly PlaceCells CityStreaming = new PlaceCells(null, null, false), VendorStreaming = new PlaceCells(null, null, true);
-            public static PlaceCells Streaming(int schema) => schema >= VendorSchema ? VendorStreaming : CityStreaming;
-            public static PlaceCells Of(WireContext context) => new PlaceCells(context.Places, context.VendorPlaces, true);
+            public static readonly PlaceCells Streaming = new PlaceCells(null, null);
+            public static PlaceCells Of(WireContext context) => new PlaceCells(context.Places, context.VendorPlaces);
             private readonly IReadOnlyList<string>? places, vendors;
-            private readonly bool vendorForm;
-            private PlaceCells(IReadOnlyList<string>? places, IReadOnlyList<string>? vendors, bool vendorForm)
-            { this.places = places; this.vendors = vendors; this.vendorForm = vendorForm; }
+            private PlaceCells(IReadOnlyList<string>? places, IReadOnlyList<string>? vendors)
+            { this.places = places; this.vendors = vendors; }
 
             public string Parse(string text, int offset, string error)
             {
@@ -45,7 +40,6 @@ namespace PersistentCity.Persistence
                 if (text[offset] == VendorPlaceForm)
                 {
                     // v indices resolve only through the vendor table.
-                    Require(vendorForm, error);
                     try { index = MemoryWire.Number(text, offset + 1, VendorIndexWidth); } catch (FormatException) { Fail(error); }
                     Require(index < (vendors?.Count ?? MaxVendorRows), error);
                     return places != null ? vendors![index] : "#";
@@ -68,9 +62,6 @@ namespace PersistentCity.Persistence
         /// escaped maxima (<see cref="VendorNames.MaximumPlaceIdLength"/>, <see cref="VendorNames.MaximumBusinessIdLength"/>);
         /// every other value keeps the field's own bound.</summary>
         private static int IdentityBound(string? value, int max) => VendorNames.Bound(value, max);
-
-        /// <summary>Properties that exist only from the vendor schema; every older writer and frozen reader omits them.</summary>
-        internal static bool VendorProperty30(Type type, string? name) => type == typeof(CityState) && name == "Vendors";
 
         // ---- Wire ----
         // Vendors:    [1, [row, ...]], rows ordinal by vehicle id (the table's own order; v indices count in this order).
@@ -363,17 +354,10 @@ namespace PersistentCity.Persistence
             public bool IsFoodPlace(string id) => ByPlace.TryGetValue(id, out var row) && row.State != VendorRowState.Tombstone && row.Stand != null;
         }
 
-        /// <summary>Write-side and read-side vendor validation, run before food validation. Older schemas carry no
-        /// vendor table, so their states must hold none. Returns the index and charges one record per row.</summary>
-        private static VendorIndex30 ValidateVendors30(CityState state, int schema, ref int records)
+        /// <summary>Write-side and read-side vendor validation, run before food validation. Returns the index and charges
+        /// one record per row.</summary>
+        private static VendorIndex30 ValidateVendors30(CityState state, ref int records)
         {
-            if (schema < VendorSchema)
-            {
-                Require(state.Vendors == null || state.Vendors.Rows.Count == 0, "The vendor table needs the vendor schema.");
-                Require(state.Food?.Shops == null || state.Food.Shops.TrueForAll(s => s == null || s.Channel == FoodScopeChannel.Shop),
-                    "Vehicle food scopes need the vendor schema.");
-                return VendorIndex30.Empty;
-            }
             var table = state.Vendors;
             ValidateVendorTable30(table);
             var index = new VendorIndex30();

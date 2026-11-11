@@ -15,64 +15,6 @@ namespace PersistentCity.Tests;
 // passes after the fix; see the FIX report.
 public sealed partial class FoodCommerceTests
 {
-    private static (CitySimulator city, string current) R8_Paid(float price)
-    {
-        var (city, market, routes) = Ready();
-        market.Price = Money.FromNative(price);
-        var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
-        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
-        Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
-        Assert.Equal(MealStatus.Paid, city.State.Food.Residents.Single().Status);
-        return (city, LegacyWire.Write(city.State));
-    }
-
-    private static string R8_Generation(string current, string generation)
-    {
-        if (generation == "current") return current;
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(current), wholeCents: generation == "schema13"),
-            generation == "schema13" ? 13 : 14);
-        return token.ToString(Formatting.None);
-    }
-
-    // Both reviewers: Json.NET reads 0x.. as hexadecimal, and only the trailing digits were validated,
-    // so a current field loaded the hex value and a migrated field changed amount. The whole token
-    // must be canonical in every field generation, and the refused payload must stay in place.
-    // The fixture holds no purchase, so each damaged value would otherwise pass every validation.
-    [Theory]
-    [InlineData("current", "Allowance", "0x20")] [InlineData("current", "Allowance", "0X20")]
-    [InlineData("current", "Allowance", "0x0")] [InlineData("current", "Arrears", "0x10")]
-    [InlineData("schema13", "AllowanceCents", "0x1")] [InlineData("schema13", "ArrearsCents", "0x10")]
-    [InlineData("schema13", "AllowanceCents", "0x0")]
-    [InlineData("earlier14", "AllowanceCents", "0x1")] [InlineData("earlier14", "ArrearsCents", "0x10")]
-    [InlineData("earlier14", "AllowanceCents", "0x0")]
-    public void R8_NonCanonicalMoneyTokenIsInvalidInEveryFieldGeneration(string generation, string field, string token)
-    {
-        var (city, _, _) = Ready(); city.EnableHouseholdFinances();
-        city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
-        string current = LegacyWire.Write(city.State);
-        string encoded = R8_Generation(current, generation);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(DevelopmentChain.Read(encoded).State!)));
-        string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
-        Assert.NotEqual(encoded, damaged);
-        var read = DevelopmentChain.Read(damaged);
-        Assert.True(read.Status == SaveReadStatus.Invalid, "Expected Invalid; got " + read.Status + "; allowance " + read.State?.Food?.Residents.Single().Allowance.ToCentsText()
-            + "; arrears " + read.State?.Food?.Residents.Single().Budget?.Arrears.ToCentsText());
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = damaged };
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(damaged, data[SaveStore.StateKey]);
-    }
-
-    // Reviewer B N4: earlier schema-14 money with whitespace before a colon migrates like schema 13.
-    [Fact]
-    public void R8_EarlierSchema14MoneyMigratesWithWhitespaceBeforeColons()
-    {
-        var (_, current) = R8_Paid(.3f);
-        string spaced = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(SaveWire.Parse(current), wholeCents: false), 14).ToString(Formatting.Indented)
-            .Replace("\": ", "\"   :  ");
-        var read = DevelopmentChain.Read(spaced);
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
-    }
-
     private static ResidentBudget R8_BoundaryBudget(CitySimulator city, long fundedCents)
     {
         // Every amount fits, and their conservation totals sit just below the unit range.
@@ -85,7 +27,7 @@ public sealed partial class FoodCommerceTests
         b.Balance = Money.FromCents(17179869183);
         b.EssentialsPaid = Money.FromCents(fundedCents) - b.Balance;
         b.HomeFoodPaid = b.PreparedFoodSpent = b.HeldPurchase = b.Arrears = Money.Zero;
-        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(LegacyWire.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
         return b;
     }
 
@@ -99,7 +41,7 @@ public sealed partial class FoodCommerceTests
         string before = JsonConvert.SerializeObject(b);
         Assert.Throws<OverflowException>(() => HouseholdFinance.PostDay(b, city.State.Minute));
         Assert.Equal(before, JsonConvert.SerializeObject(b));
-        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(LegacyWire.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
     }
 
     // Control: a posting that reaches exactly the largest whole-cent total still posts and saves.
@@ -110,7 +52,7 @@ public sealed partial class FoodCommerceTests
         var b = R8_BoundaryBudget(city, 34359738367 - 50000);
         HouseholdFinance.PostDay(b, city.State.Minute);
         Assert.Equal(Money.FromCents(34359738367), b.OpeningBalance + b.IncomeReceived);
-        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(LegacyWire.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
     }
 
     // Reviewer A N1: the wage refresh from the resident is part of the posting and is not kept
@@ -132,20 +74,13 @@ public sealed partial class FoodCommerceTests
 
 public sealed class ShadowMoneyTokenTests
 {
-    // Both reviewers: the detached shadow document shares the token check, in every schema.
+    // Both reviewers: the detached shadow document shares the token check.
     [Theory]
-    [InlineData(4, "DailyAllowanceCents", "0xA1")] [InlineData(5, "DailyAllowanceCents", "0xA1")]
-    [InlineData(5, "DailyAllowance", "0x10")] [InlineData(4, "DailyAllowanceCents", "0x0")]
-    public void R8_ShadowNonCanonicalMoneyTokenIsRefused(int schema, string field, string token)
+    [InlineData("DailyAllowance", "0x10")] [InlineData("DailyAllowance", "0xA1")] [InlineData("DailyAllowance", "0x0")]
+    public void R8_ShadowNonCanonicalMoneyTokenIsRefused(string field, string token)
     {
         var state = FoodDemandTests.Scenario(1, 1);
         string json = FoodShadowCodec.Write(state);
-        if (field.EndsWith("Cents", StringComparison.Ordinal))
-        {
-            var legacy = LegacyMoneyWire.ToLegacy(SaveWire.Parse(json), wholeCents: schema == 4);
-            legacy["Schema"] = schema;
-            json = legacy.ToString(Formatting.None);
-        }
         Assert.Equal(state.CityKey, FoodShadowCodec.Read(json, state.CityKey).CityKey);
         string damaged = Regex.Replace(json, "\"" + field + "\": ?[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(json, damaged);

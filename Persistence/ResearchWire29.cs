@@ -7,11 +7,8 @@ using PersistentCity.Core;
 namespace PersistentCity.Persistence
 {
     // C5c (docs/plans/c5-agency-research.md section 5): the research section, CityState.Research.
-    // There is no migration: a city from an older development schema is refused unchanged.
     public static partial class SaveCodec
     {
-        /// <summary>The first writer with the research section: the next schema after F5e's.</summary>
-        public const int ResearchSchema = WorkplaceCapacitySchema + 1;
         public const int MaxResearchOpenOrders = ResearchLedger.MaximumOpenOrders;
         public const int MaxResearchKeptOrders = ResearchLedger.MaximumKeptReports;
         public const int MaxResearchClosedOrders = ResearchLedger.MaximumClosedOrders;
@@ -24,9 +21,6 @@ namespace PersistentCity.Persistence
         public const int MaxResearchCellValue = MarketResearchEngine.MaximumConsumers;
 
         private const int ResearchVersion29 = 1;
-
-        /// <summary>Properties that exist only from the research schema; every older writer and frozen reader omits them.</summary>
-        internal static bool ResearchProperty29(Type type, string? name) => type == typeof(CityState) && name == "Research";
 
         // ---- Wire ----
         // Research: [1, NextSequence, [open], [kept], [closed]]

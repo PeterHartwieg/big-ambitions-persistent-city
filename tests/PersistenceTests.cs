@@ -62,13 +62,13 @@ public sealed class PersistenceTests
     }
 
     [Theory]
-    [InlineData("future", SaveReadStatus.Future)]
+    [InlineData("future", SaveReadStatus.DevelopmentSchema)]
     [InlineData("{\"Schema\":1,", SaveReadStatus.Invalid)]
     [InlineData("{\"Schema\":9999999999999999999999999999999999}", SaveReadStatus.Invalid)]
     [InlineData("{}", SaveReadStatus.Invalid)]
     [InlineData("", SaveReadStatus.Invalid)]
     [InlineData("{\"Schema\":1,\"Schema\":2}", SaveReadStatus.Invalid)]
-    public void InvalidOrFuturePayloadIsPreservedAndCannotBeOverwritten(string payload, SaveReadStatus expected)
+    public void InvalidOrOtherSchemaPayloadIsPreservedAndCannotBeOverwritten(string payload, SaveReadStatus expected)
     {
         if (payload == "future") payload = "{\"Schema\":" + (CityState.CurrentSchema + 1) + "}";
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:resident"] = "unchanged" };
@@ -82,7 +82,7 @@ public sealed class PersistenceTests
     public void MissingAndUnsupportedOldVersionAreDistinct()
     {
         Assert.Equal(SaveReadStatus.Missing, SaveWire.Read(null).Status);
-        Assert.Equal(SaveReadStatus.Invalid, SaveWire.Read("{\"Schema\":0}").Status);
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveWire.Read("{\"Schema\":0}").Status); // any number other than the held 1
         var data = new Dictionary<string, string>();
         Assert.Equal(SaveReadStatus.Missing, SaveStore.ReadFrom(data, "population-a").Status);
         Assert.True(SaveStore.WriteTo(data, Example()).Success);

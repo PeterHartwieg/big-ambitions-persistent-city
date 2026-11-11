@@ -10,9 +10,9 @@ using Xunit.Abstractions;
 namespace PersistentCity.Tests;
 
 /// <summary>
-/// F7d (issue #94, plan section 4 row F7d, compact-format decision): writer 34 stores candidate C, the columnar compact
-/// wire with a shared route table and chained road-tag ranges, encoded from F7c's snapshot. No migration: every older
-/// development schema, the JSON writers included, is refused with the distinct "start a new city" status and kept.
+/// F7d (issue #94, plan section 4 row F7d, compact-format decision): the writer stores candidate C, the columnar compact
+/// wire with a shared route table and chained road-tag ranges, encoded from F7c's snapshot. No migration: any other
+/// schema number is refused with the distinct "start a new city" status and kept.
 /// </summary>
 public sealed class F7dCompactWriterTests
 {
@@ -24,96 +24,10 @@ public sealed class F7dCompactWriterTests
     private static object? Field(SaveCodec.CompactObject o, string key) => o.Values[Array.IndexOf(o.Keys, key)];
     private static void SetField(SaveCodec.CompactObject o, string key, object? value) => o.Values[Array.IndexOf(o.Keys, key)] = value;
 
-    // ---- Schema and golden writer ----
-
-    [Theory]
-    [InlineData(5150, "a3b70408cd5c5f0a23d9e41344d1530283232449f2b9ade5dd37755c92da4a70", 73192)]
-    [InlineData(9217, "cb39d7938dfbe874054cf53afb46b660883686adc93d82654e43e7243e317c01", 72830)]
-    public void CompactWriterGoldenIsPinnedAndRoundTripsByteForByte(int seed, string pin, int characters)
-    {
-        Assert.Equal(CityState.ChangeJournalSchema + 1, CityState.CompactSchema);
-        Assert.Equal(CityState.CompactSchema, CityState.CurrentSchema);
-        Assert.Equal(CityState.ChangeJournalSchema, SaveCodec.LatestDevelopmentSchema);
-        var state = ChangeJournalTests.Fixture(seed);
-        string payload = SaveCodec.Write(state);
-        output.WriteLine($"F7d golden {seed}: {EconomicLedgerTests.Sha(payload)} chars={payload.Length} json33={DevelopmentChain.Write33(state).Length}");
-        Assert.StartsWith("{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[", payload);
-        var read = SaveCodec.Read(payload);
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(CityState.CompactSchema, read.SourceSchema);
-        Assert.Equal(payload, SaveCodec.Write(read.State!));
-        Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(state)));
-        Assert.Equal(pin, EconomicLedgerTests.Sha(payload));
-        Assert.Equal(characters, payload.Length);
-    }
-
-    [Fact]
-    public void CompactBodyIsExactlyThePredecessorBodyAndTheWriter33ReaderStaysFrozen()
-    {
-        var state = ChangeJournalTests.Fixture(5150);
-        string json33 = DevelopmentChain.Write33(state);
-        string compact = SaveCodec.Write(state);
-        Assert.Equal(ReaderCorpus.Relabel(json33, 33, 34), SaveCodec.ExpandCompact(compact));
-        var frozen = SaveCodec.ReadWriter33(json33);
-        Assert.True(frozen.Status == SaveReadStatus.Loaded, frozen.Error);
-        Assert.Equal(json33, DevelopmentChain.Write33(frozen.State!));
-        // The frozen reader sees the compact wire as a newer schema, exactly as an older build does.
-        Assert.Equal(SaveReadStatus.Future, SaveCodec.ReadWriter33(compact).Status);
-        Assert.Equal(34, SaveCodec.ReadWriter33(compact).SourceSchema);
-        Assert.Null(SaveCodec.DevelopmentSchemaOf(compact));
-        SaveCodec.RequireExecutableCapabilities(compact);
-    }
-
-    // ---- Fresh-seed state comparison against the predecessor JSON writer ----
-
-    public static IEnumerable<object[]> FreshSeeds() => new[]
-    {
-        new object[] { "journal-5150" }, new object[] { "journal-9217" }, new object[] { "rush-957x2" }, new object[] { "encoding-max" },
-    };
-
-    private static CityState Build(string name) => name.StartsWith("journal-", StringComparison.Ordinal)
-        ? ChangeJournalTests.Fixture(int.Parse(name.Substring(8))) : F7cFixtures.Build(name).State;
-
-    [Theory]
-    [MemberData(nameof(FreshSeeds))]
-    public void SameSeededCityDecodesFieldForFieldFromCompactAndFromThePredecessorJsonWriter(string fixture)
-    {
-        var state = Build(fixture);
-        string json33 = DevelopmentChain.Write33(state);
-        string compact = SaveCodec.Write(state);
-        var fromJson = SaveCodec.ReadWriter33(json33);
-        var fromCompact = SaveCodec.Read(compact);
-        Assert.True(fromJson.Status == SaveReadStatus.Loaded, fromJson.Error);
-        Assert.True(fromCompact.Status == SaveReadStatus.Loaded, fromCompact.Error);
-        var a = fromJson.State!; var b = fromCompact.State!;
-        Assert.Equal(33, a.Schema); Assert.Equal(34, b.Schema);
-        a.Schema = 34;
-        var audit = GraphAudit.Compare(a, b);
-        Assert.True(audit.Differences.Count == 0, string.Join("; ", audit.Differences));
-        // IDs and money are exact against the live city, not only against each other.
-        Assert.Equal(state.Citizens.Select(c => c.Identity.Id), b.Citizens.Select(c => c.Identity.Id));
-        Assert.Equal(state.Visitors.Select(v => v.Id), b.Visitors.Select(v => v.Id));
-        Assert.Equal(state.Places.Select(p => p.Id), b.Places.Select(p => p.Id));
-        if (state.Food != null)
-        {
-            Assert.Equal(state.Food.Residents.Select(m => m.Budget?.Balance), b.Food!.Residents.Select(m => m.Budget?.Balance));
-            Assert.Equal(state.Food.Residents.Select(m => m.Decision?.IntentId), b.Food.Residents.Select(m => m.Decision?.IntentId));
-            Assert.Equal(state.Food.BusinessReferences.Select(r => r.BusinessId), b.Food.BusinessReferences.Select(r => r.BusinessId));
-        }
-        Assert.Equal(PersonTable.Schedules(state).Select(c => c.Journey?.Minutes), PersonTable.Schedules(b).Select(c => c.Journey?.Minutes));
-        // Same state hash: both decoded cities write the same predecessor bytes and the same compact bytes.
-        a.Schema = 33;
-        Assert.Equal(json33, DevelopmentChain.Write33(a));
-        Assert.Equal(json33, DevelopmentChain.Write33(b));
-        Assert.Equal(compact, SaveCodec.Write(b));
-        Assert.Equal(ReaderCorpus.Relabel(json33, 33, 34), SaveCodec.ExpandCompact(compact));
-    }
-
     [Fact]
     public void CompactReadInternsEveryStringValueOncePerDistinctText()
     {
         var state = F7cFixtures.Build("rush-957x2").State;
-        var json = SaveCodec.ReadWriter33(DevelopmentChain.Write33(state)).State!;
         var compact = SaveCodec.Read(SaveCodec.Write(state)).State!;
         static (int Instances, int Texts) Homes(CityState city)
         {
@@ -121,32 +35,25 @@ public sealed class F7dCompactWriterTests
             foreach (var c in city.Citizens) instances.Add(c.HomeId);
             return (instances.Count, city.Citizens.Select(c => c.HomeId).Distinct(StringComparer.Ordinal).Count());
         }
-        var fromCompact = Homes(compact); var fromJson = Homes(json);
+        var fromCompact = Homes(compact);
         Assert.Equal(fromCompact.Texts, fromCompact.Instances);
-        Assert.True(fromJson.Instances > fromJson.Texts, "the JSON reader is expected to allocate one string per token");
-        output.WriteLine($"home id instances: json {fromJson.Instances}, compact {fromCompact.Instances}, distinct {fromCompact.Texts}");
+        output.WriteLine($"home id instances: compact {fromCompact.Instances}, distinct {fromCompact.Texts}");
     }
 
     // ---- No migration: older development cities ----
 
-    public static IEnumerable<object[]> OlderWriters() => new[]
-    {
-        new object[] { 33 }, new object[] { 32 }, new object[] { 31 }, new object[] { 30 }, new object[] { 29 },
-    };
-
+    /// <summary>Older development builds wrote 2 to 36, as JSON or in the compact wire; any number other than the held 1 is
+    /// refused the same way.</summary>
     [Theory]
-    [MemberData(nameof(OlderWriters))]
-    public void OlderJsonWriterCityIsRefusedWithTheStartANewCityStatusAndKept(int schema)
+    [InlineData(36, true)] [InlineData(34, true)] [InlineData(33, false)] [InlineData(29, false)] [InlineData(2, false)] [InlineData(37, true)]
+    public void AnotherSchemaNumberIsRefusedWithTheStartANewCityStatusAndKept(int schema, bool compact)
     {
-        var state = schema >= 32 ? ChangeJournalTests.Fixture(5150) : CurrentSchemaOnlyTests.City();
-        string older = schema switch
-        {
-            33 => DevelopmentChain.Write33(state), 32 => DevelopmentChain.WriteAttendance(state), 31 => DevelopmentChain.WriteLedger(state),
-            30 => DevelopmentChain.Write30(state), _ => DevelopmentChain.Write29(state),
-        };
+        var state = ChangeJournalTests.Fixture(5150);
+        string older = compact ? SaveCodec.Write(state).Replace(SaveCodec.CompactPrefix, "{\"Schema\":" + schema + ",\"f\":")
+            : SaveWire.Text(state).Replace("{\"Schema\":" + CityState.CurrentSchema + ",", "{\"Schema\":" + schema + ",");
         Assert.Equal(schema, SaveCodec.DevelopmentSchemaOf(older));
         var data = new Dictionary<string, string>(StringComparer.Ordinal)
-        { [SaveStore.StateKey] = older, ["persistentcity:food-sale-v2:intent-1"] = "pending", ["other"] = "kept" };
+        { [SaveStore.StateKey] = older, ["persistentcity:food-sale-v1:intent-1"] = "pending", ["other"] = "kept" };
         var before = new Dictionary<string, string>(data);
         var read = SaveCodec.Read(older);
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status);
@@ -171,7 +78,7 @@ public sealed class F7dCompactWriterTests
     public void FreshCitiesAreCreatedInTheCompactFormat()
     {
         var state = CurrentSchemaOnlyTests.City();
-        Assert.Equal(CityState.CompactSchema, state.Schema);
+        Assert.Equal(CityState.CurrentSchema, state.Schema);
         var data = new Dictionary<string, string>(StringComparer.Ordinal) { ["other"] = "kept" };
         var session = SaveSession.Open(data, state.PopulationKey);
         Assert.Equal(SaveReadStatus.Missing, session.InitialReadResult.Status);
@@ -209,7 +116,7 @@ public sealed class F7dCompactWriterTests
     private static void RefusedAndKept(string payload, SaveReadStatus status)
     {
         var replacement = CurrentSchemaOnlyTests.City();
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["persistentcity:food-sale-v2:i"] = "pending", ["other"] = "kept" };
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["persistentcity:food-sale-v1:i"] = "pending", ["other"] = "kept" };
         var before = new Dictionary<string, string>(data);
         var read = SaveCodec.Read(payload); Assert.True(read.Status == status, read.Error); Assert.Null(read.State);
         Assert.Equal(status, SaveStore.ReadFrom(data, replacement.PopulationKey).Status);
@@ -227,7 +134,7 @@ public sealed class F7dCompactWriterTests
     }
 
     [Fact]
-    public void FutureUnknownMalformedDanglingAndOverboundCompactPayloadsAreRefusedAndKept()
+    public void OtherSchemaUnknownMalformedDanglingAndOverboundCompactPayloadsAreRefusedAndKept()
     {
         string valid = Small();
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(valid).Status);
@@ -237,8 +144,8 @@ public sealed class F7dCompactWriterTests
 
         var refusals = new (string Name, string Payload, SaveReadStatus Status)[]
         {
-            ("future schema", valid.Replace("{\"Schema\":34,", "{\"Schema\":35,"), SaveReadStatus.Future),
-            ("far future schema", valid.Replace("{\"Schema\":34,", "{\"Schema\":99,"), SaveReadStatus.Future),
+            ("another schema", valid.Replace("{\"Schema\":1,", "{\"Schema\":37,"), SaveReadStatus.DevelopmentSchema),
+            ("far other schema", valid.Replace("{\"Schema\":1,", "{\"Schema\":99,"), SaveReadStatus.DevelopmentSchema),
             ("unknown format", valid.Replace(",\"f\":\"pcc-c\",", ",\"f\":\"pcc-d\","), SaveReadStatus.Invalid),
             ("unknown version", valid.Replace(",\"v\":1,", ",\"v\":2,"), SaveReadStatus.Invalid),
             ("unknown field", valid.Substring(0, valid.Length - 1) + ",\"x\":0}", SaveReadStatus.Invalid),
@@ -250,8 +157,8 @@ public sealed class F7dCompactWriterTests
             ("trailing content", valid + "0", SaveReadStatus.Invalid),
             ("whitespace", valid.Replace(",\"k\":[", ", \"k\":["), SaveReadStatus.Invalid),
             ("noncanonical escape", valid.Replace(",\"f\":\"pcc-c\",", ",\"f\":\"pcc\\u002dc\","), SaveReadStatus.Invalid),
-            ("bare JSON body in writer 34", SaveCodec.ExpandCompact(valid), SaveReadStatus.Invalid),
-            ("body schema mismatch", SaveCodec.CompactFromBody(SaveCodec.ExpandCompact(valid).Replace("{\"Schema\":34,", "{\"Schema\":33,")), SaveReadStatus.Invalid),
+            ("bare JSON body in the current writer", SaveCodec.ExpandCompact(valid), SaveReadStatus.Invalid),
+            ("body schema mismatch", SaveCodec.CompactFromBody(SaveCodec.ExpandCompact(valid).Replace("{\"Schema\":1,", "{\"Schema\":2,")), SaveReadStatus.Invalid),
             ("bad string index", Variant(valid, o => { var s = (object?[])Field(o, "s")!; var c = Columns(Field(o, "t"), 1).First(col => col.Skip(1).Any(v => v is SaveCodec.CompactNumber));
                 int at = Array.FindIndex(c, 1, v => v is SaveCodec.CompactNumber); c[at] = new SaveCodec.CompactNumber(s.Length.ToString()); }), SaveReadStatus.Invalid),
             ("negative string index", Variant(valid, o => { var c = Columns(Field(o, "t"), 1).First(col => col.Skip(1).Any(v => v is SaveCodec.CompactNumber));
@@ -337,21 +244,21 @@ public sealed class F7dCompactWriterTests
     [Fact]
     public void OverboundTablesAndColumnsAreRefusedBeforeTheirArraysAreAllocated()
     {
-        const string head = "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Schema\"],\"h\":[[0,1]],\"s\":[],\"n\":0,\"r\":0,";
+        const string head = "{\"Schema\":1,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Schema\"],\"h\":[[0,1]],\"s\":[],\"n\":0,\"r\":0,";
         // 500,001 citizen slots from about 120 characters: refused by the body's own citizen bound before allocation.
-        string citizens = head + "\"t\":[4,0,[5,500001,[3,500001]],[0,34]]}";
+        string citizens = head + "\"t\":[4,0,[5,500001,[3,500001]],[0,1]]}";
         long bytes = Allocated(() => SaveCodec.Read(citizens), out var read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("collection length", read.Error);
         Assert.True(bytes < 64 * 1024, bytes + " B allocated");
         // Within the citizen bound but far more slots than a payload this short can carry.
-        string dense = head + "\"t\":[4,0,[5," + SaveCodec.MaxResidents + ",[3," + SaveCodec.MaxResidents + "]],[0,34]]}";
+        string dense = head + "\"t\":[4,0,[5," + SaveCodec.MaxResidents + ",[3," + SaveCodec.MaxResidents + "]],[0,1]]}";
         bytes = Allocated(() => SaveCodec.Read(dense), out read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("decoded value bound", read.Error);
         Assert.True(bytes < 64 * 1024, bytes + " B allocated");
         // One key over the record bound: counted without building the table.
-        var keys = new StringBuilder("{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[");
+        var keys = new StringBuilder("{\"Schema\":1,\"f\":\"pcc-c\",\"v\":1,\"k\":[");
         for (int i = 0; i <= SaveCodec.MaxEmbeddedRecords; i++) { if (i > 0) keys.Append(','); keys.Append("\"k").Append(i.ToString("D7")).Append('"'); }
         string overKeys = keys.Append("],\"h\":[],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
         bytes = Allocated(() => SaveCodec.Read(overKeys), out read);
@@ -363,7 +270,7 @@ public sealed class F7dCompactWriterTests
         Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, "any").Status);
         Assert.Same(overKeys, data[SaveStore.StateKey]);
         // One shape naming 4,000,001 fields against a one-key table: bounded by the key count during the count pass.
-        var shape = new StringBuilder("{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Schema\"],\"h\":[[");
+        var shape = new StringBuilder("{\"Schema\":1,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Schema\"],\"h\":[[");
         for (int i = 0; i <= SaveCodec.MaxEmbeddedRecords; i++) { if (i > 0) shape.Append(','); shape.Append('0'); }
         string overShape = shape.Append("]],\"s\":[],\"n\":0,\"r\":0,\"t\":0}").ToString();
         bytes = Allocated(() => SaveCodec.Read(overShape), out read);
@@ -378,8 +285,8 @@ public sealed class F7dCompactWriterTests
         Assert.Equal(SaveCodec.MaxResidents, SaveCodec.CompactCollectionLimit("Citizens"));
         Assert.Equal(SaveCodec.MaxRecentVisits, SaveCodec.CompactCollectionLimit("RecentVisits"));
         int shopBound = SaveCodec.CompactCollectionLimit("Shops");
-        string scopes = "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Food\",\"Schema\",\"Shops\"],\"h\":[[0,1],[2]],\"s\":[\"" + new string('x', shopBound) + "\"],\"n\":0,\"r\":0,"
-            + "\"t\":[4,0,[4,1,[5," + (shopBound + 1) + ",[3," + (shopBound + 1) + "]]],[0,34]]}";
+        string scopes = "{\"Schema\":1,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Food\",\"Schema\",\"Shops\"],\"h\":[[0,1],[2]],\"s\":[\"" + new string('x', shopBound) + "\"],\"n\":0,\"r\":0,"
+            + "\"t\":[4,0,[4,1,[5," + (shopBound + 1) + ",[3," + (shopBound + 1) + "]]],[0,1]]}";
         bytes = Allocated(() => SaveCodec.Read(scopes), out read);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("collection length", read.Error);
@@ -390,7 +297,7 @@ public sealed class F7dCompactWriterTests
     }
 
     private static string Envelope(IEnumerable<string> keys, string shapes, string strings, string root)
-        => "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[" + string.Join(",", keys.Select(k => "\"" + k + "\"")) + "],\"h\":" + shapes
+        => "{\"Schema\":1,\"f\":\"pcc-c\",\"v\":1,\"k\":[" + string.Join(",", keys.Select(k => "\"" + k + "\"")) + "],\"h\":" + shapes
             + ",\"s\":" + strings + ",\"n\":0,\"r\":0,\"t\":" + root + "}";
 
     [Fact]
@@ -430,11 +337,11 @@ public sealed class F7dCompactWriterTests
         var cases = new[]
         {
             ("menu IDs", Envelope(new[] { "AdditionalProductIds", "Food", "Schema", "Shops" }, "[[0],[1,2],[3]]", pad(64),
-                "[4,1,[4,2,[5,1,[4,0,[5," + FoodMenuPolicy.MaximumOffers + ",[3," + FoodMenuPolicy.MaximumOffers + "]]]]],[0,34]]")),
+                "[4,1,[4,2,[5,1,[4,0,[5," + FoodMenuPolicy.MaximumOffers + ",[3," + FoodMenuPolicy.MaximumOffers + "]]]]],[0,1]]")),
             ("product names", Envelope(new[] { "ProductNames", "Schema" }, "[[0,1]]", pad(FoodNameIdentity.MaximumNames),
-                "[4,0,[5," + (FoodNameIdentity.MaximumNames + 1) + ",[3," + (FoodNameIdentity.MaximumNames + 1) + "]],[0,34]]")),
+                "[4,0,[5," + (FoodNameIdentity.MaximumNames + 1) + ",[3," + (FoodNameIdentity.MaximumNames + 1) + "]],[0,1]]")),
             ("portals", Envelope(new[] { "Portals", "Schema" }, "[[0,1]]", pad(SaveCodec.MaxPortals),
-                "[4,0,[5," + (SaveCodec.MaxPortals + 1) + ",[3," + (SaveCodec.MaxPortals + 1) + "]],[0,34]]")),
+                "[4,0,[5," + (SaveCodec.MaxPortals + 1) + ",[3," + (SaveCodec.MaxPortals + 1) + "]],[0,1]]")),
         };
         foreach (var (name, payload) in cases)
         {
@@ -464,8 +371,8 @@ public sealed class F7dCompactWriterTests
         // 256 Mi characters of body. The reader stops writing the body at the cap.
         string big = new string('x', 1 << 20);
         var refs = string.Join(",", Enumerable.Repeat("0", 257));
-        string payload = "{\"Schema\":34,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Journey\",\"Legs\",\"Schema\"],\"h\":[[0,3],[1],[2]],\"s\":[],"
-            + "\"n\":1,\"r\":[4,2,[5,1,[1,\"" + big + "\"]]],\"t\":[4,0,[5,257,[4,1,[8," + refs + "]]],[0,34]]}";
+        string payload = "{\"Schema\":1,\"f\":\"pcc-c\",\"v\":1,\"k\":[\"Citizens\",\"Journey\",\"Legs\",\"Schema\"],\"h\":[[0,3],[1],[2]],\"s\":[],"
+            + "\"n\":1,\"r\":[4,2,[5,1,[1,\"" + big + "\"]]],\"t\":[4,0,[5,257,[4,1,[8," + refs + "]]],[0,1]]}";
         var read = SaveCodec.Read(payload);
         Assert.Equal(SaveReadStatus.Invalid, read.Status);
         Assert.Contains("input size limit", read.Error);
@@ -500,14 +407,14 @@ public sealed class F7dCompactWriterTests
         var over = Assert.Throws<SaveValidationException>(() => SaveCodec.EncodeCompact(body, SaveCodec.MaxEmbeddedRecords - tables + 1));
         Assert.Contains("compact tables", over.Message);
         var counts = SaveCodec.CountRecords(state, compact);
-        var bodyCounts = DevelopmentChain.CountRecords(state, DevelopmentChain.Write33(state));
+        var bodyCounts = DevelopmentChain.CountRecords(state, body);
         Assert.Equal(bodyCounts.Streaming + tables, counts.Streaming);
         Assert.Equal(bodyCounts.Semantic + tables, counts.Semantic);
     }
 
     // ---- Exact number spelling, strings, shared routes and road ranges ----
 
-    private const string EdgeBody = "{\"Schema\":34,"
+    private const string EdgeBody = "{\"Schema\":1,"
         + "\"Numbers\":[0,-0,-1,1E-05,0.1,-0.0,12.0,9223372036854775807,-9223372036854775808,92233720368547758070,-92233720368547758090,1.7976931348623157E+308,5e3,-1E-07],"
         + "\"Ints\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,9223372036854775807,-9223372036854775808],"
         + "\"Deltas\":[1000,1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1011,1012,1013],"
@@ -577,8 +484,8 @@ public sealed class F7dCompactWriterTests
     public void CompactBytesStayInsideTheSection31Ceilings(string fixture)
     {
         var state = F7cFixtures.Build(fixture).State;
-        string json33 = DevelopmentChain.Write33(state);
         string compact = SaveCodec.Write(state);
+        string json33 = SaveCodec.ExpandCompact(compact); // the JSON body the compact wire carries
         int bytes33 = Encoding.UTF8.GetByteCount(json33), bytes = Encoding.UTF8.GetByteCount(compact);
         double ratio = (double)compact.Length / json33.Length;
         var counts = SaveCodec.CountRecords(state, compact);

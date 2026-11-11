@@ -153,22 +153,9 @@ public sealed class RhythmPersistenceTests
         var city = City(); string payload = Legacy(city, schema).ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
+        // An old shape labelled 1 (the number is held at 1 until release) fails strict reading instead of being misread.
+        Assert.Equal(schema == CityState.CurrentSchema ? SaveReadStatus.Invalid : SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
-    }
-
-    [Theory]
-    [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
-    public void LegacyMigrationFirstRejectsWrongOriginalShapeAndInvalidActiveRoute(int schema)
-    {
-        var wire = Legacy(City(), schema);
-        wire["Citizens"]![0]!["CommutePreparation"] = JObject.FromObject(Attempt());
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        ((JObject)wire["Citizens"]![0]!).Remove("CommutePreparation");
-        ((JObject)wire["Citizens"]![0]!).Remove("NextEventMinute");
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-        wire = Legacy(City(), schema); wire["Citizens"]![0]!["Journey"]!["Legs"]![1]!["Minutes"] = 0;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
     }
 
     [Theory]

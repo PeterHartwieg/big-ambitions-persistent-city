@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- F4e offline pre-gate. Compiles Core, Persistence and Compatibility by path, as tools/rush-spike-replay does, and the
+       test project's sources by path, so the F5h reference fixture (tests/F5hIntegratedAcceptanceTests.cs) and the F2a
+       presentation driver (tools/movement-equivalence/PresentationDriver.cs) are the same code the unit tests run. The
+       linked list below copies tests/PersistentCity.Tests.csproj's Compile items; add a line here when that list grows. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>disable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <SourceRoot Condition="'$(SourceRoot)' == ''">../..</SourceRoot>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);xUnit1013;xUnit1026;xUnit2013;CS8600;CS8601;CS8602;CS8603;CS8604;CS8619;CS8620;CS8625</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(SourceRoot)/Core/*.cs" />
+    <Compile Include="$(SourceRoot)/Persistence/*.cs" />
+    <Compile Include="$(SourceRoot)/Compatibility/*.cs" />
+    <Compile Include="../../tests/*.cs" />
+    <Compile Include="../../tests/Acceptance/*.cs" />
+    <Compile Include="../../tests/Support/*.cs" />
+    <Compile Include="../../tools/accounting-backlog-regression/AccountingScenario.cs" />
+    <Compile Include="../../tools/market-research-regression/ResearchFixture.cs" />
+    <Compile Include="../../Runtime/DecisionSupplyImage.cs" />
+    <Compile Include="../../Runtime/FoodContractStamps.cs" />
+    <Compile Include="../../Runtime/FoodContractHooks.cs" />
+    <Compile Include="../../Runtime/OrdinaryOwnershipIndex.cs" />
+    <Compile Include="../../Runtime/DwellSpots.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.Following.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.Queues.cs" />
+    <Compile Include="../../Runtime/PhysicalPopulation.Selection.cs" />
+    <Compile Include="../../Runtime/PlayerContact.cs" />
+    <Compile Include="../../Runtime/FoodMarkets.cs" />
+    <Compile Include="../../Runtime/StreetFoodVendorMarket.cs" />
+    <Compile Include="../../Runtime/PrototypeSettings.cs" />
+    <Compile Include="../../Runtime/FoodProductOverrideSettings.cs" />
+    <Compile Include="../../Runtime/InteriorGuardSettings.cs" />
+    <Compile Include="../../Runtime/InteriorViewState.cs" />
+    <Compile Include="../../Runtime/AudienceGeometryCache.cs" />
+    <Compile Include="../../Runtime/StaticSceneMemory.cs" />
+    <Compile Include="../../Runtime/NativeCampaignReader.cs" />
+    <Compile Include="../../Runtime/ResearchAgencyMenu.cs" />
+    <Compile Include="../../Runtime/ResearchReportText.cs" />
+    <Compile Include="../../tools/food-demand-audit/EventObservations.cs" />
+    <Compile Include="../../tools/save-contract-regression/EconomyScenario.cs" />
+    <Compile Include="../../tools/economy-interventions/EconomyFixture.cs" />
+    <Compile Include="../../tools/economy-interventions/InterventionInputs.cs" />
+    <Compile Include="../../tools/economy-interventions/EconomyRun.cs" />
+    <Compile Include="../../tools/economy-interventions/EconomyMetrics.cs" />
+    <Compile Include="../../tools/economy-interventions/InterventionArms.cs" />
+    <Compile Include="../../tools/economy-interventions/SelfChecks.cs" />
+    <Compile Include="../../tools/movement-equivalence/MovementFixture.cs" />
+    <Compile Include="../../tools/movement-equivalence/PresentationDriver.cs" />
+    <Compile Include="../../tools/movement-equivalence/MovementRun.cs" />
+    <Compile Include="../../tools/movement-equivalence/MovementArms.cs" />
+    <Compile Include="../../tools/movement-equivalence/Equivalence.cs" />
+    <Compile Include="../../tools/movement-equivalence/SelfChecks.cs" />
+    <Compile Include="../../tools/movement-equivalence/HoldReplay.cs" />
+    <Compile Include="../../tools/save-cost/RepresentativeFixture.cs" />
+    <Compile Include="../../tools/compact-format/WireTree.cs" />
+    <Compile Include="../../tools/compact-format/ColumnarCodec.cs" />
+    <Compile Include="../../tools/compact-format/Candidates.cs" />
+    <Compile Include="Windows.cs" />
+    <Compile Include="Export.cs" />
+    <Compile Include="SelfTest.cs" />
+    <Compile Include="Program.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+  </ItemGroup>
+</Project>

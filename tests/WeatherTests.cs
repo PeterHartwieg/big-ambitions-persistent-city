@@ -44,26 +44,6 @@ public sealed class WeatherTests
     }
     private static CityState Read(string wire)
     { var r=DevelopmentChain.Read(wire);Assert.True(r.Status==SaveReadStatus.Loaded,r.Error);return r.State!; }
-    internal static string As19(string wire)
-    {
-        var read=DevelopmentChain.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        read.State!.Schema=19;return DevelopmentChain.Legacy(read.State, () => PopulationSchema19.Write(read.State));
-    }
-    [Fact]
-    public void Migration19IsNeutralActivatesNextDayAndPreservesSource()
-    {
-        var state=State();string old=As19(DevelopmentChain.Write(state));var read=Read(old);
-        Assert.Equal(DevelopmentChain.ChainOutput,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
-        var rain=new Source {Value=WeatherSample.Rain};var city=new CitySimulator(read,new Paths());
-        city.AttachWeather(rain,new WeatherSettings {RainOptionalOutingMultiplier=0});city.AdvanceTo(state.Minute);
-        Assert.Equal(WeatherSample.Unknown,read.Citizens[0].W!.Weather);Assert.Equal(0,rain.Calls);
-        Assert.Equal(DevelopmentChain.Write(read),DevelopmentChain.Write(Read(DevelopmentChain.Write(read))));
-        city.AdvanceTo(state.Minute+1440);Assert.Equal(WeatherSample.Rain,read.Citizens[0].W!.Weather);Assert.True(rain.Calls>0);
-        var forbidden=SaveWire.Parse(old);forbidden["WeatherStartsDay"]=0;
-        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(forbidden.ToString()).Status);
-        forbidden=SaveWire.Parse(old);forbidden["Schema"]=CityState.CurrentSchema+1;Assert.Equal(SaveReadStatus.Future,DevelopmentChain.Read(forbidden.ToString()).Status);
-        forbidden["Schema"]=12;Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(forbidden.ToString()).Status);
-    }
     [Theory] [InlineData(WeatherSample.Dry)] [InlineData(WeatherSample.Rain)] [InlineData(WeatherSample.Unknown)]
     public void OutingCaptureSurvivesInterruptedPlanningChangedRainAndChangedTuning(WeatherSample weather)
     {
@@ -185,24 +165,6 @@ public sealed class WeatherTests
         while(!city.AdvanceFrameSlice(at,1).CaughtUp) { }
         Assert.Equal(enabled ? 1 : 0,source.Calls);Assert.Equal(1,meal.ContextAttempts);
         Assert.InRange(planner.Out+planner.Back,1,16);
-    }
-    [Theory]
-    [InlineData("code")] [InlineData("low")] [InlineData("high")] [InlineData("nonneutral")]
-    [InlineData("missing")] [InlineData("consumer")]
-    public void BadSchema20FoodWeatherRefusesAndPreservesSource(string damage)
-    {
-        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);city.AttachWeather(new Source {Value=WeatherSample.Rain});
-        city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt,1);
-        var root=SaveWire.Parse(DevelopmentChain.Write25(city.State));root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
-        var meal=(JArray)root["Food"]!["Residents"]![0]!;var d=(JObject)meal[9]!;
-        if(damage=="code") d["Weather"]=3;
-        if(damage=="low") d["WeatherTravelMultiplier"]=0;
-        if(damage=="high") d["WeatherTravelMultiplier"]=3;
-        if(damage=="nonneutral") d["Weather"]=0;
-        if(damage=="missing") d.Remove("Weather");
-        if(damage=="consumer") meal[35]=((string)meal[35]!)[..^1]+"3";
-        string payload=root.ToString(Formatting.None);var store=new Dictionary<string,string> {[SaveStore.StateKey]=payload};
-        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(payload).Status);Assert.False(SaveStore.WriteTo(store,city.State).Success);Assert.Same(payload,store[SaveStore.StateKey]);
     }
     [Theory]
     [InlineData(true,false)] [InlineData(true,true)]

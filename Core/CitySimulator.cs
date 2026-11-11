@@ -51,7 +51,13 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, Due> citizenEvents = new Dictionary<string, Due>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
         private readonly IRoutePlanner routes;
+        /// <summary>The mutable city: load, save and the simulator's own writers. Observers read <see cref="View"/> instead
+        /// (F9e); tests/OwnershipBoundaryTests.cs lists the Runtime files that may still read this property.</summary>
         public CityState State { get; }
+        private CityView? view;
+        /// <summary>F9e: the read-only city for observers (diagnostics, panel, inspector, F9 oracles). Created once and
+        /// read live, so a read allocates nothing; see <see cref="ICityView"/>.</summary>
+        public ICityView View => view ??= new CityView(State);
         private FoodCommerce? food;
         public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
         /// <summary>F5d diagnostic counter: food/finance reads of a person other than the meal's owner (zero from schema 27).</summary>
@@ -93,7 +99,8 @@ namespace PersistentCity.Core
             // Visitors have no body before F5i, so nothing selects them for the resident inspector.
             if (person == null || person.IsVisitor) return null;
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
-            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop);
+            return ResidentInsight.Capture(View, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop,
+                ResidentInsight.MemoryFood(State));
         }
         public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
@@ -150,7 +157,7 @@ namespace PersistentCity.Core
         }
         private void MissRoutine(CitizenState person, RoutineSlot slot, double now, string reason)
         {
-            if (State.Schema >= CityState.AttendanceSchema && slot.Activity == Activity.Work)
+            if (slot.Activity == Activity.Work)
             {
                 var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1));
                 if (w.HasValue && person.Accrual.Day == (int)(w.Value.StartsAt / 1440)
@@ -199,8 +206,7 @@ namespace PersistentCity.Core
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
             state.Capabilities.RequireExecutable();
-            if (state.Schema > CityState.CurrentSchema || state.Schema >= 23
-                && state.MenuPolicy != (state.Schema >= 25 ? FoodNameIdentity.Wire : FoodMenuPolicy.Wire))
+            if (state.Schema != CityState.CurrentSchema || state.MenuPolicy != FoodNameIdentity.DynamicWire)
                 throw new InvalidOperationException("Unsupported menu product policy; preserve the payload.");
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)
@@ -220,10 +226,9 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
             }
-            // Schema 27: visitor routines share the queue. Their slot is the complement of their list index.
-            if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0 && state.Schema >= PersonTable.IndependentSchema)
+            // Visitor routines share the queue. Their slot is the complement of their list index.
+            if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0)
             {
-                if (state.Schema < PersonTable.IndependentSchema) throw new InvalidOperationException("Visitor routines need schema 27.");
                 VisitorSchedules.LinkAll(state);
                 for (int visitorIndex = 0; visitorIndex < state.VisitorRoutines.Count; visitorIndex++)
                 {
@@ -247,7 +252,6 @@ namespace PersistentCity.Core
         internal void ScheduleVisitors()
         {
             if (pending != null && pending.Item.ListIndex < 0) throw new InvalidOperationException("A visitor event is in flight.");
-            if (State.Schema < PersonTable.IndependentSchema) throw new InvalidOperationException("Visitor routines need schema 27.");
             foreach (var visitor in State.VisitorRoutines)
                 if (citizenEvents.TryGetValue(visitor.Identity.Id, out var old)) { due.Remove(old); citizenEvents.Remove(visitor.Identity.Id); }
             VisitorSchedules.LinkAll(State);
@@ -317,7 +321,7 @@ namespace PersistentCity.Core
         {
             foreach (var meal in State.Food!.Residents)
             {
-                if (State.Schema >= CityState.AttendanceSchema && meal.Budget != null)
+                if (meal.Budget != null)
                 {
                     var person = FindCitizen(meal.HostId);
                     if (person != null && EmploymentWages.NextPosting(person, State.Seed, State.Minute, out _) <= target) return false;
@@ -400,7 +404,7 @@ namespace PersistentCity.Core
                     // atomic publication; reload restarts this transient build at the same event.
                     food.ContinueAwarenessPreparation();count++;foodContinuationCount++;continue;
                 }
-                bool postingFirst = State.Schema >= CityState.AttendanceSchema && food?.PostingDueAt(next) == true
+                bool postingFirst = food?.PostingDueAt(next) == true
                     && foodMinute <= citizenMinute && foodMinute <= trafficMinute;
                 if (food?.HasPendingDecision == true || postingFirst || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
@@ -626,6 +630,7 @@ namespace PersistentCity.Core
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
             CompletedJourneys = live.CompletedJourneys, MissedActivities = live.MissedActivities,
+            PlayerHoldMinutes = live.PlayerHoldMinutes,
             RecentVisits = new List<VisitRecord>(live.RecentVisits),
             // Immutable once generated, so the copy shares it; events never change traits.
             Traits = live.Traits,
@@ -678,6 +683,8 @@ namespace PersistentCity.Core
             live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
             live.EmploymentStartDay = working.EmploymentStartDay; live.Accrual = working.Accrual;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
+            // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
+            live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
             live.DestinationActivity = working.DestinationActivity; live.Journey = working.Journey; live.DepartureMinute = working.DepartureMinute;
             live.NextEventMinute = working.NextEventMinute; live.ActivityUntilMinute = working.ActivityUntilMinute;
             live.CompletedJourneys = working.CompletedJourneys; live.MissedActivities = working.MissedActivities;
@@ -864,7 +871,7 @@ namespace PersistentCity.Core
                     earlyCommute = true;
                 }
             }
-            if (State.Schema >= CityState.AttendanceSchema && slot.Activity == Activity.Work)
+            if (slot.Activity == Activity.Work)
             {
                 var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 1));
                 if (work.HasValue && now >= work.Value.StartsAt && person.Accrual.Day == (int)(work.Value.StartsAt / 1440)

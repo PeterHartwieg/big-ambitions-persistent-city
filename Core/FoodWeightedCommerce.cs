@@ -177,6 +177,8 @@ namespace PersistentCity.Core
             d.Weather=city.CaptureWeather(now);d.WeatherTravelMultiplier=city.RainTravelMultiplier(d.Weather);
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             double[] contributions=Array.Empty<double>();
+            // E5b4: one product policy for this whole context, read after the capture boundary opened.
+            var policy=ProductPolicy();
             var scopes=meal.Day>=state.AwarenessStartsDay ? AwareShortlist(meal,person,stop,d,atStop)
                 : atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
                 : Shortlist(meal,person,stop,Draw(meal,d),d.Tuning.Settings,out contributions,d.WeatherTravelMultiplier);
@@ -195,7 +197,7 @@ namespace PersistentCity.Core
                 // Preserve that priced subset; never invent a price or trim a scope to fit a limit.
                 bool supportedMenu=b.Offers.Count<=scopedOffers;
                 foreach(var offer in b.Offers)
-                    if(!FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) supportedMenu=false;
+                    if(!policy.Executable(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) supportedMenu=false;
                 if(!supportedMenu) continue; // unsupported or out-of-scope offers reject the whole shop
                 // Market inputs belong to the provider: capture before subtracting reservations.
                 var shop=new FoodDecisionShop {AlternativeKind=b.AlternativeKind,RivalTerms=b.RivalTerms,RivalServiceMinutes=b.RivalServiceMinutes,AlternativeWeight=b.AlternativeKind==FoodAlternativeKind.Rival ? RivalSettings.RivalChoiceWeight : 1,MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
@@ -208,7 +210,7 @@ namespace PersistentCity.Core
                     if(offer.Units.HasValue) reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out held);
                     int units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1;
                     shop.Offers.Add(new FoodDecisionOffer {ProductId=offer.ProductId,Price=offer.Price,
-                        Metadata=city.State.Schema>=25 ? LegacyFoodOfferMetadata.Capture(Traits(meal,person),city.State.Seed,meal.ResidentId,offer.ProductId) : null,
+                        Metadata=policy.Capture(offer.ProductId,Traits(meal,person),city.State.Seed,meal.ResidentId),
                         Units=units,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
                 }
                 d.Shops.Add(shop);
@@ -218,6 +220,24 @@ namespace PersistentCity.Core
             meal.ContextAttempts=d.Attempt;meal.LastContextKey=context;meal.Decision=d;pendingDecision=meal;
             capturedStop=CopyStop(stop);
             // No reservations, optional-stop cancellation, purchases or outcomes before commit.
+        }
+
+        /// <summary>E5b4 (Decision 11): the market's policy at the held-policy writer, the original three otherwise.</summary>
+        private IFoodProductPolicy ProductPolicy()
+            => city.State.MenuPolicy==FoodNameIdentity.DynamicWire
+                && market is IFoodProductPolicyMarket policies ? policies.ProductPolicy : FoodProductPolicy.OriginalThree;
+
+        /// <summary>E5b4: a held revision-2 tuple as weight inputs; null for revision 1, which keeps E4's legacy inputs.</summary>
+        private static FoodProductMetadata? HeldDynamic(FoodDecisionShop shop,string product)
+        {
+            foreach(var offer in shop.Offers)
+                if(offer.ProductId==product)
+                {
+                    var m=offer.Metadata;
+                    return m==null || m.Revision!=2 ? (FoodProductMetadata?)null
+                        : new FoodProductMetadata((MealClass)m.MealClass,m.TasteBand,m.BreakfastFitCents,m.LunchFitCents,m.DinnerFitCents);
+                }
+            return null;
         }
 
         private FoodScope[] AwareShortlist(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDecisionState decision,bool atStop)
@@ -333,13 +353,17 @@ namespace PersistentCity.Core
             {
                 if(!c.ScoreCents.HasValue) continue;
                 var b=businesses.First(x=>x.Id==c.BusinessId);
+                var heldShop=d.Shops.First(s=>s.BusinessId==c.BusinessId);
                 // F6j: the expense compared is the whole ticket, planned from the captured menu by the checkout policy.
-                var ticket=CandidateTicket(meal,person,d.Shops.First(s=>s.BusinessId==c.BusinessId),c.ProductId,c.Price,allowance);
+                var ticket=CandidateTicket(meal,person,heldShop,c.ProductId,c.Price,allowance);
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
+                // E5b4: a revision-2 offer weighs its held tuple (taste and fits) through the metadata overload, as saved.
+                var dynamic=HeldDynamic(heldShop,c.ProductId);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
-                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Shops.First(s=>s.BusinessId==c.BusinessId).AlternativeWeight,
-                    FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1, campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket?.Total));
+                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,heldShop.MemoryContribution,heldShop.AlternativeWeight,
+                    dynamic.HasValue ? dynamic.Value.TasteBand : FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1,
+                    campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket?.Total, metadata: dynamic));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),allowance,Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);

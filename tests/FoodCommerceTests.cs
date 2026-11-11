@@ -32,7 +32,7 @@ public sealed partial class FoodCommerceTests
     private sealed class Market : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
-        public int Units = 100, Capacity = 15, OpenFromMinute;
+        public int Units = 100, Capacity = 15;
         public Money Price = Money.FromCents(100);
         public string BusinessId = "b";
         public string UnavailableReason = "";
@@ -52,7 +52,7 @@ public sealed partial class FoodCommerceTests
         {
             Reads++;
             var businesses = new[] { new FoodBusiness { Id = BusinessId, PlaceId = "shop", Name = "Bakery", ServiceUnavailableReason = UnavailableReason,
-            MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = OpenFromMinute, ToMinute = 1440 }).ToList(),
+            MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
             Offers = Products.Select(p => new FoodOffer { ProductId = p, Price = Price, Units = Units }).ToList() } };
             Journal?.ObserveSupply(BusinessId, "shop", (int)minute,
                 new[] { new ShopObservedOffer { ProductId = FoodProducts.Croissant, PriceUnits = Price.Units, Stock = Units } }, 1, Capacity > 0 ? 1 : 0, !Closed);
@@ -66,8 +66,8 @@ public sealed partial class FoodCommerceTests
             return new(true, "Native fake confirmed");
         }
     }
-    /// <summary><paramref name="independent"/> builds a writer-27 city whose K-1 visitors per resident run their own
-    /// routines from a portal; otherwise a factor above one is the frozen writer-26 represented-consumer city.</summary>
+    /// <summary>A factor above one (or <paramref name="independent"/>) gives the city a portal, so K-1 visitors per resident are
+    /// created as persons with their own routines (the only model since F5d; represented consumers are gone).</summary>
     private static (CitySimulator city, Market market, Walking routes) Ready(int count = 1, bool atWork = false, bool threeMeals = false, int representation = 1, bool independent = false)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {
@@ -83,8 +83,7 @@ public sealed partial class FoodCommerceTests
             c.NextEventMinute = c.ActivityUntilMinute = 2870;
         }
         state.Food = new FoodCommerceState { RepresentationFactor = representation, MealRhythmVersion = threeMeals ? MealRhythm.PolicyVersion : 0, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
-        if (independent) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
-        else DevelopmentChain.RepresentedSchema(state, representation);
+        if (independent || representation > 1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var market = new Market(); var routes = new Walking(); var city = new CitySimulator(state, routes); city.AttachFoodMarket(market);
         return (city, market, routes);
     }
@@ -225,15 +224,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(0, city.State.Citizens.Single().CompletedJourneys);
     }
     [Fact]
-    public void OldPopulationSchemaAndCurrentCorruptFoodOwnershipAreRejected()
-    {
-        var (city, _, _) = Ready(); var wire = SaveWire.Parse(LegacyWire.Write(city.State));
-        wire["Schema"] = 7; StripNewFields(wire);
-        var read = DevelopmentChain.Read(wire.ToString()); Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
-        wire = SaveWire.Parse(LegacyWire.Write(city.State)); wire["Food"]!["Residents"]![0]!["ResidentId"] = "unknown";
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(wire.ToString()).Status);
-    }
-    [Fact]
     public void NativeReceiptPreventsReplayEvenWithAnOlderPopulationSnapshot()
     {
         var (city, market, _) = Ready(); var meal = city.State.Food!.Residents.Single();
@@ -336,22 +326,6 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
-    public void SchemaEightFoodHistoryIsPreservedByRefusingUpgrade()
-    {
-        var (city, market, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Schema"] = 8;
-        RemoveMealRhythmFields(payload);
-        foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>())
-        { m.Remove("ExistingStop"); m.Remove("ExistingStopPurchases"); m.Remove("Budget"); }
-        ((JObject)payload["Food"]!).Remove("HouseholdFinanceVersion");
-        ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents"); ((JObject)payload["Food"]!).Remove("History");
-        string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]); Assert.Single(market.Orders);
-    }
-
-    [Fact]
     public void PersistentHouseholdPaysEssentialsAndActualPurchaseOnceAcrossReload()
     {
         var (city, market, routes) = Ready();
@@ -417,31 +391,6 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
-    public void HouseholdSaveRejectsCreatedCashAndUnknownFinancePolicy()
-    {
-        var (city, _, _) = Ready(); city.EnableHouseholdFinances(); Advance(city, city.State.Minute + 1);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State));
-        payload["Food"]!["Residents"]![0]!["Budget"]!["Balance"] = 999999999L;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
-        payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Food"]!["HouseholdFinanceVersion"] = 99;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
-    }
-
-    [Fact]
-    public void SchemaNineCannotSilentlyBecomeACurrentBudgetedCity()
-    {
-        var (city, _, _) = Ready(); var payload = SaveWire.Parse(LegacyWire.Write(city.State)); payload["Schema"] = 9;
-        RemoveMealRhythmFields(payload);
-        ((JObject)payload["Food"]!).Remove("HouseholdFinanceVersion"); ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents");
-        ((JObject)payload["Food"]!).Remove("History");
-        foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>()) m.Remove("Budget");
-        string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
-        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State);
-        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
-    }
-
-    [Fact]
     public void ABetterLaterOfferCanReplaceAnEarlierDeclineButCannotBuyTwice()
     {
         var (city, market, routes) = Ready();
@@ -477,15 +426,6 @@ public sealed partial class FoodCommerceTests
         city = Reload(city, market, routes);
         Assert.Equal(before, DevelopmentChain.Write(city.State)); Assert.Equal(orders, market.Orders.Count);
         Assert.True(history.Sum(h => h.Purchases) > 0);
-    }
-
-    [Fact]
-    public void ManagementHistoryRejectsInventedCustomerCounts()
-    {
-        var (city, _, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
-        var payload = SaveWire.Parse(LegacyWire.Write(city.State));
-        payload["Food"]!["History"]![0]!["PurchaseHours"]![0] = 999;
-        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(payload.ToString()).Status);
     }
 
     [Theory]

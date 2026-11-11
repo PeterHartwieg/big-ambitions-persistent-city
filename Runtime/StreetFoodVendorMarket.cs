@@ -39,6 +39,15 @@ namespace PersistentCity.Runtime
         private readonly IDictionary<string, string> receipts;
         private readonly Func<double> nativeMinute;
         private readonly Func<bool> sameSave;
+        private readonly Func<IFoodProductPolicy?>? productPolicy;
+        private readonly Func<string, bool> executable;
+        private readonly int menuLimit;
+        private IFoodProductPolicy? policy;
+        private bool holding;
+        private long preparingSince = -1;
+        /// <summary>How long a vehicle market keeps its saved or last ready admission while the product policy is being
+        /// prepared (catalogue warm-up after load, a rebuild after a catalogue change). Then it fails closed.</summary>
+        public const int PolicyPreparationMinutes = 15;
         private readonly VendorVehicle before = new VendorVehicle(), after = new VendorVehicle();
         private readonly Dictionary<string, long> withdrawn = new Dictionary<string, long>(StringComparer.Ordinal);
         private readonly VendorReferences references = new VendorReferences();
@@ -47,13 +56,24 @@ namespace PersistentCity.Runtime
         private long withdrawalMinute = -1;
         private bool pending, disposed, capturing;
         private double captureMinute;
+        /// <param name="productPolicy">E6f: the market's held product policy (shared with shops through the composite). Read
+        /// once per logical minute; its <see cref="IFoodProductPolicy.Executable"/> decides whole-vehicle admission. Null
+        /// while the policy is still being prepared (no published loaded-name image yet). Without a getter only the
+        /// original three are admitted.</param>
+        /// <param name="maximumOffers">The resident choice menu width (<c>FoodMenuMaximumOffersPerShop</c>). A wider vehicle
+        /// stays with Street Food, because Core never offers a wider scope to a resident.</param>
         public StreetFoodVendorMarket(CitySimulator city, IVendorApi? api, string unavailableReason, IVendorStandSampler sampler,
-            IDictionary<string, string> receipts, Func<double> nativeMinute, Func<bool> sameSave)
+            IDictionary<string, string> receipts, Func<double> nativeMinute, Func<bool> sameSave, Func<IFoodProductPolicy?>? productPolicy = null,
+            int maximumOffers = FoodMenuPolicy.LiveMaximumOffers)
         {
             this.city = city; state = city.State.Food ?? throw new InvalidOperationException("Vendor market needs food state.");
             this.api = api == null ? null : new ExactPriceApi(api); this.receipts = receipts; this.nativeMinute = nativeMinute; this.sameSave = sameSave;
+            this.productPolicy = productPolicy; executable = Executable;
+            menuLimit = Math.Max(1, Math.Min(VendorVehicle.MaximumItems, maximumOffers));
             ValidatePopulation(state, city.State.Vendors, receipts);
-            Coordinator = new VendorCoordinator(city.State.Vendors, this.api, unavailableReason, new Places(this), sampler);
+            Coordinator = new VendorCoordinator(city.State.Vendors, this.api, unavailableReason, new Places(this), sampler, executable, menuLimit);
+            // Until the first ready policy, the saved ownership is kept as it is (see RefreshPolicy).
+            Hold(productPolicy != null);
             // A saved handback in progress remains withdrawn while its committed residents drain.
             foreach (var row in city.State.Vendors.Rows)
                 if (!row.Authority.Desired && row.Authority.Managed && row.Authority.OpeningId >= 0)
@@ -112,6 +132,33 @@ namespace PersistentCity.Runtime
             public void CollectVendorReferences(VendorReferences into) => owner.city.CollectVendorReferences(into);
         }
         public VendorCoordinator Coordinator { get; }
+        /// <summary>Whole-vehicle admission: the policy read at the last logical minute. Drink, Bundle, NonFood and Unknown
+        /// names keep the whole vehicle with Street Food. While the first policy is prepared, admission is held: the
+        /// coordinator applies nothing and a saved canonical menu stays served, so committed residents finish their held
+        /// decisions; new decisions cannot choose a dynamic name meanwhile (the composite's policy has no image). Without
+        /// a policy getter, or after preparation timed out, only the original three are admitted.</summary>
+        private bool Executable(string item) => policy != null ? policy.Executable(item)
+            : holding ? FoodNameIdentity.IsCanonical(item) : VendorRules.OriginalThree(item);
+        private void Hold(bool on) { holding = on; Coordinator.Deferred = on; }
+        // A new policy object means config, API publication or the loaded-name image changed: apply the image again.
+        // A policy still being prepared is not a refusal: keep the last ready one (or the held saved state) for a bounded time.
+        private void RefreshPolicy(long minute)
+        {
+            if (productPolicy == null) return;
+            var next = productPolicy();
+            if (next == null)
+            {
+                if (preparingSince < 0) preparingSince = minute;
+                if (minute - preparingSince < PolicyPreparationMinutes) return;
+                if (policy == null && !holding) return; // already failed closed
+                policy = null; Hold(false); Coordinator.Revalidate();
+                return;
+            }
+            preparingSince = -1;
+            if (ReferenceEquals(next, policy) && !holding) return;
+            policy = next; Hold(false);
+            Coordinator.Revalidate();
+        }
         public double EarliestMinute => Math.Floor(nativeMinute());
         public long AwarenessRevision { get; private set; }
         public long Purchases { get; private set; }
@@ -139,6 +186,7 @@ namespace PersistentCity.Runtime
             if (polled != minute)
             {
                 polled = minute;
+                RefreshPolicy(minute);
                 if (receiptDay != minute / 1440)
                 {
                     receiptDay = (int)(minute / 1440);
@@ -276,7 +324,7 @@ namespace PersistentCity.Runtime
         }
         private bool LiveOpening(VendorRow row, VendorVehicle v, long minute) => v.OwnedByPersistentCity && v.Kind == row.Kind
             && v.OpeningId == row.Stand?.OpeningId && row.DeferredStand == null && row.Stand.Published
-            && VendorRules.OpeningRefusal(v) == null && VendorRules.MenuRefusal(v, VendorRules.OriginalThree) == null
+            && VendorRules.OpeningRefusal(v) == null && VendorRules.MenuRefusal(v, executable, menuLimit) == null
             && minute >= v.OpenedAt && minute < v.ClosesAt && Coordinator.Lease.Valid(minute)
             && Position.Distance(v.Window, row.Stand.Position) <= VendorRules.StandRadiusMetres;
         public FoodSale Buy(ResidentMeal meal, double minute)

@@ -33,7 +33,10 @@ namespace PersistentCity.Runtime
                 return Task.CompletedTask;
             }
             host = new GameObject(name);
-            host.AddComponent<PopulationRuntime>().Initialize(context);
+            var runtime = host.AddComponent<PopulationRuntime>();
+            runtime.Initialize(context);
+            // The city-load callback precedes the loaded save's native ticks; Update's order against them is not guaranteed.
+            runtime.ArmForCityLoad();
             return Task.CompletedTask;
         }
 
@@ -83,6 +86,7 @@ namespace PersistentCity.Runtime
         private bool initializingHadPayload;
         private Assembly? dependency;
         private float nextStart, nextDependencyCheck, nextStationScan, nextSummary;
+        private readonly StartupClockHold startupHold = new StartupClockHold();
         private int gateChanges, roadSnapshots, seenRoadSnapshots, waitingFrames;
         private readonly Dictionary<string, int> roadRebuildReasons = new Dictionary<string, int>(StringComparer.Ordinal);
         private string lastRoadRebuild = "";
@@ -138,12 +142,20 @@ namespace PersistentCity.Runtime
             var save = SaveGameManager.Current;
             var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "FoodTrucks");
             var api = StreetFoodBridge.Open(assembly, out string reason);
+            // E5b4: one product policy for shops and vehicles, from config, the API publication and E5b2's loaded-name image.
+            var policy = new FoodProductPolicySource(() => shops.LoadedNames, () => settings.FoodProductOverrides.Resolver, FoodProductMetadataApi.PublishSnapshot,
+                message => log?.Warn("Food product policy fell back to the original three: " + message));
+            shops.ProductPolicySource = policy; // E5b5: shop admission classes products with the same policy
+            // E6f: the same policy decides which vehicle menus are executable; null while the loaded-name image is not
+            // published yet (warm-up or rebuild), which the vehicle market does not treat as a refusal. The choice menu
+            // width also bounds vehicle menus.
             vendorMarket = new StreetFoodVendorMarket(current, api, reason, new VendorNavMeshSampler(), save.modData, Now,
-                () => ReferenceEquals(save, SaveGameManager.Current));
+                () => ReferenceEquals(save, SaveGameManager.Current), () => shops.LoadedNames == null ? null : policy.Current,
+                settings.FoodChoice.FoodMenuMaximumOffersPerShop);
             vendorMarket.WorkSpike = (component, ms) => log?.Warn("Vendor mod-work spike >= 30 ms: " + component + "="
                 + ms.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms");
             AttachVendorDecisionDiagnostics(current);
-            return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position);
+            return new FoodMarkets(current.State.Food!, shops, vendorMarket, id => simulation!.FindPlace(id).Position, policy);
         }
         public void EnableHouseholdFinances()
         {
@@ -253,12 +265,20 @@ namespace PersistentCity.Runtime
                 var save = SaveGameManager.Current;
                 if (NativeInteriorCityView.Configured && (save == null || UI.Load.LoadScene.isLoading
                     || saveIdentity != null && !ReferenceEquals(saveIdentity, save))) RestoreInterior();
+                ArmStartupClock(save);
                 if (save == null) return;
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                     ResetPopulationForSaveChange();
                 if (simulation == null)
                 {
                     if (initialization != null) { CompleteInitialization(); return; }
+                    ArmStartupClock(save);
+                    if (startupHold.Wait(UI.Load.LoadScene.isLoading, Time.unscaledDeltaTime))
+                    {
+                        NativeCityClock.Stop();
+                        log?.Warn("Persistent City startup is still waiting after " + StartupClockHold.MaximumWaitSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            + " seconds; native time is released. If native time enters another minute before the city attaches, the saved city is refused as before.");
+                    }
                     if (Time.unscaledTime < nextStart) return;
                     nextStart = Time.unscaledTime + 1;
                     TryStart();
@@ -272,11 +292,21 @@ namespace PersistentCity.Runtime
                     long checkStarted = Stopwatch.GetTimestamp();
                     nextDependencyCheck = Time.unscaledTime + 30;
                     var source = ReadRlo("periodic");
+                    // F8d (D6 option B): the saved catalogue is authoritative after activation. A transient RLO answer (Off,
+                    // NotYet, Refreshing) continues on it; a different catalogue or Shared, Failed, Incompatible stops as before.
+                    var continuity = source.Continuity(simulation.State);
+                    rloDiffers = continuity == DonorContinuity.Different;
                     maxRloCheckMilliseconds = Math.Max(maxRloCheckMilliseconds, (Stopwatch.GetTimestamp() - checkStarted) * MillisecondsPerTimestamp);
-                    if (!source.MatchesPopulation(simulation.State))
+                    if (!DonorReads.Continues(continuity))
                     {
-                        Fail("RLO donor catalogue is no longer available or differs from this snapshot: " + source.Message + " Existing saved state is preserved.");
+                        Fail("RLO donor catalogue is no longer available or differs from this snapshot (" + continuity + ", " + source.Reason + "): " + source.Message + " Existing saved state is preserved.");
                         return;
+                    }
+                    if ((continuity == DonorContinuity.Transient) != rloTransient)
+                    {
+                        rloTransient = !rloTransient;
+                        log?.Info(rloTransient ? "RLO transient (" + source.Reason + "): " + source.Message + " The city continues and saves on its saved donor catalogue; no identity is created, renamed or regenerated."
+                            : "RLO ready again and matching the saved donor catalogue; the transient window ended.");
                     }
                     long gateStarted = Stopwatch.GetTimestamp();
                     string gateChange = routes?.Refresh() ?? "";
@@ -345,7 +375,8 @@ namespace PersistentCity.Runtime
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
-                AdvancePopulation(Math.Max(AccountingClock.Target(target), simulation.State.Minute));
+                AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute)));
+                ApplyHoldReplay(); // F2e: in-game E2 replay only; inactive unless pc movement replay-holds started one
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
                     try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots, settings.MovementFaultAcquirePercent); }
@@ -594,14 +625,14 @@ namespace PersistentCity.Runtime
             double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
             // Hold native time throughout detached initialization and route preparation too.
             // Otherwise the world can cross accounting epochs before its scheduler exists.
-            NativeCityClock.Start(save, settings.GameClockFactor,
-                () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
-                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
+            if (!NativeCityClock.Active) StartCityClock(save);
+            startupHold.Initializing();
             initializingSave = save;
             // F7a: load timing only when save-cost diagnostics are requested; otherwise no timestamps or fields.
             bool timed = timeActivation = saveCost != null;
             if (timed) { activationHadPayload = initializingHadPayload; activationPayloadCharacters = initializingPayload?.Length ?? 0; }
-            // Rule 5: saves during initialization are refused with both markers, never silently skipped.
+            // Rule 5: a clean save during initialization is deferred (nothing written, no stop); unit-on-stack,
+            // nested, replaced-data and poisoned saves still refuse with both markers.
             BeginInitializingSaveEpoch(save, save.modData, epochMarker?.Sequence ?? 0);
             initialization = Task.Run(() =>
             {
@@ -630,6 +661,34 @@ namespace PersistentCity.Runtime
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
+        }
+
+        /// <summary>Arms the startup guard from the city-load callback (<see cref="PersistentCityMod.OnLoadAsync"/>): each load
+        /// creates a new runtime, so no earlier Update has armed it, and the first Update may follow the first native tick.</summary>
+        public void ArmForCityLoad()
+        {
+            if (!enabled || failed) return;
+            try { ArmStartupClock(SaveGameManager.Current); }
+            catch (Exception error) { Fail(error.Message); }
+        }
+
+        /// <summary>Keeps the startup guard armed for the current save until TryStart binds the clock. The city-load
+        /// callback (ArmForCityLoad) installs it first; no runtime exists at the menu. The hold belongs to one save: a
+        /// different save stops a clock bound to the old one and starts over. Released (the wait expired) stays released
+        /// for that save.</summary>
+        private void ArmStartupClock(object? save)
+        {
+            if (simulation != null || initialization != null) return;
+            if (startupHold.ForSave(save) && NativeCityClock.Bound) NativeCityClock.Stop();
+            if (startupHold.Begin() || startupHold.Holding && !NativeCityClock.Armed && !NativeCityClock.Bound) NativeCityClock.Arm();
+        }
+
+        private void StartCityClock(object save)
+        {
+            NativeCityClock.Start(save, settings.GameClockFactor,
+                () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
+                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
+            NativeCityClock.StartupHold = true;
         }
 
         private void CompleteInitialization()
@@ -673,13 +732,16 @@ namespace PersistentCity.Runtime
             save.modData.TryGetValue(SaveEpochStore.Key, out var currentEpoch);
             if (!ReferenceEquals(currentEpoch, prepared.EpochMarker)) { Fail("Save-epoch marker changed during initialization. Every saved key is retained."); return; }
             var source = ReadRlo("activation");
-            if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization. Original payload retained."); return; }
+            // F8d: activation stays strict; the class only names why it refused.
+            rloDiffers = source.Status == RloReadStatus.Ready && !source.MatchesPopulation(state);
+            if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization (" + source.Continuity(state) + ", " + source.Reason + "). Original payload retained."); return; }
+            rloTransient = false;
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
             if (!AccountingClock.Compatible(state.Minute, Now()))
             { StopAccounting(); return; }
             // F5d: a city whose first roster is about to be created gets its portal places now, before routes and
             // the scheduler index the catalogue. A saved city keeps its own station table.
-            if (state.Food == null && state.Schema >= PersonTable.IndependentSchema && state.Portals.Count == 0 && state.Visitors.Count == 0)
+            if (state.Food == null && state.Portals.Count == 0 && state.Visitors.Count == 0)
             {
                 PortalPlaces.Add(state, NativePortalStations.Read());
                 log?.Info("Visitor portals: " + state.Portals.Count + " subway stations.");
@@ -719,9 +781,11 @@ namespace PersistentCity.Runtime
             NativeTravelPace.ResetReading();
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
+            LogActivationLines(); // F8d/F8e capability and hook lines, once per load; F8h: after the checkout decision
             ResetAdvanceDiagnostics();
             if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
             { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }
+            NativeCityClock.StartupHold = false;
             saveEpoch.CompleteInitialization(); // Attached: publication allowed, detach now marks a still-current city.
             nextDependencyCheck = Time.unscaledTime + 30;
             nextStationScan = float.PositiveInfinity;
@@ -739,6 +803,7 @@ namespace PersistentCity.Runtime
         private RloReadResult ReadRlo(string context)
         {
             var result = rlo.Read(dependency);
+            lastRloRead = result; // F8b: the capability report reads the last answer; no extra read
             log?.Info("RLO single-pass read context=" + context + " status=" + result.Status
                 + " identities=" + result.Identities.Count + " elapsedMs="
                 + rlo.LastReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
@@ -762,7 +827,7 @@ namespace PersistentCity.Runtime
                 if (cost != null)
                 {
                     cost.End(capture.Error == null, capture.Error ?? "");
-                    if (capture.Error == null) CountSavedRecords(cost);
+                    if (capture.Error == null) CountSavedRecords(cost, payload => SaveCodec.CountRecords(simulation!.State, payload));
                 }
             }
         }
@@ -771,7 +836,10 @@ namespace PersistentCity.Runtime
         {
             if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
             var source = ReadRlo("save");
-            if (!source.MatchesPopulation(simulation!.State))
+            // F8d: a transient window saves the same payload a Ready save writes; the snapshot is not touched here.
+            var saveContinuity = source.Continuity(simulation!.State);
+            rloDiffers = saveContinuity == DonorContinuity.Different;
+            if (!DonorReads.Continues(saveContinuity))
                 return SaveEpochCapture.Refused("RLO changed before saving; original population payload retained.");
             RunPhysical(() => physical?.BeforeSave());
             foodMarket?.CompleteCampaignsForSave();

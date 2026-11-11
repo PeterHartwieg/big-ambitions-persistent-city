@@ -1,0 +1,13 @@
+Application,ProcessID,SwapChainAddress,PresentRuntime,SyncInterval,PresentFlags,AllowsTearing,PresentMode,CPUStartQPC,FrameTime,CPUBusy,CPUWait,GPULatency,GPUTime,GPUBusy,GPUWait,DisplayLatency,DisplayedTime,AnimationError,ClickToPhotonLatency,AllInputToPhotonLatency
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50001044,16.3607,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.9721,16.7308,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50164651,16.8129,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.3422,16.1216,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50332780,16.0986,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.6509,16.3904,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50493766,16.2963,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.9427,17.1045,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50656729,17.0866,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.7509,16.2935,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50827595,16.2584,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.9579,99.9607,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,50990179,100.0017,10.0000,0.4000,1.0,6.5000,6.5000,1.0,104.6602,16.1278,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,51990196,16.0711,10.0000,0.4000,1.0,6.5000,6.5000,1.0,20.7862,16.4834,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52150907,16.4973,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.1985,16.6370,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52315880,16.6545,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.3382,16.8272,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52482425,16.8763,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.5108,17.1362,0.0,NA,NA
+Big Ambitions.exe,4242,0x1,DXGI,0,512,1,Hardware: Independent Flip,52651188,17.1207,10.0000,0.4000,1.0,6.5000,6.5000,1.0,21.7707,17.1207,0.0,NA,NA

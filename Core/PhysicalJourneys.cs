@@ -444,14 +444,16 @@ namespace PersistentCity.Core
     /// (queue planning), holding an optional stop, or at an outdoor scene. Physical selection iterates this set instead
     /// of every citizen. It holds no saved state and decides nothing: caps, the candidate filters and their
     /// priority order stay with Runtime's selection, and movement authority stays with F2 #89.
-    /// Visitors are indexed with their kind but withheld from <see cref="BodyCandidates"/> until F5i.
+    /// Since F5i visitors are body candidates like residents: F2's movement contract makes every body follow the
+    /// logical pose, so a body cannot change a visitor's outcome. The withheld list stays empty.
     /// F2f files every body candidate into a <see cref="PresentationGrid"/> from inside File and Rebuild, so selection
     /// can read only the cells near the focus (<see cref="Grid"/>).
     /// </summary>
     public sealed class ActiveJourneyIndex
     {
-        /// <summary>F5i switch. Visitors receive no body before F2's movement contract lands (plan B5).</summary>
-        public const bool VisitorsReceiveBodies = false;
+        /// <summary>F5i switch (plan B5): visitors receive bodies now that F2's movement contract (F2c walkers, F2d cars,
+        /// F2e player holds) makes physical progress follow logical permissions.</summary>
+        public const bool VisitorsReceiveBodies = true;
         /// <summary>Prefix of native outdoor scene places (Runtime OutdoorPlaces: parks, beaches, party piers).</summary>
         public const string OutdoorScenePrefix = "scene-";
 
@@ -482,13 +484,16 @@ namespace PersistentCity.Core
 
         public static bool ReceivesBody(CitizenState c) => VisitorsReceiveBodies || !c.IsVisitor && KindOf(c) != PersonKind.Visitor;
 
-        /// <summary>Indexed persons that may receive a body, in no particular order.</summary>
+        /// <summary>Indexed persons that may receive a body, in no particular order. F9g named exception: still entity-typed,
+        /// because the F2 movement-equivalence driver (tools/movement-equivalence/PresentationDriver.cs, owned by F2g) follows
+        /// each candidate's journey through it. Runtime presentation reads <see cref="Grid"/> instead.</summary>
         public IReadOnlyList<CitizenState> BodyCandidates => eligible;
         /// <summary>Every indexed person, visitors included.</summary>
         public int Count => eligible.Count + withheld.Count;
         /// <summary>Indexed visitors withheld from body selection (zero while VisitorsReceiveBodies).</summary>
         public int WithheldVisitors => withheld.Count;
-        public bool Contains(CitizenState c) => positions.ContainsKey(c);
+        /// <summary>F9g: takes the read-only view, so presentation can test a grid query result; only the entity is ever filed.</summary>
+        public bool Contains(IPersonView person) => person is CitizenState c && positions.ContainsKey(c);
         /// <summary>F2f spatial view of <see cref="BodyCandidates"/>: <see cref="PresentationGrid.Query"/> returns each body
         /// candidate filed near a focus once, a superset of those within the radius. Read-only outside Core.</summary>
         public PresentationGrid Grid => grid;

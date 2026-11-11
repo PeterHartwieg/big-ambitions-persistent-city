@@ -191,6 +191,13 @@ internal static class Program
         Refuses(() => f.Plan(roads), "unexplained raw native speed mutation was accepted");
         Refuses(() => roads.ResolveWaypoint(roads.TopologyId, 1), "unexplained raw speed still resolved");
         Refuses(() => f.Profile.Canonical(f.Native[1]), "unexplained raw speed became canonical");
+        // Sol-r3-3: the Resolve refusal is recorded like a refused capture, so rlo.roadspeeds reports off after the stop.
+        Check(!f.Profile.Verified && f.Profile.LastRefusal == "Native road speed changed without a verified RLO slowdown/restoration.",
+            "a terminal Resolve mismatch is recorded as the road-speed refusal");
+        var report = new CapabilityInputs { RoadSpeedsFromRlo = f.Profile.FromRlo, RoadSpeedsVerified = f.Profile.Verified, RoadSpeedRefusal = f.Profile.LastRefusal };
+        var registry = CapabilitySnapshot.Build(report);
+        Check(registry.State(CapabilityId.RloRoadSpeeds) == CapabilityState.Off && registry.Reason(CapabilityId.RloRoadSpeeds)!.StartsWith("Native road speed changed", StringComparison.Ordinal),
+            "the report shows rlo.roadspeeds off with the mismatch reason");
         f.Native[1].maxSpeed = 20; f.Overrides.Add(f.Native[1], (35, 20));
         Refuses(() => roads.Prepare(), "changed original speed was accepted over captured canonical speed");
         f.Overrides[f.Native[1]] = (30, 20); f.Native[1].maxSpeed = 19;
@@ -201,11 +208,85 @@ internal static class Program
             "speed compatibility weakened native geometry validation");
         Console.WriteLine("PASS unexplained raw/original/observed speed mutations fail closed");
     }
+    private sealed class TransientRead : InvalidOperationException { internal TransientRead(string message) : base(message) { } }
+
+    /// <summary>F8d (review Sol-r2-2): a transient RLO road-speed answer (NotYet, Refreshing) holds preparation, sweeps and a
+    /// held route plan without stopping or handing out lane timing, also when a captured lane changes during the window;
+    /// saves in the window are unchanged; the held plan finishes once RLO answers again.</summary>
+    private static void TransientCaptureWaits()
+    {
+        var fixture = new Fixture();
+        bool transient = false;
+        var profile = new NativeRoadSpeeds(() =>
+        {
+            Guard.Read();
+            if (transient) throw new TransientRead("RLO road speed overrides: ReadSlowedLanes: RLO is refreshing the city's citizens.");
+            return fixture.Overrides;
+        }, error => error is TransientRead ? error.Message : null);
+        fixture.Slow(3);
+        var roads = fixture.Build(profile);
+        var route = fixture.Plan(roads);
+        Check(profile.Verified && profile.Waiting == null, "a complete answer is verified");
+        var sim = Engine(new Planner(roads), route, out _);
+        string saved = SaveCodec.Write(sim.State);
+        var a = fixture.Native[0].position; var b = fixture.Native[8].position;
+        var held = roads.BeginPlan(new RoadRoutes.Curb { Node = 0, Position = new Position(a.x, a.y, a.z) },
+            new RoadRoutes.Curb { Node = 8, Position = new Position(b.x, b.y, b.z) }, 100);
+
+        transient = true;
+        fixture.Native[3].maxSpeed = 25; // RLO changes the captured lane while it refreshes
+        Check(!roads.Prepare(), "preparation waits on a transient answer");
+        Check(profile.Waiting != null && !profile.Verified && profile.LastRefusal == null, "waiting, not refused");
+        bool waited = false;
+        try { profile.Canonical(fixture.Native[3]); } catch (RoadSpeedsWaitingException) { waited = true; }
+        Check(waited, "lane timing is not handed out while waiting (no unverified-speed stop)");
+        Check(!held.Continue(long.MaxValue) && !held.Finished && held.WaitingForSpeeds && held.Result == null, "the held plan waits and consumes nothing");
+        Check(roads.Plan(new RoadRoutes.Curb { Node = 0, Position = new Position(a.x, a.y, a.z) },
+            new RoadRoutes.Curb { Node = 8, Position = new Position(b.x, b.y, b.z) }, 100) == null, "a new plan in the window yields no route");
+        roads.BeginSweep();
+        try { roads.Sweep(1, 1024); } catch (RoadSpeedsWaitingException) { } // MultimodalRoutes.Prepare returns not prepared on this
+        Check(SaveCodec.Write(sim.State) == saved, "a save in the window is the same bytes");
+
+        fixture.Overrides[fixture.Native[3]] = (30, 25); transient = false; // RLO answers: a verified 30 -> 25 slowdown
+        Check(roads.Prepare() && roads.Ready, "preparation resumes after the answer");
+        Check(held.Continue(long.MaxValue) && held.Result != null && !held.WaitingForSpeeds, "the held plan finishes after the answer");
+        Check(profile.Verified && profile.Canonical(fixture.Native[3]) == 30 && profile.Effective(fixture.Native[3]) == 25, "verified timing after the answer");
+        // Sol-r3-1: the held-event preflight with Waiting initially null. A held event skips RoadRoutes.Prepare, so the
+        // production preflight (MultimodalRoutes.Prepare -> NativeRoadSpeeds.WaitsAfterRefresh) is the first read; a lane
+        // changes while RLO refreshes; a traffic closure is demanded.
+        fixture.Overrides[fixture.Native[3]] = (30, 25); fixture.Native[3].maxSpeed = 25;
+        Check(!profile.WaitsAfterRefresh() && profile.Waiting == null, "held-event fixture: a complete answer, not waiting");
+        int link = roads.TrafficNetwork!.Links[0].Id;
+        Check(!roads.IsTrafficLinkClosed(link), "control: the link is open with a verified answer");
+        var heldAgain = roads.BeginPlan(new RoadRoutes.Curb { Node = 0, Position = new Position(a.x, a.y, a.z) },
+            new RoadRoutes.Curb { Node = 8, Position = new Position(b.x, b.y, b.z) }, 100);
+        transient = true; fixture.Native[3].maxSpeed = 22; // RLO changes the captured lane while it refreshes
+        Check(profile.Waiting == null, "Waiting is still null before the preflight runs");
+        Check(profile.WaitsAfterRefresh(), "the held-event preflight reports waiting, so preparation returns not prepared");
+        // Without that preflight, the demanded closure would reach Resolve; it now meets the typed wait, never the stop.
+        bool typed = false;
+        try { roads.IsTrafficLinkClosed(link); } catch (RoadSpeedsWaitingException) { typed = true; }
+        Check(typed, "a closure query in a waiting frame meets the typed wait, not the unverified-speed stop");
+        Check(!heldAgain.Continue(long.MaxValue) && heldAgain.WaitingForSpeeds, "the held plan waits");
+        Check(SaveCodec.Write(sim.State) == saved, "a save in the held-event window is the same bytes");
+        fixture.Overrides[fixture.Native[3]] = (30, 22); transient = false; // RLO answers with the new slowdown
+        Check(!profile.WaitsAfterRefresh() && profile.Verified, "recovery: the preflight passes with the verified answer");
+        Check(!roads.IsTrafficLinkClosed(link), "recovery: the demanded closure query answers open");
+        Check(heldAgain.Continue(long.MaxValue) && heldAgain.Result != null, "recovery: the held plan finishes");
+
+        // A terminal answer (Shared, Failed) still refuses and is recorded for the report.
+        var refusing = new NativeRoadSpeeds(() => throw new InvalidOperationException("RLO road speed overrides: ReadSlowedLanes: Multiplayer sessions are unsupported."),
+            error => error is TransientRead ? error.Message : null);
+        Refuses(refusing.Refresh, "a terminal answer still refuses");
+        Check(refusing.LastRefusal != null && refusing.Waiting == null && !refusing.Verified, "the terminal refusal is recorded");
+        Console.WriteLine("PASS transient road-speed answer: preparation, sweep and a held plan wait through a lane change; the save is unchanged; the plan finishes after the answer");
+    }
+
     private static void Main()
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         Guard.MainThread = Environment.CurrentManagedThreadId;
-        StagedPreflight(); UnknownChangesFailClosed(); ExistingQueueAndFutureRoutes(); GeometricSpacing();
+        StagedPreflight(); UnknownChangesFailClosed(); ExistingQueueAndFutureRoutes(); GeometricSpacing(); TransientCaptureWaits();
         Console.WriteLine("PASS " + checks + " offline assertions using actual Runtime/Core/Persistence and synthetic Unity/native surfaces; no rig or RLO mutation.");
     }
     private sealed class References : IEqualityComparer<object>

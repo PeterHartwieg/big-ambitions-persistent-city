@@ -247,7 +247,9 @@ namespace PersistentCity.Tests
             foreach (int unknown in new[] { 2, 3, 4, 5 })
             {
                 CityApiHooks.LanesStatus = unknown;
-                Assert.Throws<InvalidOperationException>(() => speeds.Capture());
+                // F8d: NotYet and Refreshing are a distinct "not ready" refusal (route preparation waits); the rest stop.
+                var refused = Assert.ThrowsAny<InvalidOperationException>(() => speeds.Capture());
+                Assert.Equal(unknown <= 3, refused is RloRoadSpeedsNotReadyException);
             }
             CityApiHooks.LanesStatus = 0;
             CityApiHooks.Lanes = new List<(object, int, int)> { (a, 50, 35), (a, 50, 35) };
