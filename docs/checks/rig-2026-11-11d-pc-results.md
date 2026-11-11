@@ -160,23 +160,23 @@ Both native build/reconcile calls completed. No `ops_fixture_unknown`, `ops_city
 
 Only the fresh native character created at this candidate was loaded. All 15 disposable saves remain in place; all 15 recorded creation/manual-save SHA-256 values reverified after stop. Full inventory `<stage>/fixtures.json`, verification `<stage>/fixture-hash-verification.json`.
 
-| Name | Absolute path | SHA-256 |
+| Name | File | SHA-256 |
 |---|---|---|
-| `FT E5b PC 11 Nov d 86c2e92f Ready` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT E5b PC 11 Nov d 86c2e92f Ready.hsg` | `574df5f88bc641653b37b8488d040d65abc6fc602133576300c04b9d5c7b3fad` |
-| `FT E5b PC 11 Nov d 86c2e92f` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT E5b PC 11 Nov d 86c2e92f.hsg` | `225de5c7d97cba4dc507493ea96a4678a0b7236a5e86ca16a565142e9420a1b1` |
-| `FT PC 11 Nov d f7cold F7 Cold Reload Verified` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d f7cold F7 Cold Reload Verified.hsg` | `e9fd60692894bf070a2d5626066d108096cf0134f92decadd9ec02f9b037dc7e` |
-| `FT PC 11 Nov d firstsale Before Normal Load` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d firstsale Before Normal Load.hsg` | `a03341b8a8afc79cedf1f9396010bf763c9c9e2e3cac6334dc6960637ccff8b7` |
-| `FT PC 11 Nov d firstsale First Sale Window` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d firstsale First Sale Window.hsg` | `841c141c5572674a002a4069d616852c6f97e22fe15011216da9f9ee8a2828a0` |
-| `FT PC 11 Nov d firstsale2 Before Normal Load` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d firstsale2 Before Normal Load.hsg` | `51666ab565d3cd333e3d8dc7ee2e3ab7fcc4060ac94aacc66529172f7ea1ef20` |
-| `FT PC 11 Nov d firstsale2 First Sale Window` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d firstsale2 First Sale Window.hsg` | `a920f55ccd19ba8006156e3c9881d2c413f35309e1044cdcd8bcb64bdbfb5eda` |
-| `FT PC 11 Nov d foreignshop Before Foreign Shop Cycle` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d foreignshop Before Foreign Shop Cycle.hsg` | `9d8a428cfafc3d036ca5bfff10ed546a21423ed8ac4cab1207f760aa058b6b3a` |
-| `FT PC 11 Nov d foreignshop Foreign Shop Reacquired` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d foreignshop Foreign Shop Reacquired.hsg` | `0dadc3089198890f9edda5f79aaac24a75b1c401955c6f7418711ec09606c352` |
-| `FT PC 11 Nov d foreignshop Foreign Shop Served` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d foreignshop Foreign Shop Served.hsg` | `0ef81806afa9ecf5024bfa4b22bce8e577fe6256430a7cb871dc7df10158ef5b` |
-| `FT PC 11 Nov d mixed Documented Mixed Shop` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d mixed Documented Mixed Shop.hsg` | `1738521e647cfd419f379f0e154d92897656f7338c2f2f55aec24b280949dad5` |
-| `FT PC 11 Nov d remaining F7 Same Minute A` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d remaining F7 Same Minute A.hsg` | `a2c358ce56c3b97353078c33ccaf9611356dcfe91cae493f5a3e0147ccf17f1a` |
-| `FT PC 11 Nov d remaining F7 Same Minute B` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d remaining F7 Same Minute B.hsg` | `d51f6e3c5a685b56ebdaa3eae2b52cc6e4be0f09f7c84c86bb87dea7e77faf75` |
-| `FT PC 11 Nov d remaining f9-city-ready` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d remaining f9-city-ready.hsg` | `5386b993ccff2aa7bc6210d51555593f14dcf089a126956b96b7310f20f99cb3` |
-| `FT PC 11 Nov d shop Owned Staffed Food Shop` | `C:/Users/Peter/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests/SaveGames/Big Ambitions/7GtI09kH1Uqnnwoy22MA+A==/FT PC 11 Nov d shop Owned Staffed Food Shop.hsg` | `c298933d9c9c5020600912480f504e37d17fa136408c1b80bd9a8d3bb2b39ae7` |
+| `FT E5b PC 11 Nov d 86c2e92f Ready` | `FT E5b PC 11 Nov d 86c2e92f Ready.hsg` | `574df5f88bc641653b37b8488d040d65abc6fc602133576300c04b9d5c7b3fad` |
+| `FT E5b PC 11 Nov d 86c2e92f` | `FT E5b PC 11 Nov d 86c2e92f.hsg` | `225de5c7d97cba4dc507493ea96a4678a0b7236a5e86ca16a565142e9420a1b1` |
+| `FT PC 11 Nov d f7cold F7 Cold Reload Verified` | `FT PC 11 Nov d f7cold F7 Cold Reload Verified.hsg` | `e9fd60692894bf070a2d5626066d108096cf0134f92decadd9ec02f9b037dc7e` |
+| `FT PC 11 Nov d firstsale Before Normal Load` | `FT PC 11 Nov d firstsale Before Normal Load.hsg` | `a03341b8a8afc79cedf1f9396010bf763c9c9e2e3cac6334dc6960637ccff8b7` |
+| `FT PC 11 Nov d firstsale First Sale Window` | `FT PC 11 Nov d firstsale First Sale Window.hsg` | `841c141c5572674a002a4069d616852c6f97e22fe15011216da9f9ee8a2828a0` |
+| `FT PC 11 Nov d firstsale2 Before Normal Load` | `FT PC 11 Nov d firstsale2 Before Normal Load.hsg` | `51666ab565d3cd333e3d8dc7ee2e3ab7fcc4060ac94aacc66529172f7ea1ef20` |
+| `FT PC 11 Nov d firstsale2 First Sale Window` | `FT PC 11 Nov d firstsale2 First Sale Window.hsg` | `a920f55ccd19ba8006156e3c9881d2c413f35309e1044cdcd8bcb64bdbfb5eda` |
+| `FT PC 11 Nov d foreignshop Before Foreign Shop Cycle` | `FT PC 11 Nov d foreignshop Before Foreign Shop Cycle.hsg` | `9d8a428cfafc3d036ca5bfff10ed546a21423ed8ac4cab1207f760aa058b6b3a` |
+| `FT PC 11 Nov d foreignshop Foreign Shop Reacquired` | `FT PC 11 Nov d foreignshop Foreign Shop Reacquired.hsg` | `0dadc3089198890f9edda5f79aaac24a75b1c401955c6f7418711ec09606c352` |
+| `FT PC 11 Nov d foreignshop Foreign Shop Served` | `FT PC 11 Nov d foreignshop Foreign Shop Served.hsg` | `0ef81806afa9ecf5024bfa4b22bce8e577fe6256430a7cb871dc7df10158ef5b` |
+| `FT PC 11 Nov d mixed Documented Mixed Shop` | `FT PC 11 Nov d mixed Documented Mixed Shop.hsg` | `1738521e647cfd419f379f0e154d92897656f7338c2f2f55aec24b280949dad5` |
+| `FT PC 11 Nov d remaining F7 Same Minute A` | `FT PC 11 Nov d remaining F7 Same Minute A.hsg` | `a2c358ce56c3b97353078c33ccaf9611356dcfe91cae493f5a3e0147ccf17f1a` |
+| `FT PC 11 Nov d remaining F7 Same Minute B` | `FT PC 11 Nov d remaining F7 Same Minute B.hsg` | `d51f6e3c5a685b56ebdaa3eae2b52cc6e4be0f09f7c84c86bb87dea7e77faf75` |
+| `FT PC 11 Nov d remaining f9-city-ready` | `FT PC 11 Nov d remaining f9-city-ready.hsg` | `5386b993ccff2aa7bc6210d51555593f14dcf089a126956b96b7310f20f99cb3` |
+| `FT PC 11 Nov d shop Owned Staffed Food Shop` | `FT PC 11 Nov d shop Owned Staffed Food Shop.hsg` | `c298933d9c9c5020600912480f504e37d17fa136408c1b80bd9a8d3bb2b39ae7` |
 
 ## Per-check results
 
