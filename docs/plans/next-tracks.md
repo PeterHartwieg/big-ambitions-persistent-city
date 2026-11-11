@@ -170,7 +170,7 @@ Every code slice runs the build, `python tools/test-focused.py` and its own new 
 
 - **Scope.** Residents in homes the player cannot rent, with the second capacity rule from J0; size from P-A, P-D and GR-4 evidence. Visitor constants in `Core/PopulationCensus.cs` become a tuning table with named groups that lean toward business types.
 - **Schema:** no bump. **Testing:** offline; rig-needing for frame and save at the new size. **Depends on:** GR-4, P-A, P-D.
-- **Owns:** `Core/PopulationCensus.cs`, `Core/PopulationFill.cs`, `Core/HousingPolicy.cs`, `Core/CityBalance.cs`.
+- **Owns:** `Core/PopulationCensus.cs`, `Core/PopulationFill.cs`, `Core/HousingPolicy.cs`, `Core/CityBalance.cs`, `Runtime/GamePlaces.cs` (footprint and floor count for the second capacity rule, after GR-1).
 - **Tests:** every person has a home and a place; a group changes who comes, never what a shop is paid; census reproducible.
 - **Reserved:** Q1, Q2.
 
