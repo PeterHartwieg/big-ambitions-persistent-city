@@ -41,3 +41,9 @@ The old rig comparator reports an invalid comparison for the current compact env
 The first one-hour attempt was stopped by a stage clock-poll race before time advanced (08:00 retained). Excluded from hour proof. Its normal-stop, modset/lifecycle restore and lease release all succeeded; a fresh launch will repeat the hour with an explicit target-clock poll.
 
 Completed group: hour reload identity readbacks. Raw evidence: `<stage>/runs/positive2`; progress and request/reply files retained.
+
+09:00 group completed: H1 and H1 Reload both carry schema 1, 957 residents, 957 visitors, logical minute `1980.009998343885`, success-epoch sequences 2/3, with matching payload lengths/schema/population/minute and no receipt keys. The full resident identity plus home/day-place/shop/leisure digest matches across reload: `00d4178c64d8462b5e4522d49da9988b985aa64fea62750fbcb8f5df2ede0d13` (ordinal ID order, sorted-key compact UTF-8 JSON). `<stage>/hour-identity-summary.json` and the native running-status capture retain the evidence.
+
+The stage .NET host's full reader rejects some Mono round-trip numeric strings in visitor routines (`commute duration`, then `visitor next event`); the native game accepts both saves and runs. Candidate `ExpandCompact` expands the lossless envelope without reformatting those tuples; identity projections and exact epoch fields/lengths above are checked from that output. No host-reader refusal is called a native failure, and no all-journey equality is claimed.
+
+`modwork arm` succeeds: coverage complete, no untimed entries, missing components or patch failures. The stage argument-name error before `begin` produced no measured window. Its process stopped normally and its modset/lifecycle restoration and lease release succeeded. The actual 30-minute window uses a separate background launch from this run's H1.
