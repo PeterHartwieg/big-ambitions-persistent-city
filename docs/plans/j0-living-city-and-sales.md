@@ -74,3 +74,99 @@ From the code, yes, with limits:
 - **Binding.** `CustomerEntry` and `Order` have no field for a person, and the citizen is random and thrown away. A binding has to be kept by the mod: own entry objects (the food path already writes its own entry, see the [city direction](../decisions/2026-11-10-city-direction.md)), or a mod table from `CustomerEntry` to resident while the entry lives in `BusinessCustomerEntries`. Ordinary native processing never keeps or reports an identity.
 - **Ceiling before the sale commits.** Two boundaries matter. The first stock mutation is `ItemInstance.SubtractFromStock` for a paid good inside `ProcessItemInOrder` (and the paper bag in `ProcessPaperBag`, whose appended `Order.AddPaperBagEntry` sets only `wholesalePrice`, so it adds no customer price). The order-booking boundary comes later: the order joins `unprocessedCompletedOrders` at the end of `ProcessCustomer`, and money moves only at the daily boundary. The incoming basket is incomplete for entrance-fee venues: `CustomerEntriesCalculatorRetail` leaves `defaultEntranceFee`, `weekendOnlyEntranceFee` and ticket items out of generated baskets, and `RetailBusinessSimulator.ProcessEntranceFee` creates a new paid `OrderEntry` for the item named by `BusinessTypeHelper.GetEntranceFeeNameForBusinessType` and appends it to `order.entries` during processing (`IndoorCustomerSpawner.TryToProcessEntranceFeeEntryToOrder` does the same for visible customers). A prefix on `RetailBusinessSimulator.ProcessCustomer` (already a mod hook) can price the basket before any stock moves, but only if it prices `order.entries` plus every checkout-added charge that applies, at least the entrance fee when `BusinessType.hasEntranceFee` is set, with `ItemHelper.GetPrice`. Pricing `order.entries` alone can approve a basket at the resident's ceiling and then book revenue above it. The game checks prices per item, not the total, so the total ceiling must be the mod's check. One catch: subclasses that override `ProcessCustomer` (Cinema/Theatre, Gym) do not call the base method's body, and Nightclub, Hairdresser and Self-service run their own checks before the base. A prefix on the base method does not cover the first two. Each family needs its own hook or a mod-run entry.
 - **Not determined from reading:** the asset mapping from business type to simulator, and the casino processor; whether `IndoorCustomerSpawner` and the employee scripts (player inside) can take a pre-bound entry without changes. S2 proves the sale in game.
+
+## Day plans
+
+### Model
+
+- A `DayPlan` belongs to one person and one game day. It holds the day number, the seed it was drawn with, and an ordered list of `PlanItem`s.
+- A `PlanItem` has a kind (`Work`, `Meal`, `Need`, `Outing`, `Home`), a venue (a place ID, or none for a need that picks its venue when it starts), a window (earliest start, latest start), a duration, a priority (`Fixed`, `Wanted`, `Optional`) and a state (`Pending`, `Travelling`, `Active`, `Done`, `Missed` with one cause, `Cancelled`).
+- Generation runs once at the person's day boundary (04:00 game time, the quietest hour in today's template) and reads only saved state: role, shift type, the workplace's weekly hours, wallet, needs due today, the household outing for today, the place catalogue. Draws come from a seed of person ID and day number, so regenerating from the same inputs gives the same plan. The plan is saved anyway, because wallet and catalogue change during the day.
+- Order of generation: work first (from the workplace hours and a shift type `Early`, `Day`, `Late` or `Night`; days off from a per-person weekday mask drawn once and saved with the person), then meals as items in the gaps (replacing the `MealRhythm` interrupt), then needs due today by urgency, then the household outing if one is set, then home. Items that do not fit are left out, not squeezed.
+- Visitors get the same plan, with `Work` only for commuters and no `Outing`. Their day starts and ends at a subway portal.
+
+### Executor
+
+- One `DayPlanExecutor` replaces the separate scheduling state in `CitySimulator` (commute preparation, meal outings, waits for opening) and in `OptionalStopScheduling`. It is event-driven: each person has one next-wake time in the existing event queue, so the executor does no per-frame walk. The `RefreshOptionalStops` full walk (a P-B hotspot) goes with it.
+- Rules, in order: a `Fixed` item that is due starts. A `Wanted` or `Optional` item starts if its window is open and the venue is open on arrival (travel time from the kernel's estimate); otherwise it waits up to its latest start and then becomes `Missed(Closed | Late | NoRoute)`. A late arrival shortens the item, never the next `Fixed` one. A missed `Need` item goes back to the need model as deferred. A purchase refused by the contract marks the item `Missed(Refused, cause)`.
+- Reload: the executor reads the saved plan and the in-flight journey and continues. No item is redrawn. A journey interrupted by a save resumes from its saved leg, as today.
+- Cadence: results depend only on event times, so two update cadences give the same item states (GR-2 test).
+
+## Need model
+
+- A need is a category from the loaded catalogue (business type tags and item types) with three numbers: interval in days, spread, and a spending band. A category nobody describes gets the neutral default: interval 7 days, spread 3 days, band from the person's wallet tier. Modded business types get the default unless a table row names them.
+- Each person keeps, per need: next-due day and last venue. A satisfied need sets next-due to today plus interval plus or minus a seeded spread. A deferred need (missed, refused, wallet short) comes due again the next day with higher urgency, up to three times, then resets to a full interval. Venue memory reuses the shape of the food memory store.
+- Impulse: while passing an open business on a journey leg, one seeded draw per person, venue and day at a small base rate, raised by how close the related need is to due. At most one impulse per person per day. An impulse becomes an inserted `Optional` plan item if it fits before the next `Fixed` one.
+- Native counts calibrate and do not drive. The native hourly count already contains building size, promotion (traffic index and marketing) and the day and hour factors (S1). Venue choice uses distance, memory and price level, not marketing, so marketing is not applied twice.
+- Household essentials in `HouseholdFinance` are re-cut with the wallet move (GR-1): a category that becomes a need stops being deducted as an essential, so it is not paid twice.
+
+## Purchase contract
+
+`PurchaseRequest(resident, venue, intention, ceiling)` in; `PurchaseResult` out, either `Bought(lines, total)` or `Refused(cause)`. The intention is a need category or a food choice. The ceiling is the smaller of the wallet balance and the need's spending band.
+
+Common steps for every family:
+
+1. Take an order. First choice: claim one uncompleted native `CustomerEntry` of the current hour from `CustomerEntriesHelper.GetEntriesByAddress(address)` whose order is not empty. The game then keeps order choice, stock and booking. A mod table maps the entry to the resident while it lives. If the hour has none left, the adapter writes its own entry, as food already does with its one-product entry: a basket from the venue's `cachedAvailableProducts` matched to the intention, following the calculator's rules (a service product at most once; cinema and theatre put their ticket first). The limit is service capacity, not the native count: claimed and mod-written entries processed this hour count against `GetMaxCustomerCapacityThisHour`, and above it the result is `Refused(VenueFull)`. The native hourly count is logged for calibration (S2, Q1) and never refuses a resident.
+2. Price the whole basket before any stock moves: every line of `order.entries` once, with `ItemHelper.GetPrice`, plus only the charges the family's processor appends that are not already in the basket. For the base, gym and other `ProcessEntranceFee` families that is the entrance fee from `BusinessTypeHelper.GetEntranceFeeNameForBusinessType` when `BusinessType.hasEntranceFee` is set. Cinema and theatre append nothing: their ticket is already the first line and is counted there, once. If the total is over the ceiling, drop optional goods from the end until it fits. The ticket and the entrance fee are mandatory and are never dropped; if they alone exceed the ceiling, `Refused(Ceiling)`. The game's own per-item check (`CitizenData.IsPriceAcceptable`) still runs afterwards.
+3. Process through the family's own `ProcessCustomer`, with the mod's citizen data in place of `CitizenHelper.CreateRandomCitizenDataNonAlloc`.
+4. Read the processed order (paid entries and prices), debit the wallet by the paid total, record the receipt. The player's money arrives at the native daily boundary (`BusinessHelper.ProcessDailyOrders`), as for food.
+
+Adapters per processing family (S1 table):
+
+| Family | Hook point | Adapter work |
+| --- | --- | --- |
+| `RetailBusinessSimulator` base, `FullServiceBusinessSimulator` | prefix on `RetailBusinessSimulator.ProcessCustomer` | common steps only; food already uses this |
+| `SelfServiceBusinessSimulator` | its `ProcessCustomer` override | the `CustomersNeedShoppingContainer` and missing-scales refusals map to `Refused(VenueNotReady)` |
+| `CinemaTheaterBusinessSimulator` | its own `ProcessCustomer` override (does not reach the base prefix) | ticket is already the first order line, priced once in step 2 and never trimmed; a refused ticket refuses the rest; a theatre without actors maps to `Refused(VenueNotReady)` |
+| `GymBusinessSimulator` | its own `ProcessCustomer` override | entrance fee priced in step 2 |
+| `NightclubBusinessSimulator` | its override, before the base | no staffed DJ booth maps to `Refused(VenueNotReady)`; the DJ-skill random drop maps to `Refused(Dropped)` |
+| `HairdresserBusinessSimulator` | its override, before the base | missing hair-care shelf or station maps to `Refused(VenueNotReady)` |
+| Casino | not found | unsupported until S2 finds the processor; stays native-owned |
+| `OfficeBusinessSimulator`, `FactoryBusinessSimulator` | none | no customers; workforce only (GR-7) |
+
+A business type whose `BusinessType.simulator` asset is none of these stays native-owned, the fallback for modded shops with their own code. S2 confirms the type-to-simulator mapping in game; GR-3 builds the adapter table from that log, never from shop names.
+
+While the player stands inside the venue (the `IndoorCustomerSpawner` path) the mod claims no entries for that building, and the resident's item waits or misses with `Refused(PlayerInside)`. Whether visible customers can carry a bound entry stays with the indoor-customers row of the roadmap.
+
+## Households
+
+- A household is the residents of one home. Visitors have none.
+- At most one shared item per household per day: an `Outing` to one venue, drawn at plan generation for an evening or a day off when at least two members are free in the window. Each member's plan carries the same item and window.
+- Cancelling rule: any member not arrived by the latest start is `Missed(Late)`. If fewer than two members have arrived by then, the arrived member's item becomes an ordinary visit and the outing is `Cancelled` for the rest. Each member buys with their own contract call and wallet.
+
+## Homes without interior area
+
+`HousingPolicy.Capacity` stays for rentable homes. Residential buildings the player cannot rent get a second rule: capacity = floor(footprint area × floors × 0.6 usable share ÷ 30 m² per person), with the footprint from the building's bounds and the floor count from its building data, both read in `GamePlaces`. If either number is missing or not finite, the building houses nobody and is counted in a diagnostic; nothing is guessed. The 90% fill and `MaximumResidents` still apply to the city total. GR-5 sets the population size from P-A, P-D and GR-4 evidence; the factors 0.6 and 30 m² are tuning values in `CityBalance`.
+
+## Through-traffic share
+
+Through cars are a share of all cars on the road, setting `ThroughTrafficShare`, default 0.10 (the Q3 default), range 0 to 0.5. Entries per map edge follow the hour's resident car count × share ÷ (1 − share), so the share holds as resident traffic rises and falls. At 0 the kernel is identical to today. They are not saved.
+
+## Revenue-scale gap
+
+From numbers already recorded in the repo; nothing new was run.
+
+| Quantity | Value | Source |
+| --- | --- | --- |
+| Population of the reference city | 957 residents; 957 visitors on day 1, 1,914 by day 3 | [rig 11 Nov batch](../checks/rig-2026-11-11-batch-results.md) |
+| Places | 1,083 | [F8h check 1 log](../checks/f8h-check1-modpack-owners-mac.json) |
+| Resident visits | about 3 per shop per day | [9 Nov review](../reviews/2026-11-09-city-review.md) |
+| Offline own-shop ceiling | 60 meals per hour, capacity-bound profile | [F9h record](../checks/f9h.md) |
+| Price response at weight 1.2 | +50% menu: meals −1.7%, revenue +29.7% (offline) | [F9h record](../checks/f9h.md) |
+| Native customers at a player shop | not measured: every rig fixture so far recorded no orders and revenue 0 | [rig 9 Nov](../checks/rig-2026-11-09-results.md), [rig 11 Nov e](../checks/rig-2026-11-11e-mac-results.md) |
+
+The mod's side is known: about 3 visits per shop per day, estimated for the 9 November reference city of 957 residents plus 1,914 commuters, 2,871 people. The native side is not measured, so the revenue gap is unknown. S1 shows the native count is `ceil(initial × promotion × day and hour factor)` for every open hour, capped at `customerCapacity` for retail. Scenarios, not measurements: if a shop open 9 hours got one native customer per open hour, native visits would be 9 a day, 3× the resident visits; with the multipliers above 1 the ratio could be 10× or more. These are visit ratios. The revenue ratio also depends on basket size and price per visit, which the records do not give for native customers. S2 gives the native visit count: log `GetCustomersByHour` and `customerCapacity` for the FT shop for one day, with its booked revenue.
+
+Growing the population: visits scale about linearly with people. 8,000 to 15,000 named people (the review's estimate) is 2.8× to 5.2× the 2,871 people behind the three-visits estimate. In the 3× scenario that leaves 1.1× at the low end and closes the gap at the high end; in the 10× scenario it leaves 3.6× to 1.9×. Visitor groups (G8) move visits between shop types and do not raise the total.
+
+## Reserved question Q1
+
+**If visitors are not enough to keep your shops' income at the game's normal level, what should give?** Default until answered: none. The plan caps each venue at its service capacity and books one visit as one customer.
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| A. Lower income: fewer customers than native | Truthful: every sale is a person you can click. No new code | Rent and wages are tuned to native volume, so shops may not cover rent. Changes the game's difficulty a lot |
+| B. One visit counts as several customers (per-venue multiplier = native count ÷ resident visits) | Keeps native income. The multiplier comes from the native count, so marketing and location still matter. Small code | The panel shows more customers than walked in, and the inspector must say so. Stock falls faster than the street suggests |
+| C. Higher spend per visit (bigger baskets) | Every unit is bought by a named person | Baskets the native order would not choose; the resident's ceiling caps it, so poorer districts still fall short. Shifts the price response F6h measured |
+
+Recommendation: grow the population first (GR-5), measure the remaining gap with S2's count, then use B with a capped multiplier (for example at most 4) shown in the panel. Peter decides.
