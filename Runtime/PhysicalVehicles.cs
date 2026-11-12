@@ -625,7 +625,8 @@ namespace PersistentCity.Runtime
                 var model = body.Instance.Model;
                 var front = body.Length <= 1e-9 ? body.To : Position.Lerp(body.From, body.To, Math.Min(1, step.Along / body.Length));
                 var rotation = Quaternion.Euler(0, (float)yaw, 0);
-                foreach (var box in OwnCarFootprint.Sweep(body.Position, body.Yaw, front, yaw, Point(model.MarkerOffset), model.Length, model.Width))
+                OwnCarFootprint.Sweep(body.Position, body.Yaw, front, yaw, Point(model.MarkerOffset), model.Length, model.Width, sweep);
+                foreach (var box in sweep)
                     if (Occupied(box, model.Height, body.Instance.Root.transform))
                     { body.SpeedValue = 0; return; }
                 body.Yaw = yaw; body.Rotation = rotation;
@@ -656,6 +657,8 @@ namespace PersistentCity.Runtime
         }
 
         private readonly Collider[] overlaps = new Collider[16];
+        // Reused per drive step (OwnCarFootprint.Sweep fills it), so moving cars allocate nothing per frame.
+        private readonly List<CarRectangle> sweep = new List<CarRectangle>(OwnCarFootprint.MaximumSubsteps + 1);
         private static int occupancyMask = -1, movingLayers = -1;
         /// <summary>Whether a vehicle, the player, a walker or another own car stands in this body rectangle. Static
         /// Obstacles-layer geometry (bollards, lamp posts) does not count; the layer is in the mask only for own cars.

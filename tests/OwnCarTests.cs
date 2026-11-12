@@ -307,6 +307,10 @@ public sealed class OwnCarTests
         var sweep = OwnCarFootprint.Sweep(from, 0, to, 18, offset, 4, 1.8);
         Assert.InRange(sweep.Count, 2, OwnCarFootprint.MaximumSubsteps + 1);
         Assert.Contains(sweep, box => OwnCarFootprint.Overlaps(box, obstacle));
+        // The buffer overload gives the same boxes into a reused list, cleared first.
+        var buffer = new List<CarRectangle> { obstacle };
+        OwnCarFootprint.Sweep(from, 0, to, 18, offset, 4, 1.8, buffer);
+        Assert.Equal(sweep, buffer);
         // Straight on, 1 m of clear space beside the car stays clear over the sweep.
         var beside = new CarRectangle(new Position(-2.0, 0, -2), 0, 3, 0.1);
         Assert.DoesNotContain(OwnCarFootprint.Sweep(new Position(0, 0, 0), 0, new Position(0, 0, 1), 0, offset, 4, 1.8),

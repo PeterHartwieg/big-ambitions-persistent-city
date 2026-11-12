@@ -44,6 +44,18 @@ namespace PersistentCity.Core
         public static List<CarRectangle> Sweep(Position fromFront, double fromYaw, Position toFront, double toYaw,
             Position markerOffset, double length, double width)
         {
+            var boxes = new List<CarRectangle>(MaximumSubsteps + 1);
+            Sweep(fromFront, fromYaw, toFront, toYaw, markerOffset, length, width, boxes);
+            return boxes;
+        }
+
+        /// <summary>The same sweep written into <paramref name="boxes"/> (cleared first), so the per-frame drive path
+        /// allocates nothing.</summary>
+        public static void Sweep(Position fromFront, double fromYaw, Position toFront, double toYaw,
+            Position markerOffset, double length, double width, List<CarRectangle> boxes)
+        {
+            if (boxes == null) throw new ArgumentNullException(nameof(boxes));
+            boxes.Clear();
             double turn = ((toYaw - fromYaw) % 360 + 540) % 360 - 180;
             double move = Position.Distance(fromFront, toFront);
             int steps = (int)Math.Ceiling(Math.Max(move / 0.25, Math.Abs(turn) / 2));
@@ -52,14 +64,12 @@ namespace PersistentCity.Core
             // Farthest body point from the front axle (the pivot): it moves the most in a turn.
             double reach = Math.Sqrt(Math.Pow(Math.Abs(markerOffset.Z) + start.HalfLength, 2) + Math.Pow(Math.Abs(markerOffset.X) + start.HalfWidth, 2));
             double margin = (reach * Math.Abs(turn) * Math.PI / 180 + move) / (2 * steps);
-            var boxes = new List<CarRectangle>(steps + 1);
             for (int i = 0; i <= steps; i++)
             {
                 double t = (double)i / steps;
                 var pose = At(Position.Lerp(fromFront, toFront, t), fromYaw + turn * t, markerOffset, length, width);
                 boxes.Add(new CarRectangle(pose.Centre, pose.YawDegrees, pose.HalfLength + margin, pose.HalfWidth + margin));
             }
-            return boxes;
         }
 
         /// <summary>Whether two rectangles overlap on the ground (separating-axis test).</summary>
