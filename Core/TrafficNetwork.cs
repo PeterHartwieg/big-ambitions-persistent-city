@@ -182,6 +182,8 @@ namespace PersistentCity.Core
         public IReadOnlyList<int> NativeNodes(int linkId) => linkId >= 0 && linkId < linkNodes.Count
             ? linkNodes[linkId] : throw new ArgumentOutOfRangeException(nameof(linkId));
         public bool TryGetEdge(int from, int to, out TrafficNetworkEdge edge) => edges.TryGetValue((from, to), out edge);
+        /// <summary>A native node's position (GR-8 map edges).</summary>
+        public Position NodePosition(int nodeId) => positions.TryGetValue(nodeId, out var at) ? at : throw new ArgumentOutOfRangeException(nameof(nodeId));
 
         /// <summary>Offsets address the full committed route. Native fragments preserve directed edge provenance after retiming.</summary>
         public bool TryMap(Route route, out List<TrafficRouteLeg> mapped) => TryMapCore(route, 0, false, out mapped);

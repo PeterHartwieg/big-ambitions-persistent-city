@@ -271,17 +271,19 @@ public sealed class ResearchMenuTests
         foreach (string key in table.Keys)
         {
             Assert.Equal(key.ToLowerInvariant().Trim(), key);
-            Assert.StartsWith(ResearchText.Prefix, key);
+            Assert.StartsWith("persistentcity_", key);
         }
-        // C5f adds the agency delivery and decline messages to the same table.
-        var used = ResearchText.Keys(ResearchProducts.All).Concat(ResearchNoticeText.Keys()).ToHashSet(StringComparer.Ordinal);
+        // C5f adds the agency delivery and decline messages to the same table; GR-7 and GR-8 add their words
+        // (VenueFeedbackWordsTests checks those).
+        var research = ResearchText.Keys(ResearchProducts.All).Concat(ResearchNoticeText.Keys()).ToHashSet(StringComparer.Ordinal);
+        var used = research.Concat(VenueWords.All.Keys).Append(ThroughTraffic.InspectorKey).ToHashSet(StringComparer.Ordinal);
         Assert.Equal(used.OrderBy(k => k, StringComparer.Ordinal), table.Keys.OrderBy(k => k, StringComparer.Ordinal));
         foreach (var value in table.Values) Assert.False(string.IsNullOrWhiteSpace(value));
         // Every placeholder is an argument the dialog passes.
         var arguments = new[] { ResearchText.ProductArgument, ResearchText.DescriptionArgument, ResearchText.BusinessArgument, ResearchText.PriceArgument,
             ResearchNoticeText.BusinessNameArgument };
-        foreach (var value in table.Values)
-            foreach (Match match in Regex.Matches(value, @"\{(\w+)\}")) Assert.Contains(match.Groups[1].Value, arguments);
+        foreach (var pair in table.Where(p => research.Contains(p.Key)))
+            foreach (Match match in Regex.Matches(pair.Value, @"\{(\w+)\}")) Assert.Contains(match.Groups[1].Value, arguments);
         // English only.
         // Shipped as <mod>/Locales/<locale>.json, the folder native ModDiscoveryRegistry registers per mod.
     }

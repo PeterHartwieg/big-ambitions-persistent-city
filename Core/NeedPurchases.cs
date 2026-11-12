@@ -82,6 +82,7 @@ namespace PersistentCity.Core
             });
             if (result == null) return;
             LastPurchase = result;
+            RecordPurchase(live, result, venue.Id);
             if (result.IsBought)
             {
                 PurchasesBought++;

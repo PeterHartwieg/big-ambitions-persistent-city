@@ -29,6 +29,64 @@ namespace PersistentCity.Core
         public static int Study(double areaSquareMetres) => PopulationCensusPolicy.StudyCapacity(areaSquareMetres);
     }
 
+    public enum WorkforceKind { None, Office, Factory, Warehouse }
+
+    /// <summary>GR-7 (R5): offices, factories and warehouses have no customers (J0 processing table: workforce only), so the
+    /// city staffs them on their own opening hours. Their workers keep a two-shift rota drawn once from the person ID: the
+    /// early shift starts at the day's opening, so its workers arrive before the doors open, and the late shift ends at the
+    /// closing, so its workers leave after they shut (<see cref="DayPlanner.FitShift"/>). A day without an opening long
+    /// enough for a whole shift staffs nobody. Seats stay <see cref="WorkplaceCapacityPolicy"/>'s area band, so no workplace
+    /// holds more persons than its capacity. Nothing here reads or writes native staff, production or wages.</summary>
+    public static class WorkplaceStaffing
+    {
+        public const string PolicyId = "workforce-venue-hours-v1";
+        public const double ShiftMinutes = 480;
+
+        // Catalogue names read from the loaded game data (12 Nov 2026); a modded or unlisted type keeps the ordinary shifts.
+        private static readonly Dictionary<string, WorkforceKind> Kinds = new Dictionary<string, WorkforceKind>(StringComparer.Ordinal)
+        {
+            ["ba:businesstype_headquarters"] = WorkforceKind.Office,
+            ["ba:businesstype_lawfirm"] = WorkforceKind.Office,
+            ["ba:businesstype_webdevelopmentagency"] = WorkforceKind.Office,
+            ["ba:businesstype_graphicdesigner"] = WorkforceKind.Office,
+            ["ba:businesstype_marketingagency"] = WorkforceKind.Office,
+            ["ba:businesstype_recruitmentagency"] = WorkforceKind.Office,
+            ["ba:businesstype_eventplanningagency"] = WorkforceKind.Office,
+            ["ba:businesstype_factory"] = WorkforceKind.Factory,
+            ["ba:businesstype_warehouse"] = WorkforceKind.Warehouse,
+            ["ba:businesstype_importexport"] = WorkforceKind.Warehouse,
+        };
+
+        public static WorkforceKind KindOf(string? businessType)
+            => businessType != null && Kinds.TryGetValue(businessType, out var kind) ? kind : WorkforceKind.None;
+
+        /// <summary>A Work place whose business is an office, factory or warehouse.</summary>
+        public static bool IsWorkforceVenue(Place place) => place.Kind == PlaceKind.Work && KindOf(place.BusinessType) != WorkforceKind.None;
+
+        /// <summary>The person's rota shift: early or late, drawn once from the person ID (seed 0, like the days off).</summary>
+        public static ShiftType Rota(string personId)
+            => (StableRandom.Finish(StableRandom.Append(StableRandom.Append(StableRandom.Begin(0), personId ?? ""), ":rota")) & 1) == 0
+                ? ShiftType.Early : ShiftType.Late;
+
+        /// <summary>True when the venue opens on calendar day <paramref name="day"/> long enough for a whole shift that starts
+        /// that day (the shift rule of <see cref="DayPlanner.FitShift"/>).</summary>
+        public static bool Staffs(Place workplace, int day) => ShiftStart(workplace, day, ShiftType.Early).HasValue;
+
+        /// <summary>The rota shift's start on <paramref name="day"/>: the early shift at the first whole-shift opening of the
+        /// day, the late shift so that it ends when that opening closes. Null when the day has no such opening.</summary>
+        public static double? ShiftStart(Place workplace, int day, ShiftType shift)
+        {
+            double midnight = day * 1440.0;
+            if (midnight + ShiftMinutes + 10080 > 1000000000) return null;
+            foreach (var interval in DailyRoutine.Intervals(workplace, midnight))
+            {
+                double from = Math.Max(interval.From, midnight), last = Math.Min(interval.To - ShiftMinutes, midnight + 1439);
+                if (from <= last) return shift == ShiftType.Late ? last : from;
+            }
+            return null;
+        }
+    }
+
     /// <summary>F5e capacity bookkeeping: persons seated per Work/Study place (residents and visitor routines), kept by
     /// the simulator so a successful job-finding roll checks vacancies in O(1) per place instead of recounting every
     /// person. It is derived state, never saved: rebuilt from the city when a simulator is built or visitors are

@@ -187,6 +187,16 @@ namespace PersistentCity.Runtime
         /// <summary>GR-3: residents with a due need or an impulse buy at the player's supported non-food businesses through
         /// the purchase contract. Off by default (Q4: automatic takeover waits for S2 and GR-4 in game); rig profiles turn it on.</summary>
         public bool NeedPurchasesEnabled { get; set; }
+        /// <summary>GR-6: households may share one evening or weekend outing a day. On by default; false turns it off.</summary>
+        public bool HouseholdOutingsEnabled { get; set; } = true;
+        private double throughTrafficShare = ThroughTrafficSettings.DefaultShare;
+        /// <summary>GR-8: the share of cars on the road that only pass through the city (Q3 default 0.10, 0 to 0.5; 0 turns
+        /// them off). A value out of range or not a number is clamped to the range or the default.</summary>
+        public double ThroughTrafficShare
+        {
+            get => throughTrafficShare;
+            set => throughTrafficShare = double.IsNaN(value) ? ThroughTrafficSettings.DefaultShare : Math.Max(0, Math.Min(ThroughTrafficSettings.MaximumShare, value));
+        }
         public int MaximumPedestrians { get; set; } = 48;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;

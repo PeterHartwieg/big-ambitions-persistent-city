@@ -7,8 +7,8 @@ namespace PersistentCity.Core
     /// person's hour shift and 480 minutes long. The workplace's opening hours on the day move the window (never shorten it).</summary>
     public enum ShiftType { Early, Day, Late, Night }
 
-    /// <summary>Need is today's shop visit (GR-3 gives needs their categories). Outing is reserved for the household outing
-    /// (GR-6). Home spans are the gaps between items and are not stored.</summary>
+    /// <summary>Need is today's shop visit (GR-3 gives needs their categories). Outing is the household outing (GR-6), a
+    /// leisure visit several members of one home share. Home spans are the gaps between items and are not stored.</summary>
     public enum PlanItemKind { Work, Meal, Need, Leisure, Outing, Home }
     public enum PlanPriority { Fixed, Wanted, Optional }
     public enum PlanItemState { Pending, Travelling, Active, Done, Missed, Cancelled }
@@ -69,7 +69,8 @@ namespace PersistentCity.Core
         /// <summary>Hash of the person ID and day under the city seed. The draws themselves keep their routine keys.</summary>
         public uint Seed { get; }
         public ShiftType Shift { get; }
-        /// <summary>Weekday bits (Monday = bit 0) without work. Today every person gets Friday to Sunday; GR-6 varies it.</summary>
+        /// <summary>Weekday bits (Monday = bit 0) without work: Friday to Sunday, or for a typed workplace open at weekends a
+        /// three-day block drawn once from the person ID (GR-6, <see cref="WorkSchedules"/>).</summary>
         public int DaysOff { get; }
         /// <summary>The workplace the work item was drawn for; a different current workplace replans the work item.</summary>
         public string WorkplaceId { get; }
@@ -162,7 +163,7 @@ namespace PersistentCity.Core
             => shift == ShiftType.Early ? 465 : shift == ShiftType.Late ? 720 : shift == ShiftType.Night ? 1320 : 510;
 
         public static DayPlan Generate(CitizenState person, int citySeed, int day, IReadOnlyList<Place>? catalogue,
-            IReadOnlyDictionary<string, Place>? places, bool meals, NeedPlanning? needs = null)
+            IReadOnlyDictionary<string, Place>? places, bool meals, NeedPlanning? needs = null, Household? household = null)
         {
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (day < 0) throw new ArgumentOutOfRangeException(nameof(day));
@@ -173,6 +174,9 @@ namespace PersistentCity.Core
             var prior = person.Plan;
             PlanItem? carried = prior != null && prior.WorkplaceId == person.DayPlaceId && prior.Day < day ? prior.NextWork : null;
             if (carried != null && DayPlan.DayOf(carried) == day) routine.Work = Window(carried);
+            Place? planHome = null;
+            if (catalogue != null && places != null) places.TryGetValue(person.HomeId, out planHome);
+            if (planHome != null) Nightlife(person, keys, day, catalogue!, places!, planHome, ref routine, ref quiet);
             DropOverlaps(ref routine);
             var items = new List<PlanItem>(6);
             if (routine.Work.HasValue)
@@ -195,8 +199,6 @@ namespace PersistentCity.Core
             // window, or no served venue is open in the drawn one, the need gets its own visit where one fits, scheduled
             // after both routine windows are known; the routine keeps one shop and one leisure visit a day, so that visit
             // replaces the drawn window, which stays only when nothing fits.
-            Place? planHome = null;
-            if (catalogue != null && places != null) places.TryGetValue(person.HomeId, out planHome);
             if (needs != null) NeedModel.EnsureCatalogue(person, needs, day, citySeed);
             bool planNeeds = needs != null && planHome != null;
             PlanItem? shopFallback = null, leisureFallback = null;
@@ -210,7 +212,8 @@ namespace PersistentCity.Core
             {
                 string venue = routine.LeisureVenue;
                 string? needVenue = planNeeds ? NeedModel.PlanVenue(person, day, needs!, planHome!, PlaceKind.Leisure, routine.LeisureFrom, routine.LeisureUntil) : null;
-                if (planHome != null) venue = needVenue ?? ChooseLeisure(keys, day, catalogue!, planHome, venue);
+                // A night out already chose its venue; a due need still sends the window to a venue selling it.
+                if (planHome != null) venue = needVenue ?? (routine.LeisureChosen ? venue : ChooseLeisure(keys, day, catalogue!, planHome, venue));
                 var drawn = new PlanItem(PlanItemKind.Leisure, Activity.Leisure, venue, routine.LeisureFrom, routine.LeisureUntil, routine.LeisureUntil, PlanPriority.Optional);
                 if (needVenue != null || !planNeeds) items.Add(drawn); else leisureFallback = drawn;
             }
@@ -233,10 +236,54 @@ namespace PersistentCity.Core
                     else if (leisureFallback != null) items.Add(leisureFallback);
                 }
             }
+            // GR-6: the household outing comes last. It takes the place of an overlapping leisure visit and is left out for
+            // this member when it overlaps anything else already planned.
+            if (household != null && planHome != null)
+            {
+                var outing = HouseholdOutings.Draw(household, citySeed, day, catalogue!, places!);
+                if (outing != null && outing.Invites(person.Identity.Id)) AddOuting(items, outing.Item);
+            }
             items.Sort((a, b) => { int c = a.EarliestStart.CompareTo(b.EarliestStart); return c != 0 ? c : a.Kind.CompareTo(b.Kind); });
             uint seed = StableRandom.Finish(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Append(StableRandom.Begin(citySeed), keys.Id), ":plan:"), day));
             var next = carried != null && DayPlan.DayOf(carried) > day ? carried : DrawNextWork(person, keys.HourShift, day, places);
-            return new DayPlan(day, seed, ShiftOf(person), DefaultDaysOff, person.DayPlaceId, items, next);
+            return new DayPlan(day, seed, ShiftOf(person, places), DaysOff(person, places), person.DayPlaceId, items, next);
+        }
+
+        private static void AddOuting(List<PlanItem> items, PlanItem outing)
+        {
+            if (items.Count >= DayPlan.MaximumItems) return;
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                double before = item.Priority == PlanPriority.Fixed ? WorkTravelAllowance : 0;
+                if (item.Kind != PlanItemKind.Meal && item.Kind != PlanItemKind.Leisure && item.EarliestStart - before < outing.EndsAt && item.EndsAt > outing.EarliestStart) return;
+            }
+            items.RemoveAll(item => item.Kind == PlanItemKind.Leisure && item.EarliestStart < outing.EndsAt && item.EndsAt > outing.EarliestStart);
+            items.Add(outing);
+        }
+
+        /// <summary>Minutes after midnight a night out starts (before the person's hour shift) and its length.</summary>
+        public const double NightlifeStartMinute = 1290, NightlifeMinutes = 150;
+
+        /// <summary>GR-6 nightlife: on the evening before a day off, one resident in three who is neither a parent nor retired
+        /// goes out late to a nightlife venue (<see cref="WorkSchedules.IsNightlife"/>) open when the night out starts. It
+        /// takes the place of the day's leisure window and is clipped to the person's waking hours like any optional item.
+        /// A catalogue without a nightlife venue plans exactly as before.</summary>
+        internal static void Nightlife(CitizenState person, RoutineKeys keys, int day, IReadOnlyList<Place> catalogue,
+            IReadOnlyDictionary<string, Place> places, Place home, ref RoutineDay routine, ref DailyRhythm.Lookup quiet)
+        {
+            var persona = person.Identity.Persona;
+            if (person.IsVisitor || !routine.Present || persona == Persona.Parent || persona == Persona.Retiree || !DayOff(person, day + 1, places)) return;
+            uint draw = StableRandom.Finish(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Append(StableRandom.Begin(keys.Seed), keys.Id), ":nightlife:"), day));
+            if (draw % 3 != 0) return;
+            double from = day * 1440.0 + NightlifeStartMinute + keys.HourShift;
+            double until = quiet.OptionalEndsAt(from, Math.Min(MaxMinute, from + NightlifeMinutes));
+            if (until <= from) return;
+            string venue = DestinationChoice.Choose(catalogue, home, PlaceKind.Leisure,
+                keys.Id + ":nightlife-venue:" + day.ToString(System.Globalization.CultureInfo.InvariantCulture), keys.Seed,
+                p => WorkSchedules.IsNightlife(p.BusinessType) && DailyRoutine.Open(p, from));
+            if (venue.Length == 0) return;
+            routine.LeisureFrom = from; routine.LeisureUntil = until; routine.LeisureVenue = venue; routine.LeisureChosen = true;
         }
 
         internal static PlanItem? DrawNextWork(CitizenState person, int hourShift, int day, IReadOnlyDictionary<string, Place>? places)
@@ -301,6 +348,10 @@ namespace PersistentCity.Core
                         result.ShopFrom = item.EarliestStart; result.ShopUntil = item.EndsAt; result.ShopVenue = item.VenueId; break;
                     case PlanItemKind.Leisure:
                         result.LeisureFrom = item.EarliestStart; result.LeisureUntil = item.EndsAt; result.LeisureVenue = item.VenueId; break;
+                    case PlanItemKind.Outing:
+                        // A member who missed the outing's latest start no longer sets off for it (GR-6 cancelling rule).
+                        if (plan.StateOf(i) == PlanItemState.Missed) break;
+                        result.LeisureFrom = item.EarliestStart; result.LeisureUntil = item.EndsAt; result.LeisureVenue = item.VenueId; break;
                 }
             }
             return result;
@@ -336,7 +387,8 @@ namespace PersistentCity.Core
             var result = new RoutineDay { ShopVenue = person.ShopId, LeisureVenue = person.LeisureId };
             int shift = keys.HourShift;
             result.Work = WorkOn(person, day, shift, places);
-            bool weekend = Weekend(day);
+            // GR-6: a resident's days off set the free-day timings; visitors keep the calendar weekend.
+            bool weekend = person.IsVisitor ? Weekend(day) : DayOff(person, day, places);
             // A commuter visitor's stays recur on weekdays only; at weekends it stays off-map at its portal. F5g: a
             // day-visitor pool member stays only on its seeded visit days and spends them at its shop and leisure venue.
             bool dayVisit = person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit;
@@ -366,13 +418,50 @@ namespace PersistentCity.Core
         internal static bool Weekend(int day) => (DefaultDaysOff >> Weekday(day) & 1) != 0;
         internal static int Weekday(int day) => ((day - 1) % 7 + 7) % 7;
 
+        /// <summary>GR-6: the person's weekday mask without work (see <see cref="DayPlan.DaysOff"/>).</summary>
+        public static int DaysOff(CitizenState person, IReadOnlyDictionary<string, Place>? places) => DaysOff(person, Workplace(person, places));
+
+        private static int DaysOff(CitizenState person, Place? workplace)
+            => person.IsVisitor || workplace == null || workplace.BusinessType.Length == 0 ? DefaultDaysOff
+                : WorkSchedules.DaysOffFor(workplace, person.Identity.Id ?? "");
+
+        private static Place? Workplace(CitizenState person, IReadOnlyDictionary<string, Place>? places)
+            => places != null && person.DayPlaceId.Length != 0 && places.TryGetValue(person.DayPlaceId, out var workplace) ? workplace : null;
+
+        /// <summary>True when <paramref name="day"/> is one of the person's days off.</summary>
+        public static bool DayOff(CitizenState person, int day, IReadOnlyDictionary<string, Place>? places)
+            => (DaysOff(person, places) >> Weekday(day) & 1) != 0;
+
+        /// <summary>The shift a person works: from the workplace's business type when it sets one (nightlife at night,
+        /// evening venues late, offices, factories and warehouses on their rota), else from the persona.</summary>
+        public static ShiftType ShiftOf(CitizenState person, IReadOnlyDictionary<string, Place>? places) => ShiftOf(person, Workplace(person, places));
+
+        private static ShiftType ShiftOf(CitizenState person, Place? workplace)
+        {
+            var shift = workplace == null || person.Identity.Persona == Persona.Student ? null : WorkSchedules.ShiftAt(workplace, person.Identity.Id ?? "");
+            return shift ?? ShiftOf(person);
+        }
+
         /// <summary>The work window from the shift template and, when the workplace is known, its opening hours.</summary>
         internal static WorkWindow? WorkOn(CitizenState person, int day, int hourShift, IReadOnlyDictionary<string, Place>? places)
         {
-            if (Weekend(day) || person.DayPlaceId.Length == 0 || person.Identity.Persona == Persona.Retiree) return null;
-            var shift = ShiftOf(person);
+            if (person.DayPlaceId.Length == 0 || person.Identity.Persona == Persona.Retiree) return null;
+            var workplace = Workplace(person, places);
+            if ((DaysOff(person, workplace) >> Weekday(day) & 1) != 0) return null;
+            var shift = ShiftOf(person, workplace);
             double start = day * 1440.0 + ShiftStart(shift) + hourShift;
-            if (places != null && places.TryGetValue(person.DayPlaceId, out var workplace)) start = FitShift(workplace, day, start, shift);
+            if (workplace != null)
+            {
+                // GR-7: an office, factory or warehouse is staffed on its own hours and staffs nobody on a day without a
+                // whole shift's opening.
+                if (WorkplaceStaffing.IsWorkforceVenue(workplace))
+                {
+                    var staffed = WorkplaceStaffing.ShiftStart(workplace, day, shift);
+                    if (!staffed.HasValue) return null;
+                    start = staffed.Value;
+                }
+                else start = FitShift(workplace, day, start, shift);
+            }
             return new WorkWindow(person.DayPlaceId, person.Identity.Persona == Persona.Student ? Activity.Study : Activity.Work, start, start + 480);
         }
 
@@ -402,6 +491,84 @@ namespace PersistentCity.Core
         }
     }
 
+    /// <summary>GR-6 work schedules: which typed workplaces vary days off, and which shift a business type sets.</summary>
+    public static class WorkSchedules
+    {
+        public const string School = "ba:businesstype_school";
+        private static readonly HashSet<string> NightlifeTypes = new HashSet<string>(StringComparer.Ordinal)
+        { "ba:businesstype_nightclub", "ba:businesstype_casino" };
+        private static readonly HashSet<string> EveningTypes = new HashSet<string>(StringComparer.Ordinal)
+        { "ba:businesstype_cinema", "ba:businesstype_theater" };
+
+        /// <summary>Venues of a night out; their staff work nights.</summary>
+        public static bool IsNightlife(string? type) => type != null && NightlifeTypes.Contains(type);
+        /// <summary>Evening venues; their staff work late.</summary>
+        public static bool IsEvening(string? type) => type != null && EveningTypes.Contains(type);
+
+        /// <summary>A workplace with a business type (not a school) whose weekly hours open on Friday, Saturday or Sunday
+        /// needs staff at weekends, so its workers' days off are drawn instead of the fixed Friday to Sunday.</summary>
+        public static bool VariesDaysOff(Place workplace) => (OpenWeekdays(workplace) & DayPlanner.DefaultDaysOff) != 0;
+
+        /// <summary>Weekday bits (Monday = bit 0) with an opening, for a typed workplace other than a school; 0 otherwise.</summary>
+        private static int OpenWeekdays(Place workplace)
+        {
+            if (workplace.Kind != PlaceKind.Work || workplace.BusinessType.Length == 0 || workplace.BusinessType == School) return 0;
+            int open = 0;
+            var hours = workplace.WeeklyHours;
+            for (int i = 0; i < hours.Count; i++)
+                if (hours[i].Day >= 0 && hours[i].Day <= 6 && hours[i].ToMinute != hours[i].FromMinute) open |= 1 << hours[i].Day;
+            return open;
+        }
+
+        /// <summary>The per-person days-off draw. Seed 0, like the employment time: drawn once from the person ID, the same
+        /// after reload, at any cadence and on every day.</summary>
+        internal static uint DaysOffDraw(string id)
+            => StableRandom.Finish(StableRandom.Append(StableRandom.Append(StableRandom.Begin(0), id), ":days-off"));
+
+        // Three consecutive weekdays from each start day, Monday = bit 0, wrapping past Sunday.
+        private static readonly int[] Blocks = { 0b0000111, 0b0001110, 0b0011100, 0b0111000, 0b1110000, 0b1100001, 0b1000011 };
+
+        /// <summary>Three consecutive weekdays off. The blocks that keep the most of the workplace's open weekdays as
+        /// workdays are the candidates and the draw picks one of them, so a venue open every day spreads its staff over all
+        /// seven blocks and a venue closed on some days puts the days off there. Friday to Sunday for a workplace that
+        /// does not vary them.</summary>
+        internal static int DaysOff(Place workplace, uint draw) => DaysOff(workplace, OpenWeekdays(workplace), draw);
+
+        /// <summary>As above for a person; the draw is hashed only for a workplace that varies days off.</summary>
+        internal static int DaysOffFor(Place workplace, string personId)
+        {
+            int open = OpenWeekdays(workplace);
+            return (open & DayPlanner.DefaultDaysOff) == 0 ? DayPlanner.DefaultDaysOff : DaysOff(workplace, open, DaysOffDraw(personId));
+        }
+
+        private static int DaysOff(Place workplace, int open, uint draw)
+        {
+            if ((open & DayPlanner.DefaultDaysOff) == 0) return DayPlanner.DefaultDaysOff;
+            int best = int.MaxValue, count = 0;
+            for (int start = 0; start < 7; start++)
+            {
+                int lost = Bits(Blocks[start] & open);
+                if (lost < best) { best = lost; count = 1; } else if (lost == best) count++;
+            }
+            int pick = (int)(draw % (uint)count);
+            for (int start = 0; start < 7; start++)
+                if (Bits(Blocks[start] & open) == best && pick-- == 0) return Blocks[start];
+            return DayPlanner.DefaultDaysOff;
+        }
+
+        private static int Bits(int mask) { int n = 0; for (; mask != 0; mask &= mask - 1) n++; return n; }
+
+        /// <summary>The shift a workplace's type sets, or null for the persona's own.</summary>
+        internal static ShiftType? ShiftAt(Place workplace, string personId)
+        {
+            if (workplace.Kind != PlaceKind.Work) return null;
+            if (IsNightlife(workplace.BusinessType)) return ShiftType.Night;
+            if (IsEvening(workplace.BusinessType)) return ShiftType.Late;
+            if (WorkplaceStaffing.IsWorkforceVenue(workplace)) return WorkplaceStaffing.Rota(personId);
+            return null;
+        }
+    }
+
     /// <summary>
     /// GR-2 executor bookkeeping. The simulator's event step is the executor: at each person event it makes sure the day's
     /// plan exists, closes items whose deadline has passed and records departures, admissions and misses on the item they
@@ -412,7 +579,7 @@ namespace PersistentCity.Core
         /// <summary>Draws today's plan once, at the first event at or after the day boundary. A previous plan with an item
         /// still running past the boundary (a night shift) stays until that item ends.</summary>
         internal static void Ensure(CitizenState person, int seed, double now, IReadOnlyList<Place> catalogue,
-            IReadOnlyDictionary<string, Place> places, bool meals, NeedPlanning? needs = null)
+            IReadOnlyDictionary<string, Place> places, bool meals, NeedPlanning? needs = null, Func<CitizenState, Household?>? households = null)
         {
             int day = DayPlanner.PlanDay(now);
             var plan = person.Plan;
@@ -425,7 +592,7 @@ namespace PersistentCity.Core
             if (plan != null)
                 for (int i = 0; i < plan.Items.Count; i++)
                     if (!DayPlan.Terminal(plan.StateOf(i)) && plan.Items[i].EndsAt > now && plan.Items[i].Kind != PlanItemKind.Meal) return;
-            person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals, needs);
+            person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals, needs, households?.Invoke(person));
             Adopt(person);
         }
 
@@ -464,7 +631,7 @@ namespace PersistentCity.Core
                 var state = plan.StateOf(i);
                 bool open = state == PlanItemState.Pending || state == PlanItemState.Travelling;
                 if (item.Kind == PlanItemKind.Work && open && item.EndsAt > now) state = PlanItemState.Cancelled;
-                if (work.HasValue && state == PlanItemState.Pending && (item.Kind == PlanItemKind.Need || item.Kind == PlanItemKind.Leisure)
+                if (work.HasValue && state == PlanItemState.Pending && (item.Kind == PlanItemKind.Need || item.Kind == PlanItemKind.Leisure || item.Kind == PlanItemKind.Outing)
                     && item.EarliestStart < work.Value.EndsAt && item.EndsAt > work.Value.StartsAt - DayPlanner.WorkTravelAllowance)
                     state = PlanItemState.Cancelled;
                 items.Add(item); marks.Add((byte)((int)state | (int)plan.CauseOf(i) << 4));
@@ -482,13 +649,18 @@ namespace PersistentCity.Core
         }
 
         /// <summary>Closes routine items whose deadline has passed: an admitted item is done, one never reached is missed late.
-        /// Meal items are kept for the food executor.</summary>
+        /// Meal items are kept for the food executor. GR-6: a household outing not reached by its latest start is missed late at
+        /// the member's first event after it (<see cref="HouseholdOutings"/>), so a late arrival is never admitted to it.</summary>
         internal static void Settle(CitizenState person, double now)
         {
             var plan = person.Plan;
             if (plan == null) return;
             for (int i = 0; i < plan.Items.Count; i++)
             {
+                var item = plan.Items[i];
+                if (item.Kind == PlanItemKind.Outing && now > item.LatestStart && item.EndsAt > now
+                    && !DayPlan.Terminal(plan.StateOf(i)) && plan.StateOf(i) != PlanItemState.Active)
+                    plan.Set(i, PlanItemState.Missed, PlanMissCause.Late);
                 if (plan.Items[i].Kind == PlanItemKind.Meal || plan.Items[i].EndsAt > now) continue;
                 var state = plan.StateOf(i);
                 if (state == PlanItemState.Active) plan.Set(i, PlanItemState.Done);
@@ -547,8 +719,11 @@ namespace PersistentCity.Core
         }
 
         /// <summary>Records a state on the routine item a slot belongs to (matched by activity and deadline; the venue may be
-        /// an optional alternative). Slots outside the saved plan (another day, a retained old window) are ignored.</summary>
-        internal static void Mark(CitizenState person, Activity activity, double endsAt, PlanItemState state, PlanMissCause cause = PlanMissCause.None)
+        /// an optional alternative). Slots outside the saved plan (another day, a retained old window) are ignored. GR-6: a
+        /// household outing is shared at its own venue only (review Sol-r1-3); travel to or arrival at <paramref name="placeId"/>
+        /// elsewhere is an ordinary visit, and the outing is missed for that member (no way to the shared venue).</summary>
+        internal static void Mark(CitizenState person, Activity activity, double endsAt, PlanItemState state, PlanMissCause cause = PlanMissCause.None,
+            string? placeId = null)
         {
             var plan = person.Plan;
             if (plan == null || activity == Activity.Home) return;
@@ -557,6 +732,9 @@ namespace PersistentCity.Core
                 var item = plan.Items[i];
                 if (item.Kind == PlanItemKind.Meal || item.Activity != activity || item.EndsAt != endsAt) continue;
                 if (plan.StateOf(i) == PlanItemState.Cancelled) continue;
+                if (item.Kind == PlanItemKind.Outing && placeId != null && !string.Equals(placeId, item.VenueId, StringComparison.Ordinal)
+                    && (state == PlanItemState.Travelling || state == PlanItemState.Active))
+                { plan.Set(i, PlanItemState.Missed, PlanMissCause.NoRoute); return; }
                 plan.Set(i, state, cause);
                 return;
             }

@@ -423,7 +423,9 @@ namespace PersistentCity.Runtime
                         + ", path reserve ms " + (routes?.JobPathReserveMilliseconds ?? 0) + ". "
                         + (physical?.Diagnostics ?? "Physical population inactive."));
                     if (simulation.Traffic != null)
-                        log?.Info("Citywide traffic: " + simulation.Traffic.VehicleCount + " persistent cars, "
+                        log?.Info("Citywide traffic: " + (simulation.Traffic.VehicleCount - simulation.ThroughCarCount) + " persistent cars, "
+                            + simulation.ThroughCarCount + " through cars (share " + simulation.ThroughTrafficShare.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                            + ", " + simulation.ThroughCarsGenerated + " generated), "
                             + simulation.Traffic.PendingEventCount + " scheduled road events, " + simulation.Traffic.LinkCount + " road sections.");
                     ResetAdvanceDiagnostics();
                 }
@@ -748,6 +750,8 @@ namespace PersistentCity.Runtime
             var stopEnvironment=this.stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
             simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage, settings.StopTiming());
             simulation.AttachWeather(new FrameWeatherSource(()=>UnityEngine.Time.frameCount,()=>stopEnvironment.Raining),settings.Weather);
+            simulation.AttachThroughTraffic(new ThroughTrafficSettings(settings.ThroughTrafficShare));
+            simulation.HouseholdOutingsEnabled = settings.HouseholdOutingsEnabled;
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

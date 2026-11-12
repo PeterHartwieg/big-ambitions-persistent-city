@@ -190,6 +190,8 @@ namespace PersistentCity.Core
             replacement.ordinaryOwnership = ordinaryOwnership; replacement.ordinaryPrices = ordinaryPrices;
             replacement.ordinaryLoadedHour = ordinaryLoadedHour; replacement.ordinaryObservedHour = ordinaryObservedHour;
             replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
+            replacement.venueFeedback = venueFeedback; replacement.throughTraffic = throughTraffic?.Fresh();
+            replacement.HouseholdOutingsEnabled = HouseholdOutingsEnabled;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             // F5g: the latched boundary plan carries over; its seat counter is rebuilt against the replacement's occupancy.
             // F5g: the latched plan carries over; its seat counter is rebuilt against the replacement's occupancy.
@@ -348,6 +350,8 @@ namespace PersistentCity.Core
             && (traffic == null || traffic.NextEventMinute > targetMinute)
             && (State.Food == null || (food != null ? food.NextMinute > targetMinute : inspectSavedFood && SavedFoodAfter(targetMinute)))
             && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute)
+            // GR-8: a due through-car entry or hour schedule is traffic work like the kernel's own events.
+            && ThroughPeek() > targetMinute
             // Last: it latches a boundary's fill plan only after every other event through the target has drained.
             && !FillHolds(targetMinute);
 
@@ -383,13 +387,16 @@ namespace PersistentCity.Core
                 // F5g: an unreached day boundary, or fill work left on the boundary the clock stands on, counts as the next work,
                 // so a survey never runs ahead of that boundary's fill.
                 // F5g: fill work at the boundary the clock stands on, or an unreached boundary, counts as the next work.
-                if (research != null && research.ReadyBefore(!FillActive ? next : FillUnitDue() ? State.Minute : Math.Min(next, NextDayBoundary), targetMinute))
+                // GR-8: through-traffic work is ordered with the rest (review Sol-r1-2): it can come before a survey or a midnight.
+                double through = throughTraffic == null ? double.PositiveInfinity : ThroughMinute();
+                double work = Math.Min(next, through);
+                if (research != null && research.ReadyBefore(!FillActive ? work : FillUnitDue() ? State.Minute : Math.Min(work, NextDayBoundary), targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
                 // F5g: a bounded fill unit at the boundary minute, before the boundary's ordinary events.
                 if (FillUnitDue()) { RunFillUnit(); count++; continue; }
                 // F5g: once every event before a day boundary inside the target has run, stop the clock on the boundary,
                 // with the first midnight's capability activation (review Sol-r2-1), so its fill runs before its events.
-                if (FillActive && NextDayBoundary <= next && NextDayBoundary <= targetMinute)
+                if (FillActive && NextDayBoundary <= work && NextDayBoundary <= targetMinute)
                 {
                     double boundary = NextDayBoundary;
                     // Publish the traffic epoch with the city's (review Sol-r4-2): every earlier traffic event has run, and
@@ -397,6 +404,14 @@ namespace PersistentCity.Core
                     if (traffic != null && traffic.Clock < boundary) traffic.BeginObservationEpoch(boundary);
                     State.Minute = boundary;
                     if (!State.Capabilities.Active) { State.Capabilities.Active = true; count++; }
+                    continue;
+                }
+                // GR-8: through-traffic work strictly before every other event (ties go to the city's own events).
+                if (through < next && through <= targetMinute && (!FillActive || through < NextDayBoundary))
+                {
+                    State.Minute = Math.Max(State.Minute, through);
+                    traffic!.AdvanceTo(State.Minute, 0);
+                    RunThroughTraffic(); count++; trafficCount++;
                     continue;
                 }
                 if (next > targetMinute) break;
@@ -596,6 +611,7 @@ namespace PersistentCity.Core
             var needVisit = NewNeedVisit(live, working);
             bool departed = purchases != null && working.Phase == CitizenPhase.Travelling && working.Journey != null && !ReferenceEquals(working.Journey, live.Journey);
             DeferMissedNeeds(live, working);
+            RecordVisitFeedback(live, working);
             CommitOrdinaryArrival(live, working);
             CommitEvent(live, working);
             if (needVisit != null) CommitNeedPurchase(live, needVisit);
@@ -773,7 +789,7 @@ namespace PersistentCity.Core
             // GR-2: the event is the plan executor. Today's plan is drawn once and items past their deadline are closed.
             var planBefore = person.Plan;
             var needPlanning = NeedPlanningNow();
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, needPlanning);
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, needPlanning, HouseholdLookup);
             if (needPlanning != null && !ReferenceEquals(planBefore, person.Plan)) WakeForNewPlan(person, now);
             DayPlanExecutor.Settle(person, now);
             person.OptionalStopChoice = null;
@@ -813,7 +829,7 @@ namespace PersistentCity.Core
                 if (admitted)
                 {
                     VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
-                    DayPlanExecutor.Mark(person, person.Activity, person.ActivityUntilMinute, PlanItemState.Active);
+                    DayPlanExecutor.Mark(person, person.Activity, person.ActivityUntilMinute, PlanItemState.Active, placeId: person.PlaceId);
                 }
                 else
                 {
@@ -846,7 +862,7 @@ namespace PersistentCity.Core
                     break;
                 }
             // A job found or lost just now replans today's work item.
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow());
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow(), HouseholdLookup);
             // Retain a home fallback until its original window ends. This also survives reload
             // and prevents counting the same closed activity again after the journey home.
             if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)
@@ -952,7 +968,7 @@ namespace PersistentCity.Core
                 if (recordArrival)
                 {
                     VisitorSchedules.RecordArrival(person, now, slot.PlaceId, slot.Activity);
-                    DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Active);
+                    DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Active, placeId: slot.PlaceId);
                 }
                 person.Phase = CitizenPhase.AtPlace;
                 person.Activity = slot.Activity;
@@ -987,7 +1003,7 @@ namespace PersistentCity.Core
             person.Journey = route.Commit();
             person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
-            DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Travelling);
+            DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Travelling, placeId: slot.PlaceId);
         }
 
         private RouteRequest WorkplaceProbe(CitizenState person, Place destination)
