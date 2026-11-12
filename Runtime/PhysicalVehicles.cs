@@ -301,6 +301,8 @@ namespace PersistentCity.Runtime
             OwnHolder = holder.transform;
             HoldNativeAmbient(pool);
             PrimeLoads(pool); // review Sol-r4-1: the leftovers are fixed now, so a load later in this frame is caught at LateUpdate
+            // Review Sol-r6-1: every native add (LoadVehicle raises it after activation) marks its slot a load; dropped on release.
+            if (onAdded == null) { onAdded = OnNativeVehicleAdded; DensityEvents.onVehicleAdded += onAdded; }
             RloOverrules.TrafficHeld = heldGroups.Count != 0 || nativeDensity.HasValue;
             active = true; return true;
         }
@@ -356,6 +358,7 @@ namespace PersistentCity.Runtime
 
         private void ReleaseNativeAmbient()
         {
+            DropAddedEvent(); loads.Reset();
             if (!TrafficManager.IsInitialized || !TrafficManager.HasInstance) { nativeShares = appliedShares = null; nativeDensity = null; RloOverrules.TrafficHeld = false; return; }
             try
             {
@@ -627,6 +630,25 @@ namespace PersistentCity.Runtime
                 { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loadsRetired++; loads.Forget(i); }
                 else loads.Accept(i, at.x, at.z);
             }
+        }
+
+        private DensityEvents.VehicleAdded? onAdded;
+
+        private void OnNativeVehicleAdded(int vehicleIndex)
+        {
+            if (!loads.Primed || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) return;
+            var pool = Manager.GetVehicleList();
+            // The event names Gley's vehicle index; the pool lists vehicles by that index, checked before use.
+            if (vehicleIndex >= 0 && vehicleIndex < pool.Count && pool[vehicleIndex] != null && pool[vehicleIndex].GetIndex() == vehicleIndex)
+            { loads.Added(vehicleIndex); return; }
+            for (int i = 0; i < pool.Count; i++) if (pool[i] != null && pool[i].GetIndex() == vehicleIndex) { loads.Added(i); return; }
+        }
+
+        private void DropAddedEvent()
+        {
+            if (onAdded == null) return;
+            DensityEvents.onVehicleAdded -= onAdded;
+            onAdded = null;
         }
 
         private void PrimeLoads(List<VehicleComponent> pool) => loads.Prime(pool.Count, i => ActiveHeld(pool[i]),

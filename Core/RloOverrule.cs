@@ -214,8 +214,10 @@ namespace PersistentCity.Core
     /// (<see cref="Forget"/>), so a slot freed and reloaded between two LateUpdate passes is still a load. Runtime asks
     /// once a frame in LateUpdate (after every Update and coroutine, before rendering) and once at the hold, so a load in
     /// the hold's own frame is caught too. One bool per pool slot; no allocation after growth.</summary>
-    /// Review Sol-r5-1: native's own traffic update can also remove a leftover and RLO reload the freed slot before the
-    /// next pass, with no inactive frame in between. A reloaded car is placed afresh (the pass-by puts it on a lane 70 to
+    /// Review Sol-r6-1: native announces every add (<see cref="Added"/>), so a removal and a reload of the same slot
+    /// between two passes is a load wherever the new car stands. Review Sol-r5-1, kept as a second check should an add
+    /// go unannounced: native's own traffic update can remove a leftover and RLO reload the freed slot before the next
+    /// pass, with no inactive frame in between. A reloaded car is placed afresh (the pass-by puts it on a lane 70 to
     /// 150 m behind a door), so each leftover's ground position is kept from pass to pass; a jump further than any car
     /// drives in that time (<see cref="MaxMove"/>) is a reload, and the slot is a load again.
     public sealed class NativeLoadWatch
@@ -265,6 +267,16 @@ namespace PersistentCity.Core
 
         /// <summary>Persistent City retired the car in this slot: the slot's next car is a load, even in the same frame.</summary>
         public void Forget(int index) { if (index >= 0 && index < leftover.Length) leftover[index] = false; }
+
+        /// <summary>Review Sol-r6-1: native reported a car added in this slot (Gley's DensityEvents.onVehicleAdded, which
+        /// TrafficManager.LoadVehicle raises after activation). Whatever was there before, at whatever distance, the car
+        /// now there is a load: it is retired or accepted at the next pass. Ignored before the hold starts.</summary>
+        public void Added(int index)
+        {
+            if (!Primed || index < 0) return;
+            Grow(index + 1);
+            leftover[index] = false;
+        }
 
         /// <summary>The hold ended.</summary>
         public void Reset() { Primed = false; Array.Clear(leftover, 0, leftover.Length); }

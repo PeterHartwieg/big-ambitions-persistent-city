@@ -491,6 +491,37 @@ namespace PersistentCity.Tests
             Assert.Equal(110, NativeLoadWatch.MaxMove(1), 6);
         }
 
+        [Theory]
+        [InlineData(0.0)]
+        [InlineData(5.0)]
+        public void NativeRemovalAndANearbyReloadBetweenTheSameTwoPassesIsCaughtByTheAddEvent(double offset)
+        {
+            // Slot 5 holds a leftover driving in view at 30 m/s; nothing of ours retires it.
+            var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
+            pool[5].Active = true; pool[5].Visible = true; pool[5].X = 100;
+            var watch = Hold(pool);
+            int cursor = 0;
+            for (int f = 1; f <= 10; f++) Frame(f, pool, watch, ref cursor, () => { if (cursor % 40 == 5) cursor++; });
+
+            // Without the event the reload is not seen: same slot, within the drive limit, never inactive at a pass.
+            var blind = Hold(pool);
+            Frame(11, pool, blind, ref cursor, () => { if (cursor % 40 == 5) cursor++; },
+                () => { pool[5].X += offset; });
+            Assert.True(pool[5].Active);
+
+            // Frame 12: native removes the car (DensityManager.RemoveVehicle) and RLO's coroutine reloads the slot at the
+            // same place or 5 m on; TrafficManager.LoadVehicle raises DensityEvents.onVehicleAdded for slot 5.
+            Frame(12, pool, watch, ref cursor,
+                otherUpdates: () => { if (cursor % 40 == 5) cursor++; pool[5].Active = false; },
+                coroutines: () => { pool[5].Active = true; pool[5].X += offset; watch.Added(5); });
+            Assert.False(pool[5].Active);
+
+            // An add before the hold, or for a slot the pool has not listed yet, is harmless.
+            new NativeLoadWatch().Added(3);
+            watch.Added(60);
+            Frame(13, pool, watch, ref cursor);
+        }
+
         [Fact]
         public void ACarLoadedInTheHoldsOwnFrameIsCaughtAtTheFirstLateUpdate()
         {
