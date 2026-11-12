@@ -369,13 +369,13 @@ namespace PersistentCity.Runtime
             if (BuildingManager.IsInsideBuilding) { refusal = PurchaseRefusal.PlayerInside; reason = "Player is inside a building"; return null; }
             var native = NativeSalePath.Prepare(reg, out var family, out var why);
             if (native == null) { refusal = family == PurchaseFamily.Unsupported ? PurchaseRefusal.Unsupported : PurchaseRefusal.VenueNotReady; reason = family + ": " + why; return null; }
-            long hour = Hour();
-            // A new hour (or the first sale after a load) starts from the hour's saved receipts, not from zero.
+            // The count runs on the city clock, as the receipt keys do. A new hour (or the first sale after a load) starts
+            // from the hour's saved receipts, not from zero.
+            long hour = request.Minute / 60;
             if (hour != soldHour)
             {
                 soldThisHour.Clear(); soldHour = hour;
-                long minuteHour = request.Minute / 60;
-                foreach (var pair in PurchaseContract.ServedInHour(receipts, minuteHour)) soldThisHour[pair.Key] = pair.Value;
+                foreach (var pair in PurchaseContract.ServedInHour(receipts, hour)) soldThisHour[pair.Key] = pair.Value;
             }
             // One count per building: its shop and leisure ids are the same venue.
             string building = PurchaseContract.Building(NativeFoodMarket.PlaceId(reg));

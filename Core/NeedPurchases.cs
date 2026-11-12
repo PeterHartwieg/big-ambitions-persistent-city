@@ -161,6 +161,27 @@ namespace PersistentCity.Core
             return planning;
         }
 
+        /// <summary>
+        /// A plan drawn during a meal outing from home (breakfast, say) can hold a visit earlier than the home continuation
+        /// the outing saved before the plan existed. The continuation is cut back to that visit's start, so the return
+        /// event hands the person to the routine in time instead of resting at home past it. Only with a purchase market:
+        /// without one, plans and continuations come from the same draws and nothing changes.
+        /// </summary>
+        private static void WakeForNewPlan(CitizenState person, double now)
+        {
+            var outing = person.MealOuting; var plan = person.Plan;
+            if (outing == null || plan == null || outing.OriginActivity != Activity.Home) return;
+            double first = double.PositiveInfinity;
+            for (int i = 0; i < plan.Items.Count; i++)
+            {
+                var item = plan.Items[i];
+                if (item.Kind == PlanItemKind.Meal || DayPlan.Terminal(plan.StateOf(i)) || item.EndsAt <= now) continue;
+                first = Math.Min(first, Math.Max(now, item.EarliestStart));
+            }
+            if (first < outing.ResumeEvent) outing.ResumeEvent = first;
+            if (first < outing.ResumeUntil) outing.ResumeUntil = first;
+        }
+
         private EssentialNeeds? essentials;
         private long essentialsHour = long.MinValue;
 

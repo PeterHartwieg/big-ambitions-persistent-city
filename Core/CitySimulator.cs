@@ -771,7 +771,10 @@ namespace PersistentCity.Core
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
             // GR-2: the event is the plan executor. Today's plan is drawn once and items past their deadline are closed.
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow());
+            var planBefore = person.Plan;
+            var needPlanning = NeedPlanningNow();
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, needPlanning);
+            if (needPlanning != null && !ReferenceEquals(planBefore, person.Plan)) WakeForNewPlan(person, now);
             DayPlanExecutor.Settle(person, now);
             person.OptionalStopChoice = null;
             person.OptionalStop = null; // The original activity event owns the continuation.

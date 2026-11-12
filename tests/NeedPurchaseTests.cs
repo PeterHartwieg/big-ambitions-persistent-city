@@ -451,6 +451,55 @@ public sealed class NeedPurchaseTests
         Assert.Fail("no person with a day without a shop window");
     }
 
+    /// <summary>The scheduled visit is executed, not only planned: a resident whose day has no routine shop window and
+    /// whose plan is drawn during a breakfast outing still goes and buys (the outing's home continuation is cut back).</summary>
+    [Fact]
+    public void AScheduledNeedVisitIsExecutedOnADayWithoutARoutineShopWindow()
+    {
+        var (city, market) = Banded();
+        var person = city.State.Citizens.Single(c => c.Identity.Id == "pc:11");
+        Assert.NotNull(person.Wallet);
+        person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Gift, 2, "", 0));
+        // The routine alone draws no shop window for this resident on day 2.
+        var catalogue = city.State.Places.Where(p => p.Kind == PlaceKind.Shop || p.Kind == PlaceKind.Leisure).ToList();
+        var index = city.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
+        var copy = CitySimulator.CloneForEvent(person); copy.Plan = null;
+        Assert.DoesNotContain(DayPlanner.Generate(copy, city.State.Seed, 2, catalogue, index, false).Items, i => i.Kind == PlanItemKind.Need);
+        Run(city, 3 * 1440 + 240);
+        var bought = market.Log.Where(l => l.Resident == "pc:11" && l.Minute / 1440 == 2).ToList();
+        Assert.Contains(bought, l => l.Refusal == PurchaseRefusal.None);
+        var need = person.Needs.Find(Gift)!;
+        Assert.Equal(0, need.Deferrals);
+        Assert.True(need.NextDueDay > 2);
+    }
+
+    [Fact]
+    public void ADueNeedWhoseVenueIsClosedInTheDrawnWindowGetsAVisitWhenItIsOpen()
+    {
+        var (city, catalogue, index, bookstore) = PlanningCity();
+        // Open 09:00 to 11:00 only: an afternoon routine window cannot serve the need, the late morning can.
+        bookstore.WeeklyHours.Clear(); bookstore.OpenMinute = 540; bookstore.CloseMinute = 660;
+        var planning = new NeedPlanning(new[] { bookstore });
+        foreach (var person in city.State.Citizens.Where(c => !c.IsVisitor && c.Wallet != null))
+            for (int day = 2; day < 9; day++)
+            {
+                person.Needs = null;
+                var drawn = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
+                var window = drawn.Items.FirstOrDefault(i => i.Kind == PlanItemKind.Need);
+                if (window == null || window.EarliestStart < day * 1440.0 + 660) continue;
+                person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, day, "", 1));
+                var plan = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
+                var visit = plan.Items.SingleOrDefault(i => i.Kind == PlanItemKind.Need);
+                if (visit == null || visit.VenueId != bookstore.Id) continue; // that morning is taken; try another person
+                Assert.InRange(visit.EarliestStart, day * 1440.0 + 600, day * 1440.0 + 615);
+                Assert.True(visit.EndsAt <= day * 1440.0 + 660);
+                // The drawn afternoon window is replaced, not kept beside it (one shop visit a day).
+                Assert.DoesNotContain(plan.Items, i => i.Kind == PlanItemKind.Need && i.EarliestStart == window.EarliestStart);
+                return;
+            }
+        Assert.Fail("no person with a free morning and an afternoon shop window");
+    }
+
     [Fact]
     public void PlanningSkipsUnservedAndClosedVenuesBeforeMemoryAndDistance()
     {
