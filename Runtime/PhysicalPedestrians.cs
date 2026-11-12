@@ -97,9 +97,18 @@ namespace PersistentCity.Runtime
                 int daysPerYear = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
                 if (daysPerYear < 8) daysPerYear = 60;
                 appearance.data = new CharacterData { name = identity.Name, ageInDays = checked(Mathf.Clamp(identity.Age, 18, 85) * daysPerYear) };
-                UnityEngine.Random.InitState(identity.AppearanceSeed);
-                appearance.RandomizeElements(identity.Female ? Gender.Female : Gender.Male,
-                    SkinColorHelper.GetRandom(identity.AppearanceSeed), new[] { AppearanceTag.Casual }, identity.AppearanceSeed);
+                // GR-9 (G6): skin from the donor seed, as RLO knows the person; hair, build and clothes from the look seed
+                // and wardrobe derived from the person ID. A wardrobe the game has no elements for falls back to casual.
+                var look = PersonAppearance.For(identity);
+                var gender = identity.Female ? Gender.Female : Gender.Male;
+                var skin = SkinColorHelper.GetRandom(identity.AppearanceSeed);
+                UnityEngine.Random.InitState(look.Seed);
+                appearance.RandomizeElements(gender, skin, new[] { Tag(look.Wardrobe) }, look.Seed);
+                if (look.Wardrobe != Wardrobe.Casual && (appearance.data.elements == null || appearance.data.elements.Count == 0))
+                {
+                    UnityEngine.Random.InitState(look.Seed);
+                    appearance.RandomizeElements(gender, skin, new[] { AppearanceTag.Casual }, look.Seed);
+                }
                 appearance.data.fatness = Mathf.Min(appearance.data.fatness, 0.55f);
                 // An empty selection makes UpdateVisuals silently randomize. Refuse it before/after rendering.
                 if (appearance.data.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
@@ -127,6 +136,14 @@ namespace PersistentCity.Runtime
             }
             finally { UnityEngine.Random.state = dice; }
         }
+
+        private static AppearanceTag Tag(Wardrobe wardrobe) => wardrobe switch
+        {
+            Wardrobe.Formal => AppearanceTag.Formal,
+            Wardrobe.Sport => AppearanceTag.Sport,
+            Wardrobe.Party => AppearanceTag.Party,
+            _ => AppearanceTag.Casual,
+        };
 
         public void Release(PhysicalPedestrianBody body)
         {

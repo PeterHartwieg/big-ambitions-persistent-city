@@ -106,7 +106,7 @@ public sealed class VisitorBodyTests
     public void CapsAreUnchangedWithVisitorsEligible()
     {
         var settings = new PrototypeSettings();
-        Assert.Equal((48, 24, 120.0), (settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres));
+        Assert.Equal((96, 24, 120.0), (settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres));
         var driver = new DriverSettings();
         Assert.Equal((48, 24, 120.0), (driver.Pedestrians, driver.Vehicles, driver.RadiusMetres));
         var stationary = BodiesRun.Value.Metrics;

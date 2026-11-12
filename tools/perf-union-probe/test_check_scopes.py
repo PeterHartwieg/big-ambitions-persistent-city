@@ -25,11 +25,6 @@ SECTION_2 = {
     ('StationaryCrowds', 'SpawnPrefix'),
     ('ResidentInspector', 'MouseRunPrefix'), ('ResidentInspector', 'CameraInputPrefix'), ('ResidentInspector', 'CameraInputPostfix'),
     ('ResidentInspector', 'UiRaycastPrefix'),
-    ('PhysicalTrafficHooks', 'SpeedChangingPrefix'), ('PhysicalTrafficHooks', 'CrashPostfix'), ('PhysicalTrafficHooks', 'SelectTranspiler'),
-    ('PhysicalTrafficHooks', 'FixedStepPrefix'), ('PhysicalTrafficHooks', 'FixedStepPostfix'), ('PhysicalTrafficHooks', 'BodyForceTranspiler'),
-    ('PhysicalTrafficHooks', 'FixedStepFinalizer'), ('PhysicalTrafficHooks', 'ReachedPrefix'), ('PhysicalTrafficHooks', 'RequestPrefix'),
-    ('PhysicalTrafficHooks', 'RescuePrefix'), ('PhysicalTrafficHooks', 'DespawnerPrefix'),
-    ('PhysicalIntersections', 'SetActivePrefix'), ('PhysicalIntersections', 'UpdatePostfix'),
     ('ResearchBilling', 'RunDailyPostfix'), ('ResearchAgencyDialog', 'CampaignSettingsPostfix'),
 }
 # Section 2 entry points other than patches, and Decision 5's component list (plus F2e's two hold call sites).

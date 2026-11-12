@@ -219,7 +219,7 @@ namespace PersistentCity.Tests
                     ("drivenrides.mod", HookPatchKind.Prefix), ("foodtrucks.mod", HookPatchKind.Prefix), ("foodtrucks.mod", HookPatchKind.Postfix), ("foodtrucks.mod", HookPatchKind.Finalizer)),
                 Method("ItemsGetter", "RegisterModItem", new[] { "Item" }, (NativeHookInventory.FoodContract, HookPatchKind.Postfix), ("hardmodepatch", HookPatchKind.Prefix)),
                 Method("MouseController", "Run", Array.Empty<string>(), (NativeHookInventory.InspectorInput, HookPatchKind.Prefix), ("rig.input", HookPatchKind.Transpiler)),
-                Method("DensityManager", "AddVehicle", new[] { "Boolean", "Int32", "Int32", "Vector3", "Vector3" }, (NativeHookInventory.PhysicalVehicles, HookPatchKind.Transpiler), ("vehicle.mod", HookPatchKind.Prefix)),
+                Method("PedestrianSpawner", "SetActivePedestrians", new[] { "Int32" }, (NativeHookInventory.AmbientPedestrians, HookPatchKind.Prefix), ("vehicle.mod", HookPatchKind.Prefix)),
                 Method("RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry" }, (NativeHookInventory.FoodAuthority, HookPatchKind.Prefix)));
             Assert.Null(modpack.CheckoutRefusal);
             Assert.Equal(6, modpack.Entries.Single(e => e.Signature == "GameManager.RunMainGameTick(Single)").Foreign.Count);
@@ -250,8 +250,8 @@ namespace PersistentCity.Tests
         [Fact]
         public void InventoryCountsAndCapabilityMapping()
         {
-            Assert.Equal(12, NativeHookInventory.Owners.Count);
-            Assert.Equal(52, NativeHookInventory.Targets.Count);
+            Assert.Equal(10, NativeHookInventory.Owners.Count);
+            Assert.Equal(42, NativeHookInventory.Targets.Count);
             Assert.Equal(NativeHookInventory.Owners.Count, NativeHookInventory.Owners.Select(o => o.Id).Distinct().Count());
             Assert.All(NativeHookInventory.Targets, t => Assert.NotNull(NativeHookInventory.Owner(t.Owner)));
             Assert.All(NativeHookInventory.Owners, o => Assert.Contains(NativeHookInventory.Targets, t => t.Owner == o.Id));
@@ -268,8 +268,8 @@ namespace PersistentCity.Tests
             Assert.Equal("clock.observe", Map(NativeHookInventory.ClockObserver));
             Assert.Equal("research.billing", Map(NativeHookInventory.ResearchBilling));
             Assert.Equal("research.dialog", Map(NativeHookInventory.ResearchDialog));
-            Assert.Equal("physical.vehicles", Map(NativeHookInventory.PhysicalVehicles));
-            Assert.Equal("physical.vehicles", Map(NativeHookInventory.PhysicalIntersections));
+            // GR-9: own cars install no hook, so no owner maps to physical.vehicles.
+            Assert.DoesNotContain(NativeHookInventory.Targets, t => t.Capability == CapabilityId.PhysicalVehicles);
             Assert.Equal("physical.pedestrians", Map(NativeHookInventory.AmbientPedestrians));
             Assert.Equal("physical.pedestrians", Map(NativeHookInventory.StationaryCrowds));
             Assert.Equal("inspector.click,inspector.scroll,inspector.uiblock", Map(NativeHookInventory.InspectorInput));

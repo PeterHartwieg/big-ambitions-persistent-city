@@ -45,6 +45,8 @@ namespace PersistentCity.Runtime
             // Released at a mode boundary: a body of the new kind is re-acquired without the retry cooldown.
             public bool Handoff;
             public int LagFrame = -1;
+            // GR-9 (G6): the body fades in from this follow-clock time (NaN: shown at full alpha).
+            public float FadeInSince = float.NaN;
             // P5: the last frame this car synced its own progress; off screen it syncs every CarSyncFrames frames.
             public int CarSyncFrame = int.MinValue;
             public PhysicalPedestrianBody? Person;
@@ -165,13 +167,12 @@ namespace PersistentCity.Runtime
             places = simulation.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
             pedestrians = new PhysicalPedestrians(parent, pedestrianLimit) { BeforeNavigation = BoundWalkers };
             vehicles = new PhysicalVehicles(routes.ResolveWaypoint, vehicleLimit);
-            vehicles.SuspendForNativeFastForward = SuspendBeforeNativeFastForward;
             vehicles.CommandLimit = CommandLimit;
             vehicles.NativeTargetPermission = NativeTargetPermission;
             ambient = new AmbientPedestrians(dependency, simulation.State.SourceIdentities);
             try
             {
-                if (!vehicles.Ready) throw new InvalidOperationException("Vehicle hooks: " + vehicles.LastError);
+                if (!vehicles.Ready) throw new InvalidOperationException("Own cars: " + vehicles.LastError);
                 if (!ambient.Ready) throw new InvalidOperationException("Pedestrian hooks: " + ambient.LastError);
                 // Test real native prefab/appearance/NavMesh acquisition before suppressing ordinary spawning.
                 bool tested = false;
@@ -181,12 +182,12 @@ namespace PersistentCity.Runtime
                     pedestrians.Release(body!); tested = true; break;
                 }
                 if (!tested) throw new InvalidOperationException("No native pedestrian body passed appearance/NavMesh preflight.");
-                if (!vehicles.Activate()) throw new InvalidOperationException("Native traffic is not ready.");
+                if (!vehicles.Activate()) throw new InvalidOperationException("Native traffic is not ready or has no ordinary car model.");
                 ambient.Activate();
                 if (!ambient.Active) throw new InvalidOperationException("Pedestrian activation: " + ambient.LastError);
                 active = true;
                 simulation.ActivityObserved += OnOptionalDeparture;
-                log.Info("Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.");
+                log.Info("Physical population active: ordinary pedestrian and vehicle spawns replaced by own bodies and own cars; RLO scenes, customers, workers, taxis and service vehicles retained.");
             }
             catch { Dispose(); throw; }
         }
@@ -197,6 +198,7 @@ namespace PersistentCity.Runtime
             + ", queueing=" + queueBindings + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed
             + ", journeyIndex=" + simulation.ActiveJourneys.Count + ", journeyIndexWithheldVisitors=" + simulation.ActiveJourneys.WithheldVisitors
             + ", journeyIndexChecks=" + journeyIndexChecks + ", journeyIndexMismatches=" + journeyIndexMismatches + ", journeyIndexFallback=" + journeyIndexFallback
+            + ", leaving=" + leaving.Count + ", " + vehicles.OwnershipDiagnostics
             + ", carAdmission=" + vehicles.LastAdmissionResident + ":" + vehicles.LastAdmissionStage + ":" + vehicles.LastAdmissionError;
         public void ObserveForSave()
         {
@@ -230,8 +232,46 @@ namespace PersistentCity.Runtime
         }
         private void ReleaseBodies(Binding binding)
         {
+            // GR-9 (G6): a visible body leaving at a mode change fades out where it stands instead of popping.
+            if (binding.Handoff && float.IsNaN(binding.FadeOutSince) && Leaves(binding)) return;
             try { if (binding.Person != null) pedestrians.Release(binding.Person); }
             finally { if (binding.Car != null) vehicles.Release(binding.Car); }
+        }
+        private bool Leaves(Binding binding)
+        {
+            if (binding.Person != null ? !(binding.Person.Valid && binding.Person.OnScreen && binding.Person.CanFade)
+                : binding.Car == null || !(binding.Car.Valid && binding.Car.OnScreen && binding.Car.CanFade)) return false;
+            binding.Person?.Pace(0);
+            leaving.Add(new Leaving(binding.Person, binding.Car, followClock));
+            return true;
+        }
+        /// <summary>Bodies fading out after a handoff. They belong to no binding: a walker stands, a car's command holds.</summary>
+        private readonly List<Leaving> leaving = new List<Leaving>();
+        private readonly struct Leaving
+        {
+            public Leaving(PhysicalPedestrianBody? person, PhysicalVehicleBody? car, float since) { Person = person; Car = car; Since = since; }
+            public PhysicalPedestrianBody? Person { get; }
+            public PhysicalVehicleBody? Car { get; }
+            public float Since { get; }
+        }
+        private void FadeLeaving(bool all)
+        {
+            Exception? failure = null;
+            for (int i = leaving.Count - 1; i >= 0; i--)
+            {
+                var body = leaving[i];
+                float alpha = all ? 0 : BodyFade.Out(followClock - body.Since);
+                bool valid = body.Person != null ? body.Person.Valid : body.Car != null && body.Car.Valid;
+                if (alpha > 0 && valid)
+                {
+                    if (body.Person != null) { body.Person.Pace(0); body.Person.SetFade(alpha); } else body.Car!.SetFade(alpha);
+                    continue;
+                }
+                leaving.RemoveAt(i);
+                try { if (body.Person != null) pedestrians.Release(body.Person); else if (body.Car != null) vehicles.Release(body.Car); }
+                catch (Exception error) { failure = failure ?? error; }
+            }
+            if (failure != null) throw new InvalidOperationException("A leaving body could not be released.", failure);
         }
         private void Release(Binding binding)
         {
@@ -250,7 +290,6 @@ namespace PersistentCity.Runtime
             if (disposed) return;
             disposed = true; active = false;
             simulation.ActivityObserved -= OnOptionalDeparture;
-            vehicles.SuspendForNativeFastForward = null;
             vehicles.CommandLimit = null;
             vehicles.NativeTargetPermission = null;
             try { Suspend(); }

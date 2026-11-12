@@ -111,7 +111,7 @@ namespace PersistentCity.Core
             new CapabilityDefinition(CapabilityId.ResearchDelivery, "research.delivery", CapabilityRequirement.Optional, Research,
                 CapabilityRecheck.CityLoad, null, "Contact message members", ResearchFallback),
             new CapabilityDefinition(CapabilityId.PhysicalVehicles, "physical.vehicles", CapabilityRequirement.Optional, CapabilityScope.VisibleBodies,
-                CapabilityRecheck.CityLoad, null, "physicalvehicles and physicalintersections hooks (H7, H8)",
+                CapabilityRecheck.CityLoad, null, "own kinematic cars: native car models and Gley group shares, no hooks (GR-9)",
                 "Native traffic; background city unchanged."),
             new CapabilityDefinition(CapabilityId.PhysicalPedestrians, "physical.pedestrians", CapabilityRequirement.Optional, CapabilityScope.VisibleBodies,
                 CapabilityRecheck.CityLoad, null, "ambientpedestrians and stationarycrowds hooks (H9, H10)",
@@ -423,7 +423,8 @@ namespace PersistentCity.Core
     }
 
     /// <summary>Static inventory of every Harmony owner and target Persistent City installs, re-read at the F8a base
-    /// (after F2c-F2e, E5b2/E5b3 and F5h): 12 owners, 52 owner-target rows. Section 2 of the plan listed 11 owners and
+    /// (after F2c-F2e, E5b2/E5b3 and F5h): 12 owners, 52 owner-target rows; GR-9 removed the two
+    /// borrowed-car owners (own cars need no hook): 10 owners, 42 rows. Section 2 of the plan listed 11 owners and
     /// 27 methods; E5b2 added the food-contract owner with its 23 hint postfixes. tests/HookInventorySourceTests.cs fails
     /// when Runtime adds an owner or target this list does not declare.</summary>
     public static class NativeHookInventory
@@ -435,8 +436,6 @@ namespace PersistentCity.Core
         public const string ClockObserver = "hart.persistentcity.clockobserver.v1";
         public const string ResearchBilling = "persistentcity.research-billing";
         public const string ResearchDialog = "persistentcity.research-dialog";
-        public const string PhysicalVehicles = "hart.persistentcity.physicalvehicles.v1";
-        public const string PhysicalIntersections = "hart.persistentcity.physicalintersections.v1";
         public const string AmbientPedestrians = "hart.persistentcity.ambientpedestrians.v1";
         public const string StationaryCrowds = "hart.persistentcity.stationarycrowds.v1";
         public const string InspectorInput = "persistentcity.resident-inspector-input";
@@ -450,8 +449,6 @@ namespace PersistentCity.Core
             new NativeHookOwner(ClockObserver, "Runtime/NativeTravelPace.cs", 1),
             new NativeHookOwner(ResearchBilling, "Runtime/ResearchBilling.cs", 1),
             new NativeHookOwner(ResearchDialog, "Runtime/ResearchAgencyDialog.cs", 1),
-            new NativeHookOwner(PhysicalVehicles, "Runtime/PhysicalTrafficHooks.cs", 5),
-            new NativeHookOwner(PhysicalIntersections, "Runtime/PhysicalIntersections.cs", 2),
             new NativeHookOwner(AmbientPedestrians, "Runtime/AmbientPedestrians.cs", 3),
             new NativeHookOwner(StationaryCrowds, "Runtime/StationaryCrowds.cs", 1),
             new NativeHookOwner(InspectorInput, "Runtime/ResidentInspector.cs", 3),
@@ -503,18 +500,6 @@ namespace PersistentCity.Core
             T(ClockObserver, "GameManager", "RunMainGameTick", new[] { "Single" }, Post, CapabilityId.ClockObserve),
             T(ResearchBilling, "MarketingHelper", "RunDaily", None, Post, CapabilityId.ResearchBilling),
             T(ResearchDialog, "MarketingAgencyDialog", "CampaignSettings", None, Post, CapabilityId.ResearchDialog),
-            T(PhysicalVehicles, "GameSpeedController", "ChangeTimeScale", new[] { "TimeSpeed", "Single" }, Pre, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "DrivingAI", "VehicleCrashHandler", new[] { "Int32", "Int32", "Boolean" }, Post, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "DensityManager", "AddVehicle", new[] { "Boolean", "Int32", "Int32", "Vector3", "Vector3" },
-                NativePatchKinds.Transpiler, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "TrafficManager", "FixedUpdate", None,
-                Pre | Post | NativePatchKinds.Transpiler | NativePatchKinds.Finalizer, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "DrivingAI", "HasReachedOrPassedWaypoint", new[] { "Int32", "Int32" }, Pre, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "DrivingAI", "WaypointRequested", new[] { "Int32", "VehicleTypes" }, Pre, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "AiCarRescueCheck", "DoUpdate", new[] { "Single" }, Pre, CapabilityId.PhysicalVehicles),
-            T(PhysicalVehicles, "TrafficDespawner", "OnTriggerEnter", new[] { "Collider" }, Pre, CapabilityId.PhysicalVehicles),
-            T(PhysicalIntersections, "IntersectionManager", "SetActiveIntersection", new[] { "List`1" }, Pre, CapabilityId.PhysicalVehicles),
-            T(PhysicalIntersections, "IntersectionManager", "UpdateIntersections", None, Post, CapabilityId.PhysicalVehicles),
             T(AmbientPedestrians, "PedestrianSpawner", "SetActivePedestrians", new[] { "Int32" }, Pre, CapabilityId.PhysicalPedestrians),
             T(AmbientPedestrians, "Pedestrian", "OnEndCycle", None, Pre, CapabilityId.PhysicalPedestrians),
             T(AmbientPedestrians, "Pedestrian", "ChangeState", new[] { "Boolean" }, Pre, CapabilityId.PhysicalPedestrians),

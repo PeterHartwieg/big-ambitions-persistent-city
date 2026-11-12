@@ -36,8 +36,8 @@ namespace PerfUnionProbe
         private const string Clock = "hart.persistentcity.cityclock.v1", Observer = "hart.persistentcity.clockobserver.v1",
             Authority = "persistentcity.food-authority", Routines = "persistentcity.food-routines",
             Ambient = "hart.persistentcity.ambientpedestrians.v1", Crowds = "hart.persistentcity.stationarycrowds.v1",
-            Inspector = "persistentcity.resident-inspector-input", Vehicles = "hart.persistentcity.physicalvehicles.v1",
-            Junctions = "hart.persistentcity.physicalintersections.v1", Billing = "persistentcity.research-billing",
+            Inspector = "persistentcity.resident-inspector-input",
+            Billing = "persistentcity.research-billing",
             Dialog = "persistentcity.research-dialog", Contract = "persistentcity.food-contract";
         private const string Hooks = R + "LoadedCatalogueLifecycleMembers+Postfixes", ContractFile = "Runtime/LoadedCatalogueLifecycleMembers.cs";
 
@@ -78,19 +78,6 @@ namespace PerfUnionProbe
             P(Inspector, ScopeKind.Prefix, R + "ResidentInspector", "CameraInputPrefix", "PedestrianCam.UpdateInput", "Runtime/ResidentInspector.cs"),
             P(Inspector, ScopeKind.Postfix, R + "ResidentInspector", "CameraInputPostfix", "PedestrianCam.UpdateInput", "Runtime/ResidentInspector.cs"),
             P(Inspector, ScopeKind.Prefix, R + "ResidentInspector", "UiRaycastPrefix", "GraphicRaycaster.Raycast", "Runtime/ResidentInspector.cs"),
-            P(Vehicles, ScopeKind.Prefix, R + "PhysicalTrafficHooks", "SpeedChangingPrefix", "GameSpeedController.ChangeTimeScale", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Postfix, R + "PhysicalTrafficHooks", "CrashPostfix", "DrivingAI.VehicleCrashHandler", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Transpiler, R + "PhysicalTrafficHooks", "SelectTranspiler", "DensityManager.AddVehicle", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Prefix, R + "PhysicalTrafficHooks", "FixedStepPrefix", "TrafficManager.FixedUpdate", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Postfix, R + "PhysicalTrafficHooks", "FixedStepPostfix", "TrafficManager.FixedUpdate", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Transpiler, R + "PhysicalTrafficHooks", "BodyForceTranspiler", "TrafficManager.FixedUpdate", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Finalizer, R + "PhysicalTrafficHooks", "FixedStepFinalizer", "TrafficManager.FixedUpdate", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Prefix, R + "PhysicalTrafficHooks", "ReachedPrefix", "DrivingAI.HasReachedOrPassedWaypoint", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Prefix, R + "PhysicalTrafficHooks", "RequestPrefix", "DrivingAI.WaypointRequested", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Prefix, R + "PhysicalTrafficHooks", "RescuePrefix", "AiCarRescueCheck.DoUpdate", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Vehicles, ScopeKind.Prefix, R + "PhysicalTrafficHooks", "DespawnerPrefix", "TrafficDespawner.OnTriggerEnter", "Runtime/PhysicalTrafficHooks.cs"),
-            P(Junctions, ScopeKind.Prefix, R + "PhysicalIntersections", "SetActivePrefix", "IntersectionManager.SetActiveIntersection", "Runtime/PhysicalIntersections.cs"),
-            P(Junctions, ScopeKind.Postfix, R + "PhysicalIntersections", "UpdatePostfix", "IntersectionManager.UpdateIntersections", "Runtime/PhysicalIntersections.cs"),
             P(Billing, ScopeKind.Postfix, R + "ResearchBilling", "RunDailyPostfix", "MarketingHelper.RunDaily", "Runtime/ResearchBilling.cs"),
             P(Dialog, ScopeKind.Postfix, R + "ResearchAgencyDialog", "CampaignSettingsPostfix", "MarketingAgencyDialog.CampaignSettings", "Runtime/ResearchAgencyDialog.cs"),
             P(Contract, ScopeKind.Postfix, Hooks, "Hook0", "ItemsGetter.OnItemsLoaded", ContractFile),
@@ -144,9 +131,6 @@ namespace PerfUnionProbe
         /// <summary>PC methods a transpiler inserts into native code; timed as their own scopes.</summary>
         public static readonly IReadOnlyList<ExpectedScope> TranspilerHelpers = Array.AsReadOnly(new[]
         {
-            H("SelectTranspiler", R + "PhysicalTrafficHooks", "SelectIdle", "Runtime/PhysicalTrafficHooks.cs"),
-            H("BodyForceTranspiler", R + "PhysicalTrafficHooks", "ApplyBodyForce", "Runtime/PhysicalTrafficHooks.cs"),
-            H("BodyForceTranspiler", R + "PhysicalTrafficHooks", "ApplyBodyRotation", "Runtime/PhysicalTrafficHooks.cs"),
         });
 
         /// <summary>Attribution sub-scopes inside Update (Decision 5 Components). Never added to the union.</summary>

@@ -113,7 +113,7 @@ namespace PersistentCity.Runtime
                     ui != null && ui.timeMachine.isRunning);
             }
         }
-        public static bool FastForward => NativeInteriorCityView.Configured ? NativeGameSpeed.CurrentFastForward : PhysicalTrafficHooks.CurrentFastForward;
+        public static bool FastForward => NativeInteriorCityView.Configured ? NativeGameSpeed.CurrentFastForward : NativeGameSpeed.LegacyFastForward;
         public static bool HiddenTravel => FastForward || Time.timeScale > 1 || LoadScene.isLoading
             || (BuildingManager.IsInsideBuilding && !NativeInteriorCityView.Active) || UndergroundParkingManager.IsInsideParking
             || (InstanceBehavior<UIs>.Instance != null && InstanceBehavior<UIs>.Instance.timeMachine.isRunning);

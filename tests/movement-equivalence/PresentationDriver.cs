@@ -9,6 +9,10 @@ namespace PersistentCity.MovementEquivalence;
 /// 0.8-1.0x and recurring blocking episodes; SlowHeadCar adds every fourth car body at 0.5x.</summary>
 public enum LagModel { Ideal, Native, SlowHeadCar }
 
+/// <summary>GR-9: which car body drives. Borrowed is the native Gley car (its own pace, capped by CommandLimit); Own is
+/// the mod's own kinematic car (Core OwnCarMotion: acceleration, cruise and braking to the same limit, real seconds).</summary>
+public enum CarBodies { Borrowed, Own }
+
 public sealed class DriverSettings
 {
     public int Pedestrians = 48, Vehicles = 24;
@@ -20,6 +24,7 @@ public sealed class DriverSettings
     /// <summary>P-C comparison: walkers aim with the F2c rule (the logical pose on its own leg, re-aimed every
     /// WalkerFollow.RetargetMetres) instead of one path per leg.</summary>
     public bool PoseAim;
+    public CarBodies Cars = CarBodies.Borrowed;
 }
 
 /// <summary>Presentation driver double. It follows the rules that Runtime/PhysicalPopulation.cs uses for
@@ -48,6 +53,8 @@ public sealed class PresentationDriver
         public Position Reached;
         public Position Target;
         public bool HasTarget;
+        // GR-9 own car: its speed along the road, metres per second.
+        public double Speed;
     }
     private sealed class Binding
     {
@@ -150,7 +157,15 @@ public sealed class PresentationDriver
                 leg = next;
             }
             double limit = PhysicalTrafficMotion.MaximumAdvance(leg, body.Position, cap);
-            double metres = Math.Min(limit, GridPlanner.CarMetresPerMinute * body.Pace * gameMinutes);
+            double metres;
+            if (settings.Cars == CarBodies.Own)
+            {
+                // Runtime PhysicalVehicles.Drive: the own car's step on its segment to the leg's corner, under the same limit.
+                var step = OwnCarMotion.Step(0, Position.Distance(body.Position, leg.To), body.Speed,
+                    new PhysicalTrafficCommandLimit(leg.Direction, limit), realSeconds * body.Pace);
+                body.Speed = step.Speed; metres = step.Moved;
+            }
+            else metres = Math.Min(limit, GridPlanner.CarMetresPerMinute * body.Pace * gameMinutes);
             if (Step(body, leg.To, metres)) { body.HasReached = true; body.Reached = leg.To; }
         }
     }
