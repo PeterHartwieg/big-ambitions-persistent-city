@@ -612,6 +612,23 @@ namespace PersistentCity.Runtime
             bool red = corner != null && corner.stop;
             var limit = OwnCarMotion.Safe(command, command.HoldPosition ? null : ObstacleAhead(body), red, body.Length - body.Along);
             var step = OwnCarMotion.Step(body.Along, body.Length, body.SpeedValue, limit, seconds);
+            // A standing car keeps its pose: the root pivots on the front axle, so turning in place would move it.
+            if (step.Moved > 1e-9)
+            {
+                double yaw = body.Yaw;
+                var heading = Vector(body.To) - Vector(body.From); heading.y = 0;
+                if (heading.sqrMagnitude > 0.0001f)
+                    yaw = OwnCarMotion.Yaw(body.Yaw, Quaternion.LookRotation(heading.normalized, Vector3.up).eulerAngles.y, seconds, hold: false);
+                // The whole body at the proposed pose must overlap nothing: the turn swings the rear and sides around the
+                // front axle. Otherwise the car stands this frame with its pose unchanged, and only lags.
+                var model = body.Instance.Model;
+                var front = body.Length <= 1e-9 ? body.To : Position.Lerp(body.From, body.To, Math.Min(1, step.Along / body.Length));
+                var footprint = OwnCarFootprint.At(front, yaw, Point(model.MarkerOffset), model.Length, model.Width);
+                var rotation = Quaternion.Euler(0, (float)yaw, 0);
+                if (Occupied(footprint, model.Height, rotation, body.Instance.Root.transform, includeStatic: false))
+                { body.SpeedValue = 0; return; }
+                body.Yaw = yaw; body.Rotation = rotation;
+            }
             body.Along = step.Along; body.SpeedValue = step.Speed;
             if (step.AtCorner && !red && body.Path.Count > 0)
             {
@@ -627,22 +644,39 @@ namespace PersistentCity.Runtime
                         if (next == null) { body.RouteFinished = true; }
                         else
                         {
+                            // The front axle stays on the corner: the next segment starts where this one ended.
                             body.From = body.To; body.To = Point(next.position);
                             body.Length = Position.Distance(body.From, body.To); body.Along = 0;
                         }
                     }
                 }
             }
-            // A standing car keeps its pose: the root pivots on the front axle, so turning in place would move it.
-            if (step.Moved <= 1e-9) return;
-            var heading = Vector(body.To) - Vector(body.From); heading.y = 0;
-            if (heading.sqrMagnitude > 0.0001f)
+            if (step.Moved > 1e-9) body.Instance.Place(body.Position, body.Rotation);
+        }
+
+        private readonly Collider[] overlaps = new Collider[16];
+        private static int occupancyMask = -1, movingLayers = -1;
+        /// <summary>Whether a vehicle, the player, a walker or another own car stands in this body rectangle. Static
+        /// Obstacles-layer geometry (bollards, lamp posts) counts only with <paramref name="includeStatic"/>; colliders
+        /// under <paramref name="ignore"/> (the car itself) never count.</summary>
+        private bool Occupied(CarRectangle box, float height, Quaternion rotation, Transform? ignore, bool includeStatic)
+        {
+            if (occupancyMask < 0)
             {
-                double target = Quaternion.LookRotation(heading.normalized, Vector3.up).eulerAngles.y;
-                body.Yaw = OwnCarMotion.Yaw(body.Yaw, target, seconds, hold: false);
-                body.Rotation = Quaternion.Euler(0, (float)body.Yaw, 0);
+                movingLayers = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Player", "Pedestrians", "Pedestrian", "Characters");
+                occupancyMask = movingLayers | LayerMask.GetMask("Obstacles");
             }
-            body.Instance.Place(body.Position, body.Rotation);
+            if (occupancyMask == 0) return false;
+            var centre = Vector(box.Centre) + Vector3.up * (height / 2f + 0.2f);
+            var half = new Vector3((float)box.HalfWidth, Math.Max(0.3f, height / 2f - 0.15f), (float)box.HalfLength);
+            int count = Physics.OverlapBoxNonAlloc(centre, half, overlaps, rotation, occupancyMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                var collider = overlaps[i];
+                if (collider == null || ignore != null && collider.transform.IsChildOf(ignore)) continue;
+                if (includeStatic || IsOwnCar(collider) || (movingLayers & (1 << collider.gameObject.layer)) != 0) return true;
+            }
+            return false;
         }
 
         private readonly RaycastHit[] hits = new RaycastHit[16];
@@ -654,11 +688,13 @@ namespace PersistentCity.Runtime
             if (obstacleMask < 0) obstacleMask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Player", "Obstacles", "Pedestrians", "Pedestrian", "Characters");
             if (obstacleMask == 0) return null;
             var model = body.Instance.Model;
-            var forward = body.Rotation * Vector3.forward;
+            // Along the road segment the car actually moves on, not its visual heading (which lags in a turn).
+            var forward = Vector(body.To) - Vector(body.From); forward.y = 0;
+            forward = forward.sqrMagnitude > 0.0001f ? forward.normalized : body.Rotation * Vector3.forward;
             var half = new Vector3(Math.Max(0.4f, model.Width / 2f), Math.Max(0.3f, model.Height / 2f - 0.15f), 0.25f);
             var centre = Vector(body.Position) + Vector3.up * (model.Height / 2f + 0.2f);
             float reach = (float)OwnCarMotion.LookAheadMetres(body.SpeedValue);
-            int count = Physics.BoxCastNonAlloc(centre, half, forward, hits, body.Rotation, reach, obstacleMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.BoxCastNonAlloc(centre, half, forward, hits, Quaternion.LookRotation(forward, Vector3.up), reach, obstacleMask, QueryTriggerInteraction.Ignore);
             double? nearest = null;
             for (int i = 0; i < count; i++)
             {
@@ -710,11 +746,12 @@ namespace PersistentCity.Runtime
                 }
         }
 
-        private static bool ParkedClear(OwnCarModel model, Position at, Quaternion rotation)
+        private bool ParkedClear(OwnCarModel model, Position at, Quaternion rotation)
         {
-            int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Player");
-            var half = new Vector3(Math.Max(0.5f, model.Width / 2f + 0.2f), Math.Max(0.3f, model.Height / 2f - 0.15f), Math.Max(1f, model.Length / 2f + 0.3f));
-            return mask != 0 && !Physics.CheckBox(Vector(at) + Vector3.up * (model.Height / 2f + 0.2f), half, rotation, mask, QueryTriggerInteraction.Ignore);
+            // The root stands on the curb point; a margin keeps neighbouring parked cars apart. Static Obstacles-layer
+            // geometry beside a curb is not occupancy, so it never hides a parked car for good.
+            var box = new CarRectangle(at, rotation.eulerAngles.y, model.Length / 2 + 0.3, model.Width / 2 + 0.2);
+            return !Occupied(box, model.Height, rotation, null, includeStatic: false);
         }
 
         /// <summary>A parked car whose owner now drives: it fades out where seen, else returns to the pool at once.</summary>

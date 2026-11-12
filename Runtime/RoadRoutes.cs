@@ -711,7 +711,8 @@ namespace PersistentCity.Runtime
             // keeps curb choice and car-trip availability independent of which bodies are shown.
             var delta = end - start;
             float length = delta.magnitude;
-            if (length <= 0.000001f) return !Physics.CheckSphere(start, 0.01f, obstacleMask, QueryTriggerInteraction.Ignore);
+            // An empty segment crosses nothing, as the base Linecast found, whether own cars are shown or not.
+            if (length <= 0.000001f) return true;
             int count = Physics.RaycastNonAlloc(start, delta / length, clearHits, length, obstacleMask, QueryTriggerInteraction.Ignore);
             if (count == clearHits.Length) return !Physics.Linecast(start, end, obstacleMask, QueryTriggerInteraction.Ignore) || OnlyOwnCars(start, end);
             for (int i = 0; i < count; i++) if (!PhysicalVehicles.IsOwnCar(clearHits[i].collider)) return false;

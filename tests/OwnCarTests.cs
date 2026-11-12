@@ -268,4 +268,24 @@ public sealed class OwnCarTests
         }
         Assert.Equal(obstacle - OwnCarMotion.ObstacleGapMetres, along, 6);
     }
+
+    /// <summary>Review Sol-r2-1: the whole body counts, not the front axle. A 4 m by 1.8 m car with its front axle 2 m
+    /// ahead of its root, standing at a corner and turning right, swings its rear left: an obstacle just beside the rear is
+    /// clear at the current pose but overlaps after the first 3-degree step, so that move is refused.</summary>
+    [Fact]
+    public void AnObstacleBesideATurningCarBlocksTheTurn()
+    {
+        var front = new Position(0, 0, 0); var offset = new Position(0, 0, 2);
+        var obstacle = new CarRectangle(new Position(-1.1, 0, -3.9), 0, 0.3, 0.1);
+        var now = OwnCarFootprint.At(front, 0, offset, 4, 1.8);
+        Assert.False(OwnCarFootprint.Overlaps(now, obstacle));
+        double yaw = OwnCarMotion.Yaw(0, 90, 1 / 60.0, hold: false);
+        Assert.Equal(3, yaw, 9);
+        Assert.True(OwnCarFootprint.Overlaps(OwnCarFootprint.At(front, yaw, offset, 4, 1.8), obstacle));
+        // The front-axle slice alone misses it: a thin box at the axle, 3 degrees on, does not reach the rear.
+        Assert.False(OwnCarFootprint.Overlaps(new CarRectangle(front, yaw, 0.25, 0.9), obstacle));
+        // A car driving straight past the same obstacle at 1 m clearance never touches it.
+        var beside = new CarRectangle(new Position(-2.0, 0, -3.9), 0, 0.3, 0.1);
+        for (double z = 0; z < 10; z += 0.2) Assert.False(OwnCarFootprint.Overlaps(OwnCarFootprint.At(new Position(0, 0, z), 0, offset, 4, 1.8), beside));
+    }
 }
