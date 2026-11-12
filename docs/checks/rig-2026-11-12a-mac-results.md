@@ -2,7 +2,7 @@
 
 Role `rig_test`, where `mac`, isolated `agentmac`. Candidate `0eb780b53185cb0c8ce9fcddece199a6223313dc` was fetched and verified before build and again after cleanup; the tip did not move. Read [11j](rig-2026-11-11j-mac-results.md) first and followed the verified official Mac, readiness, cabinet-register, food-fixture and #76 checkpoint procedures. No production code change, rig reinstall, rollback, Windows contact, normal-profile access, release, version/changelog, merge or issue creation. Other harness sessions and their worktrees were left alone.
 
-`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-12a-mac`. `<rig>` = `/Users/peterhartwieg/Coding_Projects/big-ambitions/big-ambitions-agent-rig`. Raw replies, command exits, scripts, logs, parsed saves and backups remain in the stage. Only this report and an appended checklist link enter Git.
+`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-12a-mac`. `<rig>` = the official agent-rig checkout. Raw replies, command exits, scripts, logs, parsed saves and backups remain in the stage. Only this report and an appended checklist link enter Git.
 
 **Summary: 7 passed / 0 partial / 1 failed / 3 not run. Result: BLOCKED.** Counts cover the 11 named rows below. #76 captures and saves work in game. S2 mid-probe reload **FAILS** its “no half sale” assertion: the exit cut loads one native order / $5 with an unchanged resident-wallet payload and a Pending receipt; Persistent City refuses the cut, so reconciliation does not run. F7-3's requested capture-only `receipt_pending` arm **PASSES**. Broader historical matrices are excluded from these targeted counts. In-game proof gates no merge.
 
@@ -185,7 +185,7 @@ Raw evidence stays at `<stage>`; `commands.jsonl` includes exact argv/exit/UTC w
 | `analysis-summary.json` | `266e5654062b1cc18e87bbcace02cd67081916968e3c25dfbb3dc17f9fb177af` |
 | `evidence-index.json` | `f28ba697d8b4a091e94745647c20ddaaf304bb3728789f24a1428069ee860ea7` |
 
-Report copied to `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-12a-mac.md`. Historical check documents remain in history; no deleted tree recreated.
+Report copied to the local agent-log directory as `persistent-city-rig-2026-11-12a-mac.md`. Historical check documents remain in history; no deleted tree recreated.
 
 ## Per-check results
 
