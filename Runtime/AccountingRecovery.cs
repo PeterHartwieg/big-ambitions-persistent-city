@@ -30,7 +30,7 @@ namespace PersistentCity.Runtime
                 if (NativeFoodOwnership.StandDown != null) { RefuseDevelopmentCity(); return false; }
             }
             if (SaveGameManager.Current?.modData != null && AccountingStopStore.IsStopped(SaveGameManager.Current.modData))
-            { StopAccounting(); return false; }
+            { StopAccounting(AccountingStopStore.Cause(SaveGameManager.Current.modData)); return false; }
             return true;
         }
         private bool BeginAccountingObservations()

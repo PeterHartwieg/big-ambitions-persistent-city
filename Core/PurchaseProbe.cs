@@ -93,8 +93,12 @@ namespace PersistentCity.Core
 
     /// <summary>S2 sale proof, Core side: price the whole basket against the resident's ceiling before any native call,
     /// make one native sale, then debit the wallet and confirm the receipt in the same call. Receipts live in the native
-    /// save's mod data next to the native orders. Runtime runs the call inside the save-epoch unit guard, so a native save
-    /// started during it publishes no epoch; a save therefore sees the probe before it began or after it finished.</summary>
+    /// save's mod data next to the native orders. Runtime runs the call inside the save-epoch unit guard. A native save
+    /// started during it (only a nested call can do that, such as a rig checkpoint inside the native processor) may hold the
+    /// booked order and a pending receipt beside the pre-probe population; the guard marks that save failed and stopped, so
+    /// Persistent City refuses it on load and settles neither half (F7 rules 5 and 6). Recovery is the last coherent save,
+    /// which holds the probe before it began. Every save Persistent City loads sees the probe before it began or after it
+    /// finished.</summary>
     public static class PurchaseProbe
     {
         public const string Prefix = "persistentcity:sale-probe-v1:";
@@ -170,9 +174,9 @@ namespace PersistentCity.Core
             return new PurchaseProbeResult(key, ProbeRefusal.Reversed, ProbeReceiptStatus.Missing, quote, Money.Zero, reason + "; native books restored");
         }
 
-        /// <summary>A pending receipt outside a running probe was cut before the native call returned: Run records every
-        /// native outcome, and the save-epoch guard publishes no save inside it, so no order was booked and the wallet was
-        /// never debited. It becomes abandoned and is never retried. Returns how many changed.</summary>
+        /// <summary>Defensive. Run records every native outcome before it returns and a save taken inside it is refused on
+        /// load, so no city Persistent City runs should hold a pending receipt outside a running probe. One that does is
+        /// abandoned and never retried or debited. Returns how many changed.</summary>
         public static int Recover(IDictionary<string, string> receipts)
         {
             var pending = receipts.Where(p => IsReceiptKey(p.Key) && p.Value.StartsWith("pending|", StringComparison.Ordinal)).Select(p => p.Key).ToArray();

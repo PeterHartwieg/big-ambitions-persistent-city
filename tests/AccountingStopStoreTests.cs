@@ -24,4 +24,15 @@ public sealed class AccountingStopStoreTests
         AccountingStopStore.Stop(data);
         Assert.True(AccountingStopStore.IsStopped(data)); Assert.Equal(marker, data[AccountingStopStore.Key]);
     }
+    [Theory]
+    [InlineData(AccountingStopStore.SaveEpochFailed, "never settles or replays")]
+    [InlineData(AccountingStopStore.DetachedAfterSave, "already stopped")]
+    [InlineData("input-epoch-lost", "Accounting input epoch was lost.")]
+    [InlineData("future-policy", "Accounting input epoch was lost.")]
+    public void TheLoadRefusalNamesTheRecordedStopCause(string marker, string text)
+    {
+        var data = new Dictionary<string, string> { [AccountingStopStore.Key] = marker };
+        Assert.Contains(text, AccountingStopStore.Cause(data));
+        Assert.True(AccountingStopStore.IsStopped(data));
+    }
 }

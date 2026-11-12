@@ -296,7 +296,8 @@ namespace PersistentCity.Runtime
             PurchaseProbeResult result;
             saleProbeRunning = true;
             PurchaseProbeResult? ran = null;
-            // A native save started inside the probe is re-entrant: it publishes no epoch and stops Persistent City afterwards.
+            // A native save started inside the probe is re-entrant: it publishes no epoch, marks that save refused on load and
+            // stops Persistent City afterwards. Its native books may hold the order without the debit; it is never settled.
             try { RunSaveEpochUnit(() => ran = PurchaseProbe.Run(request, person.Wallet, save.modData, native)); }
             finally { saleProbeRunning = false; }
             result = ran!;
