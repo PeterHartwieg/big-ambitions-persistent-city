@@ -591,8 +591,11 @@ namespace PersistentCity.Core
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             occupancy.Move(live.DayPlaceId, working.DayPlaceId);
             food?.AccrueWorkDeparture(live, working);
+            var needVisit = NewNeedVisit(live, working);
+            DeferMissedNeeds(live, working);
             CommitOrdinaryArrival(live, working);
             CommitEvent(live, working);
+            if (needVisit != null) CommitNeedPurchase(live, needVisit);
             food?.EmploymentChanged(live);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (live.Visitor != null) VisitorSchedules.Sync(live.Visitor);
@@ -628,7 +631,7 @@ namespace PersistentCity.Core
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
-            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet, Plan = live.Plan?.Copy(),
+            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet, Plan = live.Plan?.Copy(), Needs = live.Needs?.Copy(),
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
@@ -688,6 +691,7 @@ namespace PersistentCity.Core
             // GR-1: the copy shares the person's wallet; an event never replaces it.
             live.Wallet = working.Wallet;
             live.Plan = working.Plan;
+            live.Needs = working.Needs;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
             // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
             live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
