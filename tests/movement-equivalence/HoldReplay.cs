@@ -6,8 +6,6 @@ using PersistentCity.Persistence;
 
 namespace PersistentCity.MovementEquivalence;
 
-/// <summary>F2e replay checkpoint, kept where the native clock enters an integral minute (every earlier event drained):
-/// the saved city, the native checkout double's state, the native clock and the saved hold sequence.</summary>
 public sealed class HoldCheckpoint
 {
     public HoldCheckpoint(double minute, string payload, MovementMarket market, int hour, float minuteOfHour, long sequence, int framesPerSecond)
@@ -23,13 +21,6 @@ public sealed class HoldCheckpoint
     public int FramesPerSecond { get; }
 }
 
-/// <summary>
-/// F2e player double for the E2 arm (docs/plans/f2-movement.md Decision 4). It stands in front of every third followed
-/// body (by ordinal hash of the person) inside the contact window, so those bodies count as blocked, and reports their
-/// blocked game minutes as Runtime PlayerContact does: every <see cref="ReportMinutes"/>, each report at most 0.25 and at
-/// most the time since that person's previous report, a refusal for an undrained minute kept for the next frame. Every
-/// applied hold is written as its Player.log line and parsed back, so the replay reads exactly the logged stream.
-/// </summary>
 public sealed class PlayerDouble
 {
     public const double ContactFrom = 7 * 60, ContactTo = 10 * 60;
@@ -40,7 +31,6 @@ public sealed class PlayerDouble
     public long Reports, WalkHolds, CarHolds, Absorbed, ChargedMinutesTimes1000;
     public readonly SortedDictionary<string, long> Refusals = new(StringComparer.Ordinal);
     public readonly List<string> Lines = new();
-    /// <summary>F2e perf: HoldForPlayer wall time per applied hold, in milliseconds (walk and car).</summary>
     public readonly List<double> WalkMilliseconds = new(), CarMilliseconds = new();
 
     private static bool Blocks(string id)
@@ -90,12 +80,6 @@ public sealed class PlayerDouble
     }
 }
 
-/// <summary>
-/// F2e E2 replay (plan section 3, E2): load a starting checkpoint with bodies off and feed it the stream segment up to an
-/// end checkpoint through <see cref="PlayerHoldReplay"/>, with the same frame loop as <see cref="MovementRun"/> (native
-/// clock under the F1 fence, budgeted slices). Each advance stops on the next stamped minute. The saved bytes where the
-/// native clock enters the end checkpoint's minute must equal that checkpoint's.
-/// </summary>
 public static class HoldReplay
 {
     public sealed class Outcome
@@ -109,10 +93,6 @@ public static class HoldReplay
     public static IReadOnlyList<PlayerHoldRecord> Segment(IReadOnlyList<PlayerHoldRecord> stream, HoldCheckpoint from, HoldCheckpoint to)
         => stream.Where(h => h.Sequence > from.Sequence && h.Sequence <= to.Sequence).ToList();
 
-    /// <summary>Replays <paramref name="segment"/> from <paramref name="from"/> to <paramref name="to"/>. A segment the
-    /// validation refuses throws <see cref="ArgumentException"/> before anything runs.</summary>
-    /// <param name="withoutHolds">A bodies-off reference: run from <paramref name="from"/> to <paramref name="to"/>'s minute
-    /// applying no hold at all (the segment must be empty); its bytes show what the holds changed.</param>
     public static Outcome Replay(HoldCheckpoint from, HoldCheckpoint to, IReadOnlyList<PlayerHoldRecord> segment, bool withoutHolds = false)
     {
         if (withoutHolds && segment.Count != 0) throw new ArgumentException("A reference without holds takes no segment.");
@@ -129,7 +109,6 @@ public static class HoldReplay
         var outcome = new Outcome();
         if (native >= to.Minute)
         {
-            // A segment that ends where it starts: nothing to apply, the checkpoint is the result.
             outcome.Failure = replay.Count != 0 ? "the replay ended with " + replay.Count + " holds unapplied" : "";
             outcome.Payload = SaveCodec.Write(city.State);
             outcome.Equal = outcome.Failure.Length == 0 && outcome.Payload == to.Payload;
@@ -161,7 +140,6 @@ public static class HoldReplay
             }
             first = false;
             double target = Math.Max(city.State.Minute, AccountingClock.Target(native));
-            // The live frame's slice budget; a stop on a stamped minute costs one extra caught-up call, which is refunded.
             int budget = MovementRun.EventUnitsPerFrame;
             for (int unit = 0; unit < budget; unit++)
             {
@@ -180,10 +158,6 @@ public static class HoldReplay
         }
     }
 
-    /// <summary>The E2 arm: one contact run with checkpoints, then replays from each checkpoint to the last, plus the
-    /// refusal cases. Returns (check, pass, detail) rows like <see cref="SelfChecks.Run"/>.</summary>
-    /// <param name="visitors">F2g: the same arm with visitor bodies on (F5i). Holds refuse visitors, so the stream holds
-    /// residents only, and the replay must still equal the contact run with the visitors' journeys and sales.</param>
     public static List<(string Check, bool Pass, string Detail)> Check(int residents, int days = 1, bool visitors = false)
     {
         var rows = new List<(string, bool, string)>();

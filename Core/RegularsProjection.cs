@@ -4,9 +4,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>On-demand snapshot of retained evidence, never saved or maintained by the simulator.
-    /// One consumer pass for every owned shop together, then constant-time queries. Discard at the
-    /// next open-panel refresh; no midnight work and no work at memory commit.</summary>
     public sealed class RegularsProjection
     {
         public const int RegularMinServedVisits = 3;
@@ -18,7 +15,6 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, int> counts = new Dictionary<string, int>(StringComparer.Ordinal);
         private bool built;
 
-        // B0 compatibility seam for a caller-supplied effective-affinity policy.
         public RegularsProjection(FoodCommerceState food, int day, Func<ShopMemory, int, int> effectiveAffinity)
             : this(food, day, (consumer, entry, at) => effectiveAffinity(entry, at), new FoodMemorySettings()) { }
 
@@ -58,7 +54,6 @@ namespace PersistentCity.Core
             return counts[businessId];
         }
 
-        /// <summary>Null for any shop outside the owned snapshot. No free rival feedback.</summary>
         public string? OwnShopText(string businessId) => counts.ContainsKey(businessId)
             ? "Regulars: " + CountOwnShop(businessId).ToString(CultureInfo.InvariantCulture) : null;
     }

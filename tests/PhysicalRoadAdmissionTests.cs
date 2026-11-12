@@ -20,7 +20,6 @@ public sealed class PhysicalRoadAdmissionTests
     [InlineData(45, true)]
     public void WholeBodyMustRemainOutsideNativeTraversal(double progress, bool allowed)
     {
-        // An intermediate node at 30 may have no native intersection reference at all.
         Assert.Equal(allowed, PhysicalRoadAdmission.Allows(new[] { Enter(20), Exit(40) }, progress, 4));
     }
 
@@ -100,8 +99,6 @@ public sealed class PhysicalRoadAdmissionTests
     [Fact]
     public void CapturedC106NativeRouteCanBindBetweenJunctionsWithoutAuthorizingTheirTraversal()
     {
-        // Exact read-only r4 evidence: a leading native exit at the curb-connected
-        // road block's start, followed by five complete native junction passages.
         var boundaries = new[] {
             Exit(0), Enter(150.73696652311065, 1), Exit(187.2369111821057, 1),
             Enter(297.7223215040971, 2), Exit(320.7131921657034, 2),

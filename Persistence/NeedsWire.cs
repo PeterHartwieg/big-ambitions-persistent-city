@@ -7,18 +7,9 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>
-    /// GR-3 needs on the wire: one ASCII string per resident ("Needs"), null before the purchase path first meets a
-    /// category for that person. Visitors keep none. The schema stays 1; a city written before needs has no "Needs" field
-    /// and is refused as an older development city and kept unchanged.
-    ///
-    /// "1|last impulse day|impulse venue|needs", needs joined by ';' (empty for none), each
-    /// "category,next due day,last venue,deferrals": the category percent-encoded (Uri.EscapeDataString), days as
-    /// canonical decimals (impulse day "-" for none), venues a place cell (PlaceCells) or "---".
-    /// </summary>
     public static partial class SaveCodec
     {
-        public const int MaxNeedsWire = 16384; // 16 needs of a 256-character category, percent-encoded
+        public const int MaxNeedsWire = 16384;
 
         private static string NeedsText(PersonNeeds needs, WireContext context)
         {
@@ -38,7 +29,6 @@ namespace PersistentCity.Persistence
             return text.ToString();
         }
 
-        /// <summary>The one needs parser: the streaming check (placeholder places) and the reader (the place table).</summary>
         private static PersonNeeds ParseNeeds(string text, PlaceCells cells)
         {
             const string error = "Invalid needs.";
@@ -60,7 +50,6 @@ namespace PersistentCity.Persistence
                 catch (UriFormatException) { throw new SaveValidationException(error); }
                 Require(Uri.EscapeDataString(category) == fields[0] && category.Length <= BusinessTypes.MaximumNameLength
                     && BusinessTypes.Normalize(category) == category, error);
-                // Ordinal category order, no repeats: the order Add keeps, so a read writes back byte for byte.
                 Require(string.CompareOrdinal(previous, category) < 0, error);
                 previous = category;
                 int due = (int)PlanNumber(fields[1], int.MaxValue);
@@ -78,7 +67,6 @@ namespace PersistentCity.Persistence
             ParseNeeds((string)reader.Value!, PlaceCells.Streaming);
         }
 
-        /// <summary>Needs belong to residents only, and an impulse lies on a day that has begun.</summary>
         private static void ValidateNeeds(CityState state)
         {
             int today = DayPlanner.PlanDay(state.Minute);
@@ -108,9 +96,6 @@ namespace PersistentCity.Persistence
         private const string ResidentMissedField = "\"MissedActivities\":";
         private const string ResidentNextEventField = ",\"NextEventMinute\":";
 
-        /// <summary>The writer sorts fields ordinally, so a current resident has "Needs" between "MissedActivities" and
-        /// "NextEventMinute"; a pre-GR-3 resident goes straight from one to the other. One ordinal search on the first
-        /// resident, no decode.</summary>
         internal static bool PreNeedsBody(string source)
         {
             if (!source.StartsWith(BodyPrefix, StringComparison.Ordinal)) return false;

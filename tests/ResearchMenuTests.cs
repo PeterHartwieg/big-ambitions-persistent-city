@@ -15,8 +15,6 @@ namespace PersistentCity.Tests;
 [CollectionDefinition(nameof(ResearchMenuTests), DisableParallelization = true)]
 public sealed class ResearchMenuSerialCollection { }
 
-/// <summary>C5e: the agency research menu, the campaign-screen gate and the localization table (plan C5 section 3.1).
-/// Pure: Runtime/ResearchAgencyMenu.cs is linked into this project; the native dialog is pinned by source.</summary>
 [Collection(nameof(ResearchMenuTests))]
 public sealed class ResearchMenuTests
 {
@@ -30,7 +28,6 @@ public sealed class ResearchMenuTests
             i % 2 == 0 ? ResearchCoverage.Catchment : ResearchCoverage.City, 500 * (i + 1) + 12)).ToArray();
     }
 
-    // ---- menu tree ----
 
     [Theory]
     [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)] [InlineData(6)]
@@ -57,7 +54,6 @@ public sealed class ResearchMenuTests
             Assert.Equal(new ResearchMenuChoice(ResearchMenuTarget.Node, i, ResearchText.NativeBack), confirm.Second);
         }
 
-        // Walking the tree from the root reaches every product's confirmation once; only confirmations place orders.
         var ordered = new List<ResearchProduct>();
         var seen = new HashSet<int>();
         var pending = new Stack<int>(new[] { ResearchMenu.Root });
@@ -76,7 +72,6 @@ public sealed class ResearchMenuTests
         }
         Assert.Equal(2 * count, seen.Count);
         Assert.Equal(products.OrderBy(p => p.Code, StringComparer.Ordinal), ordered.OrderBy(p => p.Code, StringComparer.Ordinal));
-        // Exactly one way out to the native campaign screen: the last product's second option.
         Assert.Single(menu.Nodes, n => n.Second.Target == ResearchMenuTarget.CampaignScreen || n.Confirm.Target == ResearchMenuTarget.CampaignScreen);
     }
 
@@ -112,7 +107,6 @@ public sealed class ResearchMenuTests
         Assert.Throws<ArgumentException>(() => ResearchMenu.Build(Array.Empty<ResearchProduct>()));
     }
 
-    // ---- research button click ----
 
     [Fact]
     public void NullOrIneligibleBusinessStaysOnTheCampaignScreen()
@@ -123,7 +117,6 @@ public sealed class ResearchMenuTests
             var errors = new List<string>();
             int built = 0;
             var next = ResearchClick.Run<object>(selected, eligible, errors.Add, () => { built++; return new object(); });
-            // Null is native DialogController.SecondOptionCurrentEntry's "show nothing new": the input entry stays.
             Assert.Null(next);
             Assert.Equal(new[] { error }, errors);
             Assert.Equal(0, built);
@@ -136,7 +129,6 @@ public sealed class ResearchMenuTests
         Assert.Empty(shown);
     }
 
-    // ---- campaign-screen gate ----
 
     private sealed class FakeEntry
     {
@@ -178,7 +170,6 @@ public sealed class ResearchMenuTests
                 Assert.Null(entry.OnSecondOption);
                 Assert.Null(entry.SecondOptionTextOverride);
             }
-            // OnConfirm, OnCancel and the template are the native ones in every case.
             Assert.Same(confirm, entry.OnConfirm);
             Assert.Same(cancel, entry.OnCancel);
             Assert.Equal(1, entry.Template);
@@ -196,7 +187,6 @@ public sealed class ResearchMenuTests
             Assert.Equal(order[failed], ResearchDialogGate.Check(Preconditions(127 & ~(1 << failed))));
         Assert.Equal(ResearchDialogRefusal.None, ResearchDialogGate.Check(Preconditions(127)));
 
-        // Settings with no attached checks (C5f derives Available from them) are unavailable, so the button is never added.
         Assert.False(new MarketResearchSettings().Available);
         Assert.False(typeof(MarketResearchSettings).GetProperty("Available")!.CanWrite);
         var settings = new MarketResearchSettings();
@@ -205,14 +195,11 @@ public sealed class ResearchMenuTests
         Assert.Equal(ResearchDialogRefusal.Unavailable, ResearchDialogGate.TryExtend(entry, _ => available, _ => throw new InvalidOperationException()));
         Assert.Null(entry.OnSecondOption);
 
-        // A missing native entry is never read or extended.
         Assert.Equal(ResearchDialogRefusal.NativeEntryChanged,
             ResearchDialogGate.TryExtend<FakeEntry>(null, _ => throw new InvalidOperationException(), _ => throw new InvalidOperationException()));
     }
 
-    // ---- native wiring, pinned by source ----
 
-    // ---- eligibility (ordering and billing share it) ----
 
     [Fact]
     public void EligibilityFollowsCurrentFoodAuthorityThroughWithdrawalAndReacquisition()
@@ -222,14 +209,11 @@ public sealed class ResearchMenuTests
         Assert.True(authority.Boundary(11, oldWorkDrained: true, liveNativeCustomers: false, marketReady: true));
         string first = authority.BusinessId;
         Assert.True(ResearchEligibility.Decide(true, first, true, authority));
-        // Not rented or not named, no scope, or not the observed generation: never eligible.
         Assert.False(ResearchEligibility.Decide(false, first, true, authority));
         Assert.False(ResearchEligibility.Decide(true, null, true, authority));
         Assert.False(ResearchEligibility.Decide(true, first, false, authority));
         Assert.False(ResearchEligibility.Decide(true, first, true, null));
 
-        // An unsupported menu returns the business to native ownership. The scope, registration and BusinessId stay
-        // (the retained generation still matches), but the authority can no longer serve: refused at once.
         authority.Observe("burger-shop", eligible: false, hour: 20);
         Assert.Equal(first, authority.BusinessId);
         Assert.True(authority.Managed);
@@ -239,20 +223,17 @@ public sealed class ResearchMenuTests
         Assert.False(authority.Managed);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
 
-        // Reacquired at a later boundary: eligible again for the same generation.
         authority.Observe("burger-shop", eligible: true, hour: 30);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
         Assert.True(authority.Boundary(31, true, false, true));
         Assert.True(ResearchEligibility.Decide(true, first, true, authority));
 
-        // A replaced business is a new generation: the old scope's ID no longer matches until the scope follows.
         authority.Observe("pizza-shop", eligible: true, hour: 40);
         Assert.NotEqual(first, authority.BusinessId);
         Assert.False(ResearchEligibility.Decide(true, first, true, authority));
 
     }
 
-    // ---- contract refusal keeps saved research idle ----
 
     [Fact]
     public void ARefusedDialogOrBillingContractLeavesSavedOrdersUnsurveyedAndUncharged()
@@ -261,38 +242,30 @@ public sealed class ResearchMenuTests
             Assert.Equal(mask == 7, ResearchEligibility.SessionEnabled((mask & 1) != 0, (mask & 2) != 0, (mask & 4) != 0));
     }
 
-    // ---- localization ----
 
     [Fact]
     public void LocalizationTableIsTheFlatEnglishTableTheNativeLoaderReads()
     {
         var table = Table();
-        // LoadLocalizationTables lower-cases and trims every key; ours already are, and all carry the mod prefix.
         foreach (string key in table.Keys)
         {
             Assert.Equal(key.ToLowerInvariant().Trim(), key);
             Assert.StartsWith("persistentcity_", key);
         }
-        // C5f adds the agency delivery and decline messages to the same table; GR-7 and GR-8 add their words
-        // (VenueFeedbackWordsTests checks those).
         var research = ResearchText.Keys(ResearchProducts.All).Concat(ResearchNoticeText.Keys()).ToHashSet(StringComparer.Ordinal);
         var used = research.Concat(VenueWords.All.Keys).Append(ThroughTraffic.InspectorKey).ToHashSet(StringComparer.Ordinal);
         Assert.Equal(used.OrderBy(k => k, StringComparer.Ordinal), table.Keys.OrderBy(k => k, StringComparer.Ordinal));
         foreach (var value in table.Values) Assert.False(string.IsNullOrWhiteSpace(value));
-        // Every placeholder is an argument the dialog passes.
         var arguments = new[] { ResearchText.ProductArgument, ResearchText.DescriptionArgument, ResearchText.BusinessArgument, ResearchText.PriceArgument,
             ResearchNoticeText.BusinessNameArgument };
         foreach (var pair in table.Where(p => research.Contains(p.Key)))
             foreach (Match match in Regex.Matches(pair.Value, @"\{(\w+)\}")) Assert.Contains(match.Groups[1].Value, arguments);
-        // English only.
-        // Shipped as <mod>/Locales/<locale>.json, the folder native ModDiscoveryRegistry registers per mod.
     }
 
-    // ---- perf ----
 
     private void Measure(string label, int runs, Action call)
     {
-        for (int i = 0; i < 200; i++) call(); // tier-up JIT work is not per-call work
+        for (int i = 0; i < 200; i++) call();
         string line = "", check = label + " p95 (5 ms gate)";
         TimingBudget.Run(timing =>
         {
@@ -312,10 +285,7 @@ public sealed class ResearchMenuTests
         output.WriteLine(line);
     }
 
-    // ---- helpers ----
 
-    /// <summary>Native LocalizorManager.GetLocalization: key lookup, then "{name}" replacement, with a key-valued
-    /// argument rendered through the table.</summary>
     private static string Render(IReadOnlyDictionary<string, string> table, string key, IReadOnlyDictionary<string, string> arguments)
     {
         string text = table[key];

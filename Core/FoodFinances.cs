@@ -6,9 +6,6 @@ namespace PersistentCity.Core
 {
     public sealed partial class FoodCommerce
     {
-        // Daily and shift postings share one stable minute/ordinal heap and its 32-posting bound.
-        // Reuse entries; employment changes repair their existing slot. All due times are derived.
-        // GR-1: an entry is a person and that person's own wallet; the food roster is not consulted.
         private sealed class BudgetQueue
         {
             private sealed class Entry
@@ -20,7 +17,6 @@ namespace PersistentCity.Core
                 internal int Index;
                 internal WorkWindow Window;
                 internal string Workplace = "";
-                // GR-2: the plan items the window was read with; a newly drawn or replanned plan schedules the entry again.
                 internal object? PlanItems;
             }
             private readonly FoodCommerce food;
@@ -62,14 +58,11 @@ namespace PersistentCity.Core
                 e.WageAt = EmploymentWages.NextPosting(e.Person, food.city.State.Seed, now, out e.Window, food.city.PlaceIndex);
                 if (e.WageAt < now) throw new InvalidOperationException("Overdue shift posting; preserve the city.");
             }
-            // Ties break by ordinal person ID, the order Build sorts by (before F5g: that rank as an int). F5g compares the IDs
-            // themselves so a person enrolled later (Insert) takes its rank without renumbering every entry.
             private static int Compare(Entry a, Entry b)
             {
                 int time = a.Minute.CompareTo(b.Minute);
                 return time == 0 ? string.CompareOrdinal(a.Id, b.Id) : time;
             }
-            /// <summary>F5g: adds the wallet of a person created after the queue was built, in its ordinary heap position.</summary>
             internal void Insert(CitizenState person)
             {
                 Add(person);
@@ -109,7 +102,6 @@ namespace PersistentCity.Core
                 if (e.Workplace == person.DayPlaceId)
                 {
                     if (ReferenceEquals(e.PlanItems, person.Plan?.Items)) return;
-                    // A running shift keeps the window it began with; only a shift not yet begun follows a new plan.
                     if (EmploymentWages.Active(person.Accrual)) { e.PlanItems = person.Plan?.Items; return; }
                 }
                 Schedule(e); e.Minute = Math.Min(e.Wallet.NextPostingMinute, e.WageAt);
@@ -137,13 +129,7 @@ namespace PersistentCity.Core
         }
         private readonly BudgetQueue budgetDue;
         private double NextBudgetMinute => budgetDue.Minute;
-        /// <summary>GR-1: essential categories bought as needs, which the daily posting no longer deducts. Empty until the
-        /// need model (GR-3) sets it.</summary>
         internal EssentialNeeds EssentialNeeds { get; set; } = EssentialNeeds.None;
-        /// <summary>GR-1: binds every roster record of the live city to its person's wallet when food attaches. The wallet
-        /// is the person's; a record built in memory with only a budget hands that budget to its person (adopts it), and two
-        /// different objects refuse. Not SaveCodec.LinkWallets, which overwrites every link from the persons and is only for
-        /// read or snapshot state.</summary>
         private void AdoptRecordWallets()
         {
             foreach (var meal in state.Residents)
@@ -155,9 +141,6 @@ namespace PersistentCity.Core
                 else if (!ReferenceEquals(person.Wallet, meal.Budget)) throw new InvalidOperationException("A food record holds a wallet that is not its person's: " + meal.ResidentId + ".");
             }
         }
-        /// <summary>F5g: enrols a person created at a day boundary exactly once: its own meal record (meal rhythm from the
-        /// current day) and, with finances on, its wallet from <see cref="HouseholdFinance.Create"/> with its portal
-        /// district's mix. An existing record is refused, never re-seeded.</summary>
         internal void EnrolCreated(CitizenState person)
         {
             if (records.ContainsKey(person.Identity.Id)) throw new InvalidOperationException("A created person already has a meal record: " + person.Identity.Id + ".");
@@ -186,13 +169,11 @@ namespace PersistentCity.Core
         private void CreateBudget(ResidentMeal meal, CitizenState person)
         {
             string district = city.FindPlace(person.HomeId).District;
-            // The wallet is the person's; the food record only links to it.
             person.Wallet = HouseholdFinance.Create(person, city.State.Seed, city.State.Minute,
                 state.Districts.SingleOrDefault(d => d.DistrictId == district), meal.ResidentId);
             meal.Budget = person.Wallet;
         }
         public const int MaximumBudgetPostingsPerUnit = 32;
-        // Tests may lower the cap to compare interruption cadences, but cannot raise the runtime bound.
         private int budgetPostingsPerEvent = MaximumBudgetPostingsPerUnit;
         internal int BudgetPostingsPerEvent
         {
@@ -202,9 +183,6 @@ namespace PersistentCity.Core
         }
         public long BudgetPostings { get; private set; }
         public int LastBudgetPostings { get; private set; }
-        // Keep the same minute/ordinal order across units. NextBudgetMinute continues to hold the
-        // food clock before meals until every posting at that minute has completed. A save needs no
-        // cursor: each posted budget already contains its next timestamp and exact conserved ledger.
         private bool StepBudget()
         {
             LastBudgetPostings = 0;

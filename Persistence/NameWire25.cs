@@ -10,7 +10,6 @@ namespace PersistentCity.Persistence
     public static partial class SaveCodec
     {
         internal static void RequireExecutablePolicy(CityState state)
-            // E5b4: the writer executes DynamicWire only.
             => Require(state.MenuPolicy == FoodNameIdentity.DynamicWire,
                 "Unsupported held-product policy for this writer; preserve the payload.");
         // Complete coherent saves rebuild every wire-local reference together. The in-memory graph
@@ -45,7 +44,6 @@ namespace PersistentCity.Persistence
                             if (shop?.Offers != null) foreach (var offer in shop.Offers)
                                 if (offer != null) Add(offer.ProductId);
                     }
-                    // Outcomes already carry exact historical text, including predecessor-only text.
                     if (meal.Today?.Meals != null) foreach (var outcome in meal.Today.Meals)
                         if (outcome != null && FoodNameIdentity.IsCanonical(outcome.ProductId)) Add(outcome.ProductId);
                 }
@@ -74,8 +72,6 @@ namespace PersistentCity.Persistence
         }
         private static void PrepareNames25(CityState state)
         {
-            // Existing E4 execution still creates original-product contexts. Capture only those
-            // established inputs at the save boundary; dynamic metadata is never inferred here.
             if (state.Food?.Residents != null) foreach (var meal in state.Food.Residents)
                 if (meal?.Decision?.Shops != null) foreach (var shop in meal.Decision.Shops)
                     if (shop?.Offers != null) foreach (var offer in shop.Offers)
@@ -91,7 +87,6 @@ namespace PersistentCity.Persistence
             var expected = ReferencedNames25(state);
             Require(state.ProductNames != null && state.ProductNames.Count <= FoodNameIdentity.MaximumNames
                 && state.ProductNames.SequenceEqual(expected, StringComparer.Ordinal), "Product name table differs from referenced ordinal identities.");
-            // Matches both escaping modes used by Json.NET. The full save checks UTF-8 separately.
             string table = JsonConvert.SerializeObject(state.ProductNames, Formatting.None);
             Require(table.Length + 16 <= FoodNameIdentity.MaximumTableWire
                 && System.Text.Encoding.UTF8.GetByteCount(table) + 16 <= FoodNameIdentity.MaximumTableWire, "Product name table exceeds its character/UTF-8 budget.");
@@ -103,7 +98,6 @@ namespace PersistentCity.Persistence
                         ValidateMetadata25(offer.Metadata);
                         Require(offer.Metadata!.Revision != 2 || state.MenuPolicy == FoodNameIdentity.DynamicWire,
                             "Dynamic held-product inputs require their capability header.");
-                        // E5b4: the executing writer captures revision 2 only for a policy-admitted Food name.
                         Require(offer.Metadata.Revision != 2
                             || offer.Metadata.MealClass == FoodMealClass.Food && !FoodProducts.Known(offer.ProductId), "Held dynamic offer is not an admitted Food name.");
                         if (offer.Metadata!.Revision == 1 || FoodProducts.KnownLegacy(offer.ProductId))
@@ -113,8 +107,6 @@ namespace PersistentCity.Persistence
                         }
                         Require(++tuples <= 64, "Oversized held metadata image.");
                     }
-            // Six canonical scalars cost <=24 ASCII characters/tuple. Include each property name,
-            // separators and an enclosing 64-tuple image reserve; this is below the 8 Ki bound.
             Require(2 + tuples * (24 + 12) <= FoodNameIdentity.MaximumHeldWire, "Oversized held metadata bytes.");
             return expected.Count + tuples;
         }
@@ -152,8 +144,6 @@ namespace PersistentCity.Persistence
                 "Product name table exceeds its character/UTF-8 budget.");
             return names;
         }
-        // Json.NET replaces isolated escaped surrogates with U+FFFD. A name must never be
-        // silently changed by that recovery. Compare decoded source code units without a DOM.
         private static bool ExactString25(TokenText text, IJsonLineInfo token, string value)
         {
             string source = text.Source;

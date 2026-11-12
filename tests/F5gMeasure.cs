@@ -10,12 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5g measurement harness (docs/perf/f5g.md), not a gate: it runs only when PC_F5G_MEASURE names an output
-/// file, e.g. <c>PC_F5G_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F5gMeasure</c>.
-/// Each city is the F5g test fixture scaled up: a factor-1 fresh city whose census catalogue gives the stated commuter
-/// target, filled at its first day boundary, then run one more natural day. Persons are persisted persons (residents,
-/// commuters and the whole day-visitor pool), never residents alone. The planner double is the endpoint-keyed bounded
-/// geometry cache of <see cref="F5gPopulationFillTests.CachedPortalPlanner"/>, a model of Runtime's WalkingRoutes cache.</summary>
 public sealed class F5gMeasure
 {
     private static object Stats(List<double> values)
@@ -47,8 +41,6 @@ public sealed class F5gMeasure
         var requestsPerMinute = new Dictionary<long, long>();
         long events = 0;
         int peakPersonQueue = 0, peakMealQueue = 0, fillDays = 0;
-        // Fill phase: a boundary publishes at most 1,024 persons, so cross boundaries until one publishes nobody. Then the
-        // measured day: from that boundary to 06:00 on the following day, at the full persisted population.
         double end = 2 * 1440;
         while (true)
         {
@@ -56,11 +48,9 @@ public sealed class F5gMeasure
             if (arm.Skip) { while (!city.AdvanceTo(end + 1, 1_000_000).CaughtUp) { } }
             else
             {
-                // The day before the boundary is not measured; the boundary itself is driven slice by slice.
                 while (!city.AdvanceTo(end - 1, 1_000_000).CaughtUp) { }
                 Drive(end + 1, false);
             }
-            // A boundary that publishes less than its cap has reached its targets (daily job churn can still add a few later).
             if (city.PopulationFillCreated - created < PopulationFillPolicy.MaximumPersonsPerBoundary) break;
             fillDays++; end += 1440;
             Assert.True(fillDays < 40, "fill did not converge");
@@ -88,7 +78,6 @@ public sealed class F5gMeasure
                 if (city.PopulationFillUnits != units)
                 {
                     fillSliceMs.Add(ms);
-                    // Budget 1 isolates one unit per slice: its time and allocation are the unit's own.
                     if (arm.Budget == 1) { unitMs.Add(ms); unitBytes.Add(allocated); unitPersons.Add(city.LastFillUnitPersons); }
                 }
                 if (!measured) { sliceMs.Clear(); events = 0; }
@@ -118,16 +107,11 @@ public sealed class F5gMeasure
             ["routeRequests"] = planner.Requests, ["portalRequests"] = planner.PortalRequests,
             ["portalHits"] = planner.PortalHits, ["portalMisses"] = planner.PortalMisses,
             ["peakRequestsPerGameMinute"] = peakMinuteRequests,
-            // Admission model: Runtime admits at most 16 native path queries per frame (MultimodalRoutes.MaximumJobPathsPerFrame).
             ["peakMinuteFramesAt16PathsPerFrame"] = (peakMinuteRequests + 15) / 16,
             ["stateHash"] = Sha(SaveCodec.Write(state) + string.Join(",", market.Orders))
         };
     }
 
-    /// <summary>Review Opus-r1-3 and Sol-r2-2: a fill boundary at the resident bound. 7,936 homes give 49,996 residents and a
-    /// capacity of 99,992 visitors; factor 2 seeds 49,996 commuters, and catalogue-only businesses keep commuter demand above
-    /// the capacity. The first boundary creates 1,024 more commuters in 16 units of 64, each merging its persons
-    /// into about 50,000 visitors. The remaining deficit fills over later boundaries.</summary>
     private static Dictionary<string, object> Capacity()
     {
         const int homes = 7936;
@@ -179,8 +163,6 @@ public sealed class F5gMeasure
         File.AppendAllText(path, JsonConvert.SerializeObject(Capacity()) + Environment.NewLine);
     }
 
-    // Reference: 957 residents (152 homes) with a 1,000-commuter target; the pool takes its census target.
-    // Stress: 3,339 residents (530 homes) filled to their whole visitor capacity, about 10,000 persisted persons.
     private static void MeasureShape(string name, int homes, long commuterTarget)
     {
         string? path = PerfGate.Variable("PC_F5G_MEASURE");
@@ -192,7 +174,6 @@ public sealed class F5gMeasure
             var t = VisitorTargets.Compute(0, 0, probe.Citizens.Count, probe.Portals.Count);
             target = t.VisitorCapacity - t.PoolDemand;
         }
-        // The nearest target at or below that the even band capacities reach.
         while (F5gPopulationFillTests.TryCatalogueFor(probe, homes, target) == null) target--;
         string? hash = null;
         foreach (var (budget, skip) in new[] { (1, false), (16, false), (128, false), (0, true) })

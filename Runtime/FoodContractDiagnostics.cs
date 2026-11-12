@@ -13,11 +13,6 @@ using Debug = UnityEngine.Debug;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>E5b2 shadow reader plus the E5b3 contract coordinator (Decisions 3, 3a, 4-8). While it is active and every
-    /// Decision 12 capability passed, E5b5 admits any loaded Food product through the published image (dynamic
-    /// acquisition): published images, rechecks, reconciliation, the boundary commit gate and dynamic recovery. When the
-    /// capabilities fail, the shadow faults or the catalogue is refused, the market runs on the E5b1 contract with the
-    /// original-three guard (<see cref="ContractMode.Fallback"/>) and the status says why.</summary>
     public sealed partial class NativeFoodMarket
     {
         private LoadedCatalogueEligibilityReader? contractReader;
@@ -32,7 +27,6 @@ namespace PersistentCity.Runtime
         private const string ShadowNotStarted = "shadow not started";
         private string contractFallback = ShadowNotStarted;
         private readonly FoodContractCoordinator contracts = new FoodContractCoordinator();
-        // Capture batches, checkouts, recoveries and boundaries each compare a distinct definition once.
         private readonly FoodDefinitionEpoch contractEpoch = new FoodDefinitionEpoch();
         private readonly FoodDefinitionEpoch preparationEpoch = new FoodDefinitionEpoch();
         private readonly FoodDefinitionEpoch boundaryEpoch = new FoodDefinitionEpoch();
@@ -43,7 +37,6 @@ namespace PersistentCity.Runtime
             public bool Equals(BuildingRegistration? a, BuildingRegistration? b) => ReferenceEquals(a, b);
             public int GetHashCode(BuildingRegistration value) => RuntimeHelpers.GetHashCode(value);
         }
-        // Place key of each registration discovery holds, so SupportedMenu reads the image without building a place ID.
         private readonly Dictionary<BuildingRegistration, string> contractKeys = new Dictionary<BuildingRegistration, string>(RegistrationComparer.Instance);
         private readonly HashSet<string> contractWarming = new HashSet<string>(StringComparer.Ordinal);
         private FoodReferencedNames contractNames = new FoodReferencedNames();
@@ -59,7 +52,6 @@ namespace PersistentCity.Runtime
         private static CollectionVersionReader<List<CargoInstance>>? cargoVersion;
         private const double ContractFrameBudgetMilliseconds = 0.5;
         private const int ContractUnitsPerFrame = 64, PreparationsPerFrame = 64;
-        // Counters for pc food contract status/boundary and the perf record.
         private long contractRechecks, contractRecheckRefusals, contractGateRuns, contractGateRefusals, contractRecoveryUnits;
         private long contractCatalogueWaits;
         private long contractDiscards, contractRecopyEvents, contractBusinessRecopies, contractFrames, contractFramesOverBudget;
@@ -68,7 +60,6 @@ namespace PersistentCity.Runtime
         private readonly double[] contractUnitSamples = new double[1024];
         private int contractUnitSampleCount;
 
-        // Constructor, after the existing price patch. Never throws.
         private void StartContractShadow()
         {
             var report = new FoodContractCapabilities(); contractCapabilities = report;
@@ -83,7 +74,6 @@ namespace PersistentCity.Runtime
                     typeof(RetailBusinessSimulator).GetField("availableProducers", hidden) == null ? "field missing" : null);
                 report.Record("RetailBusinessSimulator.pointOfSales bound",
                     typeof(RetailBusinessSimulator).GetField("pointOfSales", hidden) == null ? "field missing" : null);
-                // E5b3 Decision 3: holder cargo lists by reference, version and count.
                 cargoVersion = CollectionVersionReader<List<CargoInstance>>.Bind(out var cargoFailure);
                 report.Record("version reader cargoInstances List<CargoInstance>._version int", cargoVersion == null ? cargoFailure : null);
                 report.Record("self-test List<CargoInstance> add, set, remove", FoodContractSelfTest.List<CargoInstance>(cargoVersion, null!, null!));
@@ -95,7 +85,6 @@ namespace PersistentCity.Runtime
                 contractNames = FoodReferencedNames.From(state, contractEconomy);
                 contractGate = CommitGate;
                 reader.ShopPublished = OnContractPublished;
-                // Seed every shop discovery already holds; owned shops serve on the E5b1 contract until all have an image.
                 contractMode = ContractMode.Warming; contractFallback = "";
                 foreach (var pair in registrations)
                 {
@@ -110,7 +99,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        // Dispose. Unpatches, then drops every native reference the reader and the coordinator hold.
         private void StopContractShadow(string reason = "shadow stopped")
         {
             var hooks = contractHooks; contractHooks = null;
@@ -123,7 +111,6 @@ namespace PersistentCity.Runtime
             contractEpoch.Clear(); preparationEpoch.Clear(); boundaryEpoch.Clear(); contractLive.Bind(null);
         }
 
-        // Existing discovery visit, once per visited registration. A fault stops the shadow, never discovery.
         private void VisitContract(string place, BuildingRegistration registration)
         {
             var reader = contractReader;
@@ -136,8 +123,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        // Once per frame after discovery. Preparation, recovery and reader units share one 0.5 ms budget; a clean
-        // frame reads nothing native.
         private void ContinueContractShadow()
         {
             var reader = contractReader;
@@ -159,7 +144,6 @@ namespace PersistentCity.Runtime
                     {
                         long hour = AccountingHour();
                         contracts.TakeRecoveries(hour, contractRecoveries);
-                        // Units left over by the budget go back to the queue for the next frame, never dropped.
                         double previous = 0;
                         for (int i = 0; i < contractRecoveries.Count; i++)
                         {
@@ -171,7 +155,6 @@ namespace PersistentCity.Runtime
                         }
                     }
                 }
-                // Stop before a unit that would likely overrun the budget (the previous unit's cost as the estimate).
                 double last = 0;
                 for (int i = 0; i < ContractUnitsPerFrame; i++)
                 {
@@ -194,9 +177,6 @@ namespace PersistentCity.Runtime
             if (frame > contractFrameMax) contractFrameMax = frame;
             if (frame > ContractFrameBudgetMilliseconds) contractFramesOverBudget++;
         }
-        // E5b5: a new product policy publication (config, API metadata or loaded names) can change a product's class with no
-        // native edit, so every shop is rebuilt against it. A shop refused for its class (never owned or wanted, so not
-        // in the hourly preparation) acquires once its fresh image passes. Coalesced in the reader's dirty queue.
         private FoodProductPolicy? observedPolicy;
         private long contractPolicyRequeues;
         private void ObserveProductPolicy(LoadedCatalogueEligibilityReader reader)
@@ -218,7 +198,6 @@ namespace PersistentCity.Runtime
         }
         private static long AccountingHour() => SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
 
-        // Warming ends when the catalogue is published and every seeded shop has an image. A refused catalogue keeps E5b1.
         private void FinishWarming(LoadedCatalogueEligibilityReader reader)
         {
             if (reader.Catalogue == null) return;
@@ -226,7 +205,6 @@ namespace PersistentCity.Runtime
             { contractMode = ContractMode.Fallback; contractFallback = "catalogue refused: " + reader.CatalogueRefusal; return; }
             if (contractWarming.Count > 0) return;
             contractMode = ContractMode.Active;
-            // Shops whose first image failed while warming are withdrawn now, exactly as a failed rebuild would be.
             foreach (var key in contracts.Keys.ToArray())
             {
                 var image = contracts.Image(key);
@@ -234,7 +212,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        // Decision 4 step 1 for one queued shop: Decision 3a first, then the E5a shop pass.
         private void PrepareUnit(LoadedCatalogueEligibilityReader reader, string key)
         {
             long started = Stopwatch.GetTimestamp();
@@ -251,11 +228,7 @@ namespace PersistentCity.Runtime
                     if (contractMode == ContractMode.Active) RefuseContractImage(reg, "preparation: " + refusal);
                 }
             }
-            // A failed or invalidated image compares nothing above, so refresh the business type's bag policy from
-            // the live type here too: a tag removed and restored in place must not leave a false cached policy.
             RefreshBagPolicy(reg);
-            // The catalogue's current copies of every definition this shop's passes ever read, kept across
-            // invalidation and failed images: an in-place repair after hand-back reaches the next image.
             var catalogue = reader.Catalogue;
             contractStale.Clear();
             if (catalogue != null && FoodContractRecheck.StaleCopies(contracts.Watched(key), catalogue, contractLive, preparationEpoch, contractStale) > 0)
@@ -268,15 +241,12 @@ namespace PersistentCity.Runtime
             RecordUnit(Elapsed(started));
         }
 
-        // Decision 4 step 3. Runs inside the reader unit that finished the pass. Never partial: the image is built
-        // whole and swapped in one call, or discarded.
         private void OnContractPublished(string key, BuildingRegistration reg, FoodEligibilityImage eligibility, ShopContractStamp stamp,
             IReadOnlyList<string> passDefinitions)
         {
             var reader = contractReader;
             if (reader == null || contractMode == ContractMode.Fallback) return;
             if (!registrations.TryGetValue(key, out var current) || !ReferenceEquals(current, reg)) return;
-            // A write since the pass started: the reader's next visit sees the same mismatch and rebuilds.
             if (!LoadedCatalogueEligibilityReader.CurrentStamp(reg).Matches(stamp)) { contractDiscards++; return; }
             var catalogue = reader.Catalogue;
             if (catalogue == null || catalogue.Revision != eligibility.CatalogueRevision) { contractDiscards++; return; }
@@ -296,13 +266,10 @@ namespace PersistentCity.Runtime
             var admission = CompleteFoodMenuRefusal.None;
             if (eligibility.StockContractMatched)
             {
-                // Participating definitions first: each must resolve, or the pass is discarded.
                 contractNamesBuffer.Clear();
                 foreach (var offer in eligibility.Offers) AddName(offer.ProductId);
                 foreach (var h in eligibility.Holders) { AddName(h.DefinitionId); AddName(h.ResourceId); }
                 int participating = contractNamesBuffer.Count;
-                // Then every other definition the pass read (nonparticipating furniture and cargo), so an in-place
-                // edit that would make one participate is seen by the rechecks and by preparation.
                 foreach (var name in passDefinitions) AddName(name);
                 var list = new List<FoodDefinitionDependency>(contractNamesBuffer.Count);
                 contractRecopy.Clear();
@@ -318,18 +285,13 @@ namespace PersistentCity.Runtime
                     if (!copy.Matches(LoadedCatalogueEligibilityReader.Facts(item))) contractRecopy.Add(item);
                     list.Add(new FoodDefinitionDependency(name, item, copy));
                 }
-                // In-place definition edit during the pass: re-copy and rebuild against the fresh facts.
                 if (contractRecopy.Count > 0) { contractDiscards++; contractRecopyEvents++; reader.RecopyDefinitions(contractRecopy.ToArray()); return; }
                 definitions = list.ToArray();
                 admission = Admission(key, reg, eligibility, eligibility.CatalogueRevision == reader.CatalogueRevision);
             }
-            // A failed image keeps every definition its pass read, including the one that refused; the coordinator
-            // also keeps the earlier images' dependencies, so preparation still sees an in-place repair.
             else definitions = Dependencies(passDefinitions, catalogue);
             if (contractLive.ReadBusinessType(out var type)) business = new FoodBusinessTypeCopy(type);
             var image = new FoodContractImage(key, hour, eligibility, holders, definitions, business, admission, stamp);
-            // Decision 1 before the swap: if the serving image no longer describes the current catalogue, record the
-            // refusal now, whether discovery saw it first or this rebuild finished first.
             bool staleCatalogue = contractMode == ContractMode.Active && ServingStaleForCatalogue(key, catalogue);
             contracts.Publish(image); contractWarming.Remove(key);
             if (staleCatalogue && ContractInterest(key, reg)) { contractLastRefusal = "catalogue"; RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); }
@@ -338,15 +300,11 @@ namespace PersistentCity.Runtime
         private void AddName(string name) { if (!contractNamesBuffer.Contains(name)) contractNamesBuffer.Add(name); }
         private bool ServingStaleForCatalogue(string key, LoadedStockCatalogue catalogue)
         {
-            // Content against the current catalogue, and live references against the loaded definitions (contractLive
-            // is bound to this registration), so a replaced definition is refused whichever runs first.
             var serving = contracts.Serving(key);
             return serving != null && (contracts.VerifiedCatalogue(key) != catalogue.Revision && !FoodContractRecheck.CatalogueCurrent(serving, catalogue)
                 || !FoodContractRecheck.ReferencesCurrent(serving, contractLive));
         }
-        /// <summary>The coordinator is active and the catalogue is rebuilding: a sale waits, without a contract refusal.</summary>
         private bool ContractCatalogueWaiting => contractMode == ContractMode.Active && contractReader != null && contractReader.Catalogue == null;
-        // Every resolvable definition a pass read. Bounded by the reader's 512 names per pass.
         private static FoodDefinitionDependency[] Dependencies(IReadOnlyList<string> names, LoadedStockCatalogue catalogue)
         {
             var result = new List<FoodDefinitionDependency>(names.Count);
@@ -357,9 +315,6 @@ namespace PersistentCity.Runtime
             }
             return result.ToArray();
         }
-        // The live food-shop shape (E5b5 LiveMenu: original three, or dynamic names while Decision 12 holds), without the
-        // cached bag policy: the shops whose contract failures are recorded for hourly recovery, whether or not they
-        // were owned or wanted when they failed.
         private bool ContractCandidate(BuildingRegistration r)
             => r.RentedByPlayer && r.HasEstablishedBusiness && !r.AvailableForRent && LiveMenu(r.cachedAvailableProducts) == FoodLiveMenuRefusal.None;
         private bool ContractInterest(string key, BuildingRegistration r)
@@ -367,7 +322,6 @@ namespace PersistentCity.Runtime
             var row = NativeFoodOwnership.Row(key);
             return row != null && (row.Managed || row.Desired) || ContractCandidate(r);
         }
-        // The live authored bag tag against the cached policy; a difference re-caches it (Decision 3a re-copy).
         private void RefreshBagPolicy(BuildingRegistration reg)
         {
             var type = BusinessTypeHelper.GetData(reg.businessTypeName);
@@ -379,22 +333,17 @@ namespace PersistentCity.Runtime
             authoredBagPolicies.Remove(type); CacheBagPolicy(reg); contractBusinessRecopies++;
         }
 
-        // Decision 8. nativeContract is true only because Decisions 2, 3 and 3a just passed for this image; Decision 5
-        // runs at every supply read that follows and refuses the shop there.
         private CompleteFoodMenuRefusal Admission(string key, BuildingRegistration reg, FoodEligibilityImage eligibility, bool currentRevision)
         {
             string business = NativeFoodOwnership.Row(key)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(reg);
             CompleteFoodMenu.HistoryProducts(state.History, key, business, SaveGameManager.Current.Day, contractHistory);
             return CompleteFoodMenu.Check(eligibility, AdmissionResolver, currentRevision, true, contractHistory, contractNames.Names);
         }
-        // A failed image of an owned, wanted or candidate food shop is a recorded refusal, so the shop is prepared
-        // every hour and an in-place repair (no stamp, no hint) reaches recovery.
         private void WithdrawFailedImage(BuildingRegistration reg)
         {
             if (!contractKeys.TryGetValue(reg, out var key) || !ContractInterest(key, reg)) return;
             RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
         }
-        // Decision 2 and Decision 7: a structural change is a recorded refusal, never a same-hour return to service.
         private void RefuseStructural(string key, BuildingRegistration reg, string reason)
         {
             contracts.Invalidate(key);
@@ -419,14 +368,12 @@ namespace PersistentCity.Runtime
             else if (refusal == FoodContractRecheckRefusal.DefinitionReference) { contractRecopyEvents++; reader.MarkCatalogueDirty(); }
             if (refusal == FoodContractRecheckRefusal.BusinessType)
             {
-                // Re-copy the authored bag policy and rebuild every shop against the live type.
                 var type = BusinessTypeHelper.GetData(reg.businessTypeName);
                 if (type != null) { authoredBagPolicies.Remove(type); CacheBagPolicy(reg); }
                 contractBusinessRecopies++; reader.RequeueAllShops();
             }
         }
 
-        // Decision 2, read by SupportedMenu: the published image plus the current stamp. E5b1 rules outside Active.
         private bool ContractAdmits(BuildingRegistration r)
         {
             if (contractMode != ContractMode.Active) return true;
@@ -436,9 +383,6 @@ namespace PersistentCity.Runtime
             if (image == null) return false;
             if (!(image.Stamp is ShopContractStamp stamp) || !LoadedCatalogueEligibilityReader.CurrentStamp(r).Matches(stamp))
             { RefuseStructural(key, r, "stamp"); return false; }
-            // Decision 1: a catalogue revision change reaches service at once. The image stays admitted only if every
-            // dependency is unchanged in the current catalogue; while the catalogue rebuilds, no capture or sale runs
-            // (ContractRecheck) and acquisitions are not ready.
             var catalogue = contractReader?.Catalogue;
             if (catalogue != null && contracts.VerifiedCatalogue(key) != catalogue.Revision)
             {
@@ -451,22 +395,17 @@ namespace PersistentCity.Runtime
             => contractMode == ContractMode.Active && contractKeys.TryGetValue(r, out var key) ? contracts.Serving(key) : null;
         private void IndexContractKey(string place, BuildingRegistration reg, BuildingRegistration? previous)
         {
-            // A replaced registration is a new business lifetime: its image, watched definitions and place-level
-            // refusal belong to the old one. The authority's generation and drain rules handle ownership.
             if (previous != null && !ReferenceEquals(previous, reg))
             { contractKeys.Remove(previous); contracts.Remove(place); contractWarming.Remove(place); }
             contractKeys[reg] = place;
         }
 
-        // Decision 3 at a selected capture (checkout=false, inside its batch epoch) or after native setup at checkout.
         private bool ContractRecheck(BuildingRegistration reg, bool checkout)
         {
             if (contractMode != ContractMode.Active) return true;
             var image = ContractImage(reg);
             if (image == null) return false;
-            // A rebuilding catalogue cannot vouch for any copy: this sale waits, without a contract refusal.
             if (contractReader?.Catalogue == null) { contractCatalogueWaits++; return false; }
-            // A capture outside a batch (a failure read) gets its own epoch, never a previous batch's verdicts.
             if (checkout || !captureBatch) contractEpoch.Begin();
             long started = Stopwatch.GetTimestamp();
             contractRechecks++;
@@ -485,8 +424,6 @@ namespace PersistentCity.Runtime
             RefuseContractImage(reg, (checkout ? "checkout: " : "capture: ") + (refusal != FoodContractRecheckRefusal.None ? refusal.ToString() : "Price"));
             return false;
         }
-        // Q2 price-only change: a new image with the live prices, swapped atomically. Checkout still compares the
-        // captured price exactly (E5b1), so a change between capture and checkout refuses there.
         private void RecordPrices(FoodContractImage image)
         {
             var next = new Money[image.Prices.Count];
@@ -494,11 +431,9 @@ namespace PersistentCity.Runtime
             contracts.Replace(image, image.WithPrices(next));
         }
 
-        // Called by NativeFoodOwnership.AfterNativeTick once per drained boundary, before its rows.
         internal void BeginContractCommit() { boundaryEpoch.Begin(); contractBoundaryCommitMs = 0; }
         internal FoodContractBoundary.Outcome CommitBoundary(FoodAuthority row, long hour, bool liveNativeCustomers)
         {
-            // Warming: no acquisition before every seeded shop has an image; hand-backs are never held.
             if (contractMode == ContractMode.Warming)
             {
                 if (row.Pending(hour, true, liveNativeCustomers, true) != FoodBoundaryStep.Acquire)
@@ -515,7 +450,6 @@ namespace PersistentCity.Runtime
             if (contractBoundaryCommitMs > contractBoundaryCommitMax) contractBoundaryCommitMax = contractBoundaryCommitMs;
             return outcome;
         }
-        // Decision 4 step 4: one last synchronous gate after the drain, for an acquisition that is ready and in budget.
         private bool CommitGate(FoodAuthority row, FoodContractImage image)
         {
             long started = Stopwatch.GetTimestamp();
@@ -523,7 +457,6 @@ namespace PersistentCity.Runtime
             try
             {
                 if (contractMode != ContractMode.Active || !registrations.TryGetValue(row.PlaceId, out var reg)) return false;
-                // A stamp change between drain and commit blocks the transfer (Decision 2 withdraws the desire).
                 if (!(image.Stamp is ShopContractStamp stamp) || !LoadedCatalogueEligibilityReader.CurrentStamp(reg).Matches(stamp))
                 {
                     RefuseStructural(row.PlaceId, reg, "commit: stamp"); NativeFoodOwnership.Observe(reg, false);
@@ -554,7 +487,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        // Decision 4 step 1 at an advancing hour: owned, acquiring and refused shops are rebuilt during the hour.
         private void PrepareContractHour(string place, BuildingRegistration reg, FoodAuthority authority)
         {
             if (contractMode == ContractMode.Fallback) return;
@@ -564,7 +496,6 @@ namespace PersistentCity.Runtime
             if (refused) contracts.RequeueRecovery(place);
         }
 
-        // Decision 7: one recovery unit. Same rules as RevalidateRefusedContract, any contract, with a fresh image.
         private void RecoverContract(string key, long hour)
         {
             if (!registrations.TryGetValue(key, out var reg) || !shopControllers.TryGetValue(key, out var controller)) return;
@@ -587,13 +518,11 @@ namespace PersistentCity.Runtime
                 var supply = FoodSupplyReader.ReadMenu(reg, products, image);
                 foreach (var item in supply.Values) if (!item.Units.HasValue) return;
             }
-            catch (Exception) { return; } // Unreadable native supply remains native-owned, never known zero.
+            catch (Exception) { return; }
             refusedContracts.Remove(reg); supplyExclusions.Remove(key); decisionSupply.Remove(key);
             contracts.Recovered(key);
-            // RefreshKnownOwnership requests eligibility; the acquisition waits a later drained boundary and the commit gate.
         }
 
-        /// <summary>Detached diagnostic view for <c>pc food contract</c>; null for an unknown view.</summary>
         internal object? ContractDiagnostics(string view)
         {
             var reader = contractReader; var hooks = contractHooks; var report = contractCapabilities;
@@ -697,7 +626,6 @@ namespace PersistentCity.Runtime
             return copy[Math.Min(n - 1, (int)Math.Ceiling(n * 0.95) - 1)];
         }
 
-        /// <summary>Main-thread live reads for the rechecks, bound to one registration at a time. No allocation.</summary>
         private sealed class NativeContractLive : IFoodContractLive
         {
             private BuildingRegistration? reg;

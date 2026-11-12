@@ -1,6 +1,3 @@
-// Rig-only F4b union probe: the expected Persistent City entry points at this source head.
-// check_scopes.py parses the P/M/E/H/C/S rows below and fails when Runtime source and this list differ.
-// Unity-free: compiled by Probe and by logic-check. One row per line; keep the argument order.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +11,8 @@ namespace PerfUnionProbe
     public sealed class ExpectedScope
     {
         public ScopeKind Kind;
-        /// <summary>Harmony owner for patches, the event name for events, empty otherwise.</summary>
         public string Owner = "";
-        /// <summary>The Persistent City type and method that runs (patch method, message, handler, helper or component).</summary>
         public string Type = "", Method = "";
-        /// <summary>The native method a patch targets, the transpiler for a helper, CLR parameter names for a component.</summary>
         public string Target = "";
         public string File = "";
         public string Canonical => Kind + "|" + Owner + "|" + Type + "|" + Method + "|" + Target + "|" + File;
@@ -26,7 +20,6 @@ namespace PerfUnionProbe
             : Type.Substring(Type.LastIndexOfAny(new[] { '.', '+' }) + 1) + "." + Method;
     }
 
-    /// <summary>A call inside Update that a later slice must not move out of a component or the union unnoticed.</summary>
     public sealed class ExpectedCallSite { public string File = "", Caller = "", Call = ""; }
 
     public static class ScopeInventory
@@ -54,8 +47,6 @@ namespace PerfUnionProbe
         private static ExpectedCallSite S(string file, string caller, string call)
             => new ExpectedCallSite { File = file, Caller = caller, Call = call };
 
-        /// <summary>Every prefix, postfix, finalizer and transpiler Persistent City installs. The first 35 rows are the F4 plan's
-        /// section 2 inventory; the food-contract rows were added by E5b2 (#168) and E5b3 (#171) after the plan.</summary>
         public static readonly IReadOnlyList<ExpectedScope> Patches = Array.AsReadOnly(new[]
         {
             P(Clock, ScopeKind.Prefix, R + "NativeCityClock", "TickPrefix", "GameManager.RunMainGameTick", "Runtime/NativeCityClock.cs"),
@@ -105,7 +96,6 @@ namespace PerfUnionProbe
             P(Contract, ScopeKind.Postfix, Hooks, "Hook22", "CargoInstance.ResetItemCached", ContractFile),
         });
 
-        /// <summary>MonoBehaviour messages on Persistent City components.</summary>
         public static readonly IReadOnlyList<ExpectedScope> Messages = Array.AsReadOnly(new[]
         {
             M(R + "PopulationRuntime", "Update", "Runtime/SaveEpochRuntime.cs"),
@@ -115,7 +105,6 @@ namespace PerfUnionProbe
             M(R + "PhysicalPedestrianCrosswalk", "OnTriggerExit", "Runtime/PhysicalPedestrians.cs"),
         });
 
-        /// <summary>Native event handlers: main-thread entry points outside Update and the Harmony patches.</summary>
         public static readonly IReadOnlyList<ExpectedScope> Events = Array.AsReadOnly(new[]
         {
             E("GlobalEvents.onSaveGame", R + "PopulationRuntime", "Save", "Runtime/SaveEpochRuntime.cs"),
@@ -128,11 +117,8 @@ namespace PerfUnionProbe
             E("SceneManager.sceneUnloaded", R + "RouteObjectDiscovery", "SceneUnloaded", "Runtime/RouteObjectDiscovery.cs"),
         });
 
-        /// <summary>PC methods a transpiler inserts into native code; timed as their own scopes. None since GR-9: own cars
-        /// replaced the borrowed-car transpilers.</summary>
         public static readonly IReadOnlyList<ExpectedScope> TranspilerHelpers = Array.AsReadOnly(Array.Empty<ExpectedScope>());
 
-        /// <summary>Attribution sub-scopes inside Update (Decision 5 Components). Never added to the union.</summary>
         public static readonly IReadOnlyList<ExpectedScope> Components = Array.AsReadOnly(new[]
         {
             C(R + "PopulationRuntime", "AdvancePopulation", "Double", "Runtime/PersistentCityMod.cs"),
@@ -148,7 +134,6 @@ namespace PerfUnionProbe
             C(R + "PhysicalPopulation", "ObservePlayerContact", "Binding,PlayerPose&", "Runtime/PhysicalPopulation.cs"),
         });
 
-        /// <summary>Calls that keep each component inside the timed Update union, including F2e's player-hold sites.</summary>
         public static readonly IReadOnlyList<ExpectedCallSite> CallSites = Array.AsReadOnly(new[]
         {
             S("Runtime/SaveEpochRuntime.cs", "Update", "UpdateCity("),
@@ -168,10 +153,8 @@ namespace PerfUnionProbe
 
         public static IEnumerable<ExpectedScope> All => Patches.Concat(Messages).Concat(Events).Concat(TranspilerHelpers).Concat(Components);
 
-        /// <summary>Owners whose patches belong to Persistent City. Any other owner patching a PC method is foreign.</summary>
         public static IReadOnlyList<string> Owners => Patches.Select(p => p.Owner).Distinct().OrderBy(o => o, StringComparer.Ordinal).ToArray();
 
-        /// <summary>The canonical text whose SHA-256 is the expected-scope list hash. check_scopes.py builds the same text.</summary>
         public static string CanonicalText()
         {
             var lines = new List<string> { Version };

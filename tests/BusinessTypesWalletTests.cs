@@ -9,22 +9,16 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>GR-1 (R1, R2): place business types from the live catalogue, and the wallet owned by the person.</summary>
 public sealed class BusinessTypesWalletTests
 {
     private static string Corpus(string file) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "ReaderCorpus", file));
 
-    // ---- Wallet move ----
 
-    /// <summary>The same builder before and after the move: every person's wallet on the new wire is the exact tuple the old
-    /// wire stored in that person's roster record, and every other roster slot is unchanged. No unit of money moved.</summary>
     [Fact]
     public void MoneyIsConservedAcrossTheMoveForEveryPerson()
     {
         var before = JObject.Parse(Corpus("retired-pre-wallet-full.json"));
         var after = JObject.Parse(Corpus(Path.Combine("schema-01", "full.json")));
-        // Old roster tuple: version, Allowance, Budget, ..., ResidentId at slot 26. The new one keeps every slot and holds
-        // the legacy external-food account where the budget was.
         var oldRecords = before["Food"]!["Residents"]!.Cast<JArray>().ToDictionary(r => (string)r[26]!, StringComparer.Ordinal);
         var newRecords = after["Food"]!["Residents"]!.Cast<JArray>().ToDictionary(r => (string)r[26]!, StringComparer.Ordinal);
         var wallets = after["Citizens"]!.ToDictionary(c => (string)c["Identity"]!["Id"]!, c => c["Wallet"]!, StringComparer.Ordinal);
@@ -37,11 +31,10 @@ public sealed class BusinessTypesWalletTests
         {
             Assert.True(JToken.DeepEquals(old[2], wallets[id]), id + ": wallet differs from the budget it replaced");
             var moved = newRecords[id];
-            Assert.Equal(0L, (long)moved[2]!); // a finance city has no legacy account
+            Assert.Equal(0L, (long)moved[2]!);
             for (int slot = 0; slot < old.Count; slot++)
                 if (slot != 2) Assert.True(JToken.DeepEquals(old[slot], moved[slot]), id + ": roster slot " + slot + " changed");
         }
-        // Read back, the roster and the persons hold the same objects and every wallet is conserved.
         var read = SaveCodec.Read(after.ToString(Newtonsoft.Json.Formatting.None));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         AssertLinked(read.State!);
@@ -91,8 +84,6 @@ public sealed class BusinessTypesWalletTests
         Assert.Contains("Wallet without household finances", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(plain)).Message);
     }
 
-    /// <summary>The wire before GR-1 (budget inside the roster record, no place business type) is an older development
-    /// city: refused with "start a new city", never migrated, and every key kept.</summary>
     [Fact]
     public void ACityWrittenBeforeTheWalletMoveIsRefusedWithStartANewCityAndKept()
     {
@@ -113,11 +104,9 @@ public sealed class BusinessTypesWalletTests
         Assert.False(session.WriteTo(data, fresh).Success); Assert.False(SaveStore.WriteTo(data, fresh).Success);
         Assert.Equal(keys.Count, data.Count);
         foreach (var (key, value) in keys) Assert.Same(value, data[key]);
-        // A current body is never mistaken for one.
         Assert.Null(SaveCodec.DevelopmentSchemaOf(Corpus(Path.Combine("schema-01", "full.json"))));
     }
 
-    // ---- Household essentials re-cut ----
 
     [Fact]
     public void EssentialSharesSumExactlyAndANeedIsNotPaidTwice()
@@ -141,7 +130,6 @@ public sealed class BusinessTypesWalletTests
             Assert.True(HouseholdFinance.CashConserved(b));
             return b.EssentialsPaid;
         }
-        // Without needs the posting is exactly the drawn bill; a need's share leaves the posting and stays in the wallet.
         Assert.Equal(Money.FromCents(3000 + 2000), Posted(null));
         Assert.Equal(Money.FromCents(3000 + 2000 - 400), Posted(EssentialNeeds.Of(HouseholdEssentials.Clothing)));
         Assert.Equal(Money.FromCents(3000 + 2000 - 400 - 300), Posted(EssentialNeeds.Of(HouseholdEssentials.Clothing, HouseholdEssentials.PersonalCare)));
@@ -158,7 +146,6 @@ public sealed class BusinessTypesWalletTests
             Assert.True(HouseholdEssentials.CanBecomeNeed(BusinessTypes.For(type).EssentialCategory), type);
     }
 
-    // ---- Business types ----
 
     [Theory]
     [InlineData("modded:businesstype_spaceport")] [InlineData("ba:businesstype_not_in_this_table")] [InlineData("")] [InlineData(null)]
@@ -190,7 +177,7 @@ public sealed class BusinessTypesWalletTests
         var places = Street();
         var live = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["address:Main%20St:1"] = "ba:businesstype_coffeeshop", // a home address never takes a type
+            ["address:Main%20St:1"] = "ba:businesstype_coffeeshop",
             ["address:Main%20St:2"] = "ba:businesstype_clothingstore",
             ["address:Main%20St:3"] = "modded:businesstype_arcade",
             ["address:Main%20St:4"] = BusinessTypes.Empty,
@@ -199,10 +186,10 @@ public sealed class BusinessTypesWalletTests
         Assert.Equal(new BusinessTypeChanges(4, 0, 0).ToString(), opened.ToString());
         Assert.Equal(new[] { "", "ba:businesstype_clothingstore", "ba:businesstype_clothingstore", "modded:businesstype_arcade", "modded:businesstype_arcade", "", "" },
             places.Select(p => p.BusinessType));
-        Assert.False(BusinessTypeRefresh.Apply(places, live).Any); // idempotent
+        Assert.False(BusinessTypeRefresh.Apply(places, live).Any);
 
-        live["address:Main%20St:2"] = "ba:businesstype_giftshop"; // replaced
-        live["address:Main%20St:4"] = "ba:businesstype_bakery";   // opened at a dormant address
+        live["address:Main%20St:2"] = "ba:businesstype_giftshop";
+        live["address:Main%20St:4"] = "ba:businesstype_bakery";
         var replaced = BusinessTypeRefresh.Apply(places, live);
         Assert.Equal(new BusinessTypeChanges(1, 0, 2).ToString(), replaced.ToString());
         Assert.Equal("ba:businesstype_bakery", places[5].BusinessType);
@@ -219,7 +206,7 @@ public sealed class BusinessTypesWalletTests
         Assert.Equal(new[] { "address:Main%20St:2:shop", "address:Main%20St:2:work" }, index.PlacesOf("ba:businesstype_clothingstore"));
         Assert.Equal(2, index.TypeCount);
 
-        live.Remove("address:Main%20St:2"); // the clothing store closed
+        live.Remove("address:Main%20St:2");
         var closed = BusinessTypeRefresh.Apply(places, live);
         Assert.Equal(new BusinessTypeChanges(0, 2, 0).ToString(), closed.ToString());
         index.Rebuild(places);
@@ -227,7 +214,6 @@ public sealed class BusinessTypesWalletTests
         Assert.DoesNotContain("ba:businesstype_clothingstore", index.Types);
         Assert.Equal(1, index.TypeCount);
         Assert.All(places.Where(p => p.Id.StartsWith("address:Main%20St:2", StringComparison.Ordinal)), p => Assert.Equal("", p.BusinessType));
-        // The place itself stays (IDs never change), so nothing that names it dangles.
         Assert.Equal(7, places.Count);
     }
 
@@ -250,7 +236,6 @@ public sealed class BusinessTypesWalletTests
         Assert.Contains("business type", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
     }
 
-    // ---- Helpers ----
 
     private static IEnumerable<CitizenState> Persons(CityState state) => state.Citizens.Concat<CitizenState>(state.VisitorRoutines);
 
@@ -259,7 +244,6 @@ public sealed class BusinessTypesWalletTests
 
     private static string Text(ResidentBudget b) => Newtonsoft.Json.JsonConvert.SerializeObject(b);
 
-    /// <summary>Every person has its own wallet, the roster record holds that same object, and each is conserved.</summary>
     private static void AssertLinked(CityState state)
     {
         var persons = Persons(state).ToDictionary(p => p.Identity.Id, StringComparer.Ordinal);

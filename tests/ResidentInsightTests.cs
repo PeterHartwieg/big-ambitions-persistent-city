@@ -100,7 +100,6 @@ public sealed class ResidentInsightTests
             Assert.Equal(expected.state, meal.State);
             Assert.Equal(expected.text, meal.Text);
         }
-        // An unconfirmed purchase is never reported as bought or skipped.
         var uncertain = Capture(city, person, Meal(MealKind.Dinner, MealStatus.Uncertain), places);
         Assert.DoesNotContain(uncertain.Meals, m => m.State == ResidentMealState.Bought || m.State == ResidentMealState.Skipped);
     }
@@ -109,24 +108,19 @@ public sealed class ResidentInsightTests
     public void MealsAreUnknownWithoutCurrentDayEvidence()
     {
         var (city, person, places) = Fixture();
-        // Yesterday's dinner says nothing about today.
         var yesterday = Capture(city, person, Meal(MealKind.Dinner, MealStatus.Paid, day: 0), places);
         Assert.All(yesterday.Meals, m => Assert.Equal(ResidentMealState.Unknown, m.State));
-        // No record at all.
         var none = Capture(city, person, null, places);
         Assert.All(none.Meals, m => Assert.Equal("unknown", m.Text));
         Assert.Contains("No meal record", none.MealNote);
-        // Food demand inactive: never invent meals.
         city.Food = null;
         var inactive = Capture(city, person, Meal(MealKind.Lunch, MealStatus.Paid), places);
         Assert.All(inactive.Meals, m => Assert.Equal(ResidentMealState.Unknown, m.State));
         Assert.Contains("unavailable", inactive.MealNote);
-        // The earlier single daily meal is labelled, not mapped onto breakfast/lunch/dinner.
         city.Food = new FoodCommerceState();
         var legacy = Capture(city, person, Meal(MealKind.Legacy, MealStatus.Paid), places);
         Assert.All(legacy.Meals, m => Assert.Equal(ResidentMealState.Unknown, m.State));
         Assert.Contains("single daily meal: bought croissant", legacy.MealNote);
-        // A represented consumer's record is never shown as the visible person's own plate.
         var represented = Meal(MealKind.Lunch, MealStatus.Paid); represented.Slot = 1; represented.ResidentId = "consumer:pc%3A1:1";
         city.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion };
         Assert.All(Capture(city, person, represented, places).Meals, m => Assert.Equal(ResidentMealState.Unknown, m.State));
@@ -202,7 +196,6 @@ public sealed class ResidentInsightTests
         Assert.Equal(new[] { "keeps a regular workday", "happy to walk far" }, words);
         Assert.DoesNotContain(words, w => w.Any(char.IsDigit));
         person.Identity.Persona = Persona.Student; person.Preferences = new TravelPreferences { WalkingToleranceMetres = 700, AllowTransit = false, FareWeightMinutes = 5 };
-        // A represented consumer's legacy taste is not the clicked person's; only the resident's own traits are described.
         var meal = Meal(MealKind.Lunch, MealStatus.Pending); meal.PreferredProductId = FoodProducts.Burger;
         Assert.Equal(new[] { "on a student budget", "often packs lunch", "prefers short walks", "avoids public transport", "minds fares" },
             Capture(city, person, meal, places).Personality);
@@ -230,7 +223,6 @@ public sealed class ResidentInsightTests
         Assert.Equal("purchase of croissant at Corner Bakery, Market Lane 3 not yet confirmed", insight.Meals[2].Text);
         Assert.DoesNotContain(insight.Meals, m => m.Text.Contains("ate") || m.Text.Contains("eaten"));
         Assert.DoesNotContain("paid", insight.Meals[2].Text); Assert.DoesNotContain("skipped", insight.Meals[2].Text);
-        // Opening the inspector reads only: no outcome, meal or city field changes.
         Assert.Equal(before, Newtonsoft.Json.JsonConvert.SerializeObject(new { city, meal }));
     }
 
@@ -239,14 +231,12 @@ public sealed class ResidentInsightTests
     {
         var (city, person, places) = Fixture();
         var meal = Meal(MealKind.Lunch, MealStatus.Travelling);
-        // Upgraded at lunch: breakfast ended before schema 17; a skipped lunch was revived and is under way again.
         meal.Today = new ResidentFoodToday { Day = 1, Unrecorded = 1, Meals = { Outcome(MealKind.Lunch, MealOutcomeStatus.Skipped, MealReasonCode.NoSuitableStop) } };
         var insight = Capture(city, person, meal, places);
         Assert.Equal((ResidentMealState.NotRecorded, "not recorded (before the upgrade)"), (insight.Meals[0].State, insight.Meals[0].Text));
         Assert.Equal(ResidentMealState.InProgress, insight.Meals[1].State);
         Assert.Equal("on the way to Corner Bakery, Market Lane 3 for croissant", insight.Meals[1].Text);
         Assert.Equal((ResidentMealState.Unknown, "unknown"), (insight.Meals[2].State, insight.Meals[2].Text));
-        // A finished meal is read from its record, including a shop that has since left the catalogue.
         meal.Status = MealStatus.Paid;
         meal.Today.Meals[0] = Outcome(MealKind.Lunch, MealOutcomeStatus.Bought, MealReasonCode.Bought, place: "address:Gone%20Street:1:shop");
         Assert.Equal("bought croissant at an unknown shop", Capture(city, person, meal, places).Meals[1].Text);
@@ -265,7 +255,6 @@ public sealed class ResidentInsightTests
         var none = Capture(city, person, meal, places);
         Assert.Contains("Meal data is unavailable", none.MealNote);
         Assert.Null(city.Food);
-        // The legacy single daily meal is read from its own record.
         city.Food = new FoodCommerceState();
         var legacy = Meal(MealKind.Legacy, MealStatus.Declined, day: 2);
         legacy.Today = new ResidentFoodToday { Day = 2, Meals = { Outcome(MealKind.Legacy, MealOutcomeStatus.ChoseAlternative, MealReasonCode.PrefersAlternative, FoodOutsideOption.PackedMeal) } };
@@ -276,13 +265,11 @@ public sealed class ResidentInsightTests
     public void TraitsAreDescribedInWordsWithoutNumbersAndNeutralOrInactiveTraitsStaySilent()
     {
         var (city, person, places) = Fixture();
-        // Croissant 4, burger 0, hot dog 2, price 3, queue 1, loyalty 4, travel 4, health 3, quality 3, time pressure 0.
         person.Traits = new ResidentTraits { Version = 1, Bands = "4023144330" };
         var words = Capture(city, person, null, places).Personality;
         Assert.Equal(new[] { "keeps a regular workday", "happy to walk far", "loves croissants", "dislikes burgers", "watches prices",
             "dislikes queues", "happy to travel far for food", "prefers lighter food", "values quality", "takes their time over meals" }, words);
         Assert.DoesNotContain(words, w => w.Any(char.IsDigit));
-        // Loyalty has no effect until shop memory exists, so it is never described.
         Assert.DoesNotContain(words, w => w.Contains("loyal") || w.Contains("curious"));
         person.Traits = new ResidentTraits { Version = 1, Bands = "2222222222" };
         Assert.Equal(new[] { "keeps a regular workday", "happy to walk far" }, Capture(city, person, null, places).Personality);
@@ -292,15 +279,15 @@ public sealed class ResidentInsightTests
     public void PickThrottleRunsOnlyAfterMovementAndAtMostOncePerInterval()
     {
         var throttle = new ResidentPickThrottle(0.05, 1f);
-        Assert.True(throttle.ShouldPick(0, 100, 100));          // first observation
+        Assert.True(throttle.ShouldPick(0, 100, 100));
         for (int frame = 1; frame < 100; frame++)
-            Assert.False(throttle.ShouldPick(frame * 0.016, 100, 100)); // still cursor: never
-        Assert.True(throttle.ShouldPick(2.0, 120, 100));        // moved
-        Assert.False(throttle.ShouldPick(2.01, 140, 100));      // moved again within the interval
-        Assert.False(throttle.ShouldPick(2.03, 140, 100));      // stopped, still throttled
-        Assert.True(throttle.ShouldPick(2.05, 140, 100));       // pending move picked once the interval elapses
-        Assert.False(throttle.ShouldPick(2.2, 140, 100));       // and not again while still
-        Assert.False(throttle.ShouldPick(2.3, 140.5f, 100.5f)); // sub-pixel jitter is not movement
+            Assert.False(throttle.ShouldPick(frame * 0.016, 100, 100));
+        Assert.True(throttle.ShouldPick(2.0, 120, 100));
+        Assert.False(throttle.ShouldPick(2.01, 140, 100));
+        Assert.False(throttle.ShouldPick(2.03, 140, 100));
+        Assert.True(throttle.ShouldPick(2.05, 140, 100));
+        Assert.False(throttle.ShouldPick(2.2, 140, 100));
+        Assert.False(throttle.ShouldPick(2.3, 140.5f, 100.5f));
         Assert.False(throttle.ShouldPick(2.4, float.NaN, 0));
         throttle.Invalidate();
         Assert.True(throttle.ShouldPick(2.5, 140, 100));
@@ -312,7 +299,6 @@ public sealed class ResidentInsightTests
     [Fact]
     public void NativeStreetKeysAreLocalizedForDisplayButKeptRawForTheMap()
     {
-        // Retain A2's street-key case using A1's corrected complete-address callback.
         const string home = "address:ba%3Astreet_thirdstreet:30:home", work = "address:ba%3Astreet_pier:7:work";
         var (city, person, places) = Fixture();
         places[home] = new Place { Id = home, Name = "ba:street_thirdstreet 30", Kind = PlaceKind.Home };
@@ -337,7 +323,6 @@ public sealed class ResidentInsightTests
     [Fact]
     public void CompleteNativeAddressFormatIsUsedButMapArgumentsStayRaw()
     {
-        // GamePlaces names homes by their raw native address, e.g. "ba:street_thirdstreet 30".
         const string home = "address:ba%3Astreet_thirdstreet:30:home", work = "address:ba%3Astreet_pier:7:work";
         var places = new[] {
             new Place { Id = home, Name = "ba:street_thirdstreet 30", Kind = PlaceKind.Home },
@@ -350,7 +335,7 @@ public sealed class ResidentInsightTests
             formatAddress: (key, number) => number + " " + names[key]);
         Assert.Equal("30 3rd Street", insight.Home!.Label);
         Assert.Equal("7 Pier Road", insight.Work!.Label);
-        Assert.Equal(("ba:street_thirdstreet", 30), (insight.Home.Street, insight.Home.Number)); // the map link matches the native key
+        Assert.Equal(("ba:street_thirdstreet", 30), (insight.Home.Street, insight.Home.Number));
         Assert.Equal(home, insight.Home.PlaceId);
         Assert.Equal((work, "ba:street_pier", 7), (insight.Work.PlaceId, insight.Work.Street, insight.Work.Number));
         Assert.Contains("Lives at 30 3rd Street.", insight.Story);
@@ -360,7 +345,6 @@ public sealed class ResidentInsightTests
         Assert.DoesNotContain("ba:street", insight.Story);
         Assert.Equal("30 Third Street", ResidentAddress.From(places[home]).Label);
         Assert.Equal("7 Pier", ResidentAddress.From(places[work], (_, _) => " ").Label);
-        // Preserve other native address orders verbatim too; never parse/reassemble the result.
         Assert.Equal("Third Street, no. 30", ResidentAddress.From(places[home], (_, _) => "Third Street, no. 30").Label);
     }
 
@@ -433,17 +417,16 @@ public sealed class ResidentInsightTests
         var throttle = new ResidentPickThrottle(0.05, 1f);
         Assert.True(throttle.ShouldPick(0, 10, 10));
         Assert.True(throttle.ShouldPick(1, 30, 10));
-        Assert.False(throttle.ShouldPick(1.01, 50, 10)); // pending move, throttled
+        Assert.False(throttle.ShouldPick(1.01, 50, 10));
         Assert.Equal(2, throttle.Picks);
         throttle.ResetPicks();
         Assert.Equal(0, throttle.Picks);
-        Assert.False(throttle.ShouldPick(1.02, 50, 10)); // still throttled after the reset
-        Assert.True(throttle.ShouldPick(1.06, 50, 10));  // the pending move survives the reset
-        for (int frame = 0; frame < 50; frame++) Assert.False(throttle.ShouldPick(2 + frame * .016, 50, 10)); // still cursor window
+        Assert.False(throttle.ShouldPick(1.02, 50, 10));
+        Assert.True(throttle.ShouldPick(1.06, 50, 10));
+        for (int frame = 0; frame < 50; frame++) Assert.False(throttle.ShouldPick(2 + frame * .016, 50, 10));
         Assert.Equal(1, throttle.Picks);
     }
 
-    // One frame of input as MouseController.Run would see it, with the current cursor position.
     private static NativeMouseAction Frame(InspectorPointerGesture gesture, bool down, bool pressed = false, bool released = false,
         bool nativeHold = false, bool onInspector = false) => gesture.Decide(pressed, released, down, nativeHold, onInspector);
 
@@ -451,16 +434,12 @@ public sealed class ResidentInsightTests
     public void AClickThatStartsOnTheInspectorNeverReachesTheGame()
     {
         var gesture = new InspectorPointerGesture();
-        // The cursor moves into the popup and presses in the same frame: decided from the current position.
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: false, onInspector: false));
         Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: true, pressed: true, onInspector: true));
         Assert.True(gesture.Owned);
-        // Dragging out of the popup (e.g. a scrollbar) while held stays with the inspector, so no hold-walk starts.
         Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: true, onInspector: false));
-        // The release outside still belongs to the gesture and ends it, clearing any native hold flags.
         Assert.Equal(NativeMouseAction.SuppressAndReleaseHolds, Frame(gesture, down: false, released: true, onInspector: false));
         Assert.False(gesture.Owned);
-        // The next world click is the game's again.
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, pressed: true, onInspector: false));
     }
 
@@ -468,14 +447,10 @@ public sealed class ResidentInsightTests
     public void GesturesThatStartOutsideTheInspectorStayNativeThroughTheirRelease()
     {
         var gesture = new InspectorPointerGesture();
-        // The cursor moves out of the popup and presses on the world in the same frame: the game handles it.
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, pressed: true, onInspector: false));
-        // Hold-walk: the cursor passes over the popup and a walker; the release there is still seen natively,
-        // so MouseController clears LeftButtonHeld and the player stops.
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, onInspector: true));
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: false, released: true, onInspector: true));
         Assert.False(gesture.Owned);
-        // A second button pressed over the inspector during a native hold-walk is not taken over.
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, pressed: true, nativeHold: true, onInspector: true));
         Assert.False(gesture.Owned);
     }
@@ -487,7 +462,6 @@ public sealed class ResidentInsightTests
         Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: false, pressed: true, released: true, onInspector: true));
         Assert.False(gesture.Owned);
         Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: false));
-        // A lost release (focus change) cannot leave the gesture owned: no button down ends it.
         Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: true, pressed: true, onInspector: true));
         Assert.Equal(NativeMouseAction.SuppressAndReleaseHolds, Frame(gesture, down: false));
         Assert.False(gesture.Owned);
@@ -498,9 +472,9 @@ public sealed class ResidentInsightTests
     [Fact]
     public void PickChoosesTheNearestWalkerIndependentOfOrder()
     {
-        Assert.False(ResidentPickAccumulator.Hit(100, 50, 100, 200, 100, 100, 8, out _));   // above the head
-        Assert.False(ResidentPickAccumulator.Hit(140, 150, 100, 200, 100, 100, 8, out _));  // beside the body
-        Assert.False(ResidentPickAccumulator.Hit(100, 150, 100, 100, 100, 200, 8, out _));  // inverted projection
+        Assert.False(ResidentPickAccumulator.Hit(100, 50, 100, 200, 100, 100, 8, out _));
+        Assert.False(ResidentPickAccumulator.Hit(140, 150, 100, 200, 100, 100, 8, out _));
+        Assert.False(ResidentPickAccumulator.Hit(100, 150, 100, 100, 100, 200, 8, out _));
         Assert.True(ResidentPickAccumulator.Hit(105, 150, 100, 200, 100, 100, 8, out float centred));
         Assert.True(ResidentPickAccumulator.Hit(125, 150, 100, 200, 100, 100, 8, out float edge));
         Assert.True(centred < edge);
@@ -510,7 +484,7 @@ public sealed class ResidentInsightTests
         {
             var best = new ResidentPickAccumulator();
             foreach (int i in order) best.Consider(candidates[i].id, candidates[i].generation, candidates[i].score, candidates[i].depth);
-            Assert.Equal(("pc:1", 3L), (best.Id, best.Generation)); // best score, nearer body, then ordinal ID
+            Assert.Equal(("pc:1", 3L), (best.Id, best.Generation));
         }
     }
 
@@ -521,17 +495,13 @@ public sealed class ResidentInsightTests
         var ids = Enumerable.Range(0, 48).Select(i => "pc:" + i).ToArray();
         void Frame(int frame)
         {
-            // Closed popup, cursor still: the throttle alone decides, nothing else runs.
             throttle.ShouldPick(frame * 0.016, 300, 200);
-            // Worst case per pick: 48 walkers (the default pedestrian ceiling).
             var best = new ResidentPickAccumulator();
             for (int i = 0; i < ids.Length; i++)
                 if (ResidentPickAccumulator.Hit(300, 200, 280 + i, 260, 281 + i, 140, 8, out float score)) best.Consider(ids[i], i, score, 10 + i);
         }
         long allocated = 0;
         Exception? failure = null;
-        // Keep runner work off the allocation counter's thread, as in the hours-cache test.
-        // Thread creation, setup and assertions remain outside the measured window.
         var worker = new Thread(() =>
         {
             try
@@ -575,7 +545,6 @@ public sealed class ResidentInsightTests
                     if (ResidentPickAccumulator.Hit(300, 200, 280 + i, 260, 281 + i, 140, 8, out float score)) best.Consider(ids[i], i, score, 10 + i);
             }
             pickMicroseconds = timing.Stop(window, "pick us") * 1000 / picks;
-            // Generous offline ceilings against the 0.20 ms event-frame sub-budget; native cost is measured on the rig.
             timing.Under("capture us", captureMicroseconds, 200);
             timing.Under("pick us", pickMicroseconds, 50);
         });
@@ -622,7 +591,6 @@ public sealed class ResidentInsightTests
             while (!plain.AdvanceTo(minute, 64).CaughtUp) { }
             foreach (var person in inspected.State.Citizens.ToArray())
             {
-                // Inspect before and after each slice, with a product-name callback, as the popup refresh would.
                 var view = inspected.Inspect(person.Identity.Id, id => id.ToUpperInvariant(), (street, number) => number + " " + street);
                 Assert.NotNull(view); texts.Add(view!.Heading + "|" + view.HeadingReason + "|" + string.Join(";", view.Meals.Select(m => m.Text)));
             }
@@ -634,7 +602,6 @@ public sealed class ResidentInsightTests
         Assert.Equal(plainMarket.Orders, inspectedMarket.Orders);
         Assert.NotEmpty(plainMarket.Orders);
         Assert.Null(inspected.Inspect("not-a-resident"));
-        // The fixture exercised real states, not just the idle case.
         Assert.Contains(texts, t => t.StartsWith("Heading to", StringComparison.Ordinal));
         Assert.Contains(texts, t => t.Contains("bought", StringComparison.Ordinal));
         output.WriteLine(texts.Count + " distinct inspector views; " + plainMarket.Orders.Count + " orders");

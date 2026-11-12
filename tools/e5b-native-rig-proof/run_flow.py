@@ -90,8 +90,6 @@ class Lifecycle:
             if stored['existed']:
                 if sha(exported)!=stored['sha256']: raise RuntimeError('Corrupt registry backup; restoration refused')
                 verify_reg_scope(exported)
-            # The caller's real lifecycle reservation verifies ownership and both players stopped.
-            # These are exactly the two documented isolated targets, never computed deletion roots.
             failures=[]
             for row in manifest['files']:
                 try:
@@ -123,7 +121,7 @@ def main():
     parser.add_argument('--evidence',type=Path,required=True)
     parser.add_argument('--rig-repo',type=Path,default=Path(r'C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-agent-rig'))
     args=parser.parse_args()
-    os.environ['HARNESS_ALERTS']='off' # No unsolicited external alerts; every real guard/selfcheck result is retained.
+    os.environ['HARNESS_ALERTS']='off'
     sys.dont_write_bytecode=True
     sys.path.insert(0,str(args.rig_repo.resolve()/'scripts'))
     import rig_flows
@@ -133,7 +131,6 @@ def main():
     own=Path(__file__).resolve().parents[2]/'build/e5b/review-r3/rig_test'
     if not evidence.is_relative_to(own.resolve()): parser.error('Evidence must remain in the assigned ignored rig_test directory')
     if evidence.exists() and any(evidence.iterdir()): parser.error('Evidence directory must be new/empty')
-    # Validate fixed lifecycle paths against the same reparse-point proof as modset transactions.
     for path in TARGETS: plain(path)
     safe_output(evidence)
     document=json.loads(args.flow.read_text(encoding='utf-8-sig'))
@@ -143,8 +140,6 @@ def main():
             self.lifecycle=Lifecycle(evidence/'lifecycle',self.file_guard)
             self.selfcheck_index=0
         def selfcheck(self,notify=None):
-            # Preserve the exact existing check results before the same failure gate raises.
-            # No check is retried here, skipped, relaxed or converted to a success.
             from rig_selfcheck import run
             options={} if notify is None else {'notify':notify}
             checks,mods=run(lock_token=self.credential,**options)
@@ -161,8 +156,6 @@ def main():
                 raise
             super().start()
         def remove_copies(self):
-            # Core always calls this after confirmed stop, before release, even without a mods field.
-            # Attempt lifecycle restoration independently if ordinary fixture cleanup fails.
             errors=[]
             try: super().remove_copies()
             except Exception: errors.append('fixture_cleanup')

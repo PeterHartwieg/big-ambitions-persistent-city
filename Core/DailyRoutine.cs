@@ -12,7 +12,6 @@ namespace PersistentCity.Core
         public double EndsAt { get; }
     }
 
-    /// <summary>Opt in to planning work/study departures from committed route durations.</summary>
     public interface ICommuteTimingPlanner : IRoutePlanner { }
 
     public readonly struct WorkWindow
@@ -30,13 +29,9 @@ namespace PersistentCity.Core
         public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places)
             => At(person, citySeed, minute, places, null, true, null);
 
-        /// <summary>As At with the place list, with the resident's home already resolved by the caller
-        /// (null when HomeId names no place), so no catalogue scan is needed.</summary>
         public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home)
             => At(person, citySeed, minute, places, home, false, null);
 
-        /// <summary>The simulator's lookup: with the place index, so unplanned days fit work to the workplace's hours exactly
-        /// as their plan will.</summary>
         internal static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home,
             IReadOnlyDictionary<string, Place> index)
             => At(person, citySeed, minute, places, home, false, index);
@@ -46,23 +41,17 @@ namespace PersistentCity.Core
         {
             var slot = SelectRoutine(person, citySeed, minute, index, out int anchorDay, out bool chosen);
             if (slot.Activity != Activity.Leisure) return slot;
-            // A committed activity owns its venue until its deadline, including waits
-            // at a closed entrance and reloads during its journey.
             if (person.ActivityUntilMinute == slot.EndsAt)
             {
                 if (person.Phase != CitizenPhase.AtPlace && person.DestinationActivity == Activity.Leisure && person.DestinationId != "")
                     return new RoutineSlot(person.DestinationId, slot.Activity, slot.EndsAt);
             }
-            // Venue closure shortens an attending resident's event deadline, but
-            // does not select a second venue in the same leisure window. Comparing
-            // routine windows also avoids retaining a late previous-day arrival.
             if (person.Phase == CitizenPhase.AtPlace && person.Activity == Activity.Leisure && person.ActivityUntilMinute > 0)
             {
                 var committed = SelectRoutine(person, citySeed, Math.Max(0, person.ActivityUntilMinute - 0.001), index, out _, out _);
                 if (committed.Activity == Activity.Leisure && committed.EndsAt == slot.EndsAt)
                     return new RoutineSlot(person.PlaceId, slot.Activity, slot.EndsAt);
             }
-            // GR-2: a saved plan chose its leisure venue when it was drawn.
             if (chosen) return slot;
             if (findHome)
             {
@@ -73,8 +62,6 @@ namespace PersistentCity.Core
             return new RoutineSlot(DayPlanner.ChooseLeisure(RoutineKeys.For(person, citySeed), anchorDay, places, home, slot.PlaceId), slot.Activity, slot.EndsAt);
         }
 
-        // Absolute minutes follow Big Ambitions' Day * 1440 + Hour * 60 + Minute.
-        // Home spans end at an actual activity, rather than at calendar/quiet-hour boundaries.
         public static RoutineSlot At(CitizenState person, int citySeed, double minute)
             => SelectRoutine(person, citySeed, minute, null, out _, out _);
 
@@ -83,8 +70,6 @@ namespace PersistentCity.Core
 
         private const double MaxMinute = 1000000000;
 
-        // GR-2: each day's windows come from the person's saved plan for that day, or from the same draws for a day not
-        // planned yet (lookahead), so a Home span ends where the next plan will start an item.
         private static RoutineSlot SelectRoutine(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index,
             out int anchorDay, out bool chosen)
         {
@@ -98,9 +83,6 @@ namespace PersistentCity.Core
             var work = today.Work;
             if (work.HasValue && minute >= work.Value.StartsAt && minute < work.Value.EndsAt)
                 return new RoutineSlot(work.Value.PlaceId, work.Value.Activity, Math.Min(MaxMinute, work.Value.EndsAt));
-            // A shift begun yesterday can run past midnight (eight hours at most). Once today's plan has replaced
-            // yesterday's, every item of that plan has ended (DayPlanExecutor.Ensure), so its shift is over and is never
-            // drawn again from hours that may have changed since it was committed.
             if (day > 0 && minute < day * 1440.0 + 480 && !(person.Plan != null && person.Plan.Day >= day))
             {
                 var overnight = DayPlanner.WorkFor(person, keys, day - 1, index);
@@ -108,8 +90,6 @@ namespace PersistentCity.Core
                     return new RoutineSlot(overnight.Value.PlaceId, overnight.Value.Activity, Math.Min(MaxMinute, overnight.Value.EndsAt));
             }
             double next = MaxMinute;
-            // Yesterday supplies overnight leisure (ending by 00:15, so not after the day boundary); a week ahead finds the
-            // next real activity even for a worker with no optional venues and a three-day weekend.
             for (int offset = minute >= day * 1440.0 + DayPlanner.DayBoundaryMinute ? 0 : -1; offset <= 8; offset++)
             {
                 int currentDay = day + offset;
@@ -133,12 +113,8 @@ namespace PersistentCity.Core
                     { anchorDay = currentDay; chosen = routine.LeisureChosen; return new RoutineSlot(routine.LeisureVenue, Activity.Leisure, routine.LeisureUntil); }
                     if (routine.LeisureFrom > minute) next = Math.Min(next, routine.LeisureFrom);
                 }
-                // Later days cannot precede an activity already found in this day.
-                // Avoid recomputing a week's hashes/windows at every ordinary event.
                 if (currentDay >= day && next <= midnight + 1440) break;
             }
-            // F5g: a pool member can draw no visit day inside this window. Wake it at the first unchecked midnight to look
-            // further ahead instead of ending its Home span at the clock limit, which would leave it dormant for good.
             if (next == MaxMinute && person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) next = Math.Min(MaxMinute, (day + 9) * 1440.0);
             return new RoutineSlot(person.HomeId, Activity.Home, next);
         }
@@ -149,18 +125,14 @@ namespace PersistentCity.Core
                 throw new ArgumentOutOfRangeException(nameof(minute));
         }
 
-        /// <summary>The fixed work/study window on this game day, independent of current attendance: the saved plan's for
-        /// a planned day, else the shift template.</summary>
         public static WorkWindow? WorkOnDay(CitizenState person, int citySeed, double minute) => WorkOnDay(person, citySeed, minute, null);
 
-        /// <summary>As WorkOnDay; with the place index an unplanned day fits the shift to the workplace's hours.</summary>
         internal static WorkWindow? WorkOnDay(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index)
         {
             CheckMinute(minute);
             return DayPlanner.WorkFor(person, RoutineKeys.For(person, citySeed), (int)Math.Floor(minute / 1440), index);
         }
 
-        /// <summary>The earliest future shift, including shifts after the three-day weekend.</summary>
         public static WorkWindow? NextWork(CitizenState person, int citySeed, double minute) => NextWork(person, citySeed, minute, null);
 
         internal static WorkWindow? NextWork(CitizenState person, int citySeed, double minute, IReadOnlyDictionary<string, Place>? index)
@@ -180,7 +152,6 @@ namespace PersistentCity.Core
             return null;
         }
 
-        /// <summary>A cheap, personal preparation deadline; no route or arrival guarantee is inferred.</summary>
         public static double CommutePreparationAt(CitizenState person, int citySeed, WorkWindow window, double previousMinutes)
         {
             CheckMinute(window.StartsAt);
@@ -196,10 +167,6 @@ namespace PersistentCity.Core
 
         public static bool Open(Place place, double minute) => NextClose(place, minute).HasValue;
 
-        /// <summary>
-        /// The end of the active union of opening windows, or null if closed. Positive infinity
-        /// means continuously open. Weekly windows override legacy daily hours when present.
-        /// </summary>
         public static double? NextClose(Place place, double minute)
         {
             var intervals = OpeningIntervals(place, minute);
@@ -217,7 +184,6 @@ namespace PersistentCity.Core
             return close.HasValue && close.Value >= minute + (place.WeeklyHours.Count != 0 ? 10080 : 1440) ? double.PositiveInfinity : close;
         }
 
-        /// <summary>First open instant within [minute, beforeMinute), or null if none remains.</summary>
         public static double? NextOpen(Place place, double minute, double beforeMinute)
         {
             if (!Position.Finite(beforeMinute) || beforeMinute < minute || beforeMinute > 1e9)
@@ -231,7 +197,6 @@ namespace PersistentCity.Core
             return null;
         }
 
-        /// <summary>The opening intervals from the day before <paramref name="minute"/>'s day to a week after, sorted.</summary>
         internal static OpeningInterval[] Intervals(Place place, double minute) => OpeningIntervals(place, minute);
 
         private static OpeningInterval[] OpeningIntervals(Place place, double minute)
@@ -239,9 +204,6 @@ namespace PersistentCity.Core
             if (place == null) throw new ArgumentNullException(nameof(place));
             if (!Position.Finite(minute) || minute < 0 || minute > 1e9) throw new ArgumentOutOfRangeException(nameof(minute));
             int day = (int)Math.Floor(minute / 1440);
-            // The windows for a day depend only on the day and the place's hours. The cache keeps an exact
-            // copy of the hours it was built from and is rebuilt whenever any of them differ, so every
-            // writer (a replaced list, an edited window, changed daily hours) is observed without a hook.
             var cache = place.OpeningCache;
             if (cache == null || !cache.Matches(place)) cache = null;
             else if (cache.Day == day) return cache.Intervals;
@@ -255,8 +217,6 @@ namespace PersistentCity.Core
         {
             bool weekly = place.WeeklyHours.Count != 0;
             var intervals = new List<OpeningInterval>();
-            // Yesterday supplies overnight windows; a full future week plus tomorrow allows us
-            // to distinguish an actual closure from a schedule that remains open every week.
             for (int offset = -1; offset <= 8; offset++)
             {
                 int currentDay = day + offset;
@@ -287,8 +247,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Transient opening windows of one place for its two most recently built days, with an
-    /// exact copy of the hours they were built from. Immutable: a change publishes a new instance.</summary>
     internal sealed class OpeningCache
     {
         private readonly int openMinute, closeMinute;
@@ -329,19 +287,12 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>
-    /// Per-resident routine hash inputs, each a pure function of Identity.Id and the city seed, computed
-    /// once instead of concatenating and hashing a key string at every routine evaluation. The day-keyed
-    /// draws keep the hash state after the fixed key prefix and continue it over the day's digits, which
-    /// gives exactly StableRandom.Hash(prefix + day, seed).
-    /// </summary>
     internal sealed class RoutineKeys
     {
         internal readonly string Id;
         internal readonly int Seed;
         internal readonly int HourShift, QuietPersonal;
         internal readonly uint CommutePreparation, CommuteMargin, EmploymentTime;
-        // Hash states after Id + ":shop:", ":leisure:", ":quiet-day:", ":leisure-day:" and (F5g) ":visit:".
         internal readonly uint ShopDay, LeisureDay, QuietDay, LeisureChoiceDay, VisitDay;
 
         private RoutineKeys(string id, int seed)
@@ -361,12 +312,10 @@ namespace PersistentCity.Core
         }
 
         private static uint Final(uint state, string suffix) => StableRandom.Finish(StableRandom.Append(state, suffix));
-        // The employment check time is drawn with seed 0, independent of the city.
         private static uint EmploymentTimeOf(string id) => Final(StableRandom.Append(StableRandom.Begin(0), id), ":employment-time");
 
         internal static RoutineKeys For(CitizenState person, int seed)
         {
-            // A null ID concatenates as empty, as the string keys did.
             string id = person.Identity.Id ?? "";
             var keys = person.RoutineKeys;
             if (keys != null && keys.Seed == seed && string.Equals(keys.Id, id, StringComparison.Ordinal)) return keys;
@@ -375,7 +324,6 @@ namespace PersistentCity.Core
             return keys;
         }
 
-        /// <summary>StableRandom.Hash(Identity.Id + ":employment-time", 0), from the cache when it is current.</summary>
         internal static uint EmploymentTimeFor(CitizenState person)
         {
             string id = person.Identity.Id ?? "";
@@ -383,7 +331,6 @@ namespace PersistentCity.Core
             return keys != null && string.Equals(keys.Id, id, StringComparison.Ordinal) ? keys.EmploymentTime : EmploymentTimeOf(id);
         }
 
-        /// <summary>The hash of a day-keyed draw: the prefix state continued over the day's invariant digits.</summary>
         internal static uint Draw(uint prefix, int day) => StableRandom.Finish(StableRandom.AppendDecimal(prefix, day));
     }
 }

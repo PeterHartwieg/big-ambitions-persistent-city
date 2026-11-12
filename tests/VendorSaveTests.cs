@@ -13,9 +13,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E6c (docs/plans/e6-carts-food-trucks.md section 4 row E6c, section 5): the vendor table and the scope channel
-/// in the next-free writer. Every round trip runs through the real SaveCodec writer and reader. Vehicle scenarios drive
-/// E6b's coordinator against the Street Food stand-in, so these tests share its collection.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class VendorSaveTests
 {
@@ -24,7 +21,6 @@ public sealed class VendorSaveTests
 
     public VendorSaveTests() => StreetFoodHooks.Reset();
 
-    /// <summary>E6b's rig with the city's own saved table, plus save/reload through the real codec.</summary>
     internal sealed class Rig
     {
         private readonly WeightedFoodChoiceTests.Planner planner;
@@ -53,8 +49,6 @@ public sealed class VendorSaveTests
         public void RunTo(long to, int step = 5) { for (long m = Now + step; m <= to; m += step) Run(m); if (Now < to) Run(to); }
         public VendorRow Row(string id) => Table.Find(id) ?? throw new InvalidOperationException("no row " + id);
 
-        /// <summary>Writes, reads, checks the loaded city writes the same bytes, and continues on the loaded city with a
-        /// fresh coordinator (its lease and image are transient).</summary>
         public string Reload()
         {
             string payload = SaveWire.Text(City.State);
@@ -67,7 +61,6 @@ public sealed class VendorSaveTests
             return payload;
         }
 
-        /// <summary>One served experience in the resident's memory, through the memory store's own registration.</summary>
         public int Remember(VendorRow row)
         {
             int slot = new FoodMemoryStore(Food).RegisterCampaign(row.BusinessId, row.PlaceId);
@@ -85,7 +78,6 @@ public sealed class VendorSaveTests
             return day;
         }
 
-        /// <summary>Admits, requests at 8:05 and opens every named vehicle at 9:05, so each has a published stand.</summary>
         public void OpenAll(long from, params string[] ids)
         {
             foreach (string id in ids) if (!StreetFoodHooks.Vehicles.Any(v => v.Id == id)) StreetFoodHooks.Add(id, x: 10 + StreetFoodHooks.Vehicles.Count);
@@ -116,8 +108,6 @@ public sealed class VendorSaveTests
         return v;
     }
 
-    /// <summary>A table built directly (no stand-in): stands get their vendor place and Vehicle scope through the
-    /// simulator, as the coordinator does. Tombstones first, then retired, then live, as the reader restores.</summary>
     internal static CitySimulator Table(int live, int retired, int tombstones, bool stands = true, int seed = 5, int idLength = 0)
     {
         var city = WeightedFoodChoiceTests.Ready(seed).city;
@@ -125,8 +115,6 @@ public sealed class VendorSaveTests
         return city;
     }
 
-    /// <summary>Adds the rows to <paramref name="city"/>'s own (empty) table; with <paramref name="references"/> every row
-    /// also gets a business reference, as a remembered vehicle has.</summary>
     internal static void Fill(CitySimulator city, int live, int retired, int tombstones, bool stands = true, int idLength = 0, bool references = false)
     {
         var table = city.State.Vendors;
@@ -159,7 +147,6 @@ public sealed class VendorSaveTests
     private static string RetiredRow(string id) => "[1,\"" + id + "\",\"cart\",1,\"vendor:" + id + "\",null,null,[false,-1,-1,-1,false,-1,false]]";
     private static string TombstoneRow(string id, int generation = 1) => "[2,\"" + id + "\"," + generation + ",\"vendor:" + id + "\",\"streetfood:vehicle:" + id + ":generation:" + generation + "\"]";
 
-    /// <summary>Replaces the saved vendor rows with <paramref name="rows"/> as raw text, so noncanonical tokens stay.</summary>
     private static string WithRows(string payload, IEnumerable<string> rows)
     {
         string table = "\"Vendors\":" + Wire(payload)["Vendors"]!.ToString(Formatting.None);
@@ -167,7 +154,6 @@ public sealed class VendorSaveTests
         return payload.Replace(table, "\"Vendors\":[1,[" + string.Join(",", rows) + "]]");
     }
 
-    // ---- Round trip ----
 
     [Fact]
     public void EveryRowStateRoundTripsFieldForFieldAndRebuildsVendorPlaces()
@@ -183,7 +169,6 @@ public sealed class VendorSaveTests
         var before = city.State.Vendors; var after = read.State!.Vendors;
         Assert.Equal((before.Live, before.Retired, before.Tombstones), (after.Live, after.Retired, after.Tombstones));
         Assert.Equal(JsonConvert.SerializeObject(before.Rows), JsonConvert.SerializeObject(after.Rows));
-        // Vendor places are rebuilt from the table, never stored as city places.
         Assert.DoesNotContain(read.State.Places, p => VendorNames.IsVendorPlace(p.Id));
         Assert.DoesNotContain("\"Id\":\"vendor:", payload);
         var loaded = new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner());
@@ -194,8 +179,8 @@ public sealed class VendorSaveTests
         }
         Assert.Equal(400.125, after.Find("l0001")!.DeferredStand!.Position.X);
         Assert.Equal(new Position(11.5, 0, -3.25), loaded.FindPosition("vendor:l0001"));
-        Assert.Single(loaded.FindPlace("vendor:l0000").WeeklyHours); // live stand published: one window
-        Assert.Empty(loaded.FindPlace("vendor:r0000").WeeklyHours);  // retired: closed
+        Assert.Single(loaded.FindPlace("vendor:l0000").WeeklyHours);
+        Assert.Empty(loaded.FindPlace("vendor:r0000").WeeklyHours);
     }
 
     [Fact]
@@ -209,7 +194,6 @@ public sealed class VendorSaveTests
         Assert.Same(place, rebuilt.FindPlace("vendor:l0000"));
     }
 
-    // ---- Bounds ----
 
     [Fact]
     public void SixtyFourLiveRowsSaveAndSixtyFiveAreRefused()
@@ -232,7 +216,6 @@ public sealed class VendorSaveTests
         string empty = SaveWire.Text(Table(0, 0, 0).State);
         var rows = Enumerable.Range(0, 64).Select(i => LiveRow("l" + i.ToString("D3"))).Concat(Enumerable.Range(0, 65).Select(i => RetiredRow("r" + i.ToString("D3"))));
         Refused(WithRows(empty, rows.OrderBy(r => r.Substring(4), StringComparer.Ordinal)), "Live and retired vendor rows exceed the bound of 128.");
-        // 129 retired rows alone are refused by the same bound.
         Refused(WithRows(empty, Enumerable.Range(0, 129).Select(i => RetiredRow("r" + i.ToString("D3")))), "Live and retired vendor rows exceed the bound of 128.");
     }
 
@@ -251,7 +234,6 @@ public sealed class VendorSaveTests
     public void TheFullTableOf1152RowsSavesAndEveryRowHasAVIndex()
     {
         var city = Table(64, 64, 1024);
-        // One business reference per row, so every v index of the full table is written and read back.
         var food = city.State.Food!;
         int slot = 0;
         foreach (var row in city.State.Vendors.Rows) food.BusinessReferences.Add(new BusinessReference { Slot = slot++, BusinessId = row.BusinessId, PlaceId = row.PlaceId });
@@ -265,7 +247,6 @@ public sealed class VendorSaveTests
         Assert.Equal(food.BusinessReferences.Select(r => r.PlaceId), read.State!.Food!.BusinessReferences.Select(r => r.PlaceId));
     }
 
-    // ---- Vehicle scenarios through the coordinator ----
 
     [Fact]
     public void SixtyThreeReferencedRetiredRowsAndTwoSoldLiveVehiclesLeave65RetiredRowsThatSaveAndReload()
@@ -281,11 +262,10 @@ public sealed class VendorSaveTests
         Assert.Equal((2, 63), (rig.Table.Live, rig.Table.Retired));
         foreach (string id in new[] { "b0", "b1" }) rig.History(rig.Row(id));
         rig.Reload();
-        // Both sold before their history expires: 65 retired rows, still inside live + retired <= 128.
         StreetFoodHooks.Remove("b0"); StreetFoodHooks.Remove("b1");
         rig.Run(rig.Now + 5);
         Assert.Equal((0, 65, 0), (rig.Table.Live, rig.Table.Retired, rig.Table.Tombstones));
-        Assert.Equal(0, rig.Vendors.Compact()); // history still names them all
+        Assert.Equal(0, rig.Vendors.Compact());
         rig.Reload();
         Assert.Equal((0, 65, 0), (rig.Table.Live, rig.Table.Retired, rig.Table.Tombstones));
     }
@@ -312,7 +292,6 @@ public sealed class VendorSaveTests
         Assert.Equal("vendor table full: 128 live and retired vehicles", rig.Table.AdmissionRefusal(null));
     }
 
-    /// <summary>The memory-slot lifecycle of plan 3.5 and section 5, one vehicle, every step saved and reloaded.</summary>
     [Fact]
     public void AVehicleRemembersAcrossTombstoneAndReturnAsGeneration2()
     {
@@ -323,12 +302,10 @@ public sealed class VendorSaveTests
         var history = rig.History(a);
         rig.Reload();
 
-        // Sold: retired. History still names it, so it is not compacted.
         StreetFoodHooks.Remove("A"); rig.Run(rig.Now + 5);
         Assert.Equal(VendorRowState.Retired, rig.Row("A").State);
         Assert.Equal(0, rig.Vendors.Compact());
         rig.Reload();
-        // History expires; memory still names generation 1, so the row becomes a tombstone.
         rig.Food.History.RemoveAll(h => h.PlaceId == "vendor:A");
         Assert.Equal(1, rig.Vendors.Compact());
         Assert.Equal(VendorRowState.Tombstone, rig.Row("A").State);
@@ -338,7 +315,6 @@ public sealed class VendorSaveTests
         Assert.Contains(TombstoneRow("A"), payload);
         AssertSlot(rig, slot1, "streetfood:vehicle:A:generation:1");
 
-        // Returns as generation 2 and records a new experience: both references stay valid.
         rig.OpenAll(rig.Now + 5, "A");
         a = rig.Row("A");
         Assert.Equal((VendorRowState.Live, 2), (a.State, a.Generation));
@@ -349,7 +325,6 @@ public sealed class VendorSaveTests
         AssertSlot(rig, slot2, "streetfood:vehicle:A:generation:2");
         Assert.Equal(2, ((JArray)Wire(payload)["Food"]!["BusinessReferences"]!).Count(r => (string)r[3]! == "v00"));
 
-        // A reference with generation 3 for a row at generation 2 is refused by the writer and by the reader.
         var food = rig.Food;
         food.BusinessReferences.Add(new BusinessReference { Slot = slot2 + 1, BusinessId = "streetfood:vehicle:A:generation:3", PlaceId = "vendor:A" });
         WriteRefused(rig.City.State, "names another business or generation");
@@ -372,19 +347,17 @@ public sealed class VendorSaveTests
 
         rig.OpenAll(rig.Now + 5, "A");
         Assert.Equal(2, rig.Row("A").Generation);
-        // A short-lived reference: the resident's meal holds the stand (pending at its place).
         var meal = rig.Food.Residents[0];
         meal.PlaceId = "vendor:A"; meal.BusinessId = rig.Row("A").BusinessId; meal.ProductId = FoodProducts.HotDog;
         rig.Reload();
         meal = rig.Food.Residents[0];
         StreetFoodHooks.Remove("A"); rig.Run(rig.Now + 5);
         Assert.Equal(VendorRowState.Retired, rig.Row("A").State);
-        Assert.Equal(0, rig.Vendors.Compact()); // the committed meal still names the place
+        Assert.Equal(0, rig.Vendors.Compact());
         rig.Reload();
         meal = rig.Food.Residents[0];
         meal.PlaceId = meal.BusinessId = meal.ProductId = "";
         Assert.Equal(1, rig.Vendors.Compact());
-        // Not removed: the generation-1 reference remains, so the row is a tombstone at generation 2.
         var row = rig.Row("A");
         Assert.Equal((VendorRowState.Tombstone, 2), (row.State, row.Generation));
         string payload = rig.Reload();
@@ -411,7 +384,6 @@ public sealed class VendorSaveTests
             var ids = Enumerable.Range(0, 40).Select(i => "v" + round + "-" + i.ToString("D2")).ToArray();
             rig.OpenAll(at, ids);
             Assert.Equal(40, rig.Table.Live);
-            // Every fifth vehicle is remembered; the rest are named by nothing once sold.
             for (int i = 0; i < ids.Length; i += 10) { rig.Remember(rig.Row(ids[i])); remembered++; }
             rig.Reload();
             foreach (string id in ids) StreetFoodHooks.Remove(id);
@@ -421,7 +393,6 @@ public sealed class VendorSaveTests
             rig.Vendors.Compact();
             Assert.Equal((0, 0, remembered), (rig.Table.Live, rig.Table.Retired, rig.Table.Tombstones));
             rig.Reload();
-            // Memory may hold four businesses per resident; the store keeps their slots and the tombstones keep them valid.
             rig.Food.Residents[0].Memory.Entries.Clear();
             at = rig.Now + 60;
         }
@@ -439,13 +410,11 @@ public sealed class VendorSaveTests
         Assert.True(rig.Vendors.CanServe(rig.Row("A").BusinessId, rig.Now));
         var meal = rig.Food.Residents[0];
         meal.PlaceId = "vendor:A"; meal.BusinessId = rig.Row("A").BusinessId; meal.ProductId = FoodProducts.HotDog;
-        // Stop 1 closes, stop 2 opens 400 m away while the resident still holds a meal for stop 1.
         rig.RunTo(rig.Now + 60); StreetFoodHooks.Close("A"); StreetFoodHooks.Open("A", 120, x: 500); rig.Run(rig.Now + 1);
         var row = rig.Row("A");
         Assert.NotNull(row.DeferredStand);
         Assert.Equal(500, row.DeferredStand!.Position.X);
         string payload = rig.Reload();
-        // The reload keeps the deferred move: old position, no hours, the new stand still waiting.
         row = rig.Row("A");
         Assert.NotNull(row.DeferredStand); Assert.Equal(500, row.DeferredStand!.Position.X);
         Assert.False(row.Stand!.Published);
@@ -465,7 +434,6 @@ public sealed class VendorSaveTests
         Assert.Contains(",500.0,", payload);
     }
 
-    // ---- Business-reference place forms ----
 
     private static (CityState State, string Payload) Referenced()
     {
@@ -489,8 +457,8 @@ public sealed class VendorSaveTests
     }
 
     [Theory]
-    [InlineData("v03", "Unknown vendor business place reference.")] // the table has three rows
-    [InlineData("vZZ", "Invalid vendor business place reference.")] // 1,295 is beyond the 1,152-row bound
+    [InlineData("v03", "Unknown vendor business place reference.")]
+    [InlineData("vZZ", "Invalid vendor business place reference.")]
     [InlineData("vw0", "Noncanonical base-36 alphabet.")]
     [InlineData("v0", "Invalid business place reference.")]
     [InlineData("v000", "Invalid business place reference.")]
@@ -512,7 +480,6 @@ public sealed class VendorSaveTests
     {
         var (state, payload) = Referenced();
         var root = Wire(payload);
-        // A city place with the vendor prefix is refused on its own and as a business reference target.
         var forged = ((JArray)root["Places"]!).First(p => (string)p["Id"]! == "s0").DeepClone();
         forged["Id"] = "vendor:zz";
         ((JArray)root["Places"]!).Add(forged);
@@ -520,7 +487,6 @@ public sealed class VendorSaveTests
         var reference = ((JArray)root["Food"]!["BusinessReferences"]!)[0];
         reference[2] = "streetfood:vehicle:zz:generation:1"; reference[3] = MemoryWire.Number(ids.IndexOf("vendor:zz"), 3);
         Refused(Text(root), "A city business place reference names a vendor place.");
-        // The writer refuses the same city place before encoding anything.
         state.Places.Add(new Place { Id = "vendor:zz", Name = "Forged", Kind = PlaceKind.Shop });
         WriteRefused(state, "A city place uses the vendor place prefix.");
     }
@@ -539,7 +505,6 @@ public sealed class VendorSaveTests
         Refused(payload.Replace("\"streetfood:vehicle:l0000:generation:1\",\"v00\"", "\"other:business\",\"v00\""), "names another business or generation");
     }
 
-    // ---- Ids ----
 
     [Fact]
     public void VehicleIdsOf128UnitsRoundTripAnd129AreRefused()
@@ -551,7 +516,6 @@ public sealed class VendorSaveTests
         Assert.Equal(payload, SaveWire.Text(read.State!));
         string id = new string('x', 129);
         Refused(WithRows(SaveWire.Text(Table(0, 0, 0).State), new[] { TombstoneRow(id) }), "Invalid vendor vehicle id.");
-        // Non-ASCII ids escape into the place and signature and round-trip exactly.
         string unicode = "Café é 🚚";
         var escaped = Table(0, 0, 0);
         var row = escaped.State.Vendors.Admit(unicode, ""); escaped.State.Vendors.Move(row, VendorRowState.Tombstone);
@@ -560,14 +524,10 @@ public sealed class VendorSaveTests
         Refused(WithRows(text, new[] { "[2,\"a\\u0001\",1,\"vendor:a%01\",\"streetfood:vehicle:a%01:generation:1\"]" }), "Invalid vendor vehicle id.");
     }
 
-    /// <summary>Reviews Sol-r1-1 and Sol-r2-1: a valid 128-unit id may escape to 1,152 characters. The identities keep
-    /// the plan's escaped form (vendor:&lt;escaped id&gt;, streetfood:vehicle:&lt;escaped id&gt;:generation:&lt;g&gt;), and every
-    /// saved field that holds them allows the escaped maxima: the table, the Vehicle scope, a meal and its outcome
-    /// record, a resident at the stand, a business reference and a remembered tombstone.</summary>
     [Theory]
-    [InlineData("中", 128)]        // 9 escaped characters per unit: the maximum
-    [InlineData(" ", 128)]         // 3 per unit
-    [InlineData("\ud83d\ude9a", 64)] // 64 surrogate pairs, 128 units, 6 per unit
+    [InlineData("中", 128)]
+    [InlineData(" ", 128)]
+    [InlineData("\ud83d\ude9a", 64)]
     [InlineData("é", 128)]
     public void MaximumLengthEscapedIdsRoundTripWithScopeMealPersonReferenceAndTombstone(string unit, int repeat)
     {
@@ -592,7 +552,6 @@ public sealed class VendorSaveTests
         var food = state.Food!;
         food.BusinessReferences.Add(new BusinessReference { Slot = 0, BusinessId = row.BusinessId, PlaceId = row.PlaceId });
         food.BusinessReferences.Add(new BusinessReference { Slot = 1, BusinessId = VendorNames.BusinessId(other, 1), PlaceId = tomb.PlaceId });
-        // The resident bought at the stand and is still eating there.
         var person = state.Citizens.Single();
         var meal = food.Residents.Single(m => m.ResidentId == person.Identity.Id);
         meal.Status = MealStatus.Paid; meal.PlaceId = row.PlaceId; meal.BusinessId = row.BusinessId; meal.ProductId = FoodProducts.HotDog;
@@ -611,16 +570,13 @@ public sealed class VendorSaveTests
         Assert.Equal(row.PlaceId, read.State.Citizens.Single().PlaceId);
         Assert.Equal(row.PlaceId, read.State.Food!.Residents[0].Today!.Meals.Single().PlaceId);
         Assert.Equal(new Position(10, 0, 0), new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner()).FindPosition(row.PlaceId));
-        // An ordinary place or business id keeps its own bound: only vendor identities may be longer.
         food.BusinessReferences.Add(new BusinessReference { Slot = 2, BusinessId = new string('b', 513), PlaceId = "s0" });
         WriteRefused(state, "Invalid Business reference identity.");
     }
 
-    /// <summary>Review Sol-r3-1: the awareness catalogue accepts the escaped maxima too. A city with a maximum-length
-    /// escaped vehicle identity saves, reloads and advances two days through awareness rebuilds.</summary>
     [Theory]
-    [InlineData(28)]  // a 259-character place id, the first over the ordinary 256 bound
-    [InlineData(128)] // the maxima
+    [InlineData(28)]
+    [InlineData(128)]
     public void AMaximumLengthVendorIdentitySurvivesReloadAndAwarenessRebuilds(int units)
     {
         var (city, market, planner) = WeightedFoodChoiceTests.Ready(5);
@@ -644,10 +600,7 @@ public sealed class VendorSaveTests
         Assert.True(again.Status == SaveReadStatus.Loaded, again.Error);
     }
 
-    // ---- Persons at stands (review Opus-r1-1) ----
 
-    /// <summary>A resident eating at a stand, walking to it, or with the stand among their recent visits saves and
-    /// reloads. The visit uses the "v" place cell.</summary>
     [Fact]
     public void AResidentAtWalkingToOrRecentlyAtAStandSavesAndReloads()
     {
@@ -694,7 +647,7 @@ public sealed class VendorSaveTests
     }
 
     [Theory]
-    [InlineData("v02", "Invalid visit place/activity code.")] // two rows
+    [InlineData("v02", "Invalid visit place/activity code.")]
     [InlineData("vZZ", "Invalid visit place/activity code.")]
     public void AVisitVIndexOutsideTheTableIsRefused(string cell, string message)
     {
@@ -714,7 +667,7 @@ public sealed class VendorSaveTests
         person.RecentVisits.Add(new VisitRecord { AtMinute = rig.City.State.Minute, PlaceId = "vendor:A", Activity = Activity.Shop });
         StreetFoodHooks.Remove("A"); rig.Run(rig.Now + 5);
         Assert.Equal(VendorRowState.Retired, rig.Row("A").State);
-        Assert.Equal(0, rig.Vendors.Compact()); // the visit still names the place
+        Assert.Equal(0, rig.Vendors.Compact());
         rig.Reload();
         Assert.NotNull(rig.City.FindPosition("vendor:A"));
         rig.City.State.Citizens.Single().RecentVisits.Clear();
@@ -723,7 +676,6 @@ public sealed class VendorSaveTests
         rig.Reload();
     }
 
-    /// <summary>A visitor at, or last arrived at, a stand writes its routine and arrival cells in the "v" form.</summary>
     [Fact]
     public void AVisitorAtAStandWritesTheVendorFormInItsRoutineAndArrival()
     {
@@ -734,7 +686,6 @@ public sealed class VendorSaveTests
         while (!city.AdvanceTo(target, 64).CaughtUp) { }
         Fill(city, 1, 0, 0);
         var live = state.Vendors.Rows.Single();
-        // An active visitor at a city place, moved to the stand: its routine place and its arrival name the vendor place.
         var routine = state.VisitorRoutines.First(r => r.Phase == CitizenPhase.AtPlace && r.PlaceId != r.HomeId && r.MealOuting == null && r.OptionalStop == null);
         routine.Activity = Activity.Shop;
         var visitor = state.Visitors[state.VisitorRoutines.IndexOf(routine)];
@@ -748,7 +699,7 @@ public sealed class VendorSaveTests
         Assert.Equal(live.PlaceId, read.State.Visitors[at].LastArrival!.PlaceId);
         Assert.Contains("|v00|", (string)((JArray)Wire(payload)["VisitorRoutines"]!)[at]["T"]!);
         string tuple = (string)((JArray)Wire(payload)["Visitors"]!)[at]!;
-        Assert.Equal("v00", tuple.Substring(tuple.Length - 4, 3)); // the arrival cell, before its activity digit
+        Assert.Equal("v00", tuple.Substring(tuple.Length - 4, 3));
     }
 
     [Fact]
@@ -769,11 +720,10 @@ public sealed class VendorSaveTests
     [InlineData("[0,\"a\",\"van\",1,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1,false]]", "Unknown vendor kind.")]
     [InlineData("[0,\"a\",\"cart\",1,\"vendor:a\",null,null,[false,-1,-1,-2,false,-1,false]]", "Invalid vendor until hour.")]
     [InlineData("[0,\"a\",\"cart\",1,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1]]", "Invalid vendor handback flag.")]
-    [InlineData("[0,\"a\",\"cart\",01,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1,false]]", "Invalid state")] // F7d: "01" is not a JSON number, so the compact wire cannot carry it
+    [InlineData("[0,\"a\",\"cart\",01,\"vendor:a\",null,null,[false,-1,-1,-1,false,-1,false]]", "Invalid state")]
     public void MalformedRowsAreRefused(string row, string message)
         => Refused(WithRows(SaveWire.Text(Table(0, 0, 0).State), new[] { row }), message);
 
-    // ---- Channel-aware scope and food-place checks ----
 
     [Fact]
     public void AVehicleScopeWithoutItsRowIsRefused()
@@ -806,12 +756,11 @@ public sealed class VendorSaveTests
         meal.PlaceId = "vendor:l0000"; meal.BusinessId = "streetfood:vehicle:l0000:generation:1"; meal.ProductId = FoodProducts.HotDog;
         string payload = SaveWire.Text(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status);
-        foreach (string missing in new[] { "vendor:nobody", "vendor:t0000" }) // unknown, and a tombstone (no food place)
+        foreach (string missing in new[] { "vendor:nobody", "vendor:t0000" })
         {
             meal.PlaceId = missing;
             WriteRefused(state, "Meal lost its historical business/place identity.");
         }
-        // A history row at a missing vendor place is refused the same way.
         meal.PlaceId = "vendor:l0000";
         state.Food.History.Add(new FoodShopDay { Day = 1, PlaceId = "vendor:nobody", BusinessId = "x" });
         WriteRefused(state, "Invalid market history ownership.");
@@ -830,7 +779,6 @@ public sealed class VendorSaveTests
         WriteRefused(state, "A shop scope names a vendor place.");
         vehicle.UseChannel(FoodScopeChannel.Vehicle); vehicle.BusinessId = "streetfood:vehicle:l0000:generation:2";
         WriteRefused(state, "differs from its vendor row's business");
-        // The same mismatches in a payload, and an unknown channel code.
         var root = Wire(payload);
         var shops = (JArray)root["Food"]!["Shops"]!;
         var cityScope = shops.First(s => (string)s["PlaceId"]! == "s0");
@@ -847,19 +795,16 @@ public sealed class VendorSaveTests
         var state = Table(1, 0, 0).State;
         var row = state.Vendors.Rows[0];
         string payload = SaveWire.Text(state);
-        // A deferred stand needs the stand (and so the place) it replaces.
         var root = Wire(payload);
         var wireRow = (JArray)Rows(root)[0];
         wireRow[6] = wireRow[5]; wireRow[5] = JValue.CreateNull();
         Refused(Text(root), "A deferred vendor stand needs the stand it replaces.");
-        // Writer side: a stand whose vendor place is not published, and the reverse.
         row.PlacePublished = false;
         WriteRefused(state, "A vendor place exists exactly while its row has a stand.");
         row.PlacePublished = true;
         var stand = row.Stand; row.Stand = null; row.DeferredStand = stand;
         WriteRefused(state, "A vendor place exists exactly while its row has a stand.");
         row.Stand = stand; row.DeferredStand = null;
-        // A stand with an impossible window.
         row.Stand!.ClosesDay = 1;
         WriteRefused(state, "Invalid vendor stand closing time.");
     }
@@ -885,7 +830,6 @@ public sealed class VendorSaveTests
         Refused(payload.Replace(",\"Vendors\":[1,[]]", ""), "");
     }
 
-    // ---- Older and future cities ----
 
     private static void RefusedAndPreserved(string payload, SaveReadStatus status, string? message = null)
     {
@@ -897,7 +841,6 @@ public sealed class VendorSaveTests
         var before = new Dictionary<string, string>(data);
         Assert.Equal(status, SaveSession.Open(data, replacement.PopulationKey).InitialReadResult.Status);
         Assert.Equal(status, SaveStore.ReadFrom(data, replacement.PopulationKey).Status);
-        // The refused payload is never overwritten, not even by an explicit write of a replacement city.
         Assert.False(SaveStore.WriteTo(data, replacement).Success);
         Assert.False(SaveSession.Open(data, replacement.PopulationKey).WriteTo(data, replacement).Success);
         Assert.Same(payload, data[SaveStore.StateKey]);
@@ -907,7 +850,6 @@ public sealed class VendorSaveTests
     [Fact]
     public void AnOlderDevelopmentCityIsRefusedWithTheNewCityStatusAndKept()
     {
-        // Older development builds wrote 2 to 36; a vendor table does not make any of them readable.
         foreach (int older in new[] { 29, 36, 37 })
         {
             string payload = SaveWire.Text(Table(1, 1, 1).State)
@@ -918,7 +860,6 @@ public sealed class VendorSaveTests
         }
     }
 
-    // ---- Golden ----
 
     internal static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
@@ -927,8 +868,6 @@ public sealed class VendorSaveTests
         ("vendors-at-bounds", () => { var c = WeightedFoodChoiceTests.Ready(5).city; Fill(c, 64, 64, 1024, references: true); return c.State; }),
     };
 
-    /// <summary>The writer's golden for each vendor fixture, re-pinned once by X3 at the held schema 1. A deliberate format
-    /// change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData("shops-only", "e39fbfe32157c405cb53ed40530e6233d0ff8cd365535c1c902390699c2c2f0f", 3631)]
     [InlineData("vendors-all-states", "3fa4c8cde1c8ecf7373b35868f3798ce7e3ed3afba3071f6c719e3e306ba6a33", 5072)]
@@ -948,7 +887,6 @@ public sealed class VendorSaveTests
         foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveWire.Text(build()), SaveWire.Text(build()));
     }
 
-    // ---- Snapshot ----
 
     [Fact]
     public void TheSnapshotCopiesTheVendorTableAndTheChannel()
@@ -963,7 +901,6 @@ public sealed class VendorSaveTests
             Assert.NotSame(state.Vendors.Rows[i], snapshot.Wire.Vendors.Rows[i]);
             if (state.Vendors.Rows[i].Stand != null) Assert.NotSame(state.Vendors.Rows[i].Stand, snapshot.Wire.Vendors.Rows[i].Stand);
         }
-        // Mutation after capture never reaches the payload.
         var live = state.Vendors.Find("l0002")!;
         live.Authority.Desired = false; live.Stand!.Published = false;
         state.Food!.Shops.Single(s => s.PlaceId == "vendor:l0000").UseChannel(FoodScopeChannel.Shop);

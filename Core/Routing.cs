@@ -28,12 +28,6 @@ namespace PersistentCity.Core
         public string ServiceId { get; }
     }
 
-    /// <summary>
-    /// Offline directed graph prototype, not a game road or transit adapter. Places must use graph
-    /// node IDs and positions. Walking tolerance limits total walked metres. Transit uses expected
-    /// headway / 2 boarding waits (no timetable), and fares apply once per continuous service.
-    /// A car must be used for the entire journey. Unknown, disconnected and same-node trips return null.
-    /// </summary>
     public sealed class GraphRoutePlanner : IRoutePlanner
     {
         private readonly Dictionary<string, GraphNode> nodes = new Dictionary<string, GraphNode>(StringComparer.Ordinal);
@@ -83,8 +77,6 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Place positions must match their graph nodes; implicit connector legs are unsupported.");
             if (origin.Id == destination.Id) return null;
 
-            // Labels retain nondominated (generalized time, walked metres) alternatives. A single
-            // shortest label per node would incorrectly discard feasible routes under a walk budget.
             var frontier = new List<Label>();
             var labels = new Dictionary<State, List<Label>>();
             var initial = new Label(new State(origin.Id, 0, null, ""), 0, 0, null, null, 0, new List<string>());
@@ -165,7 +157,7 @@ namespace PersistentCity.Core
             public State(string nodeId, int journeyKind, TravelMode? transitMode, string serviceId)
             { NodeId = nodeId; JourneyKind = journeyKind; TransitMode = transitMode; ServiceId = serviceId; }
             public string NodeId { get; }
-            public int JourneyKind { get; } // 0 = start, 1 = car, 2 = walking/transit
+            public int JourneyKind { get; }
             public TravelMode? TransitMode { get; }
             public string ServiceId { get; }
             public bool Equals(State other) => NodeId == other.NodeId && JourneyKind == other.JourneyKind && TransitMode == other.TransitMode && ServiceId == other.ServiceId;

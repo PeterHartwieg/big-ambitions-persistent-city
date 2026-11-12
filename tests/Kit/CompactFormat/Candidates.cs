@@ -5,10 +5,6 @@ using System.Text;
 
 namespace PersistentCity.Tools.CompactFormat
 {
-    /// <summary>
-    /// The four F7p candidates of plan section 3.6. Each encodes the detached wire tree (the F7c snapshot
-    /// stand-in) to one modData string and decodes that string back to a tree.
-    /// </summary>
     public abstract class Candidate
     {
         public static readonly Candidate[] All = { new Writer25(), new Columnar("B", ColumnarOptions.B), new Columnar("C", ColumnarOptions.C), new Deflated() };
@@ -20,7 +16,6 @@ namespace PersistentCity.Tools.CompactFormat
 
         public static Candidate Get(string id) => Array.Find(All, c => c.Id == id) ?? throw new ArgumentException("Unknown candidate " + id);
 
-        /// <summary>A: writer-25 JSON exactly as written today (byte-identical to SaveCodec.Write).</summary>
         private sealed class Writer25 : Candidate
         {
             public override string Id => "A";
@@ -41,11 +36,9 @@ namespace PersistentCity.Tools.CompactFormat
             public override object? Decode(string payload) => ColumnarCodec.Decode(payload, options);
         }
 
-        /// <summary>D: C, then raw deflate of its UTF-8 bytes, then base64 (the modData value must stay a string).</summary>
         private sealed class Deflated : Candidate
         {
             public const string Prefix = "pcd1:";
-            /// <summary>The one compression setting measured; deterministic for one zlib build only.</summary>
             public const CompressionLevel Level = CompressionLevel.Optimal;
             public override string Id => "D";
             public override string Description => "C plus deflate (Optimal) and base64";

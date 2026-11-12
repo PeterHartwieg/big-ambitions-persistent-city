@@ -7,23 +7,15 @@ using UnityEngine.AI;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>A queue at a customer entrance: a building door or a pavement-side vendor stand.</summary>
     internal sealed class DoorQueue
     {
         public DoorQueue(string key, Position door, Position entrance, IReadOnlyList<Position> spots) { Key = key; Door = door; Entrance = entrance; Spots = spots; }
-        /// <summary>One line per entrance. Places that share a door (two customer places at one entrance) share it.</summary>
         public string Key { get; }
         public Position Door { get; }
-        /// <summary>The places' walkable entrance point: where a queuer comes out to the line and goes in at opening.</summary>
         public Position Entrance { get; }
         public IReadOnlyList<Position> Spots { get; }
     }
 
-    /// <summary>
-    /// Read-only, cached sampling of dwell spots. Queue spots run along the building's wall beside
-    /// the door, close to the facade and out of the pavement's walking line, and stop short of any
-    /// other door.
-    /// </summary>
     internal sealed class DwellSpots
     {
         public const int QueueLength = 8;
@@ -36,7 +28,6 @@ namespace PersistentCity.Runtime
         }
         public void Invalidate(Place place)
         { string key = KeyOf(place); queues.Remove(key); retryAt.Remove(key); }
-        // Native entrances are sampled 0.5 m in front of the door transform (GamePlaces.TryEntrance).
         private const float DoorMatchMetres = 2.5f, WallOffset = 0.6f, FirstGap = 1.1f, Spacing = 0.75f;
         private const float SampleRadius = 0.6f, LateralTolerance = 0.45f, OtherDoorClearance = 1.2f, RetrySeconds = 60f;
         private readonly Dictionary<string, DoorQueue> queues = new Dictionary<string, DoorQueue>(StringComparer.Ordinal);
@@ -44,10 +35,6 @@ namespace PersistentCity.Runtime
 
         public static string KeyOf(Place place) => VendorNames.IsVendorPlace(place.Id) ? place.Id : DwellPlanner.DoorKey(place.Position);
 
-        /// <summary>
-        /// At most one uncached door is sampled per frame across all callers. A door with no usable line is tried again
-        /// after a minute, in case its navmesh was not ready.
-        /// </summary>
         public bool TryQueue(Place place, ref bool sampledThisCall, out DoorQueue? queue)
         {
             string key = KeyOf(place);
@@ -63,7 +50,6 @@ namespace PersistentCity.Runtime
             return true;
         }
 
-        /// <summary>True when this door has not been sampled yet and is not waiting out a retry.</summary>
         public bool Unsampled(Place place)
         {
             string key = KeyOf(place);
@@ -73,8 +59,6 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, (long Opening, Position Entrance, Position Origin, float Heading, string Kind)> vendorLayouts
             = new Dictionary<string, (long, Position, Position, float, string)>(StringComparer.Ordinal);
 
-        /// <summary>Street Food supplies the pavement-side queue origin and its direction (Unity yaw degrees).
-        /// Never look for a building door or snap a refused spot farther out into the street.</summary>
         public bool TryVendorQueue(VendorRow row, VendorVehicle vehicle, out DoorQueue? queue)
         {
             queue = null;
@@ -114,7 +98,6 @@ namespace PersistentCity.Runtime
                 var wanted = new Position(origin.X + Math.Sin(heading) * spacing * i, origin.Y, origin.Z + Math.Cos(heading) * spacing * i);
                 if (!NavMesh.SamplePosition(PhysicalPedestrianBody.Vector(wanted), out NavMeshHit hit, 0.3f, WalkingRoutes.DryFilter)) break;
                 var point = PhysicalPedestrianBody.Point(hit.position);
-                // Keep the supplied pavement line, including its level. A partial line is usable; never bridge a gap.
                 if (Math.Abs(point.Y - wanted.Y) > 0.5 || Math.Sqrt(Math.Pow(point.X - wanted.X, 2) + Math.Pow(point.Z - wanted.Z, 2)) > 0.15
                     || NavMesh.Raycast(PhysicalPedestrianBody.Vector(previous), hit.position, out _, WalkingRoutes.DryFilter)) break;
                 points.Add(point); previous = point;
@@ -148,12 +131,8 @@ namespace PersistentCity.Runtime
             if (outward.sqrMagnitude < 0.01f) return null;
             outward.Normalize();
             Vector3 along = Vector3.Cross(Vector3.up, outward);
-            // Prefer the side with the longer clear line; ties go to the door's right.
             var right = Line(door.position, outward, along, otherDoors);
             var left = Line(door.position, outward, -along, otherDoors);
-            // A queuer comes out of the entrance and walks to the line, so the line must be
-            // reachable from it on the walking navmesh, round the door's own carve if need be.
-            // If the longer side isn't, the other side is used.
             foreach (var spots in left.Count > right.Count ? new[] { left, right } : new[] { right, left })
                 if (spots.Count > 0 && Reachable(entrance, spots[0]))
                     return new DoorQueue(key, PhysicalPedestrianBody.Point(door.position), place.Position, spots);

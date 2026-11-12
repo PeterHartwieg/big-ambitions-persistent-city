@@ -9,8 +9,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E6b: the Street Food bridge against a contract-shaped stand-in, and the Core vendor rules (E6 plan 3.2-3.6,
-/// section 9 defaults). The stand-in is static, so these tests share one collection and reset it.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class StreetFoodVendorTests
 {
@@ -27,7 +25,7 @@ public sealed class StreetFoodVendorTests
         {
             Calls++;
             point = new Position(stand.X, 0, stand.Z);
-            return !Blocked && stand.X < 9000; // far stands are off the walkable mesh
+            return !Blocked && stand.X < 9000;
         }
     }
 
@@ -66,7 +64,6 @@ public sealed class StreetFoodVendorTests
         public string Shops() => JsonConvert.SerializeObject(City.State.Food!.Shops.Where(s => s.Channel == FoodScopeChannel.Shop));
     }
 
-    // ---- Bridge: bind, validate, copy ----
 
     [Fact]
     public void BridgeBindsTheContractAndCopiesADetachedValidatedImage()
@@ -88,7 +85,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(2, b.OpenedDay); Assert.Equal(480, b.OpenedMinute); Assert.Equal(2, b.ClosesDay); Assert.Equal(570, b.ClosesMinute);
         Assert.Equal(200f, b.X); Assert.Equal(201f, b.QueueX); Assert.Equal(90f, b.QueueHeading);
         Assert.Equal(2, b.ItemCount); Assert.Equal(FoodProducts.Croissant, b.Items[1]); Assert.Equal(401, b.PriceCents[1]); Assert.Equal(10, b.Units[1]);
-        // Detached: Street Food changing its vehicle does not change the copy.
         StreetFoodHooks.Find("B").Units[1] = 0;
         Assert.Equal(10, image.Find("B")!.Units[1]);
     }
@@ -216,7 +212,7 @@ public sealed class StreetFoodVendorTests
         Assert.NotNull(rig.Table.Find("A"));
         int reads = StreetFoodHooks.ReadCalls;
         long minute = At(8, 1);
-        for (int i = 0; i < 2000; i++) rig.Vendors.Poll(minute); // the lease slot was renewed at 08:00; nothing is due at 08:01; warm-up past tiered JIT
+        for (int i = 0; i < 2000; i++) rig.Vendors.Poll(minute);
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) rig.Vendors.Poll(minute);
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
@@ -225,7 +221,6 @@ public sealed class StreetFoodVendorTests
         Assert.False(rig.Vendors.Continue(minute));
     }
 
-    // ---- Missing or unsupported API ----
 
     [Fact]
     public void MissingOrUnsupportedApiRefusesVehicleScopesAndLeavesShopsUntouched()
@@ -248,7 +243,6 @@ public sealed class StreetFoodVendorTests
         Assert.Contains("unsupported contract 2", unsupported);
     }
 
-    // ---- Ownership: request, acquire at a later opening, serve ----
 
     [Fact]
     public void CrewOpeningInALaterHourIsAcquiredPublishedAndServed()
@@ -260,12 +254,10 @@ public sealed class StreetFoodVendorTests
         Assert.True(a.Authority.Desired); Assert.Equal(Day2 / 60 + 8, a.Authority.RequestedHour);
         Assert.Contains("request A", StreetFoodHooks.Calls); Assert.Contains("renew", StreetFoodHooks.Calls);
 
-        // An opening in the request hour stays Street Food's; the request stays recorded.
         rig.RunTo(At(8, 30)); StreetFoodHooks.Open("A", 30); rig.Run(At(8, 30));
         Assert.False(rig.Serves("A")); Assert.False(a.PlacePublished); Assert.Equal(-1, a.Authority.FromHour);
         rig.RunTo(At(9)); StreetFoodHooks.Close("A"); rig.Run(At(9));
 
-        // The next opening, at 09:30, is PC's.
         rig.RunTo(At(9, 30)); StreetFoodHooks.Open("A", 120); rig.Run(At(9, 30));
         Assert.Equal(Day2 / 60 + 9, a.Authority.FromHour); Assert.Equal(2, a.Authority.OpeningId);
         Assert.True(rig.Serves("A"));
@@ -273,16 +265,15 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(PlaceKind.Shop, place.Kind); Assert.Equal(100, place.Position.X); Assert.Equal(0, place.Position.Y);
         var window = Assert.Single(place.WeeklyHours);
         Assert.Equal((VendorRules.Weekday(2), 570, 690), (window.Day, window.FromMinute, window.ToMinute));
-        Assert.DoesNotContain(rig.City.State.Places, p => p.Id == a.PlaceId); // never a saved city place
+        Assert.DoesNotContain(rig.City.State.Places, p => p.Id == a.PlaceId);
         var scope = rig.City.State.Food!.Shops.Single(s => s.PlaceId == a.PlaceId);
         Assert.Equal(FoodScopeChannel.Vehicle, scope.Channel); Assert.Equal(a.BusinessId, scope.BusinessId);
         Assert.Equal(FoodProducts.HotDog, scope.ProductId); Assert.Equal(FoodAlternativeKind.Player, scope.AlternativeKind);
         Assert.All(rig.City.State.Food.Shops.Where(s => s.PlaceId != a.PlaceId), s => Assert.Equal(FoodScopeChannel.Shop, s.Channel));
 
-        // Closing ends the window; residents arriving later find it closed.
         rig.RunTo(At(11, 30)); StreetFoodHooks.Close("A"); rig.Run(At(11, 30));
         Assert.False(rig.Serves("A")); Assert.Empty(rig.Place("A").WeeklyHours);
-        Assert.True(a.Authority.Managed); // ownership continues for the next opening
+        Assert.True(a.Authority.Managed);
     }
 
     [Fact]
@@ -291,14 +282,14 @@ public sealed class StreetFoodVendorTests
         StreetFoodHooks.Add("A");
         var rig = new Rig();
         rig.Run(At(8, 5));
-        StreetFoodHooks.Open("A"); StreetFoodHooks.Find("A").Owner = VendorNames.Owner; // a faulty Street Food grant at 08:05
+        StreetFoodHooks.Open("A"); StreetFoodHooks.Find("A").Owner = VendorNames.Owner;
         rig.Run(At(8, 6));
         var a = rig.Row("A");
         Assert.False(rig.Serves("A")); Assert.False(a.PlacePublished);
         Assert.Contains("request hour", a.Reason);
         Assert.Contains("release A", StreetFoodHooks.Calls);
-        Assert.Equal("", StreetFoodHooks.Find("A").Owner); // Street Food resumes its own customers
-        Assert.True(a.Authority.Desired); Assert.True(a.Authority.Requested); // and the next opening is requested again
+        Assert.Equal("", StreetFoodHooks.Find("A").Owner);
+        Assert.True(a.Authority.Desired); Assert.True(a.Authority.Requested);
     }
 
     [Theory]
@@ -312,10 +303,9 @@ public sealed class StreetFoodVendorTests
         rig.RunTo(At(9, 10)); StreetFoodHooks.Open("A", 60, crew, cityEvent); rig.Run(At(9, 10));
         var a = rig.Row("A");
         Assert.False(rig.Serves("A")); Assert.False(a.PlacePublished); Assert.Equal(reason, a.Reason);
-        Assert.Equal("", StreetFoodHooks.Find("A").Owner); // Street Food keeps its own queue for this opening
+        Assert.Equal("", StreetFoodHooks.Find("A").Owner);
         rig.RunTo(At(10, 10)); StreetFoodHooks.Close("A"); rig.Run(At(10, 10));
 
-        // The crew opening afterwards gets residents.
         rig.RunTo(At(11, 5)); StreetFoodHooks.Open("A", 60); rig.Run(At(11, 5));
         Assert.True(rig.Serves("A")); Assert.True(a.PlacePublished);
     }
@@ -334,7 +324,7 @@ public sealed class StreetFoodVendorTests
         Assert.Equal("menu has more than 8 items", refusals["C"]);
         Assert.True(rig.Vendors.Image!.Find("C")!.MenuOverflow);
         Assert.DoesNotContain("request B", StreetFoodHooks.Calls); Assert.DoesNotContain("request C", StreetFoodHooks.Calls);
-        Assert.DoesNotContain(rig.City.State.Food!.Shops, s => s.Channel == FoodScopeChannel.Vehicle); // none before an accepted opening
+        Assert.DoesNotContain(rig.City.State.Food!.Shops, s => s.Channel == FoodScopeChannel.Vehicle);
     }
 
     [Fact]
@@ -351,7 +341,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(1, rig.Stands.Calls);
     }
 
-    // ---- Stands ----
 
     [Theory]
     [InlineData(MealStatus.Travelling)]
@@ -366,17 +355,16 @@ public sealed class StreetFoodVendorTests
         Assert.True(rig.Serves("A"));
         var meal = rig.Commit("A", committed);
 
-        // Stop 1 closes, stop 2 opens 400 m away while a resident still walks to stop 1.
         rig.RunTo(At(10, 5)); StreetFoodHooks.Close("A"); StreetFoodHooks.Open("A", 60, x: 500); rig.Run(At(10, 5));
         var a = rig.Row("A");
         Assert.NotNull(a.DeferredStand);
-        Assert.Equal(100, rig.Place("A").Position.X); Assert.Empty(rig.Place("A").WeeklyHours); // old position, closed
+        Assert.Equal(100, rig.Place("A").Position.X); Assert.Empty(rig.Place("A").WeeklyHours);
         Assert.False(rig.Serves("A"));
         Assert.Equal("stand move waits for committed residents", a.Reason);
 
         rig.RunTo(At(10, 30), 5);
         Assert.NotNull(a.DeferredStand);
-        meal.Status = MealStatus.Declined; // arrived, found it closed, kept their money
+        meal.Status = MealStatus.Declined;
         rig.RunTo(At(10, 40), 5);
         Assert.Null(a.DeferredStand);
         Assert.Equal(500, rig.Place("A").Position.X); Assert.Single(rig.Place("A").WeeklyHours);
@@ -406,7 +394,7 @@ public sealed class StreetFoodVendorTests
         rig.Run(At(8, 5));
         rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 60); rig.Run(At(9, 5));
         Assert.False(rig.City.FoodAwarenessCurrent);
-        rig.City.InspectFoodAwareness("r"); // bounded preparation finishes the rebuild
+        rig.City.InspectFoodAwareness("r");
         Assert.True(rig.City.FoodAwarenessCurrent);
         rig.RunTo(At(10, 5)); StreetFoodHooks.Close("A"); StreetFoodHooks.Open("A", 60, x: 50); rig.Run(At(10, 5));
         Assert.False(rig.City.FoodAwarenessCurrent);
@@ -423,7 +411,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(rig.City.FindPosition(rig.Row("A").PlaceId), rebuilt.FindPosition(rig.Row("A").PlaceId));
     }
 
-    // ---- Release, lease, handback ----
 
     [Fact]
     public void ReleaseWaitsUntilPcWorkHasDrained()
@@ -433,7 +420,6 @@ public sealed class StreetFoodVendorTests
         rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 180); rig.Run(At(9, 5));
         var meal = rig.Commit("A", MealStatus.Serving);
 
-        // The menu changes to something PC cannot execute: no new captures at once, release only after the drain.
         var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
         rig.Run(At(9, 20));
         var a = rig.Row("A");
@@ -460,13 +446,12 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(12, StreetFoodHooks.Calls.Count(c => c == "renew"));
         Assert.True(rig.Serves("A")); Assert.True(rig.Vendors.Lease.Valid(At(12, 5)));
 
-        // PC stops advancing for 70 minutes: the lease runs out and Street Food takes the opening back by itself.
         StreetFoodHooks.Now = At(13, 15); StreetFoodHooks.Expire();
         Assert.Equal("", StreetFoodHooks.Find("A").Owner);
         rig.Run(At(13, 15));
         var a = rig.Row("A");
         Assert.False(rig.Serves("A")); Assert.Equal(-1, a.Authority.OpeningId); Assert.Empty(rig.Place("A").WeeklyHours);
-        Assert.Equal(Day2 / 60 + 13, a.Authority.RequestedHour); // asked again after the lapse
+        Assert.Equal(Day2 / 60 + 13, a.Authority.RequestedHour);
         rig.RunTo(At(14, 10)); StreetFoodHooks.Close("A"); StreetFoodHooks.Open("A", 60); rig.Run(At(14, 10));
         Assert.True(rig.Serves("A"));
     }
@@ -487,7 +472,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal("city refused", rig.Vendors.Reason);
     }
 
-    // ---- Retirement and capacity ----
 
     [Fact]
     public void AMissingVehicleRetiresThenCompactsToATombstoneOrIsRemovedAndReturnsAsTheNextGeneration()
@@ -506,19 +490,17 @@ public sealed class StreetFoodVendorTests
         Assert.Equal((0, 2, 0), (rig.Table.Live, rig.Table.Retired, rig.Table.Tombstones));
         Assert.Empty(rig.Place("A").WeeklyHours);
 
-        // An uncertain receipt and a retained history row keep the rows.
         Assert.Equal(0, rig.Vendors.Compact());
         meal.Status = MealStatus.Paid;
-        Assert.Equal(0, rig.Vendors.Compact(row => row == a)); // pending receipt
-        Assert.Equal(1, rig.Vendors.Compact());                 // A: remembered -> tombstone
+        Assert.Equal(0, rig.Vendors.Compact(row => row == a));
+        Assert.Equal(1, rig.Vendors.Compact());
         Assert.Equal(VendorRowState.Tombstone, a.State);
         Assert.Null(rig.City.FindPosition(a.PlaceId)); Assert.DoesNotContain(food.Shops, s => s.PlaceId == a.PlaceId);
         food.History.Clear();
-        Assert.Equal(1, rig.Vendors.Compact());                 // B: nothing names it -> removed
+        Assert.Equal(1, rig.Vendors.Compact());
         Assert.Null(rig.Table.Find("B")); Assert.DoesNotContain(food.Shops, s => s.PlaceId == b.PlaceId);
         Assert.Equal((0, 0, 1), (rig.Table.Live, rig.Table.Retired, rig.Table.Tombstones));
 
-        // A returns: same place id, next generation; the old memory reference stays valid.
         StreetFoodHooks.Add("A"); rig.Run(At(9, 40));
         Assert.Equal(VendorRowState.Live, a.State); Assert.Equal(2, a.Generation);
         Assert.Equal("streetfood:vehicle:A:generation:2", a.BusinessId); Assert.Equal("vendor:A", a.PlaceId);
@@ -541,18 +523,15 @@ public sealed class StreetFoodVendorTests
         rig.Run(At(8, 10));
         Assert.Equal((64, 64), (rig.Table.Live, rig.Table.Retired));
 
-        // One more vehicle sold and one bought: live + retired stays 128 and the newcomer is refused.
         StreetFoodHooks.Remove("b00"); StreetFoodHooks.Add("c00"); rig.Run(At(8, 15));
         Assert.Equal((63, 65), (rig.Table.Live, rig.Table.Retired));
         Assert.Null(rig.Table.Find("c00"));
         Assert.Equal("vendor table full: 128 live and retired vehicles", rig.Vendors.Refusals.Single(p => p.Key == "c00").Value);
 
-        // A retired vehicle that returns keeps live + retired the same and is admitted.
         StreetFoodHooks.Remove("c00"); StreetFoodHooks.Add("b00"); rig.Run(At(8, 20));
         Assert.Equal((64, 64), (rig.Table.Live, rig.Table.Retired));
         Assert.Equal(2, rig.Row("b00").Generation);
 
-        // Retired rows nothing names compact away.
         Assert.Equal(64, rig.Vendors.Compact());
         Assert.Equal((64, 0, 0), (rig.Table.Live, rig.Table.Retired, rig.Table.Tombstones));
     }
@@ -585,7 +564,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(a.BusinessId, rig.City.State.Food!.Shops.Single(s => s.PlaceId == a.PlaceId).BusinessId);
     }
 
-    // ---- Channel and cadence ----
 
     [Fact]
     public void TheChannelIsPartOfTheVendorSaveShapeOnly()
@@ -596,7 +574,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(FoodScopeChannel.Vehicle, scope.Channel);
         Assert.Throws<ArgumentOutOfRangeException>(() => scope.UseChannel((FoodScopeChannel)2));
         var city = WeightedFoodChoiceTests.Ready(5).city;
-        // E6c: the writer saves the channel; every existing scope writes Shop.
         string payload = SaveWire.Text(city.State);
         Assert.Contains("\"Channel\":0,", payload);
         Assert.DoesNotContain("\"Channel\":1", payload);
@@ -605,11 +582,10 @@ public sealed class StreetFoodVendorTests
     [Fact]
     public void AMarketThatCannotTellChannelsNeverShortlistsVehicleScopes()
     {
-        // 32 vehicle scopes nearer than the only shop would take most of the eight weighted shortlist slots if offered.
         for (int seed = 0; seed < 6; seed++)
         {
             var (city, _, _) = WeightedFoodChoiceTests.Ready(seed, shops: 1);
-            city.State.Food!.AwarenessStartsDay = 99; // the pre-awareness shortlist ranks every scope
+            city.State.Food!.AwarenessStartsDay = 99;
             var table = new VendorTable();
             for (int i = 0; i < 32; i++)
             {
@@ -650,7 +626,6 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(every, Script(step));
     }
 
-    // ---- Review round 1 regressions ----
 
     private sealed class RecordingPlanner : IRoutePlanner, IFoodWalkingPace
     {
@@ -671,7 +646,6 @@ public sealed class StreetFoodVendorTests
         var rig = new Rig(planner: planner);
         rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 60); rig.Run(At(9, 5));
         var a = rig.Row("A");
-        // Checkout succeeded: the meal is Paid, but the resident is still at the stand eating, on a meal outing.
         var person = rig.City.State.Citizens.Single();
         var meal = rig.City.State.Food!.Residents.Single(m => m.ResidentId == person.Identity.Id);
         meal.Status = MealStatus.Paid; meal.PlaceId = a.PlaceId; meal.BusinessId = a.BusinessId;
@@ -683,13 +657,11 @@ public sealed class StreetFoodVendorTests
         Assert.NotNull(a.DeferredStand);
         Assert.Equal(100, rig.City.FindPosition(a.PlaceId)!.Value.X);
 
-        // The eating interval ends: the return route starts from the stand the resident visited.
         while (!rig.City.AdvanceTo(person.NextEventMinute, 1).CaughtUp) { }
         var back = Assert.Single(planner.Requests, r => r.From == a.PlaceId);
         Assert.Equal(100, back.At.X);
         Assert.NotEqual(a.PlaceId, person.PlaceId);
 
-        // Once the resident has left, the move applies.
         rig.RunTo(At(10, 20), 5);
         Assert.Null(a.DeferredStand);
         Assert.Equal(500, rig.City.FindPosition(a.PlaceId)!.Value.X);
@@ -703,7 +675,6 @@ public sealed class StreetFoodVendorTests
         rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 300); StreetFoodHooks.Open("B", 300); rig.Run(At(9, 5));
         Assert.True(rig.Serves("A")); Assert.True(rig.Serves("B"));
 
-        // A turns ineligible and Street Food fails its release; B stays eligible and keeps the shared lease renewed.
         StreetFoodHooks.FailRelease.Add("A");
         var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
         StreetFoodHooks.Calls.Clear();
@@ -711,12 +682,11 @@ public sealed class StreetFoodVendorTests
         var a = rig.Row("A");
         Assert.True(a.Authority.HandbackPending);
         Assert.False(rig.Serves("A")); Assert.True(rig.Serves("B"));
-        Assert.Equal(VendorNames.Owner, v.Owner); // Street Food still reserves the opening for PC
-        Assert.True(StreetFoodHooks.Calls.Count(c => c == "release A") >= 10); // retried every 5 minutes, no new revision
+        Assert.Equal(VendorNames.Owner, v.Owner);
+        Assert.True(StreetFoodHooks.Calls.Count(c => c == "release A") >= 10);
         Assert.DoesNotContain("request A", StreetFoodHooks.Calls);
         Assert.True(rig.Vendors.Lease.Valid(At(10, 5)));
 
-        // Street Food recovers: the retried handback goes through and the opening is Street Food's again.
         StreetFoodHooks.FailRelease.Clear();
         rig.RunTo(At(10, 15), 5);
         Assert.False(a.Authority.HandbackPending);
@@ -731,7 +701,7 @@ public sealed class StreetFoodVendorTests
         var rig = new Rig();
         rig.Run(At(8, 5));
         StreetFoodHooks.FailRelease.Add("A");
-        StreetFoodHooks.Open("A"); StreetFoodHooks.Find("A").Owner = VendorNames.Owner; // faulty same-hour grant
+        StreetFoodHooks.Open("A"); StreetFoodHooks.Find("A").Owner = VendorNames.Owner;
         StreetFoodHooks.Calls.Clear();
         rig.Run(At(8, 6));
         var a = rig.Row("A");
@@ -783,7 +753,7 @@ public sealed class StreetFoodVendorTests
         rig.Run(At(8, 0));
         Assert.Equal(VendorApiStatus.NotYet, rig.Vendors.Image!.Status);
         int reads = StreetFoodHooks.ReadCalls;
-        StreetFoodHooks.ReadStatus = 0; // Street Food recovers without changing its revision
+        StreetFoodHooks.ReadStatus = 0;
         rig.RunTo(At(8, 14));
         Assert.Equal(reads, StreetFoodHooks.ReadCalls);
         Assert.Empty(rig.Table.Rows);
@@ -793,7 +763,6 @@ public sealed class StreetFoodVendorTests
         Assert.NotNull(rig.Table.Find("A"));
     }
 
-    // ---- Review round 2 regressions ----
 
     [Fact]
     public void AConfirmedRetriedHandbackFollowedByAFailedRequestNeverServesTheOldOpening()
@@ -801,19 +770,15 @@ public sealed class StreetFoodVendorTests
         StreetFoodHooks.Add("A"); StreetFoodHooks.Add("B", x: 300);
         var rig = new Rig();
         rig.Run(At(8, 5));
-        // A's crew opening at 09:05 is granted, but its stand has no walkable point (a refusal the snapshot does not
-        // carry) and Street Food fails the handback. B keeps the shared lease alive.
         rig.Stands.Blocked = true; StreetFoodHooks.FailRelease.Add("A");
         rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 120); rig.Run(At(9, 5));
         rig.Stands.Blocked = false; StreetFoodHooks.Open("B", 120); rig.Run(At(9, 6));
         var a = rig.Row("A");
         Assert.True(a.Authority.HandbackPending); Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("A").Owner);
 
-        // The retry succeeds and the next ownership request fails. The retry runs on the snapshot taken before the
-        // handback, which still shows A owned by PC: that opening must not be accepted.
         StreetFoodHooks.FailRelease.Clear(); StreetFoodHooks.FailRequest.Add("A");
         rig.Run(At(9, 10));
-        Assert.Equal(VendorNames.Owner, rig.Vendors.Image!.Find("A")!.OpeningOwner); // the stale snapshot
+        Assert.Equal(VendorNames.Owner, rig.Vendors.Image!.Find("A")!.OpeningOwner);
         Assert.False(a.Authority.HandbackPending);
         Assert.Equal("", StreetFoodHooks.Find("A").Owner);
         Assert.False(rig.Serves("A")); Assert.Equal(-1, a.Authority.OpeningId); Assert.False(a.PlacePublished);
@@ -828,7 +793,7 @@ public sealed class StreetFoodVendorTests
         var rig = new Rig();
         rig.Run(At(8, 5)); rig.RunTo(At(9, 5)); StreetFoodHooks.Open("A", 300); rig.Run(At(9, 5));
         Assert.True(rig.Serves("A"));
-        StreetFoodHooks.FailRelease.Add("A"); // Street Food never confirms the release
+        StreetFoodHooks.FailRelease.Add("A");
         var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
         rig.Run(At(9, 10));
         var a = rig.Row("A");
@@ -836,7 +801,7 @@ public sealed class StreetFoodVendorTests
         StreetFoodHooks.Calls.Clear();
         rig.RunTo(At(10, 30));
         Assert.DoesNotContain("renew", StreetFoodHooks.Calls);
-        Assert.Equal("", v.Owner); // the lease ran out and Street Food took the opening back
+        Assert.Equal("", v.Owner);
         Assert.False(a.Authority.HandbackPending);
         Assert.False(rig.Serves("A"));
     }
@@ -851,7 +816,7 @@ public sealed class StreetFoodVendorTests
         var v = StreetFoodHooks.Find("A"); v.Items = new[] { "ba:itemname_kabob" }; StreetFoodHooks.Revision++;
         rig.Run(At(9, 10));
         StreetFoodHooks.FailRelease.Clear(); StreetFoodHooks.Calls.Clear();
-        rig.Run(At(9, 15)); // the retry, from the snapshot taken before the handback
+        rig.Run(At(9, 15));
         Assert.Equal(1, StreetFoodHooks.Calls.Count(c => c == "release A"));
         Assert.False(rig.Row("A").Authority.HandbackPending);
     }

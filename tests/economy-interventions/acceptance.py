@@ -13,10 +13,6 @@ import math
 import statistics as st
 from pathlib import Path
 
-# Household control thresholds from the 8 Nov 2026 rerun after F6j extras (base ec186f97): canonical
-# capacity-bound fixture, five seeds, week-6 control seed band (mean +/- 2 sd), rounded outward.
-# Measured: arrears 0.18808% [high 0.46057%], unfed 1.8 owner-days [high 5.65], p10 $689.99 [low $659.00].
-# Post-F6i rerun (3f734cb6): arrears <= 0.47%, unfed <= 5.2, p10 >= $656.
 HOUSEHOLD_THRESHOLDS = {"week6ArrearsShareMax": 0.0047, "week6UnfedOwnerDaysMax": 5.7, "week6P10DollarsMin": 658.0}
 
 
@@ -32,8 +28,6 @@ def inside(value, seed_band):
 
 
 def day_meals(d):
-    """Own meals (visits) on a day. Since F6j shop purchases count items (main + extras); pre-F6j runs have
-    no per-shop meals field and their purchases are meals."""
     shops = d["own"]["shops"]
     return sum(s["meals"] for s in shops) if shops and all("meals" in s for s in shops) else d["own"]["purchases"]
 
@@ -43,7 +37,6 @@ def meal_hours(shop):
 
 
 def staffing_checks(key, runs, controls):
-    """Staffing cuts are judged on served meals, never items: fewer extras must not hide more meals."""
     def active_meals(run):
         if key.endswith("zero-staff-day"):
             return day_meals(run["days"][16])
@@ -86,18 +79,12 @@ def products(run, week):
 
 
 def dominance_floor(high, other, week, base_units):
-    """Minimum profit(high)-profit(other) over the entire stated wholesale box.
-
-    Linear in each price, so the minimum occurs at an endpoint. Positive means
-    the high arm wins for *every* cost in the box, including measured costs if in it.
-    """
     a, ar = products(high, week)
     b, br = products(other, week)
     return ar - br - sum(max(0, a.get(p, 0) - b.get(p, 0)) * cost for p, cost in base_units.items())
 
 
 def derive_household_thresholds(household):
-    """Week-6 control seed band, rounded outward: arrears up to 4 dp, unfed up to 0.1, p10 down to $1."""
     return {"week6ArrearsShareMax": math.ceil(household["arrearsShare"][5]["high"] * 1e4) / 1e4,
             "week6UnfedOwnerDaysMax": math.ceil(household["unfedOwnerDays"][5]["high"] * 10) / 10,
             "week6P10DollarsMin": float(math.floor(household["p10Dollars"][5]["low"]))}
@@ -109,14 +96,9 @@ def within_household(arrears, unfed, p10, limits=None):
 
 
 def price_arms(groups, controls, base_units, units):
-    """Price-arm table: per-seed quantity, revenue and arc elasticity against the matched control
-    over both intervention weeks, plus whether own capacity bound at any hour and the share of
-    evaluated own offers refused as unaffordable (wallet-exhaustion check)."""
     def fortnight(run):
         days = run["days"][14:28]
         shops = [s for d in days for s in d["own"]["shops"]]
-        # F6j: shop purchases count items (main + extras). Meals are visits, from outcomes; capacity is
-        # meals per hour, so the binding test reads meals by checkout hour (pre-F6j runs: byHour = meals).
         hours = "mealsByCheckoutHour" if all("mealsByCheckoutHour" in s for s in shops) else "byHour"
         meals = sum(s["meals"] for s in shops) if hours != "byHour" else sum(d["own"]["purchases"] for d in days)
         mains = {}
@@ -151,16 +133,11 @@ def price_arms(groups, controls, base_units, units):
         if key != "control/control":
             entry["quantityChange"] = band([x["q"] / b["q"] - 1 for x, b in zip(rows, base)])
             entry["revenueChange"] = band([x["r"] / b["r"] - 1 for x, b in zip(rows, base)])
-            # Menu arc uses own purchases; product arms use all own purchases too (cross-product
-            # substitution included), so their value is a shop-level response, not own-product.
             entry["arcElasticity"] = band([(x["q"] - b["q"]) / ((x["q"] + b["q"]) / 2) / arc_price for x, b in zip(rows, base)])
             entry["mealQuantityChange"] = band([x["meals"] / b["meals"] - 1 for x, b in zip(rows, base)])
             entry["mealArcElasticity"] = band([(x["meals"] - b["meals"]) / ((x["meals"] + b["meals"]) / 2) / arc_price for x, b in zip(rows, base)])
             entry["homeMealsChange"] = band([x["home"] / b["home"] - 1 for x, b in zip(rows, base)])
             if all(x["mains"] for x in rows):
-                # Extras per meal, arm minus control, split into a main-mix part (arm's mains at control's per-main
-                # extras rate) and a within-main part (arm's per-main rate change at arm's mix). Under a whole-menu
-                # markup the extras bands and draws are unchanged, so a wallet that cuts extras shows up within-main.
                 def split(x, b):
                     meals, base_meals = sum(m[0] for m in x["mains"].values()), sum(m[0] for m in b["mains"].values())
                     rate = lambda m: m[1] / m[0] if m[0] else 0
@@ -188,7 +165,6 @@ def report(directory):
     controls = sorted(groups["control/control"], key=lambda r: r["seed"])
     assert len(controls) == 5 and [r["seed"] for r in controls] == list(range(5))
     units = controls[0]["fixture"]["unitsPerCent"]
-    # Read actual product IDs from the fixture outputs rather than relying on name spelling.
     base_units = {}
     for d in controls[0]["days"]:
         for shop in d["own"]["shops"]:
@@ -255,8 +231,6 @@ def report(directory):
                                for key, runs in groups.items() if key == "control/control" or key.startswith("price/product-")}
                 certificates.append({"seed": seed, "week": week + 1, "minimumProfitAdvantageDollars": comparisons})
     dominant = len(certificates) == 10 and all(min(c["minimumProfitAdvantageDollars"].values()) > 0 for c in certificates)
-    # Diagnostic only since F6k (docs/decisions/2026-11-08-price-weight.md): profit non-dominance over the
-    # wholesale box is no longer an acceptance criterion, so a dominant +50% menu is reported but never fails.
     failures = []
     for key, row in rows.items():
         if key == "control/control":

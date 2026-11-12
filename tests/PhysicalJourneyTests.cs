@@ -32,7 +32,6 @@ public sealed partial class PhysicalJourneyTests
         return new CitySimulator(state, new Planner());
     }
 
-    // F2d: nothing is leased. Traffic legs use a two-section road (TrafficJourneyTests' shape).
     private const string Native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     private sealed class Roads : IRoutePlanner, ITrafficRoutePlanner
     {
@@ -54,7 +53,6 @@ public sealed partial class PhysicalJourneyTests
         {
             c.Preferences.OwnsCar = true;
             c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = new Position(0,0,0) };
-            // Two road sections, then the walk from the parked car to work (12 minutes in all).
             c.Journey = new Route { Legs = new() {
                 new RouteLeg { From = new Position(0,0,0), To = new Position(12,0,0), Minutes = 1.2, Mode = TravelMode.Car, ServiceId = "native:road:v1:" + Native + ":0:1" },
                 new RouteLeg { From = new Position(12,0,0), To = new Position(24,0,0), Minutes = 1.2, Mode = TravelMode.Car, ServiceId = "native:road:v1:" + Native + ":1:2" },
@@ -85,7 +83,6 @@ public sealed partial class PhysicalJourneyTests
         var plain = Driving();
         double completed = double.NaN;
         engine.Traffic!.VehicleCompleted += (id, at) => completed = at;
-        // Nobody reports progress: the kernel completes the vehicle at its own pace, never under physical control.
         for (double minute = 1441; minute < 1470 && double.IsNaN(completed); minute += 1)
         {
             engine.AdvanceTo(minute); plain.AdvanceTo(minute);
@@ -93,7 +90,6 @@ public sealed partial class PhysicalJourneyTests
         Assert.False(double.IsNaN(completed));
         Assert.Equal(CitizenPhase.Travelling, c.Phase);
         Assert.Equal(TravelMode.Walk, engine.SampleJourney(c).Mode);
-        // The walk runs on the logical clock: arrival exactly its leg minutes after the traffic completion.
         Assert.Equal(completed + 9.6, c.NextEventMinute, 9);
         engine.AdvanceTo(c.NextEventMinute + 1); plain.AdvanceTo(engine.State.Minute);
         Assert.Equal(1, c.CompletedJourneys);
@@ -136,7 +132,6 @@ public sealed partial class PhysicalJourneyTests
         c.Journey.Legs.Add(new RouteLeg { From = new Position(6,0,0), To = new Position(7,0,0), Minutes = 10.91187700962951, Mode = TravelMode.Walk });
         c.Journey.Legs.Add(new RouteLeg { From = new Position(7,0,0), To = new Position(120,0,0), Minutes = .7, Mode = TravelMode.Walk });
         c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
-        // Reconstruct to rebuild the due queue after preparing the committed route fixture.
         engine = new CitySimulator(engine.State, new Planner());
         var sample = engine.SampleJourney(c, 48.09206235010644);
         double corner = sample.ElapsedMinutes + (1 - sample.LegFraction) * sample.LegMinutes;
@@ -145,7 +140,6 @@ public sealed partial class PhysicalJourneyTests
         double final = next.ElapsedMinutes + (1 - next.LegFraction) * next.LegMinutes;
         var end = engine.SampleJourney(c, final);
         Assert.True(end.AtEnd); Assert.Equal(c.Journey.Minutes, end.ElapsedMinutes); Assert.Equal(1, end.LegFraction);
-        // A legitimately unfinished point remains on the old leg.
         Assert.Equal(6, engine.SampleJourney(c, corner - .000001).LegIndex);
     }
 
@@ -170,7 +164,6 @@ public sealed partial class PhysicalJourneyTests
         {
             var sample = engine.SampleJourney(c);
             double observed = sample.ElapsedMinutes;
-            // A walker projecting itself onto the sampled pose never moves behind it.
             Assert.True(WalkerFollow.Advance(c.Journey!, 0, observed, sample.Position) <= observed);
             Assert.True(PhysicalProgress.TryProject(sample, sample.Position, false, out double projected));
             Assert.True(projected >= observed);
@@ -197,7 +190,6 @@ public sealed partial class PhysicalJourneyTests
                     To = new Position(120.0 * (leg+1) / count,0,0), Minutes = .01 + random.NextDouble() * 70, Mode = TravelMode.Walk });
             c.DepartureMinute = state.Minute; c.NextEventMinute = state.Minute + c.Journey.Minutes;
             engine = new CitySimulator(state, new Planner());
-            // The completed state a traffic completion (or, before F2c, a walk lease) leaves: departure = clock - duration.
             double total = c.Journey.Minutes;
             c.DepartureMinute = state.Minute - total; c.NextEventMinute = state.Minute;
             var arrived = engine.SampleJourney(c); Assert.True(arrived.AtEnd); Assert.Equal(120, arrived.Position.X);
@@ -205,7 +197,6 @@ public sealed partial class PhysicalJourneyTests
             Assert.True(TravelTiming.Apply(state, 2, 2));
             Assert.Equal(state.Minute, c.NextEventMinute);
             Assert.True(engine.SampleJourney(c).AtEnd);
-            // A meaningful overshoot remains invalid rather than being hidden by the roundoff fix.
             c.DepartureMinute -= .000001;
             Assert.Throws<ArgumentOutOfRangeException>(() => engine.SampleJourney(c));
             Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 3));

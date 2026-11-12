@@ -25,7 +25,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, reconcileAt - .0001);
         Money balance = city.State.Food!.Residents.Single().Budget!.Balance;
         market.ConfirmEvidence = true;
-        market.EarliestMinute = reconcileAt; // Original checkout is now too old for Buy.
+        market.EarliestMinute = reconcileAt;
         Advance(city, reconcileAt);
         meal = city.State.Food!.Residents.Single();
         Assert.Equal(MealStatus.Paid, meal.Status);

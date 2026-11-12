@@ -6,8 +6,6 @@ namespace PersistentCity.Core
 {
     public static class DestinationChoice
     {
-        /// <summary>Small deterministic shortlist for a time-limited optional outing.
-        /// All venues can compete; the shortlist bounds subsequent native route work.</summary>
         public static IReadOnlyList<Place> Shortlist(IEnumerable<Place> places, Place origin, PlaceKind kind,
             string choiceKey, int seed, int maximum = 8)
         {
@@ -19,8 +17,6 @@ namespace PersistentCity.Core
                 if (place.Kind != kind || place.Capacity <= 0) continue;
                 double attraction = Position.Finite(place.AttractionWeight) ? Math.Max(.05, Math.Min(20, place.AttractionWeight)) : 1;
                 double traffic = place.NativeTrafficIndex < 0 ? 1 : 1 + Math.Min(100, place.NativeTrafficIndex) / 100.0;
-                // Short optional windows favour the current neighbourhood more strongly than
-                // a permanent work/home assignment. Distance still never proves a route.
                 double distance = Position.Distance(origin.Position, place.Position) / 250.0;
                 double uniform = (StableRandom.Finish(StableRandom.Append(key, place.Id)) + 1.0) / (uint.MaxValue + 2.0);
                 double score = -Math.Log(uniform) * (1 + distance) * (1 + distance) / (attraction * traffic);
@@ -34,9 +30,6 @@ namespace PersistentCity.Core
             return ranked.Select(x => x.Place).ToArray();
         }
 
-        // Every eligible venue participates. Distance is a preference, not a cut-off.
-        // Independent exponential draws give a deterministic weighted sample without
-        // dependence on catalogue order or a nearest-three restriction.
         public static string Choose(IEnumerable<Place> places, Place origin, PlaceKind kind,
             string choiceKey, int seed, Func<Place, bool>? eligible = null)
         {
@@ -51,8 +44,6 @@ namespace PersistentCity.Core
             return best;
         }
 
-        /// <summary>Choose over a list without an eligibility filter, from a key already continued through
-        /// choiceKey + ":" (see KeyState). Same venue as the string overload; no per-venue allocation.</summary>
         internal static string Choose(IReadOnlyList<Place> places, Place origin, PlaceKind kind, uint key)
         {
             string best = "";
@@ -71,14 +62,12 @@ namespace PersistentCity.Core
             double traffic = place.NativeTrafficIndex < 0 ? 1 : 1 + Math.Min(100, place.NativeTrafficIndex) / 100.0;
             double distance = Position.Distance(origin.Position, place.Position) / 1200.0;
             double weight = attraction * traffic / ((1 + distance) * (1 + distance));
-            // StableRandom.Hash(choiceKey + ":" + place.Id, seed), continued from the shared key prefix.
             double uniform = (StableRandom.Finish(StableRandom.Append(key, place.Id)) + 1.0) / (uint.MaxValue + 2.0);
             double score = -Math.Log(uniform) / weight;
             if (score < bestScore || (score == bestScore && StringComparer.Ordinal.Compare(place.Id, best) < 0))
             { bestScore = score; best = place.Id; }
         }
 
-        /// <summary>The hash state after choiceKey + ":"; a null key concatenates as empty, as before.</summary>
         internal static uint KeyState(string? choiceKey, int seed)
             => StableRandom.Append(StableRandom.Append(StableRandom.Begin(seed), choiceKey ?? ""), ':');
     }

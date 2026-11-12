@@ -7,8 +7,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>The mod's own words from Runtime/Localization/en.json, with the English text Core gives as the fallback when
-    /// the table is not loaded or lacks the key.</summary>
     internal static class ModWords
     {
         internal static string Text(string key, string english)
@@ -22,19 +20,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>
-    /// Resident inspector in the normal view: hovering an own walker highlights it, a click opens a
-    /// small popup. Read-only: it changes no simulation, economy, schedule or save state, and makes
-    /// no route or market call. Picking runs in Update (inside mod-work attribution) only after the
-    /// cursor moved and at most every <see cref="ResidentPickThrottle.DefaultIntervalSeconds"/>;
-    /// popup content is built on click and refreshed once per second while open.
-    /// It only acts where the game itself would accept a world click: no open native menu, map, phone,
-    /// placement, mini-game or screenshot mode, and no native UI element under the cursor. A press on
-    /// the popup or a highlighted walker (current cursor position) makes that whole press-hold-release
-    /// gesture the inspector's: a prefix on the game's MouseController.Run skips native world mouse
-    /// handling for it, so an inspector click does not also move the player. Every other gesture stays
-    /// native, including a hold-walk released over the popup or a walker (<see cref="InspectorPointerGesture"/>).
-    /// </summary>
     internal sealed class ResidentInspector
     {
         private const float RefreshSeconds = 1f;
@@ -54,7 +39,6 @@ namespace PersistentCity.Runtime
         private Vector2 scroll;
         private bool visible;
         private GUIStyle? text, link, title;
-        // Timing per mode at the start of each call: Update runs inside PopulationRuntime.Update.
         private readonly long[] updateTicks = new long[3], updateCalls = new long[3], updateMaxTicks = new long[3];
         private readonly long[] drawTicks = new long[3], drawCalls = new long[3], drawMaxTicks = new long[3];
         private long builds, buildTicks, buildMaxTicks;
@@ -66,16 +50,11 @@ namespace PersistentCity.Runtime
         private readonly InspectorPointerGesture gesture = new InspectorPointerGesture();
         private int decidedFrame = -1, ownedPressFrame = -1;
         private bool suppressThisFrame, guardFailed, wheelFailed;
-        // Native uGUI raycasts miss inside the open popup, so what the player sees on top is what takes the click.
         private bool uiBlockInstalled, uiBlockFailed;
         private bool UiBlockActive => uiBlockInstalled && !uiBlockFailed;
-        // Last frame Update ran. Input decisions require a fresh one, so a hidden or stale inspector
-        // (e.g. while the city prepares routes and Update returns early) never claims a click or the wheel.
         private int updatedFrame = -10;
-        // MouseController's private hold-walk flags: read before taking a gesture, cleared when an owned one ends.
         private static System.Reflection.FieldInfo? leftHeld, rightHeld;
 
-        /// <summary>Install the native click guard. Failure leaves the inspector usable without it.</summary>
         public void Attach(Action<string> warning)
         {
             warn = warning;
@@ -98,9 +77,6 @@ namespace PersistentCity.Runtime
             if (clickGuard == null) return;
             try
             {
-                // The camera applies wheel zoom in its private UpdateInput. Restore its distance afterwards
-                // while the cursor is on the popup; the shared blockCameraZoom flag is never written, so
-                // native dialogs and windows keep sole ownership of it.
                 var input = AccessTools.Method(typeof(CameraControllers.PedestrianCam), "UpdateInput", new[] { typeof(float) })
                     ?? throw new MissingMethodException("PedestrianCam.UpdateInput(float)");
                 if (AccessTools.Field(typeof(CameraControllers.PedestrianCam), nameof(CameraControllers.PedestrianCam.distance))?.FieldType != typeof(float))
@@ -111,9 +87,6 @@ namespace PersistentCity.Runtime
             catch (Exception error) { warning("Resident inspector scroll guard unavailable; scrolling the popup may also zoom the camera: " + error.Message); }
             try
             {
-                // The popup is drawn on top of native uGUI (HUD, dialogs). Inside its rectangle, uGUI pointer
-                // raycasts find nothing, so hidden native buttons cannot take a popup click and
-                // IsPointerOverGameObject agrees with the popup. Keyboard and navigation input are untouched.
                 var raycast = AccessTools.Method(typeof(UnityEngine.UI.GraphicRaycaster), nameof(UnityEngine.UI.GraphicRaycaster.Raycast),
                     new[] { typeof(PointerEventData), typeof(System.Collections.Generic.List<RaycastResult>) })
                     ?? throw new MissingMethodException("GraphicRaycaster.Raycast(PointerEventData, List<RaycastResult>)");
@@ -163,21 +136,17 @@ namespace PersistentCity.Runtime
             finally { clickGuard = null; attachTried = false; guardFailed = wheelFailed = uiBlockFailed = uiBlockInstalled = false; }
         }
 
-        // Current native cursor in GUI coordinates (y grows downwards); the inspector draws with an identity GUI matrix.
         private static Vector2 CurrentMouse()
         {
             Vector3 position = Input.mousePosition;
             return new Vector2(position.x, Screen.height - position.y);
         }
 
-        // Update ran this frame or the previous one (script order against the game's input is not fixed).
         private bool Fresh => updatedFrame >= Time.frameCount - 1;
 
-        // Where an inspector click would land now: the popup, or a highlighted walker other than the open one.
         private bool PointerOnInspector(Vector2 at) => visible && Fresh && NormalView() && !NativeUiUnderPointer()
             && ((selectedId != null && popup.Contains(at)) || (hoveredId != null && hoveredId != selectedId && hoveredRect.Contains(at)));
 
-        // The current cursor is on the open popup in the normal view.
         private bool PointerOnPopupNow() => visible && Fresh && selectedId != null && popup.Contains(CurrentMouse()) && NormalView();
 
         private static bool MouseRunPrefix()
@@ -187,20 +156,17 @@ namespace PersistentCity.Runtime
             try { return !owner.SuppressNativeMouse(); }
             catch (Exception error)
             {
-                // Runs inside the game's world-input path: fail open, once, and stay out of the way.
                 owner.guardFailed = true; owner.gesture.Reset(); owner.suppressThisFrame = false; owner.ownedPressFrame = -1;
                 owner.warn?.Invoke("Resident inspector click guard failed and is disabled; clicks go to the game: " + error);
                 return true;
             }
         }
 
-        // MouseController.Run can run more than once per frame; decide once, from current input.
         private bool SuppressNativeMouse()
         {
             int frame = Time.frameCount;
             if (frame == decidedFrame) return suppressThisFrame;
             decidedFrame = frame;
-            // Left button only: the inspector has no right-click action, so right gestures stay native.
             bool pressed = Input.GetMouseButtonDown(0);
             bool released = Input.GetMouseButtonUp(0);
             bool anyDown = Input.GetMouseButton(0);
@@ -219,8 +185,6 @@ namespace PersistentCity.Runtime
             gesture.Reset(); ownedPressFrame = -1;
         }
 
-        /// <summary>The runtime skipped Update this frame (e.g. while routes prepare): hide the inspector's
-        /// input claims until the next update. The selection itself is kept.</summary>
         public void Suspend()
         {
             visible = false; ClearHover(); updatedFrame = -10;
@@ -230,7 +194,6 @@ namespace PersistentCity.Runtime
 
         private void ClearHover() { hoveredId = null; hoveredGeneration = 0; hoveredName = ""; }
 
-        // The game's own conditions for world hover/clicks (see its EntityController hover and MouseController).
         private static bool NormalView()
         {
             if (CityMap.IsOpen || BuildingManager.IsInsideBuilding || BigAmbitions.PlacementSystem.PlacementSystem.IsInPlacementMode || UI.Smartphone.FullMenu.IsOpen || UI.MiniMenu.MiniMenu.IsOpen
@@ -262,8 +225,6 @@ namespace PersistentCity.Runtime
                     if (camera == null || overUi) ClearHover();
                     else
                     {
-                        // A hovered walker can walk out from under a still cursor: one projection per frame.
-                        // Native UI is checked only on hover or pick frames, never when closed and still.
                         if (hoveredId != null && (NativeUiUnderPointer() || !physical.TryWalkerRect(camera, hoveredId, hoveredGeneration, out hoveredRect) || !hoveredRect.Contains(mouse)))
                             ClearHover();
                         if (throttle.ShouldPick(Time.unscaledTime, mouse.x, mouse.y) && !NativeUiUnderPointer())
@@ -297,7 +258,6 @@ namespace PersistentCity.Runtime
         {
             long started = Stopwatch.GetTimestamp();
             nextRefresh = Time.unscaledTime + RefreshSeconds;
-            // GR-8: a through car belongs to nobody; it has no person to inspect.
             string? vehicle = CitySimulator.DescribeVehicle(selectedId!);
             insight = vehicle != null ? null : simulation.Inspect(selectedId!, null, FormattedAddress, ShopName, CurrentOwnShop);
             if (vehicle != null) { body = ModWords.Text(ThroughTraffic.InspectorKey, vehicle) + "."; personality = homeLabel = workLabel = ""; header = "Car"; }
@@ -305,7 +265,6 @@ namespace PersistentCity.Runtime
             else
             {
                 body = insight.Text();
-                // GR-7: today's non-food visits, purchases and refusals with their causes.
                 var visits = VenueFeedbackPanel.ResidentLines(simulation.VenueFeedback, insight.ResidentId, (int)Math.Floor(simulation.State.Minute / 1440),
                     id => simulation.PlaceLabel(id, FormattedAddress), ModWords.Text);
                 if (visits.Count > 0) body += string.Join(".\n", visits) + ".\n";
@@ -318,7 +277,6 @@ namespace PersistentCity.Runtime
             builds++; buildTicks += elapsed; if (elapsed > buildMaxTicks) buildMaxTicks = elapsed;
         }
 
-        /// <summary>Called from OnGUI. Draws only cached strings; no picking or content building here.</summary>
         public void Draw()
         {
             long started = Stopwatch.GetTimestamp();
@@ -330,8 +288,6 @@ namespace PersistentCity.Runtime
                 if (hoveredId != null && hoveredId != selectedId)
                 {
                     if (input.type == EventType.Repaint) DrawHighlight();
-                    // With the guard installed, accept only the press it gave the inspector this frame, so the
-                    // game never handles the same click; without it, apply the same checks directly.
                     else if (input.type == EventType.MouseDown && input.button == 0 && hoveredRect.Contains(input.mousePosition)
                         && !(selectedId != null && popup.Contains(input.mousePosition))
                         && (clickGuard != null ? ownedPressFrame == Time.frameCount : NormalView() && !NativeUiUnderPointer()))
@@ -341,8 +297,6 @@ namespace PersistentCity.Runtime
                 }
                 if (selectedId != null)
                 {
-                    // Without the UI block, native uGUI under the popup owns the pointer: the popup's controls
-                    // then ignore that mouse event, so one click never acts on both.
                     if (!UiBlockActive && IsPointerEvent(input.type) && popup.Contains(input.mousePosition) && NativeUiUnderPointer())
                     {
                         if (input.type == EventType.MouseUp) GUIUtility.hotControl = 0;
@@ -423,7 +377,6 @@ namespace PersistentCity.Runtime
                 try { mapProblem = NativeMap.TryFocus(address, out string problem) ? "" : problem; }
                 catch (Exception error)
                 {
-                    // A native map failure must not escape OnGUI mid-layout.
                     mapProblem = "The map could not open.";
                     if (!mapFailureLogged) { mapFailureLogged = true; warn?.Invoke("Resident inspector map link failed: " + error); }
                 }
@@ -431,8 +384,6 @@ namespace PersistentCity.Runtime
             GUILayout.EndHorizontal();
         }
 
-        // Same formatter as BizManBuildingInfo.ShowInfo: StreetData lookup, not Localizor keys.
-        // Called only by the popup build/refresh above. Core guards missing data and exceptions.
         private static readonly Func<string, int, string> FormattedAddress = (street, number) =>
             Streets.AddressHelper.ToFormattedString(new Address(street, number));
 
@@ -444,7 +395,6 @@ namespace PersistentCity.Runtime
             open = new { calls = calls[2], totalMilliseconds = Milliseconds(ticks[2]), maxMilliseconds = Milliseconds(max[2]) }
         };
 
-        /// <summary>Rig diagnostic: cumulative inspector cost by mode at call start (closed / hover / open).</summary>
         public object Timing
         {
             get

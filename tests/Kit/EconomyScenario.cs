@@ -9,12 +9,6 @@ using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 
-/// <summary>
-/// A fixed three-day food city (two consumers per resident, three meals, household finances, three shops,
-/// checkout refusals, lost acknowledgements and a mid-run save/reload). Uses only API that exists before
-/// and after schema 17, so the same source compiles against both trees. X1 removed the schema-17 save
-/// digests with the legacy writer they projected through; the order log and money totals remain.
-/// </summary>
 public static class EconomyScenario
 {
     private sealed class Walking : IRoutePlanner
@@ -60,7 +54,6 @@ public static class EconomyScenario
 
     public static CityState Create(int residents, int seed)
     {
-        // At most 5,000 immutable donors exist; larger cities grow through housing expansion with pc: residents.
         int imported = residents <= 5000 ? residents : 1000;
         var identities = Enumerable.Range(0, imported).Select(i => new CitizenIdentity
         {
@@ -100,9 +93,6 @@ public static class EconomyScenario
         }
     };
 
-    /// <summary>Run the fixed scenario and return the order log and money totals.</summary>
-    /// <summary><paramref name="frozen"/> lets a caller run the same scenario on a frozen writer: it adjusts the fresh
-    /// state (for example its schema) and supplies that writer's write/read pair for the mid-run reload.</summary>
     public static object Run(int residents = 60, int seed = 23, bool legacyChoice = false,
         (Action<CityState> Prepare, Func<CityState, string> Write, Func<string, SaveReadResult> Read)? frozen = null)
     {
@@ -116,8 +106,6 @@ public static class EconomyScenario
         string? reloaded = null;
         for (double at = state.Minute + 60; at <= 4 * 1440; at += 60)
         {
-            // Historical differential probe stays before policy activation. Reflection also lets the
-            // same fixture compile against the schema-16 baseline, which had no choice header.
             if(legacyChoice) typeof(FoodCommerceState).GetProperty("ChoiceStartsDay")?.SetValue(city.State.Food,(int)(at/1440)+1);
             while (!city.AdvanceTo(at, 64).CaughtUp) { }
             if (reloaded == null && at >= 2 * 1440 + 750)
@@ -128,7 +116,7 @@ public static class EconomyScenario
                 city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
             }
         }
-        write(city.State); // the final state must still save
+        write(city.State);
         var meals = city.State.Food!.Residents;
         return new
         {

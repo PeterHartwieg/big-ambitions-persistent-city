@@ -23,12 +23,9 @@ namespace PersistentCity.Core
             new CampaignTypeGroup(2, "LargeInternet"), new CampaignTypeGroup(3, "SmallBillboard"),
             new CampaignTypeGroup(4, "MediumBillboard"), new CampaignTypeGroup(5, "LargeBillboard") });
         public static string? VerifiedName(int code) => code >= 0 && code < Reviewed.Count ? Reviewed[code].Name : null;
-        // The inspected native contract contains channels/sizes, but no resident targeting evidence.
-        // Neither internet use nor billboard exposure follows from a persona or an assigned workplace.
         public static CampaignResidentGroup Group(int code) => code >= 0 && code < Reviewed.Count ? Reviewed[code].Group : CampaignResidentGroup.Unknown;
     }
 
-    /// <summary>Detached observation only; nullable scalars mean Unknown, never inferred success.</summary>
     public sealed class CampaignObservation
     {
         public CampaignObservation(int? typeCode, string? typeName, bool? enabled, string? agencyId,

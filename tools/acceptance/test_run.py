@@ -1,4 +1,3 @@
-"""F9a runner tests with fake stage commands. python -m unittest discover -s tools/acceptance -p test_*.py"""
 import copy
 import getpass
 import hashlib
@@ -58,7 +57,6 @@ def sample(**changes):
 
 
 class Fixture:
-    """A temporary out directory, lock and catalogue whose stages are fake Python scripts under {out}."""
 
     def __init__(self, test):
         self.tmp = tempfile.TemporaryDirectory()
@@ -123,7 +121,6 @@ class ResultHygiene(unittest.TestCase):
         self.assertEqual({"os", "architecture", "dotnetSdk", "python"}, set(host))
         self.assertNotIn(os.environ.get("COMPUTERNAME", "<none>"), text)
         self.assertEqual("{python}", f.stage_record(result, "loud")["argv"][0])
-        # F9b: without supplied assemblies the game block says so and holds no hashes.
         self.assertEqual({"supplied": False, "managed": None, "set": None, "differing": [], "assemblies": {}}, result["provenance"]["game"])
 
     def test_provenance_records_source_settings_and_compiled_price_weight(self):
@@ -294,7 +291,7 @@ class Summarize(unittest.TestCase):
         _, merged, _ = self.summarize(f, "--rig", str(rig_file(f.dir / "rig2", ours)))
         self.assertEqual("pass", merged["summary"]["verdict"])
         unrecorded = copy.deepcopy(ours)
-        unrecorded["artifact"]["persistentCityDllSha256"] = None  # only one side recorded a hash: no conflict
+        unrecorded["artifact"]["persistentCityDllSha256"] = None
         _, merged, _ = self.summarize(f, "--rig", str(rig_file(f.dir / "rig3", unrecorded)))
         self.assertEqual("pass", merged["summary"]["verdict"])
 
@@ -499,8 +496,6 @@ class Stages(unittest.TestCase):
         self.assertIsNone(re.search(r"[A-Za-z]:\\\\|/Users/|LOCALAPPDATA|wait-other-dotnet", text))
 
 
-# The 16 arms F9a seeded as expected-red from the F2a baseline (docs-history-2026-11-10:docs/checks/f2a.md), used as synthetic red data now that
-# F2g recorded the green matrix and F9f emptied the expectation list.
 F2A_RED = ["bodies-off/plain-30", "bodies-off/plain-120", "focus/stationary", "focus/sweep", "focus/away-return", "caps/1-1",
            "caps/24-12", "caps/256-64", "lag/ideal", "lag/slow-head-car", "failures/10pct", "failures/50pct", "cadence/30fps",
            "cadence/120fps", "transitions/reload-mid-journey", "transitions/hidden-travel"]
@@ -520,7 +515,6 @@ class Movement(unittest.TestCase):
         self.listed = json.loads(EXPECTATIONS.read_text(encoding="utf-8"))["expectedRed"]
 
     def test_expectation_file_is_emptied_after_f2d(self):
-        # F9f: the recorded baseline has every compared arm equal, its self-checks and F2e's E2 rows pass, so the list is empty.
         compared = [a for a in self.baseline["arms"] if a.get("comparison")]
         self.assertTrue(compared)
         self.assertEqual([], [a["arm"] for a in compared if not a["comparison"]["Identical"]])
@@ -545,7 +539,6 @@ class Movement(unittest.TestCase):
         self.assertEqual("pass", summary["summary"]["verdict"])
 
     def test_unlisted_differing_arm_fails(self):
-        # With the emptied list any differing arm fails the stage.
         verdict, reason, metrics, _ = run.assess_movement(red(self.baseline, ["focus/sweep"]), self.listed)
         self.assertEqual("fail", verdict)
         self.assertEqual(["focus/sweep"], metrics["unexpectedDifferingArms"])
@@ -569,7 +562,6 @@ class Movement(unittest.TestCase):
         self.assertEqual("fail", run.assess_movement(data, self.listed)[0])
 
     def test_failed_e2_replay_row_fails(self):
-        # F2e's E2 replay arm is part of the harness output (e2 rows), so the movement stage already runs it.
         data = copy.deepcopy(self.baseline)
         row = next(c for c in data["e2"] if "replay from" in c["check"])
         row["pass"] = False
@@ -578,7 +570,6 @@ class Movement(unittest.TestCase):
         self.assertEqual([row["check"]], metrics["failedSelfChecks"])
 
     def test_city_stages_select_the_f9c_and_f9f_facts(self):
-        # F9f's body arms join the city scenario stages: each filter names both classes' prefix and the trait they declare.
         stages = {s["id"]: s for s in json.loads((HERE / "stages.json").read_text())["stages"]}
         sources = [ROOT / "tests/F9IntegratedCityTests.cs", ROOT / "tests/Acceptance/CityMovementArms.cs"]
         for size in ("city-s", "city-m"):
@@ -590,7 +581,6 @@ class Movement(unittest.TestCase):
                 self.assertTrue(any(c.startswith(prefix) for c in re.findall(r"public sealed class (\w+)", text)), source.name)
 
     def test_loop_stage_selects_the_gr4_whole_loop_facts(self):
-        # GR-4: the loop stage runs every J1 whole-loop fact, both sizes, and no F9 city class.
         stages = {s["id"]: s for s in json.loads((HERE / "stages.json").read_text())["stages"]}
         prefix = re.fullmatch(r"FullyQualifiedName~(\w+)", stages["loop"]["filter"]).group(1)
         text = (ROOT / "tests/Acceptance/CityLoopArms.cs").read_text(encoding="utf-8")
@@ -626,7 +616,7 @@ class Economy(unittest.TestCase):
         self.assertNotIn("unrouted", classes.values())
 
     def test_recorded_sample_as_written_fails(self):
-        data = json.loads(SAMPLE.read_text(encoding="utf-8"))  # pre-F6k dominance failure, weight 1
+        data = json.loads(SAMPLE.read_text(encoding="utf-8"))
         self.assertEqual("fail", economy_stage.assess(data, compiled_weight=1.2)["verdict"])
 
     def test_recovery_failure_fails(self):
@@ -696,7 +686,6 @@ class Economy(unittest.TestCase):
         code, result, _ = f.run()
         stage = f.stage_record(result, "economy")
         self.assertEqual("pass", stage["verdict"], stage["reason"])
-        # The unrelated passing rig stage does not clear the two routed native rows.
         self.assertEqual("incomplete", result["summary"]["verdict"])
         self.assertEqual(["native-wholesale-costs", "native-staffed-throughput"], result["summary"]["incomplete"])
         self.assertEqual(2, len(result["classes"]["native"]["pending"]))
@@ -788,7 +777,7 @@ class Lock(unittest.TestCase):
     def test_lock_is_exclusive_while_its_metadata_is_still_empty(self):
         f = Fixture(self)
         first = run.RunnerLock(f.lock)
-        first._lock()  # OS lock taken, PID not yet written: the window the old file lock lost
+        first._lock()
         self.addCleanup(first.release)
         self.assertEqual({}, first._holder())
         with self.assertRaises(run.LockHeld):
@@ -802,7 +791,7 @@ class Lock(unittest.TestCase):
         holder = self.hold(f)
         stale_pid = holder.pid
         holder.stdin.close()
-        holder.wait()  # the holder exits without releasing; its PID stays in the file
+        holder.wait()
         self.assertEqual(stale_pid, run.RunnerLock(f.lock)._holder()["pid"])
         lock = run.RunnerLock(f.lock)
         with lock:
@@ -823,7 +812,7 @@ class Lock(unittest.TestCase):
     def test_probe_sees_dotnet_test_in_every_phase_but_not_builds(self):
         sdk = r"C:\sdk\dotnet.exe"
         rows = [
-            ("11", "dotnet.exe", sdk + " test tests/PersistentCity.Tests.csproj"),  # restore/build phase of dotnet test
+            ("11", "dotnet.exe", sdk + " test tests/PersistentCity.Tests.csproj"),
             ("12", "dotnet.exe", '"' + sdk + '" exec C:\\sdk\\10.0\\vstest.console.dll --framework:x'),
             ("13", "testhost.exe", r'"C:\w\tests\bin\testhost.exe" --port 1'),
             ("14", "dotnet", "/usr/bin/dotnet test --filter X"),

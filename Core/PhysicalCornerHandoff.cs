@@ -2,12 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>
-    /// F2d: presentation only. When Gley reports a visible car past a road corner, its measured marker projects onto
-    /// the next leg. Until the kernel's coordinate reaches that projection, the command holds the car's pose and yaw,
-    /// so it does not swing into the new road ahead of the city. It never credits progress; the kernel decides
-    /// crossings on its own clock.
-    /// </summary>
     public sealed class PhysicalCornerHandoff
     {
         private int leg = -1;
@@ -28,8 +22,6 @@ namespace PersistentCity.Core
             leg = next.LegIndex; from = next.From; to = next.To; nominal = pending;
         }
 
-        /// <summary>True while the car is on the handed-over leg and the cap (the kernel's coordinate) is still short of
-        /// the marker's projection. Clears itself otherwise.</summary>
         public bool MustHold(PhysicalJourneySample sample, double maximum)
         {
             if (leg != sample.LegIndex || !from.Equals(sample.From) || !to.Equals(sample.To)

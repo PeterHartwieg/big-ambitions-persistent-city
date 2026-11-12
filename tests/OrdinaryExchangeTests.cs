@@ -121,7 +121,6 @@ public sealed class OrdinaryExchangeTests
         Assert.Equal(16, index.LastUnitPlaces); Assert.Equal(16, index.NativeReads);
         Assert.True(index.TryGet("p0", out var terms)); Assert.Equal(26, terms.Hour); Assert.False(terms.PlayerOwned);
         Assert.False(index.TryGet("p16", out _));
-        // The callback assertion above is specific to the first unit.
         while (index.Pending) index.Continue(); Assert.Equal(33, index.NativeReads);
         player = true; index.ObserveBoundary(1620); Assert.False(index.TryGet("p0", out _));
         fail = true; Assert.Throws<InvalidOperationException>(() => index.Continue()); Assert.False(index.TryGet("p0", out _));
@@ -198,7 +197,6 @@ public sealed class OrdinaryExchangeTests
         while (!city.PlanningPending) Assert.False(city.AdvanceFrameSlice(start, 1).CaughtUp);
         Assert.Equal(Money.Zero, Budget(city).Ledger.Discretionary); Assert.Empty(city.State.Economy.Outside);
         string saved = SaveCodec.Write(city.State);
-        // Rebuilding abandons the detached departure; no ordinary debit has happened to roll back.
         city = city.RebuildRoutes(new AttendanceWageTests.Routes());
         Assert.Equal(saved, SaveCodec.Write(city.State)); Drain(city, start + 1);
         Assert.Equal(Money.FromCents(500), Budget(city).Ledger.Discretionary);
@@ -281,7 +279,6 @@ public sealed class OrdinaryExchangeTests
         }
         var city = Attach(state); Drain(city, 2880);
         var visitor = state.Food!.Residents.Single(m => m.ResidentId == state.Visitors[0].Id).Budget!;
-        // Leave an endowment below the resident reserve, with no hold or missing visitor basket.
         Assert.True(HouseholdFinance.HoldPurchase(visitor, visitor.Balance - Money.FromCents(1)));
         HouseholdFinance.ConfirmPurchase(visitor);
         var before = city.FoodMoney!.Snapshot();
@@ -308,7 +305,6 @@ public sealed class OrdinaryExchangeTests
         if (activity == Activity.Leisure) person.Identity.Persona = Persona.Sporty;
         person.ShopId = activity == Activity.Shop ? "venue" : "";
         person.LeisureId = activity == Activity.Leisure ? "venue" : "";
-        // First admitted slot ends while the next routine slot continues at the same venue.
         person.ActivityUntilMinute = start + 21;
         var budget = Budget(city); var price = new OrdinaryVisitPrices().Price(owner.Kind);
         budget.OpeningBalance = budget.Balance = HouseholdFinance.SpendingReserve(budget) + price;

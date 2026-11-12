@@ -41,7 +41,6 @@ class LockHeld(Exception):
     pass
 
 
-# ---------------------------------------------------------------- lock and process checks
 
 def pid_alive(pid):
     if pid <= 0:
@@ -49,12 +48,12 @@ def pid_alive(pid):
     if os.name == "nt":
         import ctypes
         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-        handle = kernel.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        handle = kernel.OpenProcess(0x1000, False, pid)
         if not handle:
-            return ctypes.get_last_error() == 5  # access denied: the process exists
+            return ctypes.get_last_error() == 5
         code = ctypes.c_ulong()
         try:
-            return bool(kernel.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == 259  # STILL_ACTIVE
+            return bool(kernel.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == 259
         finally:
             kernel.CloseHandle(handle)
     try:
@@ -67,11 +66,8 @@ def pid_alive(pid):
 
 
 class RunnerLock:
-    """Machine-wide lock in the OS temp directory (section 3.9). Exclusivity is an OS lock on one byte of the
-    lock file, which the kernel drops when the holder exits, so a crashed runner leaves no live lock. The file
-    holds the PID and checkout for messages only; unreadable or empty metadata never decides ownership."""
 
-    OFFSET = 4096  # the locked byte lies past the metadata, so other runners can still read who holds it
+    OFFSET = 4096
 
     def __init__(self, path=None, checkout=ROOT):
         self.path = Path(path or os.environ.get("PC_ACCEPTANCE_LOCK") or Path(tempfile.gettempdir()) / LOCK_NAME)
@@ -98,7 +94,7 @@ class RunnerLock:
     def _write(self):
         previous = self._holder()
         if previous.get("pid") not in (None, os.getpid()):
-            self.cleared_stale = previous  # its owner is gone: we hold the OS lock
+            self.cleared_stale = previous
         os.lseek(self.fd, 0, os.SEEK_SET)
         os.write(self.fd, json.dumps({"pid": os.getpid(), "checkout": self.checkout}).encode().ljust(512))
 
@@ -111,7 +107,7 @@ class RunnerLock:
         try:
             fd = os.open(self.path, os.O_RDONLY | getattr(os, "O_BINARY", 0))
             try:
-                raw = os.read(fd, 512)  # unbuffered: a buffered read would touch the locked byte on Windows
+                raw = os.read(fd, 512)
             finally:
                 os.close(fd)
             return json.loads(raw.decode("utf-8").strip() or "{}")
@@ -121,14 +117,13 @@ class RunnerLock:
     def release(self):
         if self.fd is None:
             return
-        # The file stays: unlinking it would let a third runner lock a new file while a second holds the old one.
         os.lseek(self.fd, 0, os.SEEK_SET)
         os.write(self.fd, b" " * 512)
         if os.name == "nt":
             import msvcrt
             os.lseek(self.fd, self.OFFSET, os.SEEK_SET)
             msvcrt.locking(self.fd, msvcrt.LK_UNLCK, 1)
-        os.close(self.fd)  # also drops the POSIX flock
+        os.close(self.fd)
         self.fd = None
 
     def __enter__(self):
@@ -144,8 +139,6 @@ TEST_PROBE = ("powershell", "-NoProfile", "-NonInteractive", "-Command",
 
 
 def busy_test_processes(rows, own=None):
-    """Rows of (pid, name, command line). A testhost, or a dotnet host running `test`/vstest at any phase
-    (restore, build or run), is a test run."""
     own = os.getpid() if own is None else own
     busy = []
     for pid, name, command in rows:
@@ -160,7 +153,6 @@ def busy_test_processes(rows, own=None):
 
 
 def other_test_processes():
-    """Running testhost / `dotnet test` processes on this machine (CIM on Windows, ps elsewhere)."""
     try:
         if os.name == "nt":
             text = subprocess.run(TEST_PROBE, capture_output=True, text=True, check=False).stdout
@@ -178,7 +170,6 @@ def other_test_processes():
 
 
 def wait_for_dotnet(no_wait, poll=5.0, probe=other_test_processes):
-    """Blocks while other test processes run; returns the seconds spent waiting (not runner cost)."""
     started = time.perf_counter()
     hook = os.environ.get("PC_DOTNET_WAIT")
     if hook:
@@ -196,7 +187,6 @@ def wait_for_dotnet(no_wait, poll=5.0, probe=other_test_processes):
         time.sleep(poll)
 
 
-# ---------------------------------------------------------------- helpers
 
 def sha256_file(path):
     digest = hashlib.sha256()
@@ -230,7 +220,6 @@ def git(*args):
 
 
 class Sanitizer:
-    """Removes absolute paths, home directory and user name from every string in the result."""
 
     def __init__(self, out, managed=None):
         self.pairs = []
@@ -265,7 +254,6 @@ class Sanitizer:
 
 
 def read_source_value(spec):
-    """Compiled default read from the source at this commit (a literal initialiser)."""
     path = ROOT / spec["file"]
     try:
         text = path.read_text(encoding="utf-8")
@@ -283,10 +271,8 @@ def read_source_value(spec):
     return value
 
 
-# ---------------------------------------------------------------- TRX
 
 def parse_trx(path):
-    """Counts and per-test outcomes from a VSTest TRX file."""
     tree = ET.parse(path)
     ns = {"t": tree.getroot().tag.split("}")[0].strip("{")} if tree.getroot().tag.startswith("{") else {}
     q = (lambda tag: "t:" + tag) if ns else (lambda tag: tag)
@@ -312,7 +298,6 @@ def count(results):
 
 
 def filter_terms(expression):
-    """Alternatives of FullyQualifiedName~X / Name~X, or None when the filter has other clauses."""
     terms = []
     for part in expression.split("|"):
         match = re.fullmatch(r"(FullyQualifiedName|Name)~([\w.]+)", part.strip())
@@ -328,7 +313,6 @@ def apply_filter(results, terms):
     return [r for r in results if hit(r)]
 
 
-# ---------------------------------------------------------------- stages
 
 class Context:
     def __init__(self, out, dotnet, managed, price_weight, no_wait, settings):
@@ -340,14 +324,13 @@ class Context:
         self.settings = settings
         self.unit_trx = None
         self.artifact = None
-        self.game = None  # F9b: the build's fingerprint record (build.py --provenance)
-        self.tests_built = None  # None: no test build in this run; True/False: its outcome
+        self.game = None
+        self.tests_built = None
 
     def env(self):
         env = dict(os.environ, MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false", DOTNET_CLI_TELEMETRY_OPTOUT="1",
                    DOTNET_NOLOGO="1")
         if self.dotnet and Path(self.dotnet).parent != Path("."):
-            # The selected SDK host comes first on PATH, so tools/build.py's own discovery finds the same SDK.
             env["PATH"] = str(Path(self.dotnet).resolve().parent) + os.pathsep + env.get("PATH", "")
         return env
 
@@ -367,7 +350,6 @@ class Context:
 
 
 def stage_steps(stage, built=None):
-    """A filter stage reuses this run's test build (--no-build) when there was one, else builds itself."""
     if "filter" in stage and not stage.get("steps"):
         trx = f"trx/{stage['id']}/{stage['id']}.trx"
         return [["{dotnet}", "test", "tests/PersistentCity.Tests.csproj"] + (["--no-build"] if built else [])
@@ -377,7 +359,6 @@ def stage_steps(stage, built=None):
 
 
 def stage_outputs(stage):
-    """Files and directories under {out} a stage writes; removed before it runs so nothing stale is read."""
     _, trx = stage_steps(stage)
     owned = [stage.get("acceptance"), stage.get("output"), stage.get("provenance"), trx and str(Path(trx).parent),
              "logs/" + stage["id"] + ".log"]
@@ -396,7 +377,6 @@ def clean_outputs(out, stage):
 
 
 def run_steps(ctx, stage, steps, record):
-    """Run each step in the foreground with output to logs/<id>.log; returns the exit codes."""
     log_path = ctx.out / "logs" / (stage["id"] + ".log")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     env = ctx.env()
@@ -404,7 +384,6 @@ def run_steps(ctx, stage, steps, record):
     child = waited = 0.0
     with open(log_path, "wb") as log:
         for number, argv in enumerate(steps):
-            # One probe per stage: our own steps run back to back, so a later step needs no second probe.
             if stage.get("dotnet") and number == 0:
                 waited += wait_for_dotnet(ctx.no_wait)
             command = ctx.expand(argv, stage["id"])
@@ -497,8 +476,6 @@ def rule_build(ctx, stage, record):
         record["digests"]["PersistentCity.dll"] = match.group(1)
     elif verdict == "pass":
         return "fail", "build printed no DLL SHA256"
-    # F9b (Decision 4): the fingerprint set of the supplied assemblies. "unknown" leaves the build passing; the summary
-    # then holds native incomplete (summarize_result).
     record_path = ctx.out / stage["provenance"] if stage.get("provenance") else None
     if record_path is not None and record_path.is_file():
         record["evidence"].append(record_path)
@@ -529,7 +506,6 @@ def rule_economy(ctx, stage, record):
 
 
 def assess_movement(data, expected_red):
-    """Self-checks must pass; each compared arm must be equal unless listed expected-red."""
     listed = set(expected_red)
     failed_checks = [c["check"] for c in data.get("selfChecks", []) + data.get("e2", []) if not c.get("pass")]
     equal, red, unexpected, green = [], [], [], []
@@ -600,7 +576,7 @@ def run_stage(ctx, stage):
             record["verdict"], record["reason"] = RULES[stage["rule"]](ctx, stage, record)
         except LockHeld:
             raise
-        except Exception as error:  # a broken stage is a failed stage, never a crashed runner
+        except Exception as error:
             record["verdict"], record["reason"] = "fail", f"runner error: {type(error).__name__}: {error}"
     record["seconds"] = round(time.perf_counter() - started, 3)
     if "childSeconds" in record["metrics"]:
@@ -610,7 +586,6 @@ def run_stage(ctx, stage):
     return record
 
 
-# ---------------------------------------------------------------- provenance
 
 def provenance(catalogue, dotnet, profile_stages, price_weight):
     status = git("status", "--porcelain")
@@ -645,7 +620,6 @@ def provenance(catalogue, dotnet, profile_stages, price_weight):
     }
 
 
-# ---------------------------------------------------------------- verdicts
 
 def class_verdict(records):
     if not records:
@@ -659,27 +633,21 @@ def class_verdict(records):
 
 
 def summarize_result(result):
-    """Rebuild classes and summary. Only semantic and native required stages decide the verdict."""
     stages = result["stages"]
     required = [s for s in stages if s.get("required") and s["class"] in FUNCTIONAL]
     native = [s for s in stages if s["class"] == "native"]
     checks = (result.get("nativeEvidence") or {}).get("requiredChecks")
     if checks is not None:
-        # F9d (Decision 7): with the ledger, native needs the rig check of every row that is not fresh at this head. A
-        # missing check is not-run; a merged failed check is a required native stage and fails the class.
         for check in checks:
             if not any(s.get("rig") and rig_manifest.matches_check(s, check) for s in native):
                 required.append({"id": check, "class": "native", "verdict": "not-run", "reason": "rig check not merged"})
     elif not any(s.get("rig") for s in native):
         required.append({"id": "rig", "class": "native", "verdict": "not-run", "reason": "rig results not merged"})
-    # F9b (Decision 4): assemblies outside every declared fingerprint set leave native incomplete, never failed.
     game = (result.get("provenance") or {}).get("game") or {}
     if game.get("supplied") and game.get("set") in ("unknown", None):
         reason = ("game assemblies match no declared set; differing: " + ", ".join(game.get("differing") or [])
                   if game.get("set") == "unknown" else "no game fingerprint recorded")
         required.append({"id": "game-fingerprint", "class": "native", "verdict": "incomplete", "reason": reason})
-    # Native rows routed from the economy stage stay incomplete until a native record that names the same row
-    # (`measures`) reports; an unrelated rig pass never clears them (Decision 2).
     pending = []
     for row in [r for s in stages for r in s.get("routed", []) if r.get("class") == "native"]:
         measured = [s for s in native if s.get("measures") == row["row"]]
@@ -702,7 +670,6 @@ def summarize_result(result):
                          "notes": [n for s in stages for n in s.get("notes", [])]}
     evidence = result.get("nativeEvidence") or {}
     if "batchDue" in evidence:
-        # A scheduling signal printed next to the verdict; it never changes it (merge rule v2).
         result["summary"].update(nativeBatchDue=evidence["batchDue"], staleNativeRows=evidence["stale"],
                                  unprovenNativeRows=evidence["unproven"])
         if evidence["batchDue"]:
@@ -711,7 +678,6 @@ def summarize_result(result):
 
 
 def native_evidence(catalogue, prov):
-    """The Decision 7 ledger at this source (F9d), or why it was not assessed. Never part of the verdict."""
     path = catalogue.get("nativeAssumptions")
     if not path:
         return {"status": "not-configured"}
@@ -784,14 +750,12 @@ def artifact_hash(result):
 
 
 def identity_problem(result, rig):
-    """Why rig evidence does not belong to this run's source and artifact, or None when it does."""
     identity, rig_identity = source_identity(result), source_identity(rig)
     if identity["commit"] is None or rig_identity != identity:
         return f"rig source {rig_identity} is not the offline run's source {identity}"
     ours, theirs = artifact_hash(result), artifact_hash(rig)
     if ours and theirs and ours != theirs:
         return f"rig PersistentCity.dll {theirs} is not the offline run's {ours}"
-    # F9b/F9d: native proof counts only on the declared game the offline build matched.
     offline_set, rig_set = game_set(result), game_set(rig)
     if rig_set == "unknown":
         return "rig game assemblies match no declared fingerprint set"
@@ -809,7 +773,6 @@ def game_set(result):
 
 
 def package_evidence(stage, src_base, out, prefix):
-    """Copy a stage's evidence into the merged run directory and rebase its paths. Returns the problems found."""
     problems, entries = [], []
     src_base = src_base.resolve()
     for entry in stage.get("evidence", []):
@@ -836,8 +799,6 @@ def demote(stage, problems):
 
 
 def update_ledger(args, catalogue, result, out):
-    """F9d: record this head for every ledger row whose rig check passed in the merged result (rig check 10). The updated
-    ledger goes to {out}/native-assumptions.json, and with --update-ledger into the catalogue's ledger file."""
     evidence = result.get("nativeEvidence") or {}
     path = catalogue.get("nativeAssumptions")
     if evidence.get("status") != "assessed" or not path:
@@ -863,10 +824,6 @@ def update_ledger(args, catalogue, result, out):
 
 
 def merge(args, catalogue=None):
-    """summarize: merge rig stage records and F4's performance record into a run result.
-
-    Rig records count only when their provenance names the same source (commit, dirty flag and diff hash) and,
-    when both record one, the same PersistentCity.dll hash; otherwise they are incomplete whatever their verdict. Every evidence file is copied under the merged run directory."""
     source = Path(args.result).resolve()
     result = json.loads(source.read_text(encoding="utf-8"))
     if result.get("schema") != SCHEMA:
@@ -882,7 +839,6 @@ def merge(args, catalogue=None):
         if rig.get("schema") != SCHEMA:
             raise SystemExit(f"{rig_path.name} is not {SCHEMA}")
         mismatch = identity_problem(result, rig)
-        # Prefixes are numbered after every earlier import, also from earlier summarize runs, so no copy is overwritten.
         used = {entry.get("prefix") for entry in imported}
         index = len(imported)
         while f"rig/{index}-{rig_path.stem}" in used or (out / f"rig/{index}-{rig_path.stem}").exists():
@@ -897,7 +853,6 @@ def merge(args, catalogue=None):
             imported[-1]["stages"].append({"id": stage["id"], "verdict": stage["verdict"], "reason": stage.get("reason", "")})
             problems = package_evidence(stage, rig_path.parent, out, prefix)
             if mismatch:
-                # Foreign evidence neither passes nor fails this run; its own verdict stays in importedEvidence.
                 stage["verdict"], stage["reason"] = "incomplete", "; ".join([mismatch] + problems)
             demote(stage, problems)
             result["stages"] = [s for s in result["stages"] if s["id"] != stage["id"]] + [stage]
@@ -934,10 +889,8 @@ def main(argv=None):
         parser.error("summarize needs --result")
     catalogue = json.loads(Path(args.catalogue).read_text(encoding="utf-8"))
     if args.profile == "rig-manifest":
-        # Decision 1: seconds, no .NET and no lock. --result takes the fingerprint set from that run's build.
         game = (json.loads(Path(args.result).read_text(encoding="utf-8"))["provenance"].get("game") or {}) if args.result else {}
         extra = ["--fingerprint", game["set"]] if game.get("supplied") and game.get("set") else []
-        # summarize writes the ledger with this batch's evidence next to its result; the manifest reads that one.
         merged = Path(args.result).resolve().parent / "native-assumptions.json" if args.result else None
         ledger = merged if merged is not None and merged.is_file() else ROOT / catalogue["nativeAssumptions"]
         return rig_manifest.main(["--ledger", str(ledger),

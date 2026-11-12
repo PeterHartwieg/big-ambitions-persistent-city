@@ -4,23 +4,13 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    // F5d (city audit F5 #92, docs/plans/f5-population.md section 3 Independent schedules and Visitor lifecycle):
-    // schema 27 gives every visitor its own routine in the one CitySimulator event queue. There is no switch-over
-    // day, no host or anchor relation and no represented excursion: a fresh city runs this way from its first day.
 
-    /// <summary>A visitor's routine (schema 27). It is an ordinary scheduler entry like a resident's, kept outside
-    /// <see cref="CityState.Citizens"/> so resident-only consumers (RLO identities, bodies, cars, census) never see
-    /// it. Identity and traits are derived (contract B6); the home is the visitor's portal place, where it is
-    /// off-map; it owns no car, no traffic record and no recent-visit history beyond the latest arrival.</summary>
     public sealed class VisitorRoutine : CitizenState
     {
-        /// <summary>The visitor person this routine belongs to (linked on creation and read).</summary>
         public VisitorPerson? Person => Visitor;
-        /// <summary>The routine's carried outside income source (published to the person at each commit).</summary>
         public ResidentIncomeSource? Carried { get => VisitorCarried; set => VisitorCarried = value; }
     }
 
-    /// <summary>A subway station read when the city's first roster is enrolled; it becomes a portal place.</summary>
     public readonly struct PortalStation
     {
         public PortalStation(string id, Position entrance) { Id = id; Entrance = entrance; }
@@ -28,8 +18,6 @@ namespace PersistentCity.Core
         public Position Entrance { get; }
     }
 
-    /// <summary>Portal places: zero-capacity Home-kind places at subway entrances, listed in
-    /// <see cref="CityState.Portals"/>. Capacity zero keeps them out of housing, destination and workplace choice.</summary>
     public static class PortalPlaces
     {
         public const string Evidence = "portal:subway-station";
@@ -37,9 +25,6 @@ namespace PersistentCity.Core
         public static bool Is(Place place) => place.Kind == PlaceKind.Home && place.Capacity == 0
             && string.Equals(place.EvidenceSource, Evidence, StringComparison.Ordinal);
 
-        /// <summary>Adds each station as a portal place once, before any visitor exists. The portal's district is the
-        /// district of the nearest saved non-portal place (ordinal-ID tie-break), so a visitor's budget uses its
-        /// portal neighbourhood's mix (section 3 Resources). Station IDs that collide with a saved place are skipped.</summary>
         public static void Add(CityState city, IEnumerable<PortalStation> stations)
         {
             if (city.Visitors.Count != 0) throw new InvalidOperationException("Portals are fixed before visitors are created.");
@@ -73,11 +58,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Creates one visitor person and routine at a time from catalogue candidates prepared once (review
-    /// Opus-r1-1 perf: no scan of every place per visitor). F5d's fresh roster and F5g's day-boundary fill both use it,
-    /// so a visitor's portal, identity, venues, seat and carried income are drawn by the same keys whichever creates it.
-    /// <paramref name="vacant"/> and <paramref name="seat"/> are the caller's capacity view (a recount or the
-    /// simulator's occupancy index); both count residents and every earlier visitor.</summary>
     internal sealed class VisitorFactory
     {
         private readonly CityState city;
@@ -92,18 +72,13 @@ namespace PersistentCity.Core
             this.city = city; this.vacant = vacant; this.seat = seat;
             identities = IdentityPolicy.V1(city.SourceIdentities);
             foreach (var place in city.Places) places[place.Id] = place;
-            // The candidates of each kind once, in catalogue order. DestinationChoice keeps only these, so every choice is unchanged.
             foreach (var kind in new[] { PlaceKind.Work, PlaceKind.Study, PlaceKind.Shop, PlaceKind.Leisure }) candidates[kind] = new List<Place>();
             foreach (var place in city.Places)
                 if (place.Capacity > 0 && candidates.TryGetValue(place.Kind, out var list)) list.Add(place);
         }
 
-        /// <summary>True when <c>pv:&lt;sequence&gt;</c>'s derived identity has a working persona (not a student or retiree).</summary>
         internal bool Working(int sequence) => VisitorSchedules.WorkingPersona(identities.PersonaOf(city.Seed, PersonIds.Visitor(sequence)));
 
-        /// <summary>The visitor <c>pv:&lt;sequence&gt;</c> of <paramref name="pattern"/>, off-map at its portal (Dormant) with its
-        /// first event at <paramref name="minute"/>. A commuter is seated with today's rule; a day visitor never holds a city
-        /// workplace. A working adult without a seat keeps an outside employer as its carried income source.</summary>
         internal (VisitorPerson Visitor, VisitorRoutine Routine) Create(int sequence, VisitorPattern pattern, double minute)
         {
             string id = PersonIds.Visitor(sequence);
@@ -127,7 +102,6 @@ namespace PersistentCity.Core
             ResidentLifecycle.Initialize(routine, city.Seed, minute);
             var visitor = new VisitorPerson { Id = id, Stay = new VisitorStay { OriginPortalId = portalId,
                 Pattern = pattern, Presence = VisitorPresence.Dormant, FirstDay = (int)Math.Floor(minute / 1440), NextStayStart = minute } };
-            // An unseated worker keeps an outside employer (carried income) until its own employment outcome.
             if (work.Length == 0 && ResidentLifecycle.IsWorker(routine) && identity.Age >= 18)
                 routine.VisitorCarried = ResidentIncomeSource.ExternalEmployment;
             VisitorSchedules.Link(visitor, routine);
@@ -138,16 +112,8 @@ namespace PersistentCity.Core
 
     public static class VisitorSchedules
     {
-        /// <summary>Visitors created with a fresh roster: K−1 per resident for the requested factor K (1–3), the
-        /// population the represented consumers stood for. F5g fills toward the census target later.</summary>
         public static int FreshVisitors(int residents, int factor) => residents * Math.Max(0, factor - 1);
 
-        /// <summary>Creates <paramref name="count"/> commuter visitors <c>pv:&lt;n&gt;</c> at the city clock. Each gets a
-        /// portal by <c>Hash(seed, PersonId, "portal")</c>, a derived identity, its own preferences, shop and leisure
-        /// venues, and employment seated with today's rule (closest-scoring workplace with a vacancy, counted with the
-        /// residents' and earlier visitors' assignments). A worker left without a vacancy keeps an outside employer as
-        /// its carried income source. Visitors start off-map at their portal (Dormant) with their first event now.
-        /// Without a portal no visitor is created (missing stations never invent a portal). Returns the new routines.</summary>
         public static IReadOnlyList<VisitorRoutine> Create(CityState city, int count)
         {
             if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
@@ -168,11 +134,8 @@ namespace PersistentCity.Core
             return created;
         }
 
-        /// <summary>Owner decision (8 Nov 2026): fill-created commuters have a working persona, so each takes a Work seat.</summary>
         public static bool WorkingPersona(Persona persona) => persona != Persona.Student && persona != Persona.Retiree;
 
-        /// <summary>F5g reader rule: every sequence number below NextVisitorSequence without a visitor in
-        /// <paramref name="present"/> derives a student or retiree identity, the only numbers the fill skips for a commuter.</summary>
         public static bool OnlyNonWorkingSkipped(CityState city, IReadOnlyCollection<int> present)
         {
             var used = new bool[city.NextVisitorSequence];
@@ -183,16 +146,12 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>F5g: a day-visitor pool member returns on the days drawn by <c>Hash(seed, PersonId, "visit", day)</c>
-        /// against the census's weekend-weighted DayVisitProbability (plan section 3 Visitor lifecycle, Reuse).</summary>
         public static bool VisitsOn(CitizenState person, int seed, int day)
             => VisitsOn(RoutineKeys.For(person, seed), day, ((day - 1) % 7 + 7) % 7 >= 4);
 
         internal static bool VisitsOn(RoutineKeys keys, int day, bool weekend)
             => RoutineKeys.Draw(keys.VisitDay, day) % 10000 < (weekend ? PopulationCensusPolicy.DayVisitWeekendBasisPoints : PopulationCensusPolicy.DayVisitWeekdayBasisPoints);
 
-        /// <summary>A visitor's travel preferences, derived from (seed, PersonId) and never stored. Section 9 Q1 default:
-        /// visitors come by subway and walk; they own no car. Tolerance and fare weight follow the resident draws.</summary>
         public static TravelPreferences Preferences(string id, Persona persona, int seed) => new TravelPreferences
         {
             OwnsCar = PersonPolicy.VisitorsOwnCars, AllowTransit = true,
@@ -201,7 +160,6 @@ namespace PersistentCity.Core
             FareWeightMinutes = (persona == Persona.Student ? 5 : 2) * (0.75 + StableRandom.Hash(id + ":fare", seed) % 51 / 100.0)
         };
 
-        /// <summary>Restores ordinal order of the aligned visitor and routine lists after appends.</summary>
         public static void Order(CityState city)
         {
             if (city.Visitors.Count != city.VisitorRoutines.Count) throw new InvalidOperationException("Every visitor has exactly one routine.");
@@ -219,7 +177,6 @@ namespace PersistentCity.Core
             visitor.Routine = routine; routine.Visitor = visitor;
         }
 
-        /// <summary>Links every visitor with its routine (lists aligned by index) and derives the routines' identity.</summary>
         public static void LinkAll(CityState city, IdentityPolicy? identities = null)
         {
             if (city.Visitors.Count != city.VisitorRoutines.Count) throw new InvalidOperationException("Every visitor has exactly one routine.");
@@ -234,8 +191,6 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>Codec read (schema 27): every routine gets the derived facts that are never stored (identity, traits,
-        /// travel preferences) and is linked to its person. The lists are aligned by index.</summary>
         public static void DeriveAll(CityState city)
         {
             if (city.Visitors.Count != city.VisitorRoutines.Count) throw new InvalidOperationException("Every visitor has exactly one routine.");
@@ -251,13 +206,9 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>True while the visitor is off-map at its portal: Dormant (section 3 Visitor lifecycle). A visitor still
-        /// waiting there for a route to its first destination has not arrived and stays dormant.</summary>
         public static bool Dormant(CitizenState routine) => routine.PlaceId == routine.HomeId && routine.Activity == Activity.Home
             && routine.Phase != CitizenPhase.Travelling && routine.Journey == null && routine.MealOuting == null;
 
-        /// <summary>Publishes a committed routine onto its person record: presence and next stay start, the single
-        /// <c>LastArrival</c> tuple (cleared on departure), the Employment formalizing DayPlaceId, and the carried source.</summary>
         public static void Sync(VisitorPerson visitor)
         {
             var routine = visitor.Routine ?? throw new InvalidOperationException("Visitor has no routine.");
@@ -270,8 +221,6 @@ namespace PersistentCity.Core
             else
             {
                 stay.Presence = VisitorPresence.Active; stay.NextStayStart = 0;
-                // Arrival records are never edited after the arrival commit, so the tuple shares the routine's record
-                // (F5d perf: no second record per visitor arrival).
                 visitor.LastArrival = routine.RecentVisits.Count == 0 ? null : routine.RecentVisits[routine.RecentVisits.Count - 1];
             }
             if (routine.DayPlaceId.Length == 0) visitor.Employment = null;
@@ -286,8 +235,6 @@ namespace PersistentCity.Core
             visitor.CarriedIncomeSource = routine.VisitorCarried;
         }
 
-        /// <summary>Records an admitted arrival. A resident appends to its bounded recent visits exactly as before; a
-        /// visitor keeps only this latest arrival, which becomes its <c>LastArrival</c> tuple.</summary>
         internal static void RecordArrival(CitizenState person, double minute, string placeId, Activity activity)
         {
             var visit = new VisitRecord { AtMinute = minute, PlaceId = placeId, Activity = activity };
@@ -296,16 +243,12 @@ namespace PersistentCity.Core
             if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
         }
 
-        /// <summary>The visitor admission guard (section 3 Arrival evidence): the latest arrival is a Shop arrival at the
-        /// meal's place no earlier than the meal's desired minute. Residents keep their RecentVisits check.</summary>
         internal static bool ArrivedForMeal(VisitorPerson visitor, string placeId, double desiredAt)
         {
             var arrival = visitor.LastArrival;
             return arrival != null && arrival.PlaceId == placeId && arrival.Activity == Activity.Shop && arrival.AtMinute >= desiredAt;
         }
 
-        /// <summary>Read-only diagnostic of one person (resident or visitor) from stored facts only, for the debug line
-        /// <c>pc population person &lt;id&gt;</c>; null if no such person exists. Never draws, plans or changes state.</summary>
         public static string? DescribePerson(CityState city, string id, long anchorReads)
         {
             CitizenState? person = null; VisitorPerson? visitor = null;
@@ -328,7 +271,6 @@ namespace PersistentCity.Core
                     .Append(" place=").Append(meal.PlaceId).Append(" purchases=").Append(meal.Purchases)
                     .Append(meal.Budget == null ? "" : " income=" + meal.Budget.IncomeSource + " balance_units=" + meal.Budget.Balance.Units.ToString(CultureInfo.InvariantCulture));
             var accrual = person.Accrual;
-            // Diagnostic only: the place index fits an unplanned day's shift to its workplace's hours, as the wage path does.
             var shift = EmploymentWages.ActiveWindow(person, city.Seed, System.Linq.Enumerable.ToDictionary(city.Places, p => p.Id, StringComparer.Ordinal));
             int attended = accrual.AttendedMinutes;
             if (shift.HasValue && EmploymentWages.Active(accrual) && accrual.Shift != EmploymentWages.Closed)

@@ -6,18 +6,9 @@ using System.Text;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 
-/// <summary>
-/// F7a representative save fixture: the F3 integrated replay (tools/bounded-bulk-regression
-/// Integrated.cs) of the actual Core scheduler, from 05:00 through all meal peaks and the next
-/// midnight, with household finances, two consumers per resident, work/leisure routines and a
-/// detached checkout port. Histories are natural (one replayed day), not saturated. The same
-/// seed and size always give the same writer-25 bytes. No visitor identity is stored: the
-/// fixture holds only the residents and consumers today's Core creates (F5 contract B6).
-/// </summary>
 public static class RepresentativeFixture
 {
     public const int Seed = 23;
-    /// <summary>Day 3 00:30: one complete day from the 05:00 start, plus the midnight postings.</summary>
     public const double TargetMinute = 2910;
 
     public sealed class Routes : IRoutePlanner
@@ -56,12 +47,9 @@ public static class RepresentativeFixture
         public long Events { get; }
     }
 
-    /// <summary>Replay bounded slices until caught up; slicing never depends on wall-clock time,
-    /// and the saved bytes do not depend on <paramref name="eventsPerSlice"/>.</summary>
     public static Replay Build(int residents, int seed = Seed, double target = TargetMinute, int eventsPerSlice = 1)
     {
         var state = EconomyScenario.Create(residents, seed); state.Food = EconomyScenario.Food();
-        // F5d: two subway portals, so the factor-2 roster creates one visitor per resident on its own routine.
         PortalPlaces.Add(state, Portals);
         var routes = new Routes(); var market = new Market();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();

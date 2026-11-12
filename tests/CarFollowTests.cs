@@ -5,11 +5,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2d: the pure car-follow arithmetic and the car part of the F2c movement telemetry.
 public sealed class CarFollowTests
 {
-    // The Runtime car shape: walk 2 min to the car, a 1 min preparation pause, two road legs of 1 min, a 0.5 min kerb
-    // connector off the road, a 2 min parking pause, then a 3 min walk from the parked car.
     private static Route Route() => new Route { Legs = new() {
         new RouteLeg { From = new Position(0, 0, 0), To = new Position(10, 0, 0), Minutes = 2, Mode = TravelMode.Walk },
         new RouteLeg { From = new Position(10, 0, 0), To = new Position(10, 0, 0), Minutes = 1, Mode = TravelMode.Car },
@@ -29,7 +26,6 @@ public sealed class CarFollowTests
         Assert.Equal(5, CarFollow.CarLegsEnd(route, 4.5));
         Assert.Equal(5, CarFollow.CarLegsEnd(route, 5));
         Assert.Equal(6, CarFollow.CarLegsEnd(route, 6));
-        // The cap is the logical coordinate, but never past the road's end.
         Assert.Equal(4.25, CarFollow.Cap(route, 3.5, 4.25));
         Assert.Equal(5, CarFollow.Cap(route, 3.5, 7));
         Assert.Equal(0, CarFollow.Cap(route, 3.5, double.NaN));
@@ -51,13 +47,10 @@ public sealed class CarFollowTests
     public void AdvanceStopsAtTheRoadEndAndNeverOntoTheConnector()
     {
         var route = Route();
-        // Gley reported the first road corner: the car crosses it and projects on the second road leg.
         Assert.Equal(4.5, CarFollow.Advance(route, 3.5, 6, new Position(25, 0, 0), 2), 12);
-        // At the road's end with Gley's evidence: the parking point, never onto the connector, whatever the cap.
         Assert.Equal(5, CarFollow.Advance(route, 4.5, 7, new Position(30, 0, 0), 3), 12);
         Assert.Equal(5, CarFollow.Advance(route, 5, 7, new Position(34, 0, 0), 4), 12);
         Assert.False(CarFollow.IsRoad(WalkerFollow.Sample(route, 5)));
-        // A body pushed off its leg keeps its progress.
         Assert.Equal(3.5, CarFollow.Advance(route, 3.5, 4, new Position(15, 0, 9), -1));
     }
 
@@ -76,9 +69,7 @@ public sealed class CarFollowTests
     {
         Assert.Equal(CarPhaseMismatch.KernelHeldAtNativeGreen, CarFollow.Classify(true, false, 0.2, true, false));
         Assert.Equal(CarPhaseMismatch.NativeStopAtKernelGreen, CarFollow.Classify(true, true, 12, false, true));
-        // Both red now at the car's junction: no mismatch, whatever the kernel did there earlier.
         Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(true, true, 25, false, false));
-        // Moving, unknown native light, still catching up, or both agreeing: nothing.
         Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(false, false, 0.2, true, false));
         Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(true, null, 0.2, true, true));
         Assert.Equal(CarPhaseMismatch.None, CarFollow.Classify(true, false, 6, true, false));
@@ -101,7 +92,6 @@ public sealed class CarFollowTests
         Assert.EndsWith("body=car", WalkerMovementTelemetry.Format(list[1]));
         Assert.Contains("kind=Fade on_screen=true", WalkerMovementTelemetry.Format(list[1]));
         Assert.EndsWith("body=walker", WalkerMovementTelemetry.Format(new WalkerCorrection(1, 1, "w", WalkerCorrectionKind.Move, default, default, false)));
-        // Eviction is shared: 600 car entries push the walker's out and the ring reports the gap.
         for (int i = 0; i < 600; i++) t.Record(10 + i, "c", WalkerCorrectionKind.LagRelease, default, default, false, car: true);
         list.Clear(); t.Since(0, list, out gap);
         Assert.True(gap); Assert.Equal(WalkerMovementTelemetry.Capacity, list.Count); Assert.All(list, c => Assert.True(c.Car));
@@ -129,12 +119,9 @@ public sealed class CarFollowTests
         Assert.Contains("phase_kernel_held_native_green=1\n", status);
         Assert.Contains("phase_native_stop_kernel_green=1\n", status);
         Assert.Contains("car_thresholds=catch_up_m:5;correct_m:30;hurry_s:10;fade_out_s:1;stopped_mps:0.5", status);
-        // The walker lines keep their F2c order and names.
         Assert.StartsWith("followers=2\nlag_samples=1\n", status);
     }
 
-    /// <summary>F2d (E1): a car body's model and paint are derived from the stable car ID, the same values the native
-    /// adapter used to write on first acquisition, and nothing is written, so a seen car saves like an unseen one.</summary>
     [Fact]
     public void CarAppearanceIsDerivedWithoutWritingTheSavedCar()
     {
@@ -147,13 +134,10 @@ public sealed class CarFollowTests
         Assert.Equal(models[hash % (uint)models.Length], model);
         uint paintHash = 2166136261; foreach (char c in fresh.Id + ":paint") paintHash = unchecked((paintHash ^ c) * 16777619);
         Assert.Equal(1 + (int)(paintHash % 2147483646u), CarAppearance.Paint(fresh));
-        // Nothing written, and the same answer every time.
         Assert.Equal("", fresh.ModelId); Assert.Equal(0, fresh.PaintSeed);
         Assert.True(CarAppearance.TryModel(fresh, Catalogue, out string again)); Assert.Equal(model, again);
-        // An empty catalogue refuses the body (a failed acquisition), still writing nothing.
         Assert.False(CarAppearance.TryModel(fresh, () => Array.Empty<string>(), out _));
         Assert.Equal("", fresh.ModelId); Assert.Equal(0, fresh.PaintSeed);
-        // A saved assignment (an older city) is kept and needs no catalogue traversal.
         traversals = 0;
         var saved = new CarState { Id = "resident-17:car", ModelId = "Truck", PaintSeed = 42 };
         Assert.True(CarAppearance.TryModel(saved, Catalogue, out string kept));

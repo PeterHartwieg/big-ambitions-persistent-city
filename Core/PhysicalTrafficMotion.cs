@@ -16,7 +16,6 @@ namespace PersistentCity.Core
         public double Fraction { get; }
         public double ReservedAdvance { get; }
     }
-    /// <summary>Additional command braking only. External collision impulses remain physical evidence to validate separately.</summary>
     public static class PhysicalTrafficMotion
     {
         public static double MaximumSpeed(PhysicalJourneySample sample, Position actual, double maximumNominalMinutes, double fixedSeconds)
@@ -35,19 +34,11 @@ namespace PersistentCity.Core
             double length = Math.Sqrt(x * x + z * z);
             if (!Position.Finite(length) || length <= .000001) return 0;
             double actualAlong = ((actual.X - sample.From.X) * x + (actual.Z - sample.From.Z) * z) / length;
-            // Keep a small margin at an interior queue limit. Reached native endpoints get no permanent
-            // setback: the head must be able to substantiate the boundary and release finite storage.
             double setback = fraction < 1 - 1e-10 ? .15 : 0;
             double remaining = Math.Max(0, length * fraction - actualAlong - setback);
             return remaining;
         }
 
-        /// <summary>
-        /// Bound the entire commanded rotation arc, not just its final orientation. Native yaw is around
-        /// the body's current local up axis; projected marker movement is A(cos(theta)-1)+B sin(theta).
-        /// A prefix maximum is monotone, so bounded bisection finds a safe prefix without translating
-        /// a stopped root backwards to compensate for rotation.
-        /// </summary>
         public static PhysicalTrafficRotationLimit LimitRotation(Position markerOffset, Position axis, Position routeDirection,
             double proposedRadians, double maximumAdvance)
         {
@@ -67,7 +58,6 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Invalid physical traffic marker projection.");
             double full = MaximumRotationAdvance(a, b, proposedRadians);
             if (full == 0) return new PhysicalTrafficRotationLimit(1, 0);
-            // Reserve float quaternion/application roundoff only when rotation can advance the marker.
             const double guard = .0001;
             double budget = Math.Max(0, maximumAdvance - guard);
             if (full <= budget) return new PhysicalTrafficRotationLimit(1, full + guard);
@@ -95,7 +85,6 @@ namespace PersistentCity.Core
             return result;
         }
 
-        /// <summary>Reduce the native requested horizontal speed, preserving its direction, vertical forces and any stronger native stop.</summary>
         public static Position LimitVelocityChange(Position velocity, Position nativeChange, double maximumSpeed)
         {
             if (!velocity.IsFinite || !nativeChange.IsFinite || !Position.Finite(maximumSpeed) || maximumSpeed < 0)

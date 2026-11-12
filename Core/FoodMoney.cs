@@ -6,12 +6,6 @@ using System.Runtime.Serialization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Resident money: a signed 64-bit whole number of units, 1 unit = 2^-28 cents
-    /// (2^-30 / 25 dollars). Every supported native binary32 price (a whole multiple of 2^-30
-    /// dollars) and every whole cent is a whole number of units, so payments, postings, sums and
-    /// saves are exact integers. Every operator is overflow-checked; nothing rounds. The range is
-    /// about plus or minus $343.6 million per amount. Never round a payment to display precision.</summary>
-    // Outside the codecs' integer form, plain Json.NET round-trips the exact unit count as {"Units": n}.
     [DataContract]
     public readonly struct Money : IEquatable<Money>, IComparable<Money>
     {
@@ -41,7 +35,6 @@ namespace PersistentCity.Core
         public static Money Min(Money left, Money right) => left <= right ? left : right;
         public static Money Max(Money left, Money right) => left >= right ? left : right;
 
-        /// <summary>Refuse, without throwing, a sum the unit cannot hold.</summary>
         public static bool TryAdd(Money left, Money right, out Money result)
         {
             long sum = unchecked(left.Units + right.Units);
@@ -55,46 +48,35 @@ namespace PersistentCity.Core
             foreach (var value in values) total += value;
             return total;
         }
-        /// <summary>Exact total of any number of amounts, for diagnostics that may exceed one amount's range.</summary>
         public static BigInteger TotalUnits(IEnumerable<Money> values)
         {
             var total = BigInteger.Zero;
             foreach (var value in values) total += value.Units;
             return total;
         }
-        /// <summary>Exact cents text of <see cref="TotalUnits"/>, for diagnostics.</summary>
         public static string TotalCentsText(IEnumerable<Money> values) => CentsText(TotalUnits(values));
 
-        // Methods rather than properties: serialized diagnostics show only the exact Units.
         public bool IsWholeCents() => Units % UnitsPerCent == 0;
-        /// <summary>Scores and display only; never funds or settles a sale.</summary>
         public double ApproximateCents() => Units / (double)UnitsPerCent;
 
         public static Money FromNative(float dollars)
             => TryFromNative(dollars, out var money) ? money : throw new ArgumentOutOfRangeException(nameof(dollars), Unrepresentable);
 
-        /// <summary>The exact unit count of a native binary32 dollar price. Refuses, never rounds:
-        /// nonfinite, nonpositive, subnormal, above $10,000, or below 2^-7 dollars and between units.</summary>
         public static bool TryFromNative(float dollars, out Money money)
         {
             money = default;
             if (float.IsNaN(dollars) || float.IsInfinity(dollars) || dollars <= 0 || dollars > MaximumNativePriceCents / 100) return false;
-            // Decode the IEEE fields; no decimal or double cast takes part in the amount.
             int bits = new Binary32 { Value = dollars }.Bits;
             int biased = (bits >> 23) & 255;
             if (biased == 0) return false;
-            // dollars = m * 2^(biased - 150); units = dollars * 25 * 2^30 = m * 25 * 2^(biased - 120).
             long significand = (bits & 0x7fffff) | 0x800000;
             int exponent = biased - 120;
             while (exponent < 0 && (significand & 1) == 0) { significand >>= 1; exponent++; }
-            // Only prices below 2^-7 dollars can fall between units.
             if (exponent < 0) return false;
-            // At most $10,000: exponent <= 20, so m * 25 * 2^20 < 2^49.
             money = new Money(significand * 25 << exponent);
             return true;
         }
 
-        /// <summary>Exact invariant decimal cents: no exponent, grouping or trailing fractional zeros.</summary>
         public string ToCentsText() => CentsText(Units);
         public static string CentsText(BigInteger units)
         {
@@ -103,15 +85,11 @@ namespace PersistentCity.Core
             var fraction = magnitude - (whole << CentBits);
             string text = whole.ToString(CultureInfo.InvariantCulture);
             if (!fraction.IsZero)
-                // fraction / 2^28 == fraction * 5^28 / 10^28, exactly 28 decimal places.
                 text += "." + (fraction * BigInteger.Pow(5, CentBits)).ToString(CultureInfo.InvariantCulture).PadLeft(CentBits, '0').TrimEnd('0');
             return units.Sign < 0 ? "-" + text : text;
         }
         public override string ToString() => ToCentsText();
 
-        /// <summary>Parse plain decimal cents (optional '-', digits, optional fraction; no exponent)
-        /// exactly. Refuses more than <paramref name="maximumFractionDigits"/> places, a value that
-        /// is not a whole number of units, and a value outside the unit range; never rounds.</summary>
         public static bool TryParseCents(string text, int maximumFractionDigits, out Money value)
         {
             value = default;
@@ -123,7 +101,6 @@ namespace PersistentCity.Core
             if (point >= 0 && (places == 0 || !Digits(text, point + 1, text.Length))) return false;
             if (places > maximumFractionDigits) return false;
             var scaled = BigInteger.Parse(text.Substring(start, end - start) + (point < 0 ? "" : text.Substring(point + 1)), NumberStyles.None, CultureInfo.InvariantCulture);
-            // scaled / 10^places cents = scaled * 2^(28 - places) / 5^places units.
             var divisor = BigInteger.Pow(5, places);
             if (!(scaled % divisor).IsZero) return false;
             var units = scaled / divisor << (CentBits - places);

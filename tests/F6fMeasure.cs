@@ -27,7 +27,6 @@ public sealed class F6fMeasure
     }
     private void Measure(string name, Action action, int n = 20000)
     {
-        // Warm the timer/allocation plumbing on this test thread as well as the operation.
         for (int i = 0; i < 1000; i++)
         {
             long bytes = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp(); action();
@@ -71,7 +70,6 @@ public sealed class F6fMeasure
         {
             var places = Enumerable.Range(0, count).Select(i => new Place { Id = "p" + i }).ToArray();
             GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); long before = GC.GetTotalMemory(true);
-            // Same bounded source dictionary as Runtime; managed Place handles stand in for existing native controllers.
             var sources = new Dictionary<string, Place>(count, StringComparer.Ordinal);
             foreach (var p in places) sources.Add(p.Id, p);
             var ambiguous = new HashSet<string>(StringComparer.Ordinal);
@@ -81,7 +79,6 @@ public sealed class F6fMeasure
             index.ObserveBoundary(1560); while (index.Pending) index.Continue();
             string id = places[^1].Id;
             Measure($"owner lookup {count}", () => { if (!index.TryGet(id, out _)) throw new Exception("missing"); });
-            // Entire index lifecycle stays outside each per-unit sample except the bounded read/publication.
             int rounds = count == 20000 ? 30 : 1000;
             var times = new double[rounds * ((count + 15) / 16)]; int sample = 0; long allocated = 0, reads = index.NativeReads;
             for (int round = 0; round < rounds; round++)

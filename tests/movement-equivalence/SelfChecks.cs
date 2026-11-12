@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace PersistentCity.MovementEquivalence;
 
-/// <summary>Harness self-checks (F2a row): same seed byte-identical; the bodies-off arms (no focus, zero
-/// caps) equal the plain simulation; injected faults fail loudly; the reload arm resumes and, without
-/// bodies, equals the uninterrupted run.</summary>
 public static class SelfChecks
 {
     public const int Residents = 96;

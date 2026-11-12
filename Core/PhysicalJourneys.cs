@@ -38,8 +38,6 @@ namespace PersistentCity.Core
 
     public sealed partial class CitySimulator
     {
-        // F5g: a visitor's slot is found by its ID in the ordinal visitor list, not by the queued index, because fill units
-        // merge new visitors into that list and shift later positions. Before F5g both gave the same answer.
         private bool CurrentCitizenSlot(Due item, CitizenState citizen)
         {
             if (item.ListIndex >= 0) return item.ListIndex < State.Citizens.Count && ReferenceEquals(State.Citizens[item.ListIndex], citizen);
@@ -60,7 +58,6 @@ namespace PersistentCity.Core
             return -1;
         }
 
-        /// <summary>Sample committed geometry, including zero-distance preparation/wait legs and the parked/driven car.</summary>
         public PhysicalJourneySample SampleJourney(CitizenState citizen)
         {
             if (citizen == null) throw new ArgumentNullException(nameof(citizen));
@@ -69,8 +66,6 @@ namespace PersistentCity.Core
             return SampleJourney(citizen, elapsed);
         }
 
-        // A completed traffic leg (or, before F2c/F2d, a completed lease) stores departure = clock - duration. Reversing
-        // that subtraction can exceed duration by an ulp at a large city clock; this is not evidence of extra travel.
         internal static double JourneyClockTolerance(double clock, double total) =>
             4 * 2.2204460492503131e-16 * Math.Max(1, Math.Max(Math.Abs(clock), Math.Abs(total)));
 
@@ -89,7 +84,6 @@ namespace PersistentCity.Core
             return SampleRoute(route, routeElapsedMinutes, citizen.Car?.ParkedPosition);
         }
 
-        // Shared pure sampling keeps clock-retime validation on the exact physical pose contract.
         internal static PhysicalJourneySample SampleRoute(Route route, double routeElapsedMinutes, Position? parkedCar)
         {
             double totalMinutes = route.Minutes;
@@ -101,18 +95,12 @@ namespace PersistentCity.Core
             for (int i = 0; i < route.Legs.Count; i++)
             {
                 var leg = route.Legs[i];
-                // Summing fractional legs and then subtracting them can leave an endpoint a few
-                // ulps short. Snap only a negligible fraction of this leg, so a reached corner
-                // cannot stay unreached forever while a body has already stopped there.
                 double boundaryTolerance = Math.Min(leg.Minutes * 1e-9, Math.Max(1e-12, Math.Abs(routeElapsedMinutes) * 1e-14));
                 if (Math.Abs(remaining - leg.Minutes) <= boundaryTolerance)
                 {
-                    // Endpoint normalization may move the geometry back by a few ulps when the
-                    // measured progress was just beyond the corner. Never move its clock back.
                     sampledElapsed = Math.Max(routeElapsedMinutes, sampledElapsed + leg.Minutes - remaining);
                     remaining = leg.Minutes;
                 }
-                // At a boundary, expose the next leg (important for walk/car/transit handoffs).
                 if (remaining < leg.Minutes || i == route.Legs.Count - 1)
                 {
                     double fraction = Math.Min(1, remaining / leg.Minutes);
@@ -127,39 +115,20 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>
-    /// F2c walker follower (docs/plans/f2-movement.md Decision 2). Pure presentation arithmetic: a walker body tracks its own
-    /// progress along the committed route, never ahead of the logical pose, and Runtime turns the lag into a pace or a
-    /// correction. Nothing here writes simulator state. The thresholds are technical starting values, reported by
-    /// pc movement status and tuned from F2c measurements.
-    /// </summary>
     public static class WalkerFollow
     {
-        /// <summary>Lag up to which the body walks at native pace.</summary>
         public const double CatchUpMetres = 1.5;
-        /// <summary>Lag above which the body is corrected (moved off screen, or hurried and faded on screen).</summary>
         public const double CorrectionMetres = 8;
-        /// <summary>Fastest catch-up pace, as a multiple of native walking pace.</summary>
         public const double MaximumPaceFactor = 1.5;
-        /// <summary>Catch-up pace reaches its maximum at this lag.</summary>
         public const double FullPaceMetres = 3;
-        /// <summary>At or below this lag the body is at the logical pose and stops, so it is never ahead of it.</summary>
         public const double StopMetres = 0.05;
-        /// <summary>Q3: an on-screen body hurries this long before it fades at the next corner or doorway.</summary>
         public const double HurrySeconds = 10;
-        /// <summary>A walker on a fallback pose aim (<see cref="NeedsPath"/>) is re-aimed at the pose once it has moved this far.</summary>
         public const double RetargetMetres = 0.5;
-        /// <summary>P-C along-leg tolerance: a body further than this ahead of the logical pose on the pose's leg is
-        /// counted (<see cref="WalkerMovementTelemetry.AheadFrames"/>). The commanded speed keeps it at zero.</summary>
         public const double AheadToleranceMetres = 0.01;
-        /// <summary>After the logical arrival, a visible walker keeps walking to the door this long.</summary>
         public const double ArrivalTailSeconds = 10;
-        /// <summary>Q3 fade: a corrected on-screen body stands and fades out over this long before it is released.</summary>
         public const double FadeOutSeconds = 1;
         private const int MaximumCorners = 16;
 
-        /// <summary>Pace multiple for a lag: 0 at the logical pose, 1 up to <see cref="CatchUpMetres"/>, rising
-        /// linearly to <see cref="MaximumPaceFactor"/> at <see cref="FullPaceMetres"/>.</summary>
         public static double PaceFactor(double lagMetres)
         {
             if (!Position.Finite(lagMetres) || lagMetres <= StopMetres) return 0;
@@ -168,22 +137,11 @@ namespace PersistentCity.Core
             return Math.Min(MaximumPaceFactor, 1 + (MaximumPaceFactor - 1) * rise);
         }
 
-        /// <summary>Unity BlendMode.SrcAlpha and BlendMode.OneMinusSrcAlpha, the alpha blend Unity's built-in and
-        /// URP shaders configure for their Fade/Transparent surface through the _SrcBlend/_DstBlend properties.</summary>
         public const int SourceAlphaBlend = 5, OneMinusSourceAlphaBlend = 10;
 
-        /// <summary>Shaders whose fade configuration is verified: the URP Lit, Simple Lit and Unlit shaders, which output
-        /// _BaseColor's alpha on a transparent surface, and the built-in Standard shaders, which output _Color's alpha in
-        /// their alpha-blend (Fade) mode. Any other shader is opaque for the fade, whatever properties it exposes.</summary>
         public static readonly string[] UrpFadeShaders = { "Universal Render Pipeline/Lit", "Universal Render Pipeline/Simple Lit", "Universal Render Pipeline/Unlit" };
         public static readonly string[] StandardFadeShaders = { "Standard", "Standard (Specular setup)" };
 
-        /// <summary>Whether a material shows the fade the colour alpha applies: a verified shader (above) in its
-        /// alpha-blended configuration, using that shader's own colour property, in a transparent queue (above 2500),
-        /// with _SrcBlend SrcAlpha and _DstBlend OneMinusSrcAlpha, and without alpha clipping (_ALPHATEST_ON would cut
-        /// the body out halfway through instead of fading it). URP needs _Surface 1 with _SURFACE_TYPE_TRANSPARENT and
-        /// _BaseColor; Standard needs _ALPHABLEND_ON and _Color. Everything else counts as opaque, and the body is kept
-        /// until it is out of view instead.</summary>
         public static bool MaterialCanFade(MaterialFadeFacts m)
         {
             if (m.AlphaTestKeyword || !(m.RenderQueue > 2500)
@@ -196,9 +154,6 @@ namespace PersistentCity.Core
             return false;
         }
 
-        /// <summary>A NavMesh projection of a pose may shift it along the leg (kerbs, ramps). It is usable only if it is
-        /// not ahead of the pose along the leg <paramref name="from"/>→<paramref name="to"/> (horizontal), so the
-        /// destination stays behind the logical progress.</summary>
         public const double ProjectionAheadMetres = 0.01;
         public static bool NotAheadOnLeg(Position from, Position to, Position pose, Position projected)
         {
@@ -207,14 +162,9 @@ namespace PersistentCity.Core
             if (square <= 1e-12) return true;
             double alongPose = ((pose.X - from.X) * dx + (pose.Z - from.Z) * dz) / square;
             double alongProjected = ((projected.X - from.X) * dx + (projected.Z - from.Z) * dz) / square;
-            // Compared in metres along the leg: a pose passed through float coordinates rounds by up to a few
-            // hundredths of a millimetre, which must not count as ahead; a real forward shift does.
             return (alongProjected - alongPose) * Math.Sqrt(square) <= ProjectionAheadMetres;
         }
 
-        /// <summary>Commanded native speed: the pace's speed, but never more than the lag in one frame of
-        /// <paramref name="deltaSeconds"/>, so the body is never commanded past the logical pose, even while the
-        /// logical clock stands still. 0 at or below <see cref="StopMetres"/>.</summary>
         public static double CommandSpeed(double paceMetresPerSecond, double lagMetres, double deltaSeconds)
         {
             if (!(paceMetresPerSecond > 0) || !Position.Finite(lagMetres) || lagMetres <= StopMetres) return 0;
@@ -222,19 +172,9 @@ namespace PersistentCity.Core
             return Math.Min(paceMetresPerSecond, lagMetres / frame);
         }
 
-        /// <summary>The logical pose is a walk between corners on the body's own leg.</summary>
         public static bool PoseOnLeg(PhysicalJourneySample own, PhysicalJourneySample logical)
             => logical.Mode == TravelMode.Walk && !logical.Stationary && own.LegIndex == logical.LegIndex;
 
-        /// <summary>
-        /// P-C (P3): whether a walker needs a new native path this frame. One path per leg: the destination is the leg's
-        /// own corner, calculated once when the body takes the leg (or after a move, a re-acquisition or a refused aim),
-        /// and <see cref="CommandSpeed"/> keeps the body behind the logical pose along the leg. Only a leg whose corner
-        /// path was refused aims at the pose instead (<paramref name="atPose"/>, the F2c rule): it is re-aimed every
-        /// <see cref="RetargetMetres"/> of pose progress while the lag is above <see cref="StopMetres"/>, and tries the
-        /// corner again once the pose reaches the corner or leaves the leg. A corner path the agent no longer holds
-        /// (<paramref name="pathHeld"/> false) is calculated again while the body is behind the pose.
-        /// </summary>
         public static bool NeedsPath(PhysicalJourneySample own, PhysicalJourneySample logical, double lagMetres,
             int targetLeg, bool targetIsPose, Position targetPoint, bool pathHeld, out bool atPose)
         {
@@ -244,11 +184,6 @@ namespace PersistentCity.Core
             return lagMetres > StopMetres && Position.Distance(logical.Position, targetPoint) >= RetargetMetres;
         }
 
-        /// <summary>Horizontal metres the body stands ahead of the logical pose along the pose's own walk leg, the body
-        /// clamped to that leg; 0 when it is behind, more than 0.35 m beside the leg (PhysicalProgress's walk bound), its
-        /// own progress <paramref name="own"/> is on an earlier leg (a body before a U-turn corner lies on the next
-        /// leg's line), it is within 0.08 m of the leg's start (PhysicalProgress counts a corner that close as reached,
-        /// while the body is still on the previous leg), or the pose is not a walk between corners.</summary>
         public static double AheadMetres(PhysicalJourneySample own, PhysicalJourneySample logical, Position actual)
         {
             if (own.LegIndex != logical.LegIndex || logical.Mode != TravelMode.Walk || logical.Stationary || !actual.IsFinite
@@ -263,12 +198,9 @@ namespace PersistentCity.Core
             return ahead > 0 ? ahead : 0;
         }
 
-        /// <summary>True when the follow must be corrected: too far behind, or the logical leg is not a walk
-        /// (the person is already in the car, bus or subway).</summary>
         public static bool NeedsCorrection(double lagMetres, TravelMode logicalMode)
             => logicalMode != TravelMode.Walk || !(lagMetres <= CorrectionMetres);
 
-        /// <summary>Committed geometry at a route progress, without the simulator's clock or traffic state.</summary>
         public static PhysicalJourneySample Sample(Route route, double routeElapsedMinutes)
         {
             if (route == null) throw new ArgumentNullException(nameof(route));
@@ -277,7 +209,6 @@ namespace PersistentCity.Core
             return CitySimulator.SampleRoute(route, elapsed, null);
         }
 
-        /// <summary>Along-route metres from <paramref name="fromMinutes"/> to <paramref name="toMinutes"/>; 0 if not ahead.</summary>
         public static double RouteMetres(Route route, double fromMinutes, double toMinutes)
         {
             if (route == null) throw new ArgumentNullException(nameof(route));
@@ -295,12 +226,6 @@ namespace PersistentCity.Core
             return metres;
         }
 
-        /// <summary>
-        /// The body's route progress after this frame. It starts from the body's previous progress, projects the body
-        /// onto that walk leg with <see cref="PhysicalProgress.TryProject"/> (passing reached corners, up to 16), waits
-        /// out a zero-distance leg with the logical clock, stops at the start of a non-walk leg, and is capped at the
-        /// logical progress. A body pushed off the leg keeps its previous progress.
-        /// </summary>
         public static double Advance(Route route, double bodyMinutes, double logicalMinutes, Position actual)
         {
             if (route == null) throw new ArgumentNullException(nameof(route));
@@ -324,7 +249,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>What the fade probe reads from one material (Runtime PhysicalPedestrianBody.CanFade fills it).</summary>
     public readonly struct MaterialFadeFacts
     {
         public MaterialFadeFacts(string shaderName, int renderQueue, bool hasBaseColour, bool hasColour, float? sourceBlend, float? destinationBlend,
@@ -348,12 +272,8 @@ namespace PersistentCity.Core
 
     public enum WalkerCorrectionKind
     {
-        /// <summary>An off-screen body moved to the logical pose.</summary>
         Move,
-        /// <summary>Q3: an on-screen body that hurried for the bound faded out at a corner; it reappears at the logical pose once that is out of view.</summary>
         Fade,
-        /// <summary>An off-screen body released because of lag: the person is no longer walking, the arrival tail ended short of the door,
-        /// or (F2d) a car fell behind the kernel; it reappears at the logical pose.</summary>
         LagRelease,
     }
 
@@ -365,27 +285,17 @@ namespace PersistentCity.Core
         public long Frame { get; }
         public string PersonId { get; }
         public WalkerCorrectionKind Kind { get; }
-        /// <summary>Body pose when corrected.</summary>
         public Position Before { get; }
-        /// <summary>Body pose afterwards: the logical pose it was moved to, or where a released body reappears.</summary>
         public Position After { get; }
-        /// <summary>Inside the camera frustum with a visible renderer at that frame.</summary>
         public bool OnScreen { get; }
-        /// <summary>F2d: the corrected body was a car (false: a walker).</summary>
         public bool Car { get; }
     }
 
-    /// <summary>
-    /// F2c walker and (F2d) car movement telemetry, held in Runtime memory and never saved: one bounded correction ring
-    /// (last 512, with sequence numbers and gap detection) for both kinds of body, counters, a lag histogram per kind and
-    /// the visible cars' signal phase-mismatch counts for pc movement status.
-    /// </summary>
     public sealed class WalkerMovementTelemetry
     {
         public const int Capacity = 512;
         private sealed class LagHistogram
         {
-            // 0.05 m bins up to 64 m; larger lags share the last bin, and the exact maximum is kept separately.
             private const double BinMetres = 0.05;
             private const int Bins = 1281;
             private readonly long[] histogram = new long[Bins];
@@ -415,20 +325,13 @@ namespace PersistentCity.Core
         private readonly LagHistogram walkers = new LagHistogram(), cars = new LagHistogram();
         private long nextSequence = 1;
 
-        /// <summary>All corrections, walkers and cars.</summary>
         public long Corrections { get; private set; }
         public long Moves { get; private set; }
         public long OnScreenMoves { get; private set; }
         public long Fades { get; private set; }
         public long LagReleases { get; private set; }
-        /// <summary>Mode boundaries where a walker reached the car, bus or subway, or a car its parking point, and a body
-        /// of the new kind is re-acquired.</summary>
         public long Handoffs { get; set; }
-        /// <summary>Walker path calculations: every SetTarget a follower issues (one NavMesh CalculatePath each, the
-        /// projected and the raw attempt counted separately). Their rate scales with game speed.</summary>
         public long PathRequests { get; set; }
-        /// <summary>P-C: walker frames with the body more than <see cref="WalkerFollow.AheadToleranceMetres"/> ahead of the
-        /// logical pose on its leg (<see cref="WalkerFollow.AheadMetres"/>), and the largest such distance.</summary>
         public long AheadFrames { get; private set; }
         public double MaximumAheadMetres { get; private set; }
         public void RecordAhead(double metres)
@@ -436,12 +339,9 @@ namespace PersistentCity.Core
             if (!(metres > WalkerFollow.AheadToleranceMetres)) return;
             AheadFrames++; MaximumAheadMetres = Math.Max(MaximumAheadMetres, metres);
         }
-        /// <summary>Acquisitions refused by the test-profile key MovementFaultAcquirePercent.</summary>
         public long FaultedAcquisitions { get; set; }
         public long LagSamples => walkers.Samples;
         public double MaximumLagMetres => walkers.Maximum;
-        /// <summary>F2d car counters: corrections, fades and lag releases among the totals above, car handoffs to a walker,
-        /// and frames a visible car spent catching up (lag beyond <see cref="CarFollow.CatchUpMetres"/>).</summary>
         public long CarCorrections { get; private set; }
         public long CarFades { get; private set; }
         public long CarLagReleases { get; private set; }
@@ -449,15 +349,11 @@ namespace PersistentCity.Core
         public long CarCatchUpFrames { get; set; }
         public long CarLagSamples => cars.Samples;
         public double CarMaximumLagMetres => cars.Maximum;
-        /// <summary>F2d Decision 6: episodes in which a standing visible car was held by the kernel at a native green, or
-        /// stopped by the native light at a kernel green, and the follow-clock seconds spent in each.</summary>
         public long KernelHeldAtNativeGreen { get; private set; }
         public long NativeStopAtKernelGreen { get; private set; }
         public double KernelHeldAtNativeGreenSeconds { get; private set; }
         public double NativeStopAtKernelGreenSeconds { get; private set; }
-        /// <summary>Sequence of the latest correction; 0 before the first.</summary>
         public long LastSequence => nextSequence - 1;
-        /// <summary>Oldest sequence still in the ring (1 while nothing was evicted).</summary>
         public long OldestSequence => Math.Max(1, nextSequence - Capacity);
 
         public long Record(long frame, string personId, WalkerCorrectionKind kind, Position before, Position after, bool onScreen, bool car = false)
@@ -473,8 +369,6 @@ namespace PersistentCity.Core
             return sequence;
         }
 
-        /// <summary>Entries with a sequence after <paramref name="sequence"/>, oldest first. <paramref name="gap"/> is true
-        /// when some of those entries were already evicted from the ring.</summary>
         public void Since(long sequence, List<WalkerCorrection> into, out bool gap)
         {
             if (into == null) throw new ArgumentNullException(nameof(into));
@@ -486,12 +380,9 @@ namespace PersistentCity.Core
         public void RecordLag(double metres) => walkers.Record(metres);
         public void RecordCarLag(double metres) => cars.Record(metres);
 
-        /// <summary>Upper edge of the histogram bin holding the quantile (at most the exact maximum); 0 without samples.</summary>
         public double LagQuantile(double quantile) => walkers.Quantile(quantile);
         public double CarLagQuantile(double quantile) => cars.Quantile(quantile);
 
-        /// <summary>One frame of a visible car's phase state: a new episode when the kind differs from the car's previous
-        /// frame, and the frame's seconds added to the kind's total.</summary>
         public void RecordPhase(CarPhaseMismatch kind, CarPhaseMismatch previous, double seconds)
         {
             if (kind == CarPhaseMismatch.None) return;
@@ -529,69 +420,36 @@ namespace PersistentCity.Core
             c.Before.X, c.Before.Y, c.Before.Z, c.After.X, c.After.Y, c.After.Z, c.Car ? "car" : "walker");
     }
 
-    /// <summary>
-    /// F5f active-journey candidate index (city audit F5 #92, docs/plans/f5-population.md section 3). The derived,
-    /// in-memory set of persons whose phase can make them a physical-body candidate: travelling, waiting at a door
-    /// (queue planning), holding an optional stop, or at an outdoor scene. Physical selection iterates this set instead
-    /// of every citizen. It holds no saved state and decides nothing: caps, the candidate filters and their
-    /// priority order stay with Runtime's selection, and movement authority stays with F2 #89.
-    /// Since F5i visitors are body candidates like residents: F2's movement contract makes every body follow the
-    /// logical pose, so a body cannot change a visitor's outcome. The withheld list stays empty.
-    /// F2f files every body candidate into a <see cref="PresentationGrid"/> from inside File and Rebuild, so selection
-    /// can read only the cells near the focus (<see cref="Grid"/>).
-    /// </summary>
     public sealed class ActiveJourneyIndex
     {
-        /// <summary>F5i switch (plan B5): visitors receive bodies now that F2's movement contract (F2c walkers, F2d cars,
-        /// F2e player holds) makes physical progress follow logical permissions.</summary>
         public const bool VisitorsReceiveBodies = true;
-        /// <summary>Prefix of native outdoor scene places (Runtime OutdoorPlaces: parks, beaches, party piers).</summary>
         public const string OutdoorScenePrefix = "scene-";
 
-        // Swap-removal lists keep membership changes O(1) and enumeration allocation-free. Their order is not
-        // roster order; selection sorts by SelectionCandidate.ByPriority, whose ordinal-ID key is total.
         private readonly List<CitizenState> eligible = new List<CitizenState>();
         private readonly List<CitizenState> withheld = new List<CitizenState>();
-        // Position in its list; withheld entries are stored as ~index (negative). CitizenState has reference equality.
         private readonly Dictionary<CitizenState, int> positions = new Dictionary<CitizenState, int>();
         private readonly PresentationGrid grid;
 
-        /// <param name="placePosition">Place position by ID (the simulator's place table). Without it, stationary
-        /// candidates are unplaced in the grid and returned by every grid query.</param>
         public ActiveJourneyIndex(Func<string, Position?>? placePosition = null) => grid = new PresentationGrid(placePosition);
 
-        /// <summary>Phase-level membership. A superset of every stateful physical-selection candidate
-        /// (Runtime PhysicalPopulation: moving journeys, planned queuers, Outdoor); time, distance, cooldown,
-        /// reservation and binding filters stay in the selection.</summary>
         public static bool Member(CitizenState c)
             => c.Phase == CitizenPhase.Travelling || c.Phase == CitizenPhase.WaitingForOpening
             || c.Phase == CitizenPhase.AtPlace && (c.OptionalStop != null
                 || c.Activity == Activity.Leisure && c.PlaceId.StartsWith(OutdoorScenePrefix, StringComparison.Ordinal));
 
-        /// <summary>Kind from the stable person ID until F5c saves an explicit kind. IDs of no person format
-        /// (older fixtures and tests) keep today's resident behaviour.</summary>
         public static PersonKind KindOf(CitizenState c)
             => PersonIds.FitsKind(PersonIds.Classify(c.Identity.Id), PersonKind.Visitor) ? PersonKind.Visitor : PersonKind.Resident;
 
         public static bool ReceivesBody(CitizenState c) => VisitorsReceiveBodies || !c.IsVisitor && KindOf(c) != PersonKind.Visitor;
 
-        /// <summary>Indexed persons that may receive a body, in no particular order. F9g named exception: still entity-typed,
-        /// because the F2 movement-equivalence driver (tests/movement-equivalence/PresentationDriver.cs, owned by F2g) follows
-        /// each candidate's journey through it. Runtime presentation reads <see cref="Grid"/> instead.</summary>
         public IReadOnlyList<CitizenState> BodyCandidates => eligible;
-        /// <summary>Every indexed person, visitors included.</summary>
         public int Count => eligible.Count + withheld.Count;
-        /// <summary>Indexed visitors withheld from body selection (zero while VisitorsReceiveBodies).</summary>
         public int WithheldVisitors => withheld.Count;
-        /// <summary>F9g: takes the read-only view, so presentation can test a grid query result; only the entity is ever filed.</summary>
         public bool Contains(IPersonView person) => person is CitizenState c && positions.ContainsKey(c);
-        /// <summary>F2f spatial view of <see cref="BodyCandidates"/>: <see cref="PresentationGrid.Query"/> returns each body
-        /// candidate filed near a focus once, a superset of those within the radius. Read-only outside Core.</summary>
         public PresentationGrid Grid => grid;
 
         internal void Rebuild(IReadOnlyList<CitizenState> citizens) => Rebuild(citizens, Array.Empty<CitizenState>());
 
-        /// <summary>Residents and schema-27 visitor routines; visitors are filed with their kind and withheld.</summary>
         internal void Rebuild(IReadOnlyList<CitizenState> citizens, IReadOnlyList<CitizenState> visitors)
         {
             eligible.Clear(); withheld.Clear(); positions.Clear(); grid.Clear();
@@ -599,8 +457,6 @@ namespace PersistentCity.Core
             for (int i = 0; i < visitors.Count; i++) File(visitors[i]);
         }
 
-        /// <summary>Called wherever a live citizen's phase, activity, place or optional stop may have changed.
-        /// A body candidate that stays a member is re-filed in the grid when its phase anchor or journey changed.</summary>
         internal void File(CitizenState c)
         {
             bool member = Member(c);
@@ -628,13 +484,8 @@ namespace PersistentCity.Core
             list.RemoveAt(last);
         }
 
-        /// <summary>Shadow comparison against a full scan: exactly the members of <paramref name="citizens"/>,
-        /// each in the list of its kind, with consistent positions, and the grid holds exactly the body candidates
-        /// at their current journey or place cells (F2f). Allocation-free; for tests and the
-        /// low-cadence runtime check, never per frame.</summary>
         public bool MatchesScan(IReadOnlyList<CitizenState> citizens) => MatchesScan(citizens, Array.Empty<CitizenState>());
 
-        /// <summary>As above over residents and visitor routines together.</summary>
         public bool MatchesScan(IReadOnlyList<CitizenState> citizens, IReadOnlyList<CitizenState> visitors)
         {
             int members = 0;

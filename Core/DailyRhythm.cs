@@ -9,18 +9,14 @@ namespace PersistentCity.Core
         public double EndsAt { get; }
     }
 
-    /// <summary>Personal home preferences. Work, study and committed travel remain simulator-owned.</summary>
     public static class DailyRhythm
     {
-        // The day identifies the evening, including a NightOwl's bedtime after that midnight.
         public static QuietWindow OnDay(CitizenState person, int citySeed, int day)
         {
             var lookup = new Lookup(person, citySeed);
             return lookup.OnDay(day);
         }
 
-        // One lookup per routine evaluation. Most daytime optional slots can be excluded
-        // by persona bounds without constructing keys or hashing any quiet-hour choices.
         internal struct Lookup
         {
             private readonly RoutineKeys keys;
@@ -50,7 +46,6 @@ namespace PersistentCity.Core
                 if (hasFirst && firstDay == day) return first;
                 if (hasSecond && secondDay == day) return second;
                 int personal = keys.QuietPersonal;
-                // Hash(Identity.Id + ":quiet-day:" + day) from the resident's cached prefix.
                 int daily = (int)(RoutineKeys.Draw(keys.QuietDay, day) % 31) - 15;
                 bool weekendWake = WeekendWake(day);
                 double midnight = day * 1440.0;
@@ -64,8 +59,6 @@ namespace PersistentCity.Core
             internal double OptionalEndsAt(double from, double until)
             {
                 int day = (int)Math.Floor(from / 1440);
-                // Optional slots last at most two hours. The night before yesterday
-                // ends before this day starts; tomorrow's bedtime is beyond this slot.
                 for (int offset = -1; offset <= 0; offset++)
                 {
                     int quietDay = day + offset;

@@ -10,7 +10,6 @@ __pycache__/
 *.pyc
 CLAUDE.local.md
 
-# --- repo cleanup 2026-10-23 ---
 .DS_Store
 node_modules/
 .wrangler/
@@ -33,5 +32,4 @@ UserSettings/
 *.pdb
 *.exe
 
-# Offline test runner artifacts
 tests/TestResults/

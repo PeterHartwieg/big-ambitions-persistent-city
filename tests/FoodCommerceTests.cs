@@ -66,8 +66,6 @@ public sealed partial class FoodCommerceTests
             return new(true, "Native fake confirmed");
         }
     }
-    /// <summary>A factor above one (or <paramref name="independent"/>) gives the city a portal, so K-1 visitors per resident are
-    /// created as persons with their own routines (the only model since F5d; represented consumers are gone).</summary>
     private static (CitySimulator city, Market market, Walking routes) Ready(int count = 1, bool atWork = false, bool threeMeals = false, int representation = 1, bool independent = false)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {

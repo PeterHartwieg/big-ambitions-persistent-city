@@ -4,11 +4,9 @@
     <Nullable>disable</Nullable><ImplicitUsings>disable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Optimize>true</Optimize>
-    <!-- The pinned Lib.Harmony 2.4.2 that tools/build.py places (SHA-256 checked at run time by Program.HarmonyAdapter). -->
     <PinnedHarmony Condition="'$(PinnedHarmony)' == ''">$(MSBuildThisFileDirectory)../../../build/PersistentCity/Dependencies/0Harmony.dll</PinnedHarmony>
   </PropertyGroup>
   <ItemGroup>
-    <!-- The probe's Unity-free files, compiled exactly as Probe uses them. -->
     <Compile Include="../ProbeLogic.cs" />
     <Compile Include="../ScopeInventory.cs" />
     <Compile Include="../HarmonyScan.cs" />

@@ -18,7 +18,6 @@ namespace PersistentCity.Core
         public int FoodMemoryCapacity { get; set; } = 4;
         public int FoodMemoryForgetAfterDays { get; set; } = 28;
 
-        // Presentation only: never consumed by capture, contribution or choice.
         public int FoodMemoryRegularServedVisits { get; set; } = 3;
         public int FoodMemoryRegularRecentDays { get; set; } = 14;
 

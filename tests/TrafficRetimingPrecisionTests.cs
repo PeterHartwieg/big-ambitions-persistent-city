@@ -8,8 +8,6 @@ namespace PersistentCity.Tests;
 
 public sealed class TrafficRetimingPrecisionTests
 {
-    // Synthetic geometry/times: rounded absolute readiness is 16 ulps earlier than
-    // residual movement after a 60x retime. No game save or identity data is embedded.
     private const double Entered = 2204.6706147373316;
     private const double Now = 2205.4809627895665;
     private const double Duration = 3.0717779591160537;

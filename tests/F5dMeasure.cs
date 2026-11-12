@@ -11,11 +11,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5d measurement harness (docs/perf/f5d.md), not a gate: it runs only when PC_F5D_MEASURE names an output
-/// file, e.g. <c>PC_F5D_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F5dMeasure</c>.
-/// Each fresh city is the F7a representative replay (EconomyScenario, one natural day, household finances) with two
-/// portals at factor K, so K-1 visitor persons per resident run their own routines. The same residents at K=1 give the
-/// per-visitor cost. Events are counted per game hour; queue lengths are sampled after every slice.</summary>
 public sealed class F5dMeasure
 {
     private sealed class Run
@@ -69,9 +64,6 @@ public sealed class F5dMeasure
         return bytes;
     }
 
-    /// <summary>Review Opus-r1-1: one-time visitor creation at the fresh roster (VisitorSchedules.Create, ScheduleVisitors and
-    /// Enrol), which runs inside AttachFoodMarket on the main thread during initialization. The catalogue is padded with
-    /// 2,000 zero-capacity homes to a game-sized place count. Attach at factor K minus attach at K=1 is the visitor cost.</summary>
     [Fact]
     public void VisitorCreationCostAtInitialization()
     {
@@ -94,7 +86,7 @@ public sealed class F5dMeasure
             visitors = state.Visitors.Count;
             return ms;
         }
-        Attach(957, 2, out _); // warm
+        Attach(957, 2, out _);
         foreach (string fixture in only)
         {
             int residents = int.Parse(fixture.Split('x')[0]), factor = int.Parse(fixture.Split('x')[1]);
@@ -107,7 +99,6 @@ public sealed class F5dMeasure
         }
     }
 
-    /// <summary>Visitor wire while visitors are in the city (day 2, 12:00): tuple plus routine, with and without a journey.</summary>
     [Fact]
     public void ActiveVisitorWireAtMidday()
     {
@@ -138,7 +129,7 @@ public sealed class F5dMeasure
     public void FreshCityPersonsCostAtWriter27()
     {
         string? output = PerfGate.Variable("PC_F5D_MEASURE");
-        if (string.IsNullOrEmpty(output)) return; // measurement only on request
+        if (string.IsNullOrEmpty(output)) return;
         int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_F5D_SAMPLES"), out int n) ? n : 5;
         string[] only = (Environment.GetEnvironmentVariable("PC_F5D_FIXTURES") ?? "957x2,957x3,5000x2,5000x3,50000x2,50000x3").Split(',');
         foreach (string fixture in only)
@@ -148,7 +139,6 @@ public sealed class F5dMeasure
             var run = Build(residents, factor); var state = run.State;
             string payload = SaveCodec.Write(state);
             var records = SaveCodec.CountRecords(state, payload); var baseRecords = SaveCodec.CountRecords(baseRun.State, basePayload);
-            // Per-visitor wire: its tuple plus its routine object, by presence.
             var root = SaveWire.Parse(payload);
             var tuples = (JArray)root["Visitors"]!; var routines = (JArray)root["VisitorRoutines"]!;
             var perVisitor = new List<(bool Dormant, int Characters)>();
@@ -157,7 +147,7 @@ public sealed class F5dMeasure
                     JsonConvert.ToString((string)tuples[i]!).Length + routines[i]!.ToString(Formatting.None).Length + 2));
             root = null; tuples = routines = null;
             var writes = new List<double>(); var reads = new List<double>();
-            SaveWire.Read(SaveCodec.Write(state)); // warm
+            SaveWire.Read(SaveCodec.Write(state));
             for (int i = 0; i < samples; i++)
             {
                 long t = Stopwatch.GetTimestamp(); string again = SaveCodec.Write(state); writes.Add(Stopwatch.GetElapsedTime(t).TotalMilliseconds);

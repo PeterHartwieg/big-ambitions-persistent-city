@@ -65,7 +65,7 @@ public sealed class FoodAwarenessTests
     {
         var (prepared,source,planner)=WeightedFoodChoiceTests.Ready(79,count);prepared.State.Food!.AwarenessStartsDay=1;
         var market=new IndexedMarket(source.Shops);var city=new CitySimulator(prepared.State,planner);city.AttachFoodMarket(market);
-        city.InspectFoodAwareness("r");market.Predicates=0; // explicit shared build is outside this consumer's work
+        city.InspectFoodAwareness("r");market.Predicates=0;
         var meal=city.State.Food!.Residents[0];city.AdvanceTo(meal.DesiredAt,1);
         Assert.InRange(market.Predicates,0,24);Assert.InRange(market.Reads,0,8);
         var decision=meal.Decision!;
@@ -128,7 +128,6 @@ public sealed class FoodAwarenessTests
         Assert.Equal(12,dump.Samples.Count(x=>x.Source==FoodAwarenessSource.Home || x.Source==FoodAwarenessSource.Routine || x.Source==FoodAwarenessSource.Origin));
         Assert.All(dump.Samples.Where(x=>x.Source==FoodAwarenessSource.Home),x=>Assert.Equal("far",x.BusinessId));
         var entry=Assert.Single(image.Union);
-        // Discovery is allowed to expose this far shop; the rejected local draws cannot.
         Assert.Equal((entry.Sources & FoodAwarenessSource.Discovery)!=0,entry.Eligible);
         Assert.Equal(entry.Eligible ? 1 : 0,c.Rank(image,new(0,0,0),new ResidentTraits {Bands="2222222222"},new(),new(1,"c",1,MealKind.Lunch,"x",1),120).Length);
         var dense=Catalogue(1,true);var duplicates=Sample(dense);Assert.Single(duplicates.Union);Assert.True(duplicates.Union[0].Eligible);

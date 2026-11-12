@@ -9,8 +9,6 @@ using PersistentCity.Core;
 using PersistentCity.Persistence;
 using PersistentCity.Runtime;
 
-/// <summary>F8c/F8e/F8h stub harness (docs/plans/f8-capability-boundaries.md D8). Every arm prints one line; any failed check
-/// throws. Synthetic native surfaces with the pinned Harmony 2.4.2; this is not game execution.</summary>
 internal static partial class Program
 {
     private static int checks;
@@ -66,8 +64,6 @@ internal static partial class Program
         Console.WriteLine("verified: 6 food-authority targets resolved with exact parameters and patched by the pinned Harmony; checkout verified");
     }
 
-    /// <summary>Checks 5: each authority member under another name or signature (the fault points) refuses before any
-    /// patch, so no PC Harmony owner exists and the save dictionary is byte-identical.</summary>
     private static void RequiredRefusalPatchesNothingAndWritesNothing()
     {
         var save = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -85,7 +81,6 @@ internal static partial class Program
                 FaultPoints.Apply(specs, "authority");
                 string? refusal = NativeMemberContract.CheckAll(specs, out _);
                 Check(refusal != null && refusal.Contains(spec.Name), spec.Label + " " + shape + " is named: " + refusal);
-                // NativeFoodOwnership.Install order: the refusal throws before any Harmony owner exists.
                 Exception? thrown = null;
                 try { InstallShape(specs, save); } catch (InvalidOperationException error) { thrown = error; }
                 Check(thrown != null && thrown.Message.StartsWith("Persistent City did not start: food.authority is off: ", StringComparison.Ordinal), "named start refusal");
@@ -97,8 +92,6 @@ internal static partial class Program
         Console.WriteLine("required refusal: " + arms + " fault arms (6 targets x name/signature, 2 fields x name) refused before any patch; saved keys unchanged");
     }
 
-    // NativeFoodOwnership.Install's own order (NativeFoodContract.InstallChecked): the body patches and marks the save, so an
-    // unchanged save and no owner prove the body never ran.
     private static void InstallShape(NativeMemberSpec[] specs, IDictionary<string, string> save)
     {
         var harmony = new Harmony(NativeHookInventory.FoodAuthority);
@@ -112,7 +105,6 @@ internal static partial class Program
         save.Remove("install-body-ran");
     }
 
-    /// <summary>A failure inside the install body rolls every patch back (the same InstallChecked).</summary>
     private static void FailedInstallRollsBack()
     {
         var harmony = new Harmony(NativeHookInventory.FoodAuthority);
@@ -130,7 +122,6 @@ internal static partial class Program
         Console.WriteLine("install rollback: a failure after one patch leaves no food-authority owner");
     }
 
-    /// <summary>Check 6 shape: ProcessCustomer under another signature in the checkout arm refuses checkout only.</summary>
     private static void CheckoutFaultLeavesAuthorityVerified()
     {
         Environment.SetEnvironmentVariable("PC_FAULT_POINT", "checkout:ProcessCustomer:signature");
@@ -153,8 +144,6 @@ internal static partial class Program
         Console.WriteLine("research fault: ResearchBillingContract.Check reports GameManager.ChangeMoneySafe changed (PC_FAULT_POINTS).");
     }
 
-    /// <summary>Red on the base code: ProcessCustomer was resolved by name, so a changed parameter list was found, a receipt
-    /// begun and the invoke failed, leaving an uncertain receipt. Green: the contract refuses at construction; no receipt.</summary>
     private static void ChangedCheckoutMemberRedOnBaseGreenAfter()
     {
         var meal = new ResidentMeal { ResidentId = "r1", Day = 3, Kind = MealKind.Lunch, BusinessId = "business:x:generation:1",
@@ -179,11 +168,6 @@ internal static partial class Program
 
     public static bool PricePrefix() => true;
 
-    /// <summary>Sol-r6-1: the checkout startup NativeFoodMarket's constructor runs (NativeFoodContract.StartCheckout and
-    /// InstallPricePrefix), executed with the pinned Harmony 2.4.2 on the stubbed CitizenData.IsPriceAcceptable. Verified:
-    /// the food-routines price prefix is installed and ProcessCustomer is resolved. Refused (the checkout fault point):
-    /// startup does not throw, installs no prefix, serves nothing, resolves no ProcessCustomer and observes every shop
-    /// ineligible; a later verified load installs the prefix again.</summary>
     private static void CheckoutStartup()
     {
         var harmony = new Harmony(NativeHookInventory.FoodRoutines);

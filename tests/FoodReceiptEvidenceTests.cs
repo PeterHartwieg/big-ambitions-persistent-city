@@ -23,8 +23,6 @@ public sealed class FoodReceiptEvidenceTests
         FoodSaleReceipts.Begin(data, meal);
         Assert.Equal(FoodReceiptStatus.Pending, FoodSaleReceipts.ReadStatus(data, meal));
         FoodSaleReceipts.Confirm(data, meal);
-        // Native receipt and a population-side uncertain meal can be saved together when
-        // confirmation handling is interrupted. Reading evidence must not execute anything.
         meal.Status = MealStatus.Uncertain;
         var restoredNativeData = new Dictionary<string, string>(data);
         Assert.Equal(FoodReceiptStatus.Paid, FoodSaleReceipts.ReadStatus(restoredNativeData, meal));

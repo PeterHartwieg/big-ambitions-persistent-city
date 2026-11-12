@@ -21,7 +21,6 @@ namespace PersistentCity.Runtime
         public static bool ObservationActive => observer != null;
         public static void ResetReading() { tracker = new ClockRateTracker(); observationError = ""; }
 
-        /// <summary>Observes the final tick argument after other mods' prefixes; never changes it.</summary>
         public static bool StartObservation()
         {
             if (observer != null) return true;
@@ -64,7 +63,6 @@ namespace PersistentCity.Runtime
             tracker.Observe(Time.frameCount, deltaTimeWithMultiplier, Time.deltaTime, NativeCityClock.AccountingLimited);
         }
 
-        // PedestrianPool's normal, non-animation-override walking speed in the reviewed game build.
         public const double WalkingMetresPerSecond = 2;
         internal static double InitialClockRate(double configuredFactor)
         {
@@ -72,15 +70,11 @@ namespace PersistentCity.Runtime
                 throw new ArgumentOutOfRangeException(nameof(configuredFactor));
             return NativeClockRate(configuredFactor);
         }
-        // Called on detached startup state, before this city's clock policy is active. A loaded
-        // supported city must not be retimed against the temporary unmodified native clock.
         internal static void PrepareInitialTiming(CityState state, bool newPopulation, double initialRate)
         {
             if (newPopulation) TravelTiming.Apply(state, WalkingMetresPerSecond, initialRate);
             else
             {
-                // Runtime saves always include household balances, even with no managed shops.
-                // Food-less pure population fixtures remain valid in the diagnostic codec.
                 if (state.Food == null)
                     throw new InvalidOperationException("Missing saved household economy; original payload retained.");
                 if (state.TravelTimingVersion != 1)

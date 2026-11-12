@@ -7,8 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F6j same-visit extras: price-relative recognition, cap, wallet on the running total, same-shop stock,
-/// no name matching, no meal-reference bargain, a whole-ticket markup, and exactly-once checkout/receipts.</summary>
 public sealed class F6jMealExtrasTests
 {
     private static readonly Money Main = Money.FromCents(1250);
@@ -34,7 +32,6 @@ public sealed class F6jMealExtrasTests
         Assert.Equal(0, FoodMealExtras.Chance(FoodExtraBand.Excluded, 4));
     }
 
-    // (a) Both liked and affordable: the cheaper extra comes first, and wins when only one fits.
     [Fact]
     public void CheaperExtraIsPreferredOverSimilarlyPricedOne()
     {
@@ -52,7 +49,6 @@ public sealed class F6jMealExtrasTests
         Assert.True(both > 10, "fixture needs consumers who like both: " + both);
     }
 
-    // (b) Measured over 20,000 neutral consumers, each offered exactly one candidate extra.
     [Fact]
     public void SimilarlyPricedSecondDishIsUncommon()
     {
@@ -66,7 +62,6 @@ public sealed class F6jMealExtrasTests
         Assert.InRange(cheaper / similar, 5.5, 9);
     }
 
-    // (c)
     [Fact]
     public void NeverMoreThanThreeExtras()
     {
@@ -78,7 +73,6 @@ public sealed class F6jMealExtrasTests
             Enumerable.Range(0, 4).Select(i => new FoodTicketLine("s" + i, Money.FromCents(1))).ToArray()));
     }
 
-    // (d)
     [Fact]
     public void RunningTotalStaysWithinAllowanceAndUnaffordableExtrasAreSkipped()
     {
@@ -101,7 +95,6 @@ public sealed class F6jMealExtrasTests
         Assert.True(skipped > 100);
     }
 
-    // (e) Pure policy: only the given menu's stocked items other than the main.
     [Fact]
     public void ExtrasComeOnlyFromTheGivenStockedMenu()
     {
@@ -116,7 +109,6 @@ public sealed class F6jMealExtrasTests
         }
     }
 
-    // (f) Identical prices, different names: same band, same chance, same measured rate.
     [Fact]
     public void IdenticallyPricedItemsAreTreatedTheSameRegardlessOfName()
     {
@@ -124,7 +116,6 @@ public sealed class F6jMealExtrasTests
         foreach (var name in names) Assert.Equal(FoodExtraBand.Cheaper, FoodMealExtras.Band(Main, Money.FromCents(400)));
         var rates = names.Select(n => Rate(20000, c => Plan(c, new[] { Offer(n, 400) }).Extras.Count == 1)).ToArray();
         Assert.True(rates.Max() - rates.Min() < .02, string.Join(",", rates));
-        // Order between two liked same-priced items follows the draw, not the name.
         int firstA = 0, both = 0;
         foreach (var c in Consumers(6000))
         {
@@ -136,7 +127,6 @@ public sealed class F6jMealExtrasTests
         Assert.InRange(firstA / (double)both, .4, .6);
     }
 
-    // (g) A very cheap side gets the same chance as any cheaper extra: no $12.50 meal-reference bargain.
     [Fact]
     public void ExtrasReceiveNoMealReferenceBargain()
     {
@@ -147,12 +137,10 @@ public sealed class F6jMealExtrasTests
         double nine = Rate(20000, c => Plan(c, new[] { Offer("x", 900) }).Extras.Count == 1);
         Assert.True(Math.Abs(penny - nine) < .015, penny + " vs " + nine);
         Assert.True(FoodMealExtras.Chance(FoodExtraBand.Cheaper, 4) <= FoodMealExtras.MaximumChance);
-        // The price anchor itself (F6i) is not consulted: a $0.50 side is chosen at the same rate under a $5 main.
         double underCheapMain = Rate(20000, c => Plan(c, new[] { Offer("x", 50) }, main: MainLine("main", 500)).Extras.Count == 1);
         Assert.True(Math.Abs(penny - underCheapMain) < .015);
     }
 
-    // (i) A whole-menu +50% markup marks up the whole ticket: same extras, total exactly x1.5.
     [Fact]
     public void WholeMenuMarkupMarksUpTheWholeTicket()
     {
@@ -183,13 +171,11 @@ public sealed class F6jMealExtrasTests
         Assert.True(differ > 50);
     }
 
-    // ---- Integrated checkout (allowance mode). ----
 
     private sealed class TicketMarket : IFoodMarket, IFoodTicketMarket, IFoodSaleEvidence, IFoodTicketEvidence
     {
         public bool Extras = true;
         public HashSet<string>? ExtrasAt;
-        // Native outcome lost before the receipt is confirmed (stays pending), or after it is confirmed.
         public int ThrowFromDay = int.MaxValue, LoseAcknowledgementDay = -1;
         public int SellAtMost = 3, MealsPerHour = 30;
         public readonly Dictionary<string, Dictionary<string, (Money Price, int Units)>> Menus = new()
@@ -200,7 +186,6 @@ public sealed class F6jMealExtrasTests
         };
         public readonly List<(string Intent, string Business, string Product, Money Price)> Lines = new();
         public readonly HashSet<string> Intents = new();
-        // The real native receipt format, kept like native save data across a population reload.
         public readonly Dictionary<string, string> Receipts = new();
         public double EarliestMinute => 0;
         public bool IsConfirmedPaid(ResidentMeal meal) => FoodSaleReceipts.ReadStatus(Receipts, meal) == FoodReceiptStatus.Paid;
@@ -267,10 +252,8 @@ public sealed class F6jMealExtrasTests
         var next = new CitySimulator(read.State!, new FixedWalk(5)); next.AttachFoodMarket(market); return next;
     }
     private static void Advance(CitySimulator city, double at) { while (!city.AdvanceTo(at, 128).CaughtUp) { } }
-    // Day 1 runs the legacy choice; day 2 is the first F6i policy day. Each run ends after day 2's meals.
     private static double Until(CitySimulator city) => 3 * 1440 - 1;
 
-    // (e)+(d) integrated: extras come only from the chosen shop's priced stock and the whole ticket is booked once.
     [Fact]
     public void CheckoutSellsSameShopExtrasAndBooksTheWholeTicket()
     {
@@ -286,7 +269,6 @@ public sealed class F6jMealExtrasTests
             Assert.All(g, l => Assert.True(market.Menus[l.Business].ContainsKey(l.Product)));
             Assert.Equal(g.Count(), g.Select(l => l.Product).Distinct().Count());
             Assert.InRange(g.Count(), 1, 1 + FoodMealExtras.MaximumExtras);
-            // A $9 burger main never takes the $12.50 croissant (above 125%) as an extra; b2 sells nothing else.
             if (g.First().Product == FoodProducts.Burger) Assert.DoesNotContain(g, l => l.Product == FoodProducts.Croissant);
             if (g.First().Business == "b2" || g.First().Product == FoodProducts.HotDog) Assert.Single(g);
         }
@@ -294,7 +276,6 @@ public sealed class F6jMealExtrasTests
         Assert.Equal(market.Lines.Aggregate(Money.Zero, (s, l) => s + l.Price), spent);
         Assert.All(meals, m => Assert.True(m.DayAllowanceUsed <= m.Allowance));
         var rows = city.State.Food.History.Where(h => h.BusinessId == "b").ToArray();
-        // Each sold line is one item purchase in the shop-day row.
         Assert.Equal(market.Lines.Count(l => l.Business == "b"), rows.Sum(r => r.Purchases));
         foreach (var product in new[] { FoodProducts.Croissant, FoodProducts.Burger, FoodProducts.HotDog })
             Assert.Equal(market.Lines.Count(l => l.Business == "b" && l.Product == product),
@@ -338,7 +319,6 @@ public sealed class F6jMealExtrasTests
             var lines = market.Lines.Where(l => l.Intent == m.IntentId).ToArray();
             Assert.Equal(lines.Aggregate(Money.Zero, (s, l) => s + l.Price), m.Price);
             Assert.Equal(m.Price, m.DayAllowanceUsed);
-            // Only the earlier, confirmed day's lines are spent; the uncertain ticket stays held.
             Assert.Equal(market.Lines.Where(l => l.Intent.StartsWith("food:" + m.ResidentId + ":") && l.Intent != m.IntentId)
                 .Aggregate(Money.Zero, (s, l) => s + l.Price), m.Spent);
         }
@@ -349,14 +329,12 @@ public sealed class F6jMealExtrasTests
         var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
     }
 
-    // (9) Nothing about extras is saved: a reload mid-journey plans the same ticket from the same live terms.
     [Fact]
     public void ReloadBeforeCheckoutPlansTheSameTicket()
     {
         var (straight, straightMarket) = Ready(24);
         var (reloaded, reloadMarket) = Ready(24);
         int active = 0;
-        // Reload every 37 minutes of the first policy day, including held decisions and committed journeys.
         for (double t = 2 * 1440; t < Until(straight); t += 37)
         {
             Advance(straight, t); Advance(reloaded, t);
@@ -383,7 +361,6 @@ public sealed class F6jMealExtrasTests
         Assert.All(tickets, t => Assert.All(t.Extras, e => Assert.True(observedMarket.Menus[t.BusinessId].ContainsKey(e.ProductId))));
     }
 
-    // Sol-r1-1: the shop expense compared in the choice is the whole ticket. The F6i main factor is unchanged.
     [Fact]
     public void TicketExpenseLowersAShopWeightButNotTheMainAnchor()
     {
@@ -398,18 +375,14 @@ public sealed class F6jMealExtrasTests
         int band = traits.Band(ResidentTrait.PriceSensitivity);
         double expected = Math.Pow(1250.0 / 1850, 2 * settings.FoodChoicePriceWeight * (.5 + .25 * band));
         Assert.Equal(expected, withSide / alone, 9);
-        // A whole-menu +50% keeps the ticket/main ratio: only the F6i main factor moves.
         double marked = FoodChoicePolicy.Weight(O(1875, 2775), traits, Money.FromCents(100000), settings);
         double markedAlone = FoodChoicePolicy.Weight(O(1875, null), traits, Money.FromCents(100000), settings);
         Assert.Equal(expected, marked / markedAlone, 9);
-        // Price weight 0 disables the soft ticket signal as it does the main's.
         var off = new FoodChoiceSettings { FoodChoicePriceWeight = 0 }; off.Clamp();
         Assert.Equal(FoodChoicePolicy.Weight(O(1250, null), traits, Money.FromCents(100000), off),
             FoodChoicePolicy.Weight(O(1250, 1850), traits, Money.FromCents(100000), off));
     }
 
-    // Sol-r1-1 integrated: two equal shops with the same $12.50 croissant and $6 hot dog; only one sells extras,
-    // so only there does the croissant's planned ticket include a side. Fewer residents choose that croissant.
     [Fact]
     public void CandidateTicketsEnterTheShopChoice()
     {
@@ -445,7 +418,6 @@ public sealed class F6jMealExtrasTests
         Assert.True(HouseholdFinance.SpendingLimit(budget) < price);
     }
 
-    // Sol-r1-2: a checkout refused because the wallet limit fell keeps a savable commitment.
     [Fact]
     public void RefusedCheckoutAfterTheLimitFallsStillSaves()
     {
@@ -485,8 +457,6 @@ public sealed class F6jMealExtrasTests
         var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
     }
 
-    // Sol-r2-1: the saved Allowance was the limit at commitment (here exactly the main). The wallet grows before
-    // checkout, so a larger ticket is held; the saved terms must still cover it. Paid and uncertain checkouts.
     private static void RaiseLimitAfterCommitment(ResidentMeal meal)
     {
         var budget = meal.Budget!;
@@ -520,8 +490,6 @@ public sealed class F6jMealExtrasTests
     [Fact]
     public void LargerRivalTicketAfterTheLimitRisesStillSaves()
     {
-        // One resident, one draw per meal: follow several days. Every settlement must save, and some must be a
-        // ticket larger than its committed main.
         var (city, market, _) = RivalOutflowTests.Ready(finances: true);
         market.Rivals["rival0"].AdditionalProductIds = new() { FoodProducts.HotDog, FoodProducts.Burger };
         market.Observations["rival0"] = new FoodAlternativeObservation("rival0", "s0", "street", 1, 1, "food", "rival-owner",
@@ -548,8 +516,6 @@ public sealed class F6jMealExtrasTests
         Assert.True(grown > 0, "some rival ticket carries an extra");
     }
 
-    // Sol-r1-3: the receipt is confirmed but the acknowledgement is lost. After a reload the meal settles from the
-    // receipt's sold lines: unsold extras are returned and each sold line is recorded once, with no second order.
     [Theory]
     [InlineData(3, false)] [InlineData(0, false)] [InlineData(3, true)] [InlineData(0, true)]
     public void ConfirmedReceiptSettlesTheSoldTicketAfterReload(int sellAtMost, bool finances)
@@ -559,10 +525,8 @@ public sealed class F6jMealExtrasTests
         Advance(city, Until(city));
         var uncertainMeals = city.State.Food!.Residents.Where(m => m.Status == MealStatus.Uncertain).ToArray();
         var uncertain = uncertainMeals.Select(m => m.ResidentId).ToHashSet();
-        // Some held tickets planned extras: fully sold (3) or only the main sold, extras unsold (0).
         Assert.Contains(uncertainMeals, m => m.Price > market.Lines.First(l => l.Intent == m.IntentId).Price);
         city = Reload(city, market);
-        // TicketMarket asserts one checkout per intention, so a replayed order would fail here.
         Advance(city, Until(city) + 1440);
         var day2 = market.Lines.Where(l => l.Intent.EndsWith(":2")).GroupBy(l => l.Intent).ToDictionary(g => g.Key, g => g.ToArray());
         Assert.Contains(day2.Values, g => sellAtMost == 0 ? g.Length == 1 : g.Length > 1);
@@ -593,7 +557,7 @@ public sealed class F6jMealExtrasTests
         Assert.True(FoodSaleReceipts.TryReadPaidTicket(data, meal, out var total, out var sold));
         Assert.Equal(Money.FromCents(1000), total);
         Assert.Equal(FoodProducts.Burger, Assert.Single(sold).ProductId);
-        Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, ReceiptMeal(999), out _, out _)); // more than held
+        Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, ReceiptMeal(999), out _, out _));
         var other = ReceiptMeal(1250); other.ProductId = FoodProducts.HotDog;
         Assert.False(FoodSaleReceipts.TryReadPaidTicket(data, other, out _, out _));
         var single = new Dictionary<string, string>(); var one = ReceiptMeal(700);
@@ -602,7 +566,6 @@ public sealed class F6jMealExtrasTests
         Assert.Equal(Money.FromCents(700), total); Assert.Empty(sold);
     }
 
-    // ---- Native receipt identity. ----
 
     private static ResidentMeal ReceiptMeal(long totalCents) => new() { ResidentId = "r1", Day = 4, Kind = MealKind.Lunch,
         BusinessId = "b|1", ProductId = FoodProducts.Croissant, Price = Money.FromCents(totalCents) };
@@ -621,13 +584,11 @@ public sealed class F6jMealExtrasTests
         Assert.True(FoodSaleReceipts.AlreadyPaid(data, meal, extras));
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(data, meal, extras.Take(1).ToArray()));
         Assert.Equal(FoodReceiptStatus.Conflict, FoodSaleReceipts.ReadStatus(data, ReceiptMeal(700)));
-        // A partly sold ticket confirms the lines actually sold, with their total.
         var partial = new Dictionary<string, string>();
         FoodSaleReceipts.Begin(partial, meal, extras);
         FoodSaleReceipts.Confirm(partial, meal, Money.FromCents(700), extras, extras.Take(1).ToArray());
         Assert.Equal(FoodReceiptStatus.Paid, FoodSaleReceipts.ReadStatus(partial, ReceiptMeal(1000)));
         Assert.Equal(FoodReceiptStatus.Conflict, FoodSaleReceipts.ReadStatus(partial, meal));
-        // A one-product receipt keeps its exact previous text.
         var single = new Dictionary<string, string>(); var one = ReceiptMeal(700);
         FoodSaleReceipts.Begin(single, one); FoodSaleReceipts.Confirm(single, one);
         Assert.Equal("paid|700|b%7C1|ba%3Aitemname_croissant", single.Values.Single());

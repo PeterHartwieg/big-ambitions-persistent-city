@@ -37,7 +37,6 @@ public sealed class DwellPlannerTests
                 Assert.Equal("shop", d.FacingId);
                 Assert.Equal(opening, d.EndMinute);
                 Assert.InRange(opening - d.StartMinute, DwellPlanner.MinimumQueueLeadMinutes, DwellPlanner.MaximumQueueLeadMinutes);
-                // Nobody stands at the door earlier than the queue window, however early they came.
                 Assert.False(d.ActiveAt(opening - DwellPlanner.MaximumQueueLeadMinutes - 0.01));
                 Assert.False(d.ActiveAt(opening));
             }
@@ -104,7 +103,6 @@ public sealed class DwellPlannerTests
     [Fact]
     public void CrossingWaitHasNoTimeCap()
     {
-        // Waiting for a safe crossing ends on the light, never on a clock.
         var rule = DwellRules.For(DwellKind.WaitToCross);
         Assert.Equal(double.PositiveInfinity, rule.MaximumMinutes);
         Assert.False(rule.Optional);
@@ -152,7 +150,6 @@ public sealed class DwellPlannerTests
     [Fact]
     public void SimulatedArrivalAtAClosedShopQueuesOnlyNearOpening()
     {
-        // The engine's own wait state feeds the planner: arriving at 08:00 for a 09:00 opening.
         var home = new Place { Id = "home", Kind = PlaceKind.Home, Position = new Position(0, 0, 0) };
         var shop = new Place { Id = "shop", Kind = PlaceKind.Shop, Position = new Position(100, 0, 0), OpenMinute = 9 * 60, CloseMinute = 18 * 60 };
         var person = WaitingAtShop("arrival");
@@ -184,7 +181,6 @@ public sealed class DwellPlannerTests
         var byStart = dry.OrderBy(d => d.StartMinute).ThenBy(d => d.CitizenId, StringComparer.Ordinal).Select(d => d.CitizenId).ToArray();
         Assert.Equal(0, first[byStart[0]]);
 
-        // Rain starts: the plan drops or delays some of the eight, and six newcomers become planned.
         var wet = Enumerable.Range(0, 14).Select(i => DwellPlanner.QueueAtOpening(WaitingAtShop("q" + i), Shop, Seed, opening - 1, true))
             .Where(d => d.HasValue && d.Value.ActiveAt(opening - 1)).Select(d => d!.Value).ToList();
         Assert.True(wet.Count < 14);
@@ -193,7 +189,6 @@ public sealed class DwellPlannerTests
         Assert.Equal(second.Count, second.Values.Distinct().Count());
         Assert.True(second.Count <= 8);
 
-        // Bodies leaving free their spots for the next planned queuer, front first.
         var leaving = first.Where(p => p.Value != 0).ToList();
         var third = DwellPlanner.AssignQueueSlots(leaving, dry.Concat(wet), 8);
         Assert.Equal(third.Count, third.Values.Distinct().Count());
@@ -203,7 +198,6 @@ public sealed class DwellPlannerTests
     [Fact]
     public void PlacesSharingADoorShareOneLine()
     {
-        // GamePlaces gives a school's work and study roles the same entrance point; one door, one line.
         var entrance = new Position(12.34, 0.5, -98.76);
         var work = new Place { Id = "address:x:1:work", Position = entrance };
         var study = new Place { Id = "address:x:1:study", Position = entrance };
@@ -228,7 +222,6 @@ public sealed class DwellPlannerTests
     public void LateJoinersQueueAtTheBack()
     {
         var dwells = Enumerable.Range(0, 3).Select(i => new Dwell("late" + i, DwellKind.QueueAtOpening, "shop", 530 + i, 540, "shop")).ToList();
-        // Two people stand in spots 1 and 2; spot 0 is free because its holder left early.
         var standing = new[] { new KeyValuePair<string, int>("b", 1), new KeyValuePair<string, int>("c", 2) };
         var slots = DwellPlanner.AssignQueueSlots(standing, dwells, 4);
         Assert.Equal(3, slots["late0"]);
@@ -246,20 +239,16 @@ public sealed class DwellPlannerTests
     [Fact]
     public void StandingBodiesMoveUpOnlyIntoFreeSpots()
     {
-        // B and C stand in spots 1 and 2 because A's body was never created; the front is empty.
         var occupied = new List<int> { 1, 2 };
         Assert.Equal(0, DwellPlanner.MoveUp(occupied, 1));
-        // B's walk forward fails: B keeps spot 1, so C can't take it and has nothing free ahead but 0.
         Assert.Equal(0, DwellPlanner.MoveUp(occupied, 2));
         occupied = new List<int> { 0, 1, 2 };
         Assert.Null(DwellPlanner.MoveUp(occupied, 2));
-        // After moves the plan is built from the spots bodies actually hold: no spot is published twice.
         var standing = new[] { new KeyValuePair<string, int>("b", 1), new KeyValuePair<string, int>("c", 0) };
         var a = new Dwell("a", DwellKind.QueueAtOpening, "shop", 531, 540, "shop");
         var slots = DwellPlanner.AssignQueueSlots(standing, new[] { a }, 8);
         Assert.Equal(slots.Count, slots.Values.Distinct().Count());
         Assert.Equal(2, slots["a"]);
-        // Duplicate reports of one spot never yield two holders.
         var duplicate = new[] { new KeyValuePair<string, int>("b", 1), new KeyValuePair<string, int>("d", 1) };
         Assert.Single(DwellPlanner.AssignQueueSlots(duplicate, Array.Empty<Dwell>(), 8));
     }
@@ -276,7 +265,6 @@ public sealed class DwellPlannerTests
         var c = state.Citizens.Single(); c.Phase = CitizenPhase.WaitingForOpening; c.PlaceId = c.DestinationId = "shop";
         c.Activity = c.DestinationActivity = Activity.Shop; c.ActivityUntilMinute = opening + 60; c.NextEventMinute = opening;
         var dry = DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, false)!.Value;
-        // Admit only once its deterministic dry lead is active.
         state.Minute = dry.StartMinute + 0.01;
         var wet = DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true);
         Assert.NotEqual((Dwell?)dry, wet);
@@ -287,7 +275,6 @@ public sealed class DwellPlannerTests
         Assert.Equal(saved, SaveCodec.Write(loaded));
         Assert.Equal(wet, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, true));
         Assert.Equal(dry, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, false));
-        // Identical save supports both histories: no saved weather/lead/body/slot distinguishes them.
         Assert.Null(DwellPlanner.QueueAtOpening(c, shop, 17, opening, true, dry));
         var foreign = new Dwell("someone-else", DwellKind.QueueAtOpening, "shop", dry.StartMinute, opening, "shop");
         Assert.Equal(wet, DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true, foreign));
@@ -307,7 +294,6 @@ public sealed class DwellPlannerTests
     [InlineData(0, true)] [InlineData(25, true)] [InlineData(100, true)]
     public void OpeningQueueReloadAndAdmissionAreIndependentOfOptionalStopRate(int rate, bool raining)
     {
-        // Both ordinary morning opening and a night opening, under the same waiting-state contract.
         foreach (int hour in new[] { 9, 3 })
         {
             double opening = Day + hour * 60;
@@ -339,8 +325,6 @@ public sealed class DwellPlannerTests
                 string admitted = SaveCodec.Write(loaded.State);
                 foreach (int otherRate in new[] { 25, 100 })
                 {
-                    // Replay the identical waiting state under the other rates, comparing
-                    // both the queue commitment and the admitted save image.
                     var other = SaveWire.Read(saved); Assert.True(other.Status == SaveReadStatus.Loaded, other.Error);
                     var otherSim = new CitySimulator(other.State!, new NoRoutes()); otherSim.AttachOptionalStops(env, otherRate);
                     Assert.Equal(original, DwellPlanner.QueueAtOpening(other.State!.Citizens.Single(), shop, state.Seed, opening - 1, raining));
@@ -349,8 +333,6 @@ public sealed class DwellPlannerTests
                     if (raining) Assert.Equal(admitted, otherAdmitted);
                     else
                     {
-                        // Dry admission also draws an optional-stop chance. That banked
-                        // choice may differ by rate; every other persisted fact must agree.
                         var baseline = SaveWire.Parse(admitted); var variant = SaveWire.Parse(otherAdmitted);
                         ((JObject)baseline["Citizens"]![0]!).Remove("OptionalStopChoice");
                         ((JObject)variant["Citizens"]![0]!).Remove("OptionalStopChoice");

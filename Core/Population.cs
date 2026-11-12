@@ -17,9 +17,6 @@ namespace PersistentCity.Core
             }
         }
 
-        // Hash is one FNV-1a pass over the characters followed by a fixed finaliser, so a key built as
-        // prefix + suffix can be hashed by continuing the prefix state over the suffix. These produce
-        // exactly Hash(prefix + suffix, seed) without building the concatenated string.
         internal static uint Begin(int seed) { unchecked { return 2166136261u ^ (uint)seed; } }
 
         internal static uint Append(uint state, string text)
@@ -33,7 +30,6 @@ namespace PersistentCity.Core
 
         internal static uint Append(uint state, char c) { unchecked { state ^= c; return state * 16777619u; } }
 
-        /// <summary>The characters of value.ToString(CultureInfo.InvariantCulture).</summary>
         internal static uint AppendDecimal(uint state, int value)
         {
             uint magnitude;
@@ -97,17 +93,13 @@ namespace PersistentCity.Core
             return city;
         }
 
-        // Called after catalogue capacity refresh. Existing residents keep all physical
-        // events and assignments, even when revised housing implies a smaller target.
         public static void ExpandToHousing(CityState city)
         {
             if (city.Places.Any(p => p.Kind == PlaceKind.Home && p.Capacity < 0))
                 throw new InvalidOperationException("Residential capacities must be nonnegative.");
             long beds = city.Places.Where(p => p.Kind == PlaceKind.Home).Sum(p => (long)p.Capacity);
-            // Retain a singleton legacy population when 90% occupancy rounds down to zero.
             int target = beds <= 1 && city.Citizens.Count > 0 ? city.Citizens.Count : HousingPolicy.Target(beds);
             AppendResidents(city, target, Assignments(city));
-            // A capacity correction never evicts an already established resident.
             city.PopulationTarget = Math.Max(city.Citizens.Count, target);
         }
 
@@ -143,7 +135,6 @@ namespace PersistentCity.Core
 
         internal static CitizenState CreateResident(CityState city, CitizenIdentity identity, double minute, Dictionary<string, int> used)
         {
-            // Hash(identity.Id + ":home:" + p.Id) for every vacancy, continued from one shared prefix.
             uint homeKey = StableRandom.Append(StableRandom.Append(StableRandom.Begin(city.Seed), identity.Id), ":home:");
             var home = city.Places.Where(p => p.Kind == PlaceKind.Home && Used(used, p.Id) < p.Capacity)
                 .OrderBy(p => p.District == identity.District ? 0 : 1)
@@ -178,12 +169,10 @@ namespace PersistentCity.Core
             var used = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var person in city.Citizens)
             {
-                // An event works on a copy of the resident that shares the immutable identity object.
                 if (excluded != null && (ReferenceEquals(person, excluded) || ReferenceEquals(person.Identity, excluded.Identity))) continue;
                 Count(used, person.HomeId);
                 if (person.DayPlaceId != "") Count(used, person.DayPlaceId);
             }
-            // Schema 27: seated visitors hold workplace capacity too; their portal home holds none.
             foreach (var visitor in city.VisitorRoutines)
             {
                 if (excluded != null && (ReferenceEquals(visitor, excluded) || ReferenceEquals(visitor.Identity, excluded.Identity))) continue;

@@ -5,15 +5,11 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>S2 processing families from the J0 table. Only the exact native classes map; a subclass (a modded shop
-    /// with its own code) is <see cref="Unsupported"/> and stays native.</summary>
     public enum ProbeFamily { Unsupported, FullService, SelfService, Hairdresser, Gym, CinemaTheater, Nightclub }
     public enum ProbeKind { Food, Goods, Service }
     public enum ProbeRefusal { None, Empty, Ceiling, Wallet, AlreadyRecorded, Interrupted, Reversed, NativeDeclined, Uncertain }
     public enum ProbeReceiptStatus { Missing, Pending, Paid, Declined, Abandoned, Uncertain, Conflict }
 
-    /// <summary>One basket line at its live price. Mandatory marks a line the processor charges first (entrance fee,
-    /// ticket); it is reported, and the native side leaves a checkout-added fee out of the order it builds.</summary>
     public readonly struct ProbeLine
     {
         public ProbeLine(string itemId, Money price, bool mandatory)
@@ -50,13 +46,9 @@ namespace PersistentCity.Core
         public long Minute { get; }
         public Money Ceiling { get; }
         public IReadOnlyList<ProbeLine> Basket { get; }
-        /// <summary>One probe per resident, place and game minute; a repeat reads the saved receipt and never sells again.</summary>
         public string Key => PurchaseProbe.Prefix + Uri.EscapeDataString(ResidentId) + ":" + Uri.EscapeDataString(PlaceId) + ":" + Minute.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    /// <summary>What the native side did. Interrupted means it stopped before any native effect (a recheck after native
-    /// setup failed). Processed means exactly one order was booked; Paid lists its chargeable paid lines at the booked
-    /// prices, and Unpriced counts paid lines whose native price the mod cannot represent.</summary>
     public readonly struct ProbeNativeOutcome
     {
         private ProbeNativeOutcome(bool sold, IReadOnlyList<ProbeLine> paid, int unpriced, string reason) { Sold = sold; Paid = paid; Unpriced = unpriced; Reason = reason; }
@@ -68,10 +60,6 @@ namespace PersistentCity.Core
         public string Reason { get; }
     }
 
-    /// <summary>The only native calls of a probe. Runtime processes one order through the family's own ProcessCustomer;
-    /// tests use a double. Sell is called only after the whole basket fits the ceiling. Undo, called only after Sell,
-    /// restores the native books (stock, booked orders, the claimed entry) to the image taken before Sell's first native
-    /// effect; it throws when it cannot.</summary>
     public interface IProbeNativeSale
     {
         ProbeNativeOutcome Sell(IReadOnlyList<ProbeLine> lines);
@@ -91,24 +79,13 @@ namespace PersistentCity.Core
         public bool Bought => Refusal == ProbeRefusal.None && Paid > Money.Zero;
     }
 
-    /// <summary>S2 sale proof, Core side: price the whole basket against the resident's ceiling before any native call,
-    /// make one native sale, then debit the wallet and confirm the receipt in the same call. Receipts live in the native
-    /// save's mod data next to the native orders. Runtime runs the call inside the save-epoch unit guard. A native save
-    /// started during it (only a nested call can do that, such as a rig checkpoint inside the native processor) may hold the
-    /// booked order and a pending receipt beside the pre-probe population; the guard marks that save failed and stopped, so
-    /// Persistent City refuses it on load and settles neither half (F7 rules 5 and 6). Recovery is the last coherent save,
-    /// which holds the probe before it began. Every save Persistent City loads sees the probe before it began or after it
-    /// finished.</summary>
     public static class PurchaseProbe
     {
         public const string Prefix = "persistentcity:sale-probe-v1:";
         public static bool IsReceiptKey(string key) => key.StartsWith(Prefix, StringComparison.Ordinal);
 
-        /// <summary>The smaller of the requested ceiling and what the wallet may spend now.</summary>
         public static Money Ceiling(Money requested, ResidentBudget wallet) => Money.Min(requested, HouseholdFinance.SpendingLimit(wallet));
 
-        /// <summary>The whole basket, checkout-added charges included, against the ceiling. S2 refuses a basket above the
-        /// ceiling outright; trimming optional goods is GR-3's purchase contract, not this probe.</summary>
         public static ProbeQuote Quote(IReadOnlyList<ProbeLine> basket, Money ceiling)
         {
             Money total = Money.Sum(basket.Select(l => l.Price));
@@ -116,8 +93,6 @@ namespace PersistentCity.Core
             return new ProbeQuote(refusal == ProbeRefusal.None ? basket.ToArray() : Array.Empty<ProbeLine>(), total, ceiling, refusal);
         }
 
-        /// <summary>Runs one probe. A refusal returns before the native call and before any write. The pending receipt is
-        /// written immediately before the native call; the wallet is debited only after the native side confirms.</summary>
         public static PurchaseProbeResult Run(PurchaseProbeRequest request, ResidentBudget? wallet, IDictionary<string, string> receipts, IProbeNativeSale native)
         {
             string key = request.Key;
@@ -141,27 +116,21 @@ namespace PersistentCity.Core
                 receipts.Remove(key);
                 return new PurchaseProbeResult(key, ProbeRefusal.Interrupted, ProbeReceiptStatus.Missing, quote, Money.Zero, outcome.Reason);
             }
-            // From here one order is booked: it is debited now, exactly once, or the native books are restored. Prices were
-            // rechecked after native setup, so paid lines outside the quote are not expected; they are charged when they fit.
             Money paid = Money.Sum(outcome.Paid.Select(l => l.Price));
             string note = WithinQuote(outcome.Paid, quote.Kept) && outcome.Unpriced == 0 ? "" : "Native paid lines differ from the quote";
             if (paid > quote.Total || paid > Money.Zero && !CanDebit(wallet, request.Kind, paid))
                 return Reverse(key, identity, quote, receipts, native, "Booked order " + paid.ToCentsText() + " exceeds the quote or the wallet");
             if (paid == Money.Zero)
             {
-                // The game's own per-item price check refused every line: an order with no paid entry, no money.
                 receipts[key] = "declined|" + identity;
                 return new PurchaseProbeResult(key, ProbeRefusal.NativeDeclined, ProbeReceiptStatus.Declined, quote, Money.Zero, "Native price check refused every line");
             }
-            // Debit can throw only at its first cash check or a refused hold, before it assigns anything.
             try { Debit(wallet, request.Kind, paid); }
             catch (Exception error) { return Reverse(key, identity, quote, receipts, native, "Wallet debit failed: " + error.Message); }
             receipts[key] = "paid|" + paid.ToCentsText() + "|" + identity;
             return new PurchaseProbeResult(key, ProbeRefusal.None, ProbeReceiptStatus.Paid, quote, paid, note);
         }
 
-        // Restore the native books and drop the pending receipt: wallet, receipts and books are as before the probe.
-        // Only a failed restore leaves evidence, an uncertain receipt that is never retried or debited.
         private static PurchaseProbeResult Reverse(string key, string identity, ProbeQuote quote, IDictionary<string, string> receipts, IProbeNativeSale native, string reason)
         {
             try { native.Undo(); }
@@ -174,9 +143,6 @@ namespace PersistentCity.Core
             return new PurchaseProbeResult(key, ProbeRefusal.Reversed, ProbeReceiptStatus.Missing, quote, Money.Zero, reason + "; native books restored");
         }
 
-        /// <summary>Defensive. Run records every native outcome before it returns and a save taken inside it is refused on
-        /// load, so no city Persistent City runs should hold a pending receipt outside a running probe. One that does is
-        /// abandoned and never retried or debited. Returns how many changed.</summary>
         public static int Recover(IDictionary<string, string> receipts)
         {
             var pending = receipts.Where(p => IsReceiptKey(p.Key) && p.Value.StartsWith("pending|", StringComparison.Ordinal)).Select(p => p.Key).ToArray();
@@ -199,8 +165,6 @@ namespace PersistentCity.Core
             }
         }
 
-        // Food spending goes through the food hold, so the food panel and conservation see it as prepared food;
-        // goods and services are discretionary, the account ordinary exchanges already use.
         private static bool CanDebit(ResidentBudget wallet, ProbeKind kind, Money amount)
             => amount > Money.Zero && amount <= HouseholdFinance.SpendingLimit(wallet)
                 && Money.TryAdd(kind == ProbeKind.Food ? wallet.PreparedFoodSpent : wallet.Ledger.Discretionary, amount, out _);
@@ -219,7 +183,6 @@ namespace PersistentCity.Core
             HouseholdFinance.CheckCash(wallet);
         }
 
-        // Each paid line must be a distinct quoted line at its quoted price; nothing outside the quote is accepted.
         private static bool WithinQuote(IReadOnlyList<ProbeLine> paid, IReadOnlyList<ProbeLine> quoted)
         {
             var open = quoted.ToList();

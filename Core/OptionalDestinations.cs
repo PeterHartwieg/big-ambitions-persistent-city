@@ -7,7 +7,6 @@ namespace PersistentCity.Core
     public sealed partial class CitySimulator
     {
         private readonly List<Place> optionalPlaces = new List<Place>();
-        // This is a useful-visit floor, not time added to the resident's original window.
         private static double MinimumOptionalStay(Activity activity) => activity == Activity.Shop ? 5 : 15;
 
         private static double? UsefulOpening(Place place, double arrival, double deadline, double stay)
@@ -19,7 +18,6 @@ namespace PersistentCity.Core
             return opening.Value + stay <= Math.Min(deadline, close) ? opening : null;
         }
 
-        // The outcome of one optional decision, filled in once its request sequence has run to the end.
         private sealed class OptionalChoice
         {
             public OptionalChoice(RoutineSlot proposed) { Slot = proposed; }
@@ -38,20 +36,17 @@ namespace PersistentCity.Core
             if(weather.Value==0)
             {
                 choice.Slot=new RoutineSlot(person.HomeId,Activity.Home,proposed.EndsAt);
-                // GR-2: declining in the rain is the person's choice, not a miss.
                 DayPlanExecutor.Mark(person,proposed.Activity,proposed.EndsAt,PlanItemState.Cancelled);
                 ObserveRoutine(person,proposed,now,"weather-declined","captured-rain");
                 yield break;
             }
             var candidates = new List<Place>();
-            // The familiar shop remains a first choice; leisure keeps its seeded daily variety.
             if (places.TryGetValue(proposed.PlaceId, out var preferred) && preferred.Kind == kind && preferred.Capacity > 0)
                 candidates.Add(preferred);
             foreach (var candidate in DestinationChoice.Shortlist(optionalPlaces, origin, kind, key, State.Seed))
                 if (candidate.Id != proposed.PlaceId && candidates.Count < 8) candidates.Add(candidate);
             int routeCalls = 0;
             double stay = MinimumOptionalStay(proposed.Activity);
-            // GR-2: a missed item records why its first candidate (the planned venue when it can serve) was refused.
             var cause = PlanMissCause.None;
             foreach (var candidate in candidates)
             {
@@ -62,7 +57,6 @@ namespace PersistentCity.Core
                 { if (first) cause = PlanMissCause.Refused; ObserveRoutine(person, slot, now, "candidate-rejected", "paid-visit-unaffordable"); continue; }
                 if (!UsefulOpening(candidate, now, slot.EndsAt, stay).HasValue)
                 { if (first) cause = PlanMissCause.Closed; ObserveRoutine(person, slot, now, "candidate-rejected", "no-useful-opening"); continue; }
-                // Only a walking-only traveller can use a walking lower bound safely.
                 if (!person.Preferences.OwnsCar && !person.Preferences.AllowTransit && candidate.Id != origin.Id)
                 {
                     if (Position.Distance(origin.Position, candidate.Position) > person.Preferences.WalkingToleranceMetres
@@ -72,7 +66,6 @@ namespace PersistentCity.Core
                 Route? route = null;
                 if (candidate.Id != origin.Id)
                 {
-                    // At most two full multimodal searches per scheduled optional decision.
                     if (routeCalls == 2) break;
                     routeCalls++;
                     var request = CitizenRequest(origin, candidate, now, person);

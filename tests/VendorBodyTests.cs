@@ -80,16 +80,15 @@ public sealed class VendorBodyTests
         Assert.Equal(8, line!.Spots.Count);
         Assert.Equal(row.Stand.Position, line.Entrance); Assert.Equal(line.Entrance, line.Door);
         Assert.Equal(new Position(12, 2, 24), line.Spots[0]);
-        // Cardinal fixtures pin actual endpoints, independently of the placement calculation.
         Assert.Equal(lastX, line.Spots[^1].X, 5); Assert.Equal(lastZ, line.Spots[^1].Z, 5);
         Assert.All(line.Spots, p => Assert.Equal(2, p.Y));
         for (int i = 1; i < line.Spots.Count; i++) Assert.Equal(spacing, Position.Distance(line.Spots[i - 1], line.Spots[i]), 5);
         int samples = NavMesh.Samples;
         Assert.True(spots.TryVendorQueue(row, vehicle, out var cached)); Assert.Same(line, cached);
-        Assert.Equal(samples, NavMesh.Samples); // no extra native work for an unchanged layout
+        Assert.Equal(samples, NavMesh.Samples);
         var place = new Place { Id = row.PlaceId, Position = row.Stand.Position };
         Assert.Equal(place.Id, DwellSpots.KeyOf(place));
-        Assert.False(spots.TryQueue(place, out _)); // no building-door fallback
+        Assert.False(spots.TryQueue(place, out _));
     }
 
     [Fact]
@@ -170,7 +169,7 @@ public sealed class VendorBodyTests
         Assert.Equal(Math.Min(8, cap), f.Pool.Active.Count);
         Assert.DoesNotContain("body00", f.Pool.Active.Keys);
         Assert.Equal(f.Pool.Active.Count, f.Pool.Active.Values.Select(b => b.Target).Distinct().Count());
-        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies); // F5i
+        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
     }
 
     [Fact]
@@ -207,11 +206,11 @@ public sealed class VendorBodyTests
         var body = Assert.Single(f.Pool.Active).Value;
         Assert.Equal(f.Person.Identity.Id, body.IdentityId);
         body.Character.transform.position = PhysicalPedestrianBody.Vector(f.Row.Stand!.Position);
-        f.Tick(); // F2c: the body is ahead of the logical pose; it stands, and the journey runs on the logical clock
+        f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.Equal(CitizenPhase.Travelling, f.Person.Phase); Assert.True(body.Agent.isStopped);
         double arrives = f.Person.NextEventMinute;
-        while (!f.City.AdvanceTo(arrives, 1).CaughtUp) { } // ordinary budgeted arrival at its logical minute
+        while (!f.City.AdvanceTo(arrives, 1).CaughtUp) { }
         Assert.Equal(CitizenPhase.AtPlace, f.Person.Phase);
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
@@ -232,7 +231,6 @@ public sealed class VendorBodyTests
         Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
         f.Tick();
         Assert.Equal(f.Row.Stand.Position, body.Target);
-        // F2c: nothing holds the journey; it has left the stand on the logical clock while the body walks back.
         var journey = f.Person.Journey;
         while (!f.City.AdvanceTo(leaves + 0.25).CaughtUp) { }
         Assert.Same(journey, f.Person.Journey); Assert.Equal(CitizenPhase.Travelling, f.Person.Phase);
@@ -240,8 +238,6 @@ public sealed class VendorBodyTests
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         f.ReachTargets(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        // It follows: once the person moves on, its destination is its leg's corner (P-C: one path per leg; the
-        // commanded speed keeps it behind the logical pose).
         while (!f.City.AdvanceTo(leaves + 0.27).CaughtUp) { }
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
@@ -264,7 +260,6 @@ public sealed class VendorBodyTests
         Assert.True(body.Valid); Assert.True(body.Agent.isStopped);
         Assert.Equal(CitizenPhase.AtPlace, f.Person.Phase);
         int acquisitions = f.Pool.Acquisitions.Count;
-        // A paused city must not consume the bounded logical departure window.
         for (int i = 0; i < 100; i++) f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         double leaves = f.Person.NextEventMinute;
@@ -275,13 +270,12 @@ public sealed class VendorBodyTests
         f.Tick(); f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.Equal(f.Row.Stand.Position, f.City.PositionOf(f.Person));
-        // F2c: at the logical pose the body waits for the person to move, then walks with them, behind that pose.
         Assert.True(body.Agent.isStopped);
         while (!f.City.AdvanceTo(leaves + 0.02).CaughtUp) { }
         f.Tick();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
         Assert.False(body.Agent.isStopped);
-        Assert.Equal(f.City.SampleJourney(f.Person).To, body.Target); // P-C: its leg's corner
+        Assert.Equal(f.City.SampleJourney(f.Person).To, body.Target);
         Assert.Equal(acquisitions, f.Pool.Acquisitions.Count);
     }
 
@@ -293,7 +287,6 @@ public sealed class VendorBodyTests
         double leaves = f.Person.NextEventMinute;
         f.Meal.Status = MealStatus.Paid; f.Tick(); f.ReachTargets();
         Assert.Same(body, Assert.Single(f.Pool.Active).Value);
-        // A later reschedule cannot keep a stale physical handoff alive without a bound.
         f.Person.NextEventMinute += 30; f.Person.ActivityUntilMinute += 30;
         f.City.State.Minute = leaves + 1.01; f.Tick();
         Assert.Empty(f.Pool.Active); Assert.False(body.Valid);
@@ -304,7 +297,7 @@ public sealed class VendorBodyTests
     {
         using var f = new Fixture(); f.Tick();
         var body = Assert.Single(f.Pool.Active).Value;
-        for (int i = 0; i < 75; i++) f.Tick(); // actor never follows its path
+        for (int i = 0; i < 75; i++) f.Tick();
         Assert.Empty(f.Pool.Active); Assert.False(body.Valid);
         int acquisitions = f.Pool.Acquisitions.Count;
         Time.Next(3); f.Tick(); Assert.Empty(f.Pool.Active);

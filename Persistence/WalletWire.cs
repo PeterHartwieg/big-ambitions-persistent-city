@@ -4,17 +4,8 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>
-    /// GR-1 person wallet on the wire. The wallet is written once, with its person (<see cref="CitizenState.Wallet"/> on a
-    /// resident and on a visitor's routine); the food roster record carries none and is linked to its person's wallet after
-    /// a read and after a snapshot capture. Older development cities wrote the budget inside the roster record and had no
-    /// place business type; they are refused as older development cities and kept unchanged.
-    /// </summary>
     public static partial class SaveCodec
     {
-        /// <summary>Links every roster record to its person's wallet: a resident by its ID, a visitor by its routine. Only for
-        /// read or snapshot state: it overwrites each record's link and never adopts a record's own budget (the live city
-        /// adopts with FoodCommerce.AdoptRecordWallets).</summary>
         internal static void LinkWallets(CityState state)
         {
             var food = state.Food;
@@ -24,7 +15,7 @@ namespace PersistentCity.Persistence
             {
                 if (meal == null) continue;
                 var wallet = meal.ResidentId != null && persons.TryGetValue(meal.ResidentId, out var person) ? person.Wallet : null;
-                if (!ReferenceEquals(meal.Budget, wallet)) meal.Budget = wallet; // an attached record's setter reports to the panel counters
+                if (!ReferenceEquals(meal.Budget, wallet)) meal.Budget = wallet;
             }
         }
 
@@ -39,8 +30,6 @@ namespace PersistentCity.Persistence
             return persons;
         }
 
-        /// <summary>Every wallet belongs to exactly one person, and a roster record holds its own person's wallet or none.
-        /// Without a food scope no person has a wallet.</summary>
         private static void ValidateWallets(CityState state)
         {
             var food = state.Food;
@@ -58,8 +47,6 @@ namespace PersistentCity.Persistence
             RequireLinked(food, owners);
         }
 
-        /// <summary>Snapshot capture checks the live roster first: a record holding any other wallet than its person's
-        /// would otherwise be saved with the person's alone.</summary>
         internal static void RequireLinkedWallets(CityState live)
         {
             if (live.Food?.Residents == null || live.Citizens == null) return;
@@ -79,8 +66,6 @@ namespace PersistentCity.Persistence
 
         private const string FirstPlace = "\"Places\":[{\"AttractionWeight\":";
 
-        /// <summary>The writer sorts fields ordinally, so every current place starts with AttractionWeight then
-        /// BusinessType; a pre-GR-1 body goes straight from AttractionWeight to Capacity. One ordinal search, no decode.</summary>
         internal static bool PreWalletBody(string source)
         {
             if (!source.StartsWith(BodyPrefix, StringComparison.Ordinal)) return false;

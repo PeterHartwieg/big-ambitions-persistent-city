@@ -11,10 +11,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5c-lite measurement harness (docs/perf/f5c-lite.md), not a gate: it runs only when
-/// PC_F5C_LITE_MEASURE names an output file, e.g.
-/// <c>PC_F5C_LITE_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F5cLiteMeasure</c>.
-/// X1 removed its writer-25 versus writer-26 save-cost arm with the pre-26 reader chain; the visitor-ordering measure remains.</summary>
 public sealed class F5cLiteMeasure
 {
     private static object Stats(List<double> values)
@@ -24,8 +20,6 @@ public sealed class F5cLiteMeasure
             max = Math.Round(s[^1], 3), atLeast30Ms = s.Count(v => v >= 30) };
     }
 
-    /// <summary>Perf win in code this slice adds: represented visitors were first kept ordinal by binary-search insert
-    /// (O(n) shift per visitor), now appended and sorted once. Measured on the in-game RLO ID order c0, c1, ...</summary>
     [Fact]
     public void VisitorEnrolmentOrderingInsertVersusSortOnce()
     {

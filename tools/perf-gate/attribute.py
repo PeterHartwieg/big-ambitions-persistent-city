@@ -24,20 +24,14 @@ import present
 UNKNOWN = present.UNKNOWN
 ADVANCE = analyze.ADVANCE_COMPONENT
 CLASSES = ('pc-union', 'gc', 'save-load-scene', 'native-frame', 'gpu-present', 'reference-rate', 'unattributed')
-# Decision 7: PC union mod-work must be >= this share of the frame's excess over the reference p50.
-# The same share is required of the native phase, GPU busy or present wait for their classes.
 EVIDENCE_SHARE = 0.5
-# reference-rate: reference stalls within this size factor, at >= this share of the candidate's rate.
 SIZE_BAND = 1.5
 RATE_SHARE = 0.5
-# An RLO line ("a frame of N ms", rounded) matches a probe frame within this tolerance.
 RLO_TOLERANCE_MS, RLO_TOLERANCE_FRACTION = 1.5, 0.02
-# RLO phases that are not a named piece of native work.
 UNNAMED_PHASES = {'the rest', "outside the engine's steps"}
 PRESENT_WAIT_PHASES = {'waiting for the last frame to be shown', 'presentafterdraw'}
 
 
-# ---------------------------------------------------------------- RLO frame-diagnostic lines
 
 RLO_FRAME = re.compile(r"Session: a frame of (\d+(?:[.,]\d+)?) ms;")
 PHASE_ITEM = re.compile(r"^(.*?\S) (\d+(?:[.,]\d+)?) ms\b")
@@ -49,7 +43,6 @@ def _float(text):
 
 
 def _split_top(text, sep):
-    """Split on sep outside parentheses and quotes."""
     parts, depth, quoted, start, i = [], 0, False, 0, 0
     while i < len(text):
         c = text[i]
@@ -70,7 +63,6 @@ def _split_top(text, sep):
 
 
 def parse_rlo_line(line):
-    """RLO's Session frame diagnostic: frame ms, phases, saving/scene/collection flags. None if not one."""
     match = RLO_FRAME.search(line)
     if match is None:
         return None
@@ -94,7 +86,6 @@ def parse_rlo_line(line):
     return out
 
 
-# ---------------------------------------------------------------- probe frames
 
 def _frequency(window):
     status = (window.get('probe') or {}).get('status') or {}
@@ -108,7 +99,6 @@ def _component_names(window):
 
 
 def frame_rows(window):
-    """Normalise probe frame rows (F4b snake_case, E5b camelCase or F4a synthetic) with QPC time."""
     probe = window.get('probe')
     rows = (probe.get('frames') if probe else window.get('frames')) or []
     frequency = _frequency(window)
@@ -146,9 +136,6 @@ def advance_bound(window, frames):
 
 
 def fix128_owners(window, frames, calls, tolerance_ms):
-    """Frame -> summary fields for the one frame per observation whose advancement matches its maximum.
-
-    Candidates are all clean frames of the window, so a maximum two frames could match attaches nowhere."""
     advance = {}
     for f in frames:
         if not f['clean']:
@@ -156,7 +143,7 @@ def fix128_owners(window, frames, calls, tolerance_ms):
         ms = f['components'].get(ADVANCE)
         if not ms and f['frame'] in calls:
             ms = calls[f['frame']].get('duration_ms')
-        if ms:  # F4b component arrays hold 0 for a bound scope that did not run: not an advancement call
+        if ms:
             advance[f['frame']] = ms
     owners = {}
     for index, observation in enumerate(analyze.observations_of(window)):
@@ -174,7 +161,6 @@ def fix128_owners(window, frames, calls, tolerance_ms):
 
 
 def advancement_of(frame, ctx):
-    """Advancement fields for one frame, or None when the frame is confirmed outside advancement."""
     fr = frame['frame']
     ms = ctx['advance'].get(fr)
     if ms is None and ctx['bound']:
@@ -187,7 +173,6 @@ def advancement_of(frame, ctx):
                 call_optional_stop_ms=call.get('optional_stop_ms', UNKNOWN) if call else UNKNOWN, unit=unit)
 
 
-# ---------------------------------------------------------------- classifier
 
 def _count_between(ordered, lo, hi):
     return bisect.bisect_right(ordered, hi) - bisect.bisect_left(ordered, lo)
@@ -198,10 +183,6 @@ def _largest(components):
 
 
 def classify(stall, ctx):
-    """Classes and evidence for one stall.
-
-    stall: interval_ms, frames (probe rows the interval covers), presents (trace rows or []),
-    baseline_ms, rlo (parsed lines attached to its frames), reference (dict or None)."""
     interval = stall['interval_ms']
     frames = stall['frames']
     excess = interval - stall['baseline_ms'] if stall['baseline_ms'] is not None else interval
@@ -217,8 +198,6 @@ def classify(stall, ctx):
                                     components=worst['components'])
     elif frames and mod > 0 and stall['baseline_ms'] is None and stall.get('window_p50_ms') is not None \
             and mod >= EVIDENCE_SHARE * (interval - stall['window_p50_ms']):
-        # Decision 7 measures the excess over the reference p50; without one the union meets the share only
-        # against the window's own p50, which is not evidence.
         stall['pc_union'] = 'unresolved (no valid matched reference p50)'
     gcs = [f['gc'] for f in frames if f['gc'] is not None]
     if any(g > 0 for g in gcs):
@@ -238,7 +217,7 @@ def classify(stall, ctx):
         for name, ms in r['phases'].items():
             if name in UNNAMED_PHASES or name.lower() in PRESENT_WAIT_PHASES:
                 continue
-            outside_pc = ms - mod_by_frame.get(r['frame'], mod)  # never count PC union time as native
+            outside_pc = ms - mod_by_frame.get(r['frame'], mod)
             if outside_pc >= need and outside_pc > 0:
                 native.append(dict(source='rlo', frame=r['frame'], phase=name, phase_ms=ms, outside_pc_ms=outside_pc))
     for p in stall['presents']:
@@ -276,16 +255,12 @@ def classify(stall, ctx):
     return stall
 
 
-# ---------------------------------------------------------------- windows
 
 def _p50(values):
     return analyze.nearest_rank(sorted(values), 50) if values else None
 
 
 def presented_series(frames, joined, trace):
-    """Presented intervals whose covered frames are all clean, each with the frames since the previous displayed
-    present. An interval that covers a diagnostic or warm-up frame (a dropped present can make it span one) is
-    left out, as that frame is left out of clean timing."""
     series, pending = [], []
     order = sorted(range(len(frames)), key=lambda i: frames[i]['qpc_ms'])
     for i in order:
@@ -294,7 +269,7 @@ def presented_series(frames, joined, trace):
         if p is None:
             continue
         if not trace.presents[p].displayed:
-            continue  # dropped: the next displayed interval spans this frame
+            continue
         interval = present.displayed_interval(trace, p)
         if interval is not None and all(f['clean'] for f in pending):
             series.append(dict(interval_ms=interval, present=trace.presents[p], frames=pending))
@@ -307,7 +282,6 @@ def join_window(frames, trace, offset, source):
     clean = [i for i, f in enumerate(frames) if f['clean']]
     hits = sum(1 for i in clean if joined[i] is not None)
     shown = [joined[i] for i in clean if joined[i] is not None]
-    # The trace covers the window when presents reach the end of its first and last frames.
     first = min(frames, key=lambda f: f['qpc_ms'])
     last = max(frames, key=lambda f: f['qpc_ms'])
     covers = bool(trace.times) and trace.times[0] + offset <= first['qpc_ms'] + first['whole'] + max(2.0, 0.5 * first['whole']) \
@@ -321,7 +295,6 @@ def join_window(frames, trace, offset, source):
                  not_displayed=sum(1 for p in shown if not trace.presents[p].displayed), trace_covers_window=covers,
                  presented_intervals=len(series), gpu_busy='reported' if trace.has('gpu_busy') else UNKNOWN,
                  cpu_wait='reported' if trace.has('cpu_wait') else UNKNOWN, bound=bounds)
-    # Aligned: the join itself holds. Established also needs display timing for a presented series.
     block['aligned'] = covers and block['joined_fraction'] >= present.JOIN_MIN_FRACTION
     block['established'] = bool(trace.display_source) and block['aligned']
     if not trace.display_source:
@@ -330,10 +303,6 @@ def join_window(frames, trace, offset, source):
 
 
 def attach_rlo(lines, frames_by_window):
-    """Attach parsed RLO lines to frames: by explicit frame, else by a unique duration match in range.
-
-    Every probe frame, clean or not, is a rival candidate. A line with no window and no frame range (a bare
-    Player.log line) may describe a frame outside every window, so it is context only and never attaches."""
     index = sorted((f['whole'], wid, f['frame']) for wid, frames in frames_by_window.items() for f in frames)
     keys = [k[0] for k in index]
     attached, unmatched = {}, []
@@ -372,7 +341,6 @@ def _rlo_entries(window, extra):
 
 
 def _entries(windows, contract):
-    """F4a's window entries (validity, checkpoint, span, pace), from the enriched windows with their final receipts."""
     out = {}
     for w in windows:
         try:
@@ -383,8 +351,6 @@ def _entries(windows, contract):
 
 
 def _reference_for(window, windows, entries, contract):
-    """The valid reference that F4a would pair with this candidate: same condition, script, arm and repetition, and
-    matched on checkpoint, game-time span and pace (analyze.matched). None when there is no such reference."""
     key = (window.get('condition'), window.get('script'), window.get('arm', 'primary'), window.get('repetition'))
     own = entries.get(window['id'])
     if own is None:
@@ -399,17 +365,14 @@ def _reference_for(window, windows, entries, contract):
 
 
 def attribute(export, traces=None, player_log_lines=(), contract=None):
-    """Return (enriched export, attribution report). traces: window id -> present.Trace (or '*' for all)."""
     contract = contract or analyze.load_contract()
     stall_ms = contract['_rows']['P3']['stall_ms']
     tolerance = contract['attribution']['summary_maximum_match_tolerance_ms']
     traces = traces or {}
-    # Shallow copies: only window keys and receipts change, frame rows are shared read-only.
     enriched = dict(export, windows=[dict(w, receipts=dict(w.get('receipts') or {})) for w in export.get('windows', [])])
     windows = enriched.get('windows', [])
     frames_by_window = {w['id']: frame_rows(w) for w in windows}
 
-    # Offsets per trace, estimated over every window that uses it.
     by_trace = {}
     for w in windows:
         trace = traces.get(w['id'], traces.get('*'))
@@ -437,8 +400,6 @@ def attribute(export, traces=None, player_log_lines=(), contract=None):
                 series_by_window[i] = series
             joined_by_window[i] = (trace, joined)
 
-    # Receipts first, so reference validity below sees them. A window whose supplied trace was not joined fails
-    # the receipt, whatever the failure, before or after a presented series was built.
     for w in windows:
         wid = w['id']
         if wid not in presentation:
@@ -512,7 +473,6 @@ def attribute(export, traces=None, player_log_lines=(), contract=None):
         own_p50 = _p50(stats[wid]['whole'])
         ctx['own_stalls'] = sorted(v for v in stats[wid]['whole'] if v >= stall_ms)
         whole_reference = reference('whole')
-        # The present each frame joined to, when its trace was joined: the same evidence the presented table uses.
         trace, joined = joined_by_window.get(wid, (None, None))
         use_join = joined is not None and presentation[wid].get('aligned', False)
         classes_whole = {}
@@ -570,7 +530,6 @@ def _known(value):
     return UNKNOWN if value is None else value
 
 
-# ---------------------------------------------------------------- Markdown and CLI
 
 def _ms(v):
     return v if isinstance(v, str) else ('-' if v is None else f'{v:.3f}')

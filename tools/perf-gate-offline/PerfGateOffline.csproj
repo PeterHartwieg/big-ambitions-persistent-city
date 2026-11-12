@@ -1,8 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- F4e offline pre-gate. Compiles Core, Persistence and Compatibility by path, as tools/rush-spike-replay does, and the
-       test project's sources by path, so the F5h reference fixture (tests/F5hIntegratedAcceptanceTests.cs) and the F2a
-       presentation driver (tests/movement-equivalence/PresentationDriver.cs) are the same code the unit tests run. The
-       linked list below copies tests/PersistentCity.Tests.csproj's Compile items; add a line here when that list grows. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable><ImplicitUsings>disable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>

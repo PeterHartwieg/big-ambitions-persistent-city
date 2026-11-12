@@ -5,7 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>One population market, with authority selected by the saved scope channel.</summary>
     public sealed class FoodMarkets : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
         IFoodSaleEvidence, IFoodFailureMarket, IFoodClosedStandMarket, IRivalFoodMarket, IFoodAwarenessRevision, IFoodProductPolicyMarket, IFoodStartupValidation, IDisposable
     {
@@ -17,14 +16,12 @@ namespace PersistentCity.Runtime
         public FoodMarkets(FoodCommerceState state, IFoodMarket shops, IFoodMarket vehicles, Func<string, Position> position,
             FoodProductPolicySource? policy = null)
         { this.state = state; this.shops = shops; this.vehicles = vehicles; this.position = position; this.policy = policy; }
-        /// <summary>E5b4: one policy for shop and vehicle scopes alike, so both channels hold the same names and metadata.</summary>
         public IFoodProductPolicy ProductPolicy => policy?.Current ?? FoodProductPolicy.OriginalThree;
         private IFoodMarket Market(string id) => state.Shops.Any(s => s.BusinessId == id && s.Channel == FoodScopeChannel.Vehicle) ? vehicles : shops;
         public double EarliestMinute => Math.Max(shops.EarliestMinute, vehicles.EarliestMinute);
         public long AwarenessRevision => ((shops as IFoodAwarenessRevision)?.AwarenessRevision ?? 0) + ((vehicles as IFoodAwarenessRevision)?.AwarenessRevision ?? 0);
         public IReadOnlyList<FoodBusiness> Read(double minute) => shops.Read(minute).Concat(vehicles.Read(minute)).ToArray();
         public FoodSale Buy(ResidentMeal meal, double minute) => Market(meal.BusinessId).Buy(meal, minute);
-        // F6j: only a seller with its own extras checkout (the shop market) receives a ticket; vehicles sell the main only.
         public bool SellsExtras(string id) => Market(id) is IFoodTicketMarket tickets && tickets.SellsExtras(id);
         public FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute) => ((IFoodTicketMarket)Market(meal.BusinessId)).BuyTicket(meal, ticket, minute);
         public FoodBusiness? ReadBusiness(string id, double minute) => ((ILocalFoodMarket)Market(id)).ReadBusiness(id, minute);
@@ -45,11 +42,9 @@ namespace PersistentCity.Runtime
         {
             if (maximumCandidates < 1 || maximumCandidates > 8 || !Position.Finite(tolerance) || tolerance < 0)
                 throw new ArgumentException("Invalid local food observation bound.");
-            // Preserve the native small-market menu/cache and shop-only local-read behavior.
             if (!state.Shops.Any(s => s.Channel == FoodScopeChannel.Vehicle))
                 return ((ILocalFoodMarket)shops).ReadLocal(origin, minute, tolerance, maximumCandidates);
             if (state.Shops.Count <= maximumCandidates) return Read(minute);
-            // Rank saved geometry before reading either seller's supply; apply the shared bound once.
             using (BeginCapture(minute))
                 return state.Shops.Where(IsCandidate).Select(s => new { Scope = s, Distance = Position.Distance(origin.Position, position(s.PlaceId)) })
                     .Where(s => s.Distance <= tolerance).OrderBy(s => s.Distance).ThenBy(s => s.Scope.BusinessId, StringComparer.Ordinal)
@@ -88,7 +83,6 @@ namespace PersistentCity.Runtime
             try { (shops as IDisposable)?.Dispose(); } finally { (vehicles as IDisposable)?.Dispose(); }
         }
 
-        // Shared with NativeFoodOwnership so offline checks exercise both directions of the live guard.
         internal static void ValidateShops(FoodCommerceState state, IEnumerable<FoodAuthority> manifest,
             Func<FoodAuthority, FoodScope, bool> matches, Action<string> refuse)
         {
@@ -102,9 +96,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>E5b4: the market's product policy, rebuilt from config, the API publication and the published loaded-name
-    /// image only when one of them is a new object. A clean read returns the cached policy and allocates nothing. Read
-    /// once per uncaptured decision context, on the main thread; held tuples never read it.</summary>
     public sealed class FoodProductPolicySource
     {
         private readonly Func<LoadedNameImage?> names;
@@ -119,7 +110,6 @@ namespace PersistentCity.Runtime
         private FoodProductMetadataLoadedNames? failedLoaded;
         private FoodProductPolicy current = FoodProductPolicy.OriginalThree;
 
-        /// <param name="report">Called once per distinct failure message (the host logs it); never on a clean read.</param>
         public FoodProductPolicySource(Func<LoadedNameImage?> names, Func<FoodProductMetadataResolver> config,
             Func<FoodProductMetadataLoadedNames?, FoodProductMetadataSnapshot> api, Action<string>? report = null)
         {
@@ -129,9 +119,7 @@ namespace PersistentCity.Runtime
             this.report = report;
         }
         public long Publications { get; private set; }
-        /// <summary>Calls to the API publication, for tests: a failed publication is not retried until an input changes.</summary>
         public long PublishAttempts { get; private set; }
-        /// <summary>Empty while the last publication succeeded; otherwise why the policy fell back to the original three.</summary>
         public string Failure { get; private set; } = "";
 
         public FoodProductPolicy Current
@@ -141,9 +129,7 @@ namespace PersistentCity.Runtime
                 var next = names();
                 if (!ReferenceEquals(next, image))
                 {
-                    // The set is built once per image object, also when it fails: an unchanged image never rebuilds.
                     image = next; loaded = null; imageFailure = "";
-                    // A refused or missing image admits no dynamic name; a dirty catalogue publishes null.
                     if (next != null && next.Refusal == FoodEligibilityRefusal.None)
                     {
                         try { loaded = new FoodProductMetadataLoadedNames(next.Names); }
@@ -151,8 +137,6 @@ namespace PersistentCity.Runtime
                     }
                 }
                 var resolver = config();
-                // A failed publication is retried only when the config or the image changes (or at the next city load,
-                // which builds a new source), so a persistent cause costs no rebuild and no exception per context.
                 if (failedConfig != null && ReferenceEquals(resolver, failedConfig) && ReferenceEquals(loaded, failedLoaded)) return current;
                 try
                 {
@@ -168,7 +152,6 @@ namespace PersistentCity.Runtime
                 }
                 catch (Exception e) when (e is ArgumentException || e is InvalidOperationException)
                 {
-                    // Never a partial policy: new contexts hold the original three until a later publication succeeds.
                     current = FoodProductPolicy.OriginalThree; lastConfig = null; lastSnapshot = null;
                     failedConfig = resolver; failedLoaded = loaded;
                     Fail(e.GetType().Name + ": " + e.Message);

@@ -5,8 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Copies already-loaded district composition for the selected home districts.
-    /// No native class assignment, income, registration creation or market-demand lookup.</summary>
     public static class FoodHouseholdCatalogue
     {
         public static List<FoodDistrictBudgetMix> Read(IReadOnlyCollection<string> homeDistrictIds)

@@ -1,4 +1,3 @@
-// Rig-only diagnostic. Never package with Persistent City. Native validation is pending.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -42,7 +41,6 @@ namespace E5bNativeRigProof
         public Task OnUnloadAsync() { Session.Disarm(); if (host != null) Object.Destroy(host); return Task.CompletedTask; }
     }
 
-    // Exactly the documented reflection extension signature; no AgentRigOps reference.
     public static class E5bProofRigOps
     {
         public static JToken Op_e5b_proof(JObject args) => Session.Dispatch(args);
@@ -139,7 +137,7 @@ namespace E5bNativeRigProof
                 readPaused = (Func<GameSpeedController, bool>)getter.CreateDelegate(typeof(Func<GameSpeedController, bool>));
             }
             Require(speedController != null, "e5b_native_speed_controller_unavailable");
-            return readPaused(speedController); // Same native property used by FT TestBridgeCommands.Paused.
+            return readPaused(speedController);
         }
         private static Func<object, T> Getter<T>(FieldInfo field)
         {
@@ -179,7 +177,6 @@ namespace E5bNativeRigProof
             }
             catch (Exception e)
             {
-                // Stable bounded code, never native exception text/arguments/credentials.
                 var code = e is InvalidOperationException && e.Message.StartsWith("e5b_", StringComparison.Ordinal) ? e.Message : "e5b_" + e.GetType().Name;
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = code });
             }
@@ -208,11 +205,10 @@ namespace E5bNativeRigProof
             var owner = typeof(NativeFoodMarket).Assembly.GetType("PersistentCity.Runtime.NativeFoodOwnership", true);
             authorities = (IDictionary<string, FoodAuthority>)owner.GetField("records", All).GetValue(null);
             readMarket = Getter<NativeFoodMarket>(owner.GetField("market", All));
-            market = readMarket(null); // Actual current ownership market, never a new adapter instance.
+            market = readMarket(null);
             simulatorRegistration = AccessTools.Field(typeof(BusinessSimulator), "buildingRegistration");
             readRegistration = Getter<BuildingRegistration>(simulatorRegistration);
             nativeWork = BusinessSimulatorHelper.Work;
-            // Metadata is bound once, outside measurement/callbacks. No guessed queue semantics.
             Require(nativeWork.GetType().IsGenericType && nativeWork.GetType().GetGenericTypeDefinition().FullName == "Helpers.DistributedWork`1", "e5b_distributed_work_type_mismatch");
             queueField = AccessTools.Field(nativeWork.GetType(), "_pendingWork");
             Require(queueField != null && queueField.FieldType == typeof(Queue<ValueTuple<BuildingRegistration, int>>), "e5b_pending_queue_contract_mismatch");
@@ -236,7 +232,7 @@ namespace E5bNativeRigProof
                 Hook(AccessTools.Method(typeof(GameManager), "RunMainGameTick"), "native_tick");
                 Hook(AccessTools.Method(owner, "AfterNativeTick"), "after_native_tick");
                 var recovery = AccessTools.Method(typeof(NativeFoodMarket), "RevalidateRefusedContract");
-                recoveryHook = recovery != null; // Pre-round-1 red legitimately has no recovery helper.
+                recoveryHook = recovery != null;
                 if (recoveryHook) Hook(recovery, "recovery");
                 Hook(AccessTools.Method(nativeWork.GetType(), "ForceCompleteAllWork", Type.EmptyTypes), "work_drain");
                 Hook(AccessTools.Method(typeof(RetailBusinessSimulator), "ProcessAllCustomersFromThisHour"), "native_hourly_customers");
@@ -280,7 +276,7 @@ namespace E5bNativeRigProof
             if (!armed) return false;
             if (Thread.CurrentThread.ManagedThreadId == armThread) return true;
             Interlocked.Increment(ref offMainCallbacks);
-            return false; // No Unity/native reads, event-buffer writes or behavioral changes on this thread.
+            return false;
         }
         private static void Before(MethodBase __originalMethod, object __instance, out Scope __state)
             => Begin(__originalMethod, __instance, out __state);
@@ -338,7 +334,7 @@ namespace E5bNativeRigProof
                 if (hook.Emit) Trace(hook.After, instance, __state.call, Math.Max(0, end - __state.start), __state.jobHour);
             }
             catch { error = "e5b_observer_finalizer_failed"; measuring = false; }
-            return __exception; // Never suppress/change native exceptions.
+            return __exception;
         }
         private static void Trace(string kind, object instance, long call, long duration, int jobHour)
         {
@@ -400,8 +396,6 @@ namespace E5bNativeRigProof
         public static void Disarm()
         {
             measuring = false; armed = false; patches.UnpatchAll(PatchId); depth = 0;
-            // Never silently restore drifted fields at unload. Caller must explicitly restore,
-            // inspect the acknowledgement, and reload its disposable copy after any refusal.
             if (faults.Count != 0) error = "e5b_unrestored_negative_faults_reload_disposable_copy";
         }
         private static JObject Status() => new JObject {
@@ -454,7 +448,7 @@ namespace E5bNativeRigProof
                         row["required_item_type"] = EnumFact(field.GetValue(requirement));
                     }
                     else row["required_item_type"] = JValue.CreateNull();
-                    requirements.Add(row); // No native requirement evaluation or asset/property expansion.
+                    requirements.Add(row);
                 }
                 definitions.Add(new JObject { ["id"] = id, ["stack_type"] = EnumFact(item.stackType),
                     ["wall_mounted"] = item.wallMounted, ["snap_to_ceiling"] = item.snapToCeiling,
@@ -668,7 +662,7 @@ namespace E5bNativeRigProof
                 Require(field != null, "e5b_raw_data_field_contract_missing_" + name);
                 dtoNamedFields.Add(key, field);
             }
-            return field.GetValue(value); // Explicit diagnostic DTO path only; never callback/timed-path binding.
+            return field.GetValue(value);
         }
         private static void Contract(Type type, params string[] names)
         {
@@ -807,7 +801,7 @@ namespace E5bNativeRigProof
                     var business = market.CaptureBusiness(row.BusinessId, minute);
                     result = new JObject { ["captured"] = business != null, ["business"] = Json(business) };
                 }
-                else result = Json(market.Buy(paid, minute)); // Exact already-paid intention only; never manufacture a meal/customer.
+                else result = Json(market.Buy(paid, minute));
             }
             catch (Exception e)
             {

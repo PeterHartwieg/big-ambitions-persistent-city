@@ -71,7 +71,6 @@ public sealed class EtaModeChoiceTests
         Assert.Equal(detour.Minutes + 4, estimated, 10);
         Assert.Equal(estimated, detour.EstimatedMinutes, 10);
         Assert.True(estimated > detour.Minutes);
-        // Fresh queries must make a previously congested off-path shortcut competitive immediately.
         var reopened = graph.Plan(0, 3, _ => false, (_, _) => true,
             extraMinutes: (_, _) => 0, estimateFound: value => estimated = value)!;
         Assert.Equal(0, reopened.Legs[0].To.Z);
@@ -130,9 +129,9 @@ public sealed class EtaModeChoiceTests
         Assert.True(car.Minutes < subway.Minutes);
         Assert.True(TransportComposition.IsFaster(TransportComposition.Score(subway, 3, prefs, "person"),
             TransportComposition.Score(car, 0, prefs, "person")));
-        Assert.Equal(100, car.PositionAt(1).X); // Queue estimate did not change nominal physical sampling.
+        Assert.Equal(100, car.PositionAt(1).X);
         car.Legs[1].Minutes = 100;
-        Assert.Null(TransportComposition.Join(car)); // A stale estimate below changed nominal timing is invalid.
+        Assert.Null(TransportComposition.Join(car));
     }
 
     [Theory]
@@ -162,10 +161,10 @@ public sealed class EtaModeChoiceTests
         for(int i=0;i<3;i++) kernel.Enqueue("commuter"+i,new[]{new TrafficRouteLeg {LinkId=0,StartNominalMinutes=0,EndNominalMinutes=5}});
         kernel.AdvanceTo(0,100);
         Assert.Same(subway,Choose());
-        Assert.Equal(3,kernel.VehicleCount); // Estimates did not create, move or cancel demand.
+        Assert.Equal(3,kernel.VehicleCount);
         kernel.AdvanceTo(30,100);
         Assert.Equal(TravelMode.Car,Choose().Legs[0].Mode);
-        Assert.Equal(3,kernel.VehicleCount); // Completed acknowledgements remain owned until removed.
+        Assert.Equal(3,kernel.VehicleCount);
     }
 
     private static TransportRoadGraph RoadDiamond() => new(new[] {

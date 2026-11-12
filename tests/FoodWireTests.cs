@@ -25,7 +25,6 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _) = S17_Full(); var place = city.State.Places.First(p => p.Kind == PlaceKind.Shop);
         string previous = place.Id; place.Id = new string('界', 80) + "|\"\\";
-        // Keep the opaque food facts on their existing place; use a separate saved historical place.
         place.Id = previous;
         city.State.Places.Add(new Place { Id = new string('界', 80) + "|\"\\", Name = "historical", Kind = PlaceKind.Shop });
         var visits = city.State.Citizens[0].RecentVisits;
@@ -76,7 +75,7 @@ public sealed partial class FoodCommerceTests
         string source = DevelopmentChain.Write(city.State), broken = source;
         switch (damage)
         {
-            case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break; // roster tuple version
+            case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break;
             case "tuple-hex": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[0x1,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
             case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
@@ -97,15 +96,13 @@ public sealed partial class FoodCommerceTests
         string json = DevelopmentChain.Write(state); var after = DevelopmentChain.CountRecords(state, json);
         Assert.Equal(before.Streaming + 4, after.Streaming); Assert.Equal(before.Semantic + 4, after.Semantic);
         var read = DevelopmentChain.Read(json); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(json, DevelopmentChain.Write(read.State!));
-        // Empty extension already charges one; adding all four entries and watermark adds zero records.
         meal.Memory = new ConsumerMemory(); Assert.Equal(after, DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state)));
         var threeOutcomes = meal.Today;
         meal.Today = null; var noToday = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
         meal.Today = new ResidentFoodToday { Day = 0 }; var emptyToday = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
-        Assert.Equal(noToday, emptyToday); // absence, empty and saturated rollups all charge one consumer unit
+        Assert.Equal(noToday, emptyToday);
         meal.Today = threeOutcomes;
         var restoredToday = DevelopmentChain.CountRecords(state, DevelopmentChain.Write(state));
-        // The schema-25 table regains the historical "pastry" identity; the rollup is still one unit.
         Assert.Equal(emptyToday.Streaming + 1, restoredToday.Streaming);
         Assert.Equal(emptyToday.Semantic + 1, restoredToday.Semantic);
     }
@@ -124,12 +121,11 @@ public sealed partial class FoodCommerceTests
         state.Citizens[0].RecentVisits.Add(new VisitRecord { PlaceId = state.Citizens[0].HomeId });
         state.Food!.BusinessReferences.Add(new BusinessReference { BusinessId = "retained", PlaceId = "shop" });
         var root = SaveWire.Parse(DevelopmentChain.Write(state)); var meal = (JArray)root["Food"]!["Residents"]![0]!;
-        // GR-1: the wallet is saved with its person; the roster tuple omits AnchorId, Slot and the wallet link.
         var budget = (JArray)root["Citizens"]![0]!["Wallet"]!; var table = (JArray)root["Food"]!["BusinessReferences"]!;
         var visits = (JArray)root["Citizens"]![0]!["RecentVisits"]!;
         switch (damage)
         {
-            case "version": meal[0] = 2; break; // tuple v2 is the pre-26 roster record
+            case "version": meal[0] = 2; break;
             case "meal-short": meal.RemoveAt(33); break;
             case "meal-extra": meal.Add(0); break;
             case "budget-short": budget.RemoveAt(18); break;

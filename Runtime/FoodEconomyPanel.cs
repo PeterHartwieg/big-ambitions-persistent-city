@@ -18,7 +18,6 @@ namespace PersistentCity.Runtime
         private Vector2 economyScroll;
         private GUIStyle? economyLabel;
         private Rect economyRect;
-        /// <summary>Rig diagnostic: inspector cost by mode (closed / hover / open), picks and popup builds.</summary>
         public object InspectorTiming => inspector.Timing;
         public void ResetInspectorTiming() => inspector.ResetTiming();
         private static string LocalizedName(string id) => string.IsNullOrWhiteSpace(id) ? "Unspecified"
@@ -26,8 +25,6 @@ namespace PersistentCity.Runtime
         public object EconomyOverview => simulation == null || simulation.View.Food == null
             ? new { active = false } : CityViewReports.EconomyOverview(simulation.View);
         public object NativeEconomyAccounts => foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
-        /// <summary>Rig diagnostic (F6c): incremental panel totals against a full rescan, request/rebuild
-        /// counts and each managed shop's week projection. Built only when requested.</summary>
         public object FoodFeedbackOverview
         {
             get
@@ -50,7 +47,6 @@ namespace PersistentCity.Runtime
             var text = new StringBuilder(); history.AppendPeriods(text, placeId, businessId, day, recordingSince);
             history.AppendJournal(text, journal, placeId, businessId, day, recordingSince, LocalizedName); return text.ToString();
         }
-        // Whole-dollar display only; never changes a settlement amount. Totals may exceed one amount's range.
         private static string Amount(Money amount) => Amount(amount.Units);
         private static string Amount(System.Numerics.BigInteger units)
             => ((decimal)units / Money.UnitsPerDollar).ToString("C0", CultureInfo.GetCultureInfo("en-US"));
@@ -80,7 +76,6 @@ namespace PersistentCity.Runtime
             }
             else if (NativeCityClock.BoundaryClips > 0 && !showEconomy)
             {
-                // Quiet baseline status; reserve the large card for actual workload holds.
                 GUI.Label(new Rect(20, 20, Math.Min(760, Screen.width - 40), 22), BoundaryAccountingText);
             }
             var input = Event.current;
@@ -131,7 +126,6 @@ namespace PersistentCity.Runtime
         {
             var city = simulation!.View; var food = city.Food!;
             var text = new StringBuilder(); int day = (int)(city.Minute / 1440);
-            // F6c: incremental totals instead of consumer scans; one pass each over history, places and accounts.
             var counters = simulation.FoodMoney;
             if (counters == null) return "Preparing resident food demand. The food market is not attached yet.";
             var money = counters.Snapshot();
@@ -190,7 +184,6 @@ namespace PersistentCity.Runtime
                 if (accounts.Length == 0) text.AppendLine("Native daily cost statement pending settlement.");
                 text.AppendLine();
             }
-            // GR-7: the player's other businesses the purchase market serves: today's visits, purchases and refusals by cause.
             var purchases = simulation.Purchases;
             if (purchases != null && purchases.Venues.Count > 0)
             {

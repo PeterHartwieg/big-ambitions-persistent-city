@@ -27,7 +27,6 @@ public sealed partial class FoodCommerceTests
         foreach (var mutate in mutations)
         {
             var copy = DevelopmentChain.Read(saved).State!;
-            // Some offsets have already completed the represented excursion.
             if (copy.Food!.Residents[1].Excursion == null && mutate == mutations[4]) continue;
             mutate(copy);
             var oldError = Record.Exception(() => DevelopmentChain.Write(copy));

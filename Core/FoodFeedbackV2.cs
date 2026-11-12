@@ -6,7 +6,6 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Facts-only projections, requested by the open panel or diagnostics. Never reads the market.</summary>
     public static class FoodFeedbackV2
     {
         public const int ShopsPerPage = 16;
@@ -16,7 +15,6 @@ namespace PersistentCity.Core
         private static readonly string[] Causes = { "no staffed counter", "stock unavailable", "service/queue", "closed/late" };
         public static int RecordingSince(FoodCommerceState food)
         {
-            // Fresh scopes set the choice-policy boundary to creation day + 1. History already records the creation day.
             int since = Math.Max(0, food.ChoiceStartsDay - 1);
             foreach (var row in food.History) if (row.Day < since) since = row.Day;
             return since;
@@ -95,7 +93,6 @@ namespace PersistentCity.Core
             : n.ToString(CultureInfo.InvariantCulture);
         public static void AppendCity(StringBuilder text, FoodMoneySnapshot money, EconomicLedger economy, int today)
         {
-            // F6e already maintains these exact budget flags, including attendance wage changes. B4 uses person wallets.
             text.Append("Household strain (person wallets, current): ").Append(money.BehindOnBills).Append('/').Append(money.Budgets)
                 .Append(" behind on bills · ").Append(money.NoSpareMoney).Append('/').Append(money.Budgets)
                 .AppendLine(" with no spare money for prepared food.");

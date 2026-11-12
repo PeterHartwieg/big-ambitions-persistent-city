@@ -6,8 +6,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>The sliced road search must expand in the same order and answer the same as the one-shot search,
-/// whatever the slice sizes, and must leave the shared scratch storage usable by other searches.</summary>
 public sealed class RoadSearchSlicingTests
 {
     private static TransportRoadNode Node(double x, double z, params int[] next) => new()
@@ -47,7 +45,6 @@ public sealed class RoadSearchSlicingTests
                 bool Disabled(int i) => (i + sample) % 19 == 0;
                 double Slow(int a, int b, double nominal) => nominal * (1 + (a + b) % 3);
                 double Extra(int a, int b) => (a * 3 + b) % 7;
-                // Clear calls are recorded: the sliced search must issue them in the same order.
                 var oneShotCalls = new List<string>(); int[]? oneShotPath = null;
                 bool ClearOne(Position a, Position b) { oneShotCalls.Add(a.X + ":" + b.X); return !((a.X + b.X + sample) % 31 == 0); }
                 var oneShot = graph.PlanWithTraversal(start, goal, Disabled, ClearOne, Slow, pathFound: p => oneShotPath = p, extraMinutes: Extra);
@@ -85,7 +82,6 @@ public sealed class RoadSearchSlicingTests
         Assert.NotNull(reference); Assert.NotNull(other);
         using var suspended = graph.BeginSearch(0, 99, _ => false, (_, _) => true);
         Assert.False(suspended.Advance(2));
-        // The suspended search holds the borrowed storage; the one-shot query runs on its own and answers the same.
         var interleaved = graph.Plan(5, 93, _ => false, (_, _) => true);
         Assert.Equal(other!.Legs.Select(l => l.Minutes), interleaved!.Legs.Select(l => l.Minutes));
         using (var nested = graph.BeginSearch(5, 93, _ => false, (_, _) => true))
@@ -110,13 +106,11 @@ public sealed class RoadSearchSlicingTests
         Assert.True(abandoned.Finished); Assert.Null(abandoned.Result);
         Assert.True(abandoned.Advance(1)); Assert.Null(abandoned.Result);
         abandoned.Dispose();
-        // The next search borrows the released storage and answers the same as before.
         using var next = graph.BeginSearch(0, 99, _ => false, (_, _) => true);
         Assert.True(next.Advance(int.MaxValue));
         Assert.Equal(reference.Legs.Select(l => l.Minutes), next.Result!.Legs.Select(l => l.Minutes));
         Assert.True(next.Expanded > 1);
         Assert.Throws<ArgumentOutOfRangeException>(() => next.Advance(0));
-        // Unusable endpoints finish immediately without touching the storage.
         using var empty = graph.BeginSearch(0, 0, _ => false, (_, _) => true);
         Assert.True(empty.Finished); Assert.Null(empty.Result); Assert.Equal(0, empty.Expanded);
         Assert.Throws<ArgumentOutOfRangeException>(() => graph.BeginSearch(0, 1, _ => false, (_, _) => true, maximumEstimatedMinutes: -1));

@@ -7,14 +7,10 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>GR-8 (G5): anonymous through-traffic cars edge to edge in the traffic kernel.</summary>
 public sealed class ThroughTrafficTests
 {
     private const string Native = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
-    /// <summary>Two one-way roads crossing at node 3: east along z = 100 (nodes 0..5) and north along x = 120 (nodes 10, 11,
-    /// 3, 13, 14), plus an interior cul-de-sac from node 2 to node 20. Every node is a boundary, so every native edge is
-    /// its own section.</summary>
     private static TrafficNetwork Network()
     {
         var nodes = new List<TrafficNetworkNode>();
@@ -37,7 +33,6 @@ public sealed class ThroughTrafficTests
 
     private static int Link(TrafficNetwork network, int from, int to) { Assert.True(network.TryGetEdge(from, to, out var edge)); return edge.LinkId; }
 
-    /// <summary>Residents driving the east road, reaching it a minute apart from minute 1440.</summary>
     private static CitySimulator City(int count = 40, Planner? planner = null)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(i => new CitizenIdentity
@@ -54,7 +49,6 @@ public sealed class ThroughTrafficTests
             citizen.ActivityUntilMinute = 2880; citizen.DepartureMinute = 1440;
             citizen.Preferences.OwnsCar = true;
             citizen.Car = new CarState { Id = citizen.Identity.Id + ":car", ParkedPosition = new Position(0, 0, 100) };
-            // A walk to the car of 0.5 + i minutes staggers the drivers' road entries.
             var route = new Route();
             route.Legs.Add(new RouteLeg { From = new Position(-10, 0, 100), To = new Position(0, 0, 100), Minutes = 0.5 + i, Mode = TravelMode.Walk });
             for (int n = 0; n < 5; n++)
@@ -75,7 +69,6 @@ public sealed class ThroughTrafficTests
         var routes = new ThroughTrafficRoutes(network);
         Assert.Equal(new[] { Link(network, 0, 1), Link(network, 10, 11) }.OrderBy(i => i), routes.Entries);
         Assert.Equal(new[] { Link(network, 4, 5), Link(network, 13, 14) }.OrderBy(i => i), routes.Exits);
-        // The cul-de-sac ends inside the city: not an exit.
         Assert.False(routes.IsExit(Link(network, 2, 20)));
         foreach (int entry in routes.Entries)
             for (uint draw = 0; draw < 4; draw++)
@@ -103,9 +96,7 @@ public sealed class ThroughTrafficTests
                 seen.Add(vehicle.VehicleId);
                 Assert.True(routes.IsEntry(vehicle.Route[0].LinkId), vehicle.VehicleId + " entered inside the city");
                 Assert.True(routes.IsExit(vehicle.Route[vehicle.Route.Count - 1].LinkId), vehicle.VehicleId + " leaves inside the city");
-                // Whole sections to the far end of the exit: never a curb stop, so never parked.
                 Assert.Equal(1, vehicle.Route[vehicle.Route.Count - 1].EndLinkFraction);
-                // No person: no resident has the ID, no inspection, no permission as a resident.
                 Assert.Null(city.FindCitizen(vehicle.VehicleId));
                 Assert.Null(city.Inspect(vehicle.VehicleId));
                 Assert.Equal(ThroughTraffic.InspectorLine, CitySimulator.DescribeVehicle(vehicle.VehicleId));
@@ -114,7 +105,6 @@ public sealed class ThroughTrafficTests
         Assert.NotEmpty(seen);
         Assert.True(city.ThroughCarsCompleted > 0);
         Assert.Equal(city.ThroughCarsGenerated, city.ThroughCarsCompleted + city.ThroughCarCount);
-        // Completed through cars leave the kernel at once; residents keep their own cars and parking.
         Assert.Equal(city.ThroughCarCount, Through(city).Count);
         Assert.All(city.State.Citizens, c => Assert.Equal(c.Identity.Id + ":car", c.Car!.Id));
         Assert.All(city.State.Citizens, c => Assert.True(c.Car!.ParkedPosition.X == parked[c.Identity.Id] || c.Car.ParkedPosition.X == 200));
@@ -134,7 +124,6 @@ public sealed class ThroughTrafficTests
             var capacity = captured.Definitions.ToDictionary(d => d.Id, d => d.Capacity);
             foreach (var link in captured.Links)
             {
-                // Every queued car counts toward the section's storage and the route forecast, whoever it is.
                 Assert.True(link.Vehicles.Count <= capacity[link.LinkId]);
                 Assert.Equal(link.Vehicles.Count, city.Traffic.Forecast(link.LinkId, city.Traffic.Clock).Occupancy);
                 if (link.Vehicles.Any(ThroughTraffic.IsThroughVehicle) && link.Vehicles.Any(id => !ThroughTraffic.IsThroughVehicle(id))) shared++;
@@ -169,11 +158,9 @@ public sealed class ThroughTrafficTests
         var live = city.Traffic!.Capture();
         string payload = SaveCodec.Write(city.State);
         Assert.DoesNotContain(ThroughTraffic.Prefix, payload);
-        // Capturing for the save does not touch the live kernel, and saving again writes the same bytes.
         Assert.Equal(live.Vehicles.Count, city.Traffic.Capture().Vehicles.Count);
         Assert.True(city.ThroughCarCount > 0);
         Assert.Equal(payload, SaveCodec.Write(city.State));
-        // The saved kernel holds exactly the live resident cars, at their live positions.
         var saved = city.State.Traffic!.Vehicles.ToDictionary(v => v.VehicleId);
         var residents = live.Vehicles.Where(v => !ThroughTraffic.IsThroughVehicle(v.VehicleId)).ToList();
         Assert.Equal(residents.Select(v => v.VehicleId).OrderBy(i => i), saved.Keys.OrderBy(i => i));
@@ -206,15 +193,12 @@ public sealed class ThroughTrafficTests
         var without = kernel.Capture(ThroughTraffic.IsThroughVehicle);
         Assert.Equal(new[] { "resident" }, without.Vehicles.Select(v => v.VehicleId));
         Assert.Equal(2, kernel.VehicleCount);
-        // The capture restores and the resident still completes its route.
         var restored = TrafficKernel.Restore(without);
         string? done = null; restored.VehicleCompleted += (id, _) => done = id;
         restored.AdvanceTo(60, 10000);
         Assert.Equal("resident", done);
     }
 
-    /// <summary>A two-way grid of <paramref name="side"/>² junctions, 50 m apart, with a road in and a road out at every
-    /// perimeter junction.</summary>
     internal static TrafficNetwork Grid(int side)
     {
         var nodes = new List<TrafficNetworkNode>();
@@ -245,7 +229,7 @@ public sealed class ThroughTrafficTests
     {
         var network = Grid(40);
         Assert.True(network.Links.Count > 6000);
-        new ThroughTrafficRoutes(network).Route(0, 0); // JIT warm-up; the game reaches this code on its first through car
+        new ThroughTrafficRoutes(network).Route(0, 0);
         var watch = System.Diagnostics.Stopwatch.StartNew();
         var routes = new ThroughTrafficRoutes(network);
         double build = watch.Elapsed.TotalMilliseconds;
@@ -258,7 +242,6 @@ public sealed class ThroughTrafficTests
             Assert.NotNull(routes.Route(entry, 7));
             worst = Math.Max(worst, watch.Elapsed.TotalMilliseconds);
         }
-        // Mod-work spikes are flagged from 30 ms; one frame builds at most the edges or one entry's paths.
         PerfGate.Under(build, 30, "GR-8 map edges, " + network.Links.Count + " sections");
         PerfGate.Under(worst, 30, "GR-8 one entry's paths, " + network.Links.Count + " sections");
         Console.WriteLine($"GR-8 perf: {network.Links.Count} sections, edges {build:0.00} ms, worst first path search {worst:0.00} ms");
@@ -276,11 +259,9 @@ public sealed class ThroughTrafficTests
         for (double minute = 1440; minute <= 1440 + 90; minute += 0.25)
         {
             city.AdvanceTo(minute);
-            // No through car starts a route through the closed exit.
             Assert.All(Through(city), v => Assert.DoesNotContain(v.Route, leg => leg.LinkId == north));
         }
         Assert.True(city.ThroughCarsSkippedClosed > 0);
-        // Reopened, cars head north again; closed under them, the ones waiting for it leave the road.
         planner.Closed.Clear();
         double at = 1440 + 90;
         while (!Through(city).Any(v => v.Route.Skip(Math.Max(0, v.RouteIndex) + 1).Any(leg => leg.LinkId == north)))
@@ -305,7 +286,6 @@ public sealed class ThroughTrafficTests
             + ":" + v.MotionStartFraction.ToString("R") + ":" + v.ReadyAt.ToString("R");
         for (double minute = 1440 + 30; minute <= 2880 + 120; minute += 7.3)
         {
-            // A caught-up slice has run every through entry due by the target, like a whole advance.
             while (!sliced.AdvanceTo(minute, 1).CaughtUp) { }
             Assert.True(whole.AdvanceTo(minute).CaughtUp);
             Assert.Equal(whole.Traffic!.Capture().Vehicles.Select(Key), sliced.Traffic!.Capture().Vehicles.Select(Key));
@@ -321,7 +301,6 @@ public sealed class ThroughTrafficTests
         var kernel = new TrafficKernel(network.Links, 0);
         var routes = new ThroughTrafficRoutes(network);
         var route = routes.Route(routes.Entries[0], 0)!;
-        // The section after the first is closed: the through car waits at the head and the resident queues behind it.
         kernel.SetLinkClosed(route[1].LinkId, true);
         kernel.Enqueue(ThroughTraffic.Prefix + "0:0", route);
         kernel.Enqueue("resident", routes.Route(routes.Entries[0], 0)!);
@@ -333,7 +312,6 @@ public sealed class ThroughTrafficTests
         Assert.True(restored.TryGetVehicle("resident", out var saved));
         Assert.Equal(live.NominalMinutes, saved.NominalMinutes);
         Assert.Equal(live.MaximumNominalMinutes, saved.MaximumNominalMinutes);
-        // Reopened, the resident moves on from that point and completes its route.
         restored.SetLinkClosed(route[1].LinkId, false);
         string? done = null; restored.VehicleCompleted += (id, _) => done = id;
         restored.AdvanceTo(120, 10000);

@@ -225,14 +225,12 @@ public sealed class TravelTimingTests
         var state = City(); var c = state.Citizens[0]; state.Minute = clock;
         c.DepartureMinute = clock; c.Journey!.Legs[0].Minutes = duration; c.NextEventMinute = clock + duration;
         var engine = new CitySimulator(state, new NoRoutes());
-        // F2c: walk legs are not leased. Set the completed state a completion leaves: departure = clock - duration.
         c.DepartureMinute = clock - duration; c.NextEventMinute = clock;
         Assert.True(Math.Abs(c.NextEventMinute - (c.DepartureMinute + c.Journey.Minutes)) > 1e-7);
         state.TravelTimingVersion = timingVersion; state.TravelClockRate = 1;
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Equal(clock, c.NextEventMinute); Assert.True(engine.SampleJourney(c).AtEnd);
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
-        // Merely near the clock is not an explicit completed arrival and cannot use this exception.
         c.NextEventMinute = clock + .00001;
         Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 3));
     }

@@ -10,7 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// City-audit F6c: read-only feedback projections and incremental panel counters.
 public sealed partial class FoodCommerceTests
 {
     static FoodShopDay F6c_Row(int day, long purchases, long cents, long chosen = 0, long price = 0, long access = 0, long closed = 0,
@@ -27,7 +26,7 @@ public sealed partial class FoodCommerceTests
     public void F6c_GoldenWeekOverWeekTextEqualsRowSumsAndIgnoresOtherShopsStaleAndFutureRows()
     {
         var rows = new List<FoodShopDay> {
-            F6c_Row(6, 100, 100000, chosen: 50), // older than fourteen days and not yet pruned
+            F6c_Row(6, 100, 100000, chosen: 50),
             F6c_Row(7, 2, 1000, chosen: 2, price: 5, staff: 3), F6c_Row(13, 1, 400, chosen: 1, stock: 3),
             F6c_Row(14, 3, 1500, chosen: 3, staff: 9), F6c_Row(20, 1, 500, chosen: 1, unknown: 1),
             F6c_Row(15, 9, 9000, staff: 40, business: "other"), F6c_Row(21, 7, 700, staff: 7) };
@@ -41,7 +40,6 @@ public sealed partial class FoodCommerceTests
             "Stock unavailable: 0 evaluated offers this week (last week 3)",
             "No staffed counter: 9 evaluated offers this week (last week 3)",
             "Unknown evidence: 1 evaluated offer this week (last week 0)" }, F6c_Lines(weeks.Text()));
-        // Every displayed number is the sum of the window's own rows.
         var mine = rows.Where(r => r.PlaceId == "s" && r.BusinessId == "b").ToList();
         foreach (var (week, from, to) in new[] { (weeks.ThisWeek, 14, 20), (weeks.LastWeek, 7, 13) })
         {
@@ -80,7 +78,6 @@ public sealed partial class FoodCommerceTests
             "Chosen: 5 evaluated offers this week (no record last week)" }, F6c_Lines(fresh.Text()));
         Assert.Equal(new[] { "Week over week: nothing recorded in the last 14 days." },
             F6c_Lines(FoodFeedback.Weeks(new[] { F6c_Row(2, 1, 1) }, "s", "b", 20).Text()));
-        // A negative change keeps an explicit sign under every runtime's currency pattern.
         var down = FoodFeedback.Weeks(new[] { F6c_Row(7, 5, 5000), F6c_Row(20, 1, 100) }, "s", "b", 20).Text();
         Assert.Contains("change -4. Sales: $1 this week · $50 last week · change -$49.", down);
     }
@@ -92,7 +89,7 @@ public sealed partial class FoodCommerceTests
             foreach (bool pruned in new[] { false, true })
             {
                 var rows = Enumerable.Range(0, today + 1).Select(d => F6c_Row(d, d + 1, d, staff: 2 * d)).ToList();
-                if (pruned) rows.RemoveAll(h => h.Day < today - 13); // FoodCommerce.ShopDay retention
+                if (pruned) rows.RemoveAll(h => h.Day < today - 13);
                 var weeks = FoodFeedback.Weeks(rows, "s", "b", today);
                 long Sum(int from, int to, Func<int, long> value) => Enumerable.Range(Math.Max(0, from), Math.Max(0, to - Math.Max(0, from) + 1)).Sum(value);
                 Assert.Equal(Sum(today - 6, today, d => d + 1), weeks.ThisWeek.Purchases);
@@ -109,7 +106,6 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void F6c_QuietCoveredDaysCountAsZeroAndKeepTheComparison()
     {
-        // Recording ran since before day 7 (another shop's row on day 5), but this shop was quiet on days 7 and 8.
         var rows = new List<FoodShopDay> { F6c_Row(5, 1, 100, chosen: 1, business: "other"),
             F6c_Row(9, 2, 400, chosen: 2, staff: 1), F6c_Row(18, 5, 800, chosen: 5, staff: 4) };
         var food = new FoodCommerceState { ChoiceStartsDay = 30 }; food.History.AddRange(rows);
@@ -122,10 +118,8 @@ public sealed partial class FoodCommerceTests
             "Evaluated offers: 9 this week · 3 last week. " + FoodFeedback.OfferMeaning,
             "Chosen: 5 evaluated offers this week (last week 2)",
             "No staffed counter: 4 evaluated offers this week (last week 1)" }, F6c_Lines(weeks.Text()));
-        // The saved choice-policy start alone also proves coverage, with no row from any shop that early.
         var byStart = new FoodCommerceState { ChoiceStartsDay = 3 }; byStart.History.AddRange(rows.Skip(1));
         Assert.Equal(FoodWeekCoverage.Complete, FoodFeedback.Weeks(rows, "s", "b", 20, FoodFeedback.RecordingSince(byStart)).LastWeek.Coverage);
-        // A genuinely unknown period stays unknown: city recording itself began on day 9.
         var late = new FoodCommerceState { ChoiceStartsDay = 10 }; late.History.AddRange(rows.Skip(1));
         var unknown = FoodFeedback.Weeks(rows, "s", "b", 20, FoodFeedback.RecordingSince(late));
         Assert.Equal(FoodWeekCoverage.Partial, unknown.LastWeek.Coverage); Assert.Equal(9, unknown.LastWeek.RecordedFrom);
@@ -139,7 +133,7 @@ public sealed partial class FoodCommerceTests
         market.Units = 1000; city.EnableHouseholdFinances();
         for (int day = 2; day <= 17; day++)
         {
-            if (day == 9) market.Capacity = 0; // a staffing gap shows up as evaluated "no staffed counter" offers
+            if (day == 9) market.Capacity = 0;
             if (day == 12) market.Capacity = 15;
             Advance(city, day * 1440 + 1439);
         }
@@ -154,7 +148,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(weeks.Text(), FoodFeedback.Weeks(restored.State.Food!.History, "shop", "b", today).Text());
     }
 
-    // Every setter that the counters observe, applied in random order to attached budgets, meals and excursions.
     [Fact]
     public void F6c_CountersEqualAFullRescanAfterEveryMutation()
     {
@@ -177,8 +170,8 @@ public sealed partial class FoodCommerceTests
                     if (old != null) detached.Add(old); break;
                 case 2: meal.Excursion = random.Next(3) == 0 ? null : new MealExcursion { Unresolved = random.Next(2) == 0 }; if (meal.Excursion != null) excursions.Add(meal.Excursion); break;
                 case 3: if (meal.Excursion != null) meal.Excursion.Unresolved = !meal.Excursion.Unresolved; break;
-                case 4: if (excursions.Count > 0) excursions[random.Next(excursions.Count)].Unresolved ^= true; break; // detached or attached
-                case 5: if (detached.Count > 0) detached[random.Next(detached.Count)].Balance = M(); break; // a detached budget no longer counts
+                case 4: if (excursions.Count > 0) excursions[random.Next(excursions.Count)].Unresolved ^= true; break;
+                case 5: if (detached.Count > 0) detached[random.Next(detached.Count)].Balance = M(); break;
                 default:
                     if (b == null) break;
                     switch (random.Next(15))
@@ -196,7 +189,6 @@ public sealed partial class FoodCommerceTests
             Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot());
         }
         Assert.Equal(1, counters.Rebuilds);
-        // Exact 128-bit carries at the extremes of the money unit, including removing long.MinValue.
         var edge = food.Residents.First(m => m.Budget != null);
         foreach (long units in new[] { long.MinValue, long.MaxValue, long.MinValue, -1L, long.MaxValue, 0L, long.MinValue })
         {
@@ -207,7 +199,6 @@ public sealed partial class FoodCommerceTests
         edge.Budget = new ResidentBudget { HeldPurchase = Money.FromUnits(long.MinValue) }; edge.Budget = null;
         Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot());
         Assert.True(counters.Snapshot().PreparedFoodSpent > long.MaxValue);
-        // A consumer appended without the commerce owner is caught by the count guard and rescanned.
         food.Residents.Add(new ResidentMeal { ResidentId = "late", Status = MealStatus.Uncertain, Budget = new ResidentBudget { Arrears = Money.FromCents(1) } });
         Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot()); Assert.Equal(2, counters.Rebuilds);
         static ResidentBudget Take(List<ResidentBudget> list) { var b = list[^1]; list.RemoveAt(list.Count - 1); return b; }
@@ -268,12 +259,10 @@ public sealed partial class FoodCommerceTests
         var snapshot = city.FoodMoney!.Snapshot();
         Assert.True(snapshot.Budgets == 6 && snapshot.IncomeReceived > 0 && snapshot.EssentialsPaid > 0);
         Assert.Equal(uncertain, snapshot.Uncertain > 0);
-        // A reload through the current writer rebuilds the totals from the loaded records.
         string source = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var migrated = new CitySimulator(read.State!, routes); migrated.AttachFoodMarket(market);
         Check(migrated); Assert.Equal(snapshot, migrated.FoodMoney!.Snapshot());
-        // A route rebuild attaches a fresh owner over the same records; the old owner stops counting.
         var old = migrated.FoodMoney!; var rebuilt = migrated.RebuildRoutes(routes);
         rebuilt.State.Food!.Residents[0].Budget!.Balance += Money.FromCents(7);
         Check(rebuilt); Assert.NotEqual(FoodMoneyCounters.Rescan(rebuilt.State.Food), old.Snapshot());
@@ -286,7 +275,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, 3 * 1440);
         Assert.Equal(0, city.FoodMoney!.Requests); Assert.Equal(1, city.FoodMoney.Rebuilds);
         var budget = city.State.Food!.Residents[0].Budget!; var meal = city.State.Food.Residents[0];
-        var one = Money.FromUnits(1); budget.Balance += one; meal.Status = MealStatus.Uncertain; meal.Status = MealStatus.Pending; // warm
+        var one = Money.FromUnits(1); budget.Balance += one; meal.Status = MealStatus.Uncertain; meal.Status = MealStatus.Pending;
         long start = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 10000; i++)
         {
@@ -302,7 +291,6 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void F6c_FreeFeedbackHasNoPaidResearchFieldsNamesOrShares()
     {
-        // D3a guard extended to the F6c projections: totals, days and labeled coverage only.
         Assert.Equal(new[] { "Arrears", "BehindOnBills", "BlockedReturns", "Budgets", "Consumers", "EssentialsPaid", "ExternalFoodSpent",
             "HeldPurchase", "HoldingPurchase", "HomeFoodPaid", "IncomeReceived", "NoSpareMoney", "OpeningBalance", "PreparedFoodSpent",
             "Uncertain", "WithoutHomeBasket", "Balance" }.OrderBy(x => x, StringComparer.Ordinal),
@@ -320,13 +308,12 @@ public sealed partial class FoodCommerceTests
         Assert.DoesNotContain("SECRET", shown);
         foreach (string word in new[] { "share", "market", "research", "trait", "percent", "%" })
             Assert.DoesNotContain(word, shown, StringComparison.OrdinalIgnoreCase);
-        // The Q3 default switch (false: no share line) is the only permitted mention of a share.
         foreach (string c5f in new[] { "if (GUILayout.Button(\"Research reports\", GUILayout.Width(140))) researchWindow.Toggle();",
             "if (researchWindow.Open) researchWindow.Draw(ResearchLedgerNow, researchNames ??= ResearchBusinessName);" })
         foreach (string paid in new[] { "MarketResearch", "Research", "ProjectMarket", "Share" })
         Assert.Equal("Rival availability: estimated", FoodFeedback.RivalEstimateLabel);
         bool shareLine = FoodFeedback.FreeMealShareLine, suggestions = FoodFeedback.SuggestionLines;
-        Assert.False(shareLine); Assert.False(suggestions); // plan Q3/Q4 defaults
+        Assert.False(shareLine); Assert.False(suggestions);
         foreach (string advice in new[] { "add ", "consider", "should", "try " })
             Assert.DoesNotContain(advice, weeks.Text() + money.Text(), StringComparison.OrdinalIgnoreCase);
     }

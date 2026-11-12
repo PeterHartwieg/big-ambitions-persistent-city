@@ -8,7 +8,6 @@ namespace PersistentCity.Runtime
 {
     internal enum ResearchNoticeKind { Delivered, Declined }
 
-    /// <summary>One agency text message owed for an order that moved at the native daily bill.</summary>
     internal readonly struct ResearchNotice
     {
         internal ResearchNotice(ResearchNoticeKind kind, string orderId, string businessAddress, string agencyAddress)
@@ -20,17 +19,11 @@ namespace PersistentCity.Runtime
         internal string MessageKey => Kind == ResearchNoticeKind.Delivered ? ResearchNoticeText.Delivered : ResearchNoticeText.Declined;
     }
 
-    /// <summary>Plan C5 section 3.7: a delivery message only for Paid and a decline message only for Declined
-    /// (InsufficientFunds or BalancePrecision), once per order. A notice is owed only for an order that was Surveyed
-    /// before a billing boundary and moved during it; Surveyed → Paid or Declined happens once per order, so no extra
-    /// saved state is needed. A reloaded Paid or Declined order was never Surveyed at a boundary of this session.
-    /// Cancelled and PaymentUnknown send nothing. Fixed buffer, no allocation while idle. Single-threaded.</summary>
     internal sealed class ResearchNoticeTracker
     {
         private readonly ResearchOrder?[] due = new ResearchOrder?[ResearchLedger.MaximumOpenOrders];
         private int count;
 
-        /// <summary>Remembers the orders that are Surveyed now, before the boundary bills them.</summary>
         internal void Before(ResearchLedger ledger)
         {
             Array.Clear(due, 0, due.Length); count = 0;
@@ -39,7 +32,6 @@ namespace PersistentCity.Runtime
                 if (open[i].State == ResearchOrderState.Surveyed) due[count++] = open[i];
         }
 
-        /// <summary>Hands one notice per remembered order that is now Paid or Declined, oldest first, then forgets them all.</summary>
         internal void After(Action<ResearchNotice> send)
         {
             try
@@ -56,12 +48,9 @@ namespace PersistentCity.Runtime
             finally { Array.Clear(due, 0, due.Length); count = 0; }
         }
 
-        /// <summary>Forgets the remembered orders without sending, for a boundary that ended with the runtime stopped.</summary>
         internal void Forget() { Array.Clear(due, 0, due.Length); count = 0; }
     }
 
-    /// <summary>The mod's delivery and decline message keys, in Runtime/Localization/en.json. Both take {businessName},
-    /// the argument native agency messages use.</summary>
     internal static class ResearchNoticeText
     {
         internal const string Delivered = ResearchText.Prefix + "message_delivered";
@@ -69,7 +58,6 @@ namespace PersistentCity.Runtime
         internal const string BusinessNameArgument = "businessName";
         internal static IEnumerable<string> Keys() { yield return Delivered; yield return Declined; }
 
-        /// <summary>Reads back C5e's agency ID "address:&lt;escaped street&gt;:&lt;number&gt;:agency".</summary>
         internal static bool TryParseAgency(string? agency, out string street, out int number)
         {
             street = ""; number = 0;
@@ -84,7 +72,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>English labels made from C4's fixed metric and band codes. No native name is read.</summary>
     internal static class ResearchCellLabels
     {
         internal static string Label(MarketResearchMetric metric, MarketResearchBand band)
@@ -127,7 +114,6 @@ namespace PersistentCity.Runtime
             if (metric == MarketResearchMetric.DiscretionaryBudget)
                 switch (band)
                 {
-                    // C4's budget bands (MarketResearchReport.Evidence).
                     case MarketResearchBand.Low: return "below $10";
                     case MarketResearchBand.Neutral: return "$10 to below $25";
                     case MarketResearchBand.High: return "$25 or more";
@@ -153,8 +139,6 @@ namespace PersistentCity.Runtime
         internal static string Value(int? value) => value.HasValue ? value.Value.ToString("N0", CultureInfo.InvariantCulture) : "unknown";
     }
 
-    /// <summary>Text for the report window and the pcresearch console lines. Numbers come only from
-    /// MarketResearchReport.TryRead with the saved ledger, so only a Paid order shows them.</summary>
     internal static class ResearchReportText
     {
         internal static string ProductName(string code)
@@ -194,12 +178,10 @@ namespace PersistentCity.Runtime
                 + ":" + (whole % 60).ToString("00", CultureInfo.InvariantCulture);
         }
 
-        /// <summary>One order without numbers.</summary>
         internal static string Line(ResearchOrder order, string businessName)
             => order.Id + " · " + ProductName(order.ProductCode) + " · " + businessName + " · " + ResearchText.Price(order.Product)
                 + " · ordered " + Time(order.OrderMinute) + " · " + State(order);
 
-        /// <summary>Every order the ledger holds: open, then delivered, then closed, each oldest first.</summary>
         internal static IEnumerable<ResearchOrder> Orders(ResearchLedger ledger)
         {
             foreach (var order in ledger.Open) yield return order;
@@ -207,7 +189,6 @@ namespace PersistentCity.Runtime
             foreach (var order in ledger.Closed) yield return order;
         }
 
-        /// <summary>The report of one order. Cells only when TryRead grants them, which needs a Paid order.</summary>
         internal static string Report(ResearchLedger ledger, ResearchOrder order, string businessName)
         {
             var text = new StringBuilder(4096);
@@ -231,7 +212,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>What the open report window draws: the order rows and the selected order's text.</summary>
     internal sealed class ResearchWindowView
     {
         internal ResearchWindowView(string[] ids, string[] rows, string detail) { Ids = ids; Rows = rows; Detail = detail; }
@@ -240,8 +220,6 @@ namespace PersistentCity.Runtime
         internal string Detail { get; }
     }
 
-    /// <summary>The report window's state. Closed, it reads nothing and builds nothing; open, it rebuilds its view at
-    /// most once a second, on opening and on a new selection. Draw code only shows the cached view.</summary>
     internal sealed class ResearchWindowModel
     {
         internal const double RefreshSeconds = 1;
@@ -256,7 +234,6 @@ namespace PersistentCity.Runtime
         internal void Toggle() { if (Open) Hide(); else Show(); }
         internal void Select(string id) { Selected = id ?? ""; next = double.NegativeInfinity; }
 
-        /// <summary>Null while closed. businessName resolves a business address to its name.</summary>
         internal ResearchWindowView? Update(double now, ResearchLedger? ledger, Func<string, string> businessName)
         {
             if (!Open) return null;

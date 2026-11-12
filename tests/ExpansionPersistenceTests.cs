@@ -20,7 +20,6 @@ public sealed class ExpansionPersistenceTests
 
     private static JObject Legacy(CityState city)
     {
-        // An early development shape, labelled with a number older builds wrote (the schema is held at 1 until release).
         var root=SaveWire.Parse(DevelopmentChain.Write(city)); root["Schema"]=2;
         Keep(root,"Schema RloVersion PopulationKey Seed Minute Places Citizens");
         foreach(var token in root["Citizens"]!.Cast<JObject>())
@@ -214,7 +213,6 @@ public sealed class ExpansionPersistenceTests
         {
             string oversized = new string(' ', 4 * 1024 * 1024) + payload;
             var result = DevelopmentChain.Read(oversized);
-            // X1: the product reader's own refusal (the removed chain reported Invalid for schemas below 13).
             Assert.Equal(SaveReadStatus.DevelopmentSchema, result.Status);
             Assert.Contains("start a new city", result.Error);
         }

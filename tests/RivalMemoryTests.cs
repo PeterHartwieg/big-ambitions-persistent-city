@@ -75,7 +75,6 @@ public sealed class RivalMemoryTests
         string failed = MemoryWire.Encode(meal.Memory);
         city = Reload(city, market, paths); Advance(city, city.State.Minute + 20);
         meal = city.State.Food!.Residents.Single(); Assert.Equal(failed, MemoryWire.Encode(meal.Memory));
-        // A subsequent context uses the same generation, not a replacement or second diary.
         var store = new FoodMemoryStore(city.State.Food); meal.ContextAttempts++;
         Assert.True(store.CommitStage(meal, ExperienceStage.Committed));
         Assert.True(store.Experience(meal, ShopExperience.Served, meal.Day, Traits, new()));
@@ -210,12 +209,12 @@ public sealed class RivalMemoryTests
         Assert.Equal(1, store.ProtectedInsertions); Assert.Equal(before, JsonConvert.SerializeObject(meal.Memory.Entries));
         Assert.Equal(references, food.BusinessReferences.Count); Assert.Equal(ExperienceStage.Failed, meal.Memory.Watermark!.Stage);
         Assert.False(store.Experience(meal, ShopExperience.Closed, 5, Traits, settings));
-        Visit("new-rival", ShopExperience.Served, 34); // expired entries are evicted first
+        Visit("new-rival", ShopExperience.Served, 34);
         Assert.Equal(4, meal.Memory.Entries.Count); Assert.DoesNotContain(meal.Memory.Entries, e => store.Identity(e.BusinessRef) == "own0");
         Assert.Equal(0, FoodMemoryPolicy.EffectiveAffinity(meal.Memory.Entries[0], 34, Traits, settings));
         string wire = MemoryWire.Encode(meal.Memory); Assert.Equal(48, wire.Length);
         meal.Memory = MemoryWire.Decode(wire); store = new FoodMemoryStore(food);
-        Assert.False(store.Experience(meal, ShopExperience.Served, 40, Traits, settings)); // late replay after decay
+        Assert.False(store.Experience(meal, ShopExperience.Served, 40, Traits, settings));
         meal.Day = 3; meal.ContextAttempts = 1; Assert.False(store.CommitStage(meal, ExperienceStage.Committed));
         Assert.Equal(wire, MemoryWire.Encode(meal.Memory));
     }

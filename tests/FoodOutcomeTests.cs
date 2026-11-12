@@ -9,16 +9,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// Population schema 17 (step A, slice A2): lifestyle traits, current-day outcomes, the food choice policy
-// header and the decision wire contract. The legacy food choice and the economy stay exactly as before.
 public sealed partial class FoodCommerceTests
 {
-    // ---- Traits -------------------------------------------------------------------------------------
 
     [Fact]
     public void S17_TraitGeneratorIsPinnedDeterministicAndBounded()
     {
-        // Golden vectors for generation version 1: a change here changes every new resident's personality.
         Assert.Equal("v1:" + ResidentTraits.Generate(42, "rlo:a").Bands, ResidentTraits.Generate(42, "rlo:a").ToString());
         Assert.Equal(S17_Golden(42, "rlo:a"), ResidentTraits.Generate(42, "rlo:a").Bands);
         Assert.Equal(S17_Golden(42, "pc:1"), ResidentTraits.Generate(42, "pc:1").Bands);
@@ -36,15 +32,12 @@ public sealed partial class FoodCommerceTests
         for (int t = 0; t < ResidentTraits.Count; t++)
             for (int band = 0; band < 5; band++)
                 Assert.InRange(counts[t, band] / (double)people, expected[band] - .02, expected[band] + .02);
-        // Each trait has its own hash domain: no two traits are the same column.
         var columns = Enumerable.Range(0, ResidentTraits.Count).Select(t => string.Concat(Enumerable.Range(0, 200)
             .Select(i => ResidentTraits.Generate(11, "rlo:person:" + i).Bands[t]))).ToList();
         Assert.Equal(ResidentTraits.Count, columns.Distinct().Count());
         Assert.Throws<ArgumentException>(() => ResidentTraits.Generate(1, ""));
     }
 
-    // Independent reimplementation of the documented key: "pc:traits:v1|<length>:<id>|<code>", FNV-1a then the
-    // fixed finaliser, band thresholds 10/30/70/90 of 100.
     private static string S17_Golden(int seed, string id)
     {
         string[] codes = { "taste:croissant", "taste:burger", "taste:hotdog", "price", "queue", "loyalty", "travel", "health", "quality", "time" };
@@ -62,7 +55,6 @@ public sealed partial class FoodCommerceTests
         Place[] places = { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 10 },
             new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 10, Position = new(1, 0, 0) } };
         var a = Population.Create(new[] { Person("r1", "Ada", "x"), Person("r2", "Bo", "y") }, places, "k", "v", 9, 0);
-        // Different order, names and districts; same IDs and seed.
         var b = Population.Create(new[] { Person("r2", "Zed", "q"), Person("r1", "Quinn", "z") }, places, "k", "v", 9, 0);
         var c = Population.Create(new[] { Person("r1", "Ada", "x"), Person("r2", "Bo", "y") }, places, "k", "v", 10, 0);
         foreach (var person in a.Citizens)
@@ -71,7 +63,6 @@ public sealed partial class FoodCommerceTests
             Assert.Equal(person.Traits.Bands, b.Citizens.Single(x => x.Identity.Id == person.Identity.Id).Traits!.Bands);
         }
         Assert.NotEqual(a.Citizens.Select(x => x.Traits!.Bands), c.Citizens.Select(x => x.Traits!.Bands));
-        // No food scope: traits exist, nothing economic does, and the save keeps it that way.
         Assert.Null(a.Food);
         var read = DevelopmentChain.Read(DevelopmentChain.Write(a));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Null(read.State!.Food);
@@ -94,7 +85,6 @@ public sealed partial class FoodCommerceTests
             Assert.Same(before[person.Identity.Id], person.Traits);
             Assert.Equal(ResidentTraits.Generate(city.State.Seed, person.Identity.Id).Bands, person.Traits!.Bands);
         }
-        // Housing expansion appends pc: residents with traits from their own new stable IDs.
         city.State.Places.Single(p => p.Id == "home").Capacity = 10;
         Population.ExpandToHousing(city.State);
         var added = city.State.Citizens.Where(c => c.Identity.Id.StartsWith("pc:", StringComparison.Ordinal)).ToList();
@@ -102,7 +92,6 @@ public sealed partial class FoodCommerceTests
         foreach (var person in added) Assert.Equal(ResidentTraits.Generate(city.State.Seed, person.Identity.Id).Bands, person.Traits!.Bands);
     }
 
-    // ---- Outcome upgrade ----------------------------------------------------------------------------
 
     [Fact]
     public void S17_UpgradeRecordsOnlyTheCurrentMealAndMarksEarlierMealsNotRecorded()
@@ -119,7 +108,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(2, uncertain.Unrecorded); Assert.Equal(MealOutcomeStatus.Unconfirmed, uncertain.Meals.Single().Status);
         var pending = MealOutcomes.Upgrade(Meal(MealKind.Breakfast, MealStatus.Pending), minute, false);
         Assert.Equal(0, pending.Unrecorded); Assert.Empty(pending.Meals);
-        // Tomorrow's breakfast already started: all of today's meals ended before the upgrade.
         var tomorrow = MealOutcomes.Upgrade(Meal(MealKind.Breakfast, MealStatus.Pending, day + 1), minute, false);
         Assert.Equal((day, 3), (tomorrow.Day, tomorrow.Unrecorded)); Assert.Empty(tomorrow.Meals);
         var legacy = MealOutcomes.Upgrade(Meal(MealKind.Legacy, MealStatus.Declined), minute, legacyRhythm: true);
@@ -128,7 +116,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(1, MealOutcomes.Upgrade(Meal(MealKind.Legacy, MealStatus.Pending, day + 1), minute, true).Unrecorded);
     }
 
-    // ---- Round trip and refusals --------------------------------------------------------------------
 
     private static (CitySimulator city, string json) S17_Full()
     {
@@ -163,8 +150,6 @@ public sealed partial class FoodCommerceTests
         var decision = city.State.Food!.Residents.Single(m => m.Decision != null).Decision!;
         var answered = decision.Shops[0];
         Route Copy(Route r) => new Route { Legs = r.Legs.Select(l => new RouteLeg { From = l.From, To = l.To, Minutes = l.Minutes, Mode = l.Mode }).ToList() };
-        // Shop b1: outward refused, so its return was never asked. Shop b2: outward answered, return refused.
-        // Shop b3: not yet quoted. The cursor sits on b3's outward slot.
         var refusedOutward = new FoodDecisionShop { BusinessId = "b1", PlaceId = "shop", OutwardQuote = FoodQuoteState.Refused, ReturnQuote = FoodQuoteState.NotNeeded };
         var refusedReturn = new FoodDecisionShop { BusinessId = "b2", PlaceId = "shop", OutwardQuote = FoodQuoteState.Answered, ReturnQuote = FoodQuoteState.Refused, Outward = Copy(answered.Outward!) };
         var pending = new FoodDecisionShop { BusinessId = "b3", PlaceId = "shop" };
@@ -179,7 +164,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(new[] { (FoodQuoteState.Refused, FoodQuoteState.NotNeeded), (FoodQuoteState.Answered, FoodQuoteState.Refused), (FoodQuoteState.Unrequested, FoodQuoteState.Unrequested) },
             restored.Shops.Select(x => (x.OutwardQuote, x.ReturnQuote)));
         Assert.Null(restored.Shops[0].Outward); Assert.NotNull(restored.Shops[1].Outward); Assert.Null(restored.Shops[1].Return);
-        // Before b2's return was asked, the same image differs: unrequested is not refused.
         refusedReturn.ReturnQuote = FoodQuoteState.Unrequested; decision.QuotesDone = 3;
         Assert.NotEqual(json, DevelopmentChain.Write(city.State));
     }
@@ -189,7 +173,6 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _) = S17_Full();
         var meal = city.State.Food!.Residents.First(m => m.Today != null);
-        // Largest record validation accepts: two-digit enums, ten-digit minutes and two 256-character IDs.
         var dinner = meal.Today!.Meals[2];
         dinner.PlaceId = new string('p', 256); dinner.ProductId = new string('q', 256);
         dinner.Reason = MealReasonCode.ReceiptConfirmed;
@@ -200,10 +183,8 @@ public sealed partial class FoodCommerceTests
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(json, DevelopmentChain.Write(read.State!));
         Assert.Equal(553, 6 * 2 + 2 * 10 + 9 + 256 + 256);
-        // An ID one character longer is refused at write, so it never reaches the reader.
         dinner.PlaceId += "p";
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
-        // A record string beyond the reader's cap is refused before deserialization and preserved.
         string oversized = json.Replace(wire, wire.Substring(0, wire.Length - 256) + new string('p', SaveCodec.MaxMealOutcomeWire - (wire.Length - 256) + 1));
         Assert.NotEqual(json, oversized);
         var refused = DevelopmentChain.Read(oversized);
@@ -231,12 +212,10 @@ public sealed partial class FoodCommerceTests
         Assert.Equal("2|0|2|0|1|2|2163|2161|ba:itemname_burger|address:ba%3Astreet_harborroad:1042:shop", wire);
         Assert.True(MealOutcomeRecord.TryParse(wire, out var parsed));
         Assert.Equal(JsonConvert.SerializeObject(record), JsonConvert.SerializeObject(parsed));
-        // The place is last, so an opaque historical place ID may itself contain the separator.
         record.PlaceId = "legacy|odd";
         Assert.True(MealOutcomeRecord.TryParse(record.ToWire(), out parsed)); Assert.Equal("legacy|odd", parsed.PlaceId);
         foreach (string bad in new[] { "", "2|0|2|0|1|2|2163|2161|x", "02|0|2|0|1|2|2163|2161|x|y", "2|0|2|0|1|2|+2163|2161|x|y", "2|0|2|0|1|2|99999999999|2161|x|y", "2|0|2|0|1|2| 1|2161|x|y" })
             Assert.False(MealOutcomeRecord.TryParse(bad, out _), bad);
-        // Every dense enum the validator range-checks ends at the maximum it uses.
         Assert.Equal(MealKind.Dinner, Enum.GetValues<MealKind>().Max());
         Assert.Equal(MealOutcomeStatus.Unconfirmed, Enum.GetValues<MealOutcomeStatus>().Max());
         Assert.Equal(MealReasonCode.FundsUnavailable, Enum.GetValues<MealReasonCode>().Max());
@@ -261,7 +240,6 @@ public sealed partial class FoodCommerceTests
         }
     }
 
-    // ---- Current-day outcomes -----------------------------------------------------------------------
 
     [Fact]
     public void S17_ThreeMealsAreRecordedOncePerMealWithoutClaimingConsumption()
@@ -281,7 +259,6 @@ public sealed partial class FoodCommerceTests
             Assert.Equal("shop", record.PlaceId); Assert.Equal(FoodProducts.Croissant, record.ProductId);
             Assert.True(record.CheckoutAt >= 1440 && record.CheckoutAt <= record.At);
         }
-        // Reload keeps the records exactly and does not add any.
         city = Reload(city, market, routes);
         Assert.Equal(JsonConvert.SerializeObject(today), JsonConvert.SerializeObject(city.State.Food!.Residents.Single().Today));
     }
@@ -295,7 +272,7 @@ public sealed partial class FoodCommerceTests
         MealOutcomes.Record(meal, 4 * 1440 + 700, checkout: false);
         var skipped = Assert.Single(meal.Today!.Meals);
         Assert.Equal((MealOutcomeStatus.Skipped, MealReasonCode.QueueTooLong), (skipped.Status, skipped.Reason));
-        meal.Status = MealStatus.Pending; MealOutcomes.Record(meal, 4 * 1440 + 710, false); // in progress: never recorded
+        meal.Status = MealStatus.Pending; MealOutcomes.Record(meal, 4 * 1440 + 710, false);
         Assert.Same(skipped, Assert.Single(meal.Today.Meals));
         meal.Status = MealStatus.Uncertain; meal.ServiceAt = 4 * 1440 + 720; meal.Reason = "Native purchase did not confirm completion";
         MealOutcomes.Record(meal, 4 * 1440 + 720, checkout: true);
@@ -304,7 +281,6 @@ public sealed partial class FoodCommerceTests
         MealOutcomes.Record(meal, 4 * 1440 + 721, checkout: true);
         var bought = Assert.Single(meal.Today.Meals);
         Assert.Equal((MealOutcomeStatus.Bought, 4 * 1440 + 720), (bought.Status, bought.CheckoutAt));
-        // The checkout result path records a native refusal as skipped with its checkout time.
         var refused = new ResidentMeal { ResidentId = "q", AnchorId = "q", Day = 4, Kind = MealKind.Dinner, Status = MealStatus.Missed,
             Reason = "Unavailable at checkout", PlaceId = "shop", ProductId = FoodProducts.HotDog, ServiceAt = 4 * 1440 + 1100 };
         MealOutcomes.Record(refused, 4 * 1440 + 1100, checkout: true);
@@ -319,7 +295,6 @@ public sealed partial class FoodCommerceTests
             PlaceId = "shop", ProductId = FoodProducts.Burger, Reason = "Native fake confirmed", ServiceAt = 2 * 1440 + 1100 };
         MealOutcomes.Record(meal, 2 * 1440 + 1100, checkout: true);
         var today = meal.Today!; var list = today.Meals;
-        // Past midnight nothing changes until this consumer's own next outcome.
         Assert.Equal(2, today.Day);
         meal.Day = 3; meal.Kind = MealKind.Breakfast; meal.Status = MealStatus.Declined; meal.PlaceId = meal.ProductId = "";
         MealOutcomes.Record(meal, 3 * 1440 + 500, false, FoodOutsideOption.FundedHouseholdFood);
@@ -327,7 +302,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(3, today.Day);
         var record = Assert.Single(today.Meals);
         Assert.Equal((MealKind.Breakfast, MealOutcomeStatus.ChoseAlternative, FoodOutsideOption.FundedHouseholdFood), (record.Kind, record.Status, record.Outside));
-        // A confirmation belonging to day 2 arrives late: day 3's outcomes are untouched.
         meal.Day = 2; meal.Kind = MealKind.Dinner; meal.Status = MealStatus.Paid;
         MealOutcomes.Record(meal, 3 * 1440 + 600, true);
         Assert.Equal(3, today.Day); Assert.Same(record, Assert.Single(today.Meals));
@@ -345,7 +319,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal((MealKind.Legacy, MealOutcomeStatus.Unconfirmed, MealReasonCode.CheckoutUnconfirmed), (unconfirmed.Kind, unconfirmed.Status, unconfirmed.Reason));
         city = Reload(city, market, routes);
         market.ThrowAfterSale = false; market.ConfirmEvidence = true;
-        // Uncertain ownership is rechecked on the consumer's later events, after the day has turned.
         meal = city.State.Food!.Residents.Single();
         for (double at = city.State.Minute + 1; meal.Purchases == 0 && at < 4 * 1440; at++) Advance(city, at);
         Assert.True(city.State.Minute >= 2 * 1440);
@@ -356,5 +329,4 @@ public sealed partial class FoodCommerceTests
             (confirmed.Kind, confirmed.Status, confirmed.Reason, confirmed.CheckoutAt));
     }
 
-    // ---- The economy and choice are exactly as before schema 17 ---------------------------------------
 }

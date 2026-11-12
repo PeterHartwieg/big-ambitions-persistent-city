@@ -24,8 +24,6 @@ namespace PersistentCity.Core
             && awarenessInvalidation==publishedInvalidation && ReferenceEquals(awarenessScopes,state.Shops) && awarenessCount==state.Shops.Count;
         private long publishedInvalidation=-1;
         internal bool AwarenessCurrent => AwarenessReady;
-        // The next logical event stays unprocessed while the shared image builds. A held decision
-        // already owns its inputs and is never delayed/rerolled by a later catalogue publication.
         internal bool HasPendingCampaignPublication => (CampaignProvider as IFoodCampaignPreparation)?.HasPendingPublication == true;
         internal void ContinueCampaignPublication() => ((IFoodCampaignPreparation)CampaignProvider!).ContinuePublication();
         internal bool NeedsAwarenessPreparation(double minute) => HasPendingCampaignPublication || rivalResumeNeedsRefresh && NeedsRivalPreparation(minute)
@@ -54,13 +52,9 @@ namespace PersistentCity.Core
         }
         private FoodAwarenessCatalogue AwarenessCatalogue() => AwarenessReady ? awarenessCatalogue!
             : throw new InvalidOperationException("Awareness image must finish bounded preparation before capture.");
-        // Before activation no index is prepared by normal advancement. Retain the live
-        // existing-stop lookup until the published index is current, including after an
-        // on-demand diagnostic followed by a late scope acquisition.
         private FoodScope? ScopeAtPlace(string place)
             => AwarenessReady ? awarenessCatalogue!.ScopeAtPlace(place)
                 : state.Shops.FirstOrDefault(scope=>scope.PlaceId==place);
-        // A Vehicle scope is offered only through a candidate market, which routes it to the vehicle market by channel.
         private bool VendorCandidate(FoodScope scope) => market is IFoodCandidateMarket m ? m.IsCandidate(scope) : scope.Channel==FoodScopeChannel.Shop;
         private Position? Anchor(string id) => id.Length==0 ? (Position?)null : city.FindPlace(id).Position;
         private FoodAwarenessImage AwarenessSample(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,int day,bool atStop,FoodAwarenessDump? dump=null)
@@ -76,7 +70,6 @@ namespace PersistentCity.Core
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
             var person=Owner(meal);if(person==null) return null;
-            // Explicit on-demand inspection may finish the transient index; normal events never drain it inline.
             while(NeedsRivalPreparation(city.State.Minute) || !AwarenessReady) ContinueAwarenessPreparation();
             var stop=ChoiceStop(meal,person);bool atStop=meal.Decision!=null
                 ? meal.Decision.ContextKey.StartsWith("stop:",StringComparison.Ordinal) : AtFoodStop(person);
@@ -113,8 +106,6 @@ namespace PersistentCity.Core
             return new FoodRoutineStop {AnchorId=p.Identity.Id,PlaceId=p.PlaceId,Activity=p.Activity,
                 CapturedAt=admission,DepartureAt=Math.Min(p.NextEventMinute,p.ActivityUntilMinute)};
         }
-        // SHA-256 is only a compact, collision-resistant representation of the canonical logical stay,
-        // not a draw. It keeps even maximum-length place IDs inside schema 17's 256-character latch.
         private static string Context(FoodRoutineStop stop,bool atStop)
         {
             string text=stop.PlaceId.Length.ToString(CultureInfo.InvariantCulture)+":"+stop.PlaceId+"|"
@@ -128,7 +119,7 @@ namespace PersistentCity.Core
         {
             var copy=new FoodScope {AlternativeKind=s.AlternativeKind,BusinessId=s.BusinessId,PlaceId=s.PlaceId,
                 ProductId=s.ProductId,AdditionalProductIds=new List<string>(s.AdditionalProductIds),NextServiceAt=s.NextServiceAt};
-            copy.UseChannel(s.Channel); // a held vehicle choice stays routed to the vehicle market
+            copy.UseChannel(s.Channel);
             return copy;
         }
         private bool MatchesStop(FoodRoutineStop stop,FoodDecisionState d,bool atStop)
@@ -144,8 +135,6 @@ namespace PersistentCity.Core
 
         private double SearchAllowance(double minutes)
         {
-            // Native planners supply their actual current pace. Pure external planners with no pace contract
-            // receive a finite search ceiling; their route duration and deadline remain authoritative.
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 1000000;
             return Math.Min(1e9,Math.Max(0,minutes)*pace+.1);
         }
@@ -168,16 +157,12 @@ namespace PersistentCity.Core
             double deadline=atStop ? Math.Min(meal.ExpiresAt,stop.DepartureAt) : Math.Min(meal.ExpiresAt,
                 Math.Min(stop.DepartureAt,now+(meal.HostSlot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
             var d=new FoodDecisionState {Tuning=FoodDecisionTuning.Capture(ChoiceSettings),IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
-            // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
             using(var captureBatch=(market as IFoodCandidateMarket)?.BeginCapture(now))
             {
-            // A provider may publish replacement metadata at its capture boundary. Retry this
-            // unconsumed event after bounded preparation; never sample a stale/partial image.
             if(meal.Day>=state.AwarenessStartsDay && !AwarenessReady) return;
             d.Weather=city.CaptureWeather(now);d.WeatherTravelMultiplier=city.RainTravelMultiplier(d.Weather);
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             double[] contributions=Array.Empty<double>();
-            // E5b4: one product policy for this whole context, read after the capture boundary opened.
             var policy=ProductPolicy();
             var scopes=meal.Day>=state.AwarenessStartsDay ? AwareShortlist(meal,person,stop,d,atStop)
                 : atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
@@ -188,18 +173,13 @@ namespace PersistentCity.Core
             {
                 var scope=scopes[scopeIndex];
                 var b=scope.AlternativeKind==FoodAlternativeKind.Rival ? CaptureRival(scope.BusinessId,now,deadline) : market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
-                if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue; // no refill or replacement identity
-                // A smaller configured menu cannot silently discard offers or steal native demand.
-                // Held images retain their captured tuning. The native owner reconciles at its boundary.
+                if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue;
                 int scopedOffers=scope.AdditionalProductIds.Count+1;
                 if(scopedOffers>d.Tuning.Settings.FoodMenuMaximumOffersPerShop || b.Offers.Count>FoodMenuPolicy.MaximumOffers) continue;
-                // The catalogue has always omitted scoped products without saved retail prices.
-                // Preserve that priced subset; never invent a price or trim a scope to fit a limit.
                 bool supportedMenu=b.Offers.Count<=scopedOffers;
                 foreach(var offer in b.Offers)
                     if(!policy.Executable(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) supportedMenu=false;
-                if(!supportedMenu) continue; // unsupported or out-of-scope offers reject the whole shop
-                // Market inputs belong to the provider: capture before subtracting reservations.
+                if(!supportedMenu) continue;
                 var shop=new FoodDecisionShop {AlternativeKind=b.AlternativeKind,RivalTerms=b.RivalTerms,RivalServiceMinutes=b.RivalServiceMinutes,AlternativeWeight=b.AlternativeKind==FoodAlternativeKind.Rival ? RivalSettings.RivalChoiceWeight : 1,MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
                     NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=b.ServiceUnavailableReason.Length>0,
                     CustomerServicePercent=b.CustomerServicePercent ?? -1,DistrictId=b.DistrictId,
@@ -219,15 +199,12 @@ namespace PersistentCity.Core
             meal.Memory.Weather=d.Weather;
             meal.ContextAttempts=d.Attempt;meal.LastContextKey=context;meal.Decision=d;pendingDecision=meal;
             capturedStop=CopyStop(stop);
-            // No reservations, optional-stop cancellation, purchases or outcomes before commit.
         }
 
-        /// <summary>E5b4 (Decision 11): the market's policy at the held-policy writer, the original three otherwise.</summary>
         private IFoodProductPolicy ProductPolicy()
             => city.State.MenuPolicy==FoodNameIdentity.DynamicWire
                 && market is IFoodProductPolicyMarket policies ? policies.ProductPolicy : FoodProductPolicy.OriginalThree;
 
-        /// <summary>E5b4: a held revision-2 tuple as weight inputs; null for revision 1, which keeps E4's legacy inputs.</summary>
         private static FoodProductMetadata? HeldDynamic(FoodDecisionShop shop,string product)
         {
             foreach(var offer in shop.Offers)
@@ -273,8 +250,6 @@ namespace PersistentCity.Core
                 selected[insert]=scope;ranks[insert]=rank;contributions[insert]=contribution;count=Math.Min(count+1,selected.Length);
             }
             if(count!=selected.Length) Array.Resize(ref selected,count);
-            // Supply observation may refresh a mutable native scope catalogue. Sampled identities/menu
-            // bounds must stay the ones that actually won the metadata draw, even if a shop is replaced.
             for(int i=0;i<selected.Length;i++) selected[i]=FreezeScope(selected[i]);
             return selected;
         }
@@ -292,7 +267,6 @@ namespace PersistentCity.Core
             var intent=new FoodIntent {Id=meal.IntentId,ConsumerId=meal.ResidentId,Day=meal.Day,DesiredAt=meal.DesiredAt,RequestedAt=d.OriginAt,
                 Deadline=d.Deadline,OriginPlaceId=stop.PlaceId,OriginActivity=stop.Activity,EatingMinutes=MealRhythm.EatingMinutes(meal.Kind),
                 MaximumQueueMinutes=MealRhythm.QueueMinutes(meal.Kind,stop.Activity),TimeCostMultiplier=1+Math.Min(1,(d.OriginAt-meal.DesiredAt)/120)};
-            // Only an actually paid basket is a household alternative under the live new policy.
             if(meal.Budget?.HomeFoodFundedDay==meal.Day)
             {intent.OutsideOption=FoodOutsideOption.FundedHouseholdFood;intent.OutsideOptionScoreCents=0;}
             return intent;
@@ -301,7 +275,7 @@ namespace PersistentCity.Core
         private void ContinueFoodDecision(ResidentMeal meal,CitizenState person)
         {
             var d=meal.Decision!;
-            if(d.Tuning==null) d.Tuning=FoodDecisionTuning.Capture(ChoiceSettings); // legacy image: capture exactly once
+            if(d.Tuning==null) d.Tuning=FoodDecisionTuning.Capture(ChoiceSettings);
             bool atStop=d.ContextKey.StartsWith("stop:",StringComparison.Ordinal);
             var stop=ChoiceStop(meal,person);
             if(!MatchesStop(stop,d,atStop) || city.State.Minute!=d.OriginAt)
@@ -354,10 +328,8 @@ namespace PersistentCity.Core
                 if(!c.ScoreCents.HasValue) continue;
                 var b=businesses.First(x=>x.Id==c.BusinessId);
                 var heldShop=d.Shops.First(s=>s.BusinessId==c.BusinessId);
-                // F6j: the expense compared is the whole ticket, planned from the captured menu by the checkout policy.
                 var ticket=CandidateTicket(meal,person,heldShop,c.ProductId,c.Price,allowance);
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
-                // E5b4: a revision-2 offer weighs its held tuple (taste and fits) through the metadata overload, as saved.
                 var dynamic=HeldDynamic(heldShop,c.ProductId);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
@@ -373,13 +345,12 @@ namespace PersistentCity.Core
             if(pick.Index>=0) {d.BusinessId=evaluated[pick.Index].BusinessId;d.ProductId=evaluated[pick.Index].ProductId;}
             else if(pick.Outside) d.Outside=intent.OutsideOption;
             else d.Reason=FailureReason(intent);
-            // The selected result is a save boundary. No draw is performed when this image resumes.
         }
         private static Route PresentRoute(Position point) => new Route {Legs=new List<RouteLeg> {new RouteLeg {From=point,To=point,Mode=TravelMode.Walk}}};
         private Route? RequestFoodQuote(Place from,Place to,double at,TravelPreferences preferences)
         {
             try {return WalkingQuote(from,to,at,preferences);}
-            catch(Exception) {return null;} // settle this slot as refused; never repeat it or consume another context
+            catch(Exception) {return null;}
         }
         private static bool Usable(Route? r,Place from,Place to)
         {
@@ -397,7 +368,6 @@ namespace PersistentCity.Core
             out List<FoodBusiness> businesses,out List<FoodTravelQuote> quotes)
         {
             businesses=d.Shops.Select(CapturedBusiness).ToList();quotes=new List<FoodTravelQuote>();
-            // F6b: a rival's known lane load participates in feasibility, queue reasons and preference.
             for(int i=0;i<d.Shops.Count;i++)
                 if(d.Shops[i].AlternativeKind==FoodAlternativeKind.Rival) businesses[i].NextServiceMinute=RivalNextService(d.Shops[i],d.OriginAt);
             foreach(var s in d.Shops)
@@ -412,8 +382,6 @@ namespace PersistentCity.Core
                 else if(shop.OutwardQuote==FoodQuoteState.NotNeeded && FoodDemand.KnownUnavailable(CapturedBusiness(shop),consumer,d.OriginAt,d.Deadline)==null)
                     refusals[shop.BusinessId]="Service and return do not fit available time";
             FoodDemand.ChooseObserved(consumer,businesses,quotes,intent,d.OriginAt,refusals,meal.Kind,evaluateOnly:true);
-            // F6b: an otherwise eligible rival offer whose queued finish lands in a modeled sold-out meal period is
-            // refused before the draw, with the existing stock reason, so it can never beat an available shop.
             rivalSoldOutShops.Clear();
             foreach(var c in intent.Choices)
             {
@@ -459,10 +427,6 @@ namespace PersistentCity.Core
                 if(!atStop && meal.HostSlot==0 && !city.TryBeginMealVisit(person.Identity.Id,shop.PlaceId,shop.Outward,shop.Return!.Minutes,stay,d.Deadline,
                     deferObservation:true,capturedHours:shop.AlternativeKind==FoodAlternativeKind.Rival ? CapturedBusiness(shop).OpeningPlace : null))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
-                // Optional presentation changes only after a winner and its feasibility are committed.
-                // An existing-stop rival purchase enters Serving here, never through ArriveRival: its queued finish
-                // already includes the lane wait; the modeled sell-out applies to the period it finishes in.
-                // Evaluation already refuses such offers; this remains a fail-safe with the same D4 memory.
                 if(atStop && shop.AlternativeKind==FoodAlternativeKind.Rival && SoldOut(shop.PlaceId,RivalType(shop),choice.ServiceEndsAt!.Value))
                 {RivalSellOutRefusals++;RivalStopStockout(meal,person,shop,d);EndDecision(meal);Finish(meal,MealStatus.Missed,"Service unavailable on arrival");return;}
                 if(atStop) city.CancelOptionalStop(person.Identity.Id);
@@ -511,7 +475,6 @@ namespace PersistentCity.Core
                 Intent=intent,Businesses=businesses,Quotes=quotes,MealKind=meal.Kind,Decision=d,ChoiceMilliseconds=choiceMilliseconds,Tickets=CandidateTickets(meal,person,d,intent),
                 RouteCalls=atStop ? 0 : d.Shops.Sum(s=>(s.OutwardQuote==FoodQuoteState.Answered || s.OutwardQuote==FoodQuoteState.Refused ? 1 : 0)
                     +(s.ReturnQuote==FoodQuoteState.Answered || s.ReturnQuote==FoodQuoteState.Refused ? 1 : 0))});
-            // A compact choice explanation lives in the existing Reason field until checkout; outcomes preserve factors.
             if(d.Result==FoodDecisionResult.Selected && !atStop && meal.HostSlot==0) city.ObserveFoodDeparture(person);
         }
         private static string ChoiceWords(FoodDecisionState d) => "Chose food"+(d.Factor1==MealFactor.Taste ? "; likes it" : "")

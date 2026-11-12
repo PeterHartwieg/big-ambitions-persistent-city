@@ -2,12 +2,8 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F2d: presentation only. Whether Gley may take a visible car past the corner it is driving to.</summary>
     public static class PhysicalTrafficCornerPermission
     {
-        /// <summary>The native target predicate, including its one-nanominute arithmetic allowance: the cap (the
-        /// kernel's coordinate) reaches the end of the car's own leg. It shapes the visible turn and never gates a
-        /// logical crossing.</summary>
         public static bool CanReachEndpoint(PhysicalJourneySample sample, double maximumNominalMinutes)
         {
             return Valid(sample) && Position.Finite(maximumNominalMinutes) && maximumNominalMinutes >= sample.ElapsedMinutes

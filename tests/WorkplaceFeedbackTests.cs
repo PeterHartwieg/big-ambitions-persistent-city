@@ -9,15 +9,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>GR-7 (R5, R6): offices, factories and warehouses staffed on their hours, and the inspector and business panel
-/// words for non-food visits, purchases and refusals.</summary>
 public sealed class WorkplaceFeedbackTests
 {
     private const int Open = 8 * 60, Close = 18 * 60;
 
     private static void Run(CitySimulator city, double to) { while (!city.AdvanceTo(to, 128).CaughtUp) { } }
 
-    /// <summary>The walk planner with commute timing, as the game's route planner has: a commute leaves to arrive on time.</summary>
     private sealed class TimedWalk : ICommuteTimingPlanner
     {
         public Route? Plan(Place from, Place to, double at, TravelPreferences preferences)
@@ -25,7 +22,6 @@ public sealed class WorkplaceFeedbackTests
                 Minutes = 1 + Position.Distance(from.Position, to.Position) / 80 } } };
     }
 
-    /// <summary>The banded city with its busiest workplace turned into a law firm open Monday to Friday 08:00 to 18:00.</summary>
     private static (CitySimulator City, Place Office, List<CitizenState> Staff) OfficeCity(int seed = 5150, bool timed = false)
     {
         var (state, market) = WorkplaceCapacityTests.Fresh(3, seed);
@@ -63,7 +59,6 @@ public sealed class WorkplaceFeedbackTests
                 if (WorkplaceStaffing.Rota(pair.Key) == ShiftType.Early) Assert.Equal(midnight + Open, shift.StartsAt);
                 else Assert.Equal(midnight + Close, shift.EndsAt);
             }
-            // In the running city: an early worker is already at work when the doors open, a late one still is at closing.
             Run(city, midnight + Open);
             foreach (var person in staff.Where(p => shifts[p.Identity.Id].HasValue && WorkplaceStaffing.Rota(p.Identity.Id) == ShiftType.Early))
                 if (Working(person, office) || person.Phase == CitizenPhase.WaitingForOpening && person.PlaceId == office.Id) early++;
@@ -103,7 +98,6 @@ public sealed class WorkplaceFeedbackTests
     public void AClosedVenueStaffsNobody()
     {
         var (city, office, staff) = OfficeCity();
-        // Temporarily closed: the catalogue gives no hours at all.
         office.WeeklyHours = new List<OpeningWindow>();
         office.OpenMinute = office.CloseMinute = 0;
         var index = city.State.Places.ToDictionary(p => p.Id);
@@ -112,7 +106,6 @@ public sealed class WorkplaceFeedbackTests
             Assert.False(WorkplaceStaffing.Staffs(office, day));
             Assert.All(staff, p => Assert.Null(DayPlanner.WorkOn(p, day, RoutineKeys.For(p, city.State.Seed).HourShift, index)));
         }
-        // A day whose opening is shorter than a shift staffs nobody either.
         var shortDay = new Place { Kind = PlaceKind.Work, BusinessType = "ba:businesstype_warehouse",
             WeeklyHours = new List<OpeningWindow> { new OpeningWindow { Day = 0, FromMinute = 600, ToMinute = 1000 } } };
         Assert.False(WorkplaceStaffing.Staffs(shortDay, 7));
@@ -122,15 +115,12 @@ public sealed class WorkplaceFeedbackTests
             Run(city, minute);
             Assert.DoesNotContain(staff, p => Working(p, office));
         }
-        // Nobody worked, so nobody was paid a shift there.
         Assert.All(staff, p => Assert.Equal(income[p.Identity.Id], p.Wallet?.Ledger.EmploymentIncome ?? Money.Zero));
     }
 
     [Fact]
     public void NativeProductionAndWagesAreUnchangedByTheGoldenFixture()
     {
-        // The golden banded city has no office, factory or warehouse type: the policy leaves it byte for byte as before,
-        // whatever type a workplace without weekend hours carries.
         string Outcome(Action<CityState>? retype)
         {
             var (state, market) = WorkplaceCapacityTests.Fresh(3, 5150);
@@ -143,7 +133,6 @@ public sealed class WorkplaceFeedbackTests
         }
         string golden = Outcome(null);
         Assert.Equal(golden, Outcome(s => { foreach (var p in s.Places.Where(p => p.Kind == PlaceKind.Work)) p.BusinessType = "ba:businesstype_clothingstore"; }));
-        // An office pays the same wage for every shift worked: the week keeps its four shifts and the rate is the person's.
         var (city, _, workers) = OfficeCity();
         var before = workers.ToDictionary(p => p.Identity.Id, p => p.Wallet!.Ledger.EmploymentIncome);
         Run(city, 1440 * 16);
@@ -157,7 +146,6 @@ public sealed class WorkplaceFeedbackTests
             var earned = worker.Wallet!.Ledger.EmploymentIncome - before[worker.Identity.Id];
             var twinEarned = twin.Wallet!.Ledger.EmploymentIncome - before[worker.Identity.Id];
             Assert.True(earned.Units > 0, worker.Identity.Id + " earned nothing at the office");
-            // Two weeks of four shifts each at the same rate, give or take one shift at either edge of the window.
             double ratio = (double)earned.Units / (double)twinEarned.Units;
             Assert.InRange(ratio, 6.0 / 8, 10.0 / 8);
         }
@@ -167,7 +155,6 @@ public sealed class WorkplaceFeedbackTests
     public void EveryRefusedVisitAndPurchaseRecordsExactlyOneCauseAndThePanelListsIt()
     {
         var (city, market) = NeedPurchaseTests.Banded();
-        // Refuse with a different cause by venue; some venues sell.
         var causes = new[] { PurchaseRefusal.VenueNotReady, PurchaseRefusal.VenueFull, PurchaseRefusal.Dropped };
         market.Decide = r =>
         {
@@ -189,7 +176,6 @@ public sealed class WorkplaceFeedbackTests
             var refusedToday = market.Log.Where(l => l.Minute / 1440 == day && l.Refusal != PurchaseRefusal.None).ToList();
             foreach (var row in rows)
             {
-                // Each refused purchase is one panel entry under its own cause.
                 foreach (var cause in causes)
                 {
                     int native = refusedToday.Count(l => l.Venue == row.VenueId && l.Refusal == cause);
@@ -213,12 +199,10 @@ public sealed class WorkplaceFeedbackTests
         }
         Assert.Contains(Enumerable.Range(0, log.Count).Select(i => log[i]), e => e.Kind == VenueEventKind.Visit);
         Assert.Contains(Enumerable.Range(0, log.Count).Select(i => log[i]), e => e.Kind == VenueEventKind.Missed);
-        // A refusal is recorded once even though it also marks the plan item missed.
         for (int i = 0; i < log.Count; i++)
             if (log[i].Kind == VenueEventKind.Refused)
                 Assert.DoesNotContain(Enumerable.Range(0, log.Count).Select(j => log[j]),
                     e => e.Kind == VenueEventKind.Missed && e.ResidentId == log[i].ResidentId && e.VenueId == log[i].VenueId && e.Miss == PlanMissCause.Refused && e.Minute >= log[i].Minute);
-        // The inspector lists a resident's own outcomes with their causes.
         var refused = Enumerable.Range(0, log.Count).Select(i => log[i]).Last(e => e.Kind == VenueEventKind.Refused);
         var lines = VenueFeedbackPanel.ResidentLines(log, refused.ResidentId, refused.Day, id => id);
         Assert.Contains(lines, l => l.Contains(refused.VenueId) && l.Contains(VenueWords.English(refused.CauseKey)));
@@ -238,7 +222,6 @@ public sealed class WorkplaceFeedbackTests
         var table = document.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.GetString()!);
         foreach (var pair in VenueWords.All) Assert.Equal(pair.Value, table[pair.Key]);
         Assert.Equal(ThroughTraffic.InspectorLine, table[ThroughTraffic.InspectorKey]);
-        // Every cause has words.
         foreach (PurchaseRefusal refusal in Enum.GetValues(typeof(PurchaseRefusal)))
             if (refusal != PurchaseRefusal.None) Assert.True(VenueWords.All.ContainsKey(VenueWords.RefusalKey(refusal)));
         foreach (PlanMissCause miss in Enum.GetValues(typeof(PlanMissCause)))

@@ -1,4 +1,3 @@
-// Per-frame update and body selection: save/suspend hooks, the observation loop, candidate priority, fade restrictions, the journey-index check and the door-queue plan.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -13,7 +12,6 @@ namespace PersistentCity.Runtime
 {
     internal sealed partial class PhysicalPopulation
     {
-        // Release before an unrendered time jump so catch-up can use the same committed geometry.
         public void BeforeAdvance()
         {
             vehicles.AssertHealthy();
@@ -31,19 +29,15 @@ namespace PersistentCity.Runtime
         }
         public void BeforeSave()
         {
-            // A blocker may already have cleared the view predicate before this callback,
-            // while its bodies still await BeforeAdvance. Saving must release those too.
             if (NativeInteriorCityView.Configured && BuildingManager.IsInsideBuilding) SuspendBeforeNativeFastForward();
             else ObserveForSave();
         }
         public void RestoreInterior() { if (bindings.Count != 0) SuspendBeforeNativeFastForward(); }
         public bool HasBodies => bindings.Count != 0;
-        /// <summary>Walkers following a committed journey now (pc movement status).</summary>
         public int Followers
         {
             get { int count = 0; foreach (var binding in bindings.Values) if (binding.Person != null && binding.Journey != null) count++; return count; }
         }
-        /// <summary>F2d: cars following the traffic kernel now (pc movement status).</summary>
         public int CarFollowers
         {
             get { int count = 0; foreach (var binding in bindings.Values) if (binding.Car != null && binding.Journey != null) count++; return count; }
@@ -75,7 +69,6 @@ namespace PersistentCity.Runtime
             int pedestrianLimit = NativeInteriorCityView.Pedestrians(this.pedestrianLimit);
             int vehicleLimit = NativeInteriorCityView.Vehicles(this.vehicleLimit);
             bool interior = NativeInteriorCityView.State.Active;
-            // F2e: the player's pose once per frame; inside a building view nobody is blocked by the player.
             var playerPose = default(PlayerPose);
             bool player = !interior && PlayerContact.TryReadPlayer(out playerPose);
             var snapshot = bindingSnapshot ?? new List<Binding>(bindings.Count);
@@ -99,7 +92,6 @@ namespace PersistentCity.Runtime
             if (!interior && Time.unscaledTime >= nextParked) { nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit); }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
             nextSelection = Time.unscaledTime + .25f;
-            // The bounded view is selected deterministically. No filler identities or unrelated trips are created.
             int people = personBindings, cars = bindings.Count - people;
             int attempts = 0;
             if (!journeyIndexFallback && Time.unscaledTime >= nextJourneyIndexCheck)
@@ -110,25 +102,15 @@ namespace PersistentCity.Runtime
             }
             PlanQueues(focus, radius);
             PlanVendorQueues(focus, radius);
-            // Candidate selection. tools/physical-selection-regression extracts the text from this line
-            // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
-            // F2f: the active-journey index members filed in the grid cells within the radius (F5i: residents and
-            // visitors), or every resident after a shadow mismatch (visitors get no body in that fallback, by design: they
-            // receive bodies through the index only). Filters and order below are the same for both sources.
-            // F9g: both sources are read-only person views; the journey, optional stop and pose come from the entity.
             var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
                 var c = roster[index];
-                // Both pools are full: observations and queue movement above still ran; no
-                // candidate can acquire a body until a later update frees a slot.
                 if (people >= pedestrianLimit && cars >= vehicleLimit) break;
                 if (!(c.NextEventMinute > simulation.View.Minute) || bindings.ContainsKey(c.Id) || ambient.IsReserved(c.Id)) continue;
                 bool tried = attempted.TryGetValue(c.Id, out float lastAttempt);
                 if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
-                // Stationary indoor residents cannot consume an attempt. Keep travelling
-                // residents here: PositionOf and SampleJourney have distinct boundary rules.
                 var entity = Entity(c);
                 if (!((c.Phase == CitizenPhase.Travelling && entity.Journey != null) || queuers.ContainsKey(c.Id) || Outdoor(entity))) continue;
                 Position sampled = simulation.PositionOf(entity);
@@ -136,8 +118,6 @@ namespace PersistentCity.Runtime
                 if (!(distance <= radius)) continue;
                 candidates.Add(new SelectionCandidate(entity, sampled, tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
             }
-            // Vendor stays are outdoor meal service, so they are not in the journey/opening index.
-            // Maintain them from committed activity events rather than scanning the population per frame.
             foreach (var waiter in vendorWaiters.Values)
             {
                 if (journeyIndexFallback || simulation.ActiveJourneys.Contains(waiter)
@@ -161,11 +141,9 @@ namespace PersistentCity.Runtime
                 bool queuer = !moving && queuers.TryGetValue(citizen.Identity.Id, out queue);
                 bool person = moving ? sample.Mode == TravelMode.Walk : queuer || Outdoor(citizen);
                 if ((!car && !person) || (car ? cars >= vehicleLimit : people >= pedestrianLimit)) continue;
-                if (++attempts > 4) break; // Route validation and rejected admissions share the native-work budget.
+                if (++attempts > 4) break;
                 attempted[citizen.Identity.Id] = Time.unscaledTime;
                 PhysicalRoadSample road = default;
-                // Q3: a faded person reappears only where the player cannot see a body appear (F2d: a car as well). A
-                // deferral does no native work, so it gives back the attempt and the retry time it was just charged.
                 if (FadeRestricted(citizen) && pedestrians.Visible(candidate.Position))
                 {
                     attempts--;
@@ -174,16 +152,13 @@ namespace PersistentCity.Runtime
                     continue;
                 }
                 fadedUntilHidden.Remove(citizen.Identity.Id);
-                // Waiting sources own no finite road storage. Refuse before borrowing a native body.
                 if (car && (!simulation.TryGetTrafficPermission(citizen.Identity.Id, out var admission)
                     || !admission.LinkId.HasValue || admission.IsCompleted)) continue;
                 if (car && !routes.TryPhysicalRoadSample(citizen, sample, out road))
                     continue;
                 var binding = new Binding { Citizen = citizen };
                 Position at = candidate.Position;
-                // A waiter who was indoors comes out through the entrance and walks to their spot.
                 if (queuer) { binding.Queue = queue!.Dwell; binding.VendorOpening = queue.VendorOpening; binding.Line = queue.Line; binding.Slot = queue.Slot; at = queue.Line.Entrance; }
-                // Nothing is leased (F2c walkers, F2d cars): the body follows its journey's logical pose from where it is now.
                 if (moving) { binding.Journey = citizen.Journey; binding.BodyMinutes = sample.ElapsedMinutes; }
                 bool bound = false;
                 try
@@ -203,7 +178,6 @@ namespace PersistentCity.Runtime
                     Bind(binding); bound = true; acquired++;
                 }
                 finally { if (!bound) ReleaseBodies(binding); }
-                // No walk from the entrance to the spot: stay indoors rather than stand in the doorway.
                 if (queuer && !binding.Person!.SetPathTarget(binding.Line!.Spots[binding.Slot], NativeTravelPace.WalkingMetresPerSecond))
                 { GiveUp(binding); Release(binding); continue; }
                 if (!Observe(binding)) { Release(binding); continue; }
@@ -212,8 +186,6 @@ namespace PersistentCity.Runtime
                 if (queuer) queued++;
             }
             candidates.Clear();
-            // F5i: visitors are attempted too, so their retry times are kept like residents'.
-            // PersonTable.PersonCount and Schedules through the view: residents plus saved visitors; resident and routine ids.
             var view = simulation.View;
             if (attempted.Count > view.ResidentList.Count + view.VisitorCount + 128)
             {
@@ -222,8 +194,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        /// <summary>GR-9 (G6): a body that appears in view fades in over <see cref="BodyFade.FadeInSeconds"/> instead of
-        /// popping; one out of view, or whose materials cannot fade, appears at full alpha.</summary>
         private void BeginFadeIn(Binding binding)
         {
             bool fades = binding.Person != null ? binding.Person.OnScreen && binding.Person.CanFade
@@ -235,15 +205,12 @@ namespace PersistentCity.Runtime
         private void FadeIn(Binding binding)
         {
             if (float.IsNaN(binding.FadeInSince)) return;
-            // A correction's fade-out takes over from a fade-in that has not finished.
             if (!float.IsNaN(binding.FadeOutSince)) { binding.FadeInSince = float.NaN; return; }
             float alpha = BodyFade.In(followClock - binding.FadeInSince);
             if (alpha >= 1) binding.FadeInSince = float.NaN;
             if (binding.Person != null) binding.Person.SetFade(alpha); else binding.Car?.SetFade(alpha);
         }
 
-        /// <summary>GR-9 (G7): parked cars near the focus stand as objects at their saved curb positions, refreshed once a
-        /// second. Reads the saved cars only.</summary>
         private const float ParkedRefreshSeconds = 1f;
         private float nextParked;
         private readonly List<ParkedCar> parkedCandidates = new List<ParkedCar>();
@@ -259,7 +226,6 @@ namespace PersistentCity.Runtime
                 double elapsed = 0;
                 if (person.Phase == CitizenPhase.Travelling && person.Journey != null)
                 {
-                    // Only a journey whose car could stand near the focus is sampled.
                     bool near = Position.Distance(car.ParkedPosition, focus) <= radius;
                     var legs = person.Journey.Legs;
                     for (int leg = legs.Count - 1; leg >= 0 && !near; leg--)
@@ -279,8 +245,6 @@ namespace PersistentCity.Runtime
         }
         private readonly Dictionary<string, CarState> parkedStates = new Dictionary<string, CarState>(StringComparer.Ordinal);
 
-        // Whether a faded person's restriction still applies: the same journey is still under way, or, after an
-        // arrival-tail fade, the person is still at the place it arrived at.
         private bool FadeRestricted(CitizenState citizen)
             => fadedUntilHidden.TryGetValue(citizen.Identity.Id, out var faded) && ReferenceEquals(faded.Citizen, citizen)
             && (faded.ArrivedAt != null
@@ -304,8 +268,6 @@ namespace PersistentCity.Runtime
             log.Warn("Active-journey index differs from a full population scan; physical selection uses the full scan for this session.");
         }
 
-        // The index must hold every citizen this selection's stateful filters (journey, queue, outdoors) could admit.
-        // Residents, then visitor routines (PersonTable.Schedules' order), read through the view.
         private bool StatefulCandidatesIndexed()
             => StatefulCandidatesIndexed(simulation.View.ResidentList) && StatefulCandidatesIndexed(simulation.View.VisitorRoutineList);
 
@@ -321,7 +283,6 @@ namespace PersistentCity.Runtime
             return true;
         }
 
-        /// <summary>One physical selection candidate, with its sort keys captured before any attempt is recorded.</summary>
         private readonly struct SelectionCandidate
         {
             public SelectionCandidate(CitizenState citizen, Position position, float lastAttempt, double distance, int rosterIndex)
@@ -331,8 +292,6 @@ namespace PersistentCity.Runtime
             public float LastAttempt { get; }
             public double Distance { get; }
             public int RosterIndex { get; }
-            // Least recently attempted first (never attempted first of all), then nearest, then ordinal id.
-            // Roster order breaks any remaining tie, as the stable LINQ OrderBy/ThenBy chain did.
             public static readonly IComparer<SelectionCandidate> ByPriority = new Priority();
             private sealed class Priority : IComparer<SelectionCandidate>
             {
@@ -346,26 +305,16 @@ namespace PersistentCity.Runtime
             }
         }
         private readonly List<SelectionCandidate> candidates = new List<SelectionCandidate>();
-        // F2f grid query result, reused by PlanQueues and then the selection in the same update.
         private readonly List<IPersonView> nearby = new List<IPersonView>();
 
-        // Waiting for a route or for an opening is indoors. Only a queue-at-opening dwell
-        // (PlanQueues) puts a waiting citizen in the street, at a spot beside the door.
         private bool Outdoor(CitizenState c)
             => OptionalVisible(c) && simulation.OptionalStopStatus(c.OptionalStop!) == OptionalStopAvailability.Ready || c.Phase == CitizenPhase.AtPlace && c.Activity == Activity.Leisure && places[c.PlaceId].Id.StartsWith("scene-", StringComparison.Ordinal);
 
-        /// <summary>
-        /// Which waiting citizens near the focus stand in a door queue now, and in which spot. One
-        /// line per door: places sharing an entrance share it. A body already in a line keeps its
-        /// spot until it leaves (DwellPlanner.AssignQueueSlots). A full line leaves the rest indoors.
-        /// </summary>
         private void PlanQueues(Position focus, double radius)
         {
             queuers.Clear();
             double now = simulation.View.Minute;
             var planned = new Dictionary<string, (Place Place, List<Dwell> Dwells)>(StringComparer.Ordinal);
-            // Waiting citizens are indexed (F5f) and filed at their place cell (F2f). Line and slot order are sorted
-            // below, not taken from this order.
             var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
             {
@@ -381,8 +330,6 @@ namespace PersistentCity.Runtime
             foreach (var pair in planned.OrderBy(p => Position.Distance(p.Value.Place.Position, focus)).ThenBy(p => p.Key, StringComparer.Ordinal))
             {
                 if (!TryLine(pair.Value.Place, out var found)) continue;
-                // People in the line move up, front first, into free spots ahead of them. A move counts
-                // only once the body accepts the walk; a refused move keeps its spot reserved.
                 var inLine = bindings.Values.Where(b => b.Line != null && b.Line.Key == found.Key && b.Queue.HasValue
                     && b.Step != QueueStep.Entering && b.Person != null).OrderBy(b => b.Slot).ToList();
                 var occupied = new HashSet<int>(Standing(found).Select(b => b.Value));
@@ -393,7 +340,6 @@ namespace PersistentCity.Runtime
                     occupied.Remove(bound.Slot); occupied.Add(ahead.Value);
                     bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
                 }
-                // Newcomers are placed from the spots bodies actually hold now.
                 var slots = DwellPlanner.AssignQueueSlots(Standing(found), pair.Value.Dwells, found.Spots.Count);
                 foreach (var dwell in pair.Value.Dwells)
                     if (slots.TryGetValue(dwell.CitizenId, out int slot))
@@ -433,7 +379,6 @@ namespace PersistentCity.Runtime
                     yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, b.Slot);
                 else if (b.Optional != null && !b.OptionalReturning && (!b.OptionalStandsShort || b.Person != null))
                 {
-                    // A body standing short holds the slot it actually stands on, not the stop's spot.
                     Position at = b.OptionalStandsShort ? b.Person!.Position : b.Optional.Position;
                     for (int slot = 0; slot < line.Spots.Count; slot++)
                         if (Position.Distance(line.Spots[slot], at) < 0.65)

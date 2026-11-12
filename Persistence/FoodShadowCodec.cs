@@ -7,7 +7,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>Separate experiment documents. Never reads/writes native saves or population modData.</summary>
     public static class FoodShadowCodec
     {
         private const int MaxCharacters = 32 * 1024 * 1024;
@@ -33,7 +32,6 @@ namespace PersistentCity.Persistence
             using var reader = new JsonTextReader(new StringReader(json)) { MaxDepth = 24, DateParseHandling = DateParseHandling.None };
             var token = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
             if (reader.Read()) throw new InvalidDataException("Trailing food shadow document content.");
-            // One schema until release (docs/decisions/2026-11-09-schema-one.md): any other number is refused unchanged.
             if (token["Schema"]?.Type != JTokenType.Integer || (int)token["Schema"]! != FoodShadowState.CurrentSchema)
                 throw new InvalidDataException("Unsupported food shadow schema; retain the original document.");
             CheckShape(token, typeof(FoodShadowState), new TokenText(json));
@@ -55,7 +53,6 @@ namespace PersistentCity.Persistence
             type = nullable ?? type;
             if (type == typeof(string)) { Require(token.Type == JTokenType.String); return; }
             if (type == typeof(int) || type.IsEnum) { Require(token.Type == JTokenType.Integer); return; }
-            // Money tokens must be canonical unit integers.
             if (type == typeof(Money)) { Require(token.Type == JTokenType.Integer && TokenText.CanonicalUnits(text.Number((IJsonLineInfo)token))); return; }
             if (type == typeof(double)) { Require(token.Type == JTokenType.Integer || token.Type == JTokenType.Float); return; }
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>))

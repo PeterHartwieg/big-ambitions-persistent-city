@@ -48,8 +48,6 @@ public sealed class HousingPersistenceTests
     [InlineData(150, 5)]
     public void LargeCurrentPopulationWithVisitsAndCarJourneysRoundTripsWithinBound(int legs, int travellingEvery)
     {
-        // Large synthetic allocation stress fixture; this count is not a claim
-        // about the interior housing policy or native performance.
         var city = Housing(28328);
         Assert.Equal(25495, city.Citizens.Count);
         int index = 0;
@@ -95,8 +93,6 @@ public sealed class HousingPersistenceTests
     [Fact]
     public void CurrentOversizedHomeRetainsPopulationThroughInteriorCorrectionAndReload()
     {
-        // A bounded version of the old whole-property experiment: 90 occupants in
-        // one home now discovered as a two-person rentable interior.
         var original = Housing(100, 4);
         var read = SaveWire.Read(SaveCodec.Write(original));
         Assert.Equal(SaveReadStatus.Loaded, read.Status);

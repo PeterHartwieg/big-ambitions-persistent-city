@@ -108,7 +108,7 @@ public sealed partial class TrafficClosureRefreshTests
         Assert.False(planner.Active);
         Assert.Equal(ends + (failure == "begin" ? 0 : 1), planner.Ends);
         planner.FailBegin = planner.FailEnd = false; planner.OnRead = null; planner.Reads.Clear();
-        engine.Traffic.SetLinkClosed(1, true); // End may have failed after the observation was already applied.
+        engine.Traffic.SetLinkClosed(1, true);
         engine.RefreshTrafficClosures();
         Assert.Equal(new[] { 1 }, planner.Reads);
         Assert.False(engine.Traffic.Forecast(1, engine.State.Minute).Closed);

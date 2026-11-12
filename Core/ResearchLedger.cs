@@ -4,15 +4,11 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Ordered → Surveyed → Paid → Replaced, or Surveyed → Declined, Cancelled or PaymentUnknown.
-    /// Declined, Cancelled, PaymentUnknown and Replaced are terminal. Paid means paid and delivered.</summary>
     public enum ResearchOrderState { Ordered = 0, Surveyed = 1, Paid = 2, Declined = 3, Cancelled = 4, PaymentUnknown = 5, Replaced = 6 }
-    /// <summary>Set only on a Declined order. Neither reason touched native money.</summary>
     public enum ResearchDeclineReason { None = 0, InsufficientFunds = 1, BalancePrecision = 2 }
     public enum ResearchOrderRefusal { None, UnknownProduct, InvalidBusiness, InvalidAgency, InvalidRadius, InvalidMinute, BusinessHasOpenOrder, CityOrderLimit, SequenceExhausted }
     public enum ResearchMoveRefusal { None, UnknownOrder, WrongState, InvalidReport, InvalidReason }
 
-    /// <summary>One research order. Only the ledger changes it.</summary>
     public sealed class ResearchOrder : IResearchOrderView
     {
         internal ResearchOrder(long sequence, ResearchProduct product, string business, string agency, bool taxDeductible,
@@ -23,30 +19,21 @@ namespace PersistentCity.Core
             RadiusMetres = radiusMetres; OrderMinute = orderMinute; SurveyAtMinute = surveyAtMinute;
         }
         public long Sequence { get; }
-        /// <summary>"pcr-&lt;sequence&gt;". Never reused within a city. Also the entitlement ID.</summary>
         public string Id { get; }
         public ResearchProduct Product { get; }
         public string ProductCode => Product.Code;
-        /// <summary>Taken from the product table at order time, exact.</summary>
         public Money Price => Product.Price;
         public string BusinessAddress { get; }
         public string AgencyAddress { get; }
-        /// <summary>The agency's hasTaxDeductiblePurchases at order time.</summary>
         public bool TaxDeductible { get; }
-        /// <summary>The configured catchment at order time; 0 for city coverage.</summary>
         public int RadiusMetres { get; }
         public double OrderMinute { get; }
-        /// <summary>AccountingClock.Target(OrderMinute): the survey describes the city after every event
-        /// through this minute and before any later one.</summary>
         public double SurveyAtMinute { get; }
         public ResearchOrderState State { get; internal set; }
         public ResearchDeclineReason DeclineReason { get; internal set; }
-        /// <summary>The sealed report's query key; empty until surveyed, kept after the report is released.</summary>
         public string ReportId { get; internal set; } = "";
-        /// <summary>Held only while Surveyed or Paid. Numbers still need TryRead with this ledger.</summary>
         public MarketResearchReport? Report { get; internal set; }
         public bool IsOpen => State == ResearchOrderState.Ordered || State == ResearchOrderState.Surveyed;
-        // F9e: the read-only view (getters only; no field, wire or save change).
         string IResearchOrderView.Id => Id;
         long IResearchOrderView.Sequence => Sequence;
         string IResearchOrderView.ProductCode => ProductCode;
@@ -85,11 +72,8 @@ namespace PersistentCity.Core
 
         public ResearchLedger() { }
 
-        /// <summary>The next order's sequence. Starts at 1 and never decreases.</summary>
         public long NextSequence { get; private set; } = 1;
 
-        /// <summary>Save snapshot capture (F7c): a detached copy with the same lists, order and order states. Reports
-        /// are immutable and shared.</summary>
         internal ResearchLedger CopyForSave()
         {
             var copy = new ResearchLedger { NextSequence = NextSequence };
@@ -100,18 +84,12 @@ namespace PersistentCity.Core
                     { State = order.State, DeclineReason = order.DeclineReason, ReportId = order.ReportId, Report = order.Report });
             return copy;
         }
-        /// <summary>Ordered and Surveyed, in order sequence.</summary>
         public IReadOnlyList<ResearchOrder> Open => open;
-        /// <summary>Paid, oldest delivery first.</summary>
         public IReadOnlyList<ResearchOrder> Kept => kept;
-        /// <summary>Declined, Cancelled, PaymentUnknown and Replaced, oldest closing first.</summary>
         public IReadOnlyList<ResearchOrder> Closed => closed;
 
         internal static string OrderId(long sequence) => OrderIdPrefix + sequence.ToString(CultureInfo.InvariantCulture);
 
-        /// <summary>Stores an order at the product's fixed price. The caller has checked that the business is
-        /// an eligible Persistent City food business. radiusMetres is the configured catchment for a
-        /// catchment product and ignored for city coverage.</summary>
         public ResearchOrderRefusal TryOrder(string? productCode, string? businessAddress, string? agencyAddress,
             bool taxDeductible, int radiusMetres, double orderMinute, out ResearchOrder? order)
         {
@@ -133,8 +111,6 @@ namespace PersistentCity.Core
             return ResearchOrderRefusal.None;
         }
 
-        /// <summary>Ordered → Surveyed. The report must match the product's tier and coverage and have an
-        /// ID no other order in this ledger uses.</summary>
         public ResearchMoveRefusal TrySeal(string? orderId, MarketResearchReport? report)
         {
             var order = Find(orderId);
@@ -145,7 +121,6 @@ namespace PersistentCity.Core
             return ResearchMoveRefusal.None;
         }
 
-        /// <summary>Surveyed → Paid, on matching native evidence. Keeps at most 16 reports.</summary>
         public ResearchMoveRefusal TryMarkPaid(string? orderId)
         {
             var order = FindSurveyed(orderId, out var refusal);
@@ -163,7 +138,6 @@ namespace PersistentCity.Core
             return ResearchMoveRefusal.None;
         }
 
-        /// <summary>Surveyed → Declined. No money changed: native refused, or the preflight refused first.</summary>
         public ResearchMoveRefusal TryDecline(string? orderId, ResearchDeclineReason reason)
         {
             if (reason != ResearchDeclineReason.InsufficientFunds && reason != ResearchDeclineReason.BalancePrecision)
@@ -171,13 +145,10 @@ namespace PersistentCity.Core
             return Finish(orderId, ResearchOrderState.Declined, reason);
         }
 
-        /// <summary>Surveyed → Cancelled: the business is no longer eligible at billing.</summary>
         public ResearchMoveRefusal TryCancel(string? orderId) => Finish(orderId, ResearchOrderState.Cancelled, ResearchDeclineReason.None);
 
-        /// <summary>Surveyed → PaymentUnknown: native code threw after entry, or the evidence did not match.</summary>
         public ResearchMoveRefusal TryMarkPaymentUnknown(string? orderId) => Finish(orderId, ResearchOrderState.PaymentUnknown, ResearchDeclineReason.None);
 
-        /// <summary>True while any order is Ordered or Surveyed.</summary>
         public bool HasOpenOrders => open.Count > 0;
 
         public ResearchOrder? Find(string? orderId)
@@ -186,8 +157,6 @@ namespace PersistentCity.Core
             return Find(open, orderId!) ?? Find(kept, orderId!) ?? Find(closed, orderId!);
         }
 
-        /// <summary>A grant only for a Paid order (Paid = Delivered = true) or a Replaced one (Replaced = true).
-        /// The report ID is the C4 query key, so TryRead checks the exact pairing.</summary>
         public bool TryGet(string entitlementId, out MarketResearchGrant? grant)
         {
             grant = null;
@@ -252,15 +221,9 @@ namespace PersistentCity.Core
 
         private static bool ValidAddress(string? address)
             => !string.IsNullOrWhiteSpace(address) && address!.Length <= MaximumAddressLength;
-        // The C4 catchment bounds (MarketResearchSettings.Clamp and MarketResearchScope).
         private static bool ValidRadius(int radius) => radius >= 50 && radius <= 2000;
-        // The AccountingClock domain.
         private static bool ValidMinute(double minute) => Position.Finite(minute) && minute >= 0 && minute <= 1e9;
 
-        /// <summary>Rebuilds a saved ledger for the codec (C5c). Strict: any out-of-bound, inconsistent or
-        /// reused value refuses the whole ledger. Internal keeps it off the public surface; the multi-project
-        /// build enforces that. The shipped DLL compiles Core and Runtime into one assembly, so there it is a
-        /// convention: only the codec calls TryRestore.</summary>
         internal static bool TryRestore(long nextSequence, IReadOnlyList<ResearchOrderImage> openRows,
             IReadOnlyList<ResearchOrderImage> keptRows, IReadOnlyList<ResearchOrderImage> closedRows,
             out ResearchLedger? ledger, out string error)
@@ -327,7 +290,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>The saved fields of one order, for the codec. Restore validates every field.</summary>
     internal sealed class ResearchOrderImage
     {
         internal long Sequence { get; set; }

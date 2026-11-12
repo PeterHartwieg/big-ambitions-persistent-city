@@ -14,8 +14,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2b (docs/plans/f2-movement.md Decision 3): bodies never write logical state. F2c removed the walker leases and F2d
-// the traffic leases, so no write remains. Runtime cases use the production PhysicalPopulation with native scene doubles.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PresentationBoundaryTests
 {
@@ -55,14 +53,12 @@ public sealed class PresentationBoundaryTests
                 c.PlaceId = "shop"; c.Activity = Activity.Leisure; c.Phase = CitizenPhase.AtPlace;
                 c.NextEventMinute = c.ActivityUntilMinute = now + 30; c.Journey = null; c.MealOuting = null;
             }
-            // A saved two-person conversation: each stop names both members (OptionalStopScheduling.TryConversation).
             var members = new List<string> { "a", "b" };
             OptionalStopState Stop(Position at, Position facing) => new() { Kind = DwellKind.ChatOutsideVenue, PlaceId = "shop",
                 SpotId = "spot:" + at.Z, TargetId = "chat:a", Position = at, Facing = facing, ReturnPosition = Shop,
                 StartMinute = now - 1, EndMinute = now + 10, VisitMinute = now - 1, ResumeEventMinute = now + 30, Members = new List<string>(members) };
             state.Citizens.Single(c => c.Identity.Id == "a").OptionalStop = Stop(SpotA, SpotB);
             state.Citizens.Single(c => c.Identity.Id == "b").OptionalStop = Stop(SpotB, SpotA);
-            // Solo window-shopping stops on their own spots (perf fixture only).
             foreach (var c in state.Citizens.Where(c => c.Identity.Id.StartsWith("s", StringComparison.Ordinal)))
             {
                 int i = int.Parse(c.Identity.Id.Substring(1), CultureInfo.InvariantCulture);
@@ -83,12 +79,10 @@ public sealed class PresentationBoundaryTests
         }
         internal void Tick(float seconds = 0.3f) { Time.Next(seconds); Bodies.Update(); }
         internal PhysicalPedestrianBody Body(string id) => Pool.Active[id];
-        // The saved stops, their partners and the spot reservations Core plans against.
         internal string Logical() => string.Join("|", City.State.Citizens.OrderBy(c => c.Identity.Id, StringComparer.Ordinal).Select(c =>
             c.Identity.Id + ":" + c.Phase + ":" + c.PlaceId + ":" + c.NextEventMinute.ToString("R") + ":" + (c.OptionalStop == null ? "-"
                 : c.OptionalStop.SpotId + "," + c.OptionalStop.Position + "," + c.OptionalStop.StartMinute.ToString("R") + ","
                 + c.OptionalStop.EndMinute.ToString("R") + "," + c.OptionalStop.Cancelled + "," + string.Join("+", c.OptionalStop.Members))));
-        // A queue body standing on a's facade spot, bound as PlanQueues/TryJoinQueue would bind it.
         internal void StandQueuerOn(Position spot)
         {
             var q = City.State.Citizens.Single(c => c.Identity.Id == "q");
@@ -119,7 +113,6 @@ public sealed class PresentationBoundaryTests
         Assert.True(f.Pool.Active.ContainsKey("a"));
         Assert.False(f.A.OptionalStop!.Cancelled); Assert.False(f.B.OptionalStop!.Cancelled);
         Assert.Equal(before, f.Logical());
-        // The partner walked to its own spot as usual.
         Assert.Equal(SpotB, f.Body("b").Target);
     }
 
@@ -146,7 +139,6 @@ public sealed class PresentationBoundaryTests
         f.Tick();
         var body = f.Body("a");
         Assert.Equal(SpotA, body.Target); Assert.False(body.Agent.isStopped);
-        // The double never moves a body by itself: every second below is walking without progress.
         for (int i = 0; i < 25; i++) f.Tick(1f);
         Assert.True(body.Agent.isStopped); Assert.False(body.Agent.hasPath);
         Assert.NotEqual(SpotA, body.Position); Assert.Equal(f.A.OptionalStop!.Facing, body.Facing);
@@ -154,7 +146,6 @@ public sealed class PresentationBoundaryTests
         Assert.False(f.A.OptionalStop!.Cancelled); Assert.False(f.B.OptionalStop!.Cancelled);
         Assert.Equal(new[] { "a", "b" }, f.A.OptionalStop.Members); Assert.Equal(new[] { "a", "b" }, f.B.OptionalStop.Members);
         Assert.Equal(before, f.Logical());
-        // Saving observes bodies but still writes nothing for them.
         f.Bodies.ObserveForSave();
         Assert.Equal(before, f.Logical());
     }
@@ -170,7 +161,6 @@ public sealed class PresentationBoundaryTests
         List<KeyValuePair<string, int>> Reserved(params Position[] spots)
             => ((IEnumerable<KeyValuePair<string, int>>)standing.Invoke(f.Bodies, new object[] {
                 new DoorQueue("door", new Position(100, 0, -1), Shop, spots) })!).Where(p => p.Key == "a").ToList();
-        // The slot under the body is held; the stop's own spot, which it never reached, is not.
         Assert.Equal(new[] { new KeyValuePair<string, int>("a", 0) }, Reserved(new Position(100.3, 0, 0), new Position(110, 0, 0)));
         Assert.Empty(Reserved(SpotA));
     }
@@ -182,14 +172,12 @@ public sealed class PresentationBoundaryTests
         f.Tick();
         for (int i = 0; i < 25; i++) f.Tick(1f);
         var body = f.Body("a"); body.Character.transform.position = PhysicalPedestrianBody.Vector(new Position(102, 0, 0));
-        // Core cancels (for example for rain in RefreshOptionalStops); the body follows and only walks back.
         f.A.OptionalStop!.Cancelled = true; string before = f.Logical();
         f.Tick();
         Assert.Equal(Shop, body.Target); Assert.False(body.Agent.isStopped);
         Assert.Equal(before, f.Logical());
     }
 
-    // Opt-in offline component timing (docs/perf/f2b.md): set PC_F2B_MEASURE to an output file.
     [Fact]
     public void MeasureUpdateWithOptionalStopBodies()
     {
@@ -245,7 +233,6 @@ public sealed class PresentationBoundaryTests
         city.AdvanceTo(state.Minute + 1);
         var person = state.Citizens[0];
         Assert.Equal(CitizenPhase.WaitingForOpening, person.Phase);
-        // Captured by the event itself (sampled Dry, not the neutral Unknown), before any presentation query.
         Assert.True(source.Calls > 0); int reads = source.Calls;
         Assert.NotNull(person.W); Assert.True(person.W!.Queue);
         Assert.Equal(person.NextEventMinute, person.W.Boundary); Assert.Equal(WeatherSample.Dry, person.W.Weather);
@@ -266,32 +253,23 @@ public sealed class PresentationBoundaryTests
         string bytes = DevelopmentChain.Write(state);
         for (int i = 0; i < 3; i++) Assert.Null(city.QueueAtOpening(p, shop, now + i));
         Assert.Null(p.W); Assert.Equal(0, spy.Calls); Assert.Equal(bytes, DevelopmentChain.Write(state));
-        // A capture for another boundary (a stale wait) is not replaced either.
         var stale = new WeatherCommitment(now + 1, WeatherSample.Rain, 5); p.W = stale; bytes = DevelopmentChain.Write(state);
         Assert.Null(city.QueueAtOpening(p, shop, now));
         Assert.Same(stale, p.W); Assert.Equal(0, spy.Calls); Assert.Equal(bytes, DevelopmentChain.Write(state));
-        // With the event's capture the query answers from it alone.
         var captured = city.CaptureQueueWeather(p, now); Assert.Equal(1, spy.Calls); bytes = DevelopmentChain.Write(state);
         Assert.Equal(DwellPlanner.QueueAtOpening(p, shop, state.Seed, now, true, null, captured.Value), city.QueueAtOpening(p, shop, now));
         Assert.Same(captured, p.W); Assert.Equal(1, spy.Calls); Assert.Equal(bytes, DevelopmentChain.Write(state));
     }
 
-    // Every CitySimulator member that Runtime/Physical*.cs may reach through `simulation.`. Adding a member
-    // needs a reviewed change here. F2c removed TryHoldPhysicalDeparture and every walker lease call; F2d removed the
-    // traffic lease group, so every member is read-only. F2e adds HoldForPlayer.
     private static readonly string[] ReadOnlyMembers = {
         "State", "View", "ActiveJourneys", "ActiveJourneyIndexMatchesState", "ActivityObserved", "FindPlace", "OptionalStopStatus",
         "PositionOf", "QueueAtOpening", "SampleJourney", "TryGetTrafficPermission", "TryGetTrafficSignalGreen",
     };
-    // The removed lease surface (F2c, F2d). None of it may come back on CitySimulator or in Runtime.
     private static readonly string[] RemovedLeaseMembers = {
         "TryAcquirePhysicalJourney", "ObservePhysicalJourney", "ReleasePhysicalJourney", "IsPhysicalJourneyValid",
         "TrySamplePhysicalJourney", "TryHoldPhysicalDeparture",
     };
-    // Core's own logical rules (rain, closing, phase, availability, partners), run before a save exactly as
-    // PersistentCityMod runs them every frame. The answer does not depend on any body.
     private static readonly string[] LogicalRefreshMembers = { "RefreshOptionalStops" };
-    // F2e (Decision 4): the visible world's only write into Core, the bounded player hold, from one call site.
     private static readonly string[] PlayerHoldMembers = { "HoldForPlayer" };
 
     private static string Root()

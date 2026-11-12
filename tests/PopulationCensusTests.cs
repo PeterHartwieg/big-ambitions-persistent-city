@@ -18,13 +18,11 @@ public sealed class PopulationCensusTests
     {
         Identity = new CitizenIdentity { Id = id, Persona = persona }, HomeId = home, PlaceId = home, DayPlaceId = day
     };
-    // The census reads three facts per resident; ids only name the fixture rows.
     private static CensusResident Resident(string id, Persona persona, string home, string day = "")
         => PopulationCensusInput.CaptureResidents(new[] { Citizen(id, persona, home, day) })[0];
     private static CensusWorkplace Live(string work, double area, bool player = false, string study = "", int staff = -1)
         => new CensusWorkplace { WorkPlaceId = work, AreaSquareMetres = area, PlayerOwned = player, StudyPlaceId = study, NativeStaff = staff };
 
-    // Fixed mixed fixture whose figures are derived by hand in the comments of Mixed_fixture_arithmetic.
     private static PopulationCensusInput Mixed(IReadOnlyList<string>? stations = null) => new PopulationCensusInput
     {
         Places = new List<Place>
@@ -36,7 +34,6 @@ public sealed class PopulationCensusTests
         Workplaces = new List<CensusWorkplace>
         {
             Live("w1", 50, staff: 3), Live("w2", 700, staff: 9), Live("w3", 200, player: true), Live("s:work", 100, study: "s:study")
-            // w4 has no live record: area unknown, capacity zero, reported unmatched.
         },
         Residents = new List<CensusResident>
         {
@@ -55,31 +52,31 @@ public sealed class PopulationCensusTests
         Assert.False(census.Refused);
         Assert.Equal(3, census.HomeInteriors);
         Assert.Equal(13, census.Beds);
-        Assert.Equal(11, census.ResidentTarget); // floor(0.9 * 13)
+        Assert.Equal(11, census.ResidentTarget);
         Assert.Equal(HousingPolicy.Target(13), census.ResidentTarget);
         Assert.Equal(7, census.Residents);
         Assert.Equal(3, census.Households);
         Assert.Equal(0, census.OverBandHomes);
         Assert.Equal(5, census.Workplaces);
         Assert.Equal(1, census.PlayerOwnedWorkplaces);
-        Assert.Equal(10, census.PlayerOwnedCapacity); // 200 m2 band
-        Assert.Equal(4 + 24 + 0 + 6, census.WorkplaceCapacity); // w1, w2, w4 unknown, school staff
+        Assert.Equal(10, census.PlayerOwnedCapacity);
+        Assert.Equal(4 + 24 + 0 + 6, census.WorkplaceCapacity);
         Assert.Equal(1, census.UnknownAreaWorkplaces);
         Assert.Equal(1, census.UnmatchedWorkplaces);
-        Assert.Equal(1, census.OverCapacityWorkplaces); // r7 at zero-capacity w4
+        Assert.Equal(1, census.OverCapacityWorkplaces);
         Assert.Equal(2, census.NativeStaffWorkplaces);
         Assert.Equal(12, census.NativeStaff);
         Assert.Equal(1, census.StudyPlaces);
         Assert.Equal(12, census.StudyCapacity);
-        Assert.Equal(5, census.ResidentWorkers); // r1, r2, r5, r6, r7; retiree and student excluded
+        Assert.Equal(5, census.ResidentWorkers);
         Assert.Equal(1, census.ResidentWorkersAtPlayerOwned);
         Assert.Equal(1, census.Students);
         Assert.Equal(2, census.Stations);
-        Assert.Equal(27 - 4, census.CommuterDemand); // round(0.8 * 34) minus four eligible workers
-        Assert.Equal(14, census.VisitorCapacity); // 2 * 7
+        Assert.Equal(27 - 4, census.CommuterDemand);
+        Assert.Equal(14, census.VisitorCapacity);
         Assert.Equal(14, census.CommuterTarget);
         Assert.True(census.CommuterClamped);
-        Assert.Equal(1, census.DayVisitorsPerDay); // round(0.15 * 7)
+        Assert.Equal(1, census.DayVisitorsPerDay);
         Assert.Equal(4, census.DayVisitorPoolDemand);
         Assert.Equal(0, census.DayVisitorPoolTarget);
         Assert.True(census.PoolClamped);
@@ -112,7 +109,7 @@ public sealed class PopulationCensusTests
         var census = PopulationCensus.Compute(new PopulationCensusInput { Places = places, Residents = residents, StationIds = new[] { "subway:A" } });
         Assert.Equal(12, census.Beds);
         Assert.Equal(2, census.Households);
-        Assert.Equal(2, census.OverBandHomes); // 50 members each above 7 and 5 beds: flagged, never evicted
+        Assert.Equal(2, census.OverBandHomes);
         Assert.True(census.HouseholdsWithinBeds);
         Assert.Equal(0, census.Workplaces);
         Assert.Equal(0, census.CommuterDemand);
@@ -134,7 +131,7 @@ public sealed class PopulationCensusTests
             var census = PopulationCensus.Compute(Mixed(stations));
             Assert.True(census.StationsKnown);
             Assert.Equal(0, census.Stations);
-            Assert.Equal(23, census.CommuterDemand); // demand is reported, not materialized
+            Assert.Equal(23, census.CommuterDemand);
             Assert.Equal(0, census.CommuterTarget);
             Assert.Equal(0, census.DayVisitorPoolTarget);
             Assert.Equal(0, census.DayVisitorsPresent);
@@ -159,8 +156,8 @@ public sealed class PopulationCensusTests
         Assert.False(PopulationCensus.Compute(new PopulationCensusInput { Places = homes, Residents = exactResidents }).Refused);
         AssertRefused(new PopulationCensusInput { Places = homes, Residents = exactResidents.Append(Resident("x", Persona.Commuter, "h")).ToList() }, "residents");
 
-        Assert.False(PopulationCensus.Compute(new PopulationCensusInput { Places = new List<Place> { Home("h", 55556) } }).Refused); // target 50,000
-        AssertRefused(new PopulationCensusInput { Places = new List<Place> { Home("h", 55557) } }, "housing target"); // target 50,001
+        Assert.False(PopulationCensus.Compute(new PopulationCensusInput { Places = new List<Place> { Home("h", 55556) } }).Refused);
+        AssertRefused(new PopulationCensusInput { Places = new List<Place> { Home("h", 55557) } }, "housing target");
 
         var stations = Enumerable.Range(0, PopulationCensusPolicy.MaximumStations).Select(i => "subway:" + i).ToList();
         Assert.False(PopulationCensus.Compute(new PopulationCensusInput { StationIds = stations }).Refused);
@@ -184,7 +181,6 @@ public sealed class PopulationCensusTests
     [Fact]
     public void Persons_bound_holds_at_maximum_residents()
     {
-        // 50,000 residents can import at most 100,000 visitors: exactly the 150,000-person bound.
         var residents = Enumerable.Range(0, HousingPolicy.MaximumResidents).Select(i => Resident("r" + i, Persona.Commuter, "h")).ToList();
         var places = new List<Place> { Home("h", 55556) };
         places.AddRange(Enumerable.Range(0, 10000).Select(i => Work("w" + i.ToString("D5"))));
@@ -192,7 +188,7 @@ public sealed class PopulationCensusTests
         var census = PopulationCensus.Compute(new PopulationCensusInput { Places = places, Workplaces = live, Residents = residents, StationIds = new[] { "subway:A" } });
         Assert.False(census.Refused);
         Assert.Equal(100000, census.VisitorCapacity);
-        Assert.Equal(100000, census.CommuterTarget); // demand 192,000 clamped
+        Assert.Equal(100000, census.CommuterTarget);
         Assert.Equal(0, census.DayVisitorPoolTarget);
         Assert.Equal(PopulationCensusPolicy.MaximumPersons, census.PersistedPersons);
     }
@@ -245,7 +241,6 @@ public sealed class PopulationCensusTests
         Assert.True(census.CommuterTarget >= 0 && census.DayVisitorPoolTarget >= 0);
         Assert.Contains("check_households_within_beds=ok\n", census.Summary());
 
-        // Twenty workers in a 50 m2 shop exceed its band of four; reported, not corrected.
         var crowded = new PopulationCensusInput
         {
             Places = new List<Place> { Home("h", 30), Work("w"), Study("s") },
@@ -255,12 +250,11 @@ public sealed class PopulationCensusTests
         };
         var over = PopulationCensus.Compute(crowded);
         Assert.False(over.JobsWithinCapacity);
-        Assert.False(over.StudentsWithinCapacity); // study place without a school record has no capacity
+        Assert.False(over.StudentsWithinCapacity);
         Assert.Equal(1, over.OverCapacityWorkplaces);
         Assert.Equal(0, over.CommuterDemand);
         Assert.Contains("check_jobs_within_capacity=failed\n", over.Summary());
 
-        // Households can never exceed home interiors, so they never exceed beds of homes with capacity.
         var homesWithoutBeds = PopulationCensus.Compute(new PopulationCensusInput
         {
             Places = new List<Place> { Home("h", 0) }, Residents = new List<CensusResident> { Resident("r", Persona.Commuter, "h") }
@@ -285,7 +279,6 @@ public sealed class PopulationCensusTests
         Assert.Contains("player_owned_workplaces=1\nplayer_owned_capacity=10\nplayer_owned_flag=excluded-from-assignment\n", census.Summary());
         Assert.Contains("workplaces=4\nworkplace_capacity=34\n", census.Summary());
 
-        // Flipping that one business to non-player moves its capacity and worker into the assignable totals.
         input.Workplaces = input.Workplaces.Select(w => w.WorkPlaceId == "w3" ? Live("w3", 200) : w).ToList();
         var other = PopulationCensus.Compute(input);
         Assert.Equal(0, other.PlayerOwnedWorkplaces);
@@ -317,7 +310,7 @@ public sealed class PopulationCensusTests
         Assert.Equal(SaveCodec.MaxCitizens, HousingPolicy.MaximumResidents);
         Assert.Equal(PopulationCensusPolicy.MaximumPersons, HousingPolicy.MaximumResidents + PopulationCensusPolicy.MaximumVisitors);
         Assert.Equal(PopulationCensusPolicy.MaximumPersons, SaveCodec.MaxCitizens * 3);
-        Assert.Equal(3, Enum.GetValues(typeof(MealKind)).Length - 1); // breakfast, lunch, dinner
+        Assert.Equal(3, Enum.GetValues(typeof(MealKind)).Length - 1);
         Assert.False(PopulationCensusPolicy.VisitorsDrive);
         Assert.True(PopulationCensusPolicy.ExcludePlayerOwnedWorkplaces);
     }
@@ -325,20 +318,18 @@ public sealed class PopulationCensusTests
     [Fact]
     public void Business_established_at_a_saved_vacant_address_is_counted_from_the_load_catalogue()
     {
-        // Saved city: the address was vacant, so only its dormant shop entrance was persisted.
         var saved = new List<Place> { Home("h", 4), new Place { Id = "address:Main:1:shop", Kind = PlaceKind.Shop, Capacity = 16 } };
-        // Before reload the player established a business there; the load-time read now has its Work role.
         var fresh = new List<Place> { Home("h", 4), new Place { Id = "address:Main:1:shop", Kind = PlaceKind.Shop, Capacity = 16 }, Work("address:Main:1:work") };
         var live = new List<CensusWorkplace> { Live("address:Main:1:work", 120, player: true) };
         var residents = new List<CensusResident> { Resident("r1", Persona.Commuter, "h") };
         var stale = PopulationCensus.Compute(new PopulationCensusInput { Places = saved, Workplaces = live, Residents = residents, StationIds = new[] { "subway:A" } });
-        Assert.Equal(0, stale.Workplaces); // the defect: the business silently disappears
+        Assert.Equal(0, stale.Workplaces);
         var census = PopulationCensus.Compute(new PopulationCensusInput { Places = PopulationCensusInput.CapturePlaces(fresh), Workplaces = live, Residents = residents, StationIds = new[] { "subway:A" } });
         Assert.Equal(1, census.Workplaces);
         Assert.Equal(1, census.PlayerOwnedWorkplaces);
         Assert.Equal(6, census.PlayerOwnedCapacity);
         Assert.Equal(0, census.UnmatchedWorkplaces);
-        Assert.Equal(1, census.Households); // saved assignments join the fresh catalogue by stable ID
+        Assert.Equal(1, census.Households);
         Assert.Contains("address:Main:1:work area=120 capacity=6 study=0 assigned=0 owner=player", census.WorkplaceDetail());
     }
 
@@ -353,7 +344,6 @@ public sealed class PopulationCensusTests
             Residents = PopulationCensusInput.CaptureResidents(citizens), StationIds = new[] { "subway:A" }
         };
         string before = PopulationCensus.Compute(input).Summary();
-        // The simulation keeps running after capture: moves, job changes and capacity edits.
         citizens[0].HomeId = "h2"; citizens[0].DayPlaceId = ""; citizens.Add(Citizen("r3", Persona.Commuter, "h3"));
         foreach (var place in places) place.Capacity = 99;
         Assert.Equal(before, PopulationCensus.Compute(input).Summary());

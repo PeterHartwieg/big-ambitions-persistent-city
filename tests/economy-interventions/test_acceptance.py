@@ -1,4 +1,3 @@
-"""Fast tests of the independent acceptance reader's red-path and cost-box proof."""
 import copy
 import itertools
 import json
@@ -28,7 +27,6 @@ class AcceptanceTests(unittest.TestCase):
         a = run({"a": 50}, {"a": 150})
         b = run({"a": 50}, {"a": 100})
         self.assertGreater(dominance_floor(a, b, 2, {"a": 100}), 0)
-        # Sufficient demand loss removes the universal dominance certificate.
         c = run({"a": 10}, {"a": 150})
         self.assertLess(dominance_floor(c, b, 2, {"a": 100}), 0)
 
@@ -48,7 +46,6 @@ class AcceptanceTests(unittest.TestCase):
         self.assertGreater(b["high"], 5)
 
     def test_household_thresholds_are_the_rerun_control_band_rounded_outward(self):
-        # Pinned: a rerun that changes the canonical control band must re-derive the thresholds.
         report = json.loads((EVIDENCE / "f6h-f6j-rerun-acceptance.json").read_text())
         household = report["householdControlSeedBands"]
         self.assertEqual(HOUSEHOLD_THRESHOLDS, derive_household_thresholds(household))
@@ -73,7 +70,6 @@ class AcceptanceTests(unittest.TestCase):
         self.assertAlmostEqual(0.01, menu["unaffordableRefusalShare"]["mean"])
 
     def test_capacity_and_meal_quantity_read_meals_not_items_after_f6j(self):
-        # 50 meals/hour carrying 80 items/hour is below a 60/hour meal capacity.
         def day(meals, items, cents, peak_meals, peak_items):
             shop = {"meals": meals, "mealsByCheckoutHour": [peak_meals], "byHour": [peak_items], "offers": {"price": 0, "considered": 100}}
             return {"own": {"purchases": items, "revenueUnits": items * cents, "shops": [shop]}, "share": {"city": {"home": 1000 - meals}}}
@@ -91,8 +87,6 @@ class AcceptanceTests(unittest.TestCase):
 
 
     def test_extras_change_splits_into_main_mix_and_within_main(self):
-        # Control: 50 meals of main a (1 extra each), 50 of b (none). Arm: 20 of a, 60 of b, a keeps 1 extra:
-        # all of the drop is mix. A second arm halves a's extras at control's mix: all of it is within-main.
         def arm(tickets):
             meals = sum(t["meals"] for t in tickets); items = meals + sum(t["extras"] for t in tickets)
             shop = {"meals": meals, "mealsByCheckoutHour": [1], "byHour": [1], "offers": {"price": 0, "considered": 1}, "tickets": tickets}
@@ -110,7 +104,6 @@ class AcceptanceTests(unittest.TestCase):
         self.assertAlmostEqual(-0.25, within["extrasPerMealChangeWithinMain"]["mean"])
 
     def test_staffing_gate_counts_meals_not_items(self):
-        # A cut that serves more meals with fewer extras sells fewer items; it must still fail the gate.
         def run(meals, items, seed):
             hours = [0] * 24; hours[12] = meals
             shop = {"meals": meals, "mealsByCheckoutHour": hours, "byHour": [0] * 12 + [items] + [0] * 11}

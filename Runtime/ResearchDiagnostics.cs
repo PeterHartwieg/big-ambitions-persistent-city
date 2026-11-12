@@ -10,23 +10,17 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>C5f agency messages (plan C5 section 3.7). After the native daily bill, the agency contact the order
-    /// was placed with gets one native TextMessage: the delivery message for Paid, the decline message for Declined.
-    /// No ledger, money or campaign change. Main thread only.</summary>
     internal static class ResearchMessages
     {
         private const BindingFlags Instance = BindingFlags.Public | BindingFlags.Instance;
         private const BindingFlags Static = BindingFlags.Public | BindingFlags.Static;
         private static bool contained;
 
-        /// <summary>Empty when the contract check passed.</summary>
         internal static string Status { get; private set; } = "Research messages are not checked.";
         internal static bool ContractPassed { get; private set; }
         internal static int Sent { get; private set; }
         internal static int Skipped { get; private set; }
 
-        /// <summary>The native contact message members, with exact signatures, read by reflection (plan C5 section 3.6).
-        /// A mismatch keeps research unavailable for the session with a status line.</summary>
         internal static bool Check()
         {
             string? refusal;
@@ -64,7 +58,6 @@ namespace PersistentCity.Runtime
             return field != null && field.FieldType == fieldType ? null : type.Name + "." + name + " changed.";
         }
 
-        /// <summary>Sends one notice. Contained: a failure is logged once and native RunDaily continues.</summary>
         internal static void Send(ResearchNotice notice)
         {
             try
@@ -103,8 +96,6 @@ namespace PersistentCity.Runtime
             return null;
         }
 
-        // The contact native Contact.GetContact keeps for the agency registration (same id and description), else the
-        // contact at the agency's address. Never creates a contact.
         private static Contact? AgencyContact(GameInstance save, string agency)
         {
             var contacts = save.Contacts;
@@ -119,9 +110,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>C5f `pcresearch` console lines, a separate command name so the census file is untouched:
-    /// `pcresearch status`, `pcresearch orders`, `pcresearch report &lt;id&gt;` (numbers only for Paid) and
-    /// `pcresearch window open|close`. Read only; work only on request.</summary>
     public sealed partial class PopulationRuntime
     {
         private const string ResearchUsage = "Use: pcresearch status | pcresearch orders | pcresearch report <id> | pcresearch window open|close";
@@ -154,9 +142,6 @@ namespace PersistentCity.Runtime
         private ResearchLedger? researchSnapshot;
         private CitySimulator? researchSnapshotCity;
         private float researchSnapshotUntil;
-        /// <summary>For the open research window: a detached copy of the attached city's ledger (F9e), or null. Taken at most
-        /// every 0.25 s while the window draws, so OnGUI does not copy the ledger on every call; the window itself rebuilds at
-        /// most once a second.</summary>
         private ResearchLedger? ResearchLedgerNow
         {
             get
@@ -169,10 +154,8 @@ namespace PersistentCity.Runtime
                 return researchSnapshot;
             }
         }
-        /// <summary>For console commands: a fresh detached copy of the attached city's ledger, or null.</summary>
         private ResearchLedger? ResearchLedgerFresh => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
             ? null : CityViewReports.ResearchSnapshot(simulation.View);
-        /// <summary>The attached city's research through its read-only view, or null.</summary>
         private IResearchView? ResearchViewNow => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
             ? null : simulation.View.Research;
 

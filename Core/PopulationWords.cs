@@ -3,9 +3,6 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F5h (#92): the food panel's words for persons, households, workplaces and visitors. Words only: every
-    /// number is one the panel already printed (residents, visitors, people with meals), and the rest are fixed sentences
-    /// about rules the city follows. No new count, scan or saved field.</summary>
     public static class PopulationWords
     {
         public const string Households = "Residents who share a home form one household.";
@@ -14,12 +11,10 @@ namespace PersistentCity.Core
         public const string NoStation = "No visitors come to this city: it has no subway station to arrive through.";
         public const string Wallets = "Each person has their own wallet for food at home and prepared meals; residents also pay their bills from it.";
 
-        /// <summary>The panel's first line: day, residents, visitors and the people the food market serves.</summary>
         public static string Headline(int day, int residents, int visitors, int peopleWithMeals)
             => "Day " + N(day) + " · " + N(residents) + (residents == 1 ? " resident · " : " residents · ")
                 + N(visitors) + (visitors == 1 ? " visitor · " : " visitors · ") + N(peopleWithMeals) + (peopleWithMeals == 1 ? " person with meals" : " people with meals");
 
-        /// <summary>The population lines below the headline. <paramref name="portals"/> is the city's saved portal count.</summary>
         public static string Lines(int visitors, int portals)
         {
             var text = new StringBuilder(512);

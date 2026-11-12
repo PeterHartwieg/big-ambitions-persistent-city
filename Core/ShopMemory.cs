@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Revision 1 executes bounded B experience/loyalty; unknown revisions refuse.</summary>
     public sealed class PopulationCapabilities
     {
         public string Code { get; set; } = "B";
@@ -47,7 +46,6 @@ namespace PersistentCity.Core
         public List<ShopMemory> Entries { get; set; } = new List<ShopMemory>();
     }
 
-    /// <summary>Canonical ASCII contract; no capture, decay, eviction or choice contribution in B0.</summary>
     public static class MemoryWire
     {
         public const string Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -85,7 +83,6 @@ namespace PersistentCity.Core
         }
         public static ConsumerMemory Decode(string text)
         {
-            // Bound length and arity before creating any entry or splitting strings.
             CheckWire(text);
             var memory = new ConsumerMemory();
             if (string.CompareOrdinal(text, 1, "-------", 0, 7) != 0) memory.Watermark = new ExperienceWatermark {
@@ -96,7 +93,6 @@ namespace PersistentCity.Core
             Check(memory, MaximumDay, null);
             return memory;
         }
-        /// <summary>Streaming shape precheck without allocating the four entry objects a second time.</summary>
         public static void CheckWire(string text)
         {
             if (text == null || text.Length < 8 || text.Length > 48 || (text.Length - 8) % 10 != 0 || text[0] != '1')

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Policy in simulation minutes; green intervals are half-open and repeat without polling.</summary>
     public sealed class TrafficSignalSchedule
     {
         public double CycleMinutes { get; set; }
@@ -16,9 +15,6 @@ namespace PersistentCity.Core
             if (GreenDurationMinutes >= CycleMinutes) return time;
             double resolution = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(time) + 1) - time;
             if (CycleMinutes < resolution) return double.PositiveInfinity;
-            // One canonical boundary per cycle: reconstructing it from the query time
-            // makes the same pending green drift through cancellation as Clock advances.
-            // Reduce the origin first so a distant phase cannot overflow/cancel the clock.
             double origin = PhaseOffsetMinutes % CycleMinutes;
             if (origin < 0) origin += CycleMinutes;
             double untilWrap = CycleMinutes - GreenStartMinutes;
@@ -28,15 +24,11 @@ namespace PersistentCity.Core
             {
                 double start = origin + cycle * CycleMinutes;
                 double next = origin + (cycle + 1) * CycleMinutes;
-                // No representable adjacent boundaries means no provable green window.
                 if (double.IsNaN(start) || double.IsInfinity(start) || double.IsNaN(next)
                     || double.IsInfinity(next) || next <= start) return double.PositiveInfinity;
-                // Division can select the adjacent cycle exactly at a rounded boundary.
                 if (time < start) { cycle--; continue; }
                 if (time >= next) { cycle++; continue; }
                 double end = start + GreenDurationMinutes;
-                // A positive green window always includes its exact canonical start,
-                // even when no later timestamp fits inside that very short window.
                 return time == start || time < end ? time : next;
             }
             return double.PositiveInfinity;
@@ -54,15 +46,12 @@ namespace PersistentCity.Core
         public TrafficSignalSchedule? Signal { get; set; }
     }
 
-    /// <summary>Nominal coordinates address committed route geometry, never elapsed simulation time.</summary>
     public sealed class TrafficRouteLeg
     {
         public int LinkId { get; set; }
         public double StartNominalMinutes { get; set; }
         public double EndNominalMinutes { get; set; }
-        /// <summary>Zero derives traversal time from the nominal geometry span; stored snapshots use an explicit positive value.</summary>
         public double FreeFlowMinutes { get; set; }
-        /// <summary>Directed spatial coverage within the entire link, independent of nominal route timing.</summary>
         public double StartLinkFraction { get; set; }
         public double EndLinkFraction { get; set; } = 1;
     }
@@ -88,19 +77,14 @@ namespace PersistentCity.Core
             IsCompleted = completed; CompletedAt = completedAt; SignalGreen = signalGreen; LinkEndNominalMinutes = linkEndNominalMinutes;
         }
         public string VehicleId { get; }
-        /// <summary>-1 while waiting outside finite link storage.</summary>
         public int RouteIndex { get; }
         public int? LinkId { get; }
         public double NominalMinutes { get; }
         public double MaximumNominalMinutes { get; }
-        /// <summary>Advisory only. Crossing ownership changes only when AdvanceTo processes the transfer.</summary>
         public bool CanCrossBoundary { get; }
         public bool IsCompleted { get; }
         public double? CompletedAt { get; }
-        /// <summary>F2d: the occupied link's kernel signal is green now (true without a signal or a link). Read-only,
-        /// for the visible car's phase-mismatch count; never a native signal change.</summary>
         public bool SignalGreen { get; }
-        /// <summary>F2d: route minutes at the far end of the occupied link's leg; NaN without a link.</summary>
         public double LinkEndNominalMinutes { get; }
     }
 
@@ -111,16 +95,12 @@ namespace PersistentCity.Core
         public int LinkId { get; }
         public int Occupancy { get; }
         public int WaitingVehicles { get; }
-        /// <summary>Read-only local queue estimate, not a promise about future arrivals or spillback.</summary>
         public double DelayMinutes { get; }
         public bool Closed { get; }
     }
 
-    // Explicit DTOs include the interrupted event cursor. Persist through the caller's versioned namespace.
     public sealed class TrafficKernelState
     {
-        /// <summary>Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature
-        /// schema constants; change the format in place.</summary>
         public const int CurrentSchema = 1;
         public int Schema { get; set; } = CurrentSchema;
         public double Clock { get; set; }

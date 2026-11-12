@@ -67,8 +67,6 @@ public sealed class TransportRoadSearchParityTests
     {
         var nodes = new[] { Node(0, 0, new[] { 1, 2 }), Node(20, 0, new[] { 3 }),
             Node(10, 0, new[] { 3 }), Node(40, 0) };
-        // This rate makes both heuristic and edge metres-per-minute exactly one,
-        // so priorities are exactly (40,20,1) and (40,10,2).
         double rate = 40.0 / 3.6;
         var graph = new TransportRoadGraph(nodes, rate);
         var baseline = new BaselineRoadGraph(nodes, rate);
@@ -166,8 +164,6 @@ public sealed class TransportRoadSearchParityTests
     {
         Result Run(bool baseline, int goal, int limit)
         {
-            // The disconnected goal lets the leftover old priority actually pop;
-            // a reachable goal would return before that entry became observable.
             var nodes = CostUpdateNodes().Concat(new[] { Node(60, 0) }).ToArray();
             bool changed = false;
             bool Clear(Position from, Position to)
@@ -245,7 +241,6 @@ public sealed class TransportRoadSearchParityTests
             invoked = true;
             AssertSame(nestedExpected, Capture(graph.Plan, 2, 4));
         }
-        // Skip initial endpoint checks so the disabled callback enters during an active search.
         int disabledCalls = 0;
         var actual = Capture(graph.Plan, 0, 4,
             _ => { if (callbackKind == 0 && ++disabledCalls == 3) Reenter(); return false; },
@@ -328,8 +323,6 @@ public sealed class TransportRoadSearchParityTests
         }
     }
 
-    // Independent retained oracle: original TransportRoadGraph from source-before,
-    // including its callback order, exact tuple frontier and path-length limit.
     private sealed class BaselineRoadGraph
     {
         private readonly IReadOnlyList<TransportRoadNode> nodes;
@@ -347,7 +340,6 @@ public sealed class TransportRoadSearchParityTests
             if (!Usable(start) || !Usable(goal) || start == goal || disabled(start) || disabled(goal)) return null;
             var distance = new Dictionary<int, double> { [start] = 0 };
             var predecessor = new Dictionary<int, int>();
-            // 40 km/h is the maximum edge speed, so Euclidean remaining time is a consistent lower bound.
             double Heuristic(int node) => Position.Distance(nodes[node].Position, nodes[goal].Position) / (40.0 / 3.6 / clockRate);
             var frontier = new SortedSet<(double Estimate, double Cost, int Node)> { (Heuristic(start), 0, start) };
             int expanded = 0;
@@ -382,7 +374,6 @@ public sealed class TransportRoadSearchParityTests
                     if (!Usable(next) || disabled(next)) continue;
                     var target = nodes[next];
                     double metres = Position.Distance(node.Position, target.Position);
-                    // Reject corrupt/coarse long-distance links, rather than interpreting them as vehicle teleports.
                     if (!Position.Finite(metres) || metres <= 0.000001 || metres > 60 || !clear(node.Position, target.Position)) continue;
                     double cost = current.Cost + metres / (Math.Min(40, node.KilometresPerHour) / 3.6 / clockRate);
                     if (distance.TryGetValue(next, out double old))

@@ -7,18 +7,12 @@ using Object = UnityEngine.Object;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Save-scoped, main-thread discovery. Captures loaded hierarchies (including inactive
-    /// objects) in small slices, then retains the inventory until an actual lifecycle invalidation.</summary>
     internal sealed class RouteObjectDiscovery : IRouteObjectSource, IDisposable
     {
         private const int MaximumSteps = 2048;
         private const double BudgetMilliseconds = 1;
         private const double PausedInitializationBudgetMilliseconds = 16;
-        // Do not fragment branches merely because the last native call crosses the 1 ms
-        // scheduling budget. Native testing showed that doing so triples traversal work.
         private const double SplitThresholdMilliseconds = 4;
-        // A transient native stall must not permanently fragment the whole city over a long
-        // session. Hints are only an optimization; correctness never depends on retaining one.
         private const int MaximumSplitHints = 256;
         private GameObject anchor;
         private readonly List<Scene> scenes = new List<Scene>();
@@ -47,8 +41,6 @@ namespace PersistentCity.Runtime
         }
         public RouteObjectDiscovery()
         {
-            // Unity omits this special scene from SceneManager's scene list. Own one harmless
-            // anchor so its roots are included too; never change the lifetime of a game object.
             anchor = CreateAnchor();
             SceneManager.sceneLoaded += SceneLoaded;
             SceneManager.sceneUnloaded += SceneUnloaded;
@@ -72,7 +64,6 @@ namespace PersistentCity.Runtime
             Ready = scanning = false; restartRequested = membershipChanged = true; Revision++;
         }
 
-        /// <summary>Keep population preflight closed until a fresh, complete inventory is available.</summary>
         public void RequestSweep() { Ready = false; restartRequested = membershipChanged = true; }
         private void SceneLoaded(Scene scene, LoadSceneMode mode) => RequestSweep();
         private void SceneUnloaded(Scene scene) => RequestSweep();
@@ -80,15 +71,9 @@ namespace PersistentCity.Runtime
         public void Step(bool preparingPausedCity = false)
         {
             if (disposed) throw new ObjectDisposedException(nameof(RouteObjectDiscovery));
-            // The map is static during ordinary movement. Inspect only retained references
-            // after loading; elapsed time must never trigger another world traversal.
-            // A removal can be one half of a replacement, so rediscover before publishing it.
             if (Prune(doors) | Prune(stations)) RequestSweep();
             if (!restartRequested && !scanning) return;
             long started = Stopwatch.GetTimestamp();
-            // Before the first complete inventory, population processing is fenced.
-            // A slow rendered load should not stretch this preparation over hundreds
-            // of frames. Keep the same hard work bound for lifecycle-triggered discovery.
             double budget = preparingPausedCity && Sweeps == 0 ? PausedInitializationBudgetMilliseconds : BudgetMilliseconds;
             bool changed = false;
             if (restartRequested) { restartRequested = false; Begin(); }
@@ -101,8 +86,6 @@ namespace PersistentCity.Runtime
                     if (rootIndex < roots.Count)
                     {
                         var root = roots[rootIndex++];
-                        // Split the top two levels even on the first sweep; large city roots
-                        // commonly contain most of the world below them.
                         if (root != null) pending.Push(new Cursor(root.transform, 2));
                     }
                     else if (sceneIndex < scenes.Count)
@@ -111,8 +94,6 @@ namespace PersistentCity.Runtime
                         roots.Clear(); rootIndex = 0;
                         if (scene.IsValid() && scene.isLoaded)
                         {
-                            // Root enumeration is native and cannot be preempted. Reuse capacity and
-                            // include its cost in slice diagnostics; no recursive native calls here.
                             if (roots.Capacity < scene.rootCount) roots.Capacity = scene.rootCount;
                             scene.GetRootGameObjects(roots);
                         }
@@ -138,9 +119,6 @@ namespace PersistentCity.Runtime
                     }
                     else
                     {
-                        // Native traversal is substantially cheaper than crossing the managed/native
-                        // boundary for every irrelevant transform. Slow branches are split further
-                        // on the next sweep. A single native call remains a soft-budget operation.
                         cursor.Node.GetComponentsInChildren(true, foundDoors);
                         cursor.Node.GetComponentsInChildren(true, foundStations);
                         if (split.Count < MaximumSplitHints && Elapsed(queryStarted) > SplitThresholdMilliseconds && cursor.Node.childCount > 0)
@@ -151,17 +129,11 @@ namespace PersistentCity.Runtime
                     foreach (var station in foundStations) if (Included(station)) changed |= Add(stations, station);
                     foundDoors.Clear(); foundStations.Clear();
                     if (!descend) continue;
-                    // Snapshot siblings in this frame. Live child indices across frames can skip
-                    // an entire unseen gate subtree when an earlier sibling is destroyed/moved.
-                    // Copying one parent's children is another soft-budget operation; lists are
-                    // reused with bounded retained capacity. Do not recursively copy descendants.
                     cursor.Children = childLists.Count == 0 ? new List<Transform>() : childLists.Pop();
                     int children = cursor.Node.childCount;
                     for (int i = 0; i < children; i++) cursor.Children.Add(cursor.Node.GetChild(i));
                     cursor.Child = 0;
                 }
-                // References stay valid across sibling reorder/removal. Visit a reparented live
-                // child even if its original parent was destroyed after this snapshot.
                 if (cursor.Child < cursor.Children!.Count)
                 {
                     var child = cursor.Children[cursor.Child++];
@@ -174,8 +146,6 @@ namespace PersistentCity.Runtime
             if (changed && scanning) Ready = false;
             if (!scanning && worked)
             {
-                // Publish one complete generation, never a different subset on each slice.
-                // A synchronous invalidation during the final native read wins over completion.
                 if (!restartRequested && membershipChanged)
                 {
                     Doors = new FenceDoor[doors.Count]; doors.Values.CopyTo(Doors, 0);
@@ -206,8 +176,6 @@ namespace PersistentCity.Runtime
         }
         private static bool Included(Component component) => component != null
             && component.gameObject.scene.IsValid() && component.gameObject.scene.isLoaded
-            // Native parity fixtures: DontSaveInBuild and DontUnloadUnusedAsset alone are
-            // still returned by FindObjectsByType. DontSaveInEditor is its exclusion bit.
             && (component.hideFlags & HideFlags.DontSaveInEditor) == 0
             && (component.gameObject.hideFlags & HideFlags.DontSaveInEditor) == 0;
         private static GameObject CreateAnchor()

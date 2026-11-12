@@ -11,12 +11,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>Offline model of the E5b3 Runtime protocol (Runtime/FoodContractDiagnostics.cs and the call sites in
-/// NativeFoodMarket, NativeFoodCandidates and NativeFoodOwnership) over doubles of the native objects. Every decision
-/// goes through the same Core types the game build uses: <see cref="FoodContractCoordinator"/>, the rechecks, the
-/// reconciliation, <see cref="FoodContractBoundary"/>, <see cref="FoodAuthority"/> and the E5a builder. Only the native
-/// reads are doubled. Lists are the real BCL List, whose _version moves like the game's; furniture uses a Mono-like
-/// dictionary double (see FoodContractStampTests).</summary>
 internal sealed class ContractWorld
 {
     public const string Burger = FoodProducts.Burger, HotDog = FoodProducts.HotDog, Croissant = FoodProducts.Croissant;
@@ -31,7 +25,6 @@ internal sealed class ContractWorld
         public string[]? itemsThatCanShowcase, itemsToProduce, itemsWhitelist;
         public List<string>? tags = new List<string>();
         public int cargoCapacity = 1;
-        // Mirrors LoadedCatalogueEligibilityReader.Facts field for field.
         public LoadedStockFacts Facts()
         {
             var valid = tags != null && tags.Count <= LoadedStockLimits.Rows ? tags : null;
@@ -54,7 +47,6 @@ internal sealed class ContractWorld
     public sealed class Cargo { public string itemName = ""; public int amount; public List<Cargo>? nested = new List<Cargo>(); }
     public sealed class Holder { public string id = "", itemName = ""; public List<Cargo> cargoInstances = new List<Cargo>(); }
     public sealed class Price { public string itemName = ""; public float price; }
-    /// <summary>Mono-like dictionary: _version moves on add, indexer set and remove.</summary>
     public sealed class Furniture
     {
         private readonly Dictionary<string, Holder> inner = new Dictionary<string, Holder>(StringComparer.Ordinal);
@@ -75,7 +67,6 @@ internal sealed class ContractWorld
         public string BusinessTypeName = ShopType;
         public bool Rented = true, Established = true, ForRent, Closed, LiveCustomers;
         public FoodAuthority Row = new FoodAuthority();
-        // Model of the reader's own image stamp: a mismatch at a visit requeues a rebuild (E5b2).
         public ShopContractStamp ReaderStamp;
         public bool Queued;
         public string Signature => "business:" + Key;
@@ -106,17 +97,13 @@ internal sealed class ContractWorld
     private readonly Queue<Shop> rebuilds = new Queue<Shop>();
     public long Hour;
     public bool Active = true;
-    /// <summary>Runtime's warming mode after a load: E5b1 rules until every shop has an image; acquisitions deferred.</summary>
     public bool Warming;
     public int MenuLimit = FoodMenuPolicy.LiveMaximumOffers;
     public int CatalogueWaits, PriceOnlyRefusals;
     public int Recopies, FullRebuilds, Discards, Publishes, GateRuns, RecoveryUnits, MaxRecoveriesInFrame, Reconciliations;
     public FoodReconciliationRefusal LastReconciliation;
-    /// <summary>Runs between the passes's start stamp and its publish (a write during a multi-frame pass).</summary>
     public Action<Shop>? DuringPass;
-    /// <summary>Runs after the drain and before the commit gates (a write between drain and commit).</summary>
     public Action? AfterDrain;
-    /// <summary>Runs inside a checkout after native setup, before the second recheck.</summary>
     public Action? AfterNativeSetup;
 
     public ContractWorld(long hour = 100)
@@ -159,38 +146,29 @@ internal sealed class ContractWorld
     }
     public Shop Find(string key) => Shops.Single(s => s.Key == key);
 
-    /// <summary>E5b5 Decision 12: every runtime capability passed at city start (Runtime contractCapabilities.AllPassed).</summary>
     public bool CapabilitiesPassed = true;
-    /// <summary>The market's product policy (Runtime ProductPolicySource); null stands for an unset source.</summary>
     public FoodProductPolicy? Policy;
     public bool DynamicAcquisition => Active && !Warming && CapabilitiesPassed;
-    /// <summary>When set, the real E5b4 source over this world's catalogue revision supplies the policy (Runtime wiring).</summary>
     public FoodProductPolicySource? PolicySource;
     private FoodProductPolicy? observedPolicy;
     private readonly FoodLivePolicy livePolicy = new FoodLivePolicy();
-    // Runtime CurrentProductPolicy: a rebuilding catalogue keeps the last policy that had loaded names.
     private FoodProductPolicy CurrentPolicy => livePolicy.Resolve(PolicySource?.Current ?? Policy ?? FoodProductPolicy.OriginalThree,
         Catalogue.Names == null);
-    // Runtime LiveMenu: an all-original menu never reads the policy.
     public FoodLiveMenuRefusal LiveMenu(Shop s)
         => FoodMenuPolicy.LiveMenu(s.Menu, s.Menu.All(FoodProducts.Known) || !DynamicAcquisition ? null : CurrentPolicy);
-    // Runtime LiveMenu(registration): a shop the save already owns keeps service through startup (warming).
     public FoodLiveMenuRefusal ServiceMenu(Shop s)
     {
         var menu = LiveMenu(s);
         if (menu != FoodLiveMenuRefusal.OriginalThreeGuard || !Warming || !s.Row.Managed) return menu;
         return FoodMenuPolicy.LiveMenu(s.Menu, CurrentPolicy, loadedNamesPending: true);
     }
-    /// <summary>Runtime AwaitingValidation (StartupHeld): ownership kept, but no read, capture or sale until validated.</summary>
     public bool AwaitingValidation(Shop s) => Warming && s.Row.Managed && LiveMenu(s) == FoodLiveMenuRefusal.OriginalThreeGuard;
-    // E5b5 SupportedBusiness: Core LiveMenu (the original-three guard only while dynamic acquisition is off).
     public bool SupportedBusiness(Shop s)
     {
         if (!s.Rented || !s.Established || s.ForRent) return false;
         if (ServiceMenu(s) != FoodLiveMenuRefusal.None) return false;
         return Types.TryGetValue(s.BusinessTypeName, out var t) && t.simulator == typeof(FullService) && !t.hasEntranceFee && CachedBags(t);
     }
-    // Runtime's authoredBagPolicies: read once per type, re-cached only by a business-type re-copy or RefreshBagPolicy.
     public readonly Dictionary<BusinessType, bool> BagPolicies = new Dictionary<BusinessType, bool>();
     private bool CachedBags(BusinessType t)
     {
@@ -208,7 +186,6 @@ internal sealed class ContractWorld
         if (!SupportedBusiness(s)) { RefuseRemovedProduct(s); return false; }
         return s.Menu.Count <= MenuLimit && ContractAdmits(s);
     }
-    // Runtime RefuseRemovedProduct: a product leaving the loaded image or the Food class under an owned or wanted shop.
     private void RefuseRemovedProduct(Shop s)
     {
         if (!DynamicAcquisition || !s.Row.Managed && !s.Row.Desired) return;
@@ -217,7 +194,6 @@ internal sealed class ContractWorld
         if (!Refused.ContainsKey(s.Key)) Refused[s.Key] = Hour;
         Coordinator.Refuse(s.Key, Hour);
     }
-    // Runtime ContractCandidate: the live food-shop shape without the cached bag policy.
     public bool Candidate(Shop s) => s.Rented && s.Established && !s.ForRent && LiveMenu(s) == FoodLiveMenuRefusal.None;
     private bool Interest(Shop s) => s.Row.Managed || s.Row.Desired || Candidate(s);
     private void RefuseStructural(Shop s)
@@ -241,21 +217,19 @@ internal sealed class ContractWorld
         }
         return true;
     }
-    /// <summary>Replaces the registration at a shop's place (a new business lifetime): Runtime IndexContractKey.</summary>
     public Shop ReplaceRegistration(Shop old)
     {
         var s = new Shop { Key = old.Key, Menu = new List<string>(old.Menu), Prices = old.Prices.Select(p => new Price { itemName = p.itemName, price = p.price }).ToList() };
         foreach (var h in old.Holders.Values)
             s.Holders.Add(new Holder { id = h.id, itemName = h.itemName, cargoInstances = h.cargoInstances.Select(c => new Cargo { itemName = c.itemName, amount = c.amount }).ToList() });
         s.Row = old.Row;
-        s.Row.Observe(s.Signature, false, Hour, reset: true); // FoodAuthority's replacement rule (generation + 1)
+        s.Row.Observe(s.Signature, false, Hour, reset: true);
         Shops[Shops.IndexOf(old)] = s;
-        Refused.Remove(old.Key); // refusedContracts is keyed by the old registration object
+        Refused.Remove(old.Key);
         Coordinator.Remove(old.Key);
         return s;
     }
 
-    // Existing discovery visit: the reader's stamp check, then Observe with SupportedMenu.
     public void Visit(Shop s)
     {
         if (!s.Queued && !s.ReaderStamp.Matches(s.Stamp())) Requeue(s);
@@ -272,7 +246,6 @@ internal sealed class ContractWorld
         s.Row.Observe(s.Signature, false, Hour);
     }
 
-    // Decision 4 step 1 (RefreshKnownOwnership at an advancing hour).
     public void BeginHour(long hour)
     {
         Hour = hour;
@@ -287,10 +260,8 @@ internal sealed class ContractWorld
         }
     }
 
-    /// <summary>One frame: preparation units, recovery units and at most <paramref name="units"/> shop passes.</summary>
     public void Frame(int units = 64)
     {
-        // Runtime ObserveProductPolicy: a new policy publication rebuilds every shop.
         var policy = PolicySource?.Current ?? Policy;
         if ((Active || Warming) && policy != null && !ReferenceEquals(policy, observedPolicy))
         {
@@ -308,7 +279,6 @@ internal sealed class ContractWorld
         for (int i = 0; i < units && rebuilds.Count > 0; i++) { var s = rebuilds.Dequeue(); s.Queued = false; Pass(s); }
         FinishWarming();
     }
-    /// <summary>Exactly one unit: a preparation unit, else one shop pass.</summary>
     public bool Step()
     {
         if (Coordinator.TryNextPrepare(out var key)) { PrepareUnit(Find(key)); return true; }
@@ -344,10 +314,9 @@ internal sealed class ContractWorld
         Requeue(s);
     }
 
-    // The E5a reader pass followed by OnContractPublished.
     private void Pass(Shop s)
     {
-        if (!Shops.Contains(s)) return; // a replaced registration: Runtime drops its pass (registrations[key] differs)
+        if (!Shops.Contains(s)) return;
         var start = s.Stamp();
         var catalogue = Catalogue.Catalogue!;
         var type = Types.TryGetValue(s.BusinessTypeName, out var t) ? t : null;
@@ -420,7 +389,6 @@ internal sealed class ContractWorld
     {
         var products = new List<string>();
         CompleteFoodMenu.HistoryProducts(History, s.Key, s.Row.BusinessId, (int)(Hour / 24), products);
-        // Runtime AdmissionResolver: the policy's resolver once the capabilities passed, also while warming.
         return CompleteFoodMenu.Check(eligibility, CapabilitiesPassed ? CurrentPolicy.Resolver : FoodProductMetadataResolver.Empty,
             current, true, products, Names.Names);
     }
@@ -436,13 +404,12 @@ internal sealed class ContractWorld
         else if (refusal == FoodContractRecheckRefusal.BusinessType) { BagPolicies.Clear(); foreach (var s in Shops) Requeue(s); }
     }
 
-    // Decision 3 at a capture (checkout=false) or after native setup at checkout.
     public bool Recheck(Shop s, bool checkout)
     {
         if (!Active) return true;
         var image = Coordinator.Serving(s.Key);
         if (image == null) return false;
-        if (Catalogue.Catalogue == null) { CatalogueWaits++; return false; } // the sale waits; no refusal
+        if (Catalogue.Catalogue == null) { CatalogueWaits++; return false; }
         if (checkout) CaptureEpoch.Begin();
         var live = new Live(this, s); var changed = new List<FoodDefinitionDependency>();
         var refusal = FoodContractRecheck.Structure(image, live, CaptureEpoch, changed);
@@ -464,30 +431,25 @@ internal sealed class ContractWorld
         public Shop Shop { get; }
         public Dictionary<string, Money> Prices { get; }
     }
-    /// <summary>A selected capture: SupportedMenu, CanServe, the Decision 3 recheck, then live prices.</summary>
     public Capture? Select(Shop s)
     {
-        if (AwaitingValidation(s)) return null; // Runtime MenuStatus: StartupValidationRefusal
+        if (AwaitingValidation(s)) return null;
         CaptureEpoch.Begin();
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!s.Row.CanServe || !Recheck(s, false)) return null;
         if (!Supply(s, out _)) { Refuse(s); return null; }
         return new Capture(s, s.Menu.ToDictionary(p => p, p => Money.FromNative(s.PriceOf(p).price)));
     }
-    /// <summary>Checkout: recheck, supply with reconciliation, native setup, recheck again, exact approved price,
-    /// then the receipt. Null on a refusal before the receipt.</summary>
     public string? Checkout(Capture c, string product, string intent)
     {
         var s = c.Shop;
         if (Orders.Contains(intent)) return intent;
-        if (AwaitingValidation(s)) return null; // Runtime BuyLive: StartupValidationRefusal
+        if (AwaitingValidation(s)) return null;
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!s.Row.CanServe || !Recheck(s, true)) return null;
         int reconciled = Reconciliations;
         if (!Supply(s, out var units)) { if (Reconciliations != reconciled) Refuse(s); return null; }
         if (units[product] <= 0) return null;
-        // After native setup (Runtime CompletePrices, then Decision 3 again). E5b5 Q2: a different valid price is
-        // price-only; the sale is refused below without a hand-back.
         var verdict = FoodPriceVerdict.Same;
         if (s.Menu.Count != c.Prices.Count) { Refuse(s); return null; }
         foreach (var p in s.Menu)
@@ -497,18 +459,15 @@ internal sealed class ContractWorld
             if (live != c.Prices[p]) verdict = FoodPriceVerdict.PriceOnly;
         }
         AfterNativeSetup?.Invoke();
-        // Runtime SellLine: a rebuilding catalogue waits; any other false here is RefuseCheckoutContract.
         if (Active && Catalogue.Catalogue == null) return null;
         if (!SupportedMenu(s)) { s.Row.Observe(s.Signature, false, Hour); return null; }
         if (!Recheck(s, true)) { Refuse(s); return null; }
         if (verdict == FoodPriceVerdict.PriceOnly) { PriceOnlyRefusals++; return null; }
         Orders.Add(intent);
         var stock = s.Holders.Values.First(h => h.cargoInstances.Count == 1 && h.cargoInstances[0].itemName == product && h.cargoInstances[0].amount > 0);
-        stock.cargoInstances[0].amount--; // W1 in place: quantity only
+        stock.cargoInstances[0].amount--;
         return intent;
     }
-    /// <summary>Emulated native setup: showcases index their stocked product when amount &gt; 0, workstations index
-    /// every itemsToProduce entry, staffed counters are points of sale. Then Decision 5.</summary>
     public bool Supply(Shop s, out Dictionary<string, int> units)
     {
         units = s.Menu.ToDictionary(p => p, _ => 0);
@@ -543,7 +502,6 @@ internal sealed class ContractWorld
     public readonly HashSet<string> OmittedByNative = new HashSet<string>(StringComparer.Ordinal);
     public readonly List<FoodNativeHolder> ExtraNative = new List<FoodNativeHolder>();
 
-    // Decision 7 recovery unit.
     private void Recover(Shop s)
     {
         if (!Refused.TryGetValue(s.Key, out long refusedHour) || Hour <= refusedHour) return;
@@ -560,7 +518,6 @@ internal sealed class ContractWorld
         Refused.Remove(s.Key); Coordinator.Recovered(s.Key);
     }
 
-    /// <summary>AfterNativeTick at an advancing hour: refresh and preparation queueing, drain, refresh, commit in order.</summary>
     public List<(string Key, FoodContractBoundary.Outcome Outcome)> Boundary(long hour, bool drained = true)
     {
         BeginHour(hour);
@@ -606,7 +563,6 @@ internal sealed class ContractWorld
         return false;
     }
 
-    /// <summary>Discovery, a full rebuild, then boundaries until every listed shop is owned.</summary>
     public void Own(params Shop[] shops)
     {
         VisitAll(); Drain(); VisitAll();
@@ -646,8 +602,6 @@ internal sealed class ContractWorld
     }
 }
 
-/// <summary>E5b3 Decisions 2-4, 3a, 6, 8 and 13: atomic images, rechecks, catalogue re-copy, the boundary protocol
-/// and the capacity preflight (docs/plans/e5b-remaining.md section 4, E5b3 row).</summary>
 public sealed class FoodContractCoordinatorTests
 {
     private readonly ITestOutputHelper output;
@@ -662,8 +616,6 @@ public sealed class FoodContractCoordinatorTests
         return (world, shop);
     }
 
-    // Section 2.2 writer rows, each applied between a capture and its checkout.
-    // W10-price (a valid in-place price) is Q2's price-only change since E5b5: DynamicAcquisitionTests covers it.
     public static IEnumerable<object[]> WriterRows() => new[] { "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10-row", "W11-field", "W11-unregister" }
         .Select(w => new object[] { w });
     private static void Write(ContractWorld world, ContractWorld.Shop shop, string row)
@@ -671,16 +623,16 @@ public sealed class FoodContractCoordinatorTests
         var shelf = shop.Holder(shop.Key + ":shelf:" + Burger);
         switch (row)
         {
-            case "W3": shop.Holders.Remove(shop.Key + ":shelf:" + HotDog); break; // emptied container removed
+            case "W3": shop.Holders.Remove(shop.Key + ":shelf:" + HotDog); break;
             case "W4": shelf.cargoInstances.Add(new ContractWorld.Cargo { itemName = Burger, amount = 1 }); break;
             case "W5": shelf.cargoInstances.RemoveAt(0); break;
             case "W6": shelf.cargoInstances = new List<ContractWorld.Cargo> { new ContractWorld.Cargo { itemName = Burger, amount = 10 } }; break;
-            case "W7": shelf.cargoInstances[0].itemName = HotDog; break; // in place, no list change
+            case "W7": shelf.cargoInstances[0].itemName = HotDog; break;
             case "W8": shop.Menu = new List<string>(shop.Menu); break;
             case "W9": shop.Holders.Add(new ContractWorld.Holder { id = "added", itemName = ContractWorld.ShelfItem }); break;
             case "W10-row": shop.Prices.Add(new ContractWorld.Price { itemName = ContractWorld.Croissant, price = 3 }); break;
-            case "W10-price": shop.PriceOf(Burger).price = 6; break; // in place
-            case "W11-field": world.Items[ContractWorld.ShelfItem].consumes = false; break; // in place on a loaded Item
+            case "W10-price": shop.PriceOf(Burger).price = 6; break;
+            case "W11-field": world.Items[ContractWorld.ShelfItem].consumes = false; break;
             case "W11-unregister": world.Items.Remove(ContractWorld.BagItem); break;
             default: throw new ArgumentException(row);
         }
@@ -696,7 +648,7 @@ public sealed class FoodContractCoordinatorTests
         Write(world, shop, row);
         Assert.Null(world.Checkout(capture, Burger, "intent-1"));
         Assert.Empty(world.Orders);
-        Assert.False(shop.Row.Desired); // desire withdrawn at once; hand-back waits for the boundary
+        Assert.False(shop.Row.Desired);
         Assert.True(shop.Row.Managed);
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
     }
@@ -706,19 +658,19 @@ public sealed class FoodContractCoordinatorTests
     {
         var (world, shop) = Owned();
         long hour = world.Hour;
-        shop.Menu = new List<string>(shop.Menu); // W8: a valid replacement, same products
+        shop.Menu = new List<string>(shop.Menu);
         world.VisitAll();
         Assert.False(shop.Row.Desired);
         Assert.True(world.Refused.ContainsKey(shop.Key));
-        world.Drain(); world.VisitAll(); // the same-hour rebuild passes
+        world.Drain(); world.VisitAll();
         Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
         Assert.Equal(FoodContractPhase.Refused, world.Coordinator.Phase(shop.Key));
-        Assert.False(shop.Row.Desired); // never back to service in the hour it changed
+        Assert.False(shop.Row.Desired);
         Assert.True(shop.Row.Managed);
         Assert.Equal(hour, world.Hour);
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         world.Drain(); world.VisitAll();
-        Assert.False(world.Refused.ContainsKey(shop.Key)); // recovered after an advancing hour and the completed hand-back
+        Assert.False(world.Refused.ContainsKey(shop.Key));
         Assert.True(shop.Row.Desired);
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
     }
@@ -732,9 +684,9 @@ public sealed class FoodContractCoordinatorTests
         world.RebuildCatalogue();
         var shop = world.AddShop("address:main:1:shop", Burger);
         shop.Holders.Add(new ContractWorld.Holder { id = "oven", itemName = Oven, cargoInstances = new List<ContractWorld.Cargo>() });
-        world.Own(shop); // the oven produces nothing on the menu, so it does not participate
+        world.Own(shop);
         Assert.Contains(world.Coordinator.Serving(shop.Key)!.Definitions, d => d.Name == Oven);
-        world.Items[Oven].itemsToProduce![0] = Burger; // in place: it would now produce the advertised burger
+        world.Items[Oven].itemsToProduce![0] = Burger;
         world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
         Assert.True(world.Recopies > 0);
         Assert.True(world.Refused.ContainsKey(shop.Key));
@@ -746,15 +698,15 @@ public sealed class FoodContractCoordinatorTests
     public void ADefinitionBrokenWithAStructuralChangeIsStillWatchedForItsRepair()
     {
         var (world, shop) = Owned();
-        shop.Menu = new List<string>(shop.Menu);              // stamp: the image is dropped
-        world.Items[ContractWorld.ShelfItem].consumes = false; // and the shelf definition breaks in place
+        shop.Menu = new List<string>(shop.Menu);
+        world.Items[ContractWorld.ShelfItem].consumes = false;
         world.VisitAll(); world.Drain(); world.VisitAll();
         var failed = world.Coordinator.Image(shop.Key)!;
         Assert.Equal(FoodEligibilityRefusal.Resources, failed.Eligibility.Refusal);
         Assert.Contains(world.Coordinator.Watched(shop.Key), d => d.Name == ContractWorld.ShelfItem);
-        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); // hand-back
+        world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
         Assert.False(shop.Row.Managed);
-        world.Items[ContractWorld.ShelfItem].consumes = true; // repaired in place: no stamp, no hint
+        world.Items[ContractWorld.ShelfItem].consumes = true;
         world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll();
         Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
         Assert.False(world.Refused.ContainsKey(shop.Key));
@@ -768,17 +720,16 @@ public sealed class FoodContractCoordinatorTests
         var world = new ContractWorld();
         var shops = Enumerable.Range(0, 8).Select(i => world.AddShop("address:main:" + i + ":shop", Burger, HotDog)).ToArray();
         world.Own(shops);
-        world.BeginHour(world.Hour + 1); // a preparation backlog
-        world.Catalogue.MarkDirty();      // a W11 hint
-        Assert.All(shops, s => Assert.Null(world.Select(s))); // no capture on an unverifiable catalogue
+        world.BeginHour(world.Hour + 1);
+        world.Catalogue.MarkDirty();
+        Assert.All(shops, s => Assert.Null(world.Select(s)));
         Assert.True(world.CatalogueWaits >= 8);
         Assert.Empty(world.Refused);
-        Assert.All(shops, s => Assert.True(s.Row.CanServe)); // ownership waits, it is not withdrawn
-        world.RebuildCatalogue(); // new copy objects with the same content
+        Assert.All(shops, s => Assert.True(s.Row.CanServe));
+        world.RebuildCatalogue();
         world.VisitAll();
         Assert.All(shops, s => Assert.Equal(world.Catalogue.Revision, world.Coordinator.VerifiedCatalogue(s.Key)));
         Assert.All(shops, s => Assert.NotNull(world.Select(s)));
-        // A rebuild whose content differs for a dependency withdraws through the refusal path.
         world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase![2] = "ba:itemname_other";
         world.RebuildCatalogue(); world.VisitAll();
         Assert.All(shops, s => { Assert.True(world.Refused.ContainsKey(s.Key)); Assert.False(s.Row.Desired); });
@@ -788,18 +739,16 @@ public sealed class FoodContractCoordinatorTests
     public void ACatalogueChangeIsRefusedEvenWhenThePassingRebuildPublishesBeforeTheNextVisit()
     {
         var (world, shop) = Owned();
-        world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase![2] = "ba:itemname_other"; // a dependency's content
-        world.RebuildCatalogue(); world.Drain(); world.VisitAll(); // the rebuild publishes first, then discovery
+        world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase![2] = "ba:itemname_other";
+        world.RebuildCatalogue(); world.Drain(); world.VisitAll();
         Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
         Assert.True(world.Refused.ContainsKey(shop.Key));
         Assert.False(shop.Row.Desired);
         Assert.True(shop.Row.Managed);
-        // The same safe sequence as discovery-first: hand-back at the next boundary, recovery, later acquisition.
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         world.Drain(); world.VisitAll();
         Assert.False(world.Refused.ContainsKey(shop.Key));
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
-        // An unchanged rebuild published before the visit is rebased, not refused.
         world.RebuildCatalogue(); world.Drain(); world.VisitAll();
         Assert.False(world.Refused.ContainsKey(shop.Key));
         Assert.True(shop.Row.CanServe);
@@ -813,7 +762,6 @@ public sealed class FoodContractCoordinatorTests
         var (world, shop) = Owned();
         var capture = world.Select(shop)!;
         var old = world.Items[ContractWorld.ShelfItem];
-        // A field-identical new object under the same name (W11 re-register): same content, different reference.
         world.Items[ContractWorld.ShelfItem] = new ContractWorld.Item { itemName = old.itemName, showcase = old.showcase,
             itemsThatCanShowcase = (string[])old.itemsThatCanShowcase!.Clone(), itemsToProduce = old.itemsToProduce, tags = new List<string>(old.tags!),
             cargoCapacity = old.cargoCapacity };
@@ -824,7 +772,6 @@ public sealed class FoodContractCoordinatorTests
         Assert.False(shop.Row.Desired);
         Assert.True(shop.Row.Managed);
         Assert.Empty(world.Orders);
-        // The same safe sequence in both orders: hand-back, recovery against the new object, later acquisition.
         world.Drain(); world.VisitAll();
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         world.Drain(); world.VisitAll();
@@ -838,7 +785,7 @@ public sealed class FoodContractCoordinatorTests
     {
         var (world, shop) = Owned();
         var capture = world.Select(shop)!;
-        world.AfterNativeSetup = () => world.Catalogue.MarkDirty(); // a W11 hint during native setup
+        world.AfterNativeSetup = () => world.Catalogue.MarkDirty();
         Assert.Null(world.Checkout(capture, Burger, "wait"));
         Assert.Empty(world.Orders);
         Assert.Empty(world.Refused);
@@ -872,16 +819,15 @@ public sealed class FoodContractCoordinatorTests
         shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].itemName = HotDog;
         Assert.Null(world.Checkout(capture, Burger, "x"));
         Assert.True(world.Coordinator.RefusedHour(shop.Key) >= 0);
-        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].itemName = Burger; // the new business is laid out correctly
+        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].itemName = Burger;
         var replaced = world.ReplaceRegistration(shop);
         Assert.Equal(-1, world.Coordinator.RefusedHour(replaced.Key));
         world.VisitAll(); world.Drain(); world.VisitAll();
         Assert.True(world.Coordinator.Image(replaced.Key)!.Passed);
         Assert.True(replaced.Row.Desired);
-        Assert.False(replaced.Row.CanServe); // suspended until a drained boundary
+        Assert.False(replaced.Row.CanServe);
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == replaced.Key && o.Outcome == FoodContractBoundary.Outcome.Acquired);
         Assert.True(replaced.Row.CanServe);
-        // Runtime: replacement resets the coordinator entry under the place key.
     }
 
     [Fact]
@@ -898,7 +844,6 @@ public sealed class FoodContractCoordinatorTests
     [Fact]
     public void ACaptureOutsideABatchStartsItsOwnDefinitionEpoch()
     {
-        // Without a new epoch an in-place edit after the last comparison is answered from the cache.
         var (world, shop) = Owned();
         var image = world.Coordinator.Serving(shop.Key)!;
         var epoch = new FoodDefinitionEpoch(); epoch.Begin();
@@ -920,10 +865,10 @@ public sealed class FoodContractCoordinatorTests
         var capture = world.Select(shop)!;
         switch (write)
         {
-            case "closed": shop.Closed = true; break;      // W9 TemporarilyClose: stamp flag
-            case "for-rent": shop.ForRent = true; break;   // stamp flag
-            case "entrance-fee": world.Types[ContractWorld.ShopType].hasEntranceFee = true; break; // business type in place
-            case "seasonal": world.Items[Burger].seasonal = true; break; // W11 in place
+            case "closed": shop.Closed = true; break;
+            case "for-rent": shop.ForRent = true; break;
+            case "entrance-fee": world.Types[ContractWorld.ShopType].hasEntranceFee = true; break;
+            case "seasonal": world.Items[Burger].seasonal = true; break;
         }
         Assert.Null(world.Checkout(capture, Burger, "scalar"));
         Assert.Empty(world.Orders);
@@ -936,7 +881,7 @@ public sealed class FoodContractCoordinatorTests
         var (world, shop) = Owned();
         int publishes = world.Publishes;
         var capture = world.Select(shop)!;
-        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].amount = 3;  // W1/W2/W3 amounts in place
+        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].amount = 3;
         shop.Holder(shop.Key + ":counter").cargoInstances[0].amount = 1;
         world.VisitAll(); world.Drain();
         Assert.Equal(publishes, world.Publishes);
@@ -952,13 +897,13 @@ public sealed class FoodContractCoordinatorTests
         var (world, shop) = Owned();
         var first = world.Select(shop)!;
         shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].itemName = HotDog;
-        Assert.Equal(shop.ReaderStamp.ToString(), shop.Stamp().ToString()); // W7 moves no stamp
+        Assert.Equal(shop.ReaderStamp.ToString(), shop.Stamp().ToString());
         Assert.Null(world.Checkout(first, Burger, "w7"));
 
         (world, shop) = Owned();
         var second = world.Select(shop)!;
         shop.PriceOf(HotDog).price = 9;
-        Assert.True(shop.ReaderStamp.Matches(shop.Stamp())); // W10 in place moves no stamp
+        Assert.True(shop.ReaderStamp.Matches(shop.Stamp()));
         Assert.Null(world.Checkout(second, Burger, "w10"));
         Assert.Empty(world.Orders);
     }
@@ -976,11 +921,10 @@ public sealed class FoodContractCoordinatorTests
         world.Drain();
         var after = world.Coordinator.Serving(shop.Key)!;
         Assert.NotSame(before, after);
-        Assert.All(seen, image => Assert.Same(before, image)); // the old whole image served during the pass
+        Assert.All(seen, image => Assert.Same(before, image));
         Assert.Equal(before.Holders.Count, after.Holders.Count);
         Assert.Equal(world.Hour, after.BuiltHour);
 
-        // A write between pass start and publish discards the pass; the stamp then drops the old image too.
         world.DuringPass = s => s.Menu.Add(ContractWorld.Croissant);
         world.BeginHour(world.Hour + 1);
         int discards = world.Discards;
@@ -989,7 +933,6 @@ public sealed class FoodContractCoordinatorTests
         world.DuringPass = null;
         Assert.False(world.SupportedMenu(shop));
         Assert.Null(world.Coordinator.Serving(shop.Key));
-        // A structural change is a recorded refusal (Decision 7), not only a dropped image.
         Assert.Equal(FoodContractPhase.Refused, world.Coordinator.Phase(shop.Key));
     }
 
@@ -1001,7 +944,6 @@ public sealed class FoodContractCoordinatorTests
     public void InPlaceDefinitionElementEditsRefuseBeforeCheckoutAndTheNextImageUsesRecopiedFacts(string edit)
     {
         var world = new ContractWorld();
-        // The shelf definition produces exactly the product it shows, so an output edit stays visible to E5a.
         if (edit == "produce-element") world.Items[ContractWorld.ShelfItem].itemsToProduce = new[] { Burger };
         if (edit == "produce-element") world.RebuildCatalogue();
         var shop = world.AddShop("address:main:1:shop", Burger);
@@ -1012,13 +954,13 @@ public sealed class FoodContractCoordinatorTests
         string name = ContractWorld.ShelfItem;
         switch (edit)
         {
-            case "showcase-element": var showcase = shelf.itemsThatCanShowcase!; showcase[2] = "ba:itemname_other"; break; // same array
+            case "showcase-element": var showcase = shelf.itemsThatCanShowcase!; showcase[2] = "ba:itemname_other"; break;
             case "produce-element": var produce = shelf.itemsToProduce!; produce[0] = HotDog; break;
             case "counter-tags": world.Items[ContractWorld.CounterItem].tags!.Add("ba:itemtag_extra"); name = ContractWorld.CounterItem; break;
             case "business-tags": world.Types[ContractWorld.ShopType].tags.Add("ba:businesstag_extra"); break;
-            case "cargo-whitelist": shelf.itemsWhitelist = new[] { Burger }; break; // a field E5a never reads still re-copies
+            case "cargo-whitelist": shelf.itemsWhitelist = new[] { Burger }; break;
         }
-        Assert.True(shop.ReaderStamp.Matches(shop.Stamp())); // no stamp moves
+        Assert.True(shop.ReaderStamp.Matches(shop.Stamp()));
         Assert.Null(world.Checkout(capture, Burger, "edit"));
         Assert.Empty(world.Orders);
         Assert.False(shop.Row.Desired);
@@ -1030,13 +972,13 @@ public sealed class FoodContractCoordinatorTests
         {
             Assert.True(world.Catalogue.Revision > revision);
             Assert.True(world.Catalogue.Catalogue!.TryGet(name, out var copy));
-            Assert.True(copy.Matches(world.Items[name].Facts())); // re-copied from the live object
-            Assert.Equal(world.Catalogue.Catalogue!.Count, world.Catalogue.Names!.Count); // names republished with it
+            Assert.True(copy.Matches(world.Items[name].Facts()));
+            Assert.Equal(world.Catalogue.Catalogue!.Count, world.Catalogue.Names!.Count);
         }
         world.Drain();
         var next = world.Coordinator.Image(shop.Key)!;
         Assert.Equal(world.Catalogue.Revision, next.CatalogueRevision);
-        if (edit == "produce-element") Assert.Equal(FoodEligibilityRefusal.Outputs, next.Eligibility.Refusal); // the fresh output fact decides
+        if (edit == "produce-element") Assert.Equal(FoodEligibilityRefusal.Outputs, next.Eligibility.Refusal);
         else
         {
             Assert.True(next.Passed);
@@ -1055,7 +997,6 @@ public sealed class FoodContractCoordinatorTests
         long from = shops[0].Row.FromHour;
         for (int hour = 1; hour <= 6; hour++)
         {
-            // One shop pass per frame and only two frames before the next boundary: most rebuilds are unfinished.
             var outcomes = world.Boundary(world.Hour + 1);
             Assert.Empty(outcomes);
             world.Frame(1); world.VisitAll(); world.Frame(1); world.VisitAll();
@@ -1070,11 +1011,11 @@ public sealed class FoodContractCoordinatorTests
     {
         var (world, shop) = Owned();
         world.BeginHour(world.Hour + 1);
-        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].nested!.Add(new ContractWorld.Cargo()); // in place, no stamp
+        shop.Holder(shop.Key + ":shelf:" + Burger).cargoInstances[0].nested!.Add(new ContractWorld.Cargo());
         world.Drain();
         Assert.False(world.Coordinator.Image(shop.Key)!.Passed);
         Assert.False(shop.Row.Desired);
-        Assert.True(shop.Row.Managed); // ending-hour work still drains under the old owner
+        Assert.True(shop.Row.Managed);
         Assert.Empty(world.Boundary(world.Hour + 1, drained: false));
         Assert.True(shop.Row.Managed);
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
@@ -1089,7 +1030,6 @@ public sealed class FoodContractCoordinatorTests
         world.VisitAll(); world.Drain(); world.VisitAll();
         long requested = shop.Row.RequestedHour;
         Assert.True(shop.Row.Desired);
-        // Native customers block the first boundary; the hour's preparation rebuild then never runs before the next one.
         shop.LiveCustomers = true;
         Assert.Empty(world.Boundary(world.Hour + 1));
         shop.LiveCustomers = false;
@@ -1121,7 +1061,7 @@ public sealed class FoodContractCoordinatorTests
         reloaded.Active = false; reloaded.Warming = true;
         var o = reloaded.Find(owned.Key); var w = reloaded.Find(waiting.Key);
         reloaded.VisitAll();
-        Assert.True(o.Row.CanServe); Assert.True(w.Row.Desired); // nothing withdrawn before the first images
+        Assert.True(o.Row.CanServe); Assert.True(w.Row.Desired);
         var outcomes = reloaded.Boundary(reloaded.Hour + 1);
         Assert.Contains(outcomes, x => x.Key == w.Key && x.Outcome == FoodContractBoundary.Outcome.Deferred);
         Assert.True(o.Row.CanServe);
@@ -1157,13 +1097,11 @@ public sealed class FoodContractCoordinatorTests
         world.VisitAll(); world.Drain(); world.VisitAll();
         Assert.True(shop.Row.Desired);
         world.AfterDrain = () => shop.Prices.Add(new ContractWorld.Price { itemName = HotDog, price = 2 });
-        // The visit after the drain sees the stamp and withdraws; the gate would block it too.
         var outcomes = world.Boundary(world.Hour + 1);
         Assert.DoesNotContain(outcomes, o => o.Outcome == FoodContractBoundary.Outcome.Acquired);
         Assert.False(shop.Row.Managed);
         Assert.False(shop.Row.Desired);
 
-        // Directly at the gate: a write after the last visit, between drain and commit.
         world = new ContractWorld();
         shop = world.AddShop("address:main:1:shop", Burger);
         world.VisitAll(); world.Drain(); world.VisitAll();
@@ -1187,32 +1125,31 @@ public sealed class FoodContractCoordinatorTests
         var shop = world.AddShop("address:main:1:shop", Burger);
         world.VisitAll(); world.Drain(); world.VisitAll();
         Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
-        world.AfterDrain = () => world.Items[ContractWorld.ShelfItem].itemsToProduce![0] = HotDog; // no capture, no stamp
-        // Skip the visit's admission path: the edit moves no stamp, so SupportedMenu still admits; only the gate sees it.
+        world.AfterDrain = () => world.Items[ContractWorld.ShelfItem].itemsToProduce![0] = HotDog;
         var outcomes = world.Boundary(world.Hour + 1);
         Assert.Contains(outcomes, o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.Refused);
         Assert.False(shop.Row.Managed);
         Assert.True(world.Refused.ContainsKey(shop.Key));
         Assert.True(world.Catalogue.Catalogue!.TryGet(ContractWorld.ShelfItem, out var copy));
-        Assert.Equal(HotDog, copy.Outputs![0]); // re-copied
+        Assert.Equal(HotDog, copy.Outputs![0]);
     }
 
     [Theory]
     [InlineData(0f, false)]
     [InlineData(float.NaN, false)]
     [InlineData(-1f, false)]
-    [InlineData(0.003f, false)] // overprecise
+    [InlineData(0.003f, false)]
     [InlineData(7.5f, true)]
     public void ThePostDrainGateRefusesAnInvalidPriceAndAcceptsAnotherValidPrice(float price, bool acquires)
     {
         var world = new ContractWorld();
         var shop = world.AddShop("address:main:1:shop", Burger, HotDog);
         world.VisitAll(); world.Drain(); world.VisitAll();
-        world.AfterDrain = () => shop.PriceOf(HotDog).price = price; // in place, after the prepared image passed
+        world.AfterDrain = () => shop.PriceOf(HotDog).price = price;
         var outcomes = world.Boundary(world.Hour + 1);
         Assert.Equal(acquires, shop.Row.Managed);
         Assert.Contains(outcomes, o => o.Key == shop.Key && o.Outcome == (acquires ? FoodContractBoundary.Outcome.Acquired : FoodContractBoundary.Outcome.Refused));
-        if (acquires) Assert.Equal(Money.FromNative(7.5f), world.Coordinator.Serving(shop.Key)!.Prices[1]); // Q2: recorded, not blocking
+        if (acquires) Assert.Equal(Money.FromNative(7.5f), world.Coordinator.Serving(shop.Key)!.Prices[1]);
     }
 
     [Fact]
@@ -1244,7 +1181,7 @@ public sealed class FoodContractCoordinatorTests
         world.Drain(); world.VisitAll();
         shop.LiveCustomers = true;
         Assert.Empty(world.Boundary(world.Hour + 1));
-        Assert.Equal(0, world.GateRuns); // the gate never runs for a row that cannot transfer
+        Assert.Equal(0, world.GateRuns);
         Assert.False(shop.Row.Deferred);
         world.Drain(); world.VisitAll();
         shop.LiveCustomers = false;
@@ -1278,7 +1215,7 @@ public sealed class FoodContractCoordinatorTests
         world.Names = new FoodReferencedNames();
         for (int i = 0; i < FoodNameIdentity.MaximumNames - 1; i++) world.Names.Add("fixture:name" + i.ToString("000"));
         world.Requeue(shop); world.Drain(); world.VisitAll();
-        Assert.True(world.Coordinator.Image(shop.Key)!.Passed); // the 256th name fits
+        Assert.True(world.Coordinator.Image(shop.Key)!.Passed);
     }
 
     [Fact]
@@ -1294,7 +1231,6 @@ public sealed class FoodContractCoordinatorTests
         Assert.Equal(4, names.Count);
     }
 
-    // Shared scenario: a few shops acquire, one breaks and repairs, across several boundaries.
     private static Dictionary<string, string> Scenario(int unitsPerFrame, bool reverse, bool reload)
     {
         var world = new ContractWorld();
@@ -1317,7 +1253,6 @@ public sealed class FoodContractCoordinatorTests
         }
         return log;
     }
-    // Reload: the authority rows round-trip through the saved manifest; images, queues and refusals start empty.
     private static ContractWorld Reload(ContractWorld old)
     {
         var rows = FoodAuthorityStore.Read(FoodAuthorityStore.Write(old.Shops.Select(s => s.Row).ToArray()));
@@ -1328,7 +1263,6 @@ public sealed class FoodContractCoordinatorTests
             copy.Holders = s.Holders; copy.Prices = s.Prices; copy.Menu = s.Menu;
             copy.Row = rows.Single(r => r.PlaceId == s.Key);
         }
-        // Contract refusals are Runtime memory (E5b1 and E5b3 alike): a reload starts without them, warming.
         world.Active = false; world.Warming = true;
         return world;
     }
@@ -1355,7 +1289,6 @@ public sealed class FoodContractCoordinatorTests
         b.Observe("business:sig", true, 10);
         Assert.Equal(FoodAuthorityStore.Write(new[] { b }), FoodAuthorityStore.Write(new[] { a }));
         Assert.False(FoodAuthorityStore.Read(FoodAuthorityStore.Write(new[] { a }))[0].Deferred);
-        // The four-argument boundary is the five-argument one with a ready contract, across the whole matrix.
         foreach (bool desired in new[] { false, true })
         foreach (bool managed in new[] { false, true })
         foreach (bool drained in new[] { false, true })
@@ -1373,8 +1306,6 @@ public sealed class FoodContractCoordinatorTests
     [Fact]
     public void WithoutAPublishedPolicyADynamicProductIsNeverAcquired()
     {
-        // E5b5 replaced the original-three guard with Core LiveMenu (pinned in DynamicAcquisitionTests). With no product
-        // policy (no loaded-name image), a dynamic product never passes SupportedBusiness, whatever its image says.
         var world = new ContractWorld();
         world.Add(new ContractWorld.Item { itemName = "foodtrucks:itemname_dumplings", retail = true });
         world.Items[ContractWorld.ShelfItem].itemsThatCanShowcase = new[] { Burger, HotDog, ContractWorld.Croissant, "foodtrucks:itemname_dumplings" };
@@ -1404,7 +1335,7 @@ public sealed class FoodContractCoordinatorTests
         Assert.False(revision.Replace(new[] { new LoadedStockDefinition("fixture:missing", true, false, false, false, true, true, false, false, true, null, null) }));
         var many = Enumerable.Range(0, LoadedStockCatalogue.MaximumReplacements + 1)
             .Select(i => new LoadedStockDefinition("fixture:" + i, true, false, false, false, true, true, false, false, true, null, null)).ToArray();
-        Assert.False(revision.Replace(many)); // the caller rebuilds the whole catalogue instead
+        Assert.False(revision.Replace(many));
         revision.MarkDirty();
         Assert.False(revision.Replace(new[] { changed }));
     }
@@ -1418,7 +1349,7 @@ public sealed class FoodContractCoordinatorTests
             tags.Count, LoadedStockRows.Hash(tags), 4, -1, 0);
         var copy = new LoadedStockDefinition(live);
         Assert.True(copy.Matches(live));
-        shows[1] = Burger; // in-place element edit, same array reference
+        shows[1] = Burger;
         Assert.False(copy.Matches(live));
         shows[1] = HotDog;
         Assert.True(copy.Matches(live));
@@ -1426,7 +1357,7 @@ public sealed class FoodContractCoordinatorTests
         Assert.False(copy.Matches(new LoadedStockFacts("x", true, false, true, false, true, true, false, false, true, shows, null,
             tags.Count, LoadedStockRows.Hash(tags), 4, -1, 0)));
         Assert.False(copy.Matches(new LoadedStockFacts("x", true, false, true, false, true, true, false, false, true, shows, null,
-            2, LoadedStockRows.Hash(new List<string> { "a", "b" }), 5, -1, 0))); // cargo capacity
+            2, LoadedStockRows.Hash(new List<string> { "a", "b" }), 5, -1, 0)));
         Assert.NotEqual(LoadedStockRows.Hash(new[] { "ab", "c" }), LoadedStockRows.Hash(new[] { "a", "bc" }));
     }
 
@@ -1440,7 +1371,6 @@ public sealed class FoodContractCoordinatorTests
         long compared = world.CaptureEpoch.Compared;
         foreach (var s in shops)
             Assert.Equal(FoodContractRecheckRefusal.None, FoodContractRecheck.Definitions(world.Coordinator.Serving(s.Key)!, new ContractWorld.Live(world, s), world.CaptureEpoch));
-        // burger, hot dog, shelf, counter, bag: five distinct definitions for sixteen shops.
         Assert.Equal(5, world.CaptureEpoch.Compared - compared);
     }
 
@@ -1449,7 +1379,6 @@ public sealed class FoodContractCoordinatorTests
     {
         var rows = new List<string>();
         RecheckBoundaryRebuildAndCommitGateTimings(rows);
-        // Retained image bytes per shop.
         foreach (int holders in new[] { 3, 16, 128 })
         {
             var (image, _) = Synthetic(2, holders);
@@ -1462,10 +1391,8 @@ public sealed class FoodContractCoordinatorTests
         }
         foreach (var row in rows) output.WriteLine(row);
     }
-    // The wall-clock part of RecheckBoundaryRebuildAndCommitGateCosts; TimingBudgetTests also runs it beside a CPU load.
     internal static void RecheckBoundaryRebuildAndCommitGateTimings(List<string> rows)
     {
-        // Recheck at 1/4/8 offers and 2/16/128 holders (target p95 <= 0.05 ms).
         foreach (int decor in new[] { 0, 32 })
         foreach (int offers in new[] { 1, 4, 8 })
         foreach (int holders in new[] { 2, 16, 128 })
@@ -1492,9 +1419,6 @@ public sealed class FoodContractCoordinatorTests
                 Array.Sort(samples);
                 timing.Under("recheck p95", samples[1899], 1.0);
                 long timedBytes = bytes;
-                // Steady state allocates nothing. A one-off runtime allocation on this thread during a loaded full-suite
-                // run (a few KB over the whole pass, not per call) is re-measured on untimed passes; a real per-call
-                // allocation shows on every pass.
                 for (int pass = 0; bytes != 0 && pass < 3; pass++)
                 {
                     long start = GC.GetAllocatedBytesForCurrentThread();
@@ -1506,7 +1430,6 @@ public sealed class FoodContractCoordinatorTests
             });
             rows.Add(line);
         }
-        // Boundary rebuild of 1/64/1,024 owned shops under the 0.5 ms frame budget (target unit p95 <= 0.05 ms).
         foreach (int count in new[] { 1, 64, 1024 })
         {
             string line = "";
@@ -1520,7 +1443,6 @@ public sealed class FoodContractCoordinatorTests
                 var units = new List<double>(); var frames = new List<double>(); var frameUnits = new List<int>();
                 while (world.PendingRebuilds > 0 || world.Coordinator.PendingPreparations > 0)
                 {
-                    // The Runtime frame loop: stop before a unit whose estimated cost (the previous unit's) would overrun 0.5 ms.
                     long frame = Stopwatch.GetTimestamp(); int n = 0; double last = 0;
                     while (n == 0 || (Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency + last < 0.5)
                     {
@@ -1536,12 +1458,10 @@ public sealed class FoodContractCoordinatorTests
                 units.Sort(); frames.Sort();
                 line = $"rebuild shops={count}: units {units.Count}, unit p95 {units[(int)(units.Count * 0.95)]:0.0000} ms, max {units[^1]:0.0000} ms, frames {frames.Count}, frame p95 {frames[(int)(frames.Count * 0.95)]:0.0000} ms, frame max {frames[^1]:0.0000} ms, max units/frame {frameUnits.Max()}, units >= 30 ms {units.Count(u => u >= 30)}";
                 Assert.All(shops, s => Assert.Equal(world.Hour, world.Coordinator.Image(s.Key)!.BuiltHour));
-                // No unit at or above the 30 ms spike line.
                 timing.MaxUnder("rebuild unit max", units[^1], 30);
             });
             rows.Add(line);
         }
-        // Commit-gate boundary-frame cost at 1/16 acquisitions, including the distinct-definition comparison and price rows.
         foreach (int count in new[] { 1, 16 })
         {
             string line = "";
@@ -1578,8 +1498,6 @@ public sealed class FoodContractCoordinatorTests
         var business = new FoodBusinessTypeCopy(new FoodBusinessTypeFacts(source.Business!.Live, source.Business.Simulator, false, source.Business.Tags));
         return new FoodContractImage(source.Key, source.BuiltHour, source.Eligibility, slots, deps, business, source.Admission, (object)default(ShopContractStamp));
     }
-    // A passing image with N offers and N holders (counter included), built through the world model.
-    // decor: extra non-participating furniture, each with its own definition (a dependency since review round 1).
     private static (FoodContractImage Image, IFoodContractLive Live) Synthetic(int offers, int holders, int decor = 0)
     {
         var world = new ContractWorld { MenuLimit = LoadedStockLimits.Offers };
@@ -1597,7 +1515,7 @@ public sealed class FoodContractCoordinatorTests
             shop.Holders.Add(new ContractWorld.Holder { id = "decor" + i, itemName = "fixture:decor" + i.ToString("00") });
         }
         if (decor > 0) world.RebuildCatalogue();
-        world.Active = false; // the E5a menu bound (8) is the builder's; SupportedBusiness's 4 is not involved here
+        world.Active = false;
         world.VisitAll(); world.Drain();
         var image = world.Coordinator.Image(shop.Key)!;
         Assert.True(image.Eligibility.StockContractMatched, image.Eligibility.Refusal.ToString());

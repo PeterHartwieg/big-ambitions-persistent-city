@@ -6,9 +6,6 @@ namespace PersistentCity.Runtime
 {
     public sealed partial class NativeCampaignReader
     {
-        /// <summary>Allocation-free after binding: preflight only, never exposure evidence.
-        /// Use the same verified C1 fields-only binding instead of an unchecked native field access.
-        /// Missing/changed list shapes cannot crash the hourly adapter or fabricate an empty image.</summary>
         public bool HasCampaignEntries(object? registration)
         {
             if (registration == null) return false;

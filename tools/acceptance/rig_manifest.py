@@ -41,7 +41,6 @@ def declared_set(path=SUPPORTED):
 
 
 def glob_regex(pattern):
-    """A repository glob: ** spans directories, * and ? stay inside one path segment."""
     out, i = "", 0
     while i < len(pattern):
         if pattern.startswith("**/", i):
@@ -63,9 +62,6 @@ def git(repo, *args):
 
 
 class History:
-    """First-parent history of one head, read once: every first-parent commit with the files it changed against its
-    first parent. A row's commits since a revision on that chain are a suffix of it; a revision off the chain (for example
-    a side-branch commit) is resolved with its own query."""
 
     def __init__(self, repo, head="HEAD"):
         self.repo = repo
@@ -73,7 +69,7 @@ class History:
         if code != 0:
             raise ValueError(f"head {head} is not a commit")
         self.head = sha.strip()
-        self.chain = self._log(self.head)  # newest first: [(sha, [files])]
+        self.chain = self._log(self.head)
         self.position = {sha: i for i, (sha, _) in enumerate(self.chain)}
         self.queries = 1
 
@@ -89,8 +85,6 @@ class History:
         return commits
 
     def since(self, revision):
-        """First-parent commits after revision up to the head, or None when revision is not an ancestor of the head."""
-        # A commit id (full or abbreviated) on the chain needs no git call.
         if re.fullmatch(r"[0-9a-f]{7,40}", revision):
             hits = [i for i, (sha, _) in enumerate(self.chain) if sha.startswith(revision)]
             if len(hits) == 1:
@@ -108,8 +102,6 @@ class History:
 
 
 def assess(ledger, repo=ROOT, head="HEAD", fingerprint=None, current=None):
-    """The ledger at one head. fingerprint: the set name this run's build matched ("unknown" when none, None when no
-    assemblies were hashed). current: the declared current set (supported-game.json) used when fingerprint is None."""
     history = History(repo, head)
     effective = fingerprint if fingerprint is not None else current
     threshold = ledger.get("debtThreshold", 3)
@@ -148,8 +140,6 @@ def assess(ledger, repo=ROOT, head="HEAD", fingerprint=None, current=None):
     fingerprint_changed = any(r["status"] == "stale" and any(x.startswith("game fingerprint") for x in r["reasons"]) for r in rows)
     over = [r["id"] for r in rows if r["debt"] is not None and r["debt"] >= threshold]
     if fingerprint_changed:
-        # Decision 7: a game update marks every native assumption stale, except rows already proved again on the new
-        # fingerprint (a partial batch after the update keeps the checks it completed).
         for r in rows:
             if not r["currentEvidence"]:
                 r["status"] = "stale"
@@ -162,14 +152,11 @@ def assess(ledger, repo=ROOT, head="HEAD", fingerprint=None, current=None):
 
 
 def required_checks(ledger, rows):
-    """The rig checks a native pass needs at this head: every check of a row that is not fresh, in catalogue order."""
     needed = {r["rigCheck"] for r in rows if r["status"] != "fresh" and r["rigCheck"]}
     return [c["id"] for c in ledger.get("checks", []) if c["id"] in needed]
 
 
 def manifest(ledger, state):
-    """Section 7 checks for the next batch: pinned first, then by the worst row status (stale, unproven, fresh) and the
-    largest debt, then catalogue order; pinned last at the end. Rows without a rig check are listed as unscheduled."""
     by_check = {}
     for row in state["rows"]:
         if row["rigCheck"]:
@@ -198,7 +185,6 @@ def matches_check(stage, check):
 
 
 def update(ledger, passed_stages, head, fingerprint, evidence):
-    """A copy of the ledger with this head recorded for every row whose rig check passed. Returns (ledger, row ids)."""
     updated, ids = copy.deepcopy(ledger), []
     if not fingerprint or fingerprint == "unknown":
         return updated, ids

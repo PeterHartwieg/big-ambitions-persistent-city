@@ -4,7 +4,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    // Native references stay transient. The caller supplies a fresh live image before every reuse.
     internal sealed class AudienceTarget
     {
         public AudienceTarget(object zone, object performer, string id, Position position)

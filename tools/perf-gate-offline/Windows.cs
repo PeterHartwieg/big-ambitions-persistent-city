@@ -10,9 +10,6 @@ using PersistentCity.Tests;
 
 namespace PersistentCity.PerfGateOffline;
 
-/// <summary>Detached native checkout for the pre-gate: F5g's three player croissant shops with the F1 hour fence, one
-/// order per intent, and the F6 change journal fed once per native hour from the same image (as Runtime's
-/// NativeFoodMarket observes supply and hours). Never books anything; it only keeps the ordered sales list the run hashes.</summary>
 internal sealed class OfflineMarket : IFoodMarket, IFoodSaleEvidence
 {
     private readonly FoodBusiness[] shops;
@@ -34,7 +31,6 @@ internal sealed class OfflineMarket : IFoodMarket, IFoodSaleEvidence
     public double EarliestMinute => Math.Floor(Clock / 60) * 60;
     public IReadOnlyList<FoodBusiness> Read(double minute) => shops;
 
-    /// <summary>The native clock entered <paramref name="nativeMinute"/>: the first minute of a new hour observes supply and hours.</summary>
     public void Enter(double nativeMinute)
     {
         Clock = nativeMinute;
@@ -62,8 +58,6 @@ internal sealed class OfflineMarket : IFoodMarket, IFoodSaleEvidence
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
 }
 
-/// <summary>F6 ordinary visits: every saved shop and leisure place is a native non-player business, priced from the
-/// current hour once the clock has entered an hour after load (the shape of F6h's ownership double).</summary>
 internal sealed class OfflineOwnership : IOrdinaryVisitOwnership
 {
     private readonly Dictionary<string, OrdinaryVisitClass> kinds;
@@ -86,30 +80,23 @@ internal sealed class OfflineOwnership : IOrdinaryVisitOwnership
     }
 }
 
-/// <summary>The synchronous planner of the uninterrupted reference and the checkpoints: F5g's cached walking routes with
-/// the commute-timing role that Runtime's planner and the window's admitted planner both have, so commuters leave at the
-/// same minutes in every run.</summary>
 internal sealed class SynchronousCommutePlanner : ICommuteTimingPlanner
 {
     private readonly F5gPopulationFillTests.CachedPortalPlanner cached = new();
     public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => cached.Plan(from, to, minute, preferences);
 }
 
-/// <summary>A saved city and the native checkout's receipts at one minute: what a rig checkpoint load restores.</summary>
 internal sealed record Checkpoint(string Name, double Minute, string Payload, string[] Paid)
 {
     public string Sha256 => Fixture.Sha(Payload);
 }
 
-/// <summary>One loaded city: the simulator with FT-F4-Declared's attachments, its market and planner.</summary>
 internal sealed class Session
 {
     public CitySimulator City = null!;
     public OfflineMarket Market = null!;
     public F5hIntegratedAcceptanceTests.AdmittedPortalPlanner? Admitted;
 
-    /// <summary>Loads a checkpoint as Runtime would: F5g fill, the food market, F6 ordinary visits; household finances,
-    /// attendance wages and the change journal come with the saved writer-35 city (F5g fixture, finances on).</summary>
     public static Session Load(Checkpoint checkpoint, PopulationFillCatalogue fill, bool resumable)
     {
         var read = SaveCodec.Read(checkpoint.Payload);
@@ -131,15 +118,12 @@ internal sealed class Session
         return new Checkpoint(name, City.State.Minute, SaveCodec.Write(City.State), Market.Paid.OrderBy(p => p, StringComparer.Ordinal).ToArray());
     }
 
-    /// <summary>The state hash of a run: the saved city plus the native orders it placed.</summary>
     public string StateHash()
     {
         City.SynchronizeSnapshot();
         return Fixture.Sha(SaveCodec.Write(City.State) + "\n" + string.Join(",", Market.Orders));
     }
 
-    /// <summary>Uninterrupted advance, one native minute epoch at a time with no frame budget: drain the epoch, then let the
-    /// clock enter the next minute (the F6h epoch loop). The reference every frame-sliced run must equal.</summary>
     public void AdvanceUninterrupted(double to)
     {
         if (to != Math.Floor(to)) throw new ArgumentException("whole minutes only", nameof(to));
@@ -160,9 +144,6 @@ internal sealed class Session
     internal static void Require(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
 }
 
-/// <summary>FT-F4-Declared's shape offline: the F5h reference city (152 homes, 957 residents, the declared-load workplaces,
-/// three player food shops, F6 household finances) aged to 06:00 on day 3 so the F5g fill has reached its targets, then
-/// advanced uninterrupted to every window's start.</summary>
 internal static class Fixture
 {
     public const string Name = "FT-F4-Declared (offline: F5h reference shape)";
@@ -173,7 +154,6 @@ internal static class Fixture
 
     public static F5hIntegratedAcceptanceTests.Shape Shape() => F5hIntegratedAcceptanceTests.ReferenceShape();
 
-    /// <summary>F5h's Prefilled (tests/F5hIntegratedAcceptanceTests.cs) with the seed as a parameter.</summary>
     public static Checkpoint Aged(F5hIntegratedAcceptanceTests.Shape shape, int seed)
     {
         var (state, market) = F5gPopulationFillTests.City(shape.Homes, 1, seed: seed, businesses: shape.Businesses);
@@ -183,7 +163,6 @@ internal static class Fixture
         return new Checkpoint("day3-06:00", Day3, SaveCodec.Write(city.State), Array.Empty<string>());
     }
 
-    /// <summary>Checkpoints at each requested minute, made in one uninterrupted pass from the aged city.</summary>
     public static Dictionary<double, Checkpoint> Checkpoints(Checkpoint aged, PopulationFillCatalogue fill, IEnumerable<double> minutes)
     {
         var result = new Dictionary<double, Checkpoint>();
@@ -201,19 +180,14 @@ internal static class Fixture
         => "day" + ((int)(minute / 1440)).ToString(CultureInfo.InvariantCulture) + "-" + TimeSpan.FromMinutes(minute % 1440).ToString(@"hh\:mm", CultureInfo.InvariantCulture);
 }
 
-/// <summary>How a window advances the native clock and its bodies.</summary>
 internal enum Presentation { Bodies, Hidden, TimeMachine }
 
-/// <summary>One offline window: condition and script as Decision 3 names them, the arm's pace and frame rate.</summary>
 internal sealed record WindowSpec(string Condition, string Script, string Arm, double From, double To, int Fps,
     double GameMinutesPerRealSecond, Presentation Presentation, double ClockFactor, int NativeSpeed, bool SliceCheck = false)
 {
     public string Id => Condition + "/" + Script + "/" + Arm + "/" + Fps.ToString(CultureInfo.InvariantCulture) + "fps";
 }
 
-/// <summary>Native pace. Decision 3: about 3.3 real seconds per game minute at speed 1 and factor 1/3 on the 6 November
-/// rig; the #128 replay pins that as 98.6 frames per game minute at 30 FPS. Speeds 2, 3 and 6 are assumed to scale the
-/// speed-1 rate linearly; G9 measures the real rates.</summary>
 internal static class Pace
 {
     public const double DeclaredFactor = 1.0 / 3, FastestFactor = 1;
@@ -221,7 +195,6 @@ internal static class Pace
     public static double At(double factor, int speed) => NativeSpeed1 * factor * speed;
 }
 
-/// <summary>Per game hour of a window: frames, simulated real time against the unheld clock, holds and lag.</summary>
 internal sealed class HourRow
 {
     public int Day, Hour;
@@ -231,7 +204,6 @@ internal sealed class HourRow
     public double MaxLag;
 }
 
-/// <summary>Everything one window measured. Times are offline .NET Stopwatch milliseconds; real time is frames/fps.</summary>
 internal sealed class WindowResult
 {
     public WindowSpec Spec = null!;
@@ -245,27 +217,19 @@ internal sealed class WindowResult
     public List<HourRow> Hours = new();
     public double MaxLag, LongestHoldSeconds, LongestRecoverySeconds;
     public long Holds;
-    /// <summary>Held frames by why the frame before them ended: the frame budget part that left the epoch undrained.</summary>
     public SortedDictionary<string, long> HoldCauses = new(StringComparer.Ordinal);
     public int MaxWalkers, MaxCars; public double MedianBodies, MedianWalkers, MedianCars;
     public long BodyAcquisitions, BodyReleases;
     public double MaxPathsInFrame;
     public string StateHash = "", UninterruptedHash = "";
     public double ToolSeconds;
-    /// <summary>Game minutes of body movement supplied to the driver, in all frames and in held frames.</summary>
     public double BodyMoveMinutes, HeldBodyMoveMinutes;
     public List<double> FrameMinute = new();
-    /// <summary>Per frame: collections of any generation during the frame, and the lag after it (the export's frame rows and lag samples).</summary>
     public List<int> FrameGc = new();
     public List<double> FrameLag = new();
-    /// <summary>Calendar holds as frame ranges: first held frame and first frame after it (frame indices from 0); -1 when still held at the end.</summary>
     public List<(long Start, long End)> HoldSpans = new();
 }
 
-/// <summary>The F4e frame loop: Runtime's PopulationRuntime frame shape (PopulationFrameBudget units, citizen events and
-/// soft milliseconds; the first unit always runs; planning gets the frame's remaining time) behind the F1 accounting clock
-/// (AccountingClock.Limit holds native time until the epoch drains, the checkout fence stays in the native hour), with the
-/// F2a presentation driver moving and selecting bodies around a fixed focus every frame.</summary>
 internal static class WindowRunner
 {
     public const int Pedestrians = 48, Vehicles = 24;
@@ -289,8 +253,6 @@ internal static class WindowRunner
         HourRow? hour = null;
         double focusMetres = 0;
         string previousStop = "start";
-        // Collect the checkpoint load's garbage before timing, as the #128 replay does: a collection of memory the
-        // window did not allocate must not land in one of its frames.
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         int gc0 = GC.CollectionCount(0), gc1 = GC.CollectionCount(1), gc2 = GC.CollectionCount(2);
         while (!city.IsCaughtUpTo(end))
@@ -311,9 +273,6 @@ internal static class WindowRunner
             double target = Math.Max(city.State.Minute, AccountingClock.Target(native));
             double lag = target - city.State.Minute;
 
-            // F2a: native bodies move in real time, before the simulation advances, also on frames that hold native time.
-            // Bodies are commanded at Runtime's fixed real-time walking speed (the F2a runner's conversion), independent of the
-            // calendar pace and of a held tick.
             int g0 = GC.CollectionCount(0), g1 = GC.CollectionCount(1), g2 = GC.CollectionCount(2);
             long frameStarted = Stopwatch.GetTimestamp();
             var (moveSeconds, moveMinutes) = BodyMovement(spec.Fps);
@@ -372,7 +331,6 @@ internal static class WindowRunner
                 driver.Update(focus, false);
                 bodies.Add(driver.Count); walkers.Add(driver.Walkers); cars.Add(driver.Cars);
             }
-            // S-path walks the focus at 1.4 m/s of real time.
             if (focusPath.Count > 1) focusMetres += 1.4 / spec.Fps;
             driverMs += Ms(presented, Stopwatch.GetTimestamp());
 
@@ -383,7 +341,6 @@ internal static class WindowRunner
             r.FrameGc.Add(d0 + d1 + d2); r.FrameLag.Add(lag);
             if (modWork >= 30) r.Spikes.Add((r.Frames, city.State.Minute, modWork, coreMs, driverMs, coreMs >= driverMs ? component : "presentation-driver", gc, d0, d1, d2));
 
-            // S rows: holds (consecutive held frames), recovery to lag <= 0.1 after a hold, lag and pace per game hour.
             if (held)
             {
                 r.HeldFrames++; holdFrames++; recoveryFrames = 0;
@@ -436,8 +393,6 @@ internal static class WindowRunner
         return r;
     }
 
-    /// <summary>One frame's body movement: its real seconds and the F2a runner's fixed real-time game minutes
-    /// (GridPlanner.ClockRate, 2 m/s walkers), whatever the calendar pace or a held tick.</summary>
     public static (double Seconds, double GameMinutes) BodyMovement(int fps) => (1.0 / fps, 1.0 / fps * GridPlanner.ClockRate);
 
     private static double Median(List<int> values)
@@ -447,7 +402,6 @@ internal static class WindowRunner
         return sorted[sorted.Length / 2];
     }
 
-    /// <summary>The point <paramref name="metres"/> along a closed polyline (a stationary focus for one point).</summary>
     public static Position Along(IReadOnlyList<Position> path, double metres)
     {
         if (path.Count == 1) return path[0];

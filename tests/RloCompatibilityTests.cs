@@ -14,7 +14,6 @@ namespace PersistentCity.Tests
     [Collection(SharedFlareState)]
     public sealed class RloCompatibilityTests
     {
-        // Both this class and RloBridgeTests set the stand-in RealLifeOverhaul.GoingPublic.InSession flag.
         public const string SharedFlareState = "RLO stand-in GoingPublic state";
 
         private readonly RloIdentityAdapter adapter = new RloIdentityAdapter();
@@ -74,7 +73,7 @@ namespace PersistentCity.Tests
                     typeof(AssemblyInformationalVersionAttribute).GetConstructor(new[] { typeof(string) })!, new object[] { information }));
             Assert.Equal(accepted, RloIdentityAdapter.IsReviewedAssembly(assembly));
             var result = adapter.Read(assembly);
-            Assert.Equal(RloReadStatus.Incompatible, result.Status); // Metadata alone never supplies a population.
+            Assert.Equal(RloReadStatus.Incompatible, result.Status);
             if (accepted) Assert.Contains("Missing public contract type", result.Message);
             else
             {
@@ -248,7 +247,6 @@ namespace PersistentCity.Tests
             Assert.True(Read(city).MatchesPopulation(snapshot));
             Assert.Equal(1, adapter.Bindings);
 
-            // Session, director, Flare, seed and every citizen are read again on the reused binding.
             RealLifeOverhaul.GoingPublic.InSession = true;
             Assert.Contains("Multiplayer", Read(city).Message);
             RealLifeOverhaul.GoingPublic.InSession = false;
@@ -262,7 +260,6 @@ namespace PersistentCity.Tests
             Assert.True(Read(City()).MatchesPopulation(snapshot));
             Assert.Equal(1, adapter.Bindings);
 
-            // The live director is looked up on each unsupplied read, never kept with the binding.
             var previous = Fake.FlareDirector.Instance;
             try
             {
@@ -276,7 +273,6 @@ namespace PersistentCity.Tests
             finally { Fake.FlareDirector.Instance = previous; }
             Assert.Equal(1, adapter.Bindings);
 
-            // A refusal drops the binding; the next read binds again, as every read did before.
             city = City(); citizens = city.Citizens.ToList(); citizens[399] = citizens[0]; city.Citizens = citizens;
             Assert.Equal(RloReadStatus.Incompatible, Read(city).Status);
             Assert.True(Read(City()).MatchesPopulation(snapshot));
@@ -285,7 +281,6 @@ namespace PersistentCity.Tests
             Assert.True(Read(City()).MatchesPopulation(snapshot));
             Assert.Equal(3, adapter.Bindings);
 
-            // An assembly without the contract never replaces a good binding with a partial one.
             Assert.Equal(RloReadStatus.Incompatible, adapter.ReadContract(typeof(RloIdentityAdapter).Assembly, RloIdentityAdapter.ReviewedVersion, City(), true).Status);
             Assert.Equal(3, adapter.Bindings);
             Assert.True(Read(City()).MatchesPopulation(snapshot));

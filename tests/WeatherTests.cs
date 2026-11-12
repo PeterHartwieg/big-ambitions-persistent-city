@@ -126,7 +126,6 @@ public sealed class WeatherTests
         var source=new Source {Value=WeatherSample.Rain};var market=new Market();var paths=new Paths();var city=new CitySimulator(state,paths);
         city.AttachWeather(source);city.AttachFoodMarket(market);state.Food.ChoiceStartsDay=1;state.Food.AwarenessStartsDay=2;
         var meal=Assert.Single(state.Food.Residents);
-        // New intent at the current stay, without advancing into a different routine.
         meal.DesiredAt=meal.DueAt=state.Minute;meal.ExpiresAt=state.Minute+60;
         city=new CitySimulator(state,paths);city.AttachWeather(source);city.AttachFoodMarket(market);
         for(int i=0;i<units;i++) city.AdvanceFrameSlice(state.Minute,1);
@@ -187,7 +186,6 @@ public sealed class WeatherTests
             city=new CitySimulator(state,paths);city.AttachWeather(source,new WeatherSettings {Enabled=enabled,QueueRainLeadMinutes=10});
         }
         int capturedReads=source.Calls;
-        // No earlier QueueAtOpening call: camera admission/physical observation happens only after rain starts.
         Assert.Equal(dry,city.QueueAtOpening(person,shop,state.Minute));
         Assert.NotNull(person.W);Assert.True(person.W!.Queue);Assert.Equal(WeatherSample.Dry,person.W.Weather);
         Assert.Same(committed,person.W);Assert.Equal(capturedReads,source.Calls);
@@ -215,7 +213,7 @@ public sealed class WeatherTests
         p.PlaceId=p.DestinationId="shop";p.DestinationActivity=Activity.Shop;p.Activity=Activity.Shop;p.Phase=CitizenPhase.WaitingForOpening;
         p.NextEventMinute=now+8;p.ActivityUntilMinute=now+45;
         var source=new Source {Value=WeatherSample.Dry};var city=new CitySimulator(state,new Paths());city.AttachWeather(source);
-        city.CaptureQueueWeather(p,now); // the wait event's capture (F2b: the query never captures)
+        city.CaptureQueueWeather(p,now);
         var dry=city.QueueAtOpening(p,shop,now);Assert.NotNull(dry);source.Value=WeatherSample.Rain;
         Assert.Equal(dry,city.QueueAtOpening(p,shop,now+1));Assert.Equal(1,source.Calls);
         var loaded=Read(DevelopmentChain.Write(state));var resumed=new CitySimulator(loaded,new Paths());resumed.AttachWeather(source,new WeatherSettings {QueueRainLeadMinutes=2});
@@ -238,7 +236,7 @@ public sealed class WeatherTests
         settings.QueueRainLeadMinutes=10;source.Value=WeatherSample.Dry;
         Assert.Equal(first,sim.QueueAtOpening(person,state.Places[1],state.Minute+1));Assert.Equal(1,source.Calls);
         person.NextEventMinute+=1440;person.ActivityUntilMinute+=1440;state.Minute+=1440;
-        Assert.Null(sim.QueueAtOpening(person,state.Places[1],state.Minute));Assert.Equal(1,source.Calls); // read-only: a new opening needs its own wait event
+        Assert.Null(sim.QueueAtOpening(person,state.Places[1],state.Minute));Assert.Equal(1,source.Calls);
         sim.CaptureQueueWeather(person,state.Minute);Assert.Equal(2,source.Calls);Assert.Equal(10,person.W!.Value);
     }
     [Fact]
@@ -257,7 +255,7 @@ public sealed class WeatherTests
     {
         var state=State();string before=DevelopmentChain.Write(state);var count=SaveCodec.CountRecords(state,before);
         state.Citizens[0].W=new WeatherCommitment(state.Minute,WeatherSample.Rain,true);string after=DevelopmentChain.Write(state);
-        Assert.Equal(13,after.Length-before.Length); // 15-char value replaces null (2 quotes + 15 - 4)
+        Assert.Equal(13,after.Length-before.Length);
         Assert.Equal(22,"\"W\":\"".Length+state.Citizens[0].W!.ToWire().Length+2);
         var charged=SaveCodec.CountRecords(state,after);Assert.Equal(count.Streaming+1,charged.Streaming);Assert.Equal(count.Semantic+1,charged.Semantic);
         foreach(string damage in new[] {"1O00AAAAAAAAAAA","2O21AAAAAAAAAAA","1O91AAAAAAAAAAA","1O22AAAAAAAAAAA","1Q21AAAAAAAAAAA","1O21AAAAAAAAAA/"})

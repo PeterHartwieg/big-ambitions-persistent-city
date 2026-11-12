@@ -5,8 +5,6 @@ using System.Threading;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Version-1 provider input. Only nullable scalar policy fields; copied at registration.
-    /// Null means absent. This cannot define items, prices, resources or sale permission.</summary>
     public sealed class FoodProductMetadataInput
     {
         public MealClass? MealClass { get; set; }
@@ -16,8 +14,6 @@ namespace PersistentCity.Core
         public int? DinnerFitCents { get; set; }
     }
 
-    /// <summary>Host-owned loaded-name evidence, copied once at catalogue publication, not per
-    /// frame/context. Null at Publish means unavailable. Presence is never sale permission.</summary>
     public sealed class FoodProductMetadataLoadedNames
     {
         public const int MaximumNames = 16384;
@@ -38,8 +34,6 @@ namespace PersistentCity.Core
         public bool Contains(string name) => names.Contains(name);
     }
 
-    /// <summary>Provider-scoped lifetime. Dispose unregisters all its names; old handles cannot
-    /// register again after disposal or registry unload. No provider code is called by PC.</summary>
     public sealed class FoodProductMetadataProvider : IDisposable
     {
         private readonly FoodProductMetadataRegistry registry;
@@ -52,8 +46,6 @@ namespace PersistentCity.Core
         public void Dispose() => registry.Unregister(this);
     }
 
-    /// <summary>Staged metadata only. Registration is synchronized; publication/unload are explicitly
-    /// bound to the host main thread. There is no Update, timer, reflection or provider callback.</summary>
     public sealed class FoodProductMetadataRegistry
     {
         public const int ApiVersion = 1;
@@ -74,7 +66,6 @@ namespace PersistentCity.Core
         public int BudgetCharacters { get { lock (gate) return characters; } }
         public int BudgetUtf8Bytes { get { lock (gate) return bytes; } }
         public long Publications { get { lock (gate) return publications; } }
-        // API input policy only; E5c config/taste and E5d saved identity keep their canonical seam.
         internal static bool ValidApiName(string? name) => FoodProductMetadataResolver.ValidName(name) && name!.IndexOf('\\') < 0;
         public void BindPublicationThread()
         {
@@ -101,7 +92,6 @@ namespace PersistentCity.Core
                 Cost(providerId, out int c, out int b);
                 if (!Fits(c, b)) { reason = "registry-budget"; return false; }
                 provider = new FoodProductMetadataProvider(this, providerId);
-                // An empty provider changes bookkeeping, not the effective product image.
                 providers.Add(providerId, provider); characters += c; bytes += b;
                 reason = "accepted"; return true;
             }
@@ -123,15 +113,12 @@ namespace PersistentCity.Core
                 if (!existing)
                 {
                     if (count == 0 && names.Count == MaximumProducts) { reason = "product-bound"; return false; }
-                    int c = 128, b = 128; // One fixed bounded claim, including provider/name references and scalar fields.
+                    int c = 128, b = 128;
                     if (count == 0) { Cost(name, out int nc, out int nb); c += nc; b += nb; }
                     if (!Fits(c, b)) { reason = "registry-budget"; return false; }
                     characters += c; bytes += b; names[name] = ++count;
                 }
-                // Identical same-provider input causes no new revision or publication.
                 if (!existing || !Same(previous, metadata)) { provider.Entries[name] = metadata; revision++; }
-                // Even identical claims by distinct providers invalidate the name: no implicit shared ownership.
-                // Retain both bounded claims so rejection cannot accidentally leave the first provider winning.
                 reason = count > 1 ? ConflictReason : "accepted";
                 return count == 1;
             }
@@ -172,9 +159,6 @@ namespace PersistentCity.Core
                 if (hadEntries) revision++;
             }
         }
-        /// <summary>Atomic immutable publication at a host context boundary. A immutable detached
-        /// catalogue proves name presence only, never stock/eligibility. At most 256 name lookups,
-        /// and bounded claims; no full catalogue scan. Repeated clean calls return the same image.</summary>
         public FoodProductMetadataSnapshot Publish(FoodProductMetadataLoadedNames? catalogue)
         {
             lock (gate)
@@ -189,8 +173,6 @@ namespace PersistentCity.Core
                     if (entry.Value > 1) reasons.Add(entry.Key, ConflictReason);
                     else if (ready == null || !ready.Contains(entry.Key)) reasons.Add(entry.Key, "unloaded-product");
                 }
-                // No claim can contribute when every name is conflicted/unloaded. Avoid a
-                // redundant walk of up to the full registry budget during conflict bursts.
                 if (reasons.Count < names.Count)
                     foreach (var provider in providers.Values)
                         foreach (var entry in provider.Entries)
@@ -213,7 +195,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Detached immutable API image; only the registry can construct it.</summary>
     public sealed class FoodProductMetadataSnapshot
     {
         public static readonly FoodProductMetadataSnapshot Empty = new FoodProductMetadataSnapshot(

@@ -170,7 +170,6 @@ public sealed class PhysicalProgressTests
         Assert.False(PhysicalProgress.TryProject(default, new Position(0,0,0), true, out progress));
     }
 
-    // F2c walker follow (plan Decision 2): pure follower arithmetic and the bounded correction ring.
     private static Route FollowRoute() => new Route { Legs = new()
     {
         new RouteLeg { From = new Position(0,0,0), To = new Position(10,0,0), Minutes = 10, Mode = TravelMode.Walk },
@@ -187,29 +186,22 @@ public sealed class PhysicalProgressTests
         => Assert.Equal(factor, WalkerFollow.PaceFactor(lag), 12);
 
     private const string UrpLit = "Universal Render Pipeline/Lit";
-    // The facts the production probe reads from a material, for the verified shaders and their look-alikes.
     [Theory]
-    // URP transparent surfaces fade through _BaseColor.
     [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, true, false, false, true)]
     [InlineData("Universal Render Pipeline/Simple Lit", 3000, true, false, 5f, 10f, 1f, true, false, false, true)]
     [InlineData("Universal Render Pipeline/Unlit", 2501, true, false, 5f, 10f, 1f, true, false, false, true)]
-    // URP Lit with an opaque surface (_Surface 0), queue 3000 and blend 5/10: its fragment alpha is forced to 1.
     [InlineData(UrpLit, 3000, true, false, 5f, 10f, 0f, false, false, false, false)]
-    [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, false, false, false, false)] // keyword missing
-    // Alpha clipping cuts the body out halfway instead of fading it.
+    [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, false, false, false, false)]
     [InlineData(UrpLit, 3000, true, false, 5f, 10f, 1f, true, false, true, false)]
-    // Queue, blend and colour must all agree.
     [InlineData(UrpLit, 2500, true, false, 5f, 10f, 1f, true, false, false, false)]
     [InlineData(UrpLit, 3000, true, false, 1f, 0f, 1f, true, false, false, false)]
     [InlineData(UrpLit, 3000, true, false, 5f, 1f, 1f, true, false, false, false)]
     [InlineData(UrpLit, 3000, true, false, null, null, 1f, true, false, false, false)]
-    [InlineData(UrpLit, 3000, false, true, 5f, 10f, 1f, true, false, false, false)] // no _BaseColor
-    // Built-in Standard in its alpha-blend (Fade) mode fades through _Color.
+    [InlineData(UrpLit, 3000, false, true, 5f, 10f, 1f, true, false, false, false)]
     [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, true, false, true)]
     [InlineData("Standard (Specular setup)", 3000, false, true, 5f, 10f, null, false, true, false, true)]
-    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, false, false, false)] // opaque or cutout mode
-    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, true, true, false)]   // alpha test on
-    // An unsupported shader exposing every matching property and keyword is still opaque for the fade.
+    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, false, false, false)]
+    [InlineData("Standard", 3000, false, true, 5f, 10f, null, false, true, true, false)]
     [InlineData("Custom/Character", 3000, true, true, 5f, 10f, 1f, true, true, false, false)]
     [InlineData("", 3000, true, true, 5f, 10f, 1f, true, true, false, false)]
     public void OnlyVerifiedAlphaBlendedShaderConfigurationsCanFade(string shader, int queue, bool baseColour, bool colour,
@@ -221,12 +213,10 @@ public sealed class PhysicalProgressTests
     public void AProjectedPoseAheadOnTheLegIsNotUsable()
     {
         var from = new Position(40, 0, 0); var to = new Position(70, 0, 0); var pose = new Position(44, 0, 0);
-        Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44, 0.12, 0)));   // straight up
-        Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(43.8, 0.1, 0.2))); // behind and aside
-        Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44.3, 0.1, 0)));  // ahead along the leg
+        Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44, 0.12, 0)));
+        Assert.True(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(43.8, 0.1, 0.2)));
+        Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(44.3, 0.1, 0)));
         Assert.False(WalkerFollow.NotAheadOnLeg(from, to, pose, new Position(double.NaN, 0, 0)));
-        // A pose that is not an exact float, projected straight up through float coordinates, is not ahead.
-        // 44.1234 and 44.7 round up in float (ahead by about a micrometre), the others round down.
         foreach (double x in new[] { 44.1234, 44.7, 44.123456789, 344.987654321, 1234.5678912 })
         {
             var exact = new Position(x, 0, 0.3333333333);
@@ -251,7 +241,7 @@ public sealed class PhysicalProgressTests
     {
         var route = FollowRoute();
         Assert.Equal(5, WalkerFollow.RouteMetres(route, 0, 5), 12);
-        Assert.Equal(10, WalkerFollow.RouteMetres(route, 0, 12), 12);   // the wait leg adds no distance
+        Assert.Equal(10, WalkerFollow.RouteMetres(route, 0, 12), 12);
         Assert.Equal(15, WalkerFollow.RouteMetres(route, 5, 17), 12);
         Assert.Equal(70, WalkerFollow.RouteMetres(route, 0, 26), 12);
         Assert.Equal(0, WalkerFollow.RouteMetres(route, 7, 7));
@@ -262,19 +252,13 @@ public sealed class PhysicalProgressTests
     public void BodyProgressIsNeverAheadOfTheLogicalPose()
     {
         var route = FollowRoute();
-        // Physically ahead of a logical pose at 4 m: credited only up to the logical progress.
         Assert.Equal(4, WalkerFollow.Advance(route, 0, 4, new Position(9,0,0)), 12);
-        // Behind on the same leg: the projection.
         Assert.Equal(3, WalkerFollow.Advance(route, 0, 8, new Position(3,0,0.1)), 12);
-        // Pushed aside: no credit, the previous progress stays.
         Assert.Equal(2, WalkerFollow.Advance(route, 2, 8, new Position(3,0,5)), 12);
-        // At the corner it passes onto the wait leg and waits with the logical clock, never past it.
         Assert.Equal(11, WalkerFollow.Advance(route, 9, 11, new Position(10,0,0)), 12);
         Assert.Equal(12, WalkerFollow.Advance(route, 9, 13, new Position(10,0,0)), 12);
-        // At the station it stops at the start of the subway leg even when the logical pose is past it.
         Assert.Equal(22, WalkerFollow.Advance(route, 21, 25, new Position(10,0,20)), 12);
         Assert.Equal(TravelMode.Subway, WalkerFollow.Sample(route, 22).Mode);
-        // Never below zero or above the route, whatever the inputs.
         Assert.Equal(0, WalkerFollow.Advance(route, -5, double.NaN, new Position(0,0,0)));
         Assert.Equal(route.Minutes, WalkerFollow.Advance(route, 27, 1e9, new Position(52,0,20)), 12);
     }
@@ -303,7 +287,6 @@ public sealed class PhysicalProgressTests
         entries.Clear(); log.Since(600, entries, out gap);
         Assert.Empty(entries); Assert.False(gap);
         Assert.Equal(600, log.Corrections); Assert.Equal(200, log.Moves); Assert.Equal(200, log.Fades); Assert.Equal(200, log.LagReleases);
-        // Moves on screen are what the Q3 default prohibits; they are counted separately.
         Assert.Equal(Enumerable.Range(1, 600).Count(i => i % 3 == 0 && i % 7 == 0), log.OnScreenMoves);
         Assert.Contains("on_screen_moves=" + log.OnScreenMoves, log.Status(3));
         Assert.Contains("kind=Move on_screen=false", WalkerMovementTelemetry.Format(last));

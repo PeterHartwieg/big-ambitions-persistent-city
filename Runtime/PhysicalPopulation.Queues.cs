@@ -1,4 +1,3 @@
-// Queue and stop bodies: arrival at the door, door queues, optional stops and their departure follow, and vendor queues.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,10 +18,8 @@ namespace PersistentCity.Runtime
             if (!person.Valid) return false;
             person.Stop(true);
             var citizen = binding.Citizen;
-            // A new journey (no later opening, so the simulator sent them on) is not this arrival.
             if (citizen.Phase == CitizenPhase.Travelling)
                 return ReferenceEquals(citizen.Journey, binding.AwaitJourney) && simulation.View.Minute <= binding.AwaitMinute + 0.5;
-            // Another door used this frame's sampling budget: wait a frame rather than lose the body.
             if (citizen.Phase == CitizenPhase.WaitingForOpening && spots.SampledThisFrame
                 && places.TryGetValue(citizen.PlaceId, out var place) && spots.Unsampled(place)
                 && simulation.View.Minute <= binding.AwaitMinute + 0.5) return true;
@@ -32,7 +29,6 @@ namespace PersistentCity.Runtime
             return TryJoinVendorQueue(binding) || TryJoinOptional(binding) || TryJoinQueue(binding);
         }
 
-        /// <summary>Join the door's queue with the body that walked here. Its spot respects the people already planned for that line.</summary>
         private bool TryJoinQueue(Binding binding)
         {
             var person = binding.Person!; var citizen = binding.Citizen;
@@ -61,26 +57,21 @@ namespace PersistentCity.Runtime
             if (!person.Agent.isStopped) binding.StepWalked += Time.unscaledDeltaTime;
             if (binding.Step == QueueStep.Entering)
             {
-                // Walking in through the opened door; the body is returned at the door or after a bound on walking time.
                 if (binding.StepWalked >= QueueStepSeconds || Position.Distance(person.Position, line.Entrance) < 0.5) return false;
                 person.Tick(); return true;
             }
-            // One minute of grace: a budgeted catch-up can process the opening event a frame late.
             if (citizen.Phase == CitizenPhase.WaitingForOpening && citizen.PlaceId == dwell.SpotId && simulation.View.Minute < dwell.EndMinute + 1)
             {
                 if (binding.Step == QueueStep.Approaching)
                 {
                     if (Position.Distance(person.Position, line.Spots[binding.Slot]) <= 0.3)
                     {
-                        // Drop the finished path so agent steering can't turn them away from the door.
                         binding.Step = QueueStep.Standing;
                         if (person.Agent.hasPath) person.Agent.ResetPath();
                     }
                     else if (binding.StepWalked < QueueStepSeconds) { person.Tick(); return true; }
                     else
                     {
-                        // Never reached the spot (blocked by the player or a crowd): go back inside
-                        // to wait for the rest of this dwell rather than stand short of the line.
                         GiveUp(binding);
                         if (!person.SetPathTarget(line.Entrance, NativeTravelPace.WalkingMetresPerSecond)) return false;
                         binding.Step = QueueStep.Entering; binding.StepWalked = 0;
@@ -91,18 +82,13 @@ namespace PersistentCity.Runtime
                 person.Face(binding.Slot == 0 ? line.Door : line.Spots[binding.Slot - 1]);
                 return true;
             }
-            // The place opened and admitted them: walk in through the door instead of vanishing on the spot.
             if (citizen.Phase != CitizenPhase.AtPlace || citizen.PlaceId != dwell.SpotId) return false;
             if (person.SetPathTarget(line.Entrance, NativeTravelPace.WalkingMetresPerSecond))
             { binding.Step = QueueStep.Entering; binding.StepWalked = 0; return true; }
-            // A path can fail for a frame while bodies shuffle; keep standing and try again briefly.
             person.Stop(true);
             return ++binding.EntryAttempts < EntryAttemptFrames;
         }
 
-        // ActivityObserved runs at commitment. Departure tail (F2c): a body returning from an optional stop or a
-        // vendor stand keeps walking back while the logical journey has already started, then follows it with
-        // catch-up. Nothing is held: the journey runs on the logical clock from its commit.
         private void OnOptionalDeparture(string id, CitizenState citizen, double minute)
         {
             TrackVendorWaiter(citizen);
@@ -112,8 +98,6 @@ namespace PersistentCity.Runtime
             Follow(binding, citizen.Journey, 0);
         }
 
-        // A journey that committed without a departure notice for this body (for example while it was planned)
-        // is followed from its start, where the returning body stands.
         private static void TryFollowCommitted(Binding binding)
         {
             var citizen = binding.Citizen;
@@ -134,8 +118,6 @@ namespace PersistentCity.Runtime
             if (binding.Person == null || !OptionalVisible(binding.Citizen)
                 || simulation.OptionalStopStatus(binding.Citizen.OptionalStop!) != OptionalStopAvailability.Ready) return false;
             var stop = binding.Citizen.OptionalStop!;
-            // A queue keeps the facade spot visually, and an unreachable spot cannot be walked to. In both
-            // cases the body stands where it is (near the entrance) and never cancels the saved stop (F2b).
             bool shortOfSpot = bindings.Values.Any(b => b.Queue.HasValue && b.Line != null && b.Slot >= 0
                 && Position.Distance(b.Line.Spots[b.Slot], stop.Position) < 0.65)
                 || !binding.Person.SetPathTarget(stop.Position, NativeTravelPace.WalkingMetresPerSecond);
@@ -149,11 +131,9 @@ namespace PersistentCity.Runtime
             if (!body.Valid) return false;
             if (!body.Agent.isStopped) binding.StepWalked += Time.unscaledDeltaTime;
             bool active = OptionalVisible(binding.Citizen) && ReferenceEquals(binding.Citizen.OptionalStop, stop);
-            // Event copies preserve values but replace DTO instances; follow that same saved stop.
             if (!active && OptionalVisible(binding.Citizen) && binding.Citizen.OptionalStop!.SpotId == stop.SpotId
                 && binding.Citizen.OptionalStop.StartMinute == stop.StartMinute)
             { binding.Optional = stop = binding.Citizen.OptionalStop; active = true; }
-            // Only the logical stop ending (its time, or a Core cancellation such as rain) sends the body back.
             if (!binding.OptionalReturning && !active)
             {
                 binding.OptionalReturning = true; binding.OptionalStandsShort = false; binding.StepWalked = 0;
@@ -166,13 +146,10 @@ namespace PersistentCity.Runtime
                 if (Position.Distance(body.Position, stop.ReturnPosition) < 0.4)
                 {
                     binding.Optional = null;
-                    // The departure tail ends here: follow the journey that committed meanwhile (ObserveWalker
-                    // releases at a car or transit boundary). Without one the body goes in at the entrance.
                     if (binding.Journey == null) TryFollowCommitted(binding);
                     if (binding.Journey == null) return false;
                     body.Stop(false); binding.TargetLeg = -1; return true;
                 }
-                // Retry a temporarily blocked return; never retire a visible citizen at the spot.
                 if (!body.Agent.hasPath)
                 {
                     body.Stop(false);
@@ -181,7 +158,6 @@ namespace PersistentCity.Runtime
                 body.Tick(); return true;
             }
             bool atSpot = !binding.OptionalStandsShort && Position.Distance(body.Position, stop.Position) <= 0.3;
-            // Blocked walking stops short of the spot after the bound; the saved stop is unchanged.
             if (!atSpot && binding.StepWalked >= QueueStepSeconds) binding.OptionalStandsShort = true;
             if (atSpot || binding.OptionalStandsShort)
             {
@@ -302,8 +278,6 @@ namespace PersistentCity.Runtime
                 if (binding.StepWalked >= QueueStepSeconds) return false;
                 if (Position.Distance(body.Position, line.Entrance) < 0.3)
                 {
-                    // Pavement has no doorway to hide a returned body. Keep a completed meal's
-                    // body here until its scheduled departure commits, even while paused.
                     if (AwaitVendorDeparture(binding))
                     {
                         if (body.Agent.hasPath) body.Agent.ResetPath();
@@ -311,7 +285,6 @@ namespace PersistentCity.Runtime
                     }
                     binding.VendorOpening = 0; binding.Line = null;
                     if (Bound(binding)) queueBindings--;
-                    // The return starts at the stand: follow it from here with catch-up (departure tail).
                     if (binding.Journey == null) TryFollowCommitted(binding);
                     if (binding.Journey == null) return false;
                     binding.TargetLeg = -1;

@@ -10,12 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5h measurement harness (docs/perf/f5h.md), not a gate: it runs only when PC_F5H_MEASURE names an output file,
-/// e.g. <c>PC_F5H_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F5hMeasure</c>.
-/// <c>PC_F5H_SIZES</c> picks sizes (default <c>reference,1914,10000,50000,100000</c>). Every city is a fresh F5g fixture
-/// city in writer 34 with the fill attached, measured over one game day of the F1 frame loop
-/// (<see cref="F5hIntegratedAcceptanceTests.Accounting"/>). Persons are persisted persons: residents, commuters and the
-/// whole day-visitor pool, active or dormant.</summary>
 public sealed class F5hMeasure
 {
     private static string? Output => PerfGate.Variable("PC_F5H_MEASURE") is { Length: > 0 } path ? path : null;
@@ -32,7 +26,6 @@ public sealed class F5hMeasure
 
     private static Dictionary<string, object> Row(string size, string arm, F5hIntegratedAcceptanceTests.Window w, double buildMs, int fps, bool skip)
     {
-        // Frames the day takes against the frames at an unheld native clock (half a game minute per frame at 60 FPS).
         double nominal = skip ? 1440 / 120.0 : 1440 / (30.0 / fps);
         return new Dictionary<string, object>
         {
@@ -90,12 +83,8 @@ public sealed class F5hMeasure
         };
     }
 
-    /// <summary>One measured shape: homes, seeding factor, fill catalogue and the day whose 06:00 starts the window.</summary>
     private sealed record Size(string Name, Func<F5hIntegratedAcceptanceTests.Shape> Shape, int Factor, int Day);
 
-    // Residents are floor(6.3 × homes) (seven beds, 90% fill). Factor-1 sizes are filled toward their census targets before
-    // the window; factor-2 sizes start fresh with R seeded commuters, and the window's first boundary creates 1,024 pool
-    // members. Every shape's saved places are its census businesses (review Astra-r1-1).
     private static readonly Size[] Sizes =
     {
         new("reference", F5hIntegratedAcceptanceTests.ReferenceShape, 1, 3),
@@ -105,8 +94,6 @@ public sealed class F5hMeasure
         new("100000", () => F5hIntegratedAcceptanceTests.ScaledShape(7855), 2, 1),
     };
 
-    /// <summary>Section 6 matrix: per size, one day at 60 FPS with Runtime's 60 FPS frame shape (128 units, 16 citizen events, 2 ms; <see cref="PopulationFrameBudget"/>), then the saved city's bytes, records,
-    /// retained memory and offline write/read time.</summary>
     [Fact]
     public void MeasureSizes()
     {
@@ -127,12 +114,9 @@ public sealed class F5hMeasure
         }
     }
 
-    /// <summary>The full F1 matrix at about 10,000 persons: from 06:00 on day 7 across the seventh boundary, which completes the
-    /// fill. Every arm, with and without saves, must equal the 60/128/2 reference in save and orders.</summary>
     [Fact]
     public void MeasureStressMatrix() => Matrix("10000", F5hIntegratedAcceptanceTests.StressShape, 7);
 
-    /// <summary>The same matrix at the declared load, with timings (the ordinary test asserts equality only).</summary>
     [Fact]
     public void MeasureReferenceMatrix() => Matrix("reference", F5hIntegratedAcceptanceTests.ReferenceShape, 2);
 

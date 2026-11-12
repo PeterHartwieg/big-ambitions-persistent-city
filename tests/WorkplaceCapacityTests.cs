@@ -11,14 +11,9 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5e (#92): workplace capacity and employment. Work and Study places seat persons by F5a's area bands instead
-/// of a fixed 16; Employment is assigned and ended by the existing daily draws per person; visitors compete for what
-/// residents leave; Study carries no wage; no native staff member is used.</summary>
 public sealed class WorkplaceCapacityTests
 {
-    // ---- Fixtures ----
 
-    /// <summary>One business as Runtime's GamePlaces sees it: catalogue area, player ownership, school or not.</summary>
     internal readonly record struct Business(string Id, double Area, bool PlayerOwned = false, bool School = false);
 
     internal static readonly Business[] Businesses =
@@ -28,7 +23,6 @@ public sealed class WorkplaceCapacityTests
         new("address:s:9", 100, School: true),
     };
 
-    /// <summary>Work and Study places exactly as GamePlaces builds them under the F5e policy, plus the census facts.</summary>
     internal static (List<Place> Places, List<CensusWorkplace> Census) Workplaces(IEnumerable<Business> businesses, Func<Business, int>? baseRule = null)
     {
         var places = new List<Place>(); var census = new List<CensusWorkplace>();
@@ -53,7 +47,6 @@ public sealed class WorkplaceCapacityTests
         Persona = n == 9 ? Persona.Retiree : n >= 7 ? Persona.Student : n % 3 == 0 ? Persona.Foodie : n % 3 == 1 ? Persona.Commuter : Persona.Parent
     }).ToArray();
 
-    /// <summary>Twelve homes of seven beds (75 residents at the 90% fill), the businesses above, a park and three shops.</summary>
     internal static List<Place> Catalogue(Func<Business, int>? baseRule = null)
     {
         var places = Enumerable.Range(0, 12).Select(h => new Place { Id = "home:" + h.ToString("00"), Name = "Home " + h, Kind = PlaceKind.Home,
@@ -65,13 +58,10 @@ public sealed class WorkplaceCapacityTests
         return places;
     }
 
-    /// <summary>A fresh banded city in the current writer. With <paramref name="food"/> its roster (and its K−1 visitors per
-    /// resident) is created when the simulator attaches the market; without food the visitors are created directly.</summary>
     internal static (CityState State, VisitorRoutineTests.Market Market) Fresh(int factor = 2, int seed = 5150, bool food = true,
         Func<Business, int>? baseRule = null, IEnumerable<CitizenIdentity>? donors = null, IEnumerable<Place>? places = null)
     {
         var (state, market) = Unattached(factor, seed, food, baseRule, donors, places);
-        // Attaching the market creates the roster and its visitors, as Runtime does for a fresh city.
         if (food) new CitySimulator(state, new FreshCityTraceTests.Walk()).AttachFoodMarket(market);
         return (state, market);
     }
@@ -113,7 +103,6 @@ public sealed class WorkplaceCapacityTests
         return Start(read.State!, market);
     }
 
-    /// <summary>Persons seated per Work/Study place: residents, then visitor routines.</summary>
     private static Dictionary<string, int> Seated(CityState state)
     {
         var seated = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -149,15 +138,12 @@ public sealed class WorkplaceCapacityTests
         Assert.Same(payload, data[SaveStore.StateKey]); Assert.Equal("kept", data["rlo:state"]); Assert.Equal("manifest", data[FoodAuthorityStore.Key]);
     }
 
-    // ---- Golden ----
 
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
         ("banded-visitors-factor2-30h", () => { var (state, market) = Fresh(); var city = Start(state, market); Advance(city, state.Minute + 30 * 60); return city.State; }),
     };
 
-    /// <summary>The writer's golden for the banded city, re-pinned once by X3 at the held schema 1. A deliberate format change
-    /// re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData("banded-visitors-factor2-30h", "7596770dde88abe087e9a4badd411a133e8a832d029df675064591fb10b25854", 213982)]
     public void GoldenBandedCityBytesArePinned(string name, string sha256, int characters)
@@ -175,10 +161,7 @@ public sealed class WorkplaceCapacityTests
         foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
     }
 
-    // ---- Older cities are refused and kept ----
 
-    /// <summary>Older development builds wrote 2 to 36 (writer 27 seated cities under a fixed 16). Any number other than the
-    /// held 1 is refused with the distinct status through codec, store, session and the early probe, and every key is kept.</summary>
     [Fact]
     public void AnotherSchemaNumberIsRefusedWithTheStartANewCityStatusAndKept()
     {
@@ -195,7 +178,6 @@ public sealed class WorkplaceCapacityTests
         }
     }
 
-    // ---- The capacity rule ----
 
     [Theory]
     [InlineData(0, 0)] [InlineData(-5, 0)] [InlineData(double.NaN, 0)] [InlineData(1, 2)] [InlineData(39.99, 2)] [InlineData(40, 4)]
@@ -206,12 +188,9 @@ public sealed class WorkplaceCapacityTests
         Assert.Equal(work, WorkplaceCapacityPolicy.Work(area, playerOwned: false));
         Assert.Equal(work * PopulationCensusPolicy.StudentsPerWorkplaceBandSlot, WorkplaceCapacityPolicy.Study(area));
         Assert.Equal(PopulationCensusPolicy.WorkplaceCapacity(area), WorkplaceCapacityPolicy.Work(area, false));
-        // Persistent City persons are not the player's native staff.
         Assert.Equal(0, WorkplaceCapacityPolicy.Work(area, playerOwned: true));
     }
 
-    /// <summary>The seated capacity equals the census's assignable capacity for the same business facts, so the F5a
-    /// report and the city agree; the census then finds no over-capacity workplace in a fresh city.</summary>
     [Fact]
     public void FreshCityCapacityEqualsTheCensusAndIsNeverExceeded()
     {
@@ -224,15 +203,11 @@ public sealed class WorkplaceCapacityTests
         Assert.Equal(state.Places.Where(p => p.Kind == PlaceKind.Study).Sum(p => (long)p.Capacity), census.StudyCapacity);
         Assert.Equal(0, census.OverCapacityWorkplaces); Assert.True(census.JobsWithinCapacity); Assert.True(census.StudentsWithinCapacity);
         WithinCapacity(state, "fresh");
-        // Unknown area and player-owned businesses seat nobody, residents or visitors.
         var seated = Seated(state);
         Assert.False(seated.ContainsKey("address:g:7:work")); Assert.False(seated.ContainsKey("address:h:8:work"));
         Assert.Equal(0, state.Places.Single(p => p.Id == "address:h:8:work").Capacity);
     }
 
-    /// <summary>Residents are seated first (ordinal ID order), then visitors in <c>pv:</c> order compete for what is
-    /// left. Because every vacancy can be chosen at creation, a working visitor is left unseated only once every
-    /// workplace is full, and from then on no later visitor is seated: the fill order is a prefix.</summary>
     [Fact]
     public void ResidentsThenVisitorsFillCapacityInADeterministicOrder()
     {
@@ -245,17 +220,14 @@ public sealed class WorkplaceCapacityTests
         int seated = workers.Count(v => v.DayPlaceId.Length != 0);
         Assert.True(seated > 0 && seated < workers.Count, "visitors partly seated: " + seated + " of " + workers.Count);
         Assert.Equal(capacity, residentWorkers + seated);
-        // Prefix: in pv order every seated working visitor precedes every unseated one, which carries outside income.
         var ordered = workers.OrderBy(v => Sequence(v.Identity.Id)).ToList();
         Assert.All(ordered.Take(seated), v => Assert.NotEqual("", v.DayPlaceId));
         Assert.All(ordered.Skip(seated), v => { Assert.Equal("", v.DayPlaceId); Assert.Equal(ResidentIncomeSource.ExternalEmployment, v.VisitorCarried); });
         WithinCapacity(state, "fill");
-        // Shuffled catalogue and donor enumeration give the identical city.
         var shuffled = Fresh(donors: Donors.Reverse(), places: Catalogue().OrderBy(p => StableRandom.Hash(p.Id, 3))).State;
         Assert.Equal(SaveCodec.Write(state), SaveCodec.Write(shuffled));
     }
 
-    // ---- Employment by the existing daily draws ----
 
     private sealed class DrawLog
     {
@@ -263,9 +235,6 @@ public sealed class WorkplaceCapacityTests
         public readonly Dictionary<(string Id, int Day), bool> Lost = new();
     }
 
-    /// <summary>The daily employment check for every person on every day, as the simulator runs it at a safe home event
-    /// (a route probe that always succeeds takes the first candidate). Checks capacity and one Employment after every
-    /// day. Only the employment state moves; the simulator test below covers the same draws with reloads.</summary>
     private static (CityState State, DrawLog Log) Churn(CityState state, int days, WorkplaceOccupancy? index = null)
     {
         index?.Rebuild(state);
@@ -308,22 +277,16 @@ public sealed class WorkplaceCapacityTests
         return (state, log);
     }
 
-    /// <summary>Under two years of daily draws no workplace ever seats more than its capacity, every person has at most
-    /// one Employment (residents through DayPlaceId, visitors' Employment equals their routine's), and every job change
-    /// is counted. The codec refuses any payload that seats more than a place's capacity.</summary>
     [Fact]
     public void CapacityIsNeverExceededUnderChurn()
     {
         var (state, _) = Fresh();
         var (final, log) = Churn(state, 720);
         Assert.True(log.Losses > 0 && log.Seatings > 0, "churn happened: " + log.Losses + " losses, " + log.Seatings + " seatings");
-        // One active Employment per person: the ownership contract over the table, checked on write.
         var employments = final.Citizens.Select(PersonTable.ResidentEmployment).Where(e => e != null).Select(e => e!.PersonId)
             .Concat(final.Visitors.Where(v => v.Employment != null).Select(v => v.Id)).ToList();
         Assert.Equal(employments.Count, employments.Distinct(StringComparer.Ordinal).Count());
-        // Every job change is one logged loss or seating (JobChanges start at zero at creation).
         Assert.Equal(final.Citizens.Sum(c => c.JobChanges) + final.VisitorRoutines.Sum(v => v.JobChanges), log.Losses + log.Seatings);
-        // A payload that seats one more person than a place's capacity is refused and kept.
         var saved = Fresh().State;
         var full = Seated(saved).First(kv => kv.Value > 0);
         var root = SaveWire.Parse(SaveCodec.Write(saved));
@@ -332,9 +295,6 @@ public sealed class WorkplaceCapacityTests
         RefusedAndPreserved(root.ToString(Formatting.None), Fresh().State, SaveReadStatus.Invalid, "exceeds capacity");
     }
 
-    /// <summary>The simulator's occupancy index gives exactly the vacancies a full recount gives: two identical cities
-    /// churned for two years, one checking vacancies through the index and one recounting every person, end with the
-    /// same assignments, and the index equals a recount after every day.</summary>
     [Fact]
     public void OccupancyIndexGivesTheSameVacanciesAsAFullRecount()
     {
@@ -345,11 +305,6 @@ public sealed class WorkplaceCapacityTests
         Assert.True(PersonTable.Schedules(indexed).Sum(p => p.JobChanges) > 0);
     }
 
-    /// <summary>Fresh-seed comparison against the base rule (every Work and Study place 16): the same draw decides
-    /// loss and job finding per person and day under both capacity rules. Where a person is employed in both arms its
-    /// loss outcome is identical; the loss rate per employed day and the find-roll rate per unemployed day both match
-    /// CityBalance's chances within four standard deviations, in both arms and across seeds. Only the seating after a
-    /// successful roll depends on capacity.</summary>
     [Theory]
     [InlineData(5150)] [InlineData(77)]
     public void LossAndFindRatesPerPersonAreUnchangedAgainstTheBase(int seed)
@@ -363,7 +318,6 @@ public sealed class WorkplaceCapacityTests
         foreach (var log in new[] { banded, baseArm })
         {
             Within(log.Losses, log.EmployedChecks, CityBalance.DailyJobLossChance, "loss");
-            // An unemployed check rolls the finding chance unless the loss chance already ended a carried employer.
             Within(log.FindRolls, log.UnemployedChecks - log.CarriedEnded, CityBalance.DailyJobFindingChance, "find");
         }
         static void Within(long hits, long trials, double p, string label)
@@ -374,9 +328,6 @@ public sealed class WorkplaceCapacityTests
         }
     }
 
-    /// <summary>The simulator runs the same draws at safe home events. Over three months with a reload every ten days, a
-    /// fresh banded city loses and refills jobs (each loss opens a vacancy that residents and visitors compete for) and
-    /// never seats more than capacity; every visitor's Employment matches its routine, and every reload keeps its bytes.</summary>
     [Fact]
     public void SimulatedMonthsOfChurnWithReloadsStayWithinCapacity()
     {
@@ -398,10 +349,7 @@ public sealed class WorkplaceCapacityTests
         Assert.NotEmpty(market.Orders);
     }
 
-    // ---- Study carries no wage; income composes with F5d ----
 
-    /// <summary>A Study enrolment gives no employment income, for residents and visitors; a seated worker gets employment
-    /// income from its own Employment; an unseated working visitor keeps its carried outside employer (F5d).</summary>
     [Fact]
     public void StudyCarriesNoWageAndIncomeFollowsEachPersonsOwnEmployment()
     {
@@ -424,7 +372,6 @@ public sealed class WorkplaceCapacityTests
             else if (person.IsVisitor && person.VisitorCarried.HasValue) Assert.Equal(person.VisitorCarried.Value, source);
         }
         Assert.True(students > 0 && workers > 0, students + " students, " + workers + " workers");
-        // The resident rule is the shared per-person rule: a Study Employment never selects employment income.
         foreach (var persona in Enum.GetValues<Persona>())
             foreach (int age in new[] { 16, 18, 40, 70 })
                 foreach (string place in new[] { "", "work" })
@@ -437,10 +384,7 @@ public sealed class WorkplaceCapacityTests
             new Employment { PersonId = "p", WorkplaceId = "school", Kind = EmploymentKind.Study }, null));
     }
 
-    // ---- Vanished places ----
 
-    /// <summary>The saved catalogue is the city's own; a workplace never disappears from it in play. A payload whose
-    /// Employment names a missing place, a place of the wrong kind or a zero-capacity place is refused and kept.</summary>
     [Fact]
     public void EmploymentAtAVanishedOrWrongPlaceIsRefusedAndKept()
     {
@@ -453,15 +397,12 @@ public sealed class WorkplaceCapacityTests
         string Edit(Action<JObject> change) { var r = SaveWire.Parse(payload); change(r); return r.ToString(Formatting.None); }
         RefusedAndPreserved(Edit(r => r["Citizens"]![index]!["DayPlaceId"] = "address:gone:1:work"), replacement, SaveReadStatus.Invalid);
         RefusedAndPreserved(Edit(r => r["Citizens"]![index]!["DayPlaceId"] = "shop:0"), replacement, SaveReadStatus.Invalid);
-        // The workplace removed from the catalogue (its index shifts every later place): refused, never re-seated.
         RefusedAndPreserved(Edit(r => { var places = (JArray)r["Places"]!; places.Remove(places.First(p => (string)p["Id"]! == resident.DayPlaceId)); }),
             replacement, SaveReadStatus.Invalid);
-        // A zero-capacity workplace (unknown area or player-owned) can hold nobody.
         RefusedAndPreserved(Edit(r => r["Citizens"]![index]!["DayPlaceId"] = "address:g:7:work"), replacement, SaveReadStatus.Invalid, "exceeds capacity");
         RefusedAndPreserved(Edit(r => r["Citizens"]![index]!["DayPlaceId"] = "address:h:8:work"), replacement, SaveReadStatus.Invalid, "exceeds capacity");
     }
 
-    // ---- Native-employment source guard ----
 
     private static string RepositoryRoot()
     {

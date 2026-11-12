@@ -7,8 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// E5b4 opt-in (PC_E5B4_MEASURE_LEGACY=<file>): bytes and time of whole original-three meal decisions (8 shops, capture,
-// quotes, choice, checkout) in the weighted single-resident city. Base-compatible: only APIs that exist before E5b4.
 public sealed class OriginalThreeDecisionMeasure
 {
     [Fact]

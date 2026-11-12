@@ -14,11 +14,9 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string,FoodScope> scopesByBusiness = new Dictionary<string,FoodScope>(StringComparer.Ordinal);
         private void Candidate(string id,bool admit)
         {
-            // Eligibility is sampled live; it does not alter the geometry/identity index.
             if(admit) candidateBusinesses.Add(id);else candidateBusinesses.Remove(id);
         }
         private readonly CityBuildingController[] controllers;
-        // Escaped place IDs are memoized until a controller registration/address changes.
         private readonly BuildingRegistration?[] discoveryRegistrations;
         private readonly string?[] discoveryStreets;
         private readonly int[] discoveryNumbers;
@@ -29,7 +27,6 @@ namespace PersistentCity.Runtime
         private int indexedScopeCount=-1;
         private bool captureBatch;
         private double captureMinute;
-        /// <summary>Retained diagnostic name: C2a performs zero full metadata passes per capture.</summary>
         public long CaptureMetadataPasses => 0;
         public long CaptureBatches { get; private set; }
         private sealed class CaptureBatch : IDisposable
@@ -42,10 +39,8 @@ namespace PersistentCity.Runtime
         {
             if(captureBatch) throw new InvalidOperationException("Food capture batches cannot nest.");
             if(!ReferenceEquals(save,SaveGameManager.Current)) throw new InvalidOperationException("Food market save changed.");
-            // Discovery/ownership publishes changes through the existing 64-controller ring.
-            // Captures read only the bounded sampled identities; never scan controllers per meal.
             CaptureBatches++;
-            contractEpoch.Begin(); // E5b3 Decision 3a: one comparison per distinct definition per batch.
+            contractEpoch.Begin();
             captureMinute=minute;captureBatch=true;
             return new CaptureBatch(this);
         }
@@ -74,17 +69,9 @@ namespace PersistentCity.Runtime
             }
             if(minute!=captureMinute) throw new InvalidOperationException("Food capture minute changed inside its batch.");
             scopesByBusiness.TryGetValue(businessId,out var scope);
-            // A persisted capture must match a cold read of the saved native world. A per-minute
-            // cache alone cannot detect a player's delivery/stock edit earlier in this minute.
             return scope==null ? null : ReadSelected(minute,new[] {scope.PlaceId},capture:true).SingleOrDefault(b=>b.Id==businessId);
         }
-        // The controller ring visits every address, never just the first N eligible shops.
-        // Native city buildings are static; business registration/menu/ownership are live.
-        // Called every frame. The 64-slot slice keeps the first observation of a newly eligible business
-        // in the frame it changes, which fixes FoodAuthority.RequestedHour and therefore the acquisition hour.
-        // Place IDs are memoized per slot, so a slice over unchanged addresses builds no strings.
         public void RefreshDiscovery() { if (!checkoutSettled) SettleCheckout(); DiscoverShops(64); ContinueContractShadow(); }
-        /// <summary>Escaped place IDs discovery has built (diagnostic); unchanged addresses reuse theirs.</summary>
         internal long DiscoveryPlaceIdBuilds { get; private set; }
         private void DiscoverShops(int budget)
         {
@@ -136,7 +123,6 @@ namespace PersistentCity.Runtime
         internal void RefreshKnownOwnership()
         {
             bool recoveryBoundary = BeginContractRecoveryBoundary();
-            // E5b3 Decision 4 step 1: this hour's preparation compares each distinct definition once.
             if (recoveryBoundary && contractMode != ContractMode.Fallback) { contracts.BeginHour(lastContractRecoveryHour); preparationEpoch.Begin(); }
             foreach (var pair in shopControllers)
             {
@@ -152,7 +138,6 @@ namespace PersistentCity.Runtime
                 }
                 registrations[pair.Key] = reg; IndexContractKey(pair.Key, reg, known);
                 CacheBagPolicy(reg);
-                // Decision 7: the coordinator queues recovery units instead; E5b1 recovery only in fallback.
                 if (recoveryBoundary && contractMode == ContractMode.Fallback) RevalidateRefusedContract(reg, pair.Value);
                 var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value));
                 if (recoveryBoundary) PrepareContractHour(pair.Key, reg, authority);
@@ -163,7 +148,6 @@ namespace PersistentCity.Runtime
         internal void ActivateScope(FoodAuthority authority, BuildingRegistration reg)
         {
             if (!authority.CanServe || !SupportedMenu(reg)) {Candidate(authority.BusinessId,false);return;}
-            // This adapter owns the live list; scopes persist in place when a business/menu changes.
             if(!ReferenceEquals(scopeList,state.Shops) || indexedScopeCount!=state.Shops.Count)
             {
                 managedAwarenessRevision++;
@@ -189,8 +173,7 @@ namespace PersistentCity.Runtime
             }
             managedAwarenessRevision++;
             scope.BusinessId = authority.BusinessId; scopesByBusiness[scope.BusinessId]=scope; scope.ProductId = products[0]; scope.AdditionalProductIds = products.Skip(1).ToList();
-            foreach (var product in products) contractNames.Add(product); // E5b3 Decision 8 name superset
-            // AfterNativeTick transfers authority after its last refresh; publish acquisition immediately.
+            foreach (var product in products) contractNames.Add(product);
             Candidate(authority.BusinessId,true);
         }
     }

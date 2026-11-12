@@ -9,13 +9,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2f (docs/plans/f2-movement.md Decision 5): the presentation grid equals a full scan after every event, frame slice,
-// skip, reload and route rebuild; a grid query is a deduplicated superset of the body candidates within the radius, so
-// the selection's set and order and PlanQueues' waiting set equal the F5f index; filing happens only on phase or journey
-// change; no identity or economy effect.
 public sealed class PresentationGridTests
 {
-    // Two legs per trip: along X, then along Z, then a diagonal finish, so routes cross many cells and cell corners.
     private sealed class Walking : IRoutePlanner
     {
         public Route Plan(Place from, Place to, double at, TravelPreferences p)
@@ -40,7 +35,6 @@ public sealed class PresentationGridTests
         public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
     }
 
-    // Places spread over about 1.4 km x 1.2 km, with off-grid offsets so positions fall inside, on and near cell edges.
     private static CitySimulator Spread(int count = 300, string seed = "f2f-grid")
     {
         var personas = (Persona[])Enum.GetValues(typeof(Persona));
@@ -67,14 +61,11 @@ public sealed class PresentationGridTests
 
     private static readonly double[] Radii = { 0, 60, 120, 450 };
 
-    // The Runtime selection's position filter, applied to a roster: every candidate within the radius by PositionOf,
-    // in a total order (distance, then ordinal ID) as SelectionCandidate.ByPriority uses after equal attempt times.
     private static string[] Within(CitySimulator sim, IEnumerable<CitizenState> roster, Position focus, double radius)
         => roster.Where(c => !(c.Phase == CitizenPhase.Travelling && c.Journey == null))
             .Select(c => (c, d: Position.Distance(sim.PositionOf(c), focus))).Where(x => x.d <= radius)
             .OrderBy(x => x.d).ThenBy(x => x.c.Identity.Id, StringComparer.Ordinal).Select(x => x.c.Identity.Id).ToArray();
 
-    // PlanQueues' scan: waiting citizens whose place is within the radius.
     private static string[] Waiting(CitySimulator sim, IEnumerable<CitizenState> roster, Position focus, double radius)
         => roster.Where(c => c.Phase == CitizenPhase.WaitingForOpening && Position.Distance(sim.State.Places.Single(p => p.Id == c.PlaceId).Position, focus) <= radius)
             .Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal).ToArray();
@@ -85,14 +76,12 @@ public sealed class PresentationGridTests
     {
         Assert.True(sim.ActiveJourneyIndexMatchesState());
         var index = sim.ActiveJourneys; var grid = index.Grid;
-        // Beyond the runtime shadow check: every member's cells equal a fresh computation from its legs or place.
         Assert.True(grid.Matches(index.BodyCandidates, true));
         Assert.Equal(index.BodyCandidates.Count, grid.Count);
         Assert.All(index.BodyCandidates, c => Assert.True(grid.Contains(c)));
         var output = new List<IPersonView>();
         var points = new List<Position>();
         for (int i = 0; i < foci; i++) points.Add(new Position(rng.NextDouble() * 1600 - 800, rng.NextDouble() * 3, rng.NextDouble() * 1600 - 800));
-        // Exactly on a cell edge and an ulp either side of it.
         points.Add(new Position(64 * rng.Next(-10, 10), 0, Math.BitDecrement(64.0 * rng.Next(-10, 10))));
         if (index.BodyCandidates.Count != 0) points.Add(sim.PositionOf(index.BodyCandidates[rng.Next(index.BodyCandidates.Count)]));
         foreach (var focus in points)
@@ -114,7 +103,6 @@ public sealed class PresentationGridTests
         var sim = Spread();
         AssertGrid(sim, rng, 8);
         int observed = 0, maxCandidates = 0, maxCells = 0;
-        // A route rebuild hands its observers to the replacement, so the handler follows the live simulator.
         var live = sim;
         sim.ActivityObserved += (_, _, _) =>
         {
@@ -129,14 +117,11 @@ public sealed class PresentationGridTests
         Assert.True(observed > 800, "observed " + observed);
         Assert.True(maxCandidates > 20 && maxCells > maxCandidates, $"coverage candidates {maxCandidates}, registrations {maxCells}");
         Assert.True(pruned > 0);
-        // A hidden skip of two days in event-budgeted calls.
         double skip = sim.State.Minute + 2 * 1440 + 437;
         while (!sim.AdvanceTo(skip).CaughtUp) { }
         AssertGrid(sim, rng, 8);
-        // Reload rebuilds the grid from saved state; both cities continue identically.
         var loaded = Reload(sim);
         AssertGrid(loaded, rng, 8);
-        // A route rebuild replaces the simulator and rebuilds its grid.
         var rebuilt = live = sim.RebuildRoutes(new Walking());
         AssertGrid(rebuilt, rng, 8);
         foreach (double step in new[] { 13.5, 240, 600 })
@@ -175,7 +160,6 @@ public sealed class PresentationGridTests
         var grid = sim.ActiveJourneys.Grid;
         long filed = grid.Filings;
         Assert.Equal(3, filed);
-        // Frames between events, queries and shadow checks never re-file a committed route; walk legs take no lease (F2c).
         for (int i = 1; i <= 40; i++)
         {
             sim.AdvanceFrameSlice(1440 + i * 0.25);
@@ -184,7 +168,6 @@ public sealed class PresentationGridTests
         }
         Assert.Equal(filed, grid.Filings);
         Assert.True(sim.ActiveJourneyIndexMatchesState());
-        // Arrival leaves the index and the grid.
         sim.AdvanceTo(1500);
         Assert.Equal(0, grid.Count); Assert.Equal(0, grid.Registrations); Assert.Equal(filed, grid.Filings);
         Assert.True(sim.ActiveJourneyIndexMatchesState());
@@ -197,9 +180,7 @@ public sealed class PresentationGridTests
         var c = sim.State.Citizens[1];
         var far = new Position(-2000, 0, -2000);
         Assert.True(Found(sim, c, new Position(500, 0, 150), 1));
-        // Radius 0 reads one cell; a square wider than this small city reads every cell (still a superset).
         Assert.False(Found(sim, c, far, 0));
-        // A replacement journey on a member that stays travelling: index membership is unchanged, the grid re-files.
         long filed = sim.ActiveJourneys.Grid.Filings;
         c.Journey = new Route { Legs = { new RouteLeg { From = far, To = new Position(-1800, 0, -2100), Minutes = 4, Mode = TravelMode.Walk } } }.Commit();
         Assert.False(sim.ActiveJourneyIndexMatchesState());
@@ -208,10 +189,7 @@ public sealed class PresentationGridTests
         Assert.Equal(filed + 1, sim.ActiveJourneys.Grid.Filings);
         Assert.True(Found(sim, c, far, 0));
         Assert.False(Found(sim, c, new Position(500, 0, 150), 0));
-        // Filing the unchanged member again is a no-op.
         sim.ActiveJourneys.File(c); Assert.Equal(filed + 1, sim.ActiveJourneys.Grid.Filings);
-        // A stationary member is filed at its place; a place moved behind the index (a republished vendor stand) is drift
-        // the shadow check reports, so Runtime falls back to the full scan.
         c.Phase = CitizenPhase.WaitingForOpening; c.Journey = null; c.PlaceId = "work";
         sim.ActiveJourneys.File(c);
         Assert.True(sim.ActiveJourneyIndexMatchesState());
@@ -235,7 +213,6 @@ public sealed class PresentationGridTests
             var at = i % 4 == 0 ? new Position(64 * rng.Next(-20, 20), 0, 64 * rng.Next(-20, 20)) : new Position(rng.NextDouble() * 2000 - 1000, 0, rng.NextDouble() * 2000 - 1000);
             for (int l = 0; l < 1 + i % 5; l++)
             {
-                // Axis-aligned legs along cell edges, steep legs, zero-length legs and ordinary diagonals.
                 var to = ((i + l) % 6) switch
                 {
                     0 => new Position(at.X, 0, at.Z + rng.Next(-5, 5) * 64),
@@ -258,11 +235,9 @@ public sealed class PresentationGridTests
                 var point = c.Journey!.PositionAt(elapsed);
                 Assert.Contains(c, index.Grid.Query(point, 0, output));
             }
-        // The deduplication stamp returns a long route once even when the query covers all its cells.
         var all = index.Grid.Query(new Position(0, 0, 0), 5000, output);
         Assert.Equal(people.Count, all.Count); Assert.Equal(people.Count, all.Distinct().Count());
         Assert.True(index.Grid.Registrations > people.Count * 3);
-        // Nothing for a negative or NaN radius (the exact filter admits nothing either); everything for infinity.
         Assert.Empty(index.Grid.Query(new Position(0, 0, 0), -1, output));
         Assert.Empty(index.Grid.Query(new Position(0, 0, 0), double.NaN, output));
         Assert.Equal(people.Count, index.Grid.Query(new Position(0, 0, 0), double.PositiveInfinity, output).Count);
@@ -271,7 +246,6 @@ public sealed class PresentationGridTests
     [Fact]
     public void UnresolvablePositionsAreReturnedByEveryQuery()
     {
-        // No place table: stationary candidates are unplaced, so a query cannot miss them.
         var waiting = new CitizenState { Identity = new CitizenIdentity { Id = "w" }, Phase = CitizenPhase.WaitingForOpening, PlaceId = "shop" };
         var lost = new CitizenState { Identity = new CitizenIdentity { Id = "t" }, Phase = CitizenPhase.Travelling };
         var huge = new CitizenState { Identity = new CitizenIdentity { Id = "h" }, Phase = CitizenPhase.Travelling, Journey = new Route { Legs =
@@ -281,11 +255,9 @@ public sealed class PresentationGridTests
         var index = new ActiveJourneyIndex();
         index.Rebuild(people);
         Assert.True(index.MatchesScan(people));
-        // F5i: the waiting visitor is a body candidate too, so it is unplaced like the resident.
         Assert.Equal(4, index.Grid.Unplaced);
         var near = index.Grid.Query(new Position(5000, 0, 5000), 1, new List<IPersonView>());
         Assert.Equal(new[] { "h", "pv:1", "t", "w" }, near.Select(c => c.Id).OrderBy(id => id, StringComparer.Ordinal));
-        // With a place table the waiting person is filed at the shop's cell; unknown places stay unplaced.
         var placed = new ActiveJourneyIndex(id => id == "shop" ? new Position(10, 0, 10) : (Position?)null);
         placed.Rebuild(people);
         Assert.True(placed.MatchesScan(people));
@@ -295,7 +267,6 @@ public sealed class PresentationGridTests
         Assert.Contains(visitor, placed.Grid.Query(new Position(10, 0, 10), 0, new List<IPersonView>()));
     }
 
-    // Derived only: querying the grid never changes saved state, identity or money.
     [Fact]
     public void GridHasNoIdentityOrEconomyEffect()
     {
@@ -315,11 +286,10 @@ public sealed class PresentationGridTests
         }
         Assert.True(queries > 100);
         Assert.Equal(identities, probed.State.Citizens.Select(c => c.Identity));
-        // Filing, removal and rebuild stay inside Core; the public surface is read-only.
         var methods = typeof(PresentationGrid).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Where(m => !m.IsSpecialName).Select(m => m.Name).Distinct().OrderBy(n => n, StringComparer.Ordinal);
         Assert.Equal(new[] { "Contains", "Matches", "Query" }, methods);
-        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies); // F5i: visitors are filed in the grid too
+        Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
     }
 
     private static string Source(string relative)
@@ -330,6 +300,4 @@ public sealed class PresentationGridTests
         return File.ReadAllText(Path.Combine(dir!.FullName, relative));
     }
 
-    // Runtime selection and PlanQueues read the grid near the focus (or the full scan after a mismatch) and nothing else;
-    // the shadow check that triggers the fallback includes the grid.
 }

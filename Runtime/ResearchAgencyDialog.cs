@@ -15,8 +15,6 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>What the attached city lends the agency dialog. Every member is read at call time, so a route rebuild
-    /// (a new simulator) or a stopped runtime is seen on the next click.</summary>
     internal sealed class ResearchDesk
     {
         internal ResearchDesk(Func<bool> attached, Func<bool> available, Func<BuildingRegistration, bool> eligible,
@@ -24,22 +22,15 @@ namespace PersistentCity.Runtime
         {
             Attached = attached; Available = available; Eligible = eligible; Runner = runner; RadiusMetres = radiusMetres; Now = now; Log = log;
         }
-        /// <summary>Persistent City is attached to the current save and not stopped.</summary>
         internal Func<bool> Attached { get; }
         internal Func<bool> Available { get; }
-        /// <summary>Player-rented food business that Persistent City owns (plan section 9, Q4).</summary>
         internal Func<BuildingRegistration, bool> Eligible { get; }
         internal Func<ResearchSurveyRunner?> Runner { get; }
         internal Func<int> RadiusMetres { get; }
-        /// <summary>The native minute of the order.</summary>
         internal Func<double> Now { get; }
         internal Action<string> Log { get; }
     }
 
-    /// <summary>C5e research ordering in the agency call (plan C5 section 3.1). A postfix on the private native
-    /// MarketingAgencyDialog.CampaignSettings() sets only the unused OnSecondOption slot and its text, and only when
-    /// every ResearchDialogGate precondition holds; otherwise the native entry is returned unchanged. The button walks
-    /// ResearchMenu and places the order through the C5b survey runner. Main thread only.</summary>
     internal static class ResearchAgencyDialog
     {
         internal const string PatchId = "persistentcity.research-dialog";
@@ -50,14 +41,10 @@ namespace PersistentCity.Runtime
         private static bool installed;
         private static bool contained, clickContained;
 
-        /// <summary>Empty when the contract check passed and the postfix is installed.</summary>
         internal static string Status { get; private set; } = "Research dialog is not installed.";
         internal static bool Installed => installed;
-        /// <summary>Why the last campaign screen stayed native (None when the button was added). Diagnostic only.</summary>
         internal static ResearchDialogRefusal LastRefusal { get; private set; } = ResearchDialogRefusal.NotAttached;
 
-        /// <summary>Checks the native dialog contract and installs the postfix. A mismatch leaves research ordering off
-        /// for the session with a status line and Persistent City running; nothing substitutes a dialog.</summary>
         internal static bool Install()
         {
             if (installed) return true;
@@ -90,7 +77,6 @@ namespace PersistentCity.Runtime
         internal static void Attach(ResearchDesk attached) => desk = attached ?? throw new ArgumentNullException(nameof(attached));
         internal static void Detach() => desk = null;
 
-        // Native CampaignSettings() returns a fresh entry each call. A contained exception leaves it as native built it.
         private static void CampaignSettingsPostfix(MarketingAgencyDialog __instance, DialogEntry __result)
         {
             try { LastRefusal = ResearchDialogGate.TryExtend(__result, Read, entry => Extend(entry, __instance)); }
@@ -101,14 +87,12 @@ namespace PersistentCity.Runtime
             }
         }
 
-        /// <summary>The only change to the native entry.</summary>
         private static void Extend(DialogEntry entry, MarketingAgencyDialog dialog)
         {
             entry.OnSecondOption = () => Guarded(() => OnResearch(dialog, entry));
             entry.SecondOptionTextOverride = ResearchText.Button;
         }
 
-        // Each field is read only when every earlier one passed, so a refused screen never scans registrations.
         private static ResearchDialogPreconditions Read(DialogEntry entry)
         {
             var current = desk;
@@ -138,7 +122,6 @@ namespace PersistentCity.Runtime
             return false;
         }
 
-        // Every research button runs inside a native button callback: an exception shows the research error and stays.
         private static DialogEntry? Guarded(Func<DialogEntry?> click)
         {
             try { return click(); }
@@ -150,8 +133,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        // The research button. Null keeps the campaign screen, as native OnMarketingSettingsSet does on an error.
-        // native is the campaign entry the button was added to; its hang-up message is reused.
         private static DialogEntry? OnResearch(MarketingAgencyDialog dialog, DialogEntry native)
         {
             var current = desk;
@@ -184,7 +165,6 @@ namespace PersistentCity.Runtime
             switch (choice.Target)
             {
                 case ResearchMenuTarget.Node: return Entry(dialog, native, built, choice.Node, business);
-                // The native screen again, through the patched method, so the preconditions are read afresh.
                 case ResearchMenuTarget.CampaignScreen:
                     var screen = campaignSettings;
                     if (screen == null) { Notifications.ShowError(ResearchText.Unavailable); return null; }
@@ -204,8 +184,6 @@ namespace PersistentCity.Runtime
             var contact = DialogController.current.contact;
             var building = BuildingHelper.GetBuilding(contact.Address);
             bool taxDeductible = building != null && building.SpecialService != null && building.SpecialService.hasTaxDeductiblePurchases;
-            // Everything the confirmation needs is built before the order is stored, so nothing native can fail after it.
-            // The native continuation after a campaign change: the agency's "more help" entry.
             var moreHelp = (DialogEntry)continuation.Invoke(dialog, null);
             var confirmation = new DialogEntry
             {
@@ -240,8 +218,6 @@ namespace PersistentCity.Runtime
             + contact.streetNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":agency";
     }
 
-    /// <summary>The native dialog members research ordering uses, with exact signatures, read by reflection before the
-    /// postfix is installed (plan C5 section 3.6).</summary>
     internal static class ResearchDialogContract
     {
         private const BindingFlags Instance = BindingFlags.Public | BindingFlags.Instance;
@@ -271,7 +247,6 @@ namespace PersistentCity.Runtime
             if (field != null) return field;
             var current = typeof(DialogController).GetField("current", Static);
             if (current == null || current.FieldType != typeof(DialogController)) return "DialogController.current changed.";
-            // Enum values are compiled in; a reordered enum keeps the number but not the name.
             if (Enum.GetName(typeof(DialogEntry.InputTemplateName), DialogEntry.InputTemplateName.MarketingCampaignSettings) != "MarketingCampaignSettings"
                 || Enum.GetName(typeof(DialogEntry.TemplateType), DialogEntry.TemplateType.Input) != "Input"
                 || Enum.GetName(typeof(DialogEntry.TemplateType), DialogEntry.TemplateType.Text) != "Text")
@@ -293,7 +268,6 @@ namespace PersistentCity.Runtime
             return ForeignPatch(campaignSettings);
         }
 
-        /// <summary>A prefix, transpiler or finalizer of another owner can skip or replace the native entry.</summary>
         internal static string? ForeignPatch(MethodBase method)
         {
             var info = Harmony.GetPatchInfo(method);

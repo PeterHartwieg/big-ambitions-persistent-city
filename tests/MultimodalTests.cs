@@ -59,7 +59,6 @@ public sealed class MultimodalTests
         prefs.FareWeightMinutes = 0;
         Assert.True(TransportComposition.Score(train, 3, prefs, "person") < TransportComposition.Score(walk, 0, prefs, "person"));
         Assert.Equal(5, TransportComposition.Score(train, 3, prefs, "other-person"));
-        // Even a sub-minute ETA advantage is decisive; no identity or habit penalty can erase it.
         var almostEqual = R(TravelMode.Car, 0, 100, 5.0001);
         Assert.True(TransportComposition.IsFaster(TransportComposition.Score(train, 1000, prefs, "train"),
             TransportComposition.Score(almostEqual, 0, prefs, "car")));
@@ -127,7 +126,6 @@ public sealed class MultimodalTests
             R(TravelMode.Walk, 2000, 2040, 40.0 / 2))!;
         Assert.True(TransportComposition.ModeLowerBound(TravelMode.Subway, P(0), P(2040), prefs, "resident", 2)
             <= TransportComposition.Score(train, 3, prefs, "resident"));
-        // Walking a long detour to collect an already parked car is an unavoidable cost too.
         Assert.True(TransportComposition.ModeLowerBound(TravelMode.Car, P(0), P(2040), prefs, "resident", 2, P(-1000)) > carBound);
     }
 
@@ -139,7 +137,6 @@ public sealed class MultimodalTests
         double walkScore = TransportComposition.Score(walk, 0, prefs, "short-trip");
         Assert.True(walkScore < TransportComposition.ModeLowerBound(TravelMode.Car, P(0), P(60), prefs, "short-trip", 84));
         Assert.True(walkScore < TransportComposition.ModeLowerBound(TravelMode.Subway, P(0), P(60), prefs, "short-trip", 84));
-        // The bound remains conservative even under a custom pedestrian speed faster than the train.
         var fast = R(TravelMode.Walk, 0, 60, 0.06);
         Assert.True(TransportComposition.ModeLowerBound(TravelMode.Walk, P(0), P(60), prefs, "short-trip", 1000)
             <= TransportComposition.Score(fast, 0, prefs, "short-trip"));
@@ -153,7 +150,6 @@ public sealed class MultimodalTests
             PlaceId = home.Id, Phase = CitizenPhase.AtPlace, Preferences = new TravelPreferences { OwnsCar = true } };
         Assert.True(TransportComposition.TryAllocateHomeCar(person, home, home, P(20), R(TravelMode.Walk, 0, 20)));
         Assert.Equal("walker:car", person.Car!.Id);
-        // Walking is cheaper for this first trip, but allocation already happened and is not mode-dependent.
         var walk = R(TravelMode.Walk, 0, 60, 60.0 / 84);
         Assert.True(TransportComposition.Score(walk, 0, person.Preferences, person.Identity.Id)
             < TransportComposition.ModeLowerBound(TravelMode.Car, P(0), P(60), person.Preferences, person.Identity.Id, 84, P(20)));
@@ -197,7 +193,7 @@ public sealed class MultimodalTests
         var prefs = new TravelPreferences { OwnsCar = true, FareWeightMinutes = 0 };
         var walk = R(TravelMode.Walk, 600, 0, 600.0 / 84);
         var drive = TransportComposition.Join(R(TravelMode.Car, 600, 600, 2), R(TravelMode.Car, 600, 0, 6), R(TravelMode.Car, 0, 0, 2))!;
-        double penalty = 60; // Historical preference costs no longer affect elapsed-time selection.
+        double penalty = 60;
         double rawWalk = TransportComposition.Score(walk, 0, prefs, "homebound");
         double rawDrive = TransportComposition.Score(drive, 0, prefs, "homebound");
         Assert.True(rawWalk < rawDrive);
@@ -209,7 +205,6 @@ public sealed class MultimodalTests
         double subwayBound = TransportComposition.ModeLowerBound(TravelMode.Subway, P(600), P(0), prefs, "homebound", 84,
             nonCarRetrievalPenalty: penalty);
         Assert.True(subwayBound <= TransportComposition.Score(subway, 0, prefs, "homebound", penalty));
-        // The fastest choice still requires the owned car at the physical pickup position.
         Assert.False(TransportComposition.Valid(drive, P(600), P(0), prefs, P(0)));
     }
 
@@ -222,7 +217,6 @@ public sealed class MultimodalTests
         Assert.False(TransportAccessGeometry.IntersectsBounds(P(100), P(200), min, max));
         Assert.False(TransportAccessGeometry.IntersectsBounds(new Position(-30, 0, 30), new Position(30, 0, 30), min, max));
         Assert.False(TransportAccessGeometry.IntersectsBounds(new Position(-30, 30, 0), new Position(30, 30, 0), min, max));
-        // Overlapping segment/box envelopes alone are insufficient: this diagonal misses the actual box.
         Assert.False(TransportAccessGeometry.IntersectsBounds(new Position(10, 0, 40), new Position(40, 0, 10), min, max));
     }
     [Theory]
@@ -295,7 +289,7 @@ public sealed class MultimodalTests
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
         Assert.Equal(tag, read.State!.Citizens[0].Journey!.Legs[0].ServiceId);
         Assert.Equal(citizen.Journey.PositionAt(2).X, read.State.Citizens[0].Journey!.PositionAt(2).X);
-        Assert.Equal(4, read.State.Citizens[0].Journey!.EstimatedMinutes); // Reload has nominal progress, no stale forecast.
+        Assert.Equal(4, read.State.Citizens[0].Journey!.EstimatedMinutes);
     }
 
 }

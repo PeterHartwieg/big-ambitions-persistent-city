@@ -17,12 +17,11 @@ public sealed class FoodAwarenessFailureOddsTests
         int day = situation == "repeat" ? 57 : situation is "expiry" or "eviction-expired" ? 30 : situation == "live-habit" ? 29 : situation == "expired-insertion" ? 31 : 2;
         var (bootstrap, market, paths) = WeightedFoodChoiceTests.Ready(seed, 12);
         var state = bootstrap.State;
-        // Move the isolated fixture's unstarted meal to the comparison day; no history/event is replayed.
         double offset = (day - 1) * 1440;
         state.Minute += offset;
         var person = state.Citizens.Single();
         person.NextEventMinute += offset; person.ActivityUntilMinute += offset;
-        person.Traits = new ResidentTraits { Bands = "2222202222" }; // curious: a remembered competitor need not be boosted
+        person.Traits = new ResidentTraits { Bands = "2222202222" };
         state.Capabilities.Active = true;
         var food = state.Food!;
         food.ChoiceStartsDay = food.AwarenessStartsDay = day;
@@ -44,8 +43,6 @@ public sealed class FoodAwarenessFailureOddsTests
         if (eviction)
         {
             int count = situation == "eviction-lowered" ? 4 : 1;
-            // Curious consumers value novelty above even these positive, known competitors.
-            // B1's scalar-only eviction guard therefore permits their eviction.
             for (int i = 1; i <= count; i++) Visit("b" + i, 1, i, ShopExperience.Served);
             settings.FoodMemoryCapacity = 1;
         }

@@ -4,10 +4,7 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    // F8a (docs/plans/f8-capability-boundaries.md, decisions D1 and D2): one capability model for every native hook,
-    // reflected native contract and companion-mod contract, plus the static Harmony hook inventory. Not wired to Runtime.
 
-    /// <summary>The D2 capabilities, in report order.</summary>
     public enum CapabilityId : byte
     {
         FoodAuthority, FoodCheckoutShop, FoodDynamic, VendorStreetFood, ClockObserve, ClockCity, ClockDrivenRides,
@@ -15,16 +12,12 @@ namespace PersistentCity.Core
         PhysicalVehicles, PhysicalPedestrians, InspectorClick, InspectorScroll, InspectorUiBlock, InteriorView,
     }
 
-    /// <summary>RequiredWhenPresent: a companion mod whose contract must hold if it is loaded; absent is fine.</summary>
     public enum CapabilityRequirement : byte { Required, Optional, RequiredWhenPresent }
 
-    /// <summary>D1 states. Off always carries a reason; Absent is only for capabilities backed by a companion mod.</summary>
     public enum CapabilityState : byte { NotChecked, Active, Off, Absent }
 
-    /// <summary>The only point at which an Off or Absent capability may be checked again (D1: Off is sticky for the session).</summary>
     public enum CapabilityRecheck : byte { CityLoad, CompanionRevision }
 
-    /// <summary>The features a capability disables when it is not active. A fixed list per capability.</summary>
     [Flags]
     public enum CapabilityScope : uint
     {
@@ -42,8 +35,6 @@ namespace PersistentCity.Core
         InteriorView = 1 << 10,
     }
 
-    /// <summary>Applied changed the registry; Unchanged was a legal no-op (Off stays Off with its first reason);
-    /// Rejected broke a D1 transition rule and changed nothing.</summary>
     public enum CapabilityTransition : byte { Applied, Unchanged, Rejected }
 
     public sealed class CapabilityDefinition
@@ -55,12 +46,10 @@ namespace PersistentCity.Core
             NativeContract = nativeContract; Fallback = fallback; OffByDefault = offByDefault;
         }
         public CapabilityId Id { get; }
-        /// <summary>The stable report ID, such as <c>food.authority</c>.</summary>
         public string Name { get; }
         public CapabilityRequirement Requirement { get; }
         public CapabilityScope Scope { get; }
         public CapabilityRecheck Recheck { get; }
-        /// <summary>The companion mod this capability binds, or null for a native game contract (which cannot be Absent).</summary>
         public string? Companion { get; }
         public string NativeContract { get; }
         public string Fallback { get; }
@@ -73,7 +62,6 @@ namespace PersistentCity.Core
         private const CapabilityScope Research = CapabilityScope.MarketResearch;
         private const string ResearchFallback = "Research hidden; orders kept.";
 
-        /// <summary>D2, indexed by <see cref="CapabilityId"/>.</summary>
         public static readonly IReadOnlyList<CapabilityDefinition> All = Array.AsReadOnly(new[]
         {
             new CapabilityDefinition(CapabilityId.FoodAuthority, "food.authority", CapabilityRequirement.Required, CapabilityScope.WholeCity,
@@ -146,20 +134,15 @@ namespace PersistentCity.Core
 
     public enum CapabilityStartStatus : byte { Ready, Waiting, Refused }
 
-    /// <summary>Whether the city may start. Refused is a capability refusal: it is not a damaged save and not an older
-    /// development city, and its message says so; the saved city is kept unchanged.</summary>
     public readonly struct CapabilityStart
     {
         internal CapabilityStart(CapabilityStartStatus status, CapabilityId? capability, string message)
         { Status = status; Capability = capability; Message = message; }
         public CapabilityStartStatus Status { get; }
-        /// <summary>The first blocking capability in report order; null when Ready.</summary>
         public CapabilityId? Capability { get; }
         public string Message { get; }
     }
 
-    /// <summary>D1 state per capability for one session. Updates allocate nothing; <see cref="Revision"/> advances on
-    /// every applied change so a report can be reused until the state changes.</summary>
     public sealed class CapabilityRegistry
     {
         private readonly CapabilityState[] states = new CapabilityState[NativeCapabilities.Count];
@@ -167,11 +150,8 @@ namespace PersistentCity.Core
 
         public long Revision { get; private set; }
         public CapabilityState State(CapabilityId id) => states[NativeCapabilities.Index(id)];
-        /// <summary>The Off or Absent reason; null when Active or not checked.</summary>
         public string? Reason(CapabilityId id) => reasons[NativeCapabilities.Index(id)];
 
-        /// <summary>First detection: NotChecked to Active, Off or Absent. Any later call is rejected; use
-        /// <see cref="Fail"/> or <see cref="Recheck"/>.</summary>
         public CapabilityTransition Detect(CapabilityId id, CapabilityState outcome, string? reason = null)
         {
             int i = NativeCapabilities.Index(id);
@@ -180,7 +160,6 @@ namespace PersistentCity.Core
             return Set(i, outcome, reason);
         }
 
-        /// <summary>A later verification failure: Active to Off. Off stays Off and keeps its first reason.</summary>
         public CapabilityTransition Fail(CapabilityId id, string reason)
         {
             int i = NativeCapabilities.Index(id);
@@ -190,7 +169,6 @@ namespace PersistentCity.Core
             return Set(i, CapabilityState.Off, reason);
         }
 
-        /// <summary>The capability's declared re-check point. Any other point is rejected, so Off and Absent are sticky until it.</summary>
         public CapabilityTransition Recheck(CapabilityId id, CapabilityRecheck point, CapabilityState outcome, string? reason = null)
         {
             int i = NativeCapabilities.Index(id);
@@ -202,8 +180,6 @@ namespace PersistentCity.Core
             return Set(i, outcome, reason);
         }
 
-        /// <summary>Scopes switched off: every Off capability's scope, and every Absent one's unless it is RequiredWhenPresent.
-        /// NotChecked disables nothing here; <see cref="Start"/> holds the city until required checks have run.</summary>
         public CapabilityScope DisabledScopes
         {
             get
@@ -222,8 +198,6 @@ namespace PersistentCity.Core
 
         public bool IsEnabled(CapabilityScope scope) => scope != CapabilityScope.None && (DisabledScopes & scope) == CapabilityScope.None;
 
-        /// <summary>Refused when a Required capability is Off or Absent or a RequiredWhenPresent one is Off (first in report
-        /// order); Waiting when a required check has not run; otherwise Ready. Optional capabilities never block.</summary>
         public CapabilityStart Start()
         {
             int waiting = -1;
@@ -271,8 +245,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>The D7 text, deterministic for a given registry state and context. Wording: active, off, absent, not
-    /// checked; never "compatible", never "verified by rig".</summary>
     public sealed class CapabilityReport
     {
         private static readonly (CapabilityScope Scope, string Text)[] ScopeNames =
@@ -290,12 +262,8 @@ namespace PersistentCity.Core
         private long cachedRevision = -1;
         private string? cachedContext, cachedHeader, cachedStatus;
 
-        /// <summary><c>pc capability status</c>: one header line and one line per capability. Reused while neither the
-        /// registry revision nor the context changes.</summary>
         public string Status(CapabilityRegistry registry, string gameVersion) => Status(registry, gameVersion, null);
 
-        /// <summary>F8d: <paramref name="header"/>, when given, replaces the start status in the first line (a running city,
-        /// or a start held by a transient RLO answer).</summary>
         public string Status(CapabilityRegistry registry, string gameVersion, string? header)
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
@@ -322,7 +290,6 @@ namespace PersistentCity.Core
             return cachedStatus = text.ToString();
         }
 
-        /// <summary><c>pc capability show &lt;id&gt;</c>: the status line plus native contract, hook targets, fallback and re-check point.</summary>
         public string Show(CapabilityRegistry registry, CapabilityId id)
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
@@ -390,22 +357,16 @@ namespace PersistentCity.Core
     [Flags]
     public enum NativePatchKinds : byte { None = 0, Prefix = 1, Postfix = 2, Transpiler = 4, Finalizer = 8 }
 
-    /// <summary>One Persistent City Harmony owner ID and the Runtime file that constructs it.</summary>
     public sealed class NativeHookOwner
     {
         internal NativeHookOwner(string id, string file, int patchCallSites, string? tableFile = null)
         { Id = id; File = file; PatchCallSites = patchCallSites; TableFile = tableFile; }
         public string Id { get; }
-        /// <summary>Repository-relative path, forward slashes.</summary>
         public string File { get; }
-        /// <summary>Harmony <c>.Patch(</c> call sites in <see cref="File"/>; the source inventory test checks the count.</summary>
         public int PatchCallSites { get; }
-        /// <summary>A file whose table lists the targets when the owner patches from data (food-contract).</summary>
         public string? TableFile { get; }
     }
 
-    /// <summary>One patched native method for one owner. Parameters use CLR short names; null means the source resolves
-    /// the target by name only (none since F8c).</summary>
     public sealed class NativeHookTarget
     {
         internal NativeHookTarget(string owner, string type, string method, string[]? parameters, NativePatchKinds kinds, CapabilityId capability)
@@ -422,11 +383,6 @@ namespace PersistentCity.Core
         public string Signature => Type + "." + Method + (Parameters == null ? " (by name)" : "(" + string.Join(", ", Parameters) + ")");
     }
 
-    /// <summary>Static inventory of every Harmony owner and target Persistent City installs, re-read at the F8a base
-    /// (after F2c-F2e, E5b2/E5b3 and F5h): 12 owners, 52 owner-target rows; GR-9 removed the two
-    /// borrowed-car owners (own cars need no hook): 10 owners, 42 rows. Section 2 of the plan listed 11 owners and
-    /// 27 methods; E5b2 added the food-contract owner with its 23 hint postfixes. tests/HookInventorySourceTests.cs fails
-    /// when Runtime adds an owner or target this list does not declare.</summary>
     public static class NativeHookInventory
     {
         public const string FoodAuthority = "persistentcity.food-authority";
@@ -463,7 +419,6 @@ namespace PersistentCity.Core
 
         public static readonly IReadOnlyList<NativeHookTarget> Targets = Array.AsReadOnly(new[]
         {
-            // F8c pinned these six (NativeFoodContractSpec.Authority); before F8c they were resolved by name only.
             T(FoodAuthority, "GameManager", "RunMainGameTick", new[] { "Single" }, Post, CapabilityId.FoodAuthority),
             T(FoodAuthority, "RetailBusinessSimulator", "ProcessAllCustomersFromThisHour", None, Pre, CapabilityId.FoodAuthority),
             T(FoodAuthority, "RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry" }, Pre, CapabilityId.FoodAuthority),
@@ -471,7 +426,6 @@ namespace PersistentCity.Core
             T(FoodAuthority, "CustomerEntriesHelper", "UpdateCustomerEntriesForPlayerBusiness", new[] { "BuildingRegistration", "DayOfWeekOrdered" }, Pre, CapabilityId.FoodAuthority),
             T(FoodAuthority, "BuildingRegistration", "Reset", new[] { "Boolean" }, Pre, CapabilityId.FoodAuthority),
             T(FoodRoutines, "CitizenData", "IsPriceAcceptable", new[] { "String", "Single" }, Pre, CapabilityId.FoodCheckoutShop),
-            // E5b2 Decision 1 table (Runtime/FoodContractHooks.cs), in table order.
             Hint("ItemsGetter", "OnItemsLoaded", "IList`1"),
             Hint("ItemsGetter", "RegisterModItem", "Item"),
             Hint("ItemsGetter", "UnregisterModItem", "String"),
@@ -515,7 +469,6 @@ namespace PersistentCity.Core
             return null;
         }
 
-        /// <summary>One line per target, in inventory order, for diagnostics and the PR record.</summary>
         public static string Describe()
         {
             var text = new StringBuilder();

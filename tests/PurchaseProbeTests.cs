@@ -7,8 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>S2 sale proof, Core side: the ceiling refuses before any native call, a refused or interrupted probe changes
-/// nothing, and a reload taken mid-probe leaves no half sale.</summary>
 public sealed class PurchaseProbeTests
 {
     private const string Resident = "resident-0001", Place = "address:Main%20Street:12:shop";
@@ -20,8 +18,6 @@ public sealed class PurchaseProbeTests
     private static PurchaseProbeRequest Request(long ceilingCents, ProbeKind kind = ProbeKind.Goods, long minute = 600, params ProbeLine[] basket)
         => new PurchaseProbeRequest(Resident, Place, kind, minute, Money.FromCents(ceilingCents), basket.Length == 0 ? new[] { Fee, Shirt, Socks } : basket);
 
-    /// <summary>Native double: stock and booked orders, changed only when a sale goes through. Sell takes the pre-sale
-    /// image before its first effect, as Runtime does, and Undo restores it.</summary>
     private sealed class Native : IProbeNativeSale
     {
         public readonly Dictionary<string, int> Stock = new Dictionary<string, int>(StringComparer.Ordinal) { ["ba:itemname_shirt"] = 5, ["ba:itemname_socks"] = 5 };
@@ -68,7 +64,7 @@ public sealed class PurchaseProbeTests
         var result = PurchaseProbe.Run(Request(499), wallet, receipts, native);
 
         Assert.Equal(ProbeRefusal.Ceiling, result.Refusal);
-        Assert.Equal(Money.FromCents(1000), result.Quote!.Total); // the whole basket, fee included
+        Assert.Equal(Money.FromCents(1000), result.Quote!.Total);
         Assert.Equal(0, native.Calls);
         Assert.Empty(receipts);
         Assert.Equal(walletBefore, WalletText(wallet));
@@ -88,7 +84,6 @@ public sealed class PurchaseProbeTests
         Assert.Empty(receipts);
     }
 
-    /// <summary>S2 refuses the whole basket when it is above the ceiling, optional goods included; nothing is trimmed.</summary>
     [Fact]
     public void ACeilingBelowAnOptionalGoodsBasketRefusesBeforeAnyNativeCall()
     {
@@ -124,7 +119,6 @@ public sealed class PurchaseProbeTests
     {
         var wallet = Wallet(100000); var receipts = new Dictionary<string, string> { ["other"] = "kept" }; var native = new Native();
         string walletBefore = WalletText(wallet), books = native.Books;
-        // The pending receipt exists while the native side runs, and is gone again after an interruption.
         native.Before = _ => { Assert.Equal(ProbeReceiptStatus.Pending, PurchaseProbe.Status(receipts[Request(100000).Key])); return ProbeNativeOutcome.Interrupted("hour changed during setup"); };
 
         var result = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
@@ -136,8 +130,6 @@ public sealed class PurchaseProbeTests
         Assert.True(HouseholdFinance.CashConserved(wallet));
     }
 
-    /// <summary>A processor fault after it took stock, before any order was booked: the native books are restored, the
-    /// pending receipt is dropped and the wallet is untouched, so a save right after the command holds no half sale.</summary>
     [Fact]
     public void AFaultAfterStockConsumptionRestoresTheNativeBooks()
     {
@@ -153,7 +145,6 @@ public sealed class PurchaseProbeTests
         Assert.Equal(walletBefore, WalletText(wallet));
     }
 
-    /// <summary>Only a failed restore leaves an uncertain receipt; it is never debited or retried.</summary>
     [Fact]
     public void AFailedRestoreIsUncertainNeverDebitedAndNeverRetried()
     {
@@ -171,13 +162,10 @@ public sealed class PurchaseProbeTests
         Assert.Equal(walletBefore, WalletText(wallet));
     }
 
-    /// <summary>Once the native side reports a booked order, the sale is reconciled in the same call: stock and order
-    /// changed, so the wallet is debited the booked total once, even when the paid lines differ from the quote.</summary>
     [Fact]
     public void ABookedOrderThatDiffersFromTheQuoteIsStillDebitedOnce()
     {
         var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
-        // The processor booked the shirt one cent cheaper than quoted.
         native.Report = paid => paid.Select(l => l.ItemId == Shirt.ItemId ? new ProbeLine(l.ItemId, l.Price - Money.FromCents(1), false) : l).ToList();
 
         var result = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
@@ -193,8 +181,6 @@ public sealed class PurchaseProbeTests
         Assert.True(HouseholdFinance.CashConserved(wallet));
     }
 
-    /// <summary>A booked order above the quote (stock taken, order booked, nothing debited yet) is reversed: books, wallet
-    /// and receipts end as they began. The probe can then run again at a later minute.</summary>
     [Fact]
     public void ABookedOrderAboveTheQuoteIsReversedBeforeTheDebit()
     {
@@ -205,14 +191,12 @@ public sealed class PurchaseProbeTests
         var result = PurchaseProbe.Run(Request(100000, basket: new[] { Shirt }), wallet, receipts, native);
 
         Assert.Equal(ProbeRefusal.Reversed, result.Refusal);
-        Assert.Equal(books, native.Books); // shirt stock back at 5, no booked order
+        Assert.Equal(books, native.Books);
         Assert.Empty(receipts);
         Assert.Equal(walletBefore, WalletText(wallet));
         Assert.Equal(0, PurchaseProbe.Recover(receipts));
     }
 
-    /// <summary>The wallet limit can fall between the quote and the debit only through native callbacks; the booked
-    /// order is then reversed rather than left unpaid.</summary>
     [Fact]
     public void AWalletThatCannotTakeTheBookedTotalReversesTheSale()
     {
@@ -252,7 +236,6 @@ public sealed class PurchaseProbeTests
         var result = PurchaseProbe.Run(Request(100000, kind), wallet, receipts, native);
         var repeat = PurchaseProbe.Run(Request(100000, kind), wallet, receipts, native);
 
-        // The game's per-item check refused the socks: only the paid lines are debited.
         Assert.Equal(Money.FromCents(800), result.Paid);
         Assert.Equal(Money.FromCents(100000 - 800), wallet.Balance);
         Assert.Equal(kind == ProbeKind.Food ? Money.FromCents(800) : Money.Zero, wallet.PreparedFoodSpent);
@@ -266,11 +249,6 @@ public sealed class PurchaseProbeTests
 
     public enum Cut { Enter, Exit }
 
-    /// <summary>A save is the receipts and population payload in native mod data plus the native books, taken together.
-    /// Inside a probe only a nested native save can run (the rig's checkpoint at the processor's entry or exit). At the
-    /// exit cut the books hold the order while the payload still has the pre-probe wallet and the receipt is pending. The
-    /// save-epoch guard marks that save failed and stopped, so Persistent City refuses it on load and settles neither half;
-    /// the last coherent save holds the probe undone and sells it exactly once. The live session finishes the sale and stops.</summary>
     [Theory]
     [InlineData(Cut.Enter)]
     [InlineData(Cut.Exit)]
@@ -288,7 +266,6 @@ public sealed class PurchaseProbeTests
             data[SaveStore.StateKey] = SaveCodec.Write(state);
             return SaveEpochCapture.Written(state.Minute, state.PopulationKey);
         }
-        // Native Save: onSaveGame, then the file is mod data and the native books at that instant.
         (Dictionary<string, string> Data, string Books) NativeSave()
         {
             if (SaveEpochCallback.Run(epoch, data, data, units > 0, Capture, _ => stops++, _ => { }) == SaveEpochResult.Reentrant) stopPending = true;
@@ -301,7 +278,6 @@ public sealed class PurchaseProbeTests
         native.Before = _ => { if (cut == Cut.Enter) cutFile = NativeSave(); return null; };
         native.Report = paid => { if (cut == Cut.Exit) cutFile = NativeSave(); return paid; };
 
-        // PopulationRuntime.SaleProbeCommand: the probe runs as one save-epoch unit; a re-entrant save stops PC after it.
         PurchaseProbeResult live;
         units++;
         try { live = PurchaseProbe.Run(Request(100000, ProbeKind.Food), wallet, data, native); }
@@ -312,16 +288,13 @@ public sealed class PurchaseProbeTests
         var file = cutFile!.Value;
         Assert.Equal(cut == Cut.Exit ? orders + 1 : orders, NativeOrders(file.Books));
         Assert.Equal(ProbeReceiptStatus.Pending, PurchaseProbe.Status(file.Data[live.Key]));
-        Assert.Same(prior.Data[SaveStore.StateKey], file.Data[SaveStore.StateKey]); // pre-probe wallet
-        // Load of the cut: refused before any accounting, every key kept, the pending receipt never settled or abandoned.
+        Assert.Same(prior.Data[SaveStore.StateKey], file.Data[SaveStore.StateKey]);
         Assert.True(AccountingStopStore.IsStopped(file.Data));
         Assert.Equal(AccountingStopStore.SaveEpochFailed, file.Data[AccountingStopStore.Key]);
         Assert.NotNull(SaveEpochStore.CheckForStart(file.Data, out _));
         Assert.Contains("never settles or replays", AccountingStopStore.Cause(file.Data));
-        // Every later save of the live session is refused too: the stopped line never publishes again.
         Assert.True(AccountingStopStore.IsStopped(NativeSave().Data));
 
-        // Recovery: the last coherent save starts, holds no receipt, no order and the pre-probe wallet, and sells once.
         Assert.False(AccountingStopStore.IsStopped(prior.Data));
         Assert.Null(SaveEpochStore.CheckForStart(prior.Data, out var marker));
         var read = SaveCodec.Read(prior.Data[SaveStore.StateKey]);

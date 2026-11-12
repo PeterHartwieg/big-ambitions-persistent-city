@@ -1,4 +1,3 @@
-"""Write a perf-gate-report/v1 as JSON plus a generated Markdown summary (Decision 8)."""
 import json
 from pathlib import Path
 

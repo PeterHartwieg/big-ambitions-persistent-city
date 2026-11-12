@@ -11,7 +11,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Staged main-thread native import, pure background construction, staged validation before publication.</summary>
     internal sealed class TrafficRoadNetwork
     {
         private static readonly FieldInfo? Associated = typeof(Waypoint).GetField("associatedIntersection", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -76,7 +75,6 @@ namespace PersistentCity.Runtime
             priorities = scene?.allPriorityIntersections ?? Array.Empty<PriorityIntersection>();
             lights = scene?.allLightsIntersections ?? Array.Empty<TrafficLightsIntersection>();
             nativeNodes = new NativeNode?[waypoints.Length]; snapshot = new TrafficNetworkNode[waypoints.Length];
-            // Capture each road ID in its node slice; this array stays on the main thread.
             roadIds = scene?.roadIds != null && scene.roadIds.Length == waypoints.Length ? scene.roadIds : null;
         }
 
@@ -111,16 +109,12 @@ namespace PersistentCity.Runtime
                         stage = Stage.Nodes; continue;
                     case Stage.Nodes:
                         if (nodeCursor < waypoints.Length) { CaptureNode(nodeCursor++); units++; break; }
-                        // This worker closes over ONLY pure immutable DTOs, a string and a number.
-                        // Unity/game references stay on this importer and are never read by the worker.
                         var pureNodes = snapshot; string nativeTopology = topology; double rate = clockRate;
                         construction = Task.Run(() => new TrafficNetwork(nativeTopology, pureNodes, rate));
                         stage = Stage.Constructing; return false;
                     case Stage.Constructing:
                         if (!construction!.IsCompleted) return false;
                         constructed = construction.GetAwaiter().GetResult();
-                        // The pure constructor has finished; retain native shape validators, not a second
-                        // city-sized set of DTOs/structural strings for the lifetime of this revision.
                         snapshot = Array.Empty<TrafficNetworkNode>();
                         stage = Stage.ValidateJunctions; validationCursor = 0; continue;
                     case Stage.ValidateJunctions:
@@ -142,7 +136,6 @@ namespace PersistentCity.Runtime
                     default: return true;
                 }
             }
-            // A validation batch can span frames; never retain its junction results into a new frame.
             BeginQuery(); return stage == Stage.Complete;
         }
 
@@ -158,8 +151,6 @@ namespace PersistentCity.Runtime
             if (Flags(native) != captured.Flags) return Invalid("waypoint-flags", index);
             object? association = Associated!.GetValue(native);
             if (!ReferenceEquals(association, captured.Association)) return Invalid("junction-association", index);
-            // stop is live light/priority state, not topology. Keep the capture prerequisite live too:
-            // a newly stopped, unassociated waypoint is still an unverifiable native contract.
             if (native.stop && association == null) return Invalid("unassociated-stop", index);
             if (!Same(native.otherLanes, captured.Lanes)) return Invalid("lane-links", index);
             var currentIds = scene?.roadIds != null && scene.roadIds.Length == waypoints.Length ? scene.roadIds : null;
@@ -241,7 +232,6 @@ namespace PersistentCity.Runtime
                 return Invalid("signal-timing", id);
             return true;
         }
-        // Only immutable shape flags belong here. Native lights/priority queues change stop routinely.
         private static int Flags(Waypoint native) => (native.enter ? 1 : 0) | (native.exit ? 2 : 0) | (native.giveWay ? 4 : 0);
         private static bool Same(List<int>? current, int[]? captured)
         {

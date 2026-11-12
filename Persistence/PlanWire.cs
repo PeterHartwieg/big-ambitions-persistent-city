@@ -7,17 +7,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>
-    /// GR-2 day plan on the wire: one ASCII string per person ("Plan" on a resident and on a visitor's routine), null before
-    /// the person's first plan. The schema stays 1; a city written before day plans has no "Plan" field and is refused as an
-    /// older development city and kept unchanged.
-    ///
-    /// "1|day|seed|shift|days off|workplace|items|next shift", items joined by ';' (empty for none), next shift one work
-    /// item with state and cause 0, or "-" for none. Item:
-    /// "KAPMSC,venue,earliest,latest[,ends]": kind, activity, priority, meal, state and cause as one digit each; venue a place
-    /// cell (PlaceCells) or "---"; minutes as invariant round-trip text, refused unless canonical; ends is written only when
-    /// it differs from the latest start (today never). Workplace a place cell or "---".
-    /// </summary>
     public static partial class SaveCodec
     {
         public const int MaxPlanWire = 512;
@@ -60,7 +49,6 @@ namespace PersistentCity.Persistence
             Require(Enum.IsDefined(typeof(PlanItemKind), kind) && Enum.IsDefined(typeof(Activity), activity) && Enum.IsDefined(typeof(PlanPriority), priority)
                 && Enum.IsDefined(typeof(MealKind), meal) && Enum.IsDefined(typeof(PlanItemState), state) && Enum.IsDefined(typeof(PlanMissCause), cause)
                 && (state == PlanItemState.Missed) == (cause != PlanMissCause.None), error);
-            // A meal names its kind and picks its venue when it starts; every other item has a venue and no meal kind.
             Require(kind == PlanItemKind.Meal ? meal != MealKind.Legacy && activity == Activity.Home && fields[1] == NoPlace27
                 : meal == MealKind.Legacy && activity != Activity.Home && fields[1] != NoPlace27, error);
             string venue = PlanPlace(fields[1], cells);
@@ -70,7 +58,6 @@ namespace PersistentCity.Persistence
             return new PlanItem(kind, activity, venue, earliest, latest, ends, priority, meal);
         }
 
-        /// <summary>The one plan parser: the streaming check (placeholder places) and the reader (the place table).</summary>
         private static DayPlan ParsePlan(string text, PlaceCells cells)
         {
             const string error = "Invalid day plan.";
@@ -127,8 +114,6 @@ namespace PersistentCity.Persistence
             ParsePlan((string)reader.Value!, PlaceCells.Streaming);
         }
 
-        /// <summary>A plan belongs to a day that has begun (its boundary has passed) and plans its own person's workplace,
-        /// unless the plan is still waiting for its next event to replan; a meal item needs the food economy.</summary>
         private static void ValidatePlans(CityState state)
         {
             int today = DayPlanner.PlanDay(state.Minute);
@@ -161,9 +146,6 @@ namespace PersistentCity.Persistence
         private const string ResidentPlaceField = "\"PlaceId\":";
         private const string ResidentHoldField = ",\"PlayerHoldMinutes\":";
 
-        /// <summary>The writer sorts fields ordinally, so a current resident has "Plan" between "PlaceId" and
-        /// "PlayerHoldMinutes"; a pre-GR-2 resident goes straight from one to the other. One ordinal search on the first
-        /// resident, no decode. A city without residents has nothing to detect and fails the strict read.</summary>
         internal static bool PrePlanBody(string source)
         {
             if (!source.StartsWith(BodyPrefix, StringComparison.Ordinal)) return false;

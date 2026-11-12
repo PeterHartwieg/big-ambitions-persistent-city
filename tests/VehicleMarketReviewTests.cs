@@ -80,7 +80,6 @@ public sealed class VehicleMarketReviewTests
     public void ShopOnlyLocalReadPreservesNativeOrderingToleranceAndBatchedRead(int count)
     {
         var f = new VehicleMarketTests.Fixture(shops: count);
-        // Keep the real vendor market attached, but remove its scope to exercise a shop-only city.
         f.City.State.Food!.Shops.RemoveAll(s => s.Channel == FoodScopeChannel.Vehicle);
         var shop = new VehicleMarketTests.ShopMarket(f.City.State.Food, f.Receipts);
         var composite = new FoodMarkets(f.City.State.Food, shop, f.Market, id => f.City.FindPlace(id).Position);

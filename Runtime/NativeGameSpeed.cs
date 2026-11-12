@@ -12,8 +12,6 @@ namespace PersistentCity.Runtime
         private static Func<GameSpeedController, GameSpeed>? readSpeed;
         private static bool prepared;
 
-        // Called once when F0 is enabled, never from a body/frame query. A private-field
-        // contract mismatch or unsupported code generation leaves the feature disabled.
         public static bool Prepare()
         {
             if (prepared) return readSpeed != null;
@@ -35,14 +33,12 @@ namespace PersistentCity.Runtime
             => controller != null && (readSpeed == null || readSpeed(controller)?.speed == TimeSpeed.FastForward);
         public static bool CurrentFastForward => IsFastForward(InstanceBehavior<UIs>.Instance?.gameSpeed);
 
-        // Preserve the previous off-path accessor, including its missing-field/null behavior.
         public static bool LegacyFastForward
         {
             get
             {
                 var ui = InstanceBehavior<UIs>.Instance;
                 var controller = ui == null ? null : ui.gameSpeed;
-                // P2: the prepared reader replaces the boxed reflection read; same answer, the field is the same.
                 var speed = controller == null ? null : readSpeed != null ? readSpeed(controller) : SpeedField?.GetValue(controller) as GameSpeed;
                 return speed != null && speed.speed == TimeSpeed.FastForward;
             }

@@ -2,7 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    // Detached effective inputs only: never a loaded-definition, stock or checkout permission.
     public enum MealClass { Unknown, Food, Drink, Bundle, NonFood }
 
     public readonly struct FoodProductMetadata
@@ -23,7 +22,6 @@ namespace PersistentCity.Core
         public int Penalty(MealKind meal) => meal == MealKind.Legacy ? 0 : meal == MealKind.Breakfast ? BreakfastFitCents
             : meal == MealKind.Lunch ? LunchFitCents : meal == MealKind.Dinner ? DinnerFitCents : throw new ArgumentOutOfRangeException(nameof(meal));
     }
-    // Partial metadata; absence falls through config > API > defaults, per field.
     public readonly struct FoodProductMetadataOverride
     {
         public FoodProductMetadataOverride(MealClass mealClass, int? tasteBand, int breakfastFitCents, int lunchFitCents, int dinnerFitCents)
@@ -45,11 +43,8 @@ namespace PersistentCity.Core
         public int DinnerFitCents => OptionalDinnerFitCents ?? 450;
     }
 
-    // Shared immutable E5 DTO only. Classification is authored policy, never native eligibility.
     public enum FoodMealClass { Unknown, Food, Drink, Bundle, NonFood }
 
-    /// <summary>Effective inputs of one held offer. Revision 1 preserves E4's code-based
-    /// policy; revision 2 reserves name-based inputs for E5c/E5b. Neither grants sale permission.</summary>
     public sealed class FoodOfferMetadata
     {
         public FoodOfferMetadata(int revision, FoodMealClass mealClass, int tasteBand,

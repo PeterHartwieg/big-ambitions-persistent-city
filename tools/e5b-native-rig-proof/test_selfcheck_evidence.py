@@ -1,4 +1,3 @@
-"""Offline wrapper gate tests: fake rig modules; no lease, profile, native or build access."""
 from contextlib import nullcontext
 import json
 import os
@@ -26,8 +25,6 @@ class SelfcheckEvidence(unittest.TestCase):
                 calls.append((kwargs,os.environ.get('HARNESS_ALERTS')));return checks,inventory
             def session(document,path,rig_factory):
                 rig=rig_factory()
-                # Core owns the session failure/cleanup. This fake catches only after the
-                # wrapper's gate has raised, proving its evidence already exists then.
                 try:seen['result']=rig.selfcheck(notify='offline-notify-sentinel')
                 except Infra as error:
                     seen['raised']=str(error)
@@ -44,7 +41,7 @@ class SelfcheckEvidence(unittest.TestCase):
                  patch.object(run_flow,'__file__',str(root/'tools/e5b-native-rig-proof/run_flow.py')):
                 code=run_flow.main()
             stored=json.loads((evidence/'selfchecks/001.json').read_text())
-            self.assertEqual(len(calls),1) # No hidden retry of the actual failed check.
+            self.assertEqual(len(calls),1)
             self.assertEqual(calls[0],({'lock_token':'offline-fixture-credential','notify':'offline-notify-sentinel'},'off'))
             self.assertEqual(stored,dict(ok=passed,checks=checks,mod_inventory=inventory))
             return code,seen,stored

@@ -8,8 +8,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F5f (city audit F5 #92): the active-journey candidate index equals a full scan after every event, frame slice,
-// skip, reload, route rebuild, interrupted plan and physical lease acquire/release; visitors are indexed but withheld.
 public sealed class ActiveJourneyIndexTests
 {
     private sealed class Walking : IRoutePlanner
@@ -18,7 +16,6 @@ public sealed class ActiveJourneyIndexTests
         { Legs = { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk,
             Minutes = Math.Max(3, Position.Distance(from.Position, to.Position) / 80) } } };
     }
-    // Answers after `steps` continuations, so a frame slice leaves the event in flight.
     private sealed class Resumable(int steps) : IResumableRoutePlanner
     {
         public Route? Plan(Place a, Place b, double at, TravelPreferences p) => new Walking().Plan(a, b, at, p);
@@ -44,8 +41,6 @@ public sealed class ActiveJourneyIndexTests
         public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
     }
 
-    // The specification, written independently of Core: travelling, waiting at a door, holding an optional stop
-    // or at an outdoor scene.
     private static bool Expected(CitizenState c) => c.Phase == CitizenPhase.Travelling || c.Phase == CitizenPhase.WaitingForOpening
         || c.Phase == CitizenPhase.AtPlace && (c.OptionalStop != null || c.Activity == Activity.Leisure && c.PlaceId.StartsWith("scene-", StringComparison.Ordinal));
     private static bool IsVisitor(string id) => id.StartsWith("pv:", StringComparison.Ordinal) || id.StartsWith("consumer:", StringComparison.Ordinal);
@@ -61,7 +56,6 @@ public sealed class ActiveJourneyIndexTests
         Assert.Equal(expected.Count, index.Count);
         Assert.All(expected, c => Assert.True(index.Contains(c)));
         var bodies = index.BodyCandidates.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal);
-        // F5i: visitors are body candidates like residents; nothing is withheld.
         Assert.Equal(expected.Select(c => c.Identity.Id).OrderBy(id => id, StringComparer.Ordinal), bodies);
         Assert.Equal(0, index.WithheldVisitors);
         Assert.Equal(index.BodyCandidates.Count, index.BodyCandidates.Distinct().Count());
@@ -105,16 +99,13 @@ public sealed class ActiveJourneyIndexTests
             stops = Math.Max(stops, sim.State.Citizens.Count(c => c.Phase == CitizenPhase.AtPlace && c.OptionalStop != null && sim.ActiveJourneys.Contains(c)));
             scenes = Math.Max(scenes, sim.State.Citizens.Count(c => c.PlaceId.StartsWith("scene-", StringComparison.Ordinal) && c.Phase == CitizenPhase.AtPlace && sim.ActiveJourneys.Contains(c)));
         };
-        // One ordinary day in single-event frame slices.
         double target = sim.State.Minute + 1440;
         while (!sim.IsCaughtUpTo(target)) { sim.AdvanceFrameSlice(target); AssertIndexed(sim); }
         Assert.True(observed > 1000, "observed " + observed);
         Assert.True(travelling > 0 && stops > 0 && scenes > 0, $"coverage travelling {travelling}, stops {stops}, scenes {scenes}");
-        // A hidden skip of three days in event-budgeted calls.
         double skip = sim.State.Minute + 3 * 1440 + 437;
         while (!sim.AdvanceTo(skip).CaughtUp) { }
         AssertIndexed(sim);
-        // Reload: the rebuilt index has the same members, and both continue identically.
         var members = Members(sim);
         var loaded = Reload(sim, new Walking());
         AssertIndexed(loaded);
@@ -140,11 +131,9 @@ public sealed class ActiveJourneyIndexTests
             if (result.PlanningPending)
             {
                 pending++;
-                // The event in flight has not touched the live resident yet.
                 AssertIndexed(sim);
                 if (pending % 7 == 0)
                 {
-                    // A rebuild abandons the event; the replacement replays it from its start.
                     sim = sim.RebuildRoutes(new Resumable(3));
                     AssertIndexed(sim);
                     continue;
@@ -181,7 +170,6 @@ public sealed class ActiveJourneyIndexTests
         var sim = Travellers("c0", "c1", "c2");
         AssertIndexed(sim); Assert.Equal(3, sim.ActiveJourneys.Count);
         var c = sim.State.Citizens[0];
-        // No body can freeze a journey (F2c walkers, F2d cars): nothing is leased.
         sim.AdvanceTo(1446); AssertIndexed(sim);
         Assert.Equal(new[] { "c0", "c1", "c2" }, Members(sim));
         var loaded = Reload(sim, new Walking()); AssertIndexed(loaded); Assert.Equal(Members(sim), Members(loaded));
@@ -220,7 +208,6 @@ public sealed class ActiveJourneyIndexTests
     [Fact]
     public void VisitorsAreIndexedAsBodyCandidates()
     {
-        // F5i: visitors receive bodies through the index (before F5i they were indexed and withheld).
         Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
         var sim = Travellers("c0", "consumer:c0:1", "pv:1", "pv:2", "r5");
         AssertIndexed(sim);
@@ -230,7 +217,6 @@ public sealed class ActiveJourneyIndexTests
         { Assert.Equal(PersonKind.Visitor, ActiveJourneyIndex.KindOf(c)); Assert.True(ActiveJourneyIndex.ReceivesBody(c)); Assert.True(sim.ActiveJourneys.Contains(c)); });
         var loaded = Reload(sim, new Walking()); AssertIndexed(loaded); Assert.Equal(0, loaded.ActiveJourneys.WithheldVisitors);
         sim.AdvanceTo(1460); AssertIndexed(sim); Assert.Equal(0, sim.ActiveJourneys.Count); Assert.Equal(0, sim.ActiveJourneys.WithheldVisitors);
-        // A whole mixed day with visitor-format IDs files visitors as body candidates after every event.
         var mixed = Mixed(new Walking(), 120, i => i % 3 == 0 ? PersonIds.Visitor(i + 1) : "r" + i.ToString("D4"));
         int visitors = 0;
         mixed.ActivityObserved += (_, _, _) =>
@@ -242,8 +228,6 @@ public sealed class ActiveJourneyIndexTests
         Assert.True(visitors > 0);
     }
 
-    // The index is a superset of every stateful candidate filter of Runtime physical selection
-    // (moving journeys, planned door queues, Outdoor) for every phase/activity/stop/place combination.
     [Fact]
     public void MembershipCoversEveryStatefulSelectionCandidate()
     {
@@ -269,7 +253,6 @@ public sealed class ActiveJourneyIndexTests
         Assert.False(waiting.ActiveJourneys.Contains(w));
     }
 
-    // Derived only: reading the index never changes saved state, identity or money.
     [Fact]
     public void IndexHasNoIdentityOrEconomyEffect()
     {
@@ -285,7 +268,6 @@ public sealed class ActiveJourneyIndexTests
             Assert.Equal(text, SaveCodec.Write(probed.State));
         }
         Assert.Equal(identities, probed.State.Citizens.Select(c => c.Identity));
-        // Only read members are public; filing and rebuilding stay inside Core.
         var mutators = typeof(ActiveJourneyIndex).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Where(m => !m.IsSpecialName).Select(m => m.Name).Distinct().OrderBy(n => n, StringComparer.Ordinal);
         Assert.Equal(new[] { "Contains", "MatchesScan" }, mutators);
@@ -297,7 +279,6 @@ public sealed class ActiveJourneyIndexTests
         var sim = Travellers("c0", "c1");
         var c = sim.State.Citizens[1];
         Assert.True(sim.ActiveJourneyIndexMatchesState());
-        // A change made behind the simulator's back is a mismatch, which Runtime answers with a full scan.
         c.Phase = CitizenPhase.AtPlace; c.Journey = null; c.Activity = Activity.Work;
         Assert.False(sim.ActiveJourneyIndexMatchesState());
         sim.ActiveJourneys.File(c);

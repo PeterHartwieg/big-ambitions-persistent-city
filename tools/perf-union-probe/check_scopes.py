@@ -17,7 +17,7 @@ import sys
 MODULE = Path(__file__).resolve().parent
 SOURCE_DIRS = ('Core', 'Compatibility', 'Persistence', 'Runtime')
 INVENTORY = MODULE / 'ScopeInventory.cs'
-PATCH_KINDS = ('prefix', 'postfix', 'transpiler', 'finalizer')  # Harmony.Patch positional order after the original
+PATCH_KINDS = ('prefix', 'postfix', 'transpiler', 'finalizer')
 UNITY_BASES = ('MonoBehaviour', 'ScriptableObject', 'StateMachineBehaviour', 'UIBehaviour')
 UNITY_MESSAGES = {
     'Awake', 'Start', 'Update', 'LateUpdate', 'FixedUpdate', 'OnGUI', 'OnEnable', 'OnDisable', 'OnDestroy', 'OnValidate', 'Reset',
@@ -40,7 +40,6 @@ NOT_DEFINITION_PREFIX = {'new', 'return', 'await', 'throw', 'in', 'is', 'as', 'e
 
 
 def strip(text):
-    """Blank comments and string/char literal contents, keeping length, newlines, quotes and interpolation holes."""
     out = list(text)
     n = len(text)
 
@@ -113,7 +112,6 @@ def strip(text):
 
 
 def match_close(s, i, opener='(', closer=')'):
-    """Index just after the bracket matching s[i] (an opener)."""
     depth = 0
     for k in range(i, len(s)):
         if s[k] == opener:
@@ -126,7 +124,6 @@ def match_close(s, i, opener='(', closer=')'):
 
 
 def split_args(s, generics=False):
-    """Top-level comma split of an argument list body; generics=True also nests <...> (parameter lists)."""
     parts, depth, start, quoted = [], 0, 0, False
     openers, closers = ('([{<', ')]}>') if generics else ('([{', ')]}')
     for k, c in enumerate(s):
@@ -154,7 +151,7 @@ class SourceFile:
         self.rel = path.relative_to(root).as_posix()
         self.raw = path.read_text(encoding='utf-8-sig')
         self.code = strip(self.raw)
-        self.classes = []  # (name, body_start, body_end, bases)
+        self.classes = []
         for m in re.finditer(r'\b(class|struct|interface|record)\s+(\w+)', self.code):
             brace = self.code.find('{', m.end())
             semi = self.code.find(';', m.end())
@@ -162,7 +159,7 @@ class SourceFile:
                 continue
             end = match_close(self.code, brace, '{', '}')
             self.classes.append((m.group(2), brace, end, self.code[m.end():brace]))
-        self.methods = []  # (name, name_pos, body_start, body_end, params)
+        self.methods = []
         for m in re.finditer(r'(\w+)\s*\(', self.code):
             name = m.group(1)
             p = m.start() - 1
@@ -252,7 +249,6 @@ METHOD_CALL = re.compile(r'(AccessTools\s*\.\s*(?:Method|DeclaredMethod)|\.\s*Ge
 
 
 def top_level_cut(expr, token):
-    """expr up to the first depth-0 occurrence of token."""
     depth = 0
     for k, c in enumerate(expr):
         if c in '([{':
@@ -278,11 +274,10 @@ def statement_end(code, start):
 
 
 def assignments(f, name, pos):
-    """(position, raw right-hand side) pairs assigned to `name`; the last one before pos in its method when there is one."""
     found = []
     for m in re.finditer(r'(?<![\w.])' + re.escape(name) + r'\s*=(?![=>])', f.code):
         rhs = f.raw[m.end():statement_end(f.code, m.end())].strip()
-        if not re.fullmatch(r'(?:\w+\s*=\s*)*(?:null!?|default)', rhs):  # resets, including chained ones (a = b = null)
+        if not re.fullmatch(r'(?:\w+\s*=\s*)*(?:null!?|default)', rhs):
             found.append((m.start(), rhs))
     host = f.enclosing_method(pos) if pos is not None else None
     if host:
@@ -303,7 +298,6 @@ def type_of_variable(f, name, pos, depth):
 
 
 def target_of(f, expr, pos, depth=0):
-    """Native 'Type.Method' named by a method-reference expression, following local and field assignments; None if unknown."""
     expr = top_level_cut(expr.strip(), '??').strip().rstrip('!').strip()
     if depth > 4 or not expr:
         return None
@@ -329,14 +323,12 @@ def target_of(f, expr, pos, depth=0):
 
 
 def substitute(text, names, values):
-    """Replace a helper's parameter names in its template expression with the call's argument texts."""
     for name, value in zip(names, values):
         text = re.sub(r'(?<![\w."])' + re.escape(name) + r'(?![\w"])', lambda _, v=value: v, text)
     return text
 
 
 def is_bind_call(rhs, parameter):
-    """True only when rhs is exactly one Bind(<parameter>, ...) call: balanced, with nothing before or after it (Sol-r3-1)."""
     rhs = rhs.strip()
     m = re.match(r'Bind\s*\(', rhs)
     if not m:
@@ -349,7 +341,6 @@ def is_bind_call(rhs, parameter):
 
 
 def contract_table(files):
-    """FoodContractHookTable rows: id -> 'Type.Method', the targets of the dynamic HookN postfixes."""
     table = {}
     for f in files:
         for m in re.finditer(r'new\s+FoodContractHook\s*\(\s*(\d+)\s*,\s*"\w+"\s*,\s*"(\w+)"\s*,\s*"(\w+)"', f.raw):
@@ -357,15 +348,9 @@ def contract_table(files):
     return table
 
 
-# Method references inside an inventoried transpiler. AccessTools.Method/DeclaredMethod and typeof(T).GetMethod are parsed;
-# the other forms (delegates, CodeInstruction.Call, function pointers, other AccessTools method lookups) fail closed.
 TRANSPILER_REFERENCES = re.compile(r'AccessTools\s*\.\s*(\w+)\s*\(|\.\s*GetMethod\s*\(|\bSymbolExtensions\b|\bCodeInstruction\s*\.\s*Call\w*'
                                    r'|\bEmitDelegate\b|\bTranspilers\s*\.\s*\w+|\bCreateDelegate\b|\bOpCodes\s*\.\s*Ldv?i?r?t?ftn\b|\bnew\s+CodeInstruction\s*\('
-                                   # Reflection lookups other than one named method, and cloned instructions (Sol-r2-3).
                                    r'|\.\s*GetMethods\b|\bGetMembers?\b|\bGetRuntimeMethods?\b|\bGetMethodFromHandle\b|\bDeclaredMethods\b|\.\s*Clone\s*\(')
-# Pinned transpiler bodies (SHA-256 of the raw body with whitespace collapsed). A transpiler decides which PC helpers run inside
-# native code, and its emitted calls cannot be fully proven by pattern matching, so any edit to an inventoried transpiler fails
-# until its emitted calls are reviewed, the helper rows in ScopeInventory.cs are updated and the new fingerprint is pinned here.
 PINNED_TRANSPILERS = {
     'PhysicalTrafficHooks.SelectTranspiler': 'afd1fb7e0e9f4d8e102ea0e7ce21963b38fe96f8469cd389e5a8e9773ff6cc21',
     'PhysicalTrafficHooks.BodyForceTranspiler': 'a74a7bc1689c0bbeafd2d722ce6edbc05fe6c60fae74c18dc8cf89410cc396e6',
@@ -380,10 +365,9 @@ NON_METHOD_ACCESS = {'Field', 'DeclaredField', 'FieldRefAccess', 'StaticFieldRef
 
 
 def scan(root):
-    """Returns (found dict of sets, problems list)."""
     files = load(root)
     problems = []
-    found = dict(patches=[], messages=[], events=[], helpers=[])  # multisets: a repeated registration counts twice
+    found = dict(patches=[], messages=[], events=[], helpers=[])
     table = contract_table(files)
     behaviours = set()
     for f in files:
@@ -391,7 +375,7 @@ def scan(root):
             if re.search(r'\b(?:' + '|'.join(UNITY_BASES) + r')\b', bases):
                 behaviours.add(name)
     changed = True
-    while changed:  # Classes deriving from a PC behaviour are behaviours too.
+    while changed:
         changed = False
         for f in files:
             for name, _, _, bases in f.classes:
@@ -410,8 +394,8 @@ def scan(root):
                 problems.append(f'{f.rel}: Harmony use without HarmonyLib in the file')
         else:
             owner = owner_of(f, problems)
-            covered = []  # spans of recognised Patch calls (HarmonyMethod uses must fall inside one)
-            helpers = {}  # helper Patch definitions in this file: name_pos -> (params, kind, type, param_index)
+            covered = []
+            helpers = {}
             for name, pos, body, end, params in f.methods:
                 if name != 'Patch':
                     continue
@@ -422,7 +406,6 @@ def scan(root):
                     kind = re.search(r'(\w+)\s*:\s*$', f.code[body:body + m.start()])
                     t = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', inner[0]) if inner else None
                     if len(inner) == 2 and t and inner[1] in names and kind and kind.group(1) in PATCH_KINDS:
-                        # The template's target: the Patch call's first argument, or the local it was assigned from.
                         calls = list(re.finditer(r'\bPatch\s*\(', f.code[body:body + m.start()]))
                         template = ''
                         if calls:
@@ -431,8 +414,6 @@ def scan(root):
                             if re.fullmatch(r'\w+', template) and template not in names:
                                 local = assignments(f, template, body + calls[-1].start())
                                 template = local[-1][1] if len(local) == 1 else ''
-                        # Only the one-registration shape is supported: a second Patch call or HarmonyMethod in the template
-                        # would register more than each call site records, so it fails closed (Sol-r2-2).
                         registrations = len(re.findall(r'\bPatch\s*\(', f.code[body:end]))
                         methods = len(re.findall(r'\bHarmonyMethod\s*\(', f.code[body:end]))
                         if registrations != 1 or methods != 1:
@@ -441,7 +422,7 @@ def scan(root):
                         helpers[pos] = (names, kind.group(1), short(t.group(1)), names.index(inner[1]), template)
             for m in re.finditer(r'\bPatch\s*\(', f.code):
                 if any(m.start() == pos for name, pos, *_ in f.methods if name == 'Patch'):
-                    continue  # a definition
+                    continue
                 if re.search(r'\bHarmony\.\s*$', f.code[:m.start()]):
                     continue
                 line = f.code.count('\n', 0, m.start()) + 1
@@ -452,12 +433,12 @@ def scan(root):
                 host = f.enclosing_method(m.start())
                 if 'HarmonyMethod' in args_text:
                     if host and host[0] == 'Patch' and host[1] in helpers:
-                        continue  # the helper's own template call
+                        continue
                     parts = split_args(args_text)
                     raw_first = split_args(raw_args)[0] if parts else ''
                     target = target_of(f, raw_first, m.start())
                     offsets, k = [], 0
-                    for p in parts:  # raw counterparts by position
+                    for p in parts:
                         k = args_text.find(p, k)
                         offsets.append((k, k + len(p)))
                         k += len(p)
@@ -484,7 +465,6 @@ def scan(root):
                             if kind == 'transpiler':
                                 transpilers.append((f, short(t.group(1)), method))
                         elif len(inner) == 1 and re.fullmatch(r'\w+', inner[0]) and host:
-                            # Dynamic patch method: typeof(T).GetMethod("Prefix" + id) inside the host method.
                             dyn = re.search(r'typeof\s*\(\s*(\w+)\s*\)\s*\.\s*GetMethod\s*\(\s*"(\w+)"\s*\+', f.raw[host[2]:host[3]])
                             if not dyn:
                                 problems.append(f'{f.rel}:{line}: HarmonyMethod({inner[0]}) without a recognised typeof(T).GetMethod("Name" + id) source')
@@ -493,8 +473,6 @@ def scan(root):
                             if cls is None:
                                 problems.append(f'{f.rel}:{line}: dynamic patch class {dyn.group(1)} not declared in this file')
                                 continue
-                            # The table supplies each HookN's target only if this call registers exactly what the table binds:
-                            # one Patch call in the host, whose target is a local assigned once from Bind(<host parameter>, ...).
                             host_params = [p.split()[-1] for p in split_args(host[4], generics=True)]
                             binding = assignments(f, raw_first.strip(), m.start()) if re.fullmatch(r'\w+', raw_first.strip()) else []
                             bound = len(binding) == 1 and len(host_params) == 1 and is_bind_call(binding[0][1], host_params[0])
@@ -534,7 +512,6 @@ def scan(root):
                 if not any(a <= m.start() < b for a, b in covered):
                     if not any(name == 'Patch' and body <= m.start() < end for name, _, body, end, _ in f.methods):
                         problems.append(f'{f.rel}:{f.code.count(chr(10), 0, m.start()) + 1}: HarmonyMethod outside a recognised Patch call')
-        # MonoBehaviour messages, at class level only.
         for name, start, end, _ in f.classes:
             if name not in behaviours:
                 continue
@@ -542,7 +519,6 @@ def scan(root):
             for mname, pos, *_ in f.methods:
                 if start < pos < end and mname in UNITY_MESSAGES and not any(c[1] < pos < c[2] for c in nested):
                     found['messages'].append((name, mname, f.rel))
-        # Native event subscriptions.
         for m in re.finditer(r'\b' + EVENT_SOURCES + r'\s*\.\s*(\w+)\s*\+=\s*([^;]+);', f.code):
             source = re.match(r'\w+', m.group(0)).group(0)
             handler = m.group(2).strip()
@@ -565,7 +541,7 @@ def scan(root):
         if PINNED_TRANSPILERS.get(f'{cls}.{name}') != fingerprint:
             problems.append(f'{f.rel}: transpiler {cls}.{name} body is not the pinned, reviewed shape (fingerprint {fingerprint}); '
                             'review its emitted calls, update the helper rows and re-pin PINNED_TRANSPILERS')
-        references = set()  # locals holding a recognised method reference: the only values an emitted operand may take
+        references = set()
         for m in TRANSPILER_REFERENCES.finditer(f.code, start, end):
             line = f.code.count('\n', 0, m.start()) + 1
             access = m.group(1)
@@ -584,24 +560,19 @@ def scan(root):
             statement = max(f.code.rfind(';', start, m.start()), f.code.rfind('{', start, m.start())) + 1
             holder = re.search(r'(\bvar\s+)?(\w+)\s*=\s*$', f.code[statement:m.start()])
             if holder:
-                # A reference is trusted only as a local declared here and never written again in the transpiler (Sol-r3-2):
-                # a later assignment, ref or out could swap the emitted helper for one outside the inventory.
                 local = holder.group(2)
                 writes = len(re.findall(r'(?<![\w.])' + re.escape(local) + r'\s*(?:=(?![=>])|\+\+|--)|\b(?:ref|out)\s+' + re.escape(local) + r'\b',
                                         f.code[start:end]))
-                # Deconstruction writes such as (a, local) = (...) (Sol-r4-1).
                 writes += len(re.findall(r'\((?:[^()]*,)?\s*(?:var\s+)?' + re.escape(local) + r'\s*(?:,[^()]*)?\)\s*=(?![=>])', f.code[start:end]))
-                # The whole initializer must be the lookup itself, optionally followed only by "?? throw ..." (Astra-r4-1).
                 close = match_close(f.code, paren)
                 tail = f.code[close:statement_end(f.code, close)].strip()
-                exact = not tail or re.match(r'\?\?\s*throw\b', tail)  # the holder pattern already ends right at the lookup
+                exact = not tail or re.match(r'\?\?\s*throw\b', tail)
                 if not holder.group(1) or writes != 1 or not exact:
                     problems.append(f'{f.rel}:{line}: method reference {local!r} in transpiler {cls}.{name} is not a local assigned exactly once from the lookup alone')
                 else:
                     references.add(local)
             if typ in pc_classes:
                 found['helpers'].append((name, typ, method_name, f.rel))
-        # Every operand the transpiler writes must be one of those locals; any other value is an unreviewed emitted call.
         for m in re.finditer(r'\.\s*operand\s*=(?!=)\s*([^;]+);', f.code[start:end]):
             if m.group(1).strip() not in references:
                 line = f.code.count('\n', 0, start + m.start()) + 1
@@ -643,7 +614,6 @@ def parse_inventory(path=INVENTORY):
 
 
 def canonical(path=INVENTORY):
-    """Same text as ScopeInventory.CanonicalText()."""
     version, rows = parse_inventory(path)
     lines = [version]
     lines += ['|'.join([kind, owner, typ, method, target, file]) for owner, kind, typ, method, target, file in rows['P']]
@@ -674,7 +644,6 @@ def check(root, inventory=INVENTORY):
     files, found, problems = scan(root)
     expected, rows = expected_sets(inventory)
     for key in ('patches', 'messages', 'events', 'helpers'):
-        # Multisets: the same callback registered again, or on another native target, is a difference.
         source, listed = Counter(found[key]), Counter(expected[key])
         for row in sorted((source - listed).elements(), key=str):
             problems.append(f'{key}: in source but not in ScopeInventory.cs: {" ".join(str(x) for x in row)}')

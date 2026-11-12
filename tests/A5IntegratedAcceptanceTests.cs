@@ -104,9 +104,6 @@ public sealed class A5IntegratedAcceptanceTests
         while (!candidate.IsCaughtUpTo(at))
         {
             Assert.InRange(units, 0, 255);
-            // Catalogue preparation is transient, not a saved decision yield. A single
-            // before-capture reload is covered, but repeatedly discarding unpublished
-            // preparation would prevent any runtime from ever reaching capture.
             if (reloadAt < 0 ? units == 0 || candidate.State.Food!.Residents[0].Decision != null : units == reloadAt)
             {
                 var data = new Dictionary<string, string>();
@@ -115,8 +112,6 @@ public sealed class A5IntegratedAcceptanceTests
                 var read = SaveSession.Open(data, candidate.State.PopulationKey).InitialReadResult;
                 Assert.Equal(SaveReadStatus.Loaded, read.Status);
                 candidate = new CitySimulator(read.State!, paths); candidate.AttachFoodMarket(market);
-                // A captured E1 input must survive changed live rain/settings. Before
-                // capture, preserve the paired source so both runs start identically.
                 bool captured = candidate.State.Food!.Residents[0].Decision != null;
                 candidate.AttachWeather(new Weather { Value = captured ? WeatherSample.Unknown : weather },
                     new WeatherSettings { Enabled = !captured, RainTravelWeightMultiplier = captured ? 2 : 1.3 });
@@ -141,7 +136,6 @@ public sealed class A5IntegratedAcceptanceTests
                 savedSelection |= held.Result == FoodDecisionResult.Selected;
             }
         }
-        // A small admitted sample may finish before a later requested checkpoint.
         if (reloadAt <= 2) Assert.True(reloaded);
         Assert.True(savedSelection);
         Assert.InRange(maxShops, 1, 8); Assert.InRange(paths.Out, 1, 8); Assert.InRange(paths.Back, 1, 8);

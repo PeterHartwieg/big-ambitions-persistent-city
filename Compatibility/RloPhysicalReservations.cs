@@ -8,8 +8,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Compatibility
 {
-    /// <summary>Read-only scene/body reservations, through RLO's CityApi when it has one and otherwise for explicitly
-    /// reviewed RLO releases. Main thread only.</summary>
     public sealed class RloPhysicalReservations
     {
         private const BindingFlags Instance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
@@ -28,9 +26,6 @@ namespace PersistentCity.Compatibility
         public bool Ready { get; private set; }
         public string LastError { get; private set; } = "";
 
-        /// <summary>F8d diagnostics: the last guard's own verification result, recorded by every construction, update and
-        /// failure (no extra read). Static because the guard lives inside the physical population, which the capability
-        /// report does not reach. Null until a guard has been built in this process.</summary>
         public static RloReservationVerdict? Last { get; private set; }
         private void Record() => Last = new RloReservationVerdict(Ready, Ready && citizensKnown && bodiesKnown, LastError);
         public IReadOnlyCollection<string> ReservedCitizenIds => reserved;
@@ -49,7 +44,6 @@ namespace PersistentCity.Compatibility
                 if (sourceIdentities == null || sourceIdentities.Count == 0) throw new InvalidOperationException("Missing original identity catalogue.");
                 foreach (var identity in sourceIdentities)
                 {
-                    // Generated residents can reuse donors' looks but never become the donor.
                     if (identity.Id.Length > 1 && identity.Id[0] == 'c'
                         && int.TryParse(identity.Id.Substring(1), NumberStyles.None, CultureInfo.InvariantCulture, out int index)
                         && index >= 0 && identity.Id == "c" + index.ToString(CultureInfo.InvariantCulture))
@@ -111,8 +105,6 @@ namespace PersistentCity.Compatibility
                         int index = wears[slot];
                         if (index < 0 || index >= people.Length || people.GetValue(index) is not object who || (int)personIndex.GetValue(who)! != index)
                             throw new InvalidOperationException("Active social cast identity is missing.");
-                        // Reviewed FlareInviteLinks.MeetOnline copies this tuple; SocialPerson
-                        // has no persisted cIndex link. Do not infer identity from a name alone.
                         foreach (var source in sources)
                             if (source.Name == (string)personName.GetValue(who)! && source.Age == (int)personAge.GetValue(who)!
                                 && source.Female == (bool)personFemale.GetValue(who)! && source.AppearanceSeed == (int)personSeed.GetValue(who)!)
@@ -133,9 +125,6 @@ namespace PersistentCity.Compatibility
             }
             catch (Exception error) { Fail(error); }
         }
-        // Ready and Off are complete answers. NotYet and Refreshing say nothing about what RLO holds, so that read
-        // reserves everyone until a complete answer arrives. Shared, Failed or a broken answer stops the guard,
-        // which then reserves everyone for good.
         private void UpdateThroughApi(RloBridge api)
         {
             try
@@ -148,7 +137,6 @@ namespace PersistentCity.Compatibility
                     if (people == RloBridge.Status.Ready)
                         foreach (int index in readIndexes)
                         {
-                            // Only original donors can be RLO's people; generated residents are never reserved by a donor index.
                             string id = "c" + index.ToString(CultureInfo.InvariantCulture);
                             if (sourceIds.Contains(id)) reserved.Add(id);
                         }
@@ -196,8 +184,6 @@ namespace PersistentCity.Compatibility
         }
     }
 
-    /// <summary>F8d: one guard verification. Complete is false while either read answered NotYet or Refreshing (everyone is
-    /// reserved for that read); Ready is false once the guard stopped (it then reserves everyone for good).</summary>
     public sealed class RloReservationVerdict
     {
         public RloReservationVerdict(bool ready, bool complete, string error) { Ready = ready; Complete = complete; Error = error ?? ""; }

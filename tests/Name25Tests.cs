@@ -78,7 +78,6 @@ public sealed partial class FoodCommerceTests
         string first = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(first); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(name, read.State!.Food!.History.Single().ProductSales.Single().ProductId);
-        // No loaded catalogue API exists in the codec. A removed mod is still an exact historical fact.
         Assert.Equal(first, DevelopmentChain.Write(read.State));
         read.State.Food.History.Add(E5d_Row("A:new-before-existing", "other-generation"));
         string changed = DevelopmentChain.Write(read.State);
@@ -125,7 +124,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(wire, DevelopmentChain.Write(read.State!));
         Assert.All(typeof(FoodOfferMetadata).GetProperties(), p => Assert.Null(p.SetMethod));
         Assert.Equal(900, read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!.Shops[0].Offers[0].Metadata!.BreakfastFitCents);
-        // E5b4: the writer executes DynamicWire, so the held revision-2 tuple loads and activates.
         SaveCodec.RequireExecutableCapabilities(wire);
         DevelopmentChain.ValidateForActivation(read.State);
         _ = new CitySimulator(read.State, new Walking());
@@ -133,7 +131,6 @@ public sealed partial class FoodCommerceTests
         Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(read.State));
     }
 
-    // The raw-JSON whitespace budgets of the frozen JSON writers are gone: the writer emits no whitespace.
     [Fact]
     public void E5d_DuplicateAndNoncanonicalImagesAreRefused()
     {
@@ -173,6 +170,6 @@ public sealed partial class FoodCommerceTests
         string bad = root.ToString(Formatting.None);
         Assert.Contains("Oversized held metadata image", DevelopmentChain.Read(bad).Error);
         E5d_Refused(bad, city.State);
-        Assert.DoesNotContain("product:", string.Join(",", FoodProducts.Ids)); // no live definition was registered
+        Assert.DoesNotContain("product:", string.Join(",", FoodProducts.Ids));
     }
 }

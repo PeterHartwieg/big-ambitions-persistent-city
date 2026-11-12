@@ -7,9 +7,6 @@ namespace PersistentCity.Core
         public const int MaximumResidents = 50000;
         public const string PolicyId = "rentable-interior-occupant-bands-v1";
 
-        // Provisional occupant limits for the residential interior the player can
-        // rent or buy. Large homes allow a small family plus live-in staff; this
-        // allocation does not model household relationships or whole-property area.
         public static int Capacity(double rentableInteriorAreaSquareMetres)
         {
             if (!Position.Finite(rentableInteriorAreaSquareMetres) || rentableInteriorAreaSquareMetres < 0)
@@ -22,10 +19,8 @@ namespace PersistentCity.Core
             return 7;
         }
 
-        // Integer floor of 90% of the beds, without overflow; Target adds the bounds.
         internal static long Fill(long totalHomeCapacity) => totalHomeCapacity / 10 * 9 + totalHomeCapacity % 10 * 9 / 10;
 
-        // Apply occupancy once to the city total so small homes retain their beds.
         public static int Target(long totalHomeCapacity)
         {
             if (totalHomeCapacity <= 0) throw new InvalidOperationException("The catalogue has no residential capacity.");

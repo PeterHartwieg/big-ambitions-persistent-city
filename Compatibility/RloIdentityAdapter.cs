@@ -22,12 +22,9 @@ namespace PersistentCity.Compatibility
             DonorReadReason reason = DonorReadReason.NotReady)
         {
             Status = status; Message = message; SourceVersion = version; PopulationKey = key; CitySeed = seed; Identities = identities ?? Array.Empty<CitizenIdentity>();
-            // F8d (D6 option B): every construction site states its reason class; Status keeps its four values.
             Reason = status == RloReadStatus.Ready ? DonorReadReason.Ready : status == RloReadStatus.MissingDependency ? DonorReadReason.Missing : reason;
         }
         public RloReadStatus Status { get; }
-        /// <summary>F8d: why this read is or is not Ready (Off, NotYet, Refreshing are transient; Shared, Failed and
-        /// Incompatible stop).</summary>
         public DonorReadReason Reason { get; }
         public string Message { get; }
         public string SourceVersion { get; }
@@ -35,13 +32,9 @@ namespace PersistentCity.Compatibility
         public int CitySeed { get; }
         public IReadOnlyList<CitizenIdentity> Identities { get; }
 
-        /// <summary>F8d, after activation only: Match continues, Different and Unsupported stop as before, Transient
-        /// continues on the saved catalogue (no identity is read, created or changed). Activation stays strict
-        /// (<see cref="MatchesPopulation"/>).</summary>
         public DonorContinuity Continuity(CityState state)
             => Status == RloReadStatus.Ready ? (MatchesPopulation(state) ? DonorContinuity.Match : DonorContinuity.Different) : DonorReads.Continuity(Reason);
 
-        /// <summary>Checks a structurally validated snapshot against the actual current RLO identities.</summary>
         public bool MatchesPopulation(CityState state)
         {
             if (Status != RloReadStatus.Ready || state.PopulationKey != PopulationKey || state.Seed != CitySeed || state.SourceIdentities.Count != Identities.Count)
@@ -61,7 +54,6 @@ namespace PersistentCity.Compatibility
         }
     }
 
-    /// <summary>Read-only, fail-closed contract for explicitly reviewed RLO releases. Call on the game's main thread.</summary>
     public sealed class RloIdentityAdapter
     {
         public const string ReviewedVersion = "0.41.1";
@@ -76,15 +68,11 @@ namespace PersistentCity.Compatibility
         private const BindingFlags PublicInstance = BindingFlags.Public | BindingFlags.Instance;
         private const BindingFlags PublicStatic = BindingFlags.Public | BindingFlags.Static;
 
-        // Contract metadata bound for one RLO assembly object. A loaded assembly's types and members cannot change, so a
-        // successful binding is reused for that same object; every read still asks RLO for its live state and checks it in
-        // full. Any refusal drops both bindings, so the next read binds afresh exactly as before. Main thread only.
         private Assembly? bridgeAssembly, contractAssembly;
         private RloBridge? bridge;
         private ReflectionContract? contract;
         private bool bridgeReading;
 
-        /// <summary>Fresh contract bindings (CityApi or reviewed reflection) and their total time; diagnostic only.</summary>
         internal long Bindings { get; private set; }
         internal double BindingMilliseconds { get; private set; }
 
@@ -116,12 +104,10 @@ namespace PersistentCity.Compatibility
             {
                 version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? assembly.GetName().Version?.ToString() ?? "";
                 if (assembly.GetName().Name != "RealLifeOverhaul") throw new ContractException("The supplied assembly is not RealLifeOverhaul.");
-                // A release with RLO's CityApi is read through it on any version. Without it, only reviewed releases are read.
                 RloBridge? api = Bridge(assembly);
                 if (api != null)
                 {
                     if (supplied) throw new ContractException("A captured FlareDirector cannot be read through RLO's CityApi; use Read.");
-                    // The bridge reuses its argument buffers; a nested read (never expected) binds its own.
                     bool outer = !bridgeReading && ReferenceEquals(api, bridge);
                     if (outer) bridgeReading = true;
                     RloReadResult read;
@@ -145,7 +131,7 @@ namespace PersistentCity.Compatibility
             }
             long started = Stopwatch.GetTimestamp();
             RloBridge? found = RloBridge.Find(assembly);
-            if (found == null) return null; // No CityApi: not cached, so the lookup is repeated on every read.
+            if (found == null) return null;
             CountBinding(started);
             if (!bridgeReading) { bridgeAssembly = assembly; bridge = found; }
             return found;
@@ -178,8 +164,6 @@ namespace PersistentCity.Compatibility
             if (assembly == null || assembly.GetName().Name != "RealLifeOverhaul") return false;
             string information = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
             Version? version = assembly.GetName().Version;
-            // Match each assembly version to its own reviewed informational version/commit.
-            // A future release or a crossed old/new pair is not a compatible contract.
             return version == new Version(0, 41, 1, 0) && VersionForm(information, ReviewedVersion, ReviewedCommit)
                 || version == new Version(0, 40, 4, 0) && VersionForm(information, LegacyVersion, LegacyCommit)
                 || version == new Version(0, 45, 0, 0) && VersionForm(information, NewerVersion, NewerCommit);
@@ -188,8 +172,6 @@ namespace PersistentCity.Compatibility
         private static bool VersionForm(string information, string version, string commit) =>
             information == version || information == version + ".0" || information == version + "+" + commit;
 
-        // The reviewed reflection contract's types and members for one RLO assembly. Binding checks only metadata
-        // (names, types, enum values, the population constant); it reads no RLO state.
         private sealed class ReflectionContract
         {
             public readonly Type DirectorType, CitizenType;
@@ -235,7 +217,6 @@ namespace PersistentCity.Compatibility
             }
         }
 
-        // Separated for synthetic contract tests; the public entry points always check assembly identity/version first.
         internal RloReadResult ReadContract(Assembly assembly, string version, object? director, bool supplied)
         {
             try
@@ -282,7 +263,6 @@ namespace PersistentCity.Compatibility
             catch (Exception e) { Forget(); return Failure(e, version); }
         }
 
-        // Separated for tests with a stand-in CityApi; Read reaches it only for an assembly named RealLifeOverhaul.
         internal RloReadResult ReadBridge(RloBridge bridge, string version)
         {
             try
@@ -293,7 +273,6 @@ namespace PersistentCity.Compatibility
                 if (status != RloBridge.Status.Ready) return NotReady(Reason(status), RloBridge.Describe(status), version);
                 if (read.Count == 0) return NotReady(DonorReadReason.NotYet, "Flare's actual citizen population is not initialized yet.", version);
                 if (seed == 0) return NotReady(DonorReadReason.NotYet, "Flare has no initialized city seed yet.", version);
-                // Persistent City's own donor requirements; the contract itself does not fix the count.
                 if (read.Count != ReviewedPopulation) throw new ContractException("Citizens must contain the reviewed 400 identities; found " + read.Count + ".");
                 var identities = new List<CitizenIdentity>(ReviewedPopulation);
                 var ids = new HashSet<int>();
@@ -315,7 +294,6 @@ namespace PersistentCity.Compatibility
 
         private static string PopulationHash(int seed, List<CitizenIdentity> identities)
         {
-            // Length-prefixed UTF-8 strings prevent ambiguous concatenation; fields and order are versioned.
             using var bytes = new MemoryStream();
             using (var writer = new BinaryWriter(bytes, Encoding.UTF8, true))
             {
@@ -323,8 +301,6 @@ namespace PersistentCity.Compatibility
                 foreach (var c in identities) { writer.Write(c.Id); writer.Write(c.Name); writer.Write(c.District); writer.Write(c.Age); writer.Write(c.Female); writer.Write((int)c.Persona); writer.Write(c.AppearanceSeed); }
             }
             using var hash = SHA256.Create();
-            // This is the original donor-contract namespace, not the installed RLO version. Reviewed 0.41.1 and 0.45.0 have
-            // identical donor/appearance algorithms, and CityApi contract 1 promises the same citizens; retain existing save keys.
             return "rlo:0.40.4:" + BitConverter.ToString(hash.ComputeHash(bytes.ToArray())).Replace("-", "").ToLowerInvariant();
         }
 

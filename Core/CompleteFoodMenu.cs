@@ -8,8 +8,6 @@ namespace PersistentCity.Core
         None, Dirty, StockContract, MealClass, NativeContract, HistoryCapacity, NameCapacity
     }
 
-    /// <summary>Admission of a complete detached E5a image. A match is conditional evidence,
-    /// not native authority: Runtime must also establish timely notifications and safe handoff.</summary>
     public static class CompleteFoodMenu
     {
         public static CompleteFoodMenuRefusal Check(FoodEligibilityImage image,
@@ -18,7 +16,6 @@ namespace PersistentCity.Core
         {
             if (!currentRevision) return CompleteFoodMenuRefusal.Dirty;
             if (!image.StockContractMatched) return CompleteFoodMenuRefusal.StockContract;
-            // Admission is resident-independent. Original-three overrides remain inert in the resolver.
             for (int i = 0; i < image.Offers.Count; i++)
             {
                 var offer = image.Offers[i];
@@ -32,7 +29,6 @@ namespace PersistentCity.Core
             return nativeContract ? CompleteFoodMenuRefusal.None : CompleteFoodMenuRefusal.NativeContract;
         }
 
-        // At most eight incoming names. Count the union without building a set on every check.
         private static bool Fits(IReadOnlyList<string> existing, IReadOnlyList<FoodStockOfferImage> offers, int maximum)
         {
             if (existing.Count > maximum) return false;
@@ -46,8 +42,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>E5b3 Decision 8: the products already in this business's history row for <paramref name="day"/>,
-        /// the row a sale today would add a cell to. Appends distinct names to <paramref name="into"/>.</summary>
         public static void HistoryProducts(IReadOnlyList<FoodShopDay> history, string placeId, string businessId, int day, List<string> into)
         {
             into.Clear();
@@ -64,7 +58,6 @@ namespace PersistentCity.Core
             => new FoodOfferMetadata(2, WireClass(metadata.MealClass), metadata.TasteBand,
                 metadata.BreakfastFitCents, metadata.LunchFitCents, metadata.DinnerFitCents);
 
-        // Keep E5d's wire enum fixed. Never depend on the unrelated enums' numeric coincidence.
         public static FoodMealClass WireClass(MealClass value) => value switch
         {
             MealClass.Unknown => FoodMealClass.Unknown,

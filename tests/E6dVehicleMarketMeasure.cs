@@ -10,7 +10,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>Opt-in offline E6d measurements. No game, rig, autosave, native player money or whole-frame claims.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class E6dVehicleMarketMeasure
 {
@@ -28,7 +27,6 @@ public sealed class E6dVehicleMarketMeasure
     private void Measure(string name, Action action, int count = 300)
     {
         var times = new List<double>(count); long bytes = 0; string check = name + " offline p95";
-        // The fixture is shared, so a retry repeats the action on the state the previous attempt left.
         TimingBudget.Run(timing =>
         {
             for (int i = 0; i < 30; i++) action();
@@ -59,7 +57,6 @@ public sealed class E6dVehicleMarketMeasure
                 for (int i = 0; i < 8; i++) Assert.NotNull(f.Market.CaptureBusiness(f.City.State.Vendors.Rows[i].BusinessId, f.Now));
         });
         var origin = new Place { Position = new Position(410, 0, 0) };
-        // Same result; the baseline materializes all 64 supplies before selecting the nearest eight.
         Measure("baseline materialize 64 then rank 8", () => {
             var selected = f.Market.Read(f.Now).OrderBy(b => Position.Distance(origin.Position, f.City.FindPlace(b.PlaceId).Position))
                 .ThenBy(b => b.Id, StringComparer.Ordinal).Take(8).ToArray(); Assert.Equal(8, selected.Length);
@@ -68,7 +65,6 @@ public sealed class E6dVehicleMarketMeasure
         var meal = f.Meal("v63");
         Measure("checkout, vehicle 64 of 64", () => { f.Receipts.Clear(); Assert.True(f.Market.Buy(meal, f.Now).Paid); });
         var windows = new List<double>(160); var units = new List<double>(1280); long allBytes = 0, unitBytes = 0;
-        // Each attempt builds its own lunch: the vendors are open for 300 minutes, so a retry cannot continue the last one.
         TimingBudget.Run(timing =>
         {
             StreetFoodHooks.Reset();
@@ -86,7 +82,7 @@ public sealed class E6dVehicleMarketMeasure
                 for (int group = 0; group < 8; group++)
                 {
                     long b = GC.GetAllocatedBytesForCurrentThread(); var unit = timing.Start();
-                    while (lunch.Market.Prepare(lunch.Now)) { } // full copy/apply cost included in this conservative offline group
+                    while (lunch.Market.Prepare(lunch.Now)) { }
                     lunchMarkets.ReadLocal(origin, lunch.Now, 1000, 8);
                     for (int i = group * 8; i < group * 8 + 8; i++) Assert.True(lunchMarkets.Buy(meals[i], lunch.Now).Paid);
                     var sample = timing.End(unit);

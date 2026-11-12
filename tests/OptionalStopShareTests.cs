@@ -7,12 +7,9 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
-// The setting is the share of eligible visits that visibly receive a scheduled stop, capped by feasibility.
 public sealed class OptionalStopShareTests(ITestOutputHelper output)
 {
     private const double Start = 1440, Window = 600;
-    // Only some venues have validated geometry, as on the rig where most routes lack a usable spot.
-    // Leisure venues listed in Chat offer only two conversation spots, like a nightclub facade without a park.
     private sealed class Geometry : IOptionalStopEnvironment
     {
         public HashSet<string> Feasible = new(StringComparer.Ordinal), Chat = new(StringComparer.Ordinal);
@@ -32,12 +29,8 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         public double Share => (double)Realised.Count / Eligible.Count;
         public double FeasibleShare => (double)FeasibleVisits.Count / Eligible.Count;
     }
-    // Admission timing of the shop visits.
     public enum Timing { Uniform, SeparatedWaves }
 
-    // count citizens, each arriving once at one of `venues` shops inside `width` minutes and staying `stay`
-    // minutes; `feasibleVenues` have geometry and every 20th visit is too short for even the shortest stop.
-    // SeparatedWaves admits every infeasible visit in the first 100 minutes and every feasible one 400 minutes later.
     private static (CitySimulator Sim, Geometry Env, Tally Tally) City(int percentage, int count = 1500, int venues = 40, int feasibleVenues = 14,
         double stay = 2 * Window, double width = Window, Timing timing = Timing.Uniform)
     {
@@ -57,7 +50,6 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             double arrival = Start + 1 + StableRandom.Hash(c.Identity.Id + ":arrival", 3) % 10000 / 10000.0 * (width - 2);
             if (timing == Timing.SeparatedWaves) arrival = Start + 1 + (env.Feasible.Contains(venue.Id) ? 400 : 0) + (arrival - Start - 1) / width * 100;
             bool brief = i % 20 == 7;
-            // No routine sends anyone out again: each citizen makes exactly this one visit.
             c.ShopId = ""; c.LeisureId = "";
             c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home;
             c.DestinationId = venue.Id; c.DestinationActivity = Activity.Shop;
@@ -82,10 +74,7 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         var (sim, _, tally) = City(percentage, venues: venues, feasibleVenues: feasibleVenues, stay: stay, width: width, timing: timing);
         while (!sim.AdvanceTo(Start + width + stay).CaughtUp) { }
         Assert.Equal(1500, tally.Eligible.Count);
-        // A stop is only ever published for a feasible visit.
         Assert.Subset(tally.FeasibleVisits, tally.Realised);
-        // One visit per citizen: every draw is realised once or still pending, and below 100 none is dropped.
-        // At 100 nothing can be handed on, so an unused chance ends with its visit.
         var chances = sim.OptionalStopChances;
         Assert.Equal(tally.Drawn, tally.Realised.Count + Pending(sim) + chances.Dropped);
         Assert.Equal(new OptionalStopChanceTally { Eligible = 1500, Drawn = tally.Drawn, Realised = tally.Realised.Count,
@@ -95,16 +84,12 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             + $"drawn {tally.Drawn}, realised {tally.Realised.Count}/1500 ({tally.Share:P1}), handed on {sim.OptionalStopChances.HandedOn}, pending {Pending(sim)}");
         return tally;
     }
-    // Tolerance: +/- 3 percentage points of min(setting, feasible share) over 1,500 deterministic visits.
     private static void AssertTracks(Tally tally, int percentage)
     {
         double target = Math.Min(percentage / 100.0, tally.FeasibleShare);
         Assert.InRange(tally.Share, target - 0.03, Math.Min(target + 0.03, tally.FeasibleShare));
     }
 
-    // ob4: the rig's 42,100 default draws came to 24.56% for its one fixed seed. Over visit keys of the
-    // rig's shape, the draw share across seeds averages the setting, with binomial seed-to-seed spread;
-    // a low share for one seed is sampling, not a hashing or rounding bias.
     [Theory]
     [InlineData(10)] [InlineData(25)] [InlineData(50)]
     public void DrawShareAcrossSeedsIsUnbiasedForRigShapedVisitKeys(int percentage)
@@ -123,9 +108,9 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData(25, 14)] // ~33% feasible, like the rig
+    [InlineData(25, 14)]
     [InlineData(10, 14)]
-    [InlineData(50, 32)] // ~76% feasible
+    [InlineData(50, 32)]
     public void RealisedShareTracksTheSettingWhenFeasibilityAllowsIt(int percentage, int feasibleVenues)
     {
         var tally = Run(percentage, feasibleVenues: feasibleVenues);
@@ -133,15 +118,13 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         AssertTracks(tally, percentage);
     }
 
-    // Pending chances survive the end of their visit, so short stays, sparse admissions and infeasible
-    // visits that all end before the feasible ones arrive still reach the target (ob1 reproductions).
     [Theory]
-    [InlineData(25, 45, 600, Timing.SeparatedWaves)]   // fe72966: 8.3%
-    [InlineData(50, 45, 600, Timing.SeparatedWaves)]   // fe72966: 17.2% against a 32.7% cap
-    [InlineData(25, 45, 6000, Timing.Uniform)]         // sparse; fe72966: 20.6%
-    [InlineData(25, 45, 15000, Timing.Uniform)]        // sparser; fe72966: 18.4%
-    [InlineData(25, 3, 6000, Timing.Uniform)]          // short stays
-    [InlineData(10, 3, 15000, Timing.SeparatedWaves)]  // short stays, separated
+    [InlineData(25, 45, 600, Timing.SeparatedWaves)]
+    [InlineData(50, 45, 600, Timing.SeparatedWaves)]
+    [InlineData(25, 45, 6000, Timing.Uniform)]
+    [InlineData(25, 45, 15000, Timing.Uniform)]
+    [InlineData(25, 3, 6000, Timing.Uniform)]
+    [InlineData(10, 3, 15000, Timing.SeparatedWaves)]
     public void RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(int percentage, double stay, double width, Timing timing)
         => AssertTracks(Run(percentage, stay: stay, width: width, timing: timing), percentage);
 
@@ -175,7 +158,6 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         string saved = SaveCodec.Write(sliced.State);
         var read = SaveWire.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var loaded = new CitySimulator(read.State!, new FixedWalk(10));
-        // A different rate on reload neither re-rolls nor drops saved stops, choices or handed-on chances.
         loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new FixedWalk(10)); loaded.RefreshOptionalStops();
         Assert.Equal(saved, SaveCodec.Write(loaded.State));
         Assert.Contains(loaded.State.Citizens, c => c.OptionalStop != null);
@@ -187,7 +169,6 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
     [Fact]
     public void EveryDrawIsRealisedOnceOrStillPendingAndEachHandOnMovesExactlyOneChance()
     {
-        // Draws are counted independently of the scheduler, from each visit's key.
         var (sim, _, tally) = City(25, timing: Timing.SeparatedWaves, stay: 45);
         var before = sim.State.Citizens.ToDictionary(c => c.Identity.Id, c => (c.OptionalStopChoice, Stop: c.OptionalStop != null));
         int handOns = 0;
@@ -197,7 +178,6 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             var now = sim.State.Citizens.ToDictionary(c => c.Identity.Id, c => (c.OptionalStopChoice, Stop: c.OptionalStop != null));
             var donors = now.Keys.Where(id => before[id].OptionalStopChoice == true && !before[id].Stop && now[id].OptionalStopChoice == false).ToArray();
             var newStops = now.Keys.Where(id => !before[id].Stop && now[id].Stop).ToArray();
-            // A donor is never also a recipient, a recipient never had a pending chance, and one event moves at most one chance.
             Assert.InRange(donors.Length, 0, 1);
             if (donors.Length == 1)
             {
@@ -230,13 +210,11 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             double next = sim.State.Citizens.Min(c => c.NextEventMinute);
             sim.AdvanceTo(next, 1);
             if (!sim.State.Citizens.Any(c => old[c.Identity.Id] == true && c.OptionalStopChoice == false)) continue;
-            // Saved just before: the reload makes the same hand-on.
             var read = SaveWire.Read(before); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             var loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 25);
             loaded.AdvanceTo(next, 1);
             string after = SaveCodec.Write(sim.State);
             Assert.Equal(after, SaveCodec.Write(loaded.State));
-            // Saved just after: reload at another rate changes nothing until resumed at 25.
             read = SaveWire.Read(after); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             loaded = new CitySimulator(read.State!, new FixedWalk(10)); loaded.AttachOptionalStops(env, 100); loaded = loaded.RebuildRoutes(new FixedWalk(10));
             Assert.Equal(after, SaveCodec.Write(loaded.State));
@@ -253,7 +231,7 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
     public void ReloadAtZeroNeverSpendsChancesSavedPendingAtAHigherRate()
     {
         var (sim, env, _) = City(25, timing: Timing.SeparatedWaves, stay: 45);
-        sim.AdvanceTo(Start + 300); // the infeasible wave has left; its chances are pending at home
+        sim.AdvanceTo(Start + 300);
         var pending = sim.State.Citizens.Where(c => c.OptionalStopChoice == true && c.OptionalStop == null).Select(c => c.Identity.Id).ToArray();
         Assert.True(pending.Length > 200, "pending " + pending.Length);
         Assert.All(pending, id => Assert.Equal(Activity.Home, sim.State.Citizens.First(c => c.Identity.Id == id).Activity));
@@ -268,14 +246,10 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         Assert.True(zero.OptionalStopChances.Eligible > 0);
         Assert.Equal(new OptionalStopChanceTally { Eligible = zero.OptionalStopChances.Eligible }, zero.OptionalStopChances);
         Assert.Equal(pending, zero.State.Citizens.Where(c => c.OptionalStopChoice == true && c.OptionalStop == null).Select(c => c.Identity.Id));
-        // Control: the same save resumed at 25 does spend them.
         var resumed = Load(25).OptionalStopChances;
         Assert.True(resumed.HandedOn >= pending.Length - 5 && resumed.Realised > pending.Length, $"handed on {resumed.HandedOn}, realised {resumed.Realised}");
     }
 
-    // Conversation-only feasibility: 750 leisure venues with two chat spots and no resting or audience spot;
-    // first members arrive at 1450, second members at 1460, and both may stay until 1580. With `spread`,
-    // venue v's pair arrives (v % 10) * 100 minutes later.
     private static (CitySimulator Sim, Geometry Env, int Drawn) Pairs(int percentage, int venues = 750, bool spread = false, string prefix = "c")
     {
         var people = Enumerable.Range(0, 2 * venues).Select(i => new CitizenIdentity { Id = prefix + i.ToString("D4"), Name = "Citizen " + i, Age = 30, Persona = Persona.Commuter }).ToArray();
@@ -313,13 +287,12 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
 
     [Theory]
     [InlineData(0)] [InlineData(25)] [InlineData(50)] [InlineData(100)]
-    public void ConversationOnlyFeasibleVisitsTrackTheSetting(int percentage) // fe72966: 6.0% at 25
+    public void ConversationOnlyFeasibleVisitsTrackTheSetting(int percentage)
     {
         var (sim, _, drawn) = Pairs(percentage);
         sim.AdvanceTo(1460);
         int stops = sim.State.Citizens.Count(c => c.OptionalStop != null);
         output.WriteLine($"setting {percentage}%: drawn {drawn}, stops {stops}/1500 ({stops / 1500.0:P1}), pending {Pending(sim)}, handed on {sim.OptionalStopChances.HandedOn}");
-        // Every stop is one chance: the visit's own or a handed-on one, plus the waiting partner's own.
         Assert.Equal(drawn, stops + Pending(sim));
         AssertConversationsAreWellFormed(sim);
         Assert.True(sim.OptionalStopIndexesMatchState());
@@ -343,8 +316,6 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         AssertConversationsAreWellFormed(loaded);
     }
 
-    // Shop visits with window-shopping geometry at 14 of 40 venues, together with leisure pairs that can only
-    // converse. The feasible share is what 100 realises.
     [Theory]
     [InlineData(10)] [InlineData(25)]
     public void MixedIndividualAndConversationVisitsTrackTheSetting(int percentage)
@@ -353,7 +324,6 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         {
             var (shops, env, tally) = City(rate, 1000, stay: 45, width: 1200);
             var (pairs, _, _) = Pairs(rate, 250, spread: true, prefix: "p");
-            // One city: the leisure pairs join the shop citizens, sharing the pending chances.
             var state = shops.State;
             state.Places.AddRange(pairs.State.Places.Where(p => p.Kind == PlaceKind.Leisure));
             state.Citizens.AddRange(pairs.State.Citizens);

@@ -5,17 +5,11 @@ namespace PersistentCity.Core
 {
     public enum OwnershipRule
     {
-        // Rule 4 and identity shape
         PersonOrder, CatalogueOrder, PersonIdFormat, ResidentShape, VisitorShape, VisitorCar, InvalidVisitorStay,
-        // Rule 5: saved references only
         UnknownHome, UnknownPortal, UnknownWorkplace,
-        // Rule 1: person ↔ wallet bijection, no other money holder
         DuplicateWallet, OrphanWallet, MissingWallet, WalletWithoutFinances, HouseholdMoney, WorkplaceMoney, VisitorStayMoney,
-        // Rule 2: person ↔ meal roster bijection
         DuplicateRoster, OrphanRoster, MissingRoster, RosterNotOwn, RosterWithoutFood,
-        // Rule 3: one owner per demand unit
         IntentWithoutOwner, IntentWithTwoOwners, DuplicateIntent, IntentNotDerived,
-        // Employment and wage guards (contract B3)
         EmploymentWithoutPerson, TwoActiveEmployments, InvalidEmployment, EmploymentKindMismatch, PlayerOwnedWorkplace,
         NativeEmploymentNotNone, DayVisitorEmployment,
         WageOnStudy, WageWithoutEmployment, DuplicateWage
@@ -35,7 +29,6 @@ namespace PersistentCity.Core
         { Id = id; Kind = kind; HomeId = homeId; Stay = stay; HasCar = hasCar; }
         public string Id { get; }
         public PersonKind Kind { get; }
-        /// <summary>Saved Place.Id of the resident's home; empty for visitors. HouseholdId derives from it.</summary>
         public string HomeId { get; }
         public VisitorStay? Stay { get; }
         public bool HasCar { get; }
@@ -43,7 +36,6 @@ namespace PersistentCity.Core
 
     public enum MoneyOwnerKind { Person, Household, Workplace, VisitorStay }
 
-    /// <summary>One ResidentBudget and the entity that would own it. Only a person may own money.</summary>
     public readonly struct WalletFacts
     {
         public WalletFacts(MoneyOwnerKind ownerKind, string ownerId) { OwnerKind = ownerKind; OwnerId = ownerId; }
@@ -59,7 +51,6 @@ namespace PersistentCity.Core
         public int Slot { get; }
     }
 
-    /// <summary>A demand unit (meal intent today, F6 purchase intents later) and the person that owns it.</summary>
     public readonly struct DemandUnitFacts
     {
         public DemandUnitFacts(string intentId, string ownerId) { IntentId = intentId; OwnerId = ownerId; }
@@ -67,8 +58,6 @@ namespace PersistentCity.Core
         public string OwnerId { get; }
     }
 
-    /// <summary>A saved workplace. A player-owned business is ineligible: PC people are not the player's native staff
-    /// (F6 request C1).</summary>
     public readonly struct WorkplaceFacts
     {
         public WorkplaceFacts(string id, PlaceKind kind, bool playerOwned = false) { Id = id; Kind = kind; PlayerOwned = playerOwned; }
@@ -77,7 +66,6 @@ namespace PersistentCity.Core
         public bool PlayerOwned { get; }
     }
 
-    /// <summary>The F6 wage key: at most one wage per (PersonId, day), posted from an Employment into the single wallet.</summary>
     public readonly struct WagePosting
     {
         public WagePosting(string personId, int day, string workplaceId) { PersonId = personId; Day = day; WorkplaceId = workplaceId; }
@@ -86,7 +74,6 @@ namespace PersistentCity.Core
         public string WorkplaceId { get; }
     }
 
-    /// <summary>Ownership facts to validate. Persons, homes, portals and workplaces must be ordinal-sorted by ID.</summary>
     public sealed class OwnershipInput
     {
         private static readonly IReadOnlyList<PersonFacts> NoPersons = Array.Empty<PersonFacts>();
@@ -99,15 +86,10 @@ namespace PersistentCity.Core
         public IReadOnlyList<string> HomePlaceIds { get; set; } = Array.Empty<string>();
         public IReadOnlyList<string> PortalIds { get; set; } = Array.Empty<string>();
         public IReadOnlyList<WorkplaceFacts> Workplaces { get; set; } = Array.Empty<WorkplaceFacts>();
-        /// <summary>Household finances on: exactly one wallet per person. Off: no wallet at all.</summary>
         public bool FinancesEnabled { get; set; }
-        /// <summary>Food scope on: exactly one own slot-0 roster record per person. Off: no roster.</summary>
         public bool FoodEnabled { get; set; }
     }
 
-    /// <summary>The F5 ownership validator (section 3 rules 1–5 and the duplication guards). Pure and inactive in F5b;
-    /// F5c calls it on codec read/write and before every economic commit. One pass per list; per-person counters live
-    /// in buffers reused across calls, so a warm validation allocates nothing per person. Not thread-safe.</summary>
     public sealed class OwnershipValidator
     {
         public const string DemandUnitPrefix = "food:";
@@ -120,7 +102,6 @@ namespace PersistentCity.Core
         private int[] nextEmployment = Array.Empty<int>();
         private int hint;
 
-        /// <summary>Violations found by the last call, at most <see cref="StoredViolationLimit"/>.</summary>
         public IReadOnlyList<OwnershipViolation> Violations => violations;
         public int ViolationCount { get; private set; }
 
@@ -130,8 +111,6 @@ namespace PersistentCity.Core
             violations.Clear(); ViolationCount = 0; hint = 0;
             var persons = input.Persons;
             int n = persons.Count;
-            // Rule 4: the person list is strictly ordinal; this also refuses duplicate persons. Every later
-            // lookup is a binary search, so an unordered list stops validation here.
             for (int i = 1; i < n; i++)
                 if (string.CompareOrdinal(persons[i - 1].Id, persons[i].Id) >= 0) { Add(OwnershipRule.PersonOrder, persons[i].Id); return false; }
             if (!Sorted(input.HomePlaceIds) || !Sorted(input.PortalIds) || !SortedWorkplaces(input.Workplaces))
@@ -152,7 +131,6 @@ namespace PersistentCity.Core
             if (!PersonIds.FitsKind(PersonIds.Classify(person.Id), person.Kind)) Add(OwnershipRule.PersonIdFormat, person.Id);
             if (person.Kind == PersonKind.Resident)
             {
-                // A resident has exactly one household, derived from its saved home, and no stay.
                 if (person.HomeId.Length == 0 || person.Stay != null) Add(OwnershipRule.ResidentShape, person.Id);
                 else if (Find(input.HomePlaceIds, person.HomeId) < 0) Add(OwnershipRule.UnknownHome, person.Id);
                 return;
@@ -205,9 +183,6 @@ namespace PersistentCity.Core
 
         private void CheckIntents(OwnershipInput input)
         {
-            // An intent ID names its owner (the escaped owner never contains ':'), so at most one existing person can
-            // own it. Pass 1 registers every derived claim; pass 2 classifies the other claims against that owner.
-            // Both passes are independent of list order.
             intentOwners.Clear();
             bool foreign = false;
             for (int index = 0; index < input.Intents.Count; index++)
@@ -278,8 +253,6 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>True when the intent ID is <c>food:&lt;Uri.EscapeDataString(owner)&gt;:&lt;suffix&gt;</c> with a
-        /// non-empty suffix, compared without building the escaped owner.</summary>
         internal static bool DerivedFrom(string intentId, string ownerId)
         {
             int at = DemandUnitPrefix.Length;
@@ -336,8 +309,6 @@ namespace PersistentCity.Core
             return -1;
         }
 
-        // Wallets, roster records, intents and employments usually arrive in person order: try the last match and
-        // its successor before the binary search. The answer is the same either way.
         private int Person(IReadOnlyList<PersonFacts> persons, string id)
         {
             int count = persons.Count;

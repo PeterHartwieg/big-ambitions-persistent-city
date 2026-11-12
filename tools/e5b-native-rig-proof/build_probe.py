@@ -48,7 +48,6 @@ arguments = ['-nologo', '-nostdlib+', '-target:library', '-langversion:9',
              '-nullable:disable', '-optimize+', '-warn:4', '-deterministic+',
              '-pathmap:'+str(module)+'=/E5bRigProof', '-out:'+str(output/'E5bNativeRigProof.dll')]
 arguments += ['-reference:'+str(p) for p in references]+[str(p) for p in sources]
-# Compiler response file avoids Windows command-line limits and shell interpolation.
 rsp = output/'compile.rsp'
 rsp.write_text('\n'.join('"'+argument.replace('"','\\"')+'"' for argument in arguments)+'\n', encoding='utf-8')
 subprocess.run([dotnet, str(compiler), '-noconfig', '@'+str(rsp)], check=True)

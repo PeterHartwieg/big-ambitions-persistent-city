@@ -14,19 +14,13 @@ namespace PersistentCity.Runtime
         public List<string> UnavailablePlaces { get; set; } = new List<string>();
     }
 
-    /// <summary>
-    /// Explicit main-thread observation of selected shops. Not scheduled or
-    /// activated by the mod. Never calls registration creation, customer generation or RLO.
-    /// </summary>
     public static class FoodBusinessCatalogue
     {
-        // These explicit data refusals are known to occur before native sale processing.
         internal class CatalogueRefusalException : InvalidOperationException
         {
             internal CatalogueRefusalException(string message, Exception? cause = null) : base(message, cause) { }
         }
 
-        // Keep the price-specific checkout reason for compatibility.
         internal sealed class UnsupportedPriceException : CatalogueRefusalException
         {
             internal UnsupportedPriceException(ArgumentOutOfRangeException cause)
@@ -53,8 +47,6 @@ namespace PersistentCity.Runtime
             IReadOnlyCollection<string> foodProductIds, IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, string>? identity = null)
             => ReadSelectedCore(shopPlaceIds, foodProductIds, controllers, identity, null);
 
-        // Gameplay selects each shop's own complete bounded menu. The diagnostic overload
-        // retains its historical explicit product-filter semantics.
         internal static FoodCatalogueObservation ReadCompleteMenus(IReadOnlyCollection<string> shopPlaceIds,
             IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, IReadOnlyCollection<string>?> menu,
             Func<BuildingRegistration, string>? identity = null,
@@ -81,14 +73,12 @@ namespace PersistentCity.Runtime
             foreach (var controller in controllers)
             {
                 if (controller == null || controller.building == null || !GamePlaces.BuildingAccessible(controller)) continue;
-                // This field is already assigned by the game. Do not call GetBuildingRegistration.
                 var reg = controller.buildingRegistration;
                 if (reg == null || string.IsNullOrWhiteSpace(reg.StreetName)) continue;
                 string address = Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber.ToString(CultureInfo.InvariantCulture);
                 string place = "address:" + address + ":shop";
                 if (!selected.Contains(place) || !reg.HasEstablishedBusiness || reg.AvailableForRent
                     || BusinessTypes.Normalize(reg.businessTypeName).Length == 0) continue;
-                // A null gameplay menu means this registration is not a current owned scope.
                 var completeMenu = menu?.Invoke(reg);
                 if (menu != null && completeMenu == null) continue;
                 try
@@ -129,10 +119,7 @@ namespace PersistentCity.Runtime
                         catch (ArgumentOutOfRangeException ex) { throw new UnsupportedPriceException(ex); }
                         if (exact == Money.Zero || business.Offers.Any(o => o.ProductId == price.itemName))
                             throw new CatalogueRefusalException("Ambiguous food price; observation refused.");
-                        // An advertised product is not proof of stocked, staffed production.
                         var offer = new FoodOffer { ProductId = price.itemName, Price = exact, Units = null };
-                        // Read existing saved values only. Demand helpers can supply fabricated
-                        // defaults or recalculate providers/events; neither belongs in this observer.
                         if (business.DistrictId.Length > 0 && save.productMarketEntries != null)
                             foreach (var entry in save.productMarketEntries)
                             {
@@ -156,7 +143,6 @@ namespace PersistentCity.Runtime
                 }
                 catch (CatalogueRefusalException error) when (menu != null && refused != null)
                 {
-                    // A collision invalidates an earlier observation of this same address too.
                     result.Businesses.RemoveAll(b => b.PlaceId == place);
                     refused(reg, error);
                 }

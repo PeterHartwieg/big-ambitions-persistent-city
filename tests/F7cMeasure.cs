@@ -12,13 +12,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// F7c before/after harness (docs/perf/f7c.md), not a gate: it runs only when PC_F7C_MEASURE names an output file, e.g.
-/// <c>PC_F7C_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F7cMeasure</c>.
-/// PC_F7C_FIXTURES and PC_F7C_SAMPLES narrow a run. It calls only API that exists before and after F7c, so the same file
-/// measures the base commit and this branch: payload SHA-256 and sizes, SaveCodec.Write phase times (every phase the
-/// recorder knows), allocation per write, the live city's retained bytes and the retained bytes after a strict read.
-/// </summary>
 public sealed class F7cMeasure
 {
     internal static string[] Fixtures(string? only) => string.IsNullOrEmpty(only) ? F7cFixtures.All : only!.Split(',');
@@ -27,7 +20,7 @@ public sealed class F7cMeasure
     public void SaveCostBeforeAndAfter()
     {
         string? output = PerfGate.Variable("PC_F7C_MEASURE");
-        if (string.IsNullOrEmpty(output)) return; // measurement only on request
+        if (string.IsNullOrEmpty(output)) return;
         int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_F7C_SAMPLES"), out int n) ? n : 7;
         foreach (string fixture in Fixtures(Environment.GetEnvironmentVariable("PC_F7C_FIXTURES")))
             File.AppendAllText(output!, JsonConvert.SerializeObject(Measure(fixture, samples)) + Environment.NewLine);
@@ -36,7 +29,6 @@ public sealed class F7cMeasure
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static object Measure(string fixture, int samples)
     {
-        // The live city's retained bytes come from a separate, identical build that is measured and dropped first.
         var probe = new Holder();
         long retainedLive = BuildAndKeep(fixture, probe) - Released(probe);
         long buildStart = Stopwatch.GetTimestamp();
@@ -55,7 +47,7 @@ public sealed class F7cMeasure
             cost.End(true, "");
             long used = GC.GetAllocatedBytesForCurrentThread() - bytes;
             if (again != payload) throw new InvalidOperationException("Writer is not deterministic on " + fixture);
-            if (i == 0) continue; // warm-up
+            if (i == 0) continue;
             foreach (SaveCostPhase phase in Enum.GetValues(typeof(SaveCostPhase))) phases[phase.ToString()].Add(cost.Milliseconds(phase));
             totals.Add(cost.TotalMilliseconds); allocated.Add(used);
         }

@@ -5,8 +5,6 @@ using Buildings;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Explicit main-thread bridge read only. No hook, retained city, scan or allocation
-    /// until Capture is called. Not a report, quote, stable identity or proof of payment.</summary>
     public static class AgencyBindingDiagnostic
     {
         private static string Number(float value) => value.ToString("R", CultureInfo.InvariantCulture);
@@ -16,7 +14,6 @@ namespace PersistentCity.Runtime
         public static string Capture()
         {
             var save = SaveGameManager.Current;
-            // Instance can search/register a singleton; GetSingleton is a verified dictionary read.
             var city = Extensions.SingletonLifecycle.GetSingleton<CityManager>();
             if (save == null || city == null || city.cityBuildingControllers == null) return "C3 unavailable: no loaded city";
             var b = new StringBuilder(2048);
@@ -35,7 +32,6 @@ namespace PersistentCity.Runtime
                 var service = controller.building.SpecialService;
                 if (service == null || !(service.settings is MarketingAgencySettings agency)) continue;
                 b.Append("agency=");
-                // Building.Address lazily writes its native cache; use raw fields instead.
                 Address(b, controller.building.StreetName, controller.building.StreetNumber);
                 b.Append(" businessType=").Append(service.businessTypeName).Append(" dialogType=").Append(service.dialogType)
                     .Append(" options=");
@@ -43,8 +39,6 @@ namespace PersistentCity.Runtime
                     foreach (var option in agency.marketingTypesAvailable) b.Append(option).Append(';');
                 b.Append('\n');
             }
-            // A fixed-size ring retains the most recent sixteen marketing records, not the whole queue.
-            // Strings are built only for retained records, avoiding allocations for discarded entries.
             var recent = new Transaction?[16];
             int count = 0;
             if (save.Transactions != null)

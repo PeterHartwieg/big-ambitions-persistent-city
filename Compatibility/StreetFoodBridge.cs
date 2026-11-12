@@ -5,12 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Compatibility
 {
-    /// <summary>
-    /// Street Food's public vendor contract (<c>FoodTrucks.ModApi.VendorApi</c>, E6 plan 3.2), bound by name through
-    /// public members only, the same way <see cref="RloBridge"/> binds RLO. Exactly contract 1 is accepted; any other
-    /// version, or a missing or changed member, refuses vehicle scopes with a reason. There is no fallback into
-    /// Street Food's private members. Main thread only.
-    /// </summary>
     internal sealed class StreetFoodBridge : IVendorApi
     {
         public const string ApiTypeName = "FoodTrucks.ModApi.VendorApi";
@@ -77,22 +71,18 @@ namespace PersistentCity.Compatibility
             readArgs[0] = view;
         }
 
-        /// <summary>Null when the assembly has no VendorApi (a Street Food release from before the contract). Throws when it
-        /// has one that Persistent City cannot use.</summary>
         public static StreetFoodBridge? Find(Assembly assembly)
         {
             Type? api = assembly.GetType(ApiTypeName, false);
             return api == null ? null : Bind(api);
         }
 
-        // Tests bind contract-shaped doubles from their own assembly; the game always goes through Find or Open.
         internal static StreetFoodBridge Bind(Type api)
         {
             try { return new StreetFoodBridge(api); }
             catch (Exception error) when (!(error is InvalidOperationException)) { throw Invalid("could not bind", error); }
         }
 
-        /// <summary>The bridge, or null with the reason vehicles stay with Street Food. Never throws.</summary>
         public static StreetFoodBridge? Open(Assembly? streetFood, out string reason)
         {
             if (streetFood == null) { reason = "Street Food is not loaded; " + MissingReason; return null; }
@@ -107,7 +97,6 @@ namespace PersistentCity.Compatibility
 
         public long Revision => revision();
 
-        /// <summary>Asks Street Food for its contract version again. Throws, as binding does, if it has changed.</summary>
         public void CheckContractVersion()
         {
             int current;
@@ -136,7 +125,7 @@ namespace PersistentCity.Compatibility
             if (v == null || v.GetType() != vehicleType) throw Invalid("Read returned an unexpected element");
             into.VehicleId = (string?)vehicleId.GetValue(v) ?? ""; into.Kind = (string?)kind.GetValue(v) ?? "";
             into.Open = (bool)open.GetValue(v)!; into.OpeningId = (long)openingId.GetValue(v)!;
-            into.OpeningOwner = (string?)openingOwner.GetValue(v) ?? "\0"; // null owner fails the image check
+            into.OpeningOwner = (string?)openingOwner.GetValue(v) ?? "\0";
             into.OpenedByCrew = (bool)openedByCrew.GetValue(v)!; into.EventOrCatering = (bool)eventOrCatering.GetValue(v)!;
             into.OpenedDay = (int)openedDay.GetValue(v)!; into.OpenedMinute = (int)openedMinute.GetValue(v)!;
             into.ClosesDay = (int)closesDay.GetValue(v)!; into.ClosesMinute = (int)closesMinute.GetValue(v)!;
@@ -149,7 +138,7 @@ namespace PersistentCity.Compatibility
             if (names == null || prices == null || counts == null) { into.ItemCount = 0; into.ShapeFault = "null menu arrays"; return; }
             if (names.Length != prices.Length || names.Length != counts.Length) { into.ItemCount = 0; into.ShapeFault = "menu arrays of different lengths"; return; }
             into.ItemCount = names.Length;
-            if (names.Length > VendorVehicle.MaximumItems) return; // the image check refuses it
+            if (names.Length > VendorVehicle.MaximumItems) return;
             for (int i = 0; i < names.Length; i++) { into.Items[i] = names[i]; into.PriceCents[i] = prices[i]; into.Units[i] = counts[i]; }
             for (int i = names.Length; i < VendorVehicle.MaximumItems; i++) { into.Items[i] = null!; into.PriceCents[i] = 0; into.Units[i] = 0; }
         }
@@ -201,7 +190,6 @@ namespace PersistentCity.Compatibility
             return (VendorApiStatus)value;
         }
 
-        // A static property read through a typed delegate: the per-minute revision poll does not box or allocate.
         private static Func<T> Getter<T>(Type api, string name)
         {
             var property = api.GetProperty(name, PublicStatic);

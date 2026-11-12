@@ -4,8 +4,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>GR-6 (G4): the residents of one home, ordered by ID. Visitors have no household. Each member keeps their own
-    /// wallet; a household shares a plan item, never money.</summary>
     public sealed class Household
     {
         public Household(string homeId, IReadOnlyList<CitizenState> members)
@@ -21,12 +19,10 @@ namespace PersistentCity.Core
         public IReadOnlyList<CitizenState> Members { get; }
     }
 
-    /// <summary>One household's outing on one day: the shared item and the members it invites.</summary>
     public sealed class HouseholdOuting
     {
         internal HouseholdOuting(PlanItem item, IReadOnlyList<string> invited) { Item = item; Invited = invited; }
         public PlanItem Item { get; }
-        /// <summary>Members free in the window, ordered by ID; at least two.</summary>
         public IReadOnlyList<string> Invited { get; }
         public bool Invites(string personId)
         {
@@ -37,22 +33,10 @@ namespace PersistentCity.Core
 
     public enum OutingOutcome { None, Pending, Held, Cancelled }
 
-    /// <summary>
-    /// GR-6 (G4, J0 "Households"). At most one shared item per household per day: an <see cref="PlanItemKind.Outing"/> to one
-    /// leisure venue, on a workday evening or a weekend afternoon, drawn when at least two members are free in its window.
-    /// The draw is a pure function of the household's saved state (members, their work windows, home, catalogue, day, seed),
-    /// so every member's plan generation, each at its own day boundary, finds the same item and window.
-    /// Cancelling rule: a member not arrived by the latest start is <c>Missed(Late)</c> (<see cref="DayPlanExecutor.Settle"/>)
-    /// and no longer sets off. If fewer than two members arrived, the outing is cancelled and an arrived member stays as an
-    /// ordinary visit. The outcome is read from the members' own item states, never written across members, so it does not
-    /// depend on which member's event runs first. Each member buys with their own contract call and wallet.
-    /// </summary>
     public static class HouseholdOutings
     {
         public const double EveningStartMinute = 1170, EveningMinutes = 120, WeekendStartMinute = 900, WeekendMinutes = 150;
-        /// <summary>Minutes after the start a member may still arrive.</summary>
         public const double GraceMinutes = 30;
-        /// <summary>Chance in percent that a household with two free members goes out: workday evenings, weekend afternoons.</summary>
         public const int EveningPercent = 15, WeekendPercent = 40;
 
         public static HouseholdOuting? Draw(Household household, int citySeed, int day, IReadOnlyList<Place> catalogue,
@@ -76,8 +60,6 @@ namespace PersistentCity.Core
             return new HouseholdOuting(new PlanItem(PlanItemKind.Outing, Activity.Leisure, venue, start, latest, ends, PlanPriority.Wanted), invited);
         }
 
-        /// <summary>A member is free when no shift (with the trip to it) overlaps the outing. Shifts come from the saved plan
-        /// where one covers the day, else from the same rules, so every member computes the same answer.</summary>
         private static bool Free(CitizenState member, int citySeed, int day, double start, double ends, IReadOnlyDictionary<string, Place> places)
         {
             if (member.IsVisitor) return false;
@@ -91,7 +73,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>The household's outing outcome on <paramref name="day"/> from its members' saved item states.</summary>
         public static OutingOutcome Outcome(Household household, int day)
         {
             int invited = 0, arrived = 0, open = 0;
@@ -120,14 +101,10 @@ namespace PersistentCity.Core
         private int householdDay = int.MinValue, householdCitizens = -1;
         private Func<CitizenState, Household?>? householdLookup;
 
-        /// <summary>GR-6: plans draw household outings. Off unless the caller turns it on (Runtime does, from its setting), so
-        /// a city without it plans exactly as before. Set it the same way on every load: it decides future plans only.</summary>
         public bool HouseholdOutingsEnabled { get; set; }
 
         private Func<CitizenState, Household?>? HouseholdLookup => HouseholdOutingsEnabled ? householdLookup ??= HouseholdOf : null;
 
-        /// <summary>GR-6: the household of a resident (null for a visitor or a home with nobody else). The index is derived,
-        /// never saved: rebuilt for each plan day and whenever the number of persons changes.</summary>
         public Household? HouseholdOf(CitizenState person)
         {
             if (person == null || person.IsVisitor || person.HomeId.Length == 0) return null;
@@ -144,14 +121,12 @@ namespace PersistentCity.Core
                 householdDay = day; householdCitizens = State.Citizens.Count;
             }
             if (!householdMembers.TryGetValue(person.HomeId, out var members) || members.Count < 2) return null;
-            // An event plans on its working copy of the person; the household holds that copy in the live person's place.
             var current = new List<CitizenState>(members.Count);
             bool found = false;
             foreach (var member in members)
             {
                 bool self = string.Equals(member.Identity.Id, person.Identity.Id, StringComparison.Ordinal);
                 found |= self;
-                // The index is per day; a member who moved home since it was built is no longer in this household.
                 if (self || member.HomeId == person.HomeId) current.Add(self ? person : member);
             }
             return found && current.Count >= 2 ? new Household(person.HomeId, current) : null;

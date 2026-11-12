@@ -1,8 +1,3 @@
-"""F9d native-evidence ledger and rig manifest (Decision 7). python -m unittest discover -s tools/acceptance -p test_*.py
-
-Staleness and debt run on a synthetic Git history in a temporary repository; the merge cases run the runner's own
-summarize on fake results. The real ledger is checked for records, globs and checks that exist at this head.
-"""
 import copy
 import hashlib
 import json
@@ -30,7 +25,6 @@ CHECKS = [{"id": "c-first", "title": "provenance", "mode": "locked-PC", "existin
 
 
 class Repo:
-    """A throwaway Git repository with a first-parent chain, side branches and merges."""
 
     def __init__(self, test):
         self.tmp = tempfile.TemporaryDirectory()
@@ -57,7 +51,6 @@ class Repo:
         return self.git("rev-parse", "HEAD")
 
     def merge_side(self, *side_commits):
-        """A side branch with one commit per path list, merged with --no-ff: one first-parent commit."""
         branch = f"side{self.counter}"
         self.git("checkout", "-q", "-b", branch)
         for paths in side_commits:
@@ -101,11 +94,10 @@ class Staleness(unittest.TestCase):
         repo = Repo(self)
         base = repo.commit("Core/Alpha.cs", "Core/Other.cs")
         repo.commit("Core/Alpha.cs")
-        repo.commit("Core/Other.cs")  # not a dependent path
+        repo.commit("Core/Other.cs")
         state = rm.assess(ledger(row("alpha", ["Core/Alpha.cs"], "c-a", base)), repo.dir, fingerprint="set-a")
         self.assertEqual(1, by_id(state)["alpha"]["debt"])
         self.assertFalse(state["batchDue"])
-        # A merge of a side branch with two touching commits is one merge into the chain: debt 2, still below 3.
         repo.merge_side(["Core/Alpha.cs"], ["Core/Alpha.cs"])
         state = rm.assess(ledger(row("alpha", ["Core/Alpha.cs"], "c-a", base)), repo.dir, fingerprint="set-a")
         self.assertEqual(2, by_id(state)["alpha"]["debt"])
@@ -117,7 +109,6 @@ class Staleness(unittest.TestCase):
         self.assertEqual(touched[:12], alpha["touchedBy"][0])
         self.assertTrue(state["batchDue"])
         self.assertEqual(["alpha has debt >= 3"], state["batchDueReasons"])
-        # Evidence at the head clears it.
         state = rm.assess(ledger(row("alpha", ["Core/Alpha.cs"], "c-a", touched)), repo.dir, fingerprint="set-a")
         self.assertEqual(("fresh", 0), (by_id(state)["alpha"]["status"], by_id(state)["alpha"]["debt"]))
         self.assertEqual([], state["requiredChecks"])
@@ -169,21 +160,19 @@ class Staleness(unittest.TestCase):
             self.assertTrue(state["batchDue"])
             self.assertIn("game fingerprint changed", state["batchDueReasons"])
             self.assertEqual(["c-a", "c-b", "c-c"], state["requiredChecks"])
-        # The declared current set is used when the run hashed no assemblies.
         self.assertEqual([], rm.assess(ledger(*rows), repo.dir, fingerprint=None, current="set-a")["stale"])
 
     def test_rows_proved_on_the_new_fingerprint_stay_fresh_after_a_change(self):
         repo = Repo(self)
         base = repo.commit("Core/Alpha.cs", "Runtime/Beta.cs")
-        rows = [row("alpha", ["Core/Alpha.cs"], "c-a", base, fingerprint="set-b"),   # proved again after the update
-                row("beta", ["Runtime/Beta.cs"], "c-b", base, fingerprint="set-a"),  # still old evidence
+        rows = [row("alpha", ["Core/Alpha.cs"], "c-a", base, fingerprint="set-b"),
+                row("beta", ["Runtime/Beta.cs"], "c-b", base, fingerprint="set-a"),
                 row("gamma", ["Runtime/Beta.cs"], "c-c", recorded=base)]
         state = rm.assess(ledger(*rows), repo.dir, fingerprint="set-b")
         statuses = {r["id"]: r["status"] for r in state["rows"]}
         self.assertEqual({"alpha": "fresh", "beta": "stale", "gamma": "stale"}, statuses)
         self.assertTrue(state["fingerprintChanged"])
         self.assertEqual(["c-b", "c-c"], state["requiredChecks"])
-        # Unknown assemblies prove nothing: every row is stale.
         self.assertEqual(["alpha", "beta", "gamma"], rm.assess(ledger(*rows), repo.dir, fingerprint="unknown")["stale"])
 
     def test_globs(self):
@@ -207,7 +196,6 @@ class Manifest(unittest.TestCase):
                      dict(row("unscheduled", ["A.cs"], None, recorded=base), pendingCapability="RIG-X"))
         doc = rm.manifest(led, rm.assess(led, repo.dir, fingerprint="set-a"))
         order = [c["id"] for c in doc["checks"]]
-        # Pinned first; c-a (stale-2, debt 2) before c-c (stale-1, debt 1); then the unproven check; pinned last.
         self.assertEqual(["c-first", "c-a", "c-c", "c-b", "c-last"], order)
         checks = {c["id"]: c for c in doc["checks"]}
         self.assertEqual(("stale", 2, ["fresh", "stale-2"]), (checks["c-a"]["status"], checks["c-a"]["debt"], checks["c-a"]["rows"]))
@@ -233,7 +221,7 @@ class Manifest(unittest.TestCase):
         self.assertEqual("f9-10", ids[-1])
         self.assertEqual(sorted(f"f9-{i}" for i in range(1, 11)), sorted(i for i in ids if i.startswith("f9-")))
         due = [c["due"] for c in doc["checks"][1:-1]]
-        self.assertEqual(sorted(due, reverse=True), due)  # due checks before checks with only fresh rows
+        self.assertEqual(sorted(due, reverse=True), due)
 
 
 def native_result(required_checks, *rig_stages, stale=(), due=False):
@@ -250,7 +238,6 @@ class NativeClass(unittest.TestCase):
         self.assertEqual("fail", result["classes"]["native"]["verdict"])
         self.assertEqual("fail", result["summary"]["verdict"])
         self.assertEqual(["f9-4"], result["summary"]["failed"])
-        # A failed check that no stale row needs still fails: rig evidence is never ignored.
         result = native_result([], {"id": "f9-3", "verdict": "fail"})
         self.assertEqual("fail", result["classes"]["native"]["verdict"])
 
@@ -281,8 +268,6 @@ class NativeClass(unittest.TestCase):
 
 
 def seed_ledger(source):
-    """The maintained ledger's rows and checks with every rig evidence field cleared: a deterministic ledger for the merge
-    tests, whatever evidence reviewed updates have committed."""
     seeded = copy.deepcopy(source)
     for r in seeded["rows"]:
         r["lastRigHead"] = r["lastRigFingerprint"] = r["lastRigEvidence"] = None
@@ -290,8 +275,6 @@ def seed_ledger(source):
 
 
 class SummarizeWithLedger(unittest.TestCase):
-    """End to end on a synthetic ledger (the maintained rows without rig evidence) at this head: offline run, rig file for
-    every required check, summarize."""
 
     def offline(self):
         f = Fixture(self)
@@ -333,7 +316,6 @@ class SummarizeWithLedger(unittest.TestCase):
         self.assertEqual("incomplete", result["classes"]["native"]["verdict"])
         self.assertEqual(sorted(required), sorted(result["summary"]["incomplete"]))
         self.assertIn("nativeBatchDue", result["summary"])
-        # The rig batch reports every check but the last one: still incomplete.
         rig = f.dir / "rig.json"
         stages = [{"id": c, "class": "native", "verdict": "pass"} for c in required]
         rig.write_text(json.dumps({"schema": run.SCHEMA, "provenance": result["provenance"], "stages": stages[:-1]}))
@@ -342,7 +324,6 @@ class SummarizeWithLedger(unittest.TestCase):
                   "--lock", str(f.lock), "--catalogue", str(catalogue)])
         merged = json.loads((out / "acceptance.json").read_text())
         self.assertEqual([required[-1]], merged["summary"]["incomplete"])
-        # All of them: native passes, and the updated ledger records this head for every row whose check passed.
         rig.write_text(json.dumps({"schema": run.SCHEMA, "provenance": result["provenance"], "stages": stages}))
         before = (ROOT / "tools/acceptance/native-assumptions.json").read_bytes()
         code = run.main(["summarize", "--result", str(f.out / "acceptance.json"), "--rig", str(rig), "--out", str(out),
@@ -360,16 +341,14 @@ class SummarizeWithLedger(unittest.TestCase):
             if r["id"] in expected:
                 self.assertEqual((commit, current), (r["lastRigHead"], r["lastRigFingerprint"]))
             else:
-                self.assertEqual(original[r["id"]], r)  # rows whose check was not required keep their evidence
-        self.assertEqual(before, (ROOT / "tools/acceptance/native-assumptions.json").read_bytes())  # no --update-ledger
-        # Rig check f9-10's second step: the manifest for the merged result reads the ledger summarize wrote beside it.
+                self.assertEqual(original[r["id"]], r)
+        self.assertEqual(before, (ROOT / "tools/acceptance/native-assumptions.json").read_bytes())
         manifest_out = f.dir / "manifest"
         self.assertEqual(0, run.main(["rig-manifest", "--result", str(out / "acceptance.json"), "--out", str(manifest_out),
                                       "--catalogue", str(catalogue)]))
         doc = json.loads((manifest_out / "rig-manifest.json").read_text())
         statuses = {r["id"]: r["status"] for r in doc["ledger"]["rows"]}
         self.assertTrue(all(statuses[i] == "fresh" for i in expected), statuses)
-        # The updated ledger at the same head and set: every row with a passed check is fresh.
         state = rm.assess(updated, ROOT, commit, current)
         self.assertTrue(set(expected) <= {r["id"] for r in state["rows"] if r["status"] == "fresh"})
 
@@ -388,7 +367,7 @@ class SummarizeWithLedger(unittest.TestCase):
         self.assertEqual("fail", merged["classes"]["native"]["verdict"])
         self.assertEqual(["f9-4"], merged["summary"]["failed"])
         updated = {r["id"]: r for r in json.loads((out / "native-assumptions.json").read_text())["rows"]}
-        self.assertIsNone(updated["save-epoch"]["lastRigHead"])  # proved by f9-4, which failed
+        self.assertIsNone(updated["save-epoch"]["lastRigHead"])
 
     def test_rig_evidence_on_another_or_unknown_game_never_passes_native(self):
         f, managed, current = self.offline()
@@ -427,7 +406,6 @@ class SummarizeWithLedger(unittest.TestCase):
         self.assertIsNone(run.identity_problem({"provenance": prov}, {"provenance": rig}))
 
     def test_merge_fixture_does_not_depend_on_committed_evidence(self):
-        # Reviewed updates of the maintained ledger (one check, then every check) leave the merge fixture unchanged.
         real = rm.load()
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
         partial, _ = rm.update(real, [{"id": "f9-4", "verdict": "pass"}], head, rm.declared_set(), "run-1")
@@ -448,7 +426,6 @@ class SummarizeWithLedger(unittest.TestCase):
 
 
 class SeededLedger(unittest.TestCase):
-    """The committed ledger: rows seeded from existing records, each pointing at files and checks that exist."""
 
     @classmethod
     def setUpClass(cls):
@@ -460,7 +437,6 @@ class SeededLedger(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         for wanted in ("save-epoch", "buylive-sale-authority", "hourly-settlement", "agency-billing", "streetfood-bridge", "subway-portals"):
             self.assertIn(wanted, ids)
-        # The economy stage routes two native rows; the ledger holds both under the same IDs.
         for routed in [r["row"] for r in economy_stage.ROUTES.values() if r["class"] == "native"]:
             self.assertIn(routed, ids)
 
@@ -473,11 +449,10 @@ class SeededLedger(unittest.TestCase):
             for record in r["records"]:
                 path = record.split("#")[0]
                 if ":" in path:
-                    # A record moved to the docs-history tag on 10 Nov 2026 (docs/decisions/2026-11-10-lean-docs.md).
                     tag, inner = path.split(":", 1)
                     if subprocess.run(["git", "rev-parse", "--verify", "--quiet", "refs/tags/" + tag], cwd=ROOT,
                                       capture_output=True).returncode != 0:
-                        continue  # a clone without the tag
+                        continue
                     self.assertEqual(0, subprocess.run(["git", "cat-file", "-e", path], cwd=ROOT).returncode, record)
                 else:
                     self.assertTrue((ROOT / path).is_file(), record)
@@ -491,7 +466,6 @@ class SeededLedger(unittest.TestCase):
             self.assert_evidence(r)
 
     def assert_evidence(self, r):
-        """Either no rig evidence (all three fields null) or a complete record: a commit, a declared set and a run."""
         fields = (r["lastRigHead"], r["lastRigFingerprint"], r["lastRigEvidence"])
         if fields[0] is None:
             self.assertEqual((None, None, None), fields, r["id"])
@@ -503,7 +477,6 @@ class SeededLedger(unittest.TestCase):
         self.assertIsNotNone(r["rigCheck"], r["id"])
 
     def test_a_ledger_updated_by_summarize_still_validates(self):
-        # A valid f9-4 update, as summarize --update-ledger writes it, is a ledger this class accepts.
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
         updated, rows = rm.update(self.ledger, [{"id": "f9-4", "verdict": "pass"}], head, rm.declared_set(), "run-1")
         self.assertIn("save-epoch", rows)

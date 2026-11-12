@@ -32,7 +32,7 @@ public sealed class TransportRoadTraversalTests
         Assert.Equal(4, original.Minutes); Assert.True(slowed.Minutes > original.Minutes);
         Assert.Equal(slowed.Minutes, slowed.EstimatedMinutes);
         Assert.All(nodes, node => Assert.Equal(36, node.KilometresPerHour));
-        Assert.Equal(4, graph.Plan(0, 3, Open, Clear)!.Minutes); // Existing queries and returned routes stay unchanged.
+        Assert.Equal(4, graph.Plan(0, 3, Open, Clear)!.Minutes);
         Assert.Equal(4, original.Minutes);
     }
 
@@ -97,7 +97,7 @@ public sealed class TransportRoadTraversalTests
         var route = graph.PlanWithTraversal(0, 1, Open, Clear, (_, _, baseline) =>
         { baselines.Add(baseline); return baseline * 2; })!;
         Assert.Equal(2, baselines.Count); Assert.All(baselines, baseline => Assert.Equal(1, baseline));
-        Assert.Equal(2, route.Minutes); // One exploration call despite duplicate edge, one acceptance call.
+        Assert.Equal(2, route.Minutes);
     }
 
     [Fact]

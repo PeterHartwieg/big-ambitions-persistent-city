@@ -11,7 +11,6 @@ namespace PersistentCity.Persistence
         public string Error { get; }
     }
 
-    /// <summary>Only owns StateKey. The caller must retain the dictionary and failed raw payload.</summary>
     public static class SaveStore
     {
         public const string StateKey = SaveCodec.StateKey;
@@ -39,7 +38,6 @@ namespace PersistentCity.Persistence
             if (state == null) return new SaveWriteResult(false, "State is null.");
             try
             {
-                // Encode and validate completely before touching modData.
                 SaveCodec.RequireExecutablePolicy(state);
                 var payload = SaveCodec.Write(state);
                 var existing = ReadFrom(modData, state.PopulationKey);

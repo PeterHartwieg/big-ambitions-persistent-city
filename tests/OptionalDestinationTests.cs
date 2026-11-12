@@ -68,7 +68,7 @@ public sealed class OptionalDestinationTests
         var resumed = Reload(sim, routes); resumed.AdvanceTo(Start + 11);
         Assert.Equal("s1", resumed.State.Citizens[0].PlaceId);
         Assert.Single(resumed.State.Citizens[0].RecentVisits);
-        Assert.Equal(2, routes.Calls.Count); // Chosen route is committed, never searched twice.
+        Assert.Equal(2, routes.Calls.Count);
     }
 
     [Fact]
@@ -109,7 +109,6 @@ public sealed class OptionalDestinationTests
         Assert.Equal(2, routes.Calls.Count);
         Assert.Equal(1, city.Citizens[0].MissedActivities);
         Assert.Single(observations, x => x.Outcome == "missed");
-        // A runtime rebuild or lifecycle wake during the same window cannot retry it.
         city.Citizens[0].NextEventMinute = Start + 5;
         var resumed = Reload(sim, routes); resumed.AdvanceTo(Start + 44);
         Assert.Equal("home", resumed.State.Citizens[0].PlaceId);

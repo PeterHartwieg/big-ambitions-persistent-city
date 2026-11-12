@@ -129,7 +129,6 @@ public sealed class PopulationExpansionTests
         var city = City(1); var person = city.Citizens[0];
         var slot = DailyRoutine.At(person, city.Seed, 5 * 1440 + 900, city.Places);
         Assert.Equal(Activity.Leisure, slot.Activity);
-        // A migrated/previously committed venue need not equal today's new draw.
         var current = city.Places.Single(p => p.Id == (slot.PlaceId == "leisure-a" ? "leisure-b" : "leisure-a"));
         double closure = slot.EndsAt - 20;
         current.CloseMinute = (int)(closure % 1440);

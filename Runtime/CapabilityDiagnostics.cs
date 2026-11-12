@@ -7,16 +7,11 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>F8b `pc capability status | show &lt;id&gt;` (docs/plans/f8-capability-boundaries.md D7). On request only: it
-    /// copies the existing status members into <see cref="CapabilityInputs"/>, builds a fresh registry and prints the
-    /// Core report. It installs, attaches, persists and observes nothing, and no frame path calls it.</summary>
     public sealed partial class PopulationRuntime
     {
         private readonly CapabilityReport capabilityReport = new CapabilityReport();
         private RloReadResult? lastRloRead;
-        /// <summary>F8d: the running city is inside a transient RLO window (set by the periodic check).</summary>
         private bool rloTransient;
-        /// <summary>F8d: the last periodic, save or activation verdict was Ready but a different catalogue.</summary>
         private bool rloDiffers;
 
         private void CapabilityCommand(string action, string detail)
@@ -31,7 +26,6 @@ namespace PersistentCity.Runtime
                 catch (Exception error) { Debug.LogWarning("[Persistent City] capability status unavailable: " + error.Message); }
                 return;
             }
-            // F8e: foreign Harmony owners on every Persistent City target, classed by patch kind (report only).
             if (action == "hooks" && detail.Length == 0)
             {
                 try
@@ -42,7 +36,6 @@ namespace PersistentCity.Runtime
                 catch (Exception error) { Debug.LogWarning("[Persistent City] hook conflict report unavailable: " + error.Message); }
                 return;
             }
-            // F8f: the transaction mechanism (or unsupported reason) of one scoped business, from the existing scope status.
             if (action == "business" && detail.Length > 0) { BusinessMechanismCommand(detail); return; }
             if (action == "show" && NativeCapabilities.TryParse(detail, out var id))
             {
@@ -54,12 +47,9 @@ namespace PersistentCity.Runtime
                 + string.Join(", ", NativeCapabilities.All.Select(d => d.Name)) + ")");
         }
 
-        /// <summary>F8f: maps a place (or business ID) to its scope and reads the market's read-only scope verdict
-        /// (ReadOnlyScopeStatus, not ScopeStatus, which can refuse contracts and update observations) or the vendor market's
-        /// serving answer; Core picks the mechanism. Reads only.</summary>
         private void BusinessMechanismCommand(string place)
         {
-            var food = simulation?.View.Food; // the read-only view (OwnershipBoundaryTests)
+            var food = simulation?.View.Food;
             if (failed || food == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
             { Debug.LogWarning("[Persistent City] capability business unavailable: no active Persistent City food scope in this save."); return; }
             var scope = food?.ScopeList.FirstOrDefault(s => s.PlaceId == place) ?? food?.ScopeList.FirstOrDefault(s => s.BusinessId == place);
@@ -77,7 +67,6 @@ namespace PersistentCity.Runtime
             Debug.Log("[Persistent City] capability business (read-only)\n" + TransactionMechanisms.Describe(scope.PlaceId, scope.BusinessId, scope.Channel, verdict));
         }
 
-        /// <summary>Plain copies of today's status members. Harmony owner queries read patch metadata only.</summary>
         private CapabilityInputs ReadCapabilityInputs()
         {
             var save = SaveGameManager.Current;
@@ -110,7 +99,6 @@ namespace PersistentCity.Runtime
                 InteriorConfigured = NativeInteriorCityView.Configured, InteriorRequested = settings.InteriorCityView == "on",
                 InteriorGuardAllowed = !guard.Detected, InteriorGuardReason = guard.Reason,
             };
-            // Assemblies, Harmony owners and both owner checks: the shared metadata read the harness times (Astra-r2-6).
             HookConflicts.ReadMetadata(inputs);
             inputs.ReadVendor(inputs.StreetFoodLoaded, vendors?.Coordinator);
             var reservations = RloPhysicalReservations.Last;
@@ -121,9 +109,6 @@ namespace PersistentCity.Runtime
 
         private static DonorReadReason DonorReason(RloReadResult read) => read.Reason;
 
-        /// <summary>F8d (D7) and F8e: the two activation lines, once per load. F8h (review Sol-r2-2): when the market waits
-        /// for the city load to finish before deciding checkout, both lines are logged when it decides, from the deciding
-        /// scan, so they show the final food.checkout.shop state.</summary>
         private void LogActivationLines()
         {
             var market = foodMarket;
@@ -133,20 +118,16 @@ namespace PersistentCity.Runtime
 
         private void WriteActivationLines()
         {
-            log?.Info(CapabilityActivationLine()); // F8d (D7): one line naming every capability that is not active
-            log?.Info(HookConflictActivationLine()); // F8e: foreign owners on Persistent City targets
+            log?.Info(CapabilityActivationLine());
+            log?.Info(HookConflictActivationLine());
         }
 
-        /// <summary>F8e: the once-per-load conflict line. F8h: it reuses the scan this load's checkout decision used (taken
-        /// once the city load finished), so a load scans once. A scan failing here only changes this line; a load scan
-        /// that failed already refused food.checkout.shop with its reason (pc capability status).</summary>
         private static string HookConflictActivationLine()
         {
             try { return (HookConflicts.TakeLoadScan() ?? HookConflicts.Scan()).ActivationLine(); }
             catch (Exception error) { return "Persistent City hook conflict scan unavailable for the activation line: " + error.Message; }
         }
 
-        /// <summary>F8d (D7): the activation Player.log line, once per load. Builds the same on-request snapshot.</summary>
         private string CapabilityActivationLine()
         {
             try { return CapabilityActivationText(); }
@@ -175,14 +156,9 @@ namespace PersistentCity.Runtime
 
     public sealed partial class NativeFoodMarket
     {
-        /// <summary>F8b: E5b dynamic acquisition is on (read-only copy for the capability report).</summary>
         internal bool DynamicCapabilityActive => DynamicAcquisition;
-        /// <summary>F8b: why dynamic acquisition is off once the coordinator left startup; empty while warming.</summary>
         internal string DynamicCapabilityRefusal => DynamicAcquisition || StartupPhase ? "" : DynamicRefusalReason;
 
-        /// <summary>F8f (Sol-r1-2): the scope verdict from state the market already holds. Unlike ScopeStatus it calls no
-        /// SupportedMenu, ContractAdmits or NativeFoodOwnership.Find, so it refuses no contract, rebases no image, records
-        /// no refusal hour and changes no observation. NativeFoodOwnership.Row has no side effect.</summary>
         internal string ReadOnlyScopeStatus(string placeId)
         {
             if (!ReferenceEquals(save, SaveGameManager.Current)) return "Excluded: another save is loaded";

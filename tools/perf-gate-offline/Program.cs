@@ -10,10 +10,6 @@ using PersistentCity.Tests;
 
 namespace PersistentCity.PerfGateOffline;
 
-// F4e offline pre-gate (docs/plans/f4-perf-gate.md, F4e row). Usage:
-//   dotnet run --project tools/perf-gate-offline -c Release -- [--out <directory>] [--seed N] [--only <window prefix>]
-// Writes offline.export.json (F4a's perf-gate-export/v1, source=offline), offline.report.json and offline.report.md through F4a's analyzer.
-//   dotnet run --project tools/perf-gate-offline -c Release -- --self-test
 static class Program
 {
     const double Day3 = 3 * 1440, Day4 = 4 * 1440;
@@ -45,7 +41,6 @@ static class Program
         };
         var stationary = new[] { Kerb(read) };
         var path = WalkPath(read);
-        // Decision 3 discards each process's first window (JIT); the offline run does the same with the first spec.
         var warm = Stopwatch.StartNew();
         if (specs.Count > 0) WindowRunner.Run(specs[0], checkpoints[specs[0].From], shape.Catalogue, stationary, uninterruptedCheck: false);
         inputs.DiscardedWarmUpSeconds = warm.Elapsed.TotalSeconds;
@@ -71,18 +66,14 @@ static class Program
         var report = Analyzer.Analyze(export, output, "offline", out int code, out string analyzerOutput);
         Console.Error.WriteLine(analyzerOutput);
         if (code != 0) { Console.Error.WriteLine("F4a's analyzer refused the offline export (exit " + code + ")"); return 1; }
-        // Every offline window is invalid as a gate window (rig receipts n/a), so the expectations are the per-window rows.
         foreach (var w in report["windows"]!)
             Console.Error.WriteLine($"{w["id"],-48} " + string.Join(" ", new[] { "M1", "M3", "M4", "S1", "S2", "S3", "S4" }.Select(r => r + "=" + (w["rows"]?[r]?["verdict"] ?? "-"))));
         Console.Error.WriteLine($"overall {report["overall"]}; wrote {System.IO.Path.Combine(output, "offline.export.json")} and offline.report.json/.md ({total.Elapsed.TotalSeconds:F1} s)");
         return 0;
     }
 
-    /// <summary>Nearest-rank percentile of an ascending array (Decision 4), for the console line only.</summary>
     static double Rank(double[] sorted, int p) => sorted.Length == 0 ? double.NaN : sorted[Math.Max(0, (int)Math.Ceiling(p / 100.0 * sorted.Length) - 1)];
 
-    /// <summary>Decision 3's windows on FT-F4-Declared (day 3, idle on day 4), the declared arm at 30/60/120 FPS with the
-    /// driver at 48/24, and G9's fastest-traveller sequence and day at 60 FPS.</summary>
     static IEnumerable<WindowSpec> Matrix()
     {
         double declared = Pace.At(Pace.DeclaredFactor, 1);
@@ -105,14 +96,12 @@ static class Program
         yield return new WindowSpec("G9b-day-speed3", "S-stationary", "fastest-traveller", start, start + 1440, 60, Pace.At(Pace.FastestFactor, 3), Presentation.Bodies, Pace.FastestFactor, 3);
     }
 
-    /// <summary>S-stationary: a kerb point 3 m from the first player shop.</summary>
     internal static Position Kerb(CityState state)
     {
         var shop = state.Places.Single(p => p.Id == state.Food!.Shops[0].PlaceId).Position;
         return new Position(shop.X + 3, shop.Y, shop.Z);
     }
 
-    /// <summary>S-path: from the shop kerb to the city's centroid (the dense part) and to the farthest home (quiet) and back.</summary>
     internal static IReadOnlyList<Position> WalkPath(CityState state)
     {
         var kerb = Kerb(state);

@@ -18,7 +18,6 @@ namespace PersistentCity.Core
         Funded = 7, Unfunded = 8, Work = 9, Study = 10, Other = 11
     }
 
-    /// <summary>Fixed codes, no native names. Null is unavailable; zero is an observed empty count.</summary>
     public sealed class MarketResearchCell
     {
         internal MarketResearchCell(MarketResearchMetric metric, MarketResearchBand band, int? value)
@@ -29,7 +28,6 @@ namespace PersistentCity.Core
         public string Label => Metric.ToString() + ":" + Band.ToString();
     }
 
-    /// <summary>C5 must supply durable proof. C4 provides no accepting production implementation.</summary>
     public interface IMarketResearchEntitlement
     {
         bool TryGet(string entitlementId, out MarketResearchGrant? grant);
@@ -52,8 +50,6 @@ namespace PersistentCity.Core
         { grant = null; return false; }
     }
 
-    /// <summary>Opaque completed report. Numbers have one public exit, guarded on every read.
-    /// No public constructor, engine, diagnostic bypass or serialization getter for its cells.</summary>
     public sealed class MarketResearchReport
     {
         private readonly IReadOnlyList<MarketResearchCell> cells;
@@ -82,7 +78,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        // Only friend test/offline assemblies can inspect fixtures. Runtime has no access to this seam.
         internal IReadOnlyList<MarketResearchCell> FixtureCells => cells;
     }
 }

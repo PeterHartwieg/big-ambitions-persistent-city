@@ -6,8 +6,6 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Own-ledger totals only. No business identity, native receipt or market denominator.
-    /// Recorded in the same atomic operation as D2's debit; outcomes never feed this history.</summary>
     public sealed class RivalOutflowHistory
     {
         public const int Days = 14;
@@ -26,8 +24,6 @@ namespace PersistentCity.Core
         {
             var baseline = Ledger(food);
             return new RivalOutflowHistory { StartDay = (int)(minute / 1440), ThroughDay = (int)(minute / 1440),
-                // A preexisting undated ledger can include a boundary-minute debit. Midnight
-                // alone cannot prove this first day is fully covered by the new history.
                 PartialStart = minute % 1440 != 0 || baseline > 0, Baseline = baseline };
         }
         public static BigInteger Ledger(FoodCommerceState food)
@@ -66,7 +62,6 @@ namespace PersistentCity.Core
             foreach (var row in Rows) total += row.Units;
             return total == Ledger(food);
         }
-        // Fixed-size scalar wire: six header cells, then at most fourteen day,units,count cells.
         public string ToWire()
         {
             var text = new StringBuilder().Append(StartDay).Append('|').Append(PartialStart ? 1 : 0)
@@ -179,14 +174,12 @@ namespace PersistentCity.Core
         private static string Amount(BigInteger units)
         {
             var whole = BigInteger.DivRem(units, Money.UnitsPerDollar, out var remainder);
-            // 1 / (100 * 2^28) dollars has an exact thirty-place decimal expansion.
             string fraction = (remainder * BigInteger.Pow(5, 28)).ToString(CultureInfo.InvariantCulture).PadLeft(30, '0').TrimEnd('0');
             return "$" + whole.ToString(CultureInfo.InvariantCulture) + (fraction.Length == 0 ? "" : "." + fraction);
         }
     }
     public sealed partial class CitySimulator
     {
-        // Called only on the existing panel's three-second text refresh or explicit bridge request.
         public RivalOutflowView? FreeRivalOutflow() => State.Food?.Outflow?.Capture((int)(State.Minute / 1440));
     }
 }

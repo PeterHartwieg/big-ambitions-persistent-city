@@ -13,8 +13,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F8b (docs/plans/f8-capability-boundaries.md D7): `pc capability status | show` built from doubles of the
-/// existing Runtime status members, and the source boundary of Runtime/CapabilityDiagnostics.cs.</summary>
 [Collection(F8aSerial.Collection)]
 public sealed class CapabilityReportTests
 {
@@ -22,7 +20,6 @@ public sealed class CapabilityReportTests
     public CapabilityReportTests(ITestOutputHelper output) => this.output = output;
     internal static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;
 
-    /// <summary>Every input as a healthy running city reports it.</summary>
     internal static CapabilityInputs Healthy() => new CapabilityInputs
     {
         CityActive = true, FoodAuthorityInstalled = true, FoodMarketAttached = true, FoodPricePrefixInstalled = true, FoodDynamicActive = true,
@@ -36,7 +33,6 @@ public sealed class CapabilityReportTests
         ReservationsChecked = true, ReservationsReady = true, ReservationsComplete = true,
     };
 
-    /// <summary>Every capability the report reads (F8d added rlo.reservations and rlo.roadspeeds).</summary>
     private static readonly CapabilityId[] Read = NativeCapabilities.All.Select(d => d.Id).ToArray();
 
     public static IEnumerable<object[]> Cases()
@@ -54,10 +50,8 @@ public sealed class CapabilityReportTests
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.Absent, "is not loaded", i => i.StreetFoodLoaded = false);
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.Off, "contract 2", i => { i.VendorApiBound = false; i.VendorReason = "contract 2"; });
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.NotChecked, null, i => i.VendorMarketAttached = false);
-        // Sol-r1-3: a bound API whose snapshot is not Ready suspends every vehicle scope; before the first read it is not checked.
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.Off, "snapshot Off: Street Food is off", i => { i.VendorSnapshot = VendorApiStatus.Off; i.VendorReason = "Street Food is off"; });
         yield return C(CapabilityId.VendorStreetFood, CapabilityState.NotChecked, null, i => { i.VendorSnapshot = VendorApiStatus.NotYet; i.VendorReason = "Street Food has not been read yet."; });
-        // Astra-r1-2: each RLO read reports its own result; Ready but different is off.
         yield return C(CapabilityId.RloDonor, CapabilityState.Off, "differs from the saved one", i => i.RloDiffers = true);
         yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.Off, "Route preparation waits", i => i.RoadSpeedWaiting = "RLO road speed overrides: ReadSlowedLanes: RLO is refreshing the city's citizens.");
         yield return C(CapabilityId.RloRoadSpeeds, CapabilityState.NotChecked, null, i => i.RoadSpeedsFromRlo = false);
@@ -67,7 +61,6 @@ public sealed class CapabilityReportTests
         yield return C(CapabilityId.RloReservations, CapabilityState.Off, "ReadReservedBodies", i => { i.ReservationsReady = false; i.ReservationsError = "InvalidOperationException: ReadReservedBodies: RLO's CityApi reported a fault."; });
         yield return C(CapabilityId.RloReservations, CapabilityState.Off, "visible bodies pause", i => i.ReservationsComplete = false);
         yield return C(CapabilityId.RloReservations, CapabilityState.NotChecked, null, i => i.ReservationsChecked = false);
-        // An unrelated physical failure no longer marks the reservations off.
         yield return C(CapabilityId.RloReservations, CapabilityState.Active, null, i => { i.PhysicalActive = false; i.PhysicalFailed = true; });
         yield return C(CapabilityId.RloReservations, CapabilityState.Absent, "not loaded", i => i.RloReason = DonorReadReason.Missing);
         yield return C(CapabilityId.ClockObserve, CapabilityState.Off, "observation unavailable", i => { i.ClockObserving = false; i.ClockObserveError = "Native clock observation unavailable"; });
@@ -92,7 +85,6 @@ public sealed class CapabilityReportTests
         yield return C(CapabilityId.InspectorScroll, CapabilityState.Off, "scroll guard not installed", i => i.InspectorScrollInstalled = false);
         yield return C(CapabilityId.InspectorUiBlock, CapabilityState.Off, "UI block not installed", i => i.InspectorUiBlockInstalled = false);
         yield return C(CapabilityId.InspectorClick, CapabilityState.NotChecked, null, i => i.InspectorClickInstalled = i.InspectorScrollInstalled = i.InspectorUiBlockInstalled = false);
-        // Sol-r1-5: NativeInteriorCityView.Start leaves Configured false for each of these; once a city runs each has its reason.
         yield return C(CapabilityId.InteriorView, CapabilityState.Off, "third-party interior mod", i => { i.InteriorConfigured = false; i.InteriorGuardAllowed = false; i.InteriorGuardReason = "third-party interior mod detected"; });
         yield return C(CapabilityId.InteriorView, CapabilityState.Off, "off in the settings (default)", i => { i.InteriorConfigured = false; i.InteriorRequested = false; });
         yield return C(CapabilityId.InteriorView, CapabilityState.Off, "native speed accessor unavailable", i => i.InteriorConfigured = false);
@@ -108,7 +100,6 @@ public sealed class CapabilityReportTests
         string text = new CapabilityReport().Status(registry, "0.9.1");
         Assert.StartsWith("Persistent City capabilities (game 0.9.1): start ready\n", text);
         Assert.DoesNotContain("compatible", text, StringComparison.OrdinalIgnoreCase);
-        // Before any city: required checks have not run, so the start waits; nothing claims active.
         var before = CapabilitySnapshot.Build(new CapabilityInputs { StreetFoodLoaded = true, DrivenRidesLoaded = true });
         Assert.Equal(CapabilityStartStatus.Waiting, before.Start().Status);
         Assert.All(NativeCapabilities.All, d => Assert.NotEqual(CapabilityState.Active, before.State(d.Id)));
@@ -123,7 +114,6 @@ public sealed class CapabilityReportTests
         var registry = CapabilitySnapshot.Build(input);
         Assert.Equal(state, registry.State(id));
         if (reason.Length > 0) Assert.Contains(reason, registry.Reason(id));
-        // Optional and absent capabilities never block the start; a required Off is a capability refusal.
         var definition = NativeCapabilities.Get(id);
         var start = registry.Start();
         bool blocks = state == CapabilityState.Off && definition.Requirement != CapabilityRequirement.Optional
@@ -141,7 +131,6 @@ public sealed class CapabilityReportTests
     public void EveryReadCapabilityHasACaseForEachState()
     {
         var covered = Cases().Select(c => ((CapabilityId)c[0], (CapabilityState)c[1])).ToHashSet();
-        // Healthy() covers Active. Billing, scroll and UI block share their not-checked inputs with dialog and click.
         var sharedNotChecked = new[] { CapabilityId.ResearchBilling, CapabilityId.InspectorScroll, CapabilityId.InspectorUiBlock, CapabilityId.PhysicalVehicles };
         var companions = new[] { CapabilityId.VendorStreetFood, CapabilityId.ClockDrivenRides, CapabilityId.RloDonor, CapabilityId.RloReservations, CapabilityId.RloRoadSpeeds };
         foreach (var id in Read)
@@ -151,17 +140,13 @@ public sealed class CapabilityReportTests
             Assert.True(covered.Contains((id, CapabilityState.NotChecked)) || sharedNotChecked.Contains(id), name + " not checked");
             if (companions.Contains(id)) Assert.True(covered.Contains((id, CapabilityState.Absent)), name + " absent");
         }
-        // Driven Rides changed stops the city inside NativeCityClock.Start; the report shows the stop as clock.city off.
         var stopped = Healthy(); stopped.CityActive = stopped.ClockCityActive = false; stopped.CityFailed = true; stopped.FailureStatus = "Unsupported Driven Rides clock contract.";
         var registry = CapabilitySnapshot.Build(stopped);
         Assert.Equal(CapabilityState.Off, registry.State(CapabilityId.ClockDrivenRides));
         Assert.Contains("Unsupported Driven Rides clock contract.", registry.Reason(CapabilityId.ClockDrivenRides));
     }
 
-    // ---- Wire and cost ------------------------------------------------------------------------------------------
 
-    /// <summary>F8b-F8g change no wire. X3 owns the canonical golden pins of this fixture; this test only shows that the
-    /// payload carries the current writer's envelope and that building and printing the report leaves it unchanged.</summary>
     [Theory]
     [InlineData(5150)]
     [InlineData(9217)]
@@ -170,14 +155,11 @@ public sealed class CapabilityReportTests
         var state = ChangeJournalTests.Fixture(seed);
         string payload = SaveCodec.Write(state);
         Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",", payload);
-        // Building and printing the report reads no city state.
         _ = new CapabilityReport().Status(CapabilitySnapshot.Build(Healthy()), "x");
         _ = HookConflictReport.Build(Array.Empty<HookPatchedMethod>()).Text();
         Assert.Equal(payload, SaveCodec.Write(state));
     }
 
-    /// <summary>Plan section 6, F8b: command cost (snapshot build plus report text) while the 957x2 economy city is
-    /// alive. The command reads no population, so the city size does not enter the cost; the fixture shows it.</summary>
     [Fact]
     public void CommandCostOnThe957x2City()
     {

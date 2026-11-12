@@ -10,11 +10,6 @@ using PersistentCity.Runtime;
 
 namespace PersistentCity.Tests.Acceptance;
 
-/// <summary>F9c (plan f9-city-acceptance.md, Decision 3): one integrated city in two sizes. Both sizes are the F5h reference
-/// composition (F5g housing, census catalogue, two portals, seed 2026) with the player food shops, one rival under the F6b
-/// service limits, one crew-run Street Food vehicle through the contract stand-in and C5 research on the saved ledger.
-/// <c>city-m</c> is F5h's declared load (957 residents, three shops); <c>city-s</c> is the same composition at 126
-/// residents and one shop. Offline only: every native side is a double that lives outside the saved city.</summary>
 internal sealed class CitySize
 {
     public const int Seed = 2026;
@@ -25,12 +20,10 @@ internal sealed class CitySize
     public int Homes => Shape.Homes;
     public PopulationFillCatalogue Catalogue => Shape.Catalogue;
 
-    /// <summary>F5h's base businesses on 20 homes of seven beds: 126 residents.</summary>
     public static CitySize Small() => new("city-s", new F5hIntegratedAcceptanceTests.Shape(20, F5gPopulationFillTests.Base), 1);
     public static CitySize Medium() => new("city-m", F5hIntegratedAcceptanceTests.ReferenceShape(), 3);
 }
 
-/// <summary>The fixture's saved checkpoint: a fresh city at 06:00 on day 1, written by the current writer.</summary>
 internal sealed class CityCheckpoint
 {
     public CityCheckpoint(CitySize size, string payload) { Size = size; Payload = payload; }
@@ -48,7 +41,6 @@ internal static class CityFixture
     public const int ResearchRadius = 500;
     public const string ResearchBusiness = "shop:0";
     public const int OpenMinute = 6 * 60, CloseMinute = 22 * 60, MealsPerHour = 30;
-    /// <summary>The F6a menu, sorted by product ID as the scopes list it.</summary>
     public static readonly (string Product, int Cents)[] Menu = EconomyFixture.Menu.OrderBy(m => m.Product, StringComparer.Ordinal).ToArray();
     public static string Shop(int i) => "b" + i.ToString(CultureInfo.InvariantCulture);
     public static string ShopPlace(int i) => "shop:" + i.ToString(CultureInfo.InvariantCulture);
@@ -66,18 +58,13 @@ internal static class CityFixture
             Shops = Enumerable.Range(0, size.Shops).Select(i => new FoodScope { PlaceId = ShopPlace(i), BusinessId = Shop(i),
                 ProductId = products[0], AdditionalProductIds = products.Skip(1).ToList() }).ToList(),
         };
-        // Weighted choice, awareness and rivals from the first day, as F6a's fresh fixture.
         state.Food.ChoiceStartsDay = state.Food.AwarenessStartsDay = state.Food.RivalStartsDay = 1;
-        // Attaching the market creates the roster, as Runtime does.
         var native = new CityNative(size);
         native.SetClock(StartMinute);
         new CitySimulator(state, new SyncWalk()).AttachFoodMarket(native.Shops, rivalSettings: native.Shops.RivalSettings);
         return new CityCheckpoint(size, SaveCodec.Write(state));
     }
 
-    /// <summary>The minute-stamped native changes of Decision 3, in F6a's input stream: on day 2 the first shop raises every
-    /// price by half, a product sells out, the staff is cut, the hours shorten, the rival loses half its lanes and one
-    /// workplace closes; every change reverts on day 3.</summary>
     public static InterventionInput[] Inputs(CityState state)
     {
         string shop = Shop(0);
@@ -100,7 +87,6 @@ internal static class CityFixture
         return list.ToArray();
     }
 
-    /// <summary>One research order of each product, one a day at 10:05 for the first shop (a business holds one open order).</summary>
     public static (double Minute, string Product)[] ResearchOrders() => new[]
     {
         (1 * 1440 + 10 * 60 + 5.0, ResearchProducts.BasicLocalCode),
@@ -108,11 +94,8 @@ internal static class CityFixture
         (3 * 1440 + 10 * 60 + 5.0, ResearchProducts.DetailedCityCode),
     };
 
-    /// <summary>The vehicle opens at 11:05 for three hours each day (a crew opening in a later hour than PC's request).
-    /// On day 3 PC withdraws it at 12:30, so the opening is handed back while Street Food keeps it open.</summary>
     public const double VehicleOpens = 11 * 60 + 5, VehicleCloses = 14 * 60 + 5, WithdrawMinute = 3 * 1440 + 12 * 60 + 30;
 
-    /// <summary>The walking route of F5h's admitted planner, answered synchronously: the reference arm's planner.</summary>
     internal sealed class SyncWalk : ICommuteTimingPlanner
     {
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => new Route { Legs = new() { new RouteLeg
@@ -120,8 +103,6 @@ internal static class CityFixture
     }
 }
 
-/// <summary>Everything native in one arm: the shop and rival double, the Street Food stand-in behind the real bridge and
-/// vendor market, the native receipt dictionary and the agency bill. It lives across a city reload, as native state does.</summary>
 internal sealed class CityNative
 {
     public CityNative(CitySize size)
@@ -140,10 +121,8 @@ internal sealed class CityNative
     public readonly CityResearchPort Port = new();
     public StreetFoodVendorMarket? Vendor;
     public FoodMarkets? Markets;
-    /// <summary>Fault: the stand-in stops honouring the lease (it lapses without handing the vehicle back) while PC is told it was renewed.</summary>
     public bool LeaseFault;
     public void SetClock(double native) { Clock = native; Shops.Clock = native; }
-    /// <summary>The stand-in's native clock and lease expiry at a whole native minute.</summary>
     public void EnterMinute(long minute)
     {
         StreetFoodHooks.Now = minute;
@@ -151,10 +130,6 @@ internal sealed class CityNative
     }
 }
 
-/// <summary>The player shops and the rival as native reports them. Inputs are F6a's <see cref="InterventionInput"/> kinds and
-/// change only this double. Checkout is the sale authority: one order per intent, refused on changed terms, outside the
-/// current native hour it is a harness failure. Every 23rd intent by hash loses its acknowledgement after the sale, so the
-/// receipt is uncertain (F5h's double).</summary>
 internal sealed class CityShopMarket : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority, IFoodFailureMarket,
     IFoodSaleEvidence, IRivalFoodMarket, IFoodAwarenessRevision, IWorkplaceAvailability
 {
@@ -182,10 +157,8 @@ internal sealed class CityShopMarket : IFoodMarket, ILocalFoodMarket, IFoodCandi
     public double Clock;
     public const int BaseStock = 100000;
     private readonly HashSet<string> paid = new(StringComparer.Ordinal);
-    /// <summary>Native orders in booking order: intent, logical minute, business, product, cents.</summary>
     public readonly List<string> Orders = new();
     public long RevenueUnits, Duplicates, HistoricalCheckouts;
-    /// <summary>Fault: the next sale is booked twice natively.</summary>
     public bool InjectDuplicate;
     public Action<string>? Booked;
 
@@ -251,7 +224,6 @@ internal sealed class CityShopMarket : IFoodMarket, ILocalFoodMarket, IFoodCandi
     private void Book(ResidentMeal meal, double minute)
     {
         RevenueUnits += meal.Price.Units;
-        // The buyer's wallet as checkout found it, so a posting moved across this sale changes the row.
         string row = "o|" + CityOracles.M(minute) + "|" + meal.IntentId + "|" + meal.BusinessId + "|" + meal.ProductId + "|" + meal.Price.Units.ToString(CultureInfo.InvariantCulture)
             + "|" + CityOracles.Wallet(meal.Budget);
         Orders.Add(row);
@@ -271,8 +243,6 @@ internal sealed class CityShopMarket : IFoodMarket, ILocalFoodMarket, IFoodCandi
             Enumerable.Range(0, 7).Select(d => new FoodAdvertisedHours(d, CityFixture.OpenMinute, CityFixture.CloseMinute)));
 }
 
-/// <summary>The real Street Food bridge over the contract stand-in, recording every confirmed sale with the stand-in's lease
-/// and owner at that moment. With <see cref="CityNative.LeaseFault"/> a renewal is reported to PC but not made.</summary>
 internal sealed class CityVendorApi : IVendorApi
 {
     private readonly IVendorApi inner = StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi));
@@ -309,9 +279,6 @@ internal sealed class CityVendorApi : IVendorApi
     }
 }
 
-/// <summary>The native agency bill (ChangeMoneySafe contract of the C5 doubles): money in dollars as a float, one tagged
-/// marketing record per charge. With <see cref="ChargeWithoutReport"/> the next boundary also books a tagged charge that no
-/// delivered report backs.</summary>
 internal sealed class CityResearchPort : IResearchChargePort
 {
     public const float OpeningMoney = 50000;
@@ -321,7 +288,6 @@ internal sealed class CityResearchPort : IResearchChargePort
     public bool ChargeWithoutReport;
     public bool TagStored => true;
     public float Balance => Money;
-    /// <summary>The native day being billed: the marketing boundary closes the previous day, as Runtime's port reads it.</summary>
     public int BilledDay => Day - 1;
     public bool TryResolve(ResearchOrder order, out ResearchChargeTarget? target)
     { target = new ResearchChargeTarget("Shop " + order.BusinessAddress, order.BusinessAddress); return true; }
@@ -346,5 +312,4 @@ internal sealed class CityResearchPort : IResearchChargePort
     public static string ResearchLedgerOrderId(long sequence) => "pcr-" + sequence.ToString(CultureInfo.InvariantCulture);
 }
 
-/// <summary>An F9c oracle failure. Thrown, never caught by the scenario, so a broken invariant fails the test loudly.</summary>
 internal sealed class CityViolation : Exception { public CityViolation(string message) : base(message) { } }

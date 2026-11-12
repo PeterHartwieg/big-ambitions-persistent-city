@@ -11,10 +11,6 @@ using PersistentCity.Runtime;
 
 namespace PersistentCity.FailureMatrix;
 
-/// <summary>F8g (docs/plans/f8-capability-boundaries.md): the offline failure matrix over the Core 957-resident economy
-/// fixture (F6a shape, representation factor 2). Each arm switches one capability off, absent or refused the way the
-/// Runtime does, and checks the plan's invariants. Shared by tests/capability-matrix and tests/CapabilityMatrixTests;
-/// the Street Food absent-then-returned arm uses the test project's vendor rig and lives in the test.</summary>
 public static class CapabilityMatrix
 {
     public const int Seed = 11, Residents = EconomyFixture.Residents;
@@ -30,7 +26,6 @@ public static class CapabilityMatrix
     private static RunOptions Options(int days, int? bodyCap = null, int fps = 0, bool ownListed = true)
         => new RunOptions { Seed = Seed, Residents = Residents, Days = days, BodyCap = bodyCap, FramesPerSecond = fps, OwnListed = ownListed };
 
-    /// <summary>Runs every Core arm. <paramref name="days"/> is the simulated length of each economy arm.</summary>
     public static List<Arm> Run(int days, Action<string>? log = null)
     {
         var arms = new List<Arm>();
@@ -54,7 +49,6 @@ public static class CapabilityMatrix
             return "purchases=" + control.Purchases + " save=" + control.FinalSaveSha256[..12];
         });
 
-        // Presentation capabilities have no economic role: the background city is identical with bodies off and never present.
         Add("presentation off vs never present", "physical.vehicles, physical.pedestrians, rlo.reservations (bodies), inspector.*, interior.view",
             "money, wallets, receipts and the saved city equal between bodies off (driver attached, cap 0) and never present", () =>
         {
@@ -67,7 +61,6 @@ public static class CapabilityMatrix
             return "purchases=" + off.Purchases + " frames=" + off.Frames + " save=" + off.FinalSaveSha256[..12];
         });
 
-        // food.checkout.shop off: shops stay native-owned, so the city books no PC sale and conserves every wallet.
         Add("food.checkout.shop off", "food.checkout.shop", "no PC receipt is booked; cash is conserved; no duplicate intent", () =>
         {
             var off = EconomyRun.Run(Options(days, ownListed: false));
@@ -77,7 +70,6 @@ public static class CapabilityMatrix
             return "own orders=0 over " + off.Days.Count + " days; conservation checks=" + off.ConservationChecks;
         });
 
-        // Required capabilities refused: no city starts and the saved keys stay byte-identical.
         Add("required refused", "food.authority, clock.observe, clock.city, rlo.donor, clock.drivenrides (present and changed)",
             "a refused required arm leaves the payload byte-identical; the status is a capability refusal, not damage or an older city", () =>
         {
@@ -96,14 +88,12 @@ public static class CapabilityMatrix
                 Require(saved.OrderBy(p => p.Key, StringComparer.Ordinal).SequenceEqual(before), "saved keys byte-identical");
                 refused++;
             }
-            // Driven Rides absent is not a refusal.
             var absent = new CapabilityRegistry();
             foreach (var d in NativeCapabilities.All) absent.Detect(d.Id, d.Id == CapabilityId.ClockDrivenRides ? CapabilityState.Absent : CapabilityState.Active, d.Id == CapabilityId.ClockDrivenRides ? "not loaded" : null);
             Require(TryStart(absent, saved).Status == CapabilityStartStatus.Ready, "Driven Rides absent starts");
             return refused + " required capabilities refused; payload unchanged";
         });
 
-        // RLO transient: the periodic and save gates continue; the saved city equals a run with RLO Ready throughout.
         Add("rlo.donor transient window", "rlo.donor (Off, NotYet, Refreshing)", "the city runs and saves the Ready bytes; identity hash and resident count unchanged; Shared stops with the last payload kept", () =>
         {
             var ready = TransientRun(days, _ => DonorReadReason.Ready);
@@ -117,9 +107,6 @@ public static class CapabilityMatrix
             return "checks=" + window.Checks + " transient=" + window.Transient + " saves=" + window.Saves.Count + " identity=" + window.Identity[..12];
         });
 
-        // research.dialog, research.billing, research.delivery: each contract failing alone, through the production gate
-        // (ResearchEligibility.SessionEnabled, which PersistentCityMod.AttachResearch uses, and MarketResearchActivation).
-        // The control has all three and surveys the order; each failure keeps the order unchanged and moves no resident money.
         Add("research contracts off one at a time", "research.dialog, research.billing, research.delivery",
             "each failed contract names itself, leaves research unattached and the order unchanged; resident cash, wallets, receipts and scopes equal the control", () =>
         {
@@ -139,9 +126,6 @@ public static class CapabilityMatrix
             return string.Join("; ", detail) + "; " + control.Economy;
         });
 
-        // food.dynamic: the second site sells a non-historical product. Whether it may be owned is the production menu
-        // predicate (FoodMenuPolicy.LiveMenu, which NativeFoodMarket applies with a policy only while dynamic acquisition
-        // is on). Control: dynamic on, the site sells. Off: the site is refused, books no PC receipt, keeps its scope bytes.
         Add("food.dynamic off vs on", "food.dynamic", "on: the dynamic site sells; off: it books no PC receipt and keeps its bytes; the other shop sells; conserved", () =>
         {
             var on = Simulate(days, dynamicOn: true);
@@ -156,8 +140,6 @@ public static class CapabilityMatrix
         return arms;
     }
 
-    /// <summary>Every optional or required-when-present capability and the arm (or other check) that fails it. The test
-    /// fails when a capability has no entry.</summary>
     public static readonly IReadOnlyDictionary<CapabilityId, string> Coverage = new Dictionary<CapabilityId, string>
     {
         [CapabilityId.FoodCheckoutShop] = "food.checkout.shop off",
@@ -165,15 +147,12 @@ public static class CapabilityMatrix
         [CapabilityId.VendorStreetFood] = "CapabilityMatrixTests.StreetFoodAbsentThenReturned (vendor rig)",
         [CapabilityId.ClockDrivenRides] = "required refused (changed refuses; absent starts)",
         [CapabilityId.RloReservations] = "presentation off vs never present (bodies are the reservation guard's only consumer)",
-        // The road planner is Runtime; the offline arm is the RLO speed adapter's fail-closed capture.
         [CapabilityId.RloRoadSpeeds] = "RloRoadSpeedOverridesTests.UnexpectedObservedSpeedOrInvalidOriginalFailsClosed",
         [CapabilityId.ResearchDialog] = "research contracts off one at a time",
         [CapabilityId.ResearchBilling] = "research contracts off one at a time",
         [CapabilityId.ResearchDelivery] = "research contracts off one at a time",
         [CapabilityId.PhysicalVehicles] = "presentation off vs never present",
         [CapabilityId.PhysicalPedestrians] = "presentation off vs never present",
-        // Runtime-only surfaces with no Core input: the Core city cannot see them (source checks in CapabilityReportTests
-        // and HookConflictReportTests; rig checks in docs/checks/f8bg.md).
         [CapabilityId.InspectorClick] = "no Core input: CapabilityReportTests.ReportFromDoublesForEveryState",
         [CapabilityId.InspectorScroll] = "no Core input: CapabilityReportTests.ReportFromDoublesForEveryState",
         [CapabilityId.InspectorUiBlock] = "no Core input: CapabilityReportTests.ReportFromDoublesForEveryState",
@@ -191,10 +170,8 @@ public static class CapabilityMatrix
     private static string ScopeBytes(CityState state) => string.Join("|", state.Food!.Shops.Select(s =>
         s.PlaceId + "," + s.BusinessId + "," + s.ProductId + "," + string.Join("+", s.AdditionalProductIds) + "," + s.Channel));
 
-    /// <summary>The economy fixture's epoch loop with one capability switched the way the Runtime switches it.</summary>
     public const string DynamicProduct = "ba:itemname_dumplings";
 
-    /// <summary>The dynamic policy a passing E5b5 publication gives: the product is loaded and classed Food by a provider.</summary>
     private static FoodProductPolicy DynamicPolicy()
     {
         var registry = new FoodProductMetadataRegistry(); registry.BindPublicationThread();
@@ -211,7 +188,6 @@ public static class CapabilityMatrix
         {
             var scope = state.Food!.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop);
             scope.AdditionalProductIds.Add(DynamicProduct);
-            // The production predicate: no policy unless dynamic acquisition is on (NativeFoodMarket.LiveMenu).
             var refusal = FoodMenuPolicy.LiveMenu(scope.Products().ToList(), on ? DynamicPolicy() : null);
             Require(on ? refusal == FoodLiveMenuRefusal.None : refusal == FoodLiveMenuRefusal.OriginalThreeGuard, "menu verdict " + refusal);
             market.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop).SiteOpen = refusal == FoodLiveMenuRefusal.None;
@@ -250,7 +226,6 @@ public static class CapabilityMatrix
         return outcome;
     }
 
-    /// <summary>The Runtime order: capabilities first; only a Ready start may read or write the saved keys.</summary>
     private static CapabilityStart TryStart(CapabilityRegistry registry, IDictionary<string, string> saved)
     {
         var start = registry.Start();
@@ -268,8 +243,6 @@ public static class CapabilityMatrix
         public int Residents;
     }
 
-    /// <summary>One run with a donor read every 30 game minutes (the Runtime's periodic cadence at native pace) and a save
-    /// every 6 game hours, gated as PersistentCityMod does after activation.</summary>
     public static TransientResult TransientRun(int days, Func<int, DonorReadReason> read)
     {
         var (state, market) = EconomyFixture.Build(Seed, Residents);

@@ -3,14 +3,11 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // Schema-21 rival outcome and validation rules, still part of the current contract.
     internal static class RivalWire21
     {
         private static void Require(bool condition, string reason)
         { if (!condition) throw new SaveValidationException(reason); }
 
-        // Schema 21 reserves status codes 4..7 for the rival target variant. Both target
-        // and ordinary status fit the existing single digit: zero added outcome bytes.
         internal static string Outcome(MealOutcomeRecord record)
         {
             string wire = record.ToWire();

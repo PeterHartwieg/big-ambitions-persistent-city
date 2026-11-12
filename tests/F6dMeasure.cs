@@ -15,7 +15,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-// Explicitly requested offline save measurement; no game/rig or regression matrix. Set PC_F6D_MEASURE to JSONL path.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class F6dMeasure
 {
@@ -25,7 +24,6 @@ public sealed class F6dMeasure
         "ba:itemname_donut", "ba:itemname_cupcake", "ba:itemname_salad", "foodtrucks:itemname_dumplings", "foodtrucks:itemname_choppedcheese" };
     internal static CityState Build(int residents, int factor, int visits, bool cf)
     {
-        // E5d's seed/city/32-or-64 visits, rebuilt as fresh F5 independent persons, never migrated.
         var state = EconomyScenario.Create(residents, 11);
         state.Minute += 12 * 1440;
         foreach (var p in state.Citizens) { p.NextEventMinute += 12 * 1440; p.ActivityUntilMinute += 12 * 1440; }
@@ -54,7 +52,6 @@ public sealed class F6dMeasure
             int slot = food.BusinessReferences.Count;
             food.BusinessReferences.Add(new BusinessReference { Slot = slot, BusinessId = "business:fixture:" + slot.ToString("D5") + ":created:17:food:player:generation:1", PlaceId = "shop-1" });
         }
-        // Consume the full B table's 2Mi wire allowance, including the vendor references.
         int tableSize = 1 + food.BusinessReferences.Sum(r => 1 + ("[1," + r.Slot + ",\"" + r.BusinessId + "\",\"000\"]").Length);
         int padding = 2 * 1024 * 1024 - tableSize;
         var generic = food.BusinessReferences.Where(r => r.BusinessId.StartsWith("business:fixture:", StringComparison.Ordinal)).ToArray();
@@ -67,7 +64,6 @@ public sealed class F6dMeasure
                 Entries = Enumerable.Range((i % 5000) * 4, 4).Select(slot => new ShopMemory { BusinessRef = slot, Day = 0, Served = 35, Affinity = 8, Outcome = ShopExperience.Served }).ToList() };
         }
         foreach (var p in state.Citizens) p.W = new WeatherCommitment(state.Minute, WeatherSample.Rain, true);
-        // A fully quoted 8-shop x 8-offer held image, with exact detached dynamic-product metadata.
         var first = food.Residents[0];
         food.ChoiceStartsDay = first.Day; first.Status = MealStatus.Pending;
         state.MenuPolicy = FoodNameIdentity.DynamicWire;
@@ -90,9 +86,7 @@ public sealed class F6dMeasure
         }
         if (cf)
         {
-            // Actual 14,000 places, with the full E5d 12Mi existing-state allowance carried separately below.
             for (int i = state.Places.Count; i < 14000; i++) state.Places.Add(new Place { Id = "address:cf:" + i + ":shop", Name = "Historical shop " + i, District = "a", Kind = PlaceKind.Shop, Position = new Position(i, 0, 0) });
-            // Keep the C5c maximum research section inside the same composition (fixture has no native billing).
             state.Research = ResearchSaveTests.AllStates();
         }
         return state;
@@ -163,7 +157,6 @@ public sealed class F6dMeasure
                 addedCharacters = after.Length - inactive.Length, addedRecords = expectedRecords, composed, composedRecords, reserveChars, reserveRecords,
                 memoryHeadroom = (long)state.Food.Residents.Count * 13, writeMs = Stats(write), readMs = Stats(read), sha256 = EconomicLedgerTests.Sha(after) });
             File.AppendAllText(path, row + Environment.NewLine); output.WriteLine(row);
-            // Release the two large payload strings and graph before the next fixture.
             GC.Collect();
         }
     }

@@ -1,4 +1,3 @@
-"""Offline lifecycle invariants. Fake registry/lease; temporary workspace files only."""
 from contextlib import contextmanager
 import importlib.util
 from pathlib import Path
@@ -16,7 +15,7 @@ class LifecycleInvariants(unittest.TestCase):
         OUT.mkdir(parents=True,exist_ok=True)
         self.temp=tempfile.TemporaryDirectory(prefix='mock-lifecycle-',dir=OUT)
         self.root=Path(self.temp.name).resolve()
-        self.assertTrue(self.root.is_relative_to(OUT.resolve())) # Before owned recursive temp cleanup.
+        self.assertTrue(self.root.is_relative_to(OUT.resolve()))
         self.paths=(self.root/'run.json',self.root/'settings.json')
         self.paths[0].write_bytes(b'original run metadata')
         self.original=('Windows Registry Editor Version 5.00\r\n\r\n['+runner.REG_EXPORT+']\r\n"pref"=dword:00000001\r\n').encode('utf-16')
