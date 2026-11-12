@@ -13,5 +13,3 @@ The checks written by slices merged before 10 November are in the history tag, o
 ## Checks
 
 None added since 10 November.
-
-12 November 2026 (b), Mac: [rig results](checks/rig-2026-11-12b-mac-results.md) — 15 passed / 0 partial / 0 failed / 0 not run in the targeted rows at `060a7947`; #233 enter/exit refusal and pre-probe recovery, restated S2 check 5, #77 goods status/service readiness, Food/Goods/Service sales and ceiling refusal verified by rig. Grouped exclusions remain in the report.
