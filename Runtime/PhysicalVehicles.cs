@@ -608,25 +608,29 @@ namespace PersistentCity.Runtime
 
         /// <summary>Reviews Sol-r3-1 and Sol-r4-1, called from LateUpdate: a car of a held group that is not a leftover of
         /// the hold (NativeLoadWatch) was loaded directly (RLO's rival pass-by) and is retired before it renders. One
-        /// activeInHierarchy and one group read per pool slot a frame; the preset, ignore-list and script reads only for a
-        /// car not seen before.</summary>
+        /// activeInHierarchy and one group read per pool slot a frame, a position read per active car of a held group; the
+        /// preset, ignore-list and script reads only for a car not seen before or a reloaded slot (review Sol-r5-1).</summary>
         public void CatchNewLoads()
         {
             if (!Active || heldGroups.Count == 0 && !nativeDensity.HasValue || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) { loads.Reset(); return; }
             var pool = Manager.GetVehicleList();
             if (!loads.Primed) { PrimeLoads(pool); return; }
+            float seconds = Time.deltaTime; // game time since the last LateUpdate: how far a car can have driven
             for (int i = 0; i < pool.Count; i++)
             {
                 var vehicle = pool[i];
-                if (!loads.IsLoad(i, ActiveHeld(vehicle)) || vehicle == null) continue;
+                bool held = ActiveHeld(vehicle);
+                var at = held ? vehicle!.transform.position : default;
+                if (!loads.IsLoad(i, held, at.x, at.z, seconds) || vehicle == null) continue;
                 if (RloOverrule.RetiresNewNativeLoad(true, vehicle.presetPath != null, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()),
                     Ordinary(vehicle), IsTaxi(vehicle)))
                 { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loadsRetired++; loads.Forget(i); }
-                else loads.Accept(i);
+                else loads.Accept(i, at.x, at.z);
             }
         }
 
-        private void PrimeLoads(List<VehicleComponent> pool) => loads.Prime(pool.Count, i => ActiveHeld(pool[i]));
+        private void PrimeLoads(List<VehicleComponent> pool) => loads.Prime(pool.Count, i => ActiveHeld(pool[i]),
+            i => { var p = pool[i].transform.position; return (p.x, p.z); });
 
         private bool ActiveHeld(VehicleComponent? vehicle) => vehicle != null && vehicle.gameObject.activeInHierarchy
             && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType));

@@ -214,34 +214,54 @@ namespace PersistentCity.Core
     /// (<see cref="Forget"/>), so a slot freed and reloaded between two LateUpdate passes is still a load. Runtime asks
     /// once a frame in LateUpdate (after every Update and coroutine, before rendering) and once at the hold, so a load in
     /// the hold's own frame is caught too. One bool per pool slot; no allocation after growth.</summary>
+    /// Review Sol-r5-1: native's own traffic update can also remove a leftover and RLO reload the freed slot before the
+    /// next pass, with no inactive frame in between. A reloaded car is placed afresh (the pass-by puts it on a lane 70 to
+    /// 150 m behind a door), so each leftover's ground position is kept from pass to pass; a jump further than any car
+    /// drives in that time (<see cref="MaxMove"/>) is a reload, and the slot is a load again.
     public sealed class NativeLoadWatch
     {
+        /// <summary>Metres a car of the native pool cannot exceed in <paramref name="seconds"/> of game time: 100 m/s
+        /// (360 km/h), plus 10 m of slack for a car's own small corrections.</summary>
+        public static double MaxMove(double seconds) => 10 + 100 * Math.Max(0, seconds);
+
         private bool[] leftover = Array.Empty<bool>();
+        private double[] x = Array.Empty<double>(), z = Array.Empty<double>();
 
         public bool Primed { get; private set; }
 
-        /// <summary>The hold starts: <paramref name="activeHeld"/> says, per slot, whether a car of a held group is active.</summary>
-        public void Prime(int count, Func<int, bool> activeHeld)
+        /// <summary>The hold starts: <paramref name="activeHeld"/> says, per slot, whether a car of a held group is active;
+        /// <paramref name="position"/> gives its ground position (x, z).</summary>
+        public void Prime(int count, Func<int, bool> activeHeld, Func<int, (double X, double Z)> position)
         {
             if (activeHeld == null) throw new ArgumentNullException(nameof(activeHeld));
+            if (position == null) throw new ArgumentNullException(nameof(position));
             Grow(count);
-            for (int i = 0; i < count; i++) leftover[i] = activeHeld(i);
+            for (int i = 0; i < count; i++)
+            {
+                leftover[i] = activeHeld(i);
+                if (leftover[i]) { var p = position(i); x[i] = p.X; z[i] = p.Z; }
+            }
             Primed = true;
         }
 
-        /// <summary>One slot in a frame's pass. True when an active car of a held group there is not a leftover: a direct
-        /// load to retire or, if it is kept (an RLO scene car), to accept, after which it is a leftover too.</summary>
-        public bool IsLoad(int index, bool activeHeld)
+        /// <summary>One slot in a frame's pass, <paramref name="seconds"/> of game time after the last. True when an active
+        /// car of a held group there is not a leftover, or is one that jumped (a reload): a direct load to retire or, if it
+        /// is kept (an RLO scene car), to <see cref="Accept"/>.</summary>
+        public bool IsLoad(int index, bool activeHeld, double posX, double posZ, double seconds)
         {
             if (!Primed) throw new InvalidOperationException("Prime the watch when the hold starts.");
             Grow(index + 1);
             if (!activeHeld) { leftover[index] = false; return false; }
-            return !leftover[index];
+            if (!leftover[index]) return true;
+            double dx = posX - x[index], dz = posZ - z[index], limit = MaxMove(seconds);
+            if (dx * dx + dz * dz > limit * limit) { leftover[index] = false; return true; }
+            x[index] = posX; z[index] = posZ;
+            return false;
         }
 
-        /// <summary>The car in this slot was kept (an RLO scene car, or not ordinary): it is not asked about again until
-        /// its slot is seen inactive.</summary>
-        public void Accept(int index) { Grow(index + 1); leftover[index] = true; }
+        /// <summary>The car in this slot was kept (an RLO scene car, or not ordinary): it is followed as a leftover from
+        /// its position now, so a later reload of the slot is still seen.</summary>
+        public void Accept(int index, double posX, double posZ) { Grow(index + 1); leftover[index] = true; x[index] = posX; z[index] = posZ; }
 
         /// <summary>Persistent City retired the car in this slot: the slot's next car is a load, even in the same frame.</summary>
         public void Forget(int index) { if (index >= 0 && index < leftover.Length) leftover[index] = false; }
@@ -252,7 +272,9 @@ namespace PersistentCity.Core
         private void Grow(int count)
         {
             // Slots the pool adds later start as non-leftovers (false).
-            if (count > leftover.Length) Array.Resize(ref leftover, Math.Max(count, leftover.Length * 2));
+            if (count <= leftover.Length) return;
+            int size = Math.Max(count, leftover.Length * 2);
+            Array.Resize(ref leftover, size); Array.Resize(ref x, size); Array.Resize(ref z, size);
         }
     }
 }

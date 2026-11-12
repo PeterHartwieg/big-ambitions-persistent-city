@@ -373,7 +373,9 @@ namespace PersistentCity.Tests
         }
 
         // One native pool slot as PhysicalVehicles reads it.
-        private sealed class PoolCar { public bool Active, Held = true, Preset, Ignored, Ordinary = true, Taxi, Visible; public int FramesDriven; }
+        private sealed class PoolCar { public bool Active, Held = true, Preset, Ignored, Ordinary = true, Taxi, Visible; public int FramesDriven; public double X, Z; }
+
+        private const double FrameSeconds = 1.0 / 60;
 
         private static bool ActiveHeld(PoolCar c) => c.Active && c.Held;
 
@@ -395,17 +397,17 @@ namespace PersistentCity.Tests
             for (int i = 0; i < pool.Count; i++)
             {
                 var c = pool[i];
-                if (!watch.IsLoad(i, ActiveHeld(c))) continue;
+                if (!watch.IsLoad(i, ActiveHeld(c), c.X, c.Z, FrameSeconds)) continue;
                 if (RloOverrule.RetiresNewNativeLoad(c.Held, c.Preset, c.Ignored, c.Ordinary, c.Taxi)) { c.Active = false; watch.Forget(i); }
-                else watch.Accept(i);
+                else watch.Accept(i, c.X, c.Z);
             }
-            foreach (var c in pool) if (c.Active) c.FramesDriven++; // rendering and the next traffic step see only what is left
+            foreach (var c in pool) if (c.Active) { c.FramesDriven++; c.X += 30 * FrameSeconds; } // rendering and the next traffic step see only what is left; 30 m/s
         }
 
         private static NativeLoadWatch Hold(List<PoolCar> pool)
         {
             var watch = new NativeLoadWatch();
-            watch.Prime(pool.Count, i => ActiveHeld(pool[i]));
+            watch.Prime(pool.Count, i => ActiveHeld(pool[i]), i => (pool[i].X, pool[i].Z));
             return watch;
         }
 
@@ -462,6 +464,34 @@ namespace PersistentCity.Tests
         }
 
         [Fact]
+        public void NativeRemovalAndAReloadBetweenTheSameTwoPassesIsCaughtByTheJump()
+        {
+            // Slot 5 holds a leftover driving at 30 m/s; nothing of ours retires it (the cursor skips it, it is in view).
+            var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
+            pool[5].Active = true; pool[5].Visible = true;
+            var watch = Hold(pool);
+            int cursor = 0;
+            for (int f = 1; f <= 120; f++) Frame(f, pool, watch, ref cursor, () => { if (cursor % 40 == 5) cursor++; });
+            Assert.True(pool[5].Active); // a leftover that drives on is never taken for a load
+
+            // Frame 121: native's traffic update removes it, then RLO's coroutine reloads the idle slot on a lane 90 m away,
+            // in view. Both passes see slot 5 active and nothing of ours retired it; the jump marks the reload.
+            Frame(121, pool, watch, ref cursor,
+                otherUpdates: () => { if (cursor % 40 == 5) cursor++; pool[5].Active = false; },
+                coroutines: () => { pool[5].Active = true; pool[5].X += 90; pool[5].Visible = true; });
+            Assert.False(pool[5].Active);
+
+            // A kept RLO scene car (preset path) is followed too: when RLO lets it go and the slot is reloaded far away, it
+            // is a load again.
+            pool[7].Active = pool[7].Preset = true;
+            Frame(122, pool, watch, ref cursor);
+            Assert.True(pool[7].Active);
+            Frame(123, pool, watch, ref cursor, coroutines: () => { pool[7].Preset = false; pool[7].Z += 120; pool[7].Visible = true; });
+            Assert.False(pool[7].Active);
+            Assert.Equal(110, NativeLoadWatch.MaxMove(1), 6);
+        }
+
+        [Fact]
         public void ACarLoadedInTheHoldsOwnFrameIsCaughtAtTheFirstLateUpdate()
         {
             var pool = Enumerable.Range(0, 10).Select(_ => new PoolCar()).ToList();
@@ -472,7 +502,7 @@ namespace PersistentCity.Tests
             Frame(1, pool, watch, ref cursor, coroutines: () => { pool[3].Active = true; pool[3].Visible = true; });
             Assert.False(pool[3].Active);
             Assert.True(pool[0].Active); // the leftover is left to the out-of-view step
-            Assert.Throws<InvalidOperationException>(() => new NativeLoadWatch().IsLoad(0, true));
+            Assert.Throws<InvalidOperationException>(() => new NativeLoadWatch().IsLoad(0, true, 0, 0, FrameSeconds));
         }
 
         [Fact]
