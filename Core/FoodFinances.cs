@@ -94,7 +94,7 @@ namespace PersistentCity.Core
                     else EmploymentWages.Settle(e.Person, budget, e.Window, e.WageAt);
                     Schedule(e);
                 }
-                else HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments, food.EssentialNeeds);
+                else HouseholdFinance.PostDay(budget, food.city.State.Minute, e.Person, food.city.VisitorEndowments, food.city.PurchaseEssentials() ?? food.EssentialNeeds);
                 e.Minute = Math.Min(budget.NextPostingMinute, e.WageAt);
                 Repair(0);
             }

@@ -125,6 +125,12 @@ internal sealed class GraphFill
         if (type == typeof(Position)) return new Position(n, n + 0.25, n + 0.5);
         if (type == typeof(long[])) return new long[] { n, n + 1 };
         if (type == typeof(ResearchLedger)) return ResearchSaveTests.AllStates();
+        if (type == typeof(PersonNeeds))
+        {
+            var needs = new PersonNeeds(n, "s" + n);
+            needs.Add(new NeedState("s" + n, n + 1, "s" + (n + 2), 2));
+            return needs;
+        }
         if (type == typeof(DayPlan))
         {
             var plan = new DayPlan(n, (uint)n + 1, ShiftType.Late, n % 128, "s" + n, new[] {

@@ -157,6 +157,7 @@ namespace PersistentCity.Persistence
                 copy.JoinedMinute = c.JoinedMinute; copy.LastEmploymentCheckDay = c.LastEmploymentCheckDay; copy.JobChanges = c.JobChanges;
                 copy.EmploymentStartDay = c.EmploymentStartDay; copy.Accrual = c.Accrual; copy.Wallet = Budget(c.Wallet);
                 copy.Plan = c.Plan?.Copy(); // shared immutable items, own states
+                copy.Needs = c.Needs?.Copy();
                 copy.Phase = c.Phase; copy.Activity = c.Activity; copy.PlaceId = c.PlaceId; copy.DestinationId = c.DestinationId;
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
                 copy.DepartureMinute = c.DepartureMinute; copy.NextEventMinute = c.NextEventMinute; copy.ActivityUntilMinute = c.ActivityUntilMinute;

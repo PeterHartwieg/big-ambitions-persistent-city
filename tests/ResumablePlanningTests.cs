@@ -635,8 +635,16 @@ public sealed class ResumablePlanningTests
         Traits = ResidentTraits.Generate(n, "traits-" + n),
         Wallet = new ResidentBudget { BaseIncomeCents = n, Balance = Money.FromUnits(n) },
         Plan = new DayPlan(n, (uint)n, (ShiftType)(n % 4), n, "work-" + n,
-            new[] { new PlanItem(PlanItemKind.Work, Activity.Work, "work-" + n, 10 * n, 10 * n, 20 * n, PlanPriority.Fixed) })
+            new[] { new PlanItem(PlanItemKind.Work, Activity.Work, "work-" + n, 10 * n, 10 * n, 20 * n, PlanPriority.Fixed) }),
+        Needs = NeedsOf(n)
     };
+
+    private static PersonNeeds NeedsOf(int n)
+    {
+        var needs = new PersonNeeds(n, "venue-" + n);
+        needs.Add(new NeedState("type-" + n, 7 * n, "venue-" + n, n % 4));
+        return needs;
+    }
 
     [Fact]
     public void EventCopyAndCommitCoverEveryResidentField()
@@ -667,6 +675,8 @@ public sealed class ResumablePlanningTests
         // GR-2: the copy owns its item states and shares the immutable item definitions.
         Assert.NotSame(live.Plan, working.Plan); Assert.True(live.Plan!.SameAs(working.Plan!));
         Assert.Same(live.Plan.Items, working.Plan!.Items);
+        // GR-3: the copy owns its needs; commit hands them back.
+        Assert.NotSame(live.Needs, working.Needs); Assert.True(live.Needs!.SameAs(working.Needs));
         var car = live.Car; var preparation = live.CommutePreparation; var outing = live.MealOuting; var preferences = live.Preferences; var visits = live.RecentVisits;
         CitySimulator.CommitEvent(live, Filled(2, identity));
         // F2e: the player-hold allowance belongs to one journey; a replaced journey (or arrival) clears it.

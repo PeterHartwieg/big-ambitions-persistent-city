@@ -315,6 +315,9 @@ namespace PersistentCity.Core
         /// <summary>GR-2: this person's plan for the current game day, drawn once and saved (residents and visitors). Null
         /// until the person's first event after its first day boundary.</summary>
         public DayPlan? Plan { get; set; }
+        /// <summary>GR-3: this resident's needs (next due day, last venue, deferrals per category), saved with the person.
+        /// Null until the purchase path first meets a category for this person. Visitors keep none.</summary>
+        public PersonNeeds? Needs { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
         public string PlaceId { get; set; } = "";

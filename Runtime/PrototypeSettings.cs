@@ -184,6 +184,9 @@ namespace PersistentCity.Runtime
         public bool SaveCostDiagnostics { get; set; } = SaveCostDiagnosticsDefault;
         public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
         public bool PhysicalEnabled { get; set; } = true;
+        /// <summary>GR-3: residents with a due need or an impulse buy at the player's supported non-food businesses through
+        /// the purchase contract. Off by default (Q4: automatic takeover waits for S2 and GR-4 in game); rig profiles turn it on.</summary>
+        public bool NeedPurchasesEnabled { get; set; }
         public int MaximumPedestrians { get; set; } = 48;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;

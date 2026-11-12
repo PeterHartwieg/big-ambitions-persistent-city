@@ -162,7 +162,7 @@ namespace PersistentCity.Core
             => shift == ShiftType.Early ? 465 : shift == ShiftType.Late ? 720 : shift == ShiftType.Night ? 1320 : 510;
 
         public static DayPlan Generate(CitizenState person, int citySeed, int day, IReadOnlyList<Place>? catalogue,
-            IReadOnlyDictionary<string, Place>? places, bool meals)
+            IReadOnlyDictionary<string, Place>? places, bool meals, NeedPlanning? needs = null)
         {
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (day < 0) throw new ArgumentOutOfRangeException(nameof(day));
@@ -190,14 +190,48 @@ namespace PersistentCity.Core
                     if (desired >= 0 && expires >= desired && Position.Finite(expires))
                         items.Add(new PlanItem(PlanItemKind.Meal, Activity.Home, "", desired, expires, expires, PlanPriority.Wanted, kind));
                 }
+            // GR-3: with a purchase market, every category it sells is a need before the plan is drawn. A due need sends the
+            // day's shop or leisure window to a served venue open for it, most urgent first. When the routine drew no such
+            // window, or no served venue is open in the drawn one, the need gets its own visit where one fits, scheduled
+            // after both routine windows are known; the routine keeps one shop and one leisure visit a day, so that visit
+            // replaces the drawn window, which stays only when nothing fits.
+            Place? planHome = null;
+            if (catalogue != null && places != null) places.TryGetValue(person.HomeId, out planHome);
+            if (needs != null) NeedModel.EnsureCatalogue(person, needs, day, citySeed);
+            bool planNeeds = needs != null && planHome != null;
+            PlanItem? shopFallback = null, leisureFallback = null;
             if (routine.HasShop)
-                items.Add(new PlanItem(PlanItemKind.Need, Activity.Shop, routine.ShopVenue, routine.ShopFrom, routine.ShopUntil, routine.ShopUntil, PlanPriority.Optional));
+            {
+                string? venue = planNeeds ? NeedModel.PlanVenue(person, day, needs!, planHome!, PlaceKind.Shop, routine.ShopFrom, routine.ShopUntil) : null;
+                var drawn = new PlanItem(PlanItemKind.Need, Activity.Shop, venue ?? routine.ShopVenue, routine.ShopFrom, routine.ShopUntil, routine.ShopUntil, PlanPriority.Optional);
+                if (venue != null || !planNeeds) items.Add(drawn); else shopFallback = drawn;
+            }
             if (routine.HasLeisure)
             {
                 string venue = routine.LeisureVenue;
-                if (catalogue != null && places != null && places.TryGetValue(person.HomeId, out var home))
-                    venue = ChooseLeisure(keys, day, catalogue, home, venue);
-                items.Add(new PlanItem(PlanItemKind.Leisure, Activity.Leisure, venue, routine.LeisureFrom, routine.LeisureUntil, routine.LeisureUntil, PlanPriority.Optional));
+                string? needVenue = planNeeds ? NeedModel.PlanVenue(person, day, needs!, planHome!, PlaceKind.Leisure, routine.LeisureFrom, routine.LeisureUntil) : null;
+                if (planHome != null) venue = needVenue ?? ChooseLeisure(keys, day, catalogue!, planHome, venue);
+                var drawn = new PlanItem(PlanItemKind.Leisure, Activity.Leisure, venue, routine.LeisureFrom, routine.LeisureUntil, routine.LeisureUntil, PlanPriority.Optional);
+                if (needVenue != null || !planNeeds) items.Add(drawn); else leisureFallback = drawn;
+            }
+            if (planNeeds)
+            {
+                // Each missing visit keeps clear of everything already planned, the other routine window included.
+                var others = new List<PlanItem>(items);
+                if (leisureFallback != null) others.Add(leisureFallback);
+                if (!routine.HasShop || shopFallback != null)
+                {
+                    var shop = NeedModel.ScheduleVisit(person, day, needs!, planHome!, PlaceKind.Shop, others);
+                    if (shop != null) { items.Add(shop); others.Add(shop); }
+                    else if (shopFallback != null) { items.Add(shopFallback); others.Add(shopFallback); }
+                }
+                if (leisureFallback != null) others.Remove(leisureFallback);
+                if (!routine.HasLeisure || leisureFallback != null)
+                {
+                    var leisure = NeedModel.ScheduleVisit(person, day, needs!, planHome!, PlaceKind.Leisure, others);
+                    if (leisure != null) items.Add(leisure);
+                    else if (leisureFallback != null) items.Add(leisureFallback);
+                }
             }
             items.Sort((a, b) => { int c = a.EarliestStart.CompareTo(b.EarliestStart); return c != 0 ? c : a.Kind.CompareTo(b.Kind); });
             uint seed = StableRandom.Finish(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Append(StableRandom.Begin(citySeed), keys.Id), ":plan:"), day));
@@ -378,7 +412,7 @@ namespace PersistentCity.Core
         /// <summary>Draws today's plan once, at the first event at or after the day boundary. A previous plan with an item
         /// still running past the boundary (a night shift) stays until that item ends.</summary>
         internal static void Ensure(CitizenState person, int seed, double now, IReadOnlyList<Place> catalogue,
-            IReadOnlyDictionary<string, Place> places, bool meals)
+            IReadOnlyDictionary<string, Place> places, bool meals, NeedPlanning? needs = null)
         {
             int day = DayPlanner.PlanDay(now);
             var plan = person.Plan;
@@ -391,7 +425,7 @@ namespace PersistentCity.Core
             if (plan != null)
                 for (int i = 0; i < plan.Items.Count; i++)
                     if (!DayPlan.Terminal(plan.StateOf(i)) && plan.Items[i].EndsAt > now && plan.Items[i].Kind != PlanItemKind.Meal) return;
-            person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals);
+            person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals, needs);
             Adopt(person);
         }
 

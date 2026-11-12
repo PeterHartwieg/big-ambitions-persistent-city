@@ -18,11 +18,11 @@ public sealed class SaveSnapshotTests
     /// (docs/checks/x3.md). A deliberate format change re-pins them in place.</summary>
     public static IEnumerable<object[]> BasePins() => new[]
     {
-        new object[] { "representative-957x2", "77973528E11E420C7DDDBF38C086454089FAF5959887D86320283E122C7AF516", 2812202 },
-        new object[] { "fresh-957x3", "099BF47D94B426889B3E12CA65F2EB2DF8AF3CBB1B2BA8A7C7E2DB344AD4C86C", 3615488 },
-        new object[] { "saturated-957x3", "49634A1190BD3ED11392AA02A9C6928B29248F62D49AD4153042DB6BFDB8E86E", 4903592 },
-        new object[] { "encoding-max", "AEBED169E213B86356B50808BE1534D12EB416E8705A255166DCF61A8516CAC8", 2947503 },
-        new object[] { "rush-957x2", "66E24767D138C61C8B8C8EF81FFC270F0CF34BAF157C51E245A4D7DFE6BA70DB", 2742590 },
+        new object[] { "representative-957x2", "5FC9DB6ED1844D2B99CE8EE3BA3B54B785FFC55A82A710FC16FEE4E58598A9EE", 2824643 },
+        new object[] { "fresh-957x3", "1B3FD0E4DE7E9ED6C5676CAC23532F8F103D67C0A05A6C29D43A7E5A6FA9949B", 3627929 },
+        new object[] { "saturated-957x3", "2FD351378B93AD40346FADBE9749D742B679F2698FCEBDDFD9228ADD887E28D5", 4916033 },
+        new object[] { "encoding-max", "11FB50CE4161EF19303C0C813ED33915B504CB2ECA80276ED879C6B1EC726E56", 2959944 },
+        new object[] { "rush-957x2", "3859D913FBD830EDF97DFB487E2629437241A1E408B82FC19A788F5A2EDA7115", 2755031 },
     };
 
     /// <summary>The writer's golden for each F7c fixture (the name is kept for docs/checks/f7c.md). X3 re-pinned them once at

@@ -387,9 +387,9 @@ public sealed class ResearchSaveTests
     /// <summary>The writer's golden for each research fixture, re-pinned once by X3 at the held schema 1. A deliberate
     /// format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
-    [InlineData("research-all-states", "58aec060f7aa3de3eeec12d572773ea70d6a3f297c266d4907391f0a92f15b8a", 13620)]
-    [InlineData("research-at-bounds", "6b990fb796bcbaad391d8ac839170da96bca863e7b6cd5be8f7e1f005e9fb08a", 48271)]
-    [InlineData("banded-visitors-factor2-30h-research", "87f528e6403f41532b842d00bd11ba4bfd8abbd263e712edc40d4c8f5f4f7b25", 224665)]
+    [InlineData("research-all-states", "75951c894575f13db5c1f3e825ceedfa7e95fd68d061334481314441dc412c2f", 13633)]
+    [InlineData("research-at-bounds", "ae0fb34ecc724cd5199e72e7954de34497a3f1045e5b3c72e344b32032238329", 48284)]
+    [InlineData("banded-visitors-factor2-30h-research", "23198dd2b5ef3c54810468b9f82db8f48032e13323a7f156a6c7215dad112b04", 225640)]
     public void GoldenResearchWriterBytesArePinned(string name, string sha256, int characters)
     {
         string payload = SaveCodec.Write(GoldenFixtures().Single(f => f.Name == name).Build());

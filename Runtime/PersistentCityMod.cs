@@ -352,6 +352,12 @@ namespace PersistentCity.Runtime
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute)));
+                // GR-3: a booked native order that could not be restored has no debit; stop before any save can keep it.
+                if (simulation.PurchaseFault is string purchaseFault)
+                {
+                    log?.Warn("Need purchase native restore failed; the uncertain receipt is kept: " + purchaseFault);
+                    StopAccounting("Need purchase native restore failed: " + purchaseFault); return;
+                }
                 ApplyHoldReplay(); // F2e: in-game E2 replay only; inactive unless pc movement replay-holds started one
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
@@ -752,6 +758,14 @@ namespace PersistentCity.Runtime
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop, economy: state.Economy);
             simulation.AttachFoodMarket(ComposeFoodMarkets(foodMarket), settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
+            if (settings.NeedPurchasesEnabled)
+            {
+                // A pending receipt outside a running purchase was cut before its native call returned: never retried.
+                int abandoned = PurchaseContract.Recover(save.modData);
+                PurchaseContract.Prune(save.modData, (int)(state.Minute / 1440) - 1);
+                simulation.AttachPurchases(new NativePurchaseMarket(save.modData, RunSaveEpochUnit));
+                log?.Info("Need purchases attached (GR-3); abandoned pending receipts=" + abandoned + ".");
+            }
             // F5g: every current-schema city fills toward the census of this load's catalogue from its next day boundary.
             var fill = new PopulationFillCatalogue(censusPlaces, censusWorkplaces);
             if (fill.Refused) log?.Warn("Population fill detached: census refused the catalogue (" + fill.RefusalReason + "). No person is created or removed.");
@@ -909,6 +923,7 @@ namespace PersistentCity.Runtime
             NativeInteriorCityView.Stop();
             vendorMarket?.Dispose(); vendorMarket = null;
             foodMarket?.Dispose(); foodMarket = null; ordinaryOwnershipIndex = null;
+            try { NativeSalePath.Unpatch(); } catch (Exception error) { log?.Warn("Sale path unpatch failed: " + error.Message); }
             inspector.Detach();
             try { physical?.Dispose(); }
             finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }

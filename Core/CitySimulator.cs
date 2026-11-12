@@ -199,6 +199,8 @@ namespace PersistentCity.Core
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
             // A running survey is transient; the replacement starts it again from zero.
             if (research != null) replacement.AttachResearch(research.Ledger, research.ConsumersPerUnit, research.BusinessPlace);
+            // GR-3: the purchase market and its fault carry over; a faulted market stays detached.
+            replacement.purchases = purchases; replacement.PurchaseFault = PurchaseFault;
             return replacement;
         }
 
@@ -591,8 +593,13 @@ namespace PersistentCity.Core
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             occupancy.Move(live.DayPlaceId, working.DayPlaceId);
             food?.AccrueWorkDeparture(live, working);
+            var needVisit = NewNeedVisit(live, working);
+            bool departed = purchases != null && working.Phase == CitizenPhase.Travelling && working.Journey != null && !ReferenceEquals(working.Journey, live.Journey);
+            DeferMissedNeeds(live, working);
             CommitOrdinaryArrival(live, working);
             CommitEvent(live, working);
+            if (needVisit != null) CommitNeedPurchase(live, needVisit);
+            if (departed) ImpulseOnDeparture(live);
             food?.EmploymentChanged(live);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (live.Visitor != null) VisitorSchedules.Sync(live.Visitor);
@@ -628,7 +635,7 @@ namespace PersistentCity.Core
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
-            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet, Plan = live.Plan?.Copy(),
+            EmploymentStartDay = live.EmploymentStartDay, Accrual = live.Accrual, Wallet = live.Wallet, Plan = live.Plan?.Copy(), Needs = live.Needs?.Copy(),
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
@@ -688,6 +695,7 @@ namespace PersistentCity.Core
             // GR-1: the copy shares the person's wallet; an event never replaces it.
             live.Wallet = working.Wallet;
             live.Plan = working.Plan;
+            live.Needs = working.Needs;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
             // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
             live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
@@ -763,7 +771,10 @@ namespace PersistentCity.Core
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
             // GR-2: the event is the plan executor. Today's plan is drawn once and items past their deadline are closed.
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null);
+            var planBefore = person.Plan;
+            var needPlanning = NeedPlanningNow();
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, needPlanning);
+            if (needPlanning != null && !ReferenceEquals(planBefore, person.Plan)) WakeForNewPlan(person, now);
             DayPlanExecutor.Settle(person, now);
             person.OptionalStopChoice = null;
             person.OptionalStop = null; // The original activity event owns the continuation.
@@ -835,7 +846,7 @@ namespace PersistentCity.Core
                     break;
                 }
             // A job found or lost just now replans today's work item.
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null);
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow());
             // Retain a home fallback until its original window ends. This also survives reload
             // and prevents counting the same closed activity again after the journey home.
             if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)

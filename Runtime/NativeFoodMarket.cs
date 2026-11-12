@@ -570,8 +570,11 @@ namespace PersistentCity.Runtime
                 && liveSupply.Supply.TryGetValue(meal.ProductId, out var supply) && supply.Units == 0
                 && (supply.ProducerUnits == 0 || supply.StaffedCounters > 0 && supply.BagUnits == 0))
                 return new FoodSale(false, "Confirmed stockout before service", ShopExperience.Stockout);
+            // GR-3: food is priced on the purchase contract's checkout against the allowance the meal was held within. The
+            // ticket's lines are all mandatory, so the refusal is the one the food checkout always made (price over allowance).
+            var quote = PurchaseContract.Quote(PurchaseContract.FoodBasket(meal.ProductId, mainPrice, ticket?.Extras), meal.Allowance);
             if (offer == null || !offer.Units.HasValue || offer.Units <= 0 || !business!.MealsPerHour.HasValue || business.MealsPerHour <= 0
-                || offer.Price != mainPrice || meal.Price > meal.Allowance
+                || offer.Price != mainPrice || meal.Price > meal.Allowance || quote.Refusal != PurchaseRefusal.None
                 || meal.ServiceMinutes + 1e-7 < 60.0 / business.MealsPerHour.Value)
                 return new FoodSale(false, "Stock or staffing changed");
             var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
@@ -599,7 +602,7 @@ namespace PersistentCity.Runtime
             // line is confirmed. The first refusal stops the extras; an uncertain line throws (no retry).
             var sold = new List<FoodTicketLine>();
             if (ticket != null)
-                foreach (var extra in ticket.Extras)
+                foreach (var extra in PurchaseContract.KeptExtras(quote, ticket.Extras))
                 {
                     var extraOffer = business!.Offers.SingleOrDefault(o => o.ProductId == extra.ProductId);
                     if (extraOffer == null || extraOffer.Price != extra.Price || !before.TryGetValue(extra.ProductId, out var extraSupply)
