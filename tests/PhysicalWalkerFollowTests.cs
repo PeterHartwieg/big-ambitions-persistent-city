@@ -95,7 +95,7 @@ public sealed class PhysicalWalkerFollowTests
             Bodies.BeforeSave(); Plain.RefreshOptionalStops();
             Assert.Equal(SaveCodec.Write(Plain.State), SaveCodec.Write(City.State));
         }
-        public void Dispose() { PhysicalPedestrians.VisiblePoint = null; Bodies.Dispose(); }
+        public void Dispose() { PhysicalPedestrians.VisiblePoint = null; PhysicalPedestrians.AppearOnScreen = false; Bodies.Dispose(); }
     }
 
     [Fact]
@@ -561,8 +561,9 @@ public sealed class PhysicalWalkerFollowTests
         using var f = new Fixture(Transit);
         f.Tick();
         // The body reached the station while the person is already on the subway: a handoff, not a correction.
+        // GR-9: an opaque body (its materials cannot fade) still leaves at once.
         f.Advance(Now + 16);
-        f.Body.OnScreen = true; f.Place(new Position(70, 0, 0));
+        f.Body.OnScreen = true; f.Body.CanFade = false; f.Place(new Position(70, 0, 0));
         f.Tick();
         Assert.False(f.Bound);
         Assert.Empty(f.Corrections());
@@ -574,6 +575,51 @@ public sealed class PhysicalWalkerFollowTests
         f.Tick();
         Assert.True(f.Bound);
         Assert.Equal(new Position(92, 0, 0), f.Body.Position);
+        f.AssertSameAsBodiesOff();
+    }
+
+    /// <summary>GR-9 (G6): a walker that appears in view fades in over BodyFade.FadeInSeconds of follow clock instead of
+    /// popping, and walks meanwhile; nothing in the city changes.</summary>
+    [Fact]
+    public void AWalkerAppearingInViewFadesIn()
+    {
+        using var f = new Fixture();
+        PhysicalPedestrians.AppearOnScreen = true;
+        f.Tick();
+        Assert.True(f.Bound); Assert.Equal(0f, f.Body.Fades[0]);
+        f.Run();
+        Assert.InRange(f.Body.Alpha, 0.2f, 0.6f);
+        for (int i = 0; i < 4; i++) f.Run();
+        Assert.Equal(1f, f.Body.Alpha);
+        int fades = f.Body.Fades.Count;
+        f.Run();
+        Assert.Equal(fades, f.Body.Fades.Count); // done: no more fade writes
+        Assert.Empty(f.Corrections());
+        f.AssertSameAsBodiesOff();
+    }
+
+    /// <summary>GR-9 (G6): a visible walker leaving at a mode boundary (boarding the subway) fades out where it stands
+    /// over BodyFade.HandoffFadeSeconds of follow clock and is then returned to the pool; it is no correction, and the
+    /// city equals its bodies-off twin.</summary>
+    [Fact]
+    public void AVisibleWalkerBoardingFadesOutInsteadOfPopping()
+    {
+        Route Transit() => new Route { Legs = new() { Leg(Home, new Position(70, 0, 0)),
+            Leg(new Position(70, 0, 0), new Position(90, 0, 0), TravelMode.Subway), Leg(new Position(90, 0, 0), Work) } };
+        using var f = new Fixture(Transit);
+        f.Tick();
+        f.Advance(Now + 16);
+        var body = f.Body;
+        body.OnScreen = true; f.Place(new Position(70, 0, 0));
+        f.Tick();
+        Assert.True(f.Bound); Assert.Same(body, f.Body); // still shown, now fading
+        Assert.Equal(0, body.Speed);
+        for (int i = 0; i < 3; i++) f.Run();
+        Assert.True(f.Bound); Assert.InRange(body.Alpha, 0.05f, 0.95f);
+        for (int i = 0; i < 4; i++) f.Run();
+        Assert.False(f.Bound); Assert.Contains(body.Fades, a => a < 1 && a > 0);
+        Assert.Empty(f.Corrections());
+        Assert.Equal(f.Handoffs + 1, PhysicalPopulation.Telemetry.Handoffs);
         f.AssertSameAsBodiesOff();
     }
 

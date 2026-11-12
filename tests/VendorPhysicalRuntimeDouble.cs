@@ -2,6 +2,7 @@
 // Movement advances only when a test explicitly moves an actor; path commands alone never prove arrival.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using PersistentCity.Core;
 using UnityEngine;
@@ -153,7 +154,6 @@ namespace PersistentCity.Runtime
         internal readonly Dictionary<string, PhysicalVehicleBody> Active = new();
         internal int Acquisitions;
         internal PhysicalVehicles(Func<int, object> _, int maximum) { this.maximum = maximum; Last = this; }
-        internal Action? SuspendForNativeFastForward;
         internal Func<PhysicalVehicleBody, PhysicalTrafficCommandLimit>? CommandLimit;
         internal Func<PhysicalVehicleBody, int, bool>? NativeTargetPermission;
         internal bool Ready => true;
@@ -161,6 +161,16 @@ namespace PersistentCity.Runtime
         internal string LastAdmissionResident => "";
         internal string LastAdmissionStage => "";
         internal string LastAdmissionError => "";
+        internal string OwnershipDiagnostics => "ownCars=" + Active.Count + ", parkedCars=" + Parked.Count;
+        // GR-9: the parked cars the population asked to show, by car ID, with their saved state.
+        internal readonly Dictionary<string, (ParkedCar Car, CarState? State)> Parked = new();
+        internal int ParkedRefreshes;
+        internal void ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
+        {
+            ParkedRefreshes++;
+            Parked.Clear();
+            foreach (var entry in wanted) if (!Active.Values.Any(b => b.CarId == entry.CarId)) Parked[entry.CarId] = (entry, car(entry.CarId));
+        }
         internal bool Activate() => true;
         internal void AssertHealthy() { }
         internal void Update() { }
@@ -168,7 +178,8 @@ namespace PersistentCity.Runtime
         {
             body = null;
             if (Active.ContainsKey(c.Identity.Id) || Active.Count >= maximum) return false;
-            body = new PhysicalVehicleBody(c.Identity.Id, s.Position); Active.Add(c.Identity.Id, body); Acquisitions++;
+            body = new PhysicalVehicleBody(c.Identity.Id, s.Position) { CarId = c.Car?.Id ?? "" }; Active.Add(c.Identity.Id, body); Acquisitions++;
+            Parked.Remove(body.CarId);
             return true;
         }
         internal void Release(PhysicalVehicleBody body)
@@ -204,6 +215,7 @@ namespace PersistentCity.Runtime
         internal PhysicalVehicleBody(string citizenId, Position at) { CitizenId = citizenId; Position = at; }
         internal Position Position;
         internal string CitizenId { get; }
+        internal string CarId = "";
         internal bool Valid = true;
         // Native speed multiple a test can lower (a slow car), and the advance of the last Drive step.
         internal double Pace = 1, Moved;
@@ -288,6 +300,8 @@ namespace PersistentCity.Runtime
         internal PhysicalPedestrians(Transform _, int maximum) { this.maximum = maximum; Last = this; }
         // F2c: whether a point is in the camera's view; tests decide. Unset means out of view.
         internal static Func<Position, bool>? VisiblePoint;
+        // GR-9: new bodies start on screen (a fade-in test); off by default.
+        internal static bool AppearOnScreen;
         // P-C: the production pool calls this right before each native navigation update; tests call it before moving bodies.
         internal Action? BeforeNavigation { get; set; }
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
@@ -299,7 +313,7 @@ namespace PersistentCity.Runtime
             if (idle.Count > 0) actor = idle.Pop();
             else { if (actors >= maximum) return false; actors++; actor = new(); }
             actor.transform.position = PhysicalPedestrianBody.Vector(position);
-            body = new(actor, identity.Id, ++generation); Active.Add(identity.Id, body);
+            body = new(actor, identity.Id, ++generation) { OnScreen = AppearOnScreen }; Active.Add(identity.Id, body);
             Acquisitions.Add((identity, actor, generation)); return true;
         }
         internal void Release(PhysicalPedestrianBody body)

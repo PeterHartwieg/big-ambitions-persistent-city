@@ -53,6 +53,7 @@ namespace PersistentCity.Runtime
             Exception? failure = null;
             foreach (var binding in bindings.Values.ToArray())
                 try { Release(binding); } catch (Exception error) { failure = failure ?? error; }
+            try { FadeLeaving(all: true); } catch (Exception error) { failure = failure ?? error; }
             if (failure != null) throw new InvalidOperationException("One or more physical bodies could not be released.", failure);
         }
         public void Update()
@@ -65,6 +66,7 @@ namespace PersistentCity.Runtime
             ambient.Update();
             if (!ambient.Active) throw new InvalidOperationException("Pedestrian ownership guard failed: " + ambient.LastError);
             vehicles.Update();
+            FadeLeaving(all: false);
             if (NativeTravelPace.HiddenTravel) { SuspendBeforeNativeFastForward(); return; }
             Position focus = NativeTravelPace.Focus;
             if (!focus.IsFinite) { Suspend(); return; }
@@ -90,9 +92,11 @@ namespace PersistentCity.Runtime
                     if (Position.Distance(position, focus) > releaseRadius) { Release(binding); continue; }
                     if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) { Release(binding); continue; }
                     if (player) ObservePlayerContact(binding, playerPose);
+                    FadeIn(binding);
                 }
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
+            if (!interior && Time.unscaledTime >= nextParked) { nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit); }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
             nextSelection = Time.unscaledTime + .25f;
             // The bounded view is selected deterministically. No filler identities or unrelated trips are created.
@@ -203,6 +207,7 @@ namespace PersistentCity.Runtime
                 if (queuer && !binding.Person!.SetPathTarget(binding.Line!.Spots[binding.Slot], NativeTravelPace.WalkingMetresPerSecond))
                 { GiveUp(binding); Release(binding); continue; }
                 if (!Observe(binding)) { Release(binding); continue; }
+                BeginFadeIn(binding);
                 if (car) cars++; else people++;
                 if (queuer) queued++;
             }
@@ -216,6 +221,63 @@ namespace PersistentCity.Runtime
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
         }
+
+        /// <summary>GR-9 (G6): a body that appears in view fades in over <see cref="BodyFade.FadeInSeconds"/> instead of
+        /// popping; one out of view, or whose materials cannot fade, appears at full alpha.</summary>
+        private void BeginFadeIn(Binding binding)
+        {
+            bool fades = binding.Person != null ? binding.Person.OnScreen && binding.Person.CanFade
+                : binding.Car != null && binding.Car.OnScreen && binding.Car.CanFade;
+            if (!fades) return;
+            binding.FadeInSince = followClock;
+            if (binding.Person != null) binding.Person.SetFade(0); else binding.Car!.SetFade(0);
+        }
+        private void FadeIn(Binding binding)
+        {
+            if (float.IsNaN(binding.FadeInSince)) return;
+            // A correction's fade-out takes over from a fade-in that has not finished.
+            if (!float.IsNaN(binding.FadeOutSince)) { binding.FadeInSince = float.NaN; return; }
+            float alpha = BodyFade.In(followClock - binding.FadeInSince);
+            if (alpha >= 1) binding.FadeInSince = float.NaN;
+            if (binding.Person != null) binding.Person.SetFade(alpha); else binding.Car?.SetFade(alpha);
+        }
+
+        /// <summary>GR-9 (G7): parked cars near the focus stand as objects at their saved curb positions, refreshed once a
+        /// second. Reads the saved cars only.</summary>
+        private const float ParkedRefreshSeconds = 1f;
+        private float nextParked;
+        private readonly List<ParkedCar> parkedCandidates = new List<ParkedCar>();
+        private void ShowParked(Position focus, double radius, int limit)
+        {
+            parkedCandidates.Clear();
+            var residents = simulation.View.ResidentList;
+            for (int i = 0; i < residents.Count; i++)
+            {
+                var person = Entity(residents[i]);
+                var car = person.Car;
+                if (car == null || !person.Preferences.OwnsCar || bindings.TryGetValue(person.Identity.Id, out var bound) && bound.Car != null) continue;
+                double elapsed = 0;
+                if (person.Phase == CitizenPhase.Travelling && person.Journey != null)
+                {
+                    // Only a journey whose car could stand near the focus is sampled.
+                    bool near = Position.Distance(car.ParkedPosition, focus) <= radius;
+                    var legs = person.Journey.Legs;
+                    for (int leg = legs.Count - 1; leg >= 0 && !near; leg--)
+                        if (legs[leg].Mode == TravelMode.Car) { near = Position.Distance(legs[leg].To, focus) <= radius; break; }
+                    if (!near) continue;
+                    elapsed = simulation.SampleJourney(person).ElapsedMinutes;
+                }
+                if (ParkedCars.TryParked(person, elapsed, out var at) && Position.Distance(at, focus) <= radius)
+                {
+                    parkedCandidates.Add(new ParkedCar(car.Id, person.Identity.Id, at, 0));
+                    parkedStates[car.Id] = car;
+                }
+            }
+            var shown = ParkedCars.Nearest(parkedCandidates, focus, radius, limit);
+            vehicles.ShowParked(shown, id => parkedStates.TryGetValue(id, out var state) ? state : null);
+            parkedCandidates.Clear(); parkedStates.Clear();
+        }
+        private readonly Dictionary<string, CarState> parkedStates = new Dictionary<string, CarState>(StringComparer.Ordinal);
 
         // Whether a faded person's restriction still applies: the same journey is still under way, or, after an
         // arrival-tail fade, the person is still at the place it arrived at.

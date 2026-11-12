@@ -197,7 +197,8 @@ namespace PersistentCity.Runtime
             get => throughTrafficShare;
             set => throughTrafficShare = double.IsNaN(value) ? ThroughTrafficSettings.DefaultShare : Math.Max(0, Math.Min(ThroughTrafficSettings.MaximumShare, value));
         }
-        public int MaximumPedestrians { get; set; } = 48;
+        /// <summary>GR-9 (G6): 96 walkers by default (48 before P-C gave each walker one path per leg); 1-256.</summary>
+        public int MaximumPedestrians { get; set; } = 96;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;
         private int movementFaultAcquirePercent;

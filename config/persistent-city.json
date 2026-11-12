@@ -34,7 +34,7 @@
 
   "GameClockFactor": 0.3333333333333333,
   "PhysicalEnabled": true,
-  "MaximumPedestrians": 48,
+  "MaximumPedestrians": 96,
   "MaximumVehicles": 24,
   "PhysicalRadiusMetres": 120,
   "FoodChoiceTemperature": 1.0,
