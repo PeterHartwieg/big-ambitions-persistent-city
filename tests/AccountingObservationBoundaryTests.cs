@@ -31,8 +31,6 @@ public sealed partial class TrafficClosureRefreshTests
 }
 public sealed partial class PhysicalJourneyTests
 {
-    // F2c: a body observation can no longer create arrival work at an epoch boundary, because walk legs are never
-    // leased. The arrival is the logical one, at its own minute, before and after a boundary save.
     [Theory]
     [InlineData(false)] [InlineData(true)]
     public void BeforeAdvanceObservationCannotCreateArrivalWork(bool publish)

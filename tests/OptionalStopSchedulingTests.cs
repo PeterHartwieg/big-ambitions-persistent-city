@@ -60,7 +60,7 @@ public sealed class OptionalStopSchedulingTests
         var loaded = new CitySimulator(DevelopmentChain.Read(saved).State!, new FixedWalk(10));
         var minimum = new OptionalStopTiming(5, 10, 1, 2, 10);
         loaded.AttachOptionalStops(defaultEnv, rate, minimum);
-        Assert.Equal(saved, DevelopmentChain.Write(loaded.State)); // no saved stop shortened or restarted
+        Assert.Equal(saved, DevelopmentChain.Write(loaded.State));
         var rebuilt = loaded.RebuildRoutes(new FixedWalk(10));
         Assert.Equal(saved, DevelopmentChain.Write(rebuilt.State));
         var (tuned, env) = Ready(kind, count: 48, percentage: rate);
@@ -92,7 +92,7 @@ public sealed class OptionalStopSchedulingTests
             long expectedDraws = sim.State.Citizens.Count(c => OptionalStopPolicy.Choose(
                 OptionalStopPolicy.VisitKey(c, minute + 10), sim.State.Seed, rate));
             Assert.Equal(48, tally.Eligible);
-            Assert.Equal(expectedDraws, tally.Drawn); // no night multiplier or extra opportunities
+            Assert.Equal(expectedDraws, tally.Drawn);
             Assert.Equal(tally.Drawn, tally.Realised + pending + tally.Dropped);
             Assert.Equal(sim.State.Citizens.Count(c => c.OptionalStop != null), tally.Realised);
             Assert.Equal(0, tally.Dropped);
@@ -105,7 +105,6 @@ public sealed class OptionalStopSchedulingTests
             if (rate == 0) { Assert.Empty(stops); Assert.Equal(0, env.SpotQueries); }
             else Assert.NotEmpty(stops);
             if (rate == 100) Assert.Equal(48, stops.Length);
-            // Reload during the stop, including future work breaks, and continue past the original activity.
             double activeMinute = stops.Length == 0 ? sim.State.Minute : stops.Max(s => s.StartMinute) + 0.1;
             sim.AdvanceTo(activeMinute);
             string saved = DevelopmentChain.Write(sim.State);
@@ -114,8 +113,6 @@ public sealed class OptionalStopSchedulingTests
             Assert.Equal(saved, DevelopmentChain.Write(loaded.State));
             sim.AdvanceTo(minute + 140); loaded.AdvanceTo(minute + 140);
             Assert.Equal(DevelopmentChain.Write(sim.State), DevelopmentChain.Write(loaded.State));
-            // Daytime work may continue under the existing routine at the next event;
-            // the overlay must nevertheless end and replay the same continuation.
             Assert.All(loaded.State.Citizens, c => Assert.True(c.OptionalStop == null || !c.OptionalStop.ActiveAt(loaded.State.Minute)));
         }
     }
@@ -135,7 +132,6 @@ public sealed class OptionalStopSchedulingTests
         env.Raining = false; loaded.AttachOptionalStops(env, rate); loaded.AdvanceTo(1451); loaded.RefreshOptionalStops();
         Assert.Equal(0, loaded.OptionalStopChances.Eligible);
         Assert.All(loaded.State.Citizens, c => { Assert.Null(c.OptionalStop); Assert.Single(c.RecentVisits); Assert.Equal(1570, c.NextEventMinute); });
-        // Rain ending before admission permits the ordinary draw, without creating another journey.
         var (dry, drying) = Ready(kind, 48, percentage: rate); drying.Capacity = 48;
         drying.Raining = true; dry.AdvanceTo(1449); drying.Raining = false; dry.AdvanceTo(1450);
         Assert.Equal(48, dry.OptionalStopChances.Eligible);
@@ -221,7 +217,6 @@ public sealed class OptionalStopSchedulingTests
     public void WaitingConversationPartnerRetainsSavedChoiceAfterRateChange(int oldRate, bool joins)
     {
         var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 2, percentage: oldRate);
-        // The second citizen is still en route when the first visit is saved.
         sim.State.Citizens[1].Journey!.Legs[0].Minutes = 20;
         sim.State.Citizens[1].NextEventMinute = 1460;
         sim = sim.RebuildRoutes(new FixedWalk(10)); sim.AdvanceTo(1450);
@@ -416,7 +411,6 @@ public sealed class OptionalStopSchedulingTests
         env.Present = false; sim.AdvanceTo(1450);
         var shortStay = sim.State.Citizens[0];
         shortStay.ActivityUntilMinute = shortStay.NextEventMinute = 1456;
-        // First two visitors already accepted, but geometry was not available at admission.
         var arriving = sim.State.Citizens[2];
         arriving.Phase = CitizenPhase.Travelling; arriving.PlaceId = "home";
         arriving.DestinationId = "venue"; arriving.DestinationActivity = Activity.Leisure;
@@ -457,7 +451,6 @@ public sealed class OptionalStopSchedulingTests
         sim = sim.RebuildRoutes(new FixedWalk(10)); sim.AdvanceTo(1450);
         var first = sim.State.Citizens[0];
         Assert.Equal(chosen, first.OptionalStopChoice);
-        // A lifecycle/routine wakeup keeps the admitted activity and its original deadline.
         first.NextEventMinute = 1451; sim = sim.RebuildRoutes(new FixedWalk(10));
         sim.AttachOptionalStops(env, 100-rate); sim.AdvanceTo(1451);
         Assert.Equal(chosen, first.OptionalStopChoice);
@@ -470,8 +463,8 @@ public sealed class OptionalStopSchedulingTests
     }
 
     [Theory]
-    [InlineData(1451)] // an event interrupts an active pair
-    [InlineData(1490)] // both chats have naturally expired
+    [InlineData(1451)]
+    [InlineData(1490)]
     public void UsedConversationOpportunityCannotBeRecruitedAgainAfterSameVisitEvent(double eventMinute)
     {
         var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 4);
@@ -497,14 +490,14 @@ public sealed class OptionalStopSchedulingTests
         Assert.Equal(saved,DevelopmentChain.Write(read.State!));
         sim=new CitySimulator(read.State!,new FixedWalk(10)); sim.AttachOptionalStops(env,100);
         sim.AdvanceTo(1500);
-        Assert.Null(sim.State.Citizens[2].OptionalStop); // neither old partner is reusable
+        Assert.Null(sim.State.Citizens[2].OptionalStop);
         sim.AdvanceTo(1510);
         Assert.All(sim.State.Citizens.Take(2),c=> { Assert.True(c.OptionalStop!.Cancelled); Assert.Single(c.RecentVisits); });
         Assert.All(sim.State.Citizens.Skip(2),c=>Assert.False(c.OptionalStop!.Cancelled));
         Assert.Equal(new[]{"c2","c3"},sim.State.Citizens[2].OptionalStop!.Members.OrderBy(id=>id));
         Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(DevelopmentChain.Write(sim.State)).Status);
         sim.AdvanceTo(1580);
-        Assert.All(sim.State.Citizens.Take(2),c=>Assert.Null(c.OptionalStop)); // departure clears evidence
+        Assert.All(sim.State.Citizens.Take(2),c=>Assert.Null(c.OptionalStop));
     }
 
 }

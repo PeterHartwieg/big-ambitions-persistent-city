@@ -4,21 +4,12 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Lifestyle traits in generation version 1, each a fixed integer band 0-4 (2 is neutral).
-    /// Loyalty/curiosity runs from very curious (0) to very loyal (4); every other trait runs from low to high.</summary>
     public enum ResidentTrait
     {
         CroissantTaste, BurgerTaste, HotDogTaste, PriceSensitivity, QueuePatience,
         LoyaltyCuriosity, TravelWillingness, HealthOrientation, QualityOrientation, TimePressure
     }
 
-    /// <summary>
-    /// One consumer's saved lifestyle traits. Bands holds one digit 0-4 per <see cref="ResidentTrait"/>,
-    /// in enum order; the mapping is fixed by Version. The compact form keeps a 50,000-resident save small.
-    /// Generated once from the saved city seed and the stable resident/consumer ID, then never regenerated:
-    /// the saved value is authoritative, and nothing mutable (name, home, job, body, settings) is a key.
-    /// Traits are immutable after generation, so event copies of a resident may share the record.
-    /// </summary>
     public sealed class ResidentTraits
     {
         public const int CurrentVersion = 1;
@@ -41,7 +32,6 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>The product whose taste band a trait holds under version 1, or null for non-taste traits.</summary>
         public static string? TasteProduct(ResidentTrait trait) => trait == ResidentTrait.CroissantTaste ? FoodProducts.Croissant
             : trait == ResidentTrait.BurgerTaste ? FoodProducts.Burger : trait == ResidentTrait.HotDogTaste ? FoodProducts.HotDog : null;
 
@@ -51,8 +41,6 @@ namespace PersistentCity.Core
             "loyalty", "travel", "health", "quality", "time"
         };
 
-        /// <summary>Deterministic version-1 traits. Each trait has its own hash domain:
-        /// "pc:traits:v1|&lt;id length&gt;:&lt;id&gt;|&lt;trait code&gt;", seeded by the saved city seed.</summary>
         public static ResidentTraits Generate(int seed, string stableId)
         {
             if (string.IsNullOrEmpty(stableId)) throw new ArgumentException("A stable resident or consumer ID is required.", nameof(stableId));
@@ -65,7 +53,6 @@ namespace PersistentCity.Core
             return new ResidentTraits { Version = CurrentVersion, Bands = new string(bands) };
         }
 
-        // Fixed version-1 shape: 10% / 20% / 40% / 20% / 10%, so most people are neutral on most traits.
         private static int BandFor(uint percentile) => percentile < 10 ? 0 : percentile < 30 ? 1 : percentile < 70 ? 2 : percentile < 90 ? 3 : 4;
 
         /// <summary>

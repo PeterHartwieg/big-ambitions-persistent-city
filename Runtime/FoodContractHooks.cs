@@ -4,22 +4,15 @@ using System.Threading;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>How a Decision 1 postfix maps to dirty work. Hints only shorten latency; none carries authority.</summary>
     public enum FoodContractHookKind : byte
     {
-        /// <summary>W11 catalogue membership: bump the catalogue revision, which invalidates every shop image.</summary>
         Catalogue,
-        /// <summary>The registration itself (instance or first argument): mark that shop dirty.</summary>
         Registration,
-        /// <summary>A furniture instance's cargo shape (instance or first argument): mark the shop at its address dirty.</summary>
         Holder,
-        /// <summary>Amount only (Decision 6): counted, never a dirty source. Slot removal reaches a Holder hook.</summary>
         Quantity,
-        /// <summary>No owner is reachable from the call (W7 cache reset): counted only.</summary>
         Unattributed,
     }
 
-    /// <summary>One bound native member, pinned by exact declaring type, name, static-ness and parameter types.</summary>
     public sealed class FoodContractHook
     {
         internal FoodContractHook(int id, string writer, string type, string method, bool isStatic, FoodContractHookKind kind, params string[] parameters)
@@ -34,9 +27,6 @@ namespace PersistentCity.Runtime
         public string Signature => (IsStatic ? "static " : "") + Type + "." + Method + "(" + string.Join(", ", Parameters) + ")";
     }
 
-    /// <summary>Decision 1 hook inventory: E5a's 19 lifecycle members plus ParseIntoItemInstance, TemporarilyClose,
-    /// RemoveUnusedRetailPrices and ResetItemCached. Ids index the Runtime postfix bodies. Writer ids refer to
-    /// docs/plans/e5b-remaining.md section 2.2. Parameter types use the CLR short name.</summary>
     public static class FoodContractHookTable
     {
         public const int E5aMembers = 19;
@@ -70,28 +60,20 @@ namespace PersistentCity.Runtime
 
     public enum FoodContractHint : byte { NewUnit, Coalesced, Unknown }
 
-    /// <summary>The E5a reader side of a hint. Called on the main thread only.</summary>
     public interface IFoodContractHintSink
     {
         FoodContractHint Catalogue();
         FoodContractHint Registration(object registration);
         FoodContractHint Holder(string street, int number);
-        /// <summary>Requeue every tracked shop without touching the catalogue revision.</summary>
         FoodContractHint AllShops();
     }
 
-    /// <summary>Installs one hook; returns null on success or the failure. UnpatchAll removes every hook it installed.</summary>
     public interface IFoodContractPatcher
     {
         string? Patch(FoodContractHook hook);
         void UnpatchAll();
     }
 
-    /// <summary>Routes Decision 1 postfixes to the active sink. At most one router is active; postfix bodies read
-    /// <see cref="Active"/> once and do nothing without it, so a disposed city's hooks cannot reach its reader even
-    /// if unpatching failed. Every install and dispose advances <see cref="Generation"/>. Steady-state routing
-    /// allocates nothing. Calls off the main thread are counted and turned into one hint at the next
-    /// main-thread <see cref="Drain"/>: a catalogue hint for W11 rows, a requeue of every shop otherwise.</summary>
     public sealed class FoodContractHintRouter : IDisposable
     {
         private static FoodContractHintRouter? active;
@@ -149,7 +131,6 @@ namespace PersistentCity.Runtime
             if (Environment.CurrentManagedThreadId != mainThread)
             {
                 Interlocked.Increment(ref offThread);
-                // A shop hint says nothing about catalogue membership, so only W11 calls rebuild the catalogue.
                 if (kind == FoodContractHookKind.Catalogue) Interlocked.Exchange(ref pendingCatalogue, 1);
                 else if (kind != FoodContractHookKind.Quantity && kind != FoodContractHookKind.Unattributed)
                     Interlocked.Exchange(ref pendingShops, 1);
@@ -166,7 +147,6 @@ namespace PersistentCity.Runtime
         }
         private void Fault(Exception e) { Faults++; LastFault = e.GetType().Name + ": " + e.Message; }
 
-        // Postfix entry points. They never throw into native code.
         public static void Catalogue(int hook)
         {
             var r = active;
@@ -198,8 +178,6 @@ namespace PersistentCity.Runtime
             if (r != null) r.Enter(hook, FoodContractHookKind.Unattributed);
         }
 
-        /// <summary>Main thread, once per frame: an off-thread catalogue call becomes one catalogue hint (which also
-        /// requeues every shop); an off-thread shop call becomes one requeue of every tracked shop.</summary>
         public void Drain()
         {
             if (sink == null) return;

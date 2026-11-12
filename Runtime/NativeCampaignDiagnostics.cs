@@ -6,11 +6,8 @@ namespace PersistentCity.Runtime
 {
     public sealed partial class PopulationRuntime
     {
-        // Not an Update participant. Cache belongs to this runtime/city host, not a process-wide native catalogue.
         private readonly NativeCampaignReader campaignReader = new NativeCampaignReader();
 
-        /// <summary>Main-thread bridge dump of explicit existing save-registration indices. No discovery scan.
-        /// All units finish synchronously in this call, so UI/native writers cannot interleave the observation.</summary>
         public CampaignSnapshot ReadCampaignSnapshot(IReadOnlyList<int> registrationIndices)
         {
             var save = SaveGameManager.Current;

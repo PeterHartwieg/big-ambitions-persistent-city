@@ -11,11 +11,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.PerfGateOffline;
 
-/// <summary>Writes the offline run as F4a's <c>perf-gate-export/v1</c> with <c>source=offline</c>, and runs F4a's
-/// analyzer (<c>tools/perf-gate/analyze.py</c> against <c>contract-v1.json</c>) to build the <c>perf-gate-report/v1</c>.
-/// The analyzer owns every verdict, refusal and the report format; this file only maps offline measurements to export
-/// fields. Offline-only detail (per game hour, hold causes, slowest unit, state hashes) rides in each window's
-/// <c>offline</c> block, which the analyzer ignores.</summary>
 internal static class Export
 {
     public const string Format = "perf-gate-export/v1", Source = "offline", NotApplicable = "n/a";
@@ -32,15 +27,11 @@ internal static class Export
         public long AllocatedBytes;
         public string CommandLine = "";
         public List<WindowResult> Windows = new();
-        /// <summary>Raw frames pooled for W-accounting: the frames within one game minute of a native hour rollover.</summary>
         public List<(WindowResult From, int Index)> Accounting = new();
     }
 
-    /// <summary>Contract arms: Decision 3's declared windows and G9's speed 1-3 segments with bodies are primary; speed 6 with
-    /// bodies released and the time-machine skip are report-only (G9 asks M rows in the speed 1-3 segments only).</summary>
     public static string Arm(WindowSpec s) => s.Presentation == Presentation.Bodies && s.NativeSpeed <= 3 ? "primary" : "report-only";
 
-    /// <summary>Condition with its frame rate, so 30, 60 and 120 FPS windows never pool or pair with each other.</summary>
     public static string Condition(WindowSpec s) => s.Condition + "@" + s.Fps.ToString(CultureInfo.InvariantCulture) + "fps";
 
     public static JObject Build(Inputs inputs)
@@ -74,7 +65,6 @@ internal static class Export
     {
         ["source_commit"] = Git("rev-parse HEAD"),
         ["source_dirty"] = Git("status --porcelain") is { Length: > 0 } dirty && dirty != "unknown",
-        // No PersistentCity.dll offline: Core and Persistence are compiled into this tool, so the timed binary is the tool's.
         ["pc_dll_sha256"] = Sha256File(typeof(Export).Assembly.Location),
         ["pc_dll_note"] = "offline: SHA-256 of the PerfGateOffline assembly, which compiles Core and Persistence from source",
         ["probe_dll_sha256"] = NotApplicable, ["expected_scope_list_hash"] = NotApplicable, ["game_build"] = NotApplicable,
@@ -137,10 +127,6 @@ internal static class Export
         catch (System.ComponentModel.Win32Exception) { return "unknown"; }
     }
 
-    /// <summary>Contract receipts. Offline satisfies autosave (no game save inside a window), PC readiness (the fill has
-    /// reached its targets) and accounting diagnostics (read directly). The rest describe the rig session and are n/a, which
-    /// the contract does not allow a candidate window: every offline window is invalid as a gate window, so it gives
-    /// per-window expectations and never enters a row verdict.</summary>
     private static JObject Receipts() => new JObject
     {
         ["autosave"] = "pass", ["no_dotnet_activity"] = NotApplicable, ["priority_high"] = NotApplicable, ["focused"] = NotApplicable,
@@ -150,7 +136,6 @@ internal static class Export
 
     private static JObject Frame(long index, double coreMs, double driverMs, int gc) => new JObject
     {
-        // No game frame offline: the whole frame is the measured mod work.
         ["frame"] = index, ["mod_work_ms"] = R(coreMs + driverMs), ["whole_frame_ms"] = R(coreMs + driverMs), ["observer_ms"] = 0.0, ["gc"] = gc,
         ["components"] = new JObject { [Advancement] = R(coreMs), [Driver] = R(driverMs) },
     };
@@ -214,11 +199,9 @@ internal static class Export
         };
     }
 
-    /// <summary>Simulated real time of a game hour over the unheld clock's time for the same game minutes.</summary>
     public static double HourRatio(HourRow h, WindowSpec s)
         => h.GameMinutes <= 0 ? 0 : h.Frames / (double)s.Fps / (h.GameMinutes / s.GameMinutesPerRealSecond);
 
-    /// <summary>W-accounting: the pooled rollover frames as one window. No accounting block, so its S rows are not established.</summary>
     private static JObject AccountingWindow(List<(WindowResult From, int Index)> pooled)
     {
         var first = pooled[0].From;
@@ -239,8 +222,6 @@ internal static class Export
         };
     }
 
-    /// <summary>G9's fastest-traveller pace for the contract's S5 row: every game hour of at least 30 minutes in the speed
-    /// windows with bodies and the day, and the whole day. Null without a day window.</summary>
     private static JObject? S5(List<WindowResult> windows)
     {
         var fastest = windows.Where(w => w.Spec.Arm.StartsWith("fastest", StringComparison.Ordinal)).ToList();
@@ -264,8 +245,6 @@ internal static class Export
     }
 }
 
-/// <summary>Runs F4a's analyzer (<c>tools/perf-gate/analyze.py</c>) on an export. Python is <c>$PYTHON</c>, else
-/// <c>python3</c> (<c>python</c> on Windows).</summary>
 internal static class Analyzer
 {
     public static string Directory([CallerFilePath] string here = "") => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "perf-gate"));
@@ -283,7 +262,6 @@ internal static class Analyzer
         return (process.ExitCode, (stdout + stderr.Result).Trim());
     }
 
-    /// <summary>The contract's required header fields, read from F4a's file so the self-test follows it.</summary>
     public static string[] RequiredHeaderFields()
         => JObject.Parse(File.ReadAllText(Contract))["header"]!["required"]!.Select(t => (string)t!).ToArray();
 

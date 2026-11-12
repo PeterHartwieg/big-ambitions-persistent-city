@@ -7,24 +7,18 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // E6c (docs/plans/e6-carts-food-trucks.md section 5): the vendor table, CityState.Vendors, and FoodScope.Channel.
     public static partial class SaveCodec
     {
         public const int MaxVendorLive = VendorTable.MaximumLive;
         public const int MaxVendorLiveAndRetired = VendorTable.MaximumLiveAndRetired;
         public const int MaxVendorTombstones = VendorTable.MaximumTombstones;
-        /// <summary>Every row a table can hold, and so the range of the business-reference <c>v</c> place form.</summary>
         public const int MaxVendorRows = MaxVendorLiveAndRetired + MaxVendorTombstones;
-        /// <summary>Two base-36 digits after <c>v</c> (1,296 values) cover all 1,152 rows.</summary>
         private const int VendorIndexWidth = 2;
         private const char VendorPlaceForm = 'v';
         private const int VendorVersion30 = 1;
         private const long MaxVendorHour = (long)(MaxMinute / 60);
         private const int MaxVendorDay = (int)(MaxMinute / 1440);
 
-        /// <summary>A place cell inside a compact person or visit token: three base-36 digits of the ordinal Places
-        /// index, or <c>v</c> and two base-36 digits of the vendor table's saved row order. With no
-        /// tables (the streaming check) it bounds the index and returns a placeholder that is never published.</summary>
         private sealed class PlaceCells
         {
             public static readonly PlaceCells Streaming = new PlaceCells(null, null);
@@ -39,7 +33,6 @@ namespace PersistentCity.Persistence
                 int index = -1;
                 if (text[offset] == VendorPlaceForm)
                 {
-                    // v indices resolve only through the vendor table.
                     try { index = MemoryWire.Number(text, offset + 1, VendorIndexWidth); } catch (FormatException) { Fail(error); }
                     Require(index < (vendors?.Count ?? MaxVendorRows), error);
                     return places != null ? vendors![index] : "#";
@@ -47,30 +40,17 @@ namespace PersistentCity.Persistence
                 try { index = MemoryWire.Number(text, offset, 3); } catch (FormatException) { Fail(error); }
                 Require(index < (places?.Count ?? MaxPlaces), error);
                 if (places == null) return "#";
-                Require(!VendorNames.IsVendorPlace(places[index]), error); // a city index never names a vendor place
+                Require(!VendorNames.IsVendorPlace(places[index]), error);
                 return places[index];
             }
         }
 
-        /// <summary>The writer's place cell for <paramref name="id"/>: the vendor form for a vendor row's place, else the
-        /// city index. Null when the id is in neither table.</summary>
         private static string? PlaceCell30(WireContext context, string id)
             => context.VendorIndex.TryGetValue(id, out int row) ? VendorPlaceForm + MemoryWire.Number(row, VendorIndexWidth)
             : context.Index.TryGetValue(id, out int at) ? MemoryWire.Number(at, 3) : null;
 
-        /// <summary>The length bound of a saved place or business field: a vendor place id or business id may reach the
-        /// escaped maxima (<see cref="VendorNames.MaximumPlaceIdLength"/>, <see cref="VendorNames.MaximumBusinessIdLength"/>);
-        /// every other value keeps the field's own bound.</summary>
         private static int IdentityBound(string? value, int max) => VendorNames.Bound(value, max);
 
-        // ---- Wire ----
-        // Vendors:    [1, [row, ...]], rows ordinal by vehicle id (the table's own order; v indices count in this order).
-        // live (0) / retired (1):
-        //             [state, vehicle id, kind, generation, place id, stand | null, deferred stand | null, authority]
-        // tombstone:  [2, vehicle id, generation, place id, business id]
-        // stand:      [opening id, x, y, z, opened day, opened minute, closes day, closes minute, published]
-        // authority:  [desired, requested hour, from hour, until hour, suspended, opening id, handback pending]
-        // The place id and business id are derived from the vehicle id and must equal the derivation.
 
         private sealed class VendorConverter30 : JsonConverter<VendorTable>
         {
@@ -118,8 +98,6 @@ namespace PersistentCity.Persistence
 
             public override VendorTable ReadJson(JsonReader reader, Type objectType, VendorTable? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
-                // The wire context already decoded this field strictly (and the shape check did again with token text);
-                // hand that detached table over once instead of decoding it a third time.
                 var decoded = context.TakeVendors();
                 if (decoded != null) { reader.Skip(); return decoded; }
                 int records = 0;
@@ -127,12 +105,8 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>Streaming check before deserialization: the same strict decode the reader runs.</summary>
         private static void CheckVendors30(JsonReader reader, TokenText text, ref int records) => ReadVendors30(reader, text, ref records);
 
-        /// <summary>Strict decode of the vendor table. Bounds are checked before each row is allocated, ids must be
-        /// strictly ordinal, and the restored table passes the same rules the writer runs. Charges one record per row.
-        /// With <paramref name="text"/> it also checks the original token text.</summary>
         private static VendorTable ReadVendors30(JsonReader reader, TokenText? text, ref int records)
         {
             Require(reader.TokenType == JsonToken.StartArray, "Expected the vendor table.");
@@ -146,7 +120,6 @@ namespace PersistentCity.Persistence
             {
                 Require(reader.TokenType == JsonToken.StartArray, "Expected a vendor row.");
                 var state = (VendorRowState)Long30(reader, text, 0, (int)VendorRowState.Tombstone, "Unknown vendor row state.");
-                // Bounds before allocation (plan 3.5): live <= 64, live + retired <= 128, tombstones <= 1,024.
                 if (state == VendorRowState.Live && ++live > MaxVendorLive) Fail("Live vendor rows exceed the bound of 64.");
                 if (state == VendorRowState.Retired) retired++;
                 if (state != VendorRowState.Tombstone && live + retired > MaxVendorLiveAndRetired) Fail("Live and retired vendor rows exceed the bound of 128.");
@@ -236,7 +209,6 @@ namespace PersistentCity.Persistence
             return value;
         }
 
-        // ---- Restore and copy ----
 
         private sealed class VendorRowImage
         {
@@ -247,8 +219,6 @@ namespace PersistentCity.Persistence
             public VendorAuthority Authority = new VendorAuthority();
         }
 
-        /// <summary>Builds the table through its own transitions. Tombstones are admitted first, then retired rows,
-        /// then live rows, so no intermediate state breaks the capacity invariant the caller already bounded.</summary>
         private static VendorTable RestoreVendors30(List<VendorRowImage> images)
         {
             var table = new VendorTable();
@@ -259,7 +229,6 @@ namespace PersistentCity.Persistence
                     var row = table.Admit(image.VehicleId, image.Kind);
                     row.Generation = image.Generation;
                     row.Stand = image.Stand; row.DeferredStand = image.DeferredStand; row.Authority = image.Authority;
-                    // Derived, not saved: a live or retired row has its vendor place exactly while it has a stand.
                     row.PlacePublished = image.State != VendorRowState.Tombstone && image.Stand != null;
                     table.Move(row, image.State);
                 }
@@ -267,8 +236,6 @@ namespace PersistentCity.Persistence
             return table;
         }
 
-        /// <summary>F7c snapshot copy: every saved field, including ones validation would refuse, so the snapshot
-        /// reports the same refusal as the live table.</summary>
         internal static VendorTable? CopyVendors30(VendorTable? live)
         {
             if (live == null) return null;
@@ -295,10 +262,7 @@ namespace PersistentCity.Persistence
             };
         }
 
-        // ---- Rules shared by the reader and the writer ----
 
-        /// <summary>The row rules a saved table must keep. The writer runs them on the live table, the reader on the
-        /// table it restored, so a table the reader would refuse is never written.</summary>
         private static void ValidateVendorTable30(VendorTable table)
         {
             Require(table != null, "Missing vendor table.");
@@ -313,7 +277,6 @@ namespace PersistentCity.Persistence
                 Require(row.Generation >= 1, "Invalid vendor generation.");
                 if (row.State == VendorRowState.Tombstone)
                 {
-                    // A tombstone keeps only vehicle id, generation, place and business; anything else would be lost on write.
                     var a = row.Authority;
                     Require(row.Kind == "" && row.Stand == null && row.DeferredStand == null && !row.PlacePublished
                         && a != null && !a.Desired && a.RequestedHour == -1 && a.FromHour == -1 && a.UntilHour == -1
@@ -342,20 +305,14 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>The validated vendor rows of one state, by place, and the places that food checks may name.</summary>
         private sealed class VendorIndex30
         {
             public static readonly VendorIndex30 Empty = new VendorIndex30();
-            /// <summary>Every row's place, tombstones included (business references may name them).</summary>
             public readonly Dictionary<string, VendorRow> ByPlace = new Dictionary<string, VendorRow>(StringComparer.Ordinal);
-            /// <summary>Live and retired rows with a stand: the places the simulator publishes, at the stand's position. Food
-            /// records name them, and so may persons, visits and visitor arrivals (they keep the row retired, not compacted).</summary>
             public readonly List<Place> FoodPlaces = new List<Place>();
             public bool IsFoodPlace(string id) => ByPlace.TryGetValue(id, out var row) && row.State != VendorRowState.Tombstone && row.Stand != null;
         }
 
-        /// <summary>Write-side and read-side vendor validation, run before food validation. Returns the index and charges
-        /// one record per row.</summary>
         private static VendorIndex30 ValidateVendors30(CityState state, ref int records)
         {
             var table = state.Vendors;
@@ -366,25 +323,20 @@ namespace PersistentCity.Persistence
                 Charge(ref records);
                 index.ByPlace.Add(row.PlaceId, row);
                 if (row.State != VendorRowState.Tombstone && row.Stand != null)
-                    // The place the simulator rebuilds (CitySimulator.PublishVendorPlace): position and hours from the stand.
                     index.FoodPlaces.Add(new Place { Id = row.PlaceId, Name = "Street Food " + row.Kind, Kind = PlaceKind.Shop, Capacity = 1,
                         EvidenceSource = "streetfood", Position = row.Stand.Position, OpenMinute = 0, CloseMinute = 0, WeeklyHours = VendorRules.StandHours(row.Stand) });
             }
-            // City places never use the vendor prefix, so a city index can never name a vendor place.
             foreach (var place in state.Places) Require(place == null || !VendorNames.IsVendorPlace(place.Id), "A city place uses the vendor place prefix.");
             if (state.Food == null) Require(index.FoodPlaces.Count == 0, "Vendor places need a food scope.");
             return index;
         }
 
-        /// <summary>Channel-aware scope rules (plan 3.8): a Shop scope names a city shop, a Vehicle scope names the place
-        /// of a live or retired vendor row with a stand and carries that row's business id; every such row has exactly one
-        /// scope. Runs before the scope loop, which refuses null scopes and duplicate places.</summary>
         private static void ValidateScopeChannels30(FoodCommerceState food, VendorIndex30 vendors)
         {
             var vehiclePlaces = new HashSet<string>(StringComparer.Ordinal);
             foreach (var scope in food.Shops)
             {
-                if (scope == null || scope.PlaceId == null) continue; // the scope loop refuses these
+                if (scope == null || scope.PlaceId == null) continue;
                 Require(scope.Channel == FoodScopeChannel.Shop || scope.Channel == FoodScopeChannel.Vehicle, "Unknown food scope channel.");
                 bool vendorPlace = VendorNames.IsVendorPlace(scope.PlaceId);
                 if (scope.Channel == FoodScopeChannel.Shop) { Require(!vendorPlace, "A shop scope names a vendor place."); continue; }
@@ -396,8 +348,6 @@ namespace PersistentCity.Persistence
             foreach (var place in vendors.FoodPlaces) Require(vehiclePlaces.Contains(place.Id), "A vendor row with a stand has no vehicle scope.");
         }
 
-        /// <summary>A business reference at a vendor place must name that row's signature with a generation from 1 to
-        /// the row's current generation, in canonical decimal.</summary>
         private static bool VendorReference30(VendorRow row, string businessId)
         {
             string prefix = row.Signature + ":generation:";
@@ -407,10 +357,7 @@ namespace PersistentCity.Persistence
                 && generation >= 1 && generation <= row.Generation && digits == generation.ToString(CultureInfo.InvariantCulture);
         }
 
-        // ---- FoodScope.Channel ----
 
-        /// <summary>The scope channel is written from the vendor schema. Its setter is not public, so the property is
-        /// declared here and set through <see cref="FoodScope.UseChannel"/>, which refuses unknown values.</summary>
         private static JsonProperty ChannelProperty30() => new JsonProperty
         {
             PropertyName = "Channel", UnderlyingName = "Channel", PropertyType = typeof(FoodScopeChannel), DeclaringType = typeof(FoodScope),

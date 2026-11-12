@@ -1,4 +1,3 @@
-"""F9h evidence writer and cross-machine comparison (tools/acceptance/evidence.py). Synthetic results only."""
 import json
 import subprocess
 import tempfile
@@ -120,7 +119,6 @@ class Compare(unittest.TestCase):
             self.assertEqual(movement["status"], "equal")
 
     def test_a_config_hash_that_differs_only_by_checkout_line_endings_is_compared(self):
-        # The working-tree hash of config/ changes with core.autocrlf; its content is checked by the git diff of the inputs.
         defaults = {"FoodChoicePriceWeight": 1.2, "FoodChoiceHouseholdWeight": 1}
         with tempfile.TemporaryDirectory() as tmp:
             store = self.store(tmp)
@@ -144,7 +142,6 @@ class Compare(unittest.TestCase):
 
 
 def git_repo(root):
-    """A repository with three commits: base, a docs-only commit and a Core commit. Returns their SHAs."""
     repo = Path(root) / "repo"
     (repo / "Core").mkdir(parents=True)
     (repo / "docs").mkdir()

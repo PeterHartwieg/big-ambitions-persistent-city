@@ -9,8 +9,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>GR-3 (R3, R4): needs with catalogue categories and a neutral default, impulse while passing, and one purchase
-/// contract for every family with food on the same checkout.</summary>
 public sealed class NeedPurchaseTests
 {
     private const string Resident = "resident-0001", Venue = "address:Main%20Street:12:shop", Gift = "ba:businesstype_giftshop", Gym = "ba:businesstype_gym";
@@ -23,7 +21,6 @@ public sealed class NeedPurchaseTests
         => new PurchaseRequest(Resident, Venue, PurchaseIntention.Need(Gift), Money.FromCents(ceilingCents), minute);
     private static string WalletText(ResidentBudget w) => string.Join("|", w.Balance, w.PreparedFoodSpent, w.Ledger.Discretionary, w.HeldPurchase);
 
-    /// <summary>Native double: stock and booked orders, changed only when a sale goes through.</summary>
     internal sealed class Native : IPurchaseNative
     {
         public PurchaseFamily Family { get; set; } = PurchaseFamily.Gym;
@@ -64,17 +61,14 @@ public sealed class NeedPurchaseTests
         Assert.Equal(PurchaseRefusal.Ceiling, result.Refusal);
         Assert.Equal(0, native.Calls); Assert.Empty(receipts); Assert.Equal(before, WalletText(wallet));
 
-        // The wallet's own limit lowers the requested ceiling the same way.
         var poor = Wallet(300);
         Assert.Equal(PurchaseRefusal.Ceiling, PurchaseContract.Run(Request(100000), poor, receipts, native).Refusal);
         Assert.Equal(0, native.Calls); Assert.Empty(receipts);
 
-        // A full venue refuses before the basket is priced; the native count never refuses.
         var full = new Native { ServedThisHour = 10, NativeHourlyCount = 0 };
         Assert.Equal(PurchaseRefusal.VenueFull, PurchaseContract.Run(Request(100000), wallet, receipts, full).Refusal);
         Assert.Equal(0, full.Calls); Assert.Empty(receipts); Assert.Equal(before, WalletText(wallet));
 
-        // An unsupported processor stays native whatever the ceiling.
         var unsupported = new Native { Family = PurchaseFamily.Unsupported };
         Assert.Equal(PurchaseRefusal.Unsupported, PurchaseContract.Run(Request(100000), wallet, receipts, unsupported).Refusal);
         Assert.Equal(0, unsupported.Calls);
@@ -94,11 +88,9 @@ public sealed class NeedPurchaseTests
         Assert.Equal(Money.FromCents(9200), wallet.Balance);
         Assert.Equal(Money.FromCents(800), wallet.Ledger.Discretionary);
         Assert.StartsWith("paid|" + Money.FromCents(800).ToCentsText() + "|", receipts[result.Key]);
-        // The same resident, venue and minute never sells again.
         Assert.Equal(PurchaseRefusal.AlreadyRecorded, PurchaseContract.Run(Request(850), wallet, receipts, native).Refusal);
         Assert.Equal(1, native.Calls);
 
-        // A booked order outside the quote is reversed: books restored, no debit, no receipt.
         var rogue = new Native();
         rogue.Before = () => { rogue.Orders.Add("x"); return PurchaseNativeOutcome.Processed(new[] { new PurchaseLine("ba:itemname_hat", Money.FromCents(100), false) }); };
         var reversed = PurchaseContract.Run(Request(850, 601), wallet, receipts, rogue);
@@ -113,7 +105,6 @@ public sealed class NeedPurchaseTests
         var extras = new[] { new FoodTicketLine("ba:itemname_soda", Money.FromCents(150)), new FoodTicketLine("ba:itemname_fries", Money.FromCents(250)) };
         var basket = PurchaseContract.FoodBasket("ba:itemname_burger", Money.FromCents(900), extras);
         Assert.All(basket, l => Assert.True(l.Mandatory));
-        // The pre-GR-3 rule: the ticket sells whole when its total fits the allowance, and is refused whole when it does not.
         foreach (long allowance in new long[] { 800, 900, 1050, 1299, 1300, 2000 })
         {
             var quote = PurchaseContract.Quote(basket, Money.FromCents(allowance));
@@ -132,7 +123,6 @@ public sealed class NeedPurchaseTests
         Assert.Equal((7, 3), (profile.IntervalDays, profile.SpreadDays));
         Assert.Null(NeedModel.For(""));
         Assert.Same(profile, NeedModel.For(Gift));
-        // A modded type is a category too, with the same neutral default.
         Assert.True(NeedModel.For("mymod:businesstype_toys")!.IsNeutral);
 
         var need = new NeedState(Gift, 10, "", 0);
@@ -162,7 +152,6 @@ public sealed class NeedPurchaseTests
         int mid = NeedModel.ImpulseRate(new NeedState(Gift, 8, "", 0), profile, 5);
         Assert.InRange(mid, NeedModel.ImpulseBaseBasisPoints + 1, NeedModel.ImpulseBaseBasisPoints + NeedModel.ImpulseNeedBasisPoints - 1);
 
-        // Over many people the draw follows the rate, is the same on a second run, and gives each person one impulse a day.
         int hits = 0;
         for (int n = 0; n < 4000; n++)
         {
@@ -172,7 +161,7 @@ public sealed class NeedPurchaseTests
             Assert.Equal(first, NeedModel.Impulse(b, profile, Venue, 3, 11));
             if (first) { hits++; Assert.False(NeedModel.Impulse(a, profile, "other", 3, 11)); Assert.Equal(Venue, a.Needs!.ImpulseVenue); }
         }
-        Assert.InRange(hits, 40, 130); // 2 % of 4000 = 80
+        Assert.InRange(hits, 40, 130);
     }
 
     [Fact]
@@ -181,7 +170,7 @@ public sealed class NeedPurchaseTests
         var work = new PlanItem(PlanItemKind.Work, Activity.Work, "work", 600, 600, 1080, PlanPriority.Fixed);
         var plan = new DayPlan(0, 1, ShiftType.Day, 0, "work", new[] { work }, null);
         Assert.NotNull(NeedModel.ImpulseItem(plan, Venue, 400, 30));
-        Assert.Null(NeedModel.ImpulseItem(plan, Venue, 560, 30)); // ends inside the work travel allowance
+        Assert.Null(NeedModel.ImpulseItem(plan, Venue, 560, 30));
         var shop = new PlanItem(PlanItemKind.Need, Activity.Shop, "shop", 1100, 1100, 1145, PlanPriority.Optional);
         var withNeed = new DayPlan(0, 1, ShiftType.Day, 0, "work", new[] { work, shop }, null);
         Assert.Null(NeedModel.ImpulseItem(withNeed, Venue, 400, 30));
@@ -190,7 +179,6 @@ public sealed class NeedPurchaseTests
         Assert.Equal((PlanItemKind.Need, PlanPriority.Optional, 1150.0, 1180.0), (item.Kind, item.Priority, item.EarliestStart, item.EndsAt));
     }
 
-    /// <summary>The market double: serves every shop of the banded city as a gift shop, and logs each request.</summary>
     internal sealed class Market : IPurchaseMarket
     {
         public readonly Dictionary<string, string> Store = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -224,7 +212,6 @@ public sealed class NeedPurchaseTests
         var (state, food) = WorkplaceCapacityTests.Fresh(3, seed);
         var market = new Market();
         foreach (var shop in state.Places.Where(p => p.Kind == PlaceKind.Shop)) { shop.BusinessType = Gift; market.Venues.Add(shop.Id); }
-        // A gym, cinema or nightclub is a leisure place; its scheduled visits buy through the same contract.
         foreach (var leisure in state.Places.Where(p => p.Kind == PlaceKind.Leisure)) { leisure.BusinessType = Gym; market.Venues.Add(leisure.Id); }
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         city.AttachFoodMarket(food); city.AttachPurchases(market);
@@ -237,9 +224,7 @@ public sealed class NeedPurchaseTests
     public void ARefusedPurchaseDefersTheNeedAndItIsBoughtWhenItComesDueAgain()
     {
         var (city, market) = Banded();
-        // Every purchase on the first planned day is refused by the venue; later days sell.
         market.Decide = r => r.Minute / 1440 <= 1 ? PurchaseNativeOutcome.Refused(PurchaseRefusal.VenueNotReady, "no staff") : (PurchaseNativeOutcome?)null;
-        // Every resident starts with the need due, so the first shop visit buys or refuses.
         foreach (var person in city.State.Citizens.Where(c => c.Wallet != null))
         {
             person.Needs = new PersonNeeds();
@@ -261,7 +246,6 @@ public sealed class NeedPurchaseTests
         }
         Assert.True(boughtLater > 0, "some deferred need was bought once it came due again");
         Assert.True(city.PurchasesBought > 0);
-        // Each confirmed purchase moved exactly its paid total out of a wallet, into discretionary spending.
         Assert.Equal(city.PurchasesBought, market.Store.Values.Count(v => v.StartsWith("paid|" + Money.FromCents(400).ToCentsText() + "|", StringComparison.Ordinal)));
     }
 
@@ -329,11 +313,9 @@ public sealed class NeedPurchaseTests
         var receipt = Assert.Single(market.Store);
         Assert.StartsWith("uncertain|", receipt.Value);
         Assert.Contains(receipt.Key, city.PurchaseFault);
-        // Nobody was debited; the fault carries into a replacement simulator, which stays detached.
         Assert.All(city.State.Citizens.Where(c => c.Wallet != null), c => Assert.Equal(wallets[c.Identity.Id], c.Wallet!.Ledger.Discretionary));
         var rebuilt = city.RebuildRoutes(new FreshCityTraceTests.Walk());
         Assert.Equal(city.PurchaseFault, rebuilt.PurchaseFault); Assert.Null(rebuilt.Purchases);
-        // The uncertain receipt is never pruned.
         Assert.Equal(0, PurchaseContract.Prune(market.Store, 1000));
         Assert.Single(market.Store);
     }
@@ -355,17 +337,15 @@ public sealed class NeedPurchaseTests
     public void AnEssentialCategoryTheMarketSellsIsNotAlsoDeductedAtTheDailyPosting()
     {
         var (city, market) = Banded();
-        Assert.Equal(0, city.PurchaseEssentials()!.Count); // gift shops and gyms sell no essential category
+        Assert.Equal(0, city.PurchaseEssentials()!.Count);
         foreach (var shop in city.State.Places.Where(p => p.Kind == PlaceKind.Shop)) shop.BusinessType = "ba:businesstype_clothingstore";
-        Run(city, city.State.Minute + 60); // the policy is read once per game hour
+        Run(city, city.State.Minute + 60);
         var needs = city.PurchaseEssentials()!;
         Assert.Equal(new[] { HouseholdEssentials.Clothing }, needs.Categories);
         Assert.Equal(needs.Categories, city.RebuildRoutes(new FreshCityTraceTests.Walk()).PurchaseEssentials()!.Categories);
         var plain = new CitySimulator(city.State, new FreshCityTraceTests.Walk());
         Assert.Null(plain.PurchaseEssentials());
 
-        // The daily posting reads it: two cities that differ only in their venues' type, with no purchase made in either,
-        // differ in the essentials posted by exactly the clothing share of each posting.
         (Money Paid, int Postings) Essentials(string type)
         {
             var (run, m) = Banded();
@@ -382,7 +362,6 @@ public sealed class NeedPurchaseTests
 
     private const string Other = "ba:businesstype_bookstore";
 
-    /// <summary>The banded city at day 1, its places, and the last shop retyped as the only served bookstore.</summary>
     private static (CitySimulator City, List<Place> Catalogue, Dictionary<string, Place> Index, Place Bookstore) PlanningCity()
     {
         var (city, _) = Banded();
@@ -399,7 +378,6 @@ public sealed class NeedPurchaseTests
     {
         var (city, catalogue, index, bookstore) = PlanningCity();
         var planning = new NeedPlanning(new[] { bookstore });
-        // A person whose drawn day has a shop window, tried over a few days.
         foreach (var person in city.State.Citizens.Where(c => !c.IsVisitor))
             for (int day = 2; day < 6; day++)
             {
@@ -407,10 +385,8 @@ public sealed class NeedPurchaseTests
                 var drawn = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
                 int at = drawn.Items.ToList().FindIndex(i => i.Kind == PlanItemKind.Need);
                 if (at < 0) continue;
-                // Not due: the drawn venue stays.
                 person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, day + 1, "", 0));
                 Assert.Equal(drawn.Items[at].VenueId, DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning).Items[at].VenueId);
-                // Deferred and due again: the window goes to the venue that sells the category.
                 NeedModel.Defer(person.Needs.Find(Other)!, NeedModel.For(Other)!, day - 1);
                 Assert.Equal(day, person.Needs.Find(Other)!.NextDueDay);
                 var retry = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
@@ -432,10 +408,8 @@ public sealed class NeedPurchaseTests
                 person.Needs = null;
                 var drawn = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
                 if (drawn.Items.Any(i => i.Kind == PlanItemKind.Need)) continue;
-                // Planning first gives the person a need for every served category.
                 DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
                 Assert.NotNull(person.Needs!.Find(Other));
-                // Deferred yesterday: due today, and today's plan gets a visit for it although the routine drew none.
                 var need = person.Needs.Find(Other)!;
                 need.NextDueDay = day - 1; NeedModel.Defer(need, NeedModel.For(Other)!, day - 1);
                 var plan = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
@@ -444,15 +418,12 @@ public sealed class NeedPurchaseTests
                 Assert.InRange(visit.EarliestStart, day * 1440.0 + 600, day * 1440.0 + 1200);
                 foreach (var other in plan.Items.Where(i => i != visit && i.Kind != PlanItemKind.Meal))
                     Assert.True(visit.EndsAt <= other.EarliestStart - 30 || visit.EarliestStart >= other.EndsAt + 30, "the visit keeps clear of " + other.Kind);
-                // The rest of the day is the drawn plan.
                 Assert.Equal(drawn.Items.Count + 1, plan.Items.Count);
                 return;
             }
         Assert.Fail("no person with a day without a shop window");
     }
 
-    /// <summary>The scheduled visit is executed, not only planned: a resident whose day has no routine shop window and
-    /// whose plan is drawn during a breakfast outing still goes and buys (the outing's home continuation is cut back).</summary>
     [Fact]
     public void AScheduledNeedVisitIsExecutedOnADayWithoutARoutineShopWindow()
     {
@@ -460,7 +431,6 @@ public sealed class NeedPurchaseTests
         var person = city.State.Citizens.Single(c => c.Identity.Id == "pc:11");
         Assert.NotNull(person.Wallet);
         person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Gift, 2, "", 0));
-        // The routine alone draws no shop window for this resident on day 2.
         var catalogue = city.State.Places.Where(p => p.Kind == PlaceKind.Shop || p.Kind == PlaceKind.Leisure).ToList();
         var index = city.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
         var copy = CitySimulator.CloneForEvent(person); copy.Plan = null;
@@ -477,7 +447,6 @@ public sealed class NeedPurchaseTests
     public void ADueNeedWhoseVenueIsClosedInTheDrawnWindowGetsAVisitWhenItIsOpen()
     {
         var (city, catalogue, index, bookstore) = PlanningCity();
-        // Open 09:00 to 11:00 only: an afternoon routine window cannot serve the need, the late morning can.
         bookstore.WeeklyHours.Clear(); bookstore.OpenMinute = 540; bookstore.CloseMinute = 660;
         var planning = new NeedPlanning(new[] { bookstore });
         foreach (var person in city.State.Citizens.Where(c => !c.IsVisitor && c.Wallet != null))
@@ -490,10 +459,9 @@ public sealed class NeedPurchaseTests
                 person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, day, "", 1));
                 var plan = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
                 var visit = plan.Items.SingleOrDefault(i => i.Kind == PlanItemKind.Need);
-                if (visit == null || visit.VenueId != bookstore.Id) continue; // that morning is taken; try another person
+                if (visit == null || visit.VenueId != bookstore.Id) continue;
                 Assert.InRange(visit.EarliestStart, day * 1440.0 + 600, day * 1440.0 + 615);
                 Assert.True(visit.EndsAt <= day * 1440.0 + 660);
-                // The drawn afternoon window is replaced, not kept beside it (one shop visit a day).
                 Assert.DoesNotContain(plan.Items, i => i.Kind == PlanItemKind.Need && i.EarliestStart == window.EarliestStart);
                 return;
             }
@@ -512,16 +480,13 @@ public sealed class NeedPurchaseTests
         var byDistance = shops.OrderBy(p => Position.Distance(home.Position, p.Position)).ThenBy(p => p.Id, StringComparer.Ordinal).ToList();
         person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, 2, "", 0));
         double from = 2 * 1440 + 700, until = from + 45;
-        // The nearest bookstore is a rival's: planning goes to the nearest one the market serves.
         var served = new NeedPlanning(byDistance.Skip(1));
         Assert.Equal(byDistance[1].Id, NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
         Assert.Equal(byDistance[0].Id, NeedModel.PlanVenue(person, 2, new NeedPlanning(shops), home, PlaceKind.Shop, from, until));
-        // The remembered venue wins while it is open for the visit; closed, the next open one does.
         person.Needs.Find(Other)!.LastVenue = byDistance[2].Id;
         Assert.Equal(byDistance[2].Id, NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
         byDistance[2].OpenMinute = 0; byDistance[2].CloseMinute = 0; byDistance[2].WeeklyHours.Clear();
         Assert.Equal(byDistance[1].Id, NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
-        // Nothing served and open: no venue, the drawn one stays.
         byDistance[1].OpenMinute = 0; byDistance[1].CloseMinute = 0; byDistance[1].WeeklyHours.Clear();
         Assert.Null(NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
     }
@@ -533,7 +498,6 @@ public sealed class NeedPurchaseTests
         long hour = 30;
         var receipts = new Dictionary<string, string>(StringComparer.Ordinal);
         var wallet = Wallet(100000);
-        // Two residents bought this hour, one through each alias of the same building, against a capacity of two.
         foreach (var (who, venue, minute) in new[] { ("a", Shop, hour * 60 + 5), ("b", Leisure, hour * 60 + 20) })
         {
             var request = new PurchaseRequest(who, venue, PurchaseIntention.Need(Gift), Money.FromCents(10000), minute);
@@ -542,7 +506,6 @@ public sealed class NeedPurchaseTests
         receipts[PurchaseContract.Prefix + "c:" + Uri.EscapeDataString(Shop) + ":" + (hour * 60 + 30)] = "abandoned|x";
         receipts[PurchaseContract.Prefix + "d:" + Uri.EscapeDataString(Shop) + ":" + (hour * 60 - 1)] = "paid|1|x";
         receipts[PurchaseContract.Prefix + "e:" + Uri.EscapeDataString("other:shop") + ":" + (hour * 60 + 1)] = "uncertain|x";
-        // After a reload the market starts from these saved receipts, not from zero.
         var read = new Dictionary<string, string>(receipts, StringComparer.Ordinal);
         var served = PurchaseContract.ServedInHour(read, hour);
         Assert.Equal(2, served[PurchaseContract.Building(Leisure)]);
@@ -558,42 +521,35 @@ public sealed class NeedPurchaseTests
     public void TheContractsFailureTransitionsLeaveWalletAndReceiptsConsistent()
     {
         var receipts = new Dictionary<string, string>(StringComparer.Ordinal);
-        // Sell throws after booking, restore succeeds: Reversed, receipt gone, books restored, no debit.
         var wallet = Wallet(10000); string before = WalletText(wallet);
         var thrown = new Native { ThrowAfterBooking = true };
         var r = PurchaseContract.Run(Request(10000, 700), wallet, receipts, thrown);
         Assert.Equal((PurchaseRefusal.Reversed, 1, 0), (r.Refusal, thrown.Undos, thrown.Orders.Count));
         Assert.Empty(receipts); Assert.Equal(before, WalletText(wallet)); Assert.Equal(0, thrown.Commits);
 
-        // Restore fails too: Uncertain, the receipt kept as uncertain, no debit, never pruned.
         var stuck = new Native { ThrowAfterBooking = true, ThrowUndo = true };
         r = PurchaseContract.Run(Request(10000, 701), wallet, receipts, stuck);
         Assert.Equal(PurchaseRefusal.Uncertain, r.Refusal);
         Assert.StartsWith("uncertain|", receipts[r.Key]); Assert.Equal(before, WalletText(wallet));
         Assert.Equal(0, PurchaseContract.Prune(receipts, 100));
 
-        // Not sold after the pending receipt: the receipt is removed and the native refusal passes through.
         receipts.Clear();
         var declined = new Native { Before = () => PurchaseNativeOutcome.Refused(PurchaseRefusal.Dropped, "dj skill") };
         r = PurchaseContract.Run(Request(10000, 702), wallet, receipts, declined);
         Assert.Equal(PurchaseRefusal.Dropped, r.Refusal); Assert.Empty(receipts); Assert.Equal(0, declined.Undos);
 
-        // The game's per-item check refused every line: an order with no paid entry, a declined receipt, no money.
         var refusedEvery = new Native { Paid = _ => Array.Empty<PurchaseLine>() };
         r = PurchaseContract.Run(Request(10000, 703), wallet, receipts, refusedEvery);
         Assert.Equal(PurchaseRefusal.NativeDeclined, r.Refusal);
         Assert.StartsWith("declined|", receipts[r.Key]); Assert.Equal(before, WalletText(wallet)); Assert.Equal(0, refusedEvery.Commits);
 
-        // A wallet that cannot take the booked total is reversed before any debit.
         var held = Wallet(10000); held.HeldPurchase = Money.FromCents(1);
         Assert.Equal(PurchaseRefusal.Ceiling, PurchaseContract.Run(Request(10000, 704), held, receipts, new Native()).Refusal);
 
-        // A bought sale commits its native follow-up once.
         var good = new Native();
         Assert.True(PurchaseContract.Run(Request(10000, 705), wallet, receipts, good).IsBought);
         Assert.Equal(1, good.Commits);
 
-        // Recover: a pending receipt outside a running purchase becomes abandoned; Prune drops earlier days only.
         receipts.Clear();
         receipts[PurchaseContract.Prefix + "a:b:100"] = "pending|x";
         receipts[PurchaseContract.Prefix + "a:b:3000"] = "paid|1|x";
@@ -623,7 +579,6 @@ public sealed class NeedPurchaseTests
         foreach (var bad in new[] { cell.Replace(",3", ",4"), cell.Replace("1|2|", "2|2|"), cell + ";" + cell.Split('|')[3].Split(';')[0],
             "1|-|000|", "1|2|000|x,01,---,0" })
             Assert.NotEqual(SaveReadStatus.Loaded, SaveCodec.Read(payload.Replace(cell, bad)).Status);
-        // An impulse on a day that has not begun is refused.
         state.Citizens[0].Needs = new PersonNeeds(9);
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
     }
@@ -631,8 +586,6 @@ public sealed class NeedPurchaseTests
     private static string WithoutNeeds(string payload) => System.Text.RegularExpressions.Regex.Replace(payload, "\"Needs\":(null|\"[^\"]*\"),", "");
     private static string Corpus(string file) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "ReaderCorpus", file));
 
-    /// <summary>Without an attached purchase market nobody gains needs: with the "Needs" fields taken out, the corpus's
-    /// full.json is the one written before GR-3 byte for byte.</summary>
     [Fact]
     public void WithoutTheNeedsFieldsTheCorpusIsTheBytesFromBeforeNeeds()
     {
@@ -642,8 +595,6 @@ public sealed class NeedPurchaseTests
         Assert.Equal(Corpus("retired-pre-needs-full.json"), WithoutNeeds(full));
     }
 
-    /// <summary>A city written before needs (schema 1, no "Needs" field) is an older development city: refused with
-    /// "start a new city", never migrated, and every key kept.</summary>
     [Fact]
     public void ACityWrittenBeforeNeedsIsRefusedWithStartANewCityAndKept()
     {

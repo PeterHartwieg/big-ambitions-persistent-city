@@ -3,11 +3,8 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    // Legacy retains the identity and timing of an already saved single-meal intention.
     public enum MealKind { Legacy, Breakfast, Lunch, Dinner }
 
-    /// <summary>Provisional meal preferences, not nutritional requirements or guaranteed sales.
-    /// Stable resident habits plus small daily variation; no extra resident objects or frame polling.</summary>
     public static class MealRhythm
     {
         public const int PolicyVersion = 1;
@@ -16,8 +13,6 @@ namespace PersistentCity.Core
         public static string IntentId(string id, int day, MealKind kind) => kind == MealKind.Legacy
             ? FoodDemand.IntentId(id, day)
             : "food:" + Uri.EscapeDataString(id) + ":" + kind.ToString().ToLowerInvariant() + ":" + day.ToString(CultureInfo.InvariantCulture);
-        /// <summary>GR-2: the saved day plan's meal window for its day; any other day (and a window the plan left out) is
-        /// drawn here with the same rules.</summary>
         public static double DesiredAt(CitizenState person, int seed, int day, MealKind kind)
         {
             if (kind == MealKind.Legacy) return FoodRoutinePlanning.DesiredMealMinute(person, seed, day);

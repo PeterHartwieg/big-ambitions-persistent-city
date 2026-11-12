@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using PersistentCity.FailureMatrix;
 
-// F8g: prints the matrix table (docs/perf/f8bg.md, F8g) and exits non-zero on any failed arm.
 int days = args.Length > 0 ? int.Parse(args[0], CultureInfo.InvariantCulture) : 2;
 var timer = System.Diagnostics.Stopwatch.StartNew();
 var arms = CapabilityMatrix.Run(days, Console.WriteLine);

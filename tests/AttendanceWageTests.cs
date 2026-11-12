@@ -51,7 +51,6 @@ public sealed class AttendanceWageTests
         var loaded = new CitySimulator(read.State!, routes); loaded.AttachFoodMarket(new Market()); return loaded;
     }
 
-    /// <summary>The golden of <see cref="Fresh"/>(42) after 1,440 + 1,100 minutes, also pinned with the ordinary policy attached.</summary>
     internal const string Pin42 = "63fb9079a50ef7f7b26a70543e1d2a0e730771236f12269f9de3dfa5e88966ba";
 
     [Theory]
@@ -102,8 +101,6 @@ public sealed class AttendanceWageTests
         var restored = Fresh(routes: routes, count: 35);
         double end = 3 * 1440;
         int reloads = 0;
-        // Interrupted at every committed event: before preparation, in transit, start, attendance, end,
-        // and every partial <=32-posting chunk. No saved cursor or native call is involved.
         while (!restored.IsCaughtUpTo(end))
         {
             string before = SaveCodec.Write(restored.State);
@@ -125,7 +122,6 @@ public sealed class AttendanceWageTests
         var reference = Fresh(count: 4); Advance(reference, 5 * 1440);
         var actual = Fresh(count: 4);
         double start = actual.State.Minute;
-        // Equal logical interval at each render cadence, including bounded frame slices.
         for (int frame = 1; frame <= fps * 60; frame++)
         {
             double at = Math.Min(5 * 1440, start + 4 * 1440.0 * frame / (fps * 60));
@@ -149,7 +145,6 @@ public sealed class AttendanceWageTests
         Assert.Equal(EmploymentWages.ClosureDay, closed.State.Citizens[0].Accrual.Shift);
         Assert.Equal(0, closed.State.Citizens[0].Accrual.MissMask);
         Assert.Equal(0, closed.State.Citizens[0].MissedActivities);
-        // Reopening after the start cannot turn this closure day into a paid shift.
         Assert.True(closed.SetLogicalWorkplaceClosure("work", false));
         Assert.True(HouseholdFinance.CashConserved(Budget(closed)));
     }
@@ -302,7 +297,7 @@ public sealed class AttendanceWageTests
         static CitySimulator Overnight(Routes routes)
         {
             var city = Fresh(routes: routes, count: 35, minute: 2800);
-            Advance(city, 2800); // Drain initial finance/meal work before installing the named logical fixture.
+            Advance(city, 2800);
             foreach (var p in city.State.Citizens)
             {
                 p.PlaceId = "work"; p.Phase = CitizenPhase.AtPlace; p.Activity = Activity.Work;
@@ -392,7 +387,6 @@ public sealed class AttendanceWageTests
         string before = JsonConvert.SerializeObject(new { p.Accrual, b });
         Assert.Throws<OverflowException>(() => EmploymentWages.Settle(p, b, w, w.EndsAt));
         Assert.Equal(before, JsonConvert.SerializeObject(new { p.Accrual, b }));
-        // Assembly reachability: Core has no game/Runtime reference; all wage entry points live in Core.
         Assert.All(typeof(EmploymentWages).Assembly.GetReferencedAssemblies(), a => {
             string name = a.Name ?? "";
             Assert.False(name.StartsWith("Assembly-CSharp", StringComparison.Ordinal));

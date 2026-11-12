@@ -10,13 +10,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// The runtime replaces the road snapshot while a route job is suspended and refreshes traffic closures
-/// before planning resumes, so EnsureTrafficNetwork rebuilds the scheduler queue with an event in flight.
-/// That event must stay out of the rebuilt queue until CompleteEvent or AbortPending re-adds it; queued
-/// twice, its sort key changed inside the set, duplicating the resident and moving the clock backwards.
-/// Adapted from an independent reviewer's reproduction of the 27 October resumable planning change.
-/// </summary>
 public sealed class PendingEventQueueTests
 {
     private readonly ITestOutputHelper output;
@@ -97,8 +90,8 @@ public sealed class PendingEventQueueTests
         FrameUntilPending(sim, 1440 * 3);
         output.WriteLine("pending at " + sim.State.Minute + " due=" + DueCount(sim));
         Assert.Equal(citizens - 1, DueCount(sim));
-        planner.TrafficNetwork = Network();      // replacement snapshot, same topology
-        sim.RefreshTrafficClosures();            // the runtime does this every prepared frame
+        planner.TrafficNetwork = Network();
+        sim.RefreshTrafficClosures();
         output.WriteLine("after network swap due=" + DueCount(sim));
         Assert.Equal(citizens - 1, DueCount(sim));
         while (!sim.ContinuePlanning(0)) { }
@@ -168,7 +161,6 @@ public sealed class PendingEventQueueTests
         output.WriteLine("swaps=" + swaps + " violations=" + violations + " events=" + observed.Count);
         Assert.Equal(0, violations);
         Assert.Equal(40, swaps);
-        // Observed events never go back in time.
         var minutes = observed.Select(o => double.Parse(o.Substring(o.IndexOf('@') + 1), System.Globalization.CultureInfo.InvariantCulture)).ToList();
         for (int i = 1; i < minutes.Count; i++) Assert.True(minutes[i - 1] <= minutes[i], "clock moved backwards at event " + i);
     }
@@ -187,7 +179,6 @@ public sealed class PendingEventQueueTests
             {
                 if (sim.PlanningPending)
                 {
-                    // A replacement snapshot before every suspended request, the worst case for the queue rebuild.
                     if (swap) { planner.TrafficNetwork = Network(); sim.RefreshTrafficClosures(); swaps++; }
                     sim.ContinuePlanning(0); continue;
                 }

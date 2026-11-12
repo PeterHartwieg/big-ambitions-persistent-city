@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-// Game types with the shapes read from the installed game at the F8c base (NativeFoodContractSpec). Bodies are empty:
-// the harness checks metadata and Harmony patch info, never game behaviour.
 public sealed class GameManager { [MethodImpl(MethodImplOptions.NoInlining)] public void RunMainGameTick(float deltaTimeWithMultiplier) { } }
 public sealed class BuildingRegistration { [MethodImpl(MethodImplOptions.NoInlining)] public void Reset(bool resetFields) { } }
 public sealed class Address { }
@@ -34,7 +32,6 @@ namespace Buildings.Retail.Simulation
     }
 }
 
-// A game update that added a parameter to ProcessCustomer (checks 5-6 shape, red arm).
 namespace Changed
 {
     public class RetailBusinessSimulator : Helpers.BusinessSimulation.BusinessSimulator

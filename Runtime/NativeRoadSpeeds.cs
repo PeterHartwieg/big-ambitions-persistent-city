@@ -5,17 +5,11 @@ using GleyTrafficSystem;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>F8d: a road-speed read met a transient RLO answer (NotYet, Refreshing). The caller waits and retries; it
-    /// neither stops the city nor uses the lane timing.</summary>
     internal sealed class RoadSpeedsWaitingException : InvalidOperationException
     {
         internal RoadSpeedsWaitingException(string message) : base(message) { }
     }
 
-    /// <summary>
-    /// Keep structural speeds stable while a reviewed RLO fault changes the native driving limit.
-    /// This object belongs to the planner, surviving its cache clears. Main thread only.
-    /// </summary>
     internal sealed class NativeRoadSpeeds
     {
         private readonly Func<IReadOnlyDictionary<object, (int Original, int Effective)>>? capture;
@@ -25,23 +19,16 @@ namespace PersistentCity.Runtime
 
         private readonly Func<Exception, string?>? transient;
 
-        /// <param name="transient">F8d: classifies a capture failure as transient (returns its message) or not (null); the
-        /// RLO caller passes one for RloRoadSpeedsNotReadyException, so this file needs no Compatibility reference.</param>
         public NativeRoadSpeeds(Func<IReadOnlyDictionary<object, (int Original, int Effective)>>? capture = null, Func<Exception, string?>? transient = null)
         { this.capture = capture; this.transient = transient; }
 
         public bool HasOverrides => overrides.Count != 0;
         public bool FromRlo => capture != null;
-        /// <summary>F8d: the last capture was a transient RLO answer (NotYet, Refreshing); null after a complete answer.
-        /// The last verified overrides are kept and road preparation waits; nothing is read as "no slowdowns".</summary>
         public string? Waiting { get; private set; }
-        /// <summary>F8d diagnostics: a complete capture has been verified since the last refusal.</summary>
         public bool Verified { get; private set; }
-        /// <summary>F8d diagnostics: the last non-transient refusal (it stopped the runtime as before); null otherwise.</summary>
         public string? LastRefusal { get; private set; }
         internal static IEqualityComparer<object> ReferenceComparer => References.Instance;
 
-        /// <summary>F8d preflight: capture once and report whether the answer is transient (then the caller waits).</summary>
         public bool WaitsAfterRefresh() { Refresh(); return Waiting != null; }
         public void Refresh()
         {
@@ -66,17 +53,12 @@ namespace PersistentCity.Runtime
             overrides = detached; Verified = true; LastRefusal = null;
         }
 
-        /// <summary>Throws <see cref="RoadSpeedsWaitingException"/> while the capture is transient: no lane timing is
-        /// handed out from a snapshot RLO could not confirm.</summary>
         public int Canonical(Waypoint lane) => Resolve(lane).Original;
         public int Effective(Waypoint lane) => Resolve(lane).Effective;
 
         private (int Original, int Effective) Resolve(Waypoint lane)
         {
             if (Waiting != null) throw new RoadSpeedsWaitingException(Waiting);
-            // Save/physical callbacks can run after RLO's Update and before this planner's next
-            // Prepare. Refresh once on a mismatch rather than mistaking a verified transition
-            // for changed geometry. No native/RLO mutation is invoked by the provider.
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 bool active = overrides.TryGetValue(lane, out var temporary);
@@ -90,7 +72,6 @@ namespace PersistentCity.Runtime
                 }
                 if (attempt == 0 && capture != null) { Refresh(); if (Waiting != null) throw new RoadSpeedsWaitingException(Waiting); }
             }
-            // A terminal mismatch: recorded like a refused capture, so the report shows rlo.roadspeeds off after the stop.
             Verified = false; LastRefusal = "Native road speed changed without a verified RLO slowdown/restoration.";
             throw new InvalidOperationException(LastRefusal);
         }

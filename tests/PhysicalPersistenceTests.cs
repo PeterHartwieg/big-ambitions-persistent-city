@@ -52,8 +52,6 @@ public sealed class PhysicalPersistenceTests
                     Minutes = example == 0 ? 86731.89583988494 : 567634.374533236, Mode = TravelMode.Walk });
             }
             citizen.DepartureMinute = clock; citizen.NextEventMinute = clock + citizen.Journey.Minutes;
-            // A completed journey stores departure = clock - duration (traffic completion does this; before F2c a
-            // walk lease did). Nothing is leased any more (F2c, F2d), so the completed state is set as that rebase leaves it.
             citizen.DepartureMinute = clock - citizen.Journey.Minutes; citizen.NextEventMinute = clock;
             if (citizen.DepartureMinute + citizen.Journey.Minutes < clock) roundedBelowClock++;
             if (retime) Assert.True(TravelTiming.Apply(state, 2, 2));

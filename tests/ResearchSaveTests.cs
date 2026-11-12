@@ -14,18 +14,13 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>C5c: CityState.Research in the next-free writer (plan section 5). The ledger round-trips byte for byte; every
-/// out-of-bound, unknown or non-canonical value refuses the payload and keeps it; an older development city is refused
-/// with the "start a new city" status and kept; the writer's bytes are pinned.</summary>
 public sealed class ResearchSaveTests
 {
     private const double OrderMinute = 1440 + 8 * 60 + 15.25;
     private readonly ITestOutputHelper output;
     public ResearchSaveTests(ITestOutputHelper output) { this.output = output; }
 
-    // ---- Fixtures ----
 
-    /// <summary>A real C4 report for the order: the engine's own cell layout, query key and logical day.</summary>
     private static MarketResearchReport Report(ResearchOrder order, int consumers = 40)
     {
         var source = new ResearchFixture(consumers)
@@ -48,8 +43,6 @@ public sealed class ResearchSaveTests
         return order;
     }
 
-    /// <summary>Every state: open Ordered and Surveyed; 16 kept Paid; closed Declined (both reasons), Cancelled,
-    /// PaymentUnknown and Replaced (the 17th delivery replaces the oldest report).</summary>
     internal static ResearchLedger AllStates()
     {
         var ledger = new ResearchLedger();
@@ -68,9 +61,6 @@ public sealed class ResearchSaveTests
         return ledger;
     }
 
-    /// <summary>The section at its bounds: 8 Surveyed open orders, 16 kept and 16 closed. Every order is DetailedLocal,
-    /// the widest sold tier (62 cells) whose report also carries the business address, and every business and agency
-    /// address has the maximum length.</summary>
     internal static ResearchLedger AtBounds(int addressLength = ResearchLedger.MaximumAddressLength)
     {
         var ledger = new ResearchLedger();
@@ -112,7 +102,6 @@ public sealed class ResearchSaveTests
         Assert.Same(payload, data[SaveStore.StateKey]); Assert.Equal("kept", data["rlo:state"]); Assert.Equal("manifest", data[FoodAuthorityStore.Key]);
     }
 
-    /// <summary>The payload with one change to its research section, written compactly like the writer.</summary>
     private static string Mutate(string payload, Action<JArray> change)
     {
         var root = SaveWire.Parse(payload, new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
@@ -135,7 +124,6 @@ public sealed class ResearchSaveTests
         Assert.False(read.State.Research.HasOpenOrders);
     }
 
-    // ---- Round trip ----
 
     [Fact]
     public void EveryOrderStateRoundTripsByteForByte()
@@ -160,14 +148,12 @@ public sealed class ResearchSaveTests
                 (after.Report!.Id, after.Report.Tier, after.Report.LogicalDay, after.Report.Address, after.Report.RadiusMetres));
             Assert.Equal(before.Report.FixtureCells.Select(c => (c.Metric, c.Band, c.Value)), after.Report.FixtureCells.Select(c => (c.Metric, c.Band, c.Value)));
         }
-        // The restored ledger is the entitlement: a Paid report reads, a Replaced one does not, an open one does not.
         var paid = restored.Kept[0];
         Assert.True(paid.Report!.TryRead(restored, paid.Id, out var numbers)); Assert.Equal(paid.Report.FixtureCells.Count, numbers!.Count);
         var replaced = restored.Closed.Single(o => o.State == ResearchOrderState.Replaced);
         Assert.Null(replaced.Report); Assert.True(restored.TryGet(replaced.Id, out var grant) && grant!.Replaced);
         var surveyed = restored.Open.Single(o => o.State == ResearchOrderState.Surveyed);
         Assert.False(surveyed.Report!.TryRead(restored, surveyed.Id, out _));
-        // A new order after reload takes the next sequence; no ID is reused.
         Assert.Equal(ResearchOrderRefusal.None, restored.TryOrder(ResearchProducts.BasicLocalCode, "address:new", "agency:7", false, 500, OrderMinute, out var next));
         Assert.Equal("pcr-" + ledger.NextSequence.ToString(CultureInfo.InvariantCulture), next!.Id);
     }
@@ -181,20 +167,14 @@ public sealed class ResearchSaveTests
         Assert.Equal(payload, SaveWire.Text(read.State!));
         int section = Encoding.UTF8.GetByteCount(payload) - Encoding.UTF8.GetByteCount(empty);
         output.WriteLine("research section at bounds: " + section + " bytes over the empty ledger");
-        // 24 report-holding orders of 62 sold cells plus 16 closed rows, with three 256-character addresses per report-holding
-        // order and two per closed one. The plan's "well under 20 KB" assumed short addresses (docs/perf/c5c.md). Cell
-        // values up to the 150,000-consumer cap add at most 4 digits to each of the 1,488 cells, about 6 KB more.
         Assert.True(section + 4 * 62 * 24 < 64 * 1024, section + " bytes");
-        // Both record counters charge one record per order.
         var records = SaveCodec.CountRecords(read.State!, payload);
         var baseline = SaveCodec.CountRecords(SaveWire.Read(empty).State!, empty);
         Assert.Equal(40, records.Streaming - baseline.Streaming);
         Assert.Equal(40, records.Semantic - baseline.Semantic);
     }
 
-    // ---- Strict refusal ----
 
-    // JToken indexers are nullable; every slot below exists in the AllStates payload.
 #nullable disable
     public static IEnumerable<object[]> Refusals() => new (string Name, Action<JArray> Change)[]
     {
@@ -270,8 +250,6 @@ public sealed class ResearchSaveTests
         Assert.False(string.IsNullOrEmpty(name));
     }
 
-    /// <summary>Money and integers must be the writer's own canonical tokens; Json.NET would otherwise read "010" as
-    /// octal 8, round fractions and accept hexadecimal.</summary>
     [Theory]
     [InlineData("price", "{0}.0")] [InlineData("price", "0{0}")] [InlineData("price", "{0}e0")] [InlineData("price", "+{0}")]
     [InlineData("sequence", "0{0}")] [InlineData("sequence", "0x{0}")] [InlineData("radius", "0{0}")] [InlineData("cell", "0{0}")]
@@ -323,8 +301,6 @@ public sealed class ResearchSaveTests
         RefusedAndPreserved(payload.Replace(section, section + "," + section), SaveReadStatus.Invalid);
     }
 
-    /// <summary>The writer runs the same rules: a ledger holding a report that C4 could not have produced is not written,
-    /// and the stored city is not replaced.</summary>
     [Fact]
     public void TheWriterRefusesALedgerTheReaderWouldRefuse()
     {
@@ -342,15 +318,11 @@ public sealed class ResearchSaveTests
         Assert.Throws<SaveValidationException>(() => SaveWire.Text(city));
     }
 
-    // ---- Older development cities ----
 
-    /// <summary>A city with another schema number is refused with the "start a new city" status through codec, store,
-    /// session and the early probe, and every key is kept.</summary>
     [Fact]
     public void AnOlderDevelopmentCityIsRefusedWithTheStartANewCityStatusAndKept()
     {
         var city = City(AllStates());
-        // Older development builds wrote 2 to 36; the research section does not make any of them readable.
         foreach (int older in new[] { 28, 36, 37 })
         {
             string payload = SaveWire.Text(city).Replace("\"Schema\":" + CityState.CurrentSchema + ",", "\"Schema\":" + older + ",");
@@ -363,7 +335,6 @@ public sealed class ResearchSaveTests
         }
     }
 
-    // ---- Golden writer ----
 
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
@@ -372,7 +343,6 @@ public sealed class ResearchSaveTests
         ("banded-visitors-factor2-30h-research", BandedCity),
     };
 
-    /// <summary>F5e's banded visitor city after 30 hours, holding every research state.</summary>
     private static CityState BandedCity()
     {
         var (state, market) = WorkplaceCapacityTests.Fresh();
@@ -384,8 +354,6 @@ public sealed class ResearchSaveTests
         return city.State;
     }
 
-    /// <summary>The writer's golden for each research fixture, re-pinned once by X3 at the held schema 1. A deliberate
-    /// format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData("research-all-states", "75951c894575f13db5c1f3e825ceedfa7e95fd68d061334481314441dc412c2f", 13633)]
     [InlineData("research-at-bounds", "ae0fb34ecc724cd5199e72e7954de34497a3f1045e5b3c72e344b32032238329", 48284)]
@@ -405,7 +373,6 @@ public sealed class ResearchSaveTests
         foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
     }
 
-    /// <summary>The codec's cell table is C4's: every tier's engine report has exactly that layout and length.</summary>
     [Theory]
     [InlineData(MarketResearchTier.Basic, 13)] [InlineData(MarketResearchTier.Detailed, 62)] [InlineData(MarketResearchTier.InDepth, 64)]
     public void TheSavedCellLayoutIsTheEngines(MarketResearchTier tier, int length)
@@ -419,10 +386,7 @@ public sealed class ResearchSaveTests
         Assert.Equal(SaveCodec.ResearchReportIdLength, report.Id.Length);
     }
 
-    // ---- Measurement (docs/perf/c5c.md) ----
 
-    /// <summary>Save and load cost of the section at its bounds, as the difference between a minimal city with the
-    /// bounded ledger and the same city with an empty ledger. Reported, not gated: it runs only when PC_C5C_MEASURE is set.</summary>
     [Fact]
     public void MeasureSectionCostAtBounds()
     {

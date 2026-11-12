@@ -11,17 +11,12 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E5b5: dynamic acquisition and width (docs/plans/e5b-remaining.md section 4, E5b5 row; Decision 12, R12, Q1 and
-/// Q2 defaults). The shop model is <see cref="ContractWorld"/>, whose SupportedBusiness, candidate rule and admission
-/// call the same Core code as Runtime: <see cref="FoodMenuPolicy.LiveMenu"/>, the product policy's resolver and
-/// <see cref="CompleteFoodMenu.Check"/>.</summary>
 public sealed class DynamicAcquisitionTests
 {
     private readonly ITestOutputHelper output;
     public DynamicAcquisitionTests(ITestOutputHelper output) { this.output = output; }
 
     private const string Burger = ContractWorld.Burger, HotDog = ContractWorld.HotDog, Croissant = ContractWorld.Croissant;
-    // A loaded vanilla product outside the original three, and a modded double (Street Food's namespace).
     private const string Donut = "ba:itemname_donut", Dumplings = "foodtrucks:itemname_dumplings";
     private static readonly string[] Extras = { Donut, Dumplings, "ba:itemname_cupcake", "ba:itemname_salad", "ba:itemname_bagel", "foodtrucks:itemname_choppedcheese" };
 
@@ -31,8 +26,6 @@ public sealed class DynamicAcquisitionTests
                 new FoodProductMetadataOverride(o.Class, null, null, null, null)))),
             new FoodProductMetadataLoadedNames(loaded));
 
-    /// <summary>A world whose catalogue and loaded-name image hold the original three and every extra product, each a
-    /// retail item a building showcase can hold. The empty override table classes every loaded name Food.</summary>
     private static ContractWorld World(params (string Name, MealClass Class)[] overrides)
     {
         var world = new ContractWorld();
@@ -52,8 +45,8 @@ public sealed class DynamicAcquisitionTests
         var world = World();
         var mixed = world.AddShop("address:main:1:shop", Burger, product);
         var single = world.AddShop("address:main:2:shop", product);
-        Assert.Equal(MealClass.Food, world.Policy!.Resolver.ResolveMealClass(product)); // empty table: default class
-        Assert.True(world.Policy.Executable(product)); // Core decisions accept the same name
+        Assert.Equal(MealClass.Food, world.Policy!.Resolver.ResolveMealClass(product));
+        Assert.True(world.Policy.Executable(product));
         world.Own(mixed, single);
         foreach (var shop in new[] { mixed, single })
         {
@@ -82,20 +75,19 @@ public sealed class DynamicAcquisitionTests
         world.Own(plain);
         Assert.Equal(FoodLiveMenuRefusal.MealClass, world.LiveMenu(mixed));
         Assert.False(world.Policy!.Executable(Donut));
-        // The image fails admission too: CompleteFoodMenu.Check reads the same resolver.
         Assert.Equal(CompleteFoodMenuRefusal.MealClass, world.Coordinator.Image(mixed.Key)!.Admission);
         Assert.False(world.SupportedMenu(mixed));
         Assert.False(mixed.Row.Desired);
         Assert.False(mixed.Row.Managed);
-        Assert.Null(world.Select(mixed)); // no capture of the original products either: the whole shop stays native
+        Assert.Null(world.Select(mixed));
         for (int i = 0; i < 3; i++) { world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); }
         Assert.False(mixed.Row.Managed);
         Assert.True(plain.Row.CanServe);
     }
 
     [Theory]
-    [InlineData(false, false)] // a capability failed: Runtime stays in fallback with the E5b1 contract
-    [InlineData(true, true)]   // capabilities passed, but the coordinator is still warming
+    [InlineData(false, false)]
+    [InlineData(true, true)]
     public void WithoutDecision12TheOriginalThreeGuardStays(bool capabilities, bool warming)
     {
         var world = World();
@@ -110,8 +102,6 @@ public sealed class DynamicAcquisitionTests
         Assert.True(original.Row.CanServe);
         if (capabilities)
         {
-            // Warming ended. The image built while warming used the policy's resolver, so the shop is wanted now and
-            // acquires through the normal boundary.
             Assert.False(world.Warming);
             world.VisitAll();
             Assert.True(dynamic.Row.Desired);
@@ -125,7 +115,6 @@ public sealed class DynamicAcquisitionTests
             Assert.False(dynamic.Row.Managed);
             Assert.False(world.Candidate(dynamic));
         }
-        // Without a policy source (no loaded-name image) the guard also holds once active.
         var unset = World(); unset.Policy = null;
         var shop = unset.AddShop("address:main:3:shop", Burger, Donut);
         unset.VisitAll(); unset.Drain(); unset.VisitAll();
@@ -167,7 +156,7 @@ public sealed class DynamicAcquisitionTests
     public void AConfiguredSmallerWidthKeepsAWiderShopNative()
     {
         var world = World();
-        world.MenuLimit = 4; // FoodMenuMaximumOffersPerShop = 4: Runtime menuLimit
+        world.MenuLimit = 4;
         var wide = world.AddShop("address:main:1:shop", Menu(5));
         var narrow = world.AddShop("address:main:2:shop", Menu(4));
         world.Own(narrow);
@@ -190,24 +179,21 @@ public sealed class DynamicAcquisitionTests
         var history = world.History.ToArray(); var orders = world.Orders.ToArray();
         long removedHour = world.Hour;
 
-        // Street Food unregisters mid-hour: the definition leaves the catalogue and the loaded-name image.
         var definition = world.Items[Dumplings];
         world.Items.Remove(Dumplings);
         world.RebuildCatalogue();
         world.Policy = Policy(world.Items.Keys);
         world.VisitAll();
         Assert.Equal(FoodLiveMenuRefusal.NotLoaded, world.LiveMenu(shop));
-        Assert.False(shop.Row.Desired); // desire withdrawn at once
-        Assert.True(shop.Row.Managed);  // the hand-back waits for the boundary
+        Assert.False(shop.Row.Desired);
+        Assert.True(shop.Row.Managed);
         Assert.True(world.Refused.ContainsKey(shop.Key));
-        Assert.Null(world.Select(shop)); // no capture on the removed product
+        Assert.Null(world.Select(shop));
         Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         Assert.False(shop.Row.Managed);
-        Assert.Equal(history, world.History); // history and receipts kept
+        Assert.Equal(history, world.History);
         Assert.Equal(orders, world.Orders);
 
-        // The mod returns (a new definition object). The recorded refusal keeps the shop native until a fresh image,
-        // recovery after the refused hour and the commit gate.
         world.Add(new ContractWorld.Item { itemName = Dumplings, retail = true });
         Assert.NotSame(definition, world.Items[Dumplings]);
         world.RebuildCatalogue();
@@ -225,7 +211,7 @@ public sealed class DynamicAcquisitionTests
         }
         Assert.True(reacquired > removedHour + 1, "reacquired at " + reacquired);
         Assert.False(world.Refused.ContainsKey(shop.Key));
-        Assert.True(world.GateRuns > gates); // the commit gate revalidated before the transfer
+        Assert.True(world.GateRuns > gates);
         Assert.Same(world.Items[Dumplings], world.Coordinator.Serving(shop.Key)!.Definitions.Single(d => d.Name == Dumplings).Live);
         Assert.Equal(orders, world.Orders);
         world.VisitAll();
@@ -243,7 +229,6 @@ public sealed class DynamicAcquisitionTests
         world.Own(shop);
         Assert.True(world.PolicySource.Current.Executable(Dumplings));
 
-        // A W11 hint: the catalogue rebuilds with every product still installed. The source publishes no loaded names.
         world.Catalogue.MarkDirty();
         Assert.Null(world.PolicySource.Current.LoadedNames);
         world.VisitAll();
@@ -251,21 +236,19 @@ public sealed class DynamicAcquisitionTests
         Assert.True(shop.Row.Desired);
         Assert.False(world.Refused.ContainsKey(shop.Key));
         int waits = world.CatalogueWaits;
-        Assert.Null(world.Select(shop)); // captures and sales wait for the catalogue
+        Assert.Null(world.Select(shop));
         Assert.True(world.CatalogueWaits > waits);
         Assert.False(world.Refused.ContainsKey(shop.Key));
         Assert.DoesNotContain(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         Assert.True(shop.Row.CanServe);
 
-        // The identical catalogue publishes again: service resumes with no hand-back or recovery.
         world.RebuildCatalogue(); world.Drain(); world.VisitAll();
         Assert.True(shop.Row.CanServe);
         Assert.NotNull(world.Checkout(world.Select(shop)!, Dumplings, "after-rebuild"));
 
-        // A real removal: the next published catalogue lacks the product, so the shop is refused and handed back.
         world.Items.Remove(Dumplings);
         world.Catalogue.MarkDirty(); world.VisitAll();
-        Assert.True(shop.Row.Desired); // still only rebuilding
+        Assert.True(shop.Row.Desired);
         world.RebuildCatalogue(); world.VisitAll();
         Assert.Equal(FoodLiveMenuRefusal.NotLoaded, world.LiveMenu(shop));
         Assert.True(world.Refused.ContainsKey(shop.Key));
@@ -280,9 +263,9 @@ public sealed class DynamicAcquisitionTests
         var shop = world.AddShop("address:main:1:shop", Burger, Donut);
         world.Own(shop);
         var capture = world.Select(shop)!;
-        shop.PriceOf(Donut).price = 6; // W10 in place, a valid new price, between capture and checkout
+        shop.PriceOf(Donut).price = 6;
         Assert.Null(world.Checkout(capture, Donut, "old-terms"));
-        Assert.Empty(world.Orders); // never a sale on the changed terms
+        Assert.Empty(world.Orders);
         Assert.Equal(1, world.PriceOnlyRefusals);
         Assert.True(shop.Row.Desired);
         Assert.True(shop.Row.CanServe);
@@ -293,7 +276,6 @@ public sealed class DynamicAcquisitionTests
         var next = world.Select(shop)!;
         Assert.Equal(Money.FromNative(6f), next.Prices[Donut]);
         Assert.Equal("new-terms", world.Checkout(next, Donut, "new-terms"));
-        // A price change before the capture is recorded at the capture recheck, also without a hand-back.
         shop.PriceOf(Burger).price = 4.5f;
         var later = world.Select(shop)!;
         Assert.Equal(Money.FromNative(4.5f), later.Prices[Burger]);
@@ -301,14 +283,11 @@ public sealed class DynamicAcquisitionTests
         Assert.True(shop.Row.Desired);
     }
 
-    /// <summary>A seller that refuses a stale price as Q2 price-only (the Runtime checkout's flag) and otherwise sells.</summary>
     private sealed class PriceOnlyMarket : IFoodMarket
     {
         public readonly WeightedFoodChoiceTests.Market Inner;
         public PriceOnlyMarket(WeightedFoodChoiceTests.Market inner) { Inner = inner; }
         public bool KeepChanging;
-        /// <summary>The first checkout is refused as price-only although the selected price is unchanged (another menu
-        /// price changed during native setup).</summary>
         public bool OtherPriceChanged;
         public int Attempts, PriceOnly;
         public double EarliestMinute => 0;
@@ -317,7 +296,7 @@ public sealed class DynamicAcquisitionTests
         {
             Attempts++;
             var offer = Inner.Shops.Single(b => b.Id == m.BusinessId).Offers.Single(o => o.ProductId == m.ProductId);
-            if (KeepChanging && Attempts > 1) offer.Price += Money.FromCents(1); // moved again during the second checkout
+            if (KeepChanging && Attempts > 1) offer.Price += Money.FromCents(1);
             if (offer.Price != m.Price || OtherPriceChanged && Attempts == 1)
             {
                 PriceOnly++;
@@ -328,10 +307,10 @@ public sealed class DynamicAcquisitionTests
     }
 
     [Theory]
-    [InlineData(150, false, true)]     // affordable new price: the same resident buys on the new terms
-    [InlineData(1000000, false, false)] // beyond the allowance: an ordinary refusal, no second attempt
-    [InlineData(150, true, false)]     // the price moves again: one re-decision only, then the refusal stands
-    [InlineData(150, false, true, true)]      // household budget: the hold is released and taken at the new price
+    [InlineData(150, false, true)]
+    [InlineData(1000000, false, false)]
+    [InlineData(150, true, false)]
+    [InlineData(150, false, true, true)]
     [InlineData(1000000, false, false, true)]
     [InlineData(150, true, false, true)]
     public void APriceOnlyRefusalLetsTheSameResidentDecideAgainAtTheCounter(int cents, bool keepChanging, bool paid, bool budget = false)
@@ -349,7 +328,7 @@ public sealed class DynamicAcquisitionTests
         while (!city.AdvanceTo(at + 20, 1).CaughtUp) { }
         m = city.State.Food!.Residents[0];
         Assert.Equal(selected, m.BusinessId); Assert.Equal(intent, m.IntentId);
-        Assert.Equal(1, m.ContextAttempts); // no new decision context: the re-decision is at the counter
+        Assert.Equal(1, m.ContextAttempts);
         Assert.Equal(keepChanging ? 2 : 1, market.PriceOnly);
         if (paid)
         {
@@ -373,11 +352,11 @@ public sealed class DynamicAcquisitionTests
     }
 
     [Theory]
-    [InlineData("other-price", false)] // another product's price changed: the selected product at its unchanged price
+    [InlineData("other-price", false)]
     [InlineData("other-price", true)]
-    [InlineData("unaffordable", false)] // the selected product became unaffordable: the affordable alternative
+    [InlineData("unaffordable", false)]
     [InlineData("unaffordable", true)]
-    [InlineData("sold-out", false)]     // the selected product's price changed and it sold out: the alternative
+    [InlineData("sold-out", false)]
     public void ACounterReDecisionConsidersTheWholeLiveMenu(string change, bool budget)
     {
         var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
@@ -389,7 +368,6 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(FoodDecisionResult.Selected, m.Decision!.Result);
         string selected = m.Decision.BusinessId, intent = m.IntentId, product = m.Decision.ProductId!;
         Money original = inner.Shops.Single(b => b.Id == selected).Offers.Single(o => o.ProductId == product).Price;
-        // The shop also sells a burger (scoped and stocked). Its price change is the "other" price change.
         var shop = inner.Shops.Single(b => b.Id == selected);
         shop.Offers.Add(new FoodOffer { ProductId = Burger, Price = Money.FromCents(90), Units = 100 });
         city.State.Food.Shops.Single(s => s.BusinessId == selected).AdditionalProductIds.Add(Burger);
@@ -402,7 +380,7 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(selected, m.BusinessId); Assert.Equal(intent, m.IntentId);
         Assert.Equal(1, m.ContextAttempts);
         Assert.Equal(new[] { intent }, inner.Orders);
-        Assert.Equal(2, market.Attempts); // one refused attempt, one re-decided purchase
+        Assert.Equal(2, market.Attempts);
         Assert.Equal(1, market.PriceOnly);
         Money expected = change == "other-price" ? original : Money.FromCents(90);
         Assert.Equal(change == "other-price" ? product : Burger, m.ProductId);
@@ -426,8 +404,8 @@ public sealed class DynamicAcquisitionTests
         var shop = inner.Shops.Single(b => b.Id == selected);
         shop.Offers.Add(new FoodOffer { ProductId = Burger, Price = Money.FromCents(90), Units = 100 });
         city.State.Food.Shops.Single(s => s.BusinessId == selected).AdditionalProductIds.Add(Burger);
-        shop.Offers.Single(o => o.ProductId == product).Price = Money.FromCents(1000000); // unaffordable: the burger replaces it
-        inner.ThrowAfterSale = true; // the replacement order is placed, then its acknowledgement is lost
+        shop.Offers.Single(o => o.ProductId == product).Price = Money.FromCents(1000000);
+        inner.ThrowAfterSale = true;
         while (!city.AdvanceTo(at + 20, 1).CaughtUp) { }
         m = city.State.Food!.Residents[0];
         Assert.Equal(MealStatus.Uncertain, m.Status);
@@ -440,7 +418,7 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(budget ? Money.Zero : Money.FromCents(90), used);
         Assert.Equal(budget ? Money.FromCents(90) : Money.Zero, heldFunds);
 
-        string saved = DevelopmentChain.Write(city.State); // refused before the fix: the outcome named the original product
+        string saved = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(saved);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var resumed = new CitySimulator(read.State!, planner); resumed.AttachFoodMarket(market, LegacyFoodChoice.Settings());
@@ -450,10 +428,9 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(Burger, after.ProductId); Assert.Equal(Money.FromCents(90), after.Price);
         Assert.Equal(used, after.DayAllowanceUsed);
         Assert.Equal(heldFunds, after.Budget?.HeldPurchase ?? Money.Zero);
-        Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(2, market.Attempts); // never replayed
+        Assert.Equal(new[] { intent }, inner.Orders); Assert.Equal(2, market.Attempts);
     }
 
-    /// <summary>A seller that reports its saved business as awaiting startup validation, then valid or withdrawn.</summary>
     private sealed class StartupMarket : IFoodMarket, IFoodBusinessAuthority, IFoodStartupValidation
     {
         public readonly WeightedFoodChoiceTests.Market Inner;
@@ -467,14 +444,14 @@ public sealed class DynamicAcquisitionTests
         public FoodSale Buy(ResidentMeal m, double at)
         {
             Attempts++;
-            Assert.False(Awaiting); // Core never checks out a business that awaits validation
+            Assert.False(Awaiting);
             return Inner.Buy(m, at);
         }
     }
 
     [Theory]
-    [InlineData(false)] // validation passes: the held commitment is bought
-    [InlineData(true)]  // validation fails: the commitment ends with no checkout attempt
+    [InlineData(false)]
+    [InlineData(true)]
     public void CoreHoldsACommitmentWhileItsBusinessAwaitsStartupValidation(bool withdrawn)
     {
         var (prepared, inner, planner) = WeightedFoodChoiceTests.Ready(12, 12);
@@ -484,7 +461,7 @@ public sealed class DynamicAcquisitionTests
         for (int i = 0; i < 400 && m.Decision?.Result != FoodDecisionResult.Selected; i++) city.AdvanceTo(at, 1);
         Assert.Equal(FoodDecisionResult.Selected, m.Decision!.Result);
         string intent = m.IntentId;
-        market.Awaiting = true; // the save reloaded; its contract images are warming
+        market.Awaiting = true;
         var statuses = new HashSet<MealStatus>();
         for (double t = at; t <= at + 6; t += .5) { city.AdvanceTo(t, 1); statuses.Add(city.State.Food!.Residents[0].Status); }
         m = city.State.Food!.Residents[0];
@@ -509,9 +486,9 @@ public sealed class DynamicAcquisitionTests
     }
 
     [Theory]
-    [InlineData(false, false)] // valid reload, catalogue published during warm-up
-    [InlineData(true, false)]  // valid reload, catalogue still building: loaded names pending
-    [InlineData(false, true)]  // a loaded holder definition changed between sessions: the image fails validation
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
     public void AReloadKeepsASavedDynamicShopOwnedThroughWarmUpAndSellsOnlyAfterValidation(bool catalogueBuilding, bool invalidHolder)
     {
         var before = World();
@@ -519,7 +496,6 @@ public sealed class DynamicAcquisitionTests
         before.Own(owned);
         Assert.True(owned.Row.CanServe);
 
-        // Reload: a fresh coordinator in warming, the saved authority row (owned, wanted) and the same shop.
         var world = World();
         world.Policy = null;
         world.PolicySource = new FoodProductPolicySource(() => world.Catalogue.Names, () => FoodProductMetadataResolver.Empty,
@@ -527,20 +503,17 @@ public sealed class DynamicAcquisitionTests
         world.Active = false; world.Warming = true;
         if (invalidHolder)
         {
-            // The showcase now produces only burgers: native setup would index it as a workstation-like producer.
             world.Items[ContractWorld.ShelfItem].itemsToProduce = new[] { Burger };
             world.RebuildCatalogue();
         }
         var shop = world.AddShop(owned.Key, Burger, Donut);
         shop.Row = owned.Row;
-        var fresh = world.AddShop("address:main:2:shop", Burger, Donut); // never owned: stays guarded while warming
+        var fresh = world.AddShop("address:main:2:shop", Burger, Donut);
         if (catalogueBuilding) world.Catalogue.MarkDirty();
         world.VisitAll();
-        // Ownership and desire kept, so Core holds the commitment instead of dropping it ...
         Assert.True(shop.Row.CanServe);
         Assert.True(world.AwaitingValidation(shop));
         Assert.False(fresh.Row.Desired);
-        // ... but nothing is captured or sold before the image is validated.
         var held = new ContractWorld.Capture(shop, shop.Menu.ToDictionary(p => p, p => Money.FromNative(shop.PriceOf(p).price)));
         Assert.Null(world.Select(shop));
         Assert.Null(world.Checkout(held, Donut, "travelling-meal"));
@@ -557,13 +530,13 @@ public sealed class DynamicAcquisitionTests
         }
         Assert.True(frames > 1);
         Assert.True(world.Active);
-        Assert.Empty(world.Orders); // no receipt or order before validation
+        Assert.Empty(world.Orders);
         world.VisitAll();
         Assert.False(world.AwaitingValidation(shop));
         if (invalidHolder)
         {
             Assert.False(world.Coordinator.Image(shop.Key)!.Passed);
-            Assert.False(shop.Row.CanServe); // Core then drops the commitment; nothing was sold on the invalid contract
+            Assert.False(shop.Row.CanServe);
             Assert.Null(world.Checkout(held, Donut, "travelling-meal"));
             Assert.Empty(world.Orders);
             Assert.Contains(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
@@ -572,11 +545,10 @@ public sealed class DynamicAcquisitionTests
         Assert.True(shop.Row.CanServe);
         Assert.DoesNotContain(world.Boundary(world.Hour + 1), o => o.Key == shop.Key && o.Outcome == FoodContractBoundary.Outcome.HandedBack);
         Assert.True(shop.Row.CanServe);
-        Assert.NotNull(world.Checkout(world.Select(shop)!, Donut, "travelling-meal")); // the held commitment completes
+        Assert.NotNull(world.Checkout(world.Select(shop)!, Donut, "travelling-meal"));
         for (int i = 0; i < 3 && !fresh.Row.CanServe; i++) { world.Boundary(world.Hour + 1); world.Drain(); world.VisitAll(); }
-        Assert.True(fresh.Row.CanServe); // acquired normally once active
+        Assert.True(fresh.Row.CanServe);
 
-        // A failed capability is not startup: the saved dynamic shop is withdrawn and handed back (Decision 12).
         var failed = World();
         failed.Active = false; failed.CapabilitiesPassed = false;
         var kept = failed.AddShop(owned.Key, Burger, Donut);
@@ -598,8 +570,8 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(CompleteFoodMenuRefusal.MealClass, world.Coordinator.Image(shop.Key)!.Admission);
         Assert.False(shop.Row.Desired);
         var stamp = shop.Stamp();
-        world.Policy = Policy(world.Items.Keys); // the metadata now classes donut Food; no native edit
-        world.Frame(); world.Drain(); world.VisitAll(); // Runtime observes the policy every frame
+        world.Policy = Policy(world.Items.Keys);
+        world.Frame(); world.Drain(); world.VisitAll();
         Assert.True(stamp.Matches(shop.Stamp()));
         Assert.Equal(CompleteFoodMenuRefusal.None, world.Coordinator.Image(shop.Key)!.Admission);
         Assert.True(shop.Row.Desired);
@@ -650,8 +622,7 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(FoodLiveMenuRefusal.None, FoodMenuPolicy.LiveMenu(new List<string> { Burger, Donut, Dumplings }, policy));
         var menu = new List<string>(Menu(8));
         var wide = Policy(menu);
-        for (int i = 0; i < 5000; i++) FoodMenuPolicy.LiveMenu(menu, wide); // JIT tiering and runtime warm-up
-        // A LiveMenu allocation shows in every loop; runtime work during one loop (tiering, other test threads) does not.
+        for (int i = 0; i < 5000; i++) FoodMenuPolicy.LiveMenu(menu, wide);
         long least = long.MaxValue;
         for (int round = 0; round < 5; round++)
         {
@@ -675,11 +646,8 @@ public sealed class DynamicAcquisitionTests
             Assert.True(FoodDecisionTuning.TryParse(wire, out var image));
             Assert.Equal(wire, image!.ToWire());
         }
-        // A historical revision-1 image replays at four offers although the settings default is now eight: re-captured
-        // from its own settings it gives the same bytes, never the eight-offer wire.
         Assert.True(FoodDecisionTuning.TryParse(four, out var historical));
         Assert.NotEqual(eight, historical!.ToWire());
-        // The tuple 4/1/0 is only ever written as revision 1; revision 2 with it stays noncanonical.
         Assert.False(FoodDecisionTuning.IsCanonicalWire("2" + four.Substring(1) + Word(4) + Word(1) + Word(0)));
         Assert.True(FoodDecisionTuning.IsCanonicalWire("2" + four.Substring(1) + Word(8) + Word(1) + Word(0)));
     }
@@ -704,16 +672,13 @@ public sealed class DynamicAcquisitionTests
         Assert.Equal(saved, DevelopmentChain.Write(read.State));
     }
 
-    /// <summary>Offline perf arms for docs/perf/e5b5.md. Not a gate beyond the asserted bounds.</summary>
     [Fact]
     public void EightOfferCostsAndA1024ShopRecoveryWave()
     {
-        // LiveMenu per discovery visit of an eight-offer dynamic shop (the only per-visit addition).
         var menu = new List<string>(Menu(8)); var policy = Policy(menu);
         var visit = Percentiles(5000, () => FoodMenuPolicy.LiveMenu(menu, policy));
         output.WriteLine($"liveMenu8 p50={visit.P50:F5} p95={visit.P95:F5} max={visit.Max:F5} ms");
 
-        // Selected capture and checkout of an eight-offer shop through the model (recheck, supply, reconciliation).
         var world = World();
         var shop = world.AddShop("address:main:1:shop", Menu(8));
         foreach (var c in shop.Holders.Values) foreach (var cargo in c.cargoInstances) cargo.amount = 100000;
@@ -731,10 +696,8 @@ public sealed class DynamicAcquisitionTests
         var cap = Stats(captures); var chk = Stats(checkouts);
         output.WriteLine($"capture8 p50={cap.P50:F4} p95={cap.P95:F4} max={cap.Max:F4} ms; checkout8 p50={chk.P50:F4} p95={chk.P95:F4} max={chk.Max:F4} ms");
 
-        // 1,024 owned eight-offer shops (half dynamic) refused and repaired in one hour: the recovery wave.
         var wave = World();
         var shops = Enumerable.Range(0, 1024).Select(i => wave.AddShop("address:w:" + i + ":shop", i % 2 == 0 ? Menu(8) : Menu(8).Reverse().ToArray())).ToArray();
-        // 16 acquisitions commit per boundary, so owning 1,024 shops takes 64 boundaries.
         wave.VisitAll(); wave.Drain(); wave.VisitAll();
         for (int i = 0; i < 80 && shops.Any(x => !x.Row.CanServe); i++) { wave.Boundary(wave.Hour + 1); wave.Drain(); wave.VisitAll(); }
         Assert.All(shops, x => Assert.True(x.Row.CanServe));
@@ -748,9 +711,8 @@ public sealed class DynamicAcquisitionTests
         {
             long t = Stopwatch.GetTimestamp(); wave.Frame(); frames.Add(Ms(Stopwatch.GetTimestamp() - t));
         }
-        // The model frame has no time budget; Runtime stops at 0.5 ms and requeues. Report the work per unit instead.
         var frame = Stats(frames);
-        int units = 1024 + (wave.Publishes - publishes) + wave.RecoveryUnits; // preparations + passes + recoveries
+        int units = 1024 + (wave.Publishes - publishes) + wave.RecoveryUnits;
         double total = frames.Sum();
         output.WriteLine($"recoveryWave1024 modelFrames={frames.Count} frameP95={frame.P95:F4} frameMax={frame.Max:F4} ms; total={total:F3} ms; "
             + $"units={units} meanUnit={total / units:F4} ms; recoveries={wave.RecoveryUnits} maxRecoveriesInFrame={wave.MaxRecoveriesInFrame}; "
@@ -759,7 +721,6 @@ public sealed class DynamicAcquisitionTests
         Assert.All(shops, s => Assert.False(wave.Refused.ContainsKey(s.Key)));
         wave.VisitAll();
         Assert.All(shops, s => Assert.True(s.Row.Desired));
-        // Reacquisition is spread at 16 per boundary.
         var acquired = wave.Boundary(wave.Hour + 1).Count(o => o.Outcome == FoodContractBoundary.Outcome.Acquired);
         Assert.Equal(FoodContractCoordinator.CommitsPerBoundary, acquired);
     }
@@ -780,8 +741,6 @@ public sealed class DynamicAcquisitionTests
     }
 }
 
-/// <summary>E5b5 raised the offers default to eight, which a held tuning writes as revision 2. Fixtures that pin a held
-/// decision from before that change capture the historical four-offer setting that revision 1 encodes.</summary>
 internal static class LegacyFoodChoice
 {
     public static FoodChoiceSettings Settings() => new FoodChoiceSettings { FoodMenuMaximumOffersPerShop = FoodDecisionTuning.RevisionOneOffers };

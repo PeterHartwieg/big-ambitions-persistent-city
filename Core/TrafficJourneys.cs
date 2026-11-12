@@ -12,7 +12,6 @@ namespace PersistentCity.Core
         private bool refreshingClosures;
         public TrafficKernel? Traffic => traffic;
 
-        /// <summary>Refresh only demanded/receiving sections once per native frame, including dormant blocked queues.</summary>
         public void RefreshTrafficClosures()
         {
             if (refreshingClosures) throw new InvalidOperationException("Traffic closure refresh cannot be nested.");
@@ -21,7 +20,6 @@ namespace PersistentCity.Core
             {
                 EnsureTrafficNetwork();
                 if (traffic == null || !(routes is ITrafficRoutePlanner planner)) return;
-                // SetLinkClosed can change the scheduled set; collect IDs before applying observations.
                 traffic.CopyRelevantLinkIds(closureLinks);
                 var batch = routes as ITrafficClosureBatchPlanner;
                 batch?.BeginTrafficClosureBatch();
@@ -47,8 +45,6 @@ namespace PersistentCity.Core
                 trafficCitizens.Add(vehicle.VehicleId, item.Citizen);
                 due.Remove(item);
             }
-            // Completed vehicles normally leave the kernel immediately. Handle an interrupted
-            // capture at that boundary without admitting the resident twice.
             foreach (var vehicle in State.Traffic.Vehicles)
                 if (vehicle.Completed) TrafficCompleted(vehicle.VehicleId, vehicle.CompletedAt!.Value);
         }
@@ -73,14 +69,11 @@ namespace PersistentCity.Core
                 if (needsRoad && !network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
                     throw new InvalidOperationException("Committed road geometry no longer matches the native network; preserve the saved journey.");
             }
-            // GR-8: through cars are not saved and belong to one network; a new network drops them and generates again.
             if (throughTraffic != null && traffic != null) DropThroughCars(throughTraffic);
             if (traffic != null && State.TrafficTopologyId != network.TopologyId && traffic.VehicleCount != 0)
                 throw new InvalidOperationException("The road topology changed during committed traffic; preserve the saved state.");
             if (traffic != null && traffic.VehicleCount != 0)
             {
-                // Binding is infrequent. Validate the saved spatial ownership against every
-                // committed corner, including an untagged fragment split by clock conversion.
                 foreach (var vehicle in traffic.Capture().Vehicles)
                     if (!ThroughTraffic.IsThroughVehicle(vehicle.VehicleId)) network.ValidateRemainingMapping(trafficCitizens[vehicle.VehicleId].Journey!, vehicle.Route, vehicle.NominalMinutes);
             }
@@ -96,19 +89,12 @@ namespace PersistentCity.Core
             planner.SetTrafficForecast((id, at) => traffic.Forecast(id, at));
             if (routes is ITrafficEntryRoutePlanner entryPlanner)
                 entryPlanner.SetTrafficEntryForecast((id, at, fraction, share) => traffic.ForecastEntry(id, at, fraction, share));
-            // A native snapshot can finish after simulator construction. Register existing
-            // journeys at their current geometry, never rewind them to their departure.
-            // The event whose route request is in flight is outside the queue: CompleteEvent re-adds it with its
-            // new minute, or AbortPending with its unstarted one. Queuing it here as well would leave it in the
-            // set while CompleteEvent rewrites its sort key, duplicating the resident and breaking the order.
             due.Clear();
             foreach (var item in citizenEvents.Values)
                 if (!InProgress(item) && !trafficCitizens.ContainsKey(item.Citizen.Identity.Id))
                 { item.Minute = ScheduledMinute(item.Citizen); due.Add(item); }
         }
 
-        // Reused by the boundary queries above and below, which only read the first unfinished span.
-        // Simulator calls are single-threaded and none of them nests another mapping.
         private readonly List<TrafficNetwork.MappedSpan> mappingSpans = new List<TrafficNetwork.MappedSpan>();
 
         private double ScheduledMinute(CitizenState citizen)
@@ -132,8 +118,6 @@ namespace PersistentCity.Core
             double progress = JourneyProgress(citizen);
             double tolerance = JourneyClockTolerance(State.Minute, citizen.Journey.Minutes);
             if (progress + tolerance < mapped[0].StartNominalMinutes || progress >= mapped[mapped.Count - 1].EndNominalMinutes - tolerance) return false;
-            // Schema migration and a clock conversion can resume part-way through a section.
-            // Completed sections create no new demand; the unfinished section keeps its point.
             while (mapped.Count > 0 && mapped[0].EndNominalMinutes <= progress + tolerance) mapped.RemoveAt(0);
             if (mapped.Count == 0) return false;
             var first = mapped[0];
@@ -167,8 +151,6 @@ namespace PersistentCity.Core
 
         private double MappingProgress(CitizenState citizen, double progress)
         {
-            // Subtracting large absolute clocks can put an exact curb departure a few
-            // ulps inside a section. Do not turn it into an interior-source admission.
             double offset = 0, tolerance = JourneyClockTolerance(State.Minute, citizen.Journey!.Minutes);
             foreach (var leg in citizen.Journey.Legs)
             {
@@ -207,10 +189,6 @@ namespace PersistentCity.Core
             return traffic != null && traffic.TryGetVehicle(citizenId, out permission);
         }
 
-        /// <summary>F2d phase count: whether the kernel signal of the road section that holds route minute
-        /// <paramref name="routeMinutes"/> of this person's committed journey is green now. A point at a section's end
-        /// belongs to that section (a car waits there to cross). False when the point maps to no section. Read-only; it
-        /// compares the kernel's current phase at a visible car's own junction, never a past crossing.</summary>
         public bool TryGetTrafficSignalGreen(CitizenState citizen, double routeMinutes, out bool green)
         {
             green = false;
@@ -229,9 +207,6 @@ namespace PersistentCity.Core
             return false;
         }
 
-        // Food retries run at a logical event time, independently of snapshot publication.
-        // A travelling resident's published NextEventMinute may describe the previous frame.
-        // AdvanceCore has already advanced traffic to State.Minute before stepping food.
         internal double RoutineRetryMinute(CitizenState citizen)
         {
             if (traffic != null && trafficCitizens.ContainsKey(citizen.Identity.Id))
@@ -254,11 +229,9 @@ namespace PersistentCity.Core
         private void CaptureTraffic()
         {
             SynchronizeSnapshot();
-            // GR-8: the save holds resident cars only; a loaded city generates its through cars again.
             State.Traffic = traffic == null ? null : ThroughCarCount > 0 ? traffic.Capture(ThroughTraffic.IsThroughVehicle) : traffic.Capture();
         }
 
-        /// <summary>Publish progress after a batch of budgeted native-frame slices. Saving also calls this.</summary>
         public void SynchronizeSnapshot() => SynchronizeTrafficJourneys();
     }
 }

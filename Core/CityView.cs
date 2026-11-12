@@ -7,31 +7,17 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F9e (plan f9-city-acceptance.md, Decision 8): the read-only city for observers (diagnostics, the food panel,
-    /// the resident inspector and the F9 oracles), returned by <see cref="CitySimulator.View"/>. A view is a contract over
-    /// the live state, not a copy: every read sees the simulator's current values, and no member can change them. Lists are
-    /// the simulator's own lists seen through interface covariance, so a read allocates nothing. Every member returns a view
-    /// type or an immutable value; tests/OwnershipBoundaryTests.cs checks that by reflection. Writes keep going through the
-    /// simulator's own methods. Collection members are named apart from every saved field (ResidentList, not Residents):
-    /// the compact reader derives each field's bound by property name over all Core types, interfaces included.</summary>
     public interface ICityView
     {
-        /// <summary>The logical city minute (drained events), not the native clock.</summary>
         double Minute { get; }
-        /// <summary>The residents, in the simulator's order.</summary>
         IReadOnlyList<IPersonView> ResidentList { get; }
-        /// <summary>Schema 27 visitor routines, one per visitor in visitor order.</summary>
         IReadOnlyList<IPersonView> VisitorRoutineList { get; }
-        /// <summary>The saved visitor persons, including any without a routine yet.</summary>
         int VisitorCount { get; }
         int PortalCount { get; }
-        /// <summary>Saved places; vendor places are rebuilt from the vendor rows and not listed here.</summary>
         IReadOnlyList<IPlaceView> PlaceList { get; }
-        /// <summary>Null until the city owns a food scope.</summary>
         IFoodView? Food { get; }
         IEconomicLedgerView Economy { get; }
         IResearchView Research { get; }
-        /// <summary>The Street Food vendor rows, ordinal by vehicle id.</summary>
         IReadOnlyList<IVendorRowView> VendorRowList { get; }
         IVendorRowView? FindVendor(string vehicleId);
     }
@@ -81,11 +67,9 @@ namespace PersistentCity.Core
         double ResidentialAreaSquareMetres { get; }
     }
 
-    /// <summary>The city's food scopes and the counts the panel shows.</summary>
     public interface IFoodView
     {
         IReadOnlyList<IFoodScopeView> ScopeList { get; }
-        /// <summary>Persons with a meal record (one per consumer).</summary>
         int ConsumerCount { get; }
         int MealRhythmVersion { get; }
         int ChoiceStartsDay { get; }
@@ -104,9 +88,7 @@ namespace PersistentCity.Core
 
     public interface IEconomicLedgerView
     {
-        /// <summary>Recorded outside-spending days (at most <see cref="EconomicLedger.Days"/>).</summary>
         int OutsideDays { get; }
-        /// <summary>Shops with an observation journal.</summary>
         int ObservedShops { get; }
     }
 
@@ -154,13 +136,10 @@ namespace PersistentCity.Core
         bool AuthorityManaged { get; }
         bool Suspended { get; }
         bool HandbackPending { get; }
-        /// <summary>The Street Food opening PC serves; -1 when none.</summary>
         long OpeningId { get; }
         bool HasStand { get; }
     }
 
-    /// <summary>The one <see cref="ICityView"/> implementation: a wrapper that reads its state's current lists and values on
-    /// every access, so a replaced list is seen at once. <see cref="CitySimulator.View"/> allocates it once.</summary>
     internal sealed class CityView : ICityView
     {
         private readonly FoodView food;
@@ -206,9 +185,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Observer reports that run an existing Core helper on the state behind a view and return its result. The
-    /// helpers keep their concrete parameters (their files are outside F9e); the state never leaves this class, so the
-    /// observer files hold only the view. Each throws for a view this assembly did not create.</summary>
     public static class CityViewReports
     {
         private static CityState Of(ICityView view)
@@ -216,8 +192,6 @@ namespace PersistentCity.Core
         private static FoodCommerceState FoodOf(ICityView view)
             => Of(view).Food ?? throw new InvalidOperationException("The city has no food scope.");
 
-        /// <summary><see cref="FoodEconomyInsight.Capture"/>: the on-demand economy overview, field for field in the same order,
-        /// with its history rows replaced by detached copies, so nothing in the result is part of the city.</summary>
         public static IReadOnlyDictionary<string, object?> EconomyOverview(ICityView view)
         {
             object overview = FoodEconomyInsight.Capture(Of(view));
@@ -229,30 +203,18 @@ namespace PersistentCity.Core
             }
             return fields;
         }
-        /// <summary><see cref="FoodMoneyCounters.Rescan"/>: city money totals from a full scan of the wallets.</summary>
         public static FoodMoneySnapshot RescanFoodMoney(ICityView view) => FoodMoneyCounters.Rescan(FoodOf(view));
-        /// <summary>The kept food history, indexed once for one panel refresh. The rows stay inside the report.</summary>
         public static FoodHistoryReport FoodHistory(ICityView view) => new FoodHistoryReport(FoodOf(view).History);
         public static int FoodRecordingSince(ICityView view) => FoodFeedback.RecordingSince(FoodOf(view));
         public static int FoodRecordingSinceV2(ICityView view) => FoodFeedbackV2.RecordingSince(FoodOf(view));
-        /// <summary><see cref="FoodFeedbackV2.AppendCity"/> with the city's economic ledger.</summary>
         public static void AppendCityEconomy(StringBuilder text, FoodMoneySnapshot money, ICityView view, int today)
             => FoodFeedbackV2.AppendCity(text, money, Of(view).Economy, today);
-        /// <summary><see cref="VisitorSchedules.DescribePerson"/>: the <c>pc population person</c> line.</summary>
         public static string? DescribePerson(ICityView view, string id, long anchorReads) => VisitorSchedules.DescribePerson(Of(view), id, anchorReads);
-        /// <summary><see cref="PopulationCensusInput.CaptureResidents"/>: detached census facts of the residents.</summary>
         public static CensusResident[] CaptureCensusResidents(ICityView view) => PopulationCensusInput.CaptureResidents(Of(view).Citizens);
-        /// <summary>A detached copy of the research ledger (the F7c save copy: same orders, states and order, shared immutable
-        /// reports) for the research window and report text, which take a ledger. Changing it changes nothing in the city.</summary>
         public static ResearchLedger ResearchSnapshot(ICityView view) => Of(view).Research.CopyForSave();
-        /// <summary>The meal records at Street Food vendor places for <c>pc vendor sales</c> and its receipt check, each as a
-        /// detached <see cref="VendorMealReport"/>.</summary>
         public static IReadOnlyList<VendorMealReport> VendorMeals(ICityView view)
             => FoodOf(view).Residents.Where(m => VendorNames.IsVendorPlace(m.PlaceId)).Select(m => new VendorMealReport(m)).ToArray();
 
-        /// <summary>A new meal record with the meal's public settable strings and values only (IDs, day, kind, target,
-        /// price, status, place); held decisions, wallets and lists stay behind. Its computed members (IntentId,
-        /// TargetKind) read the same as the meal's.</summary>
         internal static ResidentMeal Record(ResidentMeal meal)
         {
             var record = new ResidentMeal();
@@ -265,12 +227,6 @@ namespace PersistentCity.Core
 
         internal static T Detach<T>(T value) where T : class => (T)Copy(value)!;
 
-        /// <summary>A deep copy of public state: strings and value types as they are, arrays and lists element by element, a
-        /// Core class by its parameterless constructor and its public settable properties (a get-only list is refilled).
-        /// A copy holds public state only: fields, and members with non-public setters (for example a meal's host
-        /// assignment or a product's opaque-identity flag), are reset to their defaults, and transient counters are not
-        /// attached. A type outside Core or without a parameterless constructor is refused rather than shared. Used only
-        /// for on-demand diagnostics, on wallets and history rows.</summary>
         private static object? Copy(object? value)
         {
             if (value == null) return null;
@@ -302,8 +258,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>One vendor-place meal for <c>pc vendor sales</c>: its record fields (<see cref="CityViewReports.Record"/>,
-    /// also the receipt key) and a detached copy of its wallet. Nothing in it is part of the city.</summary>
     public sealed class VendorMealReport
     {
         internal VendorMealReport(ResidentMeal meal)
@@ -311,13 +265,10 @@ namespace PersistentCity.Core
             Record = CityViewReports.Record(meal);
             Wallet = meal.Budget == null ? null : CityViewReports.Detach(meal.Budget);
         }
-        /// <summary>A new meal record with the meal's strings and values, for display and FoodSaleReceipts.ReadStatus.</summary>
         public ResidentMeal Record { get; }
         public ResidentBudget? Wallet { get; }
     }
 
-    /// <summary>The kept food history indexed by shop for one panel refresh (<see cref="FoodFeedback.IndexHistory"/>). The
-    /// saved day rows never leave it: callers get text only.</summary>
     public sealed class FoodHistoryReport
     {
         private static readonly List<FoodShopDay> NoRows = new List<FoodShopDay>();
@@ -326,7 +277,6 @@ namespace PersistentCity.Core
         private List<FoodShopDay> Rows(string placeId, string businessId)
             => index.TryGetValue(FoodFeedback.Key(placeId, businessId), out var rows) ? rows : NoRows;
 
-        /// <summary><see cref="FoodFeedback.Weeks"/> text of one shop.</summary>
         public string WeeksText(string placeId, string businessId, int today, int recordingSince)
             => FoodFeedback.Weeks(Rows(placeId, businessId), placeId, businessId, today, recordingSince).Text();
         public void AppendPeriods(StringBuilder text, string placeId, string businessId, int today, int recordingSince)
@@ -335,8 +285,6 @@ namespace PersistentCity.Core
             Func<string, string> productName)
             => FoodFeedbackV2.AppendJournal(text, journal, Rows(placeId, businessId), today, recordingSince, productName);
 
-        /// <summary>The panel's shop-days block: "No evaluated food offers recorded yet.", or the weeks and the latest
-        /// recorded day (purchases, meals, products, offer outcomes and purchase hours).</summary>
         public void AppendShopDays(StringBuilder text, string placeId, string businessId, int today, int recordingSince,
             Func<Money, string> amount, Func<string, string> productName)
         {

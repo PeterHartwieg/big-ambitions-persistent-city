@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Bounded observed offer decisions, not an exhaustive counterfactual demand count.</summary>
     public sealed class FoodBuyerDistrict
     {
         public string DistrictId { get; set; } = "";
@@ -14,7 +13,6 @@ namespace PersistentCity.Core
     {
         private bool opaqueIdentity;
         public bool HasOpaqueIdentity() => opaqueIdentity;
-        // Historical object provenance survives saves even when its name happens to be canonical.
         public void PreserveOpaqueIdentity() => opaqueIdentity = true;
         public string ProductId { get; set; } = "";
         public long Purchases { get; set; }
@@ -50,7 +48,6 @@ namespace PersistentCity.Core
     {
         private FoodShopDay ShopDay(string place, string business, int day)
         {
-            // Fourteen days of business-specific aggregates; no resident-history growth.
             state.History.RemoveAll(h => h.Day < day - 13);
             var history = state.History.FirstOrDefault(h => h.Day == day && h.PlaceId == place && h.BusinessId == business);
             if (history == null) { history = new FoodShopDay { Day = day, PlaceId = place, BusinessId = business }; state.History.Add(history); }
@@ -83,10 +80,6 @@ namespace PersistentCity.Core
                 else row.AccessRejections++;
             }
         }
-        /// <summary>Whether every addition a confirmed sale makes fits the money unit. Checked before
-        /// funds are held or native checkout starts, so immediate settlement cannot fail after a native
-        /// sale. A receipt confirmed later adds to its checkout day's history row, whose headroom other
-        /// sales may use meanwhile; that is not reserved (it needs about $343.6M in one shop-day).</summary>
         private bool CanSettle(ResidentMeal meal)
         {
             if (!Money.TryAdd(meal.Spent, meal.Price, out _)
@@ -97,12 +90,8 @@ namespace PersistentCity.Core
             return (row == null || Money.TryAdd(row.Revenue, meal.Price, out _))
                 && (product == null || Money.TryAdd(product.Revenue, meal.Price, out _));
         }
-        /// <summary>F6j: every sold line (main dish and each extra) is one item purchase in the shop-day row, so the
-        /// saved product, hour, meal and district counters keep reconciling. Without known extras (a receipt
-        /// reconciled later) the whole ticket stays on the main product's line.</summary>
         private void RecordPurchase(ResidentMeal meal, IReadOnlyList<FoodTicketLine>? extras = null)
         {
-            // Receipt reconciliation can happen days later; retain the actual checkout interval.
             int purchaseDay = (int)(meal.ServiceAt / 1440);
             if (purchaseDay < (int)(city.State.Minute / 1440) - 13) return;
             var row = ShopDay(meal.PlaceId, meal.BusinessId, purchaseDay);
@@ -129,7 +118,6 @@ namespace PersistentCity.Core
     }
     public static class FoodEconomyInsight
     {
-        // Built only on demand by the management panel or explicit diagnostics.
         public static object Capture(CityState city)
         {
             var food = city.Food ?? throw new InvalidOperationException("No enrolled food economy.");
@@ -138,7 +126,6 @@ namespace PersistentCity.Core
                 minute = city.Minute, residents = food.Residents.Count, physicalResidents = city.Citizens.Count, representedConsumers = food.Residents.Count, representationFactor = city.Citizens.Count > 0 && food.Residents.Count % city.Citizens.Count == 0 ? food.Residents.Count / city.Citizens.Count : food.RepresentationFactor, storedRosterFactor = food.RepresentationFactor,
                 unresolvedConsumers = food.Residents.Count(m => m.Status == MealStatus.Uncertain || m.Excursion?.Unresolved == true), financePolicy = food.HouseholdFinanceVersion, mealPolicy = food.MealRhythmVersion,
                 boundary = food.HouseholdFinanceVersion == 0 ? "Temporary allowance experiment" : HouseholdFinance.Evidence,
-                // Exact cents text: totals across residents may exceed one amount's range.
                 balances = Total(budgets.Select(b => b.Balance)), openingSavings = Total(budgets.Select(b => b.OpeningBalance)),
                 income = Total(budgets.Select(b => b.IncomeReceived)), essentials = Total(budgets.Select(b => b.EssentialsPaid)),
                 householdFood = Total(budgets.Select(b => b.HomeFoodPaid)), preparedFood = Total(budgets.Select(b => b.PreparedFoodSpent)),

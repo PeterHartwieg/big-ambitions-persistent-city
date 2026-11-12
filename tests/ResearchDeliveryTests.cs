@@ -11,8 +11,6 @@ using PersistentCity.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
-/// <summary>C5f delivery, report window, activation and cleanup (plan C5 sections 3.6, 3.7 and 3.9). Pure doubles of the
-/// native bill; offline only, no native evidence.</summary>
 public sealed class ResearchDeliveryTests
 {
     private const double Minute = 10 * 60 + 5;
@@ -20,7 +18,6 @@ public sealed class ResearchDeliveryTests
     private readonly ITestOutputHelper output;
     public ResearchDeliveryTests(ITestOutputHelper output) { this.output = output; }
 
-    // ---- doubles ----
 
     private static int serial;
 
@@ -37,7 +34,6 @@ public sealed class ResearchDeliveryTests
     private static MarketResearchCell[] DetailedCells()
         => new ResearchFixtureCells(MarketResearchTier.Detailed).Cells;
 
-    /// <summary>Real C4 cells from the offline fixture engine, with sentinel values 7001.. so a number is recognisable.</summary>
     private sealed class ResearchFixtureCells
     {
         internal ResearchFixtureCells(MarketResearchTier tier)
@@ -58,8 +54,6 @@ public sealed class ResearchDeliveryTests
 
     private static string Shop(int i) => "address:Main%20Street:" + i + ":shop";
 
-    /// <summary>The native ChangeMoneySafe contract: false before any change when money is short, otherwise
-    /// Money += amount and one queued record with balance floor(Money).</summary>
     private sealed class Port : IResearchChargePort
     {
         public float Money = 50000;
@@ -85,7 +79,6 @@ public sealed class ResearchDeliveryTests
             => new ResearchChargeRecord(r.Tag, true, false, r.Amount, r.Balance, r.Day, r.Address);
     }
 
-    /// <summary>ResearchBilling.RunDailyPostfix's order: remember the Surveyed orders, bill, then send the notices.</summary>
     private static List<ResearchNotice> Boundary(ResearchChargeSession session, ResearchNoticeTracker tracker)
     {
         var sent = new List<ResearchNotice>();
@@ -97,7 +90,6 @@ public sealed class ResearchDeliveryTests
 
     private static ResearchChargeSession Session(ResearchLedger ledger, Port port) => new ResearchChargeSession(ledger, port, () => true, unit => unit());
 
-    // ---- delivery and decline messages ----
 
     [Fact]
     public void DeliveryMessageOnlyForPaidAndOncePerOrder()
@@ -116,14 +108,12 @@ public sealed class ResearchDeliveryTests
         Assert.All(sent, n => Assert.Equal(Agency, n.AgencyAddress));
         Assert.Equal(first.BusinessAddress, sent[0].BusinessAddress);
 
-        // Repeated boundaries, with and without new work, never repeat a message.
         for (int i = 0; i < 5; i++) Assert.Empty(Boundary(session, tracker));
         var third = Surveyed(ledger, Shop(3));
         Assert.Equal(new[] { third.Id }, Boundary(session, tracker).Select(n => n.OrderId));
         Assert.Empty(Boundary(session, tracker));
         Assert.Equal(3, port.Charges);
 
-        // A reloaded ledger (the save copy) with these Paid orders sends nothing at the next bill.
         var reloaded = ledger.CopyForSave();
         Assert.Empty(Boundary(Session(reloaded, port), new ResearchNoticeTracker()));
         Assert.Equal(3, port.Charges);
@@ -146,7 +136,6 @@ public sealed class ResearchDeliveryTests
         Assert.Equal(ResearchNoticeText.Declined, notice.MessageKey);
         Assert.Empty(Boundary(session, tracker));
 
-        // BalancePrecision: $100,000,000 has a binary32 spacing of $8, so a $500 debit is refused before any native call.
         port.Money = 100_000_000f;
         int charges = port.Charges;
         var precise = Surveyed(ledger, Shop(2));
@@ -176,12 +165,10 @@ public sealed class ResearchDeliveryTests
         Assert.Equal(ResearchOrderState.Ordered, ordered!.State);
         Assert.Equal(ResearchOrderState.Surveyed, waiting.State);
 
-        // An order that became Paid outside a remembered boundary (for example restored) sends nothing either.
         Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(waiting.Id));
         tracker.After(sent.Add);
         Assert.Empty(sent);
 
-        // A boundary that ended with the runtime stopped forgets its orders.
         var late = Surveyed(ledger, Shop(5));
         tracker.Before(ledger);
         Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(late.Id));
@@ -207,7 +194,6 @@ public sealed class ResearchDeliveryTests
     [InlineData("Straße 9/10 % #", 1)]
     public void AgencyAddressReadsBackTheDialogsAgencyId(string street, int number)
     {
-        // C5e ResearchAgencyDialog.AgencyId.
         string id = "address:" + Uri.EscapeDataString(street) + ":" + number.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":agency";
         Assert.True(ResearchNoticeText.TryParseAgency(id, out var parsed, out int parsedNumber));
         Assert.Equal(street, parsed); Assert.Equal(number, parsedNumber);
@@ -216,7 +202,6 @@ public sealed class ResearchDeliveryTests
         Assert.False(ResearchNoticeText.TryParseAgency(null, out _, out _));
     }
 
-    // ---- window and console: numbers only for Paid ----
 
     [Fact]
     public void WindowAndConsoleShowNumbersOnlyForPaid()
@@ -251,21 +236,17 @@ public sealed class ResearchDeliveryTests
         Assert.Contains("not enough money", ResearchReportText.State(declined));
         Assert.Contains("could not be charged exactly", ResearchReportText.State(precision));
 
-        // The surveyed order holds a sealed report, but TryRead refuses it, so its numbers never show.
         Assert.NotNull(surveyed.Report);
         Assert.False(surveyed.Report!.TryRead(ledger, surveyed.Id, out _));
 
-        // Replaced: the 17th delivery releases the oldest report; its text then has no numbers.
         for (int i = 0; i < ResearchLedger.MaximumKeptReports; i++)
             Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(Surveyed(ledger, Shop(100 + i)).Id));
         Assert.Equal(ResearchOrderState.Replaced, paid.State);
         Assert.Contains("No report numbers", ResearchReportText.Report(ledger, paid, "Shop 1"));
 
-        // Order lines (pcresearch orders and the window list) never carry numbers.
         foreach (var order in ResearchReportText.Orders(ledger))
             Assert.DoesNotMatch(@"\b70\d\d\b|7,0\d\d", ResearchReportText.Line(order, Name(order.BusinessAddress)));
 
-        // A Paid order whose report does not belong to another ledger cannot be read through it.
         var stranger = new ResearchLedger();
         var strangerPaid = Surveyed(stranger, Shop(1));
         Assert.Equal(ResearchMoveRefusal.None, stranger.TryMarkPaid(strangerPaid.Id));
@@ -283,7 +264,7 @@ public sealed class ResearchDeliveryTests
             foreach (var (cell, label) in cells.Zip(labels))
             {
                 Assert.NotEqual(cell.Label, label);
-                Assert.DoesNotMatch(@"[a-z][A-Z]", label); // no enum identifier such as CroissantTaste
+                Assert.DoesNotMatch(@"[a-z][A-Z]", label);
                 Assert.DoesNotContain("Metric ", label);
                 Assert.DoesNotContain("band ", label);
             }
@@ -299,7 +280,6 @@ public sealed class ResearchDeliveryTests
             Assert.DoesNotContain("band ", ResearchCellLabels.Band(MarketResearchMetric.Consumers, band));
     }
 
-    // ---- window: nothing built while closed ----
 
     [Fact]
     public void ClosedWindowBuildsNothing()
@@ -318,8 +298,7 @@ public sealed class ResearchDeliveryTests
         Assert.NotNull(view);
         Assert.Equal(1, model.Builds);
         Assert.Equal(new[] { paid.Id }, view!.Ids);
-        Assert.Contains("7,0", view.Detail); // the newest Paid report is selected by default
-        // Cached within the refresh interval; rebuilt after it and on a new selection.
+        Assert.Contains("7,0", view.Detail);
         Assert.Same(view, model.Update(10.5, ledger, Name));
         Assert.Equal(1, model.Builds);
         Assert.NotSame(view, model.Update(11.01, ledger, Name));
@@ -328,7 +307,6 @@ public sealed class ResearchDeliveryTests
         model.Update(11.02, ledger, Name);
         Assert.Equal(3, model.Builds);
 
-        // Closing drops the view; closed again, nothing is read.
         model.Hide();
         Assert.Null(model.View);
         names = 0;
@@ -336,12 +314,10 @@ public sealed class ResearchDeliveryTests
         Assert.Equal(3, model.Builds); Assert.Equal(0, names);
         model.Toggle(); Assert.True(model.Open); model.Toggle(); Assert.False(model.Open);
 
-        // Open without an attached city: a message, no numbers.
         model.Show();
         Assert.Equal("Market research is not attached to this city.", model.Update(30, null, Name)!.Detail);
     }
 
-    // ---- activation ----
 
     [Fact]
     public void AvailableIsFalseWhenAnyAttachOrContractCheckFails()
@@ -361,7 +337,6 @@ public sealed class ResearchDeliveryTests
         }
         Assert.False(default(MarketResearchActivation).Available);
 
-        // Unbound, cleared and config-supplied settings are never available; the checks are read on every call.
         var live = new MarketResearchSettings();
         Assert.False(live.Available);
         bool attached = true;
@@ -380,14 +355,12 @@ public sealed class ResearchDeliveryTests
     [Fact]
     public void AFailedDeliveryContractLeavesASavedSurveyedOrderUnchargedAndUnchanged()
     {
-        // A saved city with a Surveyed order, loaded while the delivery contract failed (dialog and billing passed).
         var ledger = new ResearchLedger();
         var order = Surveyed(ledger, Shop(1));
         var saved = ledger.CopyForSave();
         var port = new Port();
         var tracker = new ResearchNoticeTracker();
         var sent = new List<ResearchNotice>();
-        // PersistentCityMod.AttachResearch: only an enabled session attaches the billing session.
         ResearchChargeSession? session = ResearchEligibility.SessionEnabled(true, true, deliveryContract: false) ? Session(saved, port) : null;
         Assert.Null(session);
         for (int midnight = 0; midnight < 3; midnight++)
@@ -400,21 +373,17 @@ public sealed class ResearchDeliveryTests
         Assert.Equal(ResearchOrderState.Surveyed, kept.State);
         Assert.Same(order.Report, kept.Report);
 
-        // With every contract passing the same saved order is billed and delivered once.
         session = ResearchEligibility.SessionEnabled(true, true, true) ? Session(saved, port) : null;
         Assert.Equal(ResearchNoticeKind.Delivered, Assert.Single(Boundary(session!, tracker)).Kind);
         Assert.Equal(1, port.Charges);
 
     }
 
-    // ---- cleanup ----
 
-    // ---- perf ----
 
     [Fact]
     public void WindowViewBuildCostAtTheLedgerBoundsAndZeroWorkClosed()
     {
-        // The largest ledger: 8 open, 16 delivered Detailed reports (62 cells) and 16 closed orders.
         var ledger = new ResearchLedger();
         for (int i = 0; i < ResearchLedger.MaximumKeptReports; i++)
             Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(Surveyed(ledger, Shop(i), ResearchProducts.DetailedCityCode).Id));
@@ -459,7 +428,6 @@ public sealed class ResearchDeliveryTests
         output.WriteLine(line);
     }
 
-    // ---- helpers ----
 
     private static string Root()
     {

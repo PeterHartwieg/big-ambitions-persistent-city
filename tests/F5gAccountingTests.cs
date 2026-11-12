@@ -10,14 +10,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5g (#92, review Astra-r1-1): the F1 accounting scenario with population fill attached. A detached native
-/// clock advances only as <see cref="AccountingClock.Limit"/> allows, the market accepts a checkout only inside the current
-/// native hour, and route jobs are admitted at most 16 native paths per frame (Runtime's MaximumJobPathsPerFrame). The
-/// city fills at its midnight boundary while frames run at different rates and budgets, with saves inside the fill.</summary>
 public sealed class F5gAccountingTests
 {
-    /// <summary>A resumable planner double with one frame-wide admission budget, like Runtime's MultimodalRoutes. A job
-    /// needs one or two native paths; a Continue that finds the frame's admission spent does no work.</summary>
     internal sealed class AdmittedPlanner : IResumableRoutePlanner, ICommuteTimingPlanner
     {
         public const int PathsPerFrame = 16;
@@ -53,7 +47,6 @@ public sealed class F5gAccountingTests
         }
     }
 
-    /// <summary>The F1 market rule: a checkout outside the current native hour is a historical purchase and fails the run.</summary>
     internal sealed class ClockMarket : IFoodMarket, IFoodSaleEvidence
     {
         public double Clock;
@@ -87,7 +80,6 @@ public sealed class F5gAccountingTests
         public double FrameP95, FrameMax; public int FramesAtLeast30Ms;
     }
 
-    /// <summary>One run from 06:00 on day 1 to 06:00 on day 2, filling at midnight (minute 2,880).</summary>
     internal static Result Run(int homes, int fps, int eventBudget, double milliseconds, bool reload, bool skip, int seed = 4242, int since = 3)
     {
         var (state, _) = F5gPopulationFillTests.City(homes, 1, seed: seed);
@@ -106,7 +98,6 @@ public sealed class F5gAccountingTests
             result.Skipped += city.PopulationFillSkipped - creditedSkipped; result.PlanningRequests += city.PlanningRequests - creditedRequests; }
         CitySimulator Reload()
         {
-            // Runtime's save callback: the open boundary's fill completes before capture.
             Credit();
             string payload = SaveCodec.Write(city.State);
             var read = SaveCodec.Read(payload);
@@ -133,7 +124,6 @@ public sealed class F5gAccountingTests
                 result.Held++;
                 if (city.PopulationFillPending) result.HeldAtBoundary++;
             }
-            // As the F1 scenario: the native clock is an hour plus a float minute.
             int nativeHour = (int)Math.Floor(native / 60); float nativeMinute = (float)(native - nativeHour * 60.0) + allowed;
             while (nativeMinute >= 60) { nativeMinute -= 60; nativeHour++; }
             native = nativeHour * 60.0 + nativeMinute;
@@ -141,8 +131,6 @@ public sealed class F5gAccountingTests
             Assert.True(city.BeginAccountingObservations(native), "observation epoch not published");
             target = Math.Max(city.State.Minute, AccountingClock.Target(native));
             long saveTicks = 0;
-            // A save as the clock reaches midnight: the boundary's fill is open and the save runs its units (excluded from frame cost).
-            // A save as the clock reaches midnight, before or between the fill's units.
             if (reload && !midnightReload && city.State.Minute == boundary)
             { long saveStarted = Stopwatch.GetTimestamp(); midnightReload = true; city = Reload(); saveTicks = Stopwatch.GetTimestamp() - saveStarted; }
             result.MaxLag = Math.Max(result.MaxLag, target - city.State.Minute);
@@ -157,8 +145,6 @@ public sealed class F5gAccountingTests
             city.SynchronizeSnapshot();
             if (city.PopulationFillUnits != unitsBefore) result.FillFrames++;
             costs.Add((Stopwatch.GetTimestamp() - started - saveTicks) * 1000.0 / Stopwatch.Frequency);
-            // A save between two units of midnight's fill: the reload continues with the remaining units (no fill work runs
-            // in the save).
             if (reload && !fillReload && city.PopulationFillPending && city.PopulationFillUnits > 0)
             {
                 fillReload = true; result.FillReloads++; city = Reload();
@@ -192,7 +178,6 @@ public sealed class F5gAccountingTests
         Assert.True(actual.Reloads >= 1);
         Assert.True(actual.Held > 0);
         Assert.Equal(reference.FillCreated, actual.FillCreated);
-        // At one event per frame the staging spans frames, so a save lands while persons are staged.
         if (budget == 1) Assert.True(actual.FillReloads > 0);
     }
 

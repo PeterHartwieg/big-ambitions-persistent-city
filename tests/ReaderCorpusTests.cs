@@ -9,8 +9,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F7f: the writer's golden corpus. The schema is held at 1 until release, so the corpus has one folder; the
-/// writer reads and rewrites it exactly as pinned, and any other schema number is refused with every key kept.</summary>
 public sealed class ReaderCorpusTests
 {
     private const string ReceiptKey = "persistentcity:food-sale-v1:corpus-intent";
@@ -43,7 +41,7 @@ public sealed class ReaderCorpusTests
             string path = Path.Combine(folder, "full.json");
             byte[] bytes = File.ReadAllBytes(path);
             int at = Array.IndexOf(bytes, (byte)'7'); Assert.True(at > 0);
-            bytes[at] = (byte)'8'; // one digit: still valid JSON, still a plausible payload
+            bytes[at] = (byte)'8';
             File.WriteAllBytes(path, bytes);
             var error = Assert.Throws<InvalidDataException>(() => ReaderCorpus.Load(temp));
             Assert.Contains(name + "/full.json changed", error.Message);
@@ -51,8 +49,6 @@ public sealed class ReaderCorpusTests
         finally { if (Directory.Exists(temp)) Directory.Delete(temp, recursive: true); }
     }
 
-    /// <summary>Writes the writer's folder once. Runs only when <c>PC_READER_CORPUS_WRITE</c> names the
-    /// <c>tests/ReaderCorpus</c> directory and never replaces an existing folder.</summary>
     [Fact]
     public void ReaderCorpus_GenerateFolderOnlyWhenExplicitlyRequested()
     {
@@ -94,11 +90,9 @@ public sealed class ReaderCorpusTests
             var read = SaveCodec.Read(fixture.Text);
             Assert.True(read.Status == SaveReadStatus.Loaded, key + ": " + read.Error);
             Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
-            // Decode -> re-encode is byte-identical, and the builder still produces the pinned bytes.
             Assert.Equal(fixture.Text, SaveCodec.Write(read.State!));
             Assert.Equal(fixture.Text, SaveCodec.Write(Cities.Single(c => c.File == fixture.File).City()));
             AssertRefusedAndPreserved(fixture.Text.Substring(0, fixture.Text.Length - 1), read.State!, SaveReadStatus.Invalid, key + " truncated");
-            // Older development builds wrote 2 to 36; any other number is refused the same way, never migrated.
             foreach (int other in new[] { 0, 2, 33, 36, 37 })
                 AssertRefusedAndPreserved(fixture.Text.Replace(SaveCodec.BodyPrefix, "{\"Schema\":" + other + ",\"Capabilities\":"), read.State!,
                     SaveReadStatus.DevelopmentSchema, key + " relabelled " + other);

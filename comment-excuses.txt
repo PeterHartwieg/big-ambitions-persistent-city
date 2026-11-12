@@ -1,0 +1,116 @@
+Core/BusinessTypes.cs	temporary	/// <summary>J0 need model defaults: interval and spread in days. Every row uses the neutral numbers until GR-3 tunes them.</summary>
+Core/CampaignSnapshot.cs	known-gap	/// <summary>Reviewed native identifiers, not a demographic reach claim. No choice consumer yet.</summary>
+Core/CitySimulator.cs	imperfect-choice	// A changed version discards one attempt and requeues the original event. Every replay uses
+Core/CitySimulator.cs	imperfect-choice	// the same finite frame admission as its first attempt; no number of restarts grants an
+Core/CitySimulator.cs	imperfect-choice	// unlimited call. The held clock is intentional: later events can change route forecasts,
+Core/CitySimulator.cs	imperfect-choice	// employment and meals. Reordering them would make a frame cadence change city outcomes.
+Core/CompleteFoodMenu.cs	imperfect-choice	/// <summary>E5b3 Decision 8: a superset of the city's referenced product-name table, kept by the shop market.
+Core/CompleteFoodMenu.cs	imperfect-choice	/// Seeded once from the loaded food state and economy ledger with the same sources the save writer uses, then
+Core/CompleteFoodMenu.cs	imperfect-choice	/// grown by every product a scope adopts. Every name the save can reference enters through a scope's products,
+Core/CompleteFoodMenu.cs	imperfect-choice	/// so the set never undercounts; a retired name only makes the preflight stricter until reload.</summary>
+Core/FoodCommerce.cs	known-gap	/// <summary>Which market serves this scope. The setter is not public, so the save writer does not see it
+Core/FoodCommerce.cs	known-gap	/// yet: only Shop scopes exist in a saved city until E6c's writer serializes the channel.</summary>
+Core/FoodMemoryCommerce.cs	imperfect-choice	// Held images intentionally retain only a generic service flag. Revalidate the
+Core/FoodMemoryCommerce.cs	imperfect-choice	// named bag-stockout evidence only if the necessary time/queue bounds fit.
+Core/FoodMemoryCommerce.cs	imperfect-choice	// Zero throughput hides service duration, so eating alone must leave spare time.
+Core/FoodNameIdentity.cs	temporary	// Cold schema-25 contract only until E5c/E5b implement execution. Codec inspection and
+Core/FoodNameIdentity.cs	temporary	// round trips are supported; early authority bootstrap and simulator startup refuse it.
+Core/FoodProductMetadataRegistry.cs	imperfect-choice	// Conservative wire accounting, not a claim about managed heap size: strings charge escaped JSON
+Core/FoodProductMetadataRegistry.cs	imperfect-choice	// and UTF-8 separately plus 64 units for keys, separators, lifecycle/conflict bookkeeping.
+Core/FoodProductMetadataRegistry.cs	imperfect-choice	// Claims charge 128 units even when fields are absent. No serialization/all-registry scan per edit.
+Core/MarketResearchEngine.cs	known-gap	// Engine and input adapters are deliberately internal. Only offline friends can run C4;
+Core/MarketResearchEngine.cs	known-gap	// no Runtime caller exists until the payment/access integration is separately implemented.
+Core/NativeCapabilities.cs	temporary	/// <summary>Off unless a later slice or a setting turns it on (D2: food.dynamic, interior.view).</summary>
+Core/PersonIdentity.cs	known-gap	// F5b identity and ownership core (city audit F5 #92, docs/plans/f5-population.md section 3).
+Core/PersonIdentity.cs	known-gap	// F5c-lite persists these types in schema 26 (Core/PersonTable.cs, Persistence/PersonWire26.cs); no routine,
+Core/PersonIdentity.cs	known-gap	// choice or money path reads them yet.
+Core/PersonIdentity.cs	temporary	/// <summary>Fixed at <see cref="None"/> in F5's shape. Any other value is refused until a later reviewed
+Core/PersonIdentity.cs	temporary	/// contract defines it; no F5 code calls native hiring or staff APIs.</summary>
+Core/PurchaseContract.cs	temporary	/// <summary>A cheap read: whether the venue is a player business this market sells for now. False keeps it native.</summary>
+Core/PurchaseContract.cs	temporary	/// <summary>The venues <see cref="Serves"/> is true for now, for the impulse check while passing. Kept small: the
+Core/PurchaseContract.cs	temporary	/// player's own supported businesses.</summary>
+Core/ResearchLedger.cs	known-gap	/// <summary>Per-city research orders and the C5 entitlement. Not attached to CityState yet (C5c).
+Core/ResearchLedger.cs	known-gap	/// Bounds: one open order per business, 8 open per city, 16 kept reports (the oldest Paid becomes
+Core/ResearchLedger.cs	known-gap	/// Replaced when a 17th is delivered) and 16 closed records (oldest dropped first). Nothing retries,
+Core/ResearchLedger.cs	known-gap	/// refunds or resets a terminal order; every order has its own ID, so an unknown payment blocks
+Core/ResearchLedger.cs	known-gap	/// only itself. Single-threaded: the dialog, the survey and the daily bill all run on the game thread.</summary>
+Core/ResidentTraits.cs	known-gap	/// <summary>
+Core/ResidentTraits.cs	known-gap	/// Player-facing words for non-neutral traits; never numbers. Loyalty/curiosity is generated but not
+Core/ResidentTraits.cs	known-gap	/// described: it has no effect until shop memory exists, and words must not imply behaviour that is absent.
+Core/ResidentTraits.cs	known-gap	/// </summary>
+Core/ThirdPartyInteriorGuard.cs	imperfect-choice	// Deliberately small rule language: exact names or a single trailing '*' prefix.
+Core/ThirdPartyInteriorGuard.cs	imperfect-choice	// No regex, type loading, foreign API calls, or foreign implementation knowledge.
+Core/TransportComposition.cs	imperfect-choice	/// <summary>Intersection with one bounded conservative gate region; an unknown gate never denies
+Core/TransportComposition.cs	imperfect-choice	/// unrelated city coordinates. Touching its boundary is conservatively treated as a crossing.</summary>
+Core/TravelTiming.cs	imperfect-choice	// The ordinary 512-leg fallback intentionally retains one partial leg's old pace.
+Core/TravelTiming.cs	imperfect-choice	// That would require a piecewise current-section motion model in the traffic kernel.
+Core/WeatherPolicy.cs	imperfect-choice	// unknown is deliberately neutral, including for this frame's other boundaries
+Persistence/NameWire25.cs	imperfect-choice	// Complete coherent saves rebuild every wire-local reference together. The in-memory graph
+Persistence/NameWire25.cs	imperfect-choice	// contains names only; catalogue removal/order is deliberately not an input to this method.
+Persistence/PersonWire27.cs	known-gap	/// <summary>F5g: a sequence number below NextVisitorSequence without a visitor is one the fill skipped for a commuter,
+Persistence/PersonWire27.cs	known-gap	/// so its frozen derived identity must be a student or retiree (owner decision, 8 Nov 2026). A missing number with a
+Persistence/PersonWire27.cs	known-gap	/// working identity is a lost person and refuses the payload. A lost visitor whose identity is a student or retiree
+Persistence/PersonWire27.cs	known-gap	/// cannot be told from a skipped number, so the guarantee is weaker than the old count equality for those.</summary>
+Persistence/SaveCodec.cs	imperfect-choice	// B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
+Runtime/DwellSpots.cs	skipped	// The point must be walkable, near where it was asked for (not snapped out into the
+Runtime/DwellSpots.cs	skipped	// street or onto another level), clear of other doors, and reachable in a straight
+Runtime/DwellSpots.cs	skipped	// line from the spot before it. The door's own carve is not tested.
+Runtime/FoodProductOverrideSettings.cs	known-gap	// E5a/E5b must supply an already detached loaded-name image at load/publication, not per frame.
+Runtime/FoodProductOverrideSettings.cs	known-gap	// Pure E5c cannot infer loaded names, so this diagnostic seam is deliberately not polled.
+Runtime/FoodProductOverrideSettings.cs	imperfect-choice	// Charge canonical escaped JSON and UTF-8 independently, including punctuation.
+Runtime/FoodProductOverrideSettings.cs	imperfect-choice	// One spare separator per token makes the bound conservative without serializing
+Runtime/FoodProductOverrideSettings.cs	imperfect-choice	// or retaining a second table. Raw source whitespace is not retained metadata.
+Runtime/InteriorViewState.cs	imperfect-choice	// Runtime presentation only. Deliberately absent from CityState and every save DTO.
+Runtime/NativeCityClock.cs	known-gap	// Installed but not bound to the current save (the startup guard, or a save change PopulationRuntime has
+Runtime/NativeCityClock.cs	known-gap	// not handled yet): no native minute may pass before that save's snapshot attaches.
+Runtime/RivalFoodCatalogue.cs	imperfect-choice	// Reset replaces retailPrices even when it reuses the registration object.
+Runtime/RivalFoodCatalogue.cs	imperfect-choice	// A mere collection replacement is conservatively ambiguous too.
+Runtime/RoadRoutes.cs	known-gap	/// <summary>Conservative public access: all vehicle gates are excluded, regardless of player property ownership.</summary>
+Runtime/RoadRoutes.cs	workaround	// Source-compatibility fallback only: these are conservative local exclusion dimensions,
+Runtime/RoadRoutes.cs	workaround	// not a claim about the actual gate. A missing shape must never close the entire city.
+tests/AttendanceWageTests.cs	imperfect-choice	// Shared transient awareness preparation deliberately restarts on load. Let those units
+tests/AttendanceWageTests.cs	imperfect-choice	// finish; interrupt every published shift/citizen/posting transition instead.
+tests/BusinessTypesWalletTests.cs	temporary	// A known row uses the same neutral need numbers until GR-3 tunes them.
+tests/EconomicLedgerTests.cs	imperfect-choice	// Capture is deliberately unvalidated; use the actual encoder settings to exercise the strict reader too.
+tests/ExactMoneyTests.cs	imperfect-choice	// F6d checks the extended identity at every ledger mutation. This deliberately invalid fixture now
+tests/ExactMoneyTests.cs	imperfect-choice	// refuses before its daily posting, still before any hold or native checkout.
+tests/ExactMoneyTests.cs	imperfect-choice	// The "prepared" fixture is deliberately unbalanced; the others must still conserve.
+tests/F6dMeasure.cs	imperfect-choice	// Conservative: retain every byte/record of E5d's outstanding B-E reserve AND its full 12Mi existing
+tests/F6dMeasure.cs	imperfect-choice	// growth allowance, even though this image already contains the places, scopes and full histories.
+tests/FoodAuthorityTests.cs	imperfect-choice	// Eligibility is solely the reviewed menu/business contract; operational outages
+tests/FoodAuthorityTests.cs	imperfect-choice	// change offers, not ownership. The policy deliberately accepts no stock/staff input.
+tests/FoodOutcomeTests.cs	imperfect-choice	// This fixture deliberately constructs an already active decision.
+tests/FoodProductMetadataTests.cs	imperfect-choice	// Reference strings intentionally allocate here; production streams the same UTF-16 units.
+tests/MovementEquivalenceTests.cs	skipped	/// <summary>P-C: one path per leg follows as the F2c pose aim did. Both equal the bodies-off run on every projection,
+tests/MovementEquivalenceTests.cs	skipped	/// the walker lag is no worse, and the path calculations drop. The ahead count is structural here: the driver steps a
+tests/MovementEquivalenceTests.cs	skipped	/// body at most its lag (MoveBodies), so it checks the AheadMetres accounting, not native movement. Native movement
+tests/MovementEquivalenceTests.cs	skipped	/// against the pose is covered by PhysicalWalkerFollowTests (BeforeNavigation, steps before Update, skipped Updates)
+tests/MovementEquivalenceTests.cs	skipped	/// and in game by pc movement status ahead_frames.</summary>
+tests/RhythmContinuityTests.cs	imperfect-choice	// Intentionally differs from the new routine's endpoint, as a policy migration can.
+tests/RivalOutflowTests.cs	imperfect-choice	// Transient index construction intentionally restarts on reload. Finish it once before
+tests/RivalOutflowTests.cs	imperfect-choice	// testing a saved semantic/route boundary rather than restarting each private build unit.
+tests/RloCompatibilityTests.cs	imperfect-choice	// Deliberately synthetic public shapes. These are not copied RLO rules or a substitute population for production.
+tests/RloRoadSpeedOverridesTests.cs	imperfect-choice	// Deliberately adversarial native equality implementation.
+tests/VehicleMarketTests.cs	imperfect-choice	// revision has not been polled, so the old hint is deliberately wrong
+tests/economy-interventions/acceptance.py	runtime-doc	"""F6h acceptance report. Offline only; exits 1 on a failed or unmeasured gate. python3 tests/economy-interventions/acceptance.py build/f6h --output build/f6h/acceptance.json No guessed wholesale prices: a dominance certificate covers every fixed per-product wholesale cost between zero and the baseline retail price. Since F6k it is a diagnostic, not an acceptance gate (docs/decisions/2026-11-08-price-weight.md). It cannot certify measured native operating profit or replace the rig throughput read. """
+tools/acceptance/economy_stage.py	runtime-doc	"""F9a economy stage adapter (docs/plans/f9-city-acceptance.md, Decision 2, "Economy stage adapter"). Reads the JSON that tests/economy-interventions/acceptance.py writes and turns it into one stage verdict. acceptance.py belongs to F6 and is not changed; its exit code is ignored because it exits 1 on every complete sweep (it always lists unmeasured criteria). Standard library only. python tools/acceptance/economy_stage.py <acceptance.json> --compiled-weight 1.2 [--declared-weight W] [--output stage.json] """
+tools/acceptance/evidence.py	runtime-doc	"""Reference-run evidence and the cross-machine digest comparison (F9h; docs/plans/f9-city-acceptance.md, row F9h, Decision 6 and section 3.10). python tools/acceptance/evidence.py record --result build/acceptance/<runId>/acceptance.json [--evidence DIR] python tools/acceptance/evidence.py compare [--evidence DIR] `record` copies the small, path-free parts of one `full` run into `<evidence>/<machine>/` (machine = host OS and architecture, for example `windows-x64`): `summary.json` (provenance, classes, summary, ledger state and every stage's verdict, seconds, metrics and digests, plus the F6h run digests) and `f6h-household-bands.json` (the week-6 control seed bands derived with F6's existing `derive_household_thresholds`, a hand-off to the F6 owner; acceptance.py is not edited). Raw TRX, logs and harness output stay under the run's `{out}`. `compare` reads every machine's `summary.json` and writes `<evidence>/comparison.json`: per simulation digest, the value on each machine and `equal` or `platform-divergent`. Machines declared in `machines.json` without a record are `pending` or `not-run` with their reason. Build digests (the DLL and the supplied game assemblies) are machine inputs and are not compared. Records from different commits are compared when no simulation input (SIMULATION_INPUTS) differs between the commits and the recorded settings are equal, so a Mac run at the head where the PC record merged compares with it; otherwise the verdict is `different-source`. Python 3 standard library only. """
+tools/acceptance/rig_manifest.py	runtime-doc	"""Native-evidence ledger and rig batch manifest (F9d; docs/plans/f9-city-acceptance.md, Decision 7 and section 7). python tools/acceptance/rig_manifest.py [--out FILE] [--build-json FILE] [--head REV] python tools/acceptance/run.py rig-manifest [--out DIR] (the same, as a runner profile) Reads tools/acceptance/native-assumptions.json. For each row it lists the first-parent commits since the row's last rig evidence (or, without evidence, since the commit that added its record) that touched the row's source globs: the row is stale when there is one, and their number is its debt. A game fingerprint other than the one the evidence was taken on, or an unknown one, marks every row stale. "Native batch due" when any row's debt reaches the threshold or the fingerprint changed. The manifest lists the section 7 checks with the checks of stale rows first. A scheduling signal, never a merge gate. Python 3 standard library only; no game, rig or bridge. """
+tools/acceptance/run.py	runtime-doc	"""Persistent City acceptance runner (F9a; docs/plans/f9-city-acceptance.md, Decisions 1, 2, 5 and 6). python tools/acceptance/run.py quick [--out DIR] [--dotnet PATH] python tools/acceptance/run.py full --game-managed <Managed dir> [--price-weight W] python tools/acceptance/run.py summarize --result <acceptance.json> [--rig FILE ...] [--performance FILE] Python 3 standard library only. Stages run in the foreground, one at a time, under a machine-wide lock. Writes {out}/acceptance.json (schema persistentcity-acceptance-1). Offline evidence only: no game, rig or bridge. Exit 0 unless the summary verdict is fail (1); --strict also exits 3 when incomplete. 2 = usage, 4 = lock held. """
+tools/acceptance/test_native_ledger.py	imperfect-choice	# Conservative: the merge that brought the evidenced commit in also counts, as does the later commit.
+tools/e5b-native-rig-proof/Probe.cs	imperfect-choice	// Clone only a real descriptor into its existing holder; zero quantity adds no stock.
+tools/e5b-native-rig-proof/Probe.cs	imperfect-choice	// This deliberately invalid count is negative-test state, never natural depletion evidence.
+tools/e5b-native-rig-proof/analyze.py	runtime-doc	"""Summarize exported native samples; never infer behavioral proof from timing alone."""
+tools/e5b-native-rig-proof/build_probe.py	runtime-doc	"""Build a standalone diagnostic DLL only. Root owns invoking this .NET build; no installation."""
+tools/e5b-native-rig-proof/make_flow.py	runtime-doc	"""Write a readback-only rig flow for an existing genuine FT fixture. Does not run it."""
+tools/e5b-native-rig-proof/produce_fixture.py	runtime-doc	"""Dedicated native FT character producer, not a rig_flows scenario/new_game bypass. Uses the documented bridge new_game operation as the owning lifecycle. Source review is required before execution. No existing city namespace is cleared, migrated by this tool, or rewritten; green production code initializes its own state normally in the new city. """
+tools/e5b-native-rig-proof/run_flow.py	runtime-doc	"""Existing guarded rig flow, plus exact isolated lifecycle backup/restoration. Native runner only."""
+tools/perf-gate/analyze.py	runtime-doc	"""F4a perf-gate analyzer: judge exported gate windows against a frozen contract (perf-gate/v1). Input: one or more perf-gate-export/v1 JSON files (fields in docs/checks/f4a.md). Output: a perf-gate-report/v1 JSON object and a Markdown summary (report.py). The analyzer refuses a report with a missing header field, a contract-version mismatch, mixed offline/native sources, or exports from different headers. It never averages percentiles and never takes a percentile of percentiles. """
+tools/perf-gate/attribute.py	runtime-doc	"""F4c stall attribution (F4 plan, Decisions 6 and 7) and P1-P4 inputs for the F4a analyzer. python tools/perf-gate/attribute.py <export.json> [--trace <presentmon.csv>] [--trace-for <window>=<csv>]... [--qpc-frequency <ticks/s>] [--process-id <pid>] [--player-log <Player.log>] --export-out <enriched.json> --json-out <attribution.json> --md-out <attribution.md> Joins a presentation trace to each window's probe frames (present.py), writes each window's presented-interval series (`presented_ms`, P1/P2/P4), the class of every presented stall (`stall_classes`, P3) and of every whole-frame stall (`whole_frame_stall_classes`) into a copy of the export that analyze.py reads, and writes the stall table with its evidence. A stall gets every class whose evidence is present, or `unattributed`. Whole-frame time minus the PC union is never PC's. """
+tools/perf-gate/fixtures/present/synthetic_trace.py	runtime-doc	"""Synthetic probe frames and a matching PresentMon-class trace for F4c tests and the join timing run. No game data. python fixtures/present/synthetic_trace.py --hours 7 --out-dir <dir> writes frames.json (probe rows) and trace.csv. """
+tools/perf-gate/fixtures/synthetic.py	runtime-doc	"""Synthetic perf-gate-export/v1 builders for tests and the analyzer timing run. No game data. python fixtures/synthetic.py --windows 50 --out <path> writes a 50-window export (18,000 frames each). """
+tools/perf-gate/make_gate_flow.py	runtime-doc	"""Generate the F4 perf-gate rig flow (perf-gate-flow/v1) from fixtures.json, scripts/ and contract-v1.json. python tools/perf-gate/make_gate_flow.py --out <flow.json> [--md-out <flow.md>] [--movement-state <label>] Writes a flow; runs nothing. The batch fills the run header and each window's export labels. Every step names its op, the checks it serves, its process and build, and the existing and pending rig capabilities it needs. Plan: docs/plans/f4-perf-gate.md, Decisions 1, 2, 3 and 8, section 7 checks G1-G15. """
+tools/perf-union-probe/Probe.cs	imperfect-choice	// Deliberately outside the persistentcity owner namespaces, so the inventory never sees the probe.
+tools/perf-union-probe/build_probe.py	runtime-doc	"""Build the rig-only F4b union probe DLL with pinned local references. No installation, no packaging. The probe binds Persistent City by reflection, so it has no PersistentCity.dll reference and the same artifact runs in candidate and reference mode. The manifest records names and hashes only (no machine paths), so two builds of the same inputs produce byte-identical manifests. """
+tools/perf-union-probe/check_scopes.py	runtime-doc	"""Fail-closed check that the F4b probe's expected scope list matches Persistent City's source. Scans Core/, Compatibility/, Persistence/ and Runtime/ for Harmony patch calls, HarmonyMethod uses, MonoBehaviour messages, native event subscriptions and transpiler helpers, and compares them with ScopeInventory.cs in both directions. Component methods and their call sites (including F2e's player-hold calls) must still exist where the list says. Any construct the scanner does not recognise is a failure, never a silent pass. Exit 0 only when everything matches. """
+tools/test-focused.py	runtime-doc	"""Run only the unit tests in test files this branch changed. Usage: python tools/test-focused.py [--base origin/codex/persistent-city] [--list] Changed files are the branch's commits since the merge base with --base plus uncommitted and untracked files. Every class declared in a changed tests/**/*.cs file is passed to `dotnet test --filter`. With no changed test files nothing runs. This is the focused run for implementers, fix rounds and the harness. The full suite runs once before merge. Neither waits for other test runs. """

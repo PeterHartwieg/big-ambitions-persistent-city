@@ -7,9 +7,6 @@ namespace PersistentCity.Runtime
 {
     public sealed partial class PopulationRuntime
     {
-        // GR-1: every saved place's business type follows the live catalogue. Read at activation and then once per game
-        // hour from the already-assigned registration fields; place IDs, routes and the simulator never change.
-        // The type-to-places lookup for later spenders (GR-3); rebuilt after every refresh that changed a place.
         private readonly BusinessTypeIndex businessTypes = new BusinessTypeIndex();
         private readonly Dictionary<string, string> liveBusinessTypes = new Dictionary<string, string>(StringComparer.Ordinal);
         private long businessTypeHour = long.MinValue;
@@ -25,7 +22,6 @@ namespace PersistentCity.Runtime
             if (changes.Any || reason != "hour") businessTypes.Rebuild(places);
             double milliseconds = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
             maxBusinessTypeMilliseconds = Math.Max(maxBusinessTypeMilliseconds, milliseconds);
-            // A quiet hour is logged only when the scan is slow, so a spike near the 30 ms flag is always visible.
             if (changes.Any || reason != "hour" || milliseconds >= 5)
                 log?.Info("Business types (" + reason + "): " + changes + "; types=" + businessTypes.TypeCount
                     + " live_addresses=" + liveBusinessTypes.Count + " ms=" + milliseconds.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)

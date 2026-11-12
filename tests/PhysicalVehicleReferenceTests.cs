@@ -25,7 +25,6 @@ public sealed class PhysicalVehicleReferenceTests
         var root = PhysicalVehicleReference.Root(corner, new Position(0, .7, 2), new Position(1, 0, 0));
         Assert.Equal(18, root.X);
         Assert.Equal(20, root.Z);
-        // A centre/pivot measurement would still be two metres short at the reached corner.
         Assert.Equal(2, Position.Distance(root, corner));
     }
 }

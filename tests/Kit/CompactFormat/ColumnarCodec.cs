@@ -6,39 +6,12 @@ using System.Text;
 
 namespace PersistentCity.Tools.CompactFormat
 {
-    /// <summary>
-    /// F7p columnar compact JSON (candidates B and C, plan section 3.6). Every array of entities becomes one
-    /// column per field, recursively, so nested lists flatten into a lengths vector plus one child column.
-    /// Strings that occur at least twice go into one ordinally sorted table and are written as payload-local
-    /// indices; field names and field sequences ("shapes") are tables too. Number tokens are copied as exact
-    /// text, so integer money and round-trip doubles cannot change. Indices are never identities: they are
-    /// recomputed from content on every encode and never leave one payload.
-    ///
-    /// Column grammar (first element is the tag; an empty column is the literal 0):
-    ///   [0, n...]            numbers (exact token text)
-    ///   [1, i|"s"...]        strings: table index, or inline literal for a string seen once
-    ///   [2, "0101"]          booleans
-    ///   [3, count]           all null
-    ///   [4, shape|[shape...], column...]  objects; one column per field in first-appearance order
-    ///   [5, len|[len...], column]         arrays; one flattened child column
-    ///   [6, column...]       mixed kinds, one single-value column per row
-    ///   [7, [nullRow...], column]         nulls plus one other kind
-    ///   [8, ref|null...]     shared route table references (candidate C)
-    ///   [9, "0101", column, [from|null...], [to...]]  native road tags split into head and node range (C)
-    ///   [11, mode, "packed"] canonical integers as zigzag base-64 varints (mode 0 values, mode 1 deltas)
-    ///   [12, mode, "packed"] the same for integral doubles spelled "N.0"
-    ///   [10, len|[len...], column...]     positional arrays (writer-25 tuples): column i holds slot i of every
-    ///                        row longer than i; used when the flattened slots would mix kinds
-    /// Offline prototype only; F7d decides the shipped grammar.
-    /// </summary>
     public sealed class ColumnarOptions
     {
         public ColumnarOptions(string format, bool routeTable, bool roadTags)
         { Format = format; RouteTable = routeTable; RoadTags = roadTags; }
         public string Format { get; }
-        /// <summary>Deduplicate committed route values (fields named in <see cref="ColumnarCodec.RouteFields"/>) by exact content.</summary>
         public bool RouteTable { get; }
-        /// <summary>Split native road-tag ServiceIds into a topology head plus a chained node range.</summary>
         public bool RoadTags { get; }
 
         public static readonly ColumnarOptions B = new ColumnarOptions("pcc-b", false, false);
@@ -48,7 +21,6 @@ namespace PersistentCity.Tools.CompactFormat
     public sealed class ColumnarStats
     {
         public int Strings, Keys, Shapes, Routes, RouteReferences, RoadTags, Containers;
-        /// <summary>Encode split: the table pass (string counts, shapes, route content) and the column writer.</summary>
         public long CollectTicks, WriteTicks;
         public Dictionary<string, long> PathCharacters = new Dictionary<string, long>(StringComparer.Ordinal);
         public int TableEntries => Strings + Keys + Shapes + Routes;
@@ -57,11 +29,9 @@ namespace PersistentCity.Tools.CompactFormat
     public static class ColumnarCodec
     {
         public const int Version = 1;
-        /// <summary>Committed route values: the citizen Journey (Route with Legs) and the traffic vehicle Route leg list.</summary>
         public static readonly string[] RouteFields = { "Journey", "Route" };
         public const string RoadServiceField = "ServiceId";
         private const string RoadPrefix = "native:road:";
-        /// <summary>Depth of per-field size accounting reported in the metrics (not part of the format).</summary>
         public const int PathDepth = 6;
 
         public static string Encode(object? root, ColumnarOptions options, ColumnarStats? stats = null, int capacity = 1024)
@@ -73,7 +43,6 @@ namespace PersistentCity.Tools.CompactFormat
 
         private static string ShapeKey(string[] keys) => string.Join("\u0000", keys);
 
-        /// <summary>native:road:(v1|fragment1):topology:from:to with canonical non-negative node indices, else false.</summary>
         internal static bool TrySplitRoad(string value, out string head, out int from, out int to)
         {
             head = ""; from = to = 0;
@@ -156,7 +125,6 @@ namespace PersistentCity.Tools.CompactFormat
                 switch (value)
                 {
                     case string s:
-                        // Count exactly the text the column writer emits: a road tag's head, otherwise the whole string.
                         if (options.RoadTags && key == RoadServiceField && TrySplitRoad(s, out var head, out _, out _)) s = head;
                         counts[s] = counts.TryGetValue(s, out int c) ? c + 1 : 1;
                         return;
@@ -174,7 +142,6 @@ namespace PersistentCity.Tools.CompactFormat
                 }
             }
 
-            /// <summary>Field sequence of one key array, computed once per distinct array instance.</summary>
             private string Joined(string[] array)
             {
                 if (joinedByArray.TryGetValue(array, out var joined)) return joined;
@@ -272,11 +239,6 @@ namespace PersistentCity.Tools.CompactFormat
                 Arrays(values, key, path, depth);
             }
 
-            /// <summary>
-            /// Write an all-integer (or all "N.0") column as one varint string when that is shorter than the
-            /// number list. Only tokens whose text is exactly the invariant spelling of a long qualify, so the
-            /// decoder reproduces every token character for character.
-            /// </summary>
             private bool Packed(List<object?> values)
             {
                 int n = values.Count;
@@ -324,7 +286,6 @@ namespace PersistentCity.Tools.CompactFormat
                         for (int i = 0; i < froms.Count; i++)
                         {
                             if (i > 0) output.Append(',');
-                            // A leg that starts where the previous road leg of the same topology ended is a range continuation.
                             if (i > 0 && froms[i] == tos[i - 1] && headOfRange[i] == headOfRange[i - 1]) output.Append("null");
                             else output.Append(froms[i]);
                         }
@@ -351,7 +312,6 @@ namespace PersistentCity.Tools.CompactFormat
                     positions.Add(rowShapes[i], o.Keys);
                     foreach (var k in o.Keys) if (!union.Contains(k)) union.Add(k);
                 }
-                // Position of every union field in every distinct shape, so rows are not searched per field.
                 var at = positions.ToDictionary(p => p.Key, p => union.Select(k => Array.IndexOf(p.Value, k)).ToArray());
                 output.Append("[4,");
                 if (positions.Count == 1) output.Append(rowShapes[0]);
@@ -375,7 +335,6 @@ namespace PersistentCity.Tools.CompactFormat
                 var flat = new List<object?>();
                 bool uniform = true; int length = ((object?[])values[0]!).Length, longest = 0;
                 foreach (var v in values) { var a = (object?[])v!; if (a.Length != length) uniform = false; longest = Math.Max(longest, a.Length); flat.AddRange(a); }
-                // Tuples (slots of different kinds, or numbers of different spellings) pack better slot by slot.
                 bool positional = Kinds(flat) > 1 || NumberClasses(flat) > 1;
                 output.Append(positional ? "[10," : "[5,");
                 if (uniform) output.Append(length);
@@ -652,7 +611,6 @@ namespace PersistentCity.Tools.CompactFormat
         }
     }
 
-    /// <summary>Zigzag varints in a 64-symbol JSON-safe alphabet: five data bits per character, bit 5 = more follows.</summary>
     internal static class Varint
     {
         private const string Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
@@ -666,7 +624,6 @@ namespace PersistentCity.Tools.CompactFormat
             return values;
         }
 
-        /// <summary>True only when <paramref name="text"/> is exactly long.ToString(InvariantCulture) of its value.</summary>
         public static bool TryCanonical(string text, out long value) => TryCanonical(text.AsSpan(), out value);
 
         public static bool TryCanonical(ReadOnlySpan<char> text, out long value)
@@ -681,7 +638,6 @@ namespace PersistentCity.Tools.CompactFormat
                 if (c < '0' || c > '9') return false;
                 magnitude = magnitude * 10 + (ulong)(c - '0');
             }
-            // Nineteen digits cannot overflow ulong; the sign decides the long range.
             if (negative ? magnitude > 1UL << 63 : magnitude > long.MaxValue) return false;
             value = negative ? unchecked((long)(0UL - magnitude)) : (long)magnitude;
             return true;
@@ -689,7 +645,6 @@ namespace PersistentCity.Tools.CompactFormat
 
         private static ulong Zigzag(long value) => unchecked((ulong)((value << 1) ^ (value >> 63)));
 
-        /// <summary>Packed characters for these values without building the text.</summary>
         public static long Length(long[] numbers, bool delta)
         {
             long length = 0, previous = 0;

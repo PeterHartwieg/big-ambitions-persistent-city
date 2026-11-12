@@ -11,13 +11,10 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// Round-8 regressions. Each failed at 57cb8c1, except the exact-boundary posting control, and
-// passes after the fix; see the FIX report.
 public sealed partial class FoodCommerceTests
 {
     private static ResidentBudget R8_BoundaryBudget(CitySimulator city, long fundedCents)
     {
-        // Every amount fits, and their conservation totals sit just below the unit range.
         var b = city.State.Food!.Residents.Single().Budget!;
         b.IncomeSource = ResidentIncomeSource.ExternalSupport;
         b.BaseIncomeCents = b.DailyIncomeCents = 50000;
@@ -31,8 +28,6 @@ public sealed partial class FoodCommerceTests
         return b;
     }
 
-    // Reviewer A R7-03: each posted amount fit, but OpeningBalance + IncomeReceived did not, so an
-    // accepted posting produced a ledger the save contract rejects. Refuse it atomically instead.
     [Fact]
     public void R8_PostingRefusesAConservationTotalTheSaveCannotHold()
     {
@@ -44,7 +39,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
     }
 
-    // Control: a posting that reaches exactly the largest whole-cent total still posts and saves.
     [Fact]
     public void R8_PostingUpToTheLargestSavableTotalSucceeds()
     {
@@ -55,8 +49,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
     }
 
-    // Reviewer A N1: the wage refresh from the resident is part of the posting and is not kept
-    // when the posting overflows.
     [Fact]
     public void R8_PostingWithAResidentIsAtomic()
     {
@@ -74,7 +66,6 @@ public sealed partial class FoodCommerceTests
 
 public sealed class ShadowMoneyTokenTests
 {
-    // Both reviewers: the detached shadow document shares the token check.
     [Theory]
     [InlineData("DailyAllowance", "0x10")] [InlineData("DailyAllowance", "0xA1")] [InlineData("DailyAllowance", "0x0")]
     public void R8_ShadowNonCanonicalMoneyTokenIsRefused(string field, string token)

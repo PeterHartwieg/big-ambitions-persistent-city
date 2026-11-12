@@ -4,11 +4,8 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Live script inventory; only immutable managed type metadata is cached.</summary>
     internal static class VehicleScriptOwnership
     {
-        // Queries still require Unity's main thread. Separate storage also keeps nested callers
-        // from sharing a partially filled buffer; no vehicle or ownership verdict is retained.
         [ThreadStatic] private static Dictionary<Type, bool>? nativeTypes;
         [ThreadStatic] private static List<MonoBehaviour>? available;
 
@@ -26,7 +23,6 @@ namespace PersistentCity.Runtime
             finally
             {
                 scripts.Clear();
-                // Retain one empty, modest buffer, even after nested calls or a large hierarchy.
                 if (scripts.Capacity <= 2048 && available == null) available = scripts;
             }
         }

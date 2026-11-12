@@ -9,16 +9,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5h (#92): integrated acceptance of F5a–F5g together on fresh cities in writer 34. The reference city is the
-/// F5g fixture at the declared load: 152 homes give 957 residents, and the census catalogue gives the largest reachable
-/// commuter target at or below 1,000, so the fill grows it to about 2,500 persisted persons over two day boundaries. Every
-/// check here runs in the ordinary test project; the 10,000-person matrix and the stress measurements are opt-in
-/// (<see cref="F5hMeasure"/>).</summary>
 public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAcceptanceTests.Runs>
 {
-    /// <summary>The expensive runs, shared by this class's facts. A class fixture, not static fields, so xUnit drops the
-    /// finished cities when the class is done: retained for the whole process they would enlarge every later GC, which
-    /// the timed RushSpikeReplayTests intervals measure.</summary>
     public sealed class Runs
     {
         private readonly Lazy<(SevenDays Plain, SevenDays Reloaded)> sevenDays = new(() => (RunSevenDays(false, 100_000), RunSevenDays(true, 7)));
@@ -39,14 +31,11 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     private readonly Runs runs;
     public F5hIntegratedAcceptanceTests(Runs runs) { this.runs = runs; }
 
-    // ---- Reference city ----
 
     internal const int ReferenceHomes = 152;
     internal const int StressHomes = 530;
     internal const int Seed = 2026;
 
-    /// <summary>One integrated city shape: its homes and the businesses that are both its saved places and its census
-    /// catalogue, so every workplace the census counts is one commuters can be seated in (review Astra-r1-1).</summary>
     internal sealed class Shape
     {
         public Shape(int homes, WorkplaceCapacityTests.Business[] businesses)
@@ -59,10 +48,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
 
     private static readonly Dictionary<(int Homes, long Target), WorkplaceCapacityTests.Business[]> extras = new();
 
-    /// <summary>The large businesses (900 m², 24 seats) added to F5g's base set for a fresh city of <paramref name="homes"/>:
-    /// the fewest for which the city built with them as saved places has a commuter target of at least
-    /// <paramref name="commuterTarget"/>, or of the whole visitor capacity minus the pool demand when negative (as F5g's
-    /// stress arm). The new workplaces also seat residents, so the target is measured on the city itself.</summary>
     private static WorkplaceCapacityTests.Business[] Extras(int homes, long commuterTarget)
     {
         lock (extras)
@@ -91,18 +76,14 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     internal static Shape ReferenceShape() => new(ReferenceHomes, F5gPopulationFillTests.Base.Concat(Extras(ReferenceHomes, 1000)).ToArray());
     internal static Shape StressShape() => new(StressHomes, F5gPopulationFillTests.Base.Concat(Extras(StressHomes, -1)).ToArray());
 
-    /// <summary>The reference city's added workplaces scaled by homes, for the factor-2 stress sizes: the same seats per
-    /// home, so R seeded commuters find seats in the same proportion as at the declared load.</summary>
     internal static Shape ScaledShape(int homes)
     {
         int large = Extras(ReferenceHomes, 1000).Length;
         return new(homes, F5gPopulationFillTests.Base.Concat(F5gPopulationFillTests.Since((int)Math.Round(large * (double)homes / ReferenceHomes))).ToArray());
     }
 
-    /// <summary>Lost acknowledgements keyed on the intent, so both runs lose the same ones and receipts stay uncertain.</summary>
     private static bool Lose(ResidentMeal meal) => StableRandom.Hash(meal.IntentId, 11) % 23 == 0;
 
-    // ---- Seven days with a save and reload at every day boundary ----
 
     internal sealed class SevenDays
     {
@@ -112,17 +93,11 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         public List<(double Boundary, long Commuters, long Pool, VisitorTargets Targets, long Created)> Boundaries = new();
         public CityState State = null!;
         public long PortalHits, PortalMisses;
-        /// <summary>Game minute of every reload, in order.</summary>
         public List<double> ReloadMinutes = new();
-        /// <summary>Most commuters at their city workplace at one checkpoint, and seated commuters at the end.</summary>
         public int PeakCommutersAtWork, SeatedCommuters;
         public Shape Shape = null!;
     }
 
-    /// <summary>A fresh reference city from 06:00 on day 1 for seven in-game days. Each hour is a checkpoint: per-wallet
-    /// CashConserved, the city-wide BigInteger ledger, the F5g structural invariants and the fill bounds. With
-    /// <paramref name="reload"/>, the city is saved and loaded in a new simulator (and a new planner cache) when the
-    /// clock first stands on each day boundary, and again between two units of that boundary's fill.</summary>
     internal static SevenDays RunSevenDays(bool reload, int budget)
     {
         var shape = ReferenceShape();
@@ -152,7 +127,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
                 city.AdvanceFrameSlice(hour, budget);
                 if (!reload) continue;
                 double minute = city.State.Minute;
-                // Between two units of the boundary's fill (the units already run are in the save).
                 bool midFill = city.PopulationFillPending && city.PopulationFillUnits > 0 && minute > midFillAt;
                 if (midFill) { midFillAt = minute; run.MidFillReloads++; }
                 if (minute % 1440 == 0 && minute > reloadedAt || midFill) { reloadedAt = minute; Reload(); }
@@ -167,7 +141,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             F5gPopulationFillTests.Conserved(s, "hour " + minute);
             Assert.Equal(s.Citizens.Count + s.Visitors.Count, s.Food!.Residents.Count);
             var (commuters, pool) = F5gPopulationFillTests.Counts(s);
-            // Per-pattern counts never decrease and every visitor seen stays with its pattern.
             Assert.True(commuters >= lastCommuters && pool >= lastPool, "a pattern count decreased at " + minute);
             foreach (var visitor in s.Visitors)
                 if (seen.TryGetValue(visitor.Id, out var pattern)) Assert.Equal(pattern, visitor.Stay.Pattern);
@@ -175,28 +148,22 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             Assert.Equal(seen.Count, s.Visitors.Count);
             if (minute % 1440 == 60)
             {
-                // One hour after a boundary its fill is complete (at most 16 units on the boundary minute).
                 var targets = current.PopulationFillTargets!.Value;
                 Assert.Equal(minute - 60, current.PopulationFillBoundary);
-                // Counted from 23:00 the evening before: the fill may already have run by the 00:00 checkpoint.
                 long created = commuters + pool - eveCommuters - evePool;
                 Assert.True(commuters + pool <= targets.VisitorCapacity, "visitor capacity passed at " + minute);
                 Assert.InRange(created, 0, PopulationFillPolicy.MaximumPersonsPerBoundary);
-                // Never above a pattern's target: growth happens only below it.
                 Assert.True(commuters <= Math.Max(eveCommuters, targets.CommuterTarget));
                 Assert.True(pool <= Math.Max(evePool, Math.Min(targets.PoolTarget, targets.VisitorCapacity - commuters)));
                 if (created < PopulationFillPolicy.MaximumPersonsPerBoundary)
                 {
-                    // A boundary below its cap reaches each clamped target exactly.
                     Assert.Equal(Math.Max(eveCommuters, targets.CommuterTarget), commuters);
                     Assert.Equal(Math.Max(evePool, Math.Min(targets.PoolTarget, targets.VisitorCapacity - commuters)), pool);
                 }
                 run.Boundaries.Add((minute - 60, commuters, pool, targets, created));
             }
-            // F5g owner decision: every commuter the fill created has a working persona.
             Assert.All(s.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.Commuter),
                 r => Assert.True(VisitorSchedules.WorkingPersona(r.Identity.Persona)));
-            // Commuter work journeys: seated commuters at their city workplace (review Astra-r1-1).
             run.PeakCommutersAtWork = Math.Max(run.PeakCommutersAtWork, s.VisitorRoutines.Count(r => r.Person!.Stay.Pattern == VisitorPattern.Commuter
                 && r.DayPlaceId.Length > 0 && r.Activity == PersistentCity.Core.Activity.Work && r.PlaceId == r.DayPlaceId));
             lastCommuters = commuters; lastPool = pool;
@@ -221,15 +188,12 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         var (plain, reloaded) = runs.SevenDays;
         Assert.Equal(CityState.CurrentSchema, reloaded.State.Schema);
         Assert.StartsWith("{\"Schema\":" + CityState.CurrentSchema + ",", reloaded.Final);
-        // Seven boundaries (2,880 … 11,520), each reloaded exactly once on its minute. At the first two the slice that lands
-        // on the boundary has already run fill units, so that one reload falls between fill units.
         Assert.Equal(7, reloaded.Boundaries.Count);
         Assert.Equal(Enumerable.Range(2, 7).Select(d => d * 1440.0), reloaded.Boundaries.Select(b => b.Boundary));
         Assert.Equal(Enumerable.Range(2, 7).Select(d => d * 1440.0), reloaded.ReloadMinutes);
         Assert.Equal(2, reloaded.MidFillReloads);
         Assert.True(reloaded.UncertainReloads > 0, "no reload with an uncertain receipt");
         Assert.Equal(7 * 24, reloaded.Checkpoints);
-        // The reloaded city ends byte-identical to the uninterrupted one, with the same native orders.
         Assert.Equal(plain.Final, reloaded.Final);
         Assert.Equal(plain.Orders, reloaded.Orders);
         Assert.True(plain.Orders.Count > 1000, "orders " + plain.Orders.Count);
@@ -241,9 +205,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
     {
         var (plain, _) = runs.SevenDays;
         var first = plain.Boundaries[0];
-        // The first boundary publishes its cap; the second reaches both clamped targets. Later ones only follow the
-        // commuter target as residents lose or find city jobs: each then equals its target again (checked at every
-        // boundary in the run), adding a handful of commuters and no pool members.
         Assert.Equal(PopulationFillPolicy.MaximumPersonsPerBoundary, first.Created);
         var second = plain.Boundaries[1];
         Assert.Equal(second.Targets.CommuterTarget, second.Commuters);
@@ -255,7 +216,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             Assert.Equal(second.Pool, b.Pool);
         });
         Assert.All(plain.Boundaries, b => Assert.True(b.Commuters + b.Pool <= b.Targets.VisitorCapacity));
-        // The capacity is the census's: twice the residents, on the same facts (F5g proves the full formula identity).
         var census = PopulationCensus.Compute(new PopulationCensusInput
         {
             Places = F5gPopulationFillTests.Places(ReferenceHomes, plain.Shape.Businesses),
@@ -269,12 +229,9 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         Assert.Equal(957, s.Citizens.Count);
         int persons = s.Citizens.Count + s.Visitors.Count;
         Assert.InRange(persons, 2230, 2870);
-        // Commuters are working personas only; the pool holds other personas too.
         Assert.Contains(s.VisitorRoutines, r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit && !VisitorSchedules.WorkingPersona(r.Identity.Persona));
-        // No visitor holds a car, a lease or a body before F5i (Invariants checks cars at every checkpoint).
         Assert.All(s.VisitorRoutines, r => Assert.Null(r.Car));
         Assert.True(plain.PortalHits > plain.PortalMisses);
-        // Commuters hold city seats and travel to them (review Astra-r1-1): the saved places are the census's workplaces.
         Assert.True(plain.SeatedCommuters * 10 >= s.Visitors.Count(v => v.Stay.Pattern == VisitorPattern.Commuter) * 9,
             "seated commuters " + plain.SeatedCommuters);
         Assert.True(plain.PeakCommutersAtWork * 2 >= plain.SeatedCommuters, "commuters at work " + plain.PeakCommutersAtWork);
@@ -291,16 +248,12 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         Assert.Null(read.State);
         Assert.Contains("start a new city", read.Error);
         Assert.DoesNotContain("Invalid", read.Error);
-        // Refused through the store and the session, never overwritten by a fresh city, and kept byte for byte.
         EconomicLedgerTests.Refused(older, SaveReadStatus.DevelopmentSchema);
-        // The current writer reads the same city.
         var current = SaveCodec.Read(reloaded.Final);
         Assert.True(current.Status == SaveReadStatus.Loaded, current.Error);
         Assert.Equal(reloaded.Final, SaveCodec.Write(current.State!));
     }
 
-    /// <summary>Review Sol-r2-1: an event waiting for its route has left the due queue but is still due work, so the
-    /// backlog counter counts it. Checked at every slice that leaves planning pending on a small filled city.</summary>
     [Fact]
     public void ThePendingRoutedEventCountsAsDueWork()
     {
@@ -316,7 +269,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             city.AdvanceFrameSlice(end);
             if (!city.PlanningPending) continue;
             pendingSlices++;
-            // The pending event is due at or before the clock and is not in the queue.
             Assert.True(city.DuePersonEventsAtOrBefore(city.State.Minute) >= 1, "pending routed event not counted at " + city.State.Minute);
             Assert.Equal(city.QueuedPersonEvents + 1, city.DuePersonEventsAtOrBefore(double.PositiveInfinity));
             while (city.PlanningPending) { planner.NewFrame(); city.ContinuePlanning(2); }
@@ -324,7 +276,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         Assert.True(pendingSlices > 0, "no event waited for its route");
     }
 
-    // ---- The F1 accounting harness with the whole F5 population ----
 
     internal static FoodCommerce Food(CitySimulator city) => (FoodCommerce)typeof(CitySimulator)
         .GetField("food", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(city)!;
@@ -340,17 +291,11 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         public long Paths, Jobs, Deferred, PlanningRequests, PortalHits, PortalMisses;
         public long[] EventsPerHour = new long[24];
         public int PersonsAtStart, PersonsAtEnd;
-        /// <summary>Per-frame mod-work and its parts (fill units, budget postings, planning, every other unit), in ms.</summary>
         public List<double> Frame = new(), FillMs = new(), PostingMs = new(), PlanningMs = new(), EventMs = new();
-        /// <summary>Single units: one fill unit (at most 64 persons) or one posting unit (at most 32 wallets) per slice.</summary>
-        /// <summary>Every single unit of 5 ms or more: its time, component, game minute and the GC generation collected during it (-1 none).</summary>
         public List<(double Ms, string Component, double Minute, int Gc)> Spikes = new();
         public List<double> FillUnitMs = new(), FillUnitBytes = new(), PostingUnitMs = new(), CitizenUnitMs = new(), FoodUnitMs = new();
     }
 
-    /// <summary>F5g's admitted planner with the geometry cache model of <see cref="F5gPopulationFillTests.CachedPortalPlanner"/>:
-    /// a request whose endpoint pair is cached (1,024 entries, FIFO, negative entries kept) needs no native path; a miss
-    /// needs one or two, admitted at most 16 per frame like Runtime's MultimodalRoutes. Every result is a fresh copy.</summary>
     internal sealed class AdmittedPortalPlanner : IResumableRoutePlanner, ICommuteTimingPlanner
     {
         public const int PathsPerFrame = 16;
@@ -360,7 +305,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         public long Paths, Jobs, Deferred, Requests, PortalRequests, PortalHits, PortalMisses;
         public int MaxPathsInFrame, MaxFramesWaited;
         public void NewFrame() { MaxPathsInFrame = Math.Max(MaxPathsInFrame, used); used = 0; }
-        /// <summary>Runtime's <c>JobAdmissionExhaustedForFrame</c>: this frame's native paths are spent.</summary>
         public bool AdmissionExhausted => used >= PathsPerFrame;
         public IRoutePlanningJob Begin(RouteRequest request) { Jobs++; return new Job(this, request); }
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) { Lookup(from, to); return Walk(from, to); }
@@ -398,8 +342,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         }
     }
 
-    /// <summary>A fresh city advanced (synchronous planner, no frame loop) to 06:00 on <paramref name="day"/>, saved. The
-    /// window that follows crosses that night's day boundary.</summary>
     internal static string Prefilled(Shape shape, int day, int factor = 1)
     {
         var (state, market) = shape.City(factor);
@@ -409,13 +351,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         return SaveCodec.Write(city.State);
     }
 
-    /// <summary>One game day of the F1 frame loop (as <see cref="F5gAccountingTests.Run"/>) from a saved city: the native
-    /// clock is held by <see cref="AccountingClock.Limit"/>, the market refuses checkouts outside the current native hour,
-    /// route jobs are admitted at most 16 native paths per frame, and frames run <paramref name="eventBudget"/> units within
-    /// <paramref name="milliseconds"/>. With <paramref name="reload"/> the city is saved and loaded as the clock reaches the
-    /// midnight boundary and again between two units of its fill. With <paramref name="citizenLimit"/> the frame is shaped as
-    /// Runtime's (<c>PersistentCityMod</c>): <paramref name="eventBudget"/> caps all units and only citizen events (a finished
-    /// route plan included) count against the citizen limit; without it every unit counts against the event budget.</summary>
     internal static Window Accounting(string payload, PopulationFillCatalogue fill, int fps, int eventBudget, double milliseconds, bool reload, bool skip, int? citizenLimit = null)
     {
         var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -469,9 +404,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             w.MaxLag = Math.Max(w.MaxLag, target - city.State.Minute);
             double fillMs = 0, postingMs = 0, planningMs = 0, eventMs = 0;
             var food = Food(city);
-            // PersistentCityMod's loop: the first unit always runs; a planning slice gets the frame's remaining time; an
-            // unfinished plan ends the frame only when the time or the native-path admission is spent (otherwise the
-            // event exposed its next request and planning continues); a finished plan is one citizen event and unit.
             int citizens = 0;
             double Elapsed() => Ms(started + excluded, Stopwatch.GetTimestamp());
             for (int unit = 0; unit < eventBudget; unit++)
@@ -520,7 +452,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
             if (eventMs > 0) w.EventMs.Add(eventMs);
             planningFrames = city.PlanningPending ? planningFrames + 1 : 0;
             w.PeakPlanningFrames = Math.Max(w.PeakPlanningFrames, planningFrames);
-            // Due work left after the frame: events and meals due at or before the frame's target that have not run.
             int backlog = city.DuePersonEventsAtOrBefore(target) + city.DueMealEventsAtOrBefore(target);
             w.PeakDueBacklog = Math.Max(w.PeakDueBacklog, backlog);
             backlogFrames = backlog > 0 ? backlogFrames + 1 : 0;
@@ -541,8 +472,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         return w;
     }
 
-    /// <summary>F5g's clock market without the native-hour check, for a replay that has no native clock: the same
-    /// prices, the same duplicate refusal and the same lost acknowledgement on every 29th order.</summary>
     private sealed class ReplayMarket : IFoodMarket, IFoodSaleEvidence
     {
         public FoodBusiness[] Shops = Array.Empty<FoodBusiness>();
@@ -562,15 +491,12 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
     }
 
-    /// <summary>The window planner's routes and commute-timing role, answered synchronously.</summary>
     private sealed class SynchronousWalk : ICommuteTimingPlanner
     {
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => new Route { Legs = new() { new RouteLeg { From = from.Position,
             To = to.Position, Mode = TravelMode.Walk, Minutes = Math.Max(1, Position.Distance(from.Position, to.Position) / 80) } } };
     }
 
-    /// <summary>The same day replayed with the synchronous planner, one unit per slice and no frame loop: its unit
-    /// total and per-hour units are what the frame loop's counts must reconcile with (review Astra-r1-3).</summary>
     internal static (long[] PerHour, string Snapshot) SynchronousReplay(string payload, PopulationFillCatalogue fill)
     {
         var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -589,15 +515,11 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         return (perHour, SaveCodec.Write(state) + "\n" + string.Join(",", market.Orders));
     }
 
-    /// <summary>The plan's F1 arms (section 3): 30 FPS / 32 events / 4 ms, 60 / 16 / 2, 120 / 128 / 2 and a hidden skip.</summary>
     public static IEnumerable<object[]> Arms() => new[]
     {
         new object[] { 30, 32, 4.0, false }, new object[] { 60, 16, 2.0, false }, new object[] { 120, 128, 2.0, false }, new object[] { 60, 32, 4.0, true },
     };
 
-    /// <summary>The declared load through the F1 matrix: from 06:00 on day 2 (957 residents and the first boundary's 1,024
-    /// visitors) to 06:00 on day 3, across the second boundary that completes the fill. Every arm, with a save at
-    /// midnight and one between fill units, ends equal to the unsaved reference in save and orders.</summary>
     [Theory]
     [MemberData(nameof(Arms))]
     public void DeclaredLoadF1MatrixEqualsTheReferenceAcrossBudgetsCadencesSkipAndReload(int fps, int budget, double milliseconds, bool skip)
@@ -619,8 +541,6 @@ public sealed class F5hIntegratedAcceptanceTests : IClassFixture<F5hIntegratedAc
         }
         Assert.True(reference.Orders.Length > 0);
         Assert.Equal(0, reference.HistoricalClockMisses);
-        // Every event is counted once, those finished through resumable planning included: the frame loop's unit total
-        // equals the synchronous replay's, and the two cities end equal.
         var replay = runs.Replay;
         Assert.Equal(replay.Snapshot, reference.Snapshot + "\n" + string.Join(",", reference.Orders));
         Assert.True(reference.PlannedEvents > 0);

@@ -65,7 +65,7 @@ public sealed partial class FoodMemoryTests
         if (evidence == "time") person.NextEventMinute = person.ActivityUntilMinute = at + .5;
         if (evidence == "queue") city.State.Food.Shops[0].NextServiceAt = at + 20;
         city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
-        city.AdvanceFrameSlice(at, 1); // Save the captured mixed menu before evaluation.
+        city.AdvanceFrameSlice(at, 1);
         Assert.NotNull(city.State.Food!.Residents[0].Decision);
         if (reload) city = Reload(city, market, paths);
         Advance(city, at + .1, 1); meal = city.State.Food!.Residents[0];
@@ -154,7 +154,7 @@ public sealed partial class FoodMemoryTests
             }
             Assert.True(afterCount <= beforeCount);
             if (loyalty == 4 && !floorBound && !loweredCapacity)
-                Assert.Equal(Probability(before), Probability(after)); // Includes the reported capacity-1 1/3 counterexample.
+                Assert.Equal(Probability(before), Probability(after));
             Assert.Equal(ExperienceStage.Failed, meal.Memory.Watermark!.Stage);
             string wire = MemoryWire.Encode(meal.Memory); meal.Memory = MemoryWire.Decode(wire);
             Assert.False(store.Experience(meal, ShopExperience.Stockout, 1, traits, settings));
@@ -174,7 +174,7 @@ public sealed partial class FoodMemoryTests
             market.Source.Shops[0].MealsPerHour = 0; market.Source.Shops[0].ServiceUnavailableReason = "Out of stock";
             market.Source.Shops[0].Offers[0].Units = 0;
             city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
-            city.AdvanceFrameSlice(at, 1); // Capture the held image, which has only generic service-unavailable.
+            city.AdvanceFrameSlice(at, 1);
         }
         else
         {

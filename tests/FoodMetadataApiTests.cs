@@ -293,7 +293,6 @@ public sealed class FoodMetadataApiTests
         long bytes=GC.GetAllocatedBytesForCurrentThread(); long publications=registry.Publications;
         for(int i=0;i<10000;i++) { _=registry.Publish(catalogue); _=resolver.Resolve(Dumplings,Traits,957,"pc:1"); _=resolver.Sources(Dumplings); }
         Assert.Equal(0,GC.GetAllocatedBytesForCurrentThread()-bytes); Assert.Equal(publications,registry.Publications);
-        // Public registration surface accepts only strings, nullable scalar DTO, version and out reason.
         Assert.DoesNotContain(typeof(FoodProductMetadataInput).GetProperties(), prop=>typeof(Delegate).IsAssignableFrom(prop.PropertyType));
         Assert.All(typeof(FoodProductMetadataProvider).GetMethods().Where(m=>m.DeclaringType==typeof(FoodProductMetadataProvider)),
             m=>Assert.DoesNotContain(m.GetParameters(),arg=>typeof(Delegate).IsAssignableFrom(arg.ParameterType)));

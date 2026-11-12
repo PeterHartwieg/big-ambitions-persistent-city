@@ -26,10 +26,6 @@ namespace PersistentCity.Core
         internal string Key { get; }
     }
 
-    /// <summary>Borrow a frozen logical image, not a live CityState or native adapter. The owner holds
-    /// its logical publication boundary, including budgets/traits/locations, for the query's lifetime.
-    /// A change to ANY input publishes a new identity. Consumer IDs must be unique and ordinally sorted.
-    /// No city clone, resident cache or per-shop scan is owned by this reducer.</summary>
     internal interface IMarketResearchSnapshot
     {
         MarketResearchIdentity Identity { get; }
@@ -91,8 +87,6 @@ namespace PersistentCity.Core
         }
     }
 
-    // Transient OFFLINE continuation only, never attached to CityState/SaveCodec. Public setters
-    // permit test-tool JSON round trips; restore validates bounds before copying the fixed array.
     internal sealed class MarketResearchCursor
     {
         public int Version { get; set; } = 1;
@@ -122,7 +116,7 @@ namespace PersistentCity.Core
             if (tier < MarketResearchTier.Basic || tier > MarketResearchTier.InDepth) throw new ArgumentException("Unknown tier.");
             this.scope = scope ?? throw new ArgumentNullException(nameof(scope)); this.tier = tier;
             Reset(source);
-            if (resume == null || resume.QueryKey != queryKey) return; // changed snapshot/scope/tier restarts at zero
+            if (resume == null || resume.QueryKey != queryKey) return;
             if (resume.Version != 1 || resume.Count != cursor.Count || resume.Next < 0 || resume.Next > resume.Count
                 || resume.LastId == null || resume.LastId.Length > 256 || (resume.Next == 0) != (resume.LastId.Length == 0)
                 || resume.Missing < 0 || resume.Missing > 3 || resume.Counters == null || resume.Counters.Length != MaximumCells)
@@ -159,7 +153,6 @@ namespace PersistentCity.Core
             Completed = null; faulted = false;
         }
 
-        /// <returns>Consumers examined this unit, including excluded catchment rows.</returns>
         internal int Continue(IMarketResearchSnapshot source, int consumersPerUnit = 256)
         {
             if (source.Identity.Key != identityKey || source.Count != cursor.Count) Reset(source);
@@ -179,7 +172,7 @@ namespace PersistentCity.Core
                     else if (!row.Home.HasValue || !row.DayPlace.HasValue) cursor.Counters[12]++;
                 }
                 if (source.Identity.Key != identityKey || source.Count != cursor.Count)
-                { Reset(source); return limit - start; } // never publish a mixed revision
+                { Reset(source); return limit - start; }
                 if (cursor.Next == cursor.Count) Completed = Project();
                 return cursor.Next - start;
             }
@@ -197,7 +190,7 @@ namespace PersistentCity.Core
             if (row.Traits == null) { c[61]++; cursor.Missing |= 2; }
             else for (int i = 0; i < 9; i++)
             {
-                int trait = i < 5 ? i : i+1; // loyalty experience needs B1, not the unused A2 predisposition
+                int trait = i < 5 ? i : i+1;
                 c[13 + i*5 + row.Traits[trait] - '0']++;
             }
             c[row.DayActivity == Activity.Work ? 58 : row.DayActivity == Activity.Study ? 59 : 60]++;

@@ -4,7 +4,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Immutable, bounded feasibility output. No market, routes or writers are available to policy.</summary>
     public readonly struct EvaluatedFoodOffer
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
@@ -12,9 +11,7 @@ namespace PersistentCity.Core
             Money? ticket = null, FoodProductMetadata? metadata = null)
         { Metadata=metadata; Ticket=ticket ?? price; CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
-        /// <summary>E5b4: the held revision-2 inputs of a dynamic product; null for the original products' legacy inputs.</summary>
         public FoodProductMetadata? Metadata { get; }
-        /// <summary>F6j: main plus the extras this resident would add at this shop; equals Price without extras.</summary>
         public Money Ticket { get; }
         public bool CampaignActive { get; }
         public double MemoryContribution { get; }
@@ -32,9 +29,6 @@ namespace PersistentCity.Core
         public MealKind Kind { get; }
     }
 
-    /// <summary>Policy v1 key encoding: domain followed by |length:value for EVERY component, including
-    /// invariant decimal day/kind/attempt. Prefixes are computed once, with no per-offer key strings.
-    /// The household key is two empty IDs, which cannot collide with any real business/product.</summary>
     public readonly struct FoodDrawContext
     {
         public FoodDrawContext(int seed, string consumer, int day, MealKind kind, string context, int attempt)
@@ -71,16 +65,10 @@ namespace PersistentCity.Core
     public static partial class FoodChoicePolicy
     {
         private static readonly double[] TasteRatios={.5,.75,1,1.5,2};
-        // F6i: common native-scale meal reference (retained rig prices span roughly $9-$17).
-        // A power curve gives a neutral resident the same weight at +50% at any price level: (2/3)^2.4 = .38 at the F6k default 1.2.
         private const double MealReferenceCents=1250;
         private static double PriceFactor(double cents,ResidentTraits traits,FoodChoiceSettings settings)
-            // Deep discounts must not saturate the final weight cap and erase taste/travel/memory.
-            // This reward ceiling is inactive throughout the recorded $9-$17 range at default strength.
             => Math.Min(4,Math.Pow(MealReferenceCents/cents,
                 2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity))));
-        // F6j: the shop's expense is the whole ticket. Extras raise it relative to the main at the resident's own price
-        // sensitivity; the $12.50 meal anchor applies to the main only. Never above 1, so a cheap side is never a bargain.
         private static double TicketFactor(double mainCents,double ticketCents,ResidentTraits traits,FoodChoiceSettings settings)
             => ticketCents<=mainCents ? 1 : Math.Pow(mainCents/ticketCents,
                 2*settings.FoodChoicePriceWeight*(.5+.25*traits.Band(ResidentTrait.PriceSensitivity)));
@@ -95,8 +83,6 @@ namespace PersistentCity.Core
             }
             internal double Weight(double minutes,bool shortlist,bool campaignActive=false)
             {
-                // Peter, 1 Nov: all residents receive the same active-campaign preference.
-                // Halve the soft distance penalty and add a modest 25% preference even at the door.
                 if(campaignActive) minutes*=.5;
                 double w=1/(1+weight*Math.Max(0,minutes)/scale*2/divisor);
                 if(campaignActive) w*=1.25;
@@ -107,15 +93,10 @@ namespace PersistentCity.Core
             : product==FoodProducts.Burger ? t.Band(ResidentTrait.BurgerTaste) : product==FoodProducts.HotDog ? t.Band(ResidentTrait.HotDogTaste) : ResidentTraits.Neutral;
         private static int OfferTaste(EvaluatedFoodOffer offer,ResidentTraits traits) => offer.NewTasteBand<0 ? Taste(traits,offer.ProductId) : offer.NewTasteBand;
 
-        // Bounded rational signals; unknown quality/demand are neutral. Health, loyalty and brand have no signal.
-        // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
-        // Both Weight overloads ignore allowance, retained for caller compatibility. Select and HoldPurchase
-        // enforce affordability; wallet savings never scale the soft price preference.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,double weatherTravelMultiplier=1)
             => WeightCore(o,t,s,OfferTaste(o,t),MealRhythm.ProductPenalty(o.Kind,o.ProductId),
                 o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);
 
-        // E5c seam; since E5b4 Select uses it for every offer that carries held revision-2 metadata.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,
             FoodProductMetadata metadata, double weatherTravelMultiplier=1)
             => WeightCore(o,t,s,FoodProducts.KnownLegacy(o.ProductId) ? Taste(t,o.ProductId) : metadata.TasteBand,
@@ -157,8 +138,6 @@ namespace PersistentCity.Core
         {
             if (offers.Count>MaximumShortlist*MaximumOffersPerShop || !traits.IsValid) throw new ArgumentException("Invalid policy inputs.");
             int selected=-1;
-            // Already-funded cooking is the reference-price equivalent outside option (price factor 1).
-            // HouseholdWeight scales its convenience/preference, without a second home-food debit.
             double best=fundedHousehold ? FoodDrawContext.Rank(draw.OfferHash("",""),
                 Positive(settings.FoodChoiceHouseholdWeight*PriceFactor(MealReferenceCents,traits,settings),
                     settings.FoodChoiceWeightFloor,settings.FoodChoiceTemperature)) : double.PositiveInfinity;
@@ -168,7 +147,6 @@ namespace PersistentCity.Core
                 if(o.AlternativeWeight<=0 || o.Price<=Money.Zero || o.Price>allowance) continue;
                 double weight=o.Metadata.HasValue ? Weight(o,traits,allowance,settings,o.Metadata.Value,weatherTravelMultiplier) : Weight(o,traits,allowance,settings,weatherTravelMultiplier);
                 double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),weight*o.AlternativeWeight);
-                // The reserved empty household IDs precede real IDs in an exact tie.
                 int tie=selected<0 ? 1 : StringComparer.Ordinal.Compare(o.BusinessId,offers[selected].BusinessId);
                 if(tie==0) tie=StringComparer.Ordinal.Compare(o.ProductId,offers[selected].ProductId);
                 if(rank<best || rank==best && tie<0) {best=rank;selected=i;}

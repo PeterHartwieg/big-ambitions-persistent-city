@@ -2,8 +2,6 @@ using System;
 using System.Text.Json;
 using PersistentCity.Tests;
 
-// Issue #128 replay. SourceRoot=<dir> compiles the same fixture against another Core/Persistence tree
-// (for example an extracted baseline), so before/after numbers and hashes come from one fixture.
 static class Program
 {
     static void Main(string[] args)

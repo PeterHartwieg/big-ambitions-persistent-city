@@ -12,8 +12,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
-// Opt-in offline component timing for docs/perf/f2c.md: set PC_F2C_MEASURE to an output file. Uses only API that
-// also exists before F2c, so the same file times the base build (walk leases) and this one (walker follow).
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PhysicalWalkerPerfTests
 {
@@ -58,8 +56,6 @@ public sealed class PhysicalWalkerPerfTests
         using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
             typeof(PhysicalWalkerPerfTests).Assembly, new VendorBodyTests.Log(), 64, 8, 120, new DwellSpots());
         var pool = PhysicalPedestrians.Last!;
-        // Native movement double: a walking body steps toward its target at native pace, slowed for a seeded third of
-        // them, never faster than the commanded speed (P-C: the destination can be the leg's corner, beyond the pose).
         void Move(float seconds)
         {
             foreach (var body in pool.Active.Values)
@@ -81,8 +77,6 @@ public sealed class PhysicalWalkerPerfTests
         for (int i = 0; i < count; i++)
         {
             Frame();
-            // P-C: the navigation hook runs BoundWalkers twice a frame (before PreUpdate.AIUpdate and before
-            // PreLateUpdate.AIUpdatePostScript); both passes are timed together, separately from Update.
             long start = Stopwatch.GetTimestamp();
             pool.BeforeNavigation?.Invoke();
             double bound = Elapsed(start);

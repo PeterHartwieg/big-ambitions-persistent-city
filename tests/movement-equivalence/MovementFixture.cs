@@ -6,14 +6,11 @@ using PersistentCity.Core;
 
 namespace PersistentCity.MovementEquivalence;
 
-/// <summary>Detached native checkout double for the F2a harness: one own food shop, the F1 hour fence,
-/// one order per intent. It keeps the ordered list of confirmed sales, which the run hashes.</summary>
 public sealed class MovementMarket : IFoodMarket, IFoodSaleEvidence
 {
     public double Clock;
     public double EarliestMinute => Math.Floor(Clock / 60) * 60;
     public readonly List<string> Sales = new();
-    /// <summary>F5i: the person of each confirmed sale, in sale order (parallel to <see cref="Sales"/>).</summary>
     public readonly List<string> SaleOwners = new();
     public long RevenueUnits, Refusals;
     private readonly HashSet<string> paid = new(StringComparer.Ordinal);
@@ -40,7 +37,6 @@ public sealed class MovementMarket : IFoodMarket, IFoodSaleEvidence
         return new FoodSale(true, "Native double confirmed");
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
-    /// <summary>F2e checkpoint: the native checkout's own state, so a replay resumes against the same receipts.</summary>
     public MovementMarket Copy()
     {
         var copy = new MovementMarket { Clock = Clock, RevenueUnits = RevenueUnits, Refusals = Refusals };
@@ -53,23 +49,15 @@ public sealed class MovementMarket : IFoodMarket, IFoodSaleEvidence
 
 public sealed class HarnessViolation : Exception { public HarnessViolation(string message) : base(message) { } }
 
-/// <summary>A small signalled road grid (12 m sections, so every directed link stores two cars) with
-/// Manhattan walking along the same streets. Car owners whose car is parked by the origin drive when the
-/// trip is long enough; everyone else walks. The answer is a pure function of the request and the car,
-/// as a native planner's would be.</summary>
 public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IFoodWalkingPace
 {
     public const int Size = 25;
     public const double Spacing = 12;
     public const string Native = "f2af2af2af2af2af2af2af2af2af2af2af2af2af2af2af2af2af2af2af2af2a0";
-    /// <summary>Native game minutes per real second: GameManager.MinutesMultiplier 1 times the default
-    /// Persistent City clock factor 1/3 (Core CityBalance.GameClockFactor).</summary>
     public const double ClockRate = 1.0 / 3;
-    // Runtime NativeTravelPace.WalkingMetresPerSecond (2 m/s) and 36 km/h cars, in metres per game minute.
     public const double WalkMetresPerMinute = 2 / ClockRate;
     public const double CarMetresPerMinute = 10 / ClockRate;
     public const double MinimumCarMetres = 96;
-    // Signals at every fourth junction: two-minute cycle, half green, offset by position.
     public const int SignalEvery = 4;
     public TrafficNetwork? TrafficNetwork { get; }
     public double WalkingMetresPerMinute => WalkMetresPerMinute;
@@ -114,8 +102,6 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
         if (car != null && citizen!.Preferences.OwnsCar && Position.Distance(from.Position, car.ParkedPosition) < 20
             && (Math.Abs(end.X - start.X) + Math.Abs(end.Z - start.Z)) * Spacing >= MinimumCarMetres)
         {
-            // The Runtime car shape (MultimodalRoutes/RoadRoutes): walk to the car, a preparation pause, a kerb connector
-            // onto the road, the road sections, a kerb connector off it, a parking pause, then the walk from the parked car.
             var parked = Nearest(car.ParkedPosition);
             Walk(route, from.Position, car.ParkedPosition);
             Pause(route, car.ParkedPosition, TransportComposition.CarPreparationMinutes);
@@ -134,7 +120,6 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
         return route.Legs.Count == 0 ? null : route;
     }
 
-    // X first, then Z, one grid section per leg, so every corner is a leg boundary.
     private static void Streets(Route route, (int X, int Z) from, (int X, int Z) to, TravelMode mode)
     {
         int x = from.X, z = from.Z;
@@ -150,7 +135,6 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
         }
     }
 
-    // A car-mode leg without a road service ID, at walking pace, as RoadRoutes.Connector makes it.
     private static void Connector(Route route, Position from, Position to)
     {
         double metres = Position.Distance(from, to);
@@ -158,7 +142,6 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
     }
     private static void Pause(Route route, Position at, double minutes)
         => route.Legs.Add(new RouteLeg { From = at, To = at, Mode = TravelMode.Car, Minutes = minutes });
-    // The kerb beside the last road node, up to 6 m toward the destination.
     private static Position Kerb(Position road, Position destination)
     {
         double metres = Position.Distance(road, destination);
@@ -172,10 +155,6 @@ public sealed class GridPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner, IF
     }
 }
 
-/// <summary>The F1/F6a supported shape (957 residents, representation factor 2, the current food model
-/// attached unchanged, minute-stamped native clock) placed on the signalled grid: 120 homes, ten workplaces,
-/// four leisure places and one own food shop at the centre. Every second resident owns a car parked at the
-/// home's street corner, unless the city is walking-only (F2c: E1 holds there before F2d).</summary>
 public static class MovementFixture
 {
     public const int Residents = 957;
@@ -184,14 +163,10 @@ public static class MovementFixture
     public const double StartMinute = 1440;
     public const int OpenMinute = 7 * 60, CloseMinute = 22 * 60, MealsPerHour = 60;
     public const string Business = "b-shop", ShopPlace = "shop";
-    // Doors stand 3 m off the street corner in both directions.
     public static readonly Position DoorOffset = new Position(3, 0, 3);
     public static Position ShopPosition => Door(12, 12);
     public static Position Door(int x, int z) { var n = GridPlanner.Node(x, z); return new Position(n.X + DoorOffset.X, n.Y, n.Z + DoorOffset.Z); }
 
-    /// <summary>F5i: three subway portals a few blocks from the own shop, so visitors walk past it and buy there. With
-    /// them, attaching the food market creates the representation factor's K−1 visitors per resident (walking, no car),
-    /// as Runtime does.</summary>
     public static readonly PortalStation[] Portals = {
         new("subway:west", Door(10, 12)), new("subway:east", Door(14, 12)), new("subway:north", Door(12, 15)) };
 
@@ -231,7 +206,6 @@ public static class MovementFixture
         return state;
     }
 
-    /// <summary>Attaches the current Core model unchanged: weighted choice, awareness and household budgets.</summary>
     public static CitySimulator Attach(CityState state, MovementMarket market, GridPlanner planner, bool fresh)
     {
         var city = new CitySimulator(state, planner);

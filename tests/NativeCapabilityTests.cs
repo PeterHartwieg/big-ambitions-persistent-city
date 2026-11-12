@@ -11,12 +11,9 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
-/// <summary>The F8a classes run alone: the source scan and the perf arm are CPU-heavy and, run in parallel, push runtime
-/// tier-up work into other classes' allocation and timing windows (FoodContractCoordinatorTests).</summary>
 [CollectionDefinition(Collection, DisableParallelization = true)]
 public sealed class F8aSerial { public const string Collection = "F8a serial"; }
 
-/// <summary>F8a (docs/plans/f8-capability-boundaries.md D1, D2): the capability model in Core, without game assemblies.</summary>
 [Collection(F8aSerial.Collection)]
 public sealed class NativeCapabilityTests
 {
@@ -42,7 +39,6 @@ public sealed class NativeCapabilityTests
             Assert.True(NativeCapabilities.TryParse(d.Name, out var parsed)); Assert.Equal(d.Id, parsed);
             Assert.NotEqual(CapabilityScope.None, d.Scope);
             Assert.False(string.IsNullOrWhiteSpace(d.Fallback)); Assert.False(string.IsNullOrWhiteSpace(d.NativeContract));
-            // Only a capability that stops the whole city may block the start; optional ones never carry that scope.
             Assert.Equal(d.Requirement != CapabilityRequirement.Optional, d.Scope == CapabilityScope.WholeCity);
             if (d.Requirement == CapabilityRequirement.RequiredWhenPresent) Assert.NotNull(d.Companion);
         }
@@ -61,7 +57,6 @@ public sealed class NativeCapabilityTests
         Assert.All(Ids, id => Assert.Equal(CapabilityState.NotChecked, r.State(id)));
         Assert.Equal(0, r.Revision);
 
-        // NotChecked -> Active | Off | Absent at detection, once.
         Assert.Equal(CapabilityTransition.Applied, r.Detect(CapabilityId.FoodAuthority, CapabilityState.Active, "ignored"));
         Assert.Null(r.Reason(CapabilityId.FoodAuthority));
         Assert.Equal(CapabilityTransition.Applied, r.Detect(CapabilityId.ResearchDialog, CapabilityState.Off, "dialog changed"));
@@ -69,12 +64,10 @@ public sealed class NativeCapabilityTests
         Assert.Equal(3, r.Revision);
         Assert.Equal(CapabilityTransition.Rejected, r.Detect(CapabilityId.FoodAuthority, CapabilityState.Off, "late"));
         Assert.Equal(CapabilityTransition.Rejected, r.Detect(CapabilityId.ResearchDialog, CapabilityState.Active));
-        // A native game contract cannot be Absent; only a companion mod can.
         Assert.Equal(CapabilityTransition.Rejected, r.Detect(CapabilityId.ClockCity, CapabilityState.Absent));
         Assert.Equal(CapabilityState.NotChecked, r.State(CapabilityId.ClockCity));
         Assert.Equal(3, r.Revision);
 
-        // Active -> Off on a later verification failure; Off keeps its first reason.
         Assert.Equal(CapabilityTransition.Rejected, r.Fail(CapabilityId.ClockCity, "not checked yet"));
         Assert.Equal(CapabilityTransition.Rejected, r.Fail(CapabilityId.VendorStreetFood, "absent"));
         Assert.Equal(CapabilityTransition.Applied, r.Fail(CapabilityId.FoodAuthority, "ProcessCustomer changed"));
@@ -83,7 +76,6 @@ public sealed class NativeCapabilityTests
         Assert.Equal("ProcessCustomer changed", r.Reason(CapabilityId.FoodAuthority));
         Assert.Equal(4, r.Revision);
 
-        // Caller errors throw instead of producing a reasonless Off or a NotChecked outcome.
         Assert.Throws<ArgumentException>(() => r.Detect(CapabilityId.ClockCity, CapabilityState.Off, " "));
         Assert.Throws<ArgumentException>(() => r.Fail(CapabilityId.FoodAuthority, ""));
         Assert.Throws<ArgumentOutOfRangeException>(() => r.Detect(CapabilityId.ClockCity, CapabilityState.NotChecked));
@@ -97,7 +89,6 @@ public sealed class NativeCapabilityTests
         var r = AllActive();
         Assert.Equal(CapabilityTransition.Applied, r.Fail(CapabilityId.ResearchBilling, "foreign prefix by other.mod"));
         long revision = r.Revision;
-        // No path back to Active except the declared point (city load for research billing).
         Assert.Equal(CapabilityTransition.Rejected, r.Detect(CapabilityId.ResearchBilling, CapabilityState.Active));
         Assert.Equal(CapabilityTransition.Rejected, r.Recheck(CapabilityId.ResearchBilling, CapabilityRecheck.CompanionRevision, CapabilityState.Active));
         Assert.Equal(CapabilityTransition.Unchanged, r.Fail(CapabilityId.ResearchBilling, "again"));
@@ -108,7 +99,6 @@ public sealed class NativeCapabilityTests
         Assert.Null(r.Reason(CapabilityId.ResearchBilling));
         Assert.Equal(CapabilityTransition.Unchanged, r.Recheck(CapabilityId.ResearchBilling, CapabilityRecheck.CityLoad, CapabilityState.Active));
 
-        // Street Food requalifies at its next revision, not at a city load (E6d checks item 5).
         var v = new CapabilityRegistry();
         Assert.Equal(CapabilityTransition.Applied, v.Detect(CapabilityId.VendorStreetFood, CapabilityState.Absent, "VendorApi missing"));
         Assert.Equal(CapabilityTransition.Rejected, v.Recheck(CapabilityId.VendorStreetFood, CapabilityRecheck.CityLoad, CapabilityState.Active));
@@ -117,9 +107,7 @@ public sealed class NativeCapabilityTests
         Assert.Equal(CapabilityTransition.Applied, v.Recheck(CapabilityId.VendorStreetFood, CapabilityRecheck.CompanionRevision, CapabilityState.Active));
         Assert.Equal(CapabilityTransition.Applied, v.Recheck(CapabilityId.VendorStreetFood, CapabilityRecheck.CompanionRevision, CapabilityState.Off, "contract 2"));
         Assert.Equal("contract 2", v.Reason(CapabilityId.VendorStreetFood));
-        // A re-check of a capability that was never detected is rejected: detection comes first.
         Assert.Equal(CapabilityTransition.Rejected, v.Recheck(CapabilityId.FoodAuthority, CapabilityRecheck.CityLoad, CapabilityState.Active));
-        // A re-check cannot make a native contract Absent either.
         Assert.Equal(CapabilityTransition.Rejected, r.Recheck(CapabilityId.ClockCity, CapabilityRecheck.CityLoad, CapabilityState.Absent));
     }
 
@@ -141,7 +129,6 @@ public sealed class NativeCapabilityTests
         Assert.Contains("food.authority is off: RetailBusinessSimulator.ProcessCustomer changed", refused.Message);
         Assert.Contains("The saved city is kept unchanged.", refused.Message);
 
-        // The save itself reads fine: this is a capability refusal, not a save status.
         var state = ChangeJournalTests.Fixture(5150);
         var loaded = SaveCodec.Read(SaveCodec.Write(state));
         Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
@@ -153,7 +140,6 @@ public sealed class NativeCapabilityTests
         Assert.DoesNotContain("corrupt", refused.Message, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("invalid", refused.Message, StringComparison.OrdinalIgnoreCase);
 
-        // A required companion that is missing refuses with its own wording; the first blocker in report order is named.
         var rlo = AllActiveExcept(CapabilityId.RloDonor, CapabilityState.Absent, "RealLifeOverhaul not loaded");
         var missing = rlo.Start();
         Assert.Equal(CapabilityStartStatus.Refused, missing.Status);
@@ -161,7 +147,6 @@ public sealed class NativeCapabilityTests
         rlo.Fail(CapabilityId.ClockObserve, "observer owner taken");
         Assert.Equal(CapabilityId.ClockObserve, rlo.Start().Capability);
 
-        // RequiredWhenPresent: absent is fine, present but changed refuses.
         Assert.Equal(CapabilityStartStatus.Ready,
             AllActiveExcept(CapabilityId.ClockDrivenRides, CapabilityState.Absent, null).Start().Status);
         var rides = AllActiveExcept(CapabilityId.ClockDrivenRides, CapabilityState.Off, "Unsupported Driven Rides clock contract.").Start();
@@ -191,11 +176,9 @@ public sealed class NativeCapabilityTests
             foreach (CapabilityScope scope in Enum.GetValues<CapabilityScope>())
                 if (scope != CapabilityScope.None && (scope & d.Scope) == 0) Assert.True(r.IsEnabled(scope), d.Name + " disabled " + scope);
         }
-        // Research has three capabilities sharing one scope: one off is enough to disable it, and nothing else.
         var research = AllActive();
         research.Fail(CapabilityId.ResearchDelivery, "TextMessage constructor changed");
         Assert.Equal(CapabilityScope.MarketResearch, research.DisabledScopes);
-        // Absent: an optional companion disables its scope; an absent RequiredWhenPresent one disables nothing.
         Assert.Equal(CapabilityScope.VehicleScopes,
             AllActiveExcept(CapabilityId.VendorStreetFood, CapabilityState.Absent, "no VendorApi").DisabledScopes);
         Assert.Equal(CapabilityScope.None, AllActiveExcept(CapabilityId.ClockDrivenRides, CapabilityState.Absent, null).DisabledScopes);
@@ -205,7 +188,6 @@ public sealed class NativeCapabilityTests
     [Fact]
     public void DeterministicReport()
     {
-        // The same end state reached in two different orders gives the same text.
         var a = new CapabilityRegistry();
         foreach (var id in Ids) a.Detect(id, CapabilityState.Active);
         a.Fail(CapabilityId.ResearchBilling, "foreign prefix by\r\nother.mod");
@@ -233,7 +215,6 @@ public sealed class NativeCapabilityTests
         Assert.DoesNotContain("compatible", first, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("verified", first, StringComparison.OrdinalIgnoreCase);
 
-        // A transition invalidates the reused text.
         a.Fail(CapabilityId.ClockCity, "RunMainGameTick(float) changed");
         string after = report.Status(a, "0.9.1");
         Assert.StartsWith("Persistent City capabilities (game 0.9.1): start refused (clock.city)\n", after);
@@ -252,8 +233,6 @@ public sealed class NativeCapabilityTests
         Assert.Contains("companion: Driven Rides (DrivenRides.Ride)", report.Show(a, CapabilityId.ClockDrivenRides));
     }
 
-    /// <summary>Registry update and report cost (plan section 6, F8a row). Writes the table to the test output and, when
-    /// PC_F8A_MEASURE names a file, appends it there. Steady-state updates and a reused report allocate nothing.</summary>
     [Fact]
     public void RegistryUpdateAndReportCost()
     {
@@ -275,8 +254,6 @@ public sealed class NativeCapabilityTests
                 times[i] = (Stopwatch.GetTimestamp() - t0) * tick;
             }
             long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
-            // Steady state: a one-time runtime allocation in the window (tier-up under a busy suite) does not repeat, a
-            // per-call allocation does. Re-measure once, untimed, before reporting bytes.
             if (bytes != 0)
             {
                 before = GC.GetAllocatedBytesForCurrentThread();

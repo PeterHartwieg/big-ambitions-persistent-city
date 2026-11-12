@@ -4,8 +4,6 @@ using System.Linq;
 
 namespace PersistentCity.MovementEquivalence;
 
-/// <summary>E1 comparison of one arm with its bodies-off reference: per projection, whether every 03:00
-/// boundary matches, and the first boundary that differs.</summary>
 public sealed class Comparison
 {
     public string Arm = "", Reference = "";
@@ -18,7 +16,6 @@ public sealed class Comparison
 public static class Equivalence
 {
     public static readonly string[] Projections = { "save", "sales", "journeys", "parked", "wallets", "fifo", "visitors" };
-    /// <summary>Outcome metrics reported as arm minus reference.</summary>
     public static readonly string[] Outcomes = {
         "journeys.walk.meanMinutes", "journeys.walk.p95Minutes", "journeys.car.meanMinutes", "journeys.car.p95Minutes",
         "journeys.arrivals", "visits.shopArrivals", "visits.admittedAtShop", "visits.workArrivals", "routines.missedActivities",

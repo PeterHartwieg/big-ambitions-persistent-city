@@ -11,14 +11,9 @@ using Seasons;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Main-thread E5a reader, live in shadow since E5b2: it publishes images and the loaded-name image
-    /// but grants no authority. Dirty sources are Decision 1 hints (<see cref="IFoodContractHintSink"/>) and the
-    /// Decision 2 stamp compared on each discovery <see cref="Visit"/>; neither is relied on for correctness.
-    /// Continue runs one bounded unit. Clean frames touch no definition or holder. Reset before city unload.
-    /// Arbitrary in-place third-party writes are not a proven notification surface.</summary>
     public sealed class LoadedCatalogueEligibilityReader : IDisposable, IFoodContractHintSink
     {
-        static LoadedCatalogueEligibilityReader() { } // Bind only on explicit main-thread use.
+        static LoadedCatalogueEligibilityReader() { }
         private sealed class ReferenceComparer : IEqualityComparer<object>
         {
             internal static readonly ReferenceComparer Instance = new ReferenceComparer();
@@ -31,7 +26,6 @@ namespace PersistentCity.Runtime
             var f = typeof(TaggedScriptableObject).GetField("tags", BindingFlags.Instance | BindingFlags.NonPublic);
             return f != null && !f.IsStatic && f.FieldType == typeof(List<string>) ? f : null;
         }
-        // E5b3: the same field through a DynamicMethod, so rechecks read tags without reflection per call.
         private static readonly Func<TaggedScriptableObject, List<string>?>? ReadTags = BindTagReader();
         private static Func<TaggedScriptableObject, List<string>?>? BindTagReader()
         {
@@ -56,8 +50,6 @@ namespace PersistentCity.Runtime
             for (int i = 0; i < tags.Count; i++) if (string.IsNullOrWhiteSpace(tags[i])) return null;
             return tags;
         }
-        /// <summary>E5b3 Decision 3a: the live fields the contract reads, uncopied and without allocation. The
-        /// catalogue copy and every recheck use this one function, so the two cannot disagree on a field.</summary>
         internal static LoadedStockFacts Facts(Item item)
         {
             var raw = RawTags(item);
@@ -90,7 +82,6 @@ namespace PersistentCity.Runtime
             internal int Limit;
             internal long Revision, PublishedCatalogue;
             internal FoodEligibilityImage? Image;
-            // Taken when the pass starts, so a write during a multi-frame pass mismatches at the next visit.
             internal ShopContractStamp Start, Stamp;
             public bool Queued { get; set; }
         }
@@ -110,7 +101,6 @@ namespace PersistentCity.Runtime
             public int GetHashCode(ShopAddress a) => a.GetHashCode();
         }
         private readonly Dictionary<string, Shop> shops = new Dictionary<string, Shop>(StringComparer.Ordinal);
-        // Hint lookup only; both hold exactly the shops above and are cleared with them.
         private readonly Dictionary<object, Shop> byRegistration = new Dictionary<object, Shop>(ReferenceComparer.Instance);
         private readonly Dictionary<ShopAddress, Shop> byAddress = new Dictionary<ShopAddress, Shop>(AddressComparer.Instance);
         private readonly ContractDirtyQueue<Shop> dirty = new ContractDirtyQueue<Shop>();
@@ -125,15 +115,12 @@ namespace PersistentCity.Runtime
         private Dictionary<string, ItemInstance>.Enumerator furnitureCursor;
         private bool furnitureOpen;
         private readonly StockCargoFields[] cargoBuffer = new StockCargoFields[LoadedStockLimits.Rows];
-        // Transient only; catches shared cargo references, including sharing with storage.
         private readonly HashSet<object> cargoIdentities = new HashSet<object>(ReferenceComparer.Instance);
-        // Decision 2 readers, bound by Prepare. Null until then or when a capability failed: Visit stays idle.
         private static CollectionVersionReader<List<string>>? menuVersion;
         private static CollectionVersionReader<List<RetailPrice>>? priceVersion;
         private static CollectionVersionReader<Dictionary<string, ItemInstance>>? furnitureVersion;
         private static bool stampsReady;
 
-        /// <summary>Binds and self-tests the three Decision 2 version readers. Main thread, city start.</summary>
         public static bool Prepare(FoodContractCapabilities report)
         {
             stampsReady = false;
@@ -150,7 +137,6 @@ namespace PersistentCity.Runtime
             return stampsReady;
         }
         public static bool StampsReady => stampsReady;
-        /// <summary>E5b3: the registration's current Decision 2 stamp; default (never matching) until the readers bind.</summary>
         internal static ShopContractStamp CurrentStamp(BuildingRegistration r) => stampsReady && r != null ? Stamp(r) : default;
         private static ShopContractStamp Stamp(BuildingRegistration r)
         {
@@ -162,14 +148,9 @@ namespace PersistentCity.Runtime
         }
 
         public long CatalogueRevision => catalogueRevision;
-        /// <summary>E5b3: the sealed catalogue of the current revision, or null while it is dirty or rebuilding.</summary>
         internal LoadedStockCatalogue? Catalogue => catalogueDirty ? null : catalogue;
-        /// <summary>E5b3 coordinator: called once per finished shop pass with the pass's registration, image and start stamp.</summary>
         internal Action<string, BuildingRegistration, FoodEligibilityImage, ShopContractStamp, IReadOnlyList<string>>? ShopPublished;
-        /// <summary>Most distinct definition names one pass records for E5b3 Decision 3a.</summary>
         internal const int MaximumPassDefinitions = 512;
-        // Every definition name the current pass read: menu products, furniture and cargo, participating or not,
-        // including the one that refused. Cleared with the pass.
         private readonly List<string> passDefinitions = new List<string>();
         private readonly HashSet<string> passDefinitionSet = new HashSet<string>(StringComparer.Ordinal);
         private void PassDefinition(string? name)
@@ -179,9 +160,6 @@ namespace PersistentCity.Runtime
         }
         public long DefinitionRecopies { get; private set; }
         public long FullRecopies { get; private set; }
-        /// <summary>E5b3 Decision 3a: re-copies the named live definitions into a new catalogue revision and
-        /// requeues every shop, so every image built afterwards uses the fresh facts. Falls back to a full
-        /// catalogue rebuild when the overlay cannot take them.</summary>
         internal void RecopyDefinitions(IReadOnlyList<Item> items)
         {
             if (items.Count == 0) return;
@@ -201,9 +179,7 @@ namespace PersistentCity.Runtime
             }
             FullRecopies++; MarkCatalogueDirty();
         }
-        /// <summary>E5b3: requeues every tracked shop (a business-type re-copy), keeping the catalogue.</summary>
         internal void RequeueAllShops() { foreach (var shop in shops.Values) Dirty(shop); }
-        /// <summary>The loaded-name image of the current catalogue revision, or null while it is dirty or rebuilding.</summary>
         public LoadedNameImage? LoadedNames => revision.Names;
         public LoadedNameImage? LastLoadedNames => revision.LastPublished;
         public bool CatalogueBuilding => revision.Building != null;
@@ -224,7 +200,6 @@ namespace PersistentCity.Runtime
 
         public bool MarkCatalogueDirty()
         {
-            // Repeated notifications coalesce until work starts. In-progress work is discarded.
             if (!revision.MarkDirty()) return false;
             CloseCatalogue(); CancelShop();
             foreach (var shop in shops.Values) Enqueue(shop);
@@ -265,9 +240,6 @@ namespace PersistentCity.Runtime
             shop.Address = default;
         }
 
-        /// <summary>Decision 2, once per existing discovery visit: constant time, no allocation for a tracked shop.
-        /// The first visit, a replaced registration or a stamp mismatch queues one coalesced rebuild. Shadow only:
-        /// no ownership or admission reads this.</summary>
         public void Visit(string key, BuildingRegistration registration, int maximumOffers)
         {
             if (!stampsReady || registration == null) return;
@@ -278,7 +250,6 @@ namespace PersistentCity.Runtime
             var now = Stamp(registration);
             if (!now.Matches(shop.Stamp)) { StampMismatches++; shop.Limit = maximumOffers; Dirty(shop); }
         }
-        /// <summary>Current versus published stamp of one tracked shop (diagnostic).</summary>
         public bool TryStamp(string key, out ShopContractStamp published, out ShopContractStamp current)
         {
             published = default; current = default;
@@ -331,7 +302,6 @@ namespace PersistentCity.Runtime
                 for (int i = 0; i < LoadedStockLimits.CataloguePerUnit; i++)
                 {
                     if (!catalogueCursor!.MoveNext()) { PublishCatalogue(); return; }
-                    // The sole extra enumeration step detects overflow without reading Current.
                     var buildingCatalogue = revision.Building!;
                     if (buildingCatalogue.Catalogue.Count == LoadedStockLimits.Catalogue)
                     { PublishCatalogue(FoodEligibilityRefusal.CatalogueBounds); return; }
@@ -347,7 +317,6 @@ namespace PersistentCity.Runtime
         }
         private void PublishCatalogue(FoodEligibilityRefusal refusal = FoodEligibilityRefusal.None)
         {
-            // Catalogue and loaded-name image are published in one step from the same accepted definitions.
             revision.Publish(refusal);
             catalogueCursor?.Dispose(); catalogueCursor = null;
         }
@@ -417,7 +386,6 @@ namespace PersistentCity.Runtime
                     }
                     menu.AddHolder(pair.Key, instance.id, instance.itemName, cargo != null,
                         new ReadOnlySpan<StockCargoFields>(cargoBuffer, 0, count));
-                    // Drop cargo strings after every unit; never retain native cargo objects in an image.
                     Array.Clear(cargoBuffer, 0, count);
                     if (menu.Refusal != FoodEligibilityRefusal.None) { PublishShop(); return; }
                 }
@@ -439,7 +407,6 @@ namespace PersistentCity.Runtime
             if (scanning != null) scanning.Start = default;
             scanning = null; menu = null; cargoIdentities.Clear(); Array.Clear(cargoBuffer, 0, cargoBuffer.Length);
         }
-        /// <summary>Drops every native reference: registrations, indexes, cursors and images.</summary>
         public void Reset()
         {
             CloseCatalogue(); CancelShop(false); dirty.Clear(); shops.Clear(); byRegistration.Clear(); byAddress.Clear();

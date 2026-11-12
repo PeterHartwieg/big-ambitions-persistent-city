@@ -21,7 +21,6 @@ public sealed class FoodMemoryOpeningCacheTests(ITestOutputHelper output)
         Place Temporary(FoodBusiness b) => new() { Id = b.PlaceId, Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = b.Hours };
         double Checks(bool cache, bool cacheDoor = true)
         {
-            // Arrival closure, represented admission, reached stop and returning-door closure.
             double result = DailyRoutine.Open(cache ? arrival.OpeningPlace : Temporary(arrival), 2160) ? 1 : 0;
             var admission = cache ? arrival.OpeningPlace : Temporary(arrival);
             result += DailyRoutine.NextOpen(admission, 2160, 2220) ?? -1;
@@ -32,7 +31,6 @@ public sealed class FoodMemoryOpeningCacheTests(ITestOutputHelper output)
             result += DailyRoutine.Open(cache && cacheDoor ? arrival.OpeningPlace : Temporary(arrival), 2160) ? 1 : 0;
             return result;
         }
-        // Keep runner work off the allocation counter's thread; thread/setup costs are excluded.
         var worker = new Thread(() =>
         {
             try

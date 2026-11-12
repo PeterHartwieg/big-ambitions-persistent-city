@@ -2,14 +2,8 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Measured physical progress on one committed leg. Never integrates speed or wall time for moving actors.</summary>
     public static class PhysicalProgress
     {
-        /// <summary>
-        /// Project onto the current leg only. False means the body cannot substantiate progress on that
-        /// geometry; the output remains the previous progress. A trusted native corner notification is
-        /// evidence that the endpoint was actually passed, including a vehicle already turning away.
-        /// </summary>
         public static bool TryProject(PhysicalJourneySample sample, Position actual, bool trustedNativeCornerReached, out double routeElapsedMinutes)
         {
             routeElapsedMinutes = sample.ElapsedMinutes;
@@ -29,8 +23,6 @@ namespace PersistentCity.Core
             bool reached = trustedNativeCornerReached || Position.Distance(actual, sample.To) <= endTolerance;
             if (!reached)
             {
-                // Distance to the infinite XZ line permits a measured forward overshoot, while a
-                // parallel road or the inside of a corner cannot become progress on this segment.
                 double lineX = sample.From.X + dx * along, lineZ = sample.From.Z + dz * along;
                 double crossX = actual.X - lineX, crossZ = actual.Z - lineZ;
                 double cross = Math.Sqrt(crossX * crossX + crossZ * crossZ);
@@ -44,8 +36,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        // A stair/ramp corner can have effectively identical XZ endpoints. Its measured
-        // height is real movement, unlike a zero-distance wait. Cars never use this fallback.
         private static bool TryProjectVerticalWalk(PhysicalJourneySample sample, Position actual, out double elapsed)
         {
             elapsed = sample.ElapsedMinutes;
@@ -57,11 +47,7 @@ namespace PersistentCity.Core
             if (!Position.Finite(along)) return false;
             double fraction = Math.Max(0, Math.Min(1, along));
             Position closest = Position.Lerp(sample.From, sample.To, fraction);
-            // Tight finite-segment distance rejects another floor/shaft and arbitrary vertical
-            // overshoot. Neither a trusted car corner nor nominal elapsed time grants credit.
             if (Position.Distance(actual, closest) > 0.08) return false;
-            // A short moving leg must not complete merely because its source is within
-            // the ordinary endpoint tolerance. Keep endpoint credit local to its last 1%.
             double endpointTolerance = Math.Min(0.08, Math.Sqrt(square) * 0.01);
             if (Position.Distance(actual, sample.To) <= endpointTolerance) fraction = 1;
             fraction = Math.Max(sample.LegFraction, fraction);
@@ -69,7 +55,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>Only deliberate zero-distance waits consume elapsed simulation time, capped at this leg's boundary.</summary>
         public static double AdvanceWait(PhysicalJourneySample sample, double elapsedSimulationMinutes)
         {
             if (!Position.Finite(elapsedSimulationMinutes) || elapsedSimulationMinutes < 0)

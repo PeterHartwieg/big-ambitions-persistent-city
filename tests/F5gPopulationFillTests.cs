@@ -8,16 +8,11 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5g (#92): population fill and visitor transport in writer 33 without a schema bump. At each day boundary the
-/// city creates commuters and the day-visitor pool toward the census targets in units of at most 64 persons, through the
-/// one event queue; it never retires, clamps or rewrites persisted persons, wallets or obligations.</summary>
 public sealed class F5gPopulationFillTests
 {
-    // ---- Fixtures ----
 
     internal static readonly WorkplaceCapacityTests.Business[] Base = WorkplaceCapacityTests.Businesses;
 
-    /// <summary>Homes of seven beds, the given businesses (Work/Study places as GamePlaces builds them), a park and three shops.</summary>
     internal static List<Place> Places(int homes, IEnumerable<WorkplaceCapacityTests.Business> businesses)
     {
         var places = Enumerable.Range(0, homes).Select(h => new Place { Id = "home:" + h.ToString("000"), Name = "Home " + h, Kind = PlaceKind.Home,
@@ -29,8 +24,6 @@ public sealed class F5gPopulationFillTests
         return places;
     }
 
-    /// <summary>The census catalogue Runtime reads at load: the city's businesses plus businesses established since
-    /// (catalogue-only, never saved places), as many as needed for the requested commuter demand.</summary>
     internal static PopulationFillCatalogue Catalogue(int homes, IEnumerable<WorkplaceCapacityTests.Business> businesses, IEnumerable<WorkplaceCapacityTests.Business>? since = null)
     {
         var all = businesses.Concat(since ?? Array.Empty<WorkplaceCapacityTests.Business>()).ToList();
@@ -42,9 +35,6 @@ public sealed class F5gPopulationFillTests
         => Enumerable.Range(0, large).Select(i => new WorkplaceCapacityTests.Business("address:new:" + i.ToString("000"), 900))
             .Concat(Enumerable.Range(0, small).Select(i => new WorkplaceCapacityTests.Business("address:newsmall:" + i, 30))).ToArray();
 
-    /// <summary>A catalogue whose commuter target for <paramref name="state"/> is exactly <paramref name="target"/>.</summary>
-    /// <remarks>Every band capacity is even, so round(80% of capacity) skips some integers; whether a target is reachable
-    /// depends on the residents' worker count. <see cref="TryCatalogueFor"/> reports that instead of throwing.</remarks>
     internal static (PopulationFillCatalogue Catalogue, WorkplaceCapacityTests.Business[] Since) CatalogueFor(CityState state, int homes, long target)
         => TryCatalogueFor(state, homes, target, Base) ?? throw new InvalidOperationException("No catalogue gives commuter target " + target);
 
@@ -53,7 +43,6 @@ public sealed class F5gPopulationFillTests
     {
         var own = (saved ?? Base).ToArray();
         long previous = -1;
-        // Twelve small businesses (1.6 each after the 80% fill) span one large step (19.2).
         for (int large = 0; large < 600; large++)
             for (int small = 0; small <= 12; small++)
             {
@@ -76,7 +65,6 @@ public sealed class F5gPopulationFillTests
             RepresentationFactor = factor,
             Shops = Enumerable.Range(0, 3).Select(i => new FoodScope { PlaceId = "shop:" + i, BusinessId = "b" + i, ProductId = FoodProducts.Croissant }).ToList() };
         var market = new VisitorRoutineTests.Market { Shops = Shops(state) };
-        // Attaching the market creates the roster and the factor's K−1 visitors per resident, as Runtime does.
         new CitySimulator(state, new FreshCityTraceTests.Walk()).AttachFoodMarket(market);
         return (state, market);
     }
@@ -93,7 +81,6 @@ public sealed class F5gPopulationFillTests
         return city;
     }
 
-    /// <summary>Saves and loads. Persons staged for a coming boundary are not in the city, so they are not saved.</summary>
     internal static CitySimulator Reload(CitySimulator city, VisitorRoutineTests.Market market, PopulationFillCatalogue? fill, IRoutePlanner? routes = null)
     {
         string payload = SaveCodec.Write(city.State);
@@ -108,7 +95,6 @@ public sealed class F5gPopulationFillTests
     internal static (long Commuters, long Pool) Counts(CityState state)
         => (state.Visitors.LongCount(v => v.Stay.Pattern == VisitorPattern.Commuter), state.Visitors.LongCount(v => v.Stay.Pattern == VisitorPattern.DayVisit));
 
-    /// <summary>Per-wallet CashConserved and the city-wide BigInteger ledger (sources equal uses).</summary>
     internal static void Conserved(CityState state, string context)
     {
         BigInteger sources = 0, uses = 0;
@@ -121,8 +107,6 @@ public sealed class F5gPopulationFillTests
         Assert.True(sources == uses, context + ": city ledger " + sources + " != " + uses);
     }
 
-    /// <summary>Structural F5g invariants at any instant: one roster record (and wallet with finances) per person, ordinal
-    /// visitor lists, sequence equal to the count, aggregate within capacity unless seeded above it.</summary>
     internal static void Invariants(CityState state, string context)
     {
         var persons = state.Citizens.Select(c => c.Identity.Id).Concat(state.Visitors.Select(v => v.Id)).ToList();
@@ -130,7 +114,6 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(persons.Count, roster.Count); Assert.Equal(persons.OrderBy(i => i, StringComparer.Ordinal), roster.OrderBy(i => i, StringComparer.Ordinal));
         Assert.All(state.Food.Residents, m => Assert.Equal(state.Food.HouseholdFinanceVersion != 0, m.Budget != null));
         for (int i = 1; i < state.Visitors.Count; i++) Assert.True(string.CompareOrdinal(state.Visitors[i - 1].Id, state.Visitors[i].Id) < 0, context);
-        // Every number below the sequence without a visitor was skipped for a commuter: its identity is no worker.
         Assert.True(state.NextVisitorSequence - 1 >= state.Visitors.Count, context);
         var present = state.Visitors.Select(v => int.Parse(v.Id.Substring(3))).ToHashSet();
         var identities = IdentityPolicy.V1(state.SourceIdentities);
@@ -142,7 +125,6 @@ public sealed class F5gPopulationFillTests
             Assert.True(r.Journey?.Legs == null || r.Journey.Legs.All(l => l.Mode != TravelMode.Car)); });
     }
 
-    // ---- Targets ----
 
     [Fact]
     public void FillTargetsEqualTheCensusOnTheSameFacts()
@@ -160,7 +142,6 @@ public sealed class F5gPopulationFillTests
                 Assert.Equal(reference.CommuterTarget, targets.CommuterTarget); Assert.Equal(reference.DayVisitorPoolTarget, targets.PoolTarget);
                 Assert.Equal(reference.VisitorCapacity, targets.VisitorCapacity);
                 Assert.Equal(reference.CommuterClamped, targets.CommuterClamped); Assert.Equal(reference.PoolClamped, targets.PoolClamped);
-                // Order of the catalogue is irrelevant.
                 var shuffled = new PopulationFillCatalogue(places.AsEnumerable().Reverse().ToList(), census.AsEnumerable().Reverse().ToList()).Targets(state);
                 Assert.Equal(targets.CommuterTarget, shuffled.CommuterTarget); Assert.Equal(targets.PoolTarget, shuffled.PoolTarget);
             }
@@ -169,31 +150,23 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void TargetClampsAtExactBoundariesAndWithoutStations()
     {
-        // VisitorCapacity = min(2R, 100000); commuters first, then the pool in the capacity left.
         var t = VisitorTargets.Compute(workplaceCapacity: 1000, eligibleResidentWorkers: 0, residents: 100, stations: 2);
         Assert.Equal(200, t.VisitorCapacity); Assert.Equal(800, t.CommuterDemand); Assert.Equal(200, t.CommuterTarget); Assert.Equal(0, t.PoolTarget);
         Assert.True(t.CommuterClamped); Assert.True(t.PoolClamped);
-        // Demand exactly equal to capacity: no commuter clamp, no pool room.
         t = VisitorTargets.Compute(250, 0, 100, 2);
         Assert.Equal(200, t.CommuterDemand); Assert.Equal(200, t.CommuterTarget); Assert.False(t.CommuterClamped); Assert.Equal(0, t.PoolTarget);
-        // One below capacity: exactly one pool place.
         t = VisitorTargets.Compute(250, 1, 100, 2);
         Assert.Equal(199, t.CommuterTarget); Assert.Equal(1, t.PoolTarget); Assert.True(t.PoolClamped);
-        // Pool demand ceil(round(15% R) / 25%) when unclamped.
         t = VisitorTargets.Compute(0, 0, 100, 1);
         Assert.Equal(15, t.DayVisitorsPerDay); Assert.Equal(60, t.PoolDemand); Assert.Equal(60, t.PoolTarget); Assert.Equal(0, t.CommuterTarget);
-        // The 100,000 hard cap.
         t = VisitorTargets.Compute(1_000_000, 0, 50_000, 3);
         Assert.Equal(100_000, t.VisitorCapacity); Assert.Equal(100_000, t.CommuterTarget); Assert.Equal(0, t.PoolTarget);
-        // No portal: no target and no clamp.
         t = VisitorTargets.Compute(1000, 0, 100, 0);
         Assert.Equal(0, t.CommuterTarget); Assert.Equal(0, t.PoolTarget); Assert.False(t.CommuterClamped); Assert.False(t.PoolClamped);
-        // Weekend weighting averages the census probability over a week.
         Assert.Equal(PopulationCensusPolicy.DayVisitProbabilityPercent * 100 * 7,
             4 * PopulationCensusPolicy.DayVisitWeekdayBasisPoints + 3 * PopulationCensusPolicy.DayVisitWeekendBasisPoints);
     }
 
-    // ---- Growth and convergence ----
 
     [Fact]
     public void FillConvergesToEachClampedTargetInBoundedUnitsWithoutOvershoot()
@@ -203,7 +176,6 @@ public sealed class F5gPopulationFillTests
         var fill = Catalogue(12, Base, Since(3));
         var city = Start(state, market, fill);
         int boundaryDay = (int)(state.Minute / 1440) + 1;
-        // Nothing is created before the next day boundary.
         Advance(city, boundaryDay * 1440 - 1);
         Assert.Empty(state.Visitors); Assert.Equal(0, city.PopulationFillUnits);
         long previousCommuters = 0, previousPool = 0;
@@ -214,7 +186,6 @@ public sealed class F5gPopulationFillTests
             Assert.Equal(day * 1440.0, city.PopulationFillBoundary);
             var (commuters, pool) = Counts(state);
             Assert.True(commuters >= previousCommuters && pool >= previousPool, "a pattern count decreased");
-            // Each pattern reaches its clamped target unless the aggregate capacity stops it; never beyond.
             Assert.True(commuters + pool <= targets.VisitorCapacity);
             Assert.Equal(Math.Max(previousCommuters, targets.CommuterTarget), commuters);
             Assert.Equal(Math.Max(previousPool, Math.Min(targets.PoolTarget, targets.VisitorCapacity - commuters)), pool);
@@ -224,11 +195,9 @@ public sealed class F5gPopulationFillTests
         }
         Assert.True(previousCommuters > 0 && previousPool > 0);
         Assert.True(city.PopulationFillUnits >= (previousCommuters + previousPool + 63) / 64);
-        // Day visitors carry their outside employer exactly like unseated commuter workers; they never hold a city seat.
         Assert.All(state.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit),
             r => Assert.Equal(ResidentLifecycle.IsWorker(r) && r.Identity.Age >= 18 ? ResidentIncomeSource.ExternalEmployment : (ResidentIncomeSource?)null, r.Carried));
         Assert.True(city.OccupancyMatchesFullCount());
-        // Owner decision (8 Nov 2026): the fill creates only working-persona commuters; the pool may hold any persona.
         Assert.All(state.VisitorRoutines.Where(r => r.Person!.Stay.Pattern == VisitorPattern.Commuter), r => Assert.True(VisitorSchedules.WorkingPersona(r.Identity.Persona)));
         Assert.Contains(state.VisitorRoutines, r => r.Person!.Stay.Pattern == VisitorPattern.DayVisit && !VisitorSchedules.WorkingPersona(r.Identity.Persona));
         Assert.True(city.PopulationFillSkipped > 0);
@@ -238,7 +207,6 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void FillStopsExactlyAtTheAggregateCapacity()
     {
-        // Commuter demand far above 2R: commuters take the whole capacity and the pool none.
         var (state, market) = City(12, 1);
         var city = Start(state, market, Catalogue(12, Base, Since(60)));
         Advance(city, 3 * 1440 + 1);
@@ -248,7 +216,6 @@ public sealed class F5gPopulationFillTests
         Assert.Equal((targets.VisitorCapacity, 0L), Counts(state));
         Invariants(state, "capacity");
 
-        // One or two below capacity (whichever the even band capacities reach) leaves exactly that many pool places.
         var (second, market2) = City(12, 1);
         long cap = 2L * second.Citizens.Count, gap = 1;
         var near = TryCatalogueFor(second, 12, cap - gap);
@@ -279,7 +246,6 @@ public sealed class F5gPopulationFillTests
         var city = Start(state, market, null);
         Advance(city, 4 * 1440);
         Assert.Empty(state.Visitors); Assert.False(city.PopulationFillAttached);
-        // A refused catalogue (duplicate place) detaches the fill too.
         var places = Places(12, Base); places.Add(places[0]);
         var refused = new PopulationFillCatalogue(places, WorkplaceCapacityTests.Workplaces(Base).Census);
         Assert.True(refused.Refused);
@@ -287,12 +253,10 @@ public sealed class F5gPopulationFillTests
         Assert.False(city.PopulationFillAttached);
     }
 
-    // ---- Retention: above target and shrinking census ----
 
     [Fact]
     public void FreshCitySeededAboveTargetCreatesNoCommutersAndRetiresNone()
     {
-        // Factor 2 seeds one commuter per resident, far above this catalogue's commuter target.
         var (state, market) = City(12, 2);
         var seeded = state.Visitors.Select(v => v.Id).ToList();
         var wallets = state.Food!.Residents.ToDictionary(m => m.ResidentId, m => m.Budget!.OpeningBalance);
@@ -303,12 +267,10 @@ public sealed class F5gPopulationFillTests
         var (commuters, pool) = Counts(state);
         Assert.Equal(seeded.Count, commuters);
         Assert.All(seeded, id => Assert.Contains(state.Visitors, v => v.Id == id));
-        // The pool fills toward its own target inside the remaining aggregate capacity.
         Assert.Equal(Math.Min(targets.PoolTarget, targets.VisitorCapacity - commuters), pool);
         Assert.True(pool > 0);
         foreach (var (id, opening) in wallets) Assert.Equal(opening, state.Food.Residents.Single(m => m.ResidentId == id).Budget!.OpeningBalance);
 
-        // Factor 3 seeds the whole capacity: nothing is created and nothing removed.
         var (full, market3) = City(12, 3);
         int fullCount = full.Visitors.Count;
         city = Start(full, market3, Catalogue(12, Base, Since(20)));
@@ -322,12 +284,10 @@ public sealed class F5gPopulationFillTests
     public void ShrinkingCensusKeepsAThousandCommutersAndPausesOnlyThatPattern()
     {
         const int homes = 90;
-        // A seed whose resident worker count lets the even band capacities reach both 1,000 and 700 exactly.
         CityState state = null!; VisitorRoutineTests.Market market = null!; PopulationFillCatalogue thousand = null!;
         WorkplaceCapacityTests.Business[] own = Base;
         for (int extra = 0; ; extra++)
         {
-            // Small businesses of the city itself change both the capacity and the seated resident workers.
             own = Base.Concat(Enumerable.Range(0, extra).Select(i => new WorkplaceCapacityTests.Business("address:own:" + i, 30))).ToArray();
             (state, market) = City(homes, 1, seed: 1234, businesses: own);
             var found = TryCatalogueFor(state, homes, 1000, own);
@@ -340,12 +300,10 @@ public sealed class F5gPopulationFillTests
         var (commuters, pool) = Counts(state);
         Assert.Equal(1000, commuters);
         long capacity = city.PopulationFillTargets!.Value.VisitorCapacity;
-        // The first boundary publishes at most 1,024 persons: all 1,000 commuters first, then 24 pool members.
         Assert.Equal(Math.Min(Math.Min(city.PopulationFillTargets!.Value.PoolTarget, capacity - 1000), PopulationFillPolicy.MaximumPersonsPerBoundary - 1000), pool);
         var ids = state.Visitors.Select(v => v.Id).ToList();
         var wallets = state.Food!.Residents.Where(m => m.ResidentId.StartsWith("pv:")).ToDictionary(m => m.ResidentId, m => m.Budget!.OpeningBalance);
 
-        // The census falls to 700 commuters: attached at noon, it applies only at the next boundary.
         Advance(city, 2 * 1440 + 720);
         var seven = TryCatalogueFor(state, homes, 700, own)!.Value.Catalogue;
         city.AttachPopulationFill(seven);
@@ -355,7 +313,6 @@ public sealed class F5gPopulationFillTests
         Advance(city, 3 * 1440 + 1);
         var shrunk = city.PopulationFillTargets!.Value;
         Assert.Equal(700, shrunk.CommuterTarget);
-        // Every identity and wallet is kept; commuters stay above target; the pool fills only inside the remaining capacity.
         var after = Counts(state);
         Assert.Equal(1000, after.Commuters);
         Assert.Equal(Math.Min(shrunk.PoolTarget, capacity - 1000), after.Pool);
@@ -364,7 +321,6 @@ public sealed class F5gPopulationFillTests
         Assert.All(ids, id => Assert.Contains(state.Visitors, v => v.Id == id));
         foreach (var (id, opening) in wallets) Assert.Equal(opening, state.Food.Residents.Single(m => m.ResidentId == id).Budget!.OpeningBalance);
         Invariants(state, "shrunk"); Conserved(state, "shrunk");
-        // A reload keeps every person and the pause.
         city = Reload(city, market, seven);
         Advance(city, 5 * 1440 + 1);
         Assert.Equal(1000, Counts(city.State).Commuters);
@@ -373,7 +329,6 @@ public sealed class F5gPopulationFillTests
         Invariants(city.State, "reloaded"); Conserved(city.State, "reloaded");
     }
 
-    // ---- Determinism ----
 
     private static string Run(Action<CitySimulator>? perFrame, int budget, bool frameSlices, bool reloadMidFill, bool reloadDaily, bool shuffled, int days = 4)
     {
@@ -395,8 +350,6 @@ public sealed class F5gPopulationFillTests
             if (frameSlices) { var r = city.AdvanceFrameSlice(end, budget); caught = r.CaughtUp; }
             else caught = city.AdvanceTo(end, budget).CaughtUp;
             perFrame?.Invoke(city);
-            // A save while a boundary's persons are staged (once per boundary, since the reload stages them again).
-            // A save between two units of a boundary's fill (once per boundary).
             if (reloadMidFill && city.PopulationFillPending && city.PopulationFillUnits > 0 && city.PopulationFillBoundary > reloadedBoundary)
             { reloadedBoundary = city.PopulationFillBoundary!.Value; city = Reload(city, market, Fill()); reloads++; units = 0; continue; }
             units = city.PopulationFillUnits;
@@ -416,15 +369,12 @@ public sealed class F5gPopulationFillTests
     public void CreationOrderIdsAndDrawsAreIndependentOfBudgetsCadenceSkipReloadAndOrder()
     {
         string reference = Run(null, 100000, false, false, false, false);
-        // More than one unit, so the reload arm reloads between units.
         Assert.Matches("\\|pv:(6[5-9]|[7-9][0-9]|[1-9][0-9]{2,})\\|", reference);
         Assert.Equal(reference, Run(null, 1, true, false, false, false));
         Assert.Equal(reference, Run(null, 7, true, false, false, false));
         Assert.Equal(reference, Run(null, 64, false, false, false, false));
-        // Reload between bounded units inside a boundary's fill, and at noon each day.
         Assert.Equal(reference, Run(null, 1, true, true, false, false));
         Assert.Equal(reference, Run(null, 13, false, false, true, false));
-        // Shuffled catalogue input order.
         Assert.Equal(reference, Run(null, 64, false, false, false, true));
     }
 
@@ -449,7 +399,6 @@ public sealed class F5gPopulationFillTests
         var plain = Start(a, ma, fill);
         Advance(plain, 3 * 1440 + 60);
         var reloaded = Start(b, mb, fill);
-        // Caught up to the boundary minute itself: the fill has run (the boundary is work at its own minute).
         Advance(reloaded, 2 * 1440);
         Assert.True(reloaded.PopulationFillCreated > 0);
         Assert.Equal(2 * 1440.0, reloaded.State.Minute);
@@ -464,8 +413,6 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void ACompletedBoundaryStaysClosedAcrossAttachmentAndReload()
     {
-        // Review Sol-r1-1, case 1: after the fill at minute 2880 a larger catalogue attached in process waits for 4320, and a
-        // reload of the 2880 checkpoint with that catalogue does the same instead of re-filling 2880.
         var (state, market) = City(12, 1);
         market = new VisitorRoutineTests.Market { Shops = Shops(state) };
         var city = Start(state, market, Catalogue(12, Base));
@@ -478,7 +425,6 @@ public sealed class F5gPopulationFillTests
         Advance(city, 2 * 1440 + 1);
         Assert.Equal(filled, state.Visitors.Count);
         var read = SaveCodec.Read(checkpoint); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        // Its own market double, so the two cities' native orders are not shared.
         var reloaded = Start(read.State!, new VisitorRoutineTests.Market { Shops = Shops(read.State!) }, larger);
         Advance(reloaded, 2 * 1440 + 1);
         Assert.Equal(filled, read.State!.Visitors.Count); Assert.Equal(0, reloaded.PopulationFillCreated);
@@ -486,7 +432,6 @@ public sealed class F5gPopulationFillTests
         Assert.True(state.Visitors.Count > filled);
         Assert.Equal(SaveCodec.Write(state), SaveCodec.Write(read.State!));
 
-        // Case 2: an existing city saved at exactly 2880 without fill, first attached there, fills at 4320, not 2880.
         var (old, oldMarket) = City(12, 1);
         var plain = Start(old, oldMarket, null);
         Advance(plain, 2 * 1440);
@@ -502,13 +447,10 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void ASaveInsideABoundarysFillStoresItsUnitsAndTheReloadContinuesTheRest()
     {
-        // Reviews Sol-r2-2 and Sol-r3-2: the save does no fill work. Each unit's persons are in the city with their
-        // wallets; a reload at the boundary minute continues with the remaining units before the boundary's events.
         var (a, ma) = City(12, 1, seed: 52); var (b, mb) = City(12, 1, seed: 52);
         var fill = Catalogue(12, Base, Since(3));
         var plain = Start(a, ma, fill); var city = Start(b, mb, fill);
         Advance(plain, 3 * 1440 + 30);
-        // Stop after the first unit of the boundary, then save there.
         while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(3 * 1440 + 30, 1);
         Assert.Equal(2 * 1440.0, city.State.Minute);
         Assert.True(city.PopulationFillPending);
@@ -525,8 +467,6 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void ABoundaryPublishesAtMostItsCapAndALargerDeficitFillsOverLaterDays()
     {
-        // 90 homes (567 residents) and a commuter demand above the 1,134-visitor capacity: 1,024 persons on the first day,
-        // the remaining 110 on the second.
         var (state, market) = City(90, 1, seed: 1234);
         var city = Start(state, market, Catalogue(90, Base, Since(80)));
         Advance(city, 2 * 1440 + 1);
@@ -541,8 +481,6 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void CapabilitiesActivateAtTheFirstMidnightWithTheFillAttached()
     {
-        // Review Sol-r2-1: crossing the first midnight by publication activates the city's capabilities, as ordinary
-        // advancing without the fill and the accounting-observation path both do.
         foreach (bool slices in new[] { false, true })
         {
             var (plainState, plainMarket) = City(12, 1, seed: 71); var (state, market) = City(12, 1, seed: 71);
@@ -558,8 +496,6 @@ public sealed class F5gPopulationFillTests
             }
             Assert.NotEmpty(state.Visitors);
         }
-        // Review Opus-r3-2: the accounting-observation path across the same midnight. The epoch publication moves the clock
-        // onto midnight with the activation, and the fill then runs there; both paths end in the same city.
         var (observedState, observedMarket) = City(12, 1, seed: 71); var (directState, directMarket) = City(12, 1, seed: 71);
         observedState.Capabilities.Active = directState.Capabilities.Active = false;
         var observed = Start(observedState, observedMarket, Catalogue(12, Base, Since(3)));
@@ -574,7 +510,6 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(SaveCodec.Write(directState), SaveCodec.Write(observedState));
     }
 
-    /// <summary>Walking routes plus a two-node road network, so the simulator runs a traffic kernel with its own clock.</summary>
     private sealed class TrafficWalk : IRoutePlanner, ITrafficRoutePlanner
     {
         public TrafficNetwork? TrafficNetwork { get; } = new TrafficNetwork("f5g-test-roads", new[]
@@ -590,31 +525,24 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void AFrameSliceStoppingOnMidnightKeepsTheTrafficClockWithTheCityWhenATrafficEventIsDueThere()
     {
-        // Review Sol-r4-2: a traffic event due exactly at the fill boundary. The scheduler's own stop on midnight (no epoch
-        // publication) must move the traffic clock with the city's, or a save inside the fill is refused.
         var (state, market) = City(12, 1, seed: 63);
-        // TrafficWalk's one link is 20 m at 36 km/h: two minutes, so a vehicle entered at 2878 exits exactly at 2880.
         var city = Start(state, market, Catalogue(12, Base, Since(3)), new TrafficWalk());
         Advance(city, 2 * 1440 - 2);
         var kernel = (TrafficKernel)typeof(CitySimulator).GetField("traffic", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(city)!;
         Assert.Equal(2 * 1440 - 2.0, kernel.Clock);
         var link = new TrafficWalk().TrafficNetwork!.Links[0];
         kernel.Enqueue("f5g-probe-vehicle", new[] { new TrafficRouteLeg { LinkId = link.Id, StartNominalMinutes = 0, EndNominalMinutes = link.FreeFlowMinutes } });
-        // The entry is processed now; the exit is then due exactly at midnight.
         Advance(city, 2 * 1440 - 1);
         Assert.Equal(2 * 1440.0, kernel.NextEventMinute);
         while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(2 * 1440 + 1, 1);
         Assert.Equal(2 * 1440.0, state.Minute);
         Assert.Equal(state.Minute, kernel.Clock);
-        // The event due at midnight is still queued for after the fill.
         Assert.Equal(2 * 1440.0, kernel.NextEventMinute);
     }
 
     [Fact]
     public void TheObservationEpochAndTrafficClockStayOnMidnightWhileTheFillRuns()
     {
-        // Review Sol-r3-1: with a traffic kernel, publish the midnight epoch, run one fill unit, check the epoch and the
-        // clocks, save there and reload, and end equal to the uninterrupted city.
         var (a, ma) = City(12, 1, seed: 63); var (b, mb) = City(12, 1, seed: 63);
         var fill = Catalogue(12, Base, Since(3));
         var plain = Start(a, ma, fill, new TrafficWalk()); var city = Start(b, mb, fill, new TrafficWalk());
@@ -626,7 +554,6 @@ public sealed class F5gPopulationFillTests
             Assert.Equal(2 * 1440.0, c.State.Minute);
         }
         Advance(plain, AccountingClock.Target(native));
-        // One unit, then the observation guarantees of the new epoch still hold.
         while (city.PopulationFillUnits == 0) city.AdvanceFrameSlice(AccountingClock.Target(native), 1);
         Assert.Equal(2 * 1440.0, city.State.Minute);
         Assert.True(AccountingClock.Compatible(city.State.Minute, native));
@@ -650,21 +577,18 @@ public sealed class F5gPopulationFillTests
         Assert.True(city.PopulationFillSkipped > 0);
         string payload = SaveCodec.Write(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
-        // Dropping a created visitor leaves a gap at a working identity: refused and kept, as a lost person.
         var commuter = state.Visitors.First(v => v.Stay.Pattern == VisitorPattern.Commuter && int.Parse(v.Id.Substring(3)) > 1);
         var copy = SaveCodec.Read(payload).State!;
         int at = copy.Visitors.FindIndex(v => v.Id == commuter.Id);
         var meal = copy.Food!.Residents.Single(m => m.ResidentId == commuter.Id);
         copy.Visitors.RemoveAt(at); copy.VisitorRoutines.RemoveAt(at); copy.Food.Residents.Remove(meal);
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(copy));
-        // The save is the JSON body; edits are respaced to the writer's spelling (SaveWire).
         var root = SaveWire.Parse(payload);
         var visitors = (Newtonsoft.Json.Linq.JArray)root["Visitors"]!;
         int index = visitors.Select((v, i) => (v, i)).First(t => ((string)t.v!).Contains("|" + commuter.Id + "|")).i;
         visitors.RemoveAt(index); ((Newtonsoft.Json.Linq.JArray)root["VisitorRoutines"]!).RemoveAt(index);
         var refused = SaveWire.Read(root.ToString(Newtonsoft.Json.Formatting.None));
         Assert.NotEqual(SaveReadStatus.Loaded, refused.Status);
-        // A sequence number one past the last, at a working identity, is refused too.
         var identities = IdentityPolicy.V1(state.SourceIdentities);
         int next = state.NextVisitorSequence;
         while (!VisitorSchedules.WorkingPersona(identities.PersonaOf(state.Seed, PersonIds.Visitor(next)))) next++;
@@ -673,13 +597,11 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(SaveReadStatus.Invalid, forgedRead.Status); Assert.Contains("not a student or retiree", forgedRead.Error);
     }
 
-    // ---- Enrolment ----
 
     [Fact]
     public void EveryCreatedPersonIsEnrolledOnceWithItsPortalDistrictMix()
     {
         var (state, market) = City(12, 1);
-        // Give the homes two districts with distinct budget mixes; portals take the district of their nearest saved place.
         foreach (var place in state.Places.Where(p => p.Kind == PlaceKind.Home)) place.District = place.Position.X < 0 ? "west" : "east";
         foreach (var place in state.Places.Where(p => p.Kind != PlaceKind.Home && !PortalPlaces.Is(p))) place.District = "";
         var nearest = new Dictionary<string, string>();
@@ -707,7 +629,6 @@ public sealed class F5gPopulationFillTests
         }
         Assert.Contains(state.VisitorRoutines, r => state.Places.Single(p => p.Id == r.HomeId).District == "west");
         Assert.Contains(state.VisitorRoutines, r => state.Places.Single(p => p.Id == r.HomeId).District != "west");
-        // A reload never re-seeds a wallet or meal record; later boundaries enrol only newly created persons.
         var before = state.Food.Residents.ToDictionary(m => m.ResidentId, m => m.Budget!.OpeningBalance);
         city = Reload(city, market, Catalogue(12, Base, Since(14)));
         Advance(city, 4 * 1440 + 1);
@@ -728,7 +649,6 @@ public sealed class F5gPopulationFillTests
         Advance(city, 3 * 1440 + 1);
         Invariants(city.State, "finances off reload");
 
-        // Without a food roster the current writer refuses visitors, so the fill creates none.
         var foodless = Population.CreateFromHousing(WorkplaceCapacityTests.Donors, Places(12, Base), "f5g-fill", "0.41.1", 5150, 1440 + 360);
         PortalPlaces.Add(foodless, VisitorRoutineTests.Stations);
         var plain = new CitySimulator(foodless, new FreshCityTraceTests.Walk());
@@ -738,19 +658,16 @@ public sealed class F5gPopulationFillTests
         Assert.True(SaveCodec.Read(SaveCodec.Write(foodless)).Status == SaveReadStatus.Loaded);
     }
 
-    // ---- Target timing ----
 
     [Fact]
     public void CatalogueChangesMoveTheTargetOnlyAtTheNextBoundaryAndAnExistingCityStartsFillingThere()
     {
-        // An existing current-schema city ran two days without fill (as before F5g), then is saved and reloaded.
         var (state, market) = City(12, 1);
         var old = Start(state, market, null);
         Advance(old, 3 * 1440 + 600);
         Assert.Empty(state.Visitors);
         int schema = state.Schema;
         var city = Reload(old, market, Catalogue(12, Base, Since(5)));
-        // Fill starts at its next day boundary, with no schema change or switch-over.
         Advance(city, 4 * 1440 - 1);
         Assert.Empty(city.State.Visitors);
         Advance(city, 4 * 1440 + 1);
@@ -758,7 +675,6 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(schema, city.State.Schema); Assert.Equal(CityState.CurrentSchema, city.State.Schema);
         var first = city.PopulationFillTargets!.Value;
         int count = city.State.Visitors.Count;
-        // A larger catalogue attached mid-day creates nobody until the next boundary.
         city.AttachPopulationFill(Catalogue(12, Base, Since(25)));
         Advance(city, 5 * 1440 - 1);
         Assert.Equal(count, city.State.Visitors.Count);
@@ -766,19 +682,16 @@ public sealed class F5gPopulationFillTests
         Advance(city, 5 * 1440 + 1);
         Assert.True(city.PopulationFillTargets!.Value.CommuterTarget > first.CommuterTarget);
         Assert.True(city.State.Visitors.Count > count);
-        // A catalogue attached at the boundary after its plan latched keeps the latched targets for that boundary.
         var latched = city.PopulationFillTargets!.Value;
         city.AttachPopulationFill(Catalogue(12, Base, Since(60)));
         Assert.Equal(latched.CommuterTarget, city.PopulationFillTargets!.Value.CommuterTarget);
     }
 
-    // ---- Stays over weeks ----
 
     [Fact]
     public void FourWeeksOfStaysReturnTheSamePersonsAndConserveEverythingThroughReloads()
     {
         var (a, ma) = City(12, 1, seed: 4242); var (b, mb) = City(12, 1, seed: 4242);
-        // Lost acknowledgements for some visitor meals keep receipts uncertain; evidence is withheld for a while.
         Func<ResidentMeal, bool> lose = m => m.ResidentId.StartsWith("pv:") && StableRandom.Hash(m.IntentId, 11) % 9 == 0;
         ma.LoseAcknowledgement = lose; mb.LoseAcknowledgement = lose;
         var fill = Catalogue(12, Base, Since(2));
@@ -793,7 +706,6 @@ public sealed class F5gPopulationFillTests
             Advance(plain, minute); Advance(city, minute);
             var state = city.State;
             int day = (int)(minute / 1440);
-            // Evidence returns every third day; uncertain receipts then settle exactly once (the market refuses a second order).
             ma.EvidenceAvailable = mb.EvidenceAvailable = day % 3 == 0;
             var (commuters, pool) = Counts(state);
             Assert.True(commuters >= lastCommuters && pool >= lastPool, "a pattern count decreased at " + minute);
@@ -812,15 +724,11 @@ public sealed class F5gPopulationFillTests
             {
                 var visitor = state.Visitors.FirstOrDefault(v => v.Id == meal.ResidentId);
                 if (visitor == null || visitor.Stay.Presence != VisitorPresence.Dormant) continue;
-                // No demand while dormant: no travelling or serving meal and no open decision.
                 Assert.False(meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving, meal.ResidentId + " has dormant demand");
                 Assert.Null(meal.Decision);
-                // Daily postings continue for dormant persons.
                 if (minute % 1440 == 60) Assert.Equal(day, meal.Budget!.LastPostedDay);
             }
             Invariants(state, "hour " + minute); Conserved(state, "hour " + minute);
-            // Reloads at an arrival, mid-stay, a departure deferral (meal outing at stay end), dormancy with an uncertain
-            // receipt and the next arrival; plus a fixed noon reload each week.
             bool arrival = state.Visitors.Any(v => v.LastArrival != null && v.LastArrival.AtMinute > minute - 60 && v.Stay.Pattern == VisitorPattern.DayVisit);
             bool deferral = state.VisitorRoutines.Any(r => r.MealOuting != null);
             bool dormantUncertain = state.Food.Residents.Any(m => m.Status == MealStatus.Uncertain
@@ -834,17 +742,14 @@ public sealed class F5gPopulationFillTests
         Assert.Equal(SaveCodec.Write(a), SaveCodec.Write(city.State));
         Assert.Equal(ma.Orders, mb.Orders);
         Assert.True(arrivalReloads > 0 && deferralReloads > 0 && dormantUncertainReloads > 0, $"reload coverage {arrivalReloads}/{deferralReloads}/{dormantUncertainReloads}");
-        // The same pool members return on several days across the weeks; commuters return on weekdays.
         var poolIds = seen.Where(p => p.Value == VisitorPattern.DayVisit).Select(p => p.Key).ToList();
         Assert.NotEmpty(poolIds);
         Assert.True(poolIds.Count(id => stayDays.TryGetValue(id, out var d) && d.Count >= 2) > poolIds.Count / 2, "pool members do not return");
         Assert.Contains(seen.Where(p => p.Value == VisitorPattern.Commuter), p => stayDays.TryGetValue(p.Key, out var d) && d.Count >= 10);
-        // Day visits are weighted to the weekend: more pool presence on weekend days than on weekdays.
         int Weekday(int d) => ((d - 1) % 7 + 7) % 7;
         double weekend = poolIds.Sum(id => stayDays.TryGetValue(id, out var d) ? d.Count(x => Weekday(x) >= 4) : 0) / 12.0;
         double weekdays = poolIds.Sum(id => stayDays.TryGetValue(id, out var d) ? d.Count(x => Weekday(x) < 4) : 0) / 16.0;
         Assert.True(weekend > weekdays, $"weekend {weekend} weekday {weekdays}");
-        // No uncertain receipt was ever ordered twice (the market asserts that) and every one was settled by the end.
         Assert.True(mb.Orders.Count > 0);
     }
 
@@ -864,7 +769,6 @@ public sealed class F5gPopulationFillTests
             foreach (var r in pool)
                 if (r.Person!.Stay.Presence == VisitorPresence.Active)
                 {
-                    // A pool member is present only on a seeded visit day (or finishing that day's stay after midnight).
                     Assert.True(VisitorSchedules.VisitsOn(r, state.Seed, day) || VisitorSchedules.VisitsOn(r, state.Seed, day - 1), r.Identity.Id + " present on day " + day);
                     (visits.TryGetValue(r.Identity.Id, out var d) ? d : visits[r.Identity.Id] = new HashSet<int>()).Add(day);
                 }
@@ -875,8 +779,6 @@ public sealed class F5gPopulationFillTests
     [Fact]
     public void NoPoolMemberStaysDormantForGoodOverTenWeeks()
     {
-        // Review r1-1: a member whose drawn visit days all fall outside the routine's nine-day window once got a Home span to
-        // the clock limit and never woke again. It now wakes at the window end and looks further ahead.
         var (state, market) = City(12, 1, seed: 606);
         var city = Start(state, market, Catalogue(12, Base));
         Advance(city, 2 * 1440 + 1);
@@ -896,11 +798,7 @@ public sealed class F5gPopulationFillTests
         Assert.All(pool, r => Assert.Contains(r.Identity.Id, visited));
     }
 
-    // ---- Transport ----
 
-    /// <summary>A planner double with an endpoint-keyed bounded geometry cache like Runtime's WalkingRoutes (1,024 entries,
-    /// first-in first-out, negative entries kept). Each request returns its own copy, so no two persons share a route,
-    /// queue position or choice; only geometry and timing are shared.</summary>
     internal sealed class CachedPortalPlanner : IRoutePlanner
     {
         private readonly Dictionary<string, Route?> cache = new(StringComparer.Ordinal);
@@ -942,14 +840,12 @@ public sealed class F5gPopulationFillTests
             Assert.Equal(active.Count, active.Select(r => r.Legs).Distinct(ReferenceEqualityComparer.Instance).Count());
             journeys.AddRange(active);
             Assert.True(city.ActiveJourneyIndexMatchesState());
-            // F5i: a travelling visitor is a body candidate.
             Assert.All(state.VisitorRoutines.Where(r => r.Journey != null), r => Assert.True(ActiveJourneyIndex.ReceivesBody(r) && city.ActiveJourneys.BodyCandidates.Contains(r)));
         }
         Assert.True(planner.PortalHits > 0 && planner.PortalMisses > 0, $"hits {planner.PortalHits} misses {planner.PortalMisses}");
         Assert.True(planner.PortalHits > planner.PortalMisses);
         Invariants(state, "cached");
 
-        // Every portal route refused: created visitors wait at their portals, retry, never arrive and never buy.
         var (blocked, blockedMarket) = City(12, 1);
         var refusing = new CachedPortalPlanner { Reachable = (from, to) => !PortalPlaces.Is(from) && !PortalPlaces.Is(to) };
         city = Start(blocked, blockedMarket, Catalogue(12, Base, Since(10)), refusing);
@@ -983,7 +879,6 @@ public sealed class F5gPopulationFillTests
             foreach (var meal in city.State.Food!.Residents.Where(m => poolIds.Contains(m.ResidentId) && m.Status == MealStatus.Serving && m.TargetKind == FoodAlternativeKind.Player))
             {
                 var visitor = city.State.Visitors.Single(v => v.Id == meal.ResidentId);
-                // Service was admitted only through a Shop arrival at the meal's place no earlier than its desired minute.
                 Assert.NotNull(visitor.LastArrival);
                 Assert.Equal(meal.PlaceId, visitor.LastArrival!.PlaceId);
                 Assert.Equal(Activity.Shop, visitor.LastArrival.Activity);
@@ -995,7 +890,6 @@ public sealed class F5gPopulationFillTests
         Assert.Contains(market.Orders, o => poolIds.Any(id => o.Contains(Uri.EscapeDataString(id)) || o.Contains(id)));
     }
 
-    // ---- Persistence ----
 
     [Fact]
     public void DayVisitorsRoundTripAndMalformedDayVisitorsAreRefusedAndKept()
@@ -1010,7 +904,6 @@ public sealed class F5gPopulationFillTests
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveCodec.Write(read.State!));
 
-        // A day visitor with an Employment is refused on write and on read; the payload stays byte-identical.
         var copy = SaveCodec.Read(payload).State!;
         var day = copy.Visitors.First(v => v.Stay.Pattern == VisitorPattern.DayVisit);
         var work = copy.Places.First(p => p.Kind == PlaceKind.Work && p.Capacity > 0);

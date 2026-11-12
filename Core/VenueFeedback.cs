@@ -7,8 +7,6 @@ namespace PersistentCity.Core
 {
     public enum VenueEventKind { Visit, Bought, Refused, Missed }
 
-    /// <summary>GR-7 (R6): one non-food visit outcome. A refused purchase carries exactly one <see cref="PurchaseRefusal"/> and
-    /// a missed visit exactly one <see cref="PlanMissCause"/>; the other cause is None.</summary>
     public readonly struct VenueEvent
     {
         public VenueEvent(double minute, string residentId, string venueId, VenueEventKind kind, PurchaseRefusal refusal, PlanMissCause miss, Money total)
@@ -27,12 +25,9 @@ namespace PersistentCity.Core
         public PlanMissCause Miss { get; }
         public Money Total { get; }
         public int Day => (int)Math.Floor(Minute / 1440);
-        /// <summary>The cause's word key, or empty for a visit or a purchase.</summary>
         public string CauseKey => Kind == VenueEventKind.Refused ? VenueWords.RefusalKey(Refusal) : Kind == VenueEventKind.Missed ? VenueWords.MissKey(Miss) : "";
     }
 
-    /// <summary>GR-7: the recent non-food outcomes the simulator observed, oldest first, at most <see cref="Capacity"/>. Derived
-    /// and never saved: a reloaded city starts an empty log, and nothing in the simulation reads it.</summary>
     public sealed class VenueFeedbackLog
     {
         public const int Capacity = 4096;
@@ -50,7 +45,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>One venue's row in the business panel for one day.</summary>
     public sealed class VenueFeedbackRow
     {
         internal VenueFeedbackRow(string venueId) { VenueId = venueId; }
@@ -58,16 +52,12 @@ namespace PersistentCity.Core
         public int Visits { get; internal set; }
         public int Bought { get; internal set; }
         public Money Sales { get; internal set; }
-        /// <summary>Refused purchases and missed visits by cause key, in key order.</summary>
         public SortedDictionary<string, int> Refusals { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public int RefusalCount { get { int n = 0; foreach (var pair in Refusals) n += pair.Value; return n; } }
     }
 
-    /// <summary>GR-7 business panel and inspector words for non-food visits, purchases and refusals.</summary>
     public static class VenueFeedbackPanel
     {
-        /// <summary>Rows for <paramref name="venueIds"/> on <paramref name="day"/>, in the given order; a venue without events
-        /// gets an empty row.</summary>
         public static IReadOnlyList<VenueFeedbackRow> Build(VenueFeedbackLog log, IReadOnlyList<string> venueIds, int day)
         {
             var rows = new List<VenueFeedbackRow>(venueIds.Count);
@@ -87,7 +77,6 @@ namespace PersistentCity.Core
             return rows;
         }
 
-        /// <summary>The panel lines of one row. <paramref name="words"/> localizes a key and falls back to the English given.</summary>
         public static string Text(VenueFeedbackRow row, string name, Func<string, string, string>? words = null)
         {
             Func<string, string, string> w = words ?? ((_, english) => english);
@@ -102,7 +91,6 @@ namespace PersistentCity.Core
             return text.ToString();
         }
 
-        /// <summary>Today's non-food outcomes of one resident, oldest first, one line each.</summary>
         public static IReadOnlyList<string> ResidentLines(VenueFeedbackLog log, string residentId, int day, Func<string, string> placeName,
             Func<string, string, string>? words = null)
         {
@@ -128,13 +116,10 @@ namespace PersistentCity.Core
             return text.ToString();
         }
 
-        // Whole dollars for display only.
         private static string Dollars(Money amount)
             => ((decimal)amount.Units / Money.UnitsPerDollar).ToString("C0", CultureInfo.GetCultureInfo("en-US"));
     }
 
-    /// <summary>GR-7 words: localization keys in Runtime/Localization/en.json with their English text, which is also the
-    /// fallback when the table is not loaded.</summary>
     public static class VenueWords
     {
         public const string Prefix = "persistentcity_venue_";
@@ -166,7 +151,6 @@ namespace PersistentCity.Core
             return table;
         }
 
-        /// <summary>Every key with its English text.</summary>
         public static IReadOnlyDictionary<string, string> All => Table;
         public static string English(string key) => Table.TryGetValue(key, out var english) ? english : key;
         public static string RefusalKey(PurchaseRefusal refusal) => Prefix + "refusal_" + refusal.ToString().ToLowerInvariant();
@@ -210,15 +194,11 @@ namespace PersistentCity.Core
     public sealed partial class CitySimulator
     {
         private VenueFeedbackLog venueFeedback = new VenueFeedbackLog();
-        /// <summary>GR-7: non-food visits, purchases and refusals observed since this simulator (or the one it replaced) started.</summary>
         public VenueFeedbackLog VenueFeedback => venueFeedback;
 
-        /// <summary>A place's readable label for feedback lines (the inspector's address label), or "an unknown place".</summary>
         public string PlaceLabel(string placeId, Func<string, int, string>? formatAddress = null)
             => places.TryGetValue(placeId ?? "", out var place) ? ResidentAddress.From(place, formatAddress).Label : "an unknown place";
 
-        /// <summary>Records the non-food items this event admitted or missed, compared on the same day's plan before commit.
-        /// A purchase refusal is recorded by the purchase itself (<see cref="RecordPurchase"/>), once, with its own cause.</summary>
         private void RecordVisitFeedback(CitizenState live, CitizenState working)
         {
             var before = live.Plan; var after = working.Plan;
@@ -233,13 +213,11 @@ namespace PersistentCity.Core
                 if (now == was) continue;
                 if (now == PlanItemState.Active)
                     venueFeedback.Add(new VenueEvent(State.Minute, live.Identity.Id, VisitedVenue(working, item), VenueEventKind.Visit, PurchaseRefusal.None, PlanMissCause.None, Money.Zero));
-                // A Refused miss here is a paid entry the resident could not afford, turned away before any purchase.
                 else if (now == PlanItemState.Missed)
                     venueFeedback.Add(new VenueEvent(State.Minute, live.Identity.Id, item.VenueId, VenueEventKind.Missed, PurchaseRefusal.None, after.CauseOf(i), Money.Zero));
             }
         }
 
-        // An optional alternative may replace the planned venue; the admission names where the person actually is.
         private static string VisitedVenue(CitizenState working, PlanItem item)
             => working.Phase == CitizenPhase.AtPlace && working.PlaceId.Length != 0 ? working.PlaceId : item.VenueId;
 

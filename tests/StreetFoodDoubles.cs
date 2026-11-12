@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using PersistentCity.Tests;
 
-#pragma warning disable CS0649, CS0169, CS8618 // the variants' DTO fields only exist to be bound, never assigned
+#pragma warning disable CS0649, CS0169, CS8618
 
-// A contract-shaped stand-in for Street Food's VendorApi contract 1 (E6 plan 3.2): the same public names, types and
-// signatures, answering from StreetFoodHooks. It is not Street Food's code and reads nothing of Street Food's.
 namespace FoodTrucks.ModApi
 {
     public enum VendorApiStatus { Ready = 0, Off = 1, NotYet = 2, Refused = 3, Failed = 4 }
@@ -70,7 +68,6 @@ namespace FoodTrucks.ModApi
     }
 }
 
-// Contract variants that the bridge must refuse. Their methods are never called: binding fails first.
 namespace StreetFoodVariants.Version2.FoodTrucks.ModApi
 {
     public enum VendorApiStatus { Ready = 0, Off = 1, NotYet = 2, Refused = 3, Failed = 4 }
@@ -108,7 +105,7 @@ namespace StreetFoodVariants.IntPrices.FoodTrucks.ModApi
     {
         public readonly string VehicleId, Kind, OpeningOwner; public readonly bool Open, OpenedByCrew, EventOrCatering, MenuOverflow; public readonly long OpeningId;
         public readonly int OpenedDay, OpenedMinute, ClosesDay, ClosesMinute, MealsPerHour; public readonly float X, Y, Z, QueueX, QueueY, QueueZ, QueueHeading;
-        public readonly string[] Items; public readonly int[] PriceCents; public readonly int[] Units; // float-free but not the contract's long cents
+        public readonly string[] Items; public readonly int[] PriceCents; public readonly int[] Units;
     }
     public sealed class VendorApiSale { public readonly int BookedDay; public readonly long Cents; public readonly int UnitsBefore, UnitsAfter; public readonly long Sequence; }
     public static class VendorApi { public static int ContractVersion => 1; public static long Revision => 0; }
@@ -132,13 +129,9 @@ namespace StreetFoodVariants.ShiftedStatus.FoodTrucks.ModApi
 
 namespace PersistentCity.Tests
 {
-    /// <summary>The stand-in is static, and the E6b perf lines need a quiet CPU: this collection runs alone.</summary>
     [Xunit.CollectionDefinition(StreetFoodHooks.Collection, DisableParallelization = true)]
     public sealed class StreetFoodCollection { }
 
-    /// <summary>The stand-in's behaviour: Street Food's promised contract 1 rules (grant only to an opening in a later
-    /// native hour than the recorded request while the lease is valid; a repeated request keeps the first hour; release
-    /// and lease expiry hand back at once). Static, so every test using it resets it and runs in one collection.</summary>
     public static class StreetFoodHooks
     {
         public const string Collection = "Street Food vendor API stand-in";
@@ -169,8 +162,8 @@ namespace PersistentCity.Tests
         public static readonly List<Vehicle> Vehicles = new List<Vehicle>();
         public static readonly Dictionary<string, long> Wishes = new Dictionary<string, long>(StringComparer.Ordinal);
         public static readonly List<string> Calls = new List<string>();
-        public static long LeaseUntil = -1; // PC absolute minute
-        public static long Now;               // native clock, PC absolute minute (day * 1440 + minute)
+        public static long LeaseUntil = -1;
+        public static long Now;
         public static long Sequence;
 
         public static void Reset()
@@ -188,7 +181,6 @@ namespace PersistentCity.Tests
         }
         public static Vehicle Find(string id) => Vehicles.Find(v => v.Id == id) ?? throw new InvalidOperationException("no vehicle " + id);
 
-        /// <summary>Opens the vehicle now for <paramref name="minutes"/>, applying Street Food's grant rule.</summary>
         public static void Open(string id, int minutes = 120, bool crew = true, bool cityEvent = false, float? x = null)
         {
             Expire();
@@ -203,7 +195,6 @@ namespace PersistentCity.Tests
         public static void Close(string id) { var v = Find(id); v.Open = false; v.Owner = ""; Revision++; }
         public static void Remove(string id) { Vehicles.RemoveAll(v => v.Id == id); Wishes.Remove(id); Revision++; }
 
-        /// <summary>A lease that has run out hands every opening back and drops the recorded requests.</summary>
         public static void Expire()
         {
             if (LeaseUntil < 0 || Now < LeaseUntil) return;

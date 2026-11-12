@@ -2,8 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>One immutable business image: eight types by eight dated 24-hour observation masks.
-    /// A set bit proves only an actual enabled/verified C1 observation at that hour.</summary>
     public sealed class FoodCampaignImage
     {
         private readonly uint[] masks;

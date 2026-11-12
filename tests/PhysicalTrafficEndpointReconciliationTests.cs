@@ -7,9 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2d: the actual mapped road whose kernel section end lies a few ulps away from the committed corner (the "negative
-// endpoint"). Before F2d a leased body had to reconcile that gap before the kernel would cross; now the kernel crosses
-// on its own clock and a following car only reads its coordinate.
 public sealed class PhysicalTrafficEndpointReconciliationTests
 {
     private const string Native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -36,7 +33,6 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
 
         public Fixture()
         {
-            // Actual route search and the actual network mapper supply all timings/section spans.
             var graph = new TransportRoadGraph(X.Select((x, i) => new TransportRoadNode
             { Position = new Position(x,0,0), KilometresPerHour = 30, AllowsCar = true,
                 Successors = i + 1 < X.Length ? new[] { i + 1 } : Array.Empty<int>() }).ToArray());
@@ -83,7 +79,6 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
     public void FollowerAtTheActualMappedCornerReadsTheKernelAndNeverPassesIt()
     {
         var f = new Fixture(); string id = f.Citizen.Identity.Id;
-        // The closed next section, not a body, holds the kernel vehicle at the end of its first section.
         f.Simulation.Traffic!.SetLinkClosed(f.Mapped[1].LinkId, true);
         f.Simulation.AdvanceTo(110);
         var permission = f.Simulation.Traffic.GetPermission(id);
@@ -92,22 +87,17 @@ public sealed class PhysicalTrafficEndpointReconciliationTests
         Assert.Equal(permission.MaximumNominalMinutes, permission.LinkEndNominalMinutes);
         var middle = WalkerFollow.Sample(f.Road, f.MiddleOfSecondLeg);
         Assert.Equal(1, middle.LegIndex);
-        // The committed corner lies an ulp before the kernel's section end; Gley may take the car to it.
         Assert.True(PhysicalProgress.TryProject(middle, f.Corner, true, out double corner));
         Assert.True(corner < permission.MaximumNominalMinutes);
         double cap = CarFollow.Cap(f.Road, f.MiddleOfSecondLeg, permission.MaximumNominalMinutes);
         Assert.Equal(permission.MaximumNominalMinutes, cap);
         Assert.True(PhysicalTrafficCornerPermission.CanReachEndpoint(middle, cap));
-        // Standing on the corner without Gley's receipt credits the approach only.
         double approach = CarFollow.Advance(f.Road, f.MiddleOfSecondLeg, cap, f.Corner, -1);
         Assert.Equal(1, WalkerFollow.Sample(f.Road, approach).LegIndex); Assert.True(approach < corner);
-        // With it the car's own progress crosses onto the last leg, never beyond the kernel's coordinate, and the
-        // command there allows no further advance while the kernel is held.
         double crossed = CarFollow.Advance(f.Road, f.MiddleOfSecondLeg, cap, f.Corner, 1);
         var last = WalkerFollow.Sample(f.Road, crossed);
         Assert.Equal(2, last.LegIndex); Assert.True(crossed <= cap);
         Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(last, f.Corner, cap));
-        // Reopening lets the kernel finish on its own clock.
         f.Simulation.Traffic.SetLinkClosed(f.Mapped[1].LinkId, false);
         f.Simulation.AdvanceTo(112);
         Assert.Equal(1, f.Citizen.CompletedJourneys);

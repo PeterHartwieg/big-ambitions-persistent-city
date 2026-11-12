@@ -7,7 +7,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-// F6a employment arms only, six weeks and five seeds; the regression matrix is not invoked.
 public sealed class F6eEmploymentArmsTests
 {
     private const int ResidentCount = EconomyFixture.Residents;

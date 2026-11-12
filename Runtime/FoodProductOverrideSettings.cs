@@ -25,7 +25,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    // Diagnostics belong to the load, never to Resolve/Weight. No raw names/values in logs.
     internal sealed class FoodProductOverrideTable
     {
         internal FoodProductMetadataResolver Resolver = FoodProductMetadataResolver.Empty;
@@ -55,7 +54,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>Streaming, bounded optional table; duplicate properties are observed before Json.NET can replace them.</summary>
     internal sealed class FoodProductOverrideConverter : JsonConverter<FoodProductOverrideTable>
     {
         private sealed class Budget
@@ -80,8 +78,6 @@ namespace PersistentCity.Runtime
                 }
                 else
                 {
-                    // Json.NET exposes large integer tokens as BigInteger. Charge their actual
-                    // canonical spelling before clamping; many large fields must not evade the table bound.
                     int charge=reader.Value is System.Numerics.BigInteger integer
                         ? Math.Max(32,integer.ToString(CultureInfo.InvariantCulture).Length+1) : 32;
                     escaped+=charge; utf8+=charge;
@@ -163,7 +159,6 @@ namespace PersistentCity.Runtime
         private static FoodProductOverrideTable Reject(JsonReader reader, int rootDepth, FoodProductOverrideTable result)
         {
             result.InvalidTable=true;
-            // Drain only this optional value; unrelated top-level settings still deserialize.
             while (!(reader.TokenType==JsonToken.EndObject && reader.Depth==rootDepth))
             {
                 if (!reader.Read()) throw new JsonSerializationException("Incomplete food metadata table.");
@@ -186,7 +181,6 @@ namespace PersistentCity.Runtime
         }
         public override void WriteJson(JsonWriter writer, FoodProductOverrideTable? value, JsonSerializer serializer)
         {
-            // Supports settings diagnostics/roundtrip tools; the loader never writes the file.
             writer.WriteStartObject();
             if (value!=null)
             {

@@ -8,7 +8,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F6k (Peter, 8 Nov 2026): a slight price-weight bump, 1 -> 1.2. Same settings word, no schema change.
 public sealed class F6kPriceWeightTests
 {
     static readonly Money Cap = Money.FromCents(1000000);
@@ -27,7 +26,6 @@ public sealed class F6kPriceWeightTests
         var shipped = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(Path.Combine(Root(), "config", "persistent-city.json")))!;
         Assert.Equal(1.2, shipped.FoodChoicePriceWeight);
         Assert.Equal(1, shipped.FoodChoiceHouseholdWeight);
-        // An absent key keeps the compiled default.
         Assert.Equal(1.2, JsonConvert.DeserializeObject<PrototypeSettings>("{}")!.FoodChoicePriceWeight);
     }
 
@@ -54,7 +52,6 @@ public sealed class F6kPriceWeightTests
         }
         Assert.True(Ratio(1.2) < Ratio(1));
         Assert.Equal(1.0, FoodChoicePolicy.Weight(Offer(1250), Neutral, Cap, new FoodChoiceSettings()), 12);
-        // Neutral resident: (2/3)^2.4 at the new default, (2/3)^2 at the old one.
         if (bands == "2222222222")
         {
             Assert.Equal(Math.Pow(2.0 / 3, 2.4), Ratio(1.2), 12);
@@ -65,7 +62,6 @@ public sealed class F6kPriceWeightTests
     [Fact]
     public void WriterAndTuningWireAreUnchangedAndAStoredOneIsKept()
     {
-        // E5b5: the eight-offer default is revision 2; the four-offer menu fields keep revision 1's exact bytes.
         var wide = FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire();
         Assert.Equal(241, wide.Length);
         Assert.True(FoodDecisionTuning.TryParse(wide, out var wideImage));
@@ -74,7 +70,6 @@ public sealed class F6kPriceWeightTests
         Assert.Equal(FoodDecisionTuning.WireLength, fresh.Length);
         Assert.True(FoodDecisionTuning.TryParse(fresh, out var image));
         Assert.Equal(fresh, image!.ToWire());
-        // A held image captured at weight 1 reads back as 1; nothing rewrites it to the new default.
         var old = FoodDecisionTuning.Capture(LegacyFoodChoice.Settings().Also(s => s.FoodChoicePriceWeight = 1)).ToWire();
         Assert.Equal(fresh.Length, old.Length);
         Assert.NotEqual(fresh, old);

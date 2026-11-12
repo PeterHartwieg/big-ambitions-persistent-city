@@ -6,8 +6,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>Money on the wire is a canonical JSON integer count of <see cref="Money"/> units.
-    /// Shape checks validate the original token text before typed deserialization runs.</summary>
     internal sealed class MoneyJsonConverter : JsonConverter<Money>
     {
         public override void WriteJson(JsonWriter writer, Money value, JsonSerializer serializer) => writer.WriteValue(value.Units);
@@ -19,8 +17,6 @@ namespace PersistentCity.Persistence
         }
     }
 
-    /// <summary>Original text of number tokens. Json.NET reports a token's line and the position just
-    /// after it; it parses fractional numbers through double or decimal, both of which can round.</summary>
     internal sealed class TokenText
     {
         private readonly string source;
@@ -28,15 +24,12 @@ namespace PersistentCity.Persistence
         public TokenText(string source)
         {
             this.source = source;
-            // The same line breaks Json.NET counts: "\r\n", "\r" and "\n".
             for (int i = 0; i < source.Length; i++)
                 if (source[i] == '\r') { if (i + 1 < source.Length && source[i + 1] == '\n') i++; lineStarts.Add(i + 1); }
                 else if (source[i] == '\n') lineStarts.Add(i + 1);
         }
         public string Source => source;
         public int End(IJsonLineInfo token) => lineStarts[token.LineNumber - 1] + token.LinePosition;
-        /// <summary>The whole number token, back to the preceding JSON delimiter or whitespace, so
-        /// a prefix such as Json.NET's hexadecimal "0x" stays in the text that is validated.</summary>
         public string Number(IJsonLineInfo token)
         {
             int end = End(token), start = end;
@@ -44,8 +37,6 @@ namespace PersistentCity.Persistence
             return source.Substring(start, end - start);
         }
         private static bool Delimiter(char c) => c == ':' || c == ',' || c == '[' || c == '{' || char.IsWhiteSpace(c);
-        // Current compact integer slots: reject Json.NET's octal/hex coercions without allocating
-        // a substring or formatting every integer. Legacy readers keep CanonicalUnits/old rules.
         public bool CanonicalInteger(IJsonLineInfo token)
         {
             int end = End(token), start = end;

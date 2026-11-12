@@ -7,9 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>Rewrites current unit-count money fields as the earlier "...Cents" wire fields:
-/// whole cents (city schema 13, shadow schemas 1-4) or the decimal cents that earlier schema-14 and
-/// shadow-5 writers produced (System.Decimal tokens, whole amounts written with ".0").</summary>
 internal static class LegacyMoneyWire
 {
     public static readonly IReadOnlyDictionary<string, string> Names = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -28,16 +25,12 @@ internal static class LegacyMoneyWire
             var money = Money.FromUnits((long)property.Value);
             JToken cents;
             if (wholeCents) { Assert.True(money.IsWholeCents()); cents = new JValue(money.Units / Money.UnitsPerCent); }
-            // Raw text: a long exact amount can exceed System.Decimal's 28-29 significant digits.
             else { string text = money.ToCentsText(); cents = new JRaw(text.Contains('.') ? text : text + ".0"); }
             property.Replace(new JProperty(Names[property.Name], cents));
         }
         return token;
     }
 
-    /// <summary>Labels a current payload as an earlier city schema, dropping the fields that schema did
-    /// not have (optional stops arrived in 15, saved visit choices in 16, traits, current-day outcomes,
-    /// the decision contract and the food choice policy header in 17).</summary>
     public static JObject AsSchema(JObject token, int schema)
     {
         token["Schema"] = schema;
@@ -58,8 +51,6 @@ internal static class LegacyMoneyWire
 
     public static readonly string[] Schema17MealFields = { "RepresentedTraits", "Today", "Decision", "LastContextKey", "ContextAttempts" };
 
-    /// <summary>A schema-17 payload without the facts a 13-16 upgrade synthesizes rather than reads: the policy
-    /// activation day and the current-day outcomes. Everything else must survive an upgrade byte for byte.</summary>
     public static string WithoutUpgradeFacts(string payload)
     {
         var token = SaveWire.Parse(payload);

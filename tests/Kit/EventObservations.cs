@@ -14,8 +14,6 @@ namespace FoodDemandAuditProbe
         public int Slices, Plans, Failures;
     }
 
-    // One frame only. Resumed slices of the same event are summed, not compared individually.
-    // Values copied into retained rows cannot alias the scratch dictionary.
     public sealed class EventWorkAccumulator
     {
         private readonly int capacity;
@@ -48,7 +46,6 @@ namespace FoodDemandAuditProbe
         }
     }
 
-    // Cumulative allocation counter deltas and live heap deltas have different meanings.
     public struct ManagedDelta
     {
         public long Value;

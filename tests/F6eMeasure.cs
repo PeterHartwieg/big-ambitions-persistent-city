@@ -14,7 +14,6 @@ using Activity = PersistentCity.Core.Activity;
 
 namespace PersistentCity.Tests;
 
-// Opt-in, foreground offline measurements. Does not launch the regression matrix or game.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class F6eMeasure
 {
@@ -42,7 +41,6 @@ public sealed class F6eMeasure
         var b = new ResidentBudget { BaseIncomeCents = 20000 };
         var window = new WorkWindow("work", Activity.Work, 1500, 1980);
         var initial = new EmploymentAccrual { Day = 1, Shift = EmploymentWages.Working, UnpostedWage = Money.FromUnits(960) };
-        // Reset outside the measured interval; each sample is the same conserved shift credit.
         var times = new double[20000]; long allocated = 0;
         for (int i = -1000; i < times.Length; i++)
         {
@@ -55,7 +53,6 @@ public sealed class F6eMeasure
         Report("shift settlement", times, allocated); Assert.Equal(0, allocated);
         foreach (int count in new[] { 100000, 10000, 1914 })
             Posting(count);
-        // Fresh F5 per-person cities, including factor-2 visitors, in the unchanged F6d/F7c shape.
         foreach (int count in new[] { 957, 5000, 50000 })
         {
             var state = EconomyScenario.Create(count, 11); state.Food = EconomyScenario.Food();

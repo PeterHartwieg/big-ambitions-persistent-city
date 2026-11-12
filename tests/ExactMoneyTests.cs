@@ -10,11 +10,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// Round-7 regressions. Each scenario failed against the decimal-cents implementation (46e9a85)
-// and passes with whole 2^-28-cent units; see the FIX report for the before/after runs.
 public sealed partial class FoodCommerceTests
 {
-    // Reviewer B: these prices stopped the mod at the first hold (decimal scale exhaustion).
     [Theory]
     [InlineData(.01f)] [InlineData(.02f)] [InlineData(.03f)] [InlineData(.04f)] [InlineData(.05f)]
     [InlineData(.06f)] [InlineData(.07f)] [InlineData(.08f)] [InlineData(.10f)] [InlineData(.11f)]
@@ -40,7 +37,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(market.Price, read.State!.Food!.Residents.Single().Spent);
     }
 
-    // Reviewer A: a 7,920,000-cent balance plus a .3f purchase, then one day's postings.
     [Fact]
     public void R7_DayPostingAfterExactPurchaseMovesBalanceByExactPostings()
     {
@@ -57,8 +53,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(b.OpeningBalance + b.IncomeReceived, b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase);
     }
 
-    // Reviewer B: a top-band resident buys one $1.37 item and then saves every day. Decimal cents
-    // silently rounded PostDay on day 1,943 and failed the save conservation check on day 1,578.
     [Fact]
     public void R7_LongLivedTopBandWalletStaysExactThroughDay20000()
     {
@@ -74,11 +68,9 @@ public sealed partial class FoodCommerceTests
             Assert.Equal(b.OpeningBalance + b.IncomeReceived, b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase);
         }
         Assert.Equal(Money.FromCents(350000 + 20000L * 40600) - price, b.Balance);
-        // The same ledger passes the save contract and round-trips exactly.
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         var resident = city.State.Food!.Residents.Single();
         b.NextPostingMinute = resident.Budget!.NextPostingMinute; b.LastPostedDay = resident.Budget.LastPostedDay; b.HomeFoodFundedDay = -1;
-        // GR-1: the wallet is the person's; the roster record links to the same object.
         city.State.Citizens.Single().Wallet = b; resident.Budget = b;
         string encoded = DevelopmentChain.Write(city.State);
         var read = DevelopmentChain.Read(encoded);
@@ -87,7 +79,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(encoded, DevelopmentChain.Write(read.State));
     }
 
-    // Reviewer B: a $1M wallet could not hold a $1.37 price.
     [Fact]
     public void R7_MillionDollarWalletHoldsCheapNativePriceExactly()
     {
@@ -100,7 +91,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal("99999862.999999523162841796875", b.Balance.ToCentsText());
     }
 
-    // Reviewer A: an 8,000,000-cent shop/product history plus one .3f meal rounded both aggregates.
     [Fact]
     public void R7_HistoryAggregatesAcceptedNativePriceExactly()
     {
@@ -126,7 +116,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(encoded, DevelopmentChain.Write(read.State));
     }
 
-    // Settlement additions after a native sale cannot fail: each is checked before funds move.
     [Theory]
     [InlineData("none")] [InlineData("spent")] [InlineData("history")] [InlineData("product")] [InlineData("prepared")]
     public void R7_SettlementOverflowIsRefusedBeforeHoldOrNativeCheckout(string ledger)
@@ -166,7 +155,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(0, meal.Purchases);
     }
 
-    // Field names identify the money unit on the wire, so they must be unambiguous in every saved type.
     [Fact]
     public void R7_MoneyWireNamesAreUnambiguousInEverySavedType()
     {
@@ -207,7 +195,7 @@ public sealed class MoneyUnitTests
     [Theory]
     [InlineData("")] [InlineData("-")] [InlineData(".5")] [InlineData("5.")] [InlineData("01")] [InlineData("+1")]
     [InlineData("1e2")] [InlineData("0.1")] [InlineData("0.00000000372529029846191406251")] [InlineData("1,5")]
-    [InlineData("34359738368")] // 2^35 cents: beyond the 64-bit unit range
+    [InlineData("34359738368")]
     public void CentsTextThatIsNotAWholeUnitCountIsRefused(string text)
         => Assert.False(Money.TryParseCents(text, 28, out _));
 

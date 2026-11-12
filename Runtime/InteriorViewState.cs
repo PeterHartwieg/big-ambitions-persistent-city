@@ -41,8 +41,6 @@ namespace PersistentCity.Runtime
         public InteriorViewFallback Fallback { get; private set; }
         public int Revision { get; private set; }
 
-        // Cheap identity/hidden checks may run every frame; geometry is read on entry and at most
-        // once per two seconds thereafter. A failed read latches closed until exit/new entry.
         public void Refresh(bool enabled, TravelVisibility travel, object? currentEntry, double now, Func<InteriorViewEligibility> read)
         {
             if (!enabled || !travel.Inside || currentEntry == null) { Reset(); return; }

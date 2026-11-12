@@ -6,7 +6,6 @@ namespace PersistentCity.Core
     public enum WeatherSample { Unknown, Dry, Rain }
     public interface IWeatherSource { WeatherSample ReadWeather(); }
 
-    /// <summary>Lazy frame cache: a boundary asks, never a per-resident update. Failed/missing reads are neutral.</summary>
     public sealed class FrameWeatherSource : IWeatherSource
     {
         private readonly Func<long> frame;
@@ -62,8 +61,6 @@ namespace PersistentCity.Core
             => weather!=WeatherSample.Rain || (draw+.5)/4294967296.0<rainMultiplier;
     }
 
-    /// <summary>One immutable resident capture: version, kind O/Q, weather, result/lead and exact boundary bits.
-    /// 15 ASCII characters plus seven JSON field/separator characters = 22 of the E1 allocation's 24.</summary>
     public sealed class WeatherCommitment
     {
         public WeatherCommitment(double boundary,WeatherSample weather,bool admitted)
@@ -106,19 +103,16 @@ namespace PersistentCity.Core
             {
                 var sample=CaptureWeather(now);
                 capture=new WeatherCommitment(now,sample,sample!=WeatherSample.Rain || WeatherPolicy.Admit(WeatherPolicy.AdmissionDraw(key,State.Seed),sample,weatherSettings.RainOptionalOutingMultiplier));
-                // Events work on copies; publish the input before the first route yield so interrupted/reloaded events reuse it.
                 citizenEvents[person.Identity.Id].Citizen.W=capture;
                 person.W=capture;
             }
             return capture;
         }
-        // Called only by the logical wait event (WaitForOpening), never by presentation code.
         internal WeatherCommitment CaptureQueueWeather(CitizenState person,double now)
         {
             var capture=person.W;
             if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute)
             {
-                // Disabling E1 preserves native rain's existing queue rules, frozen only for this new commitment.
                 var sample=WeatherPolicy.Sample(weatherSource);
                 int lead=weatherSettings.Enabled && (int)(now/1440)>=State.WeatherStartsDay ? weatherSettings.QueueRainLeadMinutes : (int)DwellPlanner.RainQueueLeadMinutes;
                 person.W=capture=new WeatherCommitment(person.NextEventMinute,sample,lead);
@@ -127,8 +121,6 @@ namespace PersistentCity.Core
         }
         public Dwell? QueueAtOpening(CitizenState person,Place place,double now,Dwell? committed=null)
         {
-            // Read-only (F2b): only the wait event's capture is read. No camera-dependent sampling, no new terms,
-            // and a wait without its capture gets no queue dwell instead of one captured by a body.
             if(person.Phase!=CitizenPhase.WaitingForOpening || person.PlaceId!=place.Id || person.DestinationId!=place.Id
                 || (person.DestinationActivity!=Activity.Shop && person.DestinationActivity!=Activity.Leisure)
                 || now>=person.NextEventMinute) return null;

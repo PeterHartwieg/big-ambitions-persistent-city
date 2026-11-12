@@ -8,8 +8,6 @@ using HarmonyLib;
 using PersistentCity.Core;
 using PersistentCity.Runtime;
 
-/// <summary>F8e arm: Runtime/HookConflicts.Scan with the pinned Harmony 2.4.2 on stand-in methods that carry the inventory
-/// signatures. Rig check 1 records the owners actually present under the full modpack.</summary>
 internal static partial class Program
 {
     public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions;
@@ -28,7 +26,6 @@ internal static partial class Program
         HarmonyMethod Post() => new HarmonyMethod(typeof(Program), nameof(Postfix));
         try
         {
-            // H1/H3/H4 on one method are Persistent City's own and not foreign.
             harmonies[NativeHookInventory.FoodAuthority].Patch(tick, postfix: Post());
             harmonies[NativeHookInventory.CityClock].Patch(tick, prefix: Pre());
             harmonies[NativeHookInventory.ClockObserver].Patch(tick, postfix: Post());
@@ -37,12 +34,10 @@ internal static partial class Program
             Check(entry.Patched && entry.Foreign.Count == 0 && entry.PcOwners.Count == 3, "H1/H3/H4 together are not foreign");
             Check(clean.ForeignOwners == 0 && clean.ActivationLine().Contains("no foreign owner"), "clean activation line");
 
-            // One PC owner plus a foreign owner of each kind on the checkout target; a foreign prefix on the tick too.
             harmonies[NativeHookInventory.FoodAuthority].Patch(customer, prefix: Pre());
             harmonies["other.mod"].Patch(customer, prefix: Pre(), postfix: Post(), transpiler: new HarmonyMethod(typeof(Program), nameof(Transpiler)),
                 finalizer: new HarmonyMethod(typeof(Program), nameof(Finalizer)));
             harmonies["rig.limiter"].Patch(tick, prefix: Pre());
-            // A foreign owner on a method Persistent City does not patch is outside the report.
             harmonies["PC_TEST_FOREIGN"].Patch(Stub(typeof(Buildings.Retail.Simulation.RetailBusinessSimulator), "GetMaxCustomerCapacityThisHour"), postfix: Post());
 
             var report = HookConflicts.Scan();
@@ -58,7 +53,6 @@ internal static partial class Program
             Check(report.ForeignOwners == 2 && !report.Text().Contains("PC_TEST_FOREIGN"), "only PC targets are reported");
             Check(!report.Text().Contains("compatible", StringComparison.OrdinalIgnoreCase), "never says compatible");
 
-            // Scan time at activation (plan estimate 27 x 0.011 ms = 0.3 ms): every inventory-shaped stub patched.
             harmonies[NativeHookInventory.FoodAuthority].Patch(reset, prefix: Pre());
             var times = new double[500];
             for (int i = -50; i < times.Length; i++)
@@ -72,8 +66,6 @@ internal static partial class Program
                 patched, times[times.Length / 2], times[times.Length * 95 / 100], times[^1]));
             Console.WriteLine("hook conflicts: " + report.ActivationLine());
 
-            // Astra-r1-6: the Harmony and assembly part of ReadCapabilityInputs (one assembly pass, one OwnedTargets pass)
-            // plus the Core snapshot and report, with 40 more patched methods from four owners as a modpack would add.
             var extra = typeof(ManyTargets).GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly).Where(m => m.Name.StartsWith("M", StringComparison.Ordinal)).ToArray();
             for (int i = 0; i < extra.Length; i++) harmonies[i % 2 == 0 ? "other.mod" : "rig.limiter"].Patch(extra[i], postfix: Post());
             int patchedMethods = Harmony.GetAllPatchedMethods().Count(m => Harmony.GetPatchInfo(m)?.Owners.Count > 0);
@@ -84,8 +76,6 @@ internal static partial class Program
             {
                 long a0 = GC.GetAllocatedBytesForCurrentThread();
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-                // The production sequence of ReadCapabilityInputs' metadata part (the shared HookConflicts.ReadMetadata),
-                // then the report the command prints. The remaining inputs are plain field and property reads.
                 var inputs = new CapabilityInputs { CityActive = true };
                 HookConflicts.ReadMetadata(inputs);
                 _ = reportText.Status(CapabilitySnapshot.Build(inputs), "x", CapabilitySnapshot.Context(inputs));
@@ -100,7 +90,6 @@ internal static partial class Program
     }
 }
 
-/// <summary>Forty patchable stand-in methods for the input-path measurement.</summary>
 public static class ManyTargets
 {
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] public static void M00() { }

@@ -4,29 +4,17 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>E5b5: why a live player shop menu is not admitted. Any refusal keeps the whole shop with the game's customers.</summary>
     public enum FoodLiveMenuRefusal
     {
         None, Empty, Width, Duplicate, Name,
-        /// <summary>A non-original product while dynamic acquisition is off (Decision 12: a capability failed or the
-        /// coordinator is not active).</summary>
         OriginalThreeGuard,
-        /// <summary>Not in the published loaded-name image (mod removed, catalogue rebuilding or policy fallback).</summary>
         NotLoaded,
-        /// <summary>The resolver classes the product Drink, Bundle, NonFood or Unknown.</summary>
         MealClass
     }
 
-    /// <summary>E5b5: the product policy the live menu rule reads. While the catalogue rebuilds, the loaded-name image is
-    /// unavailable, which is not the same as a product being removed: the last policy that had loaded names keeps
-    /// deciding, and captures and sales wait at the catalogue gate. Once a catalogue is published again, its policy
-    /// decides, and a product missing from it is refused.</summary>
     public sealed class FoodLivePolicy
     {
         private FoodProductPolicy? published;
-        /// <param name="current">The policy source's current policy.</param>
-        /// <param name="catalogueRebuilding">The loaded-name image is unavailable because the catalogue is dirty or
-        /// being rebuilt (not because the policy publication failed).</param>
         public FoodProductPolicy Resolve(FoodProductPolicy current, bool catalogueRebuilding)
         {
             if (current.LoadedNames != null) { published = current; return current; }
@@ -35,24 +23,15 @@ namespace PersistentCity.Core
         public void Clear() => published = null;
     }
 
-    /// <summary>Schema 23 envelope, separate from native sale permission. Append codes; never renumber.</summary>
     public static partial class FoodMenuPolicy
     {
         public const int MaximumOffers = 8;
-        /// <summary>E5b5 (Q1 default): live width is the hard limit; a shop with more products keeps the game's customers.</summary>
         public const int LiveMaximumOffers = MaximumOffers;
         public const int MaximumDefinitions = 16;
         public const int Version = 1;
         public const string Wire = "1|1=croissant|2=burger|3=hotdog|4=donut|5=cupcake|6=salad";
-        /// <summary>E5b5 (Decision 12, R12): the name rule of a live player shop menu, in place of the historical
-        /// original-three guard. <paramref name="dynamic"/> is null while dynamic acquisition is off, so only the original
-        /// three pass. Otherwise every product must be canonical, in the policy's published loaded-name image and classed
-        /// Food by its resolver, the same rule as <see cref="FoodProductPolicy.Executable"/>. The stock contract and
-        /// <see cref="CompleteFoodMenu.Check"/> still decide through the published contract image. Allocation-free.</summary>
         public static FoodLiveMenuRefusal LiveMenu(IReadOnlyList<string>? menu, FoodProductPolicy? dynamic)
             => LiveMenu(menu, dynamic, false);
-        /// <param name="loadedNamesPending">Startup only: a policy without a loaded-name image skips the loaded check
-        /// (the catalogue is not published yet) instead of refusing as <see cref="FoodLiveMenuRefusal.NotLoaded"/>.</param>
         public static FoodLiveMenuRefusal LiveMenu(IReadOnlyList<string>? menu, FoodProductPolicy? dynamic, bool loadedNamesPending)
         {
             if (menu == null || menu.Count < 1) return FoodLiveMenuRefusal.Empty;
@@ -90,8 +69,6 @@ namespace PersistentCity.Core
             return product;
         }
 
-        // Reserved identifiers establish no equipment, taste/fit/health/quality prior or sale permission.
-        // Health and quality remain unknown for all entries. Existing meal fits live in FoodProducts.
         public static int? HealthTag(int code) => null;
         public static int? QualityTag(int code) => null;
         public static int Taste(int seed, string consumerId, int code)

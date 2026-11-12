@@ -13,9 +13,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
-// Opt-in offline measurements for docs/perf/f2d.md: set PC_F2D_MEASURE to an output file. Uses only API that also
-// exists before F2d (kernel counters, the movement harness and the production PhysicalPopulation on the native
-// doubles), so the same file measures the base build (traffic leases) and this one (cars follow the kernel).
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PhysicalCarPerfTests
 {
@@ -23,7 +20,6 @@ public sealed class PhysicalCarPerfTests
     private const int Cars = 24, Sections = 6;
     private const double Now = 1440 + 600;
 
-    // One straight road per car, 12 m sections at 36 km/h (1.2 game minutes each), then a short walk.
     private sealed class Roads : IRoutePlanner, ITrafficRoutePlanner
     {
         public TrafficNetwork? TrafficNetwork { get; set; } = new TrafficNetwork(Native, Nodes().ToList(), 1);
@@ -75,7 +71,6 @@ public sealed class PhysicalCarPerfTests
         return city;
     }
 
-    // The next committed road corner ahead of a car body: Gley raises its reached marker there.
     private static Position? Corner(CitySimulator city, PhysicalVehicleBody body)
     {
         var c = city.State.Citizens.First(p => p.Identity.Id == body.CitizenId);
@@ -105,7 +100,6 @@ public sealed class PhysicalCarPerfTests
             using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
                 typeof(PhysicalCarPerfTests).Assembly, new VendorBodyTests.Log(), 8, Cars, 120, new DwellSpots());
             var pool = PhysicalVehicles.Last!;
-            // A third of the cars drive at 0.6x native pace (a slow visible car); the rest at 1.2x the kernel's pace.
             double minute = city.State.Minute;
             const float frame = 1 / 60f;
             const double gamePerSecond = 1 / 3.0;
@@ -140,7 +134,6 @@ public sealed class PhysicalCarPerfTests
         }
         finally { MultimodalRoutes.CarSamples = false; }
         {
-            // The same city without bodies: the kernel's own events per game hour over the same window.
             var plain = City();
             double minute = plain.State.Minute; const float frame = 1 / 60f;
             for (int i = 0; i < warmFrames; i++) { minute += frame / 3.0; plain.AdvanceTo(minute); }
@@ -150,7 +143,6 @@ public sealed class PhysicalCarPerfTests
                 (plain.Traffic.ProcessedEvents - events) / ((plain.State.Minute - start) / 60)));
         }
 
-        // The movement harness (957 residents, one day): kernel work and lag with up to 24 visible cars.
         foreach (var (name, change) in new (string, Action<MovementOptions>)[] {
             ("bodies-off", o => o.Driver = false), ("focus/stationary 48/24", o => { }),
             ("lag/slow-head-car", o => o.Bodies.Lag = LagModel.SlowHeadCar) })

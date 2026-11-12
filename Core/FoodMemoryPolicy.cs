@@ -2,13 +2,11 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Pure lazy projection. Reads at most four entries; no catalogue, routes or mutation.</summary>
     public static class FoodMemoryPolicy
     {
         public static bool Expired(ShopMemory entry, int day, FoodMemorySettings settings)
             => day - entry.Day > settings.FoodMemoryForgetAfterDays;
 
-        // Failure-only evidence can penalize a sampled shop, but cannot create its own admission.
         internal static bool SuppliesAwareness(ShopMemory entry, int day, FoodMemorySettings settings)
             => entry.Served > 0 && entry.Affinity > 0 && !Expired(entry, day, settings);
 
@@ -34,7 +32,6 @@ namespace PersistentCity.Core
             else
             {
                 int affinity = EffectiveAffinity(remembered, day, traits, settings);
-                // Both signs are monotone in affinity. No served-count bonus can mask disappointment.
                 multiplier = affinity < 0
                     ? Math.Exp(-affinity / 8.0 * Math.Log(settings.FoodMemoryMinimumMultiplier))
                     : 1 + affinity / 8.0 * (.1 + .9 * loyalty) * (settings.FoodMemoryLoyalReturnMultiplier - 1);
@@ -51,11 +48,9 @@ namespace PersistentCity.Core
             double sensitivity = cause == ShopExperience.Queue ? (4 - traits.Band(ResidentTrait.QueuePatience)) / 4.0
                 : traits.Band(ResidentTrait.TimePressure) / 4.0;
             double forgiveness = 1 - .5 * traits.Band(ResidentTrait.LoyaltyCuriosity) / 4.0;
-            // Zero configured magnitude still retains the minimum honest negative signal.
             return Math.Max(1, (int)Math.Ceiling(configured * (1 + settings.FoodMemoryBadVisitTraitWeight * sensitivity) * forgiveness));
         }
 
-        /// <summary>Independent eviction ordering: expired, least effective affinity, oldest, ordinal generation ID.</summary>
         public static int CompareEviction(ShopMemory a, string aId, ShopMemory b, string bId, int day, ResidentTraits traits, FoodMemorySettings settings)
         {
             int order = Expired(b, day, settings).CompareTo(Expired(a, day, settings));

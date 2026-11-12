@@ -6,19 +6,12 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>City-audit F6c read-only player feedback. Nothing here changes behaviour, money or saves.
-    /// Projections and text are built only on request (the open Ctrl+F8 panel or an explicit diagnostic).</summary>
     public static class FoodFeedback
     {
-        /// <summary>Neutral rival label. F6b replaces this one constant with its service-limit wording.</summary>
         public const string RivalEstimateLabel = "Rival availability: estimated";
-        /// <summary>F6 plan Q3 default: nearby meal shares stay in paid research; the free panel shows none.</summary>
         public const bool FreeMealShareLine = false;
-        /// <summary>F6 plan Q4 default: facts only (evaluated-offer causes and week deltas), no suggestion lines.</summary>
         public const bool SuggestionLines = false;
         public const int WeekDays = 7;
-        /// <summary>Equals the <see cref="FoodShopDay"/> retention (rows before day − 13 are removed), so the
-        /// previous week is always inside the kept history.</summary>
         public const int RetainedDays = 2 * WeekDays;
         public const string OfferMeaning = "Evaluated offers are daily totals summed per week. A resident who decides again counts again, so these are offers, not people, and these daily totals are not located by hour or meal. Meal-period causes appear separately.";
         private static readonly CultureInfo Dollars = CultureInfo.GetCultureInfo("en-US");
@@ -27,7 +20,6 @@ namespace PersistentCity.Core
 
         public static string CauseLabel(FoodOfferCause cause) => CauseLabels[(int)cause];
 
-        /// <summary>One pass over the history, grouped by place and business in history order.</summary>
         public static Dictionary<(string, string), List<FoodShopDay>> IndexHistory(IReadOnlyList<FoodShopDay> history)
         {
             var index = new Dictionary<(string, string), List<FoodShopDay>>();
@@ -39,12 +31,8 @@ namespace PersistentCity.Core
             }
             return index;
         }
-        // Value-tuple key: ordinal string equality and no per-row key allocation.
         public static (string, string) Key(string placeId, string businessId) => (placeId, businessId);
 
-        /// <summary>The day from which the city's food history was certainly being recorded, independent of any
-        /// shop's activity: the earlier of the saved choice-policy start (set to the food city's creation or
-        /// migration day + 1, so recording ran by then) and the earliest kept row of any shop.</summary>
         public static int RecordingSince(FoodCommerceState food)
         {
             int since = food.ChoiceStartsDay;
@@ -52,11 +40,6 @@ namespace PersistentCity.Core
             return since;
         }
 
-        /// <summary>This week is days today − 6 … today (today in progress); last week is today − 13 … today − 7.
-        /// Rows of other shops or outside both windows are ignored. Coverage starts at the earlier of this shop's
-        /// first kept row and <paramref name="recordingSince"/> (see <see cref="RecordingSince"/>): a covered day
-        /// without a row had no evaluated offers or purchases and counts as zero. Days before coverage are
-        /// genuinely unknown, say "no record", are never shown as zero, and no change is shown across them.</summary>
         public static FoodShopWeeks Weeks(IEnumerable<FoodShopDay> rows, string placeId, string businessId, int today, int? recordingSince = null)
         {
             var current = new FoodWeek(today - WeekDays + 1, today);
@@ -74,9 +57,7 @@ namespace PersistentCity.Core
         }
 
         public static string Amount(BigInteger units) => Amount((decimal)units);
-        // Whole-dollar display only, as the panel always showed; never a settlement amount.
         private static string Amount(decimal units) => (units / Money.UnitsPerDollar).ToString("C0", Dollars);
-        // Explicit sign: negative currency patterns differ between runtimes ("-$5" or "($5)").
         private static string SignedAmount(BigInteger units) => (units < 0 ? "-" : "+") + Amount(BigInteger.Abs(units));
         private static string Signed(long value) => (value < 0 ? "" : "+") + value.ToString(CultureInfo.InvariantCulture);
         private static string N(long value) => value.ToString(CultureInfo.InvariantCulture);
@@ -138,7 +119,6 @@ namespace PersistentCity.Core
     public enum FoodOfferCause { Chosen, Unaffordable, TravelTime, ClosedOrLate, StockUnavailable, NoStaffedCounter, ServiceQueue, PreferredAnother, Unknown }
     public enum FoodWeekCoverage { NotRecorded, Partial, Complete }
 
-    /// <summary>Sums of one seven-day window of a shop's daily rows. Counts are evaluated offers, not people.</summary>
     public sealed class FoodWeek
     {
         private readonly long[] causes = new long[9];
@@ -146,7 +126,6 @@ namespace PersistentCity.Core
         public int FirstDay { get; }
         public int LastDay { get; }
         public FoodWeekCoverage Coverage { get; private set; }
-        /// <summary>First recorded day inside this window when it is partial; otherwise null.</summary>
         public int? RecordedFrom { get; private set; }
         public int Rows { get; private set; }
         public long Purchases { get; private set; }
@@ -179,13 +158,11 @@ namespace PersistentCity.Core
         public FoodWeek ThisWeek { get; }
         public FoodWeek LastWeek { get; }
         public string Text() { var text = new StringBuilder(768); AppendTo(text); return text.ToString(); }
-        /// <summary>Appends the same lines as <see cref="Text"/> to an existing panel builder (no intermediate string).</summary>
         public void AppendTo(StringBuilder text) => FoodFeedback.AppendWeeks(text, this);
     }
 
     internal enum FoodMoneyField { OpeningBalance, Balance, IncomeReceived, EssentialsPaid, HomeFoodPaid, PreparedFoodSpent, ExternalFoodSpent, HeldPurchase, Arrears }
 
-    /// <summary>Exact city totals of the current per-consumer budgets and meal states, equal to a full rescan.</summary>
     public sealed class FoodMoneySnapshot : IEquatable<FoodMoneySnapshot>
     {
         internal FoodMoneySnapshot(BigInteger[] totals, int consumers, int budgets, int uncertain, int blocked, int[] flags)
@@ -227,22 +204,16 @@ namespace PersistentCity.Core
             PreparedFoodSpent, ExternalFoodSpent, HeldPurchase, Arrears });
     }
 
-    /// <summary>Incremental totals for the food panel, replacing its per-refresh consumer scans. Attached
-    /// budgets, meals and excursions report each exact change from their setters (O(1), no allocation).
-    /// Transient: rebuilt by a full scan whenever a food market attaches (load, migration, route rebuild).</summary>
     public sealed class FoodMoneyCounters
     {
         internal const int BehindFlag = 1, HoldFlag = 2, ShortFlag = 4, BasketFlag = 8;
         private readonly FoodCommerceState state;
-        // Exact signed 128-bit totals per field (high word, low word): one add and carry per change.
         private readonly long[] high = new long[9];
         private readonly ulong[] low = new ulong[9];
         private readonly int[] flagCounts = new int[4];
         private int meals, budgets, uncertain, blocked;
         private FoodMoneyCounters(FoodCommerceState state) { this.state = state; }
-        /// <summary>Snapshot requests (panel refreshes and diagnostics). Zero while nothing asks.</summary>
         public long Requests { get; private set; }
-        /// <summary>Full scans: one per attach, plus one if consumers were added without the commerce owner.</summary>
         public long Rebuilds { get; private set; }
 
         public static FoodMoneyCounters Attach(FoodCommerceState state)
@@ -259,13 +230,11 @@ namespace PersistentCity.Core
         public FoodMoneySnapshot Snapshot()
         {
             Requests++;
-            // Consumers are only appended (enrolment). A count mismatch means one bypassed the owner.
             if (meals != state.Residents.Count) Rebuild();
             var totals = new BigInteger[9];
             for (int i = 0; i < totals.Length; i++) totals[i] = ((BigInteger)high[i] << 64) + low[i];
             return new FoodMoneySnapshot(totals, meals, budgets, uncertain, blocked, flagCounts);
         }
-        /// <summary>Reference full scan with the same definitions; tests and diagnostics compare it with Snapshot.</summary>
         public static FoodMoneySnapshot Rescan(FoodCommerceState state)
         {
             var sums = new decimal[9]; var flags = new int[4]; int budgets = 0, uncertain = 0, blocked = 0;
@@ -285,15 +254,11 @@ namespace PersistentCity.Core
             return new FoodMoneySnapshot(totals, state.Residents.Count, budgets, uncertain, blocked, flags);
         }
 
-        /// <summary>Current budget states shared by the panel counts and the inspector words.
-        /// Short means the spending limit is zero without a purchase hold (arrears, or cash within the next
-        /// day's reserve). Basket means the last daily posting could not fund the home-food basket.</summary>
         internal static int Flags(ResidentBudget b)
         {
             int flags = 0;
             if (b.Arrears.Units != 0) flags |= BehindFlag;
             if (b.HeldPurchase.Units != 0) flags |= HoldFlag;
-            // Three ints fit a long in cents and in units (|sum| < 2^33, units per cent 2^28).
             else if (b.Arrears.Units != 0 || b.Balance <= HouseholdFinance.SpendingReserve(b))
                 flags |= ShortFlag;
             if (!b.VisitorEndowment && b.LastPostedDay >= 0 && b.HomeFoodFundedDay != b.LastPostedDay) flags |= BasketFlag;
@@ -322,12 +287,10 @@ namespace PersistentCity.Core
         }
         private void Add(int field, long units)
         {
-            // Sign-extend to 128 bits; a carry out of the low word moves into the high word.
             ulong sum = unchecked(low[field] + (ulong)units);
             high[field] += (units < 0 ? -1 : 0) + (sum < low[field] ? 1 : 0);
             low[field] = sum;
         }
-        // long.MinValue has no long negation; subtract it as two representable halves.
         private void Subtract(int field, long units)
         {
             if (units == long.MinValue) { Add(field, long.MaxValue); Add(field, 1); }
@@ -378,8 +341,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Inspector words for a consumer's current budget state (A1/B2 word style, never numbers).
-    /// Built only for the open popup or an explicit diagnostic.</summary>
     public static class ResidentBudgetWords
     {
         public const string BehindOnBills = "behind on bills";
@@ -406,7 +367,6 @@ namespace PersistentCity.Core
     }
     public sealed partial class CitySimulator
     {
-        /// <summary>F6c panel totals; null until a food market is attached. Read only on request.</summary>
         public FoodMoneyCounters? FoodMoney => food?.Feedback;
     }
 }

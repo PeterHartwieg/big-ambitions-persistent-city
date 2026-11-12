@@ -8,8 +8,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E5b3 Decision 5: native effective producers and counters against the image's validated holders, after the
-/// setup the supply read already made (docs/plans/e5b-remaining.md, Decision 5 and the E5b3 row).</summary>
 public sealed class FoodHolderReconciliationTests
 {
     private readonly ITestOutputHelper output;
@@ -37,7 +35,6 @@ public sealed class FoodHolderReconciliationTests
         Assert.NotNull(world.Select(shop));
     }
 
-    // Each case withdraws the whole business: the capture is refused, the contract recorded and desire withdrawn.
     public static IEnumerable<object[]> Mismatches() => new[]
     {
         new object[] { "workstation", FoodReconciliationRefusal.Workstation },
@@ -55,9 +52,7 @@ public sealed class FoodHolderReconciliationTests
         var burgerShelf = shop.Holder(shop.Key + ":shelf:" + Burger);
         switch (mismatch)
         {
-            // Native indexes every EmployeeWorkstation's itemsToProduce; this one is outside the image.
             case "workstation": world.ExtraNative.Add(new FoodNativeHolder(new ContractWorld.Holder { id = "grill", itemName = ContractWorld.StationItem }, Burger, true, false)); break;
-            // A shelf the image never validated (here a storage unit) indexed as a producer.
             case "unvalidated-shelf": world.ExtraNative.Add(new FoodNativeHolder(new ContractWorld.Holder { id = "storage" }, HotDog, false, false)); break;
             case "counter-not-in-image": world.ExtraNative.Add(new FoodNativeHolder(new ContractWorld.Holder { id = "till" }, null, false, true)); break;
             case "omitted-positive-holder": world.OmittedByNative.Add(burgerShelf.id); break;
@@ -98,13 +93,12 @@ public sealed class FoodHolderReconciliationTests
     {
         var (world, shop) = Owned();
         var shelf = shop.Holder(shop.Key + ":shelf:" + Burger);
-        shelf.cargoInstances[0].amount = 0; // retained same-ID slot, amount 0: native leaves it out of the index
+        shelf.cargoInstances[0].amount = 0;
         Assert.Equal(FoodReconciliationRefusal.None, Check(world, shop));
         Assert.True(world.Supply(shop, out var units));
-        Assert.Equal(0, units[Burger]);   // known zero
+        Assert.Equal(0, units[Burger]);
         Assert.Equal(10, units[HotDog]);
         Assert.NotNull(world.Select(shop));
-        // The same holder with stock that native setup omits is unknown, never zero.
         shelf.cargoInstances[0].amount = 4;
         world.OmittedByNative.Add(shelf.id);
         Assert.False(world.Supply(shop, out _));
@@ -146,7 +140,6 @@ public sealed class FoodHolderReconciliationTests
                 samples[i] = timing.Stop(t, "reconciliation p95");
             }
             Assert.Equal(0, failures);
-            // A Check allocation shows in every round; runtime work during one round (tiering, other test threads) does not.
             long allocated = long.MaxValue;
             for (int round = 0; round < 5; round++)
             {

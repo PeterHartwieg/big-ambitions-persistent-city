@@ -12,9 +12,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>DevelopmentSchema: an older development build wrote the city (any schema number other than the held
-    /// <see cref="CityState.CurrentSchema"/>). It is refused and kept unchanged, like Invalid; it is neither corruption
-    /// nor a missing city.</summary>
     public enum SaveReadStatus { Missing, Loaded, Invalid, DevelopmentSchema }
 
     public sealed class SaveReadResult
@@ -24,7 +21,6 @@ namespace PersistentCity.Persistence
         public SaveReadStatus Status { get; }
         public CityState? State { get; }
         public string Error { get; }
-        /// <summary>Original wire schema of a loaded or refused development city; zero for missing or invalid state.</summary>
         public int SourceSchema { get; }
     }
 
@@ -33,16 +29,9 @@ namespace PersistentCity.Persistence
         public SaveValidationException(string message) : base(message) { }
     }
 
-    /// <summary>
-    /// Strict current-development codec (P-A single-pass save). The save string is the JSON body itself: one writer
-    /// serializes the snapshot straight into it in a single pass, and one strict reader (token shape, caps, then semantic
-    /// validation) reads it straight back. There is no second encoding. Unsupported and failed reads never replace a city.
-    /// </summary>
     public static partial class SaveCodec
     {
         public const string StateKey = "persistentcity:state_v1";
-        // Storage and nested-record limits are separate from the identity ceiling;
-        // not every individual maximum can be combined into one valid payload.
         public const int MaxInputCharacters = 256 * 1024 * 1024;
         public const int MaxCitizens = 50000;
         public const int MaxEmbeddedRecords = 4000000;
@@ -52,25 +41,15 @@ namespace PersistentCity.Persistence
         public const int MaxOpeningWindows = 64;
         public const int MaxTrafficLinks = 250000;
         public const int MaxTrafficLinkCapacity = 1024;
-        // Schema 17 current-day outcomes per consumer; decision bounds come from FoodChoicePolicy.
         public const int MaxMealOutcomes = 3;
-        // A compact outcome record that validation accepts is at most 553 characters: six enum fields of at most two
-        // digits, two whole minutes of at most ten, nine separators and two 256-character IDs. The reader's cap
-        // must not be tighter, or a save Write accepted could not be read back.
         public const int MaxMealOutcomeWire = 600;
         private const double MaxMinute = 1000000000;
         private const double MaxCoordinate = 10000000;
 
         public static string Write(CityState state) => Write(state, null);
 
-        /// <summary>Same bytes as <see cref="Write(CityState)"/>; a non-null recorder also times its phases (F7a).</summary>
         public static string Write(CityState state, SaveCostRecorder? cost) => Encode(Capture(state, cost), cost);
 
-        /// <summary>
-        /// F7c save snapshot: synchronize the live graph (today's PrepareForSave, outflow and name-table steps), then
-        /// copy the wire-carried state into a detached <see cref="SaveSnapshot"/>. Main thread only, inside the save
-        /// callback; a later live mutation never reaches the snapshot.
-        /// </summary>
         public static SaveSnapshot Capture(CityState state, SaveCostRecorder? cost = null) => Capture(state, cost, null);
 
         internal static SaveSnapshot Capture(CityState state, SaveCostRecorder? cost, IReadOnlyList<SnapshotSection>? order)
@@ -80,14 +59,11 @@ namespace PersistentCity.Persistence
             state.PrepareForSave();
             InitializeOutflow24(state);
             PrepareNames25(state);
-            // GR-1: a live record holding another wallet than its person's would be saved with the person's alone.
             RequireLinkedWallets(state);
             cost?.Enter(SaveCostPhase.Capture);
             return SaveSnapshot.Capture(state, order);
         }
 
-        /// <summary>Validate the snapshot, then write it in one pass: the body serializer streams straight into one text
-        /// buffer, and that text is the save string. The size caps are checked on the finished string.</summary>
         public static string Encode(SaveSnapshot snapshot, SaveCostRecorder? cost = null)
         {
             if (snapshot == null) throw new SaveValidationException("Snapshot is null.");
@@ -97,8 +73,6 @@ namespace PersistentCity.Persistence
             cost?.Enter(SaveCostPhase.Encode);
             string json = WriteBody(state);
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
-            // A UTF-16 character is at most three UTF-8 bytes (a surrogate pair is four for two), so the byte count can
-            // only pass the cap above a third of it; below that it is counted only for an explicit save-cost record.
             if (cost != null || json.Length > MaxInputCharacters / 3)
             {
                 int bytes = System.Text.Encoding.UTF8.GetByteCount(json);
@@ -108,12 +82,8 @@ namespace PersistentCity.Persistence
             return json;
         }
 
-        /// <summary>The start of every current-writer string: the body's first two fields. A match skips the generic
-        /// top-level schema scan and goes straight to the strict reader.</summary>
         internal static readonly string BodyPrefix = "{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",\"Capabilities\":";
 
-        /// <summary>The start of the retired F7d columnar wire (<c>{"Schema":1,"f":"pcc-c",...}</c>). Development builds
-        /// before P-A wrote it; it is refused as an older development city and kept unchanged. There is no decoder.</summary>
         internal static readonly string RetiredCompactPrefix = "{\"Schema\":" + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ",\"f\":";
 
         internal static bool RetiredCompact(string source) => source.StartsWith(RetiredCompactPrefix, StringComparison.Ordinal);
@@ -121,14 +91,8 @@ namespace PersistentCity.Persistence
         private static SaveReadResult RetiredCompactRefusal() => new SaveReadResult(SaveReadStatus.DevelopmentSchema, null,
             DevelopmentSchemaMessage + " (schema " + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ", retired compact format)", CityState.CurrentSchema);
 
-        // One reusable text buffer per thread (the save callback runs on the main thread). It keeps the capacity of the
-        // largest save so far, so a save allocates only its finished string. Never shared between threads. The cost is
-        // that the thread keeps about two bytes per character of its largest save for the session (about 7.5 MB at
-        // 3,000 persons, 15 MB at 6,000); the first Clear after the buffer grew in chunks allocates that once.
         [ThreadStatic] private static System.Text.StringBuilder? bodyBuffer;
 
-        /// <summary>The single writer pass: the same serializer, settings and converters as
-        /// <c>JsonConvert.SerializeObject(state, Formatting.None, settings)</c>, into the reused buffer.</summary>
         private static string WriteBody(CityState state)
         {
             var serializer = JsonSerializer.CreateDefault(Settings(WireContext.FromState(state)));
@@ -145,9 +109,6 @@ namespace PersistentCity.Persistence
             finally { buffer.Clear(); }
         }
 
-        /// <summary>The body's text writer. Application-wide Json.NET defaults reach the save serializer, so a foreign
-        /// converter could write raw JSON or a token kind the body never holds; the save is then refused instead of
-        /// publishing a string the reader could not read.</summary>
         private sealed class BodyWriter : JsonTextWriter
         {
             public BodyWriter(TextWriter text) : base(text) { Formatting = Formatting.None; }
@@ -164,7 +125,6 @@ namespace PersistentCity.Persistence
             public override void WriteValue(Uri? value) => Fail("URIs are not part of the save body.");
         }
 
-        /// <summary>Run the save contract without retaining the serialized activation payload.</summary>
         public static void ValidateForActivation(CityState state)
         {
             if (state == null) throw new SaveValidationException("State is null.");
@@ -175,16 +135,12 @@ namespace PersistentCity.Persistence
             using var count = new CharacterCountingWriter();
             RequireExecutablePolicy(state);
             var serializer = JsonSerializer.CreateDefault(Settings(WireContext.FromState(state)));
-            // Match JsonConvert.SerializeObject(state, Formatting.None, Settings()), including
-            // application-wide defaults that the explicit save settings do not override.
             serializer.Formatting = Formatting.None;
             using (var writer = new JsonTextWriter(count)) serializer.Serialize(writer, state);
             Require(count.Count <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             Require(count.Bytes <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
         }
 
-        // Count UTF-16 characters, just like string.Length, including JSON escapes.
-        // Finish serialization before checking the bound to preserve serialization failures.
         private sealed class CharacterCountingWriter : TextWriter
         {
             public override System.Text.Encoding Encoding => System.Text.Encoding.Unicode;
@@ -222,31 +178,22 @@ namespace PersistentCity.Persistence
             if (source.Length > MaxInputCharacters) return Invalid("State exceeds the input size limit.");
             try
             {
-                // The writer's own prefix goes straight to the strict reader, which checks the whole body.
                 if (source.StartsWith(BodyPrefix, StringComparison.Ordinal)) return ReadExact(source);
                 if (RetiredCompact(source)) return RetiredCompactRefusal();
                 int schema = ReadSchema(source);
-                // The schema is held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Any other number came
-                // from an older development build and is refused unchanged. There is no migration.
                 if (schema != CityState.CurrentSchema)
                     return new SaveReadResult(SaveReadStatus.DevelopmentSchema, null, DevelopmentSchemaMessage + " (schema " + schema.ToString(CultureInfo.InvariantCulture) + ")", schema);
-                // Root field order and whitespace carry no meaning; the same strict reader decides.
                 return ReadExact(source);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
             {
-                // GR-1 changed the held-schema wire in place; a body from before it is an older development city.
                 if (PreWalletBody(source)) return PreWalletRefusal();
-                // GR-2 changed it again: a body from before day plans is an older development city too.
                 if (PrePlanBody(source)) return PrePlanRefusal();
-                // GR-3 added the resident's needs: a body from before them is an older development city as well.
                 if (PreNeedsBody(source)) return PreNeedsRefusal();
                 return Invalid("Invalid state: " + exception.Message);
             }
         }
 
-        /// <summary>The one strict reader: token shape and caps, then deserialization (every string value interned), then
-        /// semantic validation. It reads the save string itself; nothing is decoded first.</summary>
         private static SaveReadResult ReadExact(string source)
         {
             Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
@@ -272,8 +219,6 @@ namespace PersistentCity.Persistence
 
         private static SaveReadResult Invalid(string error) => new SaveReadResult(SaveReadStatus.Invalid, null, error);
 
-        // Json.NET otherwise coerces strings to numbers and rounds floating-point integers.
-        // A supported payload has one exact wire shape; corruption must not silently change meaning.
         private static JsonTextReader Reader(string source) => new JsonTextReader(new StringReader(source))
         { MaxDepth = 48, DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Double };
 
@@ -302,15 +247,10 @@ namespace PersistentCity.Persistence
             return schema!.Value;
         }
 
-        // Validate directly from tokens before deserialization: no full payload DOM, no coercion,
-        // and bounded collection allocation even for hostile arrays of otherwise valid records.
-        // One reusable duplicate-field set per JSON depth for a single read: a set is only in use while its
-        // object is open, so nested objects never share one. Not shared between reads or threads.
         private sealed class FieldNameSets
         {
             private readonly HashSet<string>?[] sets = new HashSet<string>?[64];
             public int Product25Count, Metadata25Count, Metadata25Characters = 2, Metadata25Bytes = 2;
-            // Schema 26: person rows already streamed, so either list can enforce the combined bound before allocation.
             public int ResidentRows, VisitorRows;
             public HashSet<string> At(int depth)
             {
@@ -320,8 +260,6 @@ namespace PersistentCity.Persistence
             }
         }
 
-        // Json.NET reads an integer token as a long, or a BigInteger beyond the long range: the same
-        // acceptance as parsing the token's invariant text, without formatting it first.
         private static bool IntegerToken(object? value, long min, long max) => value is long number && number >= min && number <= max;
 
         private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, TokenText text, FieldNameSets fieldNames)
@@ -340,7 +278,7 @@ namespace PersistentCity.Persistence
             if (token == JsonToken.Null)
             {
                 Require(nullable != null || NullableRecord(type), "Unexpected null value.");
-                if (type == typeof(ResidentFoodToday)) Charge(ref records); // one rollup slot per consumer, including null
+                if (type == typeof(ResidentFoodToday)) Charge(ref records);
                 return;
             }
             if (nullable != null) type = nullable;
@@ -369,7 +307,6 @@ namespace PersistentCity.Persistence
             if (type == typeof(string))
             {
                 Require(token == JsonToken.String, "Expected a string.");
-                // E6c: a vendor place or business id may reach its escaped maximum.
                 Require(((string)reader.Value!).Length <= IdentityBound((string)reader.Value!, 512), "Oversized string.");
                 Require(ExactString25(text, (IJsonLineInfo)reader, (string)reader.Value!), "Invalid string encoding.");
                 return;
@@ -379,7 +316,6 @@ namespace PersistentCity.Persistence
             if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, long.MinValue, long.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Integer is out of range or noncanonical."); return; }
             if (type == typeof(Money))
             {
-                // Validate the original token: Json.NET reads "010" as octal 8 and rounds fractions.
                 Require(token == JsonToken.Integer && TokenText.CanonicalUnits(text.Number((IJsonLineInfo)reader)), "Money must be a canonical whole number of units.");
                 return;
             }
@@ -413,13 +349,12 @@ namespace PersistentCity.Persistence
                     CheckShape(reader, typeof(MealOutcomeRecord), resolver, ref records, text, fieldNames);
                 }
                 Require(reader.TokenType == JsonToken.EndArray, "Incomplete rollup.");
-                Charge(ref records); // one bounded rollup, never its scalar slots
+                Charge(ref records);
                 return;
             }
             if (type == typeof(DayPlan))
             {
                 if (reader.TokenType == JsonToken.Null) return;
-                // A bounded part of its person's record, like the resident tuple; not a record of its own.
                 CheckPlan(reader, text); return;
             }
             if (type == typeof(PersonNeeds))
@@ -437,7 +372,7 @@ namespace PersistentCity.Persistence
             {
                 Require(token == JsonToken.String && ((string)reader.Value!).Length <= 50 && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid memory length/encoding.");
                 CheckMemory20((string)reader.Value!);
-                Charge(ref records); // four fixed memories + watermark are ONE extension
+                Charge(ref records);
                 return;
             }
             if (type == typeof(VisitRecord)) { VisitConverter.Check(reader, PlaceCells.Streaming); Require(text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Noncanonical visit encoding."); return; }
@@ -475,7 +410,7 @@ namespace PersistentCity.Persistence
                         Require((long)count + 1 + (item == typeof(CitizenState) ? fieldNames.VisitorRows : fieldNames.ResidentRows) <= MaxPersons,
                             "Persons exceed the bound of " + MaxPersons + ".");
                         Require(count + 1 <= limit, item == typeof(CitizenState) ? "Residents exceed the bound of " + MaxResidents + "." : "Visitors exceed the bound of " + MaxVisitors + ".");
-                        if (item == typeof(VisitorPerson)) Charge(ref records); // one fixed tuple per visitor person
+                        if (item == typeof(VisitorPerson)) Charge(ref records);
                     }
                     Require(++count <= limit, "Oversized collection.");
                     if ((item == typeof(OutsideSpendingDay) || item == typeof(ShopObservation) || item == typeof(ShopChange))) Charge(ref records);
@@ -499,8 +434,6 @@ namespace PersistentCity.Persistence
             Require(token == JsonToken.StartObject && contract is JsonObjectContract, "Expected an object.");
             var properties = ((JsonObjectContract)contract).Properties;
             var names = fieldNames.At(reader.Depth);
-            // Only these two object types contain the new bounded images. Include their raw
-            // field spelling, separator and whitespace, without extra offset work elsewhere.
             bool bounded25 = type == typeof(CityState) || type == typeof(FoodDecisionOffer);
             int fieldStart25 = bounded25 ? text.End((IJsonLineInfo)reader) : -1;
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
@@ -523,7 +456,6 @@ namespace PersistentCity.Persistence
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
         }
 
-        /// <summary>The token reader's bound for a saved collection of <paramref name="item"/> (CheckShape).</summary>
         internal static int CollectionLimit(Type item) => item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? 32 : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
                     : item == typeof(FoodDecisionOffer) ? FoodMenuPolicy.MaximumOffers
                     : item == typeof(FoodProductSales) ? FoodMenuPolicy.MaximumOffers : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces
@@ -542,9 +474,6 @@ namespace PersistentCity.Persistence
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget)
             || type == typeof(WeatherCommitment) || type == typeof(DayPlan) || type == typeof(PersonNeeds) || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
-        // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
-        // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
-        // remain per operation, including application-wide JsonConvert defaults.
         private static readonly IContractResolver StateContracts = new StateContractResolver();
         private static JsonSerializerSettings Settings(WireContext context)
         {
@@ -574,12 +503,6 @@ namespace PersistentCity.Persistence
             return settings;
         }
 
-        /// <summary>
-        /// The wire converters behind one lookup. Json.NET asks every settings converter <c>CanConvert</c> for every value
-        /// it writes or reads, in list order, until one matches; with 21 converters that scan was over half of the writer's
-        /// time. The table asks each converter once per type, keeps the first match (the same choice Json.NET makes) and
-        /// hands the call to it, so the bytes and the reads are unchanged. One table per serializer settings instance.
-        /// </summary>
         private sealed class ConverterTable : JsonConverter
         {
             private readonly JsonConverter[] converters;
@@ -596,14 +519,11 @@ namespace PersistentCity.Persistence
             }
 
             public override bool CanConvert(Type objectType) => For(objectType) != null;
-            // Json.NET resolves the written value's contract from its runtime type and matched the converter on that type.
             public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => For(value!.GetType())!.WriteJson(writer, value, serializer);
             public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
                 => For(objectType)!.ReadJson(reader, objectType, existingValue, serializer);
         }
 
-        /// <summary>Intern on read: every string value one strict read materializes is one instance per distinct text.
-        /// Read only; the shape check already ran on the token stream.</summary>
         private sealed class InternConverter : JsonConverter
         {
             private readonly Dictionary<string, string> pool = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -679,12 +599,10 @@ namespace PersistentCity.Persistence
             Require(state != null, "State is null.");
             Require(state.Schema == CityState.CurrentSchema, "Unsupported state schema.");
             Require(state.PlayerHoldSequence >= 0 && state.PlayerHoldSequence < long.MaxValue, "Invalid player hold sequence.");
-            // E5b4: the writer stores DynamicWire only.
             Require(state.MenuPolicy == FoodNameIdentity.DynamicWire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
             ValidateCapabilities(state.Capabilities);
-            // E6c: the vendor table first; food checks accept its places.
             int vendorRecords = 0;
             var vendors = ValidateVendors30(state, ref vendorRecords);
             int embeddedRecords = 1 + vendorRecords + ValidateFood(state, vendors);
@@ -696,7 +614,6 @@ namespace PersistentCity.Persistence
             Text(state.RloVersion, "RLO version", 128);
             Minute(state.Minute, "City minute");
             Require(state.Places != null && state.Places.Count > 0 && state.Places.Count <= MaxPlaces, "Invalid place count.");
-            // Named bounds first, before any per-person work (section 5 Bounds); then the existing citizen count rule.
             Require(state.Citizens != null && state.Visitors != null, "Missing person table.");
             Require((long)state.Citizens!.Count + state.Visitors!.Count <= MaxPersons, "Persons exceed the bound of " + MaxPersons + ".");
             Require(state.Citizens.Count <= MaxResidents, "Residents exceed the bound of " + MaxResidents + ".");
@@ -722,8 +639,6 @@ namespace PersistentCity.Persistence
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
                 foreach (var window in place.WeeklyHours) OpeningWindowRules(window);
             }
-            // E6c: a resident or visitor may be at, walking to or have recently visited a stand. Those cells resolve the
-            // live and retired vendor places the simulator rebuilds; city places never use the vendor prefix.
             foreach (var vendorPlace in vendors.FoodPlaces) places.Add(vendorPlace.Id, vendorPlace);
             ValidateExpansion(state);
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -753,8 +668,6 @@ namespace PersistentCity.Persistence
                 }
                 Traits(citizen.Traits, "resident");
                 Reference(places, citizen.HomeId, PlaceKind.Home);
-                // DailyRoutine derives the activity from persona. A mismatched assignment would
-                // load successfully, then create a destination/activity mismatch on its next trip.
                 if (identity.Persona == Persona.Retiree)
                     Require(citizen.DayPlaceId == "", "A retiree cannot have a day-place assignment.");
                 else
@@ -766,7 +679,6 @@ namespace PersistentCity.Persistence
                 OptionalReference(places, citizen.LeisureId, PlaceKind.Leisure);
                 ValidateOptionalStop(citizen, state, places, citizens);
                 ValidateSchedule(citizen, state, places, ref embeddedRecords);
-                // F2e: the consumed allowance belongs to the current journey only.
                 Bounded(citizen.PlayerHoldMinutes, 0, PlayerHolds.MaximumMinutesPerJourney, "Player hold minutes");
                 Require(citizen.PlayerHoldMinutes == 0 || citizen.Phase == CitizenPhase.Travelling, "Player hold minutes without a journey.");
                 Require(citizen.RecentVisits != null && citizen.RecentVisits.Count <= MaxRecentVisits, "Invalid recent visit count.");
@@ -781,15 +693,12 @@ namespace PersistentCity.Persistence
                 }
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             }
-            // ValidatePersons27 also adds visitor route legs through the ref; add its tuple charges afterwards.
             int personRecords = ValidatePersons27(state, places, assigned, ref embeddedRecords);
             embeddedRecords += personRecords;
             embeddedRecords += ValidateResearch29(state);
             embeddedRecords += ValidateEconomy(state);
             Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             int totalRecords = ValidateTraffic(state, embeddedRecords);
-            // The frozen semantic counter did not charge scope menu strings or optional-stop members;
-            // CheckShape did. Keep both reported counts, but never let a write spend that difference.
             int streamingOnly = StreamingOnlyRecords(state);
             Require(totalRecords + streamingOnly <= MaxEmbeddedRecords, "Too many embedded records in the streaming count.");
             return totalRecords;
@@ -801,7 +710,6 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>Phase, place, journey and wait rules shared by residents and schema-27 visitor routines.</summary>
         private static void ValidateSchedule(CitizenState citizen, CityState state, Dictionary<string, Place> places, ref int embeddedRecords)
         {
             Known(citizen.Phase, "Citizen phase"); Known(citizen.Activity, "Activity"); Known(citizen.DestinationActivity, "Destination activity");
@@ -837,10 +745,6 @@ namespace PersistentCity.Persistence
                     Require(Same(previous, destination.Position), "Route ends at the wrong destination.");
                     Require(citizen.DepartureMinute <= state.Minute, "Journey departure is in the future.");
                     double arrival = citizen.DepartureMinute + route.Minutes;
-                    // A completed physical lease rebases departure = clock - duration.
-                    // Adding duration back can differ from clock by a few ulps. Normalize
-                    // only this computed value when the explicit event is exactly queued
-                    // at the current clock; persisted dates themselves remain strict.
                     double clockRoundoff = 4 * 2.2204460492503131e-16
                         * Math.Max(1, Math.Max(Math.Abs(state.Minute), Math.Abs(route.Minutes)));
                     if (citizen.NextEventMinute == state.Minute && Math.Abs(arrival - state.Minute) <= clockRoundoff)
@@ -973,8 +877,6 @@ namespace PersistentCity.Persistence
             double metres = Position.Distance(geometry.From, geometry.To);
             if (geometry.Mode != TravelMode.Car || !Position.Finite(metres) || metres <= 0) return false;
             if (metres > 0.000001) return true;
-            // Clock retiming can retain a positive sub-micrometre native fragment. The codec
-            // checks its tag shape; binding still proves its directed edge and geometry.
             string[] parts = geometry.ServiceId.Split(':');
             return parts.Length == 6 && parts[0] == "native" && parts[1] == "road" && parts[2] == "fragment1"
                 && parts[3].Length == 64 && parts[3].All(c => c >= '0' && c <= '9' || c >= 'a' && c <= 'f')
@@ -998,7 +900,6 @@ namespace PersistentCity.Persistence
                 return;
             }
             Require(citizen.Identity.Persona != Persona.Retiree, "A retiree cannot prepare a work commute.");
-            // A safe job change may leave the prior attempt until the next routine evaluation.
             Reference(places, preparation.PlaceId, citizen.Identity.Persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work);
             Require(preparation.WorkEndsAt > preparation.WorkStartsAt, "Prepared work window has no duration.");
             Require(preparation.PreparedAt <= minute && preparation.PreparedAt <= preparation.WorkStartsAt,
@@ -1076,8 +977,6 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>City places plus, from the vendor schema, the shop places of live and retired vendor rows with a
-        /// stand (E6c). Tombstone places are not food places; only business references may name them.</summary>
         private sealed class FoodPlaceLookup
         {
             private readonly List<Place> source;
@@ -1094,11 +993,9 @@ namespace PersistentCity.Persistence
             public bool Contains(string id, int kind) => keys != null
                 ? keys.Contains((id, kind))
                 : source.Any(p => p.Id == id && (int)p.Kind == kind) || vendors.Any(p => p.Id == id && (int)p.Kind == kind);
-            // Used only for the at most one route-bearing decision.
             public Place? Find(string id) => source.FirstOrDefault(p => p != null && p.Id == id) ?? vendors.FirstOrDefault(p => p.Id == id);
         }
 
-        /// <summary>Returns the number of nested food records counted toward MaxEmbeddedRecords.</summary>
         private static int ValidateFood(CityState state, VendorIndex30 vendors)
         {
             Require(state != null && state.Citizens != null && state.Places != null, "Missing food population.");
@@ -1112,9 +1009,7 @@ namespace PersistentCity.Persistence
             Require(food.AwarenessStartsDay>=0 && food.AwarenessStartsDay<=currentDay+1,"Invalid awareness activation day.");
             Require(food.RivalStartsDay>=0 && food.RivalStartsDay<=currentDay+1,"Invalid rival activation day.");
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
-            // One own roster record per person (stored factor 1).
             Require(food.RepresentationFactor == 1, "A roster has one own record per person (factor 1).");
-            // No represented consumers; one roster record per resident and per visitor (bijection rule 2).
             Require(state.Visitors != null && state.VisitorRoutines != null && state.Visitors.Count == state.VisitorRoutines.Count, "Every visitor has exactly one routine.");
             Require(food.Residents != null && food.Residents.Count == state.Citizens.Count + state.Visitors!.Count,
                 "Meal roster differs from represented population.");
@@ -1122,12 +1017,9 @@ namespace PersistentCity.Persistence
             FoodHouseholdPolicy.ValidateMixes(food.Districts);
             Require(food.HouseholdFinanceVersion == 0 || food.HouseholdFinanceVersion == HouseholdFinance.PolicyVersion, "Unknown household finance policy.");
             Require(food.MealRhythmVersion == 0 || food.MealRhythmVersion == MealRhythm.PolicyVersion, "Unknown meal rhythm policy.");
-            // Duplicate IDs/kinds must not fail earlier than the existing catalogue validation.
-            // A malformed null entry retains Any's original short-circuit/exception behavior.
             var foodPlaces = new FoodPlaceLookup(state.Places, vendors.FoodPlaces);
             var shops = new HashSet<string>(StringComparer.Ordinal);
             var businessIds = new HashSet<string>(StringComparer.Ordinal);
-            // E6c: channel and place agree before the place lookup, so a mismatch is reported as one.
             ValidateScopeChannels30(food, vendors);
             foreach (var shop in food.Shops)
             {
@@ -1213,7 +1105,6 @@ namespace PersistentCity.Persistence
                 Require(meal.HostSlot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
                 if (visitorIds.Contains(meal.ResidentId))
                 {
-                    // A visitor's own traits, drawn by its PersonId exactly as its derived routine's.
                     Traits(meal.RepresentedTraits, "visitor");
                     Require(meal.RepresentedTraits!.ToString() == ResidentTraits.Generate(state.Seed, meal.ResidentId).ToString(), "Visitor traits differ from their derivation.");
                 }
@@ -1287,7 +1178,7 @@ namespace PersistentCity.Persistence
         private static int ValidateToday(ResidentMeal meal, FoodCommerceState food, int currentDay, double minute)
         {
             var today = meal.Today;
-            if (today == null) return 1; // one rollup slot per consumer; null retains the original absence
+            if (today == null) return 1;
             bool legacy = food.MealRhythmVersion == 0;
             Require(today.Day >= 0 && today.Day <= currentDay && today.Day <= meal.Day, "Invalid current-day meal outcomes.");
             Require(today.Unrecorded >= 0 && today.Unrecorded <= (legacy ? 1 : 3), "Invalid unrecorded meal count.");
@@ -1318,22 +1209,18 @@ namespace PersistentCity.Persistence
                 Require(record.Status != MealOutcomeStatus.Unconfirmed || record.Reason == MealReasonCode.CheckoutUnconfirmed, "Impossible unconfirmed outcome reason.");
                 Require(record.Status == MealOutcomeStatus.Bought == (record.Reason == MealReasonCode.Bought || record.Reason == MealReasonCode.ReceiptConfirmed),
                     "Impossible purchase outcome reason.");
-                // The outcome of the meal still held by this record must agree with its live status.
                 if (today.Day == meal.Day && record.Kind == meal.Kind)
                 {
                     var live = MealOutcomes.StatusFor(meal.Status);
                     Require(live.HasValue ? live.Value == record.Status
                         : record.Status == MealOutcomeStatus.Skipped || record.Status == MealOutcomeStatus.ChoseAlternative,
                         "Meal outcome differs from its receipt state.");
-                    // A current purchase must name the retained meal's own shop, product and checkout minute; the
-                    // inspector shows this record, so it cannot contradict the authoritative meal. Once the meal
-                    // advances, the record stays an opaque historical reference.
                     if (purchase)
                         Require(record.PlaceId == meal.PlaceId && record.ProductId == meal.ProductId
                             && record.TargetKind == meal.TargetKind && record.CheckoutAt == MealOutcomes.CheckoutMinute(meal, minute), "Purchase outcome differs from its retained meal.");
                 }
             }
-            return 1; // schema 18 fixed current-day tuple (including an empty rollup)
+            return 1;
         }
 
         private static int ValidateDecision(ResidentMeal meal, FoodCommerceState food, FoodPlaceLookup foodPlaces, ref int routeBearing)
@@ -1360,15 +1247,11 @@ namespace PersistentCity.Persistence
                 && (decision.Result == FoodDecisionResult.Selected || decision.BusinessId.Length == 0 && decision.ProductId.Length == 0),
                 "Decision selection differs from its result.");
             Require((decision.Result == FoodDecisionResult.Outside) == (decision.Outside != FoodOutsideOption.None), "Decision alternative differs from its result.");
-            // Also for a compact decision without its shortlist image.
             Require(decision.ProductId.Length == 0 || FoodNameIdentity.IsCanonical(decision.ProductId), "Unknown live product code.");
             Require(decision.Shops != null && decision.Shops.Count <= FoodChoicePolicy.MaximumShortlist, "Oversized decision shortlist.");
             Require(decision.QuotesDone >= 0 && decision.QuotesDone <= 2 * decision.Shops!.Count, "Invalid decision quote progress.");
-            // Choosing follows every feasibility answer; an undecided image may stop at any slot.
             Require(decision.Result == FoodDecisionResult.Evaluating || decision.QuotesDone == 2 * decision.Shops.Count,
                 "Decision chose before its quotes were settled.");
-            // The simulator holds one decision, including an empty-shortlist decision. Bound the tuning
-            // header as well as routes; otherwise empty images could spend a city-wide tuning history.
             Dense((int)decision.Weather,2,"decision weather");
             Bounded(decision.WeatherTravelMultiplier,1,2,"weather travel multiplier");
             Require(decision.Weather==WeatherSample.Rain || decision.WeatherTravelMultiplier==1,"Nonneutral dry/unknown weather.");
@@ -1410,12 +1293,10 @@ namespace PersistentCity.Persistence
                 records += 1 + shop.Offers.Count;
                 Dense((int)shop.OutwardQuote, (int)FoodQuoteState.NotNeeded, "Decision quote state");
                 Dense((int)shop.ReturnQuote, (int)FoodQuoteState.NotNeeded, "Decision quote state");
-                // Slots before the cursor are settled, slots from it on are not.
                 Require((shop.OutwardQuote != FoodQuoteState.Unrequested) == (slot++ < decision.QuotesDone)
                     && (shop.ReturnQuote != FoodQuoteState.Unrequested) == (slot++ < decision.QuotesDone), "Decision quote progress differs from its cursor.");
                 Require((shop.Outward != null) == (shop.OutwardQuote == FoodQuoteState.Answered)
                     && (shop.Return != null) == (shop.ReturnQuote == FoodQuoteState.Answered), "Decision route differs from its quote state.");
-                // A return is asked only after an answered outward quote; otherwise its slot is settled unasked.
                 Require(shop.OutwardQuote == FoodQuoteState.Answered
                     ? shop.ReturnQuote != FoodQuoteState.NotNeeded
                     : shop.ReturnQuote == FoodQuoteState.Unrequested || shop.ReturnQuote == FoodQuoteState.NotNeeded, "Return quote without its outward quote.");
@@ -1426,8 +1307,6 @@ namespace PersistentCity.Persistence
             return records;
         }
 
-        // A captured walking answer: connected, finite and bounded. The shop end must be the shop's own position;
-        // the origin end is checked against the live stop when the decision resumes.
         private static int DecisionRoute(Route route, FoodPlaceLookup foodPlaces, string shopId, bool outward)
         {
             Require(route.Legs != null && route.Legs.Count > 0 && route.Legs.Count <= MaxRouteLegs, "Missing or oversized decision route.");
@@ -1490,7 +1369,6 @@ namespace PersistentCity.Persistence
                 && b.EssentialsPaid >= Money.Zero && b.HomeFoodPaid >= Money.Zero && b.PreparedFoodSpent >= Money.Zero
                 && b.ExternalFoodSpent >= Money.Zero && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
                 "Negative household accounting.");
-            // Checked unit sums: an amount beyond the unit's range is refused (OverflowException), never rounded.
             try { Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved."); }
             catch (OverflowException) { Fail("Household conservation total exceeds the money range."); }
             Minute(b.NextPostingMinute, "Next household posting");
@@ -1516,10 +1394,7 @@ namespace PersistentCity.Persistence
         }
         private static void OptionalReference(Dictionary<string, Place> places, string id, params PlaceKind[] kinds)
         { Require(id != null, "Null place reference."); if (id != "") Reference(places, id, kinds); }
-        // Messages are built only on failure: these checks run for every field of every save.
         private static void Known<T>(T value, string label) where T : struct { if (!Enum.IsDefined(typeof(T), value)) Fail("Unknown " + label + "."); }
-        // Schema-17 enums are dense from zero: an unboxed range check with Known's message, for records that
-        // occur per consumer on every save and load. FoodToday's enum tests pin each maximum to its last member.
         private static void Dense(int value, int maximum, string label) { if ((uint)value > (uint)maximum) Fail("Unknown " + label + "."); }
         private static void Text(string value, string label, int max, bool emptyAllowed = false)
         { if (!(value != null && value.Length <= max && (emptyAllowed || !string.IsNullOrWhiteSpace(value)))) Fail("Invalid " + label + "."); }
@@ -1533,16 +1408,12 @@ namespace PersistentCity.Persistence
 
         private sealed class StateContractResolver : DefaultContractResolver
         {
-            /// <summary>The game's Newtonsoft build has no compiled accessors: every property it writes or reads goes through
-            /// <c>PropertyInfo.GetValue</c>/<c>SetValue</c>. A typed delegate per saved property, bound once per contract, does
-            /// the same work without reflection. Struct owners and indexers keep Json.NET's own provider.</summary>
             protected override IValueProvider CreateMemberValueProvider(MemberInfo member)
                 => (member as PropertyInfo is PropertyInfo property ? PropertyAccess.For(property) : null) ?? base.CreateMemberValueProvider(member);
 
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
                 var properties = base.CreateProperties(type, memberSerialization).Where(property => property.Writable
-                    // Derived from the person table: the resident tuple P and one roster record per person.
                     && !(type == typeof(CitizenState) && property.PropertyName == "EmploymentStartDay"
                         || type == typeof(FoodCommerceState) && property.PropertyName == "RepresentationFactor")
                     && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind")).ToList();
@@ -1551,22 +1422,18 @@ namespace PersistentCity.Persistence
                 if (type == typeof(FoodScope)) properties.Add(ChannelProperty30());
                 if (type == typeof(VisitorRoutine)) properties = RoutineProperties27(properties).ToList();
                 return properties
-                    // These two root headers let the native authority bootstrap stop before the graph.
-                    // JSON object order is not a schema change; all old property orders still read.
                     .OrderBy(property => type == typeof(CityState) ? property.PropertyName == "Schema" ? 0 : property.PropertyName == "Capabilities" ? 1 : property.PropertyName == "MenuPolicy" ? 2 : 3 : 3)
                     .ThenBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
                     if (type == typeof(FoodDecisionState) && property.PropertyName == "Tuning"
                         || type == typeof(FoodDecisionShop) && property.PropertyName == "MemoryContribution")
-                    { property.Required = Required.Default; return property; } // pre-image 18
+                    { property.Required = Required.Default; return property; }
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();
             }
         }
 
-        /// <summary>Typed getter and setter delegates for one saved property. Failures are wrapped exactly as Json.NET's
-        /// reflection provider wraps them, so a refused read reports the same error.</summary>
         private abstract class PropertyAccess : IValueProvider
         {
             public static IValueProvider? For(PropertyInfo property)
@@ -1614,7 +1481,6 @@ namespace PersistentCity.Persistence
             }
         }
 
-        // One compact string per outcome record; see MealOutcomeRecord.ToWire.
         private sealed class MealOutcomeConverter : JsonConverter<MealOutcomeRecord>
         {
             public override void WriteJson(JsonWriter writer, MealOutcomeRecord? value, JsonSerializer serializer)
@@ -1636,8 +1502,6 @@ namespace PersistentCity.Persistence
             {
                 writer.WriteStartObject(); writer.WritePropertyName("X"); writer.WriteValue(value.X); writer.WritePropertyName("Y"); writer.WriteValue(value.Y); writer.WritePropertyName("Z"); writer.WriteValue(value.Z); writer.WriteEndObject();
             }
-            // Streams the three components; no JObject per position (two per route leg). The shape check has
-            // already required exactly X, Y and Z numbers, and this repeats those rules on its own.
             public override Position ReadJson(JsonReader reader, Type objectType, Position existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 Require(reader.TokenType == JsonToken.StartObject, "Position requires exactly X, Y and Z.");

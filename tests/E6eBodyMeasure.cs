@@ -12,7 +12,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-// Opt-in offline timing of the real selection/dwell hook with native scene/pool doubles.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class E6eBodyMeasure
 {
@@ -26,7 +25,6 @@ public sealed class E6eBodyMeasure
     private void Measure(string label, Action action, int count = 1000)
     {
         var times = new List<double>(count); long bytes = 0; string check = label + " offline p95";
-        // The fixture is shared, so a retry repeats the action on the state the previous attempt left.
         TimingBudget.Run(timing =>
         {
             for (int i = 0; i < 50; i++) action();

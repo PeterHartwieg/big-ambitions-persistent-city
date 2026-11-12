@@ -5,13 +5,6 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>
-    /// Stops the game's stationary pedestrian zones from placing their anonymous standers: 2–4 bodies per zone,
-    /// put down whenever the zone comes into view and taken away when it leaves, whatever the hour or weather
-    /// [1.0: StationaryAiSpawner.SpawnGroupOverFrames, Spawn(Vector3)]. Street performers and the homeless from
-    /// the same zones stay: the performer is a happiness source the game's help names. Only Spawn(Vector3), the
-    /// ordinary stander, is skipped; the zones, their culling and their other spawns run as before.
-    /// </summary>
     internal sealed class StationaryCrowds : IDisposable
     {
         private const string Owner = "hart.persistentcity.stationarycrowds.v1";
@@ -31,8 +24,6 @@ namespace PersistentCity.Runtime
                 if (Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("Another stationary crowd hook owner is already registered.");
                 harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));
                 active = true;
-                // Zones already in view keep their standers until they leave view; clear them now and let the
-                // next time each zone comes into view place only its performer or homeless person.
                 int cleared = 0;
                 foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
                 {

@@ -29,14 +29,12 @@ namespace PersistentCity.Runtime
             }
             catch (Exception error)
             {
-                // Retire only the optional rival source, invalidating any published index.
-                // Held targets then fail their existing live check without debit/substitution.
                 unavailableRivalRevision = (rivalCatalogue?.MetadataRevision ?? 0) + 1;
                 RivalUnavailable = error.GetType().Name + ": " + error.Message;
                 try { rivalCatalogue?.Dispose(); } catch (Exception) { }
                 rivalCatalogue = null;
                 try { rivalWarning?.Invoke("Rival food source unavailable for this city; player commerce and population continue: " + RivalUnavailable); }
-                catch (Exception) { } // A diagnostic sink cannot revoke player/population ownership.
+                catch (Exception) { }
             }
         }
         public IEnumerable<FoodScope> RivalScopes => rivalCatalogue?.MetadataScopes ?? Array.Empty<FoodScope>();

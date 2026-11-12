@@ -10,17 +10,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E5b2 Decision 2 and the Decision 12 binder/self-test half, against doubles of the native collections
-/// (docs/plans/e5b-remaining.md section 2.2). Lists are the real BCL List, whose _version moves like the game's.
-/// The furniture dictionary is a double: the game's Mono Dictionary moves _version on add, indexer set and remove,
-/// while the .NET 10 Dictionary used by tests does not move it on set or remove.</summary>
 public sealed class FoodContractStampTests
 {
     public sealed class Price { public string itemName = ""; public float price; }
     public sealed class Cargo { public string itemName = ""; public int amount; }
     public sealed class Instance { public string itemName = ""; public List<Cargo> cargoInstances = new List<Cargo>(); }
 
-    /// <summary>Mono-like dictionary: one private int _version moved by every add, indexer set, remove and clear.</summary>
     public sealed class MonoDictionary<TKey, TValue> where TKey : notnull
     {
         private readonly Dictionary<TKey, TValue> inner = new Dictionary<TKey, TValue>();
@@ -58,7 +53,6 @@ public sealed class FoodContractStampTests
     private static CollectionVersionReader<T> Bound<T>() where T : class
         => CollectionVersionReader<T>.Bind(out var failure) ?? throw new InvalidOperationException(failure);
 
-    // The same composition as LoadedCatalogueEligibilityReader.Stamp, over the doubles.
     internal static ShopContractStamp Stamp(Registration r) => new ShopContractStamp(
         CollectionStamp.Of(Menu, r.cachedAvailableProducts, r.cachedAvailableProducts?.Count ?? 0),
         CollectionStamp.Of(Prices, r.retailPrices, r.retailPrices?.Count ?? 0),
@@ -66,7 +60,6 @@ public sealed class FoodContractStampTests
         r.businessTypeName, r.RentedByPlayer, r.HasEstablishedBusiness, r.AvailableForRent, r.temporarilyClosed);
     private static CollectionStamp Holder(Instance i) => CollectionStamp.Of(CargoList, i.cargoInstances, i.cargoInstances?.Count ?? 0);
 
-    // Binding ---------------------------------------------------------------------------------------------------
 
     private sealed class NoVersion { public int Count = 0; }
     private sealed class RenamedVersion { private int _ver; public void Touch() => _ver++; }
@@ -97,14 +90,12 @@ public sealed class FoodContractStampTests
         Assert.Contains("not Int32", wide);
         Assert.Null(CollectionVersionReader<StaticVersion>.Bind(out var shared));
         Assert.Contains("is missing", shared);
-        // An inherited int field is the same contract and binds.
         var derived = CollectionVersionReader<DerivedCollection>.Bind(out _);
         Assert.NotNull(derived);
         var c = new DerivedCollection(); c.Add();
         Assert.Equal(1, derived!.Read(c));
     }
 
-    // Self-test --------------------------------------------------------------------------------------------------
 
     private sealed class Probe
     {
@@ -155,7 +146,6 @@ public sealed class FoodContractStampTests
         Assert.False(report.Passed("never recorded"));
     }
 
-    // Stamps -----------------------------------------------------------------------------------------------------
 
     public static IEnumerable<object[]> ShopWrites() => new (string Writer, Action<Registration> Write)[]
     {
@@ -222,7 +212,6 @@ public sealed class FoodContractStampTests
         ("W10 in-place RetailPrice.itemName", r => r.retailPrices![0].itemName = "ba:itemname_croissant"),
     }.Select(w => new object[] { w.Writer, w.Write });
 
-    /// <summary>The known limit: element field writes move no collection stamp. E5b3's recheck owns them.</summary>
     [Theory]
     [MemberData(nameof(InPlaceWrites))]
     public void StampsDoNotMoveOnInPlaceElementWrites(string writer, Action<Registration> write)
@@ -242,7 +231,6 @@ public sealed class FoodContractStampTests
         Assert.False(default(ShopContractStamp).Matches(default));
         Assert.False(stamp.Matches(default));
         Assert.False(default(ShopContractStamp).Matches(stamp));
-        // An equal but distinct string is a write the stamp cannot prove harmless.
         r.businessTypeName = new string(r.businessTypeName.ToCharArray());
         Assert.False(stamp.Matches(Stamp(r)));
         Assert.Equal("unrecorded", default(ShopContractStamp).ToString());
@@ -261,7 +249,6 @@ public sealed class FoodContractStampTests
         Assert.Equal(10_100, matches);
     }
 
-    // Loaded-name image ------------------------------------------------------------------------------------------
 
     internal static LoadedStockDefinition Definition(string name)
         => new LoadedStockDefinition(name, true, false, false, false, true, true, false, false, false, null, null);
@@ -300,7 +287,6 @@ public sealed class FoodContractStampTests
         Assert.False(refused.Contains("ba:itemname_burger"));
     }
 
-    // Measurement (docs/perf/e5b2.md) ----------------------------------------------------------------------------
 
     internal static object Stats(List<double> values)
     {
@@ -314,7 +300,6 @@ public sealed class FoodContractStampTests
         if (!string.IsNullOrEmpty(path)) File.AppendAllText(path, JsonConvert.SerializeObject(new { arm, result }) + "\n");
     }
 
-    /// <summary>Not a gate: records per-visit stamp cost only when PC_E5B2_MEASURE names an output file.</summary>
     [Fact]
     public void MeasureStampReadPerDiscoveryVisit()
     {
@@ -333,7 +318,7 @@ public sealed class FoodContractStampTests
             if (Stamp(r).Matches(recorded)) matched++;
             ms.Add((Stopwatch.GetTimestamp() - t) * tick);
         }
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - bytes; // the sample list is preallocated
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - bytes;
         Write("stamp read + compare per visit", new { stats = Stats(ms), bytesPerCall = (double)allocated / samples, matched });
     }
 }

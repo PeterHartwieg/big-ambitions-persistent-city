@@ -13,9 +13,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests
 {
-    /// <summary>F8g (docs/plans/f8-capability-boundaries.md): the offline failure matrix. The Core arms run the shared
-    /// tests/capability-matrix code on the 957x2 economy fixture; the Street Food arm uses the vendor rig. The A1-A17 table
-    /// in docs/checks/f8bg.md names one check per requirement, and every named check must exist here.</summary>
     [Collection(F8aSerial.Collection)]
     public sealed class CapabilityMatrixTests
     {
@@ -31,8 +28,6 @@ namespace PersistentCity.Tests
             Assert.All(arms, a => Assert.True(a.Passed, a.Name + ": " + a.Detail));
         }
 
-        /// <summary>Sol-r1-4: every optional or required-when-present capability names the arm that fails it; a matrix arm
-        /// named in the map exists, and an entry outside the matrix names an existing test.</summary>
         [Fact]
         public void EveryOptionalCapabilityHasAnArm()
         {
@@ -64,9 +59,6 @@ namespace PersistentCity.Tests
 
         private static string Rows(VendorTable table) => JsonConvert.SerializeObject(table.Rows.Select(r => new { r.VehicleId, r.BusinessId, r.PlaceId, r.Generation, r.Kind, r.State }));
 
-        /// <summary>Rig check 2's shape offline: Street Food absent for a load, then returned. Vehicle scopes are unserviceable
-        /// with Street Food's reason while it is absent; shop scopes, vehicle rows and identities are unchanged by the window;
-        /// after return the cart requalifies.</summary>
         [Fact]
         public void StreetFoodAbsentThenReturned()
         {
@@ -82,14 +74,13 @@ namespace PersistentCity.Tests
                 string people = string.Join("|", rig.City.State.Citizens.Select(c => c.Identity.Id + ":" + c.Identity.Name));
                 string business = rig.Row("A").BusinessId;
 
-                // A load without Street Food: the coordinator has no API and the bridge's absence reason.
                 Assert.Null(StreetFoodBridge.Open(null, out string reason));
                 var absent = new VendorCoordinator(rig.Table, null, reason, rig.City, rig.Stands);
                 Drive(absent, rig.Table, Day2At(9, 6), Day2At(11, 6));
                 Assert.False(absent.CanServe(business, Day2At(11, 6)));
                 Assert.Contains("Street Food is not loaded", absent.Reason);
-                Assert.Equal(shops, rig.Shops());                                   // shop scopes byte-identical
-                Assert.Equal(rows, Rows(rig.Table));                                 // vehicle rows survive the window
+                Assert.Equal(shops, rig.Shops());
+                Assert.Equal(rows, Rows(rig.Table));
                 Assert.Equal(scopes, JsonConvert.SerializeObject(rig.City.State.Food.Shops));
                 Assert.Equal(people, string.Join("|", rig.City.State.Citizens.Select(c => c.Identity.Id + ":" + c.Identity.Name)));
                 var inputs = CapabilityReportTests.Healthy(); inputs.StreetFoodLoaded = false;
@@ -97,7 +88,6 @@ namespace PersistentCity.Tests
                 Assert.False(CapabilitySnapshot.Build(inputs).IsEnabled(CapabilityScope.VehicleScopes));
                 Assert.True(CapabilitySnapshot.Build(inputs).IsEnabled(CapabilityScope.ShopOwnership));
 
-                // Street Food returns at the next load: the same row requalifies at the cart's next opening.
                 var returned = new VendorCoordinator(rig.Table, StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi)), "", rig.City, rig.Stands);
                 StreetFoodHooks.Revision++;
                 Drive(returned, rig.Table, Day2At(11, 7), Day2At(12, 7));
@@ -110,9 +100,6 @@ namespace PersistentCity.Tests
             finally { StreetFoodHooks.Reset(); }
         }
 
-        /// <summary>Sol-r1-3: a bound API whose snapshot answers Off, Refused or Failed reports vendor.streetfood off with the
-        /// snapshot's reason (the coordinator suspends every vehicle scope); Ready reports active. The inputs are read from a
-        /// real coordinator with CapabilityInputs.ReadVendor, the reader Runtime uses.</summary>
         [Theory]
         [InlineData(1, "Off")]
         [InlineData(3, "Refused")]
@@ -135,7 +122,6 @@ namespace PersistentCity.Tests
                 Assert.Equal(CapabilityState.Off, registry.State(CapabilityId.VendorStreetFood));
                 Assert.StartsWith("snapshot " + word + ": ", registry.Reason(CapabilityId.VendorStreetFood));
                 Assert.False(rig.Serves("A"));
-                // Before any read the same bound coordinator is not checked, not off.
                 var fresh = new VendorCoordinator(new VendorTable(), StreetFoodBridge.Bind(typeof(FoodTrucks.ModApi.VendorApi)), "", rig.City, rig.Stands);
                 inputs.ReadVendor(true, fresh);
                 Assert.Equal(CapabilityState.NotChecked, CapabilitySnapshot.Build(inputs).State(CapabilityId.VendorStreetFood));
@@ -143,8 +129,6 @@ namespace PersistentCity.Tests
             finally { StreetFoodHooks.Reset(); }
         }
 
-        /// <summary>The plan's A1-A17 requirements and the checks that pass them, kept in code so the check survives the
-        /// lean-docs cleanup of checks files and frozen plans (the human-readable table is in the PR description).</summary>
         internal static readonly IReadOnlyDictionary<string, string[]> Requirements = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             ["A1"] = new[] { "NativeCapabilityTests.DefinitionsFollowTheD2Table", "CapabilityReportTests.ReportFromDoublesForEveryState", "HookConflictReportTests.InventoryCountsAndCapabilityMapping" },
@@ -166,8 +150,6 @@ namespace PersistentCity.Tests
             ["A17"] = new[] { "NativeFoodContractTests.FaultPointShapesAreTheRenameAndSignatureVariants", "CapabilityMatrixTests.StreetFoodAbsentThenReturned", "CapabilityMatrixTests.EveryCoreArmPasses" },
         };
 
-        /// <summary>Every A1-A17 requirement names checks that exist in this assembly (Class.Method) or a tool in the tree; the
-        /// suite running them green is the passing check. No docs file is read.</summary>
         [Fact]
         public void EveryRequirementHasANamedPassingCheck()
         {

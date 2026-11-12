@@ -27,7 +27,7 @@ public sealed partial class FoodMemoryTests
     public void TerminalWatermarkBlocksObservationFinishReceiptsAndOlderContexts()
     {
         var state = new FoodCommerceState(); var store = new FoodMemoryStore(state); var meal = Meal();
-        Assert.False(store.Experience(meal, ShopExperience.Served, 1, Traits(), new())); // pre-B commitment
+        Assert.False(store.Experience(meal, ShopExperience.Served, 1, Traits(), new()));
         Assert.True(store.CommitStage(meal, ExperienceStage.Committed));
         Assert.False(store.CommitStage(meal, ExperienceStage.Committed));
         Assert.True(store.CommitStage(meal, ExperienceStage.Reached));
@@ -60,7 +60,7 @@ public sealed partial class FoodMemoryTests
     {
         var s = new FoodMemorySettings(); var traits = Traits();
         ShopMemory E(int affinity, int day) => new() { Affinity = affinity, Day = day };
-        Assert.True(FoodMemoryPolicy.CompareEviction(E(8, 0), "z", E(-8, 30), "a", 30, traits, s) < 0); // expired first
+        Assert.True(FoodMemoryPolicy.CompareEviction(E(8, 0), "z", E(-8, 30), "a", 30, traits, s) < 0);
         Assert.True(FoodMemoryPolicy.CompareEviction(E(-2, 30), "z", E(1, 30), "a", 30, traits, s) < 0);
         Assert.True(FoodMemoryPolicy.CompareEviction(E(0, 29), "z", E(0, 30), "a", 30, traits, s) < 0);
         Assert.True(FoodMemoryPolicy.CompareEviction(E(0, 30), "a", E(0, 30), "z", 30, traits, s) < 0);
@@ -228,7 +228,7 @@ public sealed partial class FoodMemoryTests
         if (change == "closed") market.Source.Shops[0].Hours.Clear();
         if (change == "queue") city.State.Food.Shops[0].NextServiceAt = at + 100;
         if (change == "unknown") market.Source.Shops[0].MealsPerHour = null;
-        if (change == "interrupted") meal.Deadline = at; // consumer's expired break, not bad service
+        if (change == "interrupted") meal.Deadline = at;
         Advance(city, at + 20, 1);
         if (change == "closed" || change == "queue")
         {
@@ -317,7 +317,6 @@ public sealed partial class FoodMemoryTests
     {
         var (city, market, paths, settings) = Ready(1, 8); var meal = city.State.Food!.Residents[0];
         var store = new FoodMemoryStore(city.State.Food);
-        // Populate using the actual commit API, then return to an uncaptured next intent.
         meal.Day = 0; meal.ContextAttempts = 1; meal.BusinessId = "b0"; meal.PlaceId = "s0"; Visit(store, meal, ShopExperience.Served, 0);
         meal.Memory.Entries[0].Affinity = 8; meal.Day = 1; meal.ContextAttempts = 0; meal.LastContextKey = ""; meal.BusinessId = meal.PlaceId = "";
         city = Reload(city, market, paths, settings);

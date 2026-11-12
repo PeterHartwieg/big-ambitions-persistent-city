@@ -5,19 +5,13 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F2e: who blocked the person. Only the player's own avatar or vehicle is a cause; native bodies, RLO actors and
-    /// service vehicles never are (Runtime PlayerContact reads only the player).</summary>
     public enum PlayerHoldCause { PlayerFoot, PlayerVehicle }
 
-    /// <summary>Why a hold applied nothing. A refused hold is not logged and takes no sequence number.</summary>
     public enum PlayerHoldRefusal
     {
         None, InvalidInput, UnknownPerson, Visitor, NotTravelling, NotDrained, AllowanceSpent, WrongLeg, AtLegStart, NoLink, Unchanged
     }
 
-    /// <summary>F2e: the outcome of <see cref="TrafficKernel.HoldVehicle"/>. Default means refused (nothing changed). The
-    /// three motion fields are the exact saved doubles after the hold; the charge is the change of the vehicle's earliest
-    /// discharge, which is all that counts against a journey's allowance.</summary>
     public readonly struct TrafficHoldResult
     {
         internal TrafficHoldResult(bool applied, double charge, double motionStartFraction, double motionStartedAt, double readyAt)
@@ -29,8 +23,6 @@ namespace PersistentCity.Core
         public double ReadyAt { get; }
     }
 
-    /// <summary>One applied hold as it appears in the stream: its sequence, the simulator minute it was applied at, the
-    /// reported input, the charge against the allowance and, for a car, the exact mutation (NaN for a walk).</summary>
     public readonly struct PlayerHoldRecord
     {
         public PlayerHoldRecord(long sequence, double minute, string personId, PlayerHoldCause cause, double input, double charge,
@@ -56,27 +48,15 @@ namespace PersistentCity.Core
         internal PlayerHoldResult(PlayerHoldRefusal refusal, PlayerHoldRecord record = default) { Refusal = refusal; Record = record; }
         public PlayerHoldRefusal Refusal { get; }
         public bool Applied => Refusal == PlayerHoldRefusal.None;
-        /// <summary>The logged record of an applied hold; default when refused.</summary>
         public PlayerHoldRecord Record { get; }
     }
 
-    /// <summary>
-    /// F2e player holds (docs/plans/f2-movement.md Decision 4): limits, the Player.log stream line and replay segment rules.
-    /// A stream line is <c>[Persistent City] hold seq=… minute=… person=… cause=… input=… charge=…</c>, plus
-    /// <c>motionStart=… motionAt=… readyAt=…</c> for a car. Doubles are written with "G17", which round-trips on every
-    /// runtime, so replay compares them bit for bit.
-    /// </summary>
     public static class PlayerHolds
     {
-        /// <summary>Most a person can be held per journey in total (plan Q2 default, accepted 6 November 2026).</summary>
         public const double MaximumMinutesPerJourney = 1;
-        /// <summary>Largest single report; Runtime re-reports while the contact persists.</summary>
         public const double MaximumReportMinutes = 0.25;
         public const string LinePrefix = "[Persistent City] hold seq=";
-        /// <summary>Replayed holds are logged with this prefix, which the stream parser never reads as an original.</summary>
         public const string ReplayLinePrefix = "[Persistent City] hold replay seq=";
-        /// <summary>`pc movement holds since` prints its copies with this prefix, so a log that holds both the original
-        /// events and a readback still parses to one record per sequence.</summary>
         public const string ReadbackLinePrefix = "[Persistent City] hold readback seq=";
 
         public static string CauseName(PlayerHoldCause cause) => cause == PlayerHoldCause.PlayerVehicle ? "player-vehicle" : "player-foot";
@@ -90,7 +70,6 @@ namespace PersistentCity.Core
 
         public static string Format(PlayerHoldRecord record, bool replay = false) => Format(record, replay ? ReplayLinePrefix : LinePrefix);
 
-        /// <summary>The line with another prefix (<see cref="ReplayLinePrefix"/> or <see cref="ReadbackLinePrefix"/>).</summary>
         public static string Format(PlayerHoldRecord record, string prefix)
         {
             if (prefix != LinePrefix && prefix != ReplayLinePrefix && prefix != ReadbackLinePrefix) throw new ArgumentException("Unknown hold line prefix.", nameof(prefix));
@@ -108,8 +87,6 @@ namespace PersistentCity.Core
             return text.ToString();
         }
 
-        /// <summary>Reads one original stream line (anything before the prefix, such as a log timestamp, is ignored).
-        /// Keys must appear exactly in the written order.</summary>
         public static bool TryParse(string? line, out PlayerHoldRecord record)
         {
             record = default;
@@ -133,12 +110,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>
-        /// A replay segment is the contiguous stream from the starting checkpoint's saved <see cref="CityState.PlayerHoldSequence"/>
-        /// to the end checkpoint's: the first record is start + 1, each next one is one more, minutes never go back, and the last
-        /// one is <paramref name="end"/> (when given). A missing, duplicated or out-of-order sequence number, or a wrong start or
-        /// end, refuses the whole segment.
-        /// </summary>
         public static bool ValidateSegment(IReadOnlyList<PlayerHoldRecord> records, long start, long? end, out string error)
         {
             error = "";
@@ -171,12 +142,6 @@ namespace PersistentCity.Core
 
         public const string SegmentLinePrefix = "segment start=";
 
-        /// <summary>
-        /// Reads a replay file for <c>pc movement replay-holds</c>: the original hold lines (every other line, including
-        /// replayed and readback copies, is ignored) and exactly one <c>segment start=&lt;seq&gt; end=&lt;seq&gt;</c> line with
-        /// the two checkpoints' saved sequences. The bounds come from the checkpoints, never from the records, so a missing
-        /// tail or an empty file is refused. The records must also form a valid segment between those bounds.
-        /// </summary>
         public static bool ReadSegment(IEnumerable<string> lines, out List<PlayerHoldRecord> records, out long start, out long end, out string error)
         {
             records = new List<PlayerHoldRecord>(); start = end = -1; error = "";
@@ -201,8 +166,6 @@ namespace PersistentCity.Core
             || double.IsNaN(a) && double.IsNaN(b);
     }
 
-    /// <summary>F2e: the last 256 applied holds for <c>pc movement holds since &lt;seq&gt;</c>. Runtime memory only; the
-    /// complete stream is Player.log.</summary>
     public sealed class PlayerHoldRing
     {
         public const int Capacity = 256;
@@ -210,8 +173,6 @@ namespace PersistentCity.Core
         private int count, head;
         private object? owner;
 
-        /// <summary>The ring belongs to one loaded city (its <see cref="CityState"/>). A different city, from a load or a
-        /// save change, starts it empty; a presentation rebuild over the same state keeps it.</summary>
         public void Bind(object city)
         {
             if (city == null) throw new ArgumentNullException(nameof(city));
@@ -222,7 +183,6 @@ namespace PersistentCity.Core
         public long LastSequence => count == 0 ? 0 : ring[(head + count - 1) % Capacity].Sequence;
         public long OldestSequence => count == 0 ? 0 : ring[head].Sequence;
 
-        /// <summary>A new city (load) can start at any saved sequence; a sequence that does not continue the ring clears it.</summary>
         public void Add(PlayerHoldRecord record)
         {
             if (count != 0 && record.Sequence != LastSequence + 1) { count = 0; head = 0; }
@@ -231,7 +191,6 @@ namespace PersistentCity.Core
             count++;
         }
 
-        /// <summary>Entries after <paramref name="sequence"/>; gap when a later entry was evicted (or never kept).</summary>
         public void Since(long sequence, List<PlayerHoldRecord> into, out bool gap)
         {
             gap = count != 0 && sequence + 1 < OldestSequence;
@@ -243,13 +202,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>
-    /// F2e E2 replay of one validated segment into a city loaded from the segment's starting checkpoint. The caller limits
-    /// each advance to <see cref="Limit"/> so the simulator stops exactly on each stamped minute, then calls
-    /// <see cref="ApplyDue"/> once it has drained that minute. Each hold goes through the same
-    /// <see cref="CitySimulator.HoldForPlayer"/> with the recorded input; the result must reproduce the recorded sequence,
-    /// charge and mutation bit for bit, or the replay stops with <see cref="Failure"/>.
-    /// </summary>
     public sealed class PlayerHoldReplay
     {
         private readonly List<PlayerHoldRecord> records;
@@ -265,10 +217,8 @@ namespace PersistentCity.Core
         public string Failure { get; private set; } = "";
         public bool Done => next >= records.Count && Failure.Length == 0;
         public double NextMinute => Failure.Length != 0 || next >= records.Count ? double.PositiveInfinity : records[next].Minute;
-        /// <summary>The advance target for this frame: never past the next stamped minute.</summary>
         public double Limit(double target) => Math.Min(target, NextMinute);
 
-        /// <summary>Apply every record stamped at the simulator's minute, once it has drained that minute. False on failure.</summary>
         public bool ApplyDue(CitySimulator city)
         {
             if (city == null) throw new ArgumentNullException(nameof(city));
@@ -276,7 +226,7 @@ namespace PersistentCity.Core
             {
                 var record = records[next];
                 if (record.Minute != city.State.Minute) { Failure = "the city passed hold seq=" + record.Sequence + " at minute " + record.Minute.ToString("G17", CultureInfo.InvariantCulture); break; }
-                if (!city.IsCaughtUpTo(record.Minute)) return true; // wait until the stamped minute has drained
+                if (!city.IsCaughtUpTo(record.Minute)) return true;
                 if (city.State.PlayerHoldSequence != record.Sequence - 1)
                 { Failure = "the city's hold sequence " + city.State.PlayerHoldSequence + " does not precede seq=" + record.Sequence; break; }
                 var result = city.HoldForPlayer(record.PersonId, record.Input, record.Cause);
@@ -294,17 +244,6 @@ namespace PersistentCity.Core
 
     public sealed partial class CitySimulator
     {
-        /// <summary>
-        /// F2e: the visible world's only write into Core (plan Decision 4). The player blocked this person for the last
-        /// <paramref name="blockedMinutes"/> (in (0, 0.25]; Runtime reports at most the time since its previous report for this
-        /// person). The hold is applied here, at once, and nothing about it is kept afterwards except the person's consumed
-        /// allowance and the city's hold sequence, both saved.
-        /// A walk leg moves DepartureMinute and NextEventMinute later and reschedules the due event, never below the current
-        /// leg's start (a traffic handoff already made lies at or before it). A traffic leg rebases the kernel vehicle
-        /// (<see cref="TrafficKernel.HoldVehicle"/>). The person's remaining allowance (1 game minute per journey) clamps the
-        /// input; only the charge counts against it. Applied only when the simulator has drained its minute, so a replay that
-        /// stops on the same minute applies it to the same state.
-        /// </summary>
         public PlayerHoldResult HoldForPlayer(string citizenId, double blockedMinutes, PlayerHoldCause cause)
         {
             if (!Position.Finite(blockedMinutes) || !(blockedMinutes > 0) || blockedMinutes > PlayerHolds.MaximumReportMinutes
@@ -327,7 +266,6 @@ namespace PersistentCity.Core
                 var held = traffic.HoldVehicle(citizenId, input, remaining);
                 if (!held.Applied) return new PlayerHoldResult(PlayerHoldRefusal.Unchanged);
                 charge = held.Charge;
-                // The published journey follows the kernel's rebased coordinate, as SynchronizeSnapshot would.
                 double progress = traffic.GetPermission(citizenId).NominalMinutes;
                 person.DepartureMinute = State.Minute - progress;
                 person.NextEventMinute = person.DepartureMinute + person.Journey.Minutes;
@@ -350,7 +288,6 @@ namespace PersistentCity.Core
                 if (State.Minute - departure < legStart) departure = State.Minute - legStart;
                 charge = departure - person.DepartureMinute;
                 if (!(charge > 0)) return new PlayerHoldResult(PlayerHoldRefusal.AtLegStart);
-                // Its event is not queued (an event in flight or a rebuild in progress): nothing to move at this minute.
                 if (!due.Remove(item)) return new PlayerHoldResult(PlayerHoldRefusal.NotDrained);
                 person.DepartureMinute = departure;
                 person.NextEventMinute += charge;

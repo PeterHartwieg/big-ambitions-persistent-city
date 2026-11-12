@@ -10,7 +10,6 @@ namespace PersistentCity.Core
     public enum FoodExperimentMode { FixedDailyReference, ObservedRoutines }
     public enum FoodOutsideOption { None, HomePreparation, PackedMeal, FundedHouseholdFood }
 
-    /// <summary>A detached input to a counterfactual experiment, never native inventory.</summary>
     public sealed class FoodBusiness
     {
         [IgnoreDataMember] public FoodAlternativeKind AlternativeKind { get; set; }
@@ -21,8 +20,6 @@ namespace PersistentCity.Core
             ? FoodAvailabilityEvidenceKind.EstimatedFromPriceAndHours : FoodAvailabilityEvidenceKind.ObservedPlayerSupply;
         [IgnoreDataMember] public double ServiceMinutes => AlternativeKind == FoodAlternativeKind.Rival ? RivalServiceMinutes
             : MealsPerHour > 0 ? 60.0 / MealsPerHour.Value : 0;
-        // Reuse the place's exact-hours cache across offers of this observation. It validates mutable
-        // windows itself; replacing Hours also changes WeeklyHours here. Never serialized as market evidence.
         private Place? openingPlace;
         internal Place OpeningPlace
         {
@@ -37,8 +34,6 @@ namespace PersistentCity.Core
         public string Name { get; set; } = "";
         public List<OpeningWindow> Hours { get; set; } = new List<OpeningWindow>();
         public List<FoodOffer> Offers { get; set; } = new List<FoodOffer>();
-        // Effective sellable/staffed throughput, not floor area or guaranteed demand.
-        // null is unknown; zero is unavailable. Used only in ObservedRoutines mode.
         public int? MealsPerHour { get; set; }
         public string ServiceEvidence { get; set; } = "Service availability and throughput unknown";
         public string ServiceUnavailableReason { get; set; } = "";
@@ -52,7 +47,6 @@ namespace PersistentCity.Core
     {
         public string ProductId { get; set; } = "";
         public Money Price { get; set; }
-        // null means unknown, not unlimited. The experiment consumes its own copy only.
         public int? Units { get; set; }
         public int? DistrictDemandPercent { get; set; }
         public string DistrictDemandEvidence { get; set; } = "District product demand unknown; no appeal adjustment";
@@ -69,7 +63,6 @@ namespace PersistentCity.Core
         public int ValueOfTimeCentsPerMinute { get; set; } = 5;
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; } = 100;
-        // Full 0-to-100-point difference in perceived value. Zero preserves older experiments.
         public int ServiceQualityValueCents { get; set; }
         public int DistrictAppealValueCents { get; set; }
         public string HomeDistrictId { get; set; } = "";
@@ -80,10 +73,8 @@ namespace PersistentCity.Core
     {
         public string ConsumerId { get; set; } = "";
         public string BusinessId { get; set; } = "";
-        // null is a refused route. No quote is unknown; neither becomes a straight-line journey.
         public double? Minutes { get; set; }
         public string Evidence { get; set; } = "";
-        // Routine quotes belong to one opportunity at one observed origin.
         public string IntentId { get; set; } = "";
         public string OriginPlaceId { get; set; } = "";
         public double? ReturnMinutes { get; set; }
@@ -137,8 +128,6 @@ namespace PersistentCity.Core
 
     public sealed class FoodShadowState
     {
-        /// <summary>Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature
-        /// schema constants; change the format in place.</summary>
         public const int CurrentSchema = 1;
         public int Schema { get; set; } = CurrentSchema;
         public string Kind { get; set; } = "persistentcity:food-shadow";
@@ -155,10 +144,6 @@ namespace PersistentCity.Core
         public FoodExperimentMode Mode { get; set; }
     }
 
-    /// <summary>
-    /// A bounded, detached counterfactual: one meal per resident/day, temporary allowances,
-    /// explicit travel quotes and finite stock. It has no access to CityState or native writers.
-    /// </summary>
     public sealed class FoodDemand
     {
         public FoodShadowState State { get; }
@@ -214,8 +199,6 @@ namespace PersistentCity.Core
             if (!Position.Finite(minute) || minute < State.Minute || minute > State.EndsAt || eventBudget < 1)
                 throw new ArgumentOutOfRangeException(nameof(minute));
             int events = 0;
-            // The finite experiment has at most seven intentions per resident. Keep ordering
-            // explicit so arrival/departure ties and interrupted batches replay identically.
             while (pending.Count > 0)
             {
                 var next = pending.Min!;
@@ -255,7 +238,6 @@ namespace PersistentCity.Core
             return state;
         }
 
-        /// <summary>Explicit experiment intervention; never writes back into an observed business.</summary>
         public void SetPrice(string businessId, string productId, Money price)
         {
             if (price <= Money.Zero || price > Money.FromCents(1000000)) throw new ArgumentOutOfRangeException(nameof(price));
@@ -280,9 +262,6 @@ namespace PersistentCity.Core
                 Key(Routine ? intent.Id : person.Id, business.Id), out var quote) ? quote : null, State.Minute, Routine);
         }
 
-        /// <summary>One decision using already validated live inputs. Mutates only the supplied
-        /// fresh intent; no experiment document, cloning, scheduling or stock settlement.
-        /// Persisted/untrusted experiment inputs still use the validating constructor.</summary>
         public static void ChooseObserved(FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
             IReadOnlyList<FoodTravelQuote> routes, FoodIntent intent, double minute,
             IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy, bool evaluateOnly = false)
@@ -293,8 +272,6 @@ namespace PersistentCity.Core
                 && q.IntentId == intent.Id && q.ConsumerId == person.Id), minute, true, refusals, mealKind, evaluateOnly);
         }
 
-        // Only reject facts that already prevent choice under this current-supply model.
-        // Unknown supply stays unknown; no route or future staffing is invented.
         public static string? KnownUnavailable(FoodBusiness business, FoodConsumer consumer, double now, double deadline)
         {
             if (!DailyRoutine.NextOpen(Place(business), now, deadline).HasValue) return "Closed or too late";

@@ -15,19 +15,12 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F9e (plan f9-city-acceptance.md, Decision 8): observers read the city through <see cref="CitySimulator.View"/>.
-/// A reflection test walks every type reachable from <see cref="ICityView"/> and classifies every
-/// <see cref="CityViewReports"/> result; detachment tests show the reports share no saved object. The output test compares what the panel, inspector and diagnostics read through the view with
-/// the same reads through the state, on the F5h and F9c cities.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class OwnershipBoundaryTests
 {
     private readonly ITestOutputHelper output;
     public OwnershipBoundaryTests(ITestOutputHelper output) { this.output = output; }
 
-    /// <summary>F9g: the candidate queries return read-only person views. The one entity-typed public result on the
-    /// candidate query types is the named exception <see cref="ActiveJourneyIndex.BodyCandidates"/>, which the F2
-    /// movement-equivalence driver (tests/movement-equivalence/PresentationDriver.cs, owned by F2g) follows as entities.</summary>
     [Fact]
     public void CandidateQueriesReturnViewTypes()
     {
@@ -43,7 +36,6 @@ public sealed class OwnershipBoundaryTests
                 .Select(m => (t, m, type: m is PropertyInfo p ? p.PropertyType : m is MethodInfo mi && !mi.IsSpecialName ? mi.ReturnType : null)))
             .Where(x => x.type != null && Entity(x.type)).Select(x => x.t.Name + "." + x.m.Name).ToArray();
         Assert.Equal(new[] { "ActiveJourneyIndex.BodyCandidates" }, entityResults);
-        // The query hands out the filed entities themselves, seen through the view: no copy, no wrapper.
         var people = new List<CitizenState>
         {
             new() { Identity = new CitizenIdentity { Id = "w" }, Phase = CitizenPhase.WaitingForOpening, PlaceId = "shop" },
@@ -59,7 +51,6 @@ public sealed class OwnershipBoundaryTests
         Assert.False(index.Contains(people[2]));
     }
 
-    // ---- Reflection ----
 
     private static readonly Type[] Values = { typeof(string), typeof(bool), typeof(int), typeof(long), typeof(double), typeof(float), typeof(Position), typeof(Money) };
 
@@ -102,7 +93,6 @@ public sealed class OwnershipBoundaryTests
             }
         }
         Assert.Empty(problems);
-        // The walk reached every entity view, and each entity implements its view without a public member change.
         var expected = new[] { typeof(ICityView), typeof(IPersonView), typeof(IPlaceView), typeof(IFoodView), typeof(IFoodScopeView),
             typeof(IEconomicLedgerView), typeof(IResearchView), typeof(IResearchOrderView), typeof(IVendorRowView) };
         Assert.Equal(expected.OrderBy(t => t.Name), seen.OrderBy(t => t.Name));
@@ -111,29 +101,22 @@ public sealed class OwnershipBoundaryTests
             (typeof(VendorRow), typeof(IVendorRowView)), (typeof(EconomicLedger), typeof(IEconomicLedgerView)) })
         {
             Assert.True(view.IsAssignableFrom(entity), entity.Name + " does not implement " + view.Name);
-            // Explicit implementations only: the view adds no public member, so the writer sees the same shape.
             var map = entity.GetInterfaceMap(view);
             Assert.All(map.TargetMethods, m => Assert.True(m.IsPrivate && m.Name.Contains(view.Name, StringComparison.Ordinal), entity.Name + "." + m.Name));
         }
-        // No view collection shares a name with a public collection anywhere else in Core or Persistence, so a saved
-        // field name always means one collection and one bound.
         var viewCollections = seen.SelectMany(t => t.GetProperties()).Where(p => p.PropertyType != typeof(string)
             && typeof(System.Collections.IEnumerable).IsAssignableFrom(p.PropertyType)).Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
         Assert.Contains("ExtraProductIds", viewCollections);
         foreach (var type in typeof(CityState).Assembly.GetTypes().Concat(typeof(SaveCodec).Assembly.GetTypes()).Where(t => !seen.Any(v => v.IsAssignableFrom(t))))
             foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 Assert.False(viewCollections.Contains(p.Name), type.Name + "." + p.Name + " shares its name with a view collection");
-        // The city view implementation is not public, so an observer cannot name it to reach the state.
         Assert.False(typeof(CitySimulator).Assembly.GetType("PersistentCity.Core.CityView")!.IsPublic);
     }
 
-    // ---- Outputs before and after ----
 
     private static string Amount(Money amount) => ((decimal)amount.Units / Money.UnitsPerDollar).ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
     private static string Name(string id) => "<" + id + ">";
 
-    /// <summary>The base panel's per-shop history text (F6c overview weeks and V2 text, then BuildEconomyText's block), as the
-    /// base code built it from the shared rows.</summary>
     private static void BaseShopText(StringBuilder text, List<FoodShopDay> rows, string placeId, string businessId, int day, int since, int since2)
     {
         text.AppendLine(FoodFeedback.Weeks(rows, placeId, businessId, day, since).Text());
@@ -160,17 +143,12 @@ public sealed class OwnershipBoundaryTests
         FoodFeedbackV2.AppendJournal(text, null, rows, day, since2, Name);
     }
 
-    /// <summary>The <c>pc vendor sales</c> meal list (receipts against an empty receipt dictionary).</summary>
     private static string VendorSales(IEnumerable<ResidentMeal> meals, IDictionary<string, string>? receipts = null) => JsonConvert.SerializeObject(meals.Select(m => new { m.IntentId,
         m.ResidentId, m.BusinessId, m.ProductId, cents = m.Price.ToCentsText(), m.Status, receipt = FoodSaleReceipts.ReadStatus(receipts ?? new Dictionary<string, string>(), m).ToString(), wallet = m.Budget }));
-    /// <summary>The same list as VendorDiagnostics builds it from the reports.</summary>
     private static string VendorSales(IEnumerable<VendorMealReport> meals, IDictionary<string, string>? receipts = null) => JsonConvert.SerializeObject(meals.Select(v => new { v.Record.IntentId,
         v.Record.ResidentId, v.Record.BusinessId, v.Record.ProductId, cents = v.Record.Price.ToCentsText(), v.Record.Status,
         receipt = FoodSaleReceipts.ReadStatus(receipts ?? new Dictionary<string, string>(), v.Record).ToString(), wallet = v.Wallet }));
 
-    /// <summary>What the panel (BuildEconomyText and the F6c overview), the economy overview, the accounting line, the research
-    /// status, orders and reports, the vendor sales, the save-cost record counts, the census capture, the person command and
-    /// the inspector read, through the state (the base code's reads). <paramref name="payload"/> is the city's save.</summary>
     internal static string ThroughState(CitySimulator sim, string payload)
     {
         var city = sim.State; var food = city.Food!; var text = new StringBuilder();
@@ -205,7 +183,6 @@ public sealed class OwnershipBoundaryTests
         return text.ToString();
     }
 
-    /// <summary>The same reads as the observer files now make them: through <see cref="CitySimulator.View"/>.</summary>
     internal static string ThroughView(CitySimulator sim, string payload)
     {
         var city = sim.View; var food = city.Food!; var text = new StringBuilder();
@@ -230,13 +207,11 @@ public sealed class OwnershipBoundaryTests
         text.AppendLine("minute " + city.Minute.ToString("R"));
         var research = city.Research;
         text.AppendLine(research.OpenOrders.Count + "|" + research.KeptOrders.Count + "|" + research.ClosedOrders.Count + "|" + research.NextSequence);
-        // The orders, report and window text read a detached copy of the ledger; its order ids are the view's.
         var ledger = CityViewReports.ResearchSnapshot(city);
         Assert.Equal(ResearchReportText.Orders(ledger).Select(o => o.Id), research.OpenOrders.Concat(research.KeptOrders).Concat(research.ClosedOrders).Select(o => o.Id));
         foreach (var order in ResearchReportText.Orders(ledger))
             text.AppendLine(ResearchReportText.Line(order, order.BusinessAddress)).AppendLine(ResearchReportText.Report(ledger, order, order.BusinessAddress));
         text.AppendLine(VendorSales(CityViewReports.VendorMeals(city)));
-        // The save owner (PersistentCityMod) supplies the save-cost count; the status file only times it.
         text.AppendLine(SaveCodec.CountRecords(sim.State, payload).ToString());
         foreach (var r in city.VendorRowList) text.AppendLine(r.VehicleId + "|" + r.BusinessId + "|" + r.PlaceId + "|" + r.State + "|" + r.Reason);
         foreach (var c in CityViewReports.CaptureCensusResidents(city)) text.Append(c.HomeId).Append(c.DayPlaceId).Append(c.Persona).Append(',');
@@ -254,7 +229,6 @@ public sealed class OwnershipBoundaryTests
             + "|" + string.Join(",", insight.Personality) + "|" + insight.PersonWords + "|" + string.Join(",", insight.MemoryWords));
     }
 
-    /// <summary>The F5h reference city one day and seven hours in (meals, journeys and the first fill under way).</summary>
     internal static CitySimulator F5hCity()
     {
         var shape = F5hIntegratedAcceptanceTests.ReferenceShape();
@@ -265,7 +239,6 @@ public sealed class OwnershipBoundaryTests
         return city;
     }
 
-    /// <summary>The F9c city-s reference run's final city (three days, research reports and a vendor row), loaded.</summary>
     internal static CitySimulator F9cCity()
     {
         var run = CityScenario.Run(CityFixture.Create(CitySize.Small()), CityArm.ReferenceArm);
@@ -281,11 +254,9 @@ public sealed class OwnershipBoundaryTests
             string before = ThroughState(city, payload), after = ThroughView(city, payload);
             output.WriteLine(name + " outputs sha256 " + CityOracles.Sha(after) + ", " + after.Length + " characters");
             Assert.Equal(before, after);
-            // Non-trivial city: the reads cover residents, places, shops and (in F9c) research and vendor rows.
             Assert.True(city.View.ResidentList.Count > 100);
             Assert.NotEmpty(city.View.Food!.ScopeList);
             if (name == "f9c") { Assert.NotEmpty(city.View.Research.KeptOrders); Assert.NotEmpty(city.View.VendorRowList); }
-            // Every view member reads the live entity: compare each with the state field it names.
             var s = city.State; var v = city.View;
             Assert.Same(s.Citizens, v.ResidentList); Assert.Same(s.Places, v.PlaceList); Assert.Same(s.Food!.Shops, v.Food!.ScopeList);
             Assert.Same(s.VisitorRoutines, v.VisitorRoutineList); Assert.Same(s.Vendors.Rows, v.VendorRowList); Assert.Same(s.Economy, v.Economy);
@@ -338,8 +309,6 @@ public sealed class OwnershipBoundaryTests
         }
     }
 
-    /// <summary>Every public report and what makes its result safe to hand to an observer (review Sol-r1-1, Sol-r1-2). A new
-    /// report fails here until it is classified and covered below.</summary>
     private static readonly Dictionary<string, string> Reports = new(StringComparer.Ordinal)
     {
         ["EconomyOverview"] = "values and detached history rows",
@@ -368,7 +337,6 @@ public sealed class OwnershipBoundaryTests
         Assert.NotEmpty(food.History);
         var rows = new HashSet<object>(food.History, ReferenceEqualityComparer.Instance);
 
-        // The overview: the same JSON, no saved row inside, and editing its rows leaves the city as it was.
         string json = JsonConvert.SerializeObject(FoodEconomyInsight.Capture(state));
         var overview = CityViewReports.EconomyOverview(view);
         Assert.Equal(json, JsonConvert.SerializeObject(overview));
@@ -378,7 +346,6 @@ public sealed class OwnershipBoundaryTests
         foreach (var row in copies) { row.Purchases += 1000; row.PurchaseHours[0] += 7; row.ProductSales.Clear(); row.PeriodCauses.Counts[0] += 3; }
         Assert.Equal(json, JsonConvert.SerializeObject(FoodEconomyInsight.Capture(state)));
 
-        // Every meal record and wallet detaches to the same JSON and shares no object with the city.
         string meals = JsonConvert.SerializeObject(food.Residents.Select(m => new { m.IntentId, m.Status, m.Price, m.Budget }));
         var detached = food.Residents.Select(CityViewReports.Detach).ToList();
         Assert.Equal(meals, JsonConvert.SerializeObject(detached.Select(m => new { m.IntentId, m.Status, m.Price, m.Budget })));
@@ -394,7 +361,6 @@ public sealed class OwnershipBoundaryTests
         Assert.DoesNotContain(vendorMeals, v => food.Residents.Any(r => ReferenceEquals(r, v.Record) || v.Wallet != null && ReferenceEquals(r.Budget, v.Wallet)));
         output.WriteLine("vendor meals " + vendorMeals.Count + ", history rows " + copies.Length + ", meals " + detached.Count);
 
-        // The research copy has the same orders; ordering on it leaves the city's ledger as it was.
         var ledger = CityViewReports.ResearchSnapshot(view);
         Assert.NotSame(state.Research, ledger);
         Assert.Equal(state.Research.Kept.Select(o => o.Id + "=" + o.State), ledger.Kept.Select(o => o.Id + "=" + o.State));
@@ -405,9 +371,6 @@ public sealed class OwnershipBoundaryTests
         Assert.Equal((next, open), (state.Research.NextSequence, state.Research.Open.Count));
     }
 
-    /// <summary>Review Sol-r2-1: a failed vendor meal keeps its vendor place, and a later food-stop retry holds a new decision
-    /// with its tuning, which has no parameterless constructor and cannot be deep-copied. <c>pc vendor sales</c> still lists
-    /// the meal, with the same text as the base code's projection of the live meal, and shares nothing with the city.</summary>
     [Fact]
     public void VendorSalesListAVendorMealHoldingARetryDecision()
     {
@@ -422,9 +385,7 @@ public sealed class OwnershipBoundaryTests
             meal.Status = MealStatus.Declined;
             meal.Decision = new FoodDecisionState { Tuning = FoodDecisionTuning.Capture(new FoodChoiceSettings()) };
         }
-        // The full deep copy of round 1 refused this state.
         Assert.Throws<NotSupportedException>(() => CityViewReports.Detach(meals[0]));
-        // One paid receipt, one conflicting, one missing, so the receipt column takes three values.
         var receipts = new Dictionary<string, string>
         {
             [FoodSaleReceipts.Prefix + meals[1].IntentId] = "paid|" + meals[1].Price.ToCentsText() + "|" + Uri.EscapeDataString(meals[1].BusinessId) + "|" + Uri.EscapeDataString(meals[1].ProductId),
@@ -436,7 +397,6 @@ public sealed class OwnershipBoundaryTests
         Assert.Equal(live, VendorSales(reports, receipts));
         foreach (var status in new[] { "\"receipt\":\"Paid\"", "\"receipt\":\"Conflict\"", "\"receipt\":\"Missing\"" }) Assert.Contains(status, live);
         output.WriteLine(live.Length + " characters: " + live.Substring(0, Math.Min(240, live.Length)));
-        // Nothing in a report is the city's: editing it leaves the live projection as it was.
         foreach (var report in reports)
         {
             Assert.DoesNotContain(food.Residents, r => ReferenceEquals(r, report.Record) || ReferenceEquals(r.Budget, report.Wallet));
@@ -456,7 +416,6 @@ public sealed class OwnershipBoundaryTests
         Assert.Same(view, city.View);
         Assert.Null(view.Food);
         Assert.Equal(1440, view.Minute);
-        // A replaced list and a changed value are seen at once: the view is the state, not a copy.
         state.Places = new List<Place> { new() { Id = "other", Name = "Other" } };
         Assert.Equal("other", Assert.Single(view.PlaceList).Id);
         state.Minute = 2000;
@@ -464,7 +423,6 @@ public sealed class OwnershipBoundaryTests
         state.Food = new FoodCommerceState();
         Assert.NotNull(view.Food);
         Assert.Empty(view.Food!.ScopeList);
-        // A view from elsewhere cannot reach the reports.
         Assert.Throws<ArgumentException>(() => CityViewReports.DescribePerson(new ForeignView(), "a", 0));
     }
 
@@ -483,9 +441,7 @@ public sealed class OwnershipBoundaryTests
         public IVendorRowView? FindVendor(string vehicleId) => null;
     }
 
-    // ---- Allocation ----
 
-    /// <summary>The panel's view reads in BuildEconomyText and DrawEconomy, as index loops (no boxed enumerator).</summary>
     private static long PanelReads(ICityView city)
     {
         long sum = (long)city.Minute / 1440 + city.ResidentList.Count + city.VisitorCount + city.PortalCount;

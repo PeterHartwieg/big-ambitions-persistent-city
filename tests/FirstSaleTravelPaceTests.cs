@@ -8,21 +8,13 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// Rig 11h/11i natural first sale: a ready, staffed 09:00–18:00 food shop at a normal distance from
-/// homes and workplaces. Runtime walks at the native pedestrian pace of 2 m per scaled second divided
-/// by the observed clock rate (game minutes per scaled second). The rig checkpoints carry
-/// TravelClockRate 1/3 before the FT speed-20 advance and 20/3 after it; at 20/3 walking covers 0.3 m
-/// per game minute, so no break fits a round trip to any shop the person is not already standing in.
-/// </summary>
 public sealed class FirstSaleTravelPaceTests
 {
     private readonly ITestOutputHelper output;
     public FirstSaleTravelPaceTests(ITestOutputHelper output) => this.output = output;
-    private const double NativeWalkingMetresPerSecond = 2; // NativeTravelPace.WalkingMetresPerSecond
+    private const double NativeWalkingMetresPerSecond = 2;
     private const string Shop = "shop-player", Business = "player";
 
-    /// <summary>Straight-line walking at Runtime's pace; the same bound and pace contracts MultimodalRoutes offers.</summary>
     private sealed class PacedWalking : IRoutePlanner, IWalkingTimeBound, IFoodWalkingPace
     {
         public PacedWalking(double clockRate) => WalkingMetresPerMinute = NativeWalkingMetresPerSecond / clockRate;
@@ -37,7 +29,6 @@ public sealed class FirstSaleTravelPaceTests
         }
     }
 
-    /// <summary>The rig shop: one croissant at $5, 100 units, one staffed counter (20 meals per hour), 09:00–18:00 daily.</summary>
     private sealed class PlayerShop : IFoodMarket
     {
         private int sold;
@@ -61,7 +52,6 @@ public sealed class FirstSaleTravelPaceTests
             Id = "rlo:firstsale:c" + i.ToString("D3", CultureInfo.InvariantCulture), Name = "Citizen " + i, Age = 20 + i % 45,
             District = "a", Persona = (Persona)(i % 8), AppearanceSeed = i + 1
         });
-        // Distances from the shop: home 90 m, work 60 m, school 120 m, leisure 75 m.
         var places = new[]
         {
             new Place { Id = "home", Name = "Home", District = "a", Kind = PlaceKind.Home, Capacity = 60, Position = new Position(90, 0, 0) },
@@ -82,7 +72,6 @@ public sealed class FirstSaleTravelPaceTests
             foreach (var choice in trace.Intent.Choices.Where(c => c.BusinessId == Business))
                 reasons[choice.Reason] = reasons.TryGetValue(choice.Reason, out int n) ? n + 1 : 1;
         };
-        // The rig window: from day 1 05:00 through the first shop day (09:00-18:00) to day 2 noon.
         for (double at = state.Minute + 60; at <= 2 * 1440 + 720; at += 60)
             while (!city.AdvanceTo(at, 64).CaughtUp) { }
         output.WriteLine("rate " + clockRate.ToString("R", CultureInfo.InvariantCulture) + ": " + market.Orders.Count + " orders; "
@@ -93,14 +82,13 @@ public sealed class FirstSaleTravelPaceTests
     [Fact]
     public void StaffedShopAtNormalDistanceSellsAtTheNativeCalendarPace()
     {
-        var (market, reasons) = Run(1.0 / 3); // MinutesMultiplier 1 × default clock factor 1/3: 6 m per game minute
+        var (market, reasons) = Run(1.0 / 3);
         Assert.True(market.Orders.Count > 0, "No natural sale; reasons: " + string.Join(", ", reasons.Select(r => r.Key + "=" + r.Value)));
     }
 
     [Fact]
     public void FtSpeedTwentyClockRateLeavesNoBreakForARoundTrip()
     {
-        // The rate saved in every rig 11i checkpoint after "run_until … speed 20": 0.3 m per game minute.
         var (market, reasons) = Run(20.0 / 3);
         Assert.Empty(market.Orders);
         Assert.Contains(reasons.Keys, r => r == "Service and return do not fit available time" || r == "Travel and service cannot fit break");

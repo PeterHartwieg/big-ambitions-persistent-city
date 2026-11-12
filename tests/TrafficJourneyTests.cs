@@ -58,8 +58,6 @@ public sealed class TrafficJourneyTests
     [Fact]
     public void DepartureIsNeverHeldForABodyAndTrafficAdmitsOnTheLogicalClock()
     {
-        // F2c removed TryHoldPhysicalDeparture: a body returning from a stop no longer holds the new journey. F2d removed
-        // the traffic lease: no body holds a traffic leg either.
         var engine = Engine(1); var citizen = engine.State.Citizens[0];
         Assert.DoesNotContain(typeof(CitySimulator).GetMethods(), m => m.Name == "TryHoldPhysicalDeparture");
         Assert.DoesNotContain(typeof(CitySimulator).GetMethods(), m => m.Name == "TryAcquirePhysicalJourney");
@@ -192,8 +190,6 @@ public sealed class TrafficJourneyTests
         Assert.Equal(SaveCodec.Write(engine.State),SaveCodec.Write(restored.State));
     }
 
-    /// <summary>X6: the kernel has no physical control, so a saved traffic vehicle has no PhysicalControl field. The format
-    /// changed in place at schema 1: a payload that still carries the field is refused, not silently read.</summary>
     [Fact]
     public void SavedTrafficVehiclesHaveNoPhysicalControlFieldAndOlderPayloadsAreRefused()
     {
@@ -208,8 +204,6 @@ public sealed class TrafficJourneyTests
         Assert.Equal(SaveReadStatus.Invalid,read.Status);Assert.Null(read.State);Assert.Contains("PhysicalControl",read.Error);
     }
 
-    /// <summary>F2d: a visible head car no longer holds its followers. The queue discharges in FIFO order on the kernel's
-    /// clock, exactly as without bodies.</summary>
     [Fact]
     public void VisibleHeadNoLongerHoldsItsPlaceOrItsFollowers()
     {
@@ -225,8 +219,6 @@ public sealed class TrafficJourneyTests
         Assert.Equal(SaveCodec.Write(plain.State),SaveCodec.Write(engine.State));
     }
 
-    /// <summary>F2d: a car body ahead of its kernel coordinate gains nothing. The follower's progress is capped at the
-    /// kernel's permission and the queue behind it keeps its finite storage.</summary>
     [Fact]
     public void FollowerAheadOfItsKernelCoordinateCannotBypassFiniteStorage()
     {
@@ -236,7 +228,6 @@ public sealed class TrafficJourneyTests
         var behind=queued.OrderBy(c=>engine.Traffic!.GetPermission(c.Identity.Id).MaximumNominalMinutes).First();
         var permission=engine.Traffic!.GetPermission(behind.Identity.Id);
         string before=SaveCodec.Write(engine.State);
-        // A body standing at the end of the road, with Gley's receipt for the first corner.
         double body=CarFollow.Advance(behind.Journey!,0,CarFollow.Cap(behind.Journey!,0,permission.MaximumNominalMinutes),new Position(24,0,0),0);
         Assert.True(body<=permission.MaximumNominalMinutes);
         Assert.Equal(permission.MaximumNominalMinutes,engine.Traffic.GetPermission(behind.Identity.Id).MaximumNominalMinutes);
@@ -247,7 +238,6 @@ public sealed class TrafficJourneyTests
     [Fact]
     public void FollowingATrafficLegNeverRefilesTheRoute()
     {
-        // The presentation grid property that walk and traffic leases used to cover (PresentationGridTests).
         var engine=Engine(4); engine.AdvanceTo(1440);
         var grid=engine.ActiveJourneys.Grid; long filed=grid.Filings;
         var c=engine.State.Citizens[0];

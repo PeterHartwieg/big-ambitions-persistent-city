@@ -5,7 +5,6 @@ namespace PersistentCity.Core
 {
     public enum OrdinaryVisitClass { ActivityOnly, Retail, Leisure }
 
-    /// <summary>Published hourly evidence only. Runtime owns native reads; absence authorizes no spending.</summary>
     public readonly struct OrdinaryVisitTerms
     {
         public OrdinaryVisitTerms(long hour, bool playerOwned, OrdinaryVisitClass kind)
@@ -23,7 +22,6 @@ namespace PersistentCity.Core
     }
     public sealed class OrdinaryVisitPrices
     {
-        // Modeled outside prices, never advertised/native receipts. F6h calibrates these defaults.
         public OrdinaryVisitPrices(int retailCents = 500, int leisureCents = 1200)
         {
             if (retailCents < 1 || retailCents > 10000 || leisureCents < 1 || leisureCents > 10000)
@@ -42,7 +40,6 @@ namespace PersistentCity.Core
                 && price <= HouseholdFinance.SpendingLimit(budget)
                 && Money.TryAdd(budget.Ledger.Discretionary, price, out _);
 
-        /// <summary>One exact ModeledOutside counterpart. Every refusal leaves wallet and totals untouched.</summary>
         public static bool TryPay(ResidentBudget budget, EconomicLedger ledger, OrdinaryVisitClass kind, Money price, double minute)
         {
             if ((kind != OrdinaryVisitClass.Retail && kind != OrdinaryVisitClass.Leisure) || !CanAdmit(budget, price, minute)) return false;
@@ -51,7 +48,6 @@ namespace PersistentCity.Core
             var rows = ledger.Outside;
             if (rows.Count > 0 && rows[rows.Count - 1].Day > day) return false;
             OutsideSpendingDay? row = rows.Count > 0 && rows[rows.Count - 1].Day == day ? rows[rows.Count - 1] : null;
-            // Prepare the row before publishing money. Record stages both exact counters before assignment.
             bool added = row == null;
             if (row == null) row = new OutsideSpendingDay { Day = day };
             if (!row.TryRecord(kind, price)) return false;
@@ -67,7 +63,6 @@ namespace PersistentCity.Core
             while (rows.Count > 0 && rows[0].Day < day - EconomicLedger.Days + 1) rows.RemoveAt(0);
         }
     }
-    // Free feedback has no identity, shares, category breakdown or resident traits.
     public readonly struct OutsideSpendingTotal
     {
         public OutsideSpendingTotal(int firstDay, int lastDay, BigInteger units, BigInteger visits)
@@ -90,7 +85,6 @@ namespace PersistentCity.Core
         {
             ordinaryOwnership = ownership ?? throw new ArgumentNullException(nameof(ownership)); ordinaryPrices = prices ?? new OrdinaryVisitPrices();
             ordinaryLoadedHour = (long)(State.Minute / 60); ordinaryObservedHour = -1;
-            // Market-first attachment reflags its live counters; policy-first sets modes as wallets attach.
             food?.RestoreVisitorWalletModes();
         }
         private bool RecordsSamePlaceArrival(CitizenState person, RoutineSlot slot)
@@ -108,7 +102,7 @@ namespace PersistentCity.Core
         private bool CanAdmitOrdinary(CitizenState person, string placeId, Activity activity, double minute)
         {
             Money price = OrdinaryPrice(placeId, activity, minute, out _);
-            if (price == Money.Zero) return true; // activity only on unknown/stale/player-owned evidence
+            if (price == Money.Zero) return true;
             var budget = food?.FindMeal(person.Identity.Id)?.Budget;
             if (budget != null) budget.VisitorEndowment = VisitorEndowments && person.IsVisitor;
             return budget == null || OrdinaryExchanges.CanAdmit(budget, price, minute);

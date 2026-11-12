@@ -3,9 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace PersistentCity.Core
 {
-    /// <summary>One native minute is an input epoch. Drain every event strictly before its end
-    /// before allowing native time (and hourly/daily accounting) to enter the next epoch.
-    /// Checkout stays in the current native hour; no historical inventory is replayed.</summary>
     public static class AccountingClock
     {
         public const double MaximumLagMinutes = 1;
@@ -20,10 +17,6 @@ namespace PersistentCity.Core
         private static double Previous(double value) => value == 0 ? 0
             : BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(value) - 1);
 
-        // Use the float minute-of-hour that native time actually stores. A decimal epsilon
-        // is unsafe: the last substep can round into an hour before its final events drain.
-        // Use the hour's float spacing everywhere: adding across 60 and then subtracting
-        // 60 must preserve this fence too (the float spacing near minute one is smaller).
         private const float FenceGap = 1f / 262144;
         private static float Fence(double nativeMinute) => (float)(Math.Floor(nativeMinute % 60) + 1) - FenceGap;
         public static double Target(double nativeMinute)
@@ -35,8 +28,6 @@ namespace PersistentCity.Core
         public static bool Compatible(double logicalMinute, double nativeMinute)
         {
             Validate(nativeMinute);
-            // Immediately after crossing, the last published logical minute is the double
-            // predecessor of this boundary. All earlier work was drained before crossing.
             return Position.Finite(logicalMinute) && logicalMinute >= Previous(Math.Floor(nativeMinute))
                 && logicalMinute <= Target(nativeMinute);
         }
@@ -48,11 +39,8 @@ namespace PersistentCity.Core
             if (!Position.Finite(requestedMinutes) || requestedMinutes < 0) throw new ArgumentOutOfRangeException(nameof(requestedMinutes));
             if (!caughtUp || requestedMinutes == 0) return 0;
             float minute = (float)(nativeMinute % 60), fence = Fence(nativeMinute);
-            // Once the ending epoch drained, use this tick's remaining allowance in the
-            // next epoch instead of spending a rendered frame on a one-ulp crossing.
             float end = minute >= fence ? fence + 1 : fence;
             float allowed = Math.Min(requestedMinutes, end - minute);
-            // Subtraction and subsequent native float addition can round in opposite directions.
             if (minute + allowed > end) allowed = Previous(allowed);
             return allowed;
         }
@@ -62,15 +50,11 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Elapsed-time allowance with the legacy 16-start/2ms per-frame floor. No debt
-    /// accumulates after stalls; soft time limits still cannot preempt an individual native call.</summary>
     public readonly struct PopulationFrameBudget
     {
         public PopulationFrameBudget(double seconds, bool hiddenSkip)
         {
             if (!Position.Finite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
-            // Unity supplies float seconds; do not turn 16.0000008 into seventeen starts.
-            // The epsilon is below a work unit and covers float conversion at these caps.
             Units = hiddenSkip ? 128 : Math.Max(128, Math.Min(1024, (int)Math.Ceiling(Math.Min(seconds, 1) * 7680 - .0001)));
             CitizenEvents = hiddenSkip ? 128 : Math.Max(16, Math.Min(128, (int)Math.Ceiling(Math.Min(seconds, 1) * 960 - .0001)));
             Milliseconds = hiddenSkip ? 16 : Math.Max(2, Math.Min(4, seconds * 120));

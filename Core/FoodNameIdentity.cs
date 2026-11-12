@@ -2,11 +2,8 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Schema-25 identity/capture capability. This is not a loaded-product catalogue
-    /// or an eligibility policy. Wire-local references never enter Core decisions.</summary>
     public static class FoodNameIdentity
     {
-        // Recommended Q3 inputs, recorded by this wire revision, not an executed resolver.
         public const string NeutralInputs = "2,900,100,450";
         public const string Wire = "2|name=1|held=1|neutral=" + NeutralInputs;
         // Cold schema-25 contract only until E5c/E5b implement execution. Codec inspection and

@@ -18,15 +18,11 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>S2 sale proof, native side. Diagnostic only, FT cities only, one probe per console command. It changes no
-    /// ownership: it sells one order at a player business through <see cref="NativeSalePath"/> (the business type's own
-    /// simulator asset) and reports what the game did. Core <see cref="PurchaseProbe"/> owns the ceiling, wallet and receipt.</summary>
     internal sealed class NativeSaleProbe : IProbeNativeSale
     {
         private readonly NativeSalePath path;
         private NativeSaleProbe(NativeSalePath path) { this.path = path; }
 
-        /// <summary>The probe's families are the contract's, in the same order.</summary>
         internal static ProbeFamily Family(BusinessSimulator? simulator) => (ProbeFamily)(int)NativeSalePath.FamilyOf(simulator);
 
         internal static ProbeKind Kind(ProbeFamily family, bool foodOwned)
@@ -34,7 +30,6 @@ namespace PersistentCity.Runtime
 
         internal static bool FoodOwned(BuildingRegistration reg) => NativeSalePath.FoodOwned(reg);
 
-        /// <summary>True only inside a native ProcessCustomer call of the sale path for this registration.</summary>
         internal static bool IsProbing(BuildingRegistration reg) => NativeSalePath.IsSelling(reg);
 
         internal static bool Matches(BuildingRegistration reg, string placeId)
@@ -63,7 +58,6 @@ namespace PersistentCity.Runtime
         }
 
         public void Undo() => path.Undo();
-        /// <summary>The probe was paid: replay the refills the sale held back.</summary>
         internal void Commit() => path.Commit();
     }
 
@@ -71,7 +65,6 @@ namespace PersistentCity.Runtime
     {
         private bool saleProbeRunning;
 
-        /// <summary>pc probe status | pc probe businesses | pc probe &lt;resident&gt; &lt;place&gt; &lt;ceiling cents&gt;. FT cities only.</summary>
         private void SaleProbeCommand(string action, string detail, string value)
         {
             var save = SaveGameManager.Current;
@@ -82,7 +75,6 @@ namespace PersistentCity.Runtime
             int recovered = PurchaseProbe.Recover(save.modData);
             if (action == "status")
             {
-                // GR-3: the need purchase counters and native-count calibration rows (calibration only, never a decision).
                 var purchases = new { attached = simulation.Purchases != null, fault = simulation.PurchaseFault, bought = simulation.PurchasesBought,
                     refused = simulation.PurchasesRefused, impulses = simulation.ImpulsesInserted,
                     last = simulation.LastPurchase == null ? null : new { simulation.LastPurchase.Key, refusal = simulation.LastPurchase.Refusal.ToString(),
@@ -132,8 +124,6 @@ namespace PersistentCity.Runtime
             PurchaseProbeResult result;
             saleProbeRunning = true;
             PurchaseProbeResult? ran = null;
-            // A native save started inside the probe is re-entrant: it publishes no epoch, marks that save refused on load and
-            // stops Persistent City afterwards. Its native books may hold the order without the debit; it is never settled.
             try { RunSaveEpochUnit(() => ran = PurchaseProbe.Run(request, person.Wallet, save.modData, native)); }
             finally { saleProbeRunning = false; }
             result = ran!;

@@ -9,10 +9,8 @@ using PersistentCity.Persistence;
 
 namespace PersistentCity.MovementEquivalence;
 
-/// <summary>Where the player stands. None: no finite focus, so the driver holds no bodies.</summary>
 public enum FocusPath { None, Stationary, Sweep, AwayReturn }
 
-/// <summary>Injected harness faults; each must fail the run loudly.</summary>
 public enum Fault { None, DuplicateArrival, SkippedEvent }
 
 public sealed class MovementOptions
@@ -21,30 +19,19 @@ public sealed class MovementOptions
     public int Seed;
     public int Residents = MovementFixture.Residents;
     public int Days = MovementRun.Days;
-    /// <summary>False: plain simulation without any presentation driver.</summary>
     public bool Driver = true;
     public FocusPath Focus = FocusPath.Stationary;
     public DriverSettings Bodies = new();
     public int FramesPerSecond = 60;
-    /// <summary>Save and reload into a new simulator (and a new driver) mid-journey on the first day.</summary>
     public bool ReloadMidJourney;
-    /// <summary>A hidden-travel window: bodies are released and native time runs at 10x.</summary>
     public bool HiddenTravel;
-    /// <summary>F2c: nobody owns a car, so every journey walks. Walker follow makes these arms equal bodies-off.</summary>
     public bool WalkingOnly;
-    /// <summary>F5i: portals on the grid, so the city also holds K-1 walking visitors per resident (K =
-    /// <see cref="RepresentationFactor"/>). A reload then waits until a visitor body is bound as well.</summary>
     public bool Visitors;
     public int RepresentationFactor = MovementFixture.RepresentationFactor;
-    /// <summary>F5i: called after every frame's presentation update with the live simulator (it changes at a reload) and
-    /// driver, so tests can check invariants inside the harness loop. Must not change state.</summary>
     public Action<CitySimulator, PresentationDriver?>? AfterFrame;
     public Fault Fault;
-    /// <summary>Optional directory for the arm's journey records and ordered sales (one text file), for diffing arms.</summary>
     public string? DumpDirectory;
-    /// <summary>F2e E2 arm: a scripted player blocks some followed bodies and reports holds (PlayerDouble).</summary>
     public bool PlayerContact;
-    /// <summary>F2e: integral minutes at which to keep a replay checkpoint (save, native clock, checkout, hold sequence).</summary>
     public double[] Checkpoints = Array.Empty<double>();
 }
 
@@ -52,11 +39,8 @@ public sealed class Boundary
 {
     public double Minute;
     public string SaveSha256 = "", SalesSha256 = "", JourneysSha256 = "", ParkedSha256 = "", WalletsSha256 = "", FifoSha256 = "";
-    /// <summary>F5i: visitors only: their journeys (commit and arrival minute, place), their confirmed sales, and per
-    /// visitor wallet balance, food spending and purchases. Empty-input hash in a city without visitors.</summary>
     public string VisitorsSha256 = "";
     public int Sales, Arrivals, MissedActivities;
-    /// <summary>Skipped meal outcomes of the day that ended before this 03:00 boundary.</summary>
     public int SkippedMeals;
 }
 
@@ -68,23 +52,15 @@ public sealed class MovementResult
     public SortedDictionary<string, double> Metrics = new(StringComparer.Ordinal);
     public long Frames, Events, FifoSamples, QueuedFifoSamples;
     public int Reloads, InFlightAtReload, BodiesAtReload;
-    /// <summary>F5i: visitors bound to a body when the run saved and reloaded, and how many of them the new driver
-    /// gave a body again afterwards.</summary>
     public List<string> VisitorBodiesAtReload = new();
     public int VisitorsReacquiredAfterReload;
     public double Seconds, SimulatedDays;
     public long AllocatedBytes;
-    /// <summary>F2e: the complete hold stream of the run (parsed back from its Player.log lines) and its checkpoints.</summary>
     public List<PlayerHoldRecord> Holds = new();
     public List<HoldCheckpoint> Checkpoints = new();
     public PlayerDouble? Player;
 }
 
-/// <summary>Deterministic frame-driven run. Each frame: native clock step under the F1 accounting fence,
-/// publish the epoch, native body movement, budgeted simulation slices, snapshot publication, then the
-/// presentation driver's Update (Runtime order: AdvancePopulation, then PhysicalPopulation.Update).
-/// The saved city is hashed at every 03:00 boundary at the moment the native clock enters it: every
-/// earlier event drained, none at or after it run, bodies observed for save first.</summary>
 public static class MovementRun
 {
     public const string Schema = "persistentcity-f2a-movement-1";
@@ -118,7 +94,6 @@ public static class MovementRun
     public static string Sha(string text)
         => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
 
-    /// <summary>Per-journey ledger from ActivityObserved: commit minute, mode and arrival.</summary>
     private sealed class JourneyLedger
     {
         private sealed class Open { public Route Route = null!; public double Start; public int Completed; public string Mode = ""; public string Destination = ""; public Activity Activity; }
@@ -134,7 +109,6 @@ public static class MovementRun
             if (c.Phase == CitizenPhase.Travelling && c.Journey != null)
             {
                 if (o != null && ReferenceEquals(o.Route, c.Journey)) return;
-                // One event can arrive and send the person straight on (for example a closed door).
                 if (o != null && c.CompletedJourneys > o.Completed) Close(id, o, c, minute);
                 else if (o != null) { Replaced++; open.Remove(id); }
                 bool car = false;
@@ -166,7 +140,6 @@ public static class MovementRun
                     .Append(minute.ToString("R", CultureInfo.InvariantCulture)).Append(':').Append(c.PlaceId).Append('\n');
             }
         }
-        /// <summary>After a reload every in-flight journey is a new object with the same saved route.</summary>
         public void Rebind(CityState state)
         {
             foreach (var c in PersonTable.Schedules(state))
@@ -247,7 +220,6 @@ public static class MovementRun
             float allowed = AccountingClock.Limit(ready, native, requested);
             if (options.Fault == Fault.SkippedEvent && !faultInjected && !ready && native >= start + 8 * 60)
             {
-                // The native clock moves on as if this frame's due events had run.
                 faultInjected = true; allowed = (float)(Math.Floor(native) + 1.25 - native);
             }
             minute += allowed;
@@ -255,8 +227,6 @@ public static class MovementRun
             double previous = native;
             native = market.Clock = hour * 60.0 + minute;
             Require(city.BeginAccountingObservations(native), "observation epoch not published");
-            // Link order is sampled where the native clock enters each five-minute epoch, so the sample
-            // minute does not depend on frame cadence.
             if (native >= nextFifo)
             {
                 Require(city.State.Minute == nextFifo, "FIFO sample is not at its epoch minute");
@@ -282,15 +252,11 @@ public static class MovementRun
             }
             if (hidden && driver != null)
             {
-                // Runtime BeforeAdvance: hidden travel observes and releases bodies before AdvancePopulation.
                 driver.SuspendBeforeHiddenAdvance();
                 Require(driver.Count == 0, "hidden travel advanced with bodies bound");
             }
             driver?.MoveBodies(frameSeconds, frameSeconds * GameMinutesPerRealSecond);
             target = Math.Max(city.State.Minute, AccountingClock.Target(native));
-            // Since F2d no body adds kernel work, so a frame's events always drain and no frame starts behind. The
-            // skipped-event fault first starves one frame inside the current minute epoch, so the next frame starts
-            // with due work, and then skips it.
             bool starve = options.Fault == Fault.SkippedEvent && !faultInjected && native >= start + 8 * 60
                 && Math.Floor(city.State.Minute) == Math.Floor(native);
             for (int unit = 0; unit < (starve ? 0 : EventUnitsPerFrame); unit++)
@@ -306,7 +272,6 @@ public static class MovementRun
 
             if (options.Fault == Fault.DuplicateArrival && !faultInjected && ledger.Arrivals > 0 && native >= start + 8 * 60)
             {
-                // A second arrival booked for an already arrived journey.
                 faultInjected = true;
                 city.State.Citizens.First(c => c.CompletedJourneys > 0).CompletedJourneys++;
             }
@@ -328,13 +293,11 @@ public static class MovementRun
                 city.ActivityObserved += ledger.Observe;
                 ledger.Rebind(city.State);
                 result.InFlightAtReload = ledger.InFlight;
-                // Runtime disposes the physical population on load; the new one starts without bodies.
                 if (driver != null) { driver = new PresentationDriver(city, settings); drivers.Add(driver); }
                 result.Reloads++;
             }
         }
         Require(options.Fault == Fault.None || faultInjected, "fault was never injected");
-        // F2g: a reload arm that never reloaded would pass E1 without testing the reload.
         Require(!options.ReloadMidJourney || reloaded, "mid-journey reload never happened");
         if (reloaded && driver != null) result.VisitorsReacquiredAfterReload = result.VisitorBodiesAtReload.Count(driver.AcquiredVisitors.Contains);
         Require(city.HistoricalClockMisses == 0, "unreported workload-caused lost demand");
@@ -346,7 +309,6 @@ public static class MovementRun
                 ledger.Records + "--sales--\n" + string.Join("\n", market.Sales) + "\n");
         result.FifoSha256 = fifo.Sha; result.FifoSamples = fifo.Samples; result.QueuedFifoSamples = fifo.Queued;
         Summarize(result, city, market, ledger, drivers);
-        // F2d perf: kernel work over the whole run (every kernel, across a reload).
         result.Metrics["traffic.reconsiders"] = priorReconsiders + (city.Traffic?.Reconsiders ?? 0);
         result.Metrics["traffic.events"] = priorTrafficEvents + (city.Traffic?.ProcessedEvents ?? 0);
         result.Metrics["run.frames"] = result.Frames;
@@ -364,7 +326,6 @@ public static class MovementRun
 
     private static bool IsVisitorId(string id) => PersonIds.FitsKind(PersonIds.Classify(id), PersonKind.Visitor);
 
-    /// <summary>F5i: the visitor projection (see <see cref="Boundary.VisitorsSha256"/>).</summary>
     private static string VisitorOutcomes(CityState state, MovementMarket market, JourneyLedger ledger)
     {
         var text = new StringBuilder(ledger.VisitorRecords.ToString()).Append("--sales--\n");
@@ -388,7 +349,6 @@ public static class MovementRun
         foreach (var c in state.Citizens)
             if (c.Car != null) parked.Append(c.Identity.Id).Append(':').Append(c.Car.ParkedPosition.X.ToString("R", CultureInfo.InvariantCulture))
                 .Append(',').Append(c.Car.ParkedPosition.Z.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
-        // The daily outcome ledger keeps one day; read the finished day here, before the next day's meals replace it.
         int day = (int)Math.Floor(at / 1440) - 1, skipped = 0;
         foreach (var m in state.Food!.Residents)
         {
@@ -423,7 +383,6 @@ public static class MovementRun
         m["visits.admittedAtShop"] = ledger.AdmittedAtShop;
         m["visits.workArrivals"] = ledger.WorkArrivals;
         m["routines.missedActivities"] = state.Citizens.Sum(c => c.MissedActivities);
-        // F5i: visitor outcomes (zero in a city without visitors).
         var visitorMeals = state.Food!.Residents.Where(r => IsVisitorId(r.ResidentId)).ToList();
         m["visitors.count"] = state.VisitorRoutines.Count;
         m["visitors.arrivals"] = ledger.VisitorArrivals;
@@ -455,7 +414,6 @@ public static class MovementRun
         m["bodies.maxCars"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.MaxCars);
         m["bodies.hiddenTravelFrames"] = drivers.Sum(d => d.HiddenFrames);
         m["bodies.hiddenTravelReleases"] = drivers.Sum(d => d.HiddenReleases);
-        // F2c walker follow (E3 lag; the double has no camera, so every correction is an off-screen move).
         m["walkers.lagSamples"] = drivers.Sum(d => d.Walking.LagSamples);
         m["walkers.lagP50Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.LagQuantile(.5));
         m["walkers.lagP95Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.LagQuantile(.95));
@@ -463,11 +421,9 @@ public static class MovementRun
         m["walkers.moves"] = drivers.Sum(d => d.Walking.Moves);
         m["walkers.lagReleases"] = drivers.Sum(d => d.Walking.LagReleases);
         m["walkers.handoffs"] = drivers.Sum(d => d.Walking.Handoffs - d.Walking.CarHandoffs);
-        // P-C: walker path calculations (one per leg) and frames a walker stood ahead of its logical pose.
         m["walkers.pathRequests"] = drivers.Sum(d => d.Walking.PathRequests);
         m["walkers.aheadFrames"] = drivers.Sum(d => d.Walking.AheadFrames);
         m["walkers.aheadMaxMetres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.MaximumAheadMetres);
-        // F2d car follow (E3 car lag; every correction is an off-screen release and re-acquisition here).
         m["cars.lagSamples"] = drivers.Sum(d => d.Walking.CarLagSamples);
         m["cars.lagP50Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.CarLagQuantile(.5));
         m["cars.lagP95Metres"] = drivers.Count == 0 ? 0 : drivers.Max(d => d.Walking.CarLagQuantile(.95));

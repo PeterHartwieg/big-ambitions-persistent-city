@@ -12,8 +12,6 @@ using Fake = RealLifeOverhaul.Flare;
 
 namespace PersistentCity.Tests
 {
-    /// <summary>RLO's CityApi read contract (docs/rlo-bridge.md), through emitted stand-in RLO assemblies. The stand-in's
-    /// methods answer from <see cref="CityApiHooks"/>, so every test here resets it and none runs in parallel with another.</summary>
     [Collection(RloCompatibilityTests.SharedFlareState)]
     public sealed class RloBridgeTests
     {
@@ -35,7 +33,6 @@ namespace PersistentCity.Tests
             };
         }
 
-        // What contract 1 promises for the same account: the same citizens RLO's Flare has, in RLO's own order.
         private static void Serve(Fake.FlareDirector city)
         {
             CityApiHooks.Seed = city.File!.Seed;
@@ -58,7 +55,6 @@ namespace PersistentCity.Tests
             Assert.True(reservations.Ready, reservations.LastError);
             Assert.Empty(new RloRoadSpeedOverrides(rlo).Capture());
 
-            // The same release without the contract stays refused everywhere.
             var bare = StandIn.Build("0.99.0", fault: "CityApi");
             Assert.Equal(RloReadStatus.Incompatible, adapter.Read(bare).Status);
             Assert.False(new RloPhysicalReservations(bare, result.Identities).Ready);
@@ -86,7 +82,6 @@ namespace PersistentCity.Tests
             Assert.True(after.MatchesPopulation(loaded.State!));
             Assert.Equal(payload, SaveCodec.Write(loaded.State!));
 
-            // A citizen RLO now draws differently is a different donor set: the stored city is refused, never rekeyed.
             CityApiHooks.Citizens[7] = CityApiHooks.Citizens[7] with { AppearanceSeed = 12345 };
             var changed = adapter.Read(StandIn.Build("0.99.1"));
             Assert.False(changed.MatchesPopulation(loaded.State!));
@@ -150,7 +145,7 @@ namespace PersistentCity.Tests
 
         [Theory]
         [InlineData("0.99.0", 2, "")]
-        [InlineData("0.45.0", 2, "")]          // a reviewed release number does not rescue an unsupported contract
+        [InlineData("0.45.0", 2, "")]
         [InlineData("0.99.0", 0, "")]
         [InlineData("0.99.0", 1, "ReadSlowedLanes")]
         [InlineData("0.99.0", 1, "Shared")]
@@ -189,14 +184,12 @@ namespace PersistentCity.Tests
             CityApiHooks.Characters = new List<object> { character };
             var guard = new RloPhysicalReservations(rlo, sources);
             Assert.True(guard.Ready, guard.LastError);
-            // c7 and c999 are not Persistent City's donors, and a generated resident is never reserved by index.
             Assert.Equal(new[] { "c1", "c5" }, guard.ReservedCitizenIds.OrderBy(id => id, StringComparer.Ordinal));
             Assert.False(guard.IsReserved("pc:1"));
             Assert.True(guard.IsReservedNativePedestrian(pedestrian, null));
             Assert.True(guard.IsReservedNativePedestrian(other, character));
             Assert.False(guard.IsReservedNativePedestrian(other, other));
 
-            // An answer that says nothing about what RLO holds reserves everyone for that read; the other read still updates.
             foreach (int unknown in new[] { 2, 3 })
             {
                 CityApiHooks.ReservedStatus = unknown; CityApiHooks.Pedestrians = new List<object>();
@@ -211,14 +204,12 @@ namespace PersistentCity.Tests
                 CityApiHooks.BodiesStatus = 0; CityApiHooks.Pedestrians = new List<object> { pedestrian };
             }
 
-            // Switched off: nobody is RLO's.
             CityApiHooks.ReservedStatus = 1; CityApiHooks.BodiesStatus = 1;
             guard.Update();
             Assert.True(guard.Ready);
             Assert.Empty(guard.ReservedCitizenIds);
             Assert.False(guard.IsReservedNativePedestrian(other, character));
 
-            // A fault stops the guard, which then reserves everyone.
             CityApiHooks.BodiesStatus = 5;
             guard.Update();
             Assert.False(guard.Ready);
@@ -237,7 +228,6 @@ namespace PersistentCity.Tests
             Assert.Equal(2, snapshot.Count);
             Assert.Equal(50, snapshot[a].OriginalKilometresPerHour); Assert.Equal(35, snapshot[a].EffectiveKilometresPerHour);
             Assert.Equal(20, snapshot[b].EffectiveKilometresPerHour);
-            // The snapshot is detached from the next capture.
             CityApiHooks.Lanes = new List<(object, int, int)>();
             Assert.Empty(speeds.Capture());
             Assert.Equal(2, snapshot.Count);
@@ -247,7 +237,6 @@ namespace PersistentCity.Tests
             foreach (int unknown in new[] { 2, 3, 4, 5 })
             {
                 CityApiHooks.LanesStatus = unknown;
-                // F8d: NotYet and Refreshing are a distinct "not ready" refusal (route preparation waits); the rest stop.
                 var refused = Assert.ThrowsAny<InvalidOperationException>(() => speeds.Capture());
                 Assert.Equal(unknown <= 3, refused is RloRoadSpeedsNotReadyException);
             }
@@ -271,7 +260,6 @@ namespace PersistentCity.Tests
             Assert.Equal(first.PopulationKey, adapter.Read(rlo).PopulationKey);
             Assert.Equal(1, adapter.Bindings);
 
-            // Status, citizens and seed are asked for again on the reused binding.
             CityApiHooks.CitizensStatus = 3;
             Assert.Contains("refreshing", adapter.Read(rlo).Message);
             CityApiHooks.CitizensStatus = 0;
@@ -283,7 +271,6 @@ namespace PersistentCity.Tests
             Assert.Equal(2000, adapter.Read(rlo).CitySeed);
             Assert.Equal(1, adapter.Bindings);
 
-            // The contract version is read on every call; a refusal drops the binding and the next read binds afresh.
             CityApiHooks.Contract = 2;
             var refused = adapter.Read(rlo);
             Assert.Equal(RloReadStatus.Incompatible, refused.Status);
@@ -298,7 +285,6 @@ namespace PersistentCity.Tests
             Assert.Equal(RloReadStatus.Ready, adapter.Read(rlo).Status);
             Assert.Equal(3, adapter.Bindings);
 
-            // Another assembly object binds its own contract and refuses on its own terms.
             Assert.Equal(RloReadStatus.Incompatible, adapter.Read(StandIn.Build("0.99.0", contract: 2)).Status);
             Assert.Equal(RloReadStatus.Ready, adapter.Read(StandIn.Build("0.99.0")).Status);
             Assert.Equal(4, adapter.Bindings);
@@ -321,7 +307,6 @@ namespace PersistentCity.Tests
             Assert.Equal(expected.PopulationKey, outer.PopulationKey);
             Assert.NotNull(nested);
             Assert.Equal(expected.PopulationKey, nested!.PopulationKey);
-            // The nested read bound its own buffers; the outer binding stays cached.
             Assert.Equal(2, adapter.Bindings);
             Assert.Equal(expected.PopulationKey, adapter.Read(rlo).PopulationKey);
             Assert.Equal(2, adapter.Bindings);
@@ -331,7 +316,6 @@ namespace PersistentCity.Tests
             string.Join("|", c.Id, c.Name, c.District, c.Age, c.Female, c.Persona, c.AppearanceSeed);
     }
 
-    /// <summary>What the emitted stand-in CityApi answers. Public so the emitted assembly can call it.</summary>
     public static class CityApiHooks
     {
         public sealed record Citizen(int Index, string? First, string? Last, string? District, int Age, bool Female, string? Persona, int AppearanceSeed);
@@ -389,13 +373,10 @@ namespace PersistentCity.Tests
         }
     }
 
-    /// <summary>Emits an assembly named RealLifeOverhaul with a CityApi of the contract's shape, answering from CityApiHooks.
-    /// <c>fault</c> breaks one part of the shape.</summary>
     internal static class StandIn
     {
         private const string Space = "RealLifeOverhaul.ModApi.";
 
-        /// <summary><c>liveContract</c> answers ContractVersion from <see cref="CityApiHooks.Contract"/> on every call.</summary>
         public static Assembly Build(string version, int contract = 1, string fault = "", bool liveContract = false)
         {
             var name = new AssemblyName("RealLifeOverhaul") { Version = Version.TryParse(version, out var v) ? v : new Version(0, 0) };

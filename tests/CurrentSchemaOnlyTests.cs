@@ -11,8 +11,6 @@ public sealed class CurrentSchemaOnlyTests
 {
     internal static CityState City() => TestCity.Minimal();
 
-    /// <summary>The schema is held at 1 until release: older development builds wrote 2 to 36, and every other number is
-    /// a DevelopmentSchema refusal (no migration).</summary>
     public static IEnumerable<object[]> OldDevelopmentSchemas() => new[] { 0, 2, 12, 25, 26, 35, 36, 37 }.Select(s => new object[] { s });
 
     [Theory]
@@ -26,7 +24,6 @@ public sealed class CurrentSchemaOnlyTests
         Assert.Equal(SaveReadStatus.DevelopmentSchema, direct.Status); Assert.Equal(schema, direct.SourceSchema);
         Assert.Equal(SaveCodec.DevelopmentSchemaMessage + " (schema " + schema + ")", direct.Error);
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        // F5c-lite: no migration before release; every older development schema is its own refusal, not corruption.
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State); Assert.Equal(schema, read.SourceSchema);
         Assert.Contains("older development build; start a new city", read.Error);
         Assert.False(SaveStore.WriteTo(data, city).Success);

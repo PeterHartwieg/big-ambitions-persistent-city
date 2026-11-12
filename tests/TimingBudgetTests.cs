@@ -9,7 +9,6 @@ using Xunit.Sdk;
 
 namespace PersistentCity.Tests;
 
-// The load tests saturate every core, so they run alone, after the parallel collections.
 [CollectionDefinition(nameof(TimingBudgetTests), DisableParallelization = true)]
 public sealed class TimingBudgetCollection { }
 
@@ -19,11 +18,9 @@ public sealed class TimingBudgetTests
     private readonly ITestOutputHelper output;
     public TimingBudgetTests(ITestOutputHelper output) => this.output = output;
 
-    // The semantic tests fix the load factor so they do not depend on how busy the machine is.
     private static int Run(Action<TimingChecks> measure, int attempts = TimingBudget.Attempts, double factor = 1)
         => TimingBudget.Run(t =>
         {
-            // One empty kept window per label these tests use, so the fixed factor applies to each check.
             foreach (var label in new[] { "value", "a", "b" }) t.Keep(label, default);
             measure(t);
         }, attempts, (_, _) => factor);
@@ -31,8 +28,6 @@ public sealed class TimingBudgetTests
     [Fact]
     public void BudgetsAreJudgedOnlyWhenRequested()
     {
-        // #186: wall-clock budgets count only with PC_PERF_ASSERTS=1. Without it the measurement runs once, its exact
-        // asserts still apply, and a missed budget passes.
         if (PerfGate.Enabled) return;
         int runs = 0;
         Assert.Equal(1, TimingBudget.Run(t => { runs++; t.Under("value", 9, 2); }));
@@ -62,7 +57,6 @@ public sealed class TimingBudgetTests
     [Fact]
     public void EachCheckIsJudgedOnItsBestValue()
     {
-        // No single run is clean, but each budget is met by its best value.
         var runs = new[] { (a: 9.0, b: 1.0), (a: 1.0, b: 9.0) };
         int run = 0;
         Assert.Equal(2, Run(t => { var (a, b) = runs[run++]; t.Under("a", a, 2); t.Under("b", b, 2); }));
@@ -80,23 +74,19 @@ public sealed class TimingBudgetTests
     [Fact]
     public void LoadFactorScalesTheBudget()
     {
-        // 9 ms measured while the thread had a third of the wall-clock time is 3 ms of its own time.
         Assert.Equal(1, Run(t => t.Under("value", 9, 4), factor: 3));
         Assert.Throws<XunitException>(() => Run(t => t.Under("value", 9, 2), attempts: 2, factor: 3));
         Assert.Equal(3, TimingBudget.LoadFactor(3000, 1000));
         Assert.Equal(1, TimingBudget.LoadFactor(500, 1000));
         Assert.Equal(1, TimingBudget.LoadFactor(5, double.NaN));
-        // Too little timed CPU time to judge by: no discount.
         Assert.Equal(1, TimingBudget.LoadFactor(ThreadCpu.MinimumMs * 1.5, ThreadCpu.MinimumMs / 2));
     }
 
     [Fact]
     public void MeasurementWithoutATimedWindowGetsNoDiscount()
     {
-        // The factor comes from the check's own kept windows; with none, a busy attempt is judged on retries alone.
         Assert.Throws<XunitException>(() => TimingBudget.Run(t => t.Under("value", 9, 4), 2, (_, _) => 3));
         Assert.Equal(1, TimingBudget.Run(t => { t.Stop(t.Start(), "value"); t.Under("value", 9, 4); }, 2, (_, _) => 3));
-        // A window kept for another check, or not kept at all (warm-up), does not count for this one.
         Assert.Throws<XunitException>(() => TimingBudget.Run(t => { t.Stop(t.Start(), "other"); t.Stop(t.Start()); t.Under("value", 9, 4); }, 2, (_, _) => 3));
     }
 
@@ -104,8 +94,6 @@ public sealed class TimingBudgetTests
     public void DelayOutsideTheTimedWindowDoesNotLoosenTheBudget()
     {
         using var enforced = TimingBudget.Enforce();
-        // Review round 1: a 100 ms pause in setup, then about 20 ms of timed CPU work against 5 ms. Setup is not
-        // timed, so the factor stays near 1 and the work misses on every attempt.
         long work = SpinFor(20);
         var error = Assert.Throws<XunitException>(() => TimingBudget.Run(t =>
         {
@@ -121,8 +109,6 @@ public sealed class TimingBudgetTests
     public void LoadInOneCheckOrAWarmUpDoesNotDiscountAnother()
     {
         using var enforced = TimingBudget.Enforce();
-        // Review round 2: a 100 ms pause inside another check's window and inside a warm-up window, then about 20 ms
-        // of timed CPU work against 5 ms. Only the work's own window sets its factor, so it misses on every attempt.
         long work = SpinFor(20);
         var error = Assert.Throws<XunitException>(() => TimingBudget.Run(t =>
         {
@@ -139,8 +125,6 @@ public sealed class TimingBudgetTests
     [Fact]
     public void StallInOneSampleDoesNotHideACpuSpikeInAnother()
     {
-        // Review round 4: one sample does about 48 ms of CPU work, another stalls 65 ms. The check-wide factor
-        // (about 2.2) brought the 48 ms max under 30 ms; a max is now never judged below its costliest sample's CPU.
         using var enforced = TimingBudget.Enforce();
         long spike = SpinFor(48);
         var error = Assert.Throws<XunitException>(() => TimingBudget.Run(t =>
@@ -155,8 +139,7 @@ public sealed class TimingBudgetTests
     [Fact]
     public void StalledSampleAloneStillPassesAMaxCheck()
     {
-        // The other side: a sample that is long only because the thread waited is load, not a spike.
-        if (ThreadCpu.MinimumMs > 1) return; // Windows: this little CPU time is below what its tick clock can judge
+        if (ThreadCpu.MinimumMs > 1) return;
         using var enforced = TimingBudget.Enforce();
         long work = SpinFor(1);
         Assert.Equal(1, TimingBudget.Run(t =>
@@ -171,7 +154,6 @@ public sealed class TimingBudgetTests
     public void TimedWindowsDoNotAllocate()
     {
         using var enforced = TimingBudget.Enforce();
-        // Converted tests keep exact zero-allocation asserts around their timed loops.
         TimingBudget.Run(t =>
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
@@ -190,8 +172,7 @@ public sealed class TimingBudgetTests
     public void WaitInsideTheTimedWindowIsDiscounted()
     {
         using var enforced = TimingBudget.Enforce();
-        // The other side: wall time the thread spent off the CPU inside the window is load, not work.
-        if (ThreadCpu.MinimumMs > 1) return; // Windows: 2 ms of CPU is below what its tick clock can judge
+        if (ThreadCpu.MinimumMs > 1) return;
         long work = SpinFor(2);
         Assert.Equal(1, TimingBudget.Run(t =>
         {
@@ -207,7 +188,7 @@ public sealed class TimingBudgetTests
     public void ThreadCpuClockRuns()
     {
         double before = ThreadCpu.Milliseconds();
-        Spin(SpinFor(OperatingSystem.IsWindows() ? 100 : 5)); // Windows counts whole 15.6 ms ticks
+        Spin(SpinFor(OperatingSystem.IsWindows() ? 100 : 5));
         double spent = ThreadCpu.Milliseconds() - before;
         Assert.False(double.IsNaN(spent), "no thread CPU clock on this platform");
         Assert.InRange(spent, 1, 1000);
@@ -230,13 +211,12 @@ public sealed class TimingBudgetTests
     [Fact]
     public void GuardedWorkloadsPassBesideAFullCpuLoad()
     {
-        if (!PerfGate.Enabled) return; // wall-clock budgets are judged only with PC_PERF_ASSERTS=1
+        if (!PerfGate.Enabled) return;
         using var enforced = TimingBudget.Enforce();
         int before = TimingBudget.Retries;
         var watch = Stopwatch.StartNew();
         using (new CpuLoad())
         {
-            // A synthetic per-call p95 against the 5 ms mod-work gate, and E5b3's real budgets, which went red under load on 9 Nov.
             long call = SpinFor(0.2);
             double p95 = 0;
             int runs = TimingBudget.Run(t => t.Under("spin p95", p95 = P95(t, "spin p95", 400, () => Spin(call)), 5));
@@ -249,9 +229,8 @@ public sealed class TimingBudgetTests
     [Fact]
     public void TenfoldSlowdownStillFails()
     {
-        if (!PerfGate.Enabled) return; // wall-clock budgets are judged only with PC_PERF_ASSERTS=1
+        if (!PerfGate.Enabled) return;
         using var enforced = TimingBudget.Enforce();
-        // The budget is three times the fastest quiet run; the slowed workload does ten times the work.
         long iterations = SpinFor(1.0);
         double quiet = Enumerable.Range(0, 5).Min(_ => Time(() => Spin(iterations)));
         double budget = 3 * quiet;
@@ -285,7 +264,6 @@ public sealed class TimingBudgetTests
         Volatile.Write(ref sink, x);
     }
 
-    // Iterations of Spin that take about this long on a quiet core (fastest of several tries).
     private static long SpinFor(double ms)
     {
         const long probe = 1_000_000;
@@ -293,7 +271,6 @@ public sealed class TimingBudgetTests
         return Math.Max(1, (long)(probe * ms / best));
     }
 
-    /// <summary>One spinning thread per logical core, at normal priority, until disposed.</summary>
     private sealed class CpuLoad : IDisposable
     {
         private volatile bool stop;

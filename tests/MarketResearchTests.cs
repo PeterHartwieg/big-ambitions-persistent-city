@@ -46,10 +46,8 @@ public sealed class MarketResearchTests
         string wire = JsonConvert.SerializeObject(job.Checkpoint()); Assert.True(wire.Length < 1024);
         var checkpoint = JsonConvert.DeserializeObject<MarketResearchCursor>(wire)!;
         job = new MarketResearchEngine(source, new MarketResearchScope(), MarketResearchTier.InDepth, checkpoint);
-        // Mutating a previously exported checkpoint cannot alter the job.
         checkpoint.Counters[0] = 9999;
         while (job.Completed == null) Assert.InRange(job.Continue(source,unit), 1,unit);
-        // Restore reads the last processed row once to validate the cursor; it does not count it again.
         Assert.Equal(2502, source.Reads); Assert.Equal(Values(expected),Values(job.Completed));
         Assert.Equal(expected.Id,job.Completed.Id); Assert.Equal(0,job.Continue(source));
     }
@@ -245,7 +243,6 @@ public sealed class MarketResearchTests
         var source=new ResearchFixture(40); Assert.Equal(0,source.Reads);
         Assert.DoesNotContain(typeof(IMarketResearchSnapshot).GetMethods(),m=>m.GetParameters().Any(p=>p.ParameterType==typeof(IRoutePlanner)));
         Assert.DoesNotContain(typeof(MarketResearchEngine).Assembly.GetReferencedAssemblies(),a=>a.Name!.Contains("Unity") || a.Name.Contains("Rlo"));
-        // C5c: the only saved research member is the C5 ledger; no engine, cursor or report is a CityState member.
         Assert.Equal(new[] { "Research" }, typeof(CityState).GetProperties().Where(p=>p.Name.Contains("Research")).Select(p=>p.Name));
         Assert.Equal(typeof(ResearchLedger), typeof(CityState).GetProperty("Research")!.PropertyType);
         Assert.DoesNotContain(typeof(CityState).GetFields(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic),p=>p.Name.Contains("Research") && p.Name!="<Research>k__BackingField");

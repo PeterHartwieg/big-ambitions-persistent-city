@@ -5,13 +5,9 @@ using System.Reflection;
 
 namespace PersistentCity.Core
 {
-    // F8c (docs/plans/f8-capability-boundaries.md D3): exact native member contracts, checked completely before the first
-    // patch, ownership request or native call. Pure reflection over the types the caller supplies, so tests check it
-    // against stand-in types without game assemblies.
 
     public enum NativeMemberKind : byte { Method, Field }
 
-    /// <summary>One native member with its exact shape: parameter list, return type and static-ness, or field type.</summary>
     public sealed class NativeMemberSpec
     {
         private NativeMemberSpec(NativeMemberKind kind, Type declaring, string name, Type valueType, bool isStatic, Type[] parameters)
@@ -20,7 +16,6 @@ namespace PersistentCity.Core
         public NativeMemberKind Kind { get; }
         public Type Declaring { get; }
         public string Name { get; }
-        /// <summary>The return type of a method or the type of a field.</summary>
         public Type ValueType { get; }
         public bool IsStatic { get; }
         public IReadOnlyList<Type> Parameters => parameters_;
@@ -30,9 +25,7 @@ namespace PersistentCity.Core
         public static NativeMemberSpec Field(Type declaring, string name, Type fieldType, bool isStatic = false)
             => new NativeMemberSpec(NativeMemberKind.Field, declaring ?? throw new ArgumentNullException(nameof(declaring)), name, fieldType, isStatic, Type.EmptyTypes);
 
-        /// <summary>The same member expected under another name (a renamed member, as a fault point simulates it).</summary>
         public NativeMemberSpec Renamed(string name) => new NativeMemberSpec(Kind, Declaring, name, ValueType, IsStatic, parameters_);
-        /// <summary>The same method expected with one more trailing parameter (another signature).</summary>
         public NativeMemberSpec WithExtraParameter(Type parameter) => new NativeMemberSpec(Kind, Declaring, Name, ValueType, IsStatic, parameters_.Concat(new[] { parameter }).ToArray());
 
         public string Label => Declaring.Name + "." + Name + (Kind == NativeMemberKind.Method ? "(" + string.Join(", ", parameters_.Select(p => p.Name)) + ")" : "");
@@ -42,8 +35,6 @@ namespace PersistentCity.Core
     {
         private const BindingFlags Any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
-        /// <summary>Null when the member exists with exactly the expected shape; otherwise a named refusal. The member is
-        /// looked up on the declaring type and its base types, as Harmony's AccessTools does.</summary>
         public static string? Check(NativeMemberSpec spec, out MemberInfo? member)
         {
             if (spec == null) throw new ArgumentNullException(nameof(spec));
@@ -75,8 +66,6 @@ namespace PersistentCity.Core
             member = method; return null;
         }
 
-        /// <summary>Checks every spec; the first refusal in list order, or null. <paramref name="resolved"/> holds the
-        /// members that passed, by index (null where a member failed), so one failure does not hide which others resolved.</summary>
         public static string? CheckAll(IReadOnlyList<NativeMemberSpec> specs, out MemberInfo?[] resolved)
         {
             resolved = new MemberInfo?[specs.Count];
@@ -101,24 +90,17 @@ namespace PersistentCity.Core
             => method.Name + "(" + string.Join(", ", method.GetParameters().Select(p => p.ParameterType.Name)) + ")";
     }
 
-    /// <summary>F8c checkout-off mode, as NativeFoodMarket applies it: with a refused checkout contract no shop is eligible
-    /// (so every refresh observes it ineligible and the release path hands owned shops back), no shop is served, the price
-    /// prefix is not installed and every shop shows the scope reason.</summary>
     public sealed class FoodCheckoutMode
     {
         public FoodCheckoutMode(string? refusal) { Refusal = refusal; }
         public string? Refusal { get; }
-        /// <summary>SupportedMenu may admit a shop (the eligibility NativeFoodOwnership.Observe receives).</summary>
         public bool Eligible => Refusal == null;
-        /// <summary>CanServe may answer true for an owned, serving shop.</summary>
         public bool Serves => Refusal == null;
         public bool InstallsPricePrefix => Refusal == null;
         public string? ScopeReason => Refusal == null ? null : NativeFoodContractSpec.CheckoutScopeReason(Refusal);
-        /// <summary>The eligibility one refresh passes for a shop whose own menu checks gave <paramref name="supported"/>.</summary>
         public bool Observe(bool supported) => Eligible && supported;
     }
 
-    /// <summary>The game types the food-economy contract names. Runtime passes the real types; tests pass stand-ins.</summary>
     public sealed class NativeFoodTypes
     {
         public Type GameManager { get; set; } = typeof(object);
@@ -134,9 +116,6 @@ namespace PersistentCity.Core
         public Type PointOfSale { get; set; } = typeof(object);
     }
 
-    /// <summary>D3 for H1, H2 and FoodSupplyReader: the members, with the shapes read from the installed game at the F8c
-    /// base. <see cref="Authority"/> is food.authority (required: the six food-authority hook targets and the two
-    /// BusinessSimulator fields they read); <see cref="Checkout"/> is food.checkout.shop (optional per shop).</summary>
     public static class NativeFoodContractSpec
     {
         public const int AuthorityTargets = 6;
@@ -164,7 +143,6 @@ namespace PersistentCity.Core
             NativeMemberSpec.Method(t.RetailBusinessSimulator, "GetMaxCustomerCapacityThisHour", typeof(int), false),
         };
 
-        /// <summary>The start refusal for a failed required contract: a capability refusal, not a damaged save and not an older city.</summary>
         public static string AuthorityStartMessage(string refusal)
         {
             var registry = new CapabilityRegistry();
@@ -172,7 +150,6 @@ namespace PersistentCity.Core
             return registry.Start().Message;
         }
 
-        /// <summary>The scope reason a shop shows while food.checkout.shop is off.</summary>
         public static string CheckoutScopeReason(string refusal) => "Excluded: food checkout contract off: " + refusal;
     }
 }

@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    // Observation contracts only. These are not persisted candidates or sale authority.
     public enum FoodAlternativeKind { Player, Rival }
     public enum FoodAvailabilityEvidenceKind { Unknown, ObservedPlayerSupply, EstimatedFromPriceAndHours }
     public enum FoodStockEvidenceKind { Unknown }
@@ -36,8 +35,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Detached advertised facts. Unknown stock for both kinds; player supply must be
-    /// observed separately. The rival estimate label authorizes no estimate or service capacity here.</summary>
     public sealed class FoodAlternativeObservation
     {
         public string Id { get; }
@@ -57,7 +54,6 @@ namespace PersistentCity.Core
         public int? CustomerServicePercent { get; }
         public int UnsupportedProductCount { get; }
         public IReadOnlyList<FoodAdvertisedOffer> Offers { get; }
-        // Advertised schedule is preserved even while temporarily closed.
         public IReadOnlyList<FoodAdvertisedHours> Hours { get; }
         public FoodAlternativeObservation(string id, string placeId, string streetName, int streetNumber,
             int creationDay, string businessType, string ownerId, FoodAlternativeKind kind, bool accessible,

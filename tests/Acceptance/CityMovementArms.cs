@@ -9,11 +9,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests.Acceptance
 {
-    /// <summary>F9f (plan f9-city-acceptance.md, Decision 3 detail transitions and row F9f): presentation bodies in the
-    /// integrated city. The F2 harness's <see cref="PresentationDriver"/> (linked, not copied) follows travelling persons
-    /// as Runtime/PhysicalPopulation.cs does, with the Runtime frame order: hidden travel suspends before the advance,
-    /// native bodies move, the simulation advances, the snapshot is published, then the driver updates; every save
-    /// observes the bodies first and every load starts a new driver without bodies.</summary>
     internal sealed record CityBodies(FocusPath Focus = FocusPath.Stationary, int Walkers = 48, int Cars = 24, int FailurePercent = 0,
         LagModel Lag = LagModel.Native, bool Leak = false)
     {
@@ -24,14 +19,9 @@ namespace PersistentCity.Tests.Acceptance
 
     internal sealed partial record CityArm
     {
-        /// <summary>Bodies on this arm; null: the bodies-off F9c arm.</summary>
         public CityBodies? Bodies { get; init; }
-        /// <summary>The bodies-off F9c arm with the same cadence, budget, skip and reloads.</summary>
         public string BodiesOff { get; init; } = "";
 
-        /// <summary>The F9f arms: focus stationary at the first shop, a sweep across the homes, away 1 km and back, the
-        /// walker caps 1 and 256, half the acquisitions failing, the hidden skip with bodies released, and the reload arm
-        /// whose mid-journey reload waits for a bound follower. Each runs on a bodies-off F9c arm's cadence.</summary>
         public static IEnumerable<CityArm> BodyArms()
         {
             CityArm On(string name, string off, CityBodies bodies) => Arms().Single(a => a.Name == off) with { Name = "bodies-" + name, Bodies = bodies, BodiesOff = off };
@@ -49,19 +39,14 @@ namespace PersistentCity.Tests.Acceptance
         }
     }
 
-    /// <summary>What the drivers of one body arm did, summed over every driver (a load starts a new one).</summary>
     internal sealed class CityBodyStats
     {
         public long Acquired, Released, FailedAcquisitions, BodyFrames, WalkerFrames, CarFrames, HiddenFrames, HiddenReleases;
         public long VisitorAcquired;
         public int MaxWalkers, MaxCars, MaxVisitorBodies, Drivers;
-        /// <summary>The followers bound when the mid-journey reload saved, and those a later driver bound again.</summary>
         public List<string> BoundAtReload = new();
         public int ReboundAfterReload;
-        /// <summary>Bodies the driver created by the mid-journey reload's load acquired (before the next load).</summary>
         public long AcquiredAfterReload;
-        /// <summary>Away-return: frames with a body bound while the player is 1 km away (after the first away minute), and
-        /// after the return.</summary>
         public long AwayFramesWithBodies, ReturnFramesWithBodies;
         public double ReloadMinute = -1;
     }
@@ -90,8 +75,6 @@ namespace PersistentCity.Tests.Acceptance
             return created;
         }
 
-        /// <summary>The player's position: beside the first shop, a 10-minute dwell at six homes in turn, or 1 km away
-        /// from 09:00 to 15:00.</summary>
         private Position Focus(double minute)
         {
             var shop = city.FindPlace(CityFixture.ShopPlace(0)).Position;
@@ -120,7 +103,6 @@ namespace PersistentCity.Tests.Acceptance
             driver ??= NewDriver();
             if (hidden)
             {
-                // Runtime BeforeAdvance: hidden travel observes for save and releases every body before the advance.
                 driver.SuspendBeforeHiddenAdvance();
                 if (driver.Count != 0) throw new CityViolation(arm.Name + ": hidden skip advanced with bodies bound");
             }
@@ -147,7 +129,6 @@ namespace PersistentCity.Tests.Acceptance
                 if (followedAfterReload != null) foreach (var f in followed) followedAfterReload.Add(f.Citizen.Identity.Id);
                 if (arm.Bodies.Leak && !leaked && followed.Count > 0)
                 {
-                    // Fault: a body writes to the person it follows, as presentation must never do.
                     followed[0].Citizen.CompletedJourneys++;
                     leaked = true;
                 }
@@ -156,21 +137,17 @@ namespace PersistentCity.Tests.Acceptance
 
         partial void BodiesBeforeSave()
         {
-            // Runtime ObserveForSave.
             driver?.BeforeSave();
         }
 
         partial void BodiesAfterLoad()
         {
-            // Runtime disposes the physical population on load; the next frame starts a new driver without bodies.
             if (arm.Bodies != null) driver = NewDriver();
         }
 
         partial void BodiesReadyToReload(CityReload state, ref bool ready)
         {
             if (arm.Bodies == null || state != CityReload.MidJourney) return;
-            // With followers bound: at least one walker follows its journey when the city saves. The F9c city plans
-            // walking routes only, so no car is bound here; the F2 harness arms cover cars.
             followed.Clear();
             driver?.Followed(followed);
             ready = followed.Any(f => !f.Car && f.Citizen.Phase == CitizenPhase.Travelling);
@@ -179,7 +156,7 @@ namespace PersistentCity.Tests.Acceptance
             run.Bodies.BoundAtReload = followed.Select(f => f.Citizen.Identity.Id).ToList();
             run.Bodies.ReloadMinute = city.View.Minute;
             followedAfterReload = new HashSet<string>(StringComparer.Ordinal);
-            firstDriverAfterReload = drivers.Count; // the load that follows creates this driver
+            firstDriverAfterReload = drivers.Count;
         }
 
         partial void BodiesFinish()
@@ -203,9 +180,6 @@ namespace PersistentCity.Tests.Acceptance
 
 namespace PersistentCity.Tests
 {
-    /// <summary>F9f: every body arm equals the bodies-off reference and its own bodies-off F9c arm on every F9c oracle (the
-    /// ordered ledger, the save at every drained day boundary, native orders, vendor sales and the final save), and the
-    /// bodies did what the arm asks. The class name keeps it inside the runner's <c>city-s</c>/<c>city-m</c> stages.</summary>
     [Collection(StreetFoodHooks.Collection)]
     public sealed class F9IntegratedCityMovementTests : IClassFixture<F9IntegratedCityTests.Runs>
     {
@@ -241,13 +215,12 @@ namespace PersistentCity.Tests
             var bodies = spec.Bodies!;
             Assert.True(b.Acquired > 0 && b.WalkerFrames > 0, $"{name}: no body was ever bound");
             Assert.InRange(b.MaxWalkers, 1, bodies.Walkers);
-            Assert.Equal(0, b.CarFrames); // walk-only city (F9c planners); cars are the F2 harness's arms
+            Assert.Equal(0, b.CarFrames);
             switch (name)
             {
                 case "bodies-caps-1": Assert.Equal(1, b.MaxWalkers); break;
                 case "bodies-failures-50pct": Assert.True(b.FailedAcquisitions > 0, "no acquisition failed"); break;
                 case "bodies-away-return":
-                    // 1 km away every body is released within the first minute; after the return bodies are bound again.
                     Assert.Equal(0, b.AwayFramesWithBodies);
                     Assert.True(b.ReturnFramesWithBodies > 0, "no body after the return");
                     break;
@@ -255,19 +228,14 @@ namespace PersistentCity.Tests
                     Assert.True(b.HiddenFrames > 0, "the skip never ran with bodies on");
                     break;
                 case "bodies-reload":
-                    // Every F9c in-flight state was reached; the mid-journey one saved with followers bound and a new driver
-                    // after the load followed persons again.
                     foreach (CityReload state in Enum.GetValues(typeof(CityReload))) Assert.Contains(arm.Reloads, r => r.State == state);
                     Assert.NotEmpty(b.BoundAtReload);
                     Assert.Equal(b.ReloadMinute, arm.Reloads.Single(r => r.State == CityReload.MidJourney).Minute);
                     Assert.Equal(arm.Reloads.Count + 1, b.Drivers);
-                    // After the load, the new drivers bind followers again (not necessarily the same persons, whose
-                    // journeys may have ended).
                     Assert.True(b.AcquiredAfterReload > 0, "no body was bound after the mid-journey reload");
                     break;
             }
             if (name != "bodies-failures-50pct") Assert.Equal(0, b.FailedAcquisitions);
-            // F5i flipped ActiveJourneyIndex.VisitorsReceiveBodies at this base: visitors are bound under the same caps.
             Assert.True(ActiveJourneyIndex.VisitorsReceiveBodies);
             Assert.True(b.VisitorAcquired > 0, "no visitor received a body");
             Assert.InRange(b.MaxVisitorBodies, 1, bodies.Walkers);
@@ -277,8 +245,6 @@ namespace PersistentCity.Tests
                 + $"bound at reload {b.BoundAtReload.Count}, rebound {b.ReboundAfterReload}, acquired after it {b.AcquiredAfterReload}");
         }
 
-        /// <summary>Visitors receive bodies at this base: F5i flipped the index flag. A visitor arriving through a portal is
-        /// bound under the same caps, and the body arm still equals bodies-off.</summary>
         [Fact, Trait("Size", "city-s")]
         public void VisitorsReceiveBodiesAtThisBase()
         {
@@ -289,7 +255,6 @@ namespace PersistentCity.Tests
             output.WriteLine($"visitors {sweep.State.Visitors.Count} at the end, visitor bodies acquired {sweep.Bodies!.VisitorAcquired}");
         }
 
-        /// <summary>The oracles see a body that writes to its person: the arm no longer equals bodies-off.</summary>
         [Fact, Trait("Size", "city-s")]
         public void ABodyThatWritesToItsPersonFailsTheOracles()
         {

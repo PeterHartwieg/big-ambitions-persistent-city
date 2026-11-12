@@ -5,40 +5,25 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F5a census policy. Every value is provisional planning policy (F5 plan section 3,
-    /// *World capacity interpretation*), not native staffing, and none changes the city.
-    /// Answers to the F5 plan's section 9 questions are kept in single named constants.</summary>
     public static class PopulationCensusPolicy
     {
         public const string PolicyId = "world-census-v1";
-        // Workplace area bands over native BuildingSizeData.squareMeters, read exactly as for homes.
-        // Upper bounds are exclusive: an area equal to a bound belongs to the next band.
         private static readonly int[] WorkplaceBandUpperSquareMetres = { 40, 75, 150, 300, 600 };
         private static readonly int[] WorkplaceBandCapacity = { 2, 4, 6, 10, 16, 24 };
         public const int StudentsPerWorkplaceBandSlot = 2;
         public const int WorkFillPercent = 80;
-        // Plan Q4 default: about 15% of the resident count visit per day.
         public const int LeisureVisitorSharePercent = 15;
         public const int DayVisitProbabilityPercent = 25;
-        // F5g: the day-visit draw is weighted toward the three-day weekend. Four weekdays at 13.75% and three weekend
-        // days at 40% average exactly DayVisitProbabilityPercent over a week (asserted by a test).
         public const int DayVisitWeekdayBasisPoints = 1375;
         public const int DayVisitWeekendBasisPoints = 4000;
         public const int VisitorCapacityPerResident = 2;
         public const int MaximumVisitors = 100000;
         public const int MaximumPersons = 150000;
         public const int MaximumStations = 256;
-        // Equal to Persistence SaveCodec.MaxPlaces (asserted by a test; Core cannot reference Persistence).
         public const int MaximumPlaces = 20000;
-        // Breakfast, lunch and dinner intents per person per day under meal rhythm v1.
         public const int MealIntentsPerPersonPerDay = 3;
-        // One outbound and one return trip for each anchored day (work, study or a visit).
         public const int TripsPerAnchoredDay = 2;
-        // Plan Q1 default: visitors arrive by subway and walk; no road portals or visitor cars.
         public static readonly bool VisitorsDrive = false;
-        // Plan Q2 default: homes keep HousingPolicy bands and its 90% fill; the census reports that policy ID.
-        // F6 contract C1: player-owned businesses are reported on their own flagged line and excluded
-        // from assignable workplace capacity, because residents are not the player's native staff.
         public static readonly bool ExcludePlayerOwnedWorkplaces = true;
 
         public static int WorkplaceCapacity(double areaSquareMetres)
@@ -51,13 +36,9 @@ namespace PersistentCity.Core
 
         public static int StudyCapacity(double areaSquareMetres) => WorkplaceCapacity(areaSquareMetres) * StudentsPerWorkplaceBandSlot;
 
-        // Integer round-half-up of value * percent / 100 for nonnegative inputs.
         internal static long RoundPercent(long value, int percent) => (value * percent + 50) / 100;
     }
 
-    /// <summary>The census's visitor targets (plan section 3 *World capacity interpretation*, item 6), shared by the
-    /// read-only census and F5g's fill so both use one formula. Targets are clamped, never data: commuters first, then
-    /// the day-visitor pool in the capacity that remains. Without a portal both targets are zero.</summary>
     public readonly struct VisitorTargets
     {
         private VisitorTargets(bool portals, long capacity, long commuterDemand, long perDay, long poolDemand, long commuters, long pool)
@@ -65,7 +46,6 @@ namespace PersistentCity.Core
             HasPortals = portals; VisitorCapacity = capacity; CommuterDemand = commuterDemand; DayVisitorsPerDay = perDay; PoolDemand = poolDemand;
             CommuterTarget = commuters; PoolTarget = pool;
         }
-        /// <summary><c>min(2 × Residents, 100,000)</c> persisted visitors, commuters and the whole pool together.</summary>
         public long VisitorCapacity { get; }
         public long CommuterDemand { get; }
         public long DayVisitorsPerDay { get; }
@@ -73,7 +53,6 @@ namespace PersistentCity.Core
         public long CommuterTarget { get; }
         public long PoolTarget { get; }
         public bool HasPortals { get; }
-        /// <summary>A clamp applies only where a target exists; without a portal nothing is clamped.</summary>
         public bool CommuterClamped => HasPortals && CommuterTarget < CommuterDemand;
         public bool PoolClamped => HasPortals && PoolTarget < PoolDemand;
 
@@ -83,28 +62,21 @@ namespace PersistentCity.Core
             long commuterDemand = Math.Max(0, PopulationCensusPolicy.RoundPercent(workplaceCapacity, PopulationCensusPolicy.WorkFillPercent) - eligibleResidentWorkers);
             long perDay = PopulationCensusPolicy.RoundPercent(residents, PopulationCensusPolicy.LeisureVisitorSharePercent);
             long poolDemand = (perDay * 100 + PopulationCensusPolicy.DayVisitProbabilityPercent - 1) / PopulationCensusPolicy.DayVisitProbabilityPercent;
-            // No discovered portal means no visitors, never an invented entry point.
             if (stations <= 0) return new VisitorTargets(false, capacity, commuterDemand, perDay, poolDemand, 0, 0);
             long commuters = Math.Min(commuterDemand, capacity);
             return new VisitorTargets(true, capacity, commuterDemand, perDay, poolDemand, commuters, Math.Min(poolDemand, capacity - commuters));
         }
     }
 
-    /// <summary>Runtime's read-only load-time facts about one established business.</summary>
     public sealed class CensusWorkplace
     {
         public string WorkPlaceId { get; set; } = "";
-        /// <summary>The paired study place for a school; empty otherwise.</summary>
         public string StudyPlaceId { get; set; } = "";
-        /// <summary>Native interior area; zero when the catalogue has no positive area.</summary>
         public double AreaSquareMetres { get; set; }
         public bool PlayerOwned { get; set; }
-        /// <summary>Native rival AI staff list length, informational only; -1 when not a rival business.</summary>
         public int NativeStaff { get; set; } = -1;
     }
 
-    /// <summary>The three resident facts the census reads, captured on the simulation thread so the
-    /// reduction can run detached while the live population keeps changing.</summary>
     public readonly struct CensusResident
     {
         public CensusResident(string homeId, string dayPlaceId, Persona persona) { HomeId = homeId ?? ""; DayPlaceId = dayPlaceId ?? ""; Persona = persona; }
@@ -118,8 +90,6 @@ namespace PersistentCity.Core
         public IReadOnlyList<Place> Places { get; set; } = Array.Empty<Place>();
         public IReadOnlyList<CensusWorkplace> Workplaces { get; set; } = Array.Empty<CensusWorkplace>();
         public IReadOnlyList<CensusResident> Residents { get; set; } = Array.Empty<CensusResident>();
-        /// <summary>Copies the resident facts the census reads. Strings are shared immutable references;
-        /// no identity, journey or wallet is copied.</summary>
         public static CensusResident[] CaptureResidents(IReadOnlyList<CitizenState> citizens)
         {
             var residents = new CensusResident[citizens.Count];
@@ -131,8 +101,6 @@ namespace PersistentCity.Core
             return residents;
         }
 
-        /// <summary>Detached copies of the census fields of a place catalogue, so later live edits
-        /// (hours, capacity refresh) never race the detached reduction.</summary>
         public static List<Place> CapturePlaces(IReadOnlyList<Place> places)
         {
             var copy = new List<Place>(places.Count);
@@ -141,7 +109,6 @@ namespace PersistentCity.Core
             return copy;
         }
 
-        /// <summary>Discovered subway station IDs; null while discovery has not completed.</summary>
         public IReadOnlyList<string>? StationIds { get; set; }
     }
 
@@ -157,8 +124,6 @@ namespace PersistentCity.Core
         public int NativeStaff { get; internal set; } = -1;
     }
 
-    /// <summary>Read-only census of the loaded world. Counts, never targets applied to the city:
-    /// computing it creates no person, workplace, wallet, save field or native call.</summary>
     public sealed class PopulationCensus
     {
         public bool Refused { get; private set; }
@@ -242,7 +207,6 @@ namespace PersistentCity.Core
                 byStudy.Add(workplace.StudyPlaceId, workplace);
             }
 
-            // Sized once: at most one entry per occupied home or assigned day place.
             var occupancy = new Dictionary<string, int>(Math.Min(homeCount, residents.Count), StringComparer.Ordinal);
             var assigned = new Dictionary<string, int>(Math.Min(dayPlaceCount, residents.Count), StringComparer.Ordinal);
             foreach (var person in residents)
@@ -344,7 +308,6 @@ namespace PersistentCity.Core
             return census;
         }
 
-        /// <summary>Canonical summary lines; identical inputs in any order give identical text.</summary>
         public string Summary()
         {
             var text = new StringBuilder(1024);
@@ -383,7 +346,6 @@ namespace PersistentCity.Core
             return text.ToString();
         }
 
-        /// <summary>One line per workplace, ordinal by place ID.</summary>
         public string WorkplaceDetail()
         {
             var text = new StringBuilder(64 + lines.Count * 96);

@@ -9,14 +9,11 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E6f: vehicles admit every name the held product policy executes (E5b4 Decision 14), as a whole vehicle.
-/// Uses writer 36 unchanged. The vehicle market reads the policy once per logical minute.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class VendorDynamicProductTests
 {
     internal const string Dumplings = FoodMetadataApiTests.Dumplings, ChoppedCheese = FoodMetadataApiTests.ChoppedCheese;
     internal const string Kabob = "ba:itemname_kabob", Donut = "ba:itemname_donut", Bagel = "ba:itemname_bagel", Muffin = "ba:itemname_muffin";
-    /// <summary>A full eight-item vehicle: two Street Food mod products, vanilla and Bakery names, and two originals.</summary>
     internal static readonly string[] Eight = { Dumplings, ChoppedCheese, Kabob, Donut, Bagel, Muffin, FoodProducts.HotDog, FoodProducts.Burger };
 
     public VendorDynamicProductTests() => StreetFoodHooks.Reset();
@@ -26,7 +23,6 @@ public sealed class VendorDynamicProductTests
     internal static FoodProductPolicy Policy(FoodProductMetadataResolver? config = null, params string[] loaded)
         => new(config ?? FoodProductMetadataResolver.Empty, FoodMetadataApiTests.Catalogue(loaded.Length == 0 ? Eight : loaded));
 
-    /// <summary>VehicleMarketTests' fixture with a product policy the test swaps.</summary>
     private sealed class Fixture
     {
         public CitySimulator City;
@@ -34,7 +30,6 @@ public sealed class VendorDynamicProductTests
         public StreetFoodVendorMarket Market;
         public Dictionary<string, string> Receipts = new(StringComparer.Ordinal);
         public IFoodProductPolicy? Policy;
-        /// <summary>True while the policy is still being prepared: the getter returns null (no published loaded-name image).</summary>
         public bool Preparing;
         public int PolicyReads;
         private readonly int menuLimit;
@@ -81,12 +76,10 @@ public sealed class VendorDynamicProductTests
         }
     }
 
-    // ---- Admission ----
 
     [Fact]
     public void DynamicNamesOnATestDoubleVehicleAreAdmittedServedAndSold()
     {
-        // Without a policy (and so before E6f) the same vehicle is refused whole and stays with Street Food.
         var before = new Fixture(null);
         Assert.Null(before.City.State.Vendors.Find("v00"));
         Assert.Equal("menu item not executable: " + Dumplings, before.Refusal);
@@ -99,7 +92,6 @@ public sealed class VendorDynamicProductTests
         Assert.True(f.Market.CanServe(f.Row.BusinessId));
         var business = Assert.Single(f.Market.Read(f.Now));
         Assert.Equal(Eight, business.Offers.Select(o => o.ProductId));
-        // The vehicle scope holds the dynamic names exactly as Street Food reports them (name identity, no remapping).
         var scope = f.City.State.Food!.Shops.Single(s => s.Channel == FoodScopeChannel.Vehicle);
         Assert.Equal(Eight, scope.Products());
         foreach (var product in new[] { Dumplings, ChoppedCheese, Kabob, Donut })
@@ -110,7 +102,6 @@ public sealed class VendorDynamicProductTests
             Assert.Equal(product, f.Api.LastItem); Assert.Equal(units - 1, StreetFoodHooks.Find("v00").Units[Array.IndexOf(Eight, product)]);
             Assert.Equal(FoodReceiptStatus.Paid, FoodSaleReceipts.ReadStatus(f.Receipts, meal));
         }
-        // The policy is read once per logical minute, not per item or per call.
         int reads = f.PolicyReads;
         for (int i = 0; i < 100; i++) { _ = f.Market.CanServe(f.Row.BusinessId); _ = f.Market.Read(f.Now); }
         Assert.Equal(reads, f.PolicyReads);
@@ -135,13 +126,11 @@ public sealed class VendorDynamicProductTests
     {
         var drink = Config((ChoppedCheese, new FoodProductMetadataOverride(excluded, 2, 900, 100, 450)));
         var f = new Fixture(Policy(drink));
-        // No row is admitted: the vehicle never gets a business, a request or a vendor place.
         Assert.Null(f.City.State.Vendors.Find("v00"));
         Assert.Equal("menu item not executable: " + ChoppedCheese, f.Refusal);
         Assert.Empty(StreetFoodHooks.Wishes); Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
         Assert.Empty(f.Market.Read(f.Now));
         Assert.DoesNotContain(f.City.State.Food!.Shops, s => s.Channel == FoodScopeChannel.Vehicle);
-        // Checkout of a meal naming the vehicle's generation-1 business is refused before any API sale or receipt.
         var meal = f.Meal(Dumplings, business: VendorNames.BusinessId("v00", 1));
         Assert.False(f.Market.Buy(meal, f.Now).Paid);
         Assert.Equal(0, f.Api.SellCalls); Assert.Equal(FoodReceiptStatus.Missing, FoodSaleReceipts.ReadStatus(f.Receipts, meal));
@@ -161,18 +150,16 @@ public sealed class VendorDynamicProductTests
         Assert.Equal(revision, StreetFoodHooks.Revision);
         Assert.False(f.Row.Authority.Desired); Assert.Empty(f.Market.Read(f.Now));
         Assert.Null(f.Market.CaptureBusiness(f.Row.BusinessId, f.Now));
-        // PC work at the served opening still holds the vehicle until the committed resident resolves.
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
         committed.Status = MealStatus.Missed;
         f.Run(f.Now + 1); f.Run(f.Now + VendorCoordinator.WaitingRecheckMinutes);
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
         Assert.Equal("menu item not executable: " + ChoppedCheese, f.Row.Reason);
-        // The class returns to Food: the vehicle is requested again and served from a later opening.
         f.Policy = Policy();
         f.Run(f.Now + 1);
         Assert.True(f.Row.Authority.Desired); Assert.True(f.Row.Authority.Requested);
         StreetFoodHooks.Close("v00");
-        for (int i = 0; i < 5; i++) f.Run(f.Now + 15); // lease renewals keep the request alive
+        for (int i = 0; i < 5; i++) f.Run(f.Now + 15);
         StreetFoodHooks.Open("v00", 300); f.Run(f.Now + 1);
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
         Assert.True(f.Market.CanServe(f.Row.BusinessId));
@@ -182,11 +169,10 @@ public sealed class VendorDynamicProductTests
     public void APolicyFallbackToTheOriginalThreeHandsADynamicVehicleBack()
     {
         var f = new Fixture(Policy());
-        f.Policy = FoodProductPolicy.OriginalThree; // E5b4's fail-closed publication fallback
+        f.Policy = FoodProductPolicy.OriginalThree;
         f.Run(f.Now + 1); f.Run(f.Now + 1);
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
         Assert.Equal("menu item not executable: " + Dumplings, f.Row.Reason);
-        // An original-three vehicle is unaffected by the same fallback.
         StreetFoodHooks.Reset();
         var originals = new Fixture(FoodProductPolicy.OriginalThree, FoodProducts.HotDog, FoodProducts.Burger);
         Assert.True(originals.Market.CanServe(originals.Row.BusinessId));
@@ -195,7 +181,6 @@ public sealed class VendorDynamicProductTests
     [Fact]
     public void SteadyAdmissionOfAnEightItemDynamicMenuAllocatesNothingBeyondTheOriginalThreePath()
     {
-        // CanServe's existing scope lookup allocates; the policy and its eight per-item checks add 0 B to it.
         long Bytes(Fixture f)
         {
             string business = f.Row.BusinessId;
@@ -209,8 +194,6 @@ public sealed class VendorDynamicProductTests
         Assert.Equal(original, Bytes(new Fixture(Policy())));
     }
 
-    /// <summary>docs/perf/e6f.md. Measurement only: runs when PC_E6F_MEASURE is set, e.g.
-    /// <c>PC_E6F_MEASURE=1 dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~VendorDynamicProductTests.ChoiceCost --logger "console;verbosity=detailed"</c>.</summary>
     [Fact]
     public void ChoiceCostWithEightItemVehicleMenusAndDynamicNames()
     {
@@ -227,7 +210,6 @@ public sealed class VendorDynamicProductTests
             var (p50, p95, max) = Stats(ms);
             lines.Add($"{name}: p50 {p50:0.00000} ms, p95 {p95:0.00000} ms, max {max:0.00000} ms, {(double)bytes / calls:0.0} B/call, {ms.Count} samples");
         }
-        // 1. Whole-vehicle admission (CanServe -> MenuRefusal over every item): 2 originals without a policy vs 8 items with one.
         foreach (var (label, policy, items) in new (string, IFoodProductPolicy?, string[])[] {
                      ("admission, 2 original items, no policy (E6d baseline)", null, new[] { FoodProducts.HotDog, FoodProducts.Burger }),
                      ("admission, 8 items (6 dynamic), held policy", Policy(), Eight) })
@@ -239,18 +221,15 @@ public sealed class VendorDynamicProductTests
             var ms = new List<double>(); long bytes = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 1000; i++) { long t = System.Diagnostics.Stopwatch.GetTimestamp(); for (int j = 0; j < 100; j++) f.Market.CanServe(business); ms.Add(Ms(t) / 100); }
             Report(label, ms, GC.GetAllocatedBytesForCurrentThread() - bytes, 100000);
-            // 2. Capture of one vehicle business (what a decision context reads per vehicle candidate).
             for (int i = 0; i < 5000; i++) f.Market.CaptureBusiness(business, f.Now);
             ms = new List<double>(); bytes = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 1000; i++) { long t = System.Diagnostics.Stopwatch.GetTimestamp(); for (int j = 0; j < 10; j++) f.Market.CaptureBusiness(business, f.Now); ms.Add(Ms(t) / 10); }
             Report(label.Replace("admission", "capture"), ms, GC.GetAllocatedBytesForCurrentThread() - bytes, 10000);
         }
-        // 3. One resident minute step of a running city with its decision, checkout and policy read: every step timed,
-        //    original two-item vehicle vs eight-item dynamic vehicle. The decision step is the choice cost.
         foreach (var (label, items) in new[] { ("city minute, 2 original items", new[] { FoodProducts.HotDog, FoodProducts.Burger }), ("city minute, 8 items (6 dynamic)", Eight) })
         {
             var steps = new List<double>(); var decisions = new List<double>();
-            for (int seed = -2; seed < 24; seed++) // two warm-up cities (JIT) are not recorded
+            for (int seed = -2; seed < 24; seed++)
             {
                 StreetFoodHooks.Reset();
                 var run = new CityRun(seed, items);
@@ -260,8 +239,6 @@ public sealed class VendorDynamicProductTests
                 for (int i = 0; i < 2 * 1440 && !Resolved(run); i++)
                 {
                     decidedNow = false;
-                    // The step pauses once at the held context (to count its offers) and finishes that minute after it;
-                    // both parts are one native minute's work.
                     long t = System.Diagnostics.Stopwatch.GetTimestamp();
                     run.Step(() => captured == 0 && Held(run));
                     if (captured == 0 && Held(run)) { captured = run.HeldOffers.Count(); run.Step(); }
@@ -270,7 +247,6 @@ public sealed class VendorDynamicProductTests
                     if (!decided && decidedNow) { decided = true; if (seed >= 0) decisions.Add(ms); }
                 }
                 Assert.True(decided);
-                // The whole vehicle menu entered the decision and the meal was sold.
                 Assert.Equal(items.Length, captured);
                 Assert.Equal(MealStatus.Paid, run.Meal.Status);
                 Assert.Equal(0, run.City.HistoricalClockMisses);
@@ -305,12 +281,10 @@ public sealed class VendorDynamicProductTests
         var f = new Fixture(Policy());
         var row = f.Row; string business = row.BusinessId;
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
-        // The saved roster holds one record per resident, so the committed decision is the resident's own record.
         var committed = f.City.State.Food!.Residents.Single(); var decision = f.Meal(ChoppedCheese);
         committed.PlaceId = decision.PlaceId; committed.BusinessId = decision.BusinessId; committed.ProductId = decision.ProductId;
         committed.Price = decision.Price; committed.Allowance = decision.Allowance; committed.ServiceMinutes = decision.ServiceMinutes;
         committed.Status = MealStatus.Travelling;
-        // Reload while the loaded-name image is not published yet (bounded catalogue warm-up).
         f.Preparing = true;
         f.Reload(true);
         for (int i = 0; i < 10; i++)
@@ -320,20 +294,16 @@ public sealed class VendorDynamicProductTests
             Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
             Assert.True(f.Market.CanServe(business));
         }
-        // The committed resident's held decision is served as saved.
         var meal = f.City.State.Food!.Residents.Single(m => m.ResidentId == committed.ResidentId);
         meal.Status = MealStatus.Serving;
         Assert.True(f.Market.Buy(meal, f.Now).Paid);
-        // The image publishes with unchanged names: nothing changes.
         f.Preparing = false;
         f.Run(f.Now + 1); f.Run(f.Now + VendorCoordinator.WaitingRecheckMinutes);
         Assert.True(f.Row.Authority.Desired); Assert.True(f.Market.CanServe(business));
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);
-        // A catalogue rebuild mid-session keeps the last ready policy meanwhile.
         f.Preparing = true;
         for (int i = 1; i < StreetFoodVendorMarket.PolicyPreparationMinutes; i++)
         { f.Run(f.Now + 1); Assert.True(f.Market.CanServe(business)); }
-        // A catalogue that never becomes ready fails closed: the dynamic vehicle is handed back after drain.
         meal.Status = MealStatus.Paid;
         for (int i = 0; i < 2 + VendorCoordinator.WaitingRecheckMinutes; i++) f.Run(f.Now + 1);
         Assert.False(f.Market.CanServe(business));
@@ -341,7 +311,6 @@ public sealed class VendorDynamicProductTests
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
     }
 
-    // ---- Taste ----
 
     [Fact]
     public void SeededTasteIsStableAcrossReloadAndCatalogueOrder()
@@ -356,18 +325,14 @@ public sealed class VendorDynamicProductTests
                 Assert.Equal(forward.TasteBand(name, traits, seed, resident), reversed.TasteBand(name, traits, seed, resident));
                 Assert.Equal(JsonConvert.SerializeObject(forward.Capture(name, traits, seed, resident)),
                     JsonConvert.SerializeObject(reversed.Capture(name, traits, seed, resident)));
-                // A config override replaces the configured name's taste only.
                 if (name != Kabob) Assert.Equal(forward.TasteBand(name, traits, seed, resident), Policy(config).TasteBand(name, traits, seed, resident));
             }
         Assert.Equal(4, Policy(config).TasteBand(Kabob, traits, 1, "pc:1"));
-        // A food-by-default name with no config or API entry carries the default fits.
         var defaults = forward.Capture(Dumplings, traits, 1, "pc:1");
         Assert.Equal(2, defaults.Revision); Assert.Equal(FoodMealClass.Food, defaults.MealClass);
     }
 
-    // ---- A running city with the production composition: one policy source for the composite and the vehicle ----
 
-    /// <summary>A shop market with no candidate, so the resident's only option is the vehicle.</summary>
     private sealed class ClosedShops : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
         IFoodFailureMarket, IFoodSaleEvidence, IRivalFoodMarket
     {
@@ -421,7 +386,6 @@ public sealed class VendorDynamicProductTests
         public void Load(params string[] names) => Image = new LoadedNameImage(++revision, names, FoodEligibilityRefusal.None);
         private void Attach(bool present)
         {
-            // PersistentCityMod.ComposeFoodMarkets: the composite and the vehicle market read the same policy source.
             source = new FoodProductPolicySource(() => Image, () => Config, _ => FoodProductMetadataSnapshot.Empty);
             Vendor = new StreetFoodVendorMarket(City, present ? Api : null, "Street Food vendor API missing.", new VendorNavMeshSampler(),
                 Receipts, () => Clock, () => true, () => source.Current, menuLimit);
@@ -430,10 +394,6 @@ public sealed class VendorDynamicProductTests
         }
         public VendorRow Row => City.State.Vendors.Find("v00")!;
         public ResidentMeal Meal => City.State.Food!.Residents.Single();
-        /// <summary>One native minute: Street Food's crew opens the vehicle at 01:00 for 22 hours each day.</summary>
-        /// <remarks>Advances one event at a time and stops inside the minute as soon as <paramref name="stop"/> holds (a held
-        /// decision context lives only between two events). The next step finishes that same minute, so no event runs
-        /// behind the native clock.</remarks>
         public void Step(Func<bool>? stop = null)
         {
             if (!partial)
@@ -464,7 +424,6 @@ public sealed class VendorDynamicProductTests
             string payload = SaveCodec.Write(City.State);
             var read = SaveCodec.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             Assert.Equal(payload, SaveCodec.Write(read.State!));
-            // A native save carries the receipt dictionary next to the population bytes.
             Receipts = new Dictionary<string, string>(Receipts, StringComparer.Ordinal);
             City = new CitySimulator(read.State!, planner);
             Attach(present);
@@ -472,7 +431,6 @@ public sealed class VendorDynamicProductTests
         }
     }
 
-    /// <summary>A captured, not yet finished decision context (E5b4's held tuples), before the resident departs.</summary>
     private static bool Held(CityRun run) => run.Meal.Decision?.Shops.Count > 0;
     private static bool Resolved(CityRun run) => run.Meal.Status == MealStatus.Paid || run.Meal.Status == MealStatus.Missed || run.Meal.Status == MealStatus.Declined;
 
@@ -480,7 +438,6 @@ public sealed class VendorDynamicProductTests
     [InlineData(3)] [InlineData(11)]
     public void AHeldVehicleDecisionWithDumplingsOrChoppedCheeseReplaysAcrossReload(int seed)
     {
-        // Control: no reload.
         var control = new CityRun(seed, Dumplings, ChoppedCheese);
         control.RunUntil(() => Held(control));
         string held = control.Tuples;
@@ -494,7 +451,6 @@ public sealed class VendorDynamicProductTests
         var controlReceipts = JsonConvert.SerializeObject(control.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal));
         Assert.Equal(1, control.Api.SellCalls);
 
-        // Same city, saved and reloaded while the decision is held; config then changes taste and fits (still Food).
         StreetFoodHooks.Reset();
         var changed = new CityRun(seed, Dumplings, ChoppedCheese);
         changed.RunUntil(() => Held(changed));
@@ -543,7 +499,6 @@ public sealed class VendorDynamicProductTests
         string history = JsonConvert.SerializeObject(run.City.State.Food!.History);
         var scope = JsonConvert.SerializeObject(run.City.State.Food.Shops.Single(s => s.Channel == FoodScopeChannel.Vehicle));
 
-        // Street Food absent: the city loads, keeps its vehicle facts and serves no vehicle.
         string saved = run.Reload(false);
         Assert.Equal(receipts, JsonConvert.SerializeObject(run.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal)));
         Assert.Equal(history, JsonConvert.SerializeObject(run.City.State.Food!.History));
@@ -555,7 +510,6 @@ public sealed class VendorDynamicProductTests
         Assert.Equal(receipts, JsonConvert.SerializeObject(run.Receipts.OrderBy(p => p.Key, StringComparer.Ordinal)));
         int sells = run.Api.SellCalls;
 
-        // Street Food returns, but the dumpling mod did not: the whole vehicle is refused and stays with Street Food.
         run.Load(Eight.Where(n => n != Dumplings).ToArray());
         run.Reload(true);
         run.RunFor(2 * 1440);
@@ -564,7 +518,6 @@ public sealed class VendorDynamicProductTests
         Assert.Equal("", StreetFoodHooks.Find("v00").Owner);
         Assert.Equal(sells, run.Api.SellCalls);
 
-        // With dumplings loaded again the vehicle re-qualifies at a later opening and sells again.
         run.Load(Eight);
         run.RunUntil(() => run.Vendor.CanServe(run.Row.BusinessId), 2 * 1440);
         Assert.Equal(VendorNames.Owner, StreetFoodHooks.Find("v00").Owner);

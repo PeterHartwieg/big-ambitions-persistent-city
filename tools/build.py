@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Compile the Persistent City prototype against an explicitly supplied local game Managed directory."""
 import argparse
 import hashlib
 import json
@@ -32,14 +31,12 @@ if not json_reference.is_file():
 
 
 def assembly_hashes():
-    """SHA-256 per referenced game assembly plus Newtonsoft.Json.dll, keyed by file name only."""
     files = {name + ".dll": managed / (name + ".dll") for name in references}
     files["Newtonsoft.Json.dll"] = json_reference
     return {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in files.items()}
 
 
 def match_fingerprint(hashes, declared):
-    """The declared set every hash matches, else ("unknown", the file names that differ from the closest set)."""
     best = None
     for entry in declared.get("sets", []):
         differing = sorted(n for n in set(hashes) | set(entry["assemblies"]) if hashes.get(n) != entry["assemblies"].get(n))
@@ -51,7 +48,6 @@ def match_fingerprint(hashes, declared):
 
 
 if args.provenance:
-    # Decision 4: read-only hashes of the supplied assemblies. No path is written; an unknown set never stops the build.
     hashes = assembly_hashes()
     declared = json.loads(args.fingerprints.read_text(encoding="utf-8")) if args.fingerprints.is_file() else {}
     game_set, differing = match_fingerprint(hashes, declared)
@@ -99,14 +95,11 @@ command += ["-reference:" + str(json_reference)]
 command += ["-reference:" + str(harmony)]
 if args.fault_points:
     command += ["-define:PC_FAULT_POINTS"]
-# A response file keeps long worktree paths under the Windows command-line limit.
-# csc reads -noconfig only from the command line.
 arguments = command[4:] + sources
-response = root / "build/csc.rsp"  # Outside the package folder.
+response = root / "build/csc.rsp"
 response.write_text("".join('"' + a + '"\n' for a in arguments), encoding="utf-8")
 subprocess.run(command[:4] + ["@" + str(response)], check=True)
 shutil.copy2(root / "config/persistent-city.json", output / "persistent-city.json")
-# The native mod loader registers <mod>/Locales; LocalizorManager reads <folder>/<locale>.json (C5e).
 locales = output / "Locales"
 locales.mkdir(exist_ok=True)
 for table in sorted((root / "Runtime/Localization").glob("*.json")):

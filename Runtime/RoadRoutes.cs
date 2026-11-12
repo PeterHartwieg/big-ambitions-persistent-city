@@ -23,7 +23,6 @@ namespace PersistentCity.Runtime
         private const int MaximumGateCells = 64;
         private const int LinearGateLimit = 8;
         private readonly Dictionary<(int X, int Z), List<GateBox>> gateCells = new Dictionary<(int, int), List<GateBox>>();
-        // Very large or malformed boxes keep the original scan instead of filling an unbounded grid.
         private readonly List<GateBox> unindexedGates = new List<GateBox>();
         private readonly struct GateBox
         {
@@ -40,7 +39,6 @@ namespace PersistentCity.Runtime
                 new Position(Math.Min(Min.X, other.Min.X), Math.Min(Min.Y, other.Min.Y), Math.Min(Min.Z, other.Min.Z)),
                 new Position(Math.Max(Max.X, other.Max.X), Math.Max(Max.Y, other.Max.Y), Math.Max(Max.Z, other.Max.Z)), Door);
         }
-        // Per door: the box of its parts that do not move, and the gate box in use.
         private Dictionary<FenceDoor, (GateBox? Fixed, GateBox Gate)> doorBoxes = new Dictionary<FenceDoor, (GateBox?, GateBox)>();
         public PublicRoadAccess() : this(Doors(), null) { BuildIndex(); }
         public PublicRoadAccess(FenceDoor[] doors) : this(doors, null) { BuildIndex(); }
@@ -56,9 +54,6 @@ namespace PersistentCity.Runtime
                 if (Combine(colliders) is Bounds geometry)
                 {
                     geometry.Expand(new Vector3(1, 2, 1)); gate = new GateBox(geometry, door.name);
-                    // The leaves swing or slide whenever anyone passes. While the parts that do not move are
-                    // unchanged, the box only grows to take in each new leaf pose: it always covers what a fresh
-                    // read would give, and stops changing once the leaves have been seen at their extremes.
                     if (previous != null && fixedParts.HasValue && previous.doorBoxes.TryGetValue(door, out var known)
                         && known.Fixed.HasValue && known.Fixed.Value.Same(fixedParts.Value))
                         gate = known.Gate.Covers(gate) ? known.Gate : known.Gate.Union(gate);
@@ -70,8 +65,6 @@ namespace PersistentCity.Runtime
                 gates.Add(gate);
             }
         }
-        // Capture first, then index only a snapshot that will be published. An unchanged refresh needs its
-        // door records, but must not rebuild and immediately discard all of the retained grid's buckets.
         private void BuildIndex()
         {
             if (gates.Count <= LinearGateLimit) return;
@@ -103,10 +96,7 @@ namespace PersistentCity.Runtime
             firstX = (int)x0; lastX = (int)x1; firstZ = (int)z0; lastZ = (int)z1;
             return true;
         }
-        // Unsorted: the gate comparison does not depend on order.
         private static FenceDoor[] Doors() => Object.FindObjectsByType<FenceDoor>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        /// <summary>Searches the scene for doors again. Returns null when that gives exactly these gates (in any order),
-        /// otherwise the new snapshot, with the first gate that differs named in <paramref name="change"/>.</summary>
         public PublicRoadAccess? Refreshed(out string change)
             => Refreshed(Doors(), out change);
         public PublicRoadAccess? Refreshed(FenceDoor[] doors, out string change)
@@ -121,8 +111,6 @@ namespace PersistentCity.Runtime
             }
             change = remaining.Count == 0 ? "" : "gate '" + remaining[0].Door + "' is gone or moved";
             if (change.Length > 0) { next.BuildIndex(); return next; }
-            // Same gates, but a door may have been replaced by an identical one: keep the new per-door record. The
-            // multiset matched, so every gate in that record is one of these gates.
             doorBoxes = next.doorBoxes;
             return null;
         }
@@ -166,9 +154,6 @@ namespace PersistentCity.Runtime
         }
         private bool ClearIndexedSegment(Position a, Position b)
         {
-            // Boxes and queries include both boundary cells, including at negative coordinates. Only the broad
-            // phase changes: every candidate still uses the same three-dimensional, boundary-inclusive test.
-            // Short lists and long segments cost less to scan; never walk a city-sized query rectangle.
             if (!CellRange(Math.Min(a.X, b.X), Math.Max(a.X, b.X), Math.Min(a.Z, b.Z), Math.Max(a.Z, b.Z),
                 Math.Min(MaximumGateCells, gates.Count), out int minX, out int maxX, out int minZ, out int maxZ))
                 return ClearCandidates(a, b, gates);
@@ -178,8 +163,6 @@ namespace PersistentCity.Runtime
                 for (int z = minZ; z <= maxZ; z++)
                     if (gateCells.TryGetValue((x, z), out var bucket))
                     {
-                        // Overlapping boxes can occur in several queried cells. Bound repeated work by falling
-                        // back before candidate tests reach a full scan, rather than scanning the same gates 64 times.
                         if (bucket.Count >= remaining) return ClearCandidates(a, b, gates);
                         remaining -= bucket.Count;
                         if (!ClearCandidates(a, b, bucket)) return false;
@@ -190,7 +173,6 @@ namespace PersistentCity.Runtime
         {
             foreach (var gate in candidates)
             {
-                // Pure slab intersection avoids millions of Unity Bounds native calls during graph searches.
                 if (TransportAccessGeometry.IntersectsBounds(a, b, gate.Min, gate.Max)) return false;
             }
             return true;
@@ -208,7 +190,6 @@ namespace PersistentCity.Runtime
         private static Position Point(Vector3 p) => new Position(p.x, p.y, p.z);
     }
 
-    /// <summary>Read-only native lane adapter. Curb points are abstract parking, never claimed occupied real spaces.</summary>
     internal sealed class RoadRoutes
     {
         private const double ConnectorMetres = 8;
@@ -260,7 +241,6 @@ namespace PersistentCity.Runtime
             closureBatch = false;
             trafficBuilder?.BeginQuery();
         }
-        /// <summary>Checks only this captured section at a kernel boundary; no city-wide scan per traffic event.</summary>
         public bool IsTrafficLinkClosed(int linkId)
         {
             var network = TrafficNetwork;
@@ -283,8 +263,6 @@ namespace PersistentCity.Runtime
                 if (i > 0 && !closureGateClear[linkId]
                     && !access.ClearSegment(nodes[indices[i - 1]].Position, nodes[index].Position)) return true;
             }
-            // Access and captured positions are immutable. Only successful gate checks survive a batch;
-            // every native node is still validated afresh on the next pass. Blocked checks retain order.
             closureGateClear[linkId] = true;
             return false;
         }
@@ -294,16 +272,12 @@ namespace PersistentCity.Runtime
         private readonly List<int[]?> agentContracts = new List<int[]?>();
         private readonly List<VehicleTypes[]?> carContracts = new List<VehicleTypes[]?>();
         private readonly List<Waypoint?> nativeContracts = new List<Waypoint?>();
-        // The traffic capture treats a null neighbour list apart from an empty one, so the snapshot must too.
         private readonly List<bool> nullNeighbours = new List<bool>();
         private readonly int[] searchedAt;
         private readonly bool[] searchDisabled;
         private int searchGeneration;
-        // Immutable type metadata. Its value is still read from the live waypoint at every boundary.
         private static readonly System.Reflection.FieldInfo? AssociatedIntersection = typeof(Waypoint).GetField("associatedIntersection",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        // One read-only physical sample validates each node once and shares junction contracts.
-        // Nothing survives the sample: the next sample and every public resolve read live data.
         private bool sampleScope;
         private int sampleGeneration;
         private int[] sampledAt = Array.Empty<int>();
@@ -311,7 +285,6 @@ namespace PersistentCity.Runtime
         public string TopologyId { get; private set; } = "";
         public bool Ready => copiedNodes == waypoints.Length && TrafficNetwork != null;
         public bool Available => scene != null && waypoints.Length > 0;
-        /// <summary>Captured without a road scene. Nothing marks such a snapshot stale, so the caller retries it.</summary>
         public bool SceneMissing => scene == null;
         public bool IsCurrent
         {
@@ -332,14 +305,10 @@ namespace PersistentCity.Runtime
             access = current;
         }
         private int sweepNode = -1, sweepJunction;
-        /// <summary>Starts a staged check of the whole snapshot against native data. Searches only check the nodes they
-        /// touch; a node captured without car access is never touched, so only this sweep notices it changing.</summary>
         public void BeginSweep()
         {
-            // A sweep still running carries on; restarting it could keep the last nodes from ever being checked.
             if (Ready && sweepNode < 0) { sweepNode = 0; sweepJunction = 0; }
         }
-        /// <summary>Continues the sweep within the budget. A difference marks the snapshot stale, as a search would.</summary>
         public void Sweep(double milliseconds, int maximumUnits)
         {
             if (sweepNode < 0) return;
@@ -369,7 +338,6 @@ namespace PersistentCity.Runtime
         }
         public RoadRoutes(PublicRoadAccess access, double walkingSpeed = 2, double clockRate = 1, NativeRoadSpeeds? speeds = null)
             : this(Object.FindObjectOfType<CurrentSceneData>(), access, walkingSpeed, clockRate, speeds) { }
-        // A structural rebuild can reuse the same live scene; discovery belongs to the planner lifetime.
         public RoadRoutes(CurrentSceneData? scene, PublicRoadAccess access, double walkingSpeed = 2, double clockRate = 1, NativeRoadSpeeds? speeds = null)
         {
             if (!Position.Finite(walkingSpeed) || walkingSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(walkingSpeed));
@@ -385,12 +353,10 @@ namespace PersistentCity.Runtime
             searchDisabled = new bool[waypoints.Length];
         }
 
-        /// <summary>Incremental main-thread snapshot: at most 2048 nodes or two milliseconds per eligible request.
-        /// The caller must finish preflight before advancing any citizen, preserving mode-choice determinism.</summary>
         public bool Prepare()
         {
             speeds.Refresh();
-            if (speeds.Waiting != null) return false; // F8d: a transient RLO answer holds preparation; it is not a failure
+            if (speeds.Waiting != null) return false;
             try { return PrepareNodes(); }
             catch (RoadSpeedsWaitingException) { return false; }
         }
@@ -408,8 +374,6 @@ namespace PersistentCity.Runtime
                 if (w != null)
                 {
                     node.Position = Point(w.position); node.KilometresPerHour = speeds.Canonical(w);
-                    // The native AI reads allowedAgents. Conflicting populated contracts fail closed rather
-                    // than granting a permission present in only the legacy enum list.
                     node.AllowsCar = w.allowedAgents != null && w.allowedAgents.Contains((int)VehicleTypes.Car)
                         && (w.allowedCars == null || w.allowedCars.Contains(VehicleTypes.Car));
                     node.Successors = w.neighbors == null ? Array.Empty<int>() : w.neighbors.ToArray();
@@ -448,8 +412,6 @@ namespace PersistentCity.Runtime
         }
         private void HashNode(int index, Waypoint? native, TransportRoadNode node)
         {
-            // Keep the existing byte format (including null versus empty contracts) while
-            // reusing the buffer and the arrays already captured by this snapshot.
             topologyBuffer.SetLength(0); topologyBuffer.Position = 0;
             var writer = topologyWriter;
             writer.Write(index); writer.Write(native != null); writer.Write(native?.listIndex ?? -1);
@@ -469,7 +431,6 @@ namespace PersistentCity.Runtime
         public List<Curb> Near(Position position, double radius, int limit = 2)
         {
             trafficBuilder?.BeginQuery();
-            // Bound spatial-cell arithmetic too; malformed saved coordinates cannot wrap an integer loop.
             if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
                 || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) return new List<Curb>();
             var nearby = new List<int>();
@@ -480,7 +441,6 @@ namespace PersistentCity.Runtime
                         foreach (int index in indices) if (!Disabled(index) && Position.Distance(position, nodes[index].Position) <= radius) nearby.Add(index);
             nearby.Sort((a, b) => { int order = Position.Distance(position, nodes[a].Position).CompareTo(Position.Distance(position, nodes[b].Position)); return order != 0 ? order : a.CompareTo(b); });
             var result = new List<Curb>();
-            // Hard bound on NavMesh/physics queries, even in a dense junction.
             int attempts = 0;
             foreach (int index in nearby)
             {
@@ -507,23 +467,15 @@ namespace PersistentCity.Runtime
         public Route? Plan(Curb from, Curb to, double departureMinute = 0,
             double maximumEstimatedMinutes = double.PositiveInfinity)
         {
-            // The one-shot plan is the resumable plan driven without a deadline, so both share one search.
             using var plan = BeginPlan(from, to, departureMinute, maximumEstimatedMinutes);
             plan.Continue(long.MaxValue);
             return plan.Result;
         }
 
-        /// <summary>Start a curb-to-curb plan whose A* the caller advances in slices. Searches of this snapshot
-        /// that were started over while suspended, because another search reused the per-node memo.</summary>
         public RoadPlan BeginPlan(Curb from, Curb to, double departureMinute = 0, double maximumEstimatedMinutes = double.PositiveInfinity)
             => new RoadPlan(this, from, to, departureMinute, maximumEstimatedMinutes);
         public int SearchRestarts { get; private set; }
 
-        /// <summary>One road search in progress. The prologue (connector checks, forecast capture, search start) and
-        /// the epilogue (live path validation, leg tagging, connector join) are the former synchronous Plan; between
-        /// them the A* runs in 64-expansion slices until the caller's deadline. The per-search node memo belongs to
-        /// the search generation taken at the start: if another search bumps it while this one is suspended, this
-        /// one starts over rather than mixing two validations.</summary>
         internal sealed class RoadPlan : IDisposable
         {
             private const int ExpansionSlice = 64;
@@ -540,9 +492,7 @@ namespace PersistentCity.Runtime
             public bool Finished { get; private set; }
             public Route? Result { get; private set; }
             public int Restarts { get; private set; }
-            /// <summary>F8d: the last start met a transient road-speed answer; the plan is unfinished and retries.</summary>
             public bool WaitingForSpeeds { get; private set; }
-            /// <summary>Frontier expansions so far in the current search attempt.</summary>
             public int Expanded => search?.Expanded ?? 0;
 
             internal RoadPlan(RoadRoutes owner, Curb from, Curb to, double departureMinute, double maximumEstimatedMinutes)
@@ -557,15 +507,11 @@ namespace PersistentCity.Runtime
                 var owner = this.owner; var from = this.from; var to = this.to;
                 var speeds = owner.speeds; var nodes = owner.nodes; var waypoints = owner.waypoints;
                 speeds.Refresh();
-                // F8d: a transient road-speed answer leaves the plan unfinished; Continue retries it, nothing is consumed.
                 if (speeds.Waiting != null) { WaitingForSpeeds = true; return; }
                 WaitingForSpeeds = false;
                 if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
                     || from.Node == to.Node || !owner.ConnectorClear(from.Position, nodes[from.Node].Position) || !owner.ConnectorClear(to.Position, nodes[to.Node].Position))
                 { Finish(null); return; }
-                // This search runs on Unity's main thread and its access callbacks are read-only. Repeated
-                // visits to a node therefore share one native validation within the search generation;
-                // every new search and the final selected-path validation still read live data.
                 if (owner.searchGeneration == int.MaxValue) { Array.Clear(owner.searchedAt, 0, owner.searchedAt.Length); owner.searchGeneration = 0; }
                 owner.searchGeneration++;
                 generation = owner.searchGeneration;
@@ -587,9 +533,6 @@ namespace PersistentCity.Runtime
                     if (!network.TryGetEdge(a, b, out var edge)) return double.NaN;
                     if (!sectionPace.TryGetValue(edge.LinkId, out double factor))
                     {
-                        // FIFO spacing uses a linear distance/time coordinate inside a section.
-                        // Average the full section's effective travel time, then apply one pace to
-                        // all its edges. Partial curb journeys receive the same proportional pace.
                         var indices = network.NativeNodes(edge.LinkId);
                         double effective = 0; bool changed = false;
                         for (int i = 1; i < indices.Count; i++)
@@ -606,8 +549,6 @@ namespace PersistentCity.Runtime
                     }
                     return baseline * factor;
                 }
-                // One read per section for this query. A* has no arrival-time callback, so this is a departure-time
-                // local forecast. Proportional edge shares avoid repeatedly charging an entire section at every waypoint.
                 double Extra(int a, int b)
                 {
                     if (!network.TryGetEdge(a, b, out var edge)) return 1e15;
@@ -636,8 +577,6 @@ namespace PersistentCity.Runtime
                     pathFound: found => path = found, extraMinutes: Extra, maximumEstimatedMinutes: roadCeiling);
             }
 
-            /// <summary>Advance the search in slices until it finishes or the Stopwatch deadline passes; at least
-            /// one slice always runs. Returns true once Result is final.</summary>
             public bool Continue(long deadlineTimestamp)
             {
                 if (Finished) return true;
@@ -652,11 +591,8 @@ namespace PersistentCity.Runtime
                 while (true)
                 {
                     bool done;
-                    // F8d: lane timing went transient mid-search: drop this attempt and start again once RLO answers.
                     try { done = search!.Advance(ExpansionSlice); }
                     catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
-                    // A finite caller admits one 64-expansion slice even when the clock budget
-                    // is large or the host is fast. Only explicit offline/synchronous calls drain.
                     if (!done) { if (deadlineTimestamp != long.MaxValue) return false; continue; }
                     try { Complete(); }
                     catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
@@ -668,10 +604,6 @@ namespace PersistentCity.Runtime
             {
                 var owner = this.owner; var road = search!.Result; var path = this.path; var network = this.network!;
                 if (road == null || path == null || !owner.NativePathValid(path)) { Finish(null); return; }
-                // A fresh A* search and live validation check every node, directed edge and gate. No route winner
-                // is cached: an off-path closure reopening must immediately make its shorter path competitive.
-                // Background cars do not collide with
-                // traffic or artificial bridge skip hiders; local curb access receives the physical barrier test.
                 if (owner.TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) { Finish(null); return; }
                 string tagPrefix = "native:road:v1:" + owner.TopologyId + ":";
                 for (int i = 0; i < road.Legs.Count; i++)
@@ -679,7 +611,6 @@ namespace PersistentCity.Runtime
                     if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
                         || captured!.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
                         || i == 0 && entryDelays!.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) { Finish(null); return; }
-                    // The same tag text as before; setting it also decodes the transient road tag once.
                     road.Legs[i].ServiceId = string.Concat(tagPrefix, path[i].ToString(CultureInfo.InvariantCulture),
                         ":", path[i + 1].ToString(CultureInfo.InvariantCulture));
                 }
@@ -692,7 +623,6 @@ namespace PersistentCity.Runtime
                 search?.Dispose(); search = null;
             }
 
-            /// <summary>Abandon an unfinished plan, or release a finished one. Safe to call twice.</summary>
             public void Dispose()
             {
                 if (!Finished) { Finished = true; Result = null; }
@@ -707,11 +637,8 @@ namespace PersistentCity.Runtime
         {
             Vector3 start = Vector(a) + Vector3.up * 0.8f, end = Vector(b) + Vector3.up * 0.8f;
             if (obstacleMask == 0) return false;
-            // GR-9: the mod's own cars (driving or parked near the camera) are bodies, not city geometry. Ignoring them
-            // keeps curb choice and car-trip availability independent of which bodies are shown.
             var delta = end - start;
             float length = delta.magnitude;
-            // An empty segment crosses nothing, as the base Linecast found, whether own cars are shown or not.
             if (length <= 0.000001f) return true;
             int count = Physics.RaycastNonAlloc(start, delta / length, clearHits, length, obstacleMask, QueryTriggerInteraction.Ignore);
             if (count == clearHits.Length) return !Physics.Linecast(start, end, obstacleMask, QueryTriggerInteraction.Ignore) || OnlyOwnCars(start, end);
@@ -778,7 +705,6 @@ namespace PersistentCity.Runtime
             try { canonical = speeds.Canonical(native); }
             catch (InvalidOperationException error) when (!(error is RoadSpeedsWaitingException))
             {
-                // Record the cause without changing the existing exception contract on subsequent reads.
                 if (InvalidationReason.Length == 0) { InvalidationReason = "unverified-speed"; InvalidationIndex = index; }
                 throw;
             }
@@ -790,7 +716,6 @@ namespace PersistentCity.Runtime
         {
             if (current == null) return captured == null;
             if (captured == null || current.Count != captured.Length) return false;
-            // Indexed lists avoid boxing an enumerator for every checked node/contract.
             var comparer = EqualityComparer<T>.Default;
             for (int i = 0; i < captured.Length; i++)
                 if (!comparer.Equals(current[i], captured[i])) return false;
@@ -813,8 +738,6 @@ namespace PersistentCity.Runtime
                 || Disabled(index)) return null;
             return waypoints[index];
         }
-        // ResolveWaypoint's checks in its order. Inside a sample, a node's verdict is read once and
-        // junction results are shared between its nodes; outside one this is ResolveWaypoint itself.
         private Waypoint? ResolveSampled(string topology, int index)
         {
             if (!sampleScope) return ResolveWaypoint(topology, index);
@@ -824,12 +747,9 @@ namespace PersistentCity.Runtime
             { sampleDisabled[index] = Disabled(index); sampledAt[index] = sampleGeneration; }
             return sampleDisabled[index] ? null : waypoints[index];
         }
-        /// <summary>Synchronous and read-only: no native load, pin, hook or callback runs inside it, so one
-        /// validation of each node holds for the whole sample. The scope closes before the caller acquires a body.</summary>
         public bool TryPhysicalRoadSample(CitizenState citizen, PhysicalJourneySample sample, out PhysicalRoadSample roadSample)
         {
             roadSample = default;
-            // A reentrant sample is refused rather than validated against this one's partial results.
             if (sampleScope) return false;
             if (sampledAt.Length != waypoints.Length) { sampledAt = new int[waypoints.Length]; sampleDisabled = new bool[waypoints.Length]; }
             if (sampleGeneration == int.MaxValue) { Array.Clear(sampledAt, 0, sampledAt.Length); sampleGeneration = 0; }
@@ -848,10 +768,6 @@ namespace PersistentCity.Runtime
             var current = legs[sample.LegIndex];
             if (current.ServiceId != sample.ServiceId || Position.Distance(current.From, sample.From) > 0.001
                 || Position.Distance(current.To, sample.To) > 0.001 || !TryTag(current, out int from, out int to)) return false;
-            // Retimed fragments remain logical travel and bound future driving targets, but their
-            // verified history must retain junction entry/exit evidence and rear-clearance distances.
-            // Later full edges may receive a body subject to ordinary junction clearance, not immediately.
-            // Missing intersection metadata on intermediate nodes is not evidence of being outside a junction.
             int firstLeg = sample.LegIndex;
             while (firstLeg > 0)
             {
@@ -879,8 +795,6 @@ namespace PersistentCity.Runtime
                 if (fragment && i > sample.LegIndex) break;
                 if (previousTo >= 0 && (Position.Distance(legs[i - 1].To, leg.From) > .001
                     || (a != previousTo && (a != previousFrom || b != previousTo)))) return false;
-                // A fragment beginning inside an edge cannot manufacture that edge's source boundary.
-                // Successive fragments of one edge contribute their actual geometry only once.
                 if ((!fragment || Position.Distance(leg.From, nodes[a].Position) <= .001) && !Boundary(a, distance)) return false;
                 if (i == sample.LegIndex) progress = distance + Position.Distance(leg.From, sample.Position);
                 distance += Position.Distance(leg.From, leg.To);
@@ -900,9 +814,6 @@ namespace PersistentCity.Runtime
                 if (!native.enter && !native.exit) return true;
                 var junction = associated.GetValue(native);
                 if (junction == null || native.enter == native.exit) return false;
-                // Endpoint tolerance can observe the same node on adjacent tiny fragments. This is
-                // one passage until another native node intervenes, not a second entry/exit. Retain
-                // the earliest entry and latest exit so uncertainty can only delay body admission.
                 if (repeatedEndpoint)
                 {
                     var prior = boundaries[boundaries.Count - 1];
@@ -919,7 +830,6 @@ namespace PersistentCity.Runtime
         {
             from = to = -1;
             if (leg.Mode != TravelMode.Car || !leg.From.IsFinite || !leg.To.IsFinite || !Position.Finite(leg.Minutes) || leg.Minutes <= 0) return false;
-            // Decoded when ServiceId was set; the topology is compared in place on every call.
             var tag = leg.RoadTag;
             if (tag.Kind != RoadTagKind.Fragment1 || !tag.IsTopology(leg.ServiceId, TopologyId) || tag.From == tag.To) return false;
             from = tag.From; to = tag.To;
@@ -931,8 +841,6 @@ namespace PersistentCity.Runtime
             if (!Position.Finite(square) || square <= .000000000001) return false;
             double Project(Position point) => ((point.X - start.X) * x + (point.Y - start.Y) * y + (point.Z - start.Z) * z) / square;
             double first = Project(leg.From), last = Project(leg.To);
-            // Historical fragments may collapse to one representable point during retiming. They still
-            // cannot claim another edge, reverse direction or turn malformed metadata into a boundary.
             return Position.Finite(first) && Position.Finite(last) && last >= first
                 && Position.Distance(leg.From, Position.Lerp(start, end, Math.Max(0, Math.Min(1, first)))) <= .001
                 && Position.Distance(leg.To, Position.Lerp(start, end, Math.Max(0, Math.Min(1, last)))) <= .001;

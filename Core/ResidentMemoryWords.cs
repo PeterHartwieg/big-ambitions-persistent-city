@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Words from this consumer's own retained evidence. Called only for an open popup or
-    /// explicit diagnostic. No reconstruction of missed failures or invented price/product causes.</summary>
     public static class ResidentMemoryWords
     {
         public static IReadOnlyList<string> Capture(FoodCommerceState food, ResidentMeal consumer,
@@ -28,7 +26,6 @@ namespace PersistentCity.Core
                         words.Add("remembers a modeled food purchase at " + rival + "; native service unobserved");
                     continue;
                 }
-                // Generation and place must still belong to an owned scope.
                 var scope = food.Shops.Find(s => s.BusinessId == shop.BusinessId && s.PlaceId == shop.PlaceId);
                 if (scope == null || currentOwnShop != null && !currentOwnShop(scope)) continue;
                 string name = label(shop.PlaceId);

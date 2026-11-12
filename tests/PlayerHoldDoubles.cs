@@ -1,5 +1,3 @@
-// F2e native doubles for Runtime/PlayerContact.cs: the game's player controller, the vehicle the player drives and
-// Unity's log. Only these can be the player; every other body in the scene doubles is a non-player actor.
 using System.Collections.Generic;
 
 public class InstanceBehavior<T> where T : class

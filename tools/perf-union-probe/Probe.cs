@@ -1,5 +1,3 @@
-// Rig-only F4b union probe. Never package with Persistent City. Native validation is pending (rig check G2).
-// Persistent City is bound by reflection only, so the same DLL runs in reference mode with Persistent City removed.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,20 +33,17 @@ namespace PerfUnionProbe
         public Task OnUnloadAsync() { Session.Disarm(); if (host != null) Object.Destroy(host); return Task.CompletedTask; }
     }
 
-    // The documented rig ops reflection extension signature; no AgentRigOps reference.
     public static class PerfUnionRigOps
     {
         public static JToken Op_perf_union(JObject args) => Session.Dispatch(args);
     }
 
-    /// <summary>Marker type for the probe's frame-start entry in the player loop.</summary>
     public struct PerfUnionFrameStart { }
 
     public sealed class Session : MonoBehaviour
     {
         // Deliberately outside the persistentcity owner namespaces, so the inventory never sees the probe.
         internal const string PatchId = "f4b.perf-union-probe";
-        // ProbeCapacity: a 20-minute window at the 90 FPS cap fits without draining; longer windows drain through `page`.
         internal const int FrameLimit = ProbeCapacity.Frames, TickLimit = ProbeCapacity.Ticks, CallLimit = ProbeCapacity.Calls,
             DiagnosticLimit = ProbeCapacity.Diagnostics, ReplyLimit = 48000;
         internal static readonly BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
@@ -69,7 +64,6 @@ namespace PerfUnionProbe
         }
         private struct Sample { public int frame; public long qpc; public JObject accounting, saveEpoch; }
 
-        // Session state. Every field is main-thread only except offMainCallbacks.
         internal static volatile bool armed;
         internal static bool measuring;
         private static string mode = "none", error = "", stopReason = "not-started", window = "", boundarySource = "none";
@@ -80,8 +74,6 @@ namespace PerfUnionProbe
         private static readonly List<Binding> bindings = new List<Binding>();
         internal static readonly Dictionary<MethodBase, int> scopeIndex = new Dictionary<MethodBase, int>();
         internal static readonly Dictionary<MethodBase, int> componentIndex = new Dictionary<MethodBase, int>();
-        // Perf (docs/perf/f4b.md): reference-equality caches in front of the default-comparer tables. A miss falls back
-        // to the default table and caches that instance, so a different MethodBase object for the same method still binds.
         internal static readonly Dictionary<MethodBase, int> scopeFast = new Dictionary<MethodBase, int>(MethodIdentity.Instance);
         internal static readonly Dictionary<MethodBase, int> componentFast = new Dictionary<MethodBase, int>(MethodIdentity.Instance);
         private static string[] componentNames = Array.Empty<string>();
@@ -91,7 +83,6 @@ namespace PerfUnionProbe
         private static CoverageTracker coverage;
         private static int unexpectedAtWindowStart;
 
-        // Frame recording.
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
         private static float[] frameComponents = Array.Empty<float>();
         private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
@@ -105,7 +96,6 @@ namespace PerfUnionProbe
         internal static int crossFrame, timedExceptions;
         internal static long unknownScopeCalls;
 
-        // Per-tick holds, per-call advancement records, per-second diagnostics.
         internal static readonly TickRecord[] ticks = new TickRecord[TickLimit];
         internal static readonly RingCursor tickRing = new RingCursor(TickLimit);
         internal static readonly AdvanceCallRecord[] calls = new AdvanceCallRecord[CallLimit];
@@ -115,7 +105,6 @@ namespace PerfUnionProbe
         private static readonly RingCursor sampleRing = new RingCursor(DiagnosticLimit);
         private static long sampleFailures;
 
-        // Persistent City reads, bound once at arm.
         internal static Func<long> heldOrdinary, heldSkip, boundaryClips;
         internal static Func<double> withheld;
         internal static Func<bool> accountingLimited;
@@ -124,7 +113,6 @@ namespace PerfUnionProbe
         private static Func<object, double> readMinute, readSeam;
         private static PropertyInfo accountingDiagnostics, saveEpochDiagnostics;
 
-        // Reference mode.
         internal static double shimFactor = double.NaN;
         internal static long shimTicks, shimMultiplied;
         private static bool shimInstalled;
@@ -146,7 +134,7 @@ namespace PerfUnionProbe
         {
             if (Thread.CurrentThread.ManagedThreadId == armThread) return true;
             Interlocked.Increment(ref offMainCallbacks);
-            return false; // No Unity reads or buffer writes off the main thread; native execution is untouched.
+            return false;
         }
         private static JObject Wrap(JToken before, JToken after)
         {
@@ -180,7 +168,6 @@ namespace PerfUnionProbe
             }
             catch (Exception e)
             {
-                // Stable bounded code, never native exception text or arguments.
                 var code = e is InvalidOperationException && e.Message.StartsWith("f4b_", StringComparison.Ordinal) ? e.Message : "f4b_" + e.GetType().Name;
                 return new JObject { ["before"] = JValue.CreateNull(), ["after"] = new JObject { ["supported"] = false, ["refusal"] = code } };
             }
@@ -211,18 +198,16 @@ namespace PerfUnionProbe
             {
                 if (requested == "reference")
                 {
-                    // The reference arm runs without Persistent City; a loaded PC would double the calendar factor.
                     Require(pc == null && foreignOwners.Length == 0, "f4b_reference_requires_persistent_city_absent");
                     double factor = (double?)args["factor"] ?? double.NaN;
                     Require(PaceShim.ValidFactor(factor), "f4b_reference_factor_0_1_to_1_required");
                     shimFactor = factor; shimTicks = shimMultiplied = 0;
                     var tick = AccessTools.Method(typeof(GameManager), nameof(GameManager.RunMainGameTick), new[] { typeof(float) });
                     Require(tick != null, "f4b_native_tick_missing");
-                    // Same place as NativeCityClock.TickPrefix: before boundary caps, so a capped tick keeps its limit.
                     patches.Patch(tick, prefix: new HarmonyMethod(typeof(ShimPatch), nameof(ShimPatch.Prefix)) { priority = Priority.First + 1 });
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
-                    coverage = null; // n/a: no Persistent City scopes exist in this arm.
+                    coverage = null;
                 }
                 else
                 {
@@ -261,16 +246,11 @@ namespace PerfUnionProbe
             readMinute = DoubleGetter(minute);
             var stops = runtimeType.GetField("stopEnvironment", All);
             var seam = stops?.FieldType.GetProperty("SeamMilliseconds", BindingFlags.Public | BindingFlags.Instance);
-            // Optional seam: NaN per-call optional-stop time when it is unbound, never an inferred value.
             if (stops != null && seam != null && seam.PropertyType == typeof(double)) { readStopEnvironment = ObjectGetter(stops); readSeam = DoubleGetter(seam); }
             accountingDiagnostics = runtimeType.GetProperty("AccountingDiagnostics", BindingFlags.Public | BindingFlags.Instance);
             saveEpochDiagnostics = runtimeType.GetProperty("SaveEpochDiagnostics", BindingFlags.Public | BindingFlags.Instance);
         }
 
-        /// <summary>Decision 5: every expected PC callback (patch methods, messages, native event handlers, transpiler helpers)
-        /// is timed from arm on, whether or not Persistent City has installed its native patch yet, so hooks installed after
-        /// arming are timed too. Harmony's patch info is rescanned at arm, at window edges and once per real second; any PC
-        /// patch that is not an expected row on its expected target makes coverage incomplete (CoverageTracker).</summary>
         private static void BindInventory()
         {
             bindings.Clear(); scopeIndex.Clear(); componentIndex.Clear(); scopeFast.Clear(); componentFast.Clear();
@@ -278,7 +258,7 @@ namespace PerfUnionProbe
             foreach (var exp in ScopeInventory.Patches)
             {
                 var row = new Binding { Expected = exp, Label = exp.Label, Kind = exp.Kind.ToString(), Owner = exp.Owner, Target = exp.Target, Method = exp.Type + "." + exp.Method };
-                if (exp.Kind == ScopeKind.Transpiler) row.Status = "untimed-transpiled"; // Its code runs inside the native method.
+                if (exp.Kind == ScopeKind.Transpiler) row.Status = "untimed-transpiled";
                 else
                 {
                     var method = Find(exp, null);
@@ -295,7 +275,6 @@ namespace PerfUnionProbe
                 if (method != null) timed.Add(new KeyValuePair<MethodBase, Binding>(method, row));
                 bindings.Add(row);
             }
-            // One timed scope per method; a handler bound to two events shares it.
             int scopes = 0;
             foreach (var pair in timed)
             {
@@ -330,7 +309,7 @@ namespace PerfUnionProbe
                             finalizer: new HarmonyMethod(typeof(ComponentPatch), nameof(ComponentPatch.After)) { priority = Priority.Last });
                         componentIndex.Add(method, i);
                     }
-                    catch { row.Status = "component-unbound"; } // The union stays authoritative.
+                    catch { row.Status = "component-unbound"; }
                     if (components[i].Method == "AdvancePopulation" && row.Status == "component")
                     {
                         try
@@ -357,12 +336,10 @@ namespace PerfUnionProbe
             }
         }
 
-        /// <summary>Reads Harmony's patch info for every patched method and checks the PC patches against the inventory.</summary>
         private static void ScanPatches()
         {
             if (coverage == null) return;
             var observed = new List<ObservedPatch>();
-            // HarmonyScan reads every patch-list field of Patches (cached once), including the inner lists.
             foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
             coverage.Observe(observed);
         }
@@ -440,7 +417,7 @@ namespace PerfUnionProbe
                 loopInstalled = true; boundarySource = "player-loop-early-update";
                 return;
             }
-            boundarySource = "first-callback"; // Reported; a window with late boundaries cannot join the presentation trace exactly.
+            boundarySource = "first-callback";
         }
         private static void RemoveLoop()
         {
@@ -451,7 +428,7 @@ namespace PerfUnionProbe
             for (int i = 0; systems != null && i < systems.Length; i++)
                 if (systems[i].subSystemList != null && systems[i].subSystemList.Any(c => c.type == typeof(PerfUnionFrameStart)))
                     systems[i].subSystemList = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionFrameStart)).ToArray();
-            PlayerLoop.SetPlayerLoop(loop); // Only the probe's own entry is removed; other loop changes stay.
+            PlayerLoop.SetPlayerLoop(loop);
         }
 
         private static bool LoopEntryPresent()
@@ -464,7 +441,6 @@ namespace PerfUnionProbe
         private static void SceneLoaded(Scene scene, LoadSceneMode loadMode) { if (armed) { frameScene = true; totalSceneEvents++; } }
         private static void SceneUnloaded(Scene scene) { if (armed) { frameScene = true; totalSceneEvents++; } }
 
-        /// <summary>Player-loop EarlyUpdate start: the frame boundary. Closes the prior frame and samples diagnostics.</summary>
         private static void FrameStart()
         {
             if (!armed) return;
@@ -476,9 +452,9 @@ namespace PerfUnionProbe
             if (measuring && now >= nextDiagnosticQpc)
             {
                 nextDiagnosticQpc = now + Stopwatch.Frequency;
-                frameDiagnostic = true; // Sampled outside timed scopes; the frame is flagged diagnostic.
+                frameDiagnostic = true;
                 SampleDiagnostics(now);
-                Rescan(); // Catches PC patches installed or changed after arming.
+                Rescan();
             }
             boundaryTicks += Stopwatch.GetTimestamp() - now;
         }
@@ -492,7 +468,6 @@ namespace PerfUnionProbe
             if (union.Depth != 0)
             {
                 crossFrame++; union.Abandon();
-                // The closing frame is already written; do not write it again as a partial stop row.
                 if (measuring) { error = "f4b_cross_frame_scope"; StopMeasurement("cross_frame", writeStopFrame: false); }
             }
             if (measuring && pendingWindowStart) { pendingWindowStart = false; holds.BeginWindow(nowFrame, now); }
@@ -504,7 +479,7 @@ namespace PerfUnionProbe
 
         private static void WriteFrame(int nextFrame, long end, bool partial)
         {
-            if (!frameRing.TryWrite(out int slot)) return; // Counted in frameRing.Dropped.
+            if (!frameRing.TryWrite(out int slot)) return;
             frames[slot] = new FrameRow { frame = currentFrame, skipped = Math.Max(0, nextFrame - currentFrame - 1), qpc = frameStartQpc,
                 modWorkMs = union.FrameTicks * ToMs, wholeFrameMs = (end - frameStartQpc) * ToMs, observerMs = observerTicks * ToMs,
                 boundaryMs = boundaryTicks * ToMs, gc = GC.CollectionCount(0) - gcAtFrameStart, saves = frameSaves, scene = frameScene,
@@ -556,7 +531,6 @@ namespace PerfUnionProbe
             if (!measuring) return;
             if (reason == "explicit-stop") Rescan();
             long now = Stopwatch.GetTimestamp();
-            // The stop frame is written as a partial, diagnostic row so hold events inside it stay inside the window.
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, now);
@@ -637,8 +611,6 @@ namespace PerfUnionProbe
         private static JObject Page(JObject args)
         {
             string section = (string)args["section"];
-            // Frames, ticks and diagnostics stream: they can be drained while measuring (paging from an offset acknowledges
-            // every earlier row). The other sections are exported after measure-stop.
             bool streamed = section == "frames" || section == "ticks" || section == "diagnostics";
             Require(streamed || !measuring, "f4b_stop_before_exporting");
             long offset = (long?)args["offset"] ?? 0;
@@ -732,7 +704,6 @@ namespace PerfUnionProbe
 
     internal struct ScopeState { public long Start; public int Frame, Index; public bool Timed; }
 
-    /// <summary>Inclusive timing scope on every PC patch method, message, event handler and transpiler helper.</summary>
     internal static class ScopePatch
     {
         internal static void Before(MethodBase __originalMethod, out ScopeState __state)
@@ -755,13 +726,12 @@ namespace PerfUnionProbe
             long end = Stopwatch.GetTimestamp();
             if (__exception != null) Session.timedExceptions++;
             if (Time.frameCount != __state.Frame) Session.crossFrame++;
-            Session.union.Exit(__state.Index, __state.Start, end); // Never changes or suppresses the native exception.
+            Session.union.Exit(__state.Index, __state.Start, end);
         }
     }
 
     internal struct ComponentState { public long Start; public int Index; public bool Timed, Inside; }
 
-    /// <summary>Nested attribution sub-scope; never part of the union total.</summary>
     internal static class ComponentPatch
     {
         internal static void Before(MethodBase __originalMethod, out ComponentState __state)
@@ -785,7 +755,6 @@ namespace PerfUnionProbe
 
     internal struct AdvanceState { public long Start; public int Collections, Frame; public double Seam; public bool Timed; }
 
-    /// <summary>Decision 7: per-call record for AdvancePopulation calls of at least 30 ms.</summary>
     internal static class AdvancePatch
     {
         internal static void Before(out AdvanceState __state)
@@ -813,7 +782,6 @@ namespace PerfUnionProbe
         }
     }
 
-    /// <summary>Per-tick hold record around NativeCityClock.AccountingPrefix (Decision 5, calendar holds).</summary>
     internal static class HoldPatch
     {
         internal static void Before(out ClockCounters __state)
@@ -834,13 +802,12 @@ namespace PerfUnionProbe
                 record ? Session.NativeMinute() : double.NaN, record ? Session.LogicalMinute() : double.NaN);
             if (record)
             {
-                if (Session.tickRing.TryWrite(out int slot)) Session.ticks[slot] = tick; // A full ring counts tickRing.Dropped.
+                if (Session.tickRing.TryWrite(out int slot)) Session.ticks[slot] = tick;
             }
             if (Session.measuring) Session.observerTicks += Stopwatch.GetTimestamp() - now;
         }
     }
 
-    /// <summary>Reference-mode pace shim on GameManager.RunMainGameTick(float). The only probe action that changes native state.</summary>
     internal static class ShimPatch
     {
         internal static void Prefix(ref float __0)

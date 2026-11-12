@@ -4,8 +4,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>GR-8 (G5) setting: the share of all cars on the road that only pass through. J0 default 0.10 (Q3), range 0
-    /// to 0.5. At 0 nothing is generated and the kernel is exactly as without through traffic.</summary>
     public sealed class ThroughTrafficSettings
     {
         public const double DefaultShare = 0.10, MaximumShare = 0.5;
@@ -15,24 +13,14 @@ namespace PersistentCity.Core
             Share = share;
         }
         public double Share { get; }
-        /// <summary>Through entries per resident car entry: share ÷ (1 − share), so the share holds as resident traffic rises
-        /// and falls.</summary>
         public double EntriesPerResidentCar => Share / (1 - Share);
     }
 
-    /// <summary>
-    /// GR-8: the map edges of one road network and the edge-to-edge routes between them. An entry is a section whose first
-    /// native node no section leads into, an exit a section whose last node leads nowhere; both must lie on the network's
-    /// outer band (<see cref="EdgeBand"/> of the bounding box, at least <see cref="MinimumEdgeMetres"/>), so a cul-de-sac in
-    /// the middle of the city is neither. A route is the shortest free-flow path, whole sections only: it never ends at a
-    /// curb, so a through car never parks.
-    /// </summary>
     public sealed class ThroughTrafficRoutes
     {
         public const double EdgeBand = 0.1, MinimumEdgeMetres = 30;
         private readonly TrafficNetwork network;
         private readonly List<int>[] successors;
-        // Per entry: the shortest-path tree (each section's predecessor) and the exits it reaches, in exit order.
         private readonly Dictionary<int, (int[] Previous, int[] Reachable)> routes = new Dictionary<int, (int[] Previous, int[] Reachable)>();
         public IReadOnlyList<int> Entries { get; }
         public IReadOnlyList<int> Exits { get; }
@@ -78,8 +66,6 @@ namespace PersistentCity.Core
         public bool IsEntry(int linkId) => ((List<int>)Entries).BinarySearch(linkId) >= 0;
         public bool IsExit(int linkId) => ((List<int>)Exits).BinarySearch(linkId) >= 0;
 
-        /// <summary>The route from entry <paramref name="entry"/> to the exit chosen by <paramref name="draw"/> among the exits it
-        /// reaches, or null when it reaches none. The path tree is computed once per entry; each route is a new list.</summary>
         public List<TrafficRouteLeg>? Route(int entry, uint draw)
         {
             if (!routes.TryGetValue(entry, out var tree)) routes.Add(entry, tree = Paths(entry));
@@ -105,7 +91,6 @@ namespace PersistentCity.Core
             var cost = new double[count]; var previous = new int[count];
             for (int i = 0; i < count; i++) { cost[i] = double.PositiveInfinity; previous[i] = -1; }
             cost[entry] = network.Links[entry].FreeFlowMinutes;
-            // A binary heap with stale entries skipped on pop (ties by link ID, as the ordered set it replaced).
             var open = new List<(double Cost, int Link)>();
             Push(open, (cost[entry], entry));
             while (open.Count > 0)
@@ -154,17 +139,9 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>
-    /// GR-8 (G5): anonymous cars that cross the city edge to edge in the traffic kernel. They queue and fill road sections
-    /// like resident cars, but they carry nobody, have no person ID, never park and are never saved: the save captures the
-    /// kernel without them (<see cref="TrafficKernel.Capture(Func{string, bool})"/>), and a loaded city generates them again
-    /// from the setting. Each hour's entries are the previous hour's resident car entries × share ÷ (1 − share), at seeded
-    /// minutes and edges; the hour after an attach or reload uses the resident cars on the road instead.
-    /// </summary>
     public static class ThroughTraffic
     {
         public const string Prefix = "through:";
-        /// <summary>The inspector's line for a through car.</summary>
         public const string InspectorLine = "Passing through the city";
         public const string InspectorKey = "persistentcity_through_inspector";
         public static bool IsThroughVehicle(string? vehicleId) => vehicleId != null && vehicleId.StartsWith(Prefix, StringComparison.Ordinal);
@@ -179,7 +156,6 @@ namespace PersistentCity.Core
         internal int Cursor;
         internal readonly HashSet<string> InFlight = new HashSet<string>(StringComparer.Ordinal);
         internal long ScheduledHour = long.MinValue;
-        /// <summary>Resident car entries counted since this minute (the first schedule), in CountHour and the hour before it.</summary>
         internal double CountingSince = double.PositiveInfinity;
         internal long CountHour = long.MinValue;
         internal int CountEntries, LastHourEntries;
@@ -191,7 +167,6 @@ namespace PersistentCity.Core
         }
         internal long Generated, Completed, SkippedClosed, CancelledClosed;
         internal ThroughTrafficState(ThroughTrafficSettings settings) { Settings = settings; }
-        /// <summary>The same setting with nothing generated yet (a replacement simulator restores the saved kernel).</summary>
         internal ThroughTrafficState Fresh() => new ThroughTrafficState(Settings);
     }
 
@@ -199,7 +174,6 @@ namespace PersistentCity.Core
     {
         private ThroughTrafficState? throughTraffic;
 
-        /// <summary>GR-8: generates through cars at the setting's share from the next event on. Share 0 generates nothing.</summary>
         public void AttachThroughTraffic(ThroughTrafficSettings settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
@@ -207,7 +181,6 @@ namespace PersistentCity.Core
             throughTraffic = settings.Share > 0 ? new ThroughTrafficState(settings) : null;
         }
 
-        /// <summary>Removes every through car from the kernel and stops generating them.</summary>
         public void DetachThroughTraffic()
         {
             var state = throughTraffic;
@@ -216,18 +189,14 @@ namespace PersistentCity.Core
         }
 
         public double ThroughTrafficShare => throughTraffic?.Settings.Share ?? 0;
-        /// <summary>Through cars in the kernel now; generated and completed since attach (diagnostics).</summary>
         public int ThroughCarCount => throughTraffic?.InFlight.Count ?? 0;
         public long ThroughCarsGenerated => throughTraffic?.Generated ?? 0;
         public long ThroughCarsCompleted => throughTraffic?.Completed ?? 0;
-        /// <summary>Through cars not started because their route was closed, and cars taken off a closed road.</summary>
         public long ThroughCarsSkippedClosed => throughTraffic?.SkippedClosed ?? 0;
         public long ThroughCarsCancelledClosed => throughTraffic?.CancelledClosed ?? 0;
 
-        /// <summary>The inspector's words for a vehicle that belongs to no person, or null for anything else.</summary>
         public static string? DescribeVehicle(string vehicleId) => ThroughTraffic.IsThroughVehicle(vehicleId) ? ThroughTraffic.InspectorLine : null;
 
-        /// <summary>The next through-traffic work: a pending entry or the next hour boundary, which schedules that hour.</summary>
         private double ThroughMinute()
         {
             var state = throughTraffic;
@@ -236,7 +205,6 @@ namespace PersistentCity.Core
             return ThroughPeek();
         }
 
-        /// <summary><see cref="ThroughMinute"/> without binding, for the caught-up checks: an unbound network is work now.</summary>
         private double ThroughPeek()
         {
             var state = throughTraffic;
@@ -247,7 +215,6 @@ namespace PersistentCity.Core
             return state.Cursor < state.Pending.Count ? Math.Min(boundary, state.Pending[state.Cursor].At) : boundary;
         }
 
-        /// <summary>Removes the through cars of the bound network and forgets its routes; the next query binds again.</summary>
         private void DropThroughCars(ThroughTrafficState state)
         {
             if (traffic != null) foreach (var id in state.InFlight) traffic.Cancel(id);
@@ -261,7 +228,6 @@ namespace PersistentCity.Core
             state.ScheduledHour = long.MinValue; state.CountingSince = double.PositiveInfinity; state.CountHour = long.MinValue; state.CountEntries = state.LastHourEntries = 0;
         }
 
-        /// <summary>Runs the through-traffic work due at the clock: a new hour's schedule, then every entry due.</summary>
         private void RunThroughTraffic()
         {
             var state = throughTraffic!;
@@ -272,8 +238,6 @@ namespace PersistentCity.Core
                 var entry = state.Pending[state.Cursor++];
                 var route = state.Routes!.Route(entry.Entry, entry.Exit);
                 if (route == null) continue;
-                // A route through a closed section is not driven (review Opus-r1-2): the car would wait at its head and hold
-                // every resident behind it.
                 bool closed = false;
                 if (routes is ITrafficRoutePlanner planner)
                     foreach (var leg in route)
@@ -293,7 +257,6 @@ namespace PersistentCity.Core
         {
             if (double.IsPositiveInfinity(state.CountingSince)) state.CountingSince = State.Minute;
             state.Roll(hour);
-            // The previous hour's resident entries when they were all counted, else the resident cars on the road now.
             int residents = state.CountingSince <= (hour - 1) * 60.0 ? state.LastHourEntries : traffic!.VehicleCount - state.InFlight.Count;
             double expected = residents * state.Settings.EntriesPerResidentCar;
             uint key = StableRandom.Append(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Begin(State.Seed), ThroughTraffic.Prefix), (int)(hour % 1000000000)), ':');
@@ -304,7 +267,7 @@ namespace PersistentCity.Core
             {
                 uint draw = StableRandom.Finish(StableRandom.AppendDecimal(key, i));
                 double at = hour * 60.0 + (draw % 60000) / 1000.0;
-                if (at < State.Minute) continue; // the part of the hour before an attach or reload is not replayed
+                if (at < State.Minute) continue;
                 uint exit = StableRandom.Finish(StableRandom.Append(StableRandom.AppendDecimal(key, i), ":exit"));
                 string id = ThroughTraffic.Prefix + hour.ToString(CultureInfo.InvariantCulture) + ":" + i.ToString(CultureInfo.InvariantCulture);
                 state.Pending.Add((at, id, entries[(int)((draw >> 16) % (uint)entries.Count)], exit));
@@ -313,7 +276,6 @@ namespace PersistentCity.Core
             state.ScheduledHour = hour;
         }
 
-        /// <summary>Counts a resident car entering the kernel for the next hour's through entries.</summary>
         private void CountResidentCar()
         {
             var state = throughTraffic;
@@ -322,8 +284,6 @@ namespace PersistentCity.Core
             state.CountEntries++;
         }
 
-        /// <summary>After a closure refresh: a through car held by a closed section leaves the road instead of waiting there
-        /// (review Opus-r1-2). Residents plan around closures; through cars have no plan to fall back on.</summary>
         private void CancelBlockedThroughCars()
         {
             var state = throughTraffic;

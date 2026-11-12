@@ -89,7 +89,6 @@ public sealed class VehicleMarketTests
         }
         public void Reload(bool present = true)
         {
-            // A native save carries the receipt dictionary alongside the population bytes.
             string payload = SaveCodec.Write(City.State);
             var read = SaveWire.Read(payload); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             Assert.Equal(payload, SaveCodec.Write(read.State!));
@@ -105,7 +104,7 @@ public sealed class VehicleMarketTests
     {
         var f = new Fixture(); var meal = f.Meal();
         StreetFoodHooks.Find("v00").Prices[0] = 12345; meal.Price = Money.FromCents(12345); meal.Allowance = meal.Price;
-        f.Run(f.Now); // checkout must read the live price even at the same revision
+        f.Run(f.Now);
         int before = StreetFoodHooks.Find("v00").Units[0];
         Assert.True(f.Market.Buy(meal, f.Now).Paid);
         Assert.Equal(before - 1, StreetFoodHooks.Find("v00").Units[0]);
@@ -312,7 +311,6 @@ public sealed class VehicleMarketTests
         Assert.False(f.Market.Buy(m, f.Now).Paid);
         StreetFoodHooks.Close("v00");
         f.Run(f.Now + 1);
-        // At the next opening the normal later-hour request rule applies again.
         StreetFoodHooks.Open("v00"); f.Run(f.Now + 1);
         f.Run(f.Now + 61); StreetFoodHooks.Close("v00"); StreetFoodHooks.Open("v00"); f.Run(f.Now + 1);
         Assert.True(row.Authority.Desired);
@@ -449,7 +447,7 @@ public sealed class VehicleMarketTests
         Assert.Equal(8, local.Count);
         Assert.Equal(vehicleIncluded, local.Any(b => VendorNames.IsVendorPlace(b.PlaceId)));
         Assert.Equal(local.OrderBy(b => Position.Distance(f.City.FindPlace("home").Position, f.City.FindPlace(b.PlaceId).Position)).Select(b => b.Id), local.Select(b => b.Id));
-        Assert.Equal(vehicleIncluded ? 0 : 8, shop.Captures); // Small markets use the full batched read.
+        Assert.Equal(vehicleIncluded ? 0 : 8, shop.Captures);
         Assert.Equal(shops + 1, composite.Read(f.Now).Count);
         Assert.Equal(f.Now, composite.EarliestMinute); shop.Start = f.Now + 8; Assert.Equal(f.Now + 8, composite.EarliestMinute);
         Assert.Equal(33, composite.RivalRevision); Assert.Same(shop.Rival, composite.ReadRival("rival"));
@@ -477,12 +475,12 @@ public sealed class VehicleMarketTests
         Assert.Equal(new[] { "b0", "b1", f.Meal().BusinessId }, composite.ReadLocal(new Place(), f.Now, 100, 8).Select(b => b.Id));
         int start = shop.Disposals;
         var capture = composite.BeginCapture(f.Now); capture.Dispose(); capture.Dispose(); Assert.Equal(start + 1, shop.Disposals);
-        using (f.Market.BeginCapture(f.Now)) { } // both markets have been released
+        using (f.Market.BeginCapture(f.Now)) { }
         shop.ThrowDispose = true;
         capture = composite.BeginCapture(f.Now); Assert.Throws<InvalidOperationException>(() => capture.Dispose());
         using (f.Market.BeginCapture(f.Now)) { }
         shop.ThrowDispose = false;
         using (f.Market.BeginCapture(f.Now)) Assert.Throws<InvalidOperationException>(() => composite.BeginCapture(f.Now));
-        Assert.Equal(start + 3, shop.Disposals); // failed second BeginCapture released the first
+        Assert.Equal(start + 3, shop.Disposals);
     }
 }

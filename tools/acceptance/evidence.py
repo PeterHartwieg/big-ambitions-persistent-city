@@ -36,8 +36,6 @@ COMPARISON_SCHEMA = "persistentcity-acceptance-comparison-1"
 OS_NAMES = {"windows": "windows", "darwin": "macos", "linux": "linux"}
 ARCH_NAMES = {"amd64": "x64", "x86_64": "x64", "arm64": "arm64", "aarch64": "arm64"}
 NOT_COMPARED = {"build"}
-# Paths whose content decides the simulation digests. Two records from different commits are compared only when no file
-# under these paths differs between the commits and their settings match (a docs or evidence commit between them is fine).
 SIMULATION_INPUTS = ["Core", "Persistence", "Runtime", "Compatibility", "config", "tests", "tests/economy-interventions",
                      "tests/movement-equivalence", "tools/acceptance/stages.json", "tools/acceptance/expectations",
                      "tools/acceptance/run.py", "tools/acceptance/economy_stage.py"]
@@ -54,7 +52,6 @@ def sha256_file(path):
 
 
 def f6h_module():
-    """F6's acceptance.py, imported read-only for its derive_household_thresholds."""
     spec = importlib.util.spec_from_file_location("f6h_acceptance", ACCEPTANCE_PY)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -62,7 +59,6 @@ def f6h_module():
 
 
 def household_bands(f6h, result):
-    """The F6h hand-off: control seed bands at the recorded weight, derived with the existing function."""
     module = f6h_module()
     household = f6h["householdControlSeedBands"]
     derived = module.derive_household_thresholds(household)
@@ -130,16 +126,13 @@ def simulation_digests(summary):
 
 
 def changed_inputs(base, head, repo=ROOT):
-    """Simulation input files that differ between two commits, or None when git cannot compare them."""
     done = subprocess.run(["git", "diff", "--name-only", base, head, "--", *SIMULATION_INPUTS], cwd=repo,
                           capture_output=True, text=True, check=False)
     return [line for line in done.stdout.splitlines() if line] if done.returncode == 0 else None
 
 
 def source_problem(summaries, recorded, repo):
-    """None when every recorded machine ran the same simulation inputs, else the reason they are not comparable."""
     commits = sorted({summaries[k]["provenance"]["source"]["commit"] for k in recorded})
-    # configSha256 hashes the checkout, so it differs with core.autocrlf; config/ is compared by the git diff below.
     settings = {json.dumps({key: value for key, value in (summaries[k]["provenance"].get("settings") or {}).items()
                             if key != "configSha256"}, sort_keys=True) for k in recorded}
     if len(settings) > 1:

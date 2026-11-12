@@ -9,14 +9,8 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// F7c: compares two object graphs field for field (every instance field, private ones included) and records every
-/// object the two graphs share. A snapshot must equal the live graph it was captured from and share only immutable
-/// objects. Lists and arrays compare by count and items, never by capacity.
-/// </summary>
 internal sealed class GraphAudit
 {
-    /// <summary>Transient caches and panel counters that are never saved and that a capture leaves empty.</summary>
     private static readonly HashSet<string> Transient = new(StringComparer.Ordinal)
     { "counters", "visitorEndowment", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "estimatedMinutes", "HourCounts", "HoursHash" };
 
@@ -68,19 +62,12 @@ internal sealed class GraphAudit
         public int GetHashCode((object, object) p) => RuntimeHelpers.GetHashCode(p.Item1) * 31 + RuntimeHelpers.GetHashCode(p.Item2);
     }
 
-    /// <summary>Types a snapshot may share with the live graph: they have no setters, or Core treats them as derived.</summary>
     public static bool Immutable(object shared) => shared is WeatherCommitment || shared is FoodOfferMetadata || shared is FoodDecisionTuning
         || shared is FoodCampaignImage || shared is MarketResearchReport || shared is ResearchProduct || shared is RoutineKeys
         || shared is Route route && route.IsCommitted
-        // GR-2: a plan's item definitions never change after drawing; a copy owns only the item states.
         || shared is PlanItem[] || shared is PlanItem;
 }
 
-/// <summary>
-/// F7c: sets every public writable property reachable from a <see cref="CityState"/> to a distinct non-default value, so a
-/// copy that forgets a member fails <see cref="GraphAudit"/>. A property of a type this filler does not know fails the
-/// test, so a new saved member forces the capture and this filler to be updated together.
-/// </summary>
 internal sealed class GraphFill
 {
     private int next = 1;
@@ -90,7 +77,6 @@ internal sealed class GraphFill
     {
         var state = new CityState();
         Fill(state, 0);
-        // GR-1: a roster record links to its person's wallet and carries none of its own.
         var meal = state.Food!.Residents[0]; var person = state.Citizens[0];
         meal.ResidentId = person.Identity.Id; meal.Budget = person.Wallet;
         return state;
@@ -146,7 +132,7 @@ internal sealed class GraphFill
             return history;
         }
         if (type == typeof(WeatherCommitment) || type == typeof(FoodOfferMetadata) || type == typeof(FoodDecisionTuning) || type == typeof(FoodCampaignImage))
-            return null; // immutable, shared by reference
+            return null;
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
         {
             var list = (IList)Activator.CreateInstance(type)!;

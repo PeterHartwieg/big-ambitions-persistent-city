@@ -8,8 +8,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F2a (city audit F2 #89): the detached movement-equivalence harness and its self-checks.
-/// Small fixture (96 residents, one day); the 957-resident baseline is recorded in docs/checks/f2a.md.</summary>
 public sealed class MovementEquivalenceTests
 {
     private const int Residents = 96;
@@ -42,7 +40,6 @@ public sealed class MovementEquivalenceTests
         Assert.Equal(0, zero.Metrics["bodies.acquired"]);
         Assert.True(SelfChecks.Same(none, PlainRun.Value));
         Assert.True(SelfChecks.Same(zero, PlainRun.Value));
-        // Without bodies the frame cadence and a hidden-travel fast-forward change nothing (F1 discipline).
         Assert.True(SelfChecks.Same(MovementRun.Run(Plain(o => o.FramesPerSecond = 30)), PlainRun.Value));
         Assert.True(SelfChecks.Same(MovementRun.Run(Plain(o => o.HiddenTravel = true)), PlainRun.Value));
     }
@@ -114,7 +111,6 @@ public sealed class MovementEquivalenceTests
             string.Join(" ", new[] { legs, pose }.Select(r => r.Metrics["walkers.aheadFrames"] + "/" + r.Metrics["walkers.aheadMaxMetres"]
                 + "/" + r.Metrics["walkers.lagP95Metres"] + "/" + r.Metrics["walkers.pathRequests"])));
         Assert.True(legs.Metrics["walkers.lagP95Metres"] <= pose.Metrics["walkers.lagP95Metres"]);
-        // The maximum is the correction threshold plus one frame in both (a body is moved off screen beyond 8 m).
         Assert.True(legs.Metrics["walkers.lagMaxMetres"] < PersistentCity.Core.WalkerFollow.CorrectionMetres + 0.1, "max lag " + legs.Metrics["walkers.lagMaxMetres"]);
         Assert.True(legs.Metrics["walkers.pathRequests"] > 0);
         Assert.True(legs.Metrics["walkers.pathRequests"] * 4 < pose.Metrics["walkers.pathRequests"],
@@ -124,8 +120,6 @@ public sealed class MovementEquivalenceTests
     [Fact]
     public void HiddenTravelReleasesBodiesBeforeTheHiddenSliceAdvances()
     {
-        // MovementRun requires no binding and no physically controlled vehicle when a hidden slice advances.
-        // 200 residents: the smallest fixture here with bodies bound when the 12:00 window opens.
         var hidden = MovementRun.Run(Small(o => { o.Residents = 200; o.HiddenTravel = true; }));
         Assert.True(hidden.Metrics["bodies.hiddenTravelFrames"] > 0);
         Assert.True(hidden.Metrics["bodies.hiddenTravelReleases"] > 0);
@@ -141,9 +135,6 @@ public sealed class MovementEquivalenceTests
         Assert.Equal(run.Boundaries.Sum(b => b.SkippedMeals), run.Metrics["meals.skipped"]);
     }
 
-    /// <summary>F2c: in a walking-only city every body arm equals bodies-off at the same cadence (E1): bodies follow
-    /// the logical pose and write nothing. Covers focus paths, caps, native lag, acquisition failures, a slower
-    /// cadence, a mid-journey reload with walkers bound and hidden travel.</summary>
     [Fact]
     public void WalkerArmsEqualBodiesOffInWalkingOnlyCities()
     {
@@ -170,15 +161,9 @@ public sealed class MovementEquivalenceTests
         Equal(reload, plain, "reload with walkers bound");
         Equal(MovementRun.Run(Walking(o => o.HiddenTravel = true)), MovementRun.Run(Walking(o => { o.Driver = false; o.HiddenTravel = true; })), "hidden travel");
         Equal(MovementRun.Run(Walking(o => o.FramesPerSecond = 30)), MovementRun.Run(Walking(o => { o.Driver = false; o.FramesPerSecond = 30; })), "30 fps");
-        // Native lag makes walkers fall behind; beyond 8 m they are moved (the double has no camera, so off screen).
         Assert.True(stationary.Metrics["walkers.moves"] > 0);
     }
 
-    /// <summary>F2d: cars follow the traffic kernel, so in the mixed city (walkers and cars on the capacity-2 signalled
-    /// grid) every body arm equals bodies-off at the same cadence (E1): focus paths, caps, native lag including slow
-    /// visible head cars, acquisition failures, cadence, a mid-journey reload with bodies bound and hidden travel.
-    /// Equality covers save bytes, sales, journeys, parked cars, wallets and per-link FIFO order. Before F2d this was
-    /// the recorded divergence (red).</summary>
     [Fact]
     public void MixedCityBodyArmsEqualBodiesOff()
     {
@@ -230,7 +215,6 @@ public sealed class MovementEquivalenceTests
         Assert.Contains(options, o => o.Driver && o.ReloadMidJourney);
         Assert.Contains(options, o => o.Driver && o.HiddenTravel);
         Assert.All(options, o => Assert.Equal(Residents, o.Residents));
-        // F2g: with visitor bodies on, the same factor levels as the resident arms.
         var visitors = options.Where(o => o.Driver && o.Visitors).ToList();
         Assert.Equal(new[] { FocusPath.None, FocusPath.Stationary, FocusPath.Sweep, FocusPath.AwayReturn }, visitors.Select(o => o.Focus).Distinct().OrderBy(f => f));
         Assert.Equal(MovementArms.Caps, visitors.Select(o => (o.Bodies.Pedestrians, o.Bodies.Vehicles)).Distinct().OrderBy(c => c.Pedestrians));
@@ -239,7 +223,6 @@ public sealed class MovementEquivalenceTests
         Assert.Equal(3, visitors.Select(o => o.Bodies.Lag).Distinct().Count());
         Assert.Contains(visitors, o => o.ReloadMidJourney);
         Assert.Contains(visitors, o => o.HiddenTravel);
-        // F2g: combined arms vary focus, caps, failures and cadence together with a reload or hidden travel.
         var combined = arms.Where(a => a.Family == "combined").Select(a => a.Options()).ToList();
         Assert.Contains(combined, o => o.ReloadMidJourney && o.FramesPerSecond != 60 && o.Bodies.AcquisitionFailurePercent > 0);
         Assert.Contains(combined, o => o.HiddenTravel && o.Bodies.Lag == LagModel.SlowHeadCar);
@@ -247,9 +230,6 @@ public sealed class MovementEquivalenceTests
         Assert.Contains(combined, o => o.Visitors && o.HiddenTravel);
     }
 
-    /// <summary>F2g: arms that change several factors at once (focus path, caps, acquisition failures, cadence, slow head
-    /// cars, a mid-journey reload or hidden travel) still equal bodies-off (E1). The 30 and 120 fps bodies-off runs equal
-    /// the 60 fps run, so the equality also holds across cadences.</summary>
     [Fact]
     public void CombinedArmsEqualBodiesOff()
     {
@@ -275,9 +255,6 @@ public sealed class MovementEquivalenceTests
         Equal(hidden, PlainRun.Value, "stationary 24/12 50 % slow head cars hidden travel");
     }
 
-    /// <summary>F2g: the pairwise arms cover every valid pair of factor levels of the full plan product (residents or
-    /// visitors x focus path x caps x failures x cadence x lag x none/reload/hidden/reload+hidden), read back from the arm
-    /// options, and the only excluded pairs are reloads that cannot bind a body.</summary>
     [Fact]
     public void PairwiseArmsCoverEveryPairOfTheFullProduct()
     {
@@ -292,7 +269,6 @@ public sealed class MovementEquivalenceTests
         Assert.All(covered, p => Assert.True(p.Item2 >= 0 && p.Item4 >= 0, "level outside the plan factors"));
         var valid = MovementArms.ValidPairs();
         Assert.Empty(valid.Except(covered));
-        // Factor 1 is the focus path (0 = none), 2 the caps (0 = 0/0), 6 the transition (1 = reload, 3 = reload+hidden).
         var all = new System.Collections.Generic.HashSet<(int, int, int, int)>();
         for (int a = 0; a < MovementArms.FactorSizes.Length; a++)
             for (int b = a + 1; b < MovementArms.FactorSizes.Length; b++)
@@ -309,8 +285,6 @@ public sealed class MovementEquivalenceTests
         }
     }
 
-    /// <summary>F2g: every pairwise arm equals its bodies-off reference (E1) on the small fixture; the 957-resident
-    /// result is asserted by <see cref="RecordedBaselineIsTheGreenMatrix"/>.</summary>
     [Fact]
     public void PairwiseArmsEqualBodiesOff()
     {
@@ -329,7 +303,6 @@ public sealed class MovementEquivalenceTests
         }
     }
 
-    /// <summary>F2g: a reload arm that never reloads fails loudly instead of passing E1 untested.</summary>
     [Fact]
     public void ReloadArmThatNeverReloadsFailsLoudly()
     {
@@ -337,8 +310,6 @@ public sealed class MovementEquivalenceTests
         Assert.Contains("reload never happened", error.Message);
     }
 
-    /// <summary>F2g: the E2 arm with visitor bodies on. Holds refuse visitors, so the stream holds residents only. Replay
-    /// from each checkpoint still equals the contact run, and a gap, duplicate, reordering or wrong start/end is refused.</summary>
     [Fact]
     public void E2ReplayIsGreenWithVisitorBodies()
     {
@@ -351,9 +322,6 @@ public sealed class MovementEquivalenceTests
 
     private static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;
 
-    /// <summary>F2g: the recorded 957-resident, two-day baseline is the green result. Every self-check and E2 row passes
-    /// (the visitor E2 arm included), every arm of the catalogue was run, and every compared arm equals its bodies-off
-    /// reference on all projections. docs/checks/f2g.md maps each acceptance row A1-A10 to these checks.</summary>
     [Fact]
     public void RecordedBaselineIsTheGreenMatrix()
     {

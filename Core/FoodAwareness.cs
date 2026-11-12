@@ -13,8 +13,6 @@ namespace PersistentCity.Core
     [Flags]
     public enum FoodAwarenessSource { Memory=1, Home=2, Routine=4, Origin=8, Discovery=16, Campaign=32, ActiveCampaign=64 }
 
-    /// <summary>Complete generation identity, never a door/name or recycled ordinal. Implementations do
-    /// O(1) lookup per slot. C2a supplies no memory writer or campaign evidence.</summary>
     public interface IFoodAwarenessProvider
     {
         string? Reference(string consumer, int day, int slot);
@@ -24,8 +22,6 @@ namespace PersistentCity.Core
         public static readonly EmptyFoodAwarenessProvider Instance = new EmptyFoodAwarenessProvider();
         public string? Reference(string consumer, int day, int slot) => null;
     }
-    /// <summary>Publication version changes only when supported identities/places/menu change (not eligibility alone).
-    /// The native adapter's existing bounded discovery ring publishes these changes.</summary>
     public interface IFoodAwarenessRevision { long AwarenessRevision { get; } }
 
     public sealed class FoodAwarenessSettings
@@ -54,12 +50,10 @@ namespace PersistentCity.Core
         public FoodAwarenessSource Sources { get; set; }
         public bool Eligible { get; set; }
     }
-    /// <summary>Only the one held context carries this image. No resident/day awareness arrays.</summary>
     public sealed class FoodAwarenessImage
     {
         public string CatalogueRevision { get; set; } = "";
         public List<FoodAwarenessCandidate> Union { get; set; } = new List<FoodAwarenessCandidate>(24);
-        // Transient derived cache. Capture/strict decode restore it; no saved field is added.
         private bool? activeCampaign;
         internal void ClearCampaignModifier() => activeCampaign=false;
         internal void MarkCampaignModifier() => activeCampaign=true;
@@ -98,9 +92,6 @@ namespace PersistentCity.Core
         public string[] Shortlist { get; set; } = Array.Empty<string>();
     }
 
-    /// <summary>Immutable ordinal generation-keyed catalogue, with six spatial scales. Build only on
-    /// publication/place change. Sampling touches <=9 buckets/anchor and indexed slots, even in dense cells.
-    /// All supported alternatives (including future rival kinds) compete through this same interface.</summary>
     public sealed class FoodAwarenessCatalogue
     {
         public const int MaximumAlternatives=20000, MaximumSourceSlots=32, CoreSourceSlots=24;
@@ -129,13 +120,9 @@ namespace PersistentCity.Core
             {
                 if(++count>MaximumAlternatives) throw new ArgumentException("Awareness catalogue exceeds place bound.");
                 var point=position(scope.PlaceId);
-                // Yield once even for a missing place: an iterator must not hide a full invalid
-                // catalogue scan inside one MoveNext of the bounded collector.
                 yield return point.HasValue && point.Value.IsFinite ? new Entry(scope,point.Value) : null!;
             }
         }
-        // Synchronous construction is for explicit offline/on-demand callers only. Simulation drives
-        // BeginBuild/Continue: no scan, sort, hash or cell-level pass is hidden in a normal event.
         public FoodAwarenessCatalogue(IEnumerable<FoodScope> scopes,Func<string,Position?> position) : this(BuildAll(BeginBuild(scopes,position))) { }
         public FoodAwarenessCatalogue(IEnumerable<Entry> alternatives) : this(BuildAll(alternatives)) { }
         private FoodAwarenessCatalogue(FoodAwarenessCatalogue other)
@@ -152,9 +139,6 @@ namespace PersistentCity.Core
         internal static Builder BeginSparseBuild(IEnumerable<Entry> alternatives) => new Builder(alternatives,true);
         public static Builder BeginBuild(IEnumerable<FoodScope> scopes,Func<string,Position?> position) => new Builder(Project(scopes,position),true);
         public enum BuildStage { Collect, Copy, Sort, Hash, CountCells, Ranges, Fill, Publish, Complete }
-        /// <summary>Private coherent build. Each Continue performs at most 64 input/merge/hash/cell
-        /// operations. Array allocations are bounded by 20k; no Array.Sort, ToDictionary or final
-        /// whole-list copy occurs. Result is unavailable until the complete six-level image publishes.</summary>
         public sealed class Builder : IDisposable
         {
             public const int MaximumWorkPerUnit=64;
@@ -197,7 +181,6 @@ namespace PersistentCity.Core
                             LastWorkItems++;var e=input.Current;
                             if(e==null && skipMissing) continue;
                             if(collected.Count==MaximumAlternatives) throw new ArgumentException("Awareness catalogue exceeds place bound.");
-                            // E6c: a vehicle's escaped place and business ids may exceed 256/512 (VendorNames.Bound).
                             if(e==null || string.IsNullOrWhiteSpace(e.BusinessId) || e.BusinessId.Length>VendorNames.Bound(e.BusinessId,512)
                                 || string.IsNullOrWhiteSpace(e.PlaceId) || e.PlaceId.Length>VendorNames.Bound(e.PlaceId,256) || !e.Position.IsFinite || (uint)e.Kind>1)
                                 throw new ArgumentException("Invalid awareness alternative.");
@@ -317,8 +300,6 @@ namespace PersistentCity.Core
             uint h=StableRandom.AppendDecimal(StableRandom.Append(prefix,'|'),slot);
             return StableRandom.Finish(StableRandom.Append(StableRandom.Append(h,'|'),Revision));
         }
-        /// <summary>At most 24 draws here; campaign's eight reserved slots always return unknown in C2a.
-        /// Rejection/duplicates consume slots. The optional diagnostic is populated only when requested.</summary>
         public FoodAwarenessImage Sample(int seed,string consumer,int day,Position? home,Position? routine,Position? origin,
             FoodAwarenessSettings settings,Func<Entry,bool> eligible,IFoodAwarenessProvider? memory=null,
             IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null)
@@ -375,11 +356,9 @@ namespace PersistentCity.Core
             {
                 bool exposed=(Key(discoveryGate,i)+.5)/4294967296.0<settings.DiscoveryProbability;
                 Entry? entry=entries.Length==0 ? null : entries[Key(discoverySlot,i)%(uint)entries.Length];
-                // Failed exposure does not create awareness or a saved candidate identity.
                 Add(exposed ? entry : null,FoodAwarenessSource.Discovery,i,exposed,"not discovered");
                 if(diagnostic!=null && !exposed) diagnostic.Samples[diagnostic.Samples.Count-1].BusinessId=entry?.BusinessId ?? "";
             }
-            // Only a prepared C2b provider can supply evidence. Unavailable/foreign providers remain Unknown.
             if(campaign is IFoodCampaignAwarenessProvider verified && verified.HasEvidence)
                 for(int i=0;i<8;i++)
                 {
@@ -387,7 +366,6 @@ namespace PersistentCity.Core
                     Add(id==null ? null : Find(id),FoodAwarenessSource.Campaign,i,true,"unexposed, duplicate or ineligible");
                 }
             else if(diagnostic!=null) for(int i=0;i<8;i++) diagnostic.Samples.Add(new FoodAwarenessSample {Source=FoodAwarenessSource.Campaign,Slot=i,Result="unknown"});
-            // A modifier on already-admitted identities, not another draw or admission slot.
             if(campaign is IFoodCampaignAwarenessProvider active && active.HasEvidence)
                 foreach(var candidate in image.Union)
                     if(active.Active(candidate.BusinessId))

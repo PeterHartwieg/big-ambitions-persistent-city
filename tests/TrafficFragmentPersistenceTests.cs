@@ -49,7 +49,6 @@ public sealed class TrafficFragmentPersistenceTests
         state.TravelTimingVersion = 1; state.TravelClockRate = 1;
         var simulation = new CitySimulator(state, new Planner(boundary: boundary)); simulation.AdvanceTo(0);
         double progress = duration - 1e-8;
-        // A saved progress floor inside the section (TrafficFloorFixture).
         Assert.Equal(progress, TrafficFloorFixture.Write(state, simulation, "car", progress, progress));
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         Assert.True(TravelTiming.Apply(state, 2, 2));

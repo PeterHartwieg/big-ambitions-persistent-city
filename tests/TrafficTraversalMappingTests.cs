@@ -46,7 +46,7 @@ public sealed class TrafficTraversalMappingTests
     public void FutureCanonicalSpeedupAndUnreviewedSlowdownAreRefused(double factor)
     {
         var network = new Planner().TrafficNetwork; var route = Uniform(factor);
-        Assert.True(network.TryMap(route, out var mapping)); // Mapper remains geometry-only.
+        Assert.True(network.TryMap(route, out var mapping));
         network.ValidateMapping(route, mapping);
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, mapping, 0));
     }
@@ -57,7 +57,7 @@ public sealed class TrafficTraversalMappingTests
         var network = new Planner().TrafficNetwork; var route = Uniform();
         route.Legs[0].Minutes = 1; route.Legs[1].Minutes = 1.75; route.Legs[2].Minutes = 1.75;
         Assert.True(network.TryMap(route, out var mapping)); network.ValidateMapping(route, mapping);
-        Assert.Equal(4.5, Assert.Single(mapping).FreeFlowMinutes); // Same allowed mean as uniform 1.5.
+        Assert.Equal(4.5, Assert.Single(mapping).FreeFlowMinutes);
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, mapping, 0));
     }
 
@@ -66,7 +66,7 @@ public sealed class TrafficTraversalMappingTests
     {
         var network = new Planner().TrafficNetwork; var route = Uniform();
         Assert.True(network.TryMap(route, out var mapping)); mapping[0].FreeFlowMinutes = 4;
-        network.ValidateMapping(route, mapping); // Same endpoints and a separately plausible slowdown.
+        network.ValidateMapping(route, mapping);
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, mapping, 0));
     }
 

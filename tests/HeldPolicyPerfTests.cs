@@ -11,9 +11,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// Opt-in offline measurements for docs/perf/e5b4.md: set PC_E5B4_MEASURE to an output file. Choice weight cost with 0, 8
-// and 64 dynamic offers against legacy offers, the policy read on a clean frame, held metadata bytes at 64 tuples, and
-// fresh-city save bytes and read/write latency at writer 36 against the frozen writer 35.
 public sealed class HeldPolicyPerfTests
 {
     private const int Offers = 64;
@@ -58,8 +55,6 @@ public sealed class HeldPolicyPerfTests
         var settings = new FoodChoiceSettings();
         var draw = new FoodDrawContext(957, "pc:1", 3, MealKind.Lunch, "ctx", 1);
 
-        // Choice weight: Select over a 64-offer shortlist (8 shops x 8 offers) with 0, 8 or 64 dynamic offers.
-        // Two passes in the order 0, 8, 64: the first lets tiered JIT promote the code, the second is reported.
         report.AppendLine("select over 64 offers (second pass): dynamic | p50 us | p95 us | bytes/call");
         for (int pass = 0; pass < 2; pass++)
             foreach (int dynamic in new[] { 0, 8, 64 })
@@ -75,7 +70,6 @@ public sealed class HeldPolicyPerfTests
         report.AppendLine($"legacy | {lw.P50 * 1000:F0} | {lw.Bytes:F1}");
         report.AppendLine($"held revision 2 | {dw.P50 * 1000:F0} | {dw.Bytes:F1}");
 
-        // The market's policy read on a clean context (no input changed) and one rebuild after a config change.
         var image = new LoadedNameImage(1, Enumerable.Range(0, 2000).Select(i => "mod:itemname_dish" + i).ToArray(), FoodEligibilityRefusal.None);
         var config = FoodProductMetadataResolver.Empty; var snapshot = FoodProductMetadataSnapshot.Empty;
         var source = new FoodProductPolicySource(() => image, () => config, _ => snapshot);
@@ -93,7 +87,6 @@ public sealed class HeldPolicyPerfTests
         start = Stopwatch.GetTimestamp(); _ = source.Current;
         report.AppendLine($"policy rebuild after a new 2,000-name image: {(Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency:F3} ms, {GC.GetAllocatedBytesForCurrentThread() - before} B (image itself {imageBytes} B)");
 
-        // Held metadata bytes at 64 revision-2 tuples (8 shops x 8 offers), against the 8 Ki bound.
         var city = ChangeJournalTests.Fixture(5150);
         var meal = city.Food!.Residents.First(m => m.Decision == null);
         var shopsUsed = city.Food.Shops.Take(1).ToList();
@@ -110,7 +103,6 @@ public sealed class HeldPolicyPerfTests
         string metadataText = string.Join(",", decision.Shops.SelectMany(s => s.Offers).Select(o => Newtonsoft.Json.JsonConvert.SerializeObject(o.Metadata)));
         report.AppendLine($"held metadata, 64 revision-2 tuples at the widest fits: {Encoding.UTF8.GetByteCount(metadataText)} B as JSON objects; validator budget 2 + 64 x 36 = {2 + 64 * 36} B; bound {FoodNameIdentity.MaximumHeldWire} B");
 
-        // Fresh-city save bytes and read/write latency.
         foreach (int seed in new[] { 5150, 9217 })
         {
             var state = ChangeJournalTests.Fixture(seed);

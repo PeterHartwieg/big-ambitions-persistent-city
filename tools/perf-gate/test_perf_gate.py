@@ -1,4 +1,3 @@
-"""F4a offline checks: python -m unittest discover -s tools/perf-gate -p test_*.py"""
 import copy
 import importlib.util
 import json
@@ -56,22 +55,19 @@ class ContractTests(unittest.TestCase):
 
 class PercentileTests(unittest.TestCase):
     def test_nearest_rank_matches_hand_computed_values(self):
-        values = list(range(1, 21))  # 1..20
-        # p50: ceil(10) = rank 10 -> 10; p95: ceil(19) = 19 -> 19; p99: ceil(19.8) = 20 -> 20.
+        values = list(range(1, 21))
         self.assertEqual([analyze.nearest_rank(values, p) for p in (50, 95, 99)], [10, 19, 20])
         seven = [0.5, 1.0, 2.0, 3.0, 4.0, 8.0, 40.0]
-        # n=7: p50 rank ceil(3.5)=4 -> 3.0; p95 rank ceil(6.65)=7 -> 40.0; p99 rank 7.
         self.assertEqual([analyze.nearest_rank(seven, p) for p in (50, 95, 99)], [3.0, 40.0, 40.0])
         self.assertEqual(analyze.nearest_rank([4.2], 95), 4.2)
         self.assertIsNone(analyze.nearest_rank([], 95))
-        # n=100: p95 rank exactly 95, no interpolation.
         hundred = [float(i) for i in range(1, 101)]
         self.assertEqual(analyze.nearest_rank(hundred, 95), 95.0)
         d = analyze.distribution([3.0, 1.0, 2.0])
         self.assertEqual((d['p50_ms'], d['p95_ms'], d['max_ms'], d['mean_ms']), (2.0, 3.0, 3.0, 2.0))
 
     def test_window_m1_is_nearest_rank_of_its_own_frames(self):
-        mod = [0.1] * 94 + [4.0] + [9.0] * 5  # 100 frames: rank 95 -> 4.0, rank 99 -> 9.0
+        mod = [0.1] * 94 + [4.0] + [9.0] * 5
         r = run(synthetic.window('c', mod=mod))
         w = win(r, 'c')
         self.assertEqual((w['mod_work']['p95_ms'], w['mod_work']['p99_ms']), (4.0, 9.0))
@@ -83,12 +79,9 @@ class PercentileTests(unittest.TestCase):
         r = run(a, b)
         pooled = next(g for g in r['pooled'] if g['build'] == 'candidate')
         self.assertEqual(sorted(pooled['windows']), ['a', 'b'])
-        # Per-window p95: a=1.0, b=10.0; their mean would be 5.5, their p95 10.0.
-        # Pool of 200 raw frames, 10 at 10.0: rank ceil(190) = 190 -> 1.0.
         self.assertEqual(pooled['mod_work']['p95_ms'], 1.0)
         self.assertEqual(pooled['mod_work']['count'], 200)
         self.assertNotIn(pooled['mod_work']['p95_ms'], (5.5, 10.0))
-        # Pool p99: rank 198 -> 10.0.
         self.assertEqual(pooled['mod_work']['p99_ms'], 10.0)
 
     def test_invalid_windows_are_not_pooled(self):
@@ -203,7 +196,7 @@ class InvalidationTests(unittest.TestCase):
         entry = win(run(w), 'c')
         self.assertTrue(entry['valid'], entry['invalid_reasons'])
         self.assertEqual((entry['frames'], entry['clean_frames'], entry['diagnostic_frames']), (50, 49, 1))
-        self.assertEqual(entry['gc_collections'], 'unknown')  # the E5b frame shape has no GC count
+        self.assertEqual(entry['gc_collections'], 'unknown')
         w['probe']['status']['cross_frame_scopes'] = 1
         self.assertIn('receipt failed: probe_flags', win(run(w), 'c')['invalid_reasons'])
         w['probe']['status'] = dict(status, timing_coverage_complete=False)
@@ -282,7 +275,6 @@ class PairingTests(unittest.TestCase):
                 self.assertEqual(pair['verdict'], 'not established')
                 self.assertIsNone(pair['value'])
                 self.assertEqual(r['rows']['P4']['verdict'], 'not established')
-        # Inside tolerance: span 0.9 game minutes and pace 1.9 % still match.
         _, ok = self.pair(ref_overrides=dict(game_span_minutes=90.9, reference_pace_ratio=1.019))
         self.assertEqual(ok['verdict'], 'pass')
 
@@ -315,16 +307,13 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(pair['verdict'], 'not established')
 
     def test_not_established_when_reference_misses_p1(self):
-        # Reference p95 17.0 ms misses P1 (<= 16.7); candidate 17.5 ms would fail P1 on its own.
         r, pair = self.pair(ref_presented=[17.0] * 100, cand_presented=[17.5] * 100)
         cand = win(r, 'c')
         self.assertEqual(cand['rows']['P1']['verdict'], 'not established')
         self.assertIn(analyze.NATIVE_BASELINE, cand['rows']['P1']['reason'])
         self.assertEqual(r['rows']['P1']['verdict'], 'not established')
         self.assertEqual(r['sixty_fps'], analyze.NATIVE_BASELINE)
-        # The verdict then rests on P4 and the M rows: P4 is judged, never attributed away.
         self.assertEqual(pair['verdict'], 'pass')
-        # Without a reference that misses P1, the same candidate fails P1.
         r2, _ = self.pair(ref_presented=[16.0] * 100, cand_presented=[17.5] * 100)
         self.assertEqual(r2['rows']['P1']['verdict'], 'fail')
         self.assertIsNone(r2['sixty_fps'])
@@ -336,7 +325,7 @@ class RowTests(unittest.TestCase):
         w['accounting'] = dict(clock_misses=1, lag_samples=[[0, 0.0], [10, 1.2]], holds=[dict(start_s=5.0, end_s=9.0)])
         rows = win(run(w), 'c')['rows']
         self.assertEqual([rows[r]['verdict'] for r in ('S1', 'S2', 'S3')], ['fail', 'fail', 'fail'])
-        self.assertEqual(rows['S4']['verdict'], 'not established')  # lag never back below 0.1 after the hold
+        self.assertEqual(rows['S4']['verdict'], 'not established')
         w['accounting'] = dict(clock_misses=0, lag_samples=[[0, 0.0], [9.5, 0.4], [12.0, 0.05]], holds=[dict(start_s=8.0, end_s=9.0)])
         rows = win(run(w), 'c')['rows']
         self.assertEqual([rows[r]['verdict'] for r in ('S1', 'S2', 'S3', 'S4')], ['pass', 'pass', 'pass', 'pass'])
@@ -350,19 +339,14 @@ class RowTests(unittest.TestCase):
         return win(run(w), 'c')['rows']['S4']
 
     def test_s4_needs_evidence_of_recovery(self):
-        # A hold still open at window end with lag 0.8: unresolved, never pass.
         ongoing = self.s4([dict(start_s=295.0, end_s=300.0, ongoing=True)], [[0, 0.0], [300.0, 0.8]])
         self.assertEqual(ongoing['verdict'], 'not established')
-        # Samples prove lag stayed above 0.1 more than 5 s after a closed hold: fail.
         late = self.s4([dict(start_s=8.0, end_s=9.0)], [[0, 0.0], [10.0, 0.5], [15.0, 0.4], [20.0, 0.3]])
         self.assertEqual(late['verdict'], 'fail')
-        # Recovered, but only 8 s after the hold: fail.
         slow = self.s4([dict(start_s=8.0, end_s=9.0)], [[0, 0.0], [17.0, 0.05]])
         self.assertEqual((slow['verdict'], slow['value']), ('fail', 8.0))
-        # No sample after the hold ends inside the window: unresolved.
         unsampled = self.s4([dict(start_s=8.0, end_s=9.0)], [[0, 0.0], [12.0, 0.4]])
         self.assertEqual(unsampled['verdict'], 'not established')
-        # Stalls without holds need stall-time alignment (F4c): not established, never pass.
         stalled = self.s4([], [[0, 0.0], [300.0, 0.0]], presented=[10.0] * 99 + [60.0])
         self.assertEqual(stalled['verdict'], 'not established')
         self.assertIn('stall-time alignment', stalled['reason'])
@@ -385,7 +369,7 @@ class RowTests(unittest.TestCase):
         stress = synthetic.window('s', arm='stress', mod=stress_mod, repetition=2)
         alone = run(synthetic.window('p'))
         r = run(primary, stress)
-        self.assertEqual(r['rows'], alone['rows'])  # adding stress windows leaves primary results unchanged
+        self.assertEqual(r['rows'], alone['rows'])
         self.assertEqual(r['rows']['M2']['count'], 0)
         self.assertEqual(r['secondary_arm_rows']['M1']['verdict'], 'fail')
         self.assertEqual(r['secondary_arm_rows']['M2']['count'], 1)
@@ -406,7 +390,7 @@ class RowTests(unittest.TestCase):
     def test_overall_needs_every_row(self):
         e = self.complete()
         del e['measurements']
-        self.assertEqual(analyze.analyze([e], CONTRACT)['overall'], 'not established')  # S5, L1-L4, R1 have no records
+        self.assertEqual(analyze.analyze([e], CONTRACT)['overall'], 'not established')
         e = self.complete()
         r = analyze.analyze([e], CONTRACT)
         self.assertEqual(r['overall'], 'pass', {k: v['verdict'] for k, v in r['rows'].items()})
@@ -419,7 +403,7 @@ class RowTests(unittest.TestCase):
                         dict(median_pedestrians=35, median_cars=20)):
             with self.subTest(**density):
                 r = analyze.analyze([self.complete(density)], CONTRACT)
-                self.assertTrue(win(r, 'c')['valid'])  # not dense stays valid for its other rows
+                self.assertTrue(win(r, 'c')['valid'])
                 self.assertEqual(r['rows']['M1']['verdict'], 'pass')
                 self.assertEqual(r['rows']['dense_street']['verdict'], 'not established')
                 self.assertEqual(r['overall'], 'not established')
@@ -432,9 +416,9 @@ class RowTests(unittest.TestCase):
         e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020], m1_p95_per_day=[0.5, 0.55])
         r = analyze.analyze([e], CONTRACT)
         self.assertEqual((r['rows']['R1']['verdict'], r['overall']), ('not established', 'not established'))
-        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020, 1100], m1_p95_per_day=[0.5, 0.55, 0.58])  # day 3 heap +7.8 %
+        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020, 1100], m1_p95_per_day=[0.5, 0.55, 0.58])
         self.assertEqual(analyze.analyze([e], CONTRACT)['rows']['R1']['verdict'], 'fail')
-        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.65])  # day 3 M1 drift 30 %
+        e['measurements']['R1'] = dict(heap_mb_per_day=[1000, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.65])
         self.assertEqual(analyze.analyze([e], CONTRACT)['rows']['R1']['verdict'], 'fail')
         e['measurements']['R1'] = dict(heap_mb_per_day=[0, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.58])
         with self.assertRaisesRegex(analyze.Refused, 'R1 heap'):
@@ -444,7 +428,7 @@ class RowTests(unittest.TestCase):
 class SummaryLineTests(unittest.TestCase):
     def test_parser_reads_fix128_and_all_segments(self):
         parsed = summary_lines.parse_lines(SUMMARY_FIXTURE)
-        self.assertEqual(len(parsed), 3)  # the traffic line is not a summary
+        self.assertEqual(len(parsed), 3)
         current = parsed[0]
         self.assertEqual(current['advancement'], dict(frames=1795, events=412, total_ms=214.66, max_advance_ms=42.483, max_events=16))
         self.assertEqual(current['slowest_advance'], dict(unit_ms=39.688, unit_kind='route-planning', optional_stop_ms=0.0, gc_count=1))
@@ -458,7 +442,7 @@ class SummaryLineTests(unittest.TestCase):
         self.assertEqual((current['physical']['pedestrians'], current['physical']['cars']), (31, 7))
         self.assertEqual(current['physical']['carAdmission'], 'person-17:spawn:none, retry later')
         older = parsed[1]
-        self.assertIsNone(older['slowest_advance'])  # 6 Nov build: no fix-128 fields, never guessed
+        self.assertIsNone(older['slowest_advance'])
         self.assertEqual(older['advancement']['max_advance_ms'], 34.229)
         self.assertEqual(parsed[2]['physical'], {'physical': False, 'inactive': True})
 
@@ -473,7 +457,7 @@ class SummaryLineTests(unittest.TestCase):
         self.assertEqual(matched['advancement_unit']['gc_count'], 1)
         self.assertEqual(matched['advancement_unit']['source'], 'summary-maximum')
         self.assertEqual(set(other['advancement_unit'].values()), {'unknown'})
-        self.assertIsNone(outside['advancement_unit'])  # outside advancement: no advancement fields
+        self.assertIsNone(outside['advancement_unit'])
 
     def test_ambiguous_or_out_of_range_maximum_attaches_nowhere(self):
         obs = [dict(summary=summary_lines.parse_line(SUMMARY_FIXTURE[0]))]
@@ -509,12 +493,11 @@ class SummaryLineTests(unittest.TestCase):
         mod[10] = 43.0
         w = synthetic.window('c', mod=mod, summary_lines=[SUMMARY_FIXTURE[0]])
         for f in w['frames']:
-            f['components'] = {}  # AdvancePopulation component-unbound
+            f['components'] = {}
         w['advance_calls'] = [dict(frame=10, duration_ms=42.49, gc_delta=1, optional_stop_ms=0.0)]
         spike = run(w)['spikes'][0]
         self.assertEqual((spike['advance_ms'], spike['advance_source']), (42.49, 'per-call record'))
         self.assertEqual(spike['advancement_unit']['unit_kind'], 'route-planning')
-        # Without either evidence, absence of advancement is not established: unit fields stay unknown.
         w['advance_calls'] = []
         r = run(w)
         spike = r['spikes'][0]
@@ -525,7 +508,6 @@ class SummaryLineTests(unittest.TestCase):
         md = report.render_markdown(r)
         self.assertIn('unknown (timing unbound)', md)
         self.assertNotIn('outside advancement', md)
-        # Declared bound but not timed in this frame: confirmed outside advancement.
         w['bound_components'] = ['AdvancePopulation']
         spike = run(w)['spikes'][0]
         self.assertIsNone(spike['advance_source'])

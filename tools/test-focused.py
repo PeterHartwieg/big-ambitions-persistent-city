@@ -34,8 +34,6 @@ def changed_test_files(base):
 
 
 def filter_terms(files):
-    """One filter term per declared class. Namespaced classes match `.Class.`; a few test files use the
-    global namespace, where the full name starts with `Class.`, so those match `Class.` anywhere."""
     terms = set()
     for name in files:
         with open(os.path.join(ROOT, name), encoding="utf-8-sig") as handle:

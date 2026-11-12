@@ -109,7 +109,6 @@ public sealed class PhysicalTrafficMotionTests
         Assert.InRange(rotation.ReservedAdvance, 0, allowance);
         Assert.Equal(0, PhysicalTrafficMotion.LimitRotation(new Position(Math.Sqrt(2), 0, Math.Sqrt(2)),
             new Position(0, 1, 0), new Position(1, 0, 0), Math.PI / 4, 0).Fraction);
-        // A turn that moves the front marker away from its limit remains fully native.
         Assert.Equal(1, PhysicalTrafficMotion.LimitRotation(new Position(Math.Sqrt(2), 0, Math.Sqrt(2)),
             new Position(0, 1, 0), new Position(0, 0, 1), Math.PI / 4, 0).Fraction);
     }
@@ -123,7 +122,6 @@ public sealed class PhysicalTrafficMotionTests
         double axisLength = Math.Sqrt(ax * ax + ay * ay + az * az); ax /= axisLength; ay /= axisLength; az /= axisLength;
         var marker = new Position(1.3, .6, 2); double allowance = .15, directionLength = Math.Sqrt(1.25);
         var result = PhysicalTrafficMotion.LimitRotation(marker, new Position(ax, ay, az), new Position(1, 0, .5), 1.2, allowance);
-        // Independent 3-D Rodrigues samples check the scalar arc envelope on level and tilted bodies.
         double dot = ax * marker.X + ay * marker.Y + az * marker.Z;
         for (int i = 0; i <= 300; i++)
         {

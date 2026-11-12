@@ -8,19 +8,15 @@ import random
 from pathlib import Path
 
 QPC_FREQUENCY = 10_000_000
-# PresentMon 2.x default columns (README-ConsoleApplication.md, v2.3.0) with --qpc_time: rows start at CPUStartQPC.
 V2_HEADER = ['Application', 'ProcessID', 'SwapChainAddress', 'PresentRuntime', 'SyncInterval', 'PresentFlags', 'AllowsTearing',
              'PresentMode', 'CPUStartQPC', 'FrameTime', 'CPUBusy', 'CPUWait', 'GPULatency', 'GPUTime', 'GPUBusy', 'GPUWait',
              'DisplayLatency', 'DisplayedTime', 'AnimationError', 'ClickToPhotonLatency', 'AllInputToPhotonLatency']
-V2_GPU_COLUMNS = ('GPULatency', 'GPUBusy', 'GPUWait')  # --no_track_gpu
+V2_GPU_COLUMNS = ('GPULatency', 'GPUBusy', 'GPUWait')
 V1_HEADER = ['Application', 'ProcessID', 'SwapChainAddress', 'Runtime', 'SyncInterval', 'PresentFlags', 'AllowsTearing', 'PresentMode',
              'Dropped', 'TimeInSeconds', 'msInPresentAPI', 'msBetweenPresents', 'msBetweenDisplayChange', 'msUntilRenderComplete', 'msUntilDisplayed']
 
 
 def session(frames=600, seed=3, stalls=None, start_ms=5_000.0, mod=None, gpu_busy=None, cpu_wait=None, cpu_busy=None):
-    """Probe frame rows and the true present time of each frame (ms on the probe's QPC clock).
-
-    stalls: {frame index: whole-frame ms}; mod: {frame index: union ms}; gpu_busy/cpu_wait/cpu_busy: {frame index: ms}."""
     rng = random.Random(seed)
     stalls, mod = stalls or {}, mod or {}
     rows, presents, t = [], [], start_ms
@@ -37,16 +33,12 @@ def session(frames=600, seed=3, stalls=None, start_ms=5_000.0, mod=None, gpu_bus
 
 
 def trace_rows(presents, version=2, offset_ms=0.0, seconds_origin_ms=None, missing=(), dropped=(), gpu=True, process_id=4242, extra_process=False):
-    """CSV rows (header first). offset_ms shifts the trace clock; seconds_origin_ms writes seconds from that origin (v1 TimeInSeconds).
-
-    Version 2 rows start at the frame's CPU start; FrameTime runs to the next frame's start; each shown frame is
-    displayed 5 ms after its present and DisplayedTime runs to the next shown frame's display."""
     missing, dropped = set(missing), set(dropped)
     header = V2_HEADER if version == 2 else V1_HEADER
     if not gpu and version == 2:
         header = [h for h in header if h not in V2_GPU_COLUMNS]
     out = [header]
-    shown_after = {}  # frame -> display time of the next shown frame
+    shown_after = {}
     next_display = None
     for p in reversed(presents):
         shown_after[p['frame']] = next_display
@@ -94,7 +86,6 @@ def write_csv(rows, path):
 
 
 def long_session(hours=7.0, seed=11):
-    """A long session with a stall about every 8 seconds and 0.1 % of presents missing."""
     rng = random.Random(seed)
     frames = int(hours * 3600 * 60)
     stalls = {i: rng.uniform(60.0, 400.0) for i in range(240, frames, 480)}

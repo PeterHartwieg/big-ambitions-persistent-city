@@ -53,7 +53,6 @@ public sealed class ContinuityRegressionTests
         Assert.True(465 + Shift < 480);
         var city = City(Persona.Parent, 1440, work: true);
         var work = city.Places.Single(p => p.Id == "work");
-        // GR-2 fits a shift into hours that hold all 480 minutes; 470 open minutes keep the template, so the parent waits.
         work.OpenMinute = 480; work.CloseMinute = 950;
         if (weekly)
             for (int day = 0; day < 4; day++) work.WeeklyHours.Add(new OpeningWindow { Day = day, FromMinute = 480, ToMinute = 950 });
@@ -118,7 +117,6 @@ public sealed class ContinuityRegressionTests
     {
         var city = City(Persona.Parent, 1440, work: true);
         var work = city.Places.Single(p => p.Id == "work");
-        // Too short for a whole shift, so GR-2 keeps the template window and the opening falls on its deadline.
         work.OpenMinute = 465 + Shift + 480; work.CloseMinute = 465 + Shift + 780;
         var engine = new CitySimulator(city, new Routes());
         engine.AdvanceTo(2 * 1440);
@@ -157,7 +155,7 @@ public sealed class ContinuityRegressionTests
         double start = 1440 + 1050 + Shift;
         var city = City(Persona.Foodie, start, shop: true);
         var engine = new CitySimulator(city, new Routes());
-        engine.AdvanceTo(start); // Commit while the published schedule still permits the visit.
+        engine.AdvanceTo(start);
         city.Places.Single(p => p.Id == "shop").CloseMinute = 1050 + Shift + 5;
         engine.AdvanceTo(start + 12);
         var person = Assert.Single(engine.State.Citizens);
@@ -189,7 +187,7 @@ public sealed class ContinuityRegressionTests
         double start = 1440 + 1050 + Shift;
         var city = City(Persona.Foodie, start, shop: true);
         var engine = new CitySimulator(city, new Routes { HomeReachable = false });
-        engine.AdvanceTo(start); // Commit while the published schedule still permits the visit.
+        engine.AdvanceTo(start);
         city.Places.Single(p => p.Id == "shop").CloseMinute = 1050 + Shift + 5;
         engine.AdvanceTo(start + 12);
         Assert.Equal(CitizenPhase.WaitingForRoute, engine.State.Citizens[0].Phase);

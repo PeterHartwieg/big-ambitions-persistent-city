@@ -5,8 +5,6 @@ using System.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 
-// Detached native-clock/market double. Executes the real simulator, held decisions,
-// wallets and save codec. No Unity, Harmony, native stock or presented frames.
 public static class AccountingScenario
 {
     private sealed class Walking : IRoutePlanner
@@ -48,15 +46,11 @@ public static class AccountingScenario
         public long SpentUnits;
         public long BalanceUnits, HeldUnits;
         public int MissedMeals;
-        /// <summary>Persons variant (F5d): visitors with their own routines, their purchases, and the city-wide
-        /// conservation check at every frame.</summary>
         public int Visitors;
         public long VisitorPurchases;
         public bool Conserved = true;
     }
     private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
-    /// <summary>One logical day. <paramref name="persons"/> adds the F5d persons variant: two subway portals, so the
-    /// factor-2 roster creates one visitor per resident running its own routine through the same queue.</summary>
     public static Result Run(int residents, int fps, int eventBudget, double milliseconds,
         bool reload = false, int stallFrames = 0, bool skip = false, bool coordinated = true, bool persons = false)
     {
@@ -73,7 +67,6 @@ public static class AccountingScenario
         }
         if (persons)
         {
-            // Visitors compete for the same workplace, so it gets room for them.
             state.Places.Single(p => p.Id == "work").Capacity = 2 * residents;
             PortalPlaces.Add(state, new[] { new PortalStation("subway:east", new Position(3, 0, 1)), new PortalStation("subway:west", new Position(-1, 0, 1)) });
         }
@@ -81,8 +74,6 @@ public static class AccountingScenario
             Shops = new List<FoodScope> { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
         var market = new Market { Clock = state.Minute }; var routes = new Walking();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
-        // Exercise the current held-context policy throughout this fixture day, rather
-        // than measuring only the legacy day that normally precedes its activation.
         state.Food.ChoiceStartsDay = state.Food.AwarenessStartsDay = 1;
         var result = new Result(); var costs = new List<double>(); var timer = Stopwatch.StartNew();
         int hour = 24; float minute = 0;

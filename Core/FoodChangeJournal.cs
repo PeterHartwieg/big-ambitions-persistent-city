@@ -5,7 +5,6 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Consumes existing observations only. No market, clock, native reader or writer is reachable here.</summary>
     public sealed class FoodChangeJournal
     {
         public const int HoursEdges = 7 * 64 * 2;
@@ -43,8 +42,6 @@ namespace PersistentCity.Core
         private static void Add(ShopObservation row, int minute, ShopChangeKind kind, int subject, string? product, long before, long after)
         {
             if (before == after) return;
-            // Minute-resolution journal: the same transition is first-observed once in that minute.
-            // Reversals still update the exact baseline and retain their distinct reverse entry.
             for (int i = row.Changes.Count - 1; i >= 0 && row.Changes[i].ObservedMinute == minute; i--)
             {
                 var seen = row.Changes[i];
@@ -53,8 +50,6 @@ namespace PersistentCity.Core
             if (row.Changes.Count == EconomicLedger.ChangesPerShop) { row.Changes.RemoveAt(0); row.Evicted = checked(row.Evicted + 1); }
             row.Changes.Add(new ShopChange { ObservedMinute = minute, Kind = kind, Subject = subject, ProductId = product, Before = before, After = after });
         }
-        // Prices are always observed. Closed/unverified supply preserves the last stock/staff evidence.
-        // Stock is availability (-1 unknown, 0 empty, 1 available), so ordinary sales cannot fill the journal.
         public void ObserveSupply(string business, string place, int minute, ShopObservedOffer[] offers, int count, int staffedCounters,
             bool hasSupplyImage = true)
         {
@@ -66,7 +61,6 @@ namespace PersistentCity.Core
                 if (row.StaffedCounters >= 0) Add(row, minute, ShopChangeKind.StaffedCounters, 0, null, row.StaffedCounters, staffedCounters);
                 row.StaffedCounters = staffedCounters; changed = true;
             }
-            // At most eight offers; reuse the saved array until any exact price or availability changes.
             ShopObservedOffer[]? next = null;
             int old = 0;
             for (int i = 0; i < count; i++)
@@ -83,7 +77,6 @@ namespace PersistentCity.Core
                     if (before.Stock >= 0 && after.Stock >= 0) Add(row, minute, ShopChangeKind.Stock, 0, after.ProductId, before.Stock, after.Stock);
                 }
                 if (!known || old != i || before.PriceUnits != after.PriceUnits || before.Stock != after.Stock) changed = true;
-                // Only allocate on changed observations. Fill preceding unchanged offers from the saved image.
                 if (changed && next == null)
                 {
                     next = new ShopObservedOffer[count];
@@ -98,7 +91,6 @@ namespace PersistentCity.Core
         {
             if (hours.Count > 64) throw new ArgumentException("Observed hours exceed their bound.");
             var row = Get(business, place); if (row == null) return;
-            // Stack buffer avoids allocations on unchanged per-minute hours refreshes.
             Span<int> edges = stackalloc int[HoursEdges];
             Span<int> slots = stackalloc int[7]; slots.Clear();
             for (int h = 0; h < hours.Count; h++)
@@ -136,7 +128,6 @@ namespace PersistentCity.Core
         }
         private static void Fingerprint(ShopObservation row)
         {
-            // Hash is an identity hint; exact saved values above decide changes, so collisions cannot hide edits.
             var culture = System.Globalization.CultureInfo.InvariantCulture;
             var text = new StringBuilder().Append(row.StaffedCounters.ToString(culture)).Append(';');
             foreach (var o in row.Supply) text.Append(o.ProductId).Append(':').Append(o.PriceUnits.ToString(culture)).Append(':').Append(o.Stock.ToString(culture)).Append(';');

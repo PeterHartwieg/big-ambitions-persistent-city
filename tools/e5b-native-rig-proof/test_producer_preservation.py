@@ -1,4 +1,3 @@
-"""Offline producer preservation invariants; fake lease, temporary opaque files only."""
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -20,7 +19,7 @@ class ProducerPreservation(unittest.TestCase):
         self.saves=producer.ExistingSaves(self.root/'backup',self.guard)
     def tearDown(self):
         self.patched.stop()
-        self.assertTrue(self.root.is_relative_to(OUT.resolve())) # Before owned recursive test cleanup.
+        self.assertTrue(self.root.is_relative_to(OUT.resolve()))
         self.temp.cleanup()
     @contextmanager
     def guard(self): yield

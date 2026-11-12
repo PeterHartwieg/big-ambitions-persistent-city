@@ -3,15 +3,11 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>On-demand current evidence at a reached shop. Never books sales or routes;
-    /// native implementations bypass any stale decision-supply cache.</summary>
     public interface IFoodFailureMarket
     {
         FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double minute);
     }
 
-    /// <summary>Positive closure evidence for a committed stand, even after its sale authority ends.
-    /// Not a candidate or supply read; absent APIs, lost leases and generic refusals stay neutral.</summary>
     public interface IFoodClosedStandMarket
     {
         FoodBusiness? ReadClosedStand(string businessId, string placeId, double minute);
@@ -23,8 +19,6 @@ namespace PersistentCity.Core
         private readonly FoodMemoryStore memoryStore;
         private readonly IFoodAwarenessProvider storedMemoryProvider;
 
-        // Four fixed source slots project B1's saved generations through C2a's existing bound.
-        // Lookup is O(1); no city scan, memory write, new identity or campaign read.
         private sealed class StoredMemoryAwareness : IFoodAwarenessProvider
         {
             private readonly FoodCommerce owner;
@@ -55,7 +49,7 @@ namespace PersistentCity.Core
         {
             try { return market is IFoodFailureMarket evidence ? evidence.ReadFailureBusiness(businessId, placeId, minute)
                 : observed ?? ReadBusiness(businessId, minute); }
-            catch (Exception) { return null; } // Unavailable extra proof stays neutral; keep the original refusal.
+            catch (Exception) { return null; }
         }
 
         private FoodBusiness? ClosedStand(ResidentMeal meal, double minute)
@@ -69,7 +63,6 @@ namespace PersistentCity.Core
             catch (Exception) { return null; }
         }
 
-        // Only exact, causal arrival evidence. Generic "unavailable", interrupted breaks and routes stay neutral.
         private void FailedVisit(ResidentMeal meal, string reason)
         {
             ShopExperience? cause = reason == "Shop closed before admission" || reason == "Service no longer fits shop opening hours"
@@ -83,8 +76,6 @@ namespace PersistentCity.Core
             var shop = decision.Shops[0];
             if (shop.AlternativeKind == FoodAlternativeKind.Rival)
             {
-                // F6b: the only refusal recorded for a present rival customer is the modeled sell-out of an
-                // otherwise eligible offer (evaluation removed it); other rival stop failures stay neutral.
                 if (rivalSoldOutShops.Contains(shop)) RivalStopStockout(meal, person, shop, decision);
                 return;
             }
@@ -127,7 +118,7 @@ namespace PersistentCity.Core
                 if (offer.Price > Money.Zero && offer.Price <= allowance)
                 {
                     affordable = true;
-                    if (offer.Units != 0) return false; // Unknown stock is not proof of exhaustion.
+                    if (offer.Units != 0) return false;
                 }
             return affordable;
         }
@@ -178,7 +169,6 @@ namespace PersistentCity.Core
     }
     public sealed partial class CitySimulator
     {
-        /// <summary>Detached read-only diagnostic, allocating only when called; no market, route or UI work.</summary>
         public object? DumpFoodMemory(string consumerId, Func<FoodScope, bool>? currentOwnShop = null) => food?.DumpMemory(consumerId, currentOwnShop);
         public object[] DumpFoodRegulars(Func<FoodScope, bool>? currentOwnShop = null)
             => food?.DumpRegulars(currentOwnShop) ?? Array.Empty<object>();

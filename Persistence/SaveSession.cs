@@ -4,11 +4,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>
-    /// One save session. Only exact dictionary and immutable payload references validated
-    /// by this session are reusable. A changed source always goes through the strict reader.
-    /// Use on one thread at a time; the owner must serialize access to its save dictionary.
-    /// </summary>
     public sealed class SaveSession
     {
         private IDictionary<string, string>? validatedDictionary;
@@ -25,7 +20,6 @@ namespace PersistentCity.Persistence
         }
 
         public SaveReadResult InitialReadResult { get; }
-        /// <summary>Strict stored-payload reads, for save-cost diagnostics. Cache hits do not increment this count.</summary>
         public int StoredPayloadValidationCount { get; private set; }
 
         public static SaveSession Open(IDictionary<string, string> modData, string expectedPopulationKey)
@@ -38,7 +32,6 @@ namespace PersistentCity.Persistence
             var snapshot = new Dictionary<string, string>();
             if (hadPayload) snapshot.Add(SaveStore.StateKey, payload!);
             var result = SaveStore.ReadFrom(snapshot, populationKey);
-            // Do not cache an observation if a custom dictionary changed during validation.
             bool stillHasPayload = modData.TryGetValue(SaveStore.StateKey, out var current);
             if ((result.Status == SaveReadStatus.Missing || result.Status == SaveReadStatus.Loaded)
                 && hadPayload == stillHasPayload && ReferenceEquals(payload, current))
@@ -51,11 +44,6 @@ namespace PersistentCity.Persistence
             return result;
         }
 
-        /// <summary>
-        /// Transfer a snapshot validation to the live dictionary on the owning thread.
-        /// Only the exact same immutable payload (or the same missing-key observation)
-        /// can transfer without another read. Other contents are strictly revalidated.
-        /// </summary>
         public SaveWriteResult BindTo(IDictionary<string, string> modData)
         {
             if (modData == null) throw new ArgumentNullException(nameof(modData));
@@ -74,9 +62,6 @@ namespace PersistentCity.Persistence
 
         public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state) => WriteTo(modData, state, null);
 
-        /// <summary>Same publication as <see cref="WriteTo(IDictionary{string,string},CityState)"/>; a non-null recorder also times its phases (F7a).
-        /// The state is captured into a <see cref="SaveSnapshot"/> here, on the calling (main) thread, and the payload is
-        /// validated and encoded from that snapshot (F7c).</summary>
         public SaveWriteResult WriteTo(IDictionary<string, string> modData, CityState state, SaveCostRecorder? cost)
         {
             if (modData == null) throw new ArgumentNullException(nameof(modData));
@@ -86,7 +71,6 @@ namespace PersistentCity.Persistence
             SaveSnapshot snapshot;
             try
             {
-                // Validate the complete new state before considering any replacement.
                 cost?.Enter(SaveCostPhase.Validate);
                 SaveCodec.RequireExecutablePolicy(state);
                 snapshot = SaveCodec.Capture(state, cost);
@@ -95,8 +79,6 @@ namespace PersistentCity.Persistence
             return WriteTo(modData, snapshot, cost);
         }
 
-        /// <summary>Validate, encode and publish one snapshot of this session's population. A snapshot is published at
-        /// most once; a second publication is refused, so no snapshot outlives its save epoch.</summary>
         public SaveWriteResult WriteTo(IDictionary<string, string> modData, SaveSnapshot snapshot, SaveCostRecorder? cost = null)
         {
             if (modData == null) throw new ArgumentNullException(nameof(modData));
@@ -118,7 +100,6 @@ namespace PersistentCity.Persistence
                     var existing = ValidateSource(modData);
                     if (existing.Status != SaveReadStatus.Missing && existing.Status != SaveReadStatus.Loaded)
                         return new SaveWriteResult(false, existing.Error);
-                    // A dictionary that changed while being read cannot authorize replacement.
                     if (!ReferenceEquals(validatedDictionary, modData))
                         return new SaveWriteResult(false, "Stored state changed during validation.");
                 }

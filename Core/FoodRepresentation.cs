@@ -7,18 +7,11 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>A planner opts in only when it can validate cached geometry against current
-    /// endpoints and navigation/public access. A timestamp alone is not validity evidence.</summary>
     public interface IWalkingQuoteValidity
     {
         bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences);
     }
 
-    /// <summary>Optional scope for one synchronous shared-quote request: validating the shared quote,
-    /// planning its replacement and validating that. Inside it a planner may answer a repeated native
-    /// path calculation for the same endpoints with the one it made earlier in the scope; the first is
-    /// always live. Navigation must not change inside the scope. Results are discarded at End,
-    /// including after an exception, and scopes cannot nest.</summary>
     public interface IWalkingQuoteOperation
     {
         void BeginWalkingQuote();
@@ -31,7 +24,6 @@ namespace PersistentCity.Core
             : "consumer:" + Uri.EscapeDataString(anchorId) + ":" + slot.ToString(CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Last eligible base stay, captured before personal food detours diverge.</summary>
     public sealed class FoodRoutineStop
     {
         public string AnchorId { get; set; } = "";
@@ -41,7 +33,6 @@ namespace PersistentCity.Core
         public double DepartureAt { get; set; }
     }
 
-    /// <summary>One abstract walking meal visit. Never a citizen, body, car or traffic owner.</summary>
     public sealed class MealExcursion
     {
         public string OriginId { get; set; } = "";
@@ -58,7 +49,6 @@ namespace PersistentCity.Core
         public int MaximumQueueMinutes { get; set; }
         public string ReturnGeometry { get; set; } = "";
         public bool Returning { get; set; }
-        // F6c: transient panel counters (never saved); attached while its meal is attached.
         internal FoodMoneyCounters? counters;
         private bool unresolved;
         public bool Unresolved { get => unresolved; set { var c = counters; if (c == null) unresolved = value; else { bool old = unresolved; unresolved = value; c.Unresolve(old, value); } } }
@@ -82,23 +72,16 @@ namespace PersistentCity.Core
             var offers = market is ILocalFoodMarket local
                 ? local.ReadLocal(origin, now, tolerance, LocalFoodCandidates) : market.Read(now);
             var eligible = offers.Where(b => state.Shops.Any(s => s.PlaceId == b.PlaceId && s.BusinessId == b.Id)).ToList();
-            // Preserve the established small-market ordering, choices and route work.
             if (eligible.Count <= LocalFoodCandidates) return eligible;
             return eligible.Where(b => Position.Distance(origin.Position, city.FindPlace(b.PlaceId).Position) <= tolerance)
                 .OrderBy(b => Position.Distance(origin.Position, city.FindPlace(b.PlaceId).Position))
                 .ThenBy(b => b.Id, StringComparer.Ordinal).Take(LocalFoodCandidates).ToList();
         }
 
-        // Represented consumers per resident for today's excursion schedule (scheduling adapter, not ownership).
-        // Every visitor is its own person with its own routine, so this is always 1.
         private int representation = 1;
 
         private void InitializeRepresentation() => InitializePersons();
 
-        // F5d: one own record per person and no represented consumer, host, routine stop or excursion. A
-        // fresh roster creates the requested factor's K-1 visitors per resident as persons with their own routines.
-        // A saved roster enrols any person without a record (for example residents appended by ExpandToHousing),
-        // closing the gap where they had no meals or wallet; existing records are never re-seeded.
         private void InitializePersons()
         {
             representation = 1;
@@ -106,7 +89,6 @@ namespace PersistentCity.Core
             if (state.RepresentationFactor < 1 || state.RepresentationFactor > 3)
                 throw new InvalidOperationException("Representation factor must be fixed between one and three at city initialization.");
             if (state.RoutineStops.Count != 0) throw new InvalidOperationException("A city has no represented routine stops.");
-            // A populated roster is persistent ownership, never permission to multiply wallets.
             if (records.Count != 0 && state.RepresentationFactor != 1) throw new InvalidOperationException("A saved roster has one own record per person.");
             if (records.Count == 0 && city.Visitors.Count == 0
                 && VisitorSchedules.Create(city, VisitorSchedules.FreshVisitors(city.Citizens.Count, state.RepresentationFactor)).Count != 0)
@@ -174,8 +156,6 @@ namespace PersistentCity.Core
         private void ScheduleReturn(ResidentMeal meal)
         {
             var excursion = meal.Excursion!;
-            // Checkout uncertainty does not erase movement ownership. Its wallet remains held
-            // even if the independent walking return subsequently completes.
             double eating = meal.Status == MealStatus.Paid || meal.Status == MealStatus.Uncertain
                 ? MealRhythm.EatingMinutes(meal.Kind) : 0;
             excursion.ReturnStartsAt = Math.Max(city.State.Minute, excursion.ArrivesAt) + eating;
@@ -198,7 +178,6 @@ namespace PersistentCity.Core
                 var origin = city.FindPlace(excursion.OriginId); var shop = city.FindPlace(excursion.DestinationId);
                 var preferences = new TravelPreferences { AllowTransit = false, OwnsCar = false,
                     WalkingToleranceMetres = ReturnPreferences(person,meal).WalkingToleranceMetres };
-                // A changed endpoint must not teleport an away consumer to a replacement place.
                 var back = Position.Distance(origin.Position, excursion.OriginPosition) > .01
                     || Position.Distance(shop.Position, excursion.DestinationPosition) > .01 ? null
                     : WalkingQuote(shop, origin, now, preferences);
@@ -213,15 +192,12 @@ namespace PersistentCity.Core
                     meal.DueAt = (Math.Floor(now / 1440) + 1) * 1440;
                     return true;
                 }
-                // Preserve saved timing for unchanged geometry across native pace changes.
-                // A different validated path must fit using its own duration before commit.
                 meal.ReturnMinutes = minutes; excursion.ReturnGeometry = geometry;
                 excursion.Returning = true; excursion.ReturnsAt = now + minutes;
                 meal.DueAt = Math.Max(now + .001, excursion.ReturnsAt);
                 return true;
             }
             if (now < excursion.ReturnsAt) { meal.DueAt = excursion.ReturnsAt; return true; }
-            // Only a completed valid return can release excursion ownership.
             CaptureRoutineStop(person);
             bool matching = routineStops.TryGetValue(person.Identity.Id, out var stop)
                 && stop.PlaceId == excursion.OriginId && stop.Activity == excursion.OriginActivity
@@ -253,7 +229,6 @@ namespace PersistentCity.Core
 
         private Route? WalkingQuote(Place from, Place to, double at, TravelPreferences preferences, FoodDecisionTrace? trace = null)
         {
-            // K=1 preserves the previous planner calls and decisions exactly.
             if (representation == 1)
             {
                 if (trace != null) trace.RouteCalls++;

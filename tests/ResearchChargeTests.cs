@@ -10,14 +10,9 @@ using PersistentCity.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
-/// <summary>Runs alone: the postfix timing must not share the CPU and GC with the parallel suite.</summary>
 [CollectionDefinition(nameof(ResearchChargeTests), DisableParallelization = true)]
 public sealed class ResearchChargeSerialCollection { }
 
-/// <summary>C5d research billing through pure port doubles (plan C5 section 3.5). The double follows the native
-/// ChangeMoneySafe and ChangeMoney contract read at BigAmbitions.dll 9427561b...: false before any change when
-/// money is short, otherwise binary32 Money += amount, one queued record with balance floor(Money), then the
-/// money-change event. Offline only; no native evidence.</summary>
 [Collection(nameof(ResearchChargeTests))]
 public sealed class ResearchChargeTests
 {
@@ -25,7 +20,6 @@ public sealed class ResearchChargeTests
     private readonly ITestOutputHelper output;
     public ResearchChargeTests(ITestOutputHelper output) { this.output = output; }
 
-    // ---- doubles ----
 
     private sealed class Record
     {
@@ -58,8 +52,6 @@ public sealed class ResearchChargeTests
         public float Balance { get { Calls++; BalanceReads++; return Money; } }
         public int BilledDay { get { Calls++; return Day - 1; } }
 
-        /// <summary>When set, the double does the native port's work: TryResolve walks every registration and builds
-        /// NativeFoodMarket.PlaceId for each player-rented one, and Tail and CollectTaggedAfter walk the whole queue.</summary>
         public List<(string Street, int Number, bool Rented)>? Registrations;
 
         public bool TryResolve(ResearchOrder order, out ResearchChargeTarget? target)
@@ -95,7 +87,7 @@ public sealed class ResearchChargeTests
             Calls++;
             if (Registrations == null) return Queue.Count == 0 ? null : Queue[Queue.Count - 1];
             Record? last = null;
-            foreach (var record in Queue) last = record; // native Queue<Transaction> has no end accessor
+            foreach (var record in Queue) last = record;
             return last;
         }
 
@@ -104,8 +96,6 @@ public sealed class ResearchChargeTests
             Calls++;
             if (Registrations != null)
             {
-                // NativeResearchChargePort's shape: probe every record's data, keep tagged ones with their position,
-                // then keep those after the tail (not found: the tail was dropped, so all count).
                 scratch.Clear(); positions.Clear();
                 int index = 0, tailIndex = -1;
                 foreach (var record in Queue)
@@ -119,7 +109,7 @@ public sealed class ResearchChargeTests
             }
             int start = 0;
             if (tail != null)
-                for (int i = 0; i < Queue.Count; i++) if (ReferenceEquals(Queue[i], tail)) { start = i + 1; break; } // not found: tail dropped
+                for (int i = 0; i < Queue.Count; i++) if (ReferenceEquals(Queue[i], tail)) { start = i + 1; break; }
             for (int i = start; i < Queue.Count; i++) if (Tagged(Queue[i], out var row)) into.Add(row);
         }
         private readonly List<ResearchChargeRecord> scratch = new List<ResearchChargeRecord>(4);
@@ -138,7 +128,7 @@ public sealed class ResearchChargeTests
                 if (AppendOnFalse) Queue.Add(Make(request, Money));
                 return false;
             }
-            Money += request.Amount; // binary32, as native ChangeMoney
+            Money += request.Amount;
             var record = Make(request, (float)Math.Floor(Money));
             Corrupt?.Invoke(record);
             Queue.Add(record);
@@ -205,7 +195,6 @@ public sealed class ResearchChargeTests
         return (ledger, port, guard, new ResearchChargeSession(ledger, port, active ?? (() => true), guard.Run));
     }
 
-    // ---- outcomes ----
 
     [Fact]
     public void SuccessChargesOnceWithNativeMarketingDataAndMarksPaid()
@@ -303,7 +292,7 @@ public sealed class ResearchChargeTests
         }
         var (ledger2, port2, _, session2) = Setup();
         var deferred = Surveyed(ledger2, port2, "shop-a");
-        port2.SkipEntry = true; port2.Money = 0; // false without entry: no native call was made
+        port2.SkipEntry = true; port2.Money = 0;
         Assert.Equal(1, session2.Boundary().Deferred);
         Assert.Equal(ResearchOrderState.Surveyed, deferred.State);
     }
@@ -373,7 +362,7 @@ public sealed class ResearchChargeTests
     [Fact]
     public void QueueFrontDroppedDuringTheCallStillFindsTheAppendedRecord()
     {
-        foreach (int drop in new[] { 1, 4, 5 }) // 5 drops the remembered tail itself, not the appended record
+        foreach (int drop in new[] { 1, 4, 5 })
         {
             var (ledger, port, _, session) = Setup();
             for (int i = 0; i < 5; i++) port.Queue.Add(new Record { Type = "ba:transaction_rent", Amount = -10 });
@@ -422,7 +411,6 @@ public sealed class ResearchChargeTests
         Assert.Equal(49500f, port.Money);
         Assert.Equal(ResearchOrderState.Paid, order.State);
 
-        // Ledger move lost (for example a reload from the save that already holds the debit): the scan pays it.
         var (ledger2, port2, _, session2) = Setup();
         var again = Surveyed(ledger2, port2, "shop-a");
         port2.Queue.AddRange(port.Queue.Select(r => { r.Data![ResearchCharge.TagKey] = again.Id; return r; }));
@@ -443,7 +431,6 @@ public sealed class ResearchChargeTests
         Assert.Equal(0, guard.Units);
         Assert.Equal(ResearchOrderState.Surveyed, order.State);
 
-        // Stopped after the first order (for example by a refused save): later orders wait, uncharged.
         active = true;
         var later = Surveyed(ledger, port, "shop-b");
         port.OnMoneyChange = () => active = false;
@@ -511,7 +498,6 @@ public sealed class ResearchChargeTests
         Assert.Equal(new[] { a.Id, b.Id }, port.Requests.Select(r => r.OrderId));
     }
 
-    // ---- exact-debit preflight ----
 
     private static ResearchProduct Price(int dollars) => new ResearchProduct("test-" + dollars, MarketResearchTier.Basic, ResearchCoverage.Catchment, dollars);
 
@@ -523,7 +509,6 @@ public sealed class ResearchChargeTests
         Assert.Equal(-500f, after); Assert.Equal(-500f, floored);
         Assert.True(ResearchCharge.TryExactDebit(16777216f, basic, out after, out floored));
         Assert.Equal(16776716f, after); Assert.Equal(16776716f, floored);
-        // Spacing $8 at $100,000,000: native would remove $496.
         Assert.Equal(100000000f - 500f, 100000000f - 496f);
         Assert.False(ResearchCharge.TryExactDebit(100000000f, basic, out _, out _));
         var p512 = Price(512);
@@ -562,7 +547,6 @@ public sealed class ResearchChargeTests
         Assert.Equal(ResearchOrderState.Paid, exact.State);
     }
 
-    /// <summary>Independent oracle: the balance scaled by 2^160 is an integer double, so BigInteger holds it exactly.</summary>
     private static bool Oracle(float balance, int price)
     {
         if (float.IsNaN(balance) || float.IsInfinity(balance)) return false;
@@ -603,9 +587,7 @@ public sealed class ResearchChargeTests
         Assert.True(exact > 0 && exact < checkedCount);
     }
 
-    // ---- save guard ----
 
-    /// <summary>Mirrors PopulationRuntime: Save (SaveEpochRuntime.cs), the RunSaveEpochUnit helper and the deferred stop.</summary>
     private sealed class EpochRuntime
     {
         public readonly object Instance = new object();
@@ -659,14 +641,12 @@ public sealed class ResearchChargeTests
         Assert.Equal("payload-before", runtime.Data[SaveStore.StateKey]);
         Assert.StartsWith(SaveEpochStore.FailedPrefix, runtime.Data[SaveEpochStore.Key]);
         Assert.True(AccountingStopStore.IsStopped(runtime.Data));
-        Assert.False(stoppedDuringUnit); // the ledger move completes inside the unit first
+        Assert.False(stoppedDuringUnit);
         Assert.Equal(ResearchOrderState.Paid, first.State);
         Assert.Equal(1, runtime.Stops);
-        // Stopped after the first unit: the second order is not charged in a city that can no longer be saved.
         Assert.Equal(1, tally.Attempts);
         Assert.Equal(ResearchOrderState.Surveyed, second.State);
         Assert.Equal(1, port.Charges);
-        // A later native save of this object is refused too: the debit and the ledger are never saved apart.
         runtime.Save();
         Assert.Equal(SaveEpochResult.NotBound, runtime.LastSave);
         Assert.Equal("payload-before", runtime.Data[SaveStore.StateKey]);
@@ -689,13 +669,11 @@ public sealed class ResearchChargeTests
         Assert.False(AccountingStopStore.IsStopped(runtime.Data));
     }
 
-    // ---- perf ----
 
     [Fact]
     public void PostfixCostWithZeroOneAndEightOrdersOnAFullQueue()
     {
         var (ledgerIdle, portIdle, _, idle) = Setup();
-        // One untimed pass first: tier-up JIT work is not postfix work.
         for (int i = 0; i < 1000; i++) if (idle.HasWork) idle.Boundary();
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) if (idle.HasWork) idle.Boundary();
@@ -725,8 +703,6 @@ public sealed class ResearchChargeTests
                     for (int i = 0; i < 1000; i++)
                         port.Queue.Add(new Record { Type = i % 7 == 0 ? ResearchCharge.MarketingType : "ba:transaction_rent", Amount = -10, Day = 40,
                             Data = new Dictionary<string, string> { { "businessName", "b" + (i % 13) } } });
-                    // A city with 2,000 registrations, 20 of them rented by the player; orders go to the last rented ones,
-                    // so every resolution walks the whole list and builds 20 place IDs.
                     port.Registrations = new List<(string, int, bool)>(2000);
                     for (int i = 0; i < 2000; i++) port.Registrations.Add(("Street " + (i % 97), i, i % 100 == 99));
                     for (int i = 0; i < orders; i++)
@@ -753,9 +729,6 @@ public sealed class ResearchChargeTests
         }
     }
 
-    /// <summary>The postfix's foreign-patch check (ResearchBillingContract.ForeignPatch) against the Harmony build
-    /// tools/build.py pins, on a method that carries our postfix and a foreign postfix, as RunDaily will. Harmony is
-    /// loaded by reflection because the test project does not reference it; the reflection calls make this an upper bound.</summary>
     [Fact]
     public void ForeignPatchCheckCost()
     {

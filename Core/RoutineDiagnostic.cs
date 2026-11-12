@@ -1,6 +1,5 @@
 namespace PersistentCity.Core
 {
-    /// <summary>Optional per-event evidence; no saved payload or periodic resident scan.</summary>
     public sealed class RoutineDiagnostic
     {
         public RoutineDiagnostic(string citizenId, string originId, string destinationId, Activity activity,

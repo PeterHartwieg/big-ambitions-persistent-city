@@ -3,15 +3,10 @@ using System.Linq;
 
 namespace PersistentCity.EconomyInterventions;
 
-/// <summary>Harness invariants on a small fixture, run before any baseline: determinism with and
-/// without a mid-epoch reload, epoch-boundary-only inputs, a conservation check per owner per day,
-/// and each named fault injection turning the ledger red.</summary>
 public static class SelfChecks
 {
     public const int SmallResidents = 48;
-    // Day 20 at 12:30.5: a mid-epoch save during lunch, with meals in flight.
     public const double MidEpochReload = 20 * 1440 + 750.5;
-    // Day 20 at 11:00: a boundary where the lunch staffing input is published.
     public const double InputBoundaryReload = 20 * 1440 + 660;
 
     public static void Run()

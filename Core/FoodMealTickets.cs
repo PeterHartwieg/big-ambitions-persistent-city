@@ -4,8 +4,6 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>F6j: same-visit extras on the committed main dish. Nothing here is saved: a committed meal keeps
-    /// only its main, and checkout plans extras again from the live menu, stock, prices and wallet.</summary>
     public sealed partial class FoodCommerce
     {
         private FoodAlternativeObservation? matchedRival;
@@ -18,8 +16,6 @@ namespace PersistentCity.Core
             => FoodMealExtras.Plan(city.State.Seed, meal.ResidentId, meal.Day, meal.Kind, businessId,
                 new FoodTicketLine(product, price), menu, allowance);
 
-        /// <summary>Null when the seller sells the main dish only or nothing extra is wanted and affordable.
-        /// Units already held by other committed meals are not available as extras.</summary>
         private FoodMealTicket? CheckoutTicket(ResidentMeal meal, double now)
         {
             if (!(market is IFoodTicketMarket tickets) || !tickets.SellsExtras(meal.BusinessId)) return null;
@@ -29,11 +25,9 @@ namespace PersistentCity.Core
             var scope = state.Shops.FirstOrDefault(s => s.PlaceId == meal.PlaceId && s.BusinessId == meal.BusinessId);
             if (scope == null) return null;
             var menu = new List<FoodExtraOffer>(business.Offers.Count);
-            // E5b4: checkout re-plans from the live menu, so a dynamic extra uses the market's current policy.
             var policy = ProductPolicy();
             foreach (var offer in business.Offers)
             {
-                // A player shop's extra needs a known sellable unit, like its main dish.
                 if (!offer.Units.HasValue || !policy.Executable(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) continue;
                 reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int held);
                 int taste = FoodProducts.Known(offer.ProductId) ? ExtraTaste(meal, person!, offer.ProductId)
@@ -44,8 +38,6 @@ namespace PersistentCity.Core
             return ticket.Extras.Count == 0 ? null : ticket;
         }
 
-        /// <summary>A seller may sell fewer extras than planned, never others: sold lines must be a subsequence of
-        /// the ticket's. Anything else leaves the meal uncertain with its planned total held.</summary>
         private static IReadOnlyList<FoodTicketLine> SoldExtras(FoodMealTicket? ticket, FoodSale result)
         {
             var sold = result.SoldExtras;
@@ -61,8 +53,6 @@ namespace PersistentCity.Core
             return sold;
         }
 
-        /// <summary>Modeled rival ticket from the advertised menu just matched for settlement. Rival stock is
-        /// unpublished, so every advertised known product other than the main may be an extra.</summary>
         private FoodMealTicket? RivalTicket(ResidentMeal meal)
         {
             var observation = matchedRival; var person = Owner(meal);
@@ -73,14 +63,9 @@ namespace PersistentCity.Core
             return ticket.Extras.Count == 0 ? null : ticket;
         }
 
-        /// <summary>A wallet limit read that changes nothing: a refused checkout must keep its saved Price within
-        /// the saved Allowance, and an observed decision must not change state an unobserved one would not.</summary>
         private static Money CurrentAllowance(ResidentMeal meal)
             => meal.Budget != null ? HouseholdFinance.SpendingLimit(meal.Budget) : Money.Max(Money.Zero, meal.Allowance - meal.DayAllowanceUsed);
 
-        /// <summary>The ticket a candidate main would carry, from the shop's captured menu: the policy and filters
-        /// checkout applies (captured units already exclude other committed meals' reservations). Null when that
-        /// seller sells the main only.</summary>
         private FoodMealTicket? CandidateTicket(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, string product, Money price, Money allowance)
         {
             bool rival = shop.AlternativeKind == FoodAlternativeKind.Rival;
@@ -88,8 +73,6 @@ namespace PersistentCity.Core
             var menu = new List<FoodExtraOffer>(shop.Offers.Count);
             foreach (var o in shop.Offers)
             {
-                // E5b4: the captured menu replays as held. A revision-2 Food offer is an extra with its held taste;
-                // the current policy is never read here.
                 bool dynamic = o.Metadata != null && o.Metadata.Revision == 2 && o.Metadata.MealClass == FoodMealClass.Food;
                 if ((FoodProducts.Known(o.ProductId) || dynamic) && (rival || o.Units >= 0))
                     menu.Add(new FoodExtraOffer(o.ProductId, o.Price, rival ? (int?)null : o.Units,
@@ -98,7 +81,6 @@ namespace PersistentCity.Core
             return PlanTicket(meal, person, shop.BusinessId, product, price, menu, allowance);
         }
 
-        /// <summary>Diagnostic: each feasible candidate main's ticket, as used for its expense in the choice.</summary>
         private IReadOnlyList<FoodMealTicket> CandidateTickets(ResidentMeal meal, CitizenState person, FoodDecisionState d, FoodIntent intent)
         {
             var tickets = new List<FoodMealTicket>();
@@ -113,8 +95,6 @@ namespace PersistentCity.Core
             return tickets;
         }
 
-        /// <summary>Evidence that an uncertain meal's checkout completed. A ticket-aware seller reports what sold;
-        /// otherwise a confirmed receipt means the whole held Price sold as one product.</summary>
         private bool ConfirmedEvidence(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
         {
             total = meal.Price; extras = Array.Empty<FoodTicketLine>();
@@ -130,7 +110,6 @@ namespace PersistentCity.Core
             return market is IFoodSaleEvidence evidence && evidence.IsConfirmedPaid(meal);
         }
 
-        /// <summary>Settle a confirmed uncertain meal: return unsold funds, book the sold total and every sold line once.</summary>
         private void SettleConfirmed(ResidentMeal meal, Money total, IReadOnlyList<FoodTicketLine> extras, string reason)
         {
             var unsold = meal.Price - total;

@@ -2,11 +2,8 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>The native wardrobes a body can wear (the game's AppearanceTag names; uniform, pool and homeless looks are
-    /// left to native scenes).</summary>
     public enum Wardrobe { Casual, Formal, Sport, Party }
 
-    /// <summary>What a body looks like: the look seed for the native randomizer and the wardrobe.</summary>
     public readonly struct PersonLook
     {
         public PersonLook(int seed, Wardrobe wardrobe) { Seed = seed; Wardrobe = wardrobe; }
@@ -14,15 +11,8 @@ namespace PersistentCity.Core
         public Wardrobe Wardrobe { get; }
     }
 
-    /// <summary>
-    /// GR-9 (G6): appearance beyond the donor seed. Residents drawn from the same RLO donor share its appearance seed; the
-    /// look seed mixes that seed with the person ID, so two people never share a look by sharing a donor, and the wardrobe
-    /// comes from the person ID too. Gender and age stay the donor's. Derived, never saved: the same person looks the same
-    /// after pool reuse, reload or camera movement, and nothing in the saved city changes.
-    /// </summary>
     public static class PersonAppearance
     {
-        /// <summary>Wardrobe shares in percent, in <see cref="Wardrobe"/> order (casual, formal, sport, party).</summary>
         public static readonly int[] WardrobePercent = { 55, 25, 12, 8 };
 
         public static PersonLook For(CitizenIdentity identity)

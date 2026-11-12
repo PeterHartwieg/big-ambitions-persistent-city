@@ -13,18 +13,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5c-lite (#92): the person table. The factor-1 roster rule, the strict per-kind reader, the named bounds at
-/// and one over, fabricated arrival tuples, and the refusal of older development cities with their food authority left
-/// native.</summary>
 public sealed class PersonTableTests
 {
-    // ---- Fixtures ----
 
-    /// <summary>A fresh seeded city of the trace test, run for 30 hours (meals, budgets, journeys, visitors).</summary>
     internal static CitySimulator Running(int factor, bool food = true, double hours = 30)
     {
         var (state, market) = FreshCityTraceTests.Fresh(factor, food);
-        // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
         if (factor > 1) PortalPlaces.Add(state, VisitorRoutineTests.Stations);
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         if (food) city.AttachFoodMarket(market);
@@ -43,7 +37,6 @@ public sealed class PersonTableTests
         Assert.True(read.Status == expected, read.Status + ": " + read.Error); Assert.Null(read.State);
         if (error != null) Assert.Contains(error, read.Error);
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "kept", [FoodAuthorityStore.Key] = "manifest" };
-        // The product refuses a payload with another schema number as an older development city before reading its shape.
         var product = SaveCodec.DevelopmentSchemaOf(payload) != null ? SaveReadStatus.DevelopmentSchema : expected;
         Assert.Equal(product, SaveSession.Open(data, replacement.PopulationKey).InitialReadResult.Status);
         Assert.False(SaveStore.WriteTo(data, replacement).Success);
@@ -65,9 +58,7 @@ public sealed class PersonTableTests
         return root.ToString(Formatting.None);
     }
 
-    // ---- Golden current writer ----
 
-    // ---- Fresh cities in the new shape: factor-1 roster rule ----
 
     [Theory]
     [InlineData(1, true)] [InlineData(1, false)]
@@ -90,7 +81,6 @@ public sealed class PersonTableTests
         string payload = DevelopmentChain.Write(state);
         Assert.Contains("\"Schema\":" + CityState.CurrentSchema + ",", payload);
         Assert.DoesNotContain("RepresentationFactor", payload);
-        // Roster tuple: version plus 34 slots, no anchor or slot (routine stops still name their resident anchor).
         if (food) Assert.All(SaveWire.Parse(payload)["Food"]!["Residents"]!, row => { Assert.Equal(1, (int)row[0]!); Assert.Equal(35, ((JArray)row).Count); });
         Assert.DoesNotContain("EmploymentStartDay", payload);
         Assert.Contains("\"P\":\"1R", payload);
@@ -98,8 +88,6 @@ public sealed class PersonTableTests
         Assert.Equal(payload, DevelopmentChain.Write(read.State!));
         if (food)
         {
-            // Factor-1 roster rule, live and decoded: one own slot-0 record per person and a stored factor of 1. The host
-            // and slot of today's represented excursion are the scheduling adapter, identical across the reload.
             foreach (var city2 in new[] { state, read.State! })
             {
                 Assert.Equal(1, city2.Food!.RepresentationFactor);
@@ -112,14 +100,11 @@ public sealed class PersonTableTests
             Assert.Equal(factor - 1, read.State.Food.Residents.Max(m => m.HostSlot));
         }
         Assert.Equal(state.Citizens.Select(c => c.EmploymentStartDay), read.State!.Citizens.Select(c => c.EmploymentStartDay));
-        // The reloaded city keeps running on today's schedules.
         var resumed = new CitySimulator(read.State, new FreshCityTraceTests.Walk());
         if (food) resumed.AttachFoodMarket(new WeightedFoodChoiceTests.Market());
         while (!resumed.AdvanceTo(read.State.Minute + 60, 64).CaughtUp) { }
     }
 
-    /// <summary>F5b's OwnershipValidator over the saved person table; returns the violated rules other than the two the
-    /// codec documents (opaque resident IDs, represented visitors without a portal).</summary>
     private static int[] OwnershipRules(CityState state)
     {
         var persons = state.Citizens.Select(c => new PersonFacts(c.Identity.Id, PersonKind.Resident, c.HomeId))
@@ -150,7 +135,7 @@ public sealed class PersonTableTests
     {
         var state = Running(2, true, 2).State;
         var visitorMeal = state.Food!.Residents.First(m => state.Visitors.Any(v => v.Id == m.ResidentId));
-        visitorMeal.AnchorId = state.Citizens[0].Identity.Id; visitorMeal.Slot = 1; // the old hosted form
+        visitorMeal.AnchorId = state.Citizens[0].Identity.Id; visitorMeal.Slot = 1;
         Assert.Contains("factor-1 roster rule", Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(state)).Message);
         visitorMeal.AnchorId = visitorMeal.ResidentId; visitorMeal.Slot = 0;
         state.Food.RepresentationFactor = 2;
@@ -159,7 +144,6 @@ public sealed class PersonTableTests
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
     }
 
-    /// <summary>Every persona housed, plus one unassigned worker: Work, Study and no Employment all occur.</summary>
     private static CityState Personas()
     {
         var personas = new[] { Persona.Commuter, Persona.Student, Persona.Retiree, Persona.Foodie };
@@ -184,7 +168,6 @@ public sealed class PersonTableTests
         var student = state.Citizens.Single(c => c.Identity.Persona == Persona.Student);
         Assert.Equal(EmploymentKind.Study, PersonTable.ResidentEmployment(student)!.Kind);
         Assert.Null(PersonTable.ResidentEmployment(state.Citizens.Single(c => c.Identity.Persona == Persona.Retiree)));
-        // A job found after a later employment check starts on that check's day; the tuple round-trips it.
         var unassigned = state.Citizens[3]; unassigned.LastEmploymentCheckDay = 2;
         ResidentLifecycle.AssignWorkplace(unassigned, state.Places.Single(p => p.Id == "work:a"));
         Assert.Equal(2, unassigned.EmploymentStartDay);
@@ -192,28 +175,23 @@ public sealed class PersonTableTests
         Assert.Equal(2, read.State!.Citizens[3].EmploymentStartDay);
     }
 
-    // ---- Strict reader: per-kind shape ----
 
     [Fact]
     public void PerKindShapeRefusesVisitorRowsWithResidentFieldsAndResidentsWithoutIdentity()
     {
         var city = Running(2, true, 2); var state = city.State;
         string payload = DevelopmentChain.Write(state);
-        // A visitor in the resident table would carry identity, home, car and recent visits: refused.
         var root = SaveWire.Parse(payload); root["Citizens"]![0]!["P"] = (string)root["Visitors"]![0]!;
         Invalid(root.ToString(Formatting.None), state, "visitor row cannot carry resident identity");
         root = SaveWire.Parse(payload); root["Citizens"]![0]!["P"] = "1V";
         Invalid(root.ToString(Formatting.None), state, "visitor row cannot carry resident identity");
-        // A resident without identity: as a visitor tuple, or a citizen row whose identity is missing or null.
         Invalid(WithVisitor(payload, 0, p => "1R-"), state, "resident row requires identity");
         root = SaveWire.Parse(payload); ((JObject)root["Citizens"]![0]!).Remove("Identity");
         Invalid(root.ToString(Formatting.None), state);
         root = SaveWire.Parse(payload); root["Citizens"]![0]!["Identity"] = null;
         Invalid(root.ToString(Formatting.None), state);
-        // Visitor tuples have no identity, home, car or visit slot: any extra field changes the arity.
         Invalid(WithVisitor(payload, 0, p => string.Join("|", p) + "|Ada"), state, "wrong arity");
         Invalid(WithVisitor(payload, 0, p => string.Join("|", p.Take(5))), state, "wrong arity");
-        // Unknown kind and version.
         Invalid(WithVisitor(payload, 0, p => "1X|" + string.Join("|", p.Skip(1))), state, "Unknown person kind");
         Invalid(WithVisitor(payload, 0, p => "2V|" + string.Join("|", p.Skip(1))), state, "version");
         root = SaveWire.Parse(payload); root["Citizens"]![0]!["P"] = "1Q-";
@@ -238,13 +216,11 @@ public sealed class PersonTableTests
         Invalid(Set(worker, "1R" + new string('-', 40)), state);
         var r = SaveWire.Parse(payload); ((JObject)r["Citizens"]![0]!).Remove("P");
         Invalid(r.ToString(Formatting.None), state);
-        // A duplicate field cannot pass the token check even with equal values.
         string tuple = "\"P\":\"" + (string)SaveWire.Parse(payload)["Citizens"]![0]!["P"]! + "\"";
         int at = payload.IndexOf(tuple, StringComparison.Ordinal);
         Invalid(payload.Insert(at, tuple + ","), state, "Duplicate field");
     }
 
-    // ---- Bounds: named, at the bound and one over, before allocation ----
 
     [Fact]
     public void NamedBoundsSplitTheFormerCitizenCap()
@@ -294,11 +270,8 @@ public sealed class PersonTableTests
             .Invoke(null, new[] { context })!;
     }
 
-    // ---- Record budget: every new schema-26 record is charged by both counters ----
 
-    // ---- Older development schemas: refused, preserved, food authority native ----
 
-    /// <summary>The corpus's full city relabelled with a number an older development build wrote.</summary>
     private static string OlderPayload(int schema)
         => ReaderCorpus.Load().Single(f => f.File == "full.json").Text.Replace(SaveCodec.BodyPrefix, "{\"Schema\":" + schema + ",\"Capabilities\":");
 
@@ -325,7 +298,6 @@ public sealed class PersonTableTests
         data[SaveEpochStore.Key] = SaveEpochStore.Success(4, 25, loadedHour * 60, "food-live", data);
         var before = new Dictionary<string, string>(data, StringComparer.Ordinal);
 
-        // The product refuses with its own status and message: neither corruption nor a missing city.
         var read = SaveStore.ReadFrom(data, "food-live");
         Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State); Assert.Equal(25, read.SourceSchema);
         Assert.Contains(SaveCodec.DevelopmentSchemaMessage, read.Error);
@@ -335,7 +307,6 @@ public sealed class PersonTableTests
         Assert.False(session.WriteTo(data, fresh).Success); Assert.False(SaveStore.WriteTo(data, fresh).Success);
         Assert.Contains("older development build", Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(payload)).Message);
 
-        // Food authority: no PC authority is taken; the loaded hour stays protected, then native customers return.
         var standDown = new FoodAuthorityStandDown(FoodAuthorityStore.Read(data[FoodAuthorityStore.Key]), loadedHour);
         Assert.Equal(new[] { managed.PlaceId }, standDown.ProtectedPlaces);
         Assert.True(standDown.Suppresses(managed.PlaceId, loadedHour)); Assert.True(standDown.Suppresses(managed.PlaceId, loadedHour - 1));
@@ -344,13 +315,10 @@ public sealed class PersonTableTests
             for (long hour = 0; hour <= loadedHour + 2; hour++) Assert.False(standDown.Suppresses(place, hour));
         Assert.False(standDown.HandBack(loadedHour)); Assert.True(standDown.HandBack(loadedHour + 1)); Assert.False(standDown.HandBack(loadedHour + 2));
 
-        // Every key is byte-identical: payload, manifest, receipt, accounting stop, epoch marker and foreign keys.
         Assert.Equal(before.Count, data.Count);
         foreach (var (key, value) in before) Assert.Same(value, data[key]);
     }
 
-    /// <summary>An unreadable manifest, or one ahead of the loaded clock, beside a schema-25 payload still stands the city
-    /// down: nothing is protected, so every player business is native at once, and no key changes.</summary>
     [Theory]
     [InlineData("not json")] [InlineData("[]x")] [InlineData("ahead")]
     public void Schema25CityWithAnUnreadableOrAheadManifestStandsDownWithEveryBusinessNative(string damage)
@@ -377,18 +345,14 @@ public sealed class PersonTableTests
         foreach (var (key, value) in before) Assert.Same(value, data[key]);
     }
 
-    /// <summary>Source guard for the Runtime wiring offline tests cannot run: the development check precedes every
-    /// accounting-stop, epoch and authority write, and a stood-down save persists nothing.</summary>
     [Fact]
     public void RuntimeRefusesDevelopmentCitiesBeforeAnyKeyIsWritten()
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "Runtime", "NativeFoodOwnership.cs"))) root = root.Parent;
         Assert.NotNull(root);
-        // The development check precedes the manifest read, the capability probe and every suspension (Error) path.
     }
 
-    // ---- Inspector words ----
 
     [Fact]
     public void InspectorShowsKindHouseholdAndEmploymentWordsWithoutIds()

@@ -1,7 +1,6 @@
 using System;
 using PersistentCity.Core;
 
-// Offline only. Compact frozen fixture, not a city clone or a runtime input adapter.
 internal sealed class ResearchFixture : IMarketResearchSnapshot
 {
     public MarketResearchIdentity Identity { get; set; } = new MarketResearchIdentity("fixture", 3, 7, 11, 13);

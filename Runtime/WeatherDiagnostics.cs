@@ -4,7 +4,6 @@ namespace PersistentCity.Runtime
 {
     public sealed partial class PopulationRuntime
     {
-        /// <summary>Bridge-only read of saved inputs. No live sample, context, route or native write.</summary>
         public object? Weather(string residentId)
         {
             var state=simulation?.State;if(state==null) return null;

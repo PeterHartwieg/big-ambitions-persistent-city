@@ -20,7 +20,6 @@ public sealed class RunOptions
     public int Residents = EconomyFixture.Residents;
     public int Days = EconomyRun.Days;
     public IReadOnlyList<InterventionInput> Inputs = Array.Empty<InterventionInput>();
-    /// <summary>Optional city save/reload point. A fractional minute reloads mid-epoch.</summary>
     public double? ReloadAt;
     public Fault Fault;
     public int FaultDay = EconomyRun.BaselineDays + 2;
@@ -29,7 +28,6 @@ public sealed class RunOptions
     public double PriceWeight = new FoodChoiceSettings().FoodChoicePriceWeight;
     public FixtureProfile Profile = FixtureProfile.CapacityBound;
     public bool RivalListed = true, OwnListed = true;
-    // F1 cadence: 30 simulated minutes/real second as in AccountingScenario. Zero uses epoch drain.
     public int FramesPerSecond, EventUnitsPerFrame = 256;
     public double MillisecondsPerFrame = 4;
     public int? BodyCap;
@@ -52,22 +50,14 @@ public sealed class RunResult
     public long Purchases;
 }
 
-/// <summary>Deterministic Core scenario runner. The city advances epoch by epoch under the F1
-/// accounting boundary: drain the ending epoch, check the ledger at midnight, publish the inputs
-/// stamped at the boundary, enter the native epoch and only then observe it. No Runtime code,
-/// optional F1 frame cadence and F2a lease-driver inputs, with no Core behaviour change.</summary>
 public static class EconomyRun
 {
     public const string Schema = "persistentcity-f6a-metrics-1";
-    // Section 3.5 protocol: six weeks, five seeds, matched same-seed control.
     public const int BaselineDays = 14, InterventionDays = 14, RevertedDays = 14;
     public const int Days = BaselineDays + InterventionDays + RevertedDays;
     public const int Seeds = 5;
-    // Outcomes advance lazily per consumer; 03:00 is after every dinner and before any breakfast.
     public const int OutcomeSampleMinute = 180;
-    // F6 section 9 Q3 default: market share stays a diagnostic/experiment metric, not free UI.
     public const bool MarketShareDiagnosticOnly = true;
-    // F5 B4 (merged plan): person wallets. Today each represented consumer owns one budget.
     public const string OwnerKind = "consumer-budget";
 
     public static RunResult Run(RunOptions options)
@@ -92,7 +82,6 @@ public static class EconomyRun
         if (ordinary) city.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(state.Minute));
         city.FoodDecisionObserved += observer.Observe;
         double start = EconomyFixture.StartMinute;
-        // The last requested day ends at start + Days days; its outcomes are sampled at 03:00 after it.
         long end = (long)start + options.Days * 1440L + OutcomeSampleMinute;
         var schedule = new InputSchedule(options.Inputs, start, end);
         var result = new RunResult();
@@ -117,8 +106,6 @@ public static class EconomyRun
                 }
                 return;
             }
-            // Same F1 native float-minute fence and budgeted AdvanceFrameSlice order as
-            // AccountingScenario, with the existing F6a/F1-derived fixture and all F6 loops.
             int hour = (int)(Math.Max(city.State.Minute, market.Epoch) / 60);
             float minute = (float)(Math.Max(city.State.Minute, market.Epoch) % 60);
             double native = hour * 60.0 + minute;
@@ -133,7 +120,6 @@ public static class EconomyRun
                 native = hour * 60.0 + minute;
                 Require((long)native == market.Epoch, "cadence crossed undrained epoch");
                 Require(city.BeginAccountingObservations(native), "cadence observation not published");
-                // F2a bodies move in real time even on F1 frames that hold native time.
                 driver?.MoveBodies(1.0 / options.FramesPerSecond, 30.0 / options.FramesPerSecond);
                 long begin = Stopwatch.GetTimestamp();
                 for (int unit = 0; unit < options.EventUnitsPerFrame; unit++)
@@ -151,8 +137,6 @@ public static class EconomyRun
         for (long epoch = (long)start + 1; epoch <= end; epoch++)
         {
             double ending = AccountingClock.PreviousEpochTarget(epoch);
-            // A fractional reload point saves at the first half-minute at or after it with a meal
-            // in flight (decision, travel or service), so the save interrupts real work.
             if (options.ReloadAt is double at && !reloaded && at != Math.Floor(at) && epoch - 0.5 >= at)
             {
                 Advance(epoch - 0.5);
@@ -229,7 +213,6 @@ public static class EconomyRun
         if (market.Journal != null) market.Journal = new FoodChangeJournal(read.State!.Food!, read.State.Economy);
         var next = EconomyFixture.Attach(read.State!, market, routes, fresh: false);
         if (ordinary) next.AttachOrdinaryExchanges(new OrdinaryExperimentOwnership(read.State!.Minute));
-        // The observer is harness state; it continues across the city reload.
         next.FoodDecisionObserved += observer.Observe;
         return next;
     }
@@ -242,13 +225,11 @@ public static class EconomyRun
         var budget = state.Food!.Residents.Select(m => m.Budget).First(b => b != null && b.Balance > Money.FromCents(1000))!;
         switch (fault)
         {
-            // Balanced but duplicated: both sides of CashConserved move, the watermarked outflow does not.
             case Fault.DuplicatedDebit: budget.Balance -= Money.FromCents(500); budget.ExternalFoodSpent += Money.FromCents(500); break;
             case Fault.UnbalancedDebit: budget.Balance -= Money.FromCents(1); break;
         }
     }
 
-    /// <summary>The F6 stable-accounting identities, checked for every owner at every midnight.</summary>
     private static void Check(CitySimulator city, EconomyMarket market, DayMetrics metrics)
     {
         var food = city.State.Food!;
@@ -284,8 +265,6 @@ public static class EconomyRun
         if (market.EpochReadViolations != 0) throw new LedgerViolation("native read outside its epoch on day " + metrics.Day);
     }
 
-    /// <summary>Lifetime watermarked units: the history's baseline, expired rows and retained rows,
-    /// read from its public saved wire (the fourteen-day view alone is a rolling window).</summary>
     public static long CumulativeWatermarked(RivalOutflowHistory history)
     {
         var fields = history.ToWire().Split('|');
@@ -397,7 +376,6 @@ public static class EconomyRun
             .Open("population").Field("ownerKind", ordinary ? "person-wallet" : OwnerKind).Field("perPersonWallets", ordinary)
             .Raw("kindsMeasured", ordinary ? "[\"resident\",\"visitor\"]" : "[\"resident\"]")
             .Raw("kindsReserved", ordinary ? "[]" : "[\"commuter\",\"dayVisitor\"]").Close();
-        // Older sweeps carry no profile block; the default profile keeps their bytes unchanged.
         if (options.Profile != FixtureProfile.CapacityBound)
         {
             json.Open("profile").Field("name", options.Profile.Name).Field("mealsPerHour", options.Profile.MealsPerHour).OpenArray("menuCents");

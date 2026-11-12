@@ -6,9 +6,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>E5b2 Decision 2. Reads a collection's private <c>int</c> version field through a
-    /// <see cref="DynamicMethod"/>: constant time, no boxing, no reflection per read. Game-free so tests
-    /// link it against doubles. Binding fails closed when the field is missing, renamed, static or not int.</summary>
     public sealed class CollectionVersionReader<TCollection> where TCollection : class
     {
         public const string VersionField = "_version";
@@ -39,8 +36,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>Startup proof that a bound version reader moves on add, indexer set and remove.
-    /// A null result is a pass; any other value names the failed step and keeps the capability off.</summary>
     public static class FoodContractSelfTest
     {
         public static string? Check<T>(CollectionVersionReader<T>? reader, Func<T> create, Action<T> add, Action<T> set, Action<T> remove)
@@ -72,7 +67,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>Reference, version and count of one native collection. A null collection is the default stamp.</summary>
     public readonly struct CollectionStamp
     {
         public CollectionStamp(object? reference, int version, int count) { Reference = reference; Version = version; Count = count; }
@@ -86,10 +80,6 @@ namespace PersistentCity.Runtime
         public override string ToString() => Reference == null ? "null" : "v" + Version + "/n" + Count;
     }
 
-    /// <summary>E5b2 Decision 2 structural stamp of one registration: menu, price and furniture collections
-    /// by reference, version and count; business type by reference; four scalar flags. In-place writes to an
-    /// element's fields (a price, a stock name, an amount) do not move it; that limit is known and E5b3's
-    /// recheck owns it. Shadow evidence only: a mismatch dirties the image, never ownership.</summary>
     public readonly struct ShopContractStamp
     {
         [Flags] private enum Flags : byte { Valid = 1, Rented = 2, Established = 4, ForRent = 8, Closed = 16 }
@@ -110,7 +100,6 @@ namespace PersistentCity.Runtime
         public bool Established => (flags & Flags.Established) != 0;
         public bool ForRent => (flags & Flags.ForRent) != 0;
         public bool Closed => (flags & Flags.Closed) != 0;
-        /// <summary>An unrecorded (default) stamp never matches, so a missing stamp cannot read as clean.</summary>
         public bool Matches(in ShopContractStamp other)
             => Valid && other.Valid && flags == other.flags && ReferenceEquals(BusinessType, other.BusinessType)
                 && Menu.Matches(other.Menu) && Prices.Matches(other.Prices) && Instances.Matches(other.Instances);
@@ -118,7 +107,6 @@ namespace PersistentCity.Runtime
             + ", type " + (BusinessType ?? "null") + ", rented " + Rented + ", established " + Established + ", forRent " + ForRent + ", closed " + Closed;
     }
 
-    /// <summary>Decision 12 report: one entry per runtime capability, in check order. Empty means unproven.</summary>
     public sealed class FoodContractCapabilities
     {
         private readonly List<KeyValuePair<string, string?>> entries = new List<KeyValuePair<string, string?>>();
@@ -150,9 +138,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>The exact canonical names of one sealed E5a catalogue, with its revision. Immutable; published
-    /// by one reference swap, so a reader sees a whole image or none. A refused catalogue admits no name.
-    /// E5b4 consumes it; in E5b2 it grants nothing.</summary>
     public sealed class LoadedNameImage
     {
         private readonly HashSet<string> set;
@@ -172,8 +157,6 @@ namespace PersistentCity.Runtime
         public bool Contains(string? name) => name != null && set.Contains(name);
     }
 
-    /// <summary>Builds one catalogue and its name image together. Names are recorded only for definitions the
-    /// catalogue accepted, so the image equals the catalogue's names.</summary>
     public sealed class LoadedNameImageBuilder
     {
         private readonly List<string> names = new List<string>();
@@ -191,9 +174,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>Catalogue revision state of the E5a reader. W11 hints bump the revision (coalesced until a rebuild
-    /// starts; a hint during a rebuild discards it). The catalogue and its name image are published together;
-    /// <see cref="Names"/> is null whenever the published image is not the current revision.</summary>
     public sealed class LoadedCatalogueRevision
     {
         private LoadedNameImage? published;
@@ -202,7 +182,6 @@ namespace PersistentCity.Runtime
         public LoadedNameImageBuilder? Building { get; private set; }
         public LoadedStockCatalogue? Catalogue { get; private set; }
         public LoadedNameImage? Names => Dirty || published == null || published.Revision != Revision ? null : published;
-        /// <summary>The last image published, current or not (diagnostic).</summary>
         public LoadedNameImage? LastPublished => published;
         public long Bumps { get; private set; }
         public bool MarkDirty()
@@ -223,9 +202,6 @@ namespace PersistentCity.Runtime
             Catalogue = building.Catalogue; published = image; Building = null; Dirty = false;
         }
         public void Reset() { Revision++; Bumps++; Dirty = true; Catalogue = null; Building = null; published = null; }
-        /// <summary>E5b3 Decision 3a: publishes the next revision with the given definitions re-copied and every
-        /// other definition shared. The names are unchanged, so the name image is republished with the same names.
-        /// False (nothing changes) while dirty or when the catalogue cannot take the replacements.</summary>
         public bool Replace(IReadOnlyList<LoadedStockDefinition> changed)
         {
             if (Dirty || Catalogue == null || published == null) return false;
@@ -239,7 +215,6 @@ namespace PersistentCity.Runtime
 
     public interface IContractDirtyUnit { bool Queued { get; set; } }
 
-    /// <summary>Coalescing dirty queue: a unit is queued at most once however many hints arrive before it is taken.</summary>
     public sealed class ContractDirtyQueue<T> where T : class, IContractDirtyUnit
     {
         private readonly Queue<T> queue = new Queue<T>();

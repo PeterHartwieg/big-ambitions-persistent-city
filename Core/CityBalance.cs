@@ -1,6 +1,5 @@
 namespace PersistentCity.Core
 {
-    // One developer tuning profile; no user-facing settings or per-save policy switches.
     public static class CityBalance
     {
         public const double GameClockFactor = 1d / 3;

@@ -137,10 +137,7 @@ public sealed class ActivationValidationTests
             if (delta <= 0) SaveCodec.ValidateForActivation(state);
             else Assert.Equal("Serialized state exceeds the input size limit.",
                 Assert.Throws<SaveValidationException>(() => SaveCodec.ValidateForActivation(state)).Message);
-            // Small output proves the global converter is also used by the retained save path.
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Converters = { new ExactLengthConverter(7) } };
-            // The single-pass writer refuses the converter's raw JSON, so the converter reached the save path and the save
-            // is refused instead of writing a body the reader could not read.
             Assert.Contains("Raw JSON", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
             SaveCodec.ValidateForActivation(state);
         }

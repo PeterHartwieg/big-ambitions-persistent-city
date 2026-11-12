@@ -10,15 +10,12 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>C5b: the research survey runs in bounded units inside the F1 hold, at the order's drain point,
-/// and never changes the city.</summary>
 public sealed class ResearchSurveyTests
 {
     private readonly ITestOutputHelper output;
     public ResearchSurveyTests(ITestOutputHelper output) { this.output = output; }
 
     private const string Agency = "address:Agency%20Street:1";
-    // Day 1, 12:00. Shops are open, residents are at work, school or home.
     private const double Noon = 1440 + 720;
 
     private static Route Walk(Place from, Place to) => new()
@@ -30,7 +27,6 @@ public sealed class ResearchSurveyTests
         public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => Walk(from, to);
     }
 
-    // Each route answer arrives after three frame slices, as the native planner's jobs do.
     private sealed class Deferred : IResumableRoutePlanner
     {
         public readonly List<RouteRequest> Seen = new();
@@ -85,7 +81,6 @@ public sealed class ResearchSurveyTests
         var state = EconomyScenario.Create(residents, seed);
         if (unemployedEvery > 0) for (int i = 0; i < state.Citizens.Count; i += unemployedEvery) state.Citizens[i].DayPlaceId = "";
         state.Food = EconomyScenario.Food();
-        // The scenario's second consumer per resident is a visitor person; visitors arrive through a portal.
         PortalPlaces.Add(state, VisitorRoutineTests.Stations);
         var run = new Run();
         if (routes != null) run.Routes = routes;
@@ -114,7 +109,6 @@ public sealed class ResearchSurveyTests
         Observe(run);
     }
 
-    // The in-memory clone of the ledger the seam receives until C5c saves it in CityState.
     private static ResearchLedger Clone(ResearchLedger ledger)
     {
         Assert.True(ResearchLedger.TryRestore(ledger.NextSequence, ledger.Open.Select(ResearchOrderImage.Of).ToList(),
@@ -127,7 +121,6 @@ public sealed class ResearchSurveyTests
         for (int guard = 0; !city.AdvanceTo(target, budget).CaughtUp; guard++) Assert.True(guard < 1_000_000);
     }
 
-    // Native frames: one bounded unit per slice; a pending route job gets one Continue per frame.
     private static int Frames(CitySimulator city, double target, int budget = 1, Action<AdvanceResult>? each = null)
     {
         int frames = 0;
@@ -156,8 +149,6 @@ public sealed class ResearchSurveyTests
     private static int? Cell(ResearchOrder order, MarketResearchMetric metric, MarketResearchBand band = MarketResearchBand.All)
         => order.Report!.FixtureCells.Single(c => c.Metric == metric && c.Band == band).Value;
 
-    // One synchronous survey of the current state: Array.Sort index, one engine call. The reference for
-    // the bounded runner.
     private static MarketResearchReport Reference(CitySimulator city, ResearchOrder order)
     {
         var roster = city.State.Food!.Residents;
@@ -183,7 +174,6 @@ public sealed class ResearchSurveyTests
         var order = Order(held);
         Assert.Equal(Noon, order.SurveyAtMinute);
         Assert.False(held.City.IsCaughtUpTo(Noon)); Assert.False(held.City.IsCaughtUpTo(Noon + 120));
-        // Research holds native time but is not unfinished previous-epoch work.
         Assert.Equal(drained, held.City.IsAccountingEpochDrained(Noon));
         int units = 0;
         double target = Noon + 120;
@@ -243,7 +233,6 @@ public sealed class ResearchSurveyTests
         Order(reloaded, ResearchProducts.BasicLocalCode, "shop-2");
         for (int i = 0; i < unitsBeforeSave; i++) Assert.Equal(1, reloaded.City.AdvanceFrameSlice(Noon + 60, 1).ResearchUnits);
         Assert.Equal(ResearchOrderState.Ordered, reloadLedger.Open.Single().State);
-        // The save writes the order as Ordered; no cursor exists anywhere in the payload.
         Reload(reloaded, reloadLedger, 16);
         Assert.Equal(0, reloaded.Research.IndexUnits + reloaded.Research.SurveyUnits);
         Assert.False(reloaded.City.IsCaughtUpTo(Noon));
@@ -275,7 +264,6 @@ public sealed class ResearchSurveyTests
         Assert.Equal(Cells(order), Cells(ledger.Open.Single()));
     }
 
-    // An employment check whose workplace probe is still waiting for its route answer.
     private static (Run Run, string Resident) AtPendingProbe(Deferred planner)
     {
         var run = Start(routes: planner, unemployedEvery: 3);
@@ -285,7 +273,6 @@ public sealed class ResearchSurveyTests
             if (run.City.PlanningPending)
             {
                 var request = planner.Seen[planner.Seen.Count - 1];
-                // A probe is a detached resident with a cloned identity; event working copies share the live one.
                 if (request.Citizen != null && !run.City.State.Citizens.Any(c => ReferenceEquals(c.Identity, request.Citizen.Identity))
                     && run.City.State.Citizens.SingleOrDefault(c => c.Identity.Id == request.Citizen.Identity.Id) is { } probed && probed.DayPlaceId.Length == 0
                     && run.City.State.Minute >= Noon)
@@ -307,7 +294,6 @@ public sealed class ResearchSurveyTests
         var order = Order(plain, ResearchProducts.DetailedCityCode, "shop-1", minute);
         Assert.True(plain.City.PlanningPending);
         Assert.False(plain.City.IsCaughtUpTo(minute));
-        // The survey does not start before the probe commits.
         plain.City.ContinuePlanning(0);
         Assert.Equal(0, plain.Research.IndexUnits + plain.Research.SurveyUnits);
         Frames(plain.City, minute);
@@ -315,12 +301,10 @@ public sealed class ResearchSurveyTests
         Assert.NotEqual("", person.DayPlaceId);
         var cells = Cells(order);
         Assert.Equal(Values(Reference(plain.City, order)), cells);
-        // Read with the uncommitted (empty) day place the resident would count in another day group.
         string committed = person.DayPlaceId; person.DayPlaceId = "";
         Assert.NotEqual(cells, Values(Reference(plain.City, order)));
         person.DayPlaceId = committed;
 
-        // Same point in a second run; save and reload before the probe commits.
         var (reloaded, again) = AtPendingProbe(new Deferred());
         Assert.Equal(resident, again); Assert.Equal(minute, reloaded.City.State.Minute);
         var reloadLedger = new ResearchLedger();
@@ -357,7 +341,6 @@ public sealed class ResearchSurveyTests
         var roster = run.City.State.Food.Residents;
         var anchor = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Commuter);
         anchor.Traits = null;
-        // A visitor person's record carries its own traits.
         roster.First(m => run.City.State.Visitors.Any(v => v.Id == m.ResidentId)).RepresentedTraits = null;
         var lost = run.City.State.Citizens.First(c => c.Identity.Persona == Persona.Foodie && c.DayPlaceId.Length > 0);
         lost.DayPlaceId = "demolished-workplace";
@@ -373,10 +356,8 @@ public sealed class ResearchSurveyTests
         Assert.Equal(consumers, Cell(order, MarketResearchMetric.HouseholdFood, MarketResearchBand.Unknown));
         Assert.Equal(0, Cell(order, MarketResearchMetric.HouseholdFood, MarketResearchBand.Funded));
         Assert.Equal(consumers, Cell(order, MarketResearchMetric.DiscretionaryBudget, MarketResearchBand.Unknown));
-        // The resident without traits and the visitor without traits.
         Assert.Equal(2, Cell(order, MarketResearchMetric.TraitsUnknown, MarketResearchBand.Unknown));
         Assert.Null(Cell(order, MarketResearchMetric.CroissantTaste, MarketResearchBand.Neutral));
-        // The resident whose workplace is gone (visitors are their own persons, not its consumers).
         Assert.Equal(1, Cell(order, MarketResearchMetric.UsualLocationUnknown));
 
         var known = Start(); Catch(known.City, Noon);
@@ -417,7 +398,6 @@ public sealed class ResearchSurveyTests
         Assert.Equal(ResearchSurveyRefusal.NoFoodRoster,
             research.TryOrder(ResearchProducts.BasicLocalCode, "shop-1", Agency, false, 500, Noon, out var order, out _));
         Assert.Null(order); Assert.Equal(1, research.Ledger.NextSequence);
-        // An order stored past the runner (as a direct ledger call could) is not surveyable and never holds time.
         Assert.Equal(ResearchOrderRefusal.None, research.Ledger.TryOrder(ResearchProducts.DetailedCityCode, "shop-1", Agency, false, 500, Noon, out var direct));
         Assert.True(city.IsCaughtUpTo(Noon));
         Assert.Equal(new[] { direct!.Id }, research.UnsurveyableOrders);
@@ -506,7 +486,6 @@ public sealed class ResearchSurveyTests
         if (count > 4096) Assert.True(units > 1);
     }
 
-    // Represented and anchor consumer IDs in a scrambled order, as FoodCommerce enrols them.
     private static List<ResidentMeal> Roster(int count, int seed)
     {
         var meals = new List<ResidentMeal>(count);
@@ -518,7 +497,6 @@ public sealed class ResearchSurveyTests
         return meals;
     }
 
-    /// <summary>Offline perf for docs/perf/c5b.md. Runs only with PC_C5B_PERF=1.</summary>
     [Fact]
     public void Perf()
     {
@@ -532,7 +510,6 @@ public sealed class ResearchSurveyTests
         }
         foreach (int consumers in new[] { 1914, 10000, 100000 })
         {
-            // Index alone over a synthetic roster: bounded units, and the single synchronous sort.
             var roster = Roster(consumers, 3);
             var unitTimes = new List<double>(); var singles = new List<double>(); var keyless = new List<double>();
             for (int rep = 0; rep < 5; rep++)
@@ -554,7 +531,6 @@ public sealed class ResearchSurveyTests
             }
             output.WriteLine($"{consumers} index units: {Stats(unitTimes)}; single sort (key array): {Stats(singles)}; single sort (roster reads): {Stats(keyless)}");
 
-            // Whole survey in a city: index and engine units inside the hold.
             var run = Start(residents: consumers / 2, finances: true);
             Catch(run.City, run.City.State.Minute + 1);
             var research = run.City.AttachResearch(new ResearchLedger(), 256);
@@ -565,9 +541,6 @@ public sealed class ResearchSurveyTests
                 var product = rep == 0 ? ResearchProducts.DetailedCityCode : ResearchProducts.DetailedLocalCode;
                 var order = Order(run, product, rep == 0 ? "shop-1" : "shop-2");
                 long gc = GC.GetAllocatedBytesForCurrentThread();
-                // Runtime frames at 60 FPS, as PersistentCityMod.AdvancePopulation drives them: one-unit slices
-                // until the budget's unit cap, its elapsed-time allowance or catch-up. Research units do not
-                // spend the citizen-event limit.
                 var budget = new PopulationFrameBudget(1.0 / 60, false);
                 int frames = 0, total = 0;
                 while (order.State == ResearchOrderState.Ordered)
@@ -593,7 +566,6 @@ public sealed class ResearchSurveyTests
             }
             output.WriteLine($"{consumers} hold frame work: {Stats(frameWork)}");
             output.WriteLine($"{consumers} in-city index units: {Stats(indexUnits)}; engine units (256): {Stats(surveyUnits)}");
-            // Idle: no open order.
             var idle = new List<double>();
             for (int i = 0; i < 20000; i++) { long t = Stopwatch.GetTimestamp(); run.City.IsCaughtUpTo(run.City.State.Minute); idle.Add(Ms(Stopwatch.GetTimestamp() - t)); }
             output.WriteLine($"{consumers} idle IsCaughtUpTo with runner attached: {Stats(idle)}");

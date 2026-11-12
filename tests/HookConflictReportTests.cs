@@ -10,10 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests
 {
-    /// <summary>F8e (docs/plans/f8-capability-boundaries.md D4): foreign owners on Persistent City targets, classed by patch
-    /// kind; F8h adds the food.checkout.shop refusal policy on the H1 customer targets and H2. The Core join from synthetic rows, then the pinned Harmony 2.4.2 on stand-in methods (loaded by
-    /// reflection as ResearchChargeTests.ForeignPatchCheckCost does; tools/capability-contracts adds the transpiler arm and
-    /// runs Runtime/HookConflicts.cs itself).</summary>
     [Collection(F8aSerial.Collection)]
     public sealed class HookConflictReportTests
     {
@@ -27,7 +23,6 @@ namespace PersistentCity.Tests
             Assert.Equal(HookConflictClass.MaySkip, HookConflictReport.Classify(HookPatchKind.Prefix));
             Assert.Equal(HookConflictClass.Rewrites, HookConflictReport.Classify(HookPatchKind.Transpiler));
             Assert.Equal(HookConflictClass.Swallows, HookConflictReport.Classify(HookPatchKind.Finalizer));
-            // Harmony 2.4.2's inner patches change calls inside the body: rewrites.
             Assert.Equal(HookConflictClass.Rewrites, HookConflictReport.Classify(HookPatchKind.InnerPrefix));
             Assert.Equal(HookConflictClass.Rewrites, HookConflictReport.Classify(HookPatchKind.InnerPostfix));
         }
@@ -42,9 +37,9 @@ namespace PersistentCity.Tests
                 Method("RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry" }, (NativeHookInventory.FoodAuthority, HookPatchKind.Prefix),
                     ("other.mod", HookPatchKind.Finalizer), ("other.mod", HookPatchKind.Transpiler), ("other.mod", HookPatchKind.Postfix), ("other.mod", HookPatchKind.Prefix)),
                 Method("MarketingHelper", "RunDaily", Array.Empty<string>(), (NativeHookInventory.ResearchBilling, HookPatchKind.Postfix)),
-                Method("BuildingRegistration", "Reset", new[] { "Boolean" }),        // listed by Harmony with no patch left
+                Method("BuildingRegistration", "Reset", new[] { "Boolean" }),
                 Method("UnrelatedType", "Unrelated", Array.Empty<string>(), ("other.mod", HookPatchKind.Prefix)),
-                Method("RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry", "Int32" }, ("other.mod", HookPatchKind.Prefix)), // another overload
+                Method("RetailBusinessSimulator", "ProcessCustomer", new[] { "CustomerEntry", "Int32" }, ("other.mod", HookPatchKind.Prefix)),
             });
             Assert.Equal(NativeHookInventory.Targets.Select(t => t.Type + "." + t.Method + "(" + string.Join(", ", t.Parameters!) + ")").Distinct().Count(), report.Entries.Count);
             var tick = report.Entries.Single(e => e.Signature == "GameManager.RunMainGameTick(Single)");
@@ -73,11 +68,9 @@ namespace PersistentCity.Tests
         [Fact]
         public void ReportOnlyChangesNoCapability()
         {
-            // D4: the report type has no path into the registry; F8h's refusal leaves it as a reason string the market applies.
             Assert.DoesNotContain(typeof(HookConflictReport).GetMethods(), m => m.GetParameters().Any(p => p.ParameterType == typeof(CapabilityRegistry)));
         }
 
-        // ---- The pinned Harmony 2.4.2, loaded by reflection ------------------------------------------------------------
 
         private static Assembly? Harmony()
         {
@@ -91,7 +84,6 @@ namespace PersistentCity.Tests
             return Assembly.LoadFrom(dll);
         }
 
-        /// <summary>The same reads Runtime/HookConflicts.Scan makes, through reflection.</summary>
         private static List<HookPatchedMethod> Scan(Type harmony)
         {
             var all = (System.Collections.IEnumerable)harmony.GetMethod("GetAllPatchedMethods")!.Invoke(null, null)!;
@@ -115,7 +107,7 @@ namespace PersistentCity.Tests
         public void RealHarmonyOnStandInMethodsIsClassed()
         {
             var assembly = Harmony();
-            if (assembly == null) return; // tools/build.py downloads the pinned package; ForeignPatchCheckCost has the same guard
+            if (assembly == null) return;
             var harmony = assembly.GetType("HarmonyLib.Harmony", true)!;
             var methodType = assembly.GetType("HarmonyLib.HarmonyMethod", true)!;
             var patch = harmony.GetMethods().Single(m => m.Name == "Patch" && m.GetParameters().Length == 5);
@@ -150,11 +142,7 @@ namespace PersistentCity.Tests
             Assert.All(HookConflictReport.Build(Scan(harmony)).Entries, e => Assert.False(e.Patched));
         }
 
-        // ---- F8h: conflict refusals (D4 policy, after rig check 1) ----------------------------------------------------
 
-        /// <summary>The five H1 customer targets and H2. Rig check 1 (docs/checks/f8h-check1-modpack-owners-pc.json and
-        /// -mac.json, b3e5a910) found no foreign owner on any of them; RunMainGameTick carries the modpack's prefixes and
-        /// finalizers and is shared, so it is not in the policy.</summary>
         internal static readonly string[] ExpectedPolicy =
         {
             "RetailBusinessSimulator.ProcessAllCustomersFromThisHour()", "RetailBusinessSimulator.ProcessCustomer(CustomerEntry)",
@@ -192,7 +180,6 @@ namespace PersistentCity.Tests
                 Assert.Contains(signature + " [" + string.Join(", ", entry.Capabilities) + "]: other.mod " + word + " (", report.Text());
                 Assert.Contains(") -> refuses food.checkout.shop\n", report.Text());
                 Assert.Contains("food.checkout.shop off: foreign " + word + " by other.mod on " + signature + ". Details: pc capability hooks.", report.ActivationLine());
-                // Without the policy (F8e) the same owner only reports.
                 Assert.Null(HookConflictReport.Build(new[] { Method(target.Type, target.Method, target.Parameters!.ToArray(), ("other.mod", kind)) }).CheckoutRefusal);
             }
         }
@@ -200,7 +187,6 @@ namespace PersistentCity.Tests
         [Fact]
         public void ObserversAndOtherTargetsOnlyReport()
         {
-            // A foreign postfix (observer) on every policy target does not refuse.
             var observers = Refusing(ExpectedPolicy.Select(signature =>
             {
                 var t = NativeHookInventory.Targets.First(x => x.Type + "." + x.Method + "(" + string.Join(", ", x.Parameters!) + ")" == signature);
@@ -211,8 +197,6 @@ namespace PersistentCity.Tests
             Assert.DoesNotContain("-> refuses", observers.Text());
             Assert.DoesNotContain("food.checkout.shop off", observers.ActivationLine());
 
-            // Rig check 1 shapes (both rigs, b3e5a910): the modpack's RunMainGameTick owners, hardmodepatch on
-            // ItemsGetter.RegisterModItem, a rig-input transpiler on an inspector target, a vehicle owner. None refuses.
             var modpack = Refusing(
                 Method("GameManager", "RunMainGameTick", new[] { "Single" }, (NativeHookInventory.FoodAuthority, HookPatchKind.Postfix), (NativeHookInventory.CityClock, HookPatchKind.Prefix),
                     (NativeHookInventory.ClockObserver, HookPatchKind.Postfix), ("cityperformance.mod", HookPatchKind.Prefix), ("cityperformance.mod", HookPatchKind.Finalizer),
@@ -225,16 +209,12 @@ namespace PersistentCity.Tests
             Assert.Equal(6, modpack.Entries.Single(e => e.Signature == "GameManager.RunMainGameTick(Single)").Foreign.Count);
             Assert.All(modpack.Entries, e => Assert.Null(e.CheckoutRefusal));
             Assert.Contains(", 0 refusing food.checkout.shop\n", modpack.Text());
-            // Persistent City's own owners on a policy target are never foreign.
             Assert.Empty(modpack.Entries.Single(e => e.Signature == "RetailBusinessSimulator.ProcessCustomer(CustomerEntry)").Foreign);
         }
 
-        /// <summary>The decision runs once per load at the market's construction, from the scan the activation line then
-        /// reuses; a member refusal stays first; a conflict refusal enters the existing checkout-off mode.</summary>
         [Fact]
         public void TheRefusalIsDecidedOncePerLoadFromTheLoadScan()
         {
-            // The refusal goes through F8c's checkout-off mode: no price prefix, nothing served, every shop observed ineligible.
             var mode = new FoodCheckoutMode("foreign prefix by other.mod on RetailBusinessSimulator.ProcessCustomer(CustomerEntry)");
             Assert.False(mode.Serves); Assert.False(mode.InstallsPricePrefix); Assert.False(mode.Observe(true));
             var inputs = CapabilityReportTests.Healthy(); inputs.FoodCheckoutRefusal = mode.Refusal;
@@ -245,8 +225,6 @@ namespace PersistentCity.Tests
                 new CapabilityReport().Status(registry, "x"));
         }
 
-        /// <summary>The hook inventory: owner and target counts, one capability per owner (moved from the deleted
-        /// HookInventorySourceTests, X9).</summary>
         [Fact]
         public void InventoryCountsAndCapabilityMapping()
         {
@@ -268,25 +246,20 @@ namespace PersistentCity.Tests
             Assert.Equal("clock.observe", Map(NativeHookInventory.ClockObserver));
             Assert.Equal("research.billing", Map(NativeHookInventory.ResearchBilling));
             Assert.Equal("research.dialog", Map(NativeHookInventory.ResearchDialog));
-            // GR-9: own cars install no hook, so no owner maps to physical.vehicles.
             Assert.DoesNotContain(NativeHookInventory.Targets, t => t.Capability == CapabilityId.PhysicalVehicles);
             Assert.Equal("physical.pedestrians", Map(NativeHookInventory.AmbientPedestrians));
             Assert.Equal("physical.pedestrians", Map(NativeHookInventory.StationaryCrowds));
             Assert.Equal("inspector.click,inspector.scroll,inspector.uiblock", Map(NativeHookInventory.InspectorInput));
 
-            // GameManager.RunMainGameTick carries three PC owners (H1, H3, H4): normal, not a conflict (plan section 2).
             Assert.Equal(new[] { NativeHookInventory.FoodAuthority, NativeHookInventory.CityClock, NativeHookInventory.ClockObserver },
                 NativeHookInventory.Targets.Where(t => t.Type == "GameManager" && t.Method == "RunMainGameTick").Select(t => t.Owner));
         }
 
-        /// <summary>F8h with the pinned Harmony 2.4.2 on stand-in methods: a foreign prefix on ProcessCustomer and a foreign
-        /// finalizer on ProcessAllCustomersFromThisHour refuse with the owner named; a foreign postfix does not; the check-1
-        /// modpack owners on RunMainGameTick do not. tools/capability-contracts adds the transpiler arm and runs Runtime.</summary>
         [Fact]
         public void RealHarmonyForeignOwnersRefuseCheckoutByPolicy()
         {
             var assembly = Harmony();
-            if (assembly == null) return; // tools/build.py downloads the pinned package; ForeignPatchCheckCost has the same guard
+            if (assembly == null) return;
             var harmony = assembly.GetType("HarmonyLib.Harmony", true)!;
             var methodType = assembly.GetType("HarmonyLib.HarmonyMethod", true)!;
             var patch = harmony.GetMethods().Single(m => m.Name == "Patch" && m.GetParameters().Length == 5);
@@ -351,7 +324,6 @@ namespace PersistentCity.Tests.F8hStandIn
         [MethodImpl(MethodImplOptions.NoInlining)] public void ProcessAllCustomersFromThisHour() { }
         [MethodImpl(MethodImplOptions.NoInlining)] public void ProcessCustomer(CustomerEntry customerEntry) { }
     }
-    /// <summary>One patch method per owner group: Harmony 2.4.2's UnpatchAll(id) removes by patch method.</summary>
     public static class Patches
     {
         public static void PcPrefix() { }

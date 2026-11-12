@@ -7,10 +7,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5b identity and ownership core (docs/plans/f5-population.md section 3). Pure Core, inactive.</summary>
 public sealed class PersonIdentityTests
 {
-    // ---- PersonId formats and ordering (contract B1) ----
 
     [Theory]
     [InlineData("c0", PersonIdFormat.SourceResident)]
@@ -53,7 +51,6 @@ public sealed class PersonIdentityTests
                 Assert.True(PersonIds.FitsKind(PersonIds.Classify(id), PersonKind.Visitor));
                 Assert.False(PersonIds.FitsKind(PersonIds.Classify(id), PersonKind.Resident));
             }
-        // Slot zero is the resident itself, with the resident's own ID.
         Assert.Equal("pc:3", FoodRepresentation.ConsumerId("pc:3", 0));
         Assert.True(PersonIds.FitsKind(PersonIds.Classify("pc:3"), PersonKind.Resident));
         Assert.True(PersonIds.FitsKind(PersonIds.Classify("c3"), PersonKind.Resident));
@@ -99,7 +96,6 @@ public sealed class PersonIdentityTests
         Assert.Equal(VisitorPattern.Commuter, PersonPolicy.MigratedConsumerPattern);
     }
 
-    // ---- IdentityPolicy v1 (contract B6) ----
 
     private static CitizenIdentity[] GoldenDonors() => new[]
     {
@@ -113,7 +109,6 @@ public sealed class PersonIdentityTests
         new CitizenIdentity { Id = "c7", Name = "Hal Brook", Age = 66, Female = false, Persona = Persona.Grumpy, AppearanceSeed = 108, District = "Murray Hill" },
     };
 
-    // Frozen version-1 outputs. A change here is a new IdentityPolicy version, never an edit of these rows.
     public static IEnumerable<object[]> GoldenVectors() => new (int Seed, string Id, string Name, int Age, bool Female, Persona Persona, int Appearance)[]
     {
         (0, "consumer:c0:1", "Dan Brook", 41, false, Persona.NightOwl, 104),
@@ -155,15 +150,12 @@ public sealed class PersonIdentityTests
         var expected = ids.Select(id => Key(forward.Derive(5, id))).ToArray();
         Assert.Equal(expected, ids.Select(id => Key(reversed.Derive(5, id))).ToArray());
         Assert.Equal(expected.Reverse(), ids.Reverse().Select(id => Key(rotated.Derive(5, id))).ToArray());
-        // Repeated lookups are pure: no state carries between them.
         Assert.Equal(expected, ids.Select(id => Key(forward.Derive(5, id))).ToArray());
     }
 
     [Fact]
     public void DerivedIdentityUsesPlatformIndependentIntegerHashing()
     {
-        // Independent FNV-1a reference with the StableRandom finaliser: pure 32-bit integer arithmetic over UTF-16
-        // code units, no culture, floating point or runtime string hashing.
         static uint Reference(string text, int seed)
         {
             uint value = 2166136261u ^ unchecked((uint)seed);
@@ -207,7 +199,6 @@ public sealed class PersonIdentityTests
         }
     }
 
-    // ---- Per-person income source ----
 
     [Fact]
     public void IncomeSelectionEqualsTodaysRuleForResidents()
@@ -231,7 +222,6 @@ public sealed class PersonIdentityTests
         var ended = new Employment { PersonId = "consumer:c1:1", WorkplaceId = "work:1", Kind = EmploymentKind.Work, StartDay = 1, EndDay = 4 };
         var study = new Employment { PersonId = "consumer:c1:1", WorkplaceId = "school:1", Kind = EmploymentKind.Study };
         Assert.Equal(ResidentIncomeSource.ExternalEmployment, PersonIncome.Select(Persona.Commuter, 30, work, ResidentIncomeSource.ExternalSupport));
-        // A carried outside source survives until the person's own employment outcome replaces it.
         Assert.Equal(ResidentIncomeSource.ExternalEmployment, PersonIncome.Select(Persona.Commuter, 30, null, ResidentIncomeSource.ExternalEmployment));
         Assert.Equal(ResidentIncomeSource.ExternalEmployment, PersonIncome.Select(Persona.Retiree, 70, null, ResidentIncomeSource.ExternalEmployment));
         Assert.Equal(ResidentIncomeSource.ExternalSupport, PersonIncome.Select(Persona.Commuter, 30, ended, null));
@@ -240,7 +230,6 @@ public sealed class PersonIdentityTests
         Assert.Equal(ResidentIncomeSource.ExternalSupport, PersonIncome.Select(Persona.Commuter, 17, work, null));
     }
 
-    // ---- Ownership validator: rules 1-5 and duplication guards ----
 
     private static VisitorStay Stay(VisitorPattern pattern = VisitorPattern.Commuter)
         => new VisitorStay { OriginPortalId = "station:1", Pattern = pattern, Presence = VisitorPresence.Dormant, FirstDay = 2, NextStayStart = 4300 };
@@ -383,7 +372,6 @@ public sealed class PersonIdentityTests
     public void IntentWithTwoOwnersIsRefused()
     {
         var city = new City();
-        // The former anchor claims an intent its migrated consumer already owns.
         string owned = MealRhythm.IntentId("consumer:c0:1", 3, MealKind.Lunch);
         city.Intents.Add(new DemandUnitFacts(owned, "c0"));
         AssertOnly(city, OwnershipRule.IntentWithTwoOwners, owned);

@@ -24,7 +24,6 @@ namespace PersistentCity.Runtime
         public int RivalRefreshGameMinutes { get => Rivals.RivalRefreshGameMinutes; set => Rivals.RivalRefreshGameMinutes=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 64)]
         public int RivalReadsPerUnit { get => Rivals.RivalReadsPerUnit; set => Rivals.RivalReadsPerUnit=value; }
-        // F6b estimated service limits. RivalCapacityPercent holds Peter's Q2 answer (100 = moderate default).
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 25, 400)]
         public int RivalCapacityPercent { get => Rivals.RivalCapacityPercent; set => Rivals.RivalCapacityPercent=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 8)]
@@ -117,7 +116,6 @@ namespace PersistentCity.Runtime
         public double WeatherRainTravelWeightMultiplier { get => Weather.RainTravelWeightMultiplier; set => Weather.RainTravelWeightMultiplier=value; }
         [JsonConverter(typeof(WeatherLeadConverter))]
         public int WeatherQueueRainLeadMinutes { get => Weather.QueueRainLeadMinutes; set => Weather.QueueRainLeadMinutes=value; }
-        // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
         [JsonConverter(typeof(OptionalStopPercentageConverter))]
         public int OptionalStopChoicePercentage
@@ -178,32 +176,22 @@ namespace PersistentCity.Runtime
                 + ", resting=" + StreetLifeRestingMaximumMinutes + "; new stops only.");
         }
         public bool Enabled { get; set; } = true;
-        /// <summary>F7a save-cost recording default: off, so ordinary saves do no timing or counting work.</summary>
         public const bool SaveCostDiagnosticsDefault = false;
-        /// <summary>Arms the explicit F7a save-cost record from startup (diagnostic profiles only).</summary>
         public bool SaveCostDiagnostics { get; set; } = SaveCostDiagnosticsDefault;
         public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
         public bool PhysicalEnabled { get; set; } = true;
-        /// <summary>GR-3: residents with a due need or an impulse buy at the player's supported non-food businesses through
-        /// the purchase contract. Off by default (Q4: automatic takeover waits for S2 and GR-4 in game); rig profiles turn it on.</summary>
         public bool NeedPurchasesEnabled { get; set; }
-        /// <summary>GR-6: households may share one evening or weekend outing a day. On by default; false turns it off.</summary>
         public bool HouseholdOutingsEnabled { get; set; } = true;
         private double throughTrafficShare = ThroughTrafficSettings.DefaultShare;
-        /// <summary>GR-8: the share of cars on the road that only pass through the city (Q3 default 0.10, 0 to 0.5; 0 turns
-        /// them off). A value out of range or not a number is clamped to the range or the default.</summary>
         public double ThroughTrafficShare
         {
             get => throughTrafficShare;
             set => throughTrafficShare = double.IsNaN(value) ? ThroughTrafficSettings.DefaultShare : Math.Max(0, Math.Min(ThroughTrafficSettings.MaximumShare, value));
         }
-        /// <summary>GR-9 (G6): 96 walkers by default (48 before P-C gave each walker one path per leg); 1-256.</summary>
         public int MaximumPedestrians { get; set; } = 96;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;
         private int movementFaultAcquirePercent;
-        /// <summary>F2c test-profile key: share of body acquisitions refused after selection, 0-100 (default 0).
-        /// Rig check 5 compares 0 and 50; outcomes must not change.</summary>
         public int MovementFaultAcquirePercent
         {
             get => movementFaultAcquirePercent;
@@ -238,7 +226,6 @@ namespace PersistentCity.Runtime
             get => Math.Min(MaximumVehicles, interiorVehicles);
             set { int effective = value == int.MinValue ? 12 : Math.Max(0, Math.Min(24, value)); vehiclesAdjusted |= effective != value; interiorVehicles = effective; }
         }
-        // Called once after the unchanged flat loader has finished (including cross-field caps).
         public void ReportInteriorSettings(Action<string> report)
         {
             if (interiorReported) return;
@@ -261,20 +248,16 @@ namespace PersistentCity.Runtime
         {
             var token = JToken.Load(reader);
             double value;
-            // Numeric tokens already hold a number. Formatting them as localized text before
-            // invariant parsing changes endpoint clamps under comma-decimal cultures.
             if (token.Type == JTokenType.Integer || token.Type == JTokenType.Float) value = (double)token;
             else if (token.Type != JTokenType.String || !double.TryParse(token.ToString(), NumberStyles.Float,
                 CultureInfo.InvariantCulture, out value)) return int.MinValue;
             if (!double.IsNaN(value))
             {
-                // Bounds belong to the property, independent of accepted JSON key spelling.
-                // Keep out-of-range values distinguishable for the once-only adjustment report.
                 if (value < minimum) return minimum - 1;
                 if (value > maximum) return maximum + 1;
                 if (value == Math.Truncate(value)) return (int)value;
             }
-            return int.MinValue; // Invalid individual value: property selects its documented default.
+            return int.MinValue;
         }
         public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
     }
@@ -297,7 +280,6 @@ namespace PersistentCity.Runtime
                 if (!double.TryParse(token.Type == JTokenType.String ? token.ToString() : token.ToString(Formatting.None),
                     NumberStyles.Float, CultureInfo.InvariantCulture, out value)) value = double.NaN;
             if (objectType == typeof(double)) return value;
-            // Preserve endpoint clamping even for infinity; unusable in-range fractions default.
             int maximum = reader.Path == nameof(PrototypeSettings.InteriorMaximumPedestrians) ? 48 : 24;
             if (double.IsNaN(value) || value > 0 && value < maximum && value != Math.Truncate(value)) return int.MinValue;
             if (value < 0) return -1;
@@ -343,7 +325,6 @@ namespace PersistentCity.Runtime
         public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
     }
 
-    // Per-business-type rival estimates. Unusable numbers become the Clamp sentinel instead of discarding the file.
     internal sealed class RivalServiceProfilesConverter : JsonConverter<System.Collections.Generic.Dictionary<string, RivalServiceProfile>>
     {
         public override System.Collections.Generic.Dictionary<string, RivalServiceProfile> ReadJson(JsonReader reader, Type type,
@@ -378,8 +359,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    // Preserve A's numeric-string/endpoint conventions without letting an unusable awareness
-    // key discard unrelated configuration. Sentinels reach Clamp exactly once for bounded logging.
     internal sealed class AwarenessNumberConverter : JsonConverter
     {
         public override bool CanConvert(Type type) => type==typeof(int) || type==typeof(double);
@@ -389,8 +368,6 @@ namespace PersistentCity.Runtime
             string raw=token.Type==JTokenType.String ? (string)token! : token.ToString(Formatting.None);
             bool valid=(token.Type==JTokenType.Integer || token.Type==JTokenType.Float || token.Type==JTokenType.String)
                 && double.TryParse(raw,NumberStyles.Float,CultureInfo.InvariantCulture,out _);
-            // Json.NET quotes nonfinite floats when formatting JSON. Read a numeric float directly
-            // so infinities clamp to endpoints and finite radius precision is retained.
             double value=token.Type==JTokenType.Float ? (double)token
                 : valid ? double.Parse(raw,NumberStyles.Float,CultureInfo.InvariantCulture) : double.NaN;
             if(type==typeof(double)) return value;
@@ -402,8 +379,6 @@ namespace PersistentCity.Runtime
         public override void WriteJson(JsonWriter writer,object? value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
-    // Normalize the token before Int32 conversion, preserving unrelated settings even for
-    // null, structured or malformed individual values. Diagnostics use effective values only.
     internal abstract class ResearchIntegerSettingConverter : JsonConverter<int>
     {
         private readonly int minimum, maximum, fallback;
@@ -464,7 +439,6 @@ namespace PersistentCity.Runtime
         public override void WriteJson(JsonWriter writer,int value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
-    // Invalid individual values fall back without discarding unrelated settings.
     internal sealed class OptionalStopPercentageConverter : JsonConverter<int>
     {
         public override int ReadJson(JsonReader reader, Type objectType, int existingValue, bool hasExistingValue, JsonSerializer serializer)

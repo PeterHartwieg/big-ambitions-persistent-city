@@ -25,7 +25,7 @@ public sealed class OptionalVisitTests
     {
         var sim = Ready(); var c = sim.State.Citizens.Single(); var route = Out(sim);
         Assert.True(sim.TryBeginOptionalShopVisit(c.Identity.Id, "shop", route, 10, 15, 1500));
-        route.Legs[0].Minutes = 500; // caller cannot mutate the committed trip.
+        route.Legs[0].Minutes = 500;
         Assert.False(sim.TryBeginOptionalShopVisit(c.Identity.Id, "shop", Out(sim), 10, 15, 1500));
         Assert.Empty(c.RecentVisits);
         sim.AdvanceTo(1450); Assert.Equal("shop", c.PlaceId); Assert.Single(c.RecentVisits);
@@ -63,7 +63,6 @@ public sealed class OptionalVisitTests
         var captured = recorder.Finish();
         Assert.Contains(captured.Spans, s => s.Activity == Activity.Shop && s.From == 1450 && s.Until == 1465);
         original.ActivityObserved -= Observe;
-        // Removing a subscription through its original simulator also removes it after rebuilds.
         person.ActivityUntilMinute = person.NextEventMinute = 1800;
         rebuilt = rebuilt.RebuildRoutes(new FixedWalk(10));
         Assert.True(rebuilt.TryBeginOptionalShopVisit(person.Identity.Id, "shop", Out(rebuilt), 10, 15, 1550));

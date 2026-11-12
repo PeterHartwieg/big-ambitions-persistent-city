@@ -27,27 +27,18 @@ namespace PersistentCity.Runtime
         public string AvailabilityReason { get; set; } = "";
     }
 
-    /// <summary>On-demand current-hour snapshot for one stocked product at a player-owned
-    /// full-service shop. Native setup derives its actual eligible furniture/staff constraints.
-    /// Never simulates customers, restocks, creates registrations or calls sale methods.
-    /// Menu stock is read in one setup. Bags are shared and rechecked at checkout, never multiplied by menu size.</summary>
     public static class FoodSupplyReader
     {
-        // F8c: exact field and return types from the checkout contract, checked once; null when changed, which the existing
-        // supply-contract refusal below already turns into an unverified (whole-business refused) read.
         private static readonly FieldInfo? Producers = NativeFoodContract.CheckoutMember<FieldInfo>(NativeFoodContractSpec.Producers);
         private static readonly FieldInfo? Counters = NativeFoodContract.CheckoutMember<FieldInfo>(NativeFoodContractSpec.Counters);
         private static readonly MethodInfo? Capacity = NativeFoodContract.CheckoutMember<MethodInfo>(NativeFoodContractSpec.Capacity);
         private static readonly double MillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
-        /// <summary>Native simulator setups this reader has made, and their total time including stock inspection (diagnostic).</summary>
         public static long Setups { get; private set; }
         public static double SetupMilliseconds { get; private set; }
 
-        /// <summary>E5b3 Decision 5 refusals (diagnostic): native effective holders that differed from the image.</summary>
         public static long Reconciliations { get; private set; }
         public static FoodReconciliationRefusal LastReconciliation { get; private set; }
-        // Main thread only; reused by every reconciliation so the check allocates nothing.
         private static readonly List<FoodNativeHolder> NativeHolders = new List<FoodNativeHolder>();
         private static readonly Func<object, int> StockAmount = stock => ((CargoInstance)stock).amount;
 
@@ -57,14 +48,9 @@ namespace PersistentCity.Runtime
         public static IReadOnlyDictionary<string, FoodSupplySnapshot> ReadMenu(BuildingRegistration registration, IEnumerable<string> products)
             => ReadMenu(registration, products, null);
 
-        /// <summary>With <paramref name="contract"/>, the setup's producers and counters are reconciled with the
-        /// image's validated holders (Decision 5). A mismatch leaves every product unverified, which callers already
-        /// treat as a whole-business refusal. It reuses this setup and adds none.</summary>
         public static IReadOnlyDictionary<string, FoodSupplySnapshot> ReadMenu(BuildingRegistration registration, IEnumerable<string> products,
             FoodContractImage? contract)
         {
-            // Native callers already capture an immutable ordered menu array. Reuse it rather than
-            // rebuilding a hash set and array on every refresh. Refuse duplicate/oversized menus.
             var ids = products as string[] ?? products.Take(FoodMenuPolicy.MaximumOffers+1).ToArray();
             if (registration == null || ids.Length == 0 || ids.Length > FoodMenuPolicy.MaximumOffers || ids.Any(string.IsNullOrWhiteSpace))
                 throw new ArgumentException("A shop and one to eight products are required.");

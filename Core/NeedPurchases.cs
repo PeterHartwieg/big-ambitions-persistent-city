@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    /// <summary>
-    /// GR-3: the simulator side of needs and the purchase contract. A resident admitted for a shop or leisure visit at a
-    /// venue the purchase market serves buys through the contract when the venue's need is due; a visit while the need is not due
-    /// is a visit only. Everything runs at event commit on the live person, so an abandoned event never buys. Without an
-    /// attached market nothing here runs and no person gains needs.
-    /// </summary>
     public sealed partial class CitySimulator
     {
         private IPurchaseMarket? purchases;
@@ -17,19 +11,14 @@ namespace PersistentCity.Core
 
         public void AttachPurchases(IPurchaseMarket market) => purchases = market ?? throw new ArgumentNullException(nameof(market));
         public void DetachPurchases() => purchases = null;
-        /// <summary>The attached market, carried into a replacement simulator (<see cref="RebuildRoutes"/>).</summary>
         public IPurchaseMarket? Purchases => purchases;
-        /// <summary>Set when a booked native order could not be restored (<see cref="PurchaseRefusal.Uncertain"/>). The market
-        /// is detached at once, so nobody buys again; Runtime stops accounting. The uncertain receipt stays saved.</summary>
         public string? PurchaseFault { get; private set; }
         public long ImpulsesInserted { get; private set; }
         public long PurchasesBought { get; private set; }
         public long PurchasesRefused { get; private set; }
         public PurchaseResult? LastPurchase { get; private set; }
-        /// <summary>The latest native-count calibration rows (venue hour, native count, resident orders); diagnostics only.</summary>
         public IReadOnlyList<PurchaseCalibration> Calibration => calibration;
 
-        /// <summary>The shop visit this event recorded at the commit minute, read before commit (as ordinary exchanges do).</summary>
         private VisitRecord? NewNeedVisit(CitizenState live, CitizenState working)
         {
             if (purchases == null || live.IsVisitor || working.MealOuting != null || working.RecentVisits.Count == 0) return null;
@@ -39,7 +28,6 @@ namespace PersistentCity.Core
             return visit;
         }
 
-        /// <summary>A need item the event missed goes back to the need model as deferred (due again tomorrow).</summary>
         private void DeferMissedNeeds(CitizenState live, CitizenState working)
         {
             var needs = working.Needs; var plan = working.Plan;
@@ -66,10 +54,8 @@ namespace PersistentCity.Core
             if (day < 0) return;
             var request = new PurchaseRequest(live.Identity.Id, venue.Id, PurchaseIntention.Need(profile.Category),
                 NeedModel.Ceiling(profile, wallet), (long)Math.Floor(State.Minute));
-            // Ask the market first: an unsupported or native-owned venue gives the person no need state at all.
             if (!market.Serves(venue.Id)) return;
             var need = NeedModel.Ensure(live, profile, day, State.Seed);
-            // An impulse buys at its own venue on its own day even when the need is not due yet.
             bool impulse = live.Needs!.LastImpulseDay == day && live.Needs.ImpulseVenue == venue.Id;
             if (need == null || !impulse && !NeedModel.Due(need, day)) return;
             if (impulse) live.Needs.ImpulseVenue = "";
@@ -93,7 +79,6 @@ namespace PersistentCity.Core
             PurchasesRefused++;
             if (result.Refusal == PurchaseRefusal.Uncertain)
             {
-                // Fail closed: the native books may hold an order nobody paid for. No retry, no further purchase.
                 PurchaseFault = result.Key + ": " + result.Reason;
                 purchases = null;
                 return;
@@ -102,14 +87,9 @@ namespace PersistentCity.Core
             DayPlanExecutor.Mark(live, visit.Activity, live.ActivityUntilMinute, PlanItemState.Missed, PlanMissCause.Refused);
         }
 
-        /// <summary>Walking legs pass a venue within this many metres of the leg.</summary>
         public const double ImpulseReachMetres = 25;
-        /// <summary>The impulse visit's length after arrival, in minutes.</summary>
         public const double ImpulseVisitMinutes = 30;
 
-        /// <summary>A resident who sets off on a new journey whose walking legs pass an open served venue draws one impulse
-        /// for it (J0 "Impulse"). A true draw inserts an optional need item at the journey's arrival when it fits; the
-        /// routine sends the person there from the arrival event. Runs on the live person after commit.</summary>
         private void ImpulseOnDeparture(CitizenState live)
         {
             var market = purchases; var journey = live.Journey;
@@ -123,7 +103,6 @@ namespace PersistentCity.Core
                 if (!Passes(journey, venue.Position)) continue;
                 var profile = NeedModel.For(venue.BusinessType);
                 if (profile == null) continue;
-                // One draw per person, venue and day: a passing that misses the draw is not drawn again today.
                 if (!NeedModel.Impulse(live, profile, venue.Id, day, State.Seed)) continue;
                 if (NeedModel.InsertImpulse(live, venue.Id, live.NextEventMinute, ImpulseVisitMinutes)) ImpulsesInserted++;
                 return;
@@ -148,8 +127,6 @@ namespace PersistentCity.Core
         private NeedPlanning? planning;
         private long planningHour = long.MinValue;
 
-        /// <summary>The served venues planning may send needs to, rebuilt once per game hour (the market's own cadence).
-        /// Null without a market, so a city without one plans exactly as before.</summary>
         internal NeedPlanning? NeedPlanningNow()
         {
             var market = purchases;
@@ -162,12 +139,6 @@ namespace PersistentCity.Core
             return planning;
         }
 
-        /// <summary>
-        /// A plan drawn during a meal outing from home (breakfast, say) can hold a visit earlier than the home continuation
-        /// the outing saved before the plan existed. The continuation is cut back to that visit's start, so the return
-        /// event hands the person to the routine in time instead of resting at home past it. Only with a purchase market:
-        /// without one, plans and continuations come from the same draws and nothing changes.
-        /// </summary>
         private static void WakeForNewPlan(CitizenState person, double now)
         {
             var outing = person.MealOuting; var plan = person.Plan;
@@ -186,9 +157,6 @@ namespace PersistentCity.Core
         private EssentialNeeds? essentials;
         private long essentialsHour = long.MinValue;
 
-        /// <summary>GR-1/GR-3: the essential categories the attached market sells now (from the business types of its
-        /// venues), so the daily posting stops deducting them while their own spender buys them. Null without a market.
-        /// Derived from the market each game hour, so a reload or a replaced simulator gives the same policy.</summary>
         internal EssentialNeeds? PurchaseEssentials()
         {
             var market = purchases;

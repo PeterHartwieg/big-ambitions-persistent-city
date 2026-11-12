@@ -17,7 +17,6 @@ namespace PersistentCity.Persistence
             {
                 Require(image != null && image.BusinessRef > previous && references.Contains(image.BusinessRef), "Unordered/foreign campaign generation.");
                 previous = image.BusinessRef;
-                // Immutable images validate their bounded masks/header at construction and on decode.
             }
             return food.Campaigns.Count;
         }

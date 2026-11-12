@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Read-only live workplace availability. Native pay and staff accounts are never read.</summary>
     internal sealed class NativeWorkplaceAvailability : IWorkplaceAvailability
     {
         private sealed class Workplace
@@ -58,7 +57,6 @@ namespace PersistentCity.Runtime
                                     hours.Add(new OpeningWindow { Day = (int)day.day - 1, FromMinute = slot.startingHour * 60, ToMinute = slot.endingHour * 60 });
                 w.Place.OpenMinute = w.Place.CloseMinute = 0; w.Place.WeeklyHours = hours;
             }
-            // Evaluate native hours directly: no per-worker opening-cache construction on the wage path.
             int weekdayNow = ((int)(minute / 1440) - 1) % 7; if (weekdayNow < 0) weekdayNow += 7;
             double at = minute % 1440;
             foreach (var hour in w.Place.WeeklyHours)

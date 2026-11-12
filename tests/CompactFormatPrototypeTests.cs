@@ -9,10 +9,6 @@ using Xunit;
 
 namespace PersistentCity.Tests
 {
-    /// <summary>
-    /// F7p compact-format prototype (tools/compact-format, issue #94): offline checks only. The prototype is not
-    /// wired into Core, Persistence or Runtime, and writer 25 is unchanged.
-    /// </summary>
     public sealed class CompactFormatPrototypeTests
     {
         [Fact]
@@ -47,8 +43,6 @@ namespace PersistentCity.Tests
             Assert.Equal(writer25, SaveWire.Text(strict.State!));
         }
 
-        // Edge shapes the fixtures do not all reach: number spellings that must not be normalized, nulls mixed with
-        // values, varying object shapes and tuple lengths, shared routes and native road-tag ranges.
         private const string EdgeCases = "{\"Numbers\":[0,-0,-1,1E-05,0.1,-0.0,12.0,9223372036854775807,-9223372036854775808,"
             + "92233720368547758070,1.7976931348623157E+308,5e3],"
             + "\"Ints\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,9223372036854775807,-9223372036854775808],"
@@ -80,7 +74,6 @@ namespace PersistentCity.Tests
                 Assert.Equal(payload, candidate.Encode(decoded));
                 if (candidate.Id == "C" || candidate.Id == "D")
                 {
-                    // Two identical journeys and two identical vehicle routes share one table entry each.
                     Assert.Equal(3, stats.Routes);
                     Assert.Equal(5, stats.RouteReferences);
                     Assert.Equal(3, stats.RoadTags);

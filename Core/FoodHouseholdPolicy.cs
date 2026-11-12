@@ -14,9 +14,6 @@ namespace PersistentCity.Core
         public string Evidence { get; set; } = "";
     }
 
-    /// <summary>Provisional spending policy, not observed income or a household ledger.
-    /// Districts change the distribution; stable individual variation remains within each band.
-    /// Personality changes the attraction of preparing food, never a person's inferred wealth.</summary>
     public static class FoodHouseholdPolicy
     {
         public static void ValidateMixes(IReadOnlyList<FoodDistrictBudgetMix> mixes)
@@ -58,8 +55,6 @@ namespace PersistentCity.Core
 
         public static void SetOutsideOption(FoodConsumer person, FoodRoutineResident resident, FoodIntent intent, int seed)
         {
-            // No teleport home from work. A packed-meal alternative is an explicitly assumed
-            // daily preparation decision, not an observation of ingredients or food consumption.
             if (intent.OriginPlaceId.Length == 0) return;
             string dayKey = person.Id + ":prepared-food:" + intent.Day.ToString(CultureInfo.InvariantCulture);
             bool home = intent.OriginActivity == Activity.Home && intent.OriginPlaceId == resident.HomeId;

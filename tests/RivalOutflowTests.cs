@@ -37,7 +37,7 @@ public sealed class RivalOutflowTests
         public void ContinueRivalRefresh(double minute) { RefreshUnits++; }
         public IEnumerable<FoodScope> RivalScopes => Rivals.Values;
         public bool IsRivalCandidate(FoodScope scope) { Predicates++; return Observations.TryGetValue(scope.BusinessId, out var o) && o.Kind == FoodAlternativeKind.Rival; }
-        public bool RivalAtPlace(string place) => Rivals.Values.Any(s => s.PlaceId == place); // fixture only; production is indexed
+        public bool RivalAtPlace(string place) => Rivals.Values.Any(s => s.PlaceId == place);
         public FoodAlternativeObservation? ReadRival(string id) { Reads++; return Observations.GetValueOrDefault(id); }
     }
     internal static FoodAlternativeObservation Observation(string id = "rival", string place = "s0", int cents = 100,
@@ -93,7 +93,6 @@ public sealed class RivalOutflowTests
         var (city, market, paths) = Ready(representation: representation);
         city.InspectFoodAwareness("r");
         double at = city.State.Food!.Residents.Max(m => m.DesiredAt);
-        // Save at every continuation and timed boundary, with changing live weights after commitment.
         for (int i = 0; i < 400 && city.State.Food!.Residents.Any(m => m.Purchases == 0); i++)
         {
             double next = Math.Max(at, city.State.Minute);
@@ -131,7 +130,6 @@ public sealed class RivalOutflowTests
     [Theory] [InlineData(1024)] [InlineData(20000)]
     public void ProductionCaptureHasNoAllShopPassAndRetainsEnvelope(int count)
     {
-        // Place ceiling includes the home.
         var (city, market, paths) = Ready(count);
         var dump = city.InspectFoodAwareness("r")!; market.Reads = market.Predicates = 0;
         var meal = city.State.Food!.Residents.Single(); Advance(city, meal.DesiredAt);
@@ -257,7 +255,6 @@ public sealed class RivalOutflowTests
         {
             var (city, market, _) = Ready(); city.State.Seed = seed;
             city.State.Places.Add(new Place { Id="player",Name="Player",Kind=PlaceKind.Shop,Position=new(10,0,0) });
-            // Reattach after changing the immutable place image.
             city.State.Food!.Shops.Add(new FoodScope {BusinessId="player",PlaceId="player",ProductId=FoodProducts.Croissant});
             market.Players = new[] {new FoodBusiness {Id="player",PlaceId="player",MealsPerHour=12,
                 Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
@@ -324,7 +321,7 @@ public sealed class RivalOutflowTests
         city.AdvanceTo(city.State.Food!.Residents.Single().DesiredAt, 1);
         var root=SaveWire.Parse(DevelopmentChain.Write(city.State));
         var meal=(JArray)root["Food"]!["Residents"]![0]!;
-        var decision=meal[8]!;var shop=decision["Shops"]![0]!; // roster tuple v3
+        var decision=meal[8]!;var shop=decision["Shops"]![0]!;
         switch(damage)
         {
             case "kind": shop["AlternativeKind"]=2; break;
