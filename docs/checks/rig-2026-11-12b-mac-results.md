@@ -2,7 +2,7 @@
 
 Role `rig_test`, where `mac`, isolated `agentmac`. Candidate `060a7947ef9680486f17f7cf535d64cd94ebe2da` was fetched and verified before the build and after cleanup; the tip did not move. Followed [12a](rig-2026-11-12a-mac-results.md) and the verified official Mac procedures. Testing only; no production code changes, rig reinstall, rollback, Windows/agent1 contact, normal-profile access, system-setting changes, release, version/changelog, merge or issue creation. Other harness sessions and their files/branches were left alone. In-game proof gates no merge.
 
-`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-12b-mac`; `<rig>` = `/Users/peterhartwieg/Coding_Projects/big-ambitions/big-ambitions-agent-rig`. Raw command exits/replies, saves parsed by the rig, logs, scripts and backups remain in the stage. Only this report and an appended checklist link enter Git.
+`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-12b-mac`; `<rig>` = the official agent-rig checkout. Raw command exits/replies, saves parsed by the rig, logs, scripts and backups remain in the stage. Only this report and an appended checklist link enter Git.
 
 **Summary: 15 passed / 0 partial / 0 failed / 0 not run. Result: DONE.** Counts cover the 15 named rows below; grouped exclusions are not counted again. #233 enter/exit refusal and clean pre-probe recovery pass. S2 check 5 passes under the restated refuse-and-recover contract. #77 service recipe/readiness and goods post-save status work in game; both sales pass. The zero-ceiling refusal is re-proved at the changed product bytes.
 
@@ -250,7 +250,7 @@ All fresh at this candidate in the isolated profile; saves remain disposable and
 
 Raw evidence lives in `<stage>`; `evidence-index.json` maps files to sizes/SHA-256. `analysis-summary.json` records captured receipts, saved payload hashes, probe verdicts and ledgers; `food-verification.json` records all cut/recovery/ceiling/capture assertions true. No raw JSON dumps, logs, binaries or saves enter Git.
 
-Report also copied to `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-12b-mac.md`. Historical check docs stay in the history tag; no deleted tree recreated. Only an appended link/result line updates the kept rig checklist.
+A copy of this report is kept in the local agent log. Historical check docs stay in the history tag; no deleted tree recreated. Only an appended link/result line updates the kept rig checklist.
 
 | Local evidence file | SHA-256 |
 |---|---|
