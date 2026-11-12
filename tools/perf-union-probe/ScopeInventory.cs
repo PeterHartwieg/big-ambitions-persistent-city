@@ -128,10 +128,9 @@ namespace PerfUnionProbe
             E("SceneManager.sceneUnloaded", R + "RouteObjectDiscovery", "SceneUnloaded", "Runtime/RouteObjectDiscovery.cs"),
         });
 
-        /// <summary>PC methods a transpiler inserts into native code; timed as their own scopes.</summary>
-        public static readonly IReadOnlyList<ExpectedScope> TranspilerHelpers = Array.AsReadOnly(new[]
-        {
-        });
+        /// <summary>PC methods a transpiler inserts into native code; timed as their own scopes. None since GR-9: own cars
+        /// replaced the borrowed-car transpilers.</summary>
+        public static readonly IReadOnlyList<ExpectedScope> TranspilerHelpers = Array.AsReadOnly(Array.Empty<ExpectedScope>());
 
         /// <summary>Attribution sub-scopes inside Update (Decision 5 Components). Never added to the union.</summary>
         public static readonly IReadOnlyList<ExpectedScope> Components = Array.AsReadOnly(new[]

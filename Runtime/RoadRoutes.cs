@@ -706,7 +706,23 @@ namespace PersistentCity.Runtime
         private bool PhysicalClear(Position a, Position b)
         {
             Vector3 start = Vector(a) + Vector3.up * 0.8f, end = Vector(b) + Vector3.up * 0.8f;
-            return obstacleMask != 0 && !Physics.Linecast(start, end, obstacleMask, QueryTriggerInteraction.Ignore);
+            if (obstacleMask == 0) return false;
+            // GR-9: the mod's own cars (driving or parked near the camera) are bodies, not city geometry. Ignoring them
+            // keeps curb choice and car-trip availability independent of which bodies are shown.
+            var delta = end - start;
+            float length = delta.magnitude;
+            if (length <= 0.000001f) return !Physics.CheckSphere(start, 0.01f, obstacleMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.RaycastNonAlloc(start, delta / length, clearHits, length, obstacleMask, QueryTriggerInteraction.Ignore);
+            if (count == clearHits.Length) return !Physics.Linecast(start, end, obstacleMask, QueryTriggerInteraction.Ignore) || OnlyOwnCars(start, end);
+            for (int i = 0; i < count; i++) if (!PhysicalVehicles.IsOwnCar(clearHits[i].collider)) return false;
+            return true;
+        }
+        private readonly RaycastHit[] clearHits = new RaycastHit[32];
+        private bool OnlyOwnCars(Vector3 start, Vector3 end)
+        {
+            foreach (var hit in Physics.RaycastAll(start, (end - start).normalized, (end - start).magnitude, obstacleMask, QueryTriggerInteraction.Ignore))
+                if (!PhysicalVehicles.IsOwnCar(hit.collider)) return false;
+            return true;
         }
         private Route Connector(Position from, Position to)
         {

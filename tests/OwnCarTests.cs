@@ -192,4 +192,80 @@ public sealed class OwnCarTests
         Assert.Equal(1f, BodyFade.Out(0)); Assert.Equal(0f, BodyFade.Out(BodyFade.HandoffFadeSeconds)); Assert.Equal(0f, BodyFade.Out(-1 + 99));
         Assert.Equal(1f, BodyFade.In(double.NaN)); Assert.Equal(0f, BodyFade.Out(double.NaN));
     }
+
+    private sealed class Copy { public string Model = ""; public bool Live = true; }
+
+    /// <summary>Review Sol-r1-4: cycling through more models than the pool holds never exhausts it. At capacity an idle copy
+    /// of another model is destroyed to make room; destroyed copies leave the count; new copies are budgeted per frame.</summary>
+    [Fact]
+    public void ThePoolEvictsIdleCopiesOfOtherModelsAndBudgetsCreation()
+    {
+        var destroyed = new List<Copy>();
+        var pool = new OwnCarPool<Copy>(1, c => c.Live, c => { c.Live = false; destroyed.Add(c); }, createsPerFrame: 1);
+        int frame = 0;
+        foreach (var model in new[] { "A", "B", "C", "A" })
+        {
+            var copy = pool.Take(model, ++frame, () => new Copy { Model = model });
+            Assert.NotNull(copy); Assert.Equal(model, copy!.Model); Assert.Equal(1, pool.Count);
+            pool.Return(model, copy);
+        }
+        Assert.Equal(new[] { "A", "B", "C" }, destroyed.Select(c => c.Model));
+        // The idle copy of the requested model is reused without creating.
+        var again = pool.Take("A", ++frame, () => throw new InvalidOperationException("must reuse"));
+        Assert.Equal("A", again!.Model);
+        // A copy destroyed outside the pool leaves the count; the budget allows one new copy this frame, not two.
+        again.Live = false;
+        Assert.Equal(0, pool.Count);
+        var budget = new OwnCarPool<Copy>(8, c => c.Live, c => c.Live = false, createsPerFrame: 1);
+        Assert.NotNull(budget.Take("A", 7, () => new Copy()));
+        Assert.Null(budget.Take("B", 7, () => new Copy()));
+        Assert.NotNull(budget.Take("B", 8, () => new Copy()));
+        Assert.Equal(2, budget.Count);
+        // At capacity with every copy in use nothing is evicted.
+        var full = new OwnCarPool<Copy>(1, c => c.Live, c => c.Live = false);
+        Assert.NotNull(full.Take("A", 1, () => new Copy()));
+        Assert.Null(full.Take("B", 2, () => new Copy()));
+    }
+
+    /// <summary>Review Sol-r1-3: a car held (a correction fade) right after a corner keeps its yaw, so its root, which pivots
+    /// on the front axle, stands still; only a moving car turns, at the turn rate.</summary>
+    [Fact]
+    public void AHeldCarAfterATurnKeepsItsPose()
+    {
+        double yaw = 0, target = 90;
+        Assert.Equal(yaw, OwnCarMotion.Yaw(yaw, target, 1 / 60.0, hold: true));
+        var front = new Position(10, 0, 5); var offset = new Position(0, 0, 2);
+        Position Root(double y) => PhysicalVehicleReference.Root(front, offset, new Position(Math.Sin(y * Math.PI / 180), 0, Math.Cos(y * Math.PI / 180)));
+        var before = Root(yaw);
+        for (int frame = 0; frame < 60; frame++) yaw = OwnCarMotion.Yaw(yaw, target, 1 / 60.0, hold: true);
+        Assert.Equal(before, Root(yaw));
+        // Moving, it turns at most TurnDegreesPerSecond a second, the short way round.
+        Assert.Equal(3, OwnCarMotion.Yaw(0, 90, 1 / 60.0, hold: false), 9);
+        Assert.Equal(-3, OwnCarMotion.Yaw(0, 270, 1 / 60.0, hold: false), 9);
+        Assert.Equal(90, OwnCarMotion.Yaw(89, 90, 1 / 60.0, hold: false), 9);
+        // A held command step does not move the car either.
+        Assert.Equal(0, OwnCarMotion.Step(4, 12, 6, Limit(8, hold: true), 1 / 60.0).Moved);
+    }
+
+    /// <summary>Review Opus-r1-1: the own car's safety only shortens the kernel's limit: it stops a gap short of an obstacle
+    /// ahead and at its corner while the native light there is red.</summary>
+    [Fact]
+    public void ObstaclesAndRedLightsShortenTheLimit()
+    {
+        Assert.Equal(10, OwnCarMotion.Safe(Limit(10), null, false, 5).MaximumAdvance);
+        Assert.Equal(4 - OwnCarMotion.ObstacleGapMetres, OwnCarMotion.Safe(Limit(10), 4, false, 5).MaximumAdvance, 12);
+        Assert.Equal(0, OwnCarMotion.Safe(Limit(10), 0.5, false, 5).MaximumAdvance);
+        Assert.Equal(5, OwnCarMotion.Safe(Limit(10), null, true, 5).MaximumAdvance);
+        Assert.Equal(2, OwnCarMotion.Safe(Limit(2), 30, true, 5).MaximumAdvance);
+        Assert.True(OwnCarMotion.Safe(Limit(10, hold: true), 0, true, 0).HoldPosition);
+        Assert.True(OwnCarMotion.LookAheadMetres(OwnCarMotion.CruiseMetresPerSecond) > 16);
+        // A car approaching an obstacle 20 m ahead at cruise stops a gap short of it, never reaching it.
+        double along = 0, speed = OwnCarMotion.CruiseMetresPerSecond, obstacle = 20;
+        for (int frame = 0; frame < 600; frame++)
+        {
+            var step = OwnCarMotion.Step(along, 100, speed, OwnCarMotion.Safe(Limit(100), obstacle - along, false, 100 - along), 1 / 60.0);
+            along = step.Along; speed = step.Speed;
+        }
+        Assert.Equal(obstacle - OwnCarMotion.ObstacleGapMetres, along, 6);
+    }
 }

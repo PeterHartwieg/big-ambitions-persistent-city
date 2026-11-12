@@ -63,6 +63,8 @@ class SourceCopy:
         return check_scopes.check(self.root)
 
 
+# GR-9: the transpiler-reference cases were removed with the borrowed-car transpilers; Persistent City installs no
+# transpiler, so TranspilerHelpers is empty and no transpiler body is pinned.
 class CheckScopesTests(unittest.TestCase):
     def test_passes_on_base(self):
         self.assertEqual(check_scopes.check(REPO), [])
@@ -111,8 +113,6 @@ class CheckScopesTests(unittest.TestCase):
              'AccessTools.Method(typeof(StationaryAiSpawner), "SpawnAll"', 'StationaryAiSpawner.SpawnAll'),  # field-initialised variable
             ('Runtime/NativeFoodOwnership.cs', 'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',
              'Patch(typeof(BuildingRegistration), "Clear", nameof(ResetRegistration));', 'BuildingRegistration.Clear'),  # helper call
-            ('Runtime/PhysicalTrafficHooks.cs', 'Patch(typeof(DrivingAI), "WaypointRequested"',
-             'Patch(typeof(DrivingAI), "WaypointGranted"', 'DrivingAI.WaypointGranted'),  # helper through a local
             ('Runtime/ResearchBilling.cs', 'GetMethod("RunDaily"', 'GetMethod("RunWeekly"', 'MarketingHelper.RunWeekly'),  # out parameter
         ]
         for rel, old, new, expected in cases:
@@ -126,28 +126,6 @@ class CheckScopesTests(unittest.TestCase):
             src.edit('Runtime/StationaryCrowds.cs', 'harmony.Patch(spawn, prefix:', 'harmony.Patch(Lookup(), prefix:')
             problems = src.problems()
         self.assertTrue(any('cannot resolve the native target' in p for p in problems), problems)
-
-    def test_fails_on_a_string_named_transpiler_helper(self):
-        # Astra-r1-2: a helper resolved by a string literal must be inventoried.
-        with SourceCopy() as src:
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
-                     'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n'
-                     '            var other = AccessTools.Method(typeof(PhysicalTrafficHooks), "SelectOther");')
-            problems = src.problems()
-        self.assertTrue(any('SelectOther' in p and 'not in ScopeInventory' in p for p in problems), problems)
-
-    def test_fails_closed_on_other_transpiler_method_references(self):
-        snippets = ['var other = typeof(PhysicalTrafficHooks).GetMethod("SelectOther");',
-                    'var call = CodeInstruction.Call(typeof(PhysicalTrafficHooks), "SelectOther");',
-                    'var getter = AccessTools.PropertyGetter(typeof(PhysicalTrafficHooks), "Other");',
-                    'var dynamicName = AccessTools.Method(typeof(PhysicalTrafficHooks), "Select" + "Other");']
-        expected = ['SelectOther', 'unrecognised method reference', 'unrecognised method reference', 'unresolved method reference']
-        for snippet, needle in zip(snippets, expected):
-            with self.subTest(snippet=snippet), SourceCopy() as src:
-                src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
-                         'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n            ' + snippet)
-                problems = src.problems()
-                self.assertTrue(any(needle in p for p in problems), problems)
 
     def test_fails_when_the_dynamic_target_is_not_the_table_binding(self):
         # Sol-r2-2: the food-contract postfixes take their targets from the table only through Bind(hook, ...).
@@ -171,44 +149,6 @@ class CheckScopesTests(unittest.TestCase):
             problems = src.problems()
         self.assertTrue(any('does not register exactly the table binding' in p for p in problems), problems)
 
-    def test_fails_on_a_reassigned_transpiler_reference(self):
-        # Sol-r3-2: a recognised reference local reassigned after its lookup could emit an unlisted helper.
-        cases = ['replacement = ResolveOther();', 'Swap(ref replacement);', 'Resolve(out replacement);']
-        for snippet in cases:
-            with self.subTest(snippet=snippet), SourceCopy() as src:
-                src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
-                         'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n            ' + snippet)
-                problems = src.problems()
-                self.assertTrue(any("method reference 'replacement'" in p and 'assigned exactly once' in p for p in problems), problems)
-
-    OUTSIDE_HELPERS = ('        private static int SelectOther(TrafficVehicles vehicles) => vehicles.GetIdleVehicleIndex();\n'
-                       '        private static System.Reflection.MethodInfo ResolveOther() => AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectOther));\n'
-                       '        private static int SelectIdle(TrafficVehicles vehicles)')
-
-    def assert_reference_bypass_fails(self, snippet, replace_initializer=False):
-        with SourceCopy() as src:
-            lookup = 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));'
-            src.edit('Runtime/PhysicalTrafficHooks.cs', lookup, snippet if replace_initializer else lookup + '\n            ' + snippet)
-            src.edit('Runtime/PhysicalTrafficHooks.cs', '        private static int SelectIdle(TrafficVehicles vehicles)', self.OUTSIDE_HELPERS)
-            problems = src.problems()
-        self.assertTrue(any("method reference 'replacement'" in p and 'from the lookup alone' in p for p in problems), problems)
-        self.assertTrue(any('SelectTranspiler body is not the pinned' in p for p in problems), problems)
-
-    def test_fails_on_a_deconstructed_transpiler_reference(self):
-        # Sol-r4-1: a tuple write to a trusted reference local.
-        self.assert_reference_bypass_fails('(original, replacement) = (original, ResolveOther());')
-
-    def test_fails_on_a_conditional_reference_initializer(self):
-        # Astra-r4-1: the initializer must be the lookup alone, not an expression around it.
-        self.assert_reference_bypass_fails('var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle)) != null ? ResolveOther() : null;',
-                                           replace_initializer=True)
-
-    def test_any_transpiler_body_edit_fails_until_re_pinned(self):
-        with SourceCopy() as src:
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'if (instruction.Calls(original)) { selectorCalls++;', 'if (instruction.Calls(original)) { selectorCalls += 1;')
-            problems = src.problems()
-        self.assertTrue(any('SelectTranspiler body is not the pinned' in p for p in problems), problems)
-
     def test_fails_on_a_second_registration_inside_a_helper(self):
         # Sol-r2-2: a helper whose body registers twice would be recorded once per call site.
         with SourceCopy() as src:
@@ -220,26 +160,6 @@ class CheckScopesTests(unittest.TestCase):
                      'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First }); }\n')
             problems = src.problems()
         self.assertTrue(any('unsupported helper Patch shape' in p for p in problems), problems)
-
-    def test_fails_on_a_looked_up_and_cloned_transpiler_call(self):
-        # Sol-r2-3: Array.Find over GetMethods, then a cloned instruction carrying the helper as its operand.
-        with SourceCopy() as src:
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
-                     'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n'
-                     '            var other = Array.Find(typeof(PhysicalTrafficHooks).GetMethods(BindingFlags.Static | BindingFlags.NonPublic), m => m.Name == "SelectOther");')
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'yield return instruction;\n            }\n        }\n        private static int SelectIdle',
-                     'yield return instruction;\n                if (instruction.operand == replacement) { var extra = instruction.Clone(); extra.operand = other; yield return extra; }\n'
-                     '            }\n        }\n        private static int SelectIdle')
-            problems = src.problems()
-        self.assertTrue(any('GetMethods' in p for p in problems), problems)
-        self.assertTrue(any('Clone' in p for p in problems), problems)
-        self.assertTrue(any("emitted operand 'other'" in p for p in problems), problems)
-
-    def test_fails_on_an_emitted_operand_that_is_not_a_reference(self):
-        with SourceCopy() as src:
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'instruction.operand = replacement; }', 'instruction.operand = Pick(); }')
-            problems = src.problems()
-        self.assertTrue(any("emitted operand 'Pick()'" in p for p in problems), problems)
 
     def test_fails_on_extra_helper_patch_call(self):
         with SourceCopy() as src:
@@ -273,9 +193,9 @@ class CheckScopesTests(unittest.TestCase):
 
     def test_fails_when_an_expected_patch_is_removed(self):
         with SourceCopy() as src:
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'Patch(typeof(TrafficDespawner), "OnTriggerEnter", new[] { typeof(UnityEngine.Collider) }, nameof(DespawnerPrefix));', '')
+            src.edit('Runtime/AmbientPedestrians.cs', 'harmony.Patch(changeState!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(ChangeStatePrefix)));', '')
             problems = src.problems()
-        self.assertTrue(any('DespawnerPrefix' in p and 'not in source' in p for p in problems), problems)
+        self.assertTrue(any('ChangeStatePrefix' in p and 'not in source' in p for p in problems), problems)
 
     def test_fails_on_new_monobehaviour_message_or_class(self):
         with SourceCopy() as src:
@@ -307,14 +227,6 @@ class CheckScopesTests(unittest.TestCase):
             src.edit('Runtime/PersistentCityMod.cs', 'private void UpdateInspector()', 'private void UpdateInspectorV2()')
             problems = src.problems()
         self.assertTrue(any('UpdateInspector' in p and 'components' in p for p in problems), problems)
-
-    def test_fails_on_new_transpiler_helper(self):
-        with SourceCopy() as src:
-            src.edit('Runtime/PhysicalTrafficHooks.cs', 'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));',
-                     'var replacement = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectIdle));\n'
-                     '            var other = AccessTools.Method(typeof(PhysicalTrafficHooks), nameof(SelectOther));')
-            problems = src.problems()
-        self.assertTrue(any('SelectOther' in p for p in problems), problems)
 
     def test_comments_and_strings_do_not_count(self):
         with SourceCopy() as src:

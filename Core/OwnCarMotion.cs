@@ -31,6 +31,37 @@ namespace PersistentCity.Core
         public const double TurnDegreesPerSecond = 180;
         private const double Epsilon = 1e-9;
 
+        /// <summary>Gap kept to an obstacle ahead (another car, the player, a walker), metres.</summary>
+        public const double ObstacleGapMetres = 1.5;
+
+        /// <summary>The distance to look ahead for obstacles: the braking distance at the current speed plus the gap.</summary>
+        public static double LookAheadMetres(double speed)
+            => (Position.Finite(speed) && speed > 0 ? speed * speed / (2 * BrakingMetresPerSecondSquared) : 0) + ObstacleGapMetres + 1;
+
+        /// <summary>
+        /// The command limit after the own car's own safety: never closer than <see cref="ObstacleGapMetres"/> to an obstacle
+        /// <paramref name="obstacleMetres"/> ahead of its front, and not past its corner while the native light there is red.
+        /// Only shortens the limit; a held car lags, and the follower's catch-up and fade handle lag.
+        /// </summary>
+        public static PhysicalTrafficCommandLimit Safe(PhysicalTrafficCommandLimit limit, double? obstacleMetres, bool redAhead, double toCorner)
+        {
+            if (limit.HoldPosition) return limit;
+            double advance = limit.MaximumAdvance;
+            if (obstacleMetres.HasValue) advance = Math.Min(advance, Math.Max(0, obstacleMetres.Value - ObstacleGapMetres));
+            if (redAhead) advance = Math.Min(advance, Math.Max(0, toCorner));
+            return new PhysicalTrafficCommandLimit(limit.Direction, advance, false);
+        }
+
+        /// <summary>The visible yaw (degrees) after one frame: turned towards the segment heading at
+        /// <see cref="TurnDegreesPerSecond"/>, unchanged while held so the root (which pivots on the front axle) stands.</summary>
+        public static double Yaw(double current, double target, double seconds, bool hold)
+        {
+            if (hold || !Position.Finite(current) || !Position.Finite(target) || !Position.Finite(seconds) || seconds <= 0) return current;
+            double delta = ((target - current) % 360 + 540) % 360 - 180;
+            double turn = TurnDegreesPerSecond * seconds;
+            return Math.Abs(delta) <= turn ? target : current + Math.Sign(delta) * turn;
+        }
+
         public static OwnCarStep Step(double along, double length, double speed, PhysicalTrafficCommandLimit limit, double seconds)
         {
             if (!Position.Finite(length) || length < 0) length = 0;

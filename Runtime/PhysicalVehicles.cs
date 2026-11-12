@@ -170,7 +170,7 @@ namespace PersistentCity.Runtime
             Position from, Position to, double along, Quaternion rotation)
         {
             Id = id; CitizenId = citizenId; Generation = generation; Instance = instance; Topology = topology; Path = path;
-            From = from; To = to; Length = Math.Max(0, Position.Distance(from, to)); Along = along; Rotation = rotation;
+            From = from; To = to; Length = Math.Max(0, Position.Distance(from, to)); Along = along; Rotation = rotation; Yaw = rotation.eulerAngles.y;
         }
         internal readonly OwnCarInstance Instance;
         internal readonly string Topology;
@@ -179,6 +179,7 @@ namespace PersistentCity.Runtime
         internal Position From, To;
         internal double Length, Along, SpeedValue;
         internal Quaternion Rotation;
+        internal double Yaw;
         internal bool Released;
         private readonly Queue<Position> reachedCorners = new Queue<Position>();
         private int lastReachedNode = -1;
@@ -235,8 +236,7 @@ namespace PersistentCity.Runtime
         private readonly Func<string, int, Waypoint?> resolve;
         private readonly Dictionary<string, PhysicalVehicleBody> bodies = new Dictionary<string, PhysicalVehicleBody>(StringComparer.Ordinal);
         private readonly Dictionary<string, ParkedCarBody> parked = new Dictionary<string, ParkedCarBody>(StringComparer.Ordinal);
-        private readonly Dictionary<string, Stack<OwnCarInstance>> idle = new Dictionary<string, Stack<OwnCarInstance>>(StringComparer.Ordinal);
-        private readonly List<OwnCarInstance> all = new List<OwnCarInstance>();
+        private readonly OwnCarPool<OwnCarInstance> pool;
         private readonly int maximum;
         private GameObject? holder;
         private Dictionary<string, OwnCarModel>? models;
@@ -258,7 +258,14 @@ namespace PersistentCity.Runtime
         internal Func<PhysicalVehicleBody, int, bool>? NativeTargetPermission { get; set; }
 
         public PhysicalVehicles(Func<string, int, Waypoint?> resolveNode, int max = 24)
-        { resolve = resolveNode; maximum = Math.Max(1, Math.Min(64, max)); }
+        {
+            resolve = resolveNode; maximum = Math.Max(1, Math.Min(64, max));
+            // Moving plus parked cars; at most two new copies a frame (Instantiate and script removal are not cheap).
+            pool = new OwnCarPool<OwnCarInstance>(maximum * 2, i => i.Live, i => UnityEngine.Object.Destroy(i.Root));
+        }
+        /// <summary>The own-car holder: colliders under it are the mod's own cars, which the route planner ignores.</summary>
+        internal static Transform? OwnHolder { get; private set; }
+        internal static bool IsOwnCar(Collider? collider) => collider != null && OwnHolder != null && collider.transform.IsChildOf(OwnHolder);
 
         public bool Ready => !disposed && TrafficVehiclesField != null && SharesField != null && SharesField.FieldType == typeof(int[])
             && DensityManagerField != null && DensityField != null && DensityField.FieldType == typeof(int);
@@ -267,7 +274,7 @@ namespace PersistentCity.Runtime
         public string LastAdmissionResident { get; private set; } = "";
         public string LastAdmissionError { get; private set; } = "";
         public string LastError => recoveryError.Length != 0 ? recoveryError : Ready ? "" : "Native traffic share members are missing.";
-        public string OwnershipDiagnostics => "ownCars=" + bodies.Count + ", parkedCars=" + parked.Count + ", instances=" + all.Count
+        public string OwnershipDiagnostics => "ownCars=" + bodies.Count + ", parkedCars=" + parked.Count + ", instances=" + pool.Count
             + ", heldGroups=" + string.Join("|", heldGroups.Select(g => g.ToString()).OrderBy(g => g, StringComparer.Ordinal))
             + ", retired=" + retired + ", shareReapplied=" + shareReapplied;
 
@@ -291,6 +298,7 @@ namespace PersistentCity.Runtime
             modelNames = catalogue.Keys.OrderBy(n => n, StringComparer.Ordinal).ToArray();
             holder = new GameObject("PersistentCity own cars");
             UnityEngine.Object.DontDestroyOnLoad(holder);
+            OwnHolder = holder.transform;
             HoldNativeAmbient(pool);
             active = true; return true;
         }
@@ -423,10 +431,18 @@ namespace PersistentCity.Runtime
                 Math.Max(0.3f, model.Height / 2f - 0.15f), Math.Max(1f, model.Length + Math.Abs(markerOffset.z)));
             int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Default");
             LastAdmissionStage = "spawn obstruction";
-            // The resident's own parked car is not an obstruction: it is replaced by the driving one below.
-            if (parked.TryGetValue(citizen.Car.Id, out var standing)) ReleaseParked(standing);
-            if (mask == 0 || Physics.CheckBox(rootPosition + Vector3.up * (model.Height / 2f + 0.2f),
-                clearance, rotation, mask, QueryTriggerInteraction.Ignore)) return false;
+            // The resident's own parked car is not an obstruction: it is out of the check, and it leaves (fading where
+            // seen) only once the driving car stands on the road.
+            parked.TryGetValue(citizen.Car.Id, out var standing);
+            bool blocked;
+            if (standing != null) standing.Instance.Root.SetActive(false);
+            try
+            {
+                blocked = mask == 0 || Physics.CheckBox(rootPosition + Vector3.up * (model.Height / 2f + 0.2f),
+                    clearance, rotation, mask, QueryTriggerInteraction.Ignore);
+            }
+            finally { if (standing != null && standing.Instance.Live) standing.Instance.Root.SetActive(true); }
+            if (blocked) return false;
             LastAdmissionStage = "own car instance";
             OwnCarInstance? instance = null;
             try
@@ -439,6 +455,7 @@ namespace PersistentCity.Runtime
                 instance.Place(body.Position, rotation);
                 instance.Root.SetActive(true);
                 bodies.Add(body.Id, body);
+                if (standing != null) LeaveParked(standing);
                 LastAdmissionStage = "admitted";
                 return true;
             }
@@ -474,20 +491,13 @@ namespace PersistentCity.Runtime
             Return(car.Instance);
         }
 
-        // Own pool: an idle copy of the model, else a new copy while the pool has room (moving plus parked cars).
+        // Own pool (OwnCarPool): an idle copy of the model, else a new copy within capacity and this frame's budget,
+        // evicting another model's idle copy at capacity.
         private OwnCarInstance? Take(OwnCarModel model, int paintSeed)
         {
-            OwnCarInstance? instance = null;
-            if (idle.TryGetValue(model.Name, out var stack))
-                while (stack.Count > 0 && instance == null) { var next = stack.Pop(); if (next.Live) instance = next; }
-            if (instance == null)
-            {
-                if (all.Count >= maximum * 2 || holder == null) return null;
-                instance = Create(model);
-                if (instance == null) return null;
-                all.Add(instance);
-            }
-            Paint(instance, paintSeed);
+            if (holder == null) return null;
+            var instance = pool.Take(model.Name, Time.frameCount, () => Create(model));
+            if (instance != null) Paint(instance, paintSeed);
             return instance;
         }
 
@@ -496,8 +506,7 @@ namespace PersistentCity.Runtime
             if (instance == null || !instance.Live) return;
             instance.SetFade(1);
             instance.Root.SetActive(false);
-            if (!idle.TryGetValue(instance.Model.Name, out var stack)) idle.Add(instance.Model.Name, stack = new Stack<OwnCarInstance>());
-            stack.Push(instance);
+            pool.Return(instance.Model.Name, instance);
         }
 
         private static void Paint(OwnCarInstance instance, int paintSeed)
@@ -554,8 +563,9 @@ namespace PersistentCity.Runtime
             foreach (var obstacle in root.GetComponentsInChildren<UnityEngine.AI.NavMeshObstacle>(true)) obstacle.enabled = false;
             foreach (var behaviour in root.GetComponentsInChildren<Behaviour>(true))
                 if (behaviour != null && behaviour.GetType().Name == "AudioSource") behaviour.enabled = false;
+            // Only collider objects change layer; renderers keep the prefab's layers, so culling and lighting stay native.
             int layer = LayerMask.NameToLayer("Obstacles");
-            if (layer >= 0) foreach (var transform in root.GetComponentsInChildren<Transform>(true)) transform.gameObject.layer = layer;
+            if (layer >= 0) foreach (var collider in root.GetComponentsInChildren<Collider>(true)) collider.gameObject.layer = layer;
             return true;
         }
 
@@ -596,10 +606,14 @@ namespace PersistentCity.Runtime
         private void Drive(PhysicalVehicleBody body, float seconds)
         {
             if (CommandLimit == null || body.RouteFinished) return;
-            var limit = CommandLimit(body);
+            var command = CommandLimit(body);
+            // The own car's own safety on top of the kernel's limit: an obstacle ahead, a native red at its corner.
+            var corner = body.Path.Count > 0 ? resolve(body.Topology, body.Path[0]) : null;
+            bool red = corner != null && corner.stop;
+            var limit = OwnCarMotion.Safe(command, command.HoldPosition ? null : ObstacleAhead(body), red, body.Length - body.Along);
             var step = OwnCarMotion.Step(body.Along, body.Length, body.SpeedValue, limit, seconds);
             body.Along = step.Along; body.SpeedValue = step.Speed;
-            if (step.AtCorner && body.Path.Count > 0)
+            if (step.AtCorner && !red && body.Path.Count > 0)
             {
                 int node = body.Path[0];
                 if (NativeTargetPermission != null && NativeTargetPermission(body, node))
@@ -619,11 +633,40 @@ namespace PersistentCity.Runtime
                     }
                 }
             }
+            // A standing car keeps its pose: the root pivots on the front axle, so turning in place would move it.
+            if (step.Moved <= 1e-9) return;
             var heading = Vector(body.To) - Vector(body.From); heading.y = 0;
-            if (heading.sqrMagnitude > 0.0001f && seconds > 0)
-                body.Rotation = Quaternion.RotateTowards(body.Rotation, Quaternion.LookRotation(heading.normalized, Vector3.up),
-                    (float)(OwnCarMotion.TurnDegreesPerSecond * seconds));
+            if (heading.sqrMagnitude > 0.0001f)
+            {
+                double target = Quaternion.LookRotation(heading.normalized, Vector3.up).eulerAngles.y;
+                body.Yaw = OwnCarMotion.Yaw(body.Yaw, target, seconds, hold: false);
+                body.Rotation = Quaternion.Euler(0, (float)body.Yaw, 0);
+            }
             body.Instance.Place(body.Position, body.Rotation);
+        }
+
+        private readonly RaycastHit[] hits = new RaycastHit[16];
+        private static int obstacleMask = -1;
+        /// <summary>Distance from the front axle to the nearest vehicle, player or walker ahead within the braking
+        /// distance, ignoring the car's own colliders; null when clear.</summary>
+        private double? ObstacleAhead(PhysicalVehicleBody body)
+        {
+            if (obstacleMask < 0) obstacleMask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Player", "Obstacles", "Pedestrians", "Pedestrian", "Characters");
+            if (obstacleMask == 0) return null;
+            var model = body.Instance.Model;
+            var forward = body.Rotation * Vector3.forward;
+            var half = new Vector3(Math.Max(0.4f, model.Width / 2f), Math.Max(0.3f, model.Height / 2f - 0.15f), 0.25f);
+            var centre = Vector(body.Position) + Vector3.up * (model.Height / 2f + 0.2f);
+            float reach = (float)OwnCarMotion.LookAheadMetres(body.SpeedValue);
+            int count = Physics.BoxCastNonAlloc(centre, half, forward, hits, body.Rotation, reach, obstacleMask, QueryTriggerInteraction.Ignore);
+            double? nearest = null;
+            for (int i = 0; i < count; i++)
+            {
+                var hit = hits[i];
+                if (hit.collider == null || hit.collider.transform.IsChildOf(body.Instance.Root.transform)) continue;
+                if (!nearest.HasValue || hit.distance < nearest.Value) nearest = hit.distance;
+            }
+            return nearest;
         }
 
         /// <summary>GR-9: show these parked cars (nearest first, at most the vehicle cap). A car no longer wanted fades
@@ -646,9 +689,12 @@ namespace PersistentCity.Runtime
                 var state = car(entry.CarId);
                 if (state == null || !SceneReady || !CarAppearance.TryModel(state, () => modelNames, out string modelId)
                     || !models.TryGetValue(modelId, out var model) || model.Refused) continue;
+                var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
+                // A curb point is not a reserved space: another car (parked, driving, the player's) may already stand
+                // there. This car stays hidden until the space is free; its saved position is unchanged.
+                if (!ParkedClear(model, entry.At, rotation)) continue;
                 var instance = Take(model, CarAppearance.Paint(state));
                 if (instance == null) continue;
-                var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
                 // The model's root, not its front axle, stands on the curb point.
                 instance.Root.transform.SetPositionAndRotation(Vector(entry.At), rotation);
                 var body = new ParkedCarBody(entry.CarId, instance, entry.At);
@@ -662,6 +708,20 @@ namespace PersistentCity.Runtime
                     if (shown.Instance.CanFade && shown.Instance.OnScreen) shown.FadeOut = 0;
                     else ReleaseParked(shown);
                 }
+        }
+
+        private static bool ParkedClear(OwnCarModel model, Position at, Quaternion rotation)
+        {
+            int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Player");
+            var half = new Vector3(Math.Max(0.5f, model.Width / 2f + 0.2f), Math.Max(0.3f, model.Height / 2f - 0.15f), Math.Max(1f, model.Length / 2f + 0.3f));
+            return mask != 0 && !Physics.CheckBox(Vector(at) + Vector3.up * (model.Height / 2f + 0.2f), half, rotation, mask, QueryTriggerInteraction.Ignore);
+        }
+
+        /// <summary>A parked car whose owner now drives: it fades out where seen, else returns to the pool at once.</summary>
+        private void LeaveParked(ParkedCarBody car)
+        {
+            if (car.Instance.Live && car.Instance.CanFade && car.Instance.OnScreen) { if (double.IsNaN(car.FadeOut)) car.FadeOut = 0; }
+            else ReleaseParked(car);
         }
 
         private static float ParkedYaw(ParkedCar car)
@@ -704,8 +764,8 @@ namespace PersistentCity.Runtime
             finally
             {
                 disposed = true;
-                foreach (var instance in all) if (instance.Live) UnityEngine.Object.Destroy(instance.Root);
-                all.Clear(); idle.Clear();
+                pool.Clear();
+                if (holder != null && ReferenceEquals(OwnHolder, holder.transform)) OwnHolder = null;
                 if (holder != null) UnityEngine.Object.Destroy(holder);
                 holder = null;
             }
