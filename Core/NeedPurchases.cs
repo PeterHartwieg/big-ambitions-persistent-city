@@ -63,7 +63,10 @@ namespace PersistentCity.Core
             // Ask the market first: an unsupported or native-owned venue gives the person no need state at all.
             if (!market.Serves(venue.Id)) return;
             var need = NeedModel.Ensure(live, profile, day, State.Seed);
-            if (need == null || !NeedModel.Due(need, day)) return;
+            // An impulse buys at its own venue on its own day even when the need is not due yet.
+            bool impulse = live.Needs!.LastImpulseDay == day && live.Needs.ImpulseVenue == venue.Id;
+            if (need == null || !impulse && !NeedModel.Due(need, day)) return;
+            if (impulse) live.Needs.ImpulseVenue = "";
             PurchaseResult? result = null;
             market.Guarded(() =>
             {
@@ -83,6 +86,51 @@ namespace PersistentCity.Core
             PurchasesRefused++;
             NeedModel.Defer(need, profile, day);
             DayPlanExecutor.Mark(live, Activity.Shop, live.ActivityUntilMinute, PlanItemState.Missed, PlanMissCause.Refused);
+        }
+
+        /// <summary>Walking legs pass a venue within this many metres of the leg.</summary>
+        public const double ImpulseReachMetres = 25;
+        /// <summary>The impulse visit's length after arrival, in minutes.</summary>
+        public const double ImpulseVisitMinutes = 30;
+
+        /// <summary>A resident who sets off on a new journey whose walking legs pass an open served venue draws one impulse
+        /// for it (J0 "Impulse"). A true draw inserts an optional need item at the journey's arrival when it fits; the
+        /// routine sends the person there from the arrival event. Runs on the live person after commit.</summary>
+        private void ImpulseOnDeparture(CitizenState live)
+        {
+            var market = purchases; var journey = live.Journey;
+            if (market == null || live.IsVisitor || live.Wallet == null || live.Plan == null || journey == null || live.Phase != CitizenPhase.Travelling) return;
+            int day = DayPlanner.PlanDay(State.Minute);
+            if (day < 0 || live.Plan.Day != day || live.Needs != null && live.Needs.LastImpulseDay == day) return;
+            var venues = market.Venues;
+            for (int v = 0; v < venues.Count; v++)
+            {
+                if (venues[v] == live.DestinationId || !places.TryGetValue(venues[v], out var venue) || !DailyRoutine.Open(venue, State.Minute)) continue;
+                if (!Passes(journey, venue.Position)) continue;
+                var profile = NeedModel.For(venue.BusinessType);
+                if (profile == null) continue;
+                // One draw per person, venue and day: a passing that misses the draw is not drawn again today.
+                if (!NeedModel.Impulse(live, profile, venue.Id, day, State.Seed)) continue;
+                if (NeedModel.InsertImpulse(live, venue.Id, live.NextEventMinute, ImpulseVisitMinutes)) ImpulsesInserted++;
+                return;
+            }
+        }
+
+        public long ImpulsesInserted { get; private set; }
+
+        private static bool Passes(Route journey, Position at)
+        {
+            foreach (var leg in journey.Legs)
+                if (leg.Mode == TravelMode.Walk && SegmentDistance(leg.From, leg.To, at) <= ImpulseReachMetres) return true;
+            return false;
+        }
+
+        private static double SegmentDistance(Position a, Position b, Position p)
+        {
+            double dx = b.X - a.X, dz = b.Z - a.Z, length = dx * dx + dz * dz;
+            double t = length <= 0 ? 0 : Math.Max(0, Math.Min(1, ((p.X - a.X) * dx + (p.Z - a.Z) * dz) / length));
+            double x = a.X + t * dx - p.X, z = a.Z + t * dz - p.Z;
+            return Math.Sqrt(x * x + z * z);
         }
 
         private static PurchaseResult PurchaseResultFor(PurchaseRequest request, PurchaseRefusal refusal, string reason)

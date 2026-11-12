@@ -592,10 +592,12 @@ namespace PersistentCity.Core
             occupancy.Move(live.DayPlaceId, working.DayPlaceId);
             food?.AccrueWorkDeparture(live, working);
             var needVisit = NewNeedVisit(live, working);
+            bool departed = purchases != null && working.Phase == CitizenPhase.Travelling && working.Journey != null && !ReferenceEquals(working.Journey, live.Journey);
             DeferMissedNeeds(live, working);
             CommitOrdinaryArrival(live, working);
             CommitEvent(live, working);
             if (needVisit != null) CommitNeedPurchase(live, needVisit);
+            if (departed) ImpulseOnDeparture(live);
             food?.EmploymentChanged(live);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (live.Visitor != null) VisitorSchedules.Sync(live.Visitor);

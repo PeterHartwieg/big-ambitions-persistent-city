@@ -239,6 +239,8 @@ namespace PersistentCity.Persistence
                 if (PreWalletBody(source)) return PreWalletRefusal();
                 // GR-2 changed it again: a body from before day plans is an older development city too.
                 if (PrePlanBody(source)) return PrePlanRefusal();
+                // GR-3 added the resident's needs: a body from before them is an older development city as well.
+                if (PreNeedsBody(source)) return PreNeedsRefusal();
                 return Invalid("Invalid state: " + exception.Message);
             }
         }
@@ -420,6 +422,11 @@ namespace PersistentCity.Persistence
                 // A bounded part of its person's record, like the resident tuple; not a record of its own.
                 CheckPlan(reader, text); return;
             }
+            if (type == typeof(PersonNeeds))
+            {
+                if (reader.TokenType == JsonToken.Null) return;
+                CheckNeeds(reader, text); return;
+            }
             if (type == typeof(WeatherCommitment))
             {
                 if(reader.TokenType==JsonToken.Null) return;
@@ -534,7 +541,7 @@ namespace PersistentCity.Persistence
         private static bool NullableRecord(Type type) => type == typeof(RivalOutflowHistory) || type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget)
-            || type == typeof(WeatherCommitment) || type == typeof(DayPlan) || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
+            || type == typeof(WeatherCommitment) || type == typeof(DayPlan) || type == typeof(PersonNeeds) || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
         // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
         // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
         // remain per operation, including application-wide JsonConvert defaults.
@@ -553,7 +560,7 @@ namespace PersistentCity.Persistence
             settings.Converters.Add(new TuningConverter()); settings.Converters.Add(new MealOutcomeConverter()); settings.Converters.Add(new TupleConverter());
             settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter());
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
-            settings.Converters.Add(new PlanConverter(context));
+            settings.Converters.Add(new PlanConverter(context)); settings.Converters.Add(new NeedsConverter(context));
             settings.Converters.Add(new VisitorConverter26(context));
             settings.Converters.Add(new RoutineTupleConverter27(context));
             settings.Converters.Add(new ResearchConverter29());
@@ -681,7 +688,7 @@ namespace PersistentCity.Persistence
             int vendorRecords = 0;
             var vendors = ValidateVendors30(state, ref vendorRecords);
             int embeddedRecords = 1 + vendorRecords + ValidateFood(state, vendors);
-            ValidatePlans(state);
+            ValidatePlans(state); ValidateNeeds(state);
             embeddedRecords += ValidateNames25(state);
             Require(state.TravelTimingVersion == 0 || state.TravelTimingVersion == 1, "Invalid travel timing version.");
             Bounded(state.TravelClockRate, 0.01, 1000, "Travel clock rate");

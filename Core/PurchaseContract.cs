@@ -175,6 +175,9 @@ namespace PersistentCity.Core
     {
         /// <summary>A cheap read: whether the venue is a player business this market sells for now. False keeps it native.</summary>
         bool Serves(string venueId);
+        /// <summary>The venues <see cref="Serves"/> is true for now, for the impulse check while passing. Kept small: the
+        /// player's own supported businesses.</summary>
+        IReadOnlyList<string> Venues { get; }
         /// <summary>Prepares one sale, or returns null with the refusal that applies before any native call.</summary>
         IPurchaseNative? Open(PurchaseRequest request, out PurchaseRefusal refusal, out string reason);
         /// <summary>The save's receipt store (the native save's mod data, next to the native orders).</summary>

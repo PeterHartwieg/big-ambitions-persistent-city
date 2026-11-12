@@ -50,10 +50,16 @@ namespace PersistentCity.Core
     {
         public const int MaximumNeeds = 16;
         private readonly List<NeedState> needs = new List<NeedState>();
-        public PersonNeeds(int lastImpulseDay = -1) { LastImpulseDay = lastImpulseDay; }
+        public PersonNeeds(int lastImpulseDay = -1, string impulseVenue = "")
+        {
+            if (lastImpulseDay < -1) throw new ArgumentOutOfRangeException(nameof(lastImpulseDay));
+            LastImpulseDay = lastImpulseDay; ImpulseVenue = lastImpulseDay < 0 ? "" : impulseVenue ?? "";
+        }
         public IReadOnlyList<NeedState> Needs => needs;
-        /// <summary>The day of the person's last impulse purchase visit; at most one per day.</summary>
+        /// <summary>The day of the person's last impulse; at most one per day. -1 for none.</summary>
         public int LastImpulseDay { get; internal set; }
+        /// <summary>The venue of that impulse: a visit there on that day buys even when the need is not due.</summary>
+        public string ImpulseVenue { get; internal set; }
         public NeedState? Find(string category)
         {
             foreach (var need in needs) if (need.Category == category) return need;
@@ -72,13 +78,13 @@ namespace PersistentCity.Core
         }
         public PersonNeeds Copy()
         {
-            var copy = new PersonNeeds(LastImpulseDay);
+            var copy = new PersonNeeds(LastImpulseDay, ImpulseVenue);
             foreach (var need in needs) copy.needs.Add(need.Copy());
             return copy;
         }
         public bool SameAs(PersonNeeds? other)
         {
-            if (other == null || other.LastImpulseDay != LastImpulseDay || other.needs.Count != needs.Count) return false;
+            if (other == null || other.LastImpulseDay != LastImpulseDay || other.ImpulseVenue != ImpulseVenue || other.needs.Count != needs.Count) return false;
             for (int i = 0; i < needs.Count; i++)
             {
                 var a = needs[i]; var b = other.needs[i];
@@ -179,7 +185,7 @@ namespace PersistentCity.Core
             var needs = person.Needs ??= new PersonNeeds();
             if (needs.LastImpulseDay == day) return false;
             if (ImpulseRate(needs.Find(profile.Category), profile, day) <= Draw(seed, person.Identity.Id, venue, "impulse", day) % 10000) return false;
-            needs.LastImpulseDay = day;
+            needs.LastImpulseDay = day; needs.ImpulseVenue = venue;
             return true;
         }
 
@@ -195,7 +201,8 @@ namespace PersistentCity.Core
 
         /// <summary>The <see cref="PlanItemKind.Need"/> item an impulse inserts: an optional visit of
         /// <paramref name="minutes"/> starting now, only when it ends before the next pending fixed item begins (less the
-        /// travel allowance) and the plan has room. Null when it does not fit; the plan is never squeezed.</summary>
+        /// travel allowance), no other need item is still open (the routine keeps one shop visit a day) and the plan has room.
+        /// Null when it does not fit; the plan is never squeezed.</summary>
         public static PlanItem? ImpulseItem(DayPlan plan, string venue, double now, double minutes)
         {
             if (plan == null) throw new ArgumentNullException(nameof(plan));
@@ -205,6 +212,7 @@ namespace PersistentCity.Core
             {
                 var item = plan.Items[i];
                 if (DayPlan.Terminal(plan.StateOf(i))) continue;
+                if (item.Kind == PlanItemKind.Need) return null;
                 // Any open item already under way or overlapping is in the way; a later fixed item bounds the visit.
                 if (plan.StateOf(i) != PlanItemState.Pending && item.EndsAt > now) return null;
                 if (item.Priority == PlanPriority.Fixed && item.EarliestStart - DayPlanner.WorkTravelAllowance < ends && item.EndsAt > now) return null;
