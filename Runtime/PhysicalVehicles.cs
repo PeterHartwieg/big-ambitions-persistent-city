@@ -597,13 +597,21 @@ namespace PersistentCity.Runtime
             KeepNativeAmbientHeld();
             if (heldGroups.Count == 0 && !nativeDensity.HasValue) return;
             var pool = Manager.GetVehicleList(); if (pool.Count == 0) return;
-            var vehicle = pool[retireCursor++ % pool.Count];
-            // RLO 1.0 overrule: a car RLO holds for a scene (an accident, a reckless driver, a response unit) carries a preset
-            // path or is on native's ignore list; it is RLO's and never retired. Ordinary groups stay held for our own cars.
-            if (vehicle != null && vehicle.gameObject.activeInHierarchy && vehicle.presetPath == null
-                && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType)) && Ordinary(vehicle) && !IsTaxi(vehicle)
-                && !TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex())
-                && !vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible))
+            // Review Sol-r2-1: every 30 frames the whole pool is swept, so a car loaded past the shares (RLO's rival pass-by
+            // calls TrafficManager.LoadVehicle directly, out of view) goes before it comes into view; otherwise one car a frame.
+            if (Time.frameCount % 30 == 0) { for (int i = 0; i < pool.Count; i++) TryRetire(pool[i]); }
+            else TryRetire(pool[retireCursor++ % pool.Count]);
+        }
+
+        // RLO 1.0 overrule (RloOverrule.RetiresNativeCar): a car RLO holds for a scene (an accident, a reckless driver, a
+        // response unit) carries a preset path or is on native's ignore list; it is RLO's and never retired. The cheap
+        // checks run first; the script and renderer reads only for an active car of a held group.
+        private void TryRetire(VehicleComponent? vehicle)
+        {
+            if (vehicle == null || !vehicle.gameObject.activeInHierarchy || vehicle.presetPath != null
+                || !(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType))) return;
+            if (RloOverrule.RetiresNativeCar(true, true, false, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle),
+                vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible)))
             { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; }
         }
 

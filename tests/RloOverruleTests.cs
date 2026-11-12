@@ -253,13 +253,14 @@ namespace PersistentCity.Tests
         [Fact]
         public void TheOverruleStatusNamesEveryAreaAndWhatStaysRlos()
         {
-            string text = RloOverrule.Describe(new RloLivingReading(RloLivingState.On), 0, 5, null, true, 4, true);
+            string text = RloOverrule.Describe(new RloLivingReading(RloLivingState.On), 0, 5, null, true, 4, true, 2);
+            Assert.Contains("RLO accident switches not bound", RloOverrule.Describe(new RloLivingReading(RloLivingState.On), 0, 5, null, true, 4, true, 0));
             Assert.Contains("owned food shops take no native draw, batch or customer", text);
             Assert.Contains("5 replaced customer calculator(s) overruled at owned shops", text);
             Assert.Contains("owned checkout sells private orders only", text);
             Assert.Contains("books no native rent, wage or tax", text);
             Assert.Contains("4 of them RLO's; RLO's own scene people kept", text);
-            Assert.Contains("RLO staged accidents and reckless drivers stood down; cars RLO holds are never retired", text);
+            Assert.Contains("RLO staged accidents and reckless drivers stood down; cars loaded into held groups past the shares retired off screen; cars RLO holds are never retired", text);
             Assert.Equal("Persistent City RLO overrule: RLO not loaded\nnothing to overrule\n",
                 RloOverrule.Describe(new RloLivingReading(RloLivingState.Absent), 0, 0, null, false, 0, false));
         }
@@ -310,6 +311,9 @@ namespace PersistentCity.Tests
             Assert.Empty(scenes.Unbound);
 
             Assert.Equal(2, scenes.Hold());
+            SceneHooks.Ended = 0;
+            Assert.True(scenes.EndActiveScene()); // an accident already under way when the hold starts is ended
+            Assert.Equal(1, SceneHooks.Ended);
             Assert.True(scenes.Holding);
             Assert.False((bool)accidents.GetValue(null)!); // a staged accident under way gets no successor; a reckless drive ends
             Assert.False((bool)reckless.GetValue(null)!);
@@ -327,6 +331,45 @@ namespace PersistentCity.Tests
             Assert.Single(partial.Holds);
             Assert.Contains(partial.Unbound, u => u.StartsWith("NaturalAccidents", StringComparison.Ordinal));
             Assert.Empty(RloTrafficScenes.Bind(null).Holds);
+        }
+
+        [Fact]
+        public void AnOptionThePlayerSwitchesOffDuringTheHoldStaysOffAfterRelease()
+        {
+            var rlo = LivingShape("scenes");
+            var settings = rlo.GetType("RealLifeOverhaul.Settings")!;
+            var accidents = settings.GetField("TrafficAccidents")!; var reckless = settings.GetField("NaturalAccidents")!;
+            accidents.SetValue(null, true); reckless.SetValue(null, true);
+            var prefs = new Dictionary<string, int> { ["m:rlo:traffic_accidents"] = 1, ["m:rlo:natural_accidents"] = 1 };
+            var scenes = RloTrafficScenes.Bind(rlo, key => prefs.TryGetValue(key, out int v) ? v : (int?)null);
+            scenes.Hold();
+            Assert.False((bool)accidents.GetValue(null)!);
+
+            // The player saves accidents off during the hold: RLO's callback assigns false (already false) and stores 0.
+            prefs["m:rlo:traffic_accidents"] = 0;
+            scenes.Hold();
+            scenes.Release();
+            Assert.False((bool)accidents.GetValue(null)!); // the stored choice wins over the value seen at the hold
+            Assert.True((bool)reckless.GetValue(null)!);
+
+            // Without a stored value the value recorded at the hold is given back.
+            accidents.SetValue(null, true); prefs.Clear();
+            scenes.Hold(); scenes.Release();
+            Assert.True((bool)accidents.GetValue(null)!);
+        }
+
+        [Fact]
+        public void ACarLoadedPastTheHeldSharesIsRetiredOutOfViewAndRloSceneCarsStay()
+        {
+            // RLO's rival pass-by: TrafficManager.LoadVehicle of an idle pool car, out of view, on a lane of a held group.
+            Assert.True(RloOverrule.RetiresNativeCar(active: true, heldGroup: true, presetPath: false, ignored: false, ordinary: true, taxi: false, visible: false));
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, true, false, visible: true));   // never popped in view
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, presetPath: true, false, true, false, false)); // a staged accident's wreck or unit
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, ignored: true, true, false, false));    // a car RLO holds out of traffic
+            Assert.False(RloOverrule.RetiresNativeCar(true, heldGroup: false, false, false, true, false, false)); // a group Persistent City does not replace
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, ordinary: false, false, false)); // a modded or service car
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, true, taxi: true, false));
+            Assert.False(RloOverrule.RetiresNativeCar(active: false, true, false, false, true, false, false));
         }
 
         [Fact]
@@ -361,10 +404,29 @@ namespace PersistentCity.Tests
                 settings.DefineField("LivingPopulation", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
                 settings.DefineField("TrafficAccidents", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
                 if (shape == "scenes") settings.DefineField("NaturalAccidents", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
+                // RLO's option ids and Settings.PrefsKey(id), "m:" + mod id + ":" + id.
+                foreach (var (name, id) in new[] { ("TrafficAccidentsId", "traffic_accidents"), ("NaturalAccidentsId", "natural_accidents") })
+                    settings.DefineField(name, typeof(string), FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.Literal | FieldAttributes.HasDefault).SetConstant(id);
+                var key = settings.DefineMethod("PrefsKey", MethodAttributes.Public | MethodAttributes.Static, typeof(string), new[] { typeof(string) });
+                var il = key.GetILGenerator();
+                il.Emit(OpCodes.Ldstr, "m:rlo:"); il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Call, typeof(string).GetMethod(nameof(string.Concat), new[] { typeof(string), typeof(string) })!); il.Emit(OpCodes.Ret);
+                // TrafficAccidents.EndActive(): counted in SceneHooks.
+                var accidents = module.DefineType("RealLifeOverhaul.TrafficAccidents", TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Class);
+                var end = accidents.DefineMethod("EndActive", MethodAttributes.Public | MethodAttributes.Static, typeof(void), Type.EmptyTypes).GetILGenerator();
+                end.Emit(OpCodes.Call, typeof(SceneHooks).GetMethod(nameof(SceneHooks.EndActive))!); end.Emit(OpCodes.Ret);
+                accidents.CreateType();
             }
             else if (shape != "missing field" && shape != "old release") throw new ArgumentException(shape);
             settings.CreateType();
             return assembly;
         }
+    }
+
+    /// <summary>What the emitted stand-in TrafficAccidents.EndActive reports to. Public so the emitted assembly can call it.</summary>
+    public static class SceneHooks
+    {
+        public static int Ended;
+        public static void EndActive() => Ended++;
     }
 }

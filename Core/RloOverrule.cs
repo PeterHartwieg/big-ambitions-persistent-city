@@ -55,6 +55,14 @@ namespace PersistentCity.Core
         /// and the claimed entry is still retired: no RLO line is sold to a resident, and no native customer is added.</summary>
         public static bool QuotesClaimedLines(RloLivingState living) => living == RloLivingState.Absent;
 
+        /// <summary>Review Sol-r2-1: whether the own-car adapter retires a live native car now. While Persistent City holds
+        /// a group at share 0, native draws no car of it, so an active car of a held group was left over or loaded past the
+        /// shares (RLO's rival pass-by calls TrafficManager.LoadVehicle directly); it is retired while out of view. A car
+        /// RLO holds for a scene (preset path or native ignore list), a taxi, a service or modded car, and a car of a group
+        /// not held all stay.</summary>
+        public static bool RetiresNativeCar(bool active, bool heldGroup, bool presetPath, bool ignored, bool ordinary, bool taxi, bool visible)
+            => active && heldGroup && !presetPath && !ignored && ordinary && !taxi && !visible;
+
         public static string Word(RloLivingState state) => state switch
         {
             RloLivingState.Absent => "RLO not loaded", RloLivingState.NotInRelease => "no Living population in this RLO release",
@@ -64,7 +72,7 @@ namespace PersistentCity.Core
         /// <summary>One status line per overlap area: what Persistent City owns and what stays RLO's.
         /// <paramref name="calculatorsReplaced"/>: native customer calculators held by another type (F8h scan), -1 unread.</summary>
         public static string Describe(RloLivingReading living, int toggles, int calculatorsReplaced, string? checkoutRefusal,
-            bool crowdsOverruled, int rloCrowdZones, bool trafficHeld)
+            bool crowdsOverruled, int rloCrowdZones, bool trafficHeld, int sceneSwitchesHeld = 0)
         {
             var text = new StringBuilder("Persistent City RLO overrule: ").Append(living.ToString());
             if (toggles > 0) text.Append(", ").Append(toggles).Append(" toggle(s) this session");
@@ -82,7 +90,9 @@ namespace PersistentCity.Core
                     ? "ordinary standers off in every native zone" + (rloCrowdZones > 0 ? ", " + rloCrowdZones + " of them RLO's" : "") + "; RLO's own scene people kept"
                     : "not overruled (stationary crowds inactive)").Append('\n')
                 .Append("traffic: ").Append(trafficHeld
-                    ? "ordinary native groups held for Persistent City cars; RLO staged accidents and reckless drivers stood down; cars RLO holds are never retired"
+                    ? "ordinary native groups held for Persistent City cars; " + (sceneSwitchesHeld > 0
+                        ? "RLO staged accidents and reckless drivers stood down"
+                        : "RLO accident switches not bound") + "; cars loaded into held groups past the shares retired off screen; cars RLO holds are never retired"
                     : "own cars inactive; native traffic as the game and RLO run it").Append('\n');
             return text.ToString();
         }
@@ -145,11 +155,18 @@ namespace PersistentCity.Core
     public sealed class RloSceneHold
     {
         private readonly Func<bool?> read;
+        private readonly Func<bool?>? saved;
         private readonly Action<bool> write;
         private bool? original;
 
-        public RloSceneHold(string name, Func<bool?> read, Action<bool> write)
-        { Name = name ?? ""; this.read = read ?? throw new ArgumentNullException(nameof(read)); this.write = write ?? throw new ArgumentNullException(nameof(write)); }
+        /// <summary><paramref name="saved"/> reads the player's stored option (RLO keeps options in PlayerPrefs under
+        /// <c>Settings.PrefsKey(id)</c>); null when it cannot be read. Review Sol-r2-2: the stored choice, not the field
+        /// Persistent City holds off, decides what Release gives back.</summary>
+        public RloSceneHold(string name, Func<bool?> read, Action<bool> write, Func<bool?>? saved = null)
+        {
+            Name = name ?? ""; this.read = read ?? throw new ArgumentNullException(nameof(read));
+            this.write = write ?? throw new ArgumentNullException(nameof(write)); this.saved = saved;
+        }
 
         public string Name { get; }
         public bool Holding => original.HasValue;
@@ -165,13 +182,21 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>Gives the recorded value back; nothing when not holding.</summary>
+        /// <summary>Gives the player's latest choice back: the stored option when it can be read (so an option switched
+        /// off during the hold stays off), otherwise the value recorded at the hold. Nothing when not holding.</summary>
         public void Release()
         {
             if (!original.HasValue) return;
-            bool value = original.Value;
+            bool value = Saved() ?? original.Value;
             original = null;
             if (value) write(true);
+        }
+
+        private bool? Saved()
+        {
+            if (saved == null) return null;
+            try { return saved(); }
+            catch (Exception) { return null; }
         }
     }
 }

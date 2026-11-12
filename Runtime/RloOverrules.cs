@@ -20,6 +20,7 @@ namespace PersistentCity.Runtime
         private static RloTrafficScenes? scenes;
         private static bool trafficHeld;
         private static float nextSceneHold;
+        private static int scenesHeld;
 
         /// <summary>Set by PhysicalVehicles while it holds the ordinary native groups back for its own cars. Review
         /// Sol-r1-2: holding also stands down RLO's staged accidents and reckless drivers, which take over live native cars;
@@ -32,19 +33,26 @@ namespace PersistentCity.Runtime
                 trafficHeld = value;
                 if (value)
                 {
-                    int held = Scenes.Hold();
-                    Debug.Log("[Persistent City] RLO traffic scenes that take over native cars stood down while Persistent City cars hold traffic ("
-                        + held + " of " + RloTrafficScenes.Switches.Length + " switches"
-                        + (Scenes.Unbound.Count == 0 ? "" : "; not bound: " + string.Join("; ", Scenes.Unbound)) + ").");
+                    scenesHeld = Scenes.Hold();
+                    // Review Sol-r2-1: a staged accident already under way is ended once; its tick reads the switch only between scenes.
+                    bool ended = scenesHeld > 0 && Scenes.EndActiveScene();
+                    if (Scenes.Holds.Count > 0 || Scenes.Unbound.Count > 0)
+                        Debug.Log("[Persistent City] RLO traffic scenes that take over native cars stood down while Persistent City cars hold traffic ("
+                            + scenesHeld + " of " + RloTrafficScenes.Switches.Length + " switches" + (ended ? ", a scene under way ended" : "")
+                            + (Scenes.Unbound.Count == 0 ? "" : "; not bound: " + string.Join("; ", Scenes.Unbound)) + ").");
                 }
-                else if (Scenes.Holding) { Scenes.Release(); Debug.Log("[Persistent City] RLO traffic scene switches given back."); }
+                else
+                {
+                    scenesHeld = 0;
+                    if (Scenes.Holding) { Scenes.Release(); Debug.Log("[Persistent City] RLO traffic scene switches given back (the player's stored options)."); }
+                }
             }
         }
 
         private static System.Reflection.Assembly? Rlo => AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == RloLivingPopulation.AssemblyName);
 
         internal static RloLivingTracker Living => living ??= new RloLivingTracker(RloLivingPopulation.Bind(Rlo).Read);
-        private static RloTrafficScenes Scenes => scenes ??= RloTrafficScenes.Bind(Rlo);
+        private static RloTrafficScenes Scenes => scenes ??= RloTrafficScenes.Bind(Rlo, key => UnityEngine.PlayerPrefs.HasKey(key) ? UnityEngine.PlayerPrefs.GetInt(key) : (int?)null);
 
         /// <summary>Review Sol-r1-1: the cached switch state holds new shop takeovers at boundaries during play.</summary>
         internal static bool HoldsAcquisitions => RloOverrule.HoldsAcquisitions(Living.Current.State);
@@ -77,7 +85,7 @@ namespace PersistentCity.Runtime
         {
             var tracker = Living;
             return RloOverrule.Describe(tracker.Current, tracker.Toggles, calculatorsReplaced, checkoutRefusal,
-                StationaryCrowds.Overruling, StationaryCrowds.RloZones(), TrafficHeld);
+                StationaryCrowds.Overruling, StationaryCrowds.RloZones(), TrafficHeld, scenesHeld);
         }
     }
 }
