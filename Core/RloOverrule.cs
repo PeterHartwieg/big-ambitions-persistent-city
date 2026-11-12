@@ -63,6 +63,12 @@ namespace PersistentCity.Core
         public static bool RetiresNativeCar(bool active, bool heldGroup, bool presetPath, bool ignored, bool ordinary, bool taxi, bool visible)
             => active && heldGroup && !presetPath && !ignored && ordinary && !taxi && !visible;
 
+        /// <summary>Review Sol-r3-1: a car loaded into a held group during this frame (<see cref="NativeLoadWatch"/>) has
+        /// not rendered yet, so it is retired whatever its renderers report; the other rules are those of
+        /// <see cref="RetiresNativeCar"/>.</summary>
+        public static bool RetiresNewNativeLoad(bool heldGroup, bool presetPath, bool ignored, bool ordinary, bool taxi)
+            => RetiresNativeCar(true, heldGroup, presetPath, ignored, ordinary, taxi, visible: false);
+
         public static string Word(RloLivingState state) => state switch
         {
             RloLivingState.Absent => "RLO not loaded", RloLivingState.NotInRelease => "no Living population in this RLO release",
@@ -198,5 +204,41 @@ namespace PersistentCity.Core
             try { return saved(); }
             catch (Exception) { return null; }
         }
+    }
+
+    /// <summary>Review Sol-r3-1: which native pool cars became active since the previous frame. Runtime asks it once a
+    /// frame in LateUpdate (after every Update and coroutine, before rendering), so a car another mod loaded directly
+    /// during the frame (RLO's rival pass-by: TrafficManager.LoadVehicle) is seen before it has rendered once. Slots the
+    /// pool adds later count as inactive before. The first frame only records: the cars already active then are
+    /// leftovers, retired out of view by the existing step. One bool per pool slot; no allocation after growth.</summary>
+    public sealed class NativeLoadWatch
+    {
+        private bool[] wasActive = Array.Empty<bool>();
+        private int known;
+        private bool primed;
+
+        /// <summary>Starts one frame's pass over a pool of <paramref name="count"/> slots.</summary>
+        public void Begin(int count)
+        {
+            if (count > wasActive.Length) Array.Resize(ref wasActive, Math.Max(count, wasActive.Length * 2));
+            if (!primed) known = count;
+            for (int i = known; i < count; i++) wasActive[i] = false;
+            known = Math.Max(known, count);
+        }
+
+        /// <summary>Records slot <paramref name="index"/> for this frame. True when it is active now and was not on the
+        /// previous frame, never on the first frame.</summary>
+        public bool BecameActive(int index, bool active)
+        {
+            bool fresh = primed && active && !wasActive[index];
+            wasActive[index] = active;
+            return fresh;
+        }
+
+        /// <summary>Ends the frame's pass.</summary>
+        public void End() => primed = true;
+
+        /// <summary>Forgets every slot (the adapter released its hold).</summary>
+        public void Reset() { primed = false; known = 0; Array.Clear(wasActive, 0, wasActive.Length); }
     }
 }

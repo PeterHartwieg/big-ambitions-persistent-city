@@ -372,6 +372,74 @@ namespace PersistentCity.Tests
             Assert.False(RloOverrule.RetiresNativeCar(active: false, true, false, false, true, false, false));
         }
 
+        // One native pool slot as PhysicalVehicles reads it.
+        private sealed class PoolCar { public bool Active, Held = true, Preset, Ignored, Ordinary = true, Taxi, Visible; public int FramesDriven; }
+
+        // The adapter's two passes, in Unity's frame order: Update (one slot a frame, the whole pool every 30 frames, out of
+        // view only) and LateUpdate (NativeLoadWatch: a car that became active this frame is retired before it renders).
+        private static void Frame(int frame, List<PoolCar> pool, NativeLoadWatch watch, Action<int>? duringUpdate, ref int cursor)
+        {
+            duringUpdate?.Invoke(frame); // other mods' Update: RLO's rival pass-by loads here
+            void Retire(PoolCar c) { if (RloOverrule.RetiresNativeCar(c.Active, c.Held, c.Preset, c.Ignored, c.Ordinary, c.Taxi, c.Visible)) c.Active = false; }
+            if (frame % 30 == 0) foreach (var c in pool) Retire(c); else if (pool.Count > 0) Retire(pool[cursor++ % pool.Count]);
+            watch.Begin(pool.Count);
+            for (int i = 0; i < pool.Count; i++)
+            {
+                var c = pool[i];
+                if (!watch.BecameActive(i, c.Active)) continue;
+                if (RloOverrule.RetiresNewNativeLoad(c.Held, c.Preset, c.Ignored, c.Ordinary, c.Taxi)) { c.Active = false; watch.BecameActive(i, false); }
+            }
+            watch.End();
+            foreach (var c in pool) if (c.Active) c.FramesDriven++; // rendering and the next traffic step see only what is left
+        }
+
+        [Fact]
+        public void ACarLoadedJustAfterASweepIsRetiredBeforeItRendersEvenWhenItComesIntoView()
+        {
+            var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
+            var watch = new NativeLoadWatch();
+            int cursor = 0;
+            for (int f = 1; f <= 30; f++) Frame(f, pool, watch, null, ref cursor); // frame 30 is a sweep
+
+            // Frame 31, right after the sweep and away from the cursor: the pass-by loads slot 37 and the camera turns to it.
+            Frame(31, pool, watch, _ => { pool[37].Active = true; pool[37].Visible = true; }, ref cursor);
+            Assert.False(pool[37].Active);
+            Assert.Equal(0, pool[37].FramesDriven);
+
+            // The pool grows for a new car loaded straight into a held group: the new slot is caught too.
+            Frame(32, pool, watch, _ => pool.Add(new PoolCar { Active = true, Visible = true }), ref cursor);
+            Assert.False(pool[40].Active);
+
+            // Loads that are not ours to refuse stay: an RLO scene car (preset path), a car RLO holds, a group we do not
+            // replace, a taxi.
+            Frame(33, pool, watch, _ =>
+            {
+                pool[1].Active = pool[1].Preset = true; pool[2].Active = pool[2].Ignored = true;
+                pool[3].Active = true; pool[3].Held = false; pool[4].Active = pool[4].Taxi = true;
+            }, ref cursor);
+            Assert.True(pool[1].Active && pool[2].Active && pool[3].Active && pool[4].Active);
+            for (int f = 34; f <= 70; f++) Frame(f, pool, watch, null, ref cursor);
+            Assert.True(pool[1].Active && pool[2].Active && pool[3].Active && pool[4].Active);
+        }
+
+        [Fact]
+        public void TheLoadWatchLeavesCarsActiveAtTheFirstFrameToTheOutOfViewStep()
+        {
+            var watch = new NativeLoadWatch();
+            watch.Begin(2);
+            Assert.False(watch.BecameActive(0, true)); // a leftover active when the hold starts
+            Assert.False(watch.BecameActive(1, false));
+            watch.End();
+            watch.Begin(2);
+            Assert.False(watch.BecameActive(0, true));
+            Assert.True(watch.BecameActive(1, true));
+            watch.End();
+            watch.Reset();
+            watch.Begin(2);
+            Assert.False(watch.BecameActive(1, true)); // after a release the next hold primes again
+            watch.End();
+        }
+
         [Fact]
         public void NeedPurchaseClaimsTheNativeSlotButSellsNoRloBasketLine()
         {

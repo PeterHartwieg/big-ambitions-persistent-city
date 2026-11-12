@@ -249,7 +249,7 @@ namespace PersistentCity.Runtime
         private int[]? nativeShares, appliedShares;
         private int? nativeDensity;
         private readonly HashSet<VehicleGroupType> heldGroups = new HashSet<VehicleGroupType>();
-        private long retired, shareReapplied;
+        private long retired, shareReapplied, loadsRetired;
         private static readonly FieldInfo? TrafficVehiclesField = AccessTools.Field(typeof(TrafficManager), "trafficVehicles");
         private static readonly FieldInfo? SharesField = AccessTools.Field(typeof(TrafficVehicles), "currentVehicleGroupTypePercentages");
         private static readonly FieldInfo? DensityManagerField = AccessTools.Field(typeof(TrafficManager), "densityManager");
@@ -276,7 +276,7 @@ namespace PersistentCity.Runtime
         public string LastError => recoveryError.Length != 0 ? recoveryError : Ready ? "" : "Native traffic share members are missing.";
         public string OwnershipDiagnostics => "ownCars=" + bodies.Count + ", parkedCars=" + parked.Count + ", instances=" + pool.Count
             + ", heldGroups=" + string.Join("|", heldGroups.Select(g => g.ToString()).OrderBy(g => g, StringComparer.Ordinal))
-            + ", retired=" + retired + ", shareReapplied=" + shareReapplied;
+            + ", retired=" + retired + ", loadsRetired=" + loadsRetired + ", shareReapplied=" + shareReapplied;
 
         public bool Activate()
         {
@@ -601,6 +601,27 @@ namespace PersistentCity.Runtime
             // calls TrafficManager.LoadVehicle directly, out of view) goes before it comes into view; otherwise one car a frame.
             if (Time.frameCount % 30 == 0) { for (int i = 0; i < pool.Count; i++) TryRetire(pool[i]); }
             else TryRetire(pool[retireCursor++ % pool.Count]);
+        }
+
+        private readonly NativeLoadWatch loads = new NativeLoadWatch();
+
+        /// <summary>Review Sol-r3-1, called from LateUpdate: a car loaded into a held group during this frame by a direct
+        /// TrafficManager.LoadVehicle (RLO's rival pass-by) is retired before it renders. One activeInHierarchy read per
+        /// pool slot a frame; the group, script and ignore-list reads only for a car that just became active.</summary>
+        public void CatchNewLoads()
+        {
+            if (!Active || heldGroups.Count == 0 && !nativeDensity.HasValue || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) { loads.Reset(); return; }
+            var pool = Manager.GetVehicleList();
+            loads.Begin(pool.Count);
+            for (int i = 0; i < pool.Count; i++)
+            {
+                var vehicle = pool[i];
+                if (!loads.BecameActive(i, vehicle != null && vehicle.gameObject.activeInHierarchy) || vehicle == null) continue;
+                if (RloOverrule.RetiresNewNativeLoad(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType), vehicle.presetPath != null,
+                    TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle)))
+                { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loadsRetired++; loads.BecameActive(i, false); }
+            }
+            loads.End();
         }
 
         // RLO 1.0 overrule (RloOverrule.RetiresNativeCar): a car RLO holds for a scene (an accident, a reckless driver, a
