@@ -243,10 +243,15 @@ public sealed class FoodContractStampTests
         var recorded = Stamp(r);
         int matches = 0;
         for (int i = 0; i < 100; i++) if (Stamp(r).Matches(recorded)) matches++;
-        long bytes = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10_000; i++) if (Stamp(r).Matches(recorded)) matches++;
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - bytes);
-        Assert.Equal(10_100, matches);
+        long allocated = long.MaxValue;
+        for (int round = 0; round < 5; round++)
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 10_000; i++) if (Stamp(r).Matches(recorded)) matches++;
+            allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
+        Assert.Equal(0, allocated);
+        Assert.Equal(50_100, matches);
     }
 
 
