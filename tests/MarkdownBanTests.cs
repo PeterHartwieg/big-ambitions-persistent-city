@@ -30,7 +30,10 @@ public sealed class MarkdownBanTests : IDisposable
     [Fact]
     public void TheBranchAddsNoMarkdown()
     {
-        var (code, output) = Run(Root(), "origin/codex/persistent-city");
+        string? pr = Environment.GetEnvironmentVariable("PC_MD_BAN_PR");
+        var (code, output) = string.IsNullOrEmpty(pr)
+            ? Run(Root(), "origin/codex/persistent-city")
+            : Run(Root(), "origin/codex/persistent-city", "--pr", pr);
         Assert.True(code == 0, output);
     }
 
@@ -105,6 +108,14 @@ public sealed class MarkdownBanTests : IDisposable
         File.WriteAllText(labels, "bug\ndocs-approved\n");
         (code, output) = Run(repo, "base", "--pr", "7", gh);
         Assert.True(code == 0, output);
+    }
+
+    [Fact]
+    public void AMissingBaseSuggestsAFetch()
+    {
+        var (code, output) = Run(repo, "origin/missing");
+        Assert.Equal(1, code);
+        Assert.Contains("git fetch origin codex/persistent-city", output);
     }
 
     void AssertFails(string path)

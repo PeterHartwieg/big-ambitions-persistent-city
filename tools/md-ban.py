@@ -30,7 +30,11 @@ def violations(changes):
 
 
 def local_changes(root, base):
-    merge_base = run(["git", "merge-base", base, "HEAD"], root).strip()
+    result = subprocess.run(["git", "merge-base", base, "HEAD"], cwd=root, capture_output=True, text=True)
+    if result.returncode != 0:
+        sys.exit("markdown ban: no merge base with %s; run `git fetch origin codex/persistent-city` or pass --base: %s"
+                 % (base, result.stderr.strip()))
+    merge_base = result.stdout.strip()
     names = {"A": "added", "C": "copied", "R": "renamed"}
     changes = []
     fields = run(["git", "diff", "--name-status", "-z", "-M", "-C", merge_base], root).split("\0")

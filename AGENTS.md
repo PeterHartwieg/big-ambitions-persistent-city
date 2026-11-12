@@ -24,7 +24,7 @@ Read this file, your plan row and the sections your task lists. Then read the co
 - The save schema is held at 1 until release. Never bump it, add a per-feature schema constant, or plan a writer number; change the format in place. This overrides older plan text. A test enforces it. [decision](docs/decisions/2026-11-09-schema-one.md)
 - Slices write no docs unless the task names the file. Evidence, perf numbers and in-game checks go in the PR description. The coordinator updates the roadmap and the rig checklist after merge. Plans are frozen and leave the tree once their slices have merged; later owner decisions go in `docs/decisions/`. [decision](docs/decisions/2026-11-10-lean-docs.md)
 - No code comments. Fix the problem or open an issue instead of leaving an excuse in the code. The only exceptions are tooling directives and the lines in `comment-excuses.txt`; `CommentBanTests` enforces this.
-- No new markdown files unless Peter explicitly asks for one (a plan or a review); put status in the PR description or the issue. `tools/md-ban.py` (`MarkdownBanTests`) fails on new `.md`/`.mdx` paths; `--pr <n>` passes when Peter has applied the `docs-approved` label.
+- No new markdown files unless Peter explicitly asks for one (a plan or a review); put status in the PR description or the issue. `tools/md-ban.py` (`MarkdownBanTests`) fails on new `.md`/`.mdx` paths; `--pr <n>` passes when Peter has applied the `docs-approved` label, and `PC_MD_BAN_PR=<n>` makes the test use it.
 - Use "Refs #N", not "Fixes #N".
 - Do not change RLO or publish anything upstream. Do not ask about release or Workshop.
 - Implementers do not use the game, the rig, ModsLocal or the bridge.
