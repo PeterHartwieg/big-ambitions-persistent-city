@@ -63,7 +63,7 @@ namespace PersistentCity.Core
         public static bool RetiresNativeCar(bool active, bool heldGroup, bool presetPath, bool ignored, bool ordinary, bool taxi, bool visible)
             => active && heldGroup && !presetPath && !ignored && ordinary && !taxi && !visible;
 
-        /// <summary>Review Sol-r3-1: a car loaded into a held group during this frame (<see cref="NativeLoadWatch"/>) has
+        /// <summary>Review Sol-r3-1: a car loaded into a held group since the last pass (<see cref="NativeLoadWatch"/>) has
         /// not rendered yet, so it is retired whatever its renderers report; the other rules are those of
         /// <see cref="RetiresNativeCar"/>.</summary>
         public static bool RetiresNewNativeLoad(bool heldGroup, bool presetPath, bool ignored, bool ordinary, bool taxi)
@@ -206,39 +206,53 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Review Sol-r3-1: which native pool cars became active since the previous frame. Runtime asks it once a
-    /// frame in LateUpdate (after every Update and coroutine, before rendering), so a car another mod loaded directly
-    /// during the frame (RLO's rival pass-by: TrafficManager.LoadVehicle) is seen before it has rendered once. Slots the
-    /// pool adds later count as inactive before. The first frame only records: the cars already active then are
-    /// leftovers, retired out of view by the existing step. One bool per pool slot; no allocation after growth.</summary>
+    /// <summary>Reviews Sol-r3-1 and Sol-r4-1: which active native cars of the held groups were loaded past the shares.
+    /// While a group is held at share 0, native draws none of it, so the cars of held groups active when the hold starts
+    /// (<see cref="Prime"/>) are the only ones native put there: leftovers, retired out of view by the existing step. Any
+    /// other active car of a held group was loaded directly (RLO's rival pass-by: TrafficManager.LoadVehicle). A slot
+    /// leaves the leftovers for good as soon as it is seen inactive, or when Persistent City itself retires it
+    /// (<see cref="Forget"/>), so a slot freed and reloaded between two LateUpdate passes is still a load. Runtime asks
+    /// once a frame in LateUpdate (after every Update and coroutine, before rendering) and once at the hold, so a load in
+    /// the hold's own frame is caught too. One bool per pool slot; no allocation after growth.</summary>
     public sealed class NativeLoadWatch
     {
-        private bool[] wasActive = Array.Empty<bool>();
-        private int known;
-        private bool primed;
+        private bool[] leftover = Array.Empty<bool>();
 
-        /// <summary>Starts one frame's pass over a pool of <paramref name="count"/> slots.</summary>
-        public void Begin(int count)
+        public bool Primed { get; private set; }
+
+        /// <summary>The hold starts: <paramref name="activeHeld"/> says, per slot, whether a car of a held group is active.</summary>
+        public void Prime(int count, Func<int, bool> activeHeld)
         {
-            if (count > wasActive.Length) Array.Resize(ref wasActive, Math.Max(count, wasActive.Length * 2));
-            if (!primed) known = count;
-            for (int i = known; i < count; i++) wasActive[i] = false;
-            known = Math.Max(known, count);
+            if (activeHeld == null) throw new ArgumentNullException(nameof(activeHeld));
+            Grow(count);
+            for (int i = 0; i < count; i++) leftover[i] = activeHeld(i);
+            Primed = true;
         }
 
-        /// <summary>Records slot <paramref name="index"/> for this frame. True when it is active now and was not on the
-        /// previous frame, never on the first frame.</summary>
-        public bool BecameActive(int index, bool active)
+        /// <summary>One slot in a frame's pass. True when an active car of a held group there is not a leftover: a direct
+        /// load to retire or, if it is kept (an RLO scene car), to accept, after which it is a leftover too.</summary>
+        public bool IsLoad(int index, bool activeHeld)
         {
-            bool fresh = primed && active && !wasActive[index];
-            wasActive[index] = active;
-            return fresh;
+            if (!Primed) throw new InvalidOperationException("Prime the watch when the hold starts.");
+            Grow(index + 1);
+            if (!activeHeld) { leftover[index] = false; return false; }
+            return !leftover[index];
         }
 
-        /// <summary>Ends the frame's pass.</summary>
-        public void End() => primed = true;
+        /// <summary>The car in this slot was kept (an RLO scene car, or not ordinary): it is not asked about again until
+        /// its slot is seen inactive.</summary>
+        public void Accept(int index) { Grow(index + 1); leftover[index] = true; }
 
-        /// <summary>Forgets every slot (the adapter released its hold).</summary>
-        public void Reset() { primed = false; known = 0; Array.Clear(wasActive, 0, wasActive.Length); }
+        /// <summary>Persistent City retired the car in this slot: the slot's next car is a load, even in the same frame.</summary>
+        public void Forget(int index) { if (index >= 0 && index < leftover.Length) leftover[index] = false; }
+
+        /// <summary>The hold ended.</summary>
+        public void Reset() { Primed = false; Array.Clear(leftover, 0, leftover.Length); }
+
+        private void Grow(int count)
+        {
+            // Slots the pool adds later start as non-leftovers (false).
+            if (count > leftover.Length) Array.Resize(ref leftover, Math.Max(count, leftover.Length * 2));
+        }
     }
 }

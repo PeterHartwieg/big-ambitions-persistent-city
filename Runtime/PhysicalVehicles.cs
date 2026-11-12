@@ -300,6 +300,7 @@ namespace PersistentCity.Runtime
             UnityEngine.Object.DontDestroyOnLoad(holder);
             OwnHolder = holder.transform;
             HoldNativeAmbient(pool);
+            PrimeLoads(pool); // review Sol-r4-1: the leftovers are fixed now, so a load later in this frame is caught at LateUpdate
             RloOverrules.TrafficHeld = heldGroups.Count != 0 || nativeDensity.HasValue;
             active = true; return true;
         }
@@ -599,41 +600,47 @@ namespace PersistentCity.Runtime
             var pool = Manager.GetVehicleList(); if (pool.Count == 0) return;
             // Review Sol-r2-1: every 30 frames the whole pool is swept, so a car loaded past the shares (RLO's rival pass-by
             // calls TrafficManager.LoadVehicle directly, out of view) goes before it comes into view; otherwise one car a frame.
-            if (Time.frameCount % 30 == 0) { for (int i = 0; i < pool.Count; i++) TryRetire(pool[i]); }
-            else TryRetire(pool[retireCursor++ % pool.Count]);
+            if (Time.frameCount % 30 == 0) { for (int i = 0; i < pool.Count; i++) TryRetire(i, pool[i]); }
+            else { int i = retireCursor++ % pool.Count; TryRetire(i, pool[i]); }
         }
 
         private readonly NativeLoadWatch loads = new NativeLoadWatch();
 
-        /// <summary>Review Sol-r3-1, called from LateUpdate: a car loaded into a held group during this frame by a direct
-        /// TrafficManager.LoadVehicle (RLO's rival pass-by) is retired before it renders. One activeInHierarchy read per
-        /// pool slot a frame; the group, script and ignore-list reads only for a car that just became active.</summary>
+        /// <summary>Reviews Sol-r3-1 and Sol-r4-1, called from LateUpdate: a car of a held group that is not a leftover of
+        /// the hold (NativeLoadWatch) was loaded directly (RLO's rival pass-by) and is retired before it renders. One
+        /// activeInHierarchy and one group read per pool slot a frame; the preset, ignore-list and script reads only for a
+        /// car not seen before.</summary>
         public void CatchNewLoads()
         {
             if (!Active || heldGroups.Count == 0 && !nativeDensity.HasValue || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) { loads.Reset(); return; }
             var pool = Manager.GetVehicleList();
-            loads.Begin(pool.Count);
+            if (!loads.Primed) { PrimeLoads(pool); return; }
             for (int i = 0; i < pool.Count; i++)
             {
                 var vehicle = pool[i];
-                if (!loads.BecameActive(i, vehicle != null && vehicle.gameObject.activeInHierarchy) || vehicle == null) continue;
-                if (RloOverrule.RetiresNewNativeLoad(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType), vehicle.presetPath != null,
-                    TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle)))
-                { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loadsRetired++; loads.BecameActive(i, false); }
+                if (!loads.IsLoad(i, ActiveHeld(vehicle)) || vehicle == null) continue;
+                if (RloOverrule.RetiresNewNativeLoad(true, vehicle.presetPath != null, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()),
+                    Ordinary(vehicle), IsTaxi(vehicle)))
+                { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loadsRetired++; loads.Forget(i); }
+                else loads.Accept(i);
             }
-            loads.End();
         }
+
+        private void PrimeLoads(List<VehicleComponent> pool) => loads.Prime(pool.Count, i => ActiveHeld(pool[i]));
+
+        private bool ActiveHeld(VehicleComponent? vehicle) => vehicle != null && vehicle.gameObject.activeInHierarchy
+            && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType));
 
         // RLO 1.0 overrule (RloOverrule.RetiresNativeCar): a car RLO holds for a scene (an accident, a reckless driver, a
         // response unit) carries a preset path or is on native's ignore list; it is RLO's and never retired. The cheap
         // checks run first; the script and renderer reads only for an active car of a held group.
-        private void TryRetire(VehicleComponent? vehicle)
+        private void TryRetire(int slot, VehicleComponent? vehicle)
         {
             if (vehicle == null || !vehicle.gameObject.activeInHierarchy || vehicle.presetPath != null
                 || !(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType))) return;
             if (RloOverrule.RetiresNativeCar(true, true, false, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle),
                 vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible)))
-            { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; }
+            { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loads.Forget(slot); } // review Sol-r4-1: a reload of the slot is a load
         }
 
         private void Drive(PhysicalVehicleBody body, float seconds)
