@@ -225,7 +225,7 @@ namespace PersistentCity.Runtime
         private int[]? nativeShares, appliedShares;
         private int? nativeDensity;
         private readonly HashSet<VehicleGroupType> heldGroups = new HashSet<VehicleGroupType>();
-        private long retired, shareReapplied;
+        private long retired, shareReapplied, loadsRetired;
         private static readonly FieldInfo? TrafficVehiclesField = AccessTools.Field(typeof(TrafficManager), "trafficVehicles");
         private static readonly FieldInfo? SharesField = AccessTools.Field(typeof(TrafficVehicles), "currentVehicleGroupTypePercentages");
         private static readonly FieldInfo? DensityManagerField = AccessTools.Field(typeof(TrafficManager), "densityManager");
@@ -250,7 +250,7 @@ namespace PersistentCity.Runtime
         public string LastError => recoveryError.Length != 0 ? recoveryError : Ready ? "" : "Native traffic share members are missing.";
         public string OwnershipDiagnostics => "ownCars=" + bodies.Count + ", parkedCars=" + parked.Count + ", instances=" + pool.Count
             + ", heldGroups=" + string.Join("|", heldGroups.Select(g => g.ToString()).OrderBy(g => g, StringComparer.Ordinal))
-            + ", retired=" + retired + ", shareReapplied=" + shareReapplied;
+            + ", retired=" + retired + ", loadsRetired=" + loadsRetired + ", shareReapplied=" + shareReapplied;
 
         public bool Activate()
         {
@@ -274,6 +274,9 @@ namespace PersistentCity.Runtime
             UnityEngine.Object.DontDestroyOnLoad(holder);
             OwnHolder = holder.transform;
             HoldNativeAmbient(pool);
+            PrimeLoads(pool);
+            if (onAdded == null) { onAdded = OnNativeVehicleAdded; DensityEvents.onVehicleAdded += onAdded; }
+            RloOverrules.TrafficHeld = heldGroups.Count != 0 || nativeDensity.HasValue;
             active = true; return true;
         }
         private static bool Size(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value > 0;
@@ -325,13 +328,14 @@ namespace PersistentCity.Runtime
 
         private void ReleaseNativeAmbient()
         {
-            if (!TrafficManager.IsInitialized || !TrafficManager.HasInstance) { nativeShares = appliedShares = null; nativeDensity = null; return; }
+            DropAddedEvent(); loads.Reset();
+            if (!TrafficManager.IsInitialized || !TrafficManager.HasInstance) { nativeShares = appliedShares = null; nativeDensity = null; RloOverrules.TrafficHeld = false; return; }
             try
             {
                 if (appliedShares != null && nativeShares != null && heldGroups.Count != 0) TrafficManager.Instance.UpdateVehicleGroupTypePercentages(nativeShares);
                 if (nativeDensity.HasValue) Manager.SetTrafficDensity(nativeDensity.Value);
             }
-            finally { nativeShares = appliedShares = null; nativeDensity = null; heldGroups.Clear(); }
+            finally { nativeShares = appliedShares = null; nativeDensity = null; heldGroups.Clear(); RloOverrules.TrafficHeld = false; }
         }
 
         internal static bool IsTaxi(VehicleComponent vehicle) => vehicle != null && vehicle.GetComponentInChildren<TaxiController>(true) != null;
@@ -552,11 +556,62 @@ namespace PersistentCity.Runtime
             KeepNativeAmbientHeld();
             if (heldGroups.Count == 0 && !nativeDensity.HasValue) return;
             var pool = Manager.GetVehicleList(); if (pool.Count == 0) return;
-            var vehicle = pool[retireCursor++ % pool.Count];
-            if (vehicle != null && vehicle.gameObject.activeInHierarchy && vehicle.presetPath == null
-                && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType)) && Ordinary(vehicle) && !IsTaxi(vehicle)
-                && !vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible))
-            { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; }
+            if (Time.frameCount % 30 == 0) { for (int i = 0; i < pool.Count; i++) TryRetire(i, pool[i]); }
+            else { int i = retireCursor++ % pool.Count; TryRetire(i, pool[i]); }
+        }
+
+        private readonly NativeLoadWatch loads = new NativeLoadWatch();
+
+        public void CatchNewLoads()
+        {
+            if (!Active || heldGroups.Count == 0 && !nativeDensity.HasValue || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) { loads.Reset(); return; }
+            var pool = Manager.GetVehicleList();
+            if (!loads.Primed) { PrimeLoads(pool); return; }
+            float seconds = Time.deltaTime;
+            for (int i = 0; i < pool.Count; i++)
+            {
+                var vehicle = pool[i];
+                bool held = ActiveHeld(vehicle);
+                var at = held ? vehicle!.transform.position : default;
+                if (!loads.IsLoad(i, held, at.x, at.z, seconds) || vehicle == null) continue;
+                if (RloOverrule.RetiresNewNativeLoad(true, vehicle.presetPath != null, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()),
+                    Ordinary(vehicle), IsTaxi(vehicle)))
+                { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loadsRetired++; loads.Forget(i); }
+                else loads.Accept(i, at.x, at.z);
+            }
+        }
+
+        private DensityEvents.VehicleAdded? onAdded;
+
+        private void OnNativeVehicleAdded(int vehicleIndex)
+        {
+            if (!loads.Primed || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) return;
+            var pool = Manager.GetVehicleList();
+            if (vehicleIndex >= 0 && vehicleIndex < pool.Count && pool[vehicleIndex] != null && pool[vehicleIndex].GetIndex() == vehicleIndex)
+            { loads.Added(vehicleIndex); return; }
+            for (int i = 0; i < pool.Count; i++) if (pool[i] != null && pool[i].GetIndex() == vehicleIndex) { loads.Added(i); return; }
+        }
+
+        private void DropAddedEvent()
+        {
+            if (onAdded == null) return;
+            DensityEvents.onVehicleAdded -= onAdded;
+            onAdded = null;
+        }
+
+        private void PrimeLoads(List<VehicleComponent> pool) => loads.Prime(pool.Count, i => ActiveHeld(pool[i]),
+            i => { var p = pool[i].transform.position; return (p.x, p.z); });
+
+        private bool ActiveHeld(VehicleComponent? vehicle) => vehicle != null && vehicle.gameObject.activeInHierarchy
+            && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType));
+
+        private void TryRetire(int slot, VehicleComponent? vehicle)
+        {
+            if (vehicle == null || !vehicle.gameObject.activeInHierarchy || vehicle.presetPath != null
+                || !(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType))) return;
+            if (RloOverrule.RetiresNativeCar(true, true, false, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle),
+                vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible)))
+            { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loads.Forget(slot); }
         }
 
         private void Drive(PhysicalVehicleBody body, float seconds)

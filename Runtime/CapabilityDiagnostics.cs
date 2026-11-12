@@ -21,7 +21,8 @@ namespace PersistentCity.Runtime
                 try
                 {
                     var inputs = ReadCapabilityInputs();
-                    Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(inputs), Application.version, CapabilitySnapshot.Context(inputs)));
+                    Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(inputs), Application.version, CapabilitySnapshot.Context(inputs))
+                        + "\n" + RloOverruleLine());
                 }
                 catch (Exception error) { Debug.LogWarning("[Persistent City] capability status unavailable: " + error.Message); }
                 return;
@@ -120,6 +121,19 @@ namespace PersistentCity.Runtime
         {
             log?.Info(CapabilityActivationLine());
             log?.Info(HookConflictActivationLine());
+            log?.Info(RloOverruleLine().TrimEnd('\n').Replace("\n", "; "));
+        }
+
+        private string RloOverruleLine()
+        {
+            try
+            {
+                int replaced;
+                try { replaced = HookConflicts.CalculatorReplacements().Count; }
+                catch (Exception) { replaced = -1; }
+                return RloOverrules.Status(replaced, foodMarket?.CheckoutRefusal);
+            }
+            catch (Exception error) { return "Persistent City RLO overrule status unavailable: " + error.Message; }
         }
 
         private static string HookConflictActivationLine()

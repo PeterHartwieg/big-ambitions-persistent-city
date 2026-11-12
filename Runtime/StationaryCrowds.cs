@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using HarmonyLib;
+using PersistentCity.Compatibility;
 using UnityEngine;
 
 namespace PersistentCity.Runtime
@@ -13,6 +14,15 @@ namespace PersistentCity.Runtime
         private readonly FieldInfo? visible = AccessTools.Field(typeof(StationaryAiSpawner), "isVisible");
         private bool active;
         public string LastError { get; private set; } = "";
+        internal static bool Overruling { get; private set; }
+
+        internal static int RloZones()
+        {
+            int count = 0;
+            foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
+                if (zone != null && zone.name == RloLivingPopulation.CrowdZoneName) count++;
+            return count;
+        }
 
         public void Activate()
         {
@@ -23,7 +33,7 @@ namespace PersistentCity.Runtime
                     throw new InvalidOperationException("Unexpected native stationary spawner contract.");
                 if (Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("Another stationary crowd hook owner is already registered.");
                 harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));
-                active = true;
+                active = Overruling = true;
                 int cleared = 0;
                 foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
                 {
@@ -33,13 +43,14 @@ namespace PersistentCity.Runtime
                     cleared++;
                 }
                 UnityEngine.Debug.Log("[Persistent City] Stationary crowds: the game's anonymous standers are off ("
-                    + StationaryAiSpawner.AllPedestrianSpawners.Count + " zones, " + cleared + " in view cleared); street performers and the homeless kept.");
+                    + StationaryAiSpawner.AllPedestrianSpawners.Count + " zones, " + RloZones() + " of them RLO's, " + cleared
+                    + " in view cleared); street performers and the homeless kept; RLO's own scene people untouched.");
             }
             catch (Exception error)
             {
                 LastError = error.GetType().Name + ": " + error.Message;
                 harmony.UnpatchAll(Owner);
-                active = false;
+                active = Overruling = false;
                 UnityEngine.Debug.LogWarning("[Persistent City] Stationary crowds left as the game has them: " + LastError);
             }
         }
@@ -49,7 +60,7 @@ namespace PersistentCity.Runtime
         public void Dispose()
         {
             if (!active) return;
-            active = false;
+            active = Overruling = false;
             harmony.UnpatchAll(Owner);
         }
     }

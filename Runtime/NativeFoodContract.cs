@@ -37,7 +37,8 @@ namespace PersistentCity.Runtime
         {
             settled = !loading;
             if (loading) { HookConflicts.TakeLoadScan(); return Checkout; }
-            return Decide(Checkout, HookConflicts.ScanForLoad);
+            var decided = Decide(Checkout, HookConflicts.ScanForLoad);
+            return WithConflict(decided, RloOverrule.CheckoutRefusal(null, RloOverrules.ReadForLoad()));
         }
 
         internal static Result Decide(Result members, Func<HookConflictReport> scan)

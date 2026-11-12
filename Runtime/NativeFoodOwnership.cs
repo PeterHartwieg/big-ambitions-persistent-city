@@ -244,19 +244,20 @@ namespace PersistentCity.Runtime
         }
         private static bool HourlyCustomers(RetailBusinessSimulator __instance)
         {
-            if (!Suppress((BuildingRegistration)Registration.GetValue(__instance)!, BatchHour(__instance))) return true;
+            if (RloOverrule.AdmitsNative(NativeShopPath.Batch, Suppress((BuildingRegistration)Registration.GetValue(__instance)!, BatchHour(__instance)))) return true;
             SuppressedBatches++; return false;
         }
         private static bool CustomerSale(RetailBusinessSimulator __instance)
         {
             var reg = (BuildingRegistration)Registration.GetValue(__instance)!;
-            return NativeFoodMarket.IsBuying(reg) || NativeSaleProbe.IsProbing(reg) || !Suppress(reg, BatchHour(__instance));
+            bool own = NativeFoodMarket.IsBuying(reg) || NativeSaleProbe.IsProbing(reg);
+            return own || RloOverrule.AdmitsNative(NativeShopPath.Process, Suppress(reg, BatchHour(__instance)));
         }
-        private static bool GenerateCustomers(BuildingRegistration registration) => !Suppress(registration, Hour);
+        private static bool GenerateCustomers(BuildingRegistration registration) => RloOverrule.AdmitsNative(NativeShopPath.Generation, Suppress(registration, Hour));
         private static bool CustomerDraw(Address address, ref List<CustomerEntry> __result)
         {
             EnsureSave();
-            if (!addresses.TryGetValue(address, out var reg) || !Suppress(reg, Hour)) return true;
+            if (!addresses.TryGetValue(address, out var reg) || RloOverrule.AdmitsNative(NativeShopPath.Draw, Suppress(reg, Hour))) return true;
             SuppressedDraws++; __result = new List<CustomerEntry>(); return false;
         }
         private static void AfterNativeTick()

@@ -28,6 +28,16 @@ namespace PersistentCity.Core
         public string Signature => Type + "." + Method + "(" + string.Join(", ", Parameters) + ")";
     }
 
+    public readonly struct HookReplacement
+    {
+        public HookReplacement(string target, string nativeType, string replacementType, string owner)
+        { Target = target ?? ""; NativeType = nativeType ?? ""; ReplacementType = replacementType ?? ""; Owner = owner ?? ""; }
+        public string Target { get; }
+        public string NativeType { get; }
+        public string ReplacementType { get; }
+        public string Owner { get; }
+    }
+
     public sealed class HookConflictEntry
     {
         internal HookConflictEntry(string signature, IReadOnlyList<string> capabilities, IReadOnlyList<string> pcOwners, bool patched,
@@ -43,8 +53,10 @@ namespace PersistentCity.Core
 
     public sealed class HookConflictReport
     {
-        private HookConflictReport(IReadOnlyList<HookConflictEntry> entries) { Entries = entries; }
+        private HookConflictReport(IReadOnlyList<HookConflictEntry> entries, IReadOnlyList<HookReplacement> replacements)
+        { Entries = entries; Replacements = replacements; }
         public IReadOnlyList<HookConflictEntry> Entries { get; }
+        public IReadOnlyList<HookReplacement> Replacements { get; }
         public int ForeignOwners => Entries.SelectMany(e => e.Foreign.Select(f => f.Owner)).Distinct(StringComparer.Ordinal).Count();
         public string? CheckoutRefusal => Entries.Select(e => e.CheckoutRefusal).FirstOrDefault(r => r != null);
         public double ScanMilliseconds { get; set; }
@@ -68,7 +80,8 @@ namespace PersistentCity.Core
             HookPatchKind.Finalizer => "finalizer", HookPatchKind.InnerPrefix => "inner prefix", _ => "inner postfix",
         };
 
-        public static HookConflictReport Build(IEnumerable<HookPatchedMethod> patched, IEnumerable<string>? checkoutPolicy = null)
+        public static HookConflictReport Build(IEnumerable<HookPatchedMethod> patched, IEnumerable<string>? checkoutPolicy = null,
+            IEnumerable<HookReplacement>? replacements = null)
         {
             var policy = new HashSet<string>(checkoutPolicy ?? Array.Empty<string>(), StringComparer.Ordinal);
             var ours = new HashSet<string>(NativeHookInventory.Owners.Select(o => o.Id), StringComparer.Ordinal);
@@ -94,7 +107,7 @@ namespace PersistentCity.Core
                         if (f.Item3 != HookConflictClass.Observer) { refusal = "foreign " + KindWord(f.Kind) + " by " + f.Owner + " on " + group.Key; break; }
                 entries.Add(new HookConflictEntry(group.Key, capabilities, pc, true, foreign, refusal));
             }
-            return new HookConflictReport(entries);
+            return new HookConflictReport(entries, (replacements ?? Array.Empty<HookReplacement>()).ToArray());
         }
 
         private static string Key(NativeHookTarget target)
@@ -123,6 +136,9 @@ namespace PersistentCity.Core
                 if (entry.CheckoutRefusal != null) text.Append(" -> refuses food.checkout.shop");
                 text.Append('\n');
             }
+            foreach (var r in Replacements)
+                text.Append(r.Target).Append(" [non-Harmony]: ").Append(r.NativeType).Append(" replaced by ").Append(r.Owner).Append(' ')
+                    .Append(r.ReplacementType).Append(" -> overruled at owned food shops, does not refuse food.checkout.shop\n");
             return text.ToString();
         }
 
@@ -131,11 +147,16 @@ namespace PersistentCity.Core
             var conflicted = Entries.Where(e => e.Foreign.Count > 0).ToArray();
             var text = new StringBuilder("Persistent City hook conflicts at activation (scan ")
                 .Append(ScanMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append(" ms): ");
-            if (conflicted.Length == 0) return text.Append("no foreign owner on ").Append(Entries.Count(e => e.Patched)).Append(" patched targets.").ToString();
+            if (conflicted.Length == 0)
+                return text.Append("no foreign owner on ").Append(Entries.Count(e => e.Patched)).Append(" patched targets.").Append(ReplacementClause()).ToString();
             text.Append(string.Join("; ", conflicted.Select(e => e.Signature + " " + string.Join(", ",
                 e.Foreign.Select(f => f.Owner + " " + ClassWord(f.Class)))))).Append('.');
             if (CheckoutRefusal is string refusal) text.Append(" food.checkout.shop off: ").Append(refusal).Append('.');
-            return text.Append(" Details: pc capability hooks.").ToString();
+            return text.Append(ReplacementClause()).Append(" Details: pc capability hooks.").ToString();
         }
+
+        private string ReplacementClause() => Replacements.Count == 0 ? ""
+            : " " + Replacements.Count + " native object(s) replaced without Harmony by "
+                + string.Join(", ", Replacements.Select(r => r.Owner).Distinct(StringComparer.Ordinal)) + ", overruled at owned food shops.";
     }
 }

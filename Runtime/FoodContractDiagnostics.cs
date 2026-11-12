@@ -434,7 +434,7 @@ namespace PersistentCity.Runtime
         internal void BeginContractCommit() { boundaryEpoch.Begin(); contractBoundaryCommitMs = 0; }
         internal FoodContractBoundary.Outcome CommitBoundary(FoodAuthority row, long hour, bool liveNativeCustomers)
         {
-            if (contractMode == ContractMode.Warming)
+            if (contractMode == ContractMode.Warming || RloOverrules.HoldsAcquisitions)
             {
                 if (row.Pending(hour, true, liveNativeCustomers, true) != FoodBoundaryStep.Acquire)
                     return row.Boundary(hour, true, liveNativeCustomers, true) ? FoodContractBoundary.Outcome.HandedBack : FoodContractBoundary.Outcome.None;

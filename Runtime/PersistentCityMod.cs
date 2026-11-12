@@ -249,6 +249,7 @@ namespace PersistentCity.Runtime
                 if (!BeginAccountingObservations()) return;
                 foodMarket?.RefreshDiscovery();
                 routeObjects?.Step(preparingPausedCity: Time.timeScale == 0);
+                RloOverrules.Poll(Time.unscaledTime, log);
                 if (Time.unscaledTime >= nextDependencyCheck)
                 {
                     long checkStarted = Stopwatch.GetTimestamp();
