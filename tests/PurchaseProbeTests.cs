@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PersistentCity.Core;
+using PersistentCity.Persistence;
 using Xunit;
 
 namespace PersistentCity.Tests;
@@ -263,39 +264,84 @@ public sealed class PurchaseProbeTests
         Assert.Equal(1, native.Calls);
     }
 
-    /// <summary>A save is the receipts in native mod data, the wallet in the population and the native books, taken
-    /// together. The only point inside a probe where anything is written is the pending receipt before the native call;
-    /// a "save" there reloads with no native effect and no debit, and recovery abandons the receipt for good.</summary>
-    [Fact]
-    public void AReloadMidProbeLeavesNoHalfSale()
+    public enum Cut { Enter, Exit }
+
+    /// <summary>A save is the receipts and population payload in native mod data plus the native books, taken together.
+    /// Inside a probe only a nested native save can run (the rig's checkpoint at the processor's entry or exit). At the
+    /// exit cut the books hold the order while the payload still has the pre-probe wallet and the receipt is pending. The
+    /// save-epoch guard marks that save failed and stopped, so Persistent City refuses it on load and settles neither half;
+    /// the last coherent save holds the probe undone and sells it exactly once. The live session finishes the sale and stops.</summary>
+    [Theory]
+    [InlineData(Cut.Enter)]
+    [InlineData(Cut.Exit)]
+    public void AReloadMidProbeLeavesNoHalfSale(Cut cut)
     {
-        var wallet = Wallet(100000); var receipts = new Dictionary<string, string>(); var native = new Native();
+        var state = RivalOutflowTests.Ready(finances: true).city.State;
+        var wallet = state.Citizens.Single().Wallet!;
+        var data = new Dictionary<string, string>(StringComparer.Ordinal);
+        var native = new Native();
+        var epoch = new SaveEpochBinding(data, data, 0);
+        epoch.CompleteInitialization();
+        int units = 0, stops = 0; bool stopPending = false;
+        SaveEpochCapture Capture(SaveEpochTicket ticket)
+        {
+            data[SaveStore.StateKey] = SaveCodec.Write(state);
+            return SaveEpochCapture.Written(state.Minute, state.PopulationKey);
+        }
+        // Native Save: onSaveGame, then the file is mod data and the native books at that instant.
+        (Dictionary<string, string> Data, string Books) NativeSave()
+        {
+            if (SaveEpochCallback.Run(epoch, data, data, units > 0, Capture, _ => stops++, _ => { }) == SaveEpochResult.Reentrant) stopPending = true;
+            return (new Dictionary<string, string>(data, StringComparer.Ordinal), native.Books);
+        }
         string walletBefore = WalletText(wallet), booksBefore = native.Books;
-        Dictionary<string, string>? savedReceipts = null; string? savedWallet = null, savedBooks = null;
-        native.Before = _ => { savedReceipts = new Dictionary<string, string>(receipts); savedWallet = WalletText(wallet); savedBooks = native.Books; return null; };
+        var prior = NativeSave();
+        (Dictionary<string, string> Data, string Books)? cutFile = null;
+        var orders = native.Orders.Count;
+        native.Before = _ => { if (cut == Cut.Enter) cutFile = NativeSave(); return null; };
+        native.Report = paid => { if (cut == Cut.Exit) cutFile = NativeSave(); return paid; };
 
-        var live = PurchaseProbe.Run(Request(100000), wallet, receipts, native);
-        Assert.True(live.Bought); // the session that kept running finished the sale
+        // PopulationRuntime.SaleProbeCommand: the probe runs as one save-epoch unit; a re-entrant save stops PC after it.
+        PurchaseProbeResult live;
+        units++;
+        try { live = PurchaseProbe.Run(Request(100000, ProbeKind.Food), wallet, data, native); }
+        finally { units--; if (stopPending && units == 0) { stopPending = false; stops++; } }
 
-        // Reload the mid-probe image.
-        Assert.Equal(walletBefore, savedWallet);
-        Assert.Equal(booksBefore, savedBooks);
-        Assert.Equal(ProbeReceiptStatus.Pending, PurchaseProbe.Status(savedReceipts![live.Key]));
-        Assert.Equal(1, PurchaseProbe.Recover(savedReceipts));
-        Assert.Equal(ProbeReceiptStatus.Abandoned, PurchaseProbe.Status(savedReceipts[live.Key]));
-        Assert.Equal(0, PurchaseProbe.Recover(savedReceipts));
+        Assert.True(live.Bought);
+        Assert.Equal(1, stops);
+        var file = cutFile!.Value;
+        Assert.Equal(cut == Cut.Exit ? orders + 1 : orders, NativeOrders(file.Books));
+        Assert.Equal(ProbeReceiptStatus.Pending, PurchaseProbe.Status(file.Data[live.Key]));
+        Assert.Same(prior.Data[SaveStore.StateKey], file.Data[SaveStore.StateKey]); // pre-probe wallet
+        // Load of the cut: refused before any accounting, every key kept, the pending receipt never settled or abandoned.
+        Assert.True(AccountingStopStore.IsStopped(file.Data));
+        Assert.Equal(AccountingStopStore.SaveEpochFailed, file.Data[AccountingStopStore.Key]);
+        Assert.NotNull(SaveEpochStore.CheckForStart(file.Data, out _));
+        Assert.Contains("never settles or replays", AccountingStopStore.Cause(file.Data));
+        // Every later save of the live session is refused too: the stopped line never publishes again.
+        Assert.True(AccountingStopStore.IsStopped(NativeSave().Data));
 
-        // The reloaded city never completes the abandoned probe; a new probe at a later minute is a separate sale.
-        var reloadedWallet = Wallet(100000); var reloadedNative = new Native();
-        var again = PurchaseProbe.Run(Request(100000), reloadedWallet, savedReceipts, reloadedNative);
-        Assert.Equal(ProbeRefusal.AlreadyRecorded, again.Refusal);
-        Assert.Equal(0, reloadedNative.Calls);
+        // Recovery: the last coherent save starts, holds no receipt, no order and the pre-probe wallet, and sells once.
+        Assert.False(AccountingStopStore.IsStopped(prior.Data));
+        Assert.Null(SaveEpochStore.CheckForStart(prior.Data, out var marker));
+        var read = SaveCodec.Read(prior.Data[SaveStore.StateKey]);
+        Assert.Null(SaveEpochStore.DescribesState(marker, read.SourceSchema, read.State));
+        Assert.Equal(booksBefore, prior.Books);
+        Assert.DoesNotContain(prior.Data.Keys, PurchaseProbe.IsReceiptKey);
+        var reloadedWallet = read.State!.Citizens.Single().Wallet!;
         Assert.Equal(walletBefore, WalletText(reloadedWallet));
-        var later = PurchaseProbe.Run(Request(100000, minute: 601), reloadedWallet, savedReceipts, reloadedNative);
-        Assert.True(later.Bought);
-        Assert.Equal(ProbeReceiptStatus.Abandoned, PurchaseProbe.Status(savedReceipts[live.Key]));
+        var receipts = new Dictionary<string, string>(prior.Data, StringComparer.Ordinal);
+        var balanceBefore = reloadedWallet.Balance;
+        var reloadedNative = new Native();
+        var again = PurchaseProbe.Run(Request(100000, ProbeKind.Food), reloadedWallet, receipts, reloadedNative);
+        Assert.True(again.Bought);
         Assert.Single(reloadedNative.Orders);
+        Assert.Equal(ProbeReceiptStatus.Paid, PurchaseProbe.Status(receipts[again.Key]));
+        Assert.Equal(balanceBefore - again.Paid, reloadedWallet.Balance);
+        Assert.True(HouseholdFinance.CashConserved(reloadedWallet));
     }
+
+    private static int NativeOrders(string books) => books.Substring(books.IndexOf('|') + 1).Split(',', StringSplitOptions.RemoveEmptyEntries).Length;
 
     [Fact]
     public void RecoveryTouchesOnlyPendingProbeReceipts()
