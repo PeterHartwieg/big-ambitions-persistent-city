@@ -237,6 +237,33 @@ namespace PersistentCity.Core
             return true;
         }
 
+        /// <summary>
+        /// The venue a day plan sends this person to for its <paramref name="kind"/> window: the venue of the most urgent
+        /// need due on <paramref name="day"/> (urgency, then category) that a place of that kind sells. The need's last
+        /// venue when it still sells the category, else the nearest such place to home (then place ID). Null when no due
+        /// need has a venue of that kind; the plan then keeps its drawn venue.
+        /// </summary>
+        public static string? PlanVenue(CitizenState person, int day, IReadOnlyList<Place> catalogue, Place home, PlaceKind kind)
+        {
+            var needs = person.Needs;
+            if (needs == null || catalogue == null || home == null) return null;
+            NeedState? best = null; string? bestVenue = null;
+            foreach (var need in needs.Needs)
+            {
+                if (!Due(need, day) || best != null && (Urgency(need, day) <= Urgency(best, day))) continue;
+                string? venue = null; double distance = double.MaxValue;
+                foreach (var place in catalogue)
+                {
+                    if (place.Kind != kind || BusinessTypes.Normalize(place.BusinessType) != need.Category) continue;
+                    if (place.Id == need.LastVenue) { venue = place.Id; break; }
+                    double d = Position.Distance(home.Position, place.Position);
+                    if (d < distance || d == distance && string.CompareOrdinal(place.Id, venue) < 0) { venue = place.Id; distance = d; }
+                }
+                if (venue != null) { best = need; bestVenue = venue; }
+            }
+            return bestVenue;
+        }
+
         private static uint Draw(int seed, string person, string key, string purpose, int day)
             => StableRandom.Finish(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Append(StableRandom.Append(StableRandom.Append(
                 StableRandom.Append(StableRandom.Begin(seed), person), ":need:"), key), ':'), purpose), day));

@@ -63,6 +63,8 @@ namespace PersistentCity.Runtime
         }
 
         public void Undo() => path.Undo();
+        /// <summary>The probe was paid: replay the refills the sale held back.</summary>
+        internal void Commit() => path.Commit();
     }
 
     public sealed partial class PopulationRuntime
@@ -80,7 +82,14 @@ namespace PersistentCity.Runtime
             int recovered = PurchaseProbe.Recover(save.modData);
             if (action == "status")
             {
-                Debug.Log("[Persistent City] sale probe status\n" + JsonConvert.SerializeObject(new { recovered,
+                // GR-3: the need purchase counters and native-count calibration rows (calibration only, never a decision).
+                var purchases = new { attached = simulation.Purchases != null, fault = simulation.PurchaseFault, bought = simulation.PurchasesBought,
+                    refused = simulation.PurchasesRefused, impulses = simulation.ImpulsesInserted,
+                    last = simulation.LastPurchase == null ? null : new { simulation.LastPurchase.Key, refusal = simulation.LastPurchase.Refusal.ToString(),
+                        total = simulation.LastPurchase.Total.ToCentsText(), simulation.LastPurchase.Reason },
+                    calibration = simulation.Calibration.Select(r => new { r.VenueId, r.Hour, r.NativeCount, r.ResidentOrders }),
+                    receipts = save.modData.Where(p => PurchaseContract.IsReceiptKey(p.Key)).Select(p => new { p.Key, p.Value }) };
+                Debug.Log("[Persistent City] sale probe status\n" + JsonConvert.SerializeObject(new { recovered, purchases,
                     receipts = save.modData.Where(p => PurchaseProbe.IsReceiptKey(p.Key)).Select(p => new { p.Key, status = PurchaseProbe.Status(p.Value).ToString(), p.Value }) }));
                 return;
             }
@@ -128,6 +137,7 @@ namespace PersistentCity.Runtime
             try { RunSaveEpochUnit(() => ran = PurchaseProbe.Run(request, person.Wallet, save.modData, native)); }
             finally { saleProbeRunning = false; }
             result = ran!;
+            if (result.Receipt == ProbeReceiptStatus.Paid) native.Commit();
             Debug.Log("[Persistent City] sale probe\n" + JsonConvert.SerializeObject(new {
                 resident = person.Identity.Id, place = detail, type = target.businessTypeName, simulator = native.SimulatorName,
                 family = familyFound.ToString(), kind = kind.ToString(), claimedNativeEntry = native.Claimed, recovered,

@@ -352,6 +352,12 @@ namespace PersistentCity.Runtime
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute)));
+                // GR-3: a booked native order that could not be restored has no debit; stop before any save can keep it.
+                if (simulation.PurchaseFault is string purchaseFault)
+                {
+                    log?.Warn("Need purchase native restore failed; the uncertain receipt is kept: " + purchaseFault);
+                    StopAccounting("Need purchase native restore failed: " + purchaseFault); return;
+                }
                 ApplyHoldReplay(); // F2e: in-game E2 replay only; inactive unless pc movement replay-holds started one
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
@@ -917,6 +923,7 @@ namespace PersistentCity.Runtime
             NativeInteriorCityView.Stop();
             vendorMarket?.Dispose(); vendorMarket = null;
             foodMarket?.Dispose(); foodMarket = null; ordinaryOwnershipIndex = null;
+            try { NativeSalePath.Unpatch(); } catch (Exception error) { log?.Warn("Sale path unpatch failed: " + error.Message); }
             inspector.Detach();
             try { physical?.Dispose(); }
             finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }

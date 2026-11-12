@@ -99,17 +99,16 @@ namespace PersistentCity.Core
     /// <summary>One row of the adapter table: what a family's processor adds or refuses, and how that maps to the contract.</summary>
     public sealed class PurchaseAdapter
     {
-        internal PurchaseAdapter(PurchaseFamily family, bool supported, bool appendsEntranceFee, bool ticketFirst, bool needsNativeEntry, string hook, string notReady)
-        { Family = family; Supported = supported; AppendsEntranceFee = appendsEntranceFee; TicketFirst = ticketFirst; NeedsNativeEntry = needsNativeEntry; Hook = hook; NotReady = notReady; }
+        internal PurchaseAdapter(PurchaseFamily family, bool supported, bool appendsEntranceFee, bool ticketFirst, string hook, string notReady)
+        { Family = family; Supported = supported; AppendsEntranceFee = appendsEntranceFee; TicketFirst = ticketFirst; Hook = hook; NotReady = notReady; }
         public PurchaseFamily Family { get; }
         public bool Supported { get; }
         /// <summary>The processor's ProcessEntranceFee adds the entrance fee during processing; it is priced up front as a
         /// mandatory line when the type has one.</summary>
         public bool AppendsEntranceFee { get; }
-        /// <summary>The ticket is already the first order line: priced once, mandatory, never trimmed.</summary>
+        /// <summary>The ticket is the first order line: priced once, mandatory, never trimmed. A written entry (no native
+        /// entry left this hour) is the ticket alone, as the native calculator puts it first in every order.</summary>
         public bool TicketFirst { get; }
-        /// <summary>A mod-written entry would have to rebuild the native order; the contract needs a native entry here.</summary>
-        public bool NeedsNativeEntry { get; }
         /// <summary>Where the native processing runs (the family's own ProcessCustomer).</summary>
         public string Hook { get; }
         /// <summary>The family's own pre-sale refusals that map to <see cref="PurchaseRefusal.VenueNotReady"/>.</summary>
@@ -122,13 +121,13 @@ namespace PersistentCity.Core
     {
         private static readonly PurchaseAdapter[] Rows =
         {
-            new PurchaseAdapter(PurchaseFamily.Unsupported, false, false, false, false, "none", "unsupported processor; stays native-owned"),
-            new PurchaseAdapter(PurchaseFamily.FullService, true, true, false, false, "RetailBusinessSimulator.ProcessCustomer", ""),
-            new PurchaseAdapter(PurchaseFamily.SelfService, true, true, false, false, "SelfServiceBusinessSimulator.ProcessCustomer", "no shopping containers; missing scales"),
-            new PurchaseAdapter(PurchaseFamily.Hairdresser, true, true, false, false, "HairdresserBusinessSimulator.ProcessCustomer", "no stocked hair-care shelf or staffed station"),
-            new PurchaseAdapter(PurchaseFamily.Gym, true, true, false, false, "GymBusinessSimulator.ProcessCustomer", ""),
-            new PurchaseAdapter(PurchaseFamily.CinemaTheater, true, false, true, true, "CinemaTheaterBusinessSimulator.ProcessCustomer", "theatre without actors"),
-            new PurchaseAdapter(PurchaseFamily.Nightclub, true, true, false, false, "NightclubBusinessSimulator.ProcessCustomer", "no staffed DJ booth"),
+            new PurchaseAdapter(PurchaseFamily.Unsupported, false, false, false, "none", "unsupported processor; stays native-owned"),
+            new PurchaseAdapter(PurchaseFamily.FullService, true, true, false, "RetailBusinessSimulator.ProcessCustomer", ""),
+            new PurchaseAdapter(PurchaseFamily.SelfService, true, true, false, "SelfServiceBusinessSimulator.ProcessCustomer", "no shopping containers; missing scales"),
+            new PurchaseAdapter(PurchaseFamily.Hairdresser, true, true, false, "HairdresserBusinessSimulator.ProcessCustomer", "no stocked hair-care shelf or staffed station"),
+            new PurchaseAdapter(PurchaseFamily.Gym, true, true, false, "GymBusinessSimulator.ProcessCustomer", ""),
+            new PurchaseAdapter(PurchaseFamily.CinemaTheater, true, false, true, "CinemaTheaterBusinessSimulator.ProcessCustomer", "theatre without actors"),
+            new PurchaseAdapter(PurchaseFamily.Nightclub, true, true, false, "NightclubBusinessSimulator.ProcessCustomer", "no staffed DJ booth"),
         };
         public static PurchaseAdapter For(PurchaseFamily family) => Rows[(int)family];
         public static IReadOnlyList<PurchaseAdapter> All => Rows;
@@ -157,6 +156,8 @@ namespace PersistentCity.Core
     /// the venue's service limit (claimed and mod-written entries against the hourly customer capacity). NativeHourlyCount
     /// is the game's own customer count for the hour: logged for calibration only, never read by a decision.
     /// Sell is called only after the basket fits the ceiling; Undo, only after Sell, restores the native books or throws.
+    /// Commit is called once after the debit and the paid receipt: native follow-up the sale held back (shelf refills)
+    /// runs then. It must not throw.
     /// </summary>
     public interface IPurchaseNative
     {
@@ -167,6 +168,7 @@ namespace PersistentCity.Core
         int? NativeHourlyCount { get; }
         PurchaseNativeOutcome Sell(IReadOnlyList<PurchaseLine> lines);
         void Undo();
+        void Commit();
     }
 
     /// <summary>The purchase side the simulator asks at a need visit. Runtime opens one native sale per request; null when
@@ -295,7 +297,10 @@ namespace PersistentCity.Core
             try { Debit(wallet, kind, paid); }
             catch (Exception error) { return Reverse(key, identity, quote, receipts, native, "Wallet debit failed: " + error.Message); }
             receipts[key] = "paid|" + paid.ToCentsText() + "|" + identity;
-            return PurchaseResult.Bought(key, outcome.Paid.ToArray(), paid, quote, outcome.Unpriced == 0 ? "" : "Native paid lines the mod cannot price were not charged");
+            string note = outcome.Unpriced == 0 ? "" : "Native paid lines the mod cannot price were not charged";
+            try { native.Commit(); }
+            catch (Exception error) { note += (note.Length == 0 ? "" : "; ") + "Native follow-up failed: " + error.Message; }
+            return PurchaseResult.Bought(key, outcome.Paid.ToArray(), paid, quote, note);
         }
 
         private static PurchaseResult Reverse(string key, string identity, PurchaseQuote quote, IDictionary<string, string> receipts, IPurchaseNative native, string reason)

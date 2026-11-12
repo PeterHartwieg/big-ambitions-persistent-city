@@ -199,6 +199,8 @@ namespace PersistentCity.Core
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
             // A running survey is transient; the replacement starts it again from zero.
             if (research != null) replacement.AttachResearch(research.Ledger, research.ConsumersPerUnit, research.BusinessPlace);
+            // GR-3: the purchase market and its fault carry over; a faulted market stays detached.
+            replacement.purchases = purchases; replacement.PurchaseFault = PurchaseFault;
             return replacement;
         }
 

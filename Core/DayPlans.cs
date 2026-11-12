@@ -190,13 +190,19 @@ namespace PersistentCity.Core
                     if (desired >= 0 && expires >= desired && Position.Finite(expires))
                         items.Add(new PlanItem(PlanItemKind.Meal, Activity.Home, "", desired, expires, expires, PlanPriority.Wanted, kind));
                 }
+            // GR-3: a due need sends the day's shop or leisure window to a venue that sells its category, most urgent first.
+            Place? planHome = null;
+            if (catalogue != null && places != null) places.TryGetValue(person.HomeId, out planHome);
             if (routine.HasShop)
-                items.Add(new PlanItem(PlanItemKind.Need, Activity.Shop, routine.ShopVenue, routine.ShopFrom, routine.ShopUntil, routine.ShopUntil, PlanPriority.Optional));
+            {
+                string venue = planHome == null ? routine.ShopVenue : NeedModel.PlanVenue(person, day, catalogue!, planHome, PlaceKind.Shop) ?? routine.ShopVenue;
+                items.Add(new PlanItem(PlanItemKind.Need, Activity.Shop, venue, routine.ShopFrom, routine.ShopUntil, routine.ShopUntil, PlanPriority.Optional));
+            }
             if (routine.HasLeisure)
             {
                 string venue = routine.LeisureVenue;
-                if (catalogue != null && places != null && places.TryGetValue(person.HomeId, out var home))
-                    venue = ChooseLeisure(keys, day, catalogue, home, venue);
+                if (planHome != null)
+                    venue = NeedModel.PlanVenue(person, day, catalogue!, planHome, PlaceKind.Leisure) ?? ChooseLeisure(keys, day, catalogue!, planHome, venue);
                 items.Add(new PlanItem(PlanItemKind.Leisure, Activity.Leisure, venue, routine.LeisureFrom, routine.LeisureUntil, routine.LeisureUntil, PlanPriority.Optional));
             }
             items.Sort((a, b) => { int c = a.EarliestStart.CompareTo(b.EarliestStart); return c != 0 ? c : a.Kind.CompareTo(b.Kind); });

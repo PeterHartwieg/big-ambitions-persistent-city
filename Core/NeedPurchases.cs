@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace PersistentCity.Core
 {
     /// <summary>
-    /// GR-3: the simulator side of needs and the purchase contract. A resident admitted for a shop visit at a venue the
-    /// purchase market serves buys through the contract when the venue's need is due; a visit while the need is not due
+    /// GR-3: the simulator side of needs and the purchase contract. A resident admitted for a shop or leisure visit at a
+    /// venue the purchase market serves buys through the contract when the venue's need is due; a visit while the need is not due
     /// is a visit only. Everything runs at event commit on the live person, so an abandoned event never buys. Without an
     /// attached market nothing here runs and no person gains needs.
     /// </summary>
@@ -17,6 +17,12 @@ namespace PersistentCity.Core
 
         public void AttachPurchases(IPurchaseMarket market) => purchases = market ?? throw new ArgumentNullException(nameof(market));
         public void DetachPurchases() => purchases = null;
+        /// <summary>The attached market, carried into a replacement simulator (<see cref="RebuildRoutes"/>).</summary>
+        public IPurchaseMarket? Purchases => purchases;
+        /// <summary>Set when a booked native order could not be restored (<see cref="PurchaseRefusal.Uncertain"/>). The market
+        /// is detached at once, so nobody buys again; Runtime stops accounting. The uncertain receipt stays saved.</summary>
+        public string? PurchaseFault { get; private set; }
+        public long ImpulsesInserted { get; private set; }
         public long PurchasesBought { get; private set; }
         public long PurchasesRefused { get; private set; }
         public PurchaseResult? LastPurchase { get; private set; }
@@ -28,7 +34,7 @@ namespace PersistentCity.Core
         {
             if (purchases == null || live.IsVisitor || working.MealOuting != null || working.RecentVisits.Count == 0) return null;
             var visit = working.RecentVisits[working.RecentVisits.Count - 1];
-            if (visit.AtMinute != State.Minute || visit.Activity != Activity.Shop || live.RecentVisits.Count > 0
+            if (visit.AtMinute != State.Minute || visit.Activity != Activity.Shop && visit.Activity != Activity.Leisure || live.RecentVisits.Count > 0
                 && ReferenceEquals(visit, live.RecentVisits[live.RecentVisits.Count - 1])) return null;
             return visit;
         }
@@ -41,7 +47,7 @@ namespace PersistentCity.Core
             for (int i = 0; i < plan.Items.Count; i++)
             {
                 var item = plan.Items[i];
-                if (item.Kind != PlanItemKind.Need || plan.StateOf(i) != PlanItemState.Missed || live.Plan.StateOf(i) == PlanItemState.Missed) continue;
+                if (item.Kind != PlanItemKind.Need && item.Kind != PlanItemKind.Leisure || plan.StateOf(i) != PlanItemState.Missed || live.Plan.StateOf(i) == PlanItemState.Missed) continue;
                 if (!places.TryGetValue(item.VenueId, out var venue)) continue;
                 var profile = NeedModel.For(venue.BusinessType);
                 var need = profile == null ? null : needs.Find(profile.Category);
@@ -84,8 +90,15 @@ namespace PersistentCity.Core
             }
             if (result.Refusal == PurchaseRefusal.AlreadyRecorded || result.Refusal == PurchaseRefusal.Unsupported) return;
             PurchasesRefused++;
+            if (result.Refusal == PurchaseRefusal.Uncertain)
+            {
+                // Fail closed: the native books may hold an order nobody paid for. No retry, no further purchase.
+                PurchaseFault = result.Key + ": " + result.Reason;
+                purchases = null;
+                return;
+            }
             NeedModel.Defer(need, profile, day);
-            DayPlanExecutor.Mark(live, Activity.Shop, live.ActivityUntilMinute, PlanItemState.Missed, PlanMissCause.Refused);
+            DayPlanExecutor.Mark(live, visit.Activity, live.ActivityUntilMinute, PlanItemState.Missed, PlanMissCause.Refused);
         }
 
         /// <summary>Walking legs pass a venue within this many metres of the leg.</summary>
@@ -116,8 +129,6 @@ namespace PersistentCity.Core
             }
         }
 
-        public long ImpulsesInserted { get; private set; }
-
         private static bool Passes(Route journey, Position at)
         {
             foreach (var leg in journey.Legs)
@@ -131,6 +142,30 @@ namespace PersistentCity.Core
             double t = length <= 0 ? 0 : Math.Max(0, Math.Min(1, ((p.X - a.X) * dx + (p.Z - a.Z) * dz) / length));
             double x = a.X + t * dx - p.X, z = a.Z + t * dz - p.Z;
             return Math.Sqrt(x * x + z * z);
+        }
+
+        private EssentialNeeds? essentials;
+        private long essentialsHour = long.MinValue;
+
+        /// <summary>GR-1/GR-3: the essential categories the attached market sells now (from the business types of its
+        /// venues), so the daily posting stops deducting them while their own spender buys them. Null without a market.
+        /// Derived from the market each game hour, so a reload or a replaced simulator gives the same policy.</summary>
+        internal EssentialNeeds? PurchaseEssentials()
+        {
+            var market = purchases;
+            if (market == null) return null;
+            long hour = (long)Math.Floor(State.Minute / 60);
+            if (essentials != null && hour == essentialsHour) return essentials;
+            var categories = new List<string>();
+            foreach (var id in market.Venues)
+            {
+                if (!places.TryGetValue(id, out var venue)) continue;
+                string category = BusinessTypes.For(venue.BusinessType).EssentialCategory;
+                if (HouseholdEssentials.CanBecomeNeed(category) && !categories.Contains(category)) categories.Add(category);
+            }
+            categories.Sort(StringComparer.Ordinal);
+            essentials = EssentialNeeds.Of(categories.ToArray()); essentialsHour = hour;
+            return essentials;
         }
 
         private static PurchaseResult PurchaseResultFor(PurchaseRequest request, PurchaseRefusal refusal, string reason)

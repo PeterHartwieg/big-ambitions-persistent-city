@@ -25,13 +25,41 @@ namespace PersistentCity.Runtime
     internal sealed class NativeSalePath : IPurchaseNative
     {
         private static BuildingRegistration? selling;
-        private static MethodInfo? process;
+        private static NativeSalePath? current;
+        private static MethodInfo? process, refill, capacity;
+        private static bool patched;
         private const string PatchId = "persistentcity.sale-path";
         private static readonly Harmony patches = new Harmony(PatchId);
         /// <summary>Native automatic restocking (a shelf's last unit refilled from stock boxes or parked-vehicle cargo)
-        /// moves stock outside the building image Undo restores, so it does not run inside a sale. The shelf is refilled
-        /// at the native closing-hour restock (or by hand); until then it stays empty and later native customers skip it.</summary>
-        private static bool SkipRefillWhileSelling() => selling == null;
+        /// moves stock outside the building image Undo restores, so it does not run inside a sale. The request is kept and
+        /// replayed by <see cref="Commit"/> once the purchase is paid; a reversed sale drops it with the restored stock.
+        /// Outside a sale the prefix runs the original.</summary>
+        private static bool DeferRefillWhileSelling(object[] __args)
+        {
+            if (selling == null) return true;
+            if (current != null && __args.Length == 1 && __args[0] is ItemInstance instance) current.refills.Add(instance);
+            return false;
+        }
+
+        /// <summary>Patches the refill prefix once for the session (Harmony rebuilds the method on every patch, so never
+        /// per sale). False when the native method is missing.</summary>
+        private static bool EnsurePatched()
+        {
+            if (patched) return true;
+            refill ??= AccessTools.Method(typeof(ReStockingHelper), "RefillSingleItemWithLimit", new[] { typeof(ItemInstance) });
+            if (refill == null) return false;
+            patches.Patch(refill, prefix: new HarmonyMethod(typeof(NativeSalePath), nameof(DeferRefillWhileSelling)) { priority = Priority.First });
+            patched = true;
+            return true;
+        }
+
+        /// <summary>Removes the session patch (mod detach).</summary>
+        internal static void Unpatch()
+        {
+            if (!patched) return;
+            patched = false;
+            patches.UnpatchAll(PatchId);
+        }
         /// <summary>True only inside this path's native ProcessCustomer call for this registration; the food authority's
         /// customer gate lets it through as it does the mod's own food checkout.</summary>
         internal static bool IsSelling(BuildingRegistration reg) => ReferenceEquals(selling, reg);
@@ -47,6 +75,7 @@ namespace PersistentCity.Runtime
         private readonly List<(List<CargoInstance> list, CargoInstance[] cargo, int[] amounts, float[] prices)> stock = new List<(List<CargoInstance>, CargoInstance[], int[], float[])>();
         private string[] itemIds = Array.Empty<string>();
         private int ordersBefore = -1, claimedSlot = -1;
+        private readonly List<ItemInstance> refills = new List<ItemInstance>();
 
         private NativeSalePath(object save, BuildingRegistration reg, BusinessType type, PurchaseFamily family, CustomerEntry? claimed, string? fee, List<PurchaseLine> basket)
         { this.save = save; this.reg = reg; this.type = type; Family = family; this.claimed = claimed; this.fee = fee; Basket = basket; hour = SaveGameManager.Current.Hour; }
@@ -54,7 +83,7 @@ namespace PersistentCity.Runtime
         public PurchaseFamily Family { get; }
         public IReadOnlyList<PurchaseLine> Basket { get; }
         public int ServedThisHour { get; internal set; }
-        public int CapacityThisHour { get; internal set; } = int.MaxValue;
+        public int CapacityThisHour { get; internal set; }
         public int? NativeHourlyCount { get; internal set; }
 
         /// <summary>The adapter row: exact simulator classes only (J0, S2's log). A subclass is a modded shop with its own
@@ -107,10 +136,11 @@ namespace PersistentCity.Runtime
                 foreach (var entry in claimed.order.entries)
                     if (entry == null || !Line(entry.itemName, reg, IsTicket(entry.itemName), basket)) { refusal = "Claimed entry has an unpriced line"; return null; }
             }
-            else if (adapter.NeedsNativeEntry)
+            else if (adapter.TicketFirst)
             {
-                // A written entry would have to rebuild the native ticket-first order; this family needs a native one.
-                refusal = "No uncompleted native entry this hour"; return null;
+                // A written cinema or theatre entry is the ticket alone, first, as the native calculator orders it.
+                string? ticket = reg.cachedAvailableProducts?.FirstOrDefault(p => IsTicket(p) && Price(p, reg).HasValue);
+                if (ticket == null || !Line(ticket, reg, true, basket)) { refusal = "No priced ticket to write an entry for"; return null; }
             }
             else
             {
@@ -156,18 +186,24 @@ namespace PersistentCity.Runtime
                 // Native ProcessAllCustomersFromThisHour, not SetUp, sets the theatre's no-actors refusal; check it here.
                 if (Family == PurchaseFamily.CinemaTheater && BusinessHelper.ShouldWarnTheaterHasNoActors(reg))
                     return PurchaseNativeOutcome.Refused(PurchaseRefusal.VenueNotReady, "Theatre has no actors");
-                var refill = AccessTools.Method(typeof(ReStockingHelper), "RefillSingleItemWithLimit", new[] { typeof(ItemInstance) });
-                if (refill == null) return PurchaseNativeOutcome.Interrupted("ReStockingHelper.RefillSingleItemWithLimit(ItemInstance) not found");
-                patches.Patch(refill, prefix: new HarmonyMethod(typeof(NativeSalePath), nameof(SkipRefillWhileSelling)) { priority = Priority.First });
+                // ProcessAllCustomersFromThisHour also applies the staffed hourly limit, which ProcessCustomer alone skips.
+                capacity ??= AccessTools.Method(typeof(RetailBusinessSimulator), "GetMaxCustomerCapacityThisHour");
+                if (capacity == null || capacity.GetParameters().Length != 0)
+                    return PurchaseNativeOutcome.Interrupted("RetailBusinessSimulator.GetMaxCustomerCapacityThisHour() not found");
+                int staffed = Convert.ToInt32(capacity.Invoke(simulator, null));
+                Evidence["staffedCapacityThisHour"] = staffed;
+                if (ServedThisHour >= staffed)
+                    return PurchaseNativeOutcome.Refused(PurchaseRefusal.VenueFull, "Venue served its staffed capacity this hour (" + staffed + ")");
+                if (!EnsurePatched()) return PurchaseNativeOutcome.Interrupted("ReStockingHelper.RefillSingleItemWithLimit(ItemInstance) not found");
                 Capture();
-                selling = reg;
+                refills.Clear();
+                selling = reg; current = this;
                 try { process.Invoke(simulator, new object[] { customer }); }
                 catch (Exception error) { failure = error is TargetInvocationException { InnerException: { } inner } ? inner : error; }
             }
             finally
             {
-                selling = null;
-                try { patches.UnpatchAll(PatchId); } catch (Exception error) { Evidence["refillUnpatch"] = error.Message; }
+                selling = null; current = null;
                 UnityEngine.Object.Destroy(simulator);
             }
             bool completed = customer.order.completed;
@@ -225,8 +261,23 @@ namespace PersistentCity.Runtime
         /// the claimed entry back unserved. Dirt and other furniture wear from processing are not restored. A building item
         /// added or removed during the sale is outside this image: the restore is refused, and Core keeps an uncertain
         /// receipt instead of reporting the books restored.</summary>
+        /// <summary>The purchase is paid: replays the refills the sale held back, through the native method itself.</summary>
+        public void Commit()
+        {
+            var pending = refills.ToArray();
+            refills.Clear();
+            int done = 0;
+            foreach (var instance in pending)
+            {
+                try { refill!.Invoke(null, new object[] { instance }); done++; }
+                catch (Exception error) { Evidence["refillFailed"] = (error is TargetInvocationException { InnerException: { } inner } ? inner : error).Message; }
+            }
+            Evidence["refillsReplayed"] = done;
+        }
+
         public void Undo()
         {
+            refills.Clear(); // the restored stock is the pre-sale image; nothing to refill
             if (ordersBefore < 0) return; // Sell stopped before its first native effect
             if (!reg.itemInstances.Keys.OrderBy(k => k, StringComparer.Ordinal).SequenceEqual(itemIds, StringComparer.Ordinal))
                 throw new InvalidOperationException("Building items changed during the sale; restore refused.");
@@ -262,6 +313,7 @@ namespace PersistentCity.Runtime
         // Contract sales per venue this hour: the service limit counts claimed and written entries alike.
         private readonly Dictionary<string, int> soldThisHour = new Dictionary<string, int>(StringComparer.Ordinal);
         private long refreshedHour = long.MinValue, soldHour = long.MinValue;
+        private int prunedDay = int.MinValue;
 
         internal NativePurchaseMarket(IDictionary<string, string> receipts, Action<Action> guarded)
         {
@@ -296,14 +348,20 @@ namespace PersistentCity.Runtime
                 if (NativeSalePath.FamilyOf(BusinessTypeHelper.GetData(reg.businessTypeName)?.simulator) == PurchaseFamily.Unsupported) continue;
                 string place = NativeFoodMarket.PlaceId(reg);
                 // A player business may stand behind its shop or its leisure place id; both name the same building.
-                foreach (var id in new[] { place, place.Substring(0, place.Length - ":shop".Length) + ":leisure" })
+                foreach (var id in new[] { place, Leisure(place) })
                     if (!served.ContainsKey(id)) { served.Add(id, reg); venues.Add(id); }
             }
         }
 
+        private static string Leisure(string shop) => shop.Substring(0, shop.Length - ":shop".Length) + ":leisure";
+
         public IPurchaseNative? Open(PurchaseRequest request, out PurchaseRefusal refusal, out string reason)
         {
             refusal = PurchaseRefusal.None; reason = "";
+            // Receipts of past days can never repeat their minute key; drop them on the day change, as the food checkout
+            // does. Uncertain receipts are kept.
+            int day = (int)(request.Minute / 1440);
+            if (day != prunedDay) { prunedDay = day; PurchaseContract.Prune(receipts, day); }
             if (!Serves(request.VenueId) || !served.TryGetValue(request.VenueId, out var reg))
             { refusal = PurchaseRefusal.Unsupported; reason = "Not a supported player business"; return null; }
             if (!BusinessHelper.IsBusinessOpen(reg)) { refusal = PurchaseRefusal.Closed; reason = "Closed"; return null; }
@@ -313,18 +371,21 @@ namespace PersistentCity.Runtime
             if (native == null) { refusal = family == PurchaseFamily.Unsupported ? PurchaseRefusal.Unsupported : PurchaseRefusal.VenueNotReady; reason = family + ": " + why; return null; }
             long hour = Hour();
             if (hour != soldHour) { soldThisHour.Clear(); soldHour = hour; }
-            soldThisHour.TryGetValue(request.VenueId, out int sold);
+            // One count per building: its shop and leisure ids are the same venue.
+            string building = NativeFoodMarket.PlaceId(reg);
+            soldThisHour.TryGetValue(building, out int sold);
             native.ServedThisHour = sold;
-            native.CapacityThisHour = reg.customerCapacity > 0 ? reg.customerCapacity : int.MaxValue;
+            native.CapacityThisHour = Math.Max(0, reg.customerCapacity);
             native.NativeHourlyCount = NativeSalePath.NativeEntriesThisHour(reg);
-            return new Counted(native, () => soldThisHour[request.VenueId] = sold + 1);
+            return new Counted(native, delta => { soldThisHour.TryGetValue(building, out int now); soldThisHour[building] = Math.Max(0, now + delta); });
         }
 
-        /// <summary>Counts a confirmed sale against the venue's hour.</summary>
+        /// <summary>Counts a booked sale against the building's hour; a reversed one gives its slot back.</summary>
         private sealed class Counted : IPurchaseNative
         {
-            private readonly NativeSalePath inner; private readonly Action sold;
-            public Counted(NativeSalePath inner, Action sold) { this.inner = inner; this.sold = sold; }
+            private readonly NativeSalePath inner; private readonly Action<int> count;
+            private bool counted;
+            public Counted(NativeSalePath inner, Action<int> count) { this.inner = inner; this.count = count; }
             public PurchaseFamily Family => inner.Family;
             public IReadOnlyList<PurchaseLine> Basket => inner.Basket;
             public int ServedThisHour => inner.ServedThisHour;
@@ -333,10 +394,15 @@ namespace PersistentCity.Runtime
             public PurchaseNativeOutcome Sell(IReadOnlyList<PurchaseLine> lines)
             {
                 var outcome = inner.Sell(lines);
-                if (outcome.Sold) sold();
+                if (outcome.Sold) { count(1); counted = true; }
                 return outcome;
             }
-            public void Undo() => inner.Undo();
+            public void Undo()
+            {
+                inner.Undo(); // a failed restore keeps the slot: the order may still stand
+                if (counted) { count(-1); counted = false; }
+            }
+            public void Commit() => inner.Commit();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace PersistentCity.Tests;
 /// contract for every family with food on the same checkout.</summary>
 public sealed class NeedPurchaseTests
 {
-    private const string Resident = "resident-0001", Venue = "address:Main%20Street:12:shop", Gift = "ba:businesstype_giftshop";
+    private const string Resident = "resident-0001", Venue = "address:Main%20Street:12:shop", Gift = "ba:businesstype_giftshop", Gym = "ba:businesstype_gym";
     private static readonly PurchaseLine Fee = new PurchaseLine("ba:itemname_entrancefee", Money.FromCents(500), true);
     private static readonly PurchaseLine Shirt = new PurchaseLine("ba:itemname_shirt", Money.FromCents(300), false);
     private static readonly PurchaseLine Socks = new PurchaseLine("ba:itemname_socks", Money.FromCents(200), false);
@@ -32,17 +32,26 @@ public sealed class NeedPurchaseTests
         public int CapacityThisHour { get; set; } = 10;
         public int? NativeHourlyCount { get; set; }
         public readonly List<string> Orders = new List<string>();
-        public int Calls, Undos;
+        public int Calls, Undos, Commits;
         public Func<PurchaseNativeOutcome?>? Before;
+        public bool ThrowAfterBooking, ThrowUndo;
+        public Func<IReadOnlyList<PurchaseLine>, IReadOnlyList<PurchaseLine>>? Paid;
         public PurchaseNativeOutcome Sell(IReadOnlyList<PurchaseLine> lines)
         {
             Calls++;
             var early = Before?.Invoke();
             if (early.HasValue) return early.Value;
             Orders.Add(string.Join("+", lines.Select(l => l.ItemId)));
-            return PurchaseNativeOutcome.Processed(lines.ToArray());
+            if (ThrowAfterBooking) throw new InvalidOperationException("processor threw after booking");
+            return PurchaseNativeOutcome.Processed(Paid?.Invoke(lines) ?? lines.ToArray());
         }
-        public void Undo() { Undos++; if (Orders.Count > 0) Orders.RemoveAt(Orders.Count - 1); }
+        public void Undo()
+        {
+            Undos++;
+            if (ThrowUndo) throw new InvalidOperationException("restore refused");
+            if (Orders.Count > 0) Orders.RemoveAt(Orders.Count - 1);
+        }
+        public void Commit() => Commits++;
     }
 
     [Fact]
@@ -186,18 +195,26 @@ public sealed class NeedPurchaseTests
     {
         public readonly Dictionary<string, string> Store = new Dictionary<string, string>(StringComparer.Ordinal);
         public readonly List<string> Venues = new List<string>();
-        public readonly List<(string Resident, long Minute, PurchaseRefusal Refusal)> Log = new List<(string, long, PurchaseRefusal)>();
+        public readonly List<(string Resident, long Minute, PurchaseRefusal Refusal, string Venue)> Log = new List<(string, long, PurchaseRefusal, string)>();
         public Func<PurchaseRequest, PurchaseNativeOutcome?> Decide = _ => null;
         public int? Count;
-        public bool Serves(string venueId) => Venues.Contains(venueId);
+        public bool BookOutsideQuoteAndFailUndo;
+        public int Opens;
+        public bool ServesNothing;
+        public bool Serves(string venueId) => !ServesNothing && Venues.Contains(venueId);
         IReadOnlyList<string> IPurchaseMarket.Venues => Venues;
         public IDictionary<string, string> Receipts => Store;
         public void Guarded(Action unit) => unit();
         public IPurchaseNative? Open(PurchaseRequest request, out PurchaseRefusal refusal, out string reason)
         {
-            refusal = PurchaseRefusal.None; reason = "";
+            refusal = PurchaseRefusal.None; reason = ""; Opens++;
             var native = new Native { Basket = new[] { new PurchaseLine("ba:itemname_card", Money.FromCents(400), false) }, NativeHourlyCount = Count };
-            native.Before = () => { var o = Decide(request); if (o.HasValue) Log.Add((request.ResidentId, request.Minute, o.Value.Refusal)); else Log.Add((request.ResidentId, request.Minute, PurchaseRefusal.None)); return o; };
+            native.Before = () => { var o = Decide(request); Log.Add((request.ResidentId, request.Minute, o?.Refusal ?? PurchaseRefusal.None, request.VenueId)); return o; };
+            if (BookOutsideQuoteAndFailUndo)
+            {
+                native.ThrowUndo = true;
+                native.Paid = _ => new[] { new PurchaseLine("ba:itemname_hat", Money.FromCents(100), false) };
+            }
             return native;
         }
     }
@@ -207,6 +224,8 @@ public sealed class NeedPurchaseTests
         var (state, food) = WorkplaceCapacityTests.Fresh(3, seed);
         var market = new Market();
         foreach (var shop in state.Places.Where(p => p.Kind == PlaceKind.Shop)) { shop.BusinessType = Gift; market.Venues.Add(shop.Id); }
+        // A gym, cinema or nightclub is a leisure place; its scheduled visits buy through the same contract.
+        foreach (var leisure in state.Places.Where(p => p.Kind == PlaceKind.Leisure)) { leisure.BusinessType = Gym; market.Venues.Add(leisure.Id); }
         var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
         city.AttachFoodMarket(food); city.AttachPurchases(market);
         return (city, market);
@@ -284,6 +303,163 @@ public sealed class NeedPurchaseTests
         Run(reference, 1440 * 5); Run(resumed, 1440 * 5);
         Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(resumed.State));
         Assert.Equal(market.Store.OrderBy(p => p.Key), copy.Store.OrderBy(p => p.Key));
+    }
+
+    [Fact]
+    public void ScheduledLeisureVisitsBuyThroughTheContract()
+    {
+        var (city, market) = Banded();
+        Run(city, 1440 * 4);
+        Assert.Contains(market.Log, l => l.Venue.StartsWith("leisure:", StringComparison.Ordinal) && l.Refusal == PurchaseRefusal.None);
+        Assert.Contains(city.State.Citizens, c => c.Needs?.Find(Gym)?.LastVenue.StartsWith("leisure:", StringComparison.Ordinal) == true);
+    }
+
+    [Fact]
+    public void AFailedRestoreKeepsTheUncertainReceiptStopsPurchasesAndNeverRetries()
+    {
+        var (city, market) = Banded();
+        market.BookOutsideQuoteAndFailUndo = true;
+        foreach (var person in city.State.Citizens.Where(c => c.Wallet != null))
+        { person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Gift, 0, "", 0)); person.Needs.Add(new NeedState(Gym, 0, "", 0)); }
+        var wallets = city.State.Citizens.Where(c => c.Wallet != null).ToDictionary(c => c.Identity.Id, c => c.Wallet!.Ledger.Discretionary);
+        Run(city, 1440 * 4);
+        Assert.Equal(1, market.Opens);
+        Assert.NotNull(city.PurchaseFault);
+        Assert.Null(city.Purchases);
+        var receipt = Assert.Single(market.Store);
+        Assert.StartsWith("uncertain|", receipt.Value);
+        Assert.Contains(receipt.Key, city.PurchaseFault);
+        // Nobody was debited; the fault carries into a replacement simulator, which stays detached.
+        Assert.All(city.State.Citizens.Where(c => c.Wallet != null), c => Assert.Equal(wallets[c.Identity.Id], c.Wallet!.Ledger.Discretionary));
+        var rebuilt = city.RebuildRoutes(new FreshCityTraceTests.Walk());
+        Assert.Equal(city.PurchaseFault, rebuilt.PurchaseFault); Assert.Null(rebuilt.Purchases);
+        // The uncertain receipt is never pruned.
+        Assert.Equal(0, PurchaseContract.Prune(market.Store, 1000));
+        Assert.Single(market.Store);
+    }
+
+    [Fact]
+    public void TheMarketSurvivesARouteRebuildAndKeepsBuying()
+    {
+        var (city, market) = Banded();
+        Run(city, 1440 * 2);
+        int before = market.Log.Count;
+        var rebuilt = city.RebuildRoutes(new FreshCityTraceTests.Walk());
+        Assert.Same(market, rebuilt.Purchases);
+        Run(rebuilt, 1440 * 4);
+        Assert.True(market.Log.Count > before);
+        Assert.True(rebuilt.PurchasesBought > 0);
+    }
+
+    [Fact]
+    public void AnEssentialCategoryTheMarketSellsIsNotAlsoDeductedAtTheDailyPosting()
+    {
+        var (city, market) = Banded();
+        Assert.Equal(0, city.PurchaseEssentials()!.Count); // gift shops and gyms sell no essential category
+        foreach (var shop in city.State.Places.Where(p => p.Kind == PlaceKind.Shop)) shop.BusinessType = "ba:businesstype_clothingstore";
+        Run(city, city.State.Minute + 60); // the policy is read once per game hour
+        var needs = city.PurchaseEssentials()!;
+        Assert.Equal(new[] { HouseholdEssentials.Clothing }, needs.Categories);
+        Assert.Equal(needs.Categories, city.RebuildRoutes(new FreshCityTraceTests.Walk()).PurchaseEssentials()!.Categories);
+        var plain = new CitySimulator(city.State, new FreshCityTraceTests.Walk());
+        Assert.Null(plain.PurchaseEssentials());
+
+        // The daily posting reads it: two cities that differ only in their venues' type, with no purchase made in either,
+        // differ in the essentials posted by exactly the clothing share of each posting.
+        (Money Paid, int Postings) Essentials(string type)
+        {
+            var (run, m) = Banded();
+            m.ServesNothing = true;
+            foreach (var shop in run.State.Places.Where(p => p.Kind == PlaceKind.Shop)) shop.BusinessType = type;
+            Run(run, 1440 * 4);
+            var wallets = run.State.Citizens.Where(c => c.Wallet != null).Select(c => c.Wallet!).ToList();
+            return (Money.Sum(wallets.Select(w => w.EssentialsPaid)), wallets.Count);
+        }
+        var gift = Essentials(Gift); var clothing = Essentials("ba:businesstype_clothingstore");
+        Assert.True(clothing.Paid < gift.Paid, "clothing is no longer deducted while its spender sells it");
+        Assert.Equal(gift.Postings, clothing.Postings);
+    }
+
+    [Fact]
+    public void ADueNeedSendsTheNextPlanToAVenueSellingItsCategory()
+    {
+        var (city, _) = Banded();
+        Run(city, 1440 + 600);
+        var catalogue = city.State.Places.Where(p => p.Kind == PlaceKind.Shop || p.Kind == PlaceKind.Leisure).ToList();
+        var index = city.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
+        var shops = catalogue.Where(p => p.Kind == PlaceKind.Shop).ToList();
+        const string Other = "ba:businesstype_bookstore";
+        shops[shops.Count - 1].BusinessType = Other;
+        // A person whose drawn day has a shop window, tried over a few days.
+        foreach (var person in city.State.Citizens.Where(c => !c.IsVisitor))
+            for (int day = 2; day < 6; day++)
+            {
+                person.Needs = null;
+                var drawn = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
+                int at = drawn.Items.ToList().FindIndex(i => i.Kind == PlanItemKind.Need);
+                if (at < 0) continue;
+                // Not due: the drawn venue stays.
+                person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, day + 1, "", 0));
+                Assert.Equal(drawn.Items[at].VenueId, DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false).Items[at].VenueId);
+                // Deferred and due again: the window goes to the venue that sells the category.
+                NeedModel.Defer(person.Needs.Find(Other)!, NeedModel.For(Other)!, day - 1);
+                Assert.Equal(day, person.Needs.Find(Other)!.NextDueDay);
+                var retry = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
+                Assert.Equal(shops[shops.Count - 1].Id, retry.Items[at].VenueId);
+                Assert.Equal(PlanItemKind.Need, retry.Items[at].Kind);
+                return;
+            }
+        Assert.Fail("no person with a shop window");
+    }
+
+    [Fact]
+    public void TheContractsFailureTransitionsLeaveWalletAndReceiptsConsistent()
+    {
+        var receipts = new Dictionary<string, string>(StringComparer.Ordinal);
+        // Sell throws after booking, restore succeeds: Reversed, receipt gone, books restored, no debit.
+        var wallet = Wallet(10000); string before = WalletText(wallet);
+        var thrown = new Native { ThrowAfterBooking = true };
+        var r = PurchaseContract.Run(Request(10000, 700), wallet, receipts, thrown);
+        Assert.Equal((PurchaseRefusal.Reversed, 1, 0), (r.Refusal, thrown.Undos, thrown.Orders.Count));
+        Assert.Empty(receipts); Assert.Equal(before, WalletText(wallet)); Assert.Equal(0, thrown.Commits);
+
+        // Restore fails too: Uncertain, the receipt kept as uncertain, no debit, never pruned.
+        var stuck = new Native { ThrowAfterBooking = true, ThrowUndo = true };
+        r = PurchaseContract.Run(Request(10000, 701), wallet, receipts, stuck);
+        Assert.Equal(PurchaseRefusal.Uncertain, r.Refusal);
+        Assert.StartsWith("uncertain|", receipts[r.Key]); Assert.Equal(before, WalletText(wallet));
+        Assert.Equal(0, PurchaseContract.Prune(receipts, 100));
+
+        // Not sold after the pending receipt: the receipt is removed and the native refusal passes through.
+        receipts.Clear();
+        var declined = new Native { Before = () => PurchaseNativeOutcome.Refused(PurchaseRefusal.Dropped, "dj skill") };
+        r = PurchaseContract.Run(Request(10000, 702), wallet, receipts, declined);
+        Assert.Equal(PurchaseRefusal.Dropped, r.Refusal); Assert.Empty(receipts); Assert.Equal(0, declined.Undos);
+
+        // The game's per-item check refused every line: an order with no paid entry, a declined receipt, no money.
+        var refusedEvery = new Native { Paid = _ => Array.Empty<PurchaseLine>() };
+        r = PurchaseContract.Run(Request(10000, 703), wallet, receipts, refusedEvery);
+        Assert.Equal(PurchaseRefusal.NativeDeclined, r.Refusal);
+        Assert.StartsWith("declined|", receipts[r.Key]); Assert.Equal(before, WalletText(wallet)); Assert.Equal(0, refusedEvery.Commits);
+
+        // A wallet that cannot take the booked total is reversed before any debit.
+        var held = Wallet(10000); held.HeldPurchase = Money.FromCents(1);
+        Assert.Equal(PurchaseRefusal.Ceiling, PurchaseContract.Run(Request(10000, 704), held, receipts, new Native()).Refusal);
+
+        // A bought sale commits its native follow-up once.
+        var good = new Native();
+        Assert.True(PurchaseContract.Run(Request(10000, 705), wallet, receipts, good).IsBought);
+        Assert.Equal(1, good.Commits);
+
+        // Recover: a pending receipt outside a running purchase becomes abandoned; Prune drops earlier days only.
+        receipts.Clear();
+        receipts[PurchaseContract.Prefix + "a:b:100"] = "pending|x";
+        receipts[PurchaseContract.Prefix + "a:b:3000"] = "paid|1|x";
+        receipts["other:key"] = "kept";
+        Assert.Equal(1, PurchaseContract.Recover(receipts));
+        Assert.Equal("abandoned|x", receipts[PurchaseContract.Prefix + "a:b:100"]);
+        Assert.Equal(1, PurchaseContract.Prune(receipts, 2));
+        Assert.Equal(new[] { "other:key", PurchaseContract.Prefix + "a:b:3000" }, receipts.Keys.OrderBy(k => k, StringComparer.Ordinal));
     }
 
     [Fact]
