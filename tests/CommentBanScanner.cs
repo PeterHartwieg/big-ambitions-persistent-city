@@ -275,7 +275,7 @@ public static class CommentBanScanner
     {
         readonly string s;
         readonly List<(int, int)> spans;
-        readonly List<(string Word, bool Tabs)> pending = new List<(string, bool)>();
+        readonly List<(string Word, bool Tabs, bool Expand)> pending = new List<(string, bool, bool)>();
         int i;
 
         public ShellLexer(string text, List<(int, int)> found) { s = text; spans = found; }
@@ -299,6 +299,7 @@ public static class CommentBanScanner
                     i = k;
                     continue;
                 }
+                if (c == '(' && wordStart && i + 1 < n && s[i + 1] == '(') { Arithmetic(); continue; }
                 wordStart = false;
                 if (c == '\\') { i += 2; continue; }
                 if (c == '\'')
@@ -347,22 +348,28 @@ public static class CommentBanScanner
             int n = s.Length;
             if (i + 2 < n && s[i + 2] == '(')
             {
-                int depth = 0;
-                for (i += 1; i < n; i++)
-                {
-                    if (s[i] == '(') depth++;
-                    else if (s[i] == ')' && --depth == 0) { i++; return; }
-                }
+                i++;
+                Arithmetic();
                 return;
             }
             i += 2;
             Code(true);
         }
 
+        void Arithmetic()
+        {
+            int n = s.Length, depth = 0;
+            for (; i < n; i++)
+            {
+                if (s[i] == '(') depth++;
+                else if (s[i] == ')' && --depth == 0) { i++; return; }
+            }
+        }
+
         void Heredoc()
         {
             int n = s.Length;
-            bool tabs = i < n && s[i] == '-';
+            bool tabs = i < n && s[i] == '-', quoted = false;
             if (tabs) i++;
             while (i < n && (s[i] == ' ' || s[i] == '\t')) i++;
             var word = new System.Text.StringBuilder();
@@ -371,36 +378,46 @@ public static class CommentBanScanner
                 char c = s[i];
                 if (c == '\'' || c == '"')
                 {
+                    quoted = true;
                     int k = s.IndexOf(c, i + 1);
                     if (k < 0) k = n;
                     word.Append(s, i + 1, k - i - 1);
                     i = Math.Min(k + 1, n);
                     continue;
                 }
-                if (c == '\\') { if (i + 1 < n) word.Append(s[i + 1]); i += 2; continue; }
+                if (c == '\\') { quoted = true; if (i + 1 < n) word.Append(s[i + 1]); i += 2; continue; }
                 word.Append(c);
                 i++;
             }
-            if (word.Length > 0) pending.Add((word.ToString(), tabs));
+            if (word.Length > 0) pending.Add((word.ToString(), tabs, !quoted));
         }
 
         void Bodies()
         {
-            int n = s.Length;
-            foreach (var (word, tabs) in pending)
-            {
-                while (i < n)
-                {
-                    int k = s.IndexOf('\n', i);
-                    if (k < 0) k = n;
-                    int j = i;
-                    if (tabs) while (j < k && s[j] == '\t') j++;
-                    string line = s.Substring(j, k - j).TrimEnd('\r');
-                    i = Math.Min(k + 1, n);
-                    if (line == word) break;
-                }
-            }
+            var bodies = pending.ToList();
             pending.Clear();
+            foreach (var (word, tabs, expand) in bodies) Body(word, tabs, expand);
+        }
+
+        void Body(string word, bool tabs, bool expand)
+        {
+            int n = s.Length;
+            while (i < n)
+            {
+                int k = s.IndexOf('\n', i);
+                if (k < 0) k = n;
+                int j = i;
+                if (tabs) while (j < k && s[j] == '\t') j++;
+                if (s.Substring(j, k - j).TrimEnd('\r') == word) { i = Math.Min(k + 1, n); return; }
+                if (!expand) { i = Math.Min(k + 1, n); continue; }
+                while (i < n && s[i] != '\n')
+                {
+                    if (s[i] == '\\') i += 2;
+                    else if (s[i] == '$' && i + 1 < n && s[i + 1] == '(') Substitution();
+                    else i++;
+                }
+                if (i < n) i++;
+            }
         }
     }
 
