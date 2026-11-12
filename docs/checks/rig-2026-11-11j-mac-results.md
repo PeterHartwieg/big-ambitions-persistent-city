@@ -2,7 +2,7 @@
 
 Role `rig_test`, where `mac`, isolated `agentmac`. Candidate `f8013e79abee429be27d81fda586386f61e13f93` was fetched and verified before build. Official rig checkout `fae4803117431c7a3b0ed18eea88640e19c12672`, clean, read only. No reinstall, rollback, production change, release, version/changelog, merge, issue creation or Windows contact.
 
-`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-11j-mac`. Raw responses, command exits, logs, scripts, extractions and backups stay there. `<rig>` = `/Users/peterhartwieg/Coding_Projects/big-ambitions/big-ambitions-agent-rig`. Previous stages and worktrees were read only; protected harness sessions were not inspected or changed.
+`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-11j-mac`. Raw responses, command exits, logs, scripts, extractions and backups stay there. `<rig>` = the official rig checkout. Previous stages and worktrees were read only; protected harness sessions were not inspected or changed.
 
 **Summary: 16 passed / 5 partial / 2 failed / 11 not run. Result: BLOCKED.** Counts cover the 34 named rows below; grouped historical exclusions are not counted again. Natural first sale, S2 Food/Goods/ceiling, completed-receipt continuity and reload clock/identity checks passed. The required goods fixture-status read failed; the service recipe refused native finish, so its sale is NOT RUN. Mid-probe interruption remains unavailable. In-game proof gates no merge.
 
@@ -193,7 +193,7 @@ Fresh accounting city, full modpack, Enabled/PhysicalEnabled, autosave guard ver
 
 **X3-1: PARTIAL.** Native current-format loads succeed with 957 identities and schema-1 extracted bodies, without “start a new city”; the specified literal population-read `Loaded`/schema assertion is not emitted. No auxiliary reader verdict is substituted. Its deleted check doc is not recreated.
 
-**GR-1:** check 1 PASS: fresh `Business types (load): opened=0 closed=0 changed=0; types=37`, save and reload accepted. The food shop's later load observes opened=1; the full close/replace lifecycle (check 2) is NOT RUN. Check 3 needs an established modded-type fixture; check 5 needs a pre-GR-1 save outside this fresh-head-only run. Check 4 PASS: more than three normal-speed game hours; all retained business-type scan ms/max_ms values are at most **1.37 ms**, no value ≥30. Check 6 PASS on the post-daily checkpoint: c0 balance_units 29695403884544 before/after; c1 33391484967322 before/after. All 957 post-midnight wallet tuples match after reload.
+**GR-1:** check 1 PASS: fresh `Business types (load): opened=0 closed=0 changed=0; types=37`, save and reload accepted. The food shop's later load observes opened=1; the full close/replace lifecycle (check 2) is NOT RUN. Check 3 needs an established modded-type fixture; check 5 needs a pre-GR-1 save outside this fresh-head-only run. Check 4 PASS: more than three normal-speed game hours; all retained business-type scan ms/max_ms values are at most **1.37 ms**, no value ≥30 (provisional shared-Mac observation). Check 6 PASS on the post-daily checkpoint: c0 balance_units 29695403884544 before/after; c1 33391484967322 before/after. All 957 post-midnight wallet tuples match after reload.
 
 **F2 diagnostic subset: PARTIAL.** Exact console reads: `pc movement status`, `pc movement corrections since 0`, `pc movement holds since 0`. Sample: followers=10, walker lag p50/p95/max=0.50/4.65/8.25 m, corrections=320, on_screen_moves=0; car followers=3, car lag p95=27.60 m, car corrections=47. Correction/hold outputs are bounded rings. No controlled camera/body/contact/fault/cadence replay assertion is inferred from these reads; visual/pointer rows stay for Peter.
 
@@ -326,7 +326,7 @@ Counts apply only to these 34 rows; PARTIAL denotes the observed subset. Prior p
 | GR-1 check 1 types at load | **PASS** | Fresh load opened=0 closed=0 changed=0; types=37; save/reload accepted. |
 | GR-1 check 2 open/close/replace | **NOT RUN** | Needs supported close/sell/type-replacement fixture; opening observations retained only. |
 | GR-1 check 3 modded type | **NOT RUN** | Needs an established modded-business-type fixture. |
-| GR-1 check 4 scan cost | **PASS** | More than three normal-speed game hours; recorded scan maxima below 30 ms; raw scan lines archived. |
+| GR-1 check 4 scan cost | **PASS** | More than three normal-speed game hours; recorded scan maxima below 30 ms (provisional shared-Mac observation); raw scan lines archived. |
 | GR-1 check 5 older city refusal | **NOT RUN** | Needs a pre-GR-1 save; outside fresh-current-head-only scope. |
 | GR-1 check 6 post-daily wallets | **PASS** | Post-midnight normal reload preserves all 957 wallet tuples; c0/c1 budget words retained. |
 | E5b2 shop matrix | **NOT RUN** | Needs original-three/catalogue lifecycle and shop-count fixtures. |
