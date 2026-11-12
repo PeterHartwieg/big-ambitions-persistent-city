@@ -24,12 +24,12 @@ namespace PersistentCity.Tests.Acceptance
         /// <summary>Right after the first paid receipt.</summary>
         AfterPaid }
 
-    /// <summary>GR-4 (J1): the purchase market on an F9c arm. Two of the fixture's non-food shops become player businesses
-    /// the market serves: a self-service clothing store whose optional basket trims to the ceiling, and a jewellery store
+    /// <summary>GR-4 (J1): the purchase market on an F9c arm. Two shops outside every food scope join the city as player
+    /// businesses the market serves (the fixture's own shops are food scopes in city-m): a self-service clothing store whose optional basket trims to the ceiling, and a jewellery store
     /// whose one mandatory line is above every wallet tier's band, so each visit there is refused at the ceiling.</summary>
     internal sealed record CityLoop(LoopFault Fault = LoopFault.None)
     {
-        public const string Goods = "shop:1", Jewellery = "shop:2";
+        public const string Goods = "shop:loop-goods", Jewellery = "shop:loop-jewellery";
         public const string Clothing = "ba:businesstype_clothingstore", Jewellery_Type = "ba:businesstype_jewelrystore";
         public const int CapacityPerHour = 10;
         public static readonly PurchaseLine[] GoodsBasket =
@@ -195,9 +195,15 @@ namespace PersistentCity.Tests.Acceptance
         partial void LoopPrepare(CityState state)
         {
             if (arm.Loop == null) return;
-            // The same shops on every loop arm; after a load the saved types are already these.
-            state.Places.Single(p => p.Id == CityLoop.Goods).BusinessType = CityLoop.Clothing;
-            state.Places.Single(p => p.Id == CityLoop.Jewellery).BusinessType = CityLoop.Jewellery_Type;
+            // The same shops on every loop arm, next to the fixture's shops; after a load they are already saved.
+            void Add(string id, string name, string type, Position at)
+            {
+                if (state.Places.Any(p => p.Id == id)) return;
+                if (state.Food!.Shops.Any(s => s.PlaceId == id)) throw new CityViolation(id + " is a food scope");
+                state.Places.Add(new Place { Id = id, Name = name, Kind = PlaceKind.Shop, Capacity = 16, Position = at, BusinessType = type });
+            }
+            Add(CityLoop.Goods, "Loop Clothing", CityLoop.Clothing, new Position(110, 0, 0));
+            Add(CityLoop.Jewellery, "Loop Jewellery", CityLoop.Jewellery_Type, new Position(140, 0, -10));
             if (run.Loop == null)
             {
                 run.Loop = new CityLoopStats();
@@ -208,6 +214,8 @@ namespace PersistentCity.Tests.Acceptance
         partial void LoopAttach()
         {
             if (arm.Loop == null) return;
+            // Every reload (F9c's and the loop's) passes here: no purchase may still wait for its check.
+            if (loop != null) LoopAllVerified(arm.Name + " reload at " + CityOracles.M(clock));
             loop = loop == null ? new CityLoopMarket(arm.Loop) : loop.Loaded();
             var byId = city.State.Citizens.ToDictionary(c => c.Identity.Id, StringComparer.Ordinal);
             loop.WalletOf = id => byId.TryGetValue(id, out var c) ? c.Wallet : city.State.Citizens.FirstOrDefault(p => p.Identity.Id == id)?.Wallet;
@@ -307,6 +315,8 @@ namespace PersistentCity.Tests.Acceptance
             if (loaded.Plan == null || !plan.SameAs(loaded.Plan)) throw new CityViolation(context + ": plan changed");
             if (CityOracles.Wallet(loaded.Wallet) + "|" + loaded.Wallet!.Ledger.Discretionary.Units != wallet) throw new CityViolation(context + ": wallet changed");
             if (loaded.Phase + "|" + loaded.DestinationId + "|" + loaded.PlaceId + "|" + CityOracles.M(loaded.NextEventMinute) != where) throw new CityViolation(context + ": journey changed");
+            // Modelled: the receipts live in the native save's mod data, which this harness carries as a dictionary copy
+            // (CityLoopMarket.Loaded), so this holds by construction; the in-game reload check covers the real store.
             if (!receipts.SequenceEqual(loop!.Store.OrderBy(p => p.Key, StringComparer.Ordinal))) throw new CityViolation(context + ": receipts changed");
             stats.Reloads.Add((state, city.View.Minute, id));
             pendingLoopReloads.Remove(state);
@@ -335,9 +345,17 @@ namespace PersistentCity.Tests.Acceptance
             return null;
         }
 
+        /// <summary>Every opened purchase was read back and verified at its event's observation.</summary>
+        private void LoopAllVerified(string context)
+        {
+            var open = loop!.Finished ?? loop.Current;
+            if (open != null) throw new CityViolation(context + ": purchase " + open.Request.Key + " was never verified");
+        }
+
         partial void LoopFinish()
         {
             if (loop == null) return;
+            LoopAllVerified(arm.Name + " at the end");
             LoopCheckpoint(arm.Name + " at the end");
             run.Loop!.BookedOrders = loop.Books.Count;
             run.Loop.Impulses = city.ImpulsesInserted;
