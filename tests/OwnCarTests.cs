@@ -288,4 +288,28 @@ public sealed class OwnCarTests
         var beside = new CarRectangle(new Position(-2.0, 0, -3.9), 0, 0.3, 0.1);
         for (double z = 0; z < 10; z += 0.2) Assert.False(OwnCarFootprint.Overlaps(OwnCarFootprint.At(new Position(0, 0, z), 0, offset, 4, 1.8), beside));
     }
+
+    /// <summary>Review Sol-r3-1: the reviewer's replay. At 10 m/s over a 100 ms frame the front axle moves 1.03 m east while
+    /// the yaw goes from 0 to 18 degrees. A 0.4 m obstacle at (-1.175, -3.825) clears both end poses but meets the rear
+    /// in between; the swept substeps find it. A move along a straight road with clear space beside stays clear.</summary>
+    [Fact]
+    public void ASweptTurnFindsAnObstacleBetweenTwoClearPoses()
+    {
+        var offset = new Position(0, 0, 2);
+        Position from = new(0, 0, 0), to = new(1.03, 0, 0);
+        var obstacle = new CarRectangle(new Position(-1.175, 0, -3.825), 0, 0.2, 0.2);
+        Assert.False(OwnCarFootprint.Overlaps(OwnCarFootprint.At(from, 0, offset, 4, 1.8), obstacle));
+        Assert.False(OwnCarFootprint.Overlaps(OwnCarFootprint.At(to, 18, offset, 4, 1.8), obstacle));
+        bool between = false;
+        for (int i = 1; i < 100; i++)
+            between |= OwnCarFootprint.Overlaps(OwnCarFootprint.At(Position.Lerp(from, to, i / 100.0), 18 * i / 100.0, offset, 4, 1.8), obstacle);
+        Assert.True(between);
+        var sweep = OwnCarFootprint.Sweep(from, 0, to, 18, offset, 4, 1.8);
+        Assert.InRange(sweep.Count, 2, OwnCarFootprint.MaximumSubsteps + 1);
+        Assert.Contains(sweep, box => OwnCarFootprint.Overlaps(box, obstacle));
+        // Straight on, 1 m of clear space beside the car stays clear over the sweep.
+        var beside = new CarRectangle(new Position(-2.0, 0, -2), 0, 3, 0.1);
+        Assert.DoesNotContain(OwnCarFootprint.Sweep(new Position(0, 0, 0), 0, new Position(0, 0, 1), 0, offset, 4, 1.8),
+            box => OwnCarFootprint.Overlaps(box, beside));
+    }
 }

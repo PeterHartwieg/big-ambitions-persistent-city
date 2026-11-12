@@ -619,14 +619,15 @@ namespace PersistentCity.Runtime
                 var heading = Vector(body.To) - Vector(body.From); heading.y = 0;
                 if (heading.sqrMagnitude > 0.0001f)
                     yaw = OwnCarMotion.Yaw(body.Yaw, Quaternion.LookRotation(heading.normalized, Vector3.up).eulerAngles.y, seconds, hold: false);
-                // The whole body at the proposed pose must overlap nothing: the turn swings the rear and sides around the
-                // front axle. Otherwise the car stands this frame with its pose unchanged, and only lags.
+                // The whole body over the whole move must overlap nothing: the turn swings the rear and sides around the
+                // front axle, also between the two poses. Otherwise the car stands this frame with its pose unchanged,
+                // and only lags.
                 var model = body.Instance.Model;
                 var front = body.Length <= 1e-9 ? body.To : Position.Lerp(body.From, body.To, Math.Min(1, step.Along / body.Length));
-                var footprint = OwnCarFootprint.At(front, yaw, Point(model.MarkerOffset), model.Length, model.Width);
                 var rotation = Quaternion.Euler(0, (float)yaw, 0);
-                if (Occupied(footprint, model.Height, rotation, body.Instance.Root.transform, includeStatic: false))
-                { body.SpeedValue = 0; return; }
+                foreach (var box in OwnCarFootprint.Sweep(body.Position, body.Yaw, front, yaw, Point(model.MarkerOffset), model.Length, model.Width))
+                    if (Occupied(box, model.Height, body.Instance.Root.transform))
+                    { body.SpeedValue = 0; return; }
                 body.Yaw = yaw; body.Rotation = rotation;
             }
             body.Along = step.Along; body.SpeedValue = step.Speed;
@@ -657,9 +658,9 @@ namespace PersistentCity.Runtime
         private readonly Collider[] overlaps = new Collider[16];
         private static int occupancyMask = -1, movingLayers = -1;
         /// <summary>Whether a vehicle, the player, a walker or another own car stands in this body rectangle. Static
-        /// Obstacles-layer geometry (bollards, lamp posts) counts only with <paramref name="includeStatic"/>; colliders
-        /// under <paramref name="ignore"/> (the car itself) never count.</summary>
-        private bool Occupied(CarRectangle box, float height, Quaternion rotation, Transform? ignore, bool includeStatic)
+        /// Obstacles-layer geometry (bollards, lamp posts) does not count; the layer is in the mask only for own cars.
+        /// Colliders under <paramref name="ignore"/> (the car itself) never count.</summary>
+        private bool Occupied(CarRectangle box, float height, Transform? ignore)
         {
             if (occupancyMask < 0)
             {
@@ -669,12 +670,12 @@ namespace PersistentCity.Runtime
             if (occupancyMask == 0) return false;
             var centre = Vector(box.Centre) + Vector3.up * (height / 2f + 0.2f);
             var half = new Vector3((float)box.HalfWidth, Math.Max(0.3f, height / 2f - 0.15f), (float)box.HalfLength);
-            int count = Physics.OverlapBoxNonAlloc(centre, half, overlaps, rotation, occupancyMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.OverlapBoxNonAlloc(centre, half, overlaps, Quaternion.Euler(0, (float)box.YawDegrees, 0), occupancyMask, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
                 var collider = overlaps[i];
                 if (collider == null || ignore != null && collider.transform.IsChildOf(ignore)) continue;
-                if (includeStatic || IsOwnCar(collider) || (movingLayers & (1 << collider.gameObject.layer)) != 0) return true;
+                if (IsOwnCar(collider) || (movingLayers & (1 << collider.gameObject.layer)) != 0) return true;
             }
             return false;
         }
@@ -751,7 +752,7 @@ namespace PersistentCity.Runtime
             // The root stands on the curb point; a margin keeps neighbouring parked cars apart. Static Obstacles-layer
             // geometry beside a curb is not occupancy, so it never hides a parked car for good.
             var box = new CarRectangle(at, rotation.eulerAngles.y, model.Length / 2 + 0.3, model.Width / 2 + 0.2);
-            return !Occupied(box, model.Height, rotation, null, includeStatic: false);
+            return !Occupied(box, model.Height, null);
         }
 
         /// <summary>A parked car whose owner now drives: it fades out where seen, else returns to the pool at once.</summary>
