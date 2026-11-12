@@ -230,12 +230,13 @@ namespace PersistentCity.Core
                 : new PurchaseQuote(kept, dropped, total, ceiling, PurchaseRefusal.None);
         }
 
-        /// <summary>Food on the same checkout: the chosen main is a mandatory line, each planned extra an optional line in
-        /// ticket order, so a ticket over the ceiling loses extras from the end and a main over it is Refused(Ceiling).</summary>
+        /// <summary>Food on the same checkout: the chosen main and each planned extra, in ticket order, all mandatory. F6j
+        /// already planned the ticket within the meal's allowance, so a ticket over it is Refused(Ceiling) whole, exactly
+        /// as the food checkout refused it before GR-3; the contract never trims a food ticket.</summary>
         public static IReadOnlyList<PurchaseLine> FoodBasket(string product, Money main, IReadOnlyList<FoodTicketLine>? extras)
         {
             var lines = new List<PurchaseLine>(1 + (extras?.Count ?? 0)) { new PurchaseLine(product, main, true) };
-            if (extras != null) foreach (var extra in extras) lines.Add(new PurchaseLine(extra.ProductId, extra.Price, false));
+            if (extras != null) foreach (var extra in extras) lines.Add(new PurchaseLine(extra.ProductId, extra.Price, true));
             return lines;
         }
 

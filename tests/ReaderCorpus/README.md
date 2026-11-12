@@ -8,6 +8,7 @@ Golden population payloads of the writer. The save schema is held at 1 until rel
 - `retired-pcc-c-minimal.json`: the same 1-resident city as the F7d columnar writer stored it before P-A. Not a corpus fixture; `SaveRoundTripTests` checks that it is refused as an older development city and kept.
 - `retired-pre-wallet-full.json`: the old `full.json`, written before GR-1 moved the wallet from the food roster record to the person and added the place business type. Not a corpus fixture; `BusinessTypesWalletTests` checks that it is refused as an older development city and kept, and that every person's wallet in the current `full.json` is the exact budget this file stored in that person's roster record.
 - `retired-pre-plan-full.json`: the `full.json` written before GR-2 added the saved day plan (`"Plan"` on every resident and visitor routine). Not a corpus fixture; `DayPlanTests` checks that it is refused as an older development city and kept, and that the current `full.json` with its plan fields taken out is this file byte for byte.
+- `retired-pre-needs-full.json`: the `full.json` written before GR-3 added the resident's needs (`"Needs"` on every resident). Not a corpus fixture; `NeedPurchaseTests` checks that it is refused as an older development city and kept, and that the current `full.json` with its needs fields taken out is this file byte for byte.
 - `.gitattributes` marks this tree `-text`, so line-ending conversion cannot change a pinned byte.
 
 ## Provenance

@@ -627,7 +627,8 @@ public sealed class DayPlanTests
         }
     }
 
-    private static string WithoutPlans(string payload) => System.Text.RegularExpressions.Regex.Replace(payload, "\"Plan\":(null|\"[^\"]*\"),", "");
+    // GR-3 added "Needs" to every resident after these pins; it is taken out too.
+    private static string WithoutPlans(string payload) => System.Text.RegularExpressions.Regex.Replace(payload, "\"(Plan|Needs)\":(null|\"[^\"]*\"),", "");
 
     /// <summary>Plans change no routine where the workplace's hours hold the shift: with the "Plan" fields taken out, the
     /// writer goldens are byte for byte the pins from before GR-2 (a65e5a46), and the corpus's full.json is the retired one.</summary>
