@@ -370,9 +370,15 @@ namespace PersistentCity.Runtime
             var native = NativeSalePath.Prepare(reg, out var family, out var why);
             if (native == null) { refusal = family == PurchaseFamily.Unsupported ? PurchaseRefusal.Unsupported : PurchaseRefusal.VenueNotReady; reason = family + ": " + why; return null; }
             long hour = Hour();
-            if (hour != soldHour) { soldThisHour.Clear(); soldHour = hour; }
+            // A new hour (or the first sale after a load) starts from the hour's saved receipts, not from zero.
+            if (hour != soldHour)
+            {
+                soldThisHour.Clear(); soldHour = hour;
+                long minuteHour = request.Minute / 60;
+                foreach (var pair in PurchaseContract.ServedInHour(receipts, minuteHour)) soldThisHour[pair.Key] = pair.Value;
+            }
             // One count per building: its shop and leisure ids are the same venue.
-            string building = NativeFoodMarket.PlaceId(reg);
+            string building = PurchaseContract.Building(NativeFoodMarket.PlaceId(reg));
             soldThisHour.TryGetValue(building, out int sold);
             native.ServedThisHour = sold;
             native.CapacityThisHour = Math.Max(0, reg.customerCapacity);

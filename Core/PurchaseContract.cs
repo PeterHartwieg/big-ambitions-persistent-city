@@ -325,6 +325,32 @@ namespace PersistentCity.Core
             return pending.Length;
         }
 
+        /// <summary>The building a venue ID names: a player business's leisure ID is its shop ID's alias.</summary>
+        public static string Building(string venueId)
+            => venueId.EndsWith(":leisure", StringComparison.Ordinal) ? venueId.Substring(0, venueId.Length - ":leisure".Length) + ":shop" : venueId;
+
+        /// <summary>
+        /// Contract orders booked per building in game hour <paramref name="hour"/>, read from the saved receipts: paid,
+        /// declined (an order without paid lines) and uncertain (an order that may stand) count; a reversed sale left no
+        /// receipt and an abandoned one booked nothing. So the hourly service count survives a reload.
+        /// </summary>
+        public static Dictionary<string, int> ServedInHour(IDictionary<string, string> receipts, long hour)
+        {
+            var served = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var pair in receipts)
+            {
+                if (!IsReceiptKey(pair.Key)) continue;
+                string status = pair.Value.Length > 0 && pair.Value.IndexOf('|') > 0 ? pair.Value.Substring(0, pair.Value.IndexOf('|')) : pair.Value;
+                if (status != "paid" && status != "declined" && status != "uncertain") continue;
+                var parts = pair.Key.Substring(Prefix.Length).Split(':');
+                if (parts.Length != 3 || !long.TryParse(parts[2], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out long minute)
+                    || minute / 60 != hour) continue;
+                string building = Building(Uri.UnescapeDataString(parts[1]));
+                served.TryGetValue(building, out int count); served[building] = count + 1;
+            }
+            return served;
+        }
+
         /// <summary>Drops receipts of game days before <paramref name="day"/>; their minute key can never repeat.</summary>
         public static int Prune(IDictionary<string, string> receipts, int day)
         {

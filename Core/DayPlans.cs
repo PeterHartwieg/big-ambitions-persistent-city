@@ -162,7 +162,7 @@ namespace PersistentCity.Core
             => shift == ShiftType.Early ? 465 : shift == ShiftType.Late ? 720 : shift == ShiftType.Night ? 1320 : 510;
 
         public static DayPlan Generate(CitizenState person, int citySeed, int day, IReadOnlyList<Place>? catalogue,
-            IReadOnlyDictionary<string, Place>? places, bool meals)
+            IReadOnlyDictionary<string, Place>? places, bool meals, NeedPlanning? needs = null)
         {
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (day < 0) throw new ArgumentOutOfRangeException(nameof(day));
@@ -190,21 +190,28 @@ namespace PersistentCity.Core
                     if (desired >= 0 && expires >= desired && Position.Finite(expires))
                         items.Add(new PlanItem(PlanItemKind.Meal, Activity.Home, "", desired, expires, expires, PlanPriority.Wanted, kind));
                 }
-            // GR-3: a due need sends the day's shop or leisure window to a venue that sells its category, most urgent first.
+            // GR-3: with a purchase market, every category it sells is a need before the plan is drawn. A due need sends the
+            // day's shop or leisure window to a served venue open for it, most urgent first; on a day the routine drew no
+            // such window, the need gets its own visit where one fits.
             Place? planHome = null;
             if (catalogue != null && places != null) places.TryGetValue(person.HomeId, out planHome);
+            if (needs != null) NeedModel.EnsureCatalogue(person, needs, day, citySeed);
+            bool planNeeds = needs != null && planHome != null;
             if (routine.HasShop)
             {
-                string venue = planHome == null ? routine.ShopVenue : NeedModel.PlanVenue(person, day, catalogue!, planHome, PlaceKind.Shop) ?? routine.ShopVenue;
+                string venue = planNeeds ? NeedModel.PlanVenue(person, day, needs!, planHome!, PlaceKind.Shop, routine.ShopFrom, routine.ShopUntil) ?? routine.ShopVenue : routine.ShopVenue;
                 items.Add(new PlanItem(PlanItemKind.Need, Activity.Shop, venue, routine.ShopFrom, routine.ShopUntil, routine.ShopUntil, PlanPriority.Optional));
             }
+            else if (planNeeds && NeedModel.ScheduleVisit(person, day, needs!, planHome!, PlaceKind.Shop, items) is PlanItem shop) items.Add(shop);
             if (routine.HasLeisure)
             {
                 string venue = routine.LeisureVenue;
                 if (planHome != null)
-                    venue = NeedModel.PlanVenue(person, day, catalogue!, planHome, PlaceKind.Leisure) ?? ChooseLeisure(keys, day, catalogue!, planHome, venue);
+                    venue = (planNeeds ? NeedModel.PlanVenue(person, day, needs!, planHome, PlaceKind.Leisure, routine.LeisureFrom, routine.LeisureUntil) : null)
+                        ?? ChooseLeisure(keys, day, catalogue!, planHome, venue);
                 items.Add(new PlanItem(PlanItemKind.Leisure, Activity.Leisure, venue, routine.LeisureFrom, routine.LeisureUntil, routine.LeisureUntil, PlanPriority.Optional));
             }
+            else if (planNeeds && NeedModel.ScheduleVisit(person, day, needs!, planHome!, PlaceKind.Leisure, items) is PlanItem leisure) items.Add(leisure);
             items.Sort((a, b) => { int c = a.EarliestStart.CompareTo(b.EarliestStart); return c != 0 ? c : a.Kind.CompareTo(b.Kind); });
             uint seed = StableRandom.Finish(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Append(StableRandom.Begin(citySeed), keys.Id), ":plan:"), day));
             var next = carried != null && DayPlan.DayOf(carried) > day ? carried : DrawNextWork(person, keys.HourShift, day, places);
@@ -384,7 +391,7 @@ namespace PersistentCity.Core
         /// <summary>Draws today's plan once, at the first event at or after the day boundary. A previous plan with an item
         /// still running past the boundary (a night shift) stays until that item ends.</summary>
         internal static void Ensure(CitizenState person, int seed, double now, IReadOnlyList<Place> catalogue,
-            IReadOnlyDictionary<string, Place> places, bool meals)
+            IReadOnlyDictionary<string, Place> places, bool meals, NeedPlanning? needs = null)
         {
             int day = DayPlanner.PlanDay(now);
             var plan = person.Plan;
@@ -397,7 +404,7 @@ namespace PersistentCity.Core
             if (plan != null)
                 for (int i = 0; i < plan.Items.Count; i++)
                     if (!DayPlan.Terminal(plan.StateOf(i)) && plan.Items[i].EndsAt > now && plan.Items[i].Kind != PlanItemKind.Meal) return;
-            person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals);
+            person.Plan = DayPlanner.Generate(person, seed, day, catalogue, places, meals, needs);
             Adopt(person);
         }
 

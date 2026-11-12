@@ -144,6 +144,23 @@ namespace PersistentCity.Core
             return Math.Sqrt(x * x + z * z);
         }
 
+        private NeedPlanning? planning;
+        private long planningHour = long.MinValue;
+
+        /// <summary>The served venues planning may send needs to, rebuilt once per game hour (the market's own cadence).
+        /// Null without a market, so a city without one plans exactly as before.</summary>
+        internal NeedPlanning? NeedPlanningNow()
+        {
+            var market = purchases;
+            if (market == null) return null;
+            long hour = (long)Math.Floor(State.Minute / 60);
+            if (planning != null && hour == planningHour) return planning;
+            var venues = new List<Place>();
+            foreach (var id in market.Venues) if (places.TryGetValue(id, out var venue) && NeedModel.For(venue.BusinessType) != null) venues.Add(venue);
+            planning = new NeedPlanning(venues); planningHour = hour;
+            return planning;
+        }
+
         private EssentialNeeds? essentials;
         private long essentialsHour = long.MinValue;
 

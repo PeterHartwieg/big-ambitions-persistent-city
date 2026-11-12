@@ -771,7 +771,7 @@ namespace PersistentCity.Core
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
             // GR-2: the event is the plan executor. Today's plan is drawn once and items past their deadline are closed.
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null);
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow());
             DayPlanExecutor.Settle(person, now);
             person.OptionalStopChoice = null;
             person.OptionalStop = null; // The original activity event owns the continuation.
@@ -843,7 +843,7 @@ namespace PersistentCity.Core
                     break;
                 }
             // A job found or lost just now replans today's work item.
-            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null);
+            DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow());
             // Retain a home fallback until its original window ends. This also survives reload
             // and prevents counting the same closed activity again after the journey home.
             if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)

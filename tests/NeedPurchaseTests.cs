@@ -380,16 +380,25 @@ public sealed class NeedPurchaseTests
         Assert.Equal(gift.Postings, clothing.Postings);
     }
 
-    [Fact]
-    public void ADueNeedSendsTheNextPlanToAVenueSellingItsCategory()
+    private const string Other = "ba:businesstype_bookstore";
+
+    /// <summary>The banded city at day 1, its places, and the last shop retyped as the only served bookstore.</summary>
+    private static (CitySimulator City, List<Place> Catalogue, Dictionary<string, Place> Index, Place Bookstore) PlanningCity()
     {
         var (city, _) = Banded();
         Run(city, 1440 + 600);
         var catalogue = city.State.Places.Where(p => p.Kind == PlaceKind.Shop || p.Kind == PlaceKind.Leisure).ToList();
         var index = city.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
-        var shops = catalogue.Where(p => p.Kind == PlaceKind.Shop).ToList();
-        const string Other = "ba:businesstype_bookstore";
-        shops[shops.Count - 1].BusinessType = Other;
+        var bookstore = catalogue.Last(p => p.Kind == PlaceKind.Shop);
+        bookstore.BusinessType = Other;
+        return (city, catalogue, index, bookstore);
+    }
+
+    [Fact]
+    public void ADueNeedSendsTheNextPlanToAVenueSellingItsCategory()
+    {
+        var (city, catalogue, index, bookstore) = PlanningCity();
+        var planning = new NeedPlanning(new[] { bookstore });
         // A person whose drawn day has a shop window, tried over a few days.
         foreach (var person in city.State.Citizens.Where(c => !c.IsVisitor))
             for (int day = 2; day < 6; day++)
@@ -400,16 +409,100 @@ public sealed class NeedPurchaseTests
                 if (at < 0) continue;
                 // Not due: the drawn venue stays.
                 person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, day + 1, "", 0));
-                Assert.Equal(drawn.Items[at].VenueId, DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false).Items[at].VenueId);
+                Assert.Equal(drawn.Items[at].VenueId, DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning).Items[at].VenueId);
                 // Deferred and due again: the window goes to the venue that sells the category.
                 NeedModel.Defer(person.Needs.Find(Other)!, NeedModel.For(Other)!, day - 1);
                 Assert.Equal(day, person.Needs.Find(Other)!.NextDueDay);
-                var retry = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
-                Assert.Equal(shops[shops.Count - 1].Id, retry.Items[at].VenueId);
+                var retry = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
+                Assert.Equal(bookstore.Id, retry.Items[at].VenueId);
                 Assert.Equal(PlanItemKind.Need, retry.Items[at].Kind);
                 return;
             }
         Assert.Fail("no person with a shop window");
+    }
+
+    [Fact]
+    public void ADeferredNeedGetsItsOwnVisitOnADayTheRoutineDrewNoShopWindow()
+    {
+        var (city, catalogue, index, bookstore) = PlanningCity();
+        var planning = new NeedPlanning(new[] { bookstore });
+        foreach (var person in city.State.Citizens.Where(c => !c.IsVisitor && c.Wallet != null))
+            for (int day = 2; day < 9; day++)
+            {
+                person.Needs = null;
+                var drawn = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false);
+                if (drawn.Items.Any(i => i.Kind == PlanItemKind.Need)) continue;
+                // Planning first gives the person a need for every served category.
+                DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
+                Assert.NotNull(person.Needs!.Find(Other));
+                // Deferred yesterday: due today, and today's plan gets a visit for it although the routine drew none.
+                var need = person.Needs.Find(Other)!;
+                need.NextDueDay = day - 1; NeedModel.Defer(need, NeedModel.For(Other)!, day - 1);
+                var plan = DayPlanner.Generate(person, city.State.Seed, day, catalogue, index, false, planning);
+                var visit = plan.Items.Single(i => i.Kind == PlanItemKind.Need);
+                Assert.Equal(bookstore.Id, visit.VenueId);
+                Assert.InRange(visit.EarliestStart, day * 1440.0 + 600, day * 1440.0 + 1200);
+                foreach (var other in plan.Items.Where(i => i != visit && i.Kind != PlanItemKind.Meal))
+                    Assert.True(visit.EndsAt <= other.EarliestStart - 30 || visit.EarliestStart >= other.EndsAt + 30, "the visit keeps clear of " + other.Kind);
+                // The rest of the day is the drawn plan.
+                Assert.Equal(drawn.Items.Count + 1, plan.Items.Count);
+                return;
+            }
+        Assert.Fail("no person with a day without a shop window");
+    }
+
+    [Fact]
+    public void PlanningSkipsUnservedAndClosedVenuesBeforeMemoryAndDistance()
+    {
+        var (city, _, index, _) = PlanningCity();
+        var shops = city.State.Places.Where(p => p.Kind == PlaceKind.Shop).ToList();
+        Assert.True(shops.Count >= 3);
+        foreach (var shop in shops) shop.BusinessType = Other;
+        var person = city.State.Citizens.First(c => !c.IsVisitor);
+        var home = index[person.HomeId];
+        var byDistance = shops.OrderBy(p => Position.Distance(home.Position, p.Position)).ThenBy(p => p.Id, StringComparer.Ordinal).ToList();
+        person.Needs = new PersonNeeds(); person.Needs.Add(new NeedState(Other, 2, "", 0));
+        double from = 2 * 1440 + 700, until = from + 45;
+        // The nearest bookstore is a rival's: planning goes to the nearest one the market serves.
+        var served = new NeedPlanning(byDistance.Skip(1));
+        Assert.Equal(byDistance[1].Id, NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
+        Assert.Equal(byDistance[0].Id, NeedModel.PlanVenue(person, 2, new NeedPlanning(shops), home, PlaceKind.Shop, from, until));
+        // The remembered venue wins while it is open for the visit; closed, the next open one does.
+        person.Needs.Find(Other)!.LastVenue = byDistance[2].Id;
+        Assert.Equal(byDistance[2].Id, NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
+        byDistance[2].OpenMinute = 0; byDistance[2].CloseMinute = 0; byDistance[2].WeeklyHours.Clear();
+        Assert.Equal(byDistance[1].Id, NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
+        // Nothing served and open: no venue, the drawn one stays.
+        byDistance[1].OpenMinute = 0; byDistance[1].CloseMinute = 0; byDistance[1].WeeklyHours.Clear();
+        Assert.Null(NeedModel.PlanVenue(person, 2, served, home, PlaceKind.Shop, from, until));
+    }
+
+    [Fact]
+    public void TheHourlyServiceCountIsReadBackFromSavedReceiptsAfterAReload()
+    {
+        const string Shop = "address:Main%20Street:12:shop", Leisure = "address:Main%20Street:12:leisure";
+        long hour = 30;
+        var receipts = new Dictionary<string, string>(StringComparer.Ordinal);
+        var wallet = Wallet(100000);
+        // Two residents bought this hour, one through each alias of the same building, against a capacity of two.
+        foreach (var (who, venue, minute) in new[] { ("a", Shop, hour * 60 + 5), ("b", Leisure, hour * 60 + 20) })
+        {
+            var request = new PurchaseRequest(who, venue, PurchaseIntention.Need(Gift), Money.FromCents(10000), minute);
+            Assert.True(PurchaseContract.Run(request, wallet, receipts, new Native { CapacityThisHour = 2 }).IsBought);
+        }
+        receipts[PurchaseContract.Prefix + "c:" + Uri.EscapeDataString(Shop) + ":" + (hour * 60 + 30)] = "abandoned|x";
+        receipts[PurchaseContract.Prefix + "d:" + Uri.EscapeDataString(Shop) + ":" + (hour * 60 - 1)] = "paid|1|x";
+        receipts[PurchaseContract.Prefix + "e:" + Uri.EscapeDataString("other:shop") + ":" + (hour * 60 + 1)] = "uncertain|x";
+        // After a reload the market starts from these saved receipts, not from zero.
+        var read = new Dictionary<string, string>(receipts, StringComparer.Ordinal);
+        var served = PurchaseContract.ServedInHour(read, hour);
+        Assert.Equal(2, served[PurchaseContract.Building(Leisure)]);
+        Assert.Equal(1, served["other:shop"]);
+        Assert.Equal(2, served.Count);
+        var third = new PurchaseRequest("f", Shop, PurchaseIntention.Need(Gift), Money.FromCents(10000), hour * 60 + 40);
+        var full = new Native { ServedThisHour = served[PurchaseContract.Building(Shop)], CapacityThisHour = 2 };
+        Assert.Equal(PurchaseRefusal.VenueFull, PurchaseContract.Run(third, wallet, read, full).Refusal);
+        Assert.Equal(0, full.Calls);
     }
 
     [Fact]

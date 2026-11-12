@@ -94,6 +94,19 @@ namespace PersistentCity.Core
         }
     }
 
+    /// <summary>GR-3: what planning may send a need to: the places the purchase market serves now, in ordinal ID order.
+    /// Built by the simulator from its attached market; without one there is none and plans keep their drawn venues.</summary>
+    public sealed class NeedPlanning
+    {
+        public NeedPlanning(IEnumerable<Place> venues)
+        {
+            var list = new List<Place>(venues ?? throw new ArgumentNullException(nameof(venues)));
+            list.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+            Venues = list;
+        }
+        public IReadOnlyList<Place> Venues { get; }
+    }
+
     /// <summary>
     /// GR-3 need model (J0 "Need model"). A satisfied need is due again after its interval plus or minus a seeded spread; a
     /// deferred one (missed, refused, wallet short) comes due the next day with higher urgency, up to three times, then
@@ -238,23 +251,24 @@ namespace PersistentCity.Core
         }
 
         /// <summary>
-        /// The venue a day plan sends this person to for its <paramref name="kind"/> window: the venue of the most urgent
-        /// need due on <paramref name="day"/> (urgency, then category) that a place of that kind sells. The need's last
-        /// venue when it still sells the category, else the nearest such place to home (then place ID). Null when no due
-        /// need has a venue of that kind; the plan then keeps its drawn venue.
+        /// The venue a day plan sends this person to for a <paramref name="kind"/> visit from <paramref name="from"/> to
+        /// <paramref name="until"/>: for the most urgent need due on <paramref name="day"/> (urgency, then category), a
+        /// venue of that kind that sells the category, that the purchase market serves and that is open for the whole
+        /// visit. Among those, the need's last venue, else the nearest to home (then place ID). Null when no due need has
+        /// such a venue; the plan then keeps its drawn venue.
         /// </summary>
-        public static string? PlanVenue(CitizenState person, int day, IReadOnlyList<Place> catalogue, Place home, PlaceKind kind)
+        public static string? PlanVenue(CitizenState person, int day, NeedPlanning planning, Place home, PlaceKind kind, double from, double until)
         {
             var needs = person.Needs;
-            if (needs == null || catalogue == null || home == null) return null;
+            if (needs == null || planning == null || home == null) return null;
             NeedState? best = null; string? bestVenue = null;
             foreach (var need in needs.Needs)
             {
-                if (!Due(need, day) || best != null && (Urgency(need, day) <= Urgency(best, day))) continue;
+                if (!Due(need, day) || best != null && Urgency(need, day) <= Urgency(best, day)) continue;
                 string? venue = null; double distance = double.MaxValue;
-                foreach (var place in catalogue)
+                foreach (var place in planning.Venues)
                 {
-                    if (place.Kind != kind || BusinessTypes.Normalize(place.BusinessType) != need.Category) continue;
+                    if (place.Kind != kind || BusinessTypes.Normalize(place.BusinessType) != need.Category || !OpenFor(place, from, until)) continue;
                     if (place.Id == need.LastVenue) { venue = place.Id; break; }
                     double d = Position.Distance(home.Position, place.Position);
                     if (d < distance || d == distance && string.CompareOrdinal(place.Id, venue) < 0) { venue = place.Id; distance = d; }
@@ -262,6 +276,59 @@ namespace PersistentCity.Core
                 if (venue != null) { best = need; bestVenue = venue; }
             }
             return bestVenue;
+        }
+
+        private static bool OpenFor(Place place, double from, double until)
+        {
+            var close = DailyRoutine.NextClose(place, from);
+            return close.HasValue && close.Value >= until;
+        }
+
+        /// <summary>Need visits the plan schedules itself start between 10:00 and 20:00 on the half hour and last this long.</summary>
+        public const double ScheduledVisitMinutes = 45;
+
+        /// <summary>
+        /// A visit for a due need on a day whose routine drew no <paramref name="kind"/> window: the first half-hour slot
+        /// from 10:00 to 20:00 that keeps clear of every other planned item (the work travel allowance before a fixed item,
+        /// half an hour around the rest; meal windows do not block) and has a venue <see cref="PlanVenue"/> accepts. Null
+        /// when nothing fits; the plan is never squeezed.
+        /// </summary>
+        public static PlanItem? ScheduleVisit(CitizenState person, int day, NeedPlanning planning, Place home, PlaceKind kind, IReadOnlyList<PlanItem> planned)
+        {
+            if (person.Needs == null || planning == null || home == null) return null;
+            bool anyDue = false;
+            foreach (var need in person.Needs.Needs) if (Due(need, day)) { anyDue = true; break; }
+            if (!anyDue) return null;
+            for (double start = day * 1440.0 + 600; start <= day * 1440.0 + 1200; start += 30)
+            {
+                double ends = start + ScheduledVisitMinutes;
+                bool clear = true;
+                foreach (var item in planned)
+                {
+                    if (item.Kind == PlanItemKind.Meal) continue;
+                    double before = item.Priority == PlanPriority.Fixed ? DayPlanner.WorkTravelAllowance : 30;
+                    if (start < item.EndsAt + 30 && ends > item.EarliestStart - before) { clear = false; break; }
+                }
+                if (!clear) continue;
+                string? venue = PlanVenue(person, day, planning, home, kind, start, ends);
+                if (venue == null) continue;
+                return kind == PlaceKind.Leisure
+                    ? new PlanItem(PlanItemKind.Leisure, Activity.Leisure, venue, start, start, ends, PlanPriority.Optional)
+                    : new PlanItem(PlanItemKind.Need, Activity.Shop, venue, start, start, ends, PlanPriority.Optional);
+            }
+            return null;
+        }
+
+        /// <summary>Gives a resident a need for every category the served venues sell, before the plan is drawn, so a
+        /// category is planned for from the first day rather than met only on arrival.</summary>
+        public static void EnsureCatalogue(CitizenState person, NeedPlanning planning, int day, int seed)
+        {
+            if (person.IsVisitor || person.Wallet == null || planning == null) return;
+            foreach (var place in planning.Venues)
+            {
+                var profile = For(place.BusinessType);
+                if (profile != null) Ensure(person, profile, day, seed);
+            }
         }
 
         private static uint Draw(int seed, string person, string key, string purpose, int day)
