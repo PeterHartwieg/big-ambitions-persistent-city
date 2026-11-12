@@ -295,6 +295,17 @@ namespace PersistentCity.Core
             Reconsider(link);
         }
 
+        /// <summary>GR-8: true when the vehicle cannot move on because of a closure: it heads its section and the next one is
+        /// closed, or it waits outside a closed first section. O(1); the closure states are the kernel's own.</summary>
+        internal bool IsBlockedByClosure(string vehicleId)
+        {
+            if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || vehicle.Completed) return false;
+            if (vehicle.RouteIndex < 0) return links[vehicle.Route[0].LinkId].State.Closed;
+            Link link = links[vehicle.Route[vehicle.RouteIndex].LinkId];
+            return vehicle.RouteIndex + 1 < vehicle.Route.Count && ReferenceEquals(link.Queue.First?.Value, vehicle)
+                && links[vehicle.Route[vehicle.RouteIndex + 1].LinkId].State.Closed;
+        }
+
         /// <summary>Only acknowledged terminal state can be discarded.</summary>
         public bool RemoveCompleted(string vehicleId)
         {
@@ -717,12 +728,41 @@ namespace PersistentCity.Core
 
         /// <summary>GR-8: a snapshot without the vehicles <paramref name="exclude"/> names, as if they had been cancelled: the
         /// remaining queues keep their order and their wakeups are rebuilt as a retiming restore rebuilds them. The live kernel
-        /// is not changed. Without a match it is exactly <see cref="Capture()"/>.</summary>
+        /// is not changed. Without a match it is exactly <see cref="Capture()"/>. A vehicle queued behind a removed one keeps
+        /// its live position: its motion is re-anchored at that position now, so the gap the removal opens is not a jump.</summary>
         public TrafficKernelState Capture(Func<string, bool> exclude)
         {
             if (exclude == null) throw new ArgumentNullException(nameof(exclude));
             TrafficKernelState state = Capture();
             if (state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) return state;
+            var rebased = new Dictionary<string, double>(StringComparer.Ordinal);
+            foreach (Link link in links.Values)
+            {
+                bool behind = false;
+                double previous = 0;
+                int rank = 0;
+                // The same front-to-back rule as SpatialPosition, recording each retained follower's leg fraction.
+                for (var queued = link.Queue.First; queued != null; queued = queued.Next, rank++)
+                {
+                    TrafficVehicleState occupant = queued.Value;
+                    TrafficRouteLeg leg = occupant.Route[occupant.RouteIndex];
+                    double floor = (occupant.NominalMinutes - leg.StartNominalMinutes) / (leg.EndNominalMinutes - leg.StartNominalMinutes);
+                    double motion = Math.Min(1, occupant.MotionStartFraction + Math.Max(0, Clock - occupant.MotionStartedAt) / leg.FreeFlowMinutes);
+                    double spatial = leg.EndLinkFraction - leg.StartLinkFraction;
+                    double limit = rank == 0 ? 1 : Math.Max(0, Math.Min(1, (previous - 1.0 / link.Definition.Capacity - leg.StartLinkFraction) / spatial));
+                    double allowed = Math.Max(floor, Math.Min(motion, limit));
+                    previous = leg.StartLinkFraction + allowed * spatial;
+                    if (exclude(occupant.VehicleId)) behind = true;
+                    else if (behind && allowed < motion) rebased[occupant.VehicleId] = allowed;
+                }
+            }
+            foreach (TrafficVehicleState vehicle in state.Vehicles)
+            {
+                if (!rebased.TryGetValue(vehicle.VehicleId, out double at)) continue;
+                double free = vehicle.Route[vehicle.RouteIndex].FreeFlowMinutes;
+                vehicle.MotionStartFraction = at; vehicle.MotionStartedAt = Clock;
+                vehicle.ReadyAt = Math.Max(vehicle.ReadyAt, Clock + (1 - at) * free);
+            }
             foreach (TrafficLinkState link in state.Links)
             {
                 link.Vehicles.RemoveAll(id => exclude(id));

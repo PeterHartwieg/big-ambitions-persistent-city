@@ -719,8 +719,11 @@ namespace PersistentCity.Core
         }
 
         /// <summary>Records a state on the routine item a slot belongs to (matched by activity and deadline; the venue may be
-        /// an optional alternative). Slots outside the saved plan (another day, a retained old window) are ignored.</summary>
-        internal static void Mark(CitizenState person, Activity activity, double endsAt, PlanItemState state, PlanMissCause cause = PlanMissCause.None)
+        /// an optional alternative). Slots outside the saved plan (another day, a retained old window) are ignored. GR-6: a
+        /// household outing is shared at its own venue only (review Sol-r1-3); travel to or arrival at <paramref name="placeId"/>
+        /// elsewhere is an ordinary visit, and the outing is missed for that member (no way to the shared venue).</summary>
+        internal static void Mark(CitizenState person, Activity activity, double endsAt, PlanItemState state, PlanMissCause cause = PlanMissCause.None,
+            string? placeId = null)
         {
             var plan = person.Plan;
             if (plan == null || activity == Activity.Home) return;
@@ -729,6 +732,9 @@ namespace PersistentCity.Core
                 var item = plan.Items[i];
                 if (item.Kind == PlanItemKind.Meal || item.Activity != activity || item.EndsAt != endsAt) continue;
                 if (plan.StateOf(i) == PlanItemState.Cancelled) continue;
+                if (item.Kind == PlanItemKind.Outing && placeId != null && !string.Equals(placeId, item.VenueId, StringComparison.Ordinal)
+                    && (state == PlanItemState.Travelling || state == PlanItemState.Active))
+                { plan.Set(i, PlanItemState.Missed, PlanMissCause.NoRoute); return; }
                 plan.Set(i, state, cause);
                 return;
             }

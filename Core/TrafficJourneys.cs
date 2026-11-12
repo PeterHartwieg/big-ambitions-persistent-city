@@ -27,6 +27,7 @@ namespace PersistentCity.Core
                 batch?.BeginTrafficClosureBatch();
                 try { foreach (int id in closureLinks) traffic.SetLinkClosed(id, planner.IsTrafficLinkClosed(id)); }
                 finally { batch?.EndTrafficClosureBatch(); }
+                CancelBlockedThroughCars();
             }
             finally { closureLinks.Clear(); refreshingClosures = false; }
         }

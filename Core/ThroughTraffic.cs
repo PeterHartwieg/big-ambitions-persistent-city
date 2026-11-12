@@ -32,7 +32,8 @@ namespace PersistentCity.Core
         public const double EdgeBand = 0.1, MinimumEdgeMetres = 30;
         private readonly TrafficNetwork network;
         private readonly List<int>[] successors;
-        private readonly Dictionary<int, List<TrafficRouteLeg>?[]> routes = new Dictionary<int, List<TrafficRouteLeg>?[]>();
+        // Per entry: the shortest-path tree (each section's predecessor) and the exits it reaches, in exit order.
+        private readonly Dictionary<int, (int[] Previous, int[] Reachable)> routes = new Dictionary<int, (int[] Previous, int[] Reachable)>();
         public IReadOnlyList<int> Entries { get; }
         public IReadOnlyList<int> Exits { get; }
 
@@ -78,67 +79,78 @@ namespace PersistentCity.Core
         public bool IsExit(int linkId) => ((List<int>)Exits).BinarySearch(linkId) >= 0;
 
         /// <summary>The route from entry <paramref name="entry"/> to the exit chosen by <paramref name="draw"/> among the exits it
-        /// reaches, or null when it reaches none. Paths are computed once per entry.</summary>
+        /// reaches, or null when it reaches none. The path tree is computed once per entry; each route is a new list.</summary>
         public List<TrafficRouteLeg>? Route(int entry, uint draw)
         {
-            if (!routes.TryGetValue(entry, out var toExit)) routes.Add(entry, toExit = Paths(entry));
-            int reachable = 0;
-            foreach (var path in toExit) if (path != null) reachable++;
-            if (reachable == 0) return null;
-            int pick = (int)(draw % (uint)reachable);
-            foreach (var path in toExit)
-                if (path != null && pick-- == 0) return Copy(path);
-            return null;
+            if (!routes.TryGetValue(entry, out var tree)) routes.Add(entry, tree = Paths(entry));
+            if (tree.Reachable.Length == 0) return null;
+            var chain = new List<int>();
+            for (int link = tree.Reachable[(int)(draw % (uint)tree.Reachable.Length)]; link != -1; link = tree.Previous[link]) chain.Add(link);
+            chain.Reverse();
+            var legs = new List<TrafficRouteLeg>(chain.Count);
+            double nominal = 0;
+            foreach (int link in chain)
+            {
+                double minutes = network.Links[link].FreeFlowMinutes;
+                legs.Add(new TrafficRouteLeg { LinkId = link, StartNominalMinutes = nominal, EndNominalMinutes = nominal + minutes,
+                    FreeFlowMinutes = minutes, StartLinkFraction = 0, EndLinkFraction = 1 });
+                nominal += minutes;
+            }
+            return legs;
         }
 
-        private List<TrafficRouteLeg>?[] Paths(int entry)
+        private (int[] Previous, int[] Reachable) Paths(int entry)
         {
             int count = network.Links.Count;
             var cost = new double[count]; var previous = new int[count];
             for (int i = 0; i < count; i++) { cost[i] = double.PositiveInfinity; previous[i] = -1; }
             cost[entry] = network.Links[entry].FreeFlowMinutes;
-            var open = new SortedSet<(double Cost, int Link)> { (cost[entry], entry) };
+            // A binary heap with stale entries skipped on pop (ties by link ID, as the ordered set it replaced).
+            var open = new List<(double Cost, int Link)>();
+            Push(open, (cost[entry], entry));
             while (open.Count > 0)
             {
-                var (at, link) = open.Min; open.Remove(open.Min);
+                var (at, link) = Pop(open);
                 if (at > cost[link]) continue;
                 foreach (int next in successors[link])
                 {
                     double through = at + network.Links[next].FreeFlowMinutes;
                     if (through >= cost[next]) continue;
-                    if (!double.IsPositiveInfinity(cost[next])) open.Remove((cost[next], next));
-                    cost[next] = through; previous[next] = link; open.Add((through, next));
+                    cost[next] = through; previous[next] = link; Push(open, (through, next));
                 }
             }
-            var result = new List<TrafficRouteLeg>?[Exits.Count];
-            for (int e = 0; e < Exits.Count; e++)
-            {
-                int exit = Exits[e];
-                if (exit == entry || double.IsPositiveInfinity(cost[exit])) continue;
-                var chain = new List<int>();
-                for (int link = exit; link != -1; link = previous[link]) chain.Add(link);
-                chain.Reverse();
-                var legs = new List<TrafficRouteLeg>(chain.Count);
-                double nominal = 0;
-                foreach (int link in chain)
-                {
-                    double minutes = network.Links[link].FreeFlowMinutes;
-                    legs.Add(new TrafficRouteLeg { LinkId = link, StartNominalMinutes = nominal, EndNominalMinutes = nominal + minutes,
-                        FreeFlowMinutes = minutes, StartLinkFraction = 0, EndLinkFraction = 1 });
-                    nominal += minutes;
-                }
-                result[e] = legs;
-            }
-            return result;
+            var reachable = new List<int>();
+            foreach (int exit in Exits)
+                if (exit != entry && !double.IsPositiveInfinity(cost[exit])) reachable.Add(exit);
+            return (previous, reachable.ToArray());
         }
 
-        private static List<TrafficRouteLeg> Copy(List<TrafficRouteLeg> path)
+        private static bool Before((double Cost, int Link) a, (double Cost, int Link) b) => a.Cost < b.Cost || a.Cost == b.Cost && a.Link < b.Link;
+
+        private static void Push(List<(double Cost, int Link)> heap, (double Cost, int Link) item)
         {
-            var copy = new List<TrafficRouteLeg>(path.Count);
-            foreach (var leg in path)
-                copy.Add(new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes,
-                    FreeFlowMinutes = leg.FreeFlowMinutes, StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction });
-            return copy;
+            heap.Add(item);
+            for (int i = heap.Count - 1; i > 0;)
+            {
+                int parent = (i - 1) / 2;
+                if (!Before(heap[i], heap[parent])) break;
+                (heap[i], heap[parent]) = (heap[parent], heap[i]); i = parent;
+            }
+        }
+
+        private static (double Cost, int Link) Pop(List<(double Cost, int Link)> heap)
+        {
+            var top = heap[0];
+            heap[0] = heap[heap.Count - 1]; heap.RemoveAt(heap.Count - 1);
+            for (int i = 0; ;)
+            {
+                int left = 2 * i + 1, right = left + 1, least = i;
+                if (left < heap.Count && Before(heap[left], heap[least])) least = left;
+                if (right < heap.Count && Before(heap[right], heap[least])) least = right;
+                if (least == i) break;
+                (heap[i], heap[least]) = (heap[least], heap[i]); i = least;
+            }
+            return top;
         }
     }
 
@@ -177,7 +189,7 @@ namespace PersistentCity.Core
             LastHourEntries = hour == CountHour + 1 ? CountEntries : 0;
             CountHour = hour; CountEntries = 0;
         }
-        internal long Generated, Completed;
+        internal long Generated, Completed, SkippedClosed, CancelledClosed;
         internal ThroughTrafficState(ThroughTrafficSettings settings) { Settings = settings; }
         /// <summary>The same setting with nothing generated yet (a replacement simulator restores the saved kernel).</summary>
         internal ThroughTrafficState Fresh() => new ThroughTrafficState(Settings);
@@ -208,6 +220,9 @@ namespace PersistentCity.Core
         public int ThroughCarCount => throughTraffic?.InFlight.Count ?? 0;
         public long ThroughCarsGenerated => throughTraffic?.Generated ?? 0;
         public long ThroughCarsCompleted => throughTraffic?.Completed ?? 0;
+        /// <summary>Through cars not started because their route was closed, and cars taken off a closed road.</summary>
+        public long ThroughCarsSkippedClosed => throughTraffic?.SkippedClosed ?? 0;
+        public long ThroughCarsCancelledClosed => throughTraffic?.CancelledClosed ?? 0;
 
         /// <summary>The inspector's words for a vehicle that belongs to no person, or null for anything else.</summary>
         public static string? DescribeVehicle(string vehicleId) => ThroughTraffic.IsThroughVehicle(vehicleId) ? ThroughTraffic.InspectorLine : null;
@@ -218,6 +233,15 @@ namespace PersistentCity.Core
             var state = throughTraffic;
             if (state == null || traffic == null || trafficNetwork == null) return double.PositiveInfinity;
             if (!ReferenceEquals(state.Network, trafficNetwork)) BindThroughNetwork(state);
+            return ThroughPeek();
+        }
+
+        /// <summary><see cref="ThroughMinute"/> without binding, for the caught-up checks: an unbound network is work now.</summary>
+        private double ThroughPeek()
+        {
+            var state = throughTraffic;
+            if (state == null || traffic == null || trafficNetwork == null) return double.PositiveInfinity;
+            if (!ReferenceEquals(state.Network, trafficNetwork)) return State.Minute;
             if (state.Routes!.Entries.Count == 0 || state.Routes.Exits.Count == 0) return double.PositiveInfinity;
             double boundary = state.ScheduledHour == long.MinValue ? State.Minute : (state.ScheduledHour + 1) * 60.0;
             return state.Cursor < state.Pending.Count ? Math.Min(boundary, state.Pending[state.Cursor].At) : boundary;
@@ -248,8 +272,17 @@ namespace PersistentCity.Core
                 var entry = state.Pending[state.Cursor++];
                 var route = state.Routes!.Route(entry.Entry, entry.Exit);
                 if (route == null) continue;
+                // A route through a closed section is not driven (review Opus-r1-2): the car would wait at its head and hold
+                // every resident behind it.
+                bool closed = false;
                 if (routes is ITrafficRoutePlanner planner)
-                    foreach (var leg in route) traffic!.SetLinkClosed(leg.LinkId, planner.IsTrafficLinkClosed(leg.LinkId));
+                    foreach (var leg in route)
+                    {
+                        bool shut = planner.IsTrafficLinkClosed(leg.LinkId);
+                        traffic!.SetLinkClosed(leg.LinkId, shut);
+                        closed |= shut;
+                    }
+                if (closed) { state.SkippedClosed++; continue; }
                 traffic!.Enqueue(entry.Id, route);
                 state.InFlight.Add(entry.Id); state.Generated++;
             }
@@ -288,6 +321,20 @@ namespace PersistentCity.Core
             state.Roll((long)Math.Floor(State.Minute / 60));
             state.CountEntries++;
         }
+
+        /// <summary>After a closure refresh: a through car held by a closed section leaves the road instead of waiting there
+        /// (review Opus-r1-2). Residents plan around closures; through cars have no plan to fall back on.</summary>
+        private void CancelBlockedThroughCars()
+        {
+            var state = throughTraffic;
+            if (state == null || traffic == null || state.InFlight.Count == 0) return;
+            foreach (var id in state.InFlight) if (traffic.IsBlockedByClosure(id)) throughBlocked.Add(id);
+            if (throughBlocked.Count == 0) return;
+            foreach (var id in throughBlocked) { traffic.Cancel(id); state.InFlight.Remove(id); state.CancelledClosed++; }
+            throughBlocked.Clear();
+        }
+
+        private readonly List<string> throughBlocked = new List<string>();
 
         private bool ThroughCompleted(string id)
         {

@@ -108,6 +108,31 @@ public sealed class HouseholdTests
     }
 
     [Fact]
+    public void AMemberWhoGoesToAnotherVenueIsNotCountedAtTheSharedOuting()
+    {
+        var (city, _) = NeedPurchaseTests.Banded();
+        var index = Index(city.State);
+        var (household, outing, day) = FirstOuting(city);
+        foreach (var member in household.Members)
+            member.Plan = DayPlanner.Generate(member, city.State.Seed, day, city.State.Places, index, false, null, household);
+        var invited = household.Members.Where(m => m.Plan!.Items.Any(i => i.Kind == PlanItemKind.Outing)).ToList();
+        Assert.True(invited.Count >= 2, "two members carry the outing");
+        var item = outing.Item;
+        string elsewhere = city.State.Places.First(p => p.Kind != PlaceKind.Home && p.Id != item.VenueId).Id;
+        // One member reaches the shared venue; every other one takes an alternative (its route failed).
+        DayPlanExecutor.Mark(invited[0], Activity.Leisure, item.EndsAt, PlanItemState.Active, placeId: item.VenueId);
+        foreach (var member in invited.Skip(1))
+        {
+            DayPlanExecutor.Mark(member, Activity.Leisure, item.EndsAt, PlanItemState.Travelling, placeId: elsewhere);
+            DayPlanExecutor.Mark(member, Activity.Leisure, item.EndsAt, PlanItemState.Active, placeId: elsewhere);
+            int at = member.Plan!.Items.ToList().FindIndex(i => i.Kind == PlanItemKind.Outing);
+            Assert.Equal(PlanItemState.Missed, member.Plan.StateOf(at));
+            Assert.Equal(PlanMissCause.NoRoute, member.Plan.CauseOf(at));
+        }
+        Assert.Equal(OutingOutcome.Cancelled, HouseholdOutings.Outcome(household, day));
+    }
+
+    [Fact]
     public void InTheRunningCityEveryOutingEndsHeldOrCancelledByTheRuleAndEachMemberPaysFromTheirOwnWallet()
     {
         var (city, market) = NeedPurchaseTests.Banded();
